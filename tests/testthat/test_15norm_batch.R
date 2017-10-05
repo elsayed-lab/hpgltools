@@ -115,4 +115,4 @@ if (FALSE) {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 15norm_batch.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

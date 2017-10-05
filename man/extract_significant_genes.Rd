@@ -35,6 +35,8 @@ the deseq, edger, limma, basic, meta, or all.}
 \item{excel}{Write the results to this excel file, or NULL.}
 
 \item{siglfc_cutoffs}{Set of cutoffs used to define levels of 'significant.'}
+
+\item{...}{Arguments passed into arglist.}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.

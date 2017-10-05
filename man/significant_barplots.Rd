@@ -23,13 +23,15 @@ followed by 2 fold and 4 fold cutoffs.}
 
 \item{p_type}{Adjusted or not?}
 
+\item{according_to}{limma, deseq, edger, basic, or all of the above.}
+
 \item{order}{Choose a specific order for the plots.}
 
 \item{maximum}{Set a specific limit on the number of genes on the x-axis.}
 
 \item{...}{More arguments are passed to arglist.}
 
-\item{fc_column}{The column in the master-table to use for FC cutoffs.}
+\item{t_type}{Adjusted?}
 }
 \value{
 list containing the significance bar plots and some information to hopefully help interpret them.

@@ -17,6 +17,8 @@ plot_density(data, colors = NULL, sample_names = NULL,
 
 \item{position}{How to place the lines, either let them overlap (identity), or stack them.}
 
+\item{direct}{Use direct.labels for labeling the plot?}
+
 \item{fill}{Fill the distributions?  This might make the plot unreasonably colorful.}
 
 \item{title}{Title for the plot.}

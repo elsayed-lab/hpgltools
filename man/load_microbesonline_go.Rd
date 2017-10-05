@@ -8,6 +8,10 @@ load_microbesonline_go(id = "160490", name_type = "ncbi_tag", name = NULL)
 }
 \arguments{
 \item{id}{Which species to query.}
+
+\item{name_type}{The column to use as GID.}
+
+\item{name}{Allowing for non-specific searches by species name.}
 }
 \value{
 data frame of GO terms from pub.microbesonline.org

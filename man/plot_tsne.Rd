@@ -17,13 +17,35 @@ plot_tsne(data, design = NULL, plot_colors = NULL, seed = 1,
 
 \item{plot_colors}{a color scheme.}
 
+\item{seed}{A seed for Rtsne}
+
+\item{chosen_features}{Use these features?}
+
+\item{number_features}{And this number.}
+
 \item{plot_labels}{add labels?  Also, what type?  FALSE, "default", or "fancy".}
+
+\item{perplexity}{I am perplexed.}
+
+\item{min_variance}{Only include genes with more than this variance.}
 
 \item{plot_title}{a title for the plot.}
 
 \item{plot_size}{size for the glyphs on the plot.}
 
 \item{size_column}{use an experimental factor to size the glyphs of the plot}
+
+\item{components}{Look for n components.}
+
+\item{iterations}{Perform n iterations of tsne.}
+
+\item{theta}{Yay greek!}
+
+\item{pca}{Seed with an initial pca plot?}
+
+\item{component_x}{Which component goes on the x-axis?}
+
+\item{component_y}{And which goes on the y-axis?}
 
 \item{...}{arglist from elipsis!}
 }

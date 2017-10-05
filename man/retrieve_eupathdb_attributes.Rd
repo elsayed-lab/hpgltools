@@ -4,22 +4,27 @@
 \alias{retrieve_eupathdb_attributes}
 \title{Queries one of the EuPathDB APIs for gene data}
 \usage{
-retrieve_eupathdb_attributes(data_provider, organism, table_name,
+retrieve_eupathdb_attributes(provider = "TriTrypDB",
+  species = "Leishmania major", table = "GOTerms",
   wadl = "GeneQuestions/GenesByTaxonGene", format = "json",
-  workaround = FALSE)
+  overwrite = FALSE, dir = ".")
 }
 \arguments{
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 
-\item{organism}{Full name of organism, as used by EuPathDB APIs}
+\item{species}{Full name of organism, as used by EuPathDB APIs}
 
-\item{table_name}{Name of the particular table to be retrieved (e.g.
+\item{table}{Name of the particular table to be retrieved (e.g.
 'GoTerms')}
 
 \item{wadl}{String specifying API service to be queried}
 
 \item{format}{String specifying API response type (currently only 'json'
 is supported)}
+
+\item{overwrite}{Overwrite existing data?}
+
+\item{dir}{Where to place the downloaded information?}
 }
 \value{
 list containing response from API request.

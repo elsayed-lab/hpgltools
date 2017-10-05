@@ -21,6 +21,7 @@ clear_session <- function(keepers=NULL, depth=10) {
 
 #' Get the current git commit for hpgltools
 #'
+#' @param gitdir  Directory containing the git repository.
 #' @export
 get_git_commit <- function(gitdir="/home/trey/hpgltools") {
   cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
@@ -53,6 +54,7 @@ local_get_value <- function(x, delimiter=": ") {
 #' @param width  How wide?
 #' @param height  How high?
 #' @param res  The chosen resolution.
+#' @param ...  Arguments passed to the image plotters.
 #' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 #' @export
 pp <- function(file, width=9, height=9, res=180, ...) {
@@ -63,7 +65,7 @@ pp <- function(file, width=9, height=9, res=180, ...) {
   } else if (ext == "svg") {
     res <- svg(filename=file)
   } else if (ext == "ps") {
-    res <- postscript(filename=file, width=width, height=height, units="in", ...)
+    res <- postscript(file=file, width=width, height=height, units="in", ...)
   } else if (ext == "eps") {
     res <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {

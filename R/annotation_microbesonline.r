@@ -15,7 +15,7 @@
 #'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 #' @examples
 #' \dontrun{
-#'
+#'  some_ids <- get_microbesonline_ids("Streptococcus")
 #' }
 #' @export
 get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
@@ -50,6 +50,7 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
 #' This is essentially covered in get_micrboesonline_ids(), but this works too.
 #'
 #' @param id Text string containing some part of the species name of interest.
+#' @param name  An optional name so that one may have non-specific requests.
 #' @return Dataframe of ids and names.
 #' @seealso \pkg{DBI}
 #'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
@@ -90,7 +91,7 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
 #' This function makes that rather easier, or so I hope at least.
 #'
 #' @param ids List of ids to query.
-#' @param species Species name(s) to use instead.
+#' @param name Species name(s) to use instead.
 #' @return List of dataframes with the annotation information.
 #' @seealso \pkg{RCurl}
 #'  \code{\link[RCurl]{getURL}}
@@ -174,6 +175,8 @@ mdesc_table <- function(table="Locus2Go") {
 #' At the very least, it does return a large number of them, which is a start.
 #'
 #' @param id Which species to query.
+#' @param name_type  The column to use as GID.
+#' @param name  Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from pub.microbesonline.org
 #' @seealso \pkg{DBI}
 #'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
@@ -269,7 +272,7 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
     warning("Did not disconnect cleanly.")
   }
   org <- result_df[1, 1] ## Grab the identifier
-  message(paste0("The abbreviation for ", taxonid, " is ", org, "."))
+  message(paste0("The abbreviation for ", id, " is ", org, "."))
   genepaths <- get_kegg_genepaths(abbreviation=org)
   return(genepaths)
 }

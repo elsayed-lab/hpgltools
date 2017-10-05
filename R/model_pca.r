@@ -152,7 +152,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   ## Similarly, if there is no information which may be used as a design yet, make one up.
   if (is.null(design)) {
     message("No design was provided.  Making one with x conditions, 1 batch.")
-    design <- cbind(plot_labels, 1)
+    design <- cbind(plot_names, 1)
     design <- as.data.frame(design)
     design[["condition"]] <- as.numeric(design[["plot_labels"]])
     colnames(design) <- c("name", "batch", "condition")
@@ -309,6 +309,7 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' @param plot_labels   a parameter for the labels on the plot.
 #' @param plot_size  The size of the dots on the plot
 #' @param size_column an experimental factor to use for sizing the glyphs
+#' @param rug  Include the rugs on the sides of the plot?
 #' @param ... extra arguments dropped into arglist
 #' @return a ggplot2 PCA plot
 #' @seealso \pkg{ggplot2}
@@ -560,6 +561,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
   ## Start out with some sanity tests
   colors_chosen <- NULL
   exprs_data <- NULL
+  expt_data <- NULL
+  expt_design <- NULL
   data_class <- class(expt_data)[1]
   if (data_class == "expt") {
     expt_design <- expt_data[["design"]]
@@ -575,10 +578,10 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
   ## Make sure colors get chosen.
   if (is.null(colors_chosen)) {
-    colors_chosen <- as.numeric(as.factor(design[["condition"]]))
+    colors_chosen <- as.numeric(as.factor(expt_design[["condition"]]))
     num_chosen <- max(3, length(levels(as.factor(colors_chosen))))
     colors_chosen <- RColorBrewer::brewer.pal(num_chosen, "Dark2")[colors_chosen]
-    names(colors_chosen) <- rownames(design)
+    names(colors_chosen) <- rownames(expt_design)
   }
 
   ## Extract the various pieces of data we will use later.
@@ -851,9 +854,9 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
   pca_biplot <- grDevices::recordPlot()
   highest <- NULL
   lowest <- NULL
-  for (pc in 1:length(colnames(another_pca$scores))) {
-    tmphigh <- another_pca$scores
-    tmplow <- another_pca$scores
+  for (pc in 1:length(colnames(another_pca[["scores"]]))) {
+    tmphigh <- another_pca[["scores"]]
+    tmplow <- another_pca[["scores"]]
     tmphigh <- tmphigh[order(tmphigh[, pc], decreasing=TRUE), ]
     tmphigh <- head(tmphigh, n=20)
     tmplow <- tmplow[order(tmplow[, pc], decreasing=FALSE), ]
@@ -863,8 +866,8 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     highest <- cbind(highest, high_column)
     lowest <- cbind(lowest, low_column)
   }
-  colnames(highest) <- colnames(another_pca$scores)
-  colnames(lowest) <- colnames(another_pca$scores)
+  colnames(highest) <- colnames(another_pca[["scores"]])
+  colnames(lowest) <- colnames(another_pca[["scores"]])
   ret_list <- list(
     "pca_hist" = pca_hist,
     "pca_biplot" = pca_biplot,

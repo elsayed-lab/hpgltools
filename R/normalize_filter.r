@@ -71,6 +71,7 @@ filter_counts <- function(count_table, filter="hpgl", p=0.01, A=1, k=1,
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
 #' @param min_samples Minimum number of samples.
+#' @param libsize  Table of library sizes.
 #' @return Dataframe of counts without the low-count genes.
 #' @seealso \pkg{edgeR}
 #' @examples
@@ -78,7 +79,7 @@ filter_counts <- function(count_table, filter="hpgl", p=0.01, A=1, k=1,
 #'  filtered_table <- cbcb_filter_counts(count_table)
 #' }
 #' @export
-cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=NULL, ...) {
+cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=NULL) {
   ## It appears I introduced an error here.
   log2CPM <- function(qcounts, libsize=NULL) {
     if (is.null(libsize)) {
@@ -116,6 +117,8 @@ cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
 #' @param min_samples Minimum number of samples.
+#' @param libsize  Table of library sizes.
+#' @param ...  Arguments passed to cpm and friends.
 #' @return Dataframe of counts without the low-count genes.
 #' @seealso \pkg{edgeR}
 #' @examples

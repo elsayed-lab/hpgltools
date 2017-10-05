@@ -215,4 +215,4 @@ test_that("Limma results, toptable.", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 05cbcbseq.R in ", elapsed, " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

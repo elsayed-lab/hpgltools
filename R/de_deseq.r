@@ -317,7 +317,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       ## of columns of the coefficient df.
       ## This is a bit more verbose that strictly it needs to be, but I hope it is clearer therefore.
       ## 1st, if a numerator/denominator is missing, then it is the intercept name.
-      missing_name_idx <- ! num_den %in% columns
+      missing_name_idx <- ! num_den %in% colnames(coefficient_df)
       missing_name <- num_den[missing_name_idx]
       ## Those indexes found in the numerator+denominator list will be subtracted
       containing_names_idx <- columns %in% num_den

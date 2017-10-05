@@ -103,6 +103,7 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
 #' @param gff Gff filename.
 #' @param type Subset the gff file for entries of a specific type.
 #' @param id_col Column in a successful import containing the IDs of interest.
+#' @param ret_type  Return a data.frame or something else?
 #' @param second_id_col Second column to check.
 #' @param try Give your own function call to use for importing.
 #' @return Dataframe of the annotation information found in the gff file.

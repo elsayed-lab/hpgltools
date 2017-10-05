@@ -1,3 +1,22 @@
+#' Plot tnse data for the genes in a data set.
+#'
+#' @param data  Some data!
+#' @param design a design!
+#' @param plot_colors  Some colors!
+#' @param seed for tsne
+#' @param chosen_features  Use these genes for labeling
+#' @param number_features  Somethingsomething
+#' @param perplexity  for tsne
+#' @param min_variance  Only include genes with more variance than this.
+#' @param plot_title  A title!
+#' @param components  How many components to plot.
+#' @param iterations  Use x tsne iterations.
+#' @param theta  Yay greek!
+#' @param pca  Seed this with an initial pca plot?
+#' @param component_x  Put which component on the x-axis?
+#' @param component_y  And which component on the y-axis?
+#' @param ...  Arglist arguments.
+#' @export 
 plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
                             chosen_features=NULL, number_features=NULL,
                             perplexity=NULL, min_variance=0.01, plot_title=NULL,
@@ -76,7 +95,7 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   ## Similarly, if there is no information which may be used as a design yet, make one up.
   if (is.null(design)) {
     message("No design was provided.  Making one with x conditions, 1 batch.")
-    design <- cbind(plot_labels, 1)
+    design <- cbind(plot_names, 1)
     design <- as.data.frame(design)
     design[["condition"]] <- as.numeric(design[["plot_labels"]])
     colnames(design) <- c("name", "batch", "condition")
@@ -167,10 +186,21 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
 #' @param data  an expt set of samples.
 #' @param design   a design matrix and.
 #' @param plot_colors   a color scheme.
+#' @param seed  A seed for Rtsne
+#' @param chosen_features  Use these features?
+#' @param number_features  And this number.
+#' @param perplexity I am perplexed.
+#' @param min_variance  Only include genes with more than this variance.
 #' @param plot_title   a title for the plot.
 #' @param plot_size   size for the glyphs on the plot.
 #' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
 #' @param size_column use an experimental factor to size the glyphs of the plot
+#' @param components  Look for n components.
+#' @param iterations  Perform n iterations of tsne.
+#' @param theta  Yay greek!
+#' @param pca  Seed with an initial pca plot?
+#' @param component_x  Which component goes on the x-axis?
+#' @param component_y  And which goes on the y-axis?
 #' @param ...  arglist from elipsis!
 #' @return a list containing the following:
 #' \enumerate{

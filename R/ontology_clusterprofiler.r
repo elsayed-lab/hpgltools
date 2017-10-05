@@ -24,6 +24,8 @@
 #' @param do_gsea  Perform gsea searches?
 #' @param categories  How many categories should be plotted in bar/dot plots?
 #' @param excel  Print the results to an excel file?
+#' @param do_david  Attempt to use the DAVID database for a search?
+#' @param david_user  Default registered username to use.
 #' @return a list
 #' @seealso \pkg{clusterProfiler}
 #' @examples

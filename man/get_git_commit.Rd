@@ -6,6 +6,9 @@
 \usage{
 get_git_commit(gitdir = "/home/trey/hpgltools")
 }
+\arguments{
+\item{gitdir}{Directory containing the git repository.}
+}
 \description{
 Get the current git commit for hpgltools
 }

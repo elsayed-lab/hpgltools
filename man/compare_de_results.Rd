@@ -10,6 +10,8 @@ compare_de_results(first, second, cor_method = "pearson")
 \item{first}{One invocation of combine_de_tables to examine.}
 
 \item{second}{A second invocation of combine_de_tables to examine.}
+
+\item{cor_method}{Method to use for cor.test().}
 }
 \value{
 A list of compared columns, tables, and methods.

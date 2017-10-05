@@ -3,6 +3,9 @@
 \name{exprs}
 \alias{exprs}
 \title{Extend Biobase::exprs to handle expt ojects.}
+\arguments{
+\item{object}{The expt object from which to extract the expressionset.}
+}
 \description{
 Extend Biobase::exprs to handle expt ojects.
 }

@@ -759,17 +759,24 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' applications, where the x-axis is related to a measure of the strength of a statistical signal,
 #' and y-axis is related to a measure of the statistical significance of the signal."
 #'
-#' @param table Dataframe from limma's toptable which includes log(fold change) and an
+#' @param table  Dataframe from limma's toptable which includes log(fold change) and an
 #'     adjusted p-value.
-#' @param p_cutoff Cutoff defining significant from not.
-#' @param fc_cutoff Cutoff defining the minimum/maximum fold change for interesting.  This is log,
-#'     so I went with +/- 0.8 mostly arbitrarily as the default.
-#' @param alpha How transparent to make the dots.
-#' @param size How big are the dots?
-#' @param gvis_filename Filename to write a fancy html graph.
-#' @param xaxis_column Column from the data to use on the x axis (logFC)
-#' @param yaxis_column Column from the data to use on the y axis (p-value)
-#' @param tooltip_data Df of tooltip information for gvis.
+#' @param alpha  How transparent to make the dots.
+#' @param color_by  By p-value something else?
+#' @param color_list  A list of colors for significance.
+#' @param fc_col  Which column contains the fc data?
+#' @param fc_name  Name of the fold-change to put on the plot.
+#' @param gvis_filename  Filename to write a fancy html graph.
+#' @param line_color  What color for the significance lines?
+#' @param line_position  Put the significance lines above or below the dots?
+#' @param logfc_cutoff  Cutoff defining the minimum/maximum fold change for interesting.  This is log,
+#'    so I went with +/- 0.8 mostly arbitrarily as the default.
+#' @param p_col  Which column contains the p-value data?
+#' @param p_name  Name of the p-value to put on the plot.
+#' @param pval_cutoff  Cutoff defining significant from not.
+#' @param shapes_by_state  Add fun shapes for the various significance states?
+#' @param size  How big are the dots?
+#' @param tooltip_data  Df of tooltip information for gvis.
 #' @param ...  I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
 #'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
@@ -786,16 +793,12 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #'  ## check for that, but I have not yet.
 #' }
 #' @export
-plot_volcano_de <- function(table, tooltip_data=NULL,
-                            gvis_filename=NULL, logfc_cutoff=1.0,
-                            pval_cutoff=0.05, size=2, alpha=0.6,
-                            fc_col="logFC", p_col="adj.P.Val",
-                            fc_name="log2 fold change", p_name="-log10 p-value",
-                            line_color="black", color_by="p",
-                            line_position="bottom",
-                            shapes_by_state=TRUE,
+plot_volcano_de <- function(table, alpha=0.6, color_by="p",
                             color_list=c("FALSE"="darkred", "TRUE"="darkblue"),
-                            ...) {
+                            fc_col="logFC", fc_name="log2 fold change", gvis_filename=NULL,
+                            line_color="black", line_position="bottom", logfc_cutoff=1.0,
+                            p_col="adj.P.Val", p_name="-log10 p-value", pval_cutoff=0.05,
+                            shapes_by_state=TRUE, size=2, tooltip_data=NULL, ...) {
   low_vert_line <- 0.0 - logfc_cutoff
   horiz_line <- -1 * log10(pval_cutoff)
 

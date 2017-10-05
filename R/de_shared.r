@@ -372,9 +372,9 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 
   condbatch_noint_model <- try(stats::model.matrix(as.formula(condbatch_noint_string),
                                                    data=design), silent=TRUE)
-  batchcond_int_string <- "~ 0 + batch + condition"
-  batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
-                                                 data=design), silent=TRUE)
+  batchcond_noint_string <- "~ 0 + batch + condition"
+  batchcond_noint_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
+                                                   data=design), silent=TRUE)
   cond_int_string <- "~ condition"
   cond_int_model <- try(stats::model.matrix(as.formula(cond_int_string),
                                             data=design), silent=TRUE)
@@ -766,6 +766,7 @@ the state of the count table and ensure that it is in integer counts.")
 #'
 #' @param first  One invocation of combine_de_tables to examine.
 #' @param second  A second invocation of combine_de_tables to examine.
+#' @param cor_method  Method to use for cor.test().
 #' @return  A list of compared columns, tables, and methods.
 #' @examples
 #'  \dontrun{
@@ -1015,6 +1016,11 @@ compare_logfc_plots <- function(combined_tables) {
 #'
 #' This should provide nice venn diagrams and some statistics to compare 2 or 3
 #' contrasts in a differential expression analysis.
+#'
+#' @param sig_tables  A set of significance tables to poke at.
+#' @param compare_by  Use which program for the comparisons?
+#' @param contrasts  A list of contrasts to compare.
+#' @export
 compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contrasts=c(1,2,3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
@@ -1062,7 +1068,7 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
     retlist[["down_weights"]] <- c(0,
                                    nrow(retlist[[first_solo_down_name]]),
                                    nrow(retlist[[second_solo_down_name]]),
-                                   nrow(retlist[[shared_down_e]]))
+                                   nrow(retlist[[shared_down_name]]))
     retlist[["up_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
                                              Weight = retlist[["up_weights"]])
     retlist[["down_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
@@ -1148,11 +1154,15 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
                     nrow(fs_up), nrow(st_up), nrow(ft_up), nrow(shared_up))
     down_weights <- c(0, nrow(first_solo_down), nrow(second_solo_down), nrow(third_solo_down),
                       nrow(fs_down), nrow(st_down), nrow(ft_down), nrow(shared_down))
-    up_venn <- Vennerable::Venn(SetNames=c(first_up_name, second_up_name, third_up_name),
+    up_venn <- Vennerable::Venn(SetNames=c(first_solo_up_name,
+                                           second_solo_up_name,
+                                           third_solo_up_name),
                                 Weight=up_weights)
     up_venn_result <- Vennerable::plot(up_venn, doWeights=FALSE)
-    down_venn <- Vennerable::Venn(SetNames=c(first_down_name, second_down_name, third_down_name),
-                                Weight=down_weights)
+    down_venn <- Vennerable::Venn(SetNames=c(first_solo_down_name,
+                                             second_solo_down_name,
+                                             third_solo_down_name),
+                                  Weight=down_weights)
     down_venn_result <- Vennerable::plot(down_venn, doWeights=FALSE)
 
     retlist <- list(
@@ -1174,11 +1184,12 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
       "down_weights" = down_weights,
       "up_venn" = up_venn_result,
       "down_venn" = down_venn_result)
-    names(retlist) <- c(first_solo_up_name, second_solo_up_name, third_solo_up_name,
-                        fs_up_name, st_up_name, ft_up_name, shared_up_name,
-                        first_solo_down_name, second_solo_down_name, third_solo_down_name,
-                        fs_down_name, st_down_name, ft_down_name, shared_down_name,
-                        "up_weights", "down_weights", "up_venn", "down_venn")
+    names(retlist) <- c(
+      first_solo_up_name, second_solo_up_name, third_solo_up_name,
+      fs_up_name, st_up_name, ft_up_name, shared_up_name,
+      first_solo_down_name, second_solo_down_name, third_solo_down_name,
+      fs_down_name, st_down_name, ft_down_name, shared_down_name,
+      "up_weights", "down_weights", "up_venn", "down_venn")
   } else {
     stop("Currently this handles only 2 or 3 contrasts.")
   }

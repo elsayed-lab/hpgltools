@@ -27,7 +27,7 @@ hi:
 
 packrat_install:
 	echo "Installing all packrat packages globally."
-	R -e "library(hpgltools); hpgltools::install_packrat_globally()"
+	R -e "library(hpgltools); install_packrat_globally()"
 
 restore:
 	echo "Restoring packrat."

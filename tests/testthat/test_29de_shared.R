@@ -391,4 +391,4 @@ test_that("Do edger and deseq have some genes in common? (down)", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

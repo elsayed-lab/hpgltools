@@ -48,6 +48,10 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
 \item{categories}{How many categories should be plotted in bar/dot plots?}
 
 \item{excel}{Print the results to an excel file?}
+
+\item{do_david}{Attempt to use the DAVID database for a search?}
+
+\item{david_user}{Default registered username to use.}
 }
 \value{
 a list

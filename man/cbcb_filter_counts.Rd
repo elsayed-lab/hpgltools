@@ -5,7 +5,7 @@
 \title{Filter low-count genes from a data set using cpm data and a threshold.}
 \usage{
 cbcb_filter_counts(count_table, threshold = 1, min_samples = 2,
-  libsize = NULL, ...)
+  libsize = NULL)
 }
 \arguments{
 \item{count_table}{Data frame of (pseudo)counts by sample.}
@@ -13,6 +13,8 @@ cbcb_filter_counts(count_table, threshold = 1, min_samples = 2,
 \item{threshold}{Lower threshold of counts for each gene.}
 
 \item{min_samples}{Minimum number of samples.}
+
+\item{libsize}{Table of library sizes.}
 }
 \value{
 Dataframe of counts without the low-count genes.

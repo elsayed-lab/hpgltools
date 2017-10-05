@@ -13,6 +13,10 @@ hpgl_filter_counts(count_table, threshold = 2, min_samples = 2,
 \item{threshold}{Lower threshold of counts for each gene.}
 
 \item{min_samples}{Minimum number of samples.}
+
+\item{libsize}{Table of library sizes.}
+
+\item{...}{Arguments passed to cpm and friends.}
 }
 \value{
 Dataframe of counts without the low-count genes.

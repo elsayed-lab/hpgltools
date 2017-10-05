@@ -157,6 +157,8 @@ require.auto <- function(lib, update=FALSE) {
   return(count)
 }
 
+#'  Install the set of local packrat packages so everyone may use them!
+#' 
 #' @export
 install_packrat_globally <- function() {
   packrat_installed <- packrat::status()
@@ -184,7 +186,7 @@ install_packrat_globally <- function() {
       } else {
         message(paste0("Package: ", pkg_name, " is globally installed as version: ",
                        global_version, "; packrat has version ", pkg_ver, "."))
-        inst <- try(devtools::install(packrat_package_path))
+        inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
         if (class(inst) != "try-error") {
           newly_installed <- newly_installed + 1
         }

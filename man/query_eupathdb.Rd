@@ -5,14 +5,18 @@
 \title{Queries one of the EuPathDB APIs using a GET request and returns a dataframe
 representation of the result.}
 \usage{
-query_eupathdb(data_provider, organism, query_args,
-  wadl = "GeneQuestions/GenesByTaxon", format = "json",
-  workaround = FALSE)
+query_eupathdb(provider = "TriTrypDB", species = "Leishmania major",
+  dir = ".", prefix = "table", query_args = NULL,
+  wadl = "GeneQuestions/GenesByTaxon", format = "json")
 }
 \arguments{
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 
-\item{organism}{Full name of organism, as used by EuPathDB APIs}
+\item{species}{Full name of organism, as used by EuPathDB APIs}
+
+\item{dir}{Where to place the data}
+
+\item{prefix}{A prefix when writing the data file}
 
 \item{query_args}{String of additional query arguments}
 

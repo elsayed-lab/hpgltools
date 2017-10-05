@@ -532,11 +532,12 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param combined  Result from combine_de_tables and/or extract_significant_genes().
 #' @param fc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
 #'     followed by 2 fold and 4 fold cutoffs.
-#' @param fc_column  The column in the master-table to use for FC cutoffs.
 #' @param p_type  Adjusted or not?
 #' @param invert  Reverse the order of contrasts for readability?
 #' @param p  Chosen p-value cutoff.
 #' @param z  Choose instead a z-score cutoff.
+#' @param t_type  Adjusted?
+#' @param according_to  limma, deseq, edger, basic, or all of the above.
 #' @param order  Choose a specific order for the plots.
 #' @param maximum  Set a specific limit on the number of genes on the x-axis.
 #' @param ...  More arguments are passed to arglist.

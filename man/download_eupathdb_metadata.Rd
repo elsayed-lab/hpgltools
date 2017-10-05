@@ -4,7 +4,12 @@
 \alias{download_eupathdb_metadata}
 \title{Returns metadata for all eupathdb organisms.}
 \usage{
-download_eupathdb_metadata(db_version = NULL)
+download_eupathdb_metadata(overwrite = FALSE, dir = ".")
+}
+\arguments{
+\item{overwrite}{Overwrite existing data?}
+
+\item{dir}{Where to put the json.}
 }
 \value{
 Dataframe with lots of rows for the various species in eupathdb.

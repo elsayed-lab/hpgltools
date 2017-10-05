@@ -19,6 +19,10 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
 
 \item{excel}{Filename for the excel workbook, or null if not printed.}
 
+\item{sig_excel}{Filename for writing significant tables.}
+
+\item{abundant_excel}{Filename for writing abundance tables.}
+
 \item{excel_title}{Title for the excel sheet(s).  If it has the
 string 'YYY', that will be replaced by the contrast name.}
 
@@ -47,8 +51,7 @@ certain contrasts in specific orders and orientations.}
 
 \item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to}
 
-\item{padj_type}{Add a consistent p adjustment of this type.
-exclude comparison plots in the summary sheet.}
+\item{padj_type}{Add a consistent p adjustment of this type.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }

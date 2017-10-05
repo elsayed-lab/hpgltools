@@ -15,11 +15,15 @@ write_gprofiler_data(gprofiler_result, wb = NULL,
 
 \item{excel}{Excel file to which to write.}
 
+\item{order_by}{Which column to order the data by?}
+
 \item{add_plots}{Add some pvalue plots?}
 
 \item{height}{Height of included plots?}
 
 \item{width}{And their width.}
+
+\item{decreasing}{Which order?}
 
 \item{...}{More options, not currently used I think.}
 }

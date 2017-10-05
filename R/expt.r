@@ -26,7 +26,7 @@
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
-#'  \code{\link{expt_read_counts}} \code{\link[hash]{as.list.hash}}
+#'  \code{\link{read_counts_expt}} \code{\link[hash]{as.list.hash}}
 #' @examples
 #' \dontrun{
 #'  new_experiment = create_expt("some_csv_file.csv", color_hash)
@@ -1100,6 +1100,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' Extend Biobase::exprs to handle expt ojects.
 #'
 #' @name exprs
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase exprs
 #' @export exprs
 setOldClass("expt")
@@ -1111,6 +1112,7 @@ setMethod("exprs", signature="expt",
 #' Extend Biobase::fData to handle expt objects.
 #'
 #' @name fData
+#' @param object  An expt from which to extract the expressionset.
 #' @importFrom Biobase fData
 #' @export fData
 setMethod("fData", signature="expt",
@@ -1121,6 +1123,7 @@ setMethod("fData", signature="expt",
 #' Extend Biobase::pData to handle expt objects.
 #'
 #' @name pData
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase pData
 #' @export pData
 setMethod("pData", signature="expt",
@@ -1131,6 +1134,7 @@ setMethod("pData", signature="expt",
 #' Extend Biobase::notes to handle expt objects.
 #'
 #' @name notes
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase notes
 #' @export notes
 setMethod("notes", signature="expt",

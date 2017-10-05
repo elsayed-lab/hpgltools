@@ -10,6 +10,8 @@ get_kegg_genepaths(species = "ecoli", abbreviation = NULL, flatten = TRUE)
 \item{species}{String to use to query KEGG abbreviation.}
 
 \item{abbreviation}{If you already know the abbreviation, use it.}
+
+\item{flatten}{Flatten nested tables?}
 }
 \value{
 dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.

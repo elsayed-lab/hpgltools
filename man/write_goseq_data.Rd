@@ -17,6 +17,8 @@ write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
 
 \item{add_trees}{Include topgoish ontology trees?}
 
+\item{order_by}{What column to order the data by?}
+
 \item{pval}{Choose a cutoff for reporting by p-value.}
 
 \item{add_plots}{Include some pvalue plots in the excel output?}
@@ -24,6 +26,8 @@ write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
 \item{height}{Height of included plots.}
 
 \item{width}{and their width.}
+
+\item{decreasing}{In forward or reverse order?}
 
 \item{...}{Extra arguments are passed to arglist.}
 }

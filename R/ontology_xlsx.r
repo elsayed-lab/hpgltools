@@ -117,10 +117,12 @@ gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FA
 #' @param excel An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  What column to order the data by?
 #' @param pval Choose a cutoff for reporting by p-value.
 #' @param add_plots Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width and their width.
+#' @param decreasing  which direction?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
@@ -330,10 +332,12 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb   Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  What column to order the data by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  In forward or reverse order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
@@ -535,10 +539,12 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by Which column to order the data by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  Which order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{gostats}
@@ -739,9 +745,11 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 #' @param gprofiler_result  The result from simple_gprofiler().
 #' @param wb  Optional workbook object, if you wish to append to an existing workbook.
 #' @param excel  Excel file to which to write.
+#' @param order_by  Which column to order the data by?
 #' @param add_plots  Add some pvalue plots?
 #' @param height  Height of included plots?
 #' @param width  And their width.
+#' @param decreasing  Which order?
 #' @param ... More options, not currently used I think.
 #' @return A prettyified table in an xlsx document.
 #' @seealso \pkg{openxlsx} \pkg{gProfiler}
@@ -1036,10 +1044,12 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  Which column to order the results by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  In forward or reverse order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{topgo}

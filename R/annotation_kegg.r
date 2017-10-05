@@ -2,6 +2,7 @@
 #'
 #' @param species  String to use to query KEGG abbreviation.
 #' @param abbreviation  If you already know the abbreviation, use it.
+#' @param flatten  Flatten nested tables?
 #' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.
 #' @export
 get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE) {
@@ -63,6 +64,7 @@ get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE)
 #'
 #' @param vector  Information from KEGGREST
 #' @param final_colname  Column name for the new information
+#' @param flatten Flatten nested data?
 #' @return  A normalized data frame of gene IDs to whatever.
 kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
   final_df <- data.frame(stringsAsFactors=FALSE)

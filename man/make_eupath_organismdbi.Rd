@@ -6,12 +6,18 @@
 \usage{
 make_eupath_organismdbi(species = "Leishmania major strain Friedlin",
   dir = ".", overwrite = FALSE, kegg_abbreviation = NULL,
-  db_version = NULL, parallel = TRUE)
+  metadata = NULL)
 }
 \arguments{
 \item{species}{A species in the eupathDb metadata.}
 
 \item{dir}{Directory in which to build the packages.}
+
+\item{overwrite}{Overwrite existing data files?}
+
+\item{kegg_abbreviation}{For when we cannot automagically find the kegg species id.}
+
+\item{metadata}{Use a pre-existing metadata table, or download a new one.}
 }
 \value{
 The result of attempting to install the organismDbi package.

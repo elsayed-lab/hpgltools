@@ -4,12 +4,17 @@
 \alias{get_eupath_interpro_table}
 \title{Returns a mapping of gene ID to InterPro domains for a specified organism}
 \usage{
-get_eupath_interpro_table(data_provider, organism)
+get_eupath_interpro_table(provider = "TriTrypDB",
+  species = "Leishmania major", overwrite = FALSE, dir = ".")
 }
 \arguments{
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{species}{Full name of organism, as used by EuPathDB APIs}
 
-\item{organism}{Full name of organism, as used by EuPathDB APIs}
+\item{overwrite}{Overwrite existing data?}
+
+\item{dir}{Where to place the downloaded data.}
+
+\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 }
 \value{
 Dataframe with ....

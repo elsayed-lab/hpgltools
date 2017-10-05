@@ -14,6 +14,8 @@ load_gff_annotations(gff, type = NULL, id_col = "ID",
 
 \item{id_col}{Column in a successful import containing the IDs of interest.}
 
+\item{ret_type}{Return a data.frame or something else?}
+
 \item{second_id_col}{Second column to check.}
 
 \item{try}{Give your own function call to use for importing.}

@@ -10,6 +10,8 @@ kegg_vector_to_df(vector, final_colname = "first", flatten = TRUE)
 \item{vector}{Information from KEGGREST}
 
 \item{final_colname}{Column name for the new information}
+
+\item{flatten}{Flatten nested data?}
 }
 \value{
 A normalized data frame of gene IDs to whatever.

@@ -131,7 +131,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
   if (!is.null(surrogate_method)) {
-    num_surrogates <- sm(sva::num.sv(mtrx, conditional_model, method=surrogate_method))
+    num_surrogates <- sm(sva::num.sv(count_mtrx, conditional_model, method=surrogate_method))
   }
   if (num_surrogates < 1) {
     message(paste0("0 surrogates were detected by the ", surrogate_method, " method."))

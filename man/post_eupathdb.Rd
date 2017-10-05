@@ -7,19 +7,12 @@ dataframe representation of the result.
 Note: As of 2017/07/13, POST requests are not yet supported on EuPathDB.
 Note: 2017/07/13 POST queries can only use the new API}
 \usage{
-post_eupathdb(data_provider, query_body)
+post_eupathdb(provider, query_body)
 }
 \arguments{
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 
-\item{organism}{Full name of organism, as used by EuPathDB APIs}
-
-\item{query_args}{String of additional query arguments}
-
-\item{wadl}{String specifying API service to be queried}
-
-\item{format}{String specifying API response type (currently only 'json'
-is supported)}
+\item{query_body}{String of additional query arguments}
 }
 \value{
 list containing response from API request.

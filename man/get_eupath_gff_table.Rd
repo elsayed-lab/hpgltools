@@ -7,10 +7,11 @@
 get_eupath_gff_table(granges = NULL)
 }
 \arguments{
-\item{gff}{GenomicRanges instance as returned by `import.gff3`}
-
-\item{return}{data.frame containing basic gene information (ID, description,
-etc.)}
+\item{granges}{GenomicRanges instance as returned by `import.gff3`}
+}
+\value{
+data.frame containing basic gene information (ID, description,
+etc.)
 }
 \description{
 Extract gene information from a GFF file

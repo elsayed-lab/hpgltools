@@ -115,6 +115,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param colors Color scheme to use.
 #' @param sample_names Names of the samples.
 #' @param position How to place the lines, either let them overlap (identity), or stack them.
+#' @param direct Use direct.labels for labeling the plot?
 #' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
 #' @param scale Plot on the log scale?
 #' @param title Title for the plot.
@@ -471,7 +472,7 @@ plot_qq_all_pairwise <- function(data) {
       ith <- colnames(data)[i]
       jth <- colnames(data)[j]
       message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
-      tmp <- plot_qq_plot(data, x=i, y=j, labels=names)
+      tmp <- plot_single_qq(data, x=i, y=j, labels=names)
       logs[[count]] <- tmp[["log"]]
       ratios[[count]] <- tmp[["ratio"]]
       means[i, j] <- tmp[["summary"]][["Mean"]]

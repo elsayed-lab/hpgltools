@@ -5,10 +5,14 @@
 \title{Generate OrgDb for EuPathDB organism}
 \usage{
 make_eupath_orgdb(entry, dir = ".", kegg_abbreviation = NULL,
-  parallel = TRUE)
+  overwrite = FALSE)
 }
 \arguments{
 \item{entry}{One dimensional dataframe with organism metadata}
+
+\item{dir}{Where to put the data}
+
+\item{kegg_abbreviation}{A kegg abbreviation when it cannot be automatically determined.}
 }
 \value{
 OrgDb instance

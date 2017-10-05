@@ -4,35 +4,49 @@
 \alias{plot_volcano_de}
 \title{Make a pretty Volcano plot!}
 \usage{
-plot_volcano_de(table, tooltip_data = NULL, gvis_filename = NULL,
-  logfc_cutoff = 1, pval_cutoff = 0.05, size = 2, alpha = 0.6,
-  fc_col = "logFC", p_col = "adj.P.Val", fc_name = "log2 fold change",
-  p_name = "-log10 p-value", line_color = "black", color_by = "p",
-  line_position = "bottom", shapes_by_state = TRUE, color_list = c(`FALSE`
-  = "darkred", `TRUE` = "darkblue"), ...)
+plot_volcano_de(table, alpha = 0.6, color_by = "p", color_list = c(`FALSE`
+  = "darkred", `TRUE` = "darkblue"), fc_col = "logFC",
+  fc_name = "log2 fold change", gvis_filename = NULL,
+  line_color = "black", line_position = "bottom", logfc_cutoff = 1,
+  p_col = "adj.P.Val", p_name = "-log10 p-value", pval_cutoff = 0.05,
+  shapes_by_state = TRUE, size = 2, tooltip_data = NULL, ...)
 }
 \arguments{
 \item{table}{Dataframe from limma's toptable which includes log(fold change) and an
 adjusted p-value.}
 
-\item{tooltip_data}{Df of tooltip information for gvis.}
+\item{alpha}{How transparent to make the dots.}
+
+\item{color_by}{By p-value something else?}
+
+\item{color_list}{A list of colors for significance.}
+
+\item{fc_col}{Which column contains the fc data?}
+
+\item{fc_name}{Name of the fold-change to put on the plot.}
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
-\item{size}{How big are the dots?}
+\item{line_color}{What color for the significance lines?}
 
-\item{alpha}{How transparent to make the dots.}
+\item{line_position}{Put the significance lines above or below the dots?}
 
-\item{...}{I love parameters!}
-
-\item{p_cutoff}{Cutoff defining significant from not.}
-
-\item{fc_cutoff}{Cutoff defining the minimum/maximum fold change for interesting.  This is log,
+\item{logfc_cutoff}{Cutoff defining the minimum/maximum fold change for interesting.  This is log,
 so I went with +/- 0.8 mostly arbitrarily as the default.}
 
-\item{xaxis_column}{Column from the data to use on the x axis (logFC)}
+\item{p_col}{Which column contains the p-value data?}
 
-\item{yaxis_column}{Column from the data to use on the y axis (p-value)}
+\item{p_name}{Name of the p-value to put on the plot.}
+
+\item{pval_cutoff}{Cutoff defining significant from not.}
+
+\item{shapes_by_state}{Add fun shapes for the various significance states?}
+
+\item{size}{How big are the dots?}
+
+\item{tooltip_data}{Df of tooltip information for gvis.}
+
+\item{...}{I love parameters!}
 }
 \value{
 Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to

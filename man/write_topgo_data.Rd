@@ -17,6 +17,10 @@ write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
 
 \item{add_trees}{Include topgoish ontology trees?}
 
+\item{order_by}{Which column to order the results by?}
+
+\item{decreasing}{In forward or reverse order?}
+
 \item{pval}{Choose a cutoff for reporting by p-value.}
 
 \item{add_plots}{Include some pvalue plots in the excel output?}

@@ -22,6 +22,8 @@ of available conditions.  This will attempt to provide that.}
 \item{least}{Instead of the most abundant, do the least.}
 
 \item{excel}{Excel file to write.}
+
+\item{...}{Arguments passed into arglist.}
 }
 \value{
 The set of most/least abundant genes by contrast/tool.

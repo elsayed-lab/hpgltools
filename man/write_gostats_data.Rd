@@ -17,6 +17,8 @@ write_gostats_data(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
 
 \item{add_trees}{Include topgoish ontology trees?}
 
+\item{order_by}{Which column to order the data by?}
+
 \item{pval}{Choose a cutoff for reporting by p-value.}
 
 \item{add_plots}{Include some pvalue plots in the excel output?}
@@ -24,6 +26,8 @@ write_gostats_data(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
 \item{height}{Height of included plots.}
 
 \item{width}{and their width.}
+
+\item{decreasing}{Which order?}
 
 \item{...}{Extra arguments are passed to arglist.}
 }

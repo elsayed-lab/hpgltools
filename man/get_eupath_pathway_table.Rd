@@ -4,12 +4,17 @@
 \alias{get_eupath_pathway_table}
 \title{2017/07/08: IN DEVELOPMENT}
 \usage{
-get_eupath_pathway_table(data_provider, organism)
+get_eupath_pathway_table(provider = "TriTrypDB",
+  species = "Leishmania major", overwrite = FALSE, dir = ".")
 }
 \arguments{
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{species}{Full name of organism, as used by EuPathDB APIs}
 
-\item{organism}{Full name of organism, as used by EuPathDB APIs}
+\item{overwrite}{Overwrite already existing data?}
+
+\item{dir}{Where to place the data.}
+
+\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 }
 \value{
 Dataframe with gene/pathway mapping
