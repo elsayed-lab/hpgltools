@@ -319,10 +319,11 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
   taxa <- make_taxon_names(entry)
 
   first_char <- strsplit(taxa[["genus"]], split="")[[1]][[1]]
-  expected_pkg <- file.path(paste0("org.", first_char,
-                                   taxa[["species_strain"]], ".v",
-                                   entry[["SourceVersion"]], ".eg.db"))
-  expected_pkg <- gsub(pattern="_like", replacement="like", x=expected_pkg)
+  first_expected_pkg <- file.path(paste0("org.", first_char,
+                                         taxa[["species_strain"]], ".v",
+                                         entry[["SourceVersion"]], ".eg.db"))
+  expected_pkg <- gsub(pattern="_like", replacement="like", x=first_expected_pkg)
+  first_expected_path <- file.path(dir, first_expected_pkg)
   expected_path <- file.path(dir, expected_pkg)
   inst <- as.data.frame(installed.packages())
   if (expected_pkg %in% inst[["Package"]]) {
@@ -453,35 +454,32 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
   tt <- sm(require("AnnotationForge"))
   message(sprintf("- Calling makeOrgPackage for %s", entry[["Species"]]))
   ## The following lines are because makeOrgPackage fails stupidly if the directory exists.
-  backup_path <- paste0(expected_path, ".bak")
+  backup_path <- paste0(first_expected_path, ".bak")
   if (file.exists(backup_path)) {
     ret <- unlink(backup_path, recursive=TRUE)
     message(paste0(backup_path, " already exists,
  deleting it."))
   }
-  if (file.exists(expected_path)) {
-    message(paste0(expected_path, " already exists,
+  if (file.exists(first_expected_path)) {
+    message(paste0(first_expected_path, " already exists,
  backing it up."))
-    ret <- file.rename(expected_path, backup_path)
+    ret <- file.rename(first_expected_path, backup_path)
   }
   orgdb_path <- do.call("makeOrgPackage", orgdb_args)
-  testthat::expect_equal(expected_path, orgdb_path)
 
   ## Fix name in sqlite metadata table
-  dbpath <- file.path(orgdb_path, "inst/extdata",
-                      sub(".db", ".sqlite", basename(orgdb_path)))
+  dbpath <- file.path(
+    orgdb_path, "inst/extdata", sub(".db", ".sqlite", basename(orgdb_path)))
   message(sprintf("- Fixing sqlite Orgdb sqlite database %s", dbpath))
 
   ## make sqlite database editable
   Sys.chmod(dbpath, mode='0644')
   db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=dbpath)
   ## update SPECIES field
-  query <- sprintf('UPDATE metadata SET value="%s" WHERE name="SPECIES";',
-                   entry[["Species"]])
+  query <- sprintf('UPDATE metadata SET value="%s" WHERE name="SPECIES";', entry[["Species"]])
   sq_result <- RSQLite::dbSendQuery(conn=db, query)
   ## update ORGANISM field
-  query <- sprintf('UPDATE metadata SET value="%s" WHERE name="ORGANISM";',
-                   entry[["Species"]])
+  query <- sprintf('UPDATE metadata SET value="%s" WHERE name="ORGANISM";', entry[["Species"]])
   sq_result <- RSQLite::dbSendQuery(conn=db, query)
   ## lock it back down
   Sys.chmod(dbpath, mode="0444")
@@ -489,6 +487,7 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
   ## Clean up any strangeness in the DESCRIPTION file
   orgdb_path <- clean_pkg(orgdb_path)
   orgdb_path <- clean_pkg(orgdb_path, removal="_like", replace="like")
+  testthat::expect_equal(expected_path, orgdb_path)
   ## And install the resulting package.
   inst <- sm(try(devtools::install(orgdb_path)))
   ## return the path to the sqlite database
