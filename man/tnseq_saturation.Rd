@@ -4,7 +4,7 @@
 \alias{tnseq_saturation}
 \title{Make a plot and some simple numbers about tnseq saturation}
 \usage{
-tnseq_saturation(file)
+tnseq_saturation(data, column = "Reads")
 }
 \arguments{
 \item{file}{a file created using the perl script 'essentiality_tas.pl'}
@@ -19,6 +19,12 @@ and count how many hits were observed on every TA in the given genome.
 It furthermore has some logic to tell the difference between reads which were
 observed on the forward vs. reverse strand as well as reads which appear to be on both strands
 (eg. they start and end with 'TA').
+}
+\examples{
+ \dontrun{
+ input <- "preprocessing/hpgl0837/essentiality/hpgl0837-trimmed_ca_ta-v0M1.wig"
+ saturation <- tnseq_saturation(file=input)
+}
 }
 \seealso{
 \pkg{ggplot2}
