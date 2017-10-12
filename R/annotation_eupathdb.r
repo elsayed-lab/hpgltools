@@ -106,18 +106,21 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 #' @return  Dataframe with lots of rows for the various species in eupathdb.
 #' @author  Keith Hughitt
 #' @export
-download_eupathdb_metadata <- function(overwrite=FALSE, dir=".") {
+download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
+                                       dir=".", use_savefile=TRUE) {
   ## Get EuPathDB version (same for all databases)
 
-  savefile <- paste0(dir, "/eupath_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
-  if (isTRUE(overwrite)) {
-    file.remove(savefile)
-  }
-  if (file.exists(savefile)) {
-    orgdb_metadata <- new.env()
-    loaded <- load(savefile, envir=orgdb_metadata)
-    orgdb_metadata <- orgdb_metadata[["orgdb_metadata"]]
-    return(orgdb_metadata)
+  if (isTRUE(use_savefile)) {
+    savefile <- file.path(dir, paste0("eupath_metadata-v", format(Sys.time(), "%Y%m"), ".rda"))
+    if (isTRUE(overwrite)) {
+      file.remove(savefile)
+    }
+    if (file.exists(savefile)) {
+      orgdb_metadata <- new.env()
+      loaded <- load(savefile, envir=orgdb_metadata)
+      orgdb_metadata <- orgdb_metadata[["orgdb_metadata"]]
+      return(orgdb_metadata)
+    }
   }
 
   db_version <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
@@ -137,7 +140,8 @@ download_eupathdb_metadata <- function(overwrite=FALSE, dir=".") {
   tag_strings <- lapply(tags, function(x) { paste(x, collapse=",") })
 
   ## construct API request URL
-  base_url <- "http://eupathdb.org/eupathdb/webservices/"
+  ##base_url <- "http://eupathdb.org/eupathdb/webservices/"
+  base_url <- paste0("http://", webservice, ".org/", webservice, "/webservices/")
   query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
   request_url <- paste0(base_url, query_string)
 
@@ -235,8 +239,10 @@ download_eupathdb_metadata <- function(overwrite=FALSE, dir=".") {
            ) %>%
     dplyr::mutate(RDataPath=file.path("EuPathDB", "OrgDb", BiocVersion, ResourceName))
 
-  if (isTRUE(overwrite) | !file.exists(savefile)) {
-    saved <- save(list="orgdb_metadata", file=savefile)
+  if (isTRUE(use_savefile)) {
+    if (isTRUE(overwrite) | !file.exists(savefile)) {
+      saved <- save(list="orgdb_metadata", file=savefile)
+    }
   }
 
   return(orgdb_metadata)

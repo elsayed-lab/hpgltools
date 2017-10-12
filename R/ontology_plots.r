@@ -37,13 +37,16 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     new_fact <- factor(x[["term"]], levels=x[["term"]])
     return(new_fact)
   }
-  break_list <- c(0, 1/4 * max(df[["score"]]),
-                  1/2 * max(df[["score"]]),
-                  3/4 * max(df[["score"]]),
-                  max(df[["score"]]))
+  ## Sometimes max(df[["score"]]) throws an error -- I think this just needs na.rm
+  ## but if I am wrong, I will catch any other errors and just send it to (0, 1/4, 1/2, 3/4, 1)
+  max_score <- max(df[["score"]], na.rm=TRUE)
+  if (class(max_score) == "try-error") {
+    max_score <- 1
+  }
+  break_list <- c(0, 1/4 * max_score, 1/2 * max_score, 3/4 * max_score, max_score)
   pvalue_plot <- ggplot(df, aes_string(x="reorder_size(df)", y="score", fill="pvalue")) +
     ggplot2::geom_col() +
-    ggplot2::scale_y_continuous(expand=c(0, 0), breaks=break_list, limits=c(0, max(df[["score"]]))) +
+    ggplot2::scale_y_continuous(expand=c(0, 0), breaks=break_list, limits=c(0, max_score)) +
     ggplot2::scale_x_discrete(name=y_name) +
     ggplot2::scale_fill_continuous(low="red", high="blue") +
     ggplot2::theme(text=ggplot2::element_text(size=10)) +
@@ -456,13 +459,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_mf_over <- tail(plotting_mf_over, n=n)
-    plotting_mf_over <- plotting_mf_over[, c("term.name", "p.value", "recall")]
+    plotting_mf_over <- plotting_mf_over[, c("term.name", "p.value", "score")]
     colnames(plotting_mf_over) <- c("term", "pvalue", "score")
     plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]],
                                                               wrapped_width,
                                                               simplify=FALSE),
                                                       paste, collapse="\n"))
-    mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"), silent=TRUE)
+    mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"),
+                             silent=TRUE)
   }
   if (class(mf_pval_plot_over)[[1]] == "try-error") {
     mf_pval_plot_over <- NULL
@@ -488,13 +492,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_bp_over <- tail(plotting_bp_over, n=n)
-    plotting_bp_over <- plotting_bp_over[, c("term.name", "p.value", "recall")]
+    plotting_bp_over <- plotting_bp_over[, c("term.name", "p.value", "score")]
     colnames(plotting_bp_over) <- c("term", "pvalue", "score")
     plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]],
                                                               wrapped_width,
                                                               simplify=FALSE),
                                                       paste, collapse="\n"))
-    bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"), silent=TRUE)
+    bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"),
+                             silent=TRUE)
   }
   if (class(bp_pval_plot_over)[[1]] == "try-error") {
     bp_pval_plot_over <- NULL
@@ -520,13 +525,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_cc_over <- tail(plotting_cc_over, n=n)
-    plotting_cc_over <- plotting_cc_over[, c("term.name", "p.value", "recall")]
+    plotting_cc_over <- plotting_cc_over[, c("term.name", "p.value", "score")]
     colnames(plotting_cc_over) <- c("term", "pvalue", "score")
     plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]],
                                                               wrapped_width,
                                                               simplify=FALSE),
                                                       paste, collapse="\n"))
-    cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"), silent=TRUE)
+    cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"),
+                             silent=TRUE)
   }
   if (class(cc_pval_plot_over)[[1]] == "try-error") {
     cc_pval_plot_over <- NULL
@@ -552,11 +558,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_kegg_over <- tail(plotting_kegg_over, n=n)
-    plotting_kegg_over <- plotting_kegg_over[, c("term.name", "p.value", "recall")]
+    plotting_kegg_over <- plotting_kegg_over[, c("term.name", "p.value", "score")]
     colnames(plotting_kegg_over) <- c("term", "pvalue", "score")
-    plotting_kegg_over[["term"]] <- as.character(lapply(strwrap(plotting_kegg_over[["term"]], wrapped_width, simplify=FALSE),
+    plotting_kegg_over[["term"]] <- as.character(lapply(strwrap(plotting_kegg_over[["term"]],
+                                                                wrapped_width,
+                                                                simplify=FALSE),
                                                         paste, collapse="\n"))
-    kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"), silent=TRUE)
+    kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"),
+                               silent=TRUE)
   }
   if (class(kegg_pval_plot_over)[[1]] == "try-error") {
     kegg_pval_plot_over <- NULL
@@ -582,13 +591,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_reactome_over <- tail(plotting_reactome_over, n=n)
-    plotting_reactome_over <- plotting_reactome_over[, c("term.name", "p.value", "recall")]
+    plotting_reactome_over <- plotting_reactome_over[, c("term.name", "p.value", "score")]
     colnames(plotting_reactome_over) <- c("term", "pvalue", "score")
     plotting_reactome_over[["term"]] <- as.character(lapply(strwrap(plotting_reactome_over[["term"]],
                                                                     wrapped_width,
                                                                     simplify=FALSE),
                                                             paste, collapse="\n"))
-    reactome_pval_plot_over <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"), silent=TRUE)
+    reactome_pval_plot_over <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"),
+                                   silent=TRUE)
   }
   if (class(reactome_pval_plot_over)[[1]] == "try-error") {
     reactome_pval_plot_over <- NULL
@@ -614,13 +624,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_mi_over <- tail(plotting_mi_over, n=n)
-    plotting_mi_over <- plotting_mi_over[, c("term.name", "p.value", "recall")]
+    plotting_mi_over <- plotting_mi_over[, c("term.name", "p.value", "score")]
     colnames(plotting_mi_over) <- c("term", "pvalue", "score")
     plotting_mi_over[["term"]] <- as.character(lapply(strwrap(plotting_mi_over[["term"]],
                                                               wrapped_width,
                                                               simplify=FALSE),
                                                       paste, collapse="\n"))
-    mi_pval_plot_over <- try(plot_ontpval(plotting_mi_over, ontology="miRNA"), silent=TRUE)
+    mi_pval_plot_over <- try(plot_ontpval(plotting_mi_over, ontology="miRNA"),
+                             silent=TRUE)
   }
   if (class(mi_pval_plot_over)[[1]] == "try-error") {
     mi_pval_plot_over <- NULL
@@ -646,13 +657,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_tf_over <- tail(plotting_tf_over, n=n)
-    plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "recall")]
+    plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "score")]
     colnames(plotting_tf_over) <- c("term", "pvalue", "score")
     plotting_tf_over[["term"]] <- as.character(lapply(strwrap(plotting_tf_over[["term"]],
                                                               wrapped_width,
                                                               simplify=FALSE),
                                                       paste, collapse="\n"))
-    tf_pval_plot_over <- try(plot_ontpval(plotting_tf_over, ontology="Transcription factors"), silent=TRUE)
+    tf_pval_plot_over <- try(plot_ontpval(plotting_tf_over, ontology="Transcription factors"),
+                             silent=TRUE)
   }
   if (class(tf_pval_plot_over)[[1]] == "try-error") {
     tf_pval_plot_over <- NULL
@@ -678,13 +690,14 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_corum_over <- tail(plotting_corum_over, n=n)
-    plotting_corum_over <- plotting_corum_over[, c("term.name", "p.value", "recall")]
+    plotting_corum_over <- plotting_corum_over[, c("term.name", "p.value", "score")]
     colnames(plotting_corum_over) <- c("term", "pvalue", "score")
     plotting_corum_over[["term"]] <- as.character(lapply(strwrap(plotting_corum_over[["term"]],
                                                                  wrapped_width,
                                                                  simplify=FALSE),
                                                          paste, collapse="\n"))
-    corum_pval_plot_over <- try(plot_ontpval(plotting_corum_over, ontology="Corum"), silent=TRUE)
+    corum_pval_plot_over <- try(plot_ontpval(plotting_corum_over, ontology="Corum"),
+                                silent=TRUE)
   }
   if (class(corum_pval_plot_over)[[1]] == "try-error") {
     corum_pval_plot_over <- NULL
@@ -710,12 +723,13 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
     ## the factor in plot_ontpval, which should have a note.
     plotting_hp_over <- tail(plotting_hp_over, n=n)
-    plotting_hp_over <- plotting_hp_over[, c("term.name", "p.value", "recall")]
+    plotting_hp_over <- plotting_hp_over[, c("term.name", "p.value", "score")]
     colnames(plotting_hp_over) <- c("term", "pvalue", "score")
     plotting_hp_over[["term"]] <- as.character(lapply(strwrap(plotting_hp_over[["term"]],
                                                               wrapped_width, simplify=FALSE),
                                                       paste, collapse="\n"))
-    hp_pval_plot_over <- try(plot_ontpval(plotting_hp_over, ontology="Human pathology"), silent=TRUE)
+    hp_pval_plot_over <- try(plot_ontpval(plotting_hp_over, ontology="Human pathology"),
+                             silent=TRUE)
   }
   if (class(hp_pval_plot_over)[[1]] == "try-error") {
     hp_pval_plot_over <- NULL
