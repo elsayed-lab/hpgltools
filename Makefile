@@ -83,6 +83,7 @@ clean:
 	rm -rf hpgltools/
 	rm -rf ./..Rcheck
 	rm -rf tests/testthat/circos
+	rm -rf tests/testthat/excel
 	rm -rf tests/testthat/excel_test
 	rm -rf tests/testthat/excel_test_sig
 	rm -rf tests/testthat/kegg_pathways
