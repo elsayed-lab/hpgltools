@@ -27,19 +27,19 @@ dmel_lengths <- dmel_lengths[ !grepl("\\.", rownames(dmel_lengths)), ]
 
 limma <- new.env()
 load("de_limma.rda", envir=limma)
-table <- limma[["hpgl_table"]]
-z_sig_genes <- sm(get_sig_genes(table, column="untreated", z=1)[["up_genes"]])
-fc_sig_genes <- sm(get_sig_genes(table, column="untreated", fc=1)[["up_genes"]])
-fcp_sig_genes <- sm(get_sig_genes(table, column="untreated", fc=1, p=0.05)[["up_genes"]])
-top200_sig_genes <- sm(get_sig_genes(table, column="untreated", n=200)[["up_genes"]])
+table <- limma[["hpgl_limma"]][["all_tables"]][[1]]
+z_sig_genes <- sm(get_sig_genes(table, column="logFC", z=1)[["up_genes"]])
+fc_sig_genes <- sm(get_sig_genes(table, column="logFC", fc=1)[["up_genes"]])
+fcp_sig_genes <- sm(get_sig_genes(table, column="logFC", fc=1, p=0.05)[["up_genes"]])
+top200_sig_genes <- sm(get_sig_genes(table, column="logFC", n=200)[["up_genes"]])
 
-expected <- 1287
+expected <- 1852
 actual <- nrow(z_sig_genes)
 test_that("Do we get a consistent number of z-scored up genes?", {
     expect_equal(expected, actual)
 })
 
-expected <- 129
+expected <- 331
 actual <- nrow(fc_sig_genes)
 test_that("Do we get a consistent number of fc up genes?", {
     expect_equal(expected, actual)
@@ -47,7 +47,7 @@ test_that("Do we get a consistent number of fc up genes?", {
 
 ##expected <- 118
 ## The new version of limma gets 116 instead of 118 now.
-expected <- 116
+expected <- 123
 actual <- nrow(fcp_sig_genes)
 test_that("Do we get a consistent number of fc and p up genes?", {
     expect_equal(expected, actual)
@@ -87,4 +87,4 @@ save(list=ls(), file="gsea_siggenes.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 51gsea_siggenes.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

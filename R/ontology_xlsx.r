@@ -117,16 +117,19 @@ gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FA
 #' @param excel An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  What column to order the data by?
 #' @param pval Choose a cutoff for reporting by p-value.
 #' @param add_plots Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width and their width.
+#' @param decreasing  which direction?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL,
+                          add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
+                          height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -183,7 +186,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_mf <- cp_mf[ cp_mf[["pvalue"]] <= pval, ]
     cp_mf_genes <- gather_cp_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
     cp_mf[["named_genes"]] <- cp_mf_genes
-    mf_idx <- order(cp_mf[["qvalue"]])
+    mf_idx <- order(cp_mf[[order_by]], decreasing=decreasing)
     cp_mf <- cp_mf[mf_idx, ]
     cp_mf[["Ontology"]] <- "MF"
 
@@ -191,7 +194,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_bp <- cp_bp[ cp_bp[["pvalue"]] <= pval, ]
     cp_bp_genes <- gather_cp_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
     cp_bp[["named_genes"]] <- cp_bp_genes
-    bp_idx <- order(cp_bp[["qvalue"]])
+    bp_idx <- order(cp_bp[[order_by]], decreasing=decreasing)
     cp_bp <- cp_bp[bp_idx, ]
     cp_bp[["Ontology"]] <- "BP"
 
@@ -199,7 +202,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     cp_cc <- cp_cc[ cp_cc[["pvalue"]] <= pval, ]
     cp_cc_genes <- gather_cp_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
     cp_cc[["named_genes"]] <- cp_cc_genes
-    cc_idx <- order(cp_cc[["qvalue"]])
+    cc_idx <- order(cp_cc[[order_by]], decreasing=decreasing)
     cp_cc <- cp_cc[cc_idx, ]
     cp_cc[["Ontology"]] <- "CC"
 
@@ -215,11 +218,11 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     colnames(cp_cc) <- new_columns
 
     cp_kegg <- cp_result[["kegg_data"]][["kegg_sig"]]
-    kegg_idx <- order(cp_kegg[["qvalue"]])
+    kegg_idx <- order(cp_kegg[[order_by]], decreasing=decreasing)
     cp_kegg <- cp_kegg[kegg_idx, ]
 
     cp_david <- cp_result[["david_data"]]
-    david_idx <- order(cp_kegg[["qvalue"]])
+    david_idx <- order(cp_kegg[[order_by]], decreasing=decreasing)
     cp_david <- cp_david[david_idx, ]
 
     new_row <- 1
@@ -329,16 +332,19 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb   Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  What column to order the data by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  In forward or reverse order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{goseq}
 #' @export
-write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
+                             add_trees=TRUE, order_by="qvalue", pval=0.1,
+                             add_plots=TRUE, height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -412,7 +418,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_mf <- merge(goseq_mf, mf_genes, by="row.names")
     rownames(goseq_mf) <- goseq_mf[["Row.names"]]
     goseq_mf <- goseq_mf[-1]
-    mf_idx <- order(goseq_mf[["qvalue"]])
+    mf_idx <- order(goseq_mf[[order_by]], decreasing=decreasing)
     goseq_mf <- goseq_mf[mf_idx, ]
 
     goseq_bp <- goseq_result[["bp_subset"]]
@@ -423,7 +429,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_bp <- merge(goseq_bp, bp_genes, by="row.names")
     rownames(goseq_bp) <- goseq_bp[["Row.names"]]
     goseq_bp <- goseq_bp[-1]
-    bp_idx <- order(goseq_bp[["qvalue"]])
+    bp_idx <- order(goseq_bp[[order_by]], decreasing=decreasing)
     goseq_bp <- goseq_bp[bp_idx, ]
 
     goseq_cc <- goseq_result[["cc_subset"]]
@@ -434,7 +440,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
     goseq_cc <- merge(goseq_cc, cc_genes, by="row.names")
     rownames(goseq_cc) <- goseq_cc[["Row.names"]]
     goseq_cc <- goseq_cc[-1]
-    cc_idx <- order(goseq_cc[["qvalue"]])
+    cc_idx <- order(goseq_cc[[order_by]], decreasing=decreasing)
     goseq_cc <- goseq_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
@@ -533,16 +539,19 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL, ad
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by Which column to order the data by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  Which order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return  The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{gostats}
 #' @export
-write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL, add_trees=TRUE,
-                             pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
+write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL,
+                               add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
+                               height=15, width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -616,7 +625,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_mf <- merge(gostats_mf, mf_genes, by="row.names")
     rownames(gostats_mf) <- gostats_mf[["Row.names"]]
     gostats_mf <- gostats_mf[-1]
-    mf_idx <- order(gostats_mf[["qvalue"]])
+    mf_idx <- order(gostats_mf[[order_by]], decreasing=decreasing)
     gostats_mf <- gostats_mf[mf_idx, ]
 
     gostats_bp <- gostats_result[["bp_subset"]]
@@ -627,7 +636,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_bp <- merge(gostats_bp, bp_genes, by="row.names")
     rownames(gostats_bp) <- gostats_bp[["Row.names"]]
     gostats_bp <- gostats_bp[-1]
-    bp_idx <- order(gostats_bp[["qvalue"]])
+    bp_idx <- order(gostats_bp[[order_by]], decreasing=decreasing)
     gostats_bp <- gostats_bp[bp_idx, ]
 
     gostats_cc <- gostats_result[["cc_subset"]]
@@ -638,7 +647,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     gostats_cc <- merge(gostats_cc, cc_genes, by="row.names")
     rownames(gostats_cc) <- gostats_cc[["Row.names"]]
     gostats_cc <- gostats_cc[-1]
-    cc_idx <- order(gostats_cc[["qvalue"]])
+    cc_idx <- order(gostats_cc[[order_by]], decreasing=decreasing)
     gostats_cc <- gostats_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
@@ -729,6 +738,80 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     return(res)
 }
 
+#' Take the result from extract_significant_genes() and perform ontology searches.
+#'
+#' It can be annoying/confusing to extract individual sets of 'significant' genes from a
+#' differential expression analysis.  This function should make that process easier.
+#'
+#' @param significant_result  Result from extract_siggenes()
+#' @param excel_prefix  How to start the output filenames?
+#' @param excel_suffix  How to end the excel filenames?
+#' @param search_by  Use the definition of 'significant' from which program?
+#' @param type  Which specific ontology search to use?
+#' @param ...   Arguments passed to the various simple_ontology() function.
+#' @return  A list of the up/down results of the ontology searches.
+sig_ontologies <- function(significant_result,
+                           excel_prefix="excel/sig_ontologies",
+                           search_by="deseq",
+                           excel_suffix=".xlsx", type="gprofiler",
+                           ...) {
+  up_lst <- significant_result[[search_by]][["ups"]]
+  down_lst <- significant_result[[search_by]][["downs"]]
+  name_lst <- names(up_lst)
+  up_ret <- list()
+  down_ret <- list()
+  for (c in 1:length(name_lst)) {
+    name <- name_lst[[c]]
+    up_name <- paste0(excel_prefix, "_up_", name, "_", search_by, "_", type, excel_suffix)
+    down_name <- paste0(excel_prefix, "_down_", name, "_", search_by, "_", type, excel_suffix)
+    up_table <- up_lst[[c]]
+    down_table <- down_lst[[c]]
+    chosen_column <- paste0(search_by, "_logfc")
+    switchret <- switch(
+      type,
+      "goseq" = {
+        up_ret[[name]] <- try(simple_goseq(
+          up_table, excel=up_name, ...))
+        down_ret[[name]] <- try(simple_goseq(
+          down_table, excel=down_name, ...))
+      },
+      "cp" = {
+        up_ret[[name]] <- try(simple_clusterprofiler(
+          up_table, excel=up_name, ...))
+        down_ret[[name]] <- try(simple_clusterprofiler(
+          down_table, excel=down_name, ...))
+      },
+      "topgo" = {
+        up_ret[[name]] <- try(simple_topgo(
+          up_table, excel=up_name, ...))
+        down_ret[[name]] <- try(simple_topgo(
+          down_table, excel=down_name, ...))
+      },
+      "gostats" = {
+        up_ret[[name]] <- try(simple_gostats(
+          up_table, excel=up_name, ...))
+        down_ret[[name]] <- try(simple_gostats(
+          down_table, excel=down_name, ...))
+      },
+      "gprofiler" = {
+        up_ret[[name]] <- try(simple_gprofiler(
+          up_table, first_col=chosen_column, excel=up_name, ...))
+        down_ret[[name]] <- try(simple_gprofiler(
+          down_table, first_col=chosen_column, excel=down_name, ...))
+      },
+      {
+        message("It appears you did not choose a type. Doing nothing.")
+        return(NULL)
+      }
+    )
+  }
+  retlist <- list(
+    "ups" = up_ret,
+    "downs" = down_ret
+  )
+  return(retlist)
+}
+
 #' Write some excel results from a gprofiler search.
 #'
 #' Gprofiler is pretty awesome.  This function will attempt to write its results to an excel file.
@@ -736,15 +819,18 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 #' @param gprofiler_result  The result from simple_gprofiler().
 #' @param wb  Optional workbook object, if you wish to append to an existing workbook.
 #' @param excel  Excel file to which to write.
+#' @param order_by  Which column to order the data by?
 #' @param add_plots  Add some pvalue plots?
 #' @param height  Height of included plots?
 #' @param width  And their width.
+#' @param decreasing  Which order?
 #' @param ... More options, not currently used I think.
 #' @return A prettyified table in an xlsx document.
 #' @seealso \pkg{openxlsx} \pkg{gProfiler}
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofiler_result.xlsx",
-                                 add_plots=TRUE, height=15, width=10, ...) {
+                                 order_by="recall", add_plots=TRUE, height=15,
+                                 width=10, decreasing=FALSE, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
     if (!is.null(arglist[["table_style"]])) {
@@ -784,9 +870,15 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "GO_BP"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         go_data <- gprofiler_result[["go"]]
-        bp_data <- go_data[go_data[["domain"]]=="BP", ]
-        mf_data <- go_data[go_data[["domain"]]=="MF", ]
-        cc_data <- go_data[go_data[["domain"]]=="CC", ]
+        bp_data <- go_data[go_data[, "domain"] == "BP", ]
+        bp_order <- order(bp_data[[order_by]], decreasing=decreasing)
+        bp_data <- bp_data[bp_order, ]
+        mf_data <- go_data[go_data[, "domain"] == "MF", ]
+        mf_order <- order(mf_data[[order_by]], decreasing=decreasing)
+        mf_data <- mf_data[mf_order, ]
+        cc_data <- go_data[go_data[, "domain"] == "CC", ]
+        cc_order <- order(cc_data[[order_by]], decreasing=decreasing)
+        cc_data <- cc_data[cc_order, ]
 
         openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
@@ -796,9 +888,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(bp_data) + 2, start_row=new_row,
-                                      plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(bp_data) + 2, start_row=new_row,
+              plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(bp_data) + 2
 
@@ -813,9 +906,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["mfp_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(mf_data) + 2, start_row=new_row,
-                                      plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(mf_data) + 2, start_row=new_row,
+              plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(mf_data) + 2
 
@@ -830,9 +924,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["ccp_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(cc_data) + 2, start_row=new_row,
-                                      plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(cc_data) + 2, start_row=new_row,
+              plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(cc_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -850,6 +945,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "KEGG"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         kegg_data <- gprofiler_result[["kegg"]]
+        kegg_order <- order(kegg_data[[order_by]], decreasing=decreasing)
+        kegg_data <- kegg_data[kegg_order, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -858,9 +955,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["kegg_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(kegg_data) + 2, start_row=new_row,
-                                      plotname="kegg_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(kegg_data) + 2, start_row=new_row,
+              plotname="kegg_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(kegg_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -879,6 +977,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "transcription_factor"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         tf_data <- gprofiler_result[["tf"]]
+        tf_order <- order(tf_data[[order_by]], decreasing=decreasing)
+        tf_data <- tf_data[tf_order, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -887,9 +987,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["tf_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(tf_data) + 2, start_row=new_row,
-                                      plotname="tf_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(tf_data) + 2, start_row=new_row,
+              plotname="tf_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(tf_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -907,6 +1008,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "reactome"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         react_data <- gprofiler_result[["reactome"]]
+        react_order <- order(react_data[[order_by]], decreasing=decreasing)
+        react_data <- react_data[react_order, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -915,9 +1018,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["reactome_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(react_data) + 2, start_row=new_row,
-                                      plotname="react_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(react_data) + 2, start_row=new_row,
+              plotname="react_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(react_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -935,6 +1039,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "mirna"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         mi_data <- gprofiler_result[["mi"]]
+        mi_order <- order(mi_data[[order_by]], decreasing=decreasing)
+        mi_data <- mi_data[mi_order, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -943,9 +1049,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["mi_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(mi_data) + 2, start_row=new_row,
-                                      plotname="mi_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(mi_data) + 2, start_row=new_row,
+              plotname="mi_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(mi_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -963,6 +1070,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "hp"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         hp_data <- gprofiler_result[["hp"]]
+        hp_order <- order(hp_data[[order_by]], decreasing=decreasing)
+        hp_data <- hp_data[hp_order, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -971,9 +1080,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["hp_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(hp_data) + 2, start_row=new_row,
-                                      plotname="hp_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(hp_data) + 2, start_row=new_row,
+              plotname="hp_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(hp_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -991,6 +1101,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         sheet <- "corum"
         openxlsx::addWorksheet(wb, sheetName=sheet)
         corum_data <- gprofiler_result[["corum"]]
+        corum_order <- order(corum_data[[order_by]], decreasing=decreasing)
+        corum_data <- corum_data[corum_data, ]
         openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
         openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
         new_row <- new_row + 1
@@ -999,9 +1111,10 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
         ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
         if (isTRUE(add_plots)) {
             a_plot <- gprofiler_result[["pvalue_plots"]][["corum_plot_over"]]
-            plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
-                                      start_col=ncol(corum_data) + 2, start_row=new_row,
-                                      plotname="corum_plot", savedir=excel_basename, doWeights=FALSE)
+            plot_try <- xlsx_plot_png(
+              a_plot, wb=wb, sheet=sheet, width=width, height=height,
+              start_col=ncol(corum_data) + 2, start_row=new_row,
+              plotname="corum_plot", savedir=excel_basename, doWeights=FALSE)
         }
         new_row <- new_row + nrow(corum_data) + 2
         openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -1010,28 +1123,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     excel_ret <- NULL
     if (!is.null(excel)) {
         excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-    }
-    if (class(excel_ret) == "try-error") {
-        ## In case of an error with zip(1) in making an excel file.
-        csvfile <- paste0(excel, "_gomf.csv")
-        write.csv(mf_data, file=csvfile)
-        csvfile <- paste0(excel, "_gobp.csv")
-        write.csv(bp_data, file=csvfile)
-        csvfile <- paste0(excel, "_gocc.csv")
-        write.csv(cc_data, file=csvfile)
-        csvfile <- paste0(excel, "_kegg.csv")
-        write.csv(kegg_data, file=csvfile)
-        csvfile <- paste0(excel, "_tf.csv")
-        write.csv(tf_data, file=csvfile)
-        csvfile <- paste0(excel, "_reactome.csv")
-        write.csv(react_data, file=csvfile)
-        csvfile <- paste0(excel, "_mi.csv")
-        write.csv(mi_data, file=csvfile)
-        csvfile <- paste0(excel, "_hp.csv")
-        write.csv(hp_data, file=csvfile)
-        csvfile <- paste0(excel, "_corum.csv")
-        write.csv(corum_data, file=csvfile)
-        excel_ret <- "csv"
     }
     message("Finished writing excel file.")
     return(excel_ret)
@@ -1045,15 +1136,18 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
 #' @param add_trees  Include topgoish ontology trees?
+#' @param order_by  Which column to order the results by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
 #' @param height  Height of included plots.
 #' @param width  and their width.
+#' @param decreasing  In forward or reverse order?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{topgo}
 #' @export
-write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, add_trees=TRUE,
+write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
+                             add_trees=TRUE, order_by="qvalue", decreasing=FALSE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -1128,7 +1222,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_mf <- merge(topgo_mf, mf_genes, by="row.names")
     rownames(topgo_mf) <- topgo_mf[["Row.names"]]
     topgo_mf <- topgo_mf[-1]
-    mf_idx <- order(topgo_mf[["qvalue"]])
+    mf_idx <- order(topgo_mf[[order_by]], decreasing=decreasing)
     topgo_mf <- topgo_mf[mf_idx, ]
 
     topgo_bp <- topgo_result[["bp_subset"]]
@@ -1139,7 +1233,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_bp <- merge(topgo_bp, bp_genes, by="row.names")
     rownames(topgo_bp) <- topgo_bp[["Row.names"]]
     topgo_bp <- topgo_bp[-1]
-    bp_idx <- order(topgo_bp[["qvalue"]])
+    bp_idx <- order(topgo_bp[[order_by]], decreasing=decreasing)
     topgo_bp <- topgo_bp[bp_idx, ]
 
     topgo_cc <- topgo_result[["cc_subset"]]
@@ -1150,7 +1244,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL, ad
     topgo_cc <- merge(topgo_cc, cc_genes, by="row.names")
     rownames(topgo_cc) <- topgo_cc[["Row.names"]]
     topgo_cc <- topgo_cc[-1]
-    cc_idx <- order(topgo_cc[["qvalue"]])
+    cc_idx <- order(topgo_cc[["qvalue"]], decreasing=decreasing)
     topgo_cc <- topgo_cc[cc_idx, ]
 
     kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",

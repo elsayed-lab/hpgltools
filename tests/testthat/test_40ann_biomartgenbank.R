@@ -5,8 +5,9 @@ context("40ann_biomartgenbank.R: Does biomart function?\n")
 
 limma <- new.env()
 load("de_limma.rda", envir=limma)
-table <- limma[["hpgl_table"]]
-sig_genes <- sm(get_sig_genes(table, column="untreated")[["up_genes"]])
+limma_result <- limma[["hpgl_limma"]]
+table <- limma_result[["all_tables"]][[1]]
+sig_genes <- sm(get_sig_genes(table, column="logFC")[["up_genes"]])
 dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
 
@@ -23,6 +24,7 @@ actual_go <- head(dmel_go[["GO"]])
 test_that("Did the ontologies come out (ids)?", {
     expect_equal(expected_ids, actual_ids)
 })
+
 test_that("Did the ontologies come out (go)?", {
     expect_equal(expected_go, actual_go)
 })
@@ -80,4 +82,4 @@ test_that("The file exists?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 40ann_biomartgenbank.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

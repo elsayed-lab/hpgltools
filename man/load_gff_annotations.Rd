@@ -5,7 +5,7 @@
 \title{Extract annotation information from a gff file into a df}
 \usage{
 load_gff_annotations(gff, type = NULL, id_col = "ID",
-  second_id_col = "locus_tag", try = NULL)
+  ret_type = "data.frame", second_id_col = "locus_tag", try = NULL)
 }
 \arguments{
 \item{gff}{Gff filename.}
@@ -13,6 +13,8 @@ load_gff_annotations(gff, type = NULL, id_col = "ID",
 \item{type}{Subset the gff file for entries of a specific type.}
 
 \item{id_col}{Column in a successful import containing the IDs of interest.}
+
+\item{ret_type}{Return a data.frame or something else?}
 
 \item{second_id_col}{Second column to check.}
 

@@ -4,12 +4,12 @@
 \alias{load_microbesonline_annotations}
 \title{Skip the db and download all the text annotations for a given species.}
 \usage{
-load_microbesonline_annotations(ids = "160490", species = NULL)
+load_microbesonline_annotations(ids = "160490", name = NULL)
 }
 \arguments{
 \item{ids}{List of ids to query.}
 
-\item{species}{Species name(s) to use instead.}
+\item{name}{Species name(s) to use instead.}
 }
 \value{
 List of dataframes with the annotation information.

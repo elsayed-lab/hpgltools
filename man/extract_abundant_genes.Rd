@@ -5,7 +5,7 @@
 \title{Extract the sets of genes which are significantly more abundant than the rest.}
 \usage{
 extract_abundant_genes(pairwise, according_to = "all", n = 100, z = NULL,
-  unique = FALSE, least = FALSE, excel = "excel/abundant_genes.xlsx")
+  unique = FALSE, least = FALSE, excel = "excel/abundant_genes.xlsx", ...)
 }
 \arguments{
 \item{pairwise}{Output from _pairwise()().}
@@ -22,6 +22,8 @@ of available conditions.  This will attempt to provide that.}
 \item{least}{Instead of the most abundant, do the least.}
 
 \item{excel}{Excel file to write.}
+
+\item{...}{Arguments passed into arglist.}
 }
 \value{
 The set of most/least abundant genes by contrast/tool.

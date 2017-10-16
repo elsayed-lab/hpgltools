@@ -26,7 +26,7 @@ mgas_norm <- sm(normalize_expt(mgas_expt, transform="log2", norm="quant",
                                batch="combat_scale", low_to_zero=TRUE))
 
 test_that("Is the filter state maintained?", {
-    expect_equal("cbcb", mgas_norm[["state"]][["filter"]])
+    expect_equal("hpgl", mgas_norm[["state"]][["filter"]])
 })
 
 test_that("Is the normalization state maintained?", {
@@ -45,7 +45,22 @@ test_that("Is the transformation state maintained?", {
     expect_equal("log2", mgas_norm[["state"]][["transform"]])
 })
 
-mgas_pairwise <- sm(all_pairwise(mgas_expt))
+mgas_pairwise <- sm(all_pairwise(mgas_expt, parallel=FALSE))
+
+expected <- 0.85
+actual <- min(mgas_pairwise[["comparison"]][["comp"]])
+test_that("Do we get reasonably high similarities among the various DE tools?", {
+  expect_gt(actual, expected)
+})
+
+mgas_combined <- sm(combine_de_tables(mgas_pairwise, excel=FALSE))
+mgas_sig <- sm(extract_significant_genes(mgas_combined, excel=FALSE))
+
+expected <- 209
+actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wt_ll_cf_vs_mga1_ll_cf"]])
+test_that("Do we find some significant genes in the mga/wt fructose analysis?", {
+  expect_equal(expected, actual)
+})
 
 mgas_data <- sm(gbk2txdb(accession="AE009949"))
 expected <- 1895017
@@ -73,7 +88,8 @@ test_that("Can I get data from microbesonline?", {
     expect_equal(expected, actual)
 })
 
-mgas_df <- sm(load_microbesonline_annotations(expected[[1]])[[1]])
+taxon <- expected[[1]][[1]]
+mgas_df <- sm(load_microbesonline_annotations(taxon))[[1]]
 mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
 rownames(mgas_df) <- make.names(mgas_df[["sysName"]], unique=TRUE)
 
@@ -83,20 +99,32 @@ test_that("Did the mgas annotations download?", {
     expect_equal(expected, actual)
 })
 
+mgas_go <- load_microbesonline_go(taxon)
+mgas_go <- mgas_go[, c("name", "acc")]
+mgas_go <- unique(mgas_go)
+expected <- c(2806, 2)
+actual <- dim(mgas_go)
+test_that("Do we get expected gene ontology information?", {
+  expect_equal(expected, actual)
+})
+
 ## Plot the coefficients of latelog glucose
 glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]
 wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wt_ll_cg_vs_mga1_ll_cg"]]
 
-circos_test <- sm(circos_prefix())
-circos_kary <- sm(circos_karyotype("mgas", length=actual_width))
-circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
-circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
-circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
-circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
-circos_suffix(cfgout=circos_test)
-circos_made <- sm(circos_make(target="mgas"))
+## There is no way circos will work on travis, lets be realistic.
+if (!identical(Sys.getenv("TRAVIS"), "true")) {
+  circos_test <- sm(circos_prefix())
+  circos_kary <- sm(circos_karyotype("mgas", length=actual_width))
+  circos_plus <- sm(circos_plus_minus(mgas_df, circos_test))
+  circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
+  circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
+  circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
+  circos_suffix(cfgout=circos_test)
+  circos_made <- sm(circos_make(target="mgas"))
+}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 70expt_spyogenes.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

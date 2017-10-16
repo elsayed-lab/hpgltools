@@ -114,12 +114,12 @@ test_that("Do cbcbSEQ and hpgltools agree on combatMod(log2(quantile(cpm(counts)
 ## If we made it this far, then the inputs to limma should agree.
 hpgl_limma_combat_result <- sm(limma_pairwise(hpgl_qcpmcombat, limma_method="ls",
                                               model_batch=FALSE,
-                                              model_intercept=FALSE,
+                                              model_intercept=TRUE,
                                               which_voom="hpgl"))
 hpgl_voom <- hpgl_limma_combat_result[["voom_result"]]
 hpgl_fit <- hpgl_limma_combat_result[["fit"]]
 hpgl_eb <- hpgl_limma_combat_result[["pairwise_comparisons"]]
-hpgl_table <- hpgl_limma_combat_result[["all_tables"]]
+hpgl_table <- hpgl_limma_combat_result[["all_tables"]][["untreated"]]
 
 ## The order of operations in a limma analysis are: voom->fit->ebayes->table,
 ## test them in that order.  Keep in mind that I do not default to an intercept
@@ -212,7 +212,7 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value, untrea
 
 expected <- cbcb_table
 expected <- expected[sort(rownames(expected)), ]
-actual <- hpgl_table[["nointercept"]]
+actual <- hpgl_table
 actual <- actual[sort(rownames(actual)), ]
 test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
     expect_equal(expected, actual, tolerance=0.02)
@@ -223,4 +223,4 @@ save(list=ls(), file="de_limma_combat.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

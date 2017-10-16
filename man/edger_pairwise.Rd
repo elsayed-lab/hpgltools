@@ -5,7 +5,7 @@
 \title{Set up a model matrix and set of contrasts to do pairwise comparisons using EdgeR.}
 \usage{
 edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, model_intercept = TRUE,
+  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
   alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
   force = FALSE, edger_method = "long", ...)
 }
@@ -20,7 +20,7 @@ edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
 
-\item{model_intercept}{Use cell means or intercept?}
+\item{model_intercept}{Use an intercept containing model?}
 
 \item{alt_model}{Alternate experimental model to use?}
 

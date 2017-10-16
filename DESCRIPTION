@@ -17,24 +17,24 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-    acepack, ade4, affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-    base64enc, Biobase, BiocGenerics, BiocInstaller, Biostrings,
-    biomaRt, bumphunter, Category, caTools, clusterProfiler, corpcor, corrplot,
-    DBI, DESeq2, DESeq, devtools, directlabels, dplyr, doParallel, DOSE, EDASeq,
-    edgeR, ffpe, fission, Formula, gdata, genbankr, genefilter,
-    genomeIntervals, GenomeInfoDb, GenomicFeatures, genoPlotR, GenomicRanges,
-    ggdendro, ggrepel, GO.db, googleVis, goseq, GOstats, gplots, graph,
-    gProfileR, GSEABase, gtools, gridExtra, hash, Heatplus, Hmisc, htmlTable,
-    igraph, inflection, IRanges, iterators, jsonlite, KEGGgraph, KEGGREST,
-    knitcitations, knitr, lattice, limma, matrixStats, motifRG, multtest,
-    mygene, openxlsx, OrganismDbi, pander, parallel, pasilla, pathview, plyr,
-    preprocessCore, qvalue, RamiGO, RColorBrewer, ReactomePA, readr, rentrez,
-    reshape2, RCurl, rGADEM, Rgraphviz, rmarkdown, RMySQL, robustbase,
-    RefManageR, reshape, rjson, robust, Rsamtools, rtracklayer, RUVSeq,
-    S4Vectors, scales, seqinr, seqLogo, statmod, stringi, stringr, survival,
-    sva, taxize, testthat, topGO, variancePartition, xtable, XVector, survJamda
+ R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools,
+ gplots,  matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
+ openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr, clusterProfiler,
+ topGO, GOstats, Rgraphviz, gProfileR, pathview,
+ AnnotationDbi, AnnotationForge, BiocGenerics, BiocInstaller,
+ Biostrings, Category, DBI, DOSE, EDASeq, GO.db, GSEABase,
+ GenomicFeatures, GenomicRanges, Heatplus, IRanges, KEGGREST,
+ KEGGgraph, RColorBrewer, RCurl, RSQLite, Rsamtools, S4Vectors,
+ Vennerable, XLConnect, affy, corrplot, devEMF, devtools,
+ doParallel, ffpe, genefilter, genoPlotR, ggdendro, googleVis,
+ graph, httr, jsonlite, lattice, limma, motifRG,
+ packrat, plyr, qvalue, rGADEM, readr, reshape2,
+ rjson, rmarkdown, robust, robustbase, rtracklayer, scales,
+ seqLogo, stringi, sva, taxize, testthat, venneuler,
+ AnnotationForge, Vennerable, doParallel, foreach, iterators,
+ parallel, ruv,
 Imports:
-    Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
+ Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 ByteCompile: true
 RoxygenNote: 6.0.1

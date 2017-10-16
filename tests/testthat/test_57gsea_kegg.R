@@ -12,7 +12,7 @@ pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)
 
-test_orgn <- kegg_get_orgn("Drosophila melanogaster", short=FALSE)
+test_orgn <- get_kegg_orgn("Drosophila melanogaster", short=FALSE)
 actual <- as.character(test_orgn[["orgid"]])
 expected <- c("dme", "wol")
 test_that("Is it possible to look up a kegg species ID?", {
@@ -48,7 +48,7 @@ sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 ## Looks like some KEGG functionality has died, www.genome.jp/kegg-bin/download no longer returns anything...
 ## So I hacked my own retrieveKGML which adds a referer to get around this problem.
 pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme", pathway="00500"))
-expected <- 6.1
+expected <- 18.18
 actual <- pct_citrate[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
     expect_equal(expected, actual, tolerance=0.1)
@@ -56,20 +56,20 @@ test_that("Can we extract the percent differentially expressed genes in one path
 ##
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
 all_percentages <- sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
-expected <- c(1.852, 2.326, 4.167, 6.000, NA, 3.448)
+expected <- c(5.556, 4.651, 0, 12.000, NA, 3.448)
 actual <- all_percentages[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes from multiple pathways?", {
     expect_equal(expected, actual, tolerance=0.1)
 })
 
 ## Try testing out pathview
-mel_id <- kegg_get_orgn("melanogaster")
+mel_id <- get_kegg_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
 
-funkytown <- simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
-                             from_list=c("CG"), to_list=c("Dmel_CG"))
+funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
+                                from_list=c("CG"), to_list=c("Dmel_CG")))
 
-expected <- c(1, 1, 1, 1, 4)
+expected <- c(0, 3, 2, 3, 4)
 actual <- head(funkytown[["total_mapped_nodes"]])
 test_that("Did pathview work? (total mapped nodes)", {
     expect_equal(expected, actual, tolerance=0.1)
@@ -79,4 +79,4 @@ unlink("kegg_pathways", recursive=TRUE)
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 57gsea_kegg.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

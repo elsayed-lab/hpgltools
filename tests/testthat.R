@@ -6,8 +6,10 @@ library(hpgltools)
 message("Beginning test_dir('testthat')")
 test_result <- try(test_dir("tests/testthat"))
 if (class(test_result) == "try-error") {
-    message("The test suite returned an error.")
+  message("The test suite returned an error.")
+  TRUE
 } else {
-    message("The test suite returned successfully.")
-    summary(as.data.frame(test_result))
+  message("The test suite returned successfully.")
+  summary(as.data.frame(test_result))
 }
+##warnings()

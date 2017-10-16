@@ -4,10 +4,14 @@
 \alias{load_microbesonline_go}
 \title{Extract the set of GO categories by microbesonline locus}
 \usage{
-load_microbesonline_go(taxonid = "160490")
+load_microbesonline_go(id = "160490", name_type = "ncbi_tag", name = NULL)
 }
 \arguments{
-\item{taxonid}{Which species to query.}
+\item{id}{Which species to query.}
+
+\item{name_type}{The column to use as GID.}
+
+\item{name}{Allowing for non-specific searches by species name.}
 }
 \value{
 data frame of GO terms from pub.microbesonline.org
@@ -23,7 +27,7 @@ At the very least, it does return a large number of them, which is a start.
 }
 \examples{
 \dontrun{
- go_df <- get_loci_go(taxonid="160490")
+ go_df <- get_loci_go(id="160490")
 }
 }
 \seealso{

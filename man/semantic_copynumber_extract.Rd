@@ -28,6 +28,12 @@ The function semantic_copynumber_filter() is the inverse of this.
 \details{
 Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 }
+\examples{
+ \dontrun{
+  pruned_tables <- semantic_copynumber_extract(combined)
+  ## Remove sialidases, mucin, RHS, MASP, DGF, and GP63 from a combined result.
+}
+}
 \seealso{
 \code{\link{semantic_copynumber_filter}}
 }

@@ -1,0 +1,4 @@
+packrat/lib*/
+packrat/bundles
+packrat/src
+.Rhistory

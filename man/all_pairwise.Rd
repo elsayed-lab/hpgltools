@@ -6,7 +6,7 @@
 \usage{
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
-  model_intercept = TRUE, extra_contrasts = NULL, alt_model = NULL,
+  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
   libsize = NULL, test_pca = TRUE, annot_df = NULL, parallel = TRUE,
   ...)
 }
@@ -57,8 +57,9 @@ It collects the results and does some simple comparisons among them.
 }
 \examples{
  \dontrun{
-  finished_comparison = eBayes(limma_output)
-  data_list = all_pairwise(expt)
+  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+  summary(lotsodata)
+  ## limma, edger, deseq, basic results; plots; and summaries.
  }
 }
 \seealso{

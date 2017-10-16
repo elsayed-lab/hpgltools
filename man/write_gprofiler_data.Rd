@@ -5,8 +5,8 @@
 \title{Write some excel results from a gprofiler search.}
 \usage{
 write_gprofiler_data(gprofiler_result, wb = NULL,
-  excel = "excel/gprofiler_result.xlsx", add_plots = TRUE, height = 15,
-  width = 10, ...)
+  excel = "excel/gprofiler_result.xlsx", order_by = "recall",
+  add_plots = TRUE, height = 15, width = 10, decreasing = FALSE, ...)
 }
 \arguments{
 \item{gprofiler_result}{The result from simple_gprofiler().}
@@ -15,11 +15,15 @@ write_gprofiler_data(gprofiler_result, wb = NULL,
 
 \item{excel}{Excel file to which to write.}
 
+\item{order_by}{Which column to order the data by?}
+
 \item{add_plots}{Add some pvalue plots?}
 
 \item{height}{Height of included plots?}
 
 \item{width}{And their width.}
+
+\item{decreasing}{Which order?}
 
 \item{...}{More options, not currently used I think.}
 }

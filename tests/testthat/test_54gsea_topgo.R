@@ -38,14 +38,14 @@ test_that("Are the topGO interesting results expected (CC GOIDs)?", {
 
 tp_trees <- sm(topgo_trees(tp_result))
 expected <- c("GO:0003674", "GO:0003824", "GO:0003974",
-              "GO:0004175", "GO:0004252", "GO:0004467")
+              "GO:0004467", "GO:0004553", "GO:0004556")
 actual <-  head(sort(tp_trees[["mf_fisher_nodes"]][["dag"]]@nodes))
 test_that("Are the topGO interesting results as expected? (MF trees)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0003974", "GO:0004175", "GO:0004252",
-              "GO:0004467", "GO:0004556", "GO:0004742")
+expected <- c("GO:0003974", "GO:0004467", "GO:0004556",
+              "GO:0004742", "GO:0004793", "GO:0005044")
 actual <- head(sort(tp_result[["pvalue_plots"]][["mfp_plot_over"]][["data"]][["GO.ID"]]))
 test_that("Are the topGO interesting results as expected? (MF pval)?", {
     expect_equal(expected, actual)
@@ -54,4 +54,4 @@ test_that("Are the topGO interesting results as expected? (MF pval)?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

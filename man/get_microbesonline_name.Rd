@@ -4,10 +4,12 @@
 \alias{get_microbesonline_name}
 \title{Use the publicly available microbesonline mysql instance to get species name(s).}
 \usage{
-get_microbesonline_name(id = 316385)
+get_microbesonline_name(id = 316385, name = NULL)
 }
 \arguments{
 \item{id}{Text string containing some part of the species name of interest.}
+
+\item{name}{An optional name so that one may have non-specific requests.}
 }
 \value{
 Dataframe of ids and names.

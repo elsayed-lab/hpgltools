@@ -45,4 +45,4 @@ test_that("Are GO.db functions working (level)?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 50gsea_ontshared.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

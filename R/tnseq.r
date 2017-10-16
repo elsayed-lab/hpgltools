@@ -10,43 +10,78 @@
 #' @param file  a file created using the perl script 'essentiality_tas.pl'
 #' @return A plot and some numbers
 #' @seealso \pkg{ggplot2}
+#' @examples
+#'  \dontrun{
+#'  input <- "preprocessing/hpgl0837/essentiality/hpgl0837-trimmed_ca_ta-v0M1.wig"
+#'  saturation <- tnseq_saturation(file=input)
+#' }
 #' @export
-tnseq_saturation <- function(file) {
-    table <- read.table(file=file, header=1)
-    ##second_file <- paste(file, "-inter", sep="")
-    ##second_table <- read.table(file=second_file, header=1)
-    ##table <- rbind(table, second_table)
-    data_list <- as.numeric(table[["variableStep"]])
-    max_reads <- max(data_list, na.rm=TRUE)
-    log2_data_list <- as.numeric(log2(data_list + 1))
-    data_plot <- plot_histogram(log2_data_list, bins=500)
-    data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
-        ggplot2::scale_y_continuous(limits=c(0,2))
-    message(sprintf("The maximum value is: %s ", max_reads))
-    raw <- table(unlist(data_list))
-    num_zeros <- raw[as.numeric(names(raw)) == 0]
-    num_gt_ones <- raw[as.numeric(names(raw)) >= 1]
-    num_gt_one <- sum(num_gt_ones)
-    num_gt_twos <- raw[as.numeric(names(raw)) >= 2]
-    num_gt_two <- sum(num_gt_twos)
-    num_gt_fours <- raw[as.numeric(names(raw)) >= 4]
-    num_gt_four <- sum(num_gt_fours)
-    num_gt_eights <- raw[as.numeric(names(raw)) >= 8]
-    num_gt_eight <- sum(num_gt_eights)
-    num_gt_sixteens <- raw[as.numeric(names(raw)) >= 16]
-    num_gt_sixteen <- sum(num_gt_sixteens)
-    num_gt_thirtytwos <- raw[as.numeric(names(raw)) >= 32]
-    num_gt_thirtytwo <- sum(num_gt_thirtytwos)
-    saturation_ratio_1 <- num_gt_one / num_zeros
-    message(sprintf("Saturation ratio of 1s to 0s is: %s", saturation_ratio_1))
-    saturation_ratio_8 <- num_gt_eight / num_zeros
-    message(sprintf("Saturation ratio of 8 to 0s is: %s", saturation_ratio_8))
-    saturation_ratio_32 <- num_gt_thirtytwo / num_zeros
-    message(sprintf("Saturation ratio of 32 to 0s is: %s", saturation_ratio_32))
-    message(sprintf("The number of zeros, ones, twos, fours, eights, sixteens, thirtytwos, saturation1, saturation8, saturation32 are: %s %s %s %s %s %s %s %s %s %s",
-                  num_zeros, num_gt_one, num_gt_two, num_gt_four, num_gt_eight, num_gt_sixteen,
-                  num_gt_thirtytwo, saturation_ratio_1, saturation_ratio_8, saturation_ratio_32))
-    return(data_plot)
+tnseq_saturation <- function(data, column="Reads") {
+  table <- NULL
+  if (class(data) == "character") {
+    table <- read.table(file=data, header=1)
+  } else {
+    table <- data
+  }
+
+  data_list <- as.numeric(table[, column])
+  max_reads <- max(data_list, na.rm=TRUE)
+  log2_data_list <- as.numeric(log2(data_list + 1))
+  data_plot <- plot_histogram(log2_data_list, bins=500)
+  data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
+    ggplot2::scale_y_continuous(limits=c(0,2))
+
+  raw <- table(unlist(data_list))
+  num_zeros <- raw[as.numeric(names(raw)) == 0]
+  num_gt_ones <- raw[as.numeric(names(raw)) >= 1]
+  num_gt_one <- sum(num_gt_ones)
+  num_gt_twos <- raw[as.numeric(names(raw)) >= 2]
+  num_gt_two <- sum(num_gt_twos)
+  num_gt_fours <- raw[as.numeric(names(raw)) >= 4]
+  num_gt_four <- sum(num_gt_fours)
+  num_gt_eights <- raw[as.numeric(names(raw)) >= 8]
+  num_gt_eight <- sum(num_gt_eights)
+  num_gt_sixteens <- raw[as.numeric(names(raw)) >= 16]
+  num_gt_sixteen <- sum(num_gt_sixteens)
+  num_gt_thirtytwos <- raw[as.numeric(names(raw)) >= 32]
+  num_gt_thirtytwo <- sum(num_gt_thirtytwos)
+
+  saturation_ratios <- vector(length=6)
+  saturation_ratios[1] <- sprintf("%.8f", num_gt_one / num_zeros)
+  saturation_ratios[2] <- sprintf("%.8f", num_gt_two / num_zeros)
+  saturation_ratios[3] <- sprintf("%.8f", num_gt_four / num_zeros)
+  saturation_ratios[4] <- sprintf("%.8f", num_gt_eight / num_zeros)
+  saturation_ratios[5] <- sprintf("%.8f", num_gt_sixteen / num_zeros)
+  saturation_ratios[6] <- sprintf("%.8f", num_gt_thirtytwo / num_zeros)
+  names(saturation_ratios) <- c(1,2,4,8,16,32)
+
+  hit_positions <- table
+  hit_idx <- hit_positions[[column]] != 0
+  hit_positions <- hit_positions[hit_idx, 1]
+  hit_averages <- vector(length=length(hit_positions -1 ))
+  for (position in 2:length(hit_positions)) {
+    last_position <- position - 1
+    hit_averages[last_position] <- hit_positions[position] - hit_positions[last_position]
+  }
+  hits_summary <- summary(hit_averages)
+  
+  retlist <- list(
+    "hits_by_position" = table,
+    "num_hit_table" = raw,
+    "eq_0" = num_zeros,
+    "gt_1" = num_gt_one,
+    "gt_2" = num_gt_two,
+    "gt_4" = num_gt_four,
+    "gt_8" = num_gt_eight,
+    "gt_16" = num_gt_sixteen,
+    "gt_32" = num_gt_thirtytwo,
+    "ratios" = saturation_ratios,
+    "hit_positions" = hit_positions,
+    "hits_summary" = hits_summary,
+    "plot" = data_plot
+  )
+  
+  return(retlist)
 }
 
 #' Plot the essentiality of a library as per DeJesus et al.
@@ -58,22 +93,23 @@ tnseq_saturation <- function(file) {
 #' @seealso \pkg{ggplot2}
 #' @export
 plot_essentiality <- function(file) {
-    ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
-    colnames(ess) <- c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
-    ess <- ess[with(ess, order("posterior_zbar")), ]
-    ##ess <- subset(ess, posterior_zbar > -1)
-    ess <- ess[ess[["posterior_zbar"]] >= -1, ]
-    ess <- transform(ess, rank=ave("posterior_zbar", FUN=function(x) order(x, decreasing=FALSE)))
-    zbar_plot <- ggplot2::ggplot(data=ess, ggplot2::aes_string(x="rank", y="posterior_zbar")) +
-        ggplot2::geom_point(stat="identity", size=2) +
-        ## What the crab apples are these static numbers (I think to define calling boundaries)
-        ggplot2::geom_hline(color="grey", yintercept=0.0371) +
-        ggplot2::geom_hline(color="grey", yintercept=0.9902) +
-        ggplot2::theme_bw()
-    span_df <- ess[,c("max_run","max_run_span")]
-    span_plot <- plot_linear_scatter(span_df)
-    returns <- list("zbar" = zbar_plot, "scatter" = span_plot[["scatter"]])
-    return(returns)
+  ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
+  colnames(ess) <- c("gene","orf_hits","orf_tas","max_run","max_run_span","posterior_zbar","call")
+  ess <- ess[with(ess, order("posterior_zbar")), ]
+  ##ess <- subset(ess, posterior_zbar > -1)
+  ess <- ess[ess[["posterior_zbar"]] >= -1, ]
+  ess <- transform(ess, rank=ave("posterior_zbar", FUN=function(x) order(x, decreasing=FALSE)))
+  zbar_plot <- ggplot2::ggplot(data=ess, ggplot2::aes_string(x="rank", y="posterior_zbar")) +
+    ggplot2::geom_point(stat="identity", size=2) +
+    ## What the crab apples are these static numbers (I think to define calling boundaries)
+    ggplot2::geom_hline(color="grey", yintercept=0.0371) +
+    ggplot2::geom_hline(color="grey", yintercept=0.9902) +
+    ggplot2::theme_bw()
+  span_df <- ess[,c("max_run","max_run_span")]
+  span_plot <- plot_linear_scatter(span_df)
+  returns <- list("zbar" = zbar_plot, "scatter" = span_plot[["scatter"]])
+  return(returns)
 }
 
 ## EOF
+

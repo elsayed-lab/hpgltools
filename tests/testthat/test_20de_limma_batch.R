@@ -24,150 +24,183 @@ cbcb_libsize <- cbcb_cpm[["lib.size"]]
 ##                                   mod=design[["condition"]], noScale=TRUE)
 ## oh yeah, cbcbSEQ's combatMod no longer works
 cbcb_v <- cbcbSEQ::voomMod(cbcb_qcpmcounts,
-                           model.matrix(~design[["condition"]] + design[["libType"]]),
+                           model.matrix(~ design[["condition"]] + design[["libType"]]),
                            lib.size=cbcb_libsize)
 ## It looks to me like the voomMod function is missing a is.na() check and so
 ## the lowess() function is failing.
 hpgl_v <- hpgl_voom(cbcb_qcpmcounts,
-                    model=model.matrix(~design[["condition"]] + design[["libType"]]),
+                    model=model.matrix(~ design[["condition"]] + design[["libType"]]),
                     libsize=cbcb_libsize, logged=TRUE, converted=TRUE)
 ## Taking the first column of the E slot in in v
+
 cbcb_fit <- lmFit(cbcb_v)
 cbcb_eb <- eBayes(cbcb_fit)
+table_order <- sort(rownames(cbcb_eb))
 cbcb_table <- topTable(cbcb_eb, coef=2, n=nrow(cbcb_v[["E"]]))
 
 cbcb_data <- as.matrix(counts)
-cbcb_data <- cbcb_data[sort(rownames(cbcb_data)), ]
+cbcb_data <- cbcb_data[table_order, ]
 hpgl_data <- exprs(pasilla_expt)
-hpgl_data <- hpgl_data[sort(rownames(hpgl_data)), ]
+hpgl_data <- hpgl_data[table_order, ]
 test_that("Does data from an expt equal a raw dataframe?", {
     expect_equal(cbcb_data, hpgl_data)
 })
 
 ## Perform log2/cpm/quantile/combatMod normalization
 hpgl_norm <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant",
-                               convert="cbcbcpm", filter=TRUE))
+                               convert="cbcbcpm", filter="cbcb", thresh=1))
+
+## Ensure that we have the same count tables for limma_pairwise
+## and the invocations of voom->topTable() by cbcbSEQ.
+expected <- nrow(cbcb_counts)
+actual <- nrow(exprs(hpgl_norm))
+test_that("Do we get the same number of genes using cbcb's filter as normalize_expt?", {
+  expect_equal(expected, actual)
+})
 
 ## If we made it this far, then the inputs to limma should agree.
-hpgl_limma_nointercept <- sm(limma_pairwise(hpgl_norm, model_batch=TRUE, limma_method="ls",
-                                            model_intercept=FALSE, which_voom="hpgl"))
-hpgl_voom <- hpgl_limma_nointercept[["voom_result"]]
-hpgl_fit <- hpgl_limma_nointercept[["fit"]]
-hpgl_eb <- hpgl_limma_nointercept[["pairwise_comparisons"]]
-hpgl_table <- hpgl_limma_nointercept[["all_tables"]][[1]]
+## Use this section to ensure that our invocation of limma without an intercept
+## matches that from cbcbSEQ.
+int_limma <- sm(limma_pairwise(hpgl_norm, model_batch=TRUE, limma_method="ls",
+                                model_intercept=TRUE, which_voom="hpgl"))
+int_voom <- int_limma[["voom_result"]]
+int_fit <- int_limma[["fit"]]
+int_eb <- int_limma[["pairwise_comparisons"]]
+int_table <- int_limma[["all_tables"]][["untreated"]]
 
-hpgl_limma <- sm(limma_pairwise(hpgl_norm, which_voom="hpgl", limma_method="ls"))
-
+## Now see that the voom outputs are the same
 expected <- cbcb_v[["E"]]
-expected <- expected[sort(rownames(expected)), ]
-actual <- hpgl_v[["E"]]
-actual <- actual[sort(rownames(actual)), ]
+expected <- expected[table_order, ]
+actual <- int_voom[["E"]]
+actual <- actual[table_order, ]
 test_that("Do cbcbSEQ and hpgltools agree on the voom output?", {
     expect_equal(expected, actual)
 })
 
-expected <- cbcb_fit[["coefficients"]]
-expected <- as.numeric(head(expected[sort(rownames(expected)), ][[1]]))
-actual <- hpgl_fit[["coefficients"]]
-actual <- as.numeric(head(actual[sort(rownames(actual)), ][[1]]))
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: coefficients[1]?", {
-    expect_equal(expected, actual, tolerance=0.001)
-})
+## Fix the column names for the following tables to simplify things.
+int_names <- c("(Intercept)", "untreated", "single_end")
 
 expected <- cbcb_fit[["coefficients"]]
-expected <- as.numeric(head(expected[sort(rownames(expected)), ][[2]]))
-actual <- hpgl_fit[["coefficients"]]
-actual <- as.numeric(head(actual[sort(rownames(actual)), ][[2]]))
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: coefficients[2]?", {
+colnames(expected) <- int_names
+expected <- expected[table_order, ]
+actual <- int_fit[["coefficients"]]
+actual <- actual[table_order, ]
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: coefficients?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 expected <- cbcb_fit[["stdev.unscaled"]]
-expected <- as.numeric(head(expected[sort(rownames(expected)), ][[1]]))
-actual <- hpgl_fit[["stdev.unscaled"]]
-actual <- as.numeric(head(actual[sort(rownames(actual)), ][[1]]))
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: stdev_unscaled[1]?", {
-    expect_equal(expected, actual, tolerance=0.001)
-})
-
-expected <- cbcb_fit[["stdev.unscaled"]]
-expected <- as.numeric(head(expected[sort(rownames(expected)), ][[2]]))
-actual <- hpgl_fit[["stdev.unscaled"]]
-actual <- as.numeric(head(actual[sort(rownames(actual)), ][[2]]))
-test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: stdev_unscaled[2]?", {
+colnames(expected) <- int_names
+expected <- expected[table_order, ]
+actual <- int_fit[["stdev.unscaled"]]
+actual <- actual[table_order, ]
+test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: stdev_unscaled?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 expected <- cbcb_fit[["cov.coefficients"]]
-expected <- as.numeric(head(expected[sort(rownames(expected)), ][[1]]))
-actual <- hpgl_fit[["cov.coefficients"]]
-actual <- as.numeric(head(actual[sort(rownames(actual)), ][[1]]))
+colnames(expected) <- int_names
+rownames(expected) <- int_names
+actual <- int_fit[["cov.coefficients"]]
 test_that("Do cbcbSEQ and hpgltools agree on the lmFit result: cov.coefficients?", {
     expect_equal(expected, actual)
 })
 
 expected <- cbcb_eb[["t"]]
-expected <- expected[sort(rownames(expected)), ]
-actual <- hpgl_eb[["t"]]
-actual <- actual[sort(rownames(actual)), ]
+colnames(expected) <- int_names
+expected <- expected[table_order, ]
+actual <- int_eb[["t"]]
+actual <- actual[table_order, ]
 test_that("Do cbcbSEQ and hpgltools agree on the eBayes result: eb[1]?", {
-    expect_equal(expected[[1]], actual[[1]], tolerance=0.1) ## The intercept
-})
-test_that("Do cbcbSEQ and hpgltools agree on the eBayes result: eb[2]?", {
-    expect_equal(expected[[2]], actual[[2]], tolerance=0.1) ## condition-untreated
-})
-test_that("Do cbcbSEQ and hpgltools agree on the eBayes result: eb[3]?", {
-    expect_equal(expected[[3]], actual[[3]], tolerance=1) ## batch-single_end
+    expect_equal(expected, actual, tolerance=0.1) ## The intercept
 })
 
 expected <- cbcb_eb[["p.value"]]
-expected <- expected[sort(rownames(expected)), ]
-actual <- hpgl_eb[["p.value"]]
-actual <- actual[sort(rownames(actual)), ]
+colnames(expected) <- int_names
+expected <- expected[table_order, ]
+actual <- int_eb[["p.value"]]
+actual <- actual[table_order, ]
 test_that("Do the p-value tables stay the same pval[1]?", {
     expect_equal(expected[[1]], actual[[1]])
 })
-test_that("Do the p-value tables stay the same pval[2]?", {
-    expect_equal(expected[[2]], actual[[2]], tolerance=0.01)
-})
-test_that("Do the p-value tables stay the same pval[3]?", {
-    expect_equal(expected[[3]], actual[[3]])
+
+expected <- cbcb_table[table_order, "logFC"]
+actual <- int_table[table_order, "logFC"]
+test_that("Do cbcbSEQ and hpgltools agree on the logFCs?", {
+  expect_equal(expected, actual, tolerance=0.01)
 })
 
-## I need to be smarter about bringing together the filtering, otherwise these tests
-## will continue to fail in weird ways.
-cbcb_result_reordered <- cbcb_table[sort(rownames(actual)), ]
-hpgl_result_reordered <- hpgl_table[sort(rownames(actual)), ]
-cbcb_logfc <- as.numeric(head(cbcb_result_reordered[["logFC"]]))
-hpgl_logfc <- as.numeric(head(hpgl_result_reordered[["untreated"]]))
-test_that("Do cbcbSEQ and hpgltools agree on the list of DE genes?", {
-    expect_equal(cbcb_logfc, hpgl_logfc, tolerance=0.0001)
+expected <- cbcb_table[table_order, "AveExpr"]
+actual <- int_table[table_order, "AveExpr"]
+test_that("Do cbcbSEQ and hpgltools agree on the AveExprs?", {
+  expect_equal(expected, actual, tolerance=0.01)
 })
 
-reordered <- hpgl_limma[["all_tables"]][["untreated_vs_treated"]]
-reordered <- reordered[sort(rownames(actual)), ]
-test_that("Do the intercept model results equal those from cell means?", {
-    expect_equal(hpgl_voom[["E"]], hpgl_limma[["voom_result"]][["E"]])
-})
-test_that("Do the intercept model results equal those from cell means?", {
-    expect_equal(hpgl_fit[["coefficients"]][[1]], hpgl_limma[["fit"]][["coefficients"]][[1]])
-})
-## Something is not right here.
-##test_that("Do the intercept model results equal those from cell means?", {
-##    expect_equal(head(hpgl_eb[["p.value"]][[2]]),
-##                 head(hpgl_limma[["pairwise_comparisons"]][["p.value"]][[1]]),
-##                 tolerance=0.1)
-##})
-test_that("Do the intercept model results equal those from cell means?", {
-    expect_equal(as.numeric(head(hpgl_logfc)), as.numeric(head(reordered[["logFC"]])), tolerance=0.1)
+expected <- cbcb_table[table_order, "P.Value"]
+actual <- int_table[table_order, "P.Value"]
+test_that("Do cbcbSEQ and hpgltools agree on the p-values?", {
+  expect_equal(expected, actual, tolerance=0.01)
 })
 
-limma_written <- sm(write_limma(hpgl_limma, excel="limma_test.xlsx"))
+expected <- cbcb_table[table_order, "adj.P.Value"]
+actual <- int_table[table_order, "adj.P.Value"]
+test_that("Do cbcbSEQ and hpgltools agree on the p-values?", {
+  expect_equal(expected, actual, tolerance=0.01)
+})
 
+## Finished checking the no-intercept invocations, now compare intercept to no-intercept limma.
+noint_limma <- sm(limma_pairwise(hpgl_norm, which_voom="hpgl", limma_method="ls"))
 
+expected <- noint_limma[["voom_result"]][["E"]]
+actual <- int_limma[["voom_result"]][["E"]]
+expected <- expected[table_order, ]
+actual <- actual[table_order, ]
+test_that("Are the intercept and non-intercept voom results equivalent?", {
+    expect_equal(expected, actual)
+})
+
+noint_coefficients <- noint_limma[["fit"]][["coefficients"]]
+int_coefficients <- int_limma[["fit"]][["coefficients"]]
+expected <- int_fit[["coefficients"]][, 1]  ## The '(Intercept)' column
+actual <- noint_limma[["fit"]][["coefficients"]][, "treated"]
+test_that("Do the intercept model results equal those from cell means for the intercept?", {
+    expect_equal(expected, actual)
+})
+
+## Now check the noint_table vs. the int_table results.
+noint_table <- noint_limma[["all_tables"]][[1]]
+noint_table <- noint_table[table_order, ]
+int_table <- int_limma[["all_tables"]][[1]]
+int_table <- int_table[table_order, ]
+expected <- noint_table[, "logFC"]
+actual <- int_table[, "logFC"]
+test_that("Do the intercept model results equal those from no-intercept (logFC)?", {
+  expect_equal(expected, actual)
+})
+
+expected <- noint_table[["AveExpr"]]
+actual <- int_table[["AveExpr"]]
+test_that("Do the intercept and no-intercept fits give equal AveExpr values?", {
+  expect_equal(expected, actual)
+})
+
+expected <- noint_table[["t"]]
+actual <- int_table[["t"]]
+test_that("Do the intercept and no-intercept fits give equal t-statistics?", {
+  expect_equal(expected, actual, tolerance=0.02)
+})
+
+expected <- noint_table[["P.Value"]]
+actual <- int_table[["P.Value"]]
+test_that("Do the intercept and no-intercept fits give equal P-Values?", {
+  expect_equal(expected, actual, tolerance=0.01)
+})
+
+limma_written <- sm(write_limma(noint_limma, excel="limma_test.xlsx"))
+hpgl_limma <- sm(limma_pairwise(pasilla_expt))
 save(list=ls(), file="de_limma.rda")
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 20de_limma_batch.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

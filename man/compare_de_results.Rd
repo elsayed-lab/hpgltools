@@ -10,6 +10,8 @@ compare_de_results(first, second, cor_method = "pearson")
 \item{first}{One invocation of combine_de_tables to examine.}
 
 \item{second}{A second invocation of combine_de_tables to examine.}
+
+\item{cor_method}{Method to use for cor.test().}
 }
 \value{
 A list of compared columns, tables, and methods.
@@ -21,4 +23,11 @@ across invocations of limma/deseq/edger.
 }
 \details{
 Tested in 29de_shared.R
+}
+\examples{
+ \dontrun{
+  first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
+  second <- all_pairwise(expt, model_batch="svaseq", excel="second.xlsx")
+  comparison <- compare_de_results(first$combined, second$combined)
+}
 }

@@ -106,7 +106,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     if (filter == FALSE) {
         filter <- "raw"
     } else if (isTRUE(filter)) {
-        filter <- "cbcb"
+        filter <- "hpgl"
     }
     if (convert == FALSE) {
         convert <- "raw"
@@ -187,12 +187,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     }
     new_expt[["backup_expressionset"]] <- new_expt[["expressionset"]]
     current_data <- exprs(current_exprs)
-    design <- expt[["design"]]
+    design <- pData(expt)
     if (is.null(annotations)) {
         annotations <- fData(current_exprs)
-    }
-    if (is.null(design)) {
-        design <- pData(current_exprs)
     }
     ## A bunch of these options should be moved into ...
     ## Having them as options to maintain is foolish

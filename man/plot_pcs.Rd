@@ -27,6 +27,8 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 
 \item{size_column}{an experimental factor to use for sizing the glyphs}
 
+\item{rug}{Include the rugs on the sides of the plot?}
+
 \item{...}{extra arguments dropped into arglist}
 }
 \value{

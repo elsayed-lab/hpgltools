@@ -30,153 +30,76 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
                              do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
-    ## Assume for the moment a limma-ish data frame
-    ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap / #term) * (total genes / #query)
-    ## However, the total number is a constant, so we can likely get the same information from the overlap.size
-    gene_list <- NULL
-    if (class(sig_genes) == "character") {
-        gene_ids <- sig_genes
+  ## Assume for the moment a limma-ish data frame
+  ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap / #term) * (total genes / #query)
+  ## However, the total number is a constant, so we can likely get the same information from the overlap.size
+  gene_list <- NULL
+  if (class(sig_genes) == "character") {
+    gene_ids <- sig_genes
+  } else {
+    if (!is.null(sig_genes[[first_col]])) {
+      gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
+      pseudo_gsea <- TRUE
+    } else if (!is.null(sig_genes[[second_col]])) {
+      gene_list <- sig_genes[order(-sig_genes[[second_col]]), ]
+      pseudo_gsea <- TRUE
+    }
+    gene_ids <- NULL
+    if (is.null(id_col)) {
+      id_col <- "ID"
+    }
+    if (id_col == "row.names") {
+      gene_ids <- rownames(gene_list)
     } else {
-        if (!is.null(sig_genes[[first_col]])) {
-            gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
-            pseudo_gsea <- TRUE
-        } else if (!is.null(sig_genes[[second_col]])) {
-            gene_list <- sig_genes[order(-sig_genes[[second_col]]), ]
-            pseudo_gsea <- TRUE
-        }
-        gene_ids <- NULL
-        if (is.null(id_col)) {
-            id_col <- "ID"
-        }
-        if (id_col == "row.names") {
-            gene_ids <- rownames(gene_list)
-        } else {
-            gene_ids <- gene_list[[id_col]]
-        }
+      gene_ids <- gene_list[[id_col]]
     }
+  }
 
-    ## Setting 'ordered_query' to TRUE, so rank these by p-value or FC or something
-    go_result <- data.frame()
-    if (isTRUE(do_go)) {
-        message("Performing g:Profiler GO search.")
-        Sys.sleep(3)
-        go_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                              organism=species,
-                                              significant=significant,
-                                              ordered_query=pseudo_gsea,
-                                              src_filter="GO"))
-        if (class(go_result) == "try-error") {
-            go_result <- data.frame()
-        }
-        message(paste0("GO search found ", nrow(go_result), " hits."))
+  do_lst <- list(
+    "GO" = do_go,
+    "KEGG" = do_kegg,
+    "REAC" = do_reactome,
+    "MI" = do_mi,
+    "TF" = do_tf,
+    "CORUM" = do_corum,
+    "HP" = do_hp
+    )
+  result_lst <- list()
+
+  message_string <- "Performing gProfiler %s search of %s genes against %s."
+  for (type in names(do_lst)) {
+    message(sprintf(message_string, type, length(gene_ids), species))
+    Sys.sleep(5)
+    a_result <- try(gProfileR::gprofiler(
+                                 query=gene_ids,
+                                 organism=species,
+                                 significant=significant,
+                                 ordered_query=pseudo_gsea,
+                                 src_filter=type))
+    if (class(a_result) == "try-error") {
+      a_result <- data.frame(stringsAsFactors=FALSE)
     }
+    message(paste0(type, " search found ", nrow(a_result), " hits."))
+    result_lst[[type]] <- a_result
+  }
 
-    kegg_result <- data.frame()
-    if (isTRUE(do_kegg)) {
-        message("Performing g:Profiler KEGG search.")
-        Sys.sleep(3)
-        kegg_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                                organism=species,
-                                                significant=significant,
-                                                ordered_query=pseudo_gsea,
-                                                src_filter="KEGG"))
-        if (class(kegg_result) == "try-error") {
-            kegg_result <- data.frame()
-        }
-        message(paste0("KEGG search found ", nrow(kegg_result), " hits."))
-    }
+  retlist <- list(
+    "go" = result_lst[["GO"]],
+    "kegg" = result_lst[["KEGG"]],
+    "reactome" = result_lst[["REAC"]],
+    "mi" = result_lst[["MI"]],
+    "tf" = result_lst[["TF"]],
+    "corum" = result_lst[["CORUM"]],
+    "hp" = result_lst[["HP"]],
+    "input" = sig_genes)
+  retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
 
-    reactome_result <- data.frame()
-    if (isTRUE(do_reactome)) {
-        message("Performing g:Profiler reactome.db search.")
-        Sys.sleep(3)
-        reactome_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                                    organism=species,
-                                                    significant=significant,
-                                                    ordered_query=pseudo_gsea,
-                                                    src_filter="REAC"))
-        if (class(reactome_result) == "try-error") {
-            reactome_result <- data.frame()
-        }
-        message(paste0("Reactome search found ", nrow(reactome_result), " hits."))
-    }
-
-    mi_result <- data.frame()
-    if (isTRUE(do_mi)) {
-        message("Performing g:Profiler miRNA search.")
-        Sys.sleep(3)
-        mi_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                              organism=species,
-                                              significant=significant,
-                                              ordered_query=pseudo_gsea,
-                                              src_filter="MI"))
-        if (class(mi_result) == "try-error") {
-            mi_result <- data.frame()
-        }
-        message(paste0("miRNA search found ", nrow(mi_result), " hits."))
-    }
-
-    tf_result <- data.frame()
-    if (isTRUE(do_tf)) {
-        message("Performing g:Profiler transcription-factor search.")
-        Sys.sleep(3)
-        tf_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                              organism=species,
-                                              significant=significant,
-                                              ordered_query=pseudo_gsea,
-                                              src_filter="TF"))
-        if (class(tf_result) == "try-error") {
-            tf_result <- data.frame()
-        }
-        message(paste0("transcription-factor search found ", nrow(tf_result), " hits."))
-    }
-
-    corum_result <- data.frame()
-    if (isTRUE(do_corum)) {
-        message("Performing g:Profiler corum search.")
-        Sys.sleep(3)
-        corum_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                                 organism=species,
-                                                 significant=significant,
-                                                 ordered_query=pseudo_gsea,
-                                                 src_filter="CORUM"))
-        if (class(corum_result) == "try-error") {
-            corum_result <- data.frame()
-        }
-        message(paste0("corum search found ", nrow(corum_result), " hits."))
-    }
-
-    hp_result <- data.frame()
-    if (isTRUE(do_hp)) {
-        message("Performing g:Profiler hp search.")
-        Sys.sleep(3)
-        hp_result <- try(gProfileR::gprofiler(query=gene_ids,
-                                              organism=species,
-                                              significant=significant,
-                                              ordered_query=pseudo_gsea,
-                                              src_filter="HP"))
-        if (class(hp_result) == "try-error") {
-            hp_result <- data.frame()
-        }
-        message(paste0("hp search found ", nrow(hp_result), " hits."))
-    }
-
-    retlist <- list(
-        "go" = go_result,
-        "kegg" = kegg_result,
-        "reactome" = reactome_result,
-        "mi" = mi_result,
-        "tf" = tf_result,
-        "corum" = corum_result,
-        "hp" = hp_result,
-        "input" = sig_genes)
-    retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
-
-    if (!is.null(excel)) {
-        message(paste0("Writing data to: ", excel, "."))
-        excel_ret <- sm(write_gprofiler_data(retlist, excel=excel))
-    }
-    return(retlist)
+  if (!is.null(excel)) {
+    message(paste0("Writing data to: ", excel, "."))
+    excel_ret <- sm(write_gprofiler_data(retlist, excel=excel))
+  }
+  message("Finished writing data.")
+  return(retlist)
 }
 
 ## EOF

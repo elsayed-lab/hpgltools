@@ -26,7 +26,7 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               format="DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE, model_intercept=TRUE))
+hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
 hpgl_deseq_written <- sm(write_deseq(hpgl_deseq, excel="deseq_test.xlsx"))
 test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
@@ -85,4 +85,4 @@ save(list=ls(), file="de_deseq.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))
-tt <- clear_session()
+tt <- try(clear_session())

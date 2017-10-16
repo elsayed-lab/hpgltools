@@ -54,97 +54,97 @@
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
                           qq=NULL, ma=NULL, ...) {
-    if (!exists("expt", inherits=FALSE)) {
-        stop("The input data does not exist.")
-    }
-    ## First gather the necessary data for the various plots.
-    old_options <- options(scipen=10)
-    ##old_options <- options(device = function(...) {
-    ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
-    ##})
-    nonzero_title <- "Non zero genes"
-    libsize_title <- "Library sizes"
-    boxplot_title <- "Boxplot"
-    corheat_title <- "Correlation heatmap"
-    smc_title <- "Standard Median Correlation"
-    disheat_title <- "Distance heatmap"
-    smd_title <- "Standard Median Distance"
-    pca_title <- "Principle Component Analysis"
-    tsne_title <- "T-SNE Analysis"
-    dens_title <- "Density plot"
-    if (!is.null(title_suffix)) {
-        nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
-        libsize_title <- paste0(libsize_title, ": ", title_suffix)
-        boxplot_title <- paste0(boxplot_title, ": ", title_suffix)
-        corheat_title <- paste0(corheat_title, ": ", title_suffix)
-        smc_title <- paste0(smc_title, ": ", title_suffix)
-        disheat_title <- paste0(disheat_title, ": ", title_suffix)
-        smd_title <- paste0(smd_title, ": ", title_suffix)
-        pca_title <- paste0(pca_title, ": ", title_suffix)
-        tsne_title <- paste0(tsne_title, ": ", title_suffix)
-        dens_title <- paste0(dens_title, ": ", title_suffix)
-    }
-    message("Graphing number of non-zero genes with respect to CPM by library.")
-    nonzero_plot <- try(plot_nonzero(expt, title=nonzero_title, ...))
-    message("Graphing library sizes.")
-    libsize_plot <- try(plot_libsize(expt, title=libsize_title, ...))
-    message("Graphing a boxplot.")
-    boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
-    message("Graphing a correlation heatmap.")
-    corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title, ...))
-    message("Graphing a standard median correlation.")
-    smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
-    message("Graphing a distance heatmap.")
-    disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title, ...))
-    message("Graphing a standard median distance.")
-    smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
-    message("Graphing a PCA plot.")
-    pca <- try(plot_pca(expt, title=pca_title, ...))
-    message("Graphing a T-SNE plot.")
-    tsne <- try(plot_tsne(expt, title=tsne_title, ...))
-    message("Plotting a density plot.")
-    density <- try(plot_density(expt, title=dens_title))
-    message("Printing a color to condition legend.")
-    legend <- try(plot_legend(pca$plot))
+  if (!exists("expt", inherits=FALSE)) {
+    stop("The input data does not exist.")
+  }
+  ## First gather the necessary data for the various plots.
+  old_options <- options(scipen=10)
+  ##old_options <- options(device = function(...) {
+  ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
+  ##})
+  nonzero_title <- "Non zero genes"
+  libsize_title <- "Library sizes"
+  boxplot_title <- "Boxplot"
+  corheat_title <- "Correlation heatmap"
+  smc_title <- "Standard Median Correlation"
+  disheat_title <- "Distance heatmap"
+  smd_title <- "Standard Median Distance"
+  pca_title <- "Principle Component Analysis"
+  tsne_title <- "T-SNE Analysis"
+  dens_title <- "Density plot"
+  if (!is.null(title_suffix)) {
+    nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
+    libsize_title <- paste0(libsize_title, ": ", title_suffix)
+    boxplot_title <- paste0(boxplot_title, ": ", title_suffix)
+    corheat_title <- paste0(corheat_title, ": ", title_suffix)
+    smc_title <- paste0(smc_title, ": ", title_suffix)
+    disheat_title <- paste0(disheat_title, ": ", title_suffix)
+    smd_title <- paste0(smd_title, ": ", title_suffix)
+    pca_title <- paste0(pca_title, ": ", title_suffix)
+    tsne_title <- paste0(tsne_title, ": ", title_suffix)
+    dens_title <- paste0(dens_title, ": ", title_suffix)
+  }
+  message("Graphing number of non-zero genes with respect to CPM by library.")
+  nonzero_plot <- try(plot_nonzero(expt, title=nonzero_title, ...))
+  message("Graphing library sizes.")
+  libsize_plot <- try(plot_libsize(expt, title=libsize_title, ...))
+  message("Graphing a boxplot.")
+  boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
+  message("Graphing a correlation heatmap.")
+  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title, ...))
+  message("Graphing a standard median correlation.")
+  smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
+  message("Graphing a distance heatmap.")
+  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title, ...))
+  message("Graphing a standard median distance.")
+  smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
+  message("Graphing a PCA plot.")
+  pca <- try(plot_pca(expt, title=pca_title, ...))
+  message("Graphing a T-SNE plot.")
+  tsne <- try(plot_tsne(expt, title=tsne_title, ...))
+  message("Plotting a density plot.")
+  density <- try(plot_density(expt, title=dens_title))
+  message("Printing a color to condition legend.")
+  legend <- try(plot_legend(pca[["plot"]]))
 
-    qq_logs <- NULL
-    qq_ratios <- NULL
-    if (isTRUE(qq)) {
-        message("QQ plotting!")
-        qq_plots <- try(suppressWarnings(plot_qq_all(expt)))
-        qq_logs <- qq_plots$logs
-        qq_ratios <- qq_plots$ratios
-    }
+  qq_logs <- NULL
+  qq_ratios <- NULL
+  if (isTRUE(qq)) {
+    message("QQ plotting!")
+    qq_plots <- try(suppressWarnings(plot_qq_all(expt)))
+    qq_logs <- qq_plots[["logs"]]
+    qq_ratios <- qq_plots[["ratios"]]
+  }
 
-    ma_plots <- NULL
-    if (isTRUE(ma)) {
-        message("Many MA plots!")
-        ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
-    }
+  ma_plots <- NULL
+  if (isTRUE(ma)) {
+    message("Many MA plots!")
+    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
+  }
 
-    ret_data <- list(
-        "nonzero" = nonzero_plot,
-        "libsize" = libsize_plot,
-        "boxplot" = boxplot,
-        "corheat" = corheat[["plot"]],
-        "smc" = smc,
-        "disheat" = disheat[["plot"]],
-        "smd" = smd,
-        "pcaplot" = pca[["plot"]],
-        "pcatable" = pca[["table"]],
-        "pcares" = pca[["res"]],
-        "pcavar" = pca[["variance"]],
-        "tsneplot" = tsne[["plot"]],
-        "tsnetable" = tsne[["table"]],
-        "tsneres" = tsne[["res"]],
-        "tsnevar" = tsne[["variance"]],
-        "density" = density,
-        "legend" = legend,
-        "qqlog" = qq_logs,
-        "qqrat" = qq_ratios,
-        "ma" = ma_plots)
-    new_options <- options(old_options)
-    return(ret_data)
+  ret_data <- list(
+    "nonzero" = nonzero_plot,
+    "libsize" = libsize_plot,
+    "boxplot" = boxplot,
+    "corheat" = corheat[["plot"]],
+    "smc" = smc,
+    "disheat" = disheat[["plot"]],
+    "smd" = smd,
+    "pcaplot" = pca[["plot"]],
+    "pcatable" = pca[["table"]],
+    "pcares" = pca[["res"]],
+    "pcavar" = pca[["variance"]],
+    "tsneplot" = tsne[["plot"]],
+    "tsnetable" = tsne[["table"]],
+    "tsneres" = tsne[["res"]],
+    "tsnevar" = tsne[["variance"]],
+    "density" = density,
+    "legend" = legend,
+    "qqlog" = qq_logs,
+    "qqrat" = qq_ratios,
+    "ma" = ma_plots)
+  new_options <- options(old_options)
+  return(ret_data)
 }
 
 #' Scab the legend from a PCA plot and print it alone
@@ -155,24 +155,24 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 #' @return A legend!
 #' @export
 plot_legend <- function(stuff) {
-    plot <- NULL
-    if (class(stuff)[[1]] == "gg") {
-        ## Then assume it is a pca plot
-        plot <- stuff
-    } else {
-        plot <- plot_pca(stuff)[["plot"]]
-    }
+  plot <- NULL
+  if (class(stuff)[[1]] == "gg") {
+    ## Then assume it is a pca plot
+    plot <- stuff
+  } else {
+    plot <- plot_pca(stuff)[["plot"]]
+  }
 
-    tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
-    leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
-    legend <- tmp[["grobs"]][[leg]]
-    grid::grid.newpage()
-    grid::grid.draw(legend)
-    legend_plot <- grDevices::recordPlot()
-    ret <- list(
-        colors = plot[["data"]][, c("condition", "batch", "colors")],
-        plot = legend_plot)
-    return(ret)
+  tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
+  leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
+  legend <- tmp[["grobs"]][[leg]]
+  grid::grid.newpage()
+  grid::grid.draw(legend)
+  legend_plot <- grDevices::recordPlot()
+  ret <- list(
+    colors = plot[["data"]][, c("condition", "batch", "colors")],
+    plot = legend_plot)
+  return(ret)
 }
 
 ## I thought multiplot() was a part of ggplot(), but no, weird:
@@ -192,30 +192,30 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   ##  plots <- c(list(...), plotlist)
   numPlots <- length(plots)
   if (is.null(cols)) {
-      cols <- ceiling(sqrt(length(plots)))
+    cols <- ceiling(sqrt(length(plots)))
   }
   ## If layout is NULL, then use 'cols' to determine layout
   if (is.null(layout)) {
-      ## Make the panel
-      ## ncol: Number of columns of plots
-      ## nrow: Number of rows needed, calculated from # of cols
-      layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
-                       ncol=cols, nrow=ceiling(numPlots / cols))
+    ## Make the panel
+    ## ncol: Number of columns of plots
+    ## nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
+                     ncol=cols, nrow=ceiling(numPlots / cols))
   }
 
   if (numPlots==1) {
-      print(plots[[1]])
+    print(plots[[1]])
   } else {
-      ## Set up the page
-      grid::grid.newpage()
-      grid::pushViewport(grid::viewport(layout=grid::grid.layout(nrow(layout), ncol(layout))))
-      ## Make each plot, in the correct location
-      for (i in 1:numPlots) {
-          ## Get the i,j matrix positions of the regions that contain this subplot
-          matchidx <- as.data.frame(which(layout == i, arr.ind=TRUE))
-          print(plots[[i]], vp=grid::viewport(layout.pos.row=matchidx$row,
-                                              layout.pos.col=matchidx$col))
-      }
+    ## Set up the page
+    grid::grid.newpage()
+    grid::pushViewport(grid::viewport(layout=grid::grid.layout(nrow(layout), ncol(layout))))
+    ## Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      ## Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind=TRUE))
+      print(plots[[i]], vp=grid::viewport(layout.pos.row=matchidx[["row"]],
+                                          layout.pos.col=matchidx[["col"]]))
+    }
   }
 }
 

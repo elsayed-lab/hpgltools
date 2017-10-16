@@ -5,11 +5,12 @@
 \title{Combine portions of deseq/limma/edger table output.}
 \usage{
 combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
+  sig_excel = NULL, abundant_excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
   include_deseq = TRUE, include_edger = TRUE, include_basic = TRUE,
   rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
-  compare_plots = TRUE, padj_type = "fdr")
+  compare_plots = TRUE, padj_type = "fdr", ...)
 }
 \arguments{
 \item{all_pairwise_result}{Output from all_pairwise().}
@@ -17,6 +18,10 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL, excel = NULL,
 \item{extra_annot}{Add some annotation information?}
 
 \item{excel}{Filename for the excel workbook, or null if not printed.}
+
+\item{sig_excel}{Filename for writing significant tables.}
+
+\item{abundant_excel}{Filename for writing abundance tables.}
 
 \item{excel_title}{Title for the excel sheet(s).  If it has the
 string 'YYY', that will be replaced by the contrast name.}
@@ -46,8 +51,9 @@ certain contrasts in specific orders and orientations.}
 
 \item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to}
 
-\item{padj_type}{Add a consistent p adjustment of this type.
-exclude comparison plots in the summary sheet.}
+\item{padj_type}{Add a consistent p adjustment of this type.}
+
+\item{...}{Arguments passed to significance and abundance tables.}
 }
 \value{
 Table combining limma/edger/deseq outputs.

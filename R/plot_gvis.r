@@ -85,7 +85,7 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
 #' @return NULL, but along the way an html file is generated which contains a googleVis volcano
 #'  plot.
 #' @seealso \pkg{googleVis}
-#'  \code{\link{plot_volcano}}
+#'  \code{\link{plot_de_volcano}}
 #' @examples
 #' \dontrun{
 #'  plot_gvis_volcano(voomed_data, toptable_data, filename="html/fun_ma_plot.html",

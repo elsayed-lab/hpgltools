@@ -8,7 +8,7 @@ from the combined tables.}
 extract_significant_genes(combined, according_to = "all", fc = 1,
   p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
   p_type = "adj", invert_barplots = FALSE,
-  excel = "excel/significant_genes.xlsx", siglfc_cutoffs = c(0, 1, 2))
+  excel = "excel/significant_genes.xlsx", siglfc_cutoffs = c(0, 1, 2), ...)
 }
 \arguments{
 \item{combined}{Output from combine_de_tables().}
@@ -35,6 +35,8 @@ the deseq, edger, limma, basic, meta, or all.}
 \item{excel}{Write the results to this excel file, or NULL.}
 
 \item{siglfc_cutoffs}{Set of cutoffs used to define levels of 'significant.'}
+
+\item{...}{Arguments passed into arglist.}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.

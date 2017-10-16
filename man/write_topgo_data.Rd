@@ -5,8 +5,8 @@
 \title{Make a pretty table of topgo data in excel.}
 \usage{
 write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
-  add_trees = TRUE, pval = 0.1, add_plots = TRUE, height = 15,
-  width = 10, ...)
+  add_trees = TRUE, order_by = "qvalue", decreasing = FALSE, pval = 0.1,
+  add_plots = TRUE, height = 15, width = 10, ...)
 }
 \arguments{
 \item{topgo_result}{A set of results from simple_topgo().}
@@ -16,6 +16,10 @@ write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
 \item{wb}{Workbook object to write to.}
 
 \item{add_trees}{Include topgoish ontology trees?}
+
+\item{order_by}{Which column to order the results by?}
+
+\item{decreasing}{In forward or reverse order?}
 
 \item{pval}{Choose a cutoff for reporting by p-value.}
 

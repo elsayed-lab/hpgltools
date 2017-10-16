@@ -18,30 +18,31 @@
 #' }
 #' @export
 plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="factor") {
-    chosen <- expt[["design"]][[chosen_factor]]
-    sv_df <- data.frame(
-        "adjust" = svest[, 1],  ## Take a single estimate from compare_estimates()
-        "factors" = chosen,
-        "samplenames" = rownames(expt[["design"]])
-    )
-    samplenames <- rownames(expt[["design"]])
-    my_colors <- expt[["colors"]]
+  chosen <- expt[["design"]][[chosen_factor]]
+  sv_df <- data.frame(
+    "adjust" = svest[, 1],  ## Take a single estimate from compare_estimates()
+    "factors" = chosen,
+    "samplenames" = rownames(expt[["design"]])
+  )
+  samplenames <- rownames(expt[["design"]])
+  my_colors <- expt[["colors"]]
 
-    sv_melted <- reshape2::melt(sv_df, idvars="factors")
-    minval <- min(sv_df$adjust)
-    maxval <- max(sv_df$adjust)
-    my_binwidth <- (maxval - minval) / 40
-    sv_plot <- ggplot2::ggplot(sv_melted, ggplot2::aes_string(x="factors", y="value")) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
-                              stackdir="center", binpositions="all",
-                              colour="black", fill=my_colors) +
-        ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
-        ggplot2::ylab(paste0("1st surrogate variable estimation")) +
-        ##ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
-        ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="samplenames"),
-                           angle=45, size=3, vjust=2) +
-        ggplot2::theme_bw()
-    return(sv_plot)
+  sv_melted <- reshape2::melt(sv_df, idvars="factors")
+  minval <- min(sv_df$adjust)
+  maxval <- max(sv_df$adjust)
+  my_binwidth <- (maxval - minval) / 40
+  sv_plot <- ggplot2::ggplot(sv_melted, ggplot2::aes_string(x="factors", y="value")) +
+    ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
+                          stackdir="center", binpositions="all",
+                          colour="black", fill=my_colors) +
+    ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
+    ggplot2::ylab(paste0("1st surrogate variable estimation")) +
+    ##ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
+    ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="samplenames"),
+                       angle=45, size=3, vjust=2) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +
+    ggplot2::theme_bw()
+  return(sv_plot)
 }
 
 ## I want to make some notes on getting ggplot plots to look like I want:
@@ -81,59 +82,61 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
 #' }
 #' @export
 plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
-    chosen <- expt[["design"]][[batch_column]]
-    num_batches <- length(unique(chosen))
+  chosen <- expt[["design"]][[batch_column]]
+  num_batches <- length(unique(chosen))
 
-    factor_df <- data.frame(
-        "sample" = expt[["design"]][["sampleid"]],
-        "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
-        "fill" = expt[["colors"]],
-        "condition" = expt[["conditions"]],
-        "batch" = expt[["batches"]],
-        "shape" = 21,
-        "color" = "black",
-        "svs" = svs[, 1])
-    color_list <- as.character(factor_df[["fill"]])
-    names(color_list) <- as.character(factor_df[["condition"]])
+  factor_df <- data.frame(
+    "sample" = expt[["design"]][["sampleid"]],
+    "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
+    "fill" = expt[["colors"]],
+    "condition" = expt[["conditions"]],
+    "batch" = expt[["batches"]],
+    "shape" = 21,
+    "color" = "black",
+    "svs" = svs[, 1])
+  color_list <- as.character(factor_df[["fill"]])
+  names(color_list) <- as.character(factor_df[["condition"]])
 
-    sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
-        ggplot2::geom_dotplot(binaxis="y", stackdir="center",
-                              binpositions="all", colour="black",
-                              ##fill=factor_df[["fill"]])
-                              fill=color_list)
+  sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
+    ggplot2::geom_dotplot(binaxis="y", stackdir="center",
+                          binpositions="all", colour="black",
+                          ##fill=factor_df[["fill"]])
+                          fill=color_list)
 
-    factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
-                                  aes_string(x="factor",
-                                             y="svs",
-                                             fill="condition",
-                                             colour="condition",
-                                             shape="shape")) +
-        ggplot2::geom_point(size=5,
-                            aes_string(shape="as.factor(shape)",
-                                       colour="condition",
-                                       fill="condition")) +
-        ggplot2::geom_point(size=5,
-                            colour="black",
-                            show.legend=FALSE,
-                            aes_string(shape="as.factor(shape)",
-                                       fill="condition")) +
-        ggplot2::scale_color_manual(values=color_list) +
-        ggplot2::scale_fill_manual(values=color_list) +
-        ggplot2::scale_shape_manual(values=21, guide=FALSE)
+  factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
+                                aes_string(x="factor",
+                                           y="svs",
+                                           fill="condition",
+                                           colour="condition",
+                                           shape="shape")) +
+    ggplot2::geom_point(size=5,
+                        aes_string(shape="as.factor(shape)",
+                                   colour="condition",
+                                   fill="condition")) +
+    ggplot2::geom_point(size=5,
+                        colour="black",
+                        show.legend=FALSE,
+                        aes_string(shape="as.factor(shape)",
+                                   fill="condition")) +
+    ggplot2::scale_color_manual(values=color_list) +
+    ggplot2::scale_fill_manual(values=color_list) +
+    ggplot2::scale_shape_manual(values=21, guide=FALSE)
 
-    svs_sample <- ggplot(factor_df, aes_string(x="sample", y="svs")) +
-        ggplot2::geom_dotplot(binaxis="y", stackdir="center",
-                              binpositions="all", colour="black",
-                              fill=factor_df[["fill"]]) +
-        ggplot2::geom_text(aes_string(x="sample", y="svs", label="batch"),
-                          size=4, vjust=2) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  svs_sample <- ggplot(factor_df, aes_string(x="sample", y="svs")) +
+    ggplot2::geom_dotplot(binaxis="y", stackdir="center",
+                          binpositions="all", colour="black",
+                          fill=factor_df[["fill"]]) +
+    ggplot2::geom_text(aes_string(x="sample", y="svs", label="batch"),
+                       size=4, vjust=2) +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
+                                                     angle=90, hjust=1)) +
+    ggplot2::theme_bw()
 
-    plots <- list(
-        "sample_factor" = sample_factor,
-        "factor_svs" = factor_svs,
-        "svs_sample" = svs_sample)
-    return(plots)
+  plots <- list(
+    "sample_factor" = sample_factor,
+    "factor_svs" = factor_svs,
+    "svs_sample" = svs_sample)
+  return(plots)
 }
 
 #' make a dotplot of some categorised factors and a set of principle components.
@@ -152,21 +155,22 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
 #' }
 #' @export
 plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") {
-    samplenames <- rownames(expt[["design"]])
+  samplenames <- rownames(expt[["design"]])
 
-    my_colors <- expt[["colors"]]
-    minval <- min(pc_df[[component]])
-    maxval <- max(pc_df[[component]])
-    my_binwidth <- (maxval - minval) / 40
-    sv_plot <- ggplot2::ggplot(pc_df, aes_string(x="factors", y="value")) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
-                              stackdir="center", binpositions="all",
-                              colour="black", fill=my_colors) +
-        ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
-        ggplot2::ylab(paste0("1st surrogate variable estimation")) +
-        ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
-        ggplot2::theme_bw()
-    return(sv_plot)
+  my_colors <- expt[["colors"]]
+  minval <- min(pc_df[[component]])
+  maxval <- max(pc_df[[component]])
+  my_binwidth <- (maxval - minval) / 40
+  sv_plot <- ggplot2::ggplot(pc_df, aes_string(x="factors", y="value")) +
+    ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
+                          stackdir="center", binpositions="all",
+                          colour="black", fill=my_colors) +
+    ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
+    ggplot2::ylab(paste0("1st surrogate variable estimation")) +
+    ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black")) +
+    ggplot2::theme_bw()
+  return(sv_plot)
 }
 
 #' Make an R plot of the standard median correlation or distance among samples.
@@ -199,100 +203,102 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #' }
 #' @export
 plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
-    data_class <- class(data)[1]
-    arglist <- list(...)
-    conditions <- NULL
-    if (data_class == "expt") {
-        design <- data[["design"]]
-        colors <- data[["colors"]]
-        names <- data[["names"]]
-        conditions <- data[["conditions"]]
-        data <- exprs(data)
-    } else if (data_class == "ExpressionSet") {
-        design <- pData(data)
-        conditions <- pData(data)[["conditions"]]
-        data <- exprs(data)
-    } else if (data_class == "matrix" | data_class == "data.frame") {
-        data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
-    } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-    }
+  data_class <- class(data)[1]
+  arglist <- list(...)
+  conditions <- NULL
+  if (data_class == "expt") {
+    design <- data[["design"]]
+    colors <- data[["colors"]]
+    names <- data[["names"]]
+    conditions <- data[["conditions"]]
+    data <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    design <- pData(data)
+    conditions <- pData(data)[["conditions"]]
+    data <- exprs(data)
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
 
-    chosen_palette <- "Dark2"
-    if (!is.null(arglist[["palette"]])) {
-        chosen_palette <- arglist[["palette"]]
-    }
+  chosen_palette <- "Dark2"
+  if (!is.null(arglist[["palette"]])) {
+    chosen_palette <- arglist[["palette"]]
+  }
 
-    if (is.null(names)) {
-        names <- colnames(data)
-    }
+  if (is.null(names)) {
+    names <- colnames(data)
+  }
 
-    if (is.null(colors)) {
-        colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
-    }
-    colors <- as.character(colors)
+  if (is.null(colors)) {
+    colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
+  }
+  colors <- as.character(colors)
 
-    properties <- NULL
-    if (method == "pearson" | method == "spearman" | method == "robust") {
-        message("Performing correlation.")
-        properties <- hpgl_cor(data, method=method)
-    } else {
-        message("Performing distance.")
-        properties <- as.matrix(dist(t(data)))
-    }
+  properties <- NULL
+  if (method == "pearson" | method == "spearman" | method == "robust") {
+    message("Performing correlation.")
+    properties <- hpgl_cor(data, method=method)
+  } else {
+    message("Performing distance.")
+    properties <- as.matrix(dist(t(data)))
+  }
 
-    prop_median <- matrixStats::rowMedians(properties)
-    prop_spread <- stats::quantile(prop_median, p=c(1, 3) / 4)
-    prop_iqr <- diff(prop_spread)
+  prop_median <- matrixStats::rowMedians(properties)
+  prop_spread <- stats::quantile(prop_median, p=c(1, 3) / 4)
+  prop_iqr <- diff(prop_spread)
 
-    outer_limit <- NULL
-    ylimit <- NULL
-    if (method == "pearson" | method == "spearman" | method == "robust") {
-        outer_limit <- prop_spread[1] - 1.5 * prop_iqr
-        ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
-        ylimit <- ylimit[[1]]
-    } else {
-        outer_limit <- prop_spread[2] + (1.5 * prop_iqr)
-        ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
-        ylimit <- ylimit[[2]]
-    }
+  outer_limit <- NULL
+  ylimit <- NULL
+  if (method == "pearson" | method == "spearman" | method == "robust") {
+    outer_limit <- prop_spread[1] - 1.5 * prop_iqr
+    ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
+    ylimit <- ylimit[[1]]
+  } else {
+    outer_limit <- prop_spread[2] + (1.5 * prop_iqr)
+    ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
+    ylimit <- ylimit[[2]]
+  }
 
-    if (is.null(conditions)) {
-        conditions <- colors
-    }
-    sm_df <- data.frame(
-        "sample" = rownames(properties),
-        "sm" = prop_median,
-        "condition" = conditions,
-        "color" = colors)
-    color_listing <- sm_df[, c("condition", "color")]
-    color_listing <- unique(color_listing)
-    color_list <- as.character(color_listing[["color"]])
-    names(color_list) <- as.character(color_listing[["condition"]])
+  if (is.null(conditions)) {
+    conditions <- colors
+  }
+  sm_df <- data.frame(
+    "sample" = rownames(properties),
+    "sm" = prop_median,
+    "condition" = conditions,
+    "color" = colors)
+  color_listing <- sm_df[, c("condition", "color")]
+  color_listing <- unique(color_listing)
+  color_list <- as.character(color_listing[["color"]])
+  names(color_list) <- as.character(color_listing[["condition"]])
 
-    minval <- min(sm_df[["sm"]])
-    maxval <- max(sm_df[["sm"]])
-    my_binwidth <- (maxval - minval) / 40
+  minval <- min(sm_df[["sm"]])
+  maxval <- max(sm_df[["sm"]])
+  my_binwidth <- (maxval - minval) / 40
 
-    sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
-        ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
-        ggplot2::geom_dotplot(binwidth=my_binwidth,
-                              binaxis="y",
-                              stackdir="center",
-                              binpositions="all",
-                              colour="black",
-                              dotsize=1,
-                              aes_string(fill="as.factor(condition)")) +
-        ggplot2::scale_fill_manual(name="Condition",
-                                   guide="legend",
-                                   values=color_list) +
-        ggplot2::ylab(paste0("Standard Median ", method)) +
-        ggplot2::xlab(paste0("Sample")) +
-        ggplot2::ggtitle(title) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1))
+  sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
+    ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
+    ggplot2::geom_dotplot(binwidth=my_binwidth,
+                          binaxis="y",
+                          stackdir="center",
+                          binpositions="all",
+                          colour="black",
+                          dotsize=1,
+                          aes_string(fill="as.factor(condition)")) +
+    ggplot2::scale_fill_manual(name="Condition",
+                               guide="legend",
+                               values=color_list) +
+    ggplot2::ylab(paste0("Standard Median ", method)) +
+    ggplot2::xlab(paste0("Sample")) +
+    ggplot2::ggtitle(title) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
+                                                     angle=90, hjust=1))
 
-    return(sm_plot)
+            
+  return(sm_plot)
 }
 
 ## EOF

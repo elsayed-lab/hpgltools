@@ -104,7 +104,7 @@ expt_snp <- function(expt,
         new_dt <<- rbind(new_dt, row)
     }
     ## unused_var <- try(lapply(coverage_result, snp_extract_coverage))
-    unused_var <- try(multicore::mclapply(coverage_result, snp_extract_coverage))
+    unused_var <- try(parallel::mclapply(coverage_result, snp_extract_coverage))
     if (class(unused_var) == "try-error") {
         message("There was an error when creating the data table of coverage, hopefully the data is salvageable.")
     }

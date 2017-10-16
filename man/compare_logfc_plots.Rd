@@ -18,6 +18,13 @@ There are some peculiar discrepencies among these tools, what is up with that?
 \details{
 Invoked by combine_de_tables() in order to compare the results.
 }
+\examples{
+ \dontrun{
+  limma_vs_deseq_vs_edger <- compare_logfc_plots(combined)
+  ## Get a list of plots of logFC by contrast of LvD, LvE, DvE
+  ## It provides comparisons against the basic analysis, but who cares about that.
+}
+}
 \seealso{
 \code{\link{plot_linear_scatter}}
 }

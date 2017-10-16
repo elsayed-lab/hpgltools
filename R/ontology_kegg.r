@@ -743,17 +743,16 @@ myretrieveKGML <- function(pathwayid, organism, destfile, method="wget",
                            hostname="http://www.kegg.jp", ...) {
     kgml <- mygetKGMLurl(pathwayid=pathwayid, organism=organism, hostname=hostname)
     referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=", pathwayid, "&mapscale=&show_description=hide")
-    message(kgml)
-    message(referer)
-    cmdline <- paste0('wget --header=',
+    cmdline <- paste0("wget --header=",
                       shQuote("Accept: text/html"),
-                      ' --user-agent=',
+                      " --user-agent=",
                       shQuote("Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0"),
-                      ' --referer=',
+                      " --referer=",
                       shQuote(referer),
-                      ' ', shQuote(kgml),
-                      ' -O ', shQuote(destfile))
-    status <- sm(system(cmdline))
+                      " ", shQuote(kgml),
+                      " -O ", shQuote(destfile),
+                      " 2>/dev/null 1>&2")
+    status <- system(cmdline)
     return(invisible(kgml))
 }
 

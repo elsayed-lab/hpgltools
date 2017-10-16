@@ -5,9 +5,9 @@
 \title{Given the set of significant genes from combine_de_tables(), provide a view of how many are
 significant up/down.}
 \usage{
-significant_barplots(combined, fc_cutoffs = c(0, 1, 2),
-  fc_column = "limma_logfc", p_type = "adj", invert = FALSE, p = 0.05,
-  z = NULL, order = NULL, maximum = NULL, ...)
+significant_barplots(combined, fc_cutoffs = c(0, 1, 2), invert = FALSE,
+  p = 0.05, z = NULL, p_type = "adj", according_to = "all",
+  order = NULL, maximum = NULL, ...)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables and/or extract_significant_genes().}
@@ -15,21 +15,23 @@ significant_barplots(combined, fc_cutoffs = c(0, 1, 2),
 \item{fc_cutoffs}{Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
 followed by 2 fold and 4 fold cutoffs.}
 
-\item{fc_column}{The column in the master-table to use for FC cutoffs.}
-
-\item{p_type}{Adjusted or not?}
-
 \item{invert}{Reverse the order of contrasts for readability?}
 
 \item{p}{Chosen p-value cutoff.}
 
 \item{z}{Choose instead a z-score cutoff.}
 
+\item{p_type}{Adjusted or not?}
+
+\item{according_to}{limma, deseq, edger, basic, or all of the above.}
+
 \item{order}{Choose a specific order for the plots.}
 
 \item{maximum}{Set a specific limit on the number of genes on the x-axis.}
 
 \item{...}{More arguments are passed to arglist.}
+
+\item{t_type}{Adjusted?}
 }
 \value{
 list containing the significance bar plots and some information to hopefully help interpret them.

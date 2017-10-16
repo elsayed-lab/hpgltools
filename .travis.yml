@@ -1,45 +1,27 @@
 language: r
 r: bioc-release
-##sudo: required
+sudo: false
 bioc_required: true
 warnings_are_errors: false
 
 cache:
+  timeout: 3000
   packages: true
-  apt: true
-  timeout: 1000
   directories:
-    - $TRAVIS_BUILD_DIR/packrat/src
-    - $TRAVIS_BUILD_DIR/packrat/lib
-
-## deploy:
-##   skip_cleanup: true
+          - ${TRAVIS_BUILD_DIR}/packrat/lib
+          - ${TRAVIS_BUILD_DIR}/_bookdown_files
 
 env:
   global:
-    - USE_PACKRAT=1
     - R_CHECK_ARGS="--no-build-vignettes --no-manual"
     - _R_CHECK_TIMINGS_="0"
+    - R_MAX_NUM_DLLS=256
 
-r_github_packages:
-  - cran/survival
-  - cran/Hmisc
-
-##addons:
-##  apt:
-##    packages:
-##      - r-recommended
-
-##before_install:
-##  - sudo apt-get -qq update
-##  - sudo apt-get -y install $(apt-cache search r-bioc | awk '{print $1}' | grep -v "ebimage")
+install: 
+  - make restore
 
 script:
-  - make install
   - make test
-
-install:
-  - R -e "0" --args --bootstrap-packrat
 
 notifications:
   email: false
