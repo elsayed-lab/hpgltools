@@ -29,7 +29,7 @@
 #'  \code{\link{read_counts_expt}} \code{\link[hash]{as.list.hash}}
 #' @examples
 #' \dontrun{
-#'  new_experiment = create_expt("some_csv_file.csv", color_hash)
+#'  new_experiment <- create_expt("some_csv_file.csv", color_hash)
 #'  ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
@@ -108,6 +108,8 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
   colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                        x=colnames(sample_definitions))
+  ## In case I am a doofus and repeated some column names.
+  colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
   ## Check that condition and batch have been filled in.
   sample_columns <- colnames(sample_definitions)
   sample_column <- NULL
@@ -154,7 +156,6 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
     message("Did not find the condition column in the sample sheet.")
     message("Filling it in as undefined.")
     sample_definitions[["condition"]] <- "undefined"
-
   }
   found_batch <- "batch" %in% sample_columns
   if (!isTRUE(found_batch)) {

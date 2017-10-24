@@ -92,6 +92,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
                             license="Artistic-2.0"
                           )
   organdb_path <- clean_pkg(final_dir)
+  organdb_path <- clean_pkg(organdb_path, removal="_", replace="", sqlite=FALSE)
   organdb_path <- clean_pkg(organdb_path, removal="_like", replace="like", sqlite=FALSE)
   if (class(organdb) == "list") {
     inst <- devtools::install(organdb_path)
@@ -329,6 +330,7 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
                                          taxa[["species_strain"]], ".v",
                                          entry[["SourceVersion"]], ".eg.db"))
   expected_pkg <- gsub(pattern="_like", replacement="like", x=first_expected_pkg)
+  expected_pkg <- gsub(pattern="_", replacement="", x=first_expected_pkg)
   first_expected_path <- file.path(dir, first_expected_pkg)
   expected_path <- file.path(dir, expected_pkg)
   inst <- as.data.frame(installed.packages())
@@ -492,6 +494,7 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
 
   ## Clean up any strangeness in the DESCRIPTION file
   orgdb_path <- clean_pkg(orgdb_path)
+  orgdb_path <- clean_pkg(orgdb_path, removal="_", replace="")
   orgdb_path <- clean_pkg(orgdb_path, removal="_like", replace="like")
   testthat::expect_equal(expected_path, orgdb_path)
   ## And install the resulting package.
@@ -602,6 +605,7 @@ make_eupath_txdb <- function(entry, dir=".") {
 
   install_dir <- paste0(dir, "/", package_name)
   install_dir <- clean_pkg(install_dir)
+  install_dir <- clean_pkg(install_dir, removal="_", replace="")
   install_dir <- clean_pkg(install_dir, removal="_like", replace="like")
   result <- sm(try(devtools::install(install_dir)))
   result <- basename(install_dir)

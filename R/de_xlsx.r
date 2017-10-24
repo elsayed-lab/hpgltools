@@ -191,9 +191,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   stringsAsFactors=FALSE)
   summary_legend <- data.frame(rbind(
     c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
-    c("fc_meta", "The mean fold-change value of limma/deseq/edger."),
-    c("fc_var", "The variance between limma/deseq/edger."),
-    c("fc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
+    c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
+    c("lfc_var", "The variance between limma/deseq/edger."),
+    c("lfc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
     c("p_meta", "A meta-p-value of the mean p-values."),
     c("p_var", "Variance among the 3 p-values."),
     c("The last columns: top plot left",
@@ -634,8 +634,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         plot_column <- xls_result[["end_col"]] + 2
         message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
         ## Make some venn diagrams comparing deseq/limma/edger!
-        venn_list <- try(de_venn(ddd, fc=0, adjp=adjp))
-        venn_sig_list <- try(de_venn(ddd, fc=1, adjp=adjp))
+        venn_list <- try(de_venn(ddd, lfc=0, adjp=adjp))
+        venn_sig_list <- try(de_venn(ddd, lfc=1, adjp=adjp))
 
         ## If they worked, add them to the excel sheets after the data,
         ## but make them smaller than other graphs.
@@ -875,7 +875,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param include_edger  Include tables from edger?
 #' @param include_limma  Include tables from limma?
 #' @param include_basic  Include the basic table?
-#' @param fc_cutoff  Preferred logfoldchange cutoff.
+#' @param lfc_cutoff  Preferred logfoldchange cutoff.
 #' @param p_cutoff  Preferred pvalue cutoff.
 #' @param excludes  Set of genes to exclude from the output.
 #' @return List containing a) Dataframe containing the merged
@@ -885,7 +885,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 combine_de_table <- function(li, ed, de, ba, table_name,
                              annot_df=NULL, inverse=FALSE, adjp=TRUE, padj_type="fdr",
                              include_deseq=TRUE, include_edger=TRUE, include_limma=TRUE,
-                             include_basic=TRUE, fc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
+                             include_basic=TRUE, lfc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
   if (!padj_type %in% p.adjust.methods) {
     warning(paste0("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
 Defaulting to fdr."))
@@ -1003,17 +1003,17 @@ Defaulting to fdr."))
                      as.numeric(comb[["edger_logfc"]]),
                      as.numeric(comb[["deseq_logfc"]]))
     temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-    comb[["fc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
-    comb[["fc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
-    comb[["fc_varbymed"]] <- comb[["fc_var"]] / comb[["fc_meta"]]
+    comb[["lfc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
+    comb[["lfc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
+    comb[["lfc_varbymed"]] <- comb[["lfc_var"]] / comb[["lfc_meta"]]
     temp_p <- cbind(as.numeric(comb[["limma_p"]]),
                     as.numeric(comb[["edger_p"]]),
                     as.numeric(comb[["deseq_p"]]))
     comb[["p_meta"]] <- rowMeans(temp_p, na.rm=TRUE)
     comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm=TRUE)
-    comb[["fc_meta"]] <- signif(x=comb[["fc_meta"]], digits=4)
-    comb[["fc_var"]] <- format(x=comb[["fc_var"]], digits=4, scientific=TRUE)
-    comb[["fc_varbymed"]] <- format(x=comb[["fc_varbymed"]], digits=4, scientific=TRUE)
+    comb[["lfc_meta"]] <- signif(x=comb[["lfc_meta"]], digits=4)
+    comb[["lfc_var"]] <- format(x=comb[["lfc_var"]], digits=4, scientific=TRUE)
+    comb[["lfc_varbymed"]] <- format(x=comb[["lfc_varbymed"]], digits=4, scientific=TRUE)
     comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
     comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
   }
@@ -1042,8 +1042,8 @@ Defaulting to fdr."))
     }  ## End iterating through every element of the exclude list
   }
 
-  up_fc <- fc_cutoff
-  down_fc <- -1.0 * fc_cutoff
+  up_fc <- lfc_cutoff
+  down_fc <- -1.0 * lfc_cutoff
   summary_table_name <- table_name
   if (isTRUE(inverse)) {
     summary_table_name <- paste0(summary_table_name, "-inverted")
@@ -1085,10 +1085,10 @@ Defaulting to fdr."))
       comb[["basic_logfc"]] <= down_fc & as.numeric(comb[["basic_p"]]) <= p_cutoff),
     "meta_up" = sum(comb[["fc_meta"]] >= up_fc),
     "meta_sigup" = sum(
-      comb[["fc_meta"]] >= up_fc & as.numeric(comb[["p_meta"]]) <= p_cutoff),
-    "meta_down" = sum(comb[["fc_meta"]] <= down_fc),
+      comb[["lfc_meta"]] >= up_fc & as.numeric(comb[["p_meta"]]) <= p_cutoff),
+    "meta_down" = sum(comb[["lfc_meta"]] <= down_fc),
     "meta_sigdown" = sum(
-      comb[["fc_meta"]] <= down_fc & as.numeric(comb[["p_meta"]]) <= p_cutoff)
+      comb[["lfc_meta"]] <= down_fc & as.numeric(comb[["p_meta"]]) <= p_cutoff)
   )
 
   ret <- list(
@@ -1283,7 +1283,7 @@ extract_siggenes <- function(...) {
 #' @param combined  Output from combine_de_tables().
 #' @param according_to  What tool(s) decide 'significant?'  One may use
 #'  the deseq, edger, limma, basic, meta, or all.
-#' @param fc  Log fold change to define 'significant'.
+#' @param lfc  Log fold change to define 'significant'.
 #' @param p  (Adjusted)p-value to define 'significant'.
 #' @param sig_bar  Add bar plots describing various cutoffs of 'significant'?
 #' @param z  Z-score to define 'significant'.
@@ -1297,7 +1297,7 @@ extract_siggenes <- function(...) {
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-extract_significant_genes <- function(combined, according_to="all", fc=1.0, p=0.05, sig_bar=TRUE,
+extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0.05, sig_bar=TRUE,
                                       z=NULL, n=NULL, ma=TRUE, p_type="adj", invert_barplots=FALSE,
                                       excel="excel/significant_genes.xlsx",
                                       siglfc_cutoffs=c(0, 1, 2), ...) {
@@ -1342,7 +1342,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0, p=0.
   down_titles <- list()
   sig_list <- list()
   title_append <- ""
-  if (!is.null(fc)) {
+  if (!is.null(lfc)) {
     title_append <- paste0(title_append, " |log2fc|>=", fc)
   }
   if (!is.null(p)) {
@@ -1404,9 +1404,9 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0, p=0.
       c("basic_p", "Resulting p-value."),
       c("basic_adjp", "BH correction of the p-value."),
       c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
-      c("fc_meta", "The mean fold-change value of limma/deseq/edger."),
-      c("fc_var", "The variance between limma/deseq/edger."),
-      c("fc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
+      c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
+      c("lfc_var", "The variance between limma/deseq/edger."),
+      c("lfc_varbymed", "The ratio of the variance/median (closer to 0 means better agreement.)"),
       c("p_meta", "A meta-p-value of the mean p-values."),
       c("p_var", "Variance among the 3 p-values."),
       c("The last columns: top plot left",
@@ -1443,19 +1443,19 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0, p=0.
         single_ma <- NULL
         if (according == "limma") {
           single_ma <- extract_de_plots(
-            combined, type="limma", table=table_name, fc=fc,  pval_cutoff=p)
+            combined, type="limma", table=table_name, lfc=lfc,  pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "deseq") {
           single_ma <- extract_de_plots(
-            combined, type="deseq", table=table_name, fc=fc, pval_cutoff=p)
+            combined, type="deseq", table=table_name, lfc=lfc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "edger") {
           single_ma <- extract_de_plots(
-            combined, type="edger", table=table_name, fc=fc, pval_cutoff=p)
+            combined, type="edger", table=table_name, lfc=lfc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
         } else if (according == "basic") {
           single_ma <- extract_de_plots(
-            combined, type="basic", table=table_name, fc=fc, pval_cutoff=p)
+            combined, type="basic", table=table_name, lfc=lfc, pval_cutoff=p)
           single_ma <- single_ma[["ma"]][["plot"]]
         } else {
           message("Do not know this according type.")
@@ -1473,7 +1473,7 @@ extract_significant_genes <- function(combined, according_to="all", fc=1.0, p=0.
       }
 
       trimming <- get_sig_genes(
-        table, fc=fc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
+        table, lfc=lfc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
       trimmed_down[[table_name]] <- trimming[["down_genes"]]
@@ -1696,16 +1696,16 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.
 #'
 #' @param combined  A result from combine_de_tables().
-#' @param fc  Define significant via fold-change.
+#' @param lfc  Define significant via fold-change.
 #' @param p  Or p-value.
 #' @param z  Or z-score.
 #' @param p_type  Use normal or adjusted p-values.
 #' @param excel  An optional excel workbook to which to write.
 #' @export
-intersect_significant <- function(combined, fc=1.0, p=0.05,
+intersect_significant <- function(combined, lfc=1.0, p=0.05,
                                   z=NULL, p_type="adj",
                                   excel="excel/intersect_significant.xlsx") {
-  sig_genes <- sm(extract_significant_genes(combined, fc=fc, p=p,
+  sig_genes <- sm(extract_significant_genes(combined, lfc=lfc, p=p,
                                             z=z, p_type=p_type, excel=NULL))
 
   up_result_list <- list()
@@ -1733,68 +1733,68 @@ intersect_significant <- function(combined, fc=1.0, p=0.05,
       row_num <- 1
       xl_result <- write_xls(
         data=up_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by limma."))
       row_num <- row_num + nrow(up_result_list[[tab]][["l"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by DESeq2."))
       row_num <- row_num + nrow(up_result_list[[tab]][["d"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by EdgeR."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by EdgeR."))
       row_num <- row_num + nrow(up_result_list[[tab]][["e"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma and DESeq2."))
       row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma and EdgeR."))
       row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by DESeq2 and EdgeR."))
       row_num <- row_num + nrow(up_result_list[[tab]][["led"]]) + 2
       xl_result <- write_xls(
         data=up_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
 
       tabname <- paste0("down_", tab)
       row_num <- 1
       xl_result <- write_xls(
         data=down_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by limma."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by limma."))
       row_num <- row_num + nrow(down_result_list[[tab]][["l"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by DESeq2."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by DESeq2."))
       row_num <- row_num + nrow(down_result_list[[tab]][["d"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc, ", p-value: ", p, " by EdgeR."))
+        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by EdgeR."))
       row_num <- row_num + nrow(down_result_list[[tab]][["e"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma and DESeq2."))
       row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma and EdgeR."))
       row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by DESeq2 and EdgeR."))
       row_num <- row_num + nrow(down_result_list[[tab]][["led"]]) + 2
       xl_result <- write_xls(
         data=down_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", fc,
+        title=paste0("Genes deemed significant via logFC: ", lfc,
                      ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
     }
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
