@@ -19,7 +19,10 @@
 tnseq_saturation <- function(data, column="Reads") {
   table <- NULL
   if (class(data) == "character") {
-    table <- read.table(file=data, header=1)
+    table <- read.table(file=data, header=1, comment.char="")
+    if (colnames(table)[1] == "X.Start") {
+      colnames(table)[1] <- "Start"
+    }
   } else {
     table <- data
   }
@@ -27,7 +30,7 @@ tnseq_saturation <- function(data, column="Reads") {
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
   log2_data_list <- as.numeric(log2(data_list + 1))
-  data_plot <- plot_histogram(log2_data_list, bins=500)
+  data_plot <- plot_histogram(log2_data_list, bins=300)
   data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0,6)) +
     ggplot2::scale_y_continuous(limits=c(0,2))
 

@@ -29,8 +29,8 @@ limma <- new.env()
 load("de_limma.rda", envir=limma)
 table <- limma[["hpgl_limma"]][["all_tables"]][[1]]
 z_sig_genes <- sm(get_sig_genes(table, column="logFC", z=1)[["up_genes"]])
-fc_sig_genes <- sm(get_sig_genes(table, column="logFC", fc=1)[["up_genes"]])
-fcp_sig_genes <- sm(get_sig_genes(table, column="logFC", fc=1, p=0.05)[["up_genes"]])
+fc_sig_genes <- sm(get_sig_genes(table, column="logFC", lfc=1)[["up_genes"]])
+fcp_sig_genes <- sm(get_sig_genes(table, column="logFC", lfc=1, p=0.05)[["up_genes"]])
 top200_sig_genes <- sm(get_sig_genes(table, column="logFC", n=200)[["up_genes"]])
 
 expected <- 1852

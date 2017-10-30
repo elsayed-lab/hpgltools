@@ -1,4 +1,4 @@
-VERSION="201708"
+VERSION=2017.10
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
@@ -89,20 +89,21 @@ clean:
 	rm -rf tests/testthat/kegg_pathways
 	rm -rf tests/testthat/pathview
 	rm -rf tests/testthat/pathview_in
-	rm -rf tests/testthat/*.pdf
-	rm -rf tests/testthat/*.png
-	rm -rf tests/testthat/*.xlsx
-	rm -rf tests/testthat/*.rda
-	rm -rf tests/testthat/*.gff
-	rm -rf tests/testthat/*.gb
-	rm -rf tests/testthat/*.map
-	rm -rf tests/testthat/*.xml
-	rm -rf tests/testthat/*.Rdata
+	rm -f tests/testthat/*.pdf
+	rm -f tests/testthat/*.png
+	rm -f *.pdf
+	rm -f tests/testthat/*.xlsx
+	rm -f tests/testthat/*.rda
+	rm -f tests/testthat/*.gff
+	rm -f tests/testthat/*.gb
+	rm -f tests/testthat/*.map
+	rm -f tests/testthat/*.xml
+	rm -f tests/testthat/*.Rdata
 	rm -rf vignettes/circos
-	rm -rf vignettes/*.gff
-	rm -rf vignettes/*.pdf
+	rm -f vignettes/*.gff
+	rm -f vignettes/*.pdf
 	rm -rf hpgltools.Rcheck/
-	rm -rf hpgltools_${VERSION}.tar.gz
+	rm -f hpgltools_${VERSION}.tar.gz
 
 prereq:
 	@echo "Checking a few essential prerequisites.(maybe not needed with packrat)"

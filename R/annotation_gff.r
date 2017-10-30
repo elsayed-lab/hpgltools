@@ -24,16 +24,16 @@
 #' }
 #' @export
 get_gff_genelengths <- function(gff, type="gene", key="ID", ...) {
-    ret <- load_gff_annotations(gff, ...)
-    ret <- ret[ret[["type"]] == type, ]
-    ret <- ret[, c(key, "width")]
-    colnames(ret) <- c("ID", "width")
-    if (dim(ret)[1] == 0) {
-        stop(paste0("No genelengths were found. ",
-                    "Perhaps you are using the wrong 'type' or 'key' arguments, type is: ",
-                    type, ", key is: ", key))
-    }
-    return(ret)
+  ret <- load_gff_annotations(gff, ...)
+  ret <- ret[ret[["type"]] == type, ]
+  ret <- ret[, c(key, "width")]
+  colnames(ret) <- c("ID", "width")
+  if (dim(ret)[1] == 0) {
+    stop(paste0("No genelengths were found. ",
+                "Perhaps you are using the wrong 'type' or 'key' arguments, type is: ",
+                type, ", key is: ", key))
+  }
+  return(ret)
 }
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
@@ -56,38 +56,38 @@ get_gff_genelengths <- function(gff, type="gene", key="ID", ...) {
 #' }
 #' @export
 sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.names") {
-    if (is.null(annotdf) & is.null(gff)) {
-        stop("I need either a df with parents, children, and widths; or a gff filename.")
-    } else if (is.null(annotdf)) {
-        annotdf <- load_gff_annotations(gff)
-    }
+  if (is.null(annotdf) & is.null(gff)) {
+    stop("I need either a df with parents, children, and widths; or a gff filename.")
+  } else if (is.null(annotdf)) {
+    annotdf <- load_gff_annotations(gff)
+  }
 
-    tmp_data <- merge(data, annotdf, by=child)
-    rownames(tmp_data) <- tmp_data[["Row.names"]]
-    tmp_data <- tmp_data[-1]
-    ## Start out by summing the gene widths
-    column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
-    new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
-    rownames(new_data) <- column[["Parent"]]
-    colnames(new_data) <- c("width")
+  tmp_data <- merge(data, annotdf, by=child)
+  rownames(tmp_data) <- tmp_data[["Row.names"]]
+  tmp_data <- tmp_data[-1]
+  ## Start out by summing the gene widths
+  column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
+  new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
+  rownames(new_data) <- column[["Parent"]]
+  colnames(new_data) <- c("width")
 
-    for (c in 1:length(colnames(data))) {
-        column_name <- colnames(data)[[c]]
-        column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
-        rownames(column) <- column[["Parent"]]
-        new_data <- cbind(new_data, column[["x"]])
-    } ## End for loop
+  for (c in 1:length(colnames(data))) {
+    column_name <- colnames(data)[[c]]
+    column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
+    rownames(column) <- column[["Parent"]]
+    new_data <- cbind(new_data, column[["x"]])
+  } ## End for loop
 
-    width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
-    rownames(width_df) <- rownames(new_data)
-    colnames(width_df) <- c("width")
-    new_data <- new_data[-1]
-    colnames(new_data) <- colnames(data)
-    rownames(new_data) <- rownames(column)
-    ret <- list(
-        "width" = width_df,
-        "counts" = new_data)
-    return(ret)
+  width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
+  rownames(width_df) <- rownames(new_data)
+  colnames(width_df) <- c("width")
+  new_data <- new_data[-1]
+  colnames(new_data) <- colnames(data)
+  rownames(new_data) <- rownames(column)
+  ret <- list(
+    "width" = width_df,
+    "counts" = new_data)
+  return(ret)
 }
 
 #' Extract annotation information from a gff file into a df
@@ -116,57 +116,57 @@ sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL) {
-    if (!file.exists(gff)) {
-        stop(paste0("Unable to find the gff file: ", gff))
-    }
-    ret <- NULL
-    attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
-                  "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
-                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
-                  "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=FALSE)",
-                  "rtracklayer::import.gff(gff, format='gtf')",
-                  "rtracklayer::import.gff(gff)")
-    if (!is.null(try)) {
-        attempts <- c(paste0(try, "(gff)"), attempts)
-    }
+  if (!file.exists(gff)) {
+    stop(paste0("Unable to find the gff file: ", gff))
+  }
+  ret <- NULL
+  attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
+                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
+                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=FALSE)",
+                "rtracklayer::import.gff(gff, format='gtf')",
+                "rtracklayer::import.gff(gff)")
+  if (!is.null(try)) {
+    attempts <- c(paste0(try, "(gff)"), attempts)
+  }
 
-    annot <- NULL
-    for (att in 1:length(attempts)) {
-        annotations <- NULL
-        message(paste0("Trying attempt: ", attempts[[att]]))
-        attempt <- attempts[[att]]
-        eval_string <- paste0("annotations <- try(", attempt, ", silent=TRUE)")
-        eval(parse(text=eval_string))
-        if (class(annotations) == "try-error") {
-            rm(annotations)
-        } else if (is.null(GenomicRanges::as.data.frame(annotations, stringsAsFactors=FALSE)[[id_col]]) &
-                   is.null(GenomicRanges::as.data.frame(annotations, stringsAsFactors=FALSE)[[second_id_col]])) {
-            rm(annotations)
-        } else {
-            annot <- annotations
-            rm(annotations)
-            message("Had a successful gff import with ", attempt)
-            break
-        }
-    }
-    ret <- NULL
-    if (class(annot)[[1]] == "GRanges" & ret_type == "data.frame") {
-        ret <- GenomicRanges::as.data.frame(annot, stringsAsFactors=FALSE)
-        rm(annot)
-        if (!is.null(type)) {
-            index <- ret[, "type"] == type
-            ret <- ret[index, ]
-        }
-        message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
-    } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
-        ret <- annot
-        rm(annot)
-        message(paste0("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+  annot <- NULL
+  for (att in 1:length(attempts)) {
+    annotations <- NULL
+    message(paste0("Trying attempt: ", attempts[[att]]))
+    attempt <- attempts[[att]]
+    eval_string <- paste0("annotations <- try(", attempt, ", silent=TRUE)")
+    eval(parse(text=eval_string))
+    if (class(annotations) == "try-error") {
+      rm(annotations)
+    } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
+               is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
+      rm(annotations)
     } else {
-        stop("Unable to load gff file.")
+      annot <- annotations
+      rm(annotations)
+      message("Had a successful gff import with ", attempt)
+      break
     }
+  }
+  ret <- NULL
+  if (class(annot)[[1]] == "GRanges" & ret_type == "data.frame") {
+    ret <- GenomicRanges::as.data.frame(annot)
+    rm(annot)
+    if (!is.null(type)) {
+      index <- ret[, "type"] == type
+      ret <- ret[index, ]
+    }
+    message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+  } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
+    ret <- annot
+    rm(annot)
+    message(paste0("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+  } else {
+    stop("Unable to load gff file.")
+  }
 
-    return(ret)
+  return(ret)
 }
 
 #' Extract annotation information from a gff file into an irange object.
@@ -195,25 +195,25 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 #' }
 #' @export
 gff2irange <- function(gff, type=NULL) {
-    ret <- NULL
-    annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+  ret <- NULL
+  annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+  if (class(annotations) == "try-error") {
+    annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
     if (class(annotations) == "try-error") {
-        annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
-        if (class(annotations) == "try-error") {
-            stop("Could not extract the widths from the gff file.")
-        } else {
-            ret <- annotations
-        }
+      stop("Could not extract the widths from the gff file.")
     } else {
-        ret <- annotations
+      ret <- annotations
     }
-    ## The call to as.data.frame must be specified with the GenomicRanges namespace,
-    ## otherwise one gets an error about no method to coerce an S4 class to a vector.
-    if (!is.null(type)) {
-        index <- ret[, "type"] == type
-        ret <- ret[index, ]
-    }
-    return(ret)
+  } else {
+    ret <- annotations
+  }
+  ## The call to as.data.frame must be specified with the GenomicRanges namespace,
+  ## otherwise one gets an error about no method to coerce an S4 class to a vector.
+  if (!is.null(type)) {
+    index <- ret[, "type"] == type
+    ret <- ret[index, ]
+  }
+  return(ret)
 }
 
 #' Create a simple df from a gff which contains tooltips usable in googleVis graphs.
@@ -235,36 +235,36 @@ gff2irange <- function(gff, type=NULL) {
 #' }
 #' @export
 make_tooltips <- function(annotations, desc_col="description", type="gene", id_col="ID", ...) {
-    ## arglist <- list(...)
-    tooltip_data <- NULL
-    if (class(annotations) == "character") {
-        tooltip_data <- load_gff_annotations(gff=annotations, type=type)
-    } else if (class(annotations) == "data.frame") {
-        tooltip_data <- annotations
-    } else {
-        stop("This requires either a filename or data frame.")
-    }
-    if (is.null(tooltip_data[[id_col]])) {
-        tooltip_data[["ID"]] <- rownames(tooltip_data)
-    }
+  ## arglist <- list(...)
+  tooltip_data <- NULL
+  if (class(annotations) == "character") {
+    tooltip_data <- load_gff_annotations(gff=annotations, type=type)
+  } else if (class(annotations) == "data.frame") {
+    tooltip_data <- annotations
+  } else {
+    stop("This requires either a filename or data frame.")
+  }
+  if (is.null(tooltip_data[[id_col]])) {
+    tooltip_data[["ID"]] <- rownames(tooltip_data)
+  }
 
-    ## Attempt to use multiple columns if a c() was given
-    tooltip_data[["tooltip"]] <- tooltip_data[[id_col]]
-    for (col in desc_col) {
-        if (is.null(tooltip_data[[col]])) {
-            message(paste0("The column ", col, " is null, not using it."))
-        } else {
-            tooltip_data[["tooltip"]] <- paste0(tooltip_data[["tooltip"]], ": ", tooltip_data[[col]])
-        }
+  ## Attempt to use multiple columns if a c() was given
+  tooltip_data[["tooltip"]] <- tooltip_data[[id_col]]
+  for (col in desc_col) {
+    if (is.null(tooltip_data[[col]])) {
+      message(paste0("The column ", col, " is null, not using it."))
+    } else {
+      tooltip_data[["tooltip"]] <- paste0(tooltip_data[["tooltip"]], ": ", tooltip_data[[col]])
     }
-    tooltip_data[["tooltip"]] <- gsub("\\+", " ", tooltip_data[["tooltip"]])
-    tooltip_data[["tooltip"]] <- gsub(": $", "", tooltip_data[["tooltip"]])
-    tooltip_data[["tooltip"]] <- gsub("^: ", "", tooltip_data[["tooltip"]])
-    rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
-    ## Now remove extraneous columns
-    tooltip_data <- tooltip_data[, c("tooltip"), drop=FALSE]
-    colnames(tooltip_data) <- c("1.tooltip")
-    return(tooltip_data)
+  }
+  tooltip_data[["tooltip"]] <- gsub("\\+", " ", tooltip_data[["tooltip"]])
+  tooltip_data[["tooltip"]] <- gsub(": $", "", tooltip_data[["tooltip"]])
+  tooltip_data[["tooltip"]] <- gsub("^: ", "", tooltip_data[["tooltip"]])
+  rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
+  ## Now remove extraneous columns
+  tooltip_data <- tooltip_data[, c("tooltip"), drop=FALSE]
+  colnames(tooltip_data) <- c("1.tooltip")
+  return(tooltip_data)
 }
 
 #' Find how many times a given pattern occurs in every gene of a genome.
@@ -288,24 +288,24 @@ make_tooltips <- function(annotations, desc_col="description", type="gene", id_c
 #' }
 #' @export
 pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key="locus_tag") {
-    rawseq <- Rsamtools::FaFile(fasta)
-    if (is.null(gff)) {
-        entry_sequences <- rawseq
-    } else {
-        entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
-        ## type_entries <- subset(entries, type==type)
-        type_entries <- entries[entries$type == type, ]
-        names(type_entries) <- rownames(type_entries)
-        entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
-        names(entry_sequences) <- entry_sequences[[, key]]
-    }
-    dict <- Biostrings::PDict(pattern, max.mismatch=0)
-    result <- Biostrings::vcountPDict(dict, entry_sequences)
-    num_pattern <- data.frame(
-        "name" = names(entry_sequences),
-        "num" = as.data.frame(t(result)),
-        stringsAsFactors=FALSE)
-    return(num_pattern)
+  rawseq <- Rsamtools::FaFile(fasta)
+  if (is.null(gff)) {
+    entry_sequences <- rawseq
+  } else {
+    entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    ## type_entries <- subset(entries, type==type)
+    type_entries <- entries[entries$type == type, ]
+    names(type_entries) <- rownames(type_entries)
+    entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
+    names(entry_sequences) <- entry_sequences[[, key]]
+  }
+  dict <- Biostrings::PDict(pattern, max.mismatch=0)
+  result <- Biostrings::vcountPDict(dict, entry_sequences)
+  num_pattern <- data.frame(
+    "name" = names(entry_sequences),
+    "num" = as.data.frame(t(result)),
+    stringsAsFactors=FALSE)
+  return(num_pattern)
 }
 
 #' Gather some simple sequence attributes.
@@ -326,26 +326,26 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #' }
 #' @export
 sequence_attributes <- function(fasta, gff=NULL, type="gene", key="locus_tag") {
-    rawseq <- Rsamtools::FaFile(fasta)
-    if (is.null(gff)) {
-        entry_sequences <- rawseq
-    } else {
-        entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
-        ## type_entries <- subset(entries, type==type)
-        type_entries <- entries[entries[["type"]] == type, ]
-        ##names(type_entries) <- rownames(type_entries)
-        entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
-        names(entry_sequences) <- type_entries[["Name"]]
-    }
-    attribs <- data.frame(
-        "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
-        "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
-        "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
-        "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE),
-        stringsAsFactors=FALSE)
-    rownames(attribs) <- type_entries[["locus_tag"]]
-    colnames(attribs) <- c("gc", "at", "gt", "ac")
-    return(attribs)
+  rawseq <- Rsamtools::FaFile(fasta)
+  if (is.null(gff)) {
+    entry_sequences <- rawseq
+  } else {
+    entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    ## type_entries <- subset(entries, type==type)
+    type_entries <- entries[entries[["type"]] == type, ]
+    ##names(type_entries) <- rownames(type_entries)
+    entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
+    names(entry_sequences) <- type_entries[["Name"]]
+  }
+  attribs <- data.frame(
+    "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
+    "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
+    "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
+    "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE),
+    stringsAsFactors=FALSE)
+  rownames(attribs) <- type_entries[["locus_tag"]]
+  colnames(attribs) <- c("gc", "at", "gt", "ac")
+  return(attribs)
 }
 
 ## EOF

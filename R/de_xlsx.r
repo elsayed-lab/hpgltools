@@ -42,6 +42,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
                               include_deseq=TRUE, include_edger=TRUE, include_basic=TRUE,
                               rownames=TRUE, add_plots=TRUE, loess=FALSE,
                               plot_dim=6, compare_plots=TRUE, padj_type="fdr", ...) {
+  arglist <- list(...)
   retlist <- NULL
 
   ## First pull out the data for each tool
@@ -853,6 +854,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel, ...))
     ret[["abundant"]] <- abundant
   }
+  if (!is.null(arglist[["rda"]])) {
+    saved <- save(list="ret", file=arglist[["rda"]])
+  }
   return(ret)
 }
 
@@ -1343,7 +1347,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   sig_list <- list()
   title_append <- ""
   if (!is.null(lfc)) {
-    title_append <- paste0(title_append, " |log2fc|>=", fc)
+    title_append <- paste0(title_append, " |log2fc|>=", lfc)
   }
   if (!is.null(p)) {
     title_append <- paste0(title_append, " p<=", p)
@@ -1525,7 +1529,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
     ## This needs to be changed to get_sig_genes()
     sig_bar_plots <- significant_barplots(
-      combined, fc_cutoffs=siglfc_cutoffs, invert=invert_barplots, p=p, z=z, p_type=p_type,
+      combined, lfc_cutoffs=siglfc_cutoffs, invert=invert_barplots, p=p, z=z, p_type=p_type,
       according_to=according_to)
     plot_row <- 1
     plot_col <- 1

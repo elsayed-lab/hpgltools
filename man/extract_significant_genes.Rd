@@ -5,7 +5,7 @@
 \title{Extract the sets of genes which are significantly up/down regulated
 from the combined tables.}
 \usage{
-extract_significant_genes(combined, according_to = "all", fc = 1,
+extract_significant_genes(combined, according_to = "all", lfc = 1,
   p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
   p_type = "adj", invert_barplots = FALSE,
   excel = "excel/significant_genes.xlsx", siglfc_cutoffs = c(0, 1, 2), ...)
@@ -16,7 +16,7 @@ extract_significant_genes(combined, according_to = "all", fc = 1,
 \item{according_to}{What tool(s) decide 'significant?'  One may use
 the deseq, edger, limma, basic, meta, or all.}
 
-\item{fc}{Log fold change to define 'significant'.}
+\item{lfc}{Log fold change to define 'significant'.}
 
 \item{p}{(Adjusted)p-value to define 'significant'.}
 

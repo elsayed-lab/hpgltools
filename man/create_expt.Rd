@@ -50,7 +50,7 @@ a full pathname or local to the cwd of the project.
 }
 \examples{
 \dontrun{
- new_experiment = create_expt("some_csv_file.csv", color_hash)
+ new_experiment <- create_expt("some_csv_file.csv", color_hash)
  ## Remember that this depends on an existing data structure of gene annotations.
 }
 }

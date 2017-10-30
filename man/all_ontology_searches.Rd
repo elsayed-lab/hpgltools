@@ -5,7 +5,7 @@
 \title{Perform ontology searches given the results of a differential expression analysis.}
 \usage{
 all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
-  z = NULL, fc = NULL, p = NULL, overwrite = FALSE,
+  z = NULL, lfc = NULL, p = NULL, overwrite = FALSE,
   species = "unsupported", orgdb = "org.Dm.eg.db",
   goid_map = "reference/go/id2go.map", gff_file = NULL, gff_type = "gene",
   do_goseq = TRUE, do_cluster = TRUE, do_topgo = TRUE,
@@ -22,7 +22,7 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
 
 \item{z}{Number of standard deviations from the mean fold-change used to define 'significant.'}
 
-\item{fc}{Log fold-change used to define 'significant'.}
+\item{lfc}{Log fold-change used to define 'significant'.}
 
 \item{p}{Maximum pvalue to define 'significant.'}
 
