@@ -77,7 +77,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
         unlinkret <- unlink(x=paste0(final_dir, ".bak"),
                             recursive=TRUE)
       }
-      file.move(from=final_dir, to=paste0(final_dir, ".bak"))
+      renamed <- file.rename(from=final_dir, to=paste0(final_dir, ".bak"))
     }
   }
   version <- format(as.numeric(version), nsmall=1)
@@ -95,9 +95,15 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   organdb_path <- clean_pkg(organdb_path, removal="_", replace="", sqlite=FALSE)
   organdb_path <- clean_pkg(organdb_path, removal="_like", replace="like", sqlite=FALSE)
   if (class(organdb) == "list") {
-    inst <- devtools::install(organdb_path)
+    inst <- try(devtools::install(organdb_path), silent=TRUE)
   }
-  return(pkgname)
+  final_organdb_name <- basename(organdb_path)
+  retlist <- list(
+    "orgdb_name" = orgdb_name,
+    "txdb_name" = txdb_name,
+    "organdb_name" = final_organdb_name
+    )
+  return(retlist)
 }
 
 #' Returns metadata for all eupathdb organisms.
@@ -511,9 +517,10 @@ make_eupath_orgdb <- function(entry, dir=".", kegg_abbreviation=NULL, overwrite=
 #' @param dir  Base directory for building the package.
 #' @return TxDb instance
 #' @author atb 
-make_eupath_txdb <- function(entry, dir=".") {
+make_eupath_txdb <- function(entry, dir=".", overwrite=FALSE) {
   taxa <- make_taxon_names(entry)
-
+  package_name <- paste0("TxDb.", taxa[["genus"]], ".", taxa[["species_strain"]],
+                         ".", entry[["DataProvider"]], ".v", entry[["SourceVersion"]])
   ## save gff as tempfile
   input_gff <- tempfile(fileext=".gff")
   tt <- sm(download.file(entry[["SourceUrl"]], input_gff, method="internal", quiet=TRUE))
@@ -543,9 +550,6 @@ make_eupath_txdb <- function(entry, dir=".") {
   if (class(txdb) == "try-error") {
     stop("The txdb creation failed.")
   }
-
-  package_name <- paste0("TxDb.", taxa[["genus"]], ".", taxa[["species_strain"]],
-                         ".", entry[["DataProvider"]], ".v", entry[["SourceVersion"]])
 
   ## This is the section I yanked
   provider <- GenomicFeatures:::.getMetaDataValue(txdb, "Data source")

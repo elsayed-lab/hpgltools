@@ -471,7 +471,7 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
     ## Collect the text files in the new package and remove all -like instances in them
     ##find_cmd <- paste0("sed -i 's/", removal, "/", replace,
     find_cmd <- paste0("perl -p -i -e 's/", removal, "/", replace,
-                       "/g' $(find ", new_path, " -type f | grep -v sqlite)")
+                       "/g' $(find ", new_path, " -type f | grep -v sqlite | grep -v rda)")
     message(paste0("rewriting orgdb files: ", find_cmd))
     system(find_cmd)
 
