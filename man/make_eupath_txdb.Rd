@@ -4,7 +4,7 @@
 \alias{make_eupath_txdb}
 \title{Generate TxDb for EuPathDB organism}
 \usage{
-make_eupath_txdb(entry, dir = ".")
+make_eupath_txdb(entry, dir = ".", overwrite = FALSE)
 }
 \arguments{
 \item{entry}{One dimensional dataframe with organism metadata.}
