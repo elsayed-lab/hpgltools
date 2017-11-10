@@ -397,7 +397,7 @@ import_deseq <- function(data, column_data, model_string,
     summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                  colData=column_data,
                                                  design=as.formula(model_string))
-  } else if (tximport == "htseq") {
+  } else if (tximport[1] == "htseq") {
     ## We are not likely to use this.
     summarized <- DESeq2::DESeqDataSetFromHTSeqCount(countData=data,
                                                      colData=column_data,
@@ -405,7 +405,14 @@ import_deseq <- function(data, column_data, model_string,
   } else {
     ## This may be insufficient, it may require the full tximport result, while this may just be
     ## that result$counts, so be aware!!
-    summarized <- DESeq2::DESeqDataSetFromTximport(countData=tximport,
+
+    ## First make sure that if we subsetted the data, that is maintained from
+    ## the data to the tximportted data
+    keepers <- rownames(data)
+    tximport[["abundance"]] <- tximport[["abundance"]][keepers, ]
+    tximport[["counts"]] <- tximport[["counts"]][keepers, ]
+    tximport[["length"]] <- tximport[["length"]][keepers, ]
+    summarized <- DESeq2::DESeqDataSetFromTximport(txi=tximport,
                                                    colData=column_data,
                                                    design=as.formula(model_string))
   }

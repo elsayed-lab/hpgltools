@@ -230,9 +230,9 @@ Going to run pcRes with the batch information.")
   pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
                        design=design, plot_labels=plot_labels,
                        plot_size=plot_size, size_column=size_column, ...)
-  pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
-                       design=design, plot_labels=plot_labels,
-                       plot_size=plot_size, size_column=size_column)
+  ##pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+  ##                     design=design, plot_labels=plot_labels,
+  ##                     plot_size=plot_size, size_column=size_column)
 
   ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
   pca_plot <- pca_plot +
@@ -321,7 +321,7 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
-                     plot_size=5, size_column=NULL, rug=TRUE, ...) {
+                     plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   batches <- pca_data[["batch"]]
@@ -459,6 +459,18 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   } else {
     pca_plot <- pca_plot +
       directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
+  }
+
+  if (!is.null(cis)) {
+    alpha <- 0
+    for (ci in cis) {
+      alpha <- alpha + 0.1
+      ## message(paste0("Adding ", ci, " with alpha ", alpha))
+      pca_plot <- pca_plot +
+        ggplot2::stat_ellipse(
+                   mapping=aes_string(group="condition", fill="condition"),
+                   geom="polygon", type="t", level=ci, alpha=alpha)
+    }
   }
 
   return(pca_plot)
@@ -874,6 +886,77 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
     "highest" = highest,
     "lowest" = lowest)
   return(ret_list)
+}
+
+test_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+                     scale="none", center=TRUE,
+                     plot_title=NULL, plot_size=5, size_column=NULL, ...) {
+
+  hpgl_env <- environment()
+  arglist <- list(...)
+  plot_names <- arglist[["plot_names"]]
+  ## Set default columns in the experimental design for condition and batch
+  ## changing these may be used to query other experimental factors with pca.
+  cond_column <- "condition"
+  if (!is.null(arglist[["cond_column"]])) {
+    cond_column <- arglist[["cond_column"]]
+    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+  }
+  batch_column <- "batch"
+  if (!is.null(arglist[["batch_column"]])) {
+    batch_column <- arglist[["batch_column"]]
+    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+  }
+
+  ## The following if() series is used to check the type of data provided and extract the available
+  ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
+  ## specific to that.  However, the functions in this package should be smart enough to deal when
+  ## that is not true.
+  ## The primary things this particular function is seeking to acquire are: design, colors, counts.
+  ## The only thing it absolutely requires to function is counts, it will make up the rest if it cannot
+  ## find them.
+  data_class <- class(data)[1]
+  names <- NULL
+  expt <- NULL
+  if (data_class == "expt") {
+    expt <- data
+    design <- data[["design"]]
+    if (cond_column == "condition") {
+      plot_colors <- data[["colors"]]
+    } else {
+      plot_colors <- NULL
+    }
+    plot_names <- data[["samplenames"]]
+    data <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    data <- exprs(data)
+  } else if (data_class == "list") {
+    data <- data[["count_table"]]
+    if (is.null(data)) {
+      stop("The list provided contains no count_table element.")
+    }
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  ready <- pcaMethods::prep(data, scale=scale, center=center)
+  svd <- pca(ready, method="svd", center=FALSE, nPcs=2)
+  ppca <- pca(ready, method="ppca", center=FALSE, nPcs=2)
+  bpca <- pca(ready, method="bpca", center=FALSE, nPcs=2)
+  svdi <- pca(ready, method="svdImpute", center=FALSE, nPcs=2)
+  nipals <- pca(ready, method="nipals", center=FALSE, nPcs=2)
+  ## nlpca <- pca(ready, method="nlpca", center=FALSE, nPcs=2, maxSteps=300)
+
+  retlist <- list(
+    "svd" = svd,
+    "ppca" = ppca,
+    "bpca" = bpca,
+    "svdi" = svdi,
+    "nipals" = nipals
+  )
+  return(retlist)
 }
 
 ## EOF

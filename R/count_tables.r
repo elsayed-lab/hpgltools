@@ -71,7 +71,6 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     message(toString(ids))
     count_table <- tximport::tximport(files=files, type="kallisto", txOut=TRUE)
-    count_dt <- data.table::as.data.table(count_table)
   } else {
     count_table <- try(read.table(files[1], header=header))
     count_dt <- data.table::as.data.table(count_table)
@@ -113,25 +112,19 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     count_table <- as.data.frame(count_dt, stringsAsFactors=FALSE)
     rownames(count_table) <- count_table[["rownames"]]
     count_table <- count_table[, -1, drop=FALSE]
-    rm(count_dt)
-    rm(tmp_count)
-  }
 
-  ## set row and columns ids
-  ## rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
-  ## count_table <- count_table[, -1, drop=FALSE]
-  ## colnames(count_table) <- ids
-
-  ## remove summary fields added by HTSeq
-  if (!include_summary_rows) {
-    ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
-    ## In theory, only 1 of these two cases should ever be true.
-    htseq_meta_rows <- c("__no_feature", "__ambiguous", "__too_low_aQual",
-                         "__not_aligned", "__alignment_not_unique",
-                         "X__no_feature", "X__ambiguous", "X__too_low_aQual",
-                         "X__not_aligned", "X__alignment_not_unique")
-
-    count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
+    ## remove summary fields added by HTSeq
+    if (!include_summary_rows) {
+      ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
+      ## In theory, only 1 of these two cases should ever be true.
+      htseq_meta_rows <- c("__no_feature", "__ambiguous", "__too_low_aQual",
+                           "__not_aligned", "__alignment_not_unique",
+                           "X__no_feature", "X__ambiguous", "X__too_low_aQual",
+                           "X__not_aligned", "X__alignment_not_unique")
+      
+      count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
+      
+    } ## End the difference between tximport and reading tables.
   }
   return(count_table)
 }

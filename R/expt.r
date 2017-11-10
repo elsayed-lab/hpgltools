@@ -561,12 +561,12 @@ analyses more difficult/impossible.")
 #' @return  A smaller expt
 #' @seealso \code{\link{create_expt}}
 #' @export
-exclude_genes_expt <- function(expt, column="txtype", method="remove",
+exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
                                patterns=c("snRNA","tRNA","rRNA"), ...) {
   arglist <- list(...)
   ex <- expt[["expressionset"]]
   annotations <- Biobase::fData(ex)
-  if (is.null(annotations[[column]])) {
+  if (is.null(ids) & is.null(annotations[[column]])) {
     message(paste0("The ", column, " column is null, doing nothing."))
     return(expt)
   }
@@ -575,7 +575,14 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove",
     pattern_string <- paste0(pattern_string, pat, "|")
   }
   silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
-  idx <- grepl(pattern=silly_string, x=annotations[[column]], perl=TRUE)
+  idx <- rep(x=TRUE, times=nrow(annotations))
+  if (is.null(ids)) {
+    idx <- grepl(pattern=silly_string, x=annotations[[column]], perl=TRUE)
+  } else if (is.logical(ids)) {
+    idx <- ids
+  } else {
+    idx <- rownames(annotations) %in% ids
+  }
   kept <- NULL
   removed <- NULL
   kept_sums <- NULL
@@ -609,16 +616,6 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove",
   return(expt)
 }
 
-#' An alias to expt_subset, because it is stupid to have something start with verbs
-#' and others start with nouns.
-#'
-#' This just calls expt_subset.
-#'
-#' @param ...  All arguments are passed to expt_subset.
-#' @export
-subset_expt <- function(...) {
-  expt_subset(...)
-}
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
 #'
@@ -636,7 +633,7 @@ subset_expt <- function(...) {
 #'  all_expt = expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
-expt_subset <- function(expt, subset=NULL) {
+subset_expt <- function(expt, subset=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   if (class(expt)[[1]] == "ExpressionSet") {
