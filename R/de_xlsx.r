@@ -896,25 +896,36 @@ Defaulting to fdr."))
     padj_type <- "fdr"
   }
 
-  li <- li[["all_tables"]][[table_name]]
-  if (is.null(li)) {
+  ## Check that the limma result is valid.
+  if (is.null(li) | class(li) == "try-error") {
     li <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
                      "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
+  } else {
+    li <- li[["all_tables"]][[table_name]]
   }
-  de <- de[["all_tables"]][[table_name]]
-  if (is.null(de)) {
+
+  ## Check that the deseq result is valid.
+  if (is.null(de) | class(de) == "try-error") {
     de <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
                      "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
+  } else {
+    de <- de[["all_tables"]][[table_name]]
   }
-  ed <- ed[["all_tables"]][[table_name]]
-  if (is.null(ed)) {
+
+  ## Check that the edger result is valid.
+  if (is.null(ed) | class(ed) == "try-error") {
     ed <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
                      "edger_p" = 0, "edger_adjp" = 0)
+  } else {
+    ed <- ed[["all_tables"]][[table_name]]
   }
-  ba <- ba[["all_tables"]][[table_name]]
-  if (is.null(ba)) {
+
+  ## And finally, check that my stupid basic result is valid.
+  if (is.null(ba) | class(ba) == "try-error") {
     ba <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
+  } else {
+    ba <- ba[["all_tables"]][[table_name]]
   }
 
   colnames(li) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",

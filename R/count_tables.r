@@ -47,48 +47,76 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   } else if (file.exists(lower_filenames[1])) {
     files[1] <- lower_filenames[1]
   }
-  count_table <- try(read.table(files[1], header=header))
-  count_dt <- data.table::as.data.table(count_table)
-  if (class(count_table)[1] == "try-error") {
-    stop(paste0("There was an error reading: ", files[1]))
+  count_table <- NULL
+  for (f in 1:length(files)) {
+    files[f] <- gsub(pattern=" ", replacement="", x=files[f])
+    if (!grepl(pattern="^\\/", x=files[f])) {
+      files[f] <- file.path(getwd(), files[f])
+    }
   }
-  message(paste0(files[1], " contains ", length(rownames(count_dt)), " rows."))
-  colnames(count_dt) <- c("rownames", ids[1])
-  ## Following lines not needed for data.table
-  ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
-  ## count_table <- count_table[, -1, drop=FALSE]
-  ## iterate over and append remaining samples
-  for (table in 2:length(files)) {
-    if (file.exists(tolower(files[table]))) {
-      files[table] <- tolower(files[table])
-    } else if (file.exists(lowhpgl_filenames[table])) {
-      files[table] <- lowhpgl_filenames[table]
-    } else if (file.exists(lower_filenames[table])) {
-      files[table] <- lower_filenames[table]
+  if (grepl(pattern="\\.tsv", x=files[1])) {
+    names(files) <- ids
+    message(toString(files))
+    if (!all(file.exists(files))) {
+      warning(files)
     }
-    tmp_count <- try(read.table(files[table], header=header))
-    if (class(tmp_count)[1] == "try-error") {
-      stop(paste0("There was an error reading: ", files[table]))
+    message(toString(ids))
+    count_table <- tximport::tximport(files=files, type="kallisto", txOut=TRUE)
+    count_dt <- data.table::as.data.table(count_table)
+  } else if (grepl(pattern="\\.h5", x=files[1])) {
+    names(files) <- ids
+    message(toString(files))
+    if (!all(file.exists(files))) {
+      warning(files)
     }
-    colnames(tmp_count) <- c("rownames", ids[table])
-    tmp_count <- data.table::as.data.table(tmp_count)
-    ##tmp_count <- tmp_count[, c("ID", ids[table])]
-    ##rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
-    ##tmp_count <- tmp_count[, -1, drop=FALSE]
-    pre_merge <- length(rownames(tmp_count))
-    count_dt <- merge(count_dt, tmp_count, by="rownames", all.x=TRUE)
-    ## rownames(count_table) <- count_table[, "Row.names"]
+    message(toString(ids))
+    count_table <- tximport::tximport(files=files, type="kallisto", txOut=TRUE)
+    count_dt <- data.table::as.data.table(count_table)
+  } else {
+    count_table <- try(read.table(files[1], header=header))
+    count_dt <- data.table::as.data.table(count_table)
+    if (class(count_table)[1] == "try-error") {
+      stop(paste0("There was an error reading: ", files[1]))
+    }
+    message(paste0(files[1], " contains ", length(rownames(count_dt)), " rows."))
+    colnames(count_dt) <- c("rownames", ids[1])
+    ## Following lines not needed for data.table
+    ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
     ## count_table <- count_table[, -1, drop=FALSE]
-    ## post_merge <- length(rownames(count_table))
-    post_merge <- nrow(count_dt)
-    message(paste0(files[table], " contains ", pre_merge,
-                   " rows and merges to ", post_merge, " rows."))
+    ## iterate over and append remaining samples
+    for (table in 2:length(files)) {
+      if (file.exists(tolower(files[table]))) {
+        files[table] <- tolower(files[table])
+      } else if (file.exists(lowhpgl_filenames[table])) {
+        files[table] <- lowhpgl_filenames[table]
+      } else if (file.exists(lower_filenames[table])) {
+        files[table] <- lower_filenames[table]
+      }
+      tmp_count <- try(read.table(files[table], header=header))
+      if (class(tmp_count)[1] == "try-error") {
+        stop(paste0("There was an error reading: ", files[table]))
+      }
+      colnames(tmp_count) <- c("rownames", ids[table])
+      tmp_count <- data.table::as.data.table(tmp_count)
+      ##tmp_count <- tmp_count[, c("ID", ids[table])]
+      ##rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
+      ##tmp_count <- tmp_count[, -1, drop=FALSE]
+      pre_merge <- length(rownames(tmp_count))
+      count_dt <- merge(count_dt, tmp_count, by="rownames", all.x=TRUE)
+      ## rownames(count_table) <- count_table[, "Row.names"]
+      ## count_table <- count_table[, -1, drop=FALSE]
+      ## post_merge <- length(rownames(count_table))
+      post_merge <- nrow(count_dt)
+      message(paste0(files[table], " contains ", pre_merge,
+                     " rows and merges to ", post_merge, " rows."))
+    }
+    count_table <- as.data.frame(count_dt, stringsAsFactors=FALSE)
+    rownames(count_table) <- count_table[["rownames"]]
+    count_table <- count_table[, -1, drop=FALSE]
+    rm(count_dt)
+    rm(tmp_count)
   }
-  count_table <- as.data.frame(count_dt, stringsAsFactors=FALSE)
-  rownames(count_table) <- count_table[["rownames"]]
-  count_table <- count_table[, -1, drop=FALSE]
-  rm(count_dt)
-  rm(tmp_count)
+
   ## set row and columns ids
   ## rownames(count_table) <- make.names(count_table$ID, unique=TRUE)
   ## count_table <- count_table[, -1, drop=FALSE]

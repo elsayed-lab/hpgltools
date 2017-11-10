@@ -259,10 +259,16 @@ analyses more difficult/impossible.")
 
   ## At this point sample_definitions$file should be filled in no matter what;
   ## so read the files.
+  tximport_data <- NULL
   if (is.null(all_count_tables)) {
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
+    if (class(all_count_tables) == "list" & !is.null(all_count_tables[["counts"]])) {
+      ## Then this came from tximport.
+      tximport_data <- all_count_tables
+      all_count_tables <- all_count_tables[["counts"]]
+    }
     ##all_count_tables <- read_counts_expt(sample_ids, filenames)
   }
 
@@ -532,6 +538,7 @@ analyses more difficult/impossible.")
   ## Save the chosen colors
   expt[["colors"]] <- chosen_colors
   names(expt[["colors"]]) <- rownames(sample_definitions)
+  expt[["tximport"]] <- tximport_data
   ## Save an rdata file of the expressionset.
   if (!is.null(savefile)) {
     save_result <- try(save(list = c("expt"), file=paste(savefile, ".Rdata", sep="")))

@@ -57,7 +57,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                             batches=NULL, model_cond=TRUE,
                             model_batch=TRUE, model_intercept=FALSE,
                             alt_model=NULL, extra_contrasts=NULL,
-                            annot_df=NULL, force=FALSE,
+                            annot_df=NULL, force=FALSE, 
                             deseq_method="long", ...) {
   arglist <- list(...)
 
@@ -89,11 +89,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                model_cond=model_cond,
                                model_intercept=model_intercept,
                                alt_model=alt_model, ...)
-  ##model_choice <- choose_model(input, conditions, batches,
-  ##                             model_batch=model_batch,
-  ##                             model_cond=model_cond,
-  ##                             model_intercept=model_intercept,
-  ##                             alt_model=alt_model)
+  ## model_choice <- choose_model(input, conditions, batches,
+  ##                              model_batch=model_batch,
+  ##                              model_cond=model_cond,
+  ##                              model_intercept=model_intercept,
+  ##                              alt_model=alt_model)
   model_data <- model_choice[["chosen_model"]]
   model_including <- model_choice[["including"]]
   model_string <- model_choice[["chosen_string"]]
@@ -115,18 +115,14 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                 colData=column_data,
-                                                 design=as.formula(model_string))
+    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (isTRUE(model_batch)) {
     message("DESeq2 step 1/5: Including only batch in the deseq model.")
     ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                 colData=column_data,
-                                                 design=as.formula(model_string))
+    summarized <- import_deseq(data, columns_data, model_string)
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch) == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
@@ -134,9 +130,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                 colData=column_data,
-                                                 design=as.formula(sv_model_string))
+    summarized <- import_deseq(data, column_data, sv_model_string)
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
     ## I think the following lines are no longer needed now that I properly add the SVs to the model.
     ##passed <- FALSE
@@ -149,9 +143,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     ##model_string <- "~ condition"
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
-                                                 colData=column_data,
-                                                 design=as.formula(model_string))
+    summarized <- import_deseq(data, column_data, model_string)
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   }
 
@@ -393,6 +385,31 @@ surrogates explicitly stated with the option surrogates=number.")
     new_dataset <- DESeq2::DESeqDataSet(se=new_summarized, design=new_formula)
     return(new_dataset)
   }
+  return(ret)
+}
+
+import_deseq <- function(data, column_data, model_string,
+                         tximport=NULL) {
+  summarized <- NULL
+
+  ## The default.
+  if (is.null(tximport)) {
+    summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
+                                                 colData=column_data,
+                                                 design=as.formula(model_string))
+  } else if (tximport == "htseq") {
+    ## We are not likely to use this.
+    summarized <- DESeq2::DESeqDataSetFromHTSeqCount(countData=data,
+                                                     colData=column_data,
+                                                     design=as.formula(model_string))
+  } else {
+    ## This may be insufficient, it may require the full tximport result, while this may just be
+    ## that result$counts, so be aware!!
+    summarized <- DESeq2::DESeqDataSetFromTximport(countData=tximport,
+                                                   colData=column_data,
+                                                   design=as.formula(model_string))
+  }
+  return(summarized)
 }
 
 #' Writes out the results of a deseq search using write_de_table()
