@@ -2,14 +2,30 @@
 % Please edit documentation in R/expt.r
 \name{subset_expt}
 \alias{subset_expt}
-\title{An alias to expt_subset, because it is stupid to have something start with verbs
-and others start with nouns.}
+\title{Extract a subset of samples following some rule(s) from an
+experiment class.}
 \usage{
-subset_expt(...)
+subset_expt(expt, subset = NULL)
 }
 \arguments{
-\item{...}{All arguments are passed to expt_subset.}
+\item{expt}{Expt chosen to extract a subset of data.}
+
+\item{subset}{Valid R expression which defines a subset of the design to keep.}
+}
+\value{
+metadata Expt class which contains the smaller set of data.
 }
 \description{
-This just calls expt_subset.
+Sometimes an experiment has too many parts to work with conveniently, this operation allows one
+to break it into smaller pieces.
+}
+\examples{
+\dontrun{
+ smaller_expt = expt_subset(big_expt, "condition=='control'")
+ all_expt = expt_subset(expressionset, "")  ## extracts everything
+}
+}
+\seealso{
+\pkg{Biobase}
+ \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 }
