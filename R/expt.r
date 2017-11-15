@@ -609,8 +609,8 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
                                "pct_kept", "pct_removed")
-  message(paste0("Percent kept: ", toString(pct_kept)))
-  message(paste0("Percent removed: ", toString(pct_removed)))
+  message(paste0("Percent kept: ", toString(sprintf(fmt="%.3f", pct_kept))))
+  message(paste0("Percent removed: ", toString(sprintf(fmt="%.3f", pct_removed))))
   expt[["expressionset"]] <- kept
   expt[["summary_table"]] <- summary_table
   return(expt)
