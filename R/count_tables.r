@@ -25,7 +25,7 @@
 read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
   ## load first sample
-  ## arglist <- list(...)
+  arglist <- list(...)
   skippers <- (files == "" | files == "undef" | is.null(files))
   files <- files[!skippers]
   lower_filenames <- files
@@ -54,26 +54,67 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       files[f] <- file.path(getwd(), files[f])
     }
   }
-  if (grepl(pattern="\\.tsv", x=files[1])) {
+  ## When I start using sailfish/salmon/etc, I will need to add more conditions to this
+  ## and probably change it to a switch to more prettily take them into account.
+
+  ## Likely important options:
+  ## txOut: When true, do not back-convert to gene-level.
+  ## Otherwise, tximport requires a tx2gene data frame with 2 columns, TXNAME and GENEID.
+  ## These columns should be definition be available in my fData annotation.
+  ## Therefore, I will set the flags tx2gene and txOut accordingly.
+  message("Reading count tables.")
+  retlist <- list()
+  txout <- TRUE
+  tx_gene_map <- NULL
+  if (!is.null(arglist[["tx_gene_map"]])) {
+    txout <- FALSE
+    tx_gene_map <- arglist[["tx_gene_map"]]
+  }
+  if (grepl(pattern="\\.tsv|\\.h5", x=files[1])) {
+    ## This hits if we are using the kallisto outputs.
     names(files) <- ids
-    message(toString(files))
     if (!all(file.exists(files))) {
       warning(files)
     }
-    message(toString(ids))
-    count_table <- tximport::tximport(files=files, type="kallisto", txOut=TRUE)
-    count_dt <- data.table::as.data.table(count_table)
-  } else if (grepl(pattern="\\.h5", x=files[1])) {
-    names(files) <- ids
-    message(toString(files))
-    if (!all(file.exists(files))) {
-      warning(files)
+    import <- NULL
+    import_scaled <- NULL
+    if (is.null(tx_gene_map)) {
+      import <- sm(tximport::tximport(files=files, type="kallisto", txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="kallisto",
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
+    } else {
+      import <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map, txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map,
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
     }
-    message(toString(ids))
-    count_table <- tximport::tximport(files=files, type="kallisto", txOut=TRUE)
+    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
+    tt <- setkey(retlist[["count_table"]], rownames)
+    retlist[["tximport"]] <- import
+    retlist[["tximport_scaled"]] <- import_scaled
+    retlist[["source"]] <- "tximport"
+  } else if (grepl(pattern="\\.genes\\.results")) {
+    names(files) <- ids
+    import <- NULL
+    import_scaled <- NULL
+    if (is.null(tx_gene_map)) {
+      import <- tximport::tximport(files=files, type="rsem", txOut=txout)
+      import_scaled <- tximport::tximport(files=files, type="rsem",
+                                          txOut=txout, countsFromAbundance="lengthScaledTPM")
+    } else {
+      import <- tximport::tximport(files=files, type="rsem", tx2gene=tx_gene_map, txOut=txout)
+      import_scaled <- tximport::tximport(files=files, type="rsem", tx2gene=tx_gene_map,
+                                          txOut=txout, countsFromAbundance="lengthScaledTPM")
+    }
+    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
+    tt <- setkey(retlist[["count_table"]], rownames)
+    retlist[["tximport"]] <- import
+    retlist[["tximport_scaled"]] <- import_scaled
+    retlist[["source"]] <- "tximport"
   } else {
+    ## This is used when 'normal' htseq-based counts were generated.
     count_table <- try(read.table(files[1], header=header))
-    count_dt <- data.table::as.data.table(count_table)
+    count_dt <- data.table::as.data.table(count_table, keep.rownames="rownames")
+    tt <- setkey(count_dt, rownames)
     if (class(count_table)[1] == "try-error") {
       stop(paste0("There was an error reading: ", files[1]))
     }
@@ -96,7 +137,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
         stop(paste0("There was an error reading: ", files[table]))
       }
       colnames(tmp_count) <- c("rownames", ids[table])
-      tmp_count <- data.table::as.data.table(tmp_count)
+      tmp_count <- data.table::as.data.table(tmp_count, keep.rownames="rownames")
       ##tmp_count <- tmp_count[, c("ID", ids[table])]
       ##rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
       ##tmp_count <- tmp_count[, -1, drop=FALSE]
@@ -111,7 +152,8 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     count_table <- as.data.frame(count_dt, stringsAsFactors=FALSE)
     rownames(count_table) <- count_table[["rownames"]]
-    count_table <- count_table[, -1, drop=FALSE]
+    keepers <- colnames(count_table) != "rownames"
+    count_table <- count_table[, keepers, drop=FALSE]
 
     ## remove summary fields added by HTSeq
     if (!include_summary_rows) {
@@ -123,10 +165,11 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
                            "X__not_aligned", "X__alignment_not_unique")
       
       count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
-      
+      retlist[["count_table"]] <- count_table
+      retlist[["source"]] <- "htseq"
     } ## End the difference between tximport and reading tables.
   }
-  return(count_table)
+  return(retlist)
 }
 
 #' Sum the reads/gene for multiple sequencing runs of a single condition/batch.

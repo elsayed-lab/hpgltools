@@ -87,9 +87,10 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   ## Here is a note from the user's guide, which may have been there previously and I merely did not notice:
   ## To estimate common dispersion, trended dispersions and tagwise dispersions in one run
   ## y <- estimateDisp(y, design)
-  raw <- edgeR::DGEList(counts=data, group=conditions)
-  message("EdgeR step 1/9: normalizing data.")
-  norm <- edgeR::calcNormFactors(raw)
+  ## raw <- edgeR::DGEList(counts=data, group=conditions)
+  ## norm <- edgeR::calcNormFactors(raw)
+  norm <- import_edger(data, conditions, tximport=input[["tximport"]][["raw"]])
+  message("EdgeR step 1/9: importing and normalizing data.")
   final_norm <- NULL
   if (edger_method == "short") {
     message("EdgeR steps 2 through 6/9: All in one!")
@@ -216,6 +217,22 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     "model" = model_data,
     "model_string" = model_string)
   return(final)
+}
+
+## Taken from the tximport manual with minor modification.
+import_edger <- function(data, conditions, tximport=NULL) {
+  if (is.null(tximport)) {
+    raw <- edgeR::DGEList(counts=data, group=conditions)
+    norm <- edgeR::calcNormFactors(raw)
+  } else {
+    raw <- tximport[["counts"]]
+    norm_mat <- tximport[["length"]]
+    norm_mat <- norm_mat / exp(rowMeans(log(norm_mat)))
+    offset <- log(edgeR::calcNormFactors(raw / norm_mat)) + log(colSums(raw / norm_mat))
+    norm <- edgeR::DGEList(raw)
+    norm$offset <- t(t(log(norm_mat)) + offset)
+  }
+  return(norm)
 }
 
 #' Writes out the results of a edger search using write_de_table()

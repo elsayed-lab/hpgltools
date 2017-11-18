@@ -35,30 +35,42 @@ gather_cp_genes <- function(table, mappings, new="ORF") {
 #'  genes_in_cats <- gather_genes(data, ont='BP')
 #' }
 #' @export
-gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FALSE, ...) {
+gather_ontology_genes <- function(result, ontology=NULL,
+                                  column="over_represented_pvalue",
+                                  pval=0.1, include_all=FALSE, ...) {
     arglist <- list(...)
     categories <- NULL
+
+    ## I should reorganize the results from goseq
+    ## But until then, just put a silly test here.
+    table_list <- NULL
+    if (is.null(result[["tables"]])) {
+      table_list <- result
+    } else {
+      table_list <- result[["tables"]]
+    }
+
     if (is.null(ontology)) {
         retlist <- list()
         message("No ontology provided, performing all.")
         for (type in c("MF", "BP", "CC")) {
-            retlist[[type]] <- gather_ontology_genes(goseq,
+            retlist[[type]] <- gather_ontology_genes(result,
                                                      ontology=type,
                                                      pval=pval,
                                                      include_all=include_all, ...)
         }
         return(retlist)
     } else if (ontology == "MF") {
-        categories <- goseq[["mf_subset"]]
+        categories <- table_list[["mf_subset"]]
     } else if (ontology == "BP") {
-        categories <- goseq[["bp_subset"]]
+        categories <- table_list[["bp_subset"]]
     } else if (ontology == "CC") {
-        categories <- goseq[["cc_subset"]]
+        categories <- table_list[["cc_subset"]]
     } else {
         retlist <- list()
         message("No ontology provided, performing all.")
         for (type in c("MF", "BP", "CC")) {
-            retlist[[type]] <- gather_ontology_genes(goseq,
+            retlist[[type]] <- gather_ontology_genes(result,
                                                      ontology=type,
                                                      pval=pval,
                                                      include_all=include_all,
@@ -66,11 +78,11 @@ gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FA
         }
         return(retlist)
     }
-    input <- goseq[["input"]]
+    input <- result[["input"]]
     ##categories <- subset(categories, over_represented_pvalue <= pval)
-    categories <- categories[ categories[["over_represented_pvalue"]] <= pval, ]
+    categories <- categories[ categories[[column]] <= pval, ]
     cats <- rownames(categories)
-    godf <- goseq[["godf"]]
+    godf <- result[["godf"]]
     genes_per_ont <- function(cat) {
         ## all_entries <- subset(godf, GO==cat)[["ID"]]
         colnames(godf) <- c("ID", "GO")
@@ -105,6 +117,7 @@ gather_ontology_genes <- function(goseq, ontology=NULL, pval=0.1, include_all=FA
     gene_list <- lapply(cats, genes_per_ont)
     names(gene_list) <- cats
     gene_df <- data.table::rbindlist(gene_list)
+    gene_df <- as.data.frame(gene_df)
     rownames(gene_df) <- cats
     return(gene_df)
 }
@@ -1169,6 +1182,9 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
         pval_column <- arglist[["pval_column"]]
     }
 
+    table_list <- topgo_result[["tables"]]
+    result_list <- topgo_result[["results"]]
+
     if (class(excel) == "character") {
         message("Writing a sheet containing the legend.")
         wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -1188,12 +1204,12 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                                 title="Columns used in the following tables.")
         summary_row <- nrow(legend) + 5
         summary_df <- data.frame(rbind(
-            c("Queried BP ontologies", nrow(topgo_result[["bp_subset"]])),
-            c("Significant BP ontologies", nrow(topgo_result[["bp_interesting"]])),
-            c("Queried MF ontologies", nrow(topgo_result[["mf_subset"]])),
-            c("Significant MF ontologies", nrow(topgo_result[["mf_interesting"]])),
-            c("Queried CC ontologies", nrow(topgo_result[["cc_subset"]])),
-            c("Significant CC ontologies", nrow(topgo_result[["cc_interesting"]]))))
+            c("Queried BP ontologies", nrow(table_list[["bp"]])),
+            c("Significant BP ontologies", nrow(table_list[["bp_interesting"]])),
+            c("Queried MF ontologies", nrow(table_list[["mf"]])),
+            c("Significant MF ontologies", nrow(table_list[["mf_interesting"]])),
+            c("Queried CC ontologies", nrow(table_list[["cc"]])),
+            c("Significant CC ontologies", nrow(table_list[["cc_interesting"]]))))
         colnames(summary_df) <- c("Ontology type", "Number found")
         xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
                                 title="Summary of the topgo search.", start_row=1, start_col=4)
@@ -1214,47 +1230,46 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
 
     ## Pull out the relevant portions of the topgo data
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
-    topgo_mf <- topgo_result[["mf_subset"]]
-    topgo_mf <- topgo_mf[ topgo_mf[["over_represented_pvalue"]] <= pval, ]
-    topgo_mf_genes <- gather_ontology_genes(topgo_result, ontology="MF", pval=pval)
-    mf_genes <- as.data.frame(topgo_mf_genes)
-    rownames(mf_genes) <- rownames(topgo_mf_genes)
-    topgo_mf <- merge(topgo_mf, mf_genes, by="row.names")
+    topgo_mf <- table_list[["mf_subset"]]
+    topgo_mf <- topgo_mf[ topgo_mf[["qvalue"]] <= pval, ]
+    topgo_mf_genes <- gather_ontology_genes(topgo_result, ontology="MF", pval=pval, column="fisher")
+    topgo_mf <- merge(topgo_mf, topgo_mf_genes, by="row.names")
     rownames(topgo_mf) <- topgo_mf[["Row.names"]]
-    topgo_mf <- topgo_mf[-1]
+    topgo_mf <- topgo_mf[, -1]
     mf_idx <- order(topgo_mf[[order_by]], decreasing=decreasing)
     topgo_mf <- topgo_mf[mf_idx, ]
+    topgo_mf[["ontology"]] <- "MF"
 
-    topgo_bp <- topgo_result[["bp_subset"]]
-    topgo_bp <- topgo_bp[ topgo_bp[["over_represented_pvalue"]] <= pval, ]
-    topgo_bp_genes <- gather_ontology_genes(topgo_result, ontology="BP", pval=pval)
-    bp_genes <- as.data.frame(topgo_bp_genes)
-    rownames(bp_genes) <- rownames(topgo_bp_genes)
-    topgo_bp <- merge(topgo_bp, bp_genes, by="row.names")
+    topgo_bp <- table_list[["bp_subset"]]
+    topgo_bp <- topgo_bp[ topgo_bp[["qvalue"]] <= pval, ]
+    topgo_bp_genes <- gather_ontology_genes(topgo_result, ontology="BP", pval=pval, column="fisher")
+    topgo_bp <- merge(topgo_bp, topgo_bp_genes, by="row.names")
     rownames(topgo_bp) <- topgo_bp[["Row.names"]]
-    topgo_bp <- topgo_bp[-1]
+    topgo_bp <- topgo_bp[, -1]
     bp_idx <- order(topgo_bp[[order_by]], decreasing=decreasing)
     topgo_bp <- topgo_bp[bp_idx, ]
+    topgo_bp[["ontology"]] <- "BP"
 
-    topgo_cc <- topgo_result[["cc_subset"]]
-    topgo_cc <- topgo_cc[ topgo_cc[["over_represented_pvalue"]] <= pval, ]
-    topgo_cc_genes <- gather_ontology_genes(topgo_result, ontology="CC", pval=pval)
-    cc_genes <- as.data.frame(topgo_cc_genes)
-    rownames(cc_genes) <- rownames(topgo_cc_genes)
-    topgo_cc <- merge(topgo_cc, cc_genes, by="row.names")
+    topgo_cc <- table_list[["cc_subset"]]
+    topgo_cc <- topgo_cc[ topgo_cc[["qvalue"]] <= pval, ]
+    topgo_cc_genes <- gather_ontology_genes(topgo_result, ontology="CC", pval=pval, column="fisher")
+    topgo_cc <- merge(topgo_cc, topgo_cc_genes, by="row.names")
     rownames(topgo_cc) <- topgo_cc[["Row.names"]]
-    topgo_cc <- topgo_cc[-1]
+    topgo_cc <- topgo_cc[, -1]
     cc_idx <- order(topgo_cc[["qvalue"]], decreasing=decreasing)
     topgo_cc <- topgo_cc[cc_idx, ]
+    topgo_cc[["ontology"]] <- "CC"
 
-    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
-                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
-                      "limma_sigfc", "deseq_sigfc", "edger_sigfc")
+    kept_columns <- c("ontology", "GO.ID", "Term", "Annotated",
+                      "Significant", "Expected", "fisher", "KS", "EL", "weight", "qvalue",
+                      "all", "sig", "limma_sigfc", "edger_sigfc", "deseq_sigfc")
     topgo_mf <- topgo_mf[, kept_columns]
     topgo_bp <- topgo_bp[, kept_columns]
     topgo_cc <- topgo_cc[, kept_columns]
-    new_columns <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
-                     "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+    new_columns <- c("Ontology", "Category", "Term", "Annotated genes in cat.",
+                     "Significant genes in cat.", "Expected genes in cat.", "Fisher score",
+                     "KS score", "EL score", "weighted score", "qvalue",
+                     "All genes in cat.", "DE genes in cat.", 
                      "FC from limma", "FC from DESeq", "FC from edgeR")
     colnames(topgo_mf) <- new_columns
     colnames(topgo_bp) <- new_columns

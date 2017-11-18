@@ -33,7 +33,7 @@ pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata,
 ## Recent changes to how my expressionsets are created mean that the order of
 ## genes is hard-set to the order of annotations in the annotation data and
 ## therefore _not_ the order of genes found in the count tables.
-actual <- as.matrix(Biobase::exprs(pasilla_expt[["expressionset"]]))
+actual <- exprs(pasilla_expt)
 actual <- actual[ order(row.names(actual)), ]
 expected <- as.matrix(counts)
 expected <- expected[ order(row.names(expected)), ]

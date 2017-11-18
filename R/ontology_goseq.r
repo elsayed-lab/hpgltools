@@ -120,6 +120,9 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   goids_df <- NULL
   ## sig_genes may be a list, character list, or data frame.
   gene_list <- NULL
+  if (class(sig_genes)[1] == "data.table") {
+    sig_genes <- as.data.frame(sig_genes)
+  }
   if (class(sig_genes) == "character") {
     ## Then this is a character list of gene ids
     gene_list <- sig_genes
@@ -149,6 +152,9 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   
   ## Database of lengths may be a gff file, TxDb, or OrganismDb
   metadf <- NULL
+  if (class(length_db)[1] == "data.table") {
+    length_db <- as.data.frame(length_db)
+  }
   if (class(length_db)[[1]] == "character")  {
     ## Then this should be either a gff file or species name.
     if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) |
@@ -186,7 +192,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## Now I should have the gene list and gene lengths
   
     godf <- data.frame()
-    if (class(go_db) == "character") {
+    if (class(go_db)[[1]] == "character") {
       ## A text table or species name
       if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
           grepl(pattern="\\.tab", x=go_db, perl=TRUE)) {
@@ -202,6 +208,8 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
       godf <- extract_go(go_db, keytype=go_keytype)
     } else if (class(go_db)[[1]] == "OrgDb") {
       godf <- extract_go(go_db, keytype=go_keytype)
+    } else if (class(go_db)[[1]] == "data.table") {
+      godf <- as.data.frame(go_db)
     } else if (class(go_db)[[1]] == "data.frame") {
       godf <- go_db
       if (!is.null(godf[["ID"]])) {
@@ -332,28 +340,29 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
     "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
   
-  return_list <- list("input" = sig_genes,
-                      "pwf" = pwf,
-                      "pwf_plot" = pwf_plot,
-                      "alldata" = godata,
-                      "godf" = godf,
-                      "pvalue_histogram" = goseq_p,
-                      "godata_interesting" = godata_interesting,
-                      "mf_interesting" = mf_interesting,
-                      "bp_interesting" = bp_interesting,
-                      "cc_interesting" = cc_interesting,
-                      "goadjust_method" = goseq_method,
-                      "adjust_method" = padjust_method,
-                      "mf_subset" = mf_subset,
-                      "pvalue_plots" = pval_plots,
-                      "bp_subset" = bp_subset,
-                      "cc_subset" = cc_subset,
-                      "qdata" = qdata)
+  retlist <- list(
+    "input" = sig_genes,
+    "pwf" = pwf,
+    "pwf_plot" = pwf_plot,
+    "alldata" = godata,
+    "godf" = godf,
+    "pvalue_histogram" = goseq_p,
+    "godata_interesting" = godata_interesting,
+    "mf_interesting" = mf_interesting,
+    "bp_interesting" = bp_interesting,
+    "cc_interesting" = cc_interesting,
+    "goadjust_method" = goseq_method,
+    "adjust_method" = padjust_method,
+    "mf_subset" = mf_subset,
+    "pvalue_plots" = pval_plots,
+    "bp_subset" = bp_subset,
+    "cc_subset" = cc_subset,
+    "qdata" = qdata)
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- sm(write_goseq_data(return_list, excel=excel))
+    excel_ret <- sm(write_goseq_data(retlist, excel=excel))
   }
-  return(return_list)
+  return(retlist)
 }
 
 ## EOF

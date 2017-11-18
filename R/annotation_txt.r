@@ -1,4 +1,4 @@
-load_trinotate_annotations <- function(trinotate) {
+load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
 
   split_data <- big_table %>%
@@ -125,21 +125,37 @@ load_trinotate_annotations <- function(trinotate) {
   return(split_data)
 }
 
-load_trinotate_go <- function(trinotate) {
+load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
+  big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
 
-  go_data <- big_table[, c("X.gene_id", "transcript_id", "gene_ontology_blast", "gene_ontology_pfam")]
-  colnames(go_data) <- c("gene_id", "transcript_id", "go_blast", "go_pfam")
+  go_data <- big_table[, c("X.gene_id", "transcript_id", "gene_ontology_blast",
+                           "gene_ontology_pfam", "length")]
+  colnames(go_data) <- c("gene_id", "transcript_id", "go_blast", "go_pfam", "length")
   dots <- go_data == "."
   go_data[dots] <- ""
 
-  expanded <- go_data %>% mutate(GO = strsplit(as.character(go_blast), "`")) %>%
-    unnest(GO) %>%
+  expanded <- go_data %>% dplyr::mutate(GO = strsplit(as.character(go_blast), "`")) %>%
+    tidyr::unnest(GO) %>%
     tidyr::separate(GO,
                     c("GO", "GO_ont", "GO_name"),
                     "\\^")
 
   go_data <- expanded[, c("gene_id", "transcript_id", "GO", "GO_ont", "GO_name")]
-  return(go_data)
-}
 
+  go_table <- data.table::setDT(go_data)
+  go_table <- go_table[, c("gene_id", "GO")]
+  names(go_table) <- c("ID", "GO")
+
+  length_data <- expanded[, c("gene_id", "transcript_id", "length")]
+  length_table <- data.table::setDT(length_data)
+  length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)]
+  names(length_table) <- c("ID", "length")
+
+  retlist <- list(
+    "go_data" = go_data,
+    "go_table" = go_table,
+    "length_data" = length_data,
+    "length_table" = length_table)
+  return(retlist)
+}

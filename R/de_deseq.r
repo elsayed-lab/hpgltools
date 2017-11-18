@@ -115,7 +115,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]])
+    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (isTRUE(model_batch)) {
     message("DESeq2 step 1/5: Including only batch in the deseq model.")
@@ -388,6 +388,7 @@ surrogates explicitly stated with the option surrogates=number.")
   return(ret)
 }
 
+## Taken from the tximport manual with minor modification.
 import_deseq <- function(data, column_data, model_string,
                          tximport=NULL) {
   summarized <- NULL

@@ -75,10 +75,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
-      message("Using limma's removeBatchEffect to test before/after batch correction.")
+      message("Using limma's removeBatchEffect to visualize before/after batch inclusion.")
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
-      message(paste0("Using ", model_type, " to test before/after batch correction."))
+      message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type, transform="log2"))
     } else {
       model_type <- "none"
@@ -660,7 +660,6 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
   } else {
     data <- as.data.frame(input)
   }
-  head(data)
   retlist <- list(
     "libsize" = libsize,
     "conditions" = conditions,

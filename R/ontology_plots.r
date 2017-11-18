@@ -101,7 +101,6 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
     message("Extracting the goterms in your chosen level.")
     goterms <- merge(goterms, keepers, by.x="category", by.y="GO")
   }
-  ## TODO: Replace the subset calls with the less noxious which calls.
   plotting_mf <- subset(goterms, complete.cases(goterms))
   plotting_mf[["score"]] <- plotting_mf[["numDEInCat"]] / plotting_mf[["numInCat"]]
   new_order <- order(plotting_mf[["score"]], decreasing=FALSE)
@@ -177,19 +176,21 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \pkg{clusterProfiler}
 #' @export
-plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-  mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=30, type="fisher") {
+  mf_newdf <- topgo[["tables"]][["mf_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   mf_newdf[["term"]] <- as.character(lapply(strwrap(mf_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
   mf_newdf[["pvalue"]] <- as.numeric(mf_newdf[[type]])
-  mf_newdf <- subset(mf_newdf, get(type) < cutoff)
+  mf_newdf <- subset(mf_newdf, get(type) <= cutoff)
   mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]), ]
   mf_newdf <- head(mf_newdf, n=n)
   mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
+  new_order <- order(mf_newdf[["score"]], decreasing=FALSE)
+  mf_newdf <- mf_newdf[new_order, ]
   mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
 
-  bp_newdf <- topgo[["tables"]][["bp"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+  bp_newdf <- topgo[["tables"]][["bp_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   bp_newdf[["term"]] <- as.character(lapply(strwrap(bp_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
@@ -198,9 +199,11 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
   bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]), ]
   bp_newdf <- head(bp_newdf, n=n)
   bp_newdf[["score"]] <- bp_newdf[["Significant"]] / bp_newdf[["Annotated"]]
+  new_order <- order(bp_newdf[["score"]], decreasing=FALSE)
+  bp_newdf <- bp_newdf[new_order, ]
   bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
 
-  cc_newdf <- topgo[["tables"]][["cc"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+  cc_newdf <- topgo[["tables"]][["cc_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   cc_newdf[["term"]] <- as.character(lapply(strwrap(cc_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
@@ -209,6 +212,8 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
   cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]), ]
   cc_newdf <- head(cc_newdf, n=n)
   cc_newdf[["score"]] <- cc_newdf[["Significant"]] / cc_newdf[["Annotated"]]
+  new_order <- order(cc_newdf[["score"]], decreasing=FALSE)
+  cc_newdf <- cc_newdf[new_order, ]
   cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
 
   pval_plots <- list(
@@ -235,7 +240,7 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
 #' @seealso \pkg{clusterProfiler}
 #'  \code{\link{plot_ontpval}}
 #' @export
-plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=30, group_minsize=5) {
   ## TODO: replace the subset calls
   mf_over <- gs_result[["mf_over_enriched"]]
   mf_under <- gs_result[["mf_under_enriched"]]

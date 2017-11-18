@@ -25,7 +25,7 @@
 #'  knickerbockers <- simple_gostats(sig_genes, gff_file, goids)
 #' }
 #' @export
-simple_gostats <- function(sig_genes, gff, goids_df, universe_merge="id", second_merge_try="locus_tag",
+simple_gostats <- function(sig_genes, goids_df, gff=NULL, universe_merge="id", second_merge_try="locus_tag",
                            species="fun", pcutoff=0.10, direction="over", conditional=FALSE,
                            categorysize=NULL, gff_type="cds", excel=NULL, ...) {
     ## The import(gff) is being used for this primarily because it uses integers for the rownames

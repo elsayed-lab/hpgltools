@@ -33,13 +33,20 @@
 #'  ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
-create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
+create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL,
                         savefile="expt", low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
+
+  if (is.null(metadata)) {
+    stop("This requires some metadata at minimum.")
+  }
   ## Palette for colors when auto-chosen
   chosen_palette <- "Dark2"
+  if (!is.null(arglist[["palette"]])) {
+    chosen_palette <- arglist[["palette"]]
+  }
   ## I am learning about simplifying vs. preserving subsetting
   ## This is a case of simplifying and I believe one which is good because I just want
   ## the string out from my list. Lets assume that palette is in fact an element in arglist,
@@ -79,6 +86,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
   }
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
+  message("Reading the sample metadata.")
   sample_definitions <- data.frame()
   file <- NULL
   meta_dataframe <- NULL
@@ -102,7 +110,7 @@ create_expt <- function(metadata, gene_info=NULL, count_dataframe=NULL,
                                          x=colnames(sample_definitions))
   }  else {
     sample_definitions <- read_metadata(file, ...)
-    ##sample_definitions <- read_metadata(file)
+    ## sample_definitions <- read_metadata(file)
   }
 
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -207,8 +215,8 @@ analyses more difficult/impossible.")
   filenames <- NULL
   all_count_tables <- NULL
   if (!is.null(count_dataframe)) {
-    all_count_tables <- count_dataframe
-    testthat::expect_equal(colnames(all_count_tables), rownames(sample_definitions))
+    all_count_tables <- data.table::as.data.table(count_dataframe, keep.rownames="rownames")
+    testthat::expect_equal(colnames(all_count_tables), c("rownames", rownames(sample_definitions)))
     ## If neither of these cases is true, start looking for the files in the
     ## processed_data/ directory
   } else if (is.null(sample_definitions[[file_column]])) {
@@ -216,11 +224,11 @@ analyses more difficult/impossible.")
     ## There are two main organization schemes I have used in the past, the following
     ## checks for both in case I forgot to put a file column in the metadata.
     ## Look for files organized by sample
-    test_filenames <- paste0("processed_data/count_tables/",
-                             as.character(sample_definitions[[sample_column]]), "/",
-                             file_prefix,
-                             as.character(sample_definitions[[sample_column]]),
-                             file_suffix)
+    test_filenames <- file.path("preprocessing", "count_tables",
+                                as.character(sample_definitions[[sample_column]]),
+                                paste0(file_prefix,
+                                       as.character(sample_definitions[[sample_column]]),
+                                       file_suffix))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -235,10 +243,10 @@ analyses more difficult/impossible.")
     }
     if (success == 0) {
       ## Did not find samples by id, try them by type
-      test_filenames <- paste0("processed_data/count_tables/",
-                               tolower(as.character(sample_definitions[["type"]])), "/",
-                               tolower(as.character(sample_definitions[["stage"]])), "/",
-                               sample_definitions[[sample_column]], file_suffix)
+      test_filenames <- file.path("preprocessing", "count_tables",
+                                  tolower(as.character(sample_definitions[["type"]])),
+                                  tolower(as.character(sample_definitions[["stage"]])),
+                                  paste0(sample_definitions[[sample_column]], file_suffix))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -264,27 +272,32 @@ analyses more difficult/impossible.")
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
-    if (class(all_count_tables) == "list" & !is.null(all_count_tables[["counts"]])) {
-      ## Then this came from tximport.
-      tximport_data <- all_count_tables
-      all_count_tables <- all_count_tables[["counts"]]
+    ## all_count_tables <- read_counts_expt(sample_ids, filenames)
+    if (all_count_tables[["source"]] == "tximport") {
+      tximport_data <- list("raw" = all_count_tables[["tximport"]],
+                            "scaled" = all_count_tables[["tximport_scaled"]])
     }
-    ##all_count_tables <- read_counts_expt(sample_ids, filenames)
+    all_count_tables <- all_count_tables[["count_table"]]
   }
 
-  ## Recast the data as a data.frame and make sure everything is numeric
-  all_count_tables <- as.data.frame(all_count_tables)
-  for (col in colnames(all_count_tables)) {
-    ## Ensure there are no stupid entries like target_id est_counts
-    all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
-  }
   ## I have had a couple data sets with incomplete counts, get rid of those rows before moving on.
   all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+  for (col in colnames(all_count_tables)) {
+    ## Ensure there are no stupid entries like target_id est_counts
+    if (col != "rownames") {
+      all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
+    }
+  }
   ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
-  rownames(all_count_tables) <- gsub(pattern="^exon:", replacement="",
-                                     x=rownames(all_count_tables))
-  rownames(all_count_tables) <- make.names(gsub(pattern=":\\d+", replacement="",
-                                                x=rownames(all_count_tables)), unique=TRUE)
+  all_count_tables[["rownames"]] <- gsub(pattern="^exon:", replacement="",
+                                         x=all_count_tables[["rownames"]])
+  ##rownames(all_count_tables) <- gsub(pattern="^exon:", replacement="",
+  ##                                   x=rownames(all_count_tables))
+  all_count_tables[["rownames"]] <- make.names(gsub(pattern=":\\d+", replacement="",
+                                                    x=all_count_tables[["rownames"]]),
+                                               unique=TRUE)
+  ## rownames(all_count_tables) <- make.names(gsub(pattern=":\\d+", replacement="",
+  ##                                               x=rownames(all_count_tables)), unique=TRUE)
 
   ## Try a couple different ways of getting gene-level annotations into the expressionset.
   annotation <- NULL
@@ -292,19 +305,20 @@ analyses more difficult/impossible.")
   if (is.null(gene_info)) {
     ## Including, if all else fails, just grabbing the gene names from the count tables.
     if (is.null(include_gff)) {
-      gene_info <- as.data.frame(rownames(all_count_tables), stringsAsFactors=FALSE)
-      rownames(gene_info) <- rownames(all_count_tables)
-      colnames(gene_info) <- "name"
+      gene_info <- data.table::as.data.table(all_count_tables[["rownames"]], keep.rownames="rownames")
+      names(gene_info) <- "rownames"
     } else {
       ## Or reading a gff file.
       message("create_expt(): Reading annotation gff, this is slow.")
       annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
       tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
-      gene_info <- annotation
+      gene_info <- data.table::as.data.table(annotation, keep.rownames="rownames")
     }
   } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
-    gene_info <- as.data.frame(gene_info[["genes"]], stringsAsFactors=FALSE)
+    gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames="rownames")
+  } else {
+    gene_info <- data.table::as.data.table(gene_info, keep.rownames="rownames")
   }
 
   ## It turns out that loading the annotation information from orgdb/etc may not set the
@@ -347,18 +361,19 @@ analyses more difficult/impossible.")
 
   ## There should no longer be blank columns in the annotation data.
   ## Maybe I will copy/move this to my annotation collection toys?
-  tmp_countsdt <- data.table::as.data.table(all_count_tables, keep.rownames="rownames")
+  ## tmp_countsdt <- data.table::as.data.table(all_count_tables, keep.rownames="rownames")
   ##tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
   ## This temporary id number will be used to ensure that the order of features in everything
   ## will remain consistent, as we will call order() using it later.
+  tmp_countsdt <- all_count_tables
   tmp_countsdt[["temporary_id_number"]] <- 1:nrow(tmp_countsdt)
-  gene_infodt <- data.table::as.data.table(gene_info, keep.rownames="rownames")
+  ## gene_infodt <- data.table::as.data.table(gene_info, keep.rownames="rownames")
   ##gene_infodt[["rownames"]] <- rownames(gene_info)
 
   message("Bringing together the count matrix and gene information.")
   ## The method here is to create a data.table of the counts and annotation data,
   ## merge them, then split them apart.
-  counts_and_annotations <- merge(tmp_countsdt, gene_infodt, by="rownames", all.x=TRUE)
+  counts_and_annotations <- merge(tmp_countsdt, gene_info, by="rownames", all.x=TRUE)
   ## In some cases, the above merge will result in columns being set to NA
   ## We should set all the NA fields to something I think.
   na_entries <- is.na(counts_and_annotations)
@@ -367,14 +382,22 @@ analyses more difficult/impossible.")
   }
   counts_and_annotations[na_entries] <- "undefined"
   counts_and_annotations <- counts_and_annotations[order(counts_and_annotations[["temporary_id_number"]]), ]
-  counts_and_annotations <- as.data.frame(counts_and_annotations, stringsAsFactors=FALSE)
-  final_annotations <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(gene_infodt) ]
-  final_annotations <- final_annotations[, -1, drop=FALSE]
+  ## counts_and_annotations <- as.data.frame(counts_and_annotations, stringsAsFactors=FALSE)
+  kept_columns <- colnames(counts_and_annotations) %in% colnames(gene_info)
+  final_annotations <- as.data.frame(counts_and_annotations, strinsAsFactors=FALSE)
+  final_counts <- final_annotations
+  final_annotations <- final_annotations[, kept_columns]
+  rownames(final_annotations) <- final_annotations[["rownames"]]
+  final_kept <- colnames(final_annotations) != "rownames"
+  final_annotations <- final_annotations[, final_kept]
+  ##final_annotations <- final_annotations[, -1, drop=FALSE]
   ##colnames(final_annotations) <- colnames(gene_info)
   ##rownames(final_annotations) <- counts_and_annotations[["rownames"]]
-  final_countsdt <- counts_and_annotations[, colnames(counts_and_annotations) %in% colnames(all_count_tables) ]
-  final_counts <- as.data.frame(final_countsdt, stringsAsFactors=FALSE)
-  rownames(final_counts) <- counts_and_annotations[["rownames"]]
+  kept_columns <- colnames(counts_and_annotations) %in% colnames(all_count_tables)
+  final_counts <- final_counts[, kept_columns]
+  rownames(final_counts) <- final_counts[["rownames"]]
+  final_kept <- colnames(final_counts) != "rownames"
+  final_counts <- as.matrix(final_counts[, final_kept])
 
   ## I found a non-bug but utterly obnoxious behaivor in R
   ## Imagine a dataframe with 2 entries: TcCLB.511511.3 and TcCLB.511511.30
@@ -413,10 +436,6 @@ analyses more difficult/impossible.")
   ##                                    x=rownames(final_counts), perl=TRUE)
 
   ##final_counts <- final_counts[, -1, drop=FALSE]
-  rm(counts_and_annotations)
-  rm(tmp_countsdt)
-  rm(gene_infodt)
-  rm(final_countsdt)
 
   ## If the user requests input of non-int counts, fix that here.
   if (isTRUE(round)) {
@@ -486,7 +505,7 @@ analyses more difficult/impossible.")
   feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
   Biobase::featureNames(feature_data) <- rownames(final_counts)
   experiment <- methods::new("ExpressionSet",
-                             exprs=as.matrix(final_counts),
+                             exprs=final_counts,
                              phenoData=metadata,
                              featureData=feature_data)
   Biobase::notes(experiment) <- toString(notes)
