@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 ## The following library() seems to be required for glmQLFTest() to work.
 tt <- sm(library(edgeR))
-context("26de_edger.R: Does edgeR work with hpgltools?\n")
+context("26de_edger.R: Does hpgltools work with edgeR?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

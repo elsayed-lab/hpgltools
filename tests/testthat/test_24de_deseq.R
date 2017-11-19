@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("24de_deseq.R: Does DESeq2 work with hpgltools?\n")
+context("24de_deseq.R: Does hpgltools work with DESeq2?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

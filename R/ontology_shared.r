@@ -548,15 +548,15 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
             cluster_down_ontology <- try(simple_clusterprofiler(down_genes, datum, orgdb=orgdb, ...))
             if (isTRUE(do_trees)) {
                 cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology,
-                                                      goid_map=goid_map, goids_df=goids))
+                                                      goid_map=goid_map, go_db=goids))
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology,
-                                                        goid_map=goid_map, goids_df=goids))
+                                                        goid_map=goid_map, go_db=goids))
             }
         }
 
         if (isTRUE(do_topgo)) {
-            topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, goids_df=goids))
-            topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, goids_df=goids))
+            topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, go_db=goids))
+            topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, go_db=goids))
             if (isTRUE(do_trees)) {
                 topgo_up_trees <- try(topgo_trees(topgo_up_ontology))
                 topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
@@ -654,7 +654,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
     lengths <- arglist[["lengths"]]
     goids <- NULL
     if (is.null(arglist[["goids"]])) {
-        goids <- arglist[["goids_df"]]
+        goids <- arglist[["go_db"]]
     } else {
         goids <- arglist[["goids"]]
     }

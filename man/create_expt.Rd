@@ -5,7 +5,7 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_expt(metadata, gene_info = NULL, count_dataframe = NULL,
+create_expt(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   sample_colors = NULL, title = NULL, notes = NULL,
   include_type = "all", include_gff = NULL, savefile = "expt",
   low_files = FALSE, ...)

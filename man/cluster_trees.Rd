@@ -4,7 +4,7 @@
 \alias{cluster_trees}
 \title{Take clusterprofile group data and print it on a tree as per topGO.}
 \usage{
-cluster_trees(de_genes, cpdata, goid_map = "id2go.map", goids_df = NULL,
+cluster_trees(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL,
   score_limit = 0.2, overwrite = FALSE, selector = "topDiffGenes",
   pval_column = "adj.P.Val")
 }
@@ -15,7 +15,7 @@ cluster_trees(de_genes, cpdata, goid_map = "id2go.map", goids_df = NULL,
 
 \item{goid_map}{Mapping file of IDs to GO ontologies.}
 
-\item{goids_df}{Dataframe of mappings used to build goid_map.}
+\item{go_db}{Dataframe of mappings used to build goid_map.}
 
 \item{score_limit}{Scoring limit above which to ignore genes.}
 

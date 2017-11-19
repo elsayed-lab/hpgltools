@@ -5,7 +5,7 @@
 \title{Make a pretty table of topgo data in excel.}
 \usage{
 write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
-  add_trees = TRUE, order_by = "qvalue", decreasing = FALSE, pval = 0.1,
+  add_trees = TRUE, order_by = "fisher", decreasing = FALSE, pval = 0.1,
   add_plots = TRUE, height = 15, width = 10, ...)
 }
 \arguments{

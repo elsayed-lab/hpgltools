@@ -502,12 +502,12 @@ cp_options <- function(species) {
 #'
 #' @param sig_genes Set of 'significant' genes as a table.
 #' @param de_table All genes from the original analysis.
-#' @param goids_df Dataframe of GO->ID matching the gene names of sig_genes to GO categories.
+#' @param go_db Dataframe of GO->ID matching the gene names of sig_genes to GO categories.
 #' @return Table of 'enriched' categories.
-simple_cp_enricher <- function(sig_genes, de_table, goids_df=NULL) {
+simple_cp_enricher <- function(sig_genes, de_table, go_db=NULL) {
   all_genenames <- rownames(de_table)
   sig_genenames <- rownames(sig_genes)
-  enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE=goids_df)
+  enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE=go_db)
   retlist <- list(
     "enriched" = as.data.frame(enriched, stringsAsFactors=FALSE))
   return(retlist)

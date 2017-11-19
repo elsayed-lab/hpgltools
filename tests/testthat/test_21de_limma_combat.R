@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("21de_limma_combat.R: Does limma with combat work with hpgltools?\n")
+context("21de_limma_combat.R: Does hpgltools work with limma and combat?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

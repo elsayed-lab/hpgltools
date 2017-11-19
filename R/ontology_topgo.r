@@ -4,7 +4,7 @@
 #'
 #' @param sig_genes Data frame of differentially expressed genes, containing IDs any other columns.
 #' @param goid_map File containing mappings of genes to goids in the format expected by topgo.
-#' @param goids_df Data frame of the goids which may be used to make the goid_map.
+#' @param go_db Data frame of the goids which may be used to make the goid_map.
 #' @param pvals Set of pvalues in the DE data which may be used to improve the topgo results.
 #' @param limitby Test to index the results by.
 #' @param limit Ontology pvalue to use as the lower limit.
@@ -41,9 +41,14 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   requireNamespace("topGO")
   require.auto("Hmisc")
   requireNamespace("Hmisc")
-  gomap_info <- make_id2gomap(goid_map=goid_map, goids_df=go_db, overwrite=overwrite)
+  gomap_info <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
+  if (is.null(go_db)) {
+    go_db <- reshape2::melt(geneID2GO)
+    go_db <- go_db[, c("L1", "value")]
+    colnames(go_db) <- c("ID", "GO")
+  }
 
   if (is.null(sig_genes[["ID"]])) {
     sig_genes[["ID"]] <- make.names(rownames(sig_genes), unique=TRUE)
@@ -101,158 +106,50 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   sig_weight_res <- NULL
   sig_el_res <- NULL
   results <- list()
-  if (isTRUE(parallel)) {
-    ontologies <- c("MF", "BP", "CC")
-    cl <- parallel::makeCluster(3)  ## 1 for each ontology
-    doParallel::registerDoParallel(cl)
-    requireNamespace("parallel")
-    requireNamespace("doParallel")
-    requireNamespace("iterators")
-    requireNamespace("foreach")
+  godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF",
+                                      allGenes=fisher_interesting_genes,
+                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP",
+                                      allGenes=fisher_interesting_genes,
+                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC",
+                                      allGenes=fisher_interesting_genes,
+                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF",
+                                  allGenes=ks_interesting_genes, geneSel=get(selector),
+                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP",
+                                  allGenes=ks_interesting_genes, geneSel=get(selector),
+                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC",
+                                  allGenes=ks_interesting_genes, geneSel=get(selector),
+                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+  
+  test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
+  sig_fisher_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
+  sig_fisher_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
+  sig_fisher_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
 
-    ## In each of the following steps, we will make a list of 3 items in an unknown order
-    ## But they will have an ontology slot which we can query to figure out if they are
-    ## MF/BP/CC.  Ergo, let foreach() %dopar% {}  create the lists in whatever order they want.
-    ## Then step through the lists and re-order them appropriately.
+  test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
+  sig_ks_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
+  sig_ks_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
+  sig_ks_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
 
-    ## Step 1a:  Iterate through the 3 ontology groups and create Fisher-testable data sets
-    godata_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- new("topGOdata",
-                            ontology=ont,
-                            allGenes=fisher_interesting_genes,
-                            annot=topGO::annFUN.gene2GO,
-                            gene2GO=geneID2GO)
-    } ## End foreach %dopar% for the godata fisher data set
-    for (r in 1:length(godata_fisher_res)) {
-      type <- godata_fisher_res[[r]]@ontology
-      a_result <- godata_fisher_res[[r]]
-      godata_fisher_result[[type]] <- a_result
-    }
-    rm(godata_fisher_res)
+  ## test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.05)
+  test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
+  sig_el_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
+  sig_el_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
+  sig_el_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
+  ## I think the following lines were in error, and they should be using the ks test data.
+  ## sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
+  ## sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
+  ## sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
-    ## Step 1b: As above, but make them suitable for KS tests.
-    godata_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- try(new("topGOdata",
-                                description=ont,
-                                ontology=ont,
-                                allGenes=ks_interesting_genes,
-                                geneSel=get(selector),
-                                annot=topGO::annFUN.gene2GO,
-                                gene2GO=geneID2GO))
-    } ## End the foreach %dopar% for the ks godata set
-    for (r in 1:length(godata_ks_res)) {
-      type <- godata_ks_res[[r]]@ontology
-      a_result <- godata_ks_res[[r]]
-      godata_ks_result[[type]] <- a_result
-    }
-    rm(godata_ks_res)
-
-    ## Step 2:  Perform a fisher test using the fisher-testable data
-    test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
-    sig_fisher_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- try(topGO::getSigGroups(godata_fisher_result[[ont]], test_stat))
-    } ## End the foreach %dopar% to get a significant fisher result
-    for (r in 1:length(sig_fisher_res)) {
-      description_string <- sig_fisher_res[[r]]@description
-      type <- strsplit(x=description_string, split=": ", perl=TRUE)[[1]][[2]]
-      a_result <- sig_fisher_res[[r]]
-      sig_fisher_result[[type]] <- a_result
-    }
-    rm(sig_fisher_res)
-
-    ## Step 3:  Perform a KS test using the appropriate data set
-    test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
-    sig_ks_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- try(topGO::getSigGroups(godata_ks_result[[ont]], test_stat))
-    } ## End the foreach %dopar% to get a significant fisher result
-    for (r in 1:length(sig_ks_res)) {
-      description_string <- sig_ks_res[[r]]@description
-      type <- strsplit(x=description_string, split=": ", perl=TRUE)[[1]][[2]]
-      a_result <- sig_ks_res[[r]]
-      sig_ks_result[[type]] <- a_result
-    }
-    rm(sig_ks_res)
-
-    ## Step 4:  Use the KS-testable data to do an elimination score
-    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
-    sig_el_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- try(topGO::getSigGroups(godata_ks_result[[ont]], test_stat))
-    } ## End the foreach %dopar% to get a significant KS result
-    for (r in 1:length(sig_el_res)) {
-      description_string <- sig_el_res[[r]]@description
-      type <- strsplit(x=description_string, split=": ", perl=TRUE)[[1]][[2]]
-      a_result <- sig_el_res[[r]]
-      sig_el_result[[type]] <- a_result
-    }
-    rm(sig_el_res)
-
-    ## Step 5: Finally, use the weighted test on the Fisher-data
-    test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest, name="Fisher test", cutOff=0.05)
-    sig_weight_res <- foreach(c=1:length(ontologies), .packages=c("hpgltools", "topGO")) %dopar% {
-      ont <- ontologies[[c]]
-      results[[ont]] <- try(topGO::getSigGroups(godata_fisher_result[[ont]], test_stat))
-    } ## End the foreach %dopar% to get a significant fisher result
-    for (r in 1:length(sig_weight_res)) {
-      description_string <- sig_weight_res[[r]]@description
-      type <- strsplit(x=description_string, split=": ", perl=TRUE)[[1]][[2]]
-      a_result <- sig_weight_res[[r]]
-      sig_weight_result[[type]] <- a_result
-    }
-    rm(sig_weight_res)
-
-    ## We have collected all the data sets, close the 3-cpu cluster.
-    parallel::stopCluster(cl)
-  } else {
-    godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF",
-                                        allGenes=fisher_interesting_genes,
-                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP",
-                                        allGenes=fisher_interesting_genes,
-                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC",
-                                        allGenes=fisher_interesting_genes,
-                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF",
-                                    allGenes=ks_interesting_genes, geneSel=get(selector),
-                                    annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP",
-                                    allGenes=ks_interesting_genes, geneSel=get(selector),
-                                    annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-    godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC",
-                                    allGenes=ks_interesting_genes, geneSel=get(selector),
-                                    annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-
-    test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
-    sig_fisher_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
-    sig_fisher_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
-    sig_fisher_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
-
-    test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
-    sig_ks_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
-    sig_ks_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
-    sig_ks_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
-
-    ## test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.05)
-    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
-    sig_el_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
-    sig_el_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
-    sig_el_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
-    ## I think the following lines were in error, and they should be using the ks test data.
-    ## sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
-    ## sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
-    ## sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
-
-    test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
-                     name="Fisher test", sigRatio="ratio")
-    sig_weight_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
-    sig_weight_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
-    sig_weight_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
-  }
+  test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
+                   name="Fisher test", sigRatio="ratio")
+  sig_weight_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
+  sig_weight_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
+  sig_weight_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
 
   mf_fisher_pdist <- try(plot_histogram(sig_fisher_result[["MF"]]@score, bins=20))
   mf_ks_pdist <- try(plot_histogram(sig_ks_result[["MF"]]@score, bins=20))
@@ -315,15 +212,11 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
     message("simple_topgo(): Set densities=TRUE for ontology density plots.")
   }
 
-  godf <- reshape2::melt(geneID2GO)
-  godf <- godf[, c("L1", "value")]
-  colnames(godf) <- c("ID", "GO")
-
   retlist <- list(
+    "go_db" = go_db,
     "input" = sig_genes,
     "results" = results,
     "tables" = tables,
-    "godf" = godf,
     "mf_densities" = mf_densities,
     "bp_densities" = bp_densities,
     "cc_densities" = cc_densities,
@@ -468,12 +361,12 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
 #' topgo.  This handles that process and gives a summary of the new table.
 #'
 #' @param goid_map TopGO mapping file.
-#' @param goids_df If there is no goid_map, create it with this data frame.
+#' @param go_db If there is no goid_map, create it with this data frame.
 #' @param overwrite Rewrite the mapping file?
 #' @return Summary of the new goid table.
 #' @seealso \pkg{topGO}
 #' @export
-make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, overwrite=FALSE) {
+make_id2gomap <- function(goid_map="reference/go/id2go.map", go_db=NULL, overwrite=FALSE) {
   id2go_test <- file.info(goid_map)
   goids_dir <- dirname(goid_map)
   new_go <- NULL
@@ -481,28 +374,28 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
     dir.create(goids_dir, recursive=TRUE)
   }
   if (isTRUE(overwrite)) {
-    if (is.null(goids_df)) {
+    if (is.null(go_db)) {
       stop("There is neither a id2go file nor a data frame of goids.")
     } else {
       message("Attempting to generate a id2go file in the format expected by topGO.")
 
-      new_go <- reshape2::dcast(goids_df, ID~., value.var="GO",
+      new_go <- reshape2::dcast(go_db, ID~., value.var="GO",
                                 fun.aggregate=paste, collapse = ",")
 
-      ##new_go <- dplyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
+      ##new_go <- dplyr::ddply(go_db, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
       write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
       rm(id2go_test)
     }
   } else {
     ## overwrite is not true
     if (is.na(id2go_test[["size"]])) {
-      if (is.null(goids_df)) {
+      if (is.null(go_db)) {
         stop("There is neither a id2go file nor a data frame of goids.")
       } else {
         message("Attempting to generate a id2go file in the format expected by topGO.")
-        new_go <- reshape2::dcast(goids_df, ID~., value.var="GO",
+        new_go <- reshape2::dcast(go_db, ID~., value.var="GO",
                                   fun.aggregate=paste, collapse = ",")
-        ##new_go <- plyr::ddply(goids_df, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
+        ##new_go <- plyr::ddply(go_db, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
         write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
         id2go_test <- file.info(goid_map)
       }
@@ -512,6 +405,8 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", goids_df=NULL, over
       new_go <- goid_map
     }
   }
+
+  ## Pass back an easier to handle go database.
   return(new_go)
 }
 

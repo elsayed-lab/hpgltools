@@ -4,7 +4,7 @@
 \alias{simple_topgo}
 \title{Perform a simplified topgo analysis.}
 \usage{
-simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
+simple_topgo(sig_genes, goid_map = "id2go.map", go_db = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
   sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
   pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
@@ -15,7 +15,7 @@ simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
 
 \item{goid_map}{File containing mappings of genes to goids in the format expected by topgo.}
 
-\item{goids_df}{Data frame of the goids which may be used to make the goid_map.}
+\item{go_db}{Data frame of the goids which may be used to make the goid_map.}
 
 \item{pvals}{Set of pvalues in the DE data which may be used to improve the topgo results.}
 
