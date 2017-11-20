@@ -89,10 +89,39 @@ divide_seq <- function(counts, ...) {
   annotations <- arglist[["annotations"]]
   genome <- arglist[["genome"]]
   pattern <- arglist[["pattern"]]
+
+  ## The annotation data needs to have columns 'start', 'end', and 'chromosome'
+  ## If they are named something else, I need to rename those columns.
+  start_column <- "start"
+  if (!is.null(arglist[["start_column"]])) {
+    start_column <- arglist[["start_column"]]
+    if (start_column != "start") {
+      hit_idx <- colnames(annotations) == start_column
+      colnames(annotations)[hit_idx] <- "start"
+    }
+  }
+  end_column <- "end"
+  if (!is.null(arglist[["end_column"]])) {
+    end_column <- arglist[["end_column"]]
+    if (end_column != "end") {
+      hit_idx <- colnames(annotations) == end_column
+      colnames(annotations)[hit_idx] <- "end"
+    }
+  }
+  chromosome_column <- "chromosome"
+  if (!is.null(arglist[["chromosome_column"]])) {
+    chromosome_column <- arglist[["chromosome_column"]]
+    if (chromosome_column != "chromosome") {
+      hit_idx <- colnames(annotations) == chromosome_column
+      colnames(annotations)[hit_idx] <- "chromosome"
+    }
+  }
+
   if (is.null(pattern)) {
     pattern <- "TA"
   }
   message(paste0("Using pattern: ", pattern, " instead of length for an rpkm-ish normalization."))
+
   compression <- NULL
   genome_class <- class(genome)[1]
   if (genome_class == "character") {
@@ -246,13 +275,15 @@ hpgl_rpkm <- function(df, ...) {
   ##rownames(df_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
-  if (is.null(merged_annot[["width"]])) {
+  if (!is.null(arglist[["column"]])) {
+    lenvec <- as.vector(as.numeric(merged_annot[[arglist[["column"]]]]))
+  } else if (is.null(merged_annot[["width"]])) {
     lenvec <- as.vector(as.numeric(merged_annot[["length"]]))
   } else {
     lenvec <- as.vector(as.numeric(merged_annot[["width"]]))
   }
   names(lenvec) <- rownames(merged_annot)
-  requireNamespace("edgeR")
+  tt <- sm(requireNamespace("edgeR"))
   rpkm_df <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
   colnames(rpkm_df) <- colnames(df)
   return(rpkm_df)

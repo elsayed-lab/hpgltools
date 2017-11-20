@@ -20,8 +20,8 @@ test_that("cpm conversions are equivalent?", {
 })
 
 ## Check that the different ways of calling rpkm() are identical
-pasilla_convert <- sm(convert_counts(pasilla_expt, convert="rpkm"))
-pasilla_norm <- sm(normalize_expt(pasilla_expt, convert="rpkm"))
+pasilla_convert <- sm(convert_counts(pasilla_expt, convert="rpkm", column="cds_length"))
+pasilla_norm <- sm(normalize_expt(pasilla_expt, convert="rpkm", column="cds_length"))
 expected <- pasilla_convert[["count_table"]]
 actual <- exprs(pasilla_norm)
 test_that("calling convert_counts and normalize_expt are equivalent?", {
@@ -30,8 +30,8 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
 
 ## Similarly check that edgeR's rpkm() comes out the same
 ## Make sure that we remove undefined numbers from fdata(length)
-undef <- fData(pasilla_expt)[["length"]] == "undefined"
-lengths <- fData(pasilla_expt)[["length"]]
+undef <- fData(pasilla_expt)[["cds_length"]] == "undefined"
+lengths <- fData(pasilla_expt)[["cds_length"]]
 lengths[undef] <- NA
 fdata_lengths <- as.vector(as.numeric(lengths))
 names(fdata_lengths) <- rownames(fData(pasilla_expt))
@@ -46,8 +46,10 @@ test_that("rpkm conversions are equivalent?", {
 ## and normalize based on its relative frequency.  This is useful primarily for tnseq.
 tt <- sm(require.auto("BSgenome.Dmelanogaster.UCSC.dm6"))
 tt <- sm(library("BSgenome.Dmelanogaster.UCSC.dm6"))
-pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
-                                     genome=BSgenome.Dmelanogaster.UCSC.dm6))
+pasilla_convert <- sm(normalize_expt(
+  pasilla_expt, convert="cp_seq_m", start_column="start_position",
+  chromosome_column="chromosome_name", end_column="end_position",
+  genome=BSgenome.Dmelanogaster.UCSC.dm6))
 expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
 actual <- as.numeric(exprs(pasilla_convert)[test_genes, 1])
 test_that("cp_seq_m works for TA?", {
@@ -55,8 +57,10 @@ test_that("cp_seq_m works for TA?", {
 })
 
 ## Repeat cp_seq_m() for ATG
-pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cp_seq_m",
-                                     genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))
+pasilla_convert <- sm(normalize_expt(
+  pasilla_expt, convert="cp_seq_m", start_column="start_position",
+  chromosome_column="chromosome_name", end_column="end_position",
+  genome=BSgenome.Dmelanogaster.UCSC.dm6, pattern="ATG"))
 expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
 actual <- as.numeric(exprs(pasilla_convert)[test_genes, c("untreated1")])
 test_that("cp_seq_m works for ATG?", {

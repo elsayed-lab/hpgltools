@@ -19,9 +19,8 @@ actual <- nrow(goseq_result[["mf_interesting"]])
 test_that("Do we get the expected number of interesting mf categories?", {
     expect_equal(expected, actual, tolerance=2)
 })
-##expected <- 71
-## goseq picks up another bp category now.
-expected <- 70
+
+expected <- 71
 actual <- nrow(goseq_result[["bp_interesting"]])
 test_that("Do we get the expected number of interesting bp categories?", {
     expect_equal(expected, actual)
@@ -61,10 +60,10 @@ test_that("Are the goseq results as expected (mf pvalues)?", {
     expect_equal(expected, actual, tolerance=0.000001)
 })
 
-expected <- c(0.07692308, 0.08333333, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
+expected <- c(0.08333333, 0.09090909, 0.09090909, 0.09090909, 0.10000000, 0.10000000)
 actual <- head(goseq_result[["pvalue_plots"]][["bpp_plot_over"]][["data"]][["score"]])
 test_that("Are the goseq results as expected (bp pvalues)?", {
-    expect_equal(expected, actual, tolerance=0.00001)
+    expect_equal(expected, actual, tolerance=0.01)
 })
 
 ## Some testing of an interesting point by keith:

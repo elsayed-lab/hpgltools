@@ -5,11 +5,11 @@ context("55gsea_gostats.R: Does GOstats work?\n")
 
 load("gsea_siggenes.rda")
 
-gst_result <- simple_gostats(
+gst_result <- sm(simple_gostats(
   fcp_sig_genes,
   gff_df=dmel,
   go_db=dmel_ontologies,
-  gff_type="protein_coding")
+  gff_type="protein_coding"))
 ## There is some run-to-run variability in these ontology searches
 expected <- c("GO:0000146", "GO:0000295", "GO:0001871",
               "GO:0003824", "GO:0003974", "GO:0003978")

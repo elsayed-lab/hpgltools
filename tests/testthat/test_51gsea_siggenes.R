@@ -9,17 +9,21 @@ dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_ontologies <- sm(load_biomart_go(species="dmelanogaster"))
 ## Get the annotations ready to be recast as a gff file.
 dmel_annotations[["strand"]] <- ifelse(dmel_annotations[["strand"]] == "1", "+", "-")
+colnames(dmel_annotations) <- c("transcript_id", "gene_id", "gene_version", "transcript_version",
+                                "description", "type", "length", "chromosome", "strand",
+                                "start", "end")
 ## Then make them into a granges object
 ## WTF is with 'unable to find an inherited method for function 'seqinfo' for signature "GRanges". ??
 ## Why is it that if I start with a fresh R session, this works fine!?!?!?
+
 dmel_granges <- GenomicRanges::makeGRangesFromDataFrame(dmel_annotations, keep.extra.columns=TRUE)
 ## I got a weird error when the column was Type and not type, I suspect though that this line is not needed.
-dmel_granges$Type <- dmel_annotations[["Type"]]
+dmel_granges$Type <- dmel_annotations[["type"]]
 ## Recast the data frame first as a List of GRanges
 dmel <- as.data.frame(dmel_granges)
-dmel[["ID"]] <- dmel[["geneID"]]
+dmel[["ID"]] <- dmel[["gene_id"]]
 ## Get the gene lengths for goseq.
-dmel_lengths <- dmel_annotations[, c("geneID", "length")]
+dmel_lengths <- dmel_annotations[, c("gene_id", "length")]
 colnames(dmel_lengths) <- c("ID","width")
 rownames(dmel_lengths) <- make.names(dmel_lengths[["ID"]], unique=TRUE)
 ## Drop all duplicate gene IDs

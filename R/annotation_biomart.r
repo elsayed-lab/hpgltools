@@ -26,7 +26,7 @@
 #' }
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                     host="dec2016.archive.ensembl.org", drop_halotypes=TRUE,
+                                     host="dec2016.archive.ensembl.org", drop_haplotypes=TRUE,
                                      trymart="ENSEMBL_MART_ENSEMBL",
                                      gene_requests=c("ensembl_gene_id",
                                                      "version",
@@ -80,28 +80,33 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   }
   ## The following was stolen from Laura's logs for human annotations.
   ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
-  biomart_annotation <- biomaRt::getBM(attributes=gene_requests,
-                                       mart=ensembl)
-  message("Finished downloading ensembl feature annotations.")
+  available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
+  found_attribs <- gene_requests %in% available_attribs
+  if (length(gene_requests) != sum(found_attribs)) {
+    message(paste0("Some attributes in your request list were not in the ensembl database. At some point I will show them here..."))
+    gene_requests <- gene_requests[found_attribs]
+  }
+  gene_annotations <- biomaRt::getBM(attributes=gene_requests,
+                                     mart=ensembl)
+  message("Finished downloading ensembl gene annotations.")
   biomart_annotations <- NULL
   if (isTRUE(include_lengths)) {
-    biomart_structure <- biomaRt::getBM(attributes=length_requests,
-                                        mart=ensembl)
+    found_attribs <- length_requests %in% available_attribs
+    if (length(length_requests) != sum(found_attribs)) {
+      message(paste0("Some attributes in your request list were not in the ensembl database. At some point I will show them here..."))
+      length_requests <- length_requests[found_attribs]
+    }
+    structure_annotations <- biomaRt::getBM(attributes=length_requests,
+                                            mart=ensembl)
     message("Finished downloading ensembl structure annotations.")
-    tmp_annot <- data.table::as.data.table(biomart_annotation, keep.rownames="ensembl_transcript_id")
-    tmp_struct <- data.table::as.data.table(biomart_structure, keep.rownames="ensembl_transcript_id")
+    tmp_annot <- data.table::as.data.table(gene_annotations)
+    tmp_struct <- data.table::as.data.table(structure_annotations)
     biomart_annotations <- merge(tmp_annot, tmp_struct,
                                  by.x="ensembl_transcript_id", by.y="ensembl_transcript_id",
                                  all.x=TRUE)
-    ## If you change gene_requests or length_requests, this will fail.
-    tt <- try(colnames(biomart_annotations) <- c("transcriptID", "geneID", "Description",
-                                                 "Type", "length", "chromosome", "strand",
-                                                 "start", "end"), silent=TRUE)
     biomart_annotations <- as.data.frame(biomart_annotations)
   } else {
     biomart_annotations <- biomart_annotation
-    tt <- try(colnames(biomart_annotations) <- c("geneID", "transcriptID",
-                                                 "Description", "Type"), silent=TRUE)
   }
   ## rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
   ## It is not valid to arbitrarily set it to 'transcriptID' because we cannot guarantee that will
@@ -124,7 +129,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   ## able to grep -v chromosomes with MHC in them. 
   if (isTRUE(drop_haplotypes)) {
     message("Dropping haplotype chromosome annotations, set drop_haplotypes=FALSE if this is bad.")
-    good_idx <- grepl(x=biomart_annotations[["chromosome"]], pattern="^[[:alnum:]]{1,2}$")
+    good_idx <- grepl(x=biomart_annotations[["chromosome_name"]], pattern="^[[:alnum:]]{1,2}$")
     biomart_annotations <- biomart_annotations[good_idx, ]
   }
 
