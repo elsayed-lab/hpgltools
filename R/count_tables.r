@@ -113,14 +113,14 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   } else {
     ## This is used when 'normal' htseq-based counts were generated.
     count_table <- try(read.table(files[1], header=header))
-    count_dt <- data.table::as.data.table(count_table, keep.rownames="rownames")
-    tt <- setkey(count_dt, rownames)
+    colnames(count_table) <- c("rownames", ids[1])
+    count_dt <- data.table::as.data.table(count_table)
+    tt <- data.table::setkey(count_dt, rownames)
     if (class(count_table)[1] == "try-error") {
       stop(paste0("There was an error reading: ", files[1]))
     }
     message(paste0(files[1], " contains ", length(rownames(count_dt)), " rows."))
-    colnames(count_dt) <- c("rownames", ids[1])
-    ## Following lines not needed for data.table
+        ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
     ## count_table <- count_table[, -1, drop=FALSE]
     ## iterate over and append remaining samples
@@ -137,11 +137,11 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
         stop(paste0("There was an error reading: ", files[table]))
       }
       colnames(tmp_count) <- c("rownames", ids[table])
-      tmp_count <- data.table::as.data.table(tmp_count, keep.rownames="rownames")
+      tmp_count <- data.table::as.data.table(tmp_count)
       ##tmp_count <- tmp_count[, c("ID", ids[table])]
       ##rownames(tmp_count) <- make.names(tmp_count[, "ID"], unique=TRUE)
       ##tmp_count <- tmp_count[, -1, drop=FALSE]
-      pre_merge <- length(rownames(tmp_count))
+      pre_merge <- nrow(tmp_count)
       count_dt <- merge(count_dt, tmp_count, by="rownames", all.x=TRUE)
       ## rownames(count_table) <- count_table[, "Row.names"]
       ## count_table <- count_table[, -1, drop=FALSE]
