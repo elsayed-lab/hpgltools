@@ -29,7 +29,7 @@ plot_topgo_densities <- function(godata, table) {
 #' @seealso \pkg{goseq} \pkg{ggplot2}
 #'  \code{\link[goseq]{goseq}}
 #' @export
-plot_ontpval <- function(df, ontology="MF", fontsize=16) {
+plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denominator=NULL) {
   y_name <- paste("Enriched ", ontology, " categories.", sep="")
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
@@ -37,6 +37,13 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     new_fact <- factor(x[["term"]], levels=x[["term"]])
     return(new_fact)
   }
+
+  if (!is.null(numerator) & !is.null(denominator)) {
+    df[["score_string"]] <- paste0(df[[numerator]], " / ", df[[denominator]])
+  } else if (!is.null(numerator)) {
+    df[["score_string"]] <- df[[numerator]]
+  }
+
   ## Sometimes max(df[["score"]]) throws an error -- I think this just needs na.rm
   ## but if I am wrong, I will catch any other errors and just send it to (0, 1/4, 1/2, 3/4, 1)
   max_score <- max(df[["score"]], na.rm=TRUE)
@@ -52,6 +59,12 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     ggplot2::theme(text=ggplot2::element_text(size=10)) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size=fontsize)
+
+  if (!is.null(df[["score_string"]])) {
+    pvalue_plot <- pvalue_plot +
+      ggplot2::geom_text(parse=FALSE, size=3, color="white", hjust=1.2,
+                         ggplot2::aes_string(label="score_string"))
+  }
   return(pvalue_plot)
 }
 
@@ -188,7 +201,8 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=30, type="fis
   mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
   new_order <- order(mf_newdf[["score"]], decreasing=FALSE)
   mf_newdf <- mf_newdf[new_order, ]
-  mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
+  mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF",
+                               numerator="Significant", denominator="Annotated")
 
   bp_newdf <- topgo[["tables"]][["bp_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   bp_newdf[["term"]] <- as.character(lapply(strwrap(bp_newdf[["Term"]],

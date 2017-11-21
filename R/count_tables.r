@@ -92,7 +92,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
-  } else if (grepl(pattern="\\.genes\\.results")) {
+  } else if (grepl(pattern="\\.genes\\.results", x=files[1])) {
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -302,7 +302,7 @@ median_by_factor <- function(data, fact="condition") {
   rownames(medians) <- rownames(data)
   fact <- as.factor(fact)
   for (type in levels(fact)) {
-    columns <- grep(pattern=type, fact)
+    columns <- grep(pattern=type, x=fact)
     med <- NULL
     if (length(columns) < 1) {
       warning("This level of the factor has no columns.")

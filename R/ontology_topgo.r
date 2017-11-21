@@ -16,7 +16,6 @@
 #' @param overwrite Yeah I do not remember this one either.
 #' @param densities Densities, yeah, the densities...
 #' @param pval_plots Include pvalue plots of the results a la clusterprofiler?
-#' @param parallel  Perform some operations in parallel to speed this up?
 #' @param excel  Print the results to an excel file?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
@@ -26,7 +25,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
                          pvals=NULL, limitby="fisher", limit=0.1, signodes=100,
                          sigforall=TRUE, numchar=300, selector="topDiffGenes",
                          pval_column="adj.P.Val", overwrite=FALSE, densities=FALSE,
-                         pval_plots=TRUE, parallel=FALSE, excel=NULL, ...) {
+                         pval_plots=TRUE, excel=NULL, ...) {
   ## Some neat ideas from the topGO documentation:
   ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
   ## A variant of these operations make it possible to give topGO scores so that
@@ -38,9 +37,8 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   ##      allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO,
   ##      gene2GO=geneID2GO, nodeSize=2)
   ## The following library invocation is in case it was unloaded for pathview
-  requireNamespace("topGO")
-  require.auto("Hmisc")
-  requireNamespace("Hmisc")
+  tt <- sm(requireNamespace("topGO"))
+  tt <- sm(requireNamespace("Hmisc"))
   gomap_info <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
@@ -75,128 +73,77 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   ## Instead of invoking library(topGO), I can requireNamespace && attachNamespace.
   ## "GOMFTerm not found"
   ## Ergo, requireNamespace() is insufficient!
-  godata_fisher_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  godata_ks_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  sig_fisher_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  sig_ks_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  sig_weight_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  sig_el_result <- list(
-    "MF" = NULL,
-    "BP" = NULL,
-    "CC" = NULL)
-  godata_fisher_res <- NULL
-  godata_ks_res <- NULL
-  sig_fisher_res <- NULL
-  sig_ks_res <- NULL
-  sig_weight_res <- NULL
-  sig_el_res <- NULL
-  results <- list()
-  godata_fisher_result[["MF"]] <- new("topGOdata", ontology="MF",
-                                      allGenes=fisher_interesting_genes,
-                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  godata_fisher_result[["BP"]] <- new("topGOdata", ontology="BP",
-                                      allGenes=fisher_interesting_genes,
-                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  godata_fisher_result[["CC"]] <- new("topGOdata", ontology="CC",
-                                      allGenes=fisher_interesting_genes,
-                                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  godata_ks_result[["MF"]] <- new("topGOdata", description="MF", ontology="MF",
-                                  allGenes=ks_interesting_genes, geneSel=get(selector),
-                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  godata_ks_result[["BP"]] <- new("topGOdata", description="BP", ontology="BP",
-                                  allGenes=ks_interesting_genes, geneSel=get(selector),
-                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  godata_ks_result[["CC"]] <- new("topGOdata", description="CC", ontology="CC",
-                                  allGenes=ks_interesting_genes, geneSel=get(selector),
-                                  annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
-  
-  test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
-  sig_fisher_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
-  sig_fisher_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
-  sig_fisher_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
+  godata_fisher_results <- list()
+  godata_ks_results <- list()
+  sig_fisher_results <- list()
+  sig_ks_results <- list()
+  sig_weight_results <- list()
+  sig_el_results <- list()
+  fisher_pdists <- list()
+  ks_pdists <- list()
+  el_pdists <- list()
+  weight_pdists <- list()
 
-  test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
-  sig_ks_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
-  sig_ks_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
-  sig_ks_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
+  for (ont in c("BP", "MF", "CC")) {
+    godata_fisher_results[[ont]] <- new("topGOdata", description=ont, ontology=ont,
+                                        allGenes=fisher_interesting_genes,
+                                        annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+    test_stat <- new("classicCount", testStatistic=topGO::GOFisherTest, name="Fisher test")
+    sig_fisher_results[[ont]] <- topGO::getSigGroups(godata_fisher_results[[ont]], test_stat)
 
-  ## test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="Fisher test", cutOff=0.05)
-  test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
-  sig_el_result[["MF"]] <- topGO::getSigGroups(godata_ks_result[["MF"]], test_stat)
-  sig_el_result[["BP"]] <- topGO::getSigGroups(godata_ks_result[["BP"]], test_stat)
-  sig_el_result[["CC"]] <- topGO::getSigGroups(godata_ks_result[["CC"]], test_stat)
-  ## I think the following lines were in error, and they should be using the ks test data.
-  ## sig_el_result[["mf"]] <- topGO::getSigGroups(fisher_mf_GOdata, test_stat)
-  ## sig_el_result[["bp"]] <- topGO::getSigGroups(fisher_bp_GOdata, test_stat)
-  ## sig_el_result[["cc"]] <- topGO::getSigGroups(fisher_cc_GOdata, test_stat)
 
-  test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
-                   name="Fisher test", sigRatio="ratio")
-  sig_weight_result[["MF"]] <- topGO::getSigGroups(godata_fisher_result[["MF"]], test_stat)
-  sig_weight_result[["BP"]] <- topGO::getSigGroups(godata_fisher_result[["BP"]], test_stat)
-  sig_weight_result[["CC"]] <- topGO::getSigGroups(godata_fisher_result[["CC"]], test_stat)
+    godata_ks_results[[one]] <- new("topGOdata", description=ont, ontology=ont,
+                                    allGenes=ks_interesting_genes, geneSel=get(selector),
+                                    annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
+    test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
+    sig_ks_results[[ont]] <- topGO::getSigGroups(godata_ks_results[[ont]], test_stat)
 
-  mf_fisher_pdist <- try(plot_histogram(sig_fisher_result[["MF"]]@score, bins=20))
-  mf_ks_pdist <- try(plot_histogram(sig_ks_result[["MF"]]@score, bins=20))
-  mf_el_pdist <- try(plot_histogram(sig_el_result[["MF"]]@score, bins=20))
-  mf_weight_pdist <- try(plot_histogram(sig_weight_result[["MF"]]@score, bins=20))
-  bp_fisher_pdist <- try(plot_histogram(sig_fisher_result[["BP"]]@score, bins=20))
-  bp_ks_pdist <- try(plot_histogram(sig_ks_result[["BP"]]@score, bins=20))
-  bp_el_pdist <- try(plot_histogram(sig_el_result[["BP"]]@score, bins=20))
-  bp_weight_pdist <- try(plot_histogram(sig_weight_result[["BP"]]@score, bins=20))
-  cc_fisher_pdist <- try(plot_histogram(sig_fisher_result[["CC"]]@score, bins=20))
-  cc_ks_pdist <- try(plot_histogram(sig_ks_result[["CC"]]@score, bins=20))
-  cc_el_pdist <- try(plot_histogram(sig_el_result[["CC"]]@score, bins=20))
-  cc_weight_pdist <- try(plot_histogram(sig_weight_result[["CC"]]@score, bins=20))
+    test_stat <- new("elimScore", testStatistic=topGO::GOKSTest, name="KS test", cutOff=0.05)
+    sig_el_results[[ont]] <- topGO::getSigGroups(godata_ks_results[[ont]], test_stat)
+
+    test_stat <- new("weightCount", testStatistic=topGO::GOFisherTest,
+                     name="Fisher test", sigRatio="ratio")
+    sig_weight_results[[ont]] <- topGO::getSigGroups(godata_fisher_results[[ont]], test_stat)
+
+    fisher_pdists[[ont]] <- try(plot_histogram(sig_fisher_results[[ont]]@score, bins=20))
+    ks_pdists[[ont]] <- try(plot_histogram(sig_ks_results[[ont]]@score, bins=20))
+    el_pdists[[ont]] <- try(plot_histogram(sig_el_results[[ont]]@score, bins=20))
+    weight_pdists[[ont]] <- try(plot_histogram(sig_weight_results[[ont]]@score, bins=20))
+  }
 
   p_dists <- list(
-    "mf_fisher" = mf_fisher_pdist,
-    "bp_fisher" = bp_fisher_pdist,
-    "cc_fisher" = cc_fisher_pdist,
-    "mf_ks" = mf_ks_pdist,
-    "bp_ks" = bp_ks_pdist,
-    "cc_ks" = cc_ks_pdist,
-    "mf_el" = mf_el_pdist,
-    "bp_el" = bp_el_pdist,
-    "cc_el" = cc_el_pdist,
-    "mf_weight" = mf_weight_pdist,
-    "bp_weight" = bp_weight_pdist,
-    "cc_weight" = cc_weight_pdist)
+    "bp_fisher" = fisher_pdists[["BP"]],
+    "mf_fisher" = fisher_pdists[["MF"]],
+    "cc_fisher" = fisher_pdists[["CC"]],
+    "bp_ks" = ks_pdists[["BP"]],
+    "mf_ks" = ks_pdists[["MF"]],
+    "cc_ks" = ks_pdists[["CC"]],
+    "bp_el" = el_pdists[["BP"]],
+    "mf_el" = el_pdists[["MF"]],
+    "cc_el" = el_pdists[["CC"]],
+    "bp_weight" = weight_pdists[["BP"]],
+    "mf_weight" = weight_pdists[["MF"]],
+    "cc_weight" = weight_pdists[["CC"]])
 
   results <- list(
-    "fmf_godata" = godata_fisher_result[["MF"]],
-    "fbp_godata" = godata_fisher_result[["BP"]],
-    "fcc_godata" = godata_fisher_result[["CC"]],
-    "kmf_godata" = godata_ks_result[["MF"]],
-    "kbp_godata" = godata_ks_result[["BP"]],
-    "kcc_godata" = godata_ks_result[["CC"]],
-    "mf_fisher" = sig_fisher_result[["MF"]],
-    "bp_fisher" = sig_fisher_result[["BP"]],
-    "cc_fisher" = sig_fisher_result[["CC"]],
-    "mf_ks" = sig_ks_result[["MF"]],
-    "bp_ks" = sig_ks_result[["BP"]],
-    "cc_ks" = sig_ks_result[["CC"]],
-    "mf_el" = sig_el_result[["MF"]],
-    "bp_el" = sig_el_result[["BP"]],
-    "cc_el" = sig_el_result[["CC"]],
-    "mf_weight" = sig_weight_result[["MF"]],
-    "bp_weight" = sig_weight_result[["BP"]],
-    "cc_weight" = sig_weight_result[["CC"]])
+    "fbp_godata" = godata_fisher_results[["BP"]],
+    "fmf_godata" = godata_fisher_results[["MF"]],
+    "fcc_godata" = godata_fisher_results[["CC"]],
+    "kbp_godata" = godata_ks_results[["BP"]],
+    "kmf_godata" = godata_ks_results[["MF"]],
+    "kcc_godata" = godata_ks_results[["CC"]],
+    "bp_fisher" = sig_fisher_results[["BP"]],
+    "mf_fisher" = sig_fisher_results[["MF"]],
+    "cc_fisher" = sig_fisher_results[["CC"]],
+    "bp_ks" = sig_ks_results[["BP"]],
+    "mf_ks" = sig_ks_results[["MF"]],
+    "cc_ks" = sig_ks_results[["CC"]],
+    "bp_el" = sig_el_results[["BP"]],
+    "mf_el" = sig_el_results[["MF"]],
+    "cc_el" = sig_el_results[["CC"]],
+    "bp_weight" = sig_weight_results[["BP"]],
+    "mf_weight" = sig_weight_results[["MF"]],
+    "cc_weight" = sig_weight_results[["CC"]])
 
   tables <- try(topgo_tables(results, limitby=limitby, limit=limit))
   if (class(tables)[1] == "try-error") {
@@ -205,9 +152,9 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
 
   mf_densities <- bp_densities <- cc_densities <- list()
   if (isTRUE(densities)) {
-    mf_densities <- suppressMessages(plot_topgo_densities(results[["fmf_godata"]], tables[["mf"]]))
-    bp_densities <- suppressMessages(plot_topgo_densities(results[["fbp_godata"]], tables[["bp"]]))
-    cc_densities <- suppressMessages(plot_topgo_densities(results[["fcc_godata"]], tables[["cc"]]))
+    bp_densities <- plot_topgo_densities(results[["fbp_godata"]], tables[["bp_interesting"]])
+    mf_densities <- sm(plot_topgo_densities(results[["fmf_godata"]], tables[["mf_interesting"]]))
+    cc_densities <- sm(plot_topgo_densities(results[["fcc_godata"]], tables[["cc_interesting"]]))
   } else {
     message("simple_topgo(): Set densities=TRUE for ontology density plots.")
   }
@@ -224,9 +171,42 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   pval_plots <- plot_topgo_pval(retlist)
   retlist[["pvalue_plots"]] <- pval_plots
 
+  pval_histograms <- list()
+  fisher_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["fisher"]],
+                            retlist[["tables"]][["bp_subset"]][["fisher"]],
+                            retlist[["tables"]][["cc_subset"]][["fisher"]]))
+  pval_histograms[["fisher"]] <- try(plot_histogram(fisher_ps, bins=50)) +
+    ggplot2::ylab("Number of ontologies observed.") +
+    ggplot2::xlab("Fisher exact test score.")
+  ks_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["KS"]],
+                        retlist[["tables"]][["bp_subset"]][["KS"]],
+                        retlist[["tables"]][["cc_subset"]][["KS"]]))
+  pval_histograms[["KS"]] <- try(plot_histogram(ks_ps, bins=50)) +
+    ggplot2::ylab("Number of ontologies observed.") +
+    ggplot2::xlab("KS test score.")
+  el_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["EL"]],
+                        retlist[["tables"]][["bp_subset"]][["EL"]],
+                        retlist[["tables"]][["cc_subset"]][["EL"]]))
+  pval_histograms[["EL"]] <- try(plot_histogram(el_ps, bins=50)) +
+    ggplot2::ylab("Number of ontologies observed.") +
+    ggplot2::xlab("EL test score.")
+  weight_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["weight"]],
+                            retlist[["tables"]][["bp_subset"]][["weight"]],
+                            retlist[["tables"]][["cc_subset"]][["weight"]]))
+  pval_histograms[["weight"]] <- try(plot_histogram(weight_ps, bins=50)) +
+    ggplot2::ylab("Number of ontologies observed.") +
+    ggplot2::xlab("Weighted test score.")
+  qs <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["qvalue"]],
+                     retlist[["tables"]][["bp_subset"]][["qvalue"]],
+                     retlist[["tables"]][["cc_subset"]][["qvalue"]]))
+  pval_histograms[["qs"]] <- try(plot_histogram(qs, bins=50)) +
+    ggplot2::ylab("Number of ontologies observed.") +
+    ggplot2::xlab("Q-value.")
+  retlist[["pvalue_histograms"]] <- pval_histograms
+  
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- write_topgo_data(retlist, excel=excel)
+    excel_ret <- try(write_topgo_data(retlist, excel=excel))
     retlist[["excel"]] <- excel_ret
   }
   return(retlist)

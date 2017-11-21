@@ -1017,7 +1017,6 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @param topgo_result  A set of results from simple_topgo().
 #' @param excel  An excel file to which to write some pretty results.
 #' @param wb  Workbook object to write to.
-#' @param add_trees  Include topgoish ontology trees?
 #' @param order_by  Which column to order the results by?
 #' @param pval  Choose a cutoff for reporting by p-value.
 #' @param add_plots  Include some pvalue plots in the excel output?
@@ -1029,7 +1028,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
 #' @seealso \pkg{openxlsx} \pkg{topgo}
 #' @export
 write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
-                             add_trees=TRUE, order_by="fisher", decreasing=FALSE,
+                             order_by="fisher", decreasing=FALSE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
     arglist <- list(...)
     table_style <- "TableStyleMedium9"
@@ -1083,23 +1082,35 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
         xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
                                 title="Summary of the topgo search.", start_row=1, start_col=4)
         if (isTRUE(add_plots)) {
-            printme <- "Histogram of observed ontology (adjusted) p-values by topgo."
+            printme <- "Histogram of observed ontology p-values by topgo."
             xl_result <- openxlsx::writeData(wb, "legend", x=printme,
                                              startRow=summary_row - 1, startCol=1)
-            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histogram"]], wb=wb, sheet="legend",
-                                      start_col=1, start_row=summary_row, plotname="p_histogram",
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["fisher"]],
+                                      wb=wb, sheet="legend", start_col=1,
+                                      start_row=summary_row, plotname="fisher_histogram",
                                       savedir=excel_basename)
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["KS"]],
+                                      wb=wb, sheet="legend", start_col=11,
+                                      start_row=summary_row, plotname="ks_histogram",
+                                      savedir=excel_basename)
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["EL"]],
+                                      wb=wb, sheet="legend", start_col=21,
+                                      start_row=summary_row, plotname="el_histogram",
+                                      savedir=excel_basename)
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["weight"]],
+                                      wb=wb, sheet="legend", start_col=1,
+                                      start_row=summary_row + 31, plotname="weight_histogram",
+                                      savedir=excel_basename)
+            plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["qs"]],
+                                      wb=wb, sheet="legend", start_col=11,
+                                      start_row=summary_row + 31, plotname="q_histogram",
+                                      savedir=excel_basename)
+            trees <- topgo_trees(topgo_result)
         }
     }  ## End making sure that an excel is desired.
 
-    trees <- NULL
-    if (isTRUE(add_trees)) {
-        trees <- topgo_trees(topgo_result)
-    }
-
     ## Pull out the relevant portions of the topgo data
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
-    table_list <- list()
     for (ont in c("BP", "MF", "CC")) {
       table_name <- paste0(tolower(ont), "_subset")
       categories <- table_list[[table_name]]
@@ -1124,7 +1135,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
         "All genes in cat.", "DE genes in cat.", 
         "FC from limma", "FC from DESeq", "FC from edgeR")
       colnames(categories) <- better_column_names
-      table_list[[ont]] <- categories
 
       ## Now write the data.
       message(paste0("Writing the ", ont, " data."))
@@ -1143,8 +1153,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
         plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
                                   start_col=ncol(categories) + 2, start_row=new_row,
                                   plotname=p_plot_name, savedir=excel_basename, doWeights=FALSE)
-      }
-      if (!is.null(trees[[tree_plot_name]])) {
         plot_try <- xlsx_plot_png(trees[[tree_plot_name]], wb=wb, sheet=ont, width=12, height=12,
                                   start_col=ncol(categories) + 2, start_row=80, res=210,
                                   plotname=tree_plot_name, savedir=excel_basename)
