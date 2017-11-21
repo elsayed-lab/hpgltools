@@ -360,8 +360,6 @@ analyses more difficult/impossible.")
 
   ## There should no longer be blank columns in the annotation data.
   ## Maybe I will copy/move this to my annotation collection toys?
-  ## tmp_countsdt <- data.table::as.data.table(all_count_tables, keep.rownames="rownames")
-  ##tmp_countsdt[["rownames"]] <- rownames(all_count_tables)
   ## This temporary id number will be used to ensure that the order of features in everything
   ## will remain consistent, as we will call order() using it later.
   all_count_tables[["temporary_id_number"]] <- 1:nrow(all_count_tables)
@@ -386,6 +384,7 @@ analyses more difficult/impossible.")
   final_kept <- colnames(final_annotations) != "rownames"
   final_annotations <- final_annotations[, final_kept]
 
+  ## There are some shenanigans, Maddy is getting an error on countsdt...
   final_counts <- counts_and_annotations
   kept_columns <- colnames(counts_and_annotations) %in% colnames(all_count_tables) &
     colnames(counts_and_annotations) != "temporary_id_number"
