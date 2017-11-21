@@ -146,17 +146,16 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       message(paste0(files[table], " contains ", pre_merge,
                      " rows and merges to ", post_merge, " rows."))
     }
-
     ## remove summary fields added by HTSeq
-    if (!include_summary_rows) {
+    if (!isTRUE(include_summary_rows)) {
       ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
       ## In theory, only 1 of these two cases should ever be true.
       htseq_meta_rows <- c("__no_feature", "__ambiguous", "__too_low_aQual",
                            "__not_aligned", "__alignment_not_unique",
                            "X__no_feature", "X__ambiguous", "X__too_low_aQual",
                            "X__not_aligned", "X__alignment_not_unique")
-      
-      count_table <- count_table[!rownames(count_table) %in% htseq_meta_rows, ]
+      kept_rows <- !count_table[["rownames"]] %in% htseq_meta_rows
+      count_table <- count_table[kept_rows, ]
       retlist[["count_table"]] <- count_table
       retlist[["source"]] <- "htseq"
     } ## End the difference between tximport and reading tables.
