@@ -35,7 +35,7 @@ for (index in chosen) {
   bsgenome_test <- make_eupath_bsgenome(species)
   expect_true(bsgenome_test)
 
-  dm28c_test <- make_eupath_bsgenome(
+  dm28c_test <- make_eupath_bsgenome("Dm28")
 }
 
 end <- as.POSIXlt(Sys.time())
