@@ -82,23 +82,23 @@ vt:	clean_vignette vignette reference install
 clean:
 	rm -rf hpgltools/
 	rm -rf ./..Rcheck
-	rm -rf tests/testthat/circos
-	rm -rf tests/testthat/excel
-	rm -rf tests/testthat/excel_test
-	rm -rf tests/testthat/excel_test_sig
-	rm -rf tests/testthat/kegg_pathways
-	rm -rf tests/testthat/pathview
-	rm -rf tests/testthat/pathview_in
-	rm -f tests/testthat/*.pdf
-	rm -f tests/testthat/*.png
+	rm -rf tests/travis/circos
+	rm -rf tests/travis/excel
+	rm -rf tests/travis/excel_test
+	rm -rf tests/travis/excel_test_sig
+	rm -rf tests/travis/kegg_pathways
+	rm -rf tests/travis/pathview
+	rm -rf tests/travis/pathview_in
+	rm -f tests/travis/*.pdf
+	rm -f tests/travis/*.png
 	rm -f *.pdf
-	rm -f tests/testthat/*.xlsx
-	rm -f tests/testthat/*.rda
-	rm -f tests/testthat/*.gff
-	rm -f tests/testthat/*.gb
-	rm -f tests/testthat/*.map
-	rm -f tests/testthat/*.xml
-	rm -f tests/testthat/*.Rdata
+	rm -f tests/travis/*.xlsx
+	rm -f tests/travis/*.rda
+	rm -f tests/travis/*.gff
+	rm -f tests/travis/*.gb
+	rm -f tests/travis/*.map
+	rm -f tests/travis/*.xml
+	rm -f tests/travis/*.Rdata
 	rm -rf vignettes/circos
 	rm -f vignettes/*.gff
 	rm -f vignettes/*.pdf
