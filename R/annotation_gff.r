@@ -166,6 +166,19 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
     stop("Unable to load gff file.")
   }
 
+  for (col in colnames(ret)) {
+    ret[[col]] <- unAsIs(ret[[col]])
+  }
+
+  for (col in colnames(ret)) {
+    if (class(ret[[col]]) == "list") {
+      ret[[col]] <- sapply(X=ret[[col]], FUN=unlist)
+      ret[[col]] <- sapply(X=ret[[col]], FUN=toString)
+    } else if (class(ret[[col]]) == "factor") {
+      ret[[col]] <- as.character(ret[[col]])
+    }
+  }
+
   return(ret)
 }
 

@@ -353,7 +353,10 @@ get_ncbi_taxonid <- function(species="Leishmania major") {
 #'  crazytown <- make_organismdbi()  ## wait a loong time
 #' }
 #' @export
-make_tritrypdb_organismdbi <- function(id="lmajor_friedlin", cfg=NULL, output_dir="organdb/tritryp", ...) {
+make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
+                                       cfg=NULL, output_dir="organdb/tritryp", ...) {
+  warning("make_tritrypdb_organismdbi is deprecated in favor of make_eupath_organismdbi.")
+  warning("it works for now, but will die a sad, lonely death.")
   arglist <- list(...)
   reinstall <- TRUE
   if (!is.null(arglist[["reinstall"]])) {
@@ -470,8 +473,10 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
     system(mv_cmd)
     ## Collect the text files in the new package and remove all -like instances in them
     ##find_cmd <- paste0("sed -i 's/", removal, "/", replace,
-    find_cmd <- paste0("perl -p -i -e 's/", removal, "/", replace,
-                       "/g' $(find ", new_path, " -type f | grep -v sqlite | grep -v rda)")
+    find_cmd <- paste0("perl -p -i -e 's/",
+                       removal, "/", replace,
+                       "/g' $(find ", new_path,
+                       " -type f | grep -v 'sqlite' | grep -v 'zzz' | grep -v 'rda')")
     message(paste0("rewriting orgdb files: ", find_cmd))
     system(find_cmd)
 

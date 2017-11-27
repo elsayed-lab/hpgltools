@@ -92,7 +92,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
     sig_fisher_results[[ont]] <- topGO::getSigGroups(godata_fisher_results[[ont]], test_stat)
 
 
-    godata_ks_results[[one]] <- new("topGOdata", description=ont, ontology=ont,
+    godata_ks_results[[ont]] <- new("topGOdata", description=ont, ontology=ont,
                                     allGenes=ks_interesting_genes, geneSel=get(selector),
                                     annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
     test_stat <- new("classicScore", testStatistic=topGO::GOKSTest, name="KS tests")
@@ -175,31 +175,31 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   fisher_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["fisher"]],
                             retlist[["tables"]][["bp_subset"]][["fisher"]],
                             retlist[["tables"]][["cc_subset"]][["fisher"]]))
-  pval_histograms[["fisher"]] <- try(plot_histogram(fisher_ps, bins=50)) +
+  pval_histograms[["fisher"]] <- sm(try(plot_histogram(fisher_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Fisher exact test score.")
   ks_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["KS"]],
                         retlist[["tables"]][["bp_subset"]][["KS"]],
                         retlist[["tables"]][["cc_subset"]][["KS"]]))
-  pval_histograms[["KS"]] <- try(plot_histogram(ks_ps, bins=50)) +
+  pval_histograms[["KS"]] <- sm(try(plot_histogram(ks_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("KS test score.")
   el_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["EL"]],
                         retlist[["tables"]][["bp_subset"]][["EL"]],
                         retlist[["tables"]][["cc_subset"]][["EL"]]))
-  pval_histograms[["EL"]] <- try(plot_histogram(el_ps, bins=50)) +
+  pval_histograms[["EL"]] <- sm(try(plot_histogram(el_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("EL test score.")
   weight_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["weight"]],
                             retlist[["tables"]][["bp_subset"]][["weight"]],
                             retlist[["tables"]][["cc_subset"]][["weight"]]))
-  pval_histograms[["weight"]] <- try(plot_histogram(weight_ps, bins=50)) +
+  pval_histograms[["weight"]] <- sm(try(plot_histogram(weight_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Weighted test score.")
   qs <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["qvalue"]],
                      retlist[["tables"]][["bp_subset"]][["qvalue"]],
                      retlist[["tables"]][["cc_subset"]][["qvalue"]]))
-  pval_histograms[["qs"]] <- try(plot_histogram(qs, bins=50)) +
+  pval_histograms[["qs"]] <- sm(try(plot_histogram(qs, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Q-value.")
   retlist[["pvalue_histograms"]] <- pval_histograms

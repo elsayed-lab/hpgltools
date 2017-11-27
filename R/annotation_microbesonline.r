@@ -130,7 +130,7 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
     url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
     string <- RCurl::getURL(url)
     con <- textConnection(string)
-    data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL)
+    data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
     retlist[[name]] <- data
   }
   return(retlist)

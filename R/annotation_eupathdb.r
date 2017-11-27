@@ -1,3 +1,142 @@
+#' Generate a BSgenome package from the eupathdb.
+#'
+#' Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packages, it
+#' seems to me that we ought to also be able to make a readable genome package.  I should
+#' probably use some of the logic from this to make the organismdbi generator smarter.
+#'
+#' @param species  Species to create.
+#' @param dir  Working directory.
+#' @param overwrite  Rewrite an existing package directory.
+#' @param metadata  Dataframe of the required metadata.
+#' @param ... Extra arguments for downloading metadata when not provided.
+#' @return  Currently just TRUE or an error.
+#' @export
+make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", dir=".",
+                                 overwrite=FALSE, metadata=NULL, ...) {
+  if (is.null(metadata)) {
+    message("Starting metadata download.")
+    metadata <- download_eupathdb_metadata(...)
+    ## metadata <- download_eupathdb_metadata()
+    message("Finished metadata download.")
+  }
+  all_species <- metadata[["Species"]]
+  entry <- NULL
+  grep_hits <- grepl(species, all_species)
+  grepped_hits <- all_species[grep_hits]
+  if (species %in% all_species) {
+    entry <- metadata[metadata[["Species"]] == species, ]
+    message(paste0("Yay, found: ", entry[["Species"]]))
+  } else if (sum(grep_hits > 0)) {
+    species <- grepped_hits[[1]]
+    entry <- metadata[metadata[["Species"]] == species, ]
+    message("Found the following hits: ", toString(grepped_hits), ", choosing the first.")
+  } else {
+    message(paste0("Here are the possible species: ", toString(all_species)))
+    stop("Did not find your species.")
+  }
+
+  ## Create the name of the package.
+  taxa <- make_taxon_names(entry)
+  pkgname <- paste0("BSGenome.", taxa[["taxon"]], ".v", entry[["SourceVersion"]])
+  pkgname <- gsub(pattern="_|-", replacement="", x=pkgname)
+  message(paste0("Hopefully generating package: ", pkgname))
+  ## Check that it is not already installed.
+  inst <- as.data.frame(installed.packages())
+  if (pkgname %in% inst[["Package"]]) {
+    if (isTRUE(overwrite)) {
+      message(paste0(pkgname, " is already installed, overwriting it."))
+    } else {
+      message(paste0(pkgname, " is already installed, set overwrite=TRUE if you wish to reinstall."))
+      return(pkgname)
+    }
+  }
+
+  ## Figure out the version numbers and download urls.
+  db_version <- entry[["SourceVersion"]]
+  fasta_start <- entry[["SourceUrl"]]
+  fasta_starturl <- sub(pattern="gff",
+                        replacement="fasta",
+                        x=fasta_start,
+                        perl=TRUE)
+  fasta_url <- sub(pattern="\\.gff", replacement="_Genome\\.fasta",
+                   x=fasta_starturl)
+  fasta_hostname <- sub(pattern="http://(.*)\\.org.*$",
+                        replacement="\\1",
+                        x=fasta_start)
+
+  ## Find a spot to dump the fasta files
+  bsgenome_base <- file.path(dir, "bsgenome_input")
+  bsgenome_dir <- file.path(bsgenome_base, pkgname)
+  if (!file.exists(bsgenome_dir)) {
+    created <- dir.create(bsgenome_dir, recursive=TRUE)
+  }
+  ## Download them to this directory.
+  input_file <- file.path(bsgenome_base, genome_filename)
+  downloaded <- download.file(url=fasta_url, destfile=input_file)
+  ## And extract all the individual chromosomes into this directory.
+  input <- Biostrings::readDNAStringSet(input_file)
+  output_list <- list()
+  sequence_names <- "c("
+  for (index in 1:length(input)) {
+    chr <- names(input)[index]
+    chr_name <- strsplit(chr, split=" ")[[1]][1]
+    chr_file <- file.path(bsgenome_dir, paste0(chr_name, ".fa"))
+    message(paste0("Writing ", chr_file, "."))
+    output <- Biostrings::writeXStringSet(input[index], chr_file, append=FALSE,
+                compress=FALSE, format="fasta")
+    output_list[[chr_name]] <- chr_file
+    sequence_names <- paste0(sequence_names, '"', chr_name, '", ')
+  }
+  sequence_names <- gsub(pattern=", $", replacement=")", x=sequence_names)
+
+  ## Now start creating the DESCRIPTION file
+  desc_file <- file.path(bsgenome_dir, "DESCRIPTION")
+  descript <- desc::description$new("!new")
+  descript$set(Package=pkgname)
+  author <- "Ashton Trey Belew <abelew@umd.edu>"
+  title <- paste0(taxa[["genus"]], " ", taxa[["species"]], " strain ", taxa[["strain"]],
+                  " version ", db_version)
+  descript$set(Title=title)
+  descript$set(Author=author)
+  descript$set(Version=format(Sys.time(), "%Y.%m"))
+  descript$set(Maintainer=author)
+  descript$set(Description=paste0("A full genome from the eupathdb/tritrypdb for ", title, "."))
+  descript$set(License="Artistic-2.0")
+  descript$set(URL="http://eupathdb.org")
+  descript$set(BugReports="http://github.com/elsayed-lab")
+  descript$set(seqs_srcdir=bsgenome_dir)
+  descript$set(seqnames=sequence_names)
+  descript$set(organism=taxa[["taxon"]])
+  descript$set(common_name=taxa[["genus_species"]])
+  descript$set(provider=fasta_hostname)
+  descript$set(provider_version=paste0(fasta_hostname, " ", db_version))
+  descript$set(release_date=format(Sys.time(), "%Y%m%d"))
+  descript$set(BSgenomeObjname=paste0(taxa[["genus_species"]], "_", taxa[["strain"]]))
+  descript$set(release_name=db_version)
+  descript$set(organism_biocview=paste0(taxa[["genus_species"]], "_", taxa[["strain"]]))
+  descript$del("LazyData")
+  descript$del("Authors@R")
+  descript$del("URL")
+  descript$del("BugReports")
+  descript$del("Encoding")
+  output_file <- file.path(bsgenome_dir, "DESCRIPTION")
+  descript$write(output_file)
+
+  if (file.exists(pkgname)) {
+    unlink(x=pkgname, recursive=TRUE)
+  }
+  ## Generate the package.
+  annoying <- BSgenome::forgeBSgenomeDataPkg(output_file)
+
+  ## And install it.
+  inst <- try(devtools::install(pkgname))
+  if (class(inst) != "try-error") {
+    return(pkgname)
+  } else {
+    return(inst)
+  }
+}
+
 #' Create an organismDbi instance for an eupathdb organism.
 #'
 #' @param species  A species in the eupathDb metadata.
@@ -9,10 +148,10 @@
 #' @author  Keith Hughitt
 #' @export
 make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", dir=".",
-                                    overwrite=FALSE, kegg_abbreviation=NULL, metadata=NULL) {
+                                    overwrite=FALSE, kegg_abbreviation=NULL, metadata=NULL, ...) {
   if (is.null(metadata)) {
     message("Starting metadata download.")
-    metadata <- download_eupathdb_metadata()
+    metadata <- download_eupathdb_metadata(...)
     message("Finished metadata download.")
   }
   all_species <- metadata[["Species"]]
@@ -116,17 +255,18 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                        dir=".", use_savefile=TRUE) {
   ## Get EuPathDB version (same for all databases)
+  savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
   if (isTRUE(use_savefile)) {
-    savefile <- file.path(dir, paste0("eupath_metadata-v", format(Sys.time(), "%Y%m"), ".rda"))
+    savefile <- file.path(dir, savefile)
     if (isTRUE(overwrite)) {
       file.remove(savefile)
     }
     if (file.exists(savefile)) {
-      orgdb_metadata <- new.env()
-      loaded <- load(savefile, envir=orgdb_metadata)
-      orgdb_metadata <- orgdb_metadata[["orgdb_metadata"]]
-      return(orgdb_metadata)
+      metadata <- new.env()
+      loaded <- load(savefile, envir=metadata)
+      metadata <- metadata[["metadata"]]
+      return(metadata)
     }
   }
 
@@ -235,7 +375,7 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                   tolower(DataProvider), SourceVersion, "rda")) %>%
     dplyr::mutate(DataPath=file.path("EuPathDB", "GRanges", BiocVersion, ResourceName))
 
-  orgdb_metadata <- shared_metadata %>%
+  metadata <- shared_metadata %>%
     dplyr::mutate(
              Title=sprintf("Genome wide annotations for %s", Species),
              Description=sprintf("%s %s annotations for %s", DataProvider, SourceVersion, Species),
@@ -248,11 +388,11 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   if (isTRUE(use_savefile)) {
     if (isTRUE(overwrite) | !file.exists(savefile)) {
-      saved <- save(list="orgdb_metadata", file=savefile)
+      saved <- save(list="metadata", file=savefile)
     }
   }
 
-  return(orgdb_metadata)
+  return(metadata)
 }
 
 #' Invoke the appropriate get_eupath_ function.
@@ -646,12 +786,19 @@ make_taxon_names <- function(entry) {
   ##species_strain <- paste(unlist(strsplit(taxon, "_"))[-1], collapse="")
   genus_species <- paste0(genus, "_", species)
 
+  strain <- strsplit(species_strain, split="\\.")[[1]][3]
+
+  first <- substring(genus, 1, 1)
+  gsstrain <- paste0(first, species, strain)
+
   taxa <- list(
     "genus" = genus,
     "species" = species,
     "taxon" = taxon,
     "species_strain" = species_strain,
-    "genus_species" = genus_species)
+    "genus_species" = genus_species,
+    "strain" = strain,
+    "gsstrain" = gsstrain)
   return(taxa)
 }
 

@@ -20,7 +20,15 @@ normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant
                                      convert="cbcbcpm", filter="cbcb", thresh=1))
 
 ## Interestingly, doParallel does not work when run from packrat.
-hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE))
+test_keepers <- list("treatment" = c("treated", "untreated"))
+hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE,
+                            keepers=test_keepers,
+                            combined_excel="excel_test.xlsx"))
+combined_excel <- hpgl_all[["combined"]]
+
+test_that("Does combine_de_tables create an excel file?", {
+    expect_true(file.exists("excel_test.xlsx"))
+})
 
 hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
                                    limma_method="robust", edger_method="long",
@@ -152,15 +160,6 @@ expected <- c(-3.22938, -3.19676, -3.16414, -3.13152, -3.09890, -3.06628)
 actual <- as.numeric(head(funkytown[["down_data"]][[1]]))
 test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected, actual, tolerance=0.02)
-})
-
-## Ensure that the excel table printer is printing excel tables
-test_keepers <- list("treatment" = c("treated", "untreated"))
-combined_excel <- sm(combine_de_tables(hpgl_all,
-                                       excel="excel_test.xlsx",
-                                       keepers=test_keepers))
-test_that("Does combine_de_tables create an excel file?", {
-    expect_true(file.exists("excel_test.xlsx"))
 })
 
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.

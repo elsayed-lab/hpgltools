@@ -466,4 +466,11 @@ rex <- function(display=":0") {
   return(NULL)
 }
 
+unAsIs <- function(stuff) {
+  if("AsIs" %in% class(stuff)) {
+    class(stuff) <- class(stuff)[-match("AsIs", class(stuff))]
+  }
+  return(stuff)
+}
+
 ## EOF

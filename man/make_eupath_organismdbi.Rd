@@ -6,7 +6,7 @@
 \usage{
 make_eupath_organismdbi(species = "Leishmania major strain Friedlin",
   dir = ".", overwrite = FALSE, kegg_abbreviation = NULL,
-  metadata = NULL)
+  metadata = NULL, ...)
 }
 \arguments{
 \item{species}{A species in the eupathDb metadata.}

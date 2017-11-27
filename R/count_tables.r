@@ -47,6 +47,11 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   } else if (file.exists(lower_filenames[1])) {
     files[1] <- lower_filenames[1]
   }
+
+  ## Add an optional directory if I don't feel like specifying in the sample sheet.
+  if (!is.null(arglist[["countdir"]])) {
+    files <- file.path(arglist[["countdir"]], files)
+  }
   count_table <- NULL
   for (f in 1:length(files)) {
     files[f] <- gsub(pattern=" ", replacement="", x=files[f])
