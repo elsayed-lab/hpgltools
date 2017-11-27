@@ -4,13 +4,13 @@
 \alias{intersect_significant}
 \title{Find the sets of intersecting significant genes}
 \usage{
-intersect_significant(combined, fc = 1, p = 0.05, z = NULL,
+intersect_significant(combined, lfc = 1, p = 0.05, z = NULL,
   p_type = "adj", excel = "excel/intersect_significant.xlsx")
 }
 \arguments{
 \item{combined}{A result from combine_de_tables().}
 
-\item{fc}{Define significant via fold-change.}
+\item{lfc}{Define significant via fold-change.}
 
 \item{p}{Or p-value.}
 

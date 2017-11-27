@@ -5,7 +5,7 @@
 \title{Perform a coefficient scatter plot of a limma/deseq/edger/basic table.}
 \usage{
 extract_coefficient_scatter(output, toptable = NULL, type = "limma",
-  x = 1, y = 2, z = 1.5, p = NULL, fc = NULL, n = NULL,
+  x = 1, y = 2, z = 1.5, p = NULL, lfc = NULL, n = NULL,
   loess = FALSE, color_low = "#DD0000", color_high = "#7B9F35", ...)
 }
 \arguments{
@@ -23,7 +23,7 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 
 \item{p}{Set a p-value cutoff for coloring the scatter plot (currently not supported).}
 
-\item{fc}{Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)}
+\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)}
 
 \item{n}{Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).}
 

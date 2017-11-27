@@ -189,7 +189,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' @param y  The y-axis column to use.
 #' @param z  Define the range of genes to color (FIXME: extend this to p-value and fold-change).
 #' @param p  Set a p-value cutoff for coloring the scatter plot (currently not supported).
-#' @param fc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
+#' @param lfc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
 #' @param n  Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).
 #' @param loess  Add a loess estimation (This is slow.)
 #' @param color_low  Color for the genes less than the mean.
@@ -203,7 +203,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' }
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
-                                        p=NULL, fc=NULL, n=NULL, loess=FALSE,
+                                        p=NULL, lfc=NULL, n=NULL, loess=FALSE,
                                         color_low="#DD0000", color_high="#7B9F35", ...) {
   arglist <- list(...)
   ## This is an explicit test against all_pairwise() and reduces it to result from type.
@@ -276,7 +276,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     ##second_df <- output[["coefficients"]][[yname]]
     ##second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
     ##first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
-    ##colnames(first_col) <- c("mean.1", "fc.1", xname)
+    ##colnames(first_col) <- c("mean.1", "lfc.1", xname)
     ##second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
     ##colnames(second_col) <- c("mean.2", "fc.2", yname)
     ##coefficient_df <- merge(first_col, second_col, by="row.names")
@@ -295,7 +295,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
                                  gvis_trendline=gvis_trendline, first=xname, second=yname,
                                  tooltip_data=tooltip_data, base_url=base_url,
                                  pretty_colors=FALSE, color_low=color_low, color_high=color_high,
-                                 p=p, fc=fc, n=n, z=z))
+                                 p=p, lfc=lfc, n=n, z=z))
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits=c(minvalue, maxvalue)) +
     ggplot2::scale_y_continuous(limits=c(minvalue, maxvalue))
@@ -312,7 +312,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' @param adjp  Use adjusted p-values
 #' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
-#' @param fc  What fold-change cutoff to include?
+#' @param lfc  What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
 #' @return  A list of venn plots
 #' @seealso \pkg{venneuler} \pkg{Vennerable}
@@ -321,7 +321,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'  bunchovenns <- de_venn(pairwise_result)
 #' }
 #' @export
-de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, fc=0, ...) {
+de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
   ## arglist <- list(...)
   combine_tables <- function(d, e, l) {
     ddf <- as.data.frame(l[, "limma_logfc"])
@@ -348,9 +348,9 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, fc=0, ...) {
     edger_p <- "edger_adjp"
   }
 
-  limma_sig <- sm(get_sig_genes(table, fc=fc, column="limma_logfc", p_column=limma_p, p=p))
-  edger_sig <- sm(get_sig_genes(table, fc=fc, column="edger_logfc", p_column=edger_p, p=p))
-  deseq_sig <- sm(get_sig_genes(table, fc=fc, column="deseq_logfc", p_column=deseq_p, p=p))
+  limma_sig <- sm(get_sig_genes(table, lfc=lfc, column="limma_logfc", p_column=limma_p, p=p))
+  edger_sig <- sm(get_sig_genes(table, lfc=lfc, column="edger_logfc", p_column=edger_p, p=p))
+  deseq_sig <- sm(get_sig_genes(table, lfc=lfc, column="deseq_logfc", p_column=deseq_p, p=p))
   comp_up <- combine_tables(deseq_sig[["up_genes"]],
                             edger_sig[["up_genes"]],
                             limma_sig[["up_genes"]])
@@ -484,7 +484,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 
   putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
   up_point_num <- putative_up_inflection[2,1]
-  up_label <- paste0("At fc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
+  up_label <- paste0("At lfc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
                      ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
   up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
     ggplot2::geom_point() + ggplot2::geom_line() +
@@ -530,7 +530,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' given a set of fold changes and p-value.
 #'
 #' @param combined  Result from combine_de_tables and/or extract_significant_genes().
-#' @param fc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
+#' @param lfc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
 #'     followed by 2 fold and 4 fold cutoffs.
 #' @param p_type  Adjusted or not?
 #' @param invert  Reverse the order of contrasts for readability?
@@ -549,7 +549,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #'  barplots <- significant_barplots(combined_result)
 #' }
 #' @export
-significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
+significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
                                  p=0.05, z=NULL, p_type="adj",
                                  according_to="all", order=NULL, maximum=NULL, ...) {
   arglist <- list(...)
@@ -593,16 +593,16 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
   ##}
 
   for (type in types) {
-    for (fc in fc_cutoffs) {
+    for (fc in lfc_cutoffs) {
       ## This is a bit weird and circuituous
       ## The most common caller of this function is in fact extract_significant_genes
-      fc_sig <- sm(extract_significant_genes(combined, fc=fc, according_to=according_to,
+      fc_sig <- sm(extract_significant_genes(combined, lfc=fc, according_to=according_to,
                                              p=p, z=z, n=NULL, excel=FALSE,
                                              p_type=p_type, sig_bar=FALSE, ma=FALSE))
       table_length <- length(fc_sig[[type]][["ups"]])
       fc_name <- paste0("fc_", fc)
       fc_names <- append(fc_names, fc_name)
-      
+
       for (tab in 1:table_length) {
         ## The table names are shared across methods and ups/downs
         table_names <- names(fc_sig[[type]][["ups"]])
@@ -612,13 +612,13 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
         table_name <- table_names[tab]
         t_up <- nrow(fc_sig[[type]][["ups"]][[table_name]])
         t_down <- nrow(fc_sig[[type]][["downs"]][[table_name]])
-        
+
         sig_lists_up[[type]][[fc_name]][[table_name]] <- t_up
         sig_lists_down[[type]][[fc_name]][[table_name]] <- t_down
       } ## End iterating through every table
-    } ## End querying all fc cutoffs 
+    } ## End querying all fc cutoffs
     ## Now we need to collate the data and make the bars
-    
+
     up_all <- list("limma" = numeric(),
                    "deseq" = numeric(),
                    "edger" = numeric())## The number of all genes FC > 0
@@ -641,7 +641,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
     ## ######### #### #  <-- Total width is the number of all >1FC genes
     ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
     ##         |------------ Total >0FC - the smallest set >4FC
-    
+
     papa_bear <- fc_names[[1]]  ## Because it is the largest grouping
     mama_bear <- fc_names[[2]]  ## The middle grouping
     baby_bear <- fc_names[[3]]  ## And the smallest grouping
@@ -683,7 +683,7 @@ significant_barplots <- function(combined, fc_cutoffs=c(0, 1, 2), invert=FALSE,
       down_middle <- down_terminal - down_max[[type]][[table_name]]
       down_min <- down_terminal - down_mid[[type]][[table_name]]
     } ## End for 1:table_length
-    
+
     ## Prepare the tables for plotting.
     comparisons <- names(sig_lists_up[[type]][[1]])
     ## Once again, starting with only the up-stuff

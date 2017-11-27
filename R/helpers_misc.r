@@ -59,9 +59,8 @@ local_get_value <- function(x, delimiter=": ") {
 #' @export
 pp <- function(file, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
-  res <- NULL
   if (ext == "png") {
-    res <- png(filename=file, width=width, height=height, units="in", res=res, ...)
+    res <- png(filename=file, width=width, height=height, units="in", res=res) ##, ...)
   } else if (ext == "svg") {
     res <- svg(filename=file)
   } else if (ext == "ps") {
@@ -465,6 +464,13 @@ rex <- function(display=":0") {
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
   return(NULL)
+}
+
+unAsIs <- function(stuff) {
+  if("AsIs" %in% class(stuff)) {
+    class(stuff) <- class(stuff)[-match("AsIs", class(stuff))]
+  }
+  return(stuff)
 }
 
 ## EOF

@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
-context("20de_limma_batch.R: Does limma work with hpgltools?\n")
+context("20de_limma_batch.R: Does hpgltools work with limma?\n")
 
 load("pasilla_df.rda")
 

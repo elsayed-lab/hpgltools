@@ -20,7 +20,15 @@ normalized_expt <- sm(normalize_expt(pasilla_expt, transform="log2", norm="quant
                                      convert="cbcbcpm", filter="cbcb", thresh=1))
 
 ## Interestingly, doParallel does not work when run from packrat.
-hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE))
+test_keepers <- list("treatment" = c("treated", "untreated"))
+hpgl_all <- sm(all_pairwise(pasilla_expt, parallel=FALSE,
+                            keepers=test_keepers,
+                            combined_excel="excel_test.xlsx"))
+combined_excel <- hpgl_all[["combined"]]
+
+test_that("Does combine_de_tables create an excel file?", {
+    expect_true(file.exists("excel_test.xlsx"))
+})
 
 hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
                                    limma_method="robust", edger_method="long",
@@ -84,7 +92,7 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
 })
 
 combined_table <- sm(combine_de_tables(hpgl_all, excel=FALSE))
-expected <- c(10153, 43)
+expected <- c(10153, 45)
 actual <- dim(combined_table[["data"]][[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
     expect_equal(expected, actual)
@@ -154,15 +162,6 @@ test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected, actual, tolerance=0.02)
 })
 
-## Ensure that the excel table printer is printing excel tables
-test_keepers <- list("treatment" = c("treated", "untreated"))
-combined_excel <- sm(combine_de_tables(hpgl_all,
-                                       excel="excel_test.xlsx",
-                                       keepers=test_keepers))
-test_that("Does combine_de_tables create an excel file?", {
-    expect_true(file.exists("excel_test.xlsx"))
-})
-
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
 ## Check that there are some venn plots in the excel workbook:
 ## expected <- "recordedplot"
@@ -185,17 +184,18 @@ test_that("Do we get a pretty edger scatter plot?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("transcriptid", "geneid", "description", "type",
-              "length", "chromosome", "strand", "start",
-              "end", "limma_logfc", "limma_adjp", "deseq_logfc",
-              "deseq_adjp", "edger_logfc", "edger_adjp", "limma_ave", "limma_t", "limma_b", "limma_p",
-              "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p",
-              "edger_logcpm", "edger_lr", "edger_p",
-              "basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
-              "basic_logfc", "basic_t", "basic_p", "basic_adjp",
-              "limma_adjp_fdr", "deseq_adjp_fdr", "edger_adjp_fdr", "basic_adjp_fdr",
-              "fc_meta", "fc_var", "fc_varbymed",
-              "p_meta", "p_var")
+expected <- c(
+  "ensembltranscriptid", "ensemblgeneid", "version", "transcriptversion",
+  "description", "genebiotype", "cdslength", "chromosomename", "strand",
+  "startposition", "endposition", "limma_logfc", "limma_adjp", "deseq_logfc",
+  "deseq_adjp", "edger_logfc", "edger_adjp", "limma_ave", "limma_t", "limma_b",
+  "limma_p", "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p",
+  "edger_logcpm", "edger_lr", "edger_p",
+  "basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
+  "basic_logfc", "basic_t", "basic_p", "basic_adjp",
+  "limma_adjp_fdr", "deseq_adjp_fdr", "edger_adjp_fdr", "basic_adjp_fdr",
+  "lfc_meta", "lfc_var", "lfc_varbymed",
+  "p_meta", "p_var")
 actual <- colnames(combined_excel[["data"]][["treated_vs_untreated"]])
 test_that("Do we get expected columns from the excel sheet?", {
     expect_equal(expected, actual)
@@ -210,37 +210,37 @@ test_that("Does combine_de_tables create an excel file?", {
 
 ## How many significant up genes did limma find?
 actual <- dim(significant_excel[["limma"]][["ups"]][["treated_vs_untreated"]])
-expected <- c(114, 43)
+expected <- c(114, 45)
 test_that("Is the number of significant up genes as expected? (limma)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["deseq"]][["ups"]][["treated_vs_untreated"]])
-expected <- c(109, 43)
+expected <- c(109, 45)
 test_that("Is the number of significant up genes as expected? (deseq)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["edger"]][["ups"]][["treated_vs_untreated"]])
-expected <- c(190, 43)
+expected <- c(190, 45)
 test_that("Is the number of significant up genes as expected? (edger)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["limma"]][["downs"]][["treated_vs_untreated"]])
-expected <- c(123, 43)
+expected <- c(123, 45)
 test_that("Is the number of significant down genes as expected? (limma)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["deseq"]][["downs"]][["treated_vs_untreated"]])
-expected <- c(113, 43)
+expected <- c(113, 45)
 test_that("Is the number of significant down genes as expected? (deseq)", {
     expect_equal(expected, actual)
 })
 
 actual <- dim(significant_excel[["edger"]][["downs"]][["treated_vs_untreated"]])
-expected <- c(141, 43)
+expected <- c(141, 45)
 test_that("Is the number of significant down genes as expected? (edger)", {
     expect_equal(expected, actual)
 })

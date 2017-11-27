@@ -29,7 +29,7 @@ plot_topgo_densities <- function(godata, table) {
 #' @seealso \pkg{goseq} \pkg{ggplot2}
 #'  \code{\link[goseq]{goseq}}
 #' @export
-plot_ontpval <- function(df, ontology="MF", fontsize=16) {
+plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denominator=NULL) {
   y_name <- paste("Enriched ", ontology, " categories.", sep="")
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
@@ -37,6 +37,13 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     new_fact <- factor(x[["term"]], levels=x[["term"]])
     return(new_fact)
   }
+
+  if (!is.null(numerator) & !is.null(denominator)) {
+    df[["score_string"]] <- paste0(df[[numerator]], " / ", df[[denominator]])
+  } else if (!is.null(numerator)) {
+    df[["score_string"]] <- df[[numerator]]
+  }
+
   ## Sometimes max(df[["score"]]) throws an error -- I think this just needs na.rm
   ## but if I am wrong, I will catch any other errors and just send it to (0, 1/4, 1/2, 3/4, 1)
   max_score <- max(df[["score"]], na.rm=TRUE)
@@ -52,6 +59,12 @@ plot_ontpval <- function(df, ontology="MF", fontsize=16) {
     ggplot2::theme(text=ggplot2::element_text(size=10)) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size=fontsize)
+
+  if (!is.null(df[["score_string"]])) {
+    pvalue_plot <- pvalue_plot +
+      ggplot2::geom_text(parse=FALSE, size=3, color="white", hjust=1.2,
+                         ggplot2::aes_string(label="score_string"))
+  }
   return(pvalue_plot)
 }
 
@@ -101,7 +114,6 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
     message("Extracting the goterms in your chosen level.")
     goterms <- merge(goterms, keepers, by.x="category", by.y="GO")
   }
-  ## TODO: Replace the subset calls with the less noxious which calls.
   plotting_mf <- subset(goterms, complete.cases(goterms))
   plotting_mf[["score"]] <- plotting_mf[["numDEInCat"]] / plotting_mf[["numInCat"]]
   new_order <- order(plotting_mf[["score"]], decreasing=FALSE)
@@ -177,19 +189,22 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \pkg{clusterProfiler}
 #' @export
-plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fisher") {
-  mf_newdf <- topgo[["tables"]][["mf"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=30, type="fisher") {
+  mf_newdf <- topgo[["tables"]][["mf_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   mf_newdf[["term"]] <- as.character(lapply(strwrap(mf_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
   mf_newdf[["pvalue"]] <- as.numeric(mf_newdf[[type]])
-  mf_newdf <- subset(mf_newdf, get(type) < cutoff)
+  mf_newdf <- subset(mf_newdf, get(type) <= cutoff)
   mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]), ]
   mf_newdf <- head(mf_newdf, n=n)
   mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
-  mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF")
+  new_order <- order(mf_newdf[["score"]], decreasing=FALSE)
+  mf_newdf <- mf_newdf[new_order, ]
+  mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF",
+                               numerator="Significant", denominator="Annotated")
 
-  bp_newdf <- topgo[["tables"]][["bp"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+  bp_newdf <- topgo[["tables"]][["bp_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   bp_newdf[["term"]] <- as.character(lapply(strwrap(bp_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
@@ -198,9 +213,11 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
   bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]), ]
   bp_newdf <- head(bp_newdf, n=n)
   bp_newdf[["score"]] <- bp_newdf[["Significant"]] / bp_newdf[["Annotated"]]
+  new_order <- order(bp_newdf[["score"]], decreasing=FALSE)
+  bp_newdf <- bp_newdf[new_order, ]
   bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
 
-  cc_newdf <- topgo[["tables"]][["cc"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
+  cc_newdf <- topgo[["tables"]][["cc_subset"]][, c("GO.ID", "Term", "Annotated", "Significant", type)]
   cc_newdf[["term"]] <- as.character(lapply(strwrap(cc_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste, collapse="\n"))
@@ -209,6 +226,8 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
   cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]), ]
   cc_newdf <- head(cc_newdf, n=n)
   cc_newdf[["score"]] <- cc_newdf[["Significant"]] / cc_newdf[["Annotated"]]
+  new_order <- order(cc_newdf[["score"]], decreasing=FALSE)
+  cc_newdf <- cc_newdf[new_order, ]
   cc_pval_plot <- plot_ontpval(cc_newdf, ontology="CC")
 
   pval_plots <- list(
@@ -235,168 +254,53 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1, n=12, type="fis
 #' @seealso \pkg{clusterProfiler}
 #'  \code{\link{plot_ontpval}}
 #' @export
-plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=12, group_minsize=5) {
+plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=30, group_minsize=5) {
   ## TODO: replace the subset calls
-  mf_over <- gs_result[["mf_over_enriched"]]
-  mf_under <- gs_result[["mf_under_enriched"]]
-  bp_over <- gs_result[["bp_over_enriched"]]
-  bp_under <- gs_result[["bp_under_enriched"]]
-  cc_over <- gs_result[["cc_over_enriched"]]
-  cc_under <- gs_result[["cc_under_enriched"]]
+  plot_list <- list()
+  table_list <- list(
+    "mf_over" = gs_result[["tables"]][["mf_over_enriched"]],
+    "mf_under" = gs_result[["tables"]][["mf_under_enriched"]],
+    "bp_over" = gs_result[["tables"]][["bp_over_enriched"]],
+    "bp_under" = gs_result[["tables"]][["bp_under_enriched"]],
+    "cc_over" = gs_result[["tables"]][["cc_over_enriched"]],
+    "cc_under" = gs_result[["tables"]][["cc_under_enriched"]]
+  )
 
-  plotting_mf_over <- mf_over
-  mf_pval_plot_over <- NULL
-  if (is.null(mf_over)) {
-    plotting_mf_over <- NULL
-  } else {
-    plotting_mf_over[["score"]] <- plotting_mf_over[["ExpCount"]]
-    ## plotting_mf_over <- subset(plotting_mf_over, Term != "NULL")
-    plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Term"]] != "NULL", ]
-    ## plotting_mf_over <- subset(plotting_mf_over, Pvalue <= cutoff)
-    plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Pvalue"]] <= cutoff, ]
-    ## plotting_mf_over <- subset(plotting_mf_over, Size >= group_minsize)
-    plotting_mf_over <- plotting_mf_over[plotting_mf_over[["Size"]] >= group_minsize, ]
-    plotting_mf_over <- plotting_mf_over[order(plotting_mf_over[["Pvalue"]]), ]
-    plotting_mf_over <- head(plotting_mf_over, n=n)
-    plotting_mf_over <- plotting_mf_over[, c("Term", "Pvalue", "score")]
-    colnames(plotting_mf_over) <- c("term", "pvalue", "score")
-    plotting_mf_over[["term"]] <- as.character(lapply(strwrap(plotting_mf_over[["term"]],
-                                                              wrapped_width,
-                                                              simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_mf_over) > 0) {
-    mf_pval_plot_over <- plot_ontpval(plotting_mf_over, ontology="MF")
-  }
-  plotting_mf_under <- mf_under
-  mf_pval_plot_under <- NULL
-  if (is.null(mf_under)) {
-    plotting_mf_under <- NULL
-  } else {
-    plotting_mf_under[["score"]] <- plotting_mf_under[["ExpCount"]]
-    ## plotting_mf_under <- subset(plotting_mf_under, Term != "NULL")
-    plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Term"]] != "NULL", ]
-    ## plotting_mf_under <- subset(plotting_mf_under, Pvalue <= cutoff)
-    plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Pvalue"]] <= cutoff, ]
-    ## plotting_mf_under <- subset(plotting_mf_under, Size >= group_minsize)
-    plotting_mf_under <- plotting_mf_under[plotting_mf_under[["Size"]] >= group_minsize, ]
-    plotting_mf_under <- plotting_mf_under[order(plotting_mf_under[["Pvalue"]]), ]
-    plotting_mf_under <- head(plotting_mf_under, n=n)
-    plotting_mf_under <- plotting_mf_under[, c("Term", "Pvalue", "score")]
-    colnames(plotting_mf_under) <- c("term", "pvalue", "score")
-    plotting_mf_under[["term"]] <- as.character(lapply(strwrap(plotting_mf_under[["term"]],
-                                                               wrapped_width,
-                                                               simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_mf_under) > 0) {
-    mf_pval_plot_under <- plot_ontpval(plotting_mf_under, ontology="MF")
-  }
-  plotting_bp_over <- bp_over
-  bp_pval_plot_over <- NULL
-  if (is.null(bp_over)) {
-    plotting_bp_over <- NULL
-  } else {
-    plotting_bp_over[["score"]] <- plotting_bp_over[["ExpCount"]]
-    ## plotting_bp_over <- subset(plotting_bp_over, Term != "NULL")
-    plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Term"]] != "NULL", ]
-    ## plotting_bp_over <- subset(plotting_bp_over, Pvalue <= 0.1)
-    plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Pvalue"]] <= cutoff, ]
-    ## plotting_bp_over <- subset(plotting_bp_over, Size > 10)
-    plotting_bp_over <- plotting_bp_over[plotting_bp_over[["Size"]] >= group_minsize, ]
-    plotting_bp_over <- plotting_bp_over[order(plotting_bp_over[["Pvalue"]]), ]
-    plotting_bp_over <- head(plotting_bp_over, n=n)
-    plotting_bp_over <- plotting_bp_over[, c("Term", "Pvalue", "score")]
-    colnames(plotting_bp_over) <- c("term", "pvalue", "score")
-    plotting_bp_over[["term"]] <- as.character(lapply(strwrap(plotting_bp_over[["term"]],
-                                                              wrapped_width,
-                                                              simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_bp_over) > 0) {
-    bp_pval_plot_over <- plot_ontpval(plotting_bp_over, ontology="BP")
-  }
-  plotting_bp_under <- bp_under
-  bp_pval_plot_under <- NULL
-  if (is.null(bp_under)) {
-    plotting_bp_under <- NULL
-  } else {
-    plotting_bp_under[["score"]] <- plotting_bp_under[["ExpCount"]]
-    ## plotting_bp_under <- subset(plotting_bp_under, Term != "NULL")
-    plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Term"]] != "NULL", ]
-    ## plotting_bp_under <- subset(plotting_bp_under, Pvalue <= 0.1)
-    plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Pvalue"]] <= cutoff, ]
-    ## plotting_bp_under <- subset(plotting_bp_under, Size > 10)
-    plotting_bp_under <- plotting_bp_under[plotting_bp_under[["Size"]] >= group_minsize, ]
-    plotting_bp_under <- plotting_bp_under[order(plotting_bp_under[["Pvalue"]]), ]
-    plotting_bp_under <- head(plotting_bp_under, n=n)
-    plotting_bp_under <- plotting_bp_under[, c("Term", "Pvalue", "score")]
-    colnames(plotting_bp_under) <- c("term", "pvalue", "score")
-    plotting_bp_under[["term"]] <- as.character(lapply(strwrap(plotting_bp_under[["term"]],
-                                                               wrapped_width,
-                                                               simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_bp_under) > 0) {
-    bp_pval_plot_under <- plot_ontpval(plotting_bp_under, ontology="BP")
-  }
-  plotting_cc_over <- cc_over
-  cc_pval_plot_over <- NULL
-  if (is.null(cc_over)) {
-    plotting_cc_over <- NULL
-  } else {
-    plotting_cc_over[["score"]] <- plotting_cc_over[["ExpCount"]]
-    ## plotting_cc_over <- subset(plotting_cc_over, Term != "NULL")
-    plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Term"]] != "NULL", ]
-    ## plotting_cc_over <- subset(plotting_cc_over, Pvalue <= 0.1)
-    plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Pvalue"]] <= cutoff, ]
-    ## plotting_cc_over <- subset(plotting_cc_over, Size > 10)
-    plotting_cc_over <- plotting_cc_over[plotting_cc_over[["Size"]] >= group_minsize, ]
-    plotting_cc_over <- plotting_cc_over[order(plotting_cc_over[["Pvalue"]]), ]
-    plotting_cc_over <- head(plotting_cc_over, n=n)
-    plotting_cc_over <- plotting_cc_over[, c("Term", "Pvalue", "score")]
-    colnames(plotting_cc_over) <- c("term", "pvalue", "score")
-    plotting_cc_over[["term"]] <- as.character(lapply(strwrap(plotting_cc_over[["term"]],
-                                                              wrapped_width,
-                                                              simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_cc_over) > 0) {
-    cc_pval_plot_over <- plot_ontpval(plotting_cc_over, ontology="CC")
-  }
-  plotting_cc_under <- cc_under
-  cc_pval_plot_under <- NULL
-  if (is.null(cc_under)) {
-    plotting_cc_under <- NULL
-  } else {
-    plotting_cc_under[["score"]] <- plotting_cc_under[["ExpCount"]]
-    ## plotting_cc_under <- subset(plotting_cc_under, Term != "NULL")
-    plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Term"]] != "NULL", ]
-    ## plotting_cc_under <- subset(plotting_cc_under, Pvalue <= 0.1)
-    plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Pvalue"]] <= cutoff, ]
-    ## plotting_cc_under <- subset(plotting_cc_under, Size > 10)
-    plotting_cc_under <- plotting_cc_under[plotting_cc_under[["Size"]] >= group_minsize, ]
-    plotting_cc_under <- plotting_cc_under[order(plotting_cc_under[["Pvalue"]]), ]
-    plotting_cc_under <- head(plotting_cc_under, n=n)
-    plotting_cc_under <- plotting_cc_under[, c("Term", "Pvalue", "score")]
-    colnames(plotting_cc_under) <- c("term", "pvalue", "score")
-    plotting_cc_under[["term"]] <- as.character(lapply(strwrap(plotting_cc_under[["term"]],
-                                                               wrapped_width,
-                                                               simplify=FALSE), paste, collapse="\n"))
-  }
-  if (nrow(plotting_cc_under) > 0) {
-    cc_pval_plot_under <- plot_ontpval(plotting_cc_under, ontology="CC")
-  }
+  table_names <- names(table_list)
+  for (name in table_names) {
+    ont_overunder <- strsplit(x=name, split="_")[[1]]
+    ont <- ont_overunder[1]
+    overunder <- ont_overunder[2]
+    plotting <- table_list[[name]]
+    pval_plot <- NULL
+    if (is.null(plotting)) {
+      pval_plot <- NULL
+    } else {
+      plotting[["score"]] <- plotting[["ExpCount"]]
+      not_null <- plotting[["Term"]] != "NULL"
+      plotting <- plotting[not_null, ]
+      good_cutoff <- plotting[["Pvalue"]] <= cutoff
+      plotting <- plotting[good_cutoff, ]
+      good_size <- plotting[["Size"]] >= group_minsize
+      plotting <- plotting[good_size, ]
+      pval_order <- order(plotting[["Pvalue"]])
+      plotting <- plotting[pval_order, ]
+      plotting <- head(plotting, n=n)
+      plotting <- plotting[, c("Term", "Pvalue", "score")]
+      colnames(plotting) <- c("term", "pvalue", "score")
+      plotting[["term"]] <- as.character(lapply(strwrap(plotting[["term"]],
+                                                        wrapped_width,
+                                                        simplify=FALSE), paste, collapse="\n"))
+    }
+    if (nrow(plotting) > 0) {
+      plot_name <- paste0(ont, "p_plot_", overunder)
+      plot_list[[plot_name]] <- plot_ontpval(plotting, ontology=ont)
+      subset_name <- paste0(ont, "_subset_", overunder)
+      plot_list[[subset_name]] <- plotting
+    }
+  } ## End of the for loop.
 
-  pval_plots <- list(
-    "mfp_plot_over" = mf_pval_plot_over,
-    "bpp_plot_over" = bp_pval_plot_over,
-    "ccp_plot_over" = cc_pval_plot_over,
-    "mf_subset_over" = plotting_mf_over,
-    "bp_subset_over" = plotting_bp_over,
-    "cc_subset_over" = plotting_cc_over,
-    "mfp_plot_under" = mf_pval_plot_under,
-    "bpp_plot_under" = bp_pval_plot_under,
-    "ccp_plot_under" = cc_pval_plot_under,
-    "mf_subset_under" = plotting_mf_under,
-    "bp_subset_under" = plotting_bp_under,
-    "cc_subset_under" = plotting_cc_under)
-  return(pval_plots)
+  return(plot_list)
 }
 
 #' Make a pvalue plot from gprofiler data.
@@ -776,8 +680,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
 goseq_trees <- function(goseq, goid_map="id2go.map",
                         score_limit=0.01, overwrite=FALSE,
                         selector="topDiffGenes", pval_column="adj.P.Val") {
-  goids_df <- goseq[["godf"]]
-  mapping <- make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+  go_db <- goseq[["godf"]]
+  mapping <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
   de_genes <- goseq[["input"]]
@@ -876,7 +780,7 @@ goseq_trees <- function(goseq, goid_map="id2go.map",
 #' @param de_genes List of genes deemed 'interesting'.
 #' @param cpdata Data from simple_clusterprofiler().
 #' @param goid_map Mapping file of IDs to GO ontologies.
-#' @param goids_df Dataframe of mappings used to build goid_map.
+#' @param go_db Dataframe of mappings used to build goid_map.
 #' @param score_limit Scoring limit above which to ignore genes.
 #' @param overwrite Overwrite an existing goid mapping file?
 #' @param selector Name of a function for applying scores to the trees.
@@ -890,11 +794,11 @@ goseq_trees <- function(goseq, goid_map="id2go.map",
 #'  ctrees <- cluster_trees(genes, cluster_data)
 #' }
 #' @export
-cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", goids_df=NULL,
+cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", go_db=NULL,
                           score_limit=0.2, overwrite=FALSE, selector="topDiffGenes",
                           pval_column="adj.P.Val") {
   de_genes <- cpdata[["de_genes"]]
-  make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+  make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
   if (is.null(de_genes[["ID"]])) {
@@ -1224,7 +1128,7 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
 #' @param cc_under Ccunder expression data.
 #' @param goid_map Mapping of IDs to GO in the Ramigo expected format.
 #' @param score_limit Maximum score to include as 'significant'.
-#' @param goids_df Dataframe of available goids (used to generate goid_map).
+#' @param go_db Dataframe of available goids (used to generate goid_map).
 #' @param overwrite Overwrite the goid_map?
 #' @param selector Function to choose differentially expressed genes in the data.
 #' @param pval_column Column in the data to be used to extract pvalue scores.
@@ -1233,9 +1137,9 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE, do_mf_fisher_tree=
 #' @export
 gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
                           cc_under, goid_map="id2go.map", score_limit=0.01,
-                          goids_df=NULL, overwrite=FALSE, selector="topDiffGenes",
+                          go_db=NULL, overwrite=FALSE, selector="topDiffGenes",
                           pval_column="adj.P.Val") {
-  make_id2gomap(goid_map=goid_map, goids_df=goids_df, overwrite=overwrite)
+  make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
   if (is.null(de_genes[["ID"]])) {

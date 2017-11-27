@@ -4,7 +4,7 @@
 \alias{get_sig_genes}
 \title{Get a set of up/down differentially expressed genes.}
 \usage{
-get_sig_genes(table, n = NULL, z = NULL, fc = NULL, p = NULL,
+get_sig_genes(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   column = "logFC", fold = "plusminus", p_column = "adj.P.Val")
 }
 \arguments{
@@ -14,7 +14,7 @@ get_sig_genes(table, n = NULL, z = NULL, fc = NULL, p = NULL,
 
 \item{z}{Number of z-scores >/< the median to take.}
 
-\item{fc}{Fold-change cutoff.}
+\item{lfc}{Fold-change cutoff.}
 
 \item{p}{P-value cutoff.}
 
@@ -41,7 +41,7 @@ Tested in test_29de_shared.R
 }
 \examples{
  \dontrun{
-  sig_table <- get_sig_genes(table, fc=1)
+  sig_table <- get_sig_genes(table, lfc=1)
 }
 }
 \seealso{

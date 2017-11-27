@@ -7,7 +7,7 @@
 combine_de_table(li, ed, de, ba, table_name, annot_df = NULL,
   inverse = FALSE, adjp = TRUE, padj_type = "fdr", include_deseq = TRUE,
   include_edger = TRUE, include_limma = TRUE, include_basic = TRUE,
-  fc_cutoff = 1, p_cutoff = 0.05, excludes = NULL)
+  lfc_cutoff = 1, p_cutoff = 0.05, excludes = NULL)
 }
 \arguments{
 \item{li}{Limma output table.}
@@ -36,7 +36,7 @@ combine_de_table(li, ed, de, ba, table_name, annot_df = NULL,
 
 \item{include_basic}{Include the basic table?}
 
-\item{fc_cutoff}{Preferred logfoldchange cutoff.}
+\item{lfc_cutoff}{Preferred logfoldchange cutoff.}
 
 \item{p_cutoff}{Preferred pvalue cutoff.}
 

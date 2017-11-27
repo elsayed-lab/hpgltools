@@ -4,18 +4,18 @@
 \alias{simple_topgo}
 \title{Perform a simplified topgo analysis.}
 \usage{
-simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
+simple_topgo(sig_genes, goid_map = "id2go.map", go_db = NULL,
   pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
   sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
   pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
-  pval_plots = TRUE, parallel = FALSE, excel = NULL, ...)
+  pval_plots = TRUE, excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Data frame of differentially expressed genes, containing IDs any other columns.}
 
 \item{goid_map}{File containing mappings of genes to goids in the format expected by topgo.}
 
-\item{goids_df}{Data frame of the goids which may be used to make the goid_map.}
+\item{go_db}{Data frame of the goids which may be used to make the goid_map.}
 
 \item{pvals}{Set of pvalues in the DE data which may be used to improve the topgo results.}
 
@@ -38,8 +38,6 @@ simple_topgo(sig_genes, goid_map = "id2go.map", goids_df = NULL,
 \item{densities}{Densities, yeah, the densities...}
 
 \item{pval_plots}{Include pvalue plots of the results a la clusterprofiler?}
-
-\item{parallel}{Perform some operations in parallel to speed this up?}
 
 \item{excel}{Print the results to an excel file?}
 

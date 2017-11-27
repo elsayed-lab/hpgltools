@@ -12,7 +12,7 @@ dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
 
 expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
-actual_lengths <- head(dmel_annotations[["length"]])
+actual_lengths <- head(dmel_annotations[["cds_length"]])
 test_that("Did the gene lengths come out?", {
     expect_equal(expected_lengths, actual_lengths)
 })

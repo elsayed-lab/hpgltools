@@ -4,7 +4,7 @@
 \alias{de_venn}
 \title{Create venn diagrams describing how well deseq/limma/edger agree.}
 \usage{
-de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, fc = 0, ...)
+de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, lfc = 0, ...)
 }
 \arguments{
 \item{table}{Which table to query?}
@@ -15,7 +15,7 @@ de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, fc = 0, ...)
 
 \item{p}{p-value cutoff, I forget what for right now.}
 
-\item{fc}{What fold-change cutoff to include?}
+\item{lfc}{What fold-change cutoff to include?}
 
 \item{...}{More arguments are passed to arglist.}
 }

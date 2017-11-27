@@ -322,7 +322,15 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   if (is.null(batches)) {
     batches <- design[["batch"]]
   }
-  data <- input_data[["data"]]
+
+  ## The following small piece of logic is intended to handle situations where we use
+  ## tximport for limma (kallisto/sailfish/salmon).
+  if (is.null(input[["tximport"]])) {
+    data <- input_data[["data"]]
+  } else {
+    data <- edgeR::DGEList(input[["tximport"]][["scaled"]][["counts"]])
+    data <- edgeR::calcNormFactors(data)
+  }
 
   if (is.null(libsize)) {
     message("libsize was not specified, this parameter has profound effects on limma's result.")

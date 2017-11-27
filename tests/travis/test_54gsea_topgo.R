@@ -12,7 +12,12 @@ gff_file <- "dmel.gff"
 ## And write the entries as a gff file.  This gff file may be used by clusterprofiler, topgo, and gostats.
 dmel_gff <- sm(rtracklayer::export(object=dmel_granges, con=gff_file))
 
-tp_result <- sm(simple_topgo(fcp_sig_genes, gff=gff_file, goids_df=dmel_ontologies))
+tp_result <- sm(simple_topgo(fcp_sig_genes, go_db=dmel_ontologies,
+                             excel="topgo.xlsx", pval_column="adj.P.Val"))
+
+test_that("Did we get an excel output?", {
+  expect_true(file.exists("topgo.xlsx"))
+})
 
 ## There is some run-to-run variability in these searches.
 expected <- c("GO:0000146", "GO:0000295", "GO:0001871",
@@ -44,8 +49,11 @@ test_that("Are the topGO interesting results as expected? (MF trees)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0003974", "GO:0004467", "GO:0004556",
-              "GO:0004742", "GO:0004793", "GO:0005044")
+## I reordered these plots, these values are no longer valid.
+##expected <- c("GO:0003974", "GO:0004467", "GO:0004556",
+##              "GO:0004742", "GO:0004793", "GO:0005044")
+expected <- c("GO:0000146", "GO:0003974", "GO:0003978",
+              "GO:0004467", "GO:0004556", "GO:0004591")
 actual <- head(sort(tp_result[["pvalue_plots"]][["mfp_plot_over"]][["data"]][["GO.ID"]]))
 test_that("Are the topGO interesting results as expected? (MF pval)?", {
     expect_equal(expected, actual)

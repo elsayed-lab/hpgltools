@@ -4,14 +4,14 @@
 \alias{simple_cp_enricher}
 \title{Generic enrichment using clusterProfiler.}
 \usage{
-simple_cp_enricher(sig_genes, de_table, goids_df = NULL)
+simple_cp_enricher(sig_genes, de_table, go_db = NULL)
 }
 \arguments{
 \item{sig_genes}{Set of 'significant' genes as a table.}
 
 \item{de_table}{All genes from the original analysis.}
 
-\item{goids_df}{Dataframe of GO->ID matching the gene names of sig_genes to GO categories.}
+\item{go_db}{Dataframe of GO->ID matching the gene names of sig_genes to GO categories.}
 }
 \value{
 Table of 'enriched' categories.

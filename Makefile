@@ -1,4 +1,4 @@
-VERSION="201708"
+VERSION=2017.10
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
@@ -82,27 +82,28 @@ vt:	clean_vignette vignette reference install
 clean:
 	rm -rf hpgltools/
 	rm -rf ./..Rcheck
-	rm -rf tests/testthat/circos
-	rm -rf tests/testthat/excel
-	rm -rf tests/testthat/excel_test
-	rm -rf tests/testthat/excel_test_sig
-	rm -rf tests/testthat/kegg_pathways
-	rm -rf tests/testthat/pathview
-	rm -rf tests/testthat/pathview_in
-	rm -rf tests/testthat/*.pdf
-	rm -rf tests/testthat/*.png
-	rm -rf tests/testthat/*.xlsx
-	rm -rf tests/testthat/*.rda
-	rm -rf tests/testthat/*.gff
-	rm -rf tests/testthat/*.gb
-	rm -rf tests/testthat/*.map
-	rm -rf tests/testthat/*.xml
-	rm -rf tests/testthat/*.Rdata
+	rm -rf tests/travis/circos
+	rm -rf tests/travis/excel
+	rm -rf tests/travis/excel_test
+	rm -rf tests/travis/excel_test_sig
+	rm -rf tests/travis/kegg_pathways
+	rm -rf tests/travis/pathview
+	rm -rf tests/travis/pathview_in
+	rm -f tests/travis/*.pdf
+	rm -f tests/travis/*.png
+	rm -f *.pdf
+	rm -f tests/travis/*.xlsx
+	rm -f tests/travis/*.rda
+	rm -f tests/travis/*.gff
+	rm -f tests/travis/*.gb
+	rm -f tests/travis/*.map
+	rm -f tests/travis/*.xml
+	rm -f tests/travis/*.Rdata
 	rm -rf vignettes/circos
-	rm -rf vignettes/*.gff
-	rm -rf vignettes/*.pdf
+	rm -f vignettes/*.gff
+	rm -f vignettes/*.pdf
 	rm -rf hpgltools.Rcheck/
-	rm -rf hpgltools_${VERSION}.tar.gz
+	rm -f hpgltools_${VERSION}.tar.gz
 
 prereq:
 	@echo "Checking a few essential prerequisites.(maybe not needed with packrat)"

@@ -75,10 +75,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
-      message("Using limma's removeBatchEffect to test before/after batch correction.")
+      message("Using limma's removeBatchEffect to visualize before/after batch inclusion.")
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
-      message(paste0("Using ", model_type, " to test before/after batch correction."))
+      message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type, transform="log2"))
     } else {
       model_type <- "none"
@@ -660,7 +660,6 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
   } else {
     data <- as.data.frame(input)
   }
-  head(data)
   retlist <- list(
     "libsize" = libsize,
     "conditions" = conditions,
@@ -1458,7 +1457,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
 #' @param table Table from limma/edger/deseq.
 #' @param n Rank-order top/bottom number of genes to take.
 #' @param z Number of z-scores >/< the median to take.
-#' @param fc Fold-change cutoff.
+#' @param lfc Fold-change cutoff.
 #' @param p P-value cutoff.
 #' @param fold Identifier reminding how to get the bottom portion of a
 #'  fold-change (plusminus says to get the negative of the
@@ -1470,15 +1469,15 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
 #' @seealso \code{\link{extract_significant_genes}}
 #' @examples
 #'  \dontrun{
-#'   sig_table <- get_sig_genes(table, fc=1)
+#'   sig_table <- get_sig_genes(table, lfc=1)
 #' }
 #' @export
-get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
+get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
                           column="logFC", fold="plusminus", p_column="adj.P.Val") {
-  if (is.null(z) & is.null(n) & is.null(fc) & is.null(p)) {
-    message("No n, z, p, nor fc provided, setting p to 0.05 and fc to 1.0.")
+  if (is.null(z) & is.null(n) & is.null(lfc) & is.null(p)) {
+    message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
-    fc <- 1.0
+    lfc <- 1.0
   }
   up_genes <- table
   down_genes <- table
@@ -1516,18 +1515,18 @@ get_sig_genes <- function(table, n=NULL, z=NULL, fc=NULL, p=NULL,
     message(paste0("After (adj)p filter, the down genes table has ", dim(down_genes)[1], " genes."))
   }
 
-  if (!is.null(fc)) {
-    up_idx <- as.numeric(up_genes[[column]]) >= fc
+  if (!is.null(lfc)) {
+    up_idx <- as.numeric(up_genes[[column]]) >= lfc
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" | fold == "log") {
-      message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * fc"))
+      message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
       ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
-      down_idx <- as.numeric(down_genes[[column]]) <= (fc * -1.0)
+      down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
       down_genes <- down_genes[down_idx, ]
     } else {
-      message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/fc"))
+      message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
-      down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / fc)
+      down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]
     }
     message(paste0("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes."))

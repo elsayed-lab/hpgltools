@@ -5,14 +5,14 @@
 \title{Given the set of significant genes from combine_de_tables(), provide a view of how many are
 significant up/down.}
 \usage{
-significant_barplots(combined, fc_cutoffs = c(0, 1, 2), invert = FALSE,
+significant_barplots(combined, lfc_cutoffs = c(0, 1, 2), invert = FALSE,
   p = 0.05, z = NULL, p_type = "adj", according_to = "all",
   order = NULL, maximum = NULL, ...)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables and/or extract_significant_genes().}
 
-\item{fc_cutoffs}{Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
+\item{lfc_cutoffs}{Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
 followed by 2 fold and 4 fold cutoffs.}
 
 \item{invert}{Reverse the order of contrasts for readability?}

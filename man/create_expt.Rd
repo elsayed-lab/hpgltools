@@ -5,7 +5,7 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_expt(metadata, gene_info = NULL, count_dataframe = NULL,
+create_expt(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   sample_colors = NULL, title = NULL, notes = NULL,
   include_type = "all", include_gff = NULL, savefile = "expt",
   low_files = FALSE, ...)
@@ -50,7 +50,7 @@ a full pathname or local to the cwd of the project.
 }
 \examples{
 \dontrun{
- new_experiment = create_expt("some_csv_file.csv", color_hash)
+ new_experiment <- create_expt("some_csv_file.csv", color_hash)
  ## Remember that this depends on an existing data structure of gene annotations.
 }
 }

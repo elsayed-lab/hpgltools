@@ -5,17 +5,17 @@
 \title{Simplification function for gostats, in the same vein as those written for clusterProfiler,
 goseq, and topGO.}
 \usage{
-simple_gostats(sig_genes, gff, goids_df, universe_merge = "id",
-  second_merge_try = "locus_tag", species = "fun", pcutoff = 0.1,
-  direction = "over", conditional = FALSE, categorysize = NULL,
-  gff_type = "cds", excel = NULL, ...)
+simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
+  universe_merge = "id", second_merge_try = "locus_tag", species = "fun",
+  pcutoff = 0.1, direction = "over", conditional = FALSE,
+  categorysize = NULL, gff_type = "cds", excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Input list of differentially expressed genes.}
 
-\item{gff}{Annotation information for this genome.}
+\item{go_db}{Set of GOids, as before in the format ID/GO.}
 
-\item{goids_df}{Set of GOids, as before in the format ID/GO.}
+\item{gff}{Annotation information for this genome.}
 
 \item{universe_merge}{Column from which to create the universe of genes.}
 

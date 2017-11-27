@@ -447,7 +447,7 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
 #' @param goids Data frame of goids and genes.
 #' @param n Number of genes at the top/bottom of the fold-changes to define 'significant.'
 #' @param z Number of standard deviations from the mean fold-change used to define 'significant.'
-#' @param fc Log fold-change used to define 'significant'.
+#' @param lfc Log fold-change used to define 'significant'.
 #' @param p Maximum pvalue to define 'significant.'
 #' @param overwrite Overwrite existing excel results file?
 #' @param species Supported organism used by the tools.
@@ -475,7 +475,7 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
 #' }
 #' @export
 all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, fc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
+                                  z=NULL, lfc=NULL, p=NULL, overwrite=FALSE, species="unsupported",
                                   orgdb="org.Dm.eg.db", goid_map="reference/go/id2go.map",
                                   gff_file=NULL, gff_type="gene", do_goseq=TRUE, do_cluster=TRUE,
                                   do_topgo=TRUE, do_gostats=TRUE, do_gprofiler=TRUE,
@@ -524,7 +524,7 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
         }
         comparison <- names(de_out[c])
         message(paste("Performing ontology search of:", comparison, sep=""))
-        updown_genes <- get_sig_genes(datum, n=n, z=z, fc=fc, p=p)
+        updown_genes <- get_sig_genes(datum, n=n, z=z, lfc=lfc, p=p)
         up_genes <- updown_genes[["up_genes"]]
         down_genes <- updown_genes[["down_genes"]]
 
@@ -548,15 +548,15 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
             cluster_down_ontology <- try(simple_clusterprofiler(down_genes, datum, orgdb=orgdb, ...))
             if (isTRUE(do_trees)) {
                 cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology,
-                                                      goid_map=goid_map, goids_df=goids))
+                                                      goid_map=goid_map, go_db=goids))
                 cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology,
-                                                        goid_map=goid_map, goids_df=goids))
+                                                        goid_map=goid_map, go_db=goids))
             }
         }
 
         if (isTRUE(do_topgo)) {
-            topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, goids_df=goids))
-            topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, goids_df=goids))
+            topgo_up_ontology <- try(simple_topgo(up_genes, goid_map=goid_map, go_db=goids))
+            topgo_down_ontology <- try(simple_topgo(down_genes, goid_map=goid_map, go_db=goids))
             if (isTRUE(do_trees)) {
                 topgo_up_trees <- try(topgo_trees(topgo_up_ontology))
                 topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
@@ -654,7 +654,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
     lengths <- arglist[["lengths"]]
     goids <- NULL
     if (is.null(arglist[["goids"]])) {
-        goids <- arglist[["goids_df"]]
+        goids <- arglist[["go_db"]]
     } else {
         goids <- arglist[["goids"]]
     }

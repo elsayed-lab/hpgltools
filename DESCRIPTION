@@ -1,8 +1,8 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2017.01
-Date: 2017-01-12
+Version: 2017.10
+Date: 2017-10-30
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
@@ -17,25 +17,20 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
- R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools,
- gplots,  matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
- openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr, clusterProfiler,
- topGO, GOstats, Rgraphviz, gProfileR, pathview,
- AnnotationDbi, AnnotationForge, BiocGenerics, BiocInstaller,
- Biostrings, Category, DBI, DOSE, EDASeq, GO.db, GSEABase,
- GenomicFeatures, GenomicRanges, Heatplus, IRanges, KEGGREST,
- KEGGgraph, RColorBrewer, RCurl, RSQLite, Rsamtools, S4Vectors,
- Vennerable, XLConnect, affy, corrplot, devEMF, devtools,
- doParallel, ffpe, genefilter, genoPlotR, ggdendro, googleVis,
- graph, httr, jsonlite, lattice, limma, motifRG,
- packrat, plyr, qvalue, rGADEM, readr, reshape2,
- rjson, rmarkdown, robust, robustbase, rtracklayer, scales,
- seqLogo, stringi, sva, taxize, testthat, venneuler,
- AnnotationForge, Vennerable, doParallel, foreach, iterators,
- parallel, ruv,
+ R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools, gplots,
+ matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
+ openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr,
+ clusterProfiler, topGO, GOstats, Rgraphviz, gProfileR, pathview, AnnotationDbi, AnnotationForge,
+ BiocGenerics, BiocInstaller, Biostrings, Category, DBI, DOSE, EDASeq, GO.db, GSEABase,
+ GenomicFeatures, GenomicRanges, Heatplus, IRanges, KEGGREST, KEGGgraph, RColorBrewer, RCurl,
+ RSQLite, Rsamtools, S4Vectors, Vennerable, XLConnect, affy, corrplot, devEMF, devtools,
+ doParallel, ffpe, genefilter, genoPlotR, ggdendro, googleVis, graph, httr, jsonlite, lattice,
+ limma, motifRG, packrat, plyr, qvalue, rGADEM, readr, reshape2, rjson, rmarkdown, robust,
+ robustbase, rtracklayer, scales, seqLogo, stringi, sva, taxize, testthat, tximport, venneuler,
+ AnnotationForge, Vennerable, doParallel, foreach, iterators, parallel, ruv, tximport
 Imports:
  Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
 VignetteBuilder: knitr
 ByteCompile: true
-RoxygenNote: 6.0.1
 biocViews: DifferentialExpression
+RoxygenNote: 6.0.1

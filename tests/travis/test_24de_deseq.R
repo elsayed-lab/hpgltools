@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("24de_deseq.R: Does DESeq2 work with hpgltools?\n")
+context("24de_deseq.R: Does hpgltools work with DESeq2?\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -26,8 +26,9 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               format="DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- sm(deseq2_pairwise(pasilla_expt, model_batch=TRUE))
-hpgl_deseq_written <- sm(write_deseq(hpgl_deseq, excel="deseq_test.xlsx"))
+hpgl_deseq <- sm(deseq2_pairwise(input=pasilla_expt,
+                                 model_batch=TRUE,
+                                 excel="deseq_test.xlsx"))
 test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
 })
