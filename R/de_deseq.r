@@ -333,7 +333,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     } ## End both likely types of intercept columns.
   }
 
-  ret_list <- list(
+  retlist <- list(
     "all_tables" = result_list,
     "batches" = batches,
     "batches_table" = batches_table,
@@ -348,8 +348,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "model_string" = model_string,
     "numerators" = numerators,
     "run" = deseq_run
-    )
-  return(ret_list)
+  )
+  if (!is.null(arglist[["deseq_excel"]])) {
+    retlist[["deseq_excel"]] <- write_deseq(retlist, excel=arglist[["deseq_excel"]])
+  }
+  return(retlist)
 }
 
 deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {

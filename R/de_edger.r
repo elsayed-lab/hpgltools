@@ -201,7 +201,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     dispersion_plot <- grDevices::recordPlot()
   }
 
-  final <- list(
+  retlist <- list(
     "all_tables" = result_list,
     "batches" = batches,
     "batches_table" = batches_table,
@@ -216,7 +216,10 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     "lrt" = lrt_list,
     "model" = model_data,
     "model_string" = model_string)
-  return(final)
+  if (!is.null(arglist[["edger_excel"]])) {
+    retlist[["edger_excel"]] <- write_edger(retlist, excel=arglist[["edger_excel"]])
+  }
+  return(retlist)
 }
 
 ## Taken from the tximport manual with minor modification.

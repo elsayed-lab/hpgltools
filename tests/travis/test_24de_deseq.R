@@ -28,7 +28,7 @@ deseq_result <- as.data.frame(DESeq2::results(deseq_run,
 ## Performing DESeq2 analysis using hpgltools.
 hpgl_deseq <- sm(deseq2_pairwise(input=pasilla_expt,
                                  model_batch=TRUE,
-                                 excel="deseq_test.xlsx"))
+                                 deseq_excel="deseq_test.xlsx"))
 test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
 })
