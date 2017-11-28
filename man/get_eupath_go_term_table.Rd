@@ -5,7 +5,7 @@
 \title{Returns a mapping of gene ID to gene GO categories for a given organism.}
 \usage{
 get_eupath_go_term_table(provider = "TriTrypDB",
-  species = "Leishmania major", overwrite = FALSE, dir = ".")
+  species = "Leishmania major", overwrite = FALSE, dir = "eupathdb")
 }
 \arguments{
 \item{provider}{Name of data provider to query.}

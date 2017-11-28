@@ -7,7 +7,7 @@
 retrieve_eupathdb_attributes(provider = "TriTrypDB",
   species = "Leishmania major", table = "GOTerms",
   wadl = "GeneQuestions/GenesByTaxonGene", format = "json",
-  overwrite = FALSE, dir = ".")
+  overwrite = FALSE, dir = "eupathdb")
 }
 \arguments{
 \item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}

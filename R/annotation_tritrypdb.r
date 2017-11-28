@@ -459,8 +459,9 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
   ## Since I changed @ to at I figured . could be dot too
   ##dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
   dot_cmd <- paste0("perl -p -i -e 's/ dot /\\./g' ", full_path, "/DESCRIPTION")
-  message(paste0("Rewriting DESCRIPTION to remove dot: ", dot_cmd))
+  message(paste0("Rewriting DESCRIPTION to remove ' dot ': ", dot_cmd))
   system(dot_cmd)
+
   new_dir <- dir
   new_path <- file.path(basedir, new_dir)
   if (grepl(pattern=removal, x=dir)) {

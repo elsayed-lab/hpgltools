@@ -4,15 +4,24 @@
 \alias{make_eupath_txdb}
 \title{Generate TxDb for EuPathDB organism}
 \usage{
-make_eupath_txdb(entry, dir = ".", overwrite = FALSE)
+make_eupath_txdb(species = NULL, entry = NULL, dir = "eupathdb",
+  reinstall = FALSE, metadata = NULL, ...)
 }
 \arguments{
+\item{species}{guess}
+
 \item{entry}{One dimensional dataframe with organism metadata.}
 
 \item{dir}{Base directory for building the package.}
+
+\item{reinstall}{Overwrite an existing installed package?}
+
+\item{metadata}{dataframe of eupathdb metadata.}
+
+\item{...}{Extra arguments for getting metadata.}
 }
 \value{
-TxDb instance
+TxDb instance name.
 }
 \description{
 Generate TxDb for EuPathDB organism

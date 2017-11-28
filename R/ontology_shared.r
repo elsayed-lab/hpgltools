@@ -1,3 +1,44 @@
+random_ontology <- function(input, method="goseq", n=200, ...) {
+  ## Lets assume the result of *_pairwise() or combine_de_tables()
+  input_table <- NULL
+  if (!is.null(input[[]])) {
+    ## Then it is from combine_de_tables
+
+  } else if (!is.null()) {
+    ## Then it came from *_pairwise
+
+  } else {
+    stop("Not sure what to do with this input.")
+  }
+
+  input_idx <- sample(x=nrow(input_table), size=n)
+  input_table <- input_table[input_idx, ]
+  random_result <- NULL
+  switchret <- switch(
+    method,
+    "goseq" = {
+      random_result <- simple_goseq(input_table, ...)
+    },
+    "clusterp" = {
+      random_result <- simple_clusterp(input_table, ...)
+    },
+    "topgo" = {
+      random_result <- simple_topgo(input_table, ...)
+    },
+    "gostats" = {
+      random_result <- simple_gostats(input_table, ...)
+    },
+    "gprofiler" = {
+      random_result <- simple_gprofiler(input_table, ...)
+    },
+    {
+      message("Not sure what to do with this method.")
+      random_result <- NULL
+    })
+  
+  return(random_result)
+}
+
 #' Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)
 #'
 #' Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.

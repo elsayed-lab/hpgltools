@@ -1316,7 +1316,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
     keepers <- !(colnames(coefficient_df) %in% removers)
     coefficient_df <- coefficient_df[, keepers]
   } else if (type == "limma") {
-    coefficient_df <- datum[["pairwise_comparisons"]][["coefficients"]]
+    coefficient_df <- datum[["identity_comparisons"]][["coefficients"]]
     all_coefficients <- colnames(coefficient_df)
     keepers <- !grepl(pattern="_vs_", x=all_coefficients)
     coefficient_df <- coefficient_df[, keepers]

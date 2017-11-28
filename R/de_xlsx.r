@@ -852,6 +852,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (!is.null(abundant_excel)) {
     message("Invoking extract_abundant_genes().")
     abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel, ...))
+    ## abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel))
     ret[["abundant"]] <- abundant
   }
   if (!is.null(arglist[["rda"]])) {
@@ -1221,7 +1222,7 @@ combine_de_data_table <- function(lilfcdt, listatsdt, include_limma,
 #' @return  The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, unique=FALSE,
+extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, unique=FALSE,
                                    least=FALSE, excel="excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
@@ -1261,13 +1262,14 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, 
       sheetname <- paste0(according, "_", coef)
       annotations <- fData(pairwise[["input"]])
       abundances <- abundant_lists[[according]][[coef]]
-      kept_annotations <- names(abundant_lists[[according]][[coef]])
+      kept_annotations <- names(abundances)
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
-      kept_annotations <- cbind(kept_annotations, abundances)
-      final_list[[according]][[coef]] <- kept_annotations
+      used_data <- merge(data.frame(abundances), annotations, by="row.names", all.x=TRUE)
+      rownames(used_data) <- used_data[["Row.names"]]
+      used_data <- used_data[, -1]
       title <- paste0("Table SXXX: Abundant genes in ", coef, " according to ", according, ".")
-      xls_result <- write_xls(data=kept_annotations, wb=wb, sheet=sheetname, title=title)
+      xls_result <- write_xls(data=used_data, wb=wb, sheet=sheetname, title=title)
     }
   }
 
@@ -1275,6 +1277,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=100, z=NULL, 
   ret <- list(
     "with_annotations" = final_list,
     "abundances" = abundant_lists)
+
   return(ret)
 }
 
