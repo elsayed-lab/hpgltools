@@ -122,7 +122,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- import_deseq(data, columns_data, model_string)
+    summarized <- import_deseq(data, column_data, model_string)
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch) == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
@@ -309,10 +309,13 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       ## of columns of the coefficient df.
       ## This is a bit more verbose that strictly it needs to be, but I hope it is clearer therefore.
       ## 1st, if a numerator/denominator is missing, then it is the intercept name.
-      missing_name_idx <- ! num_den %in% colnames(coefficient_df)
+      columns <- colnames(coefficient_df)
+      missing_name_idx <- ! num_den %in% columns
       missing_name <- num_den[missing_name_idx]
       ## Those indexes found in the numerator+denominator list will be subtracted
-      containing_names_idx <- columns %in% num_den
+      ## Previously this line was 'containing_names_idx <- columns %in% num_den'
+      ## I think that was wrong, it should be this:
+      containing_names_idx <- colnames(coefficient_df) %in% num_den
       containing_names <- columns[containing_names_idx]
       ## If the are not in the numerator+denominator list, then they must be the SVs (except the
       ## first column of course, that is the intercept.

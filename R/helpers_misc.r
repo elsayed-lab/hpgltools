@@ -64,7 +64,7 @@ pp <- function(file, width=9, height=9, res=180, ...) {
   } else if (ext == "svg") {
     res <- svg(filename=file)
   } else if (ext == "ps") {
-    res <- postscript(file=file, width=width, height=height, units="in", ...)
+    res <- postscript(file=file, width=width, height=height, ...)
   } else if (ext == "eps") {
     res <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {

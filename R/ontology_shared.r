@@ -20,7 +20,7 @@ random_ontology <- function(input, method="goseq", n=200, ...) {
       random_result <- simple_goseq(input_table, ...)
     },
     "clusterp" = {
-      random_result <- simple_clusterp(input_table, ...)
+      random_result <- simple_clusterprofiler(input_table, ...)
     },
     "topgo" = {
       random_result <- simple_topgo(input_table, ...)

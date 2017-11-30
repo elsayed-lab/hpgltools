@@ -13,6 +13,10 @@ plot_ontpval(df, ontology = "MF", fontsize = 14, numerator = NULL,
 \item{ontology}{Ontology to plot (MF,BP,CC).}
 
 \item{fontsize}{Fiddling with the font size may make some plots more readable.}
+
+\item{numerator}{Column used for printing a ratio of genes/category.}
+
+\item{denominator}{Column used for printing a ratio of genes/category.}
 }
 \value{
 Ggplot2 plot of pvalues vs. ontology.

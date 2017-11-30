@@ -441,6 +441,7 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
 #' @param path  Location for the original Db/Dbi instance.
 #' @param removal  String to remove from the instance.
 #' @param replace  What to replace removal with, when necessary.
+#' @param sqlite  Also modify the sqlite database?
 #' @return  A new OrgDb/TxDb/OrganismDbi
 #' @examples
 #' \dontrun{

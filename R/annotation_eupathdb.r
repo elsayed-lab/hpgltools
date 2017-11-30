@@ -309,7 +309,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   maintainer <- as.character(entry[["Maintainer"]])
   final_dir <- file.path(dir, pkgname)
   if (file.exists(final_dir)) {
-    if (isTRUE(overwrite)) {
+    if (isTRUE(reinstall)) {
       unlinkret <- unlink(x=final_dir, recursive=TRUE)
     } else {
       if (file.exists(paste0(final_dir, ".bak"))) {
@@ -422,19 +422,32 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## shared metadata
   ## I wish I were this confident with %>% and transmute, I always get confused by them
+  ##shared_metadata <- dat %>% dplyr::transmute(
+  ##                                    BiocVersion=as.character(BiocInstaller::biocVersion()),
+  ##                                    Genome=sub(".gff", "", basename(URLgff)),
+  ##                                    NumGenes=genecount,
+  ##                                    NumOrthologs=orthologcount,
+  ##                                    SourceType="GFF",
+  ##                                    SourceUrl=URLgff,
+  ##                                    SourceVersion=db_version,
+  ##                                    Species=organism,
+  ##                                    TaxonomyId=ncbi_tax_id,
+  ##                                    Coordinate_1_based=TRUE,
+  ##                                    DataProvider=project_id,
+  ##                                    Maintainer="Keith Hughitt <khughitt@umd.edu>")
   shared_metadata <- dat %>% dplyr::transmute(
-                                      BiocVersion=as.character(BiocInstaller::biocVersion()),
-                                      Genome=sub(".gff", "", basename(URLgff)),
-                                      NumGenes=genecount,
-                                      NumOrthologs=orthologcount,
-                                      SourceType="GFF",
-                                      SourceUrl=URLgff,
-                                      SourceVersion=db_version,
-                                      Species=organism,
-                                      TaxonomyId=ncbi_tax_id,
-                                      Coordinate_1_based=TRUE,
-                                      DataProvider=project_id,
-                                      Maintainer="Keith Hughitt <khughitt@umd.edu>")
+                                      "BiocVersion"=as.character(BiocInstaller::biocVersion()),
+                                      "Genome"=sub(".gff", "", basename(.data[["URLgff"]])),
+                                      "NumGenes"=.data[["genecount"]],
+                                      "NumOrthologs"=.data[["orthologcount"]],
+                                      "SourceType"="GFF",
+                                      "SourceUrl"=.data[["URLgff"]],
+                                      "SourceVersion"=db_version,
+                                      "Species"=.data[["organism"]],
+                                      "TaxonomyId"=.data[["ncbi_tax_id"]],
+                                      "Coordinate_1_based"=TRUE,
+                                      "DataProvider"=.data[["project_id"]],
+                                      "Maintainer"="Keith Hughitt <khughitt@umd.edu>")
 
   ## Add project-specific tags for each entry
   shared_metadata[["Tags"]] <- sapply(shared_metadata[["DataProvider"]],
@@ -493,14 +506,19 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   metadata <- shared_metadata %>%
     dplyr::mutate(
-             Title=sprintf("Genome wide annotations for %s", Species),
-             Description=sprintf("%s %s annotations for %s", DataProvider, SourceVersion, Species),
-             RDataClass="OrgDb",
-             DispatchClass="SQLiteFile",
-             ResourceName=sprintf("org.%s.%s.db.sqlite", gsub("[ /.]+", "_", Species),
-                                  tolower(substring(DataProvider, 1, nchar(DataProvider) - 2)))
+             "Title"=sprintf("Genome wide annotations for %s", .data[["Species"]]),
+             "Description"=sprintf("%s %s annotations for %s",
+                                   .data[["DataProvider"]],
+                                   .data[["SourceVersion"]],
+                                   .data[["Species"]]),
+             "RDataClass"="OrgDb",
+             "DispatchClass"="SQLiteFile",
+             "ResourceName"=sprintf("org.%s.%s.db.sqlite", gsub("[ /.]+", "_", .data[["Species"]]),
+                                    tolower(substring(.data[["DataProvider"]], 1, nchar(.data[["DataProvider"]]) - 2)))
            ) %>%
-    dplyr::mutate(RDataPath=file.path("EuPathDB", "OrgDb", BiocVersion, ResourceName))
+    dplyr::mutate("RDataPath"=file.path("EuPathDB", "OrgDb",
+                                        .data[["BiocVersion"]],
+                                        .data[["ResourceName"]]))
 
   if (isTRUE(use_savefile)) {
     if (isTRUE(overwrite) | !file.exists(savefile)) {
@@ -951,24 +969,24 @@ make_taxon_names <- function(entry) {
 
   ## Replace some annoying characters with .
   annoying_pattern <- "(_|-|#| )"
-  taxon <- gsub(pattern=annoying_pattern, replace="\\.", x=taxon)
-  genus <- gsub(pattern=annoying_pattern, replace="\\.", x=genus)
-  species <- gsub(pattern=annoying_pattern, replace="\\.", x=species)
-  strain <- gsub(pattern=annoying_pattern, replace="\\.", x=strain)
+  taxon <- gsub(pattern=annoying_pattern, replacement="\\.", x=taxon)
+  genus <- gsub(pattern=annoying_pattern, replacement="\\.", x=genus)
+  species <- gsub(pattern=annoying_pattern, replacement="\\.", x=species)
+  strain <- gsub(pattern=annoying_pattern, replacement="\\.", x=strain)
 
   ## Completely remove the truly stupid characters.
   stupid_pattern <- "(\\,|\\/|\\?|\\|\\[|\\])"
-  taxon <- gsub(pattern=stupid_pattern, replace="", x=taxon)
-  genus <- gsub(pattern=stupid_pattern, replace="", x=genus)
-  species <- gsub(pattern=stupid_pattern, replace="", x=species)
-  strain <- gsub(pattern=stupid_pattern, replace="", x=strain)
+  taxon <- gsub(pattern=stupid_pattern, replacement="", x=taxon)
+  genus <- gsub(pattern=stupid_pattern, replacement="", x=genus)
+  species <- gsub(pattern=stupid_pattern, replacement="", x=species)
+  strain <- gsub(pattern=stupid_pattern, replacement="", x=strain)
 
   ## There are a few extra-weirdos with double-.s
   silly_pattern <- "\\.\\."
-  taxon <- gsub(pattern=silly_pattern, replace="\\.", x=taxon)
-  genus <- gsub(pattern=silly_pattern, replace="\\.", x=genus)
-  species <- gsub(pattern=silly_pattern, replace="\\.", x=species)
-  strain <- gsub(pattern=silly_pattern, replace="\\.", x=strain)
+  taxon <- gsub(pattern=silly_pattern, replacement="\\.", x=taxon)
+  genus <- gsub(pattern=silly_pattern, replacement="\\.", x=genus)
+  species <- gsub(pattern=silly_pattern, replacement="\\.", x=species)
+  strain <- gsub(pattern=silly_pattern, replacement="\\.", x=strain)
 
   species_strain <- paste0(species, ".", strain)
   genus_species <- paste0(genus, ".", species)

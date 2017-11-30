@@ -8,15 +8,17 @@
 #' complex and one should carefully inspect the output if it fails to see if there are more
 #' appropriate marts, datasets, and columns to download.
 #'
-#' @param species Choose a species.
-#' @param overwrite Overwite an existing save file?
-#' @param do_save Create a savefile of annotations for future runs?
-#' @param host Ensembl hostname to use.
-#' @param trymart Biomart has become a circular dependency, this makes me sad, now to list the
+#' @param species  Choose a species.
+#' @param overwrite  Overwite an existing save file?
+#' @param do_save  Create a savefile of annotations for future runs?
+#' @param host  Ensembl hostname to use.
+#' @param drop_haplotypes  Some chromosomes have stupid names because they are from non-standard
+#'   haplotypes and they should go away.  Setting this to false stops that.
+#' @param trymart  Biomart has become a circular dependency, this makes me sad, now to list the
 #'  marts, you need to have a mart loaded...
 #' @param gene_requests  Set of columns to query for description-ish annotations.
-#' @param length_requests Set of columns to query for location-ish annotations.
-#' @param include_lengths Also perform a search on structural elements in the genome?
+#' @param length_requests  Set of columns to query for location-ish annotations.
+#' @param include_lengths  Also perform a search on structural elements in the genome?
 #' @return Df of some (by default) human annotations.
 #' @seealso \pkg{biomaRt}
 #'  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}

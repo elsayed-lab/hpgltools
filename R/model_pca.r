@@ -300,18 +300,19 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
 
 #' A quick and dirty PCA plotter of arbitrary components against one another.
 #'
-#' @param pca_data  a dataframe of principle components PC1 .. PCN with any other arbitrary information.
-#' @param first   principle component PCx to put on the x axis.
-#' @param second   principle component PCy to put on the y axis.
-#' @param variances   a list of the percent variance explained by each component.
-#' @param design   the experimental design with condition batch factors.
-#' @param plot_title   a title for the plot.
-#' @param plot_labels   a parameter for the labels on the plot.
-#' @param plot_size  The size of the dots on the plot
-#' @param size_column an experimental factor to use for sizing the glyphs
+#' @param pca_data  Dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param first   Principle component PCx to put on the x axis.
+#' @param second   Principle component PCy to put on the y axis.
+#' @param variances   List of the percent variance explained by each component.
+#' @param design   Experimental design with condition batch factors.
+#' @param plot_title   Title for the plot.
+#' @param plot_labels   Parameter for the labels on the plot.
+#' @param plot_size  Size of the dots on the plot
+#' @param size_column  Experimental factor to use for sizing the glyphs
 #' @param rug  Include the rugs on the sides of the plot?
-#' @param ... extra arguments dropped into arglist
-#' @return a ggplot2 PCA plot
+#' @param cis  What (if any) confidence intervals to include.
+#' @param ...  Extra arguments dropped into arglist
+#' @return  gplot2 PCA plot
 #' @seealso \pkg{ggplot2}
 #'  \code{\link[directlabels]{geom_dl}}
 #' @examples
@@ -942,12 +943,12 @@ test_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   }
 
   ready <- pcaMethods::prep(data, scale=scale, center=center)
-  svd <- pca(ready, method="svd", center=FALSE, nPcs=2)
-  ppca <- pca(ready, method="ppca", center=FALSE, nPcs=2)
-  bpca <- pca(ready, method="bpca", center=FALSE, nPcs=2)
-  svdi <- pca(ready, method="svdImpute", center=FALSE, nPcs=2)
-  nipals <- pca(ready, method="nipals", center=FALSE, nPcs=2)
-  ## nlpca <- pca(ready, method="nlpca", center=FALSE, nPcs=2, maxSteps=300)
+  svd <- pcaMethods::pca(ready, method="svd", center=FALSE, nPcs=2)
+  ppca <- pcaMethods::pca(ready, method="ppca", center=FALSE, nPcs=2)
+  bpca <- pcaMethods::pca(ready, method="bpca", center=FALSE, nPcs=2)
+  svdi <- pcaMethods::pca(ready, method="svdImpute", center=FALSE, nPcs=2)
+  nipals <- pcaMethods::pca(ready, method="nipals", center=FALSE, nPcs=2)
+  ## nlpca <- pcaMethods::pca(ready, method="nlpca", center=FALSE, nPcs=2, maxSteps=300)
 
   retlist <- list(
     "svd" = svd,

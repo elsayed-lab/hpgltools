@@ -42,5 +42,4 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \seealso{
 \pkg{googleVis}
- \code{\link{plot_de_volcano}}
 }

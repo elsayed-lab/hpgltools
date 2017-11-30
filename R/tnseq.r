@@ -7,7 +7,8 @@
 #' observed on the forward vs. reverse strand as well as reads which appear to be on both strands
 #' (eg. they start and end with 'TA').
 #'
-#' @param file  a file created using the perl script 'essentiality_tas.pl'
+#' @param data  data to plot
+#' @param column which column to use for plotting
 #' @return A plot and some numbers
 #' @seealso \pkg{ggplot2}
 #' @examples
