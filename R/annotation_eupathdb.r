@@ -325,11 +325,12 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   if (!file.exists(tmp_pkg_dir)) {
     dir.create(tmp_pkg_dir, recursive=TRUE)
   }
+  version_string <- format(Sys.time(), "%Y.%m")
   organdb <- OrganismDbi::makeOrganismPackage(
                             pkgname=pkgname,
                             graphData=graph_data,
                             organism=organism,
-                            version=version,
+                            version=version_string,
                             maintainer=maintainer,
                             author=author,
                             destDir=tmp_pkg_dir,
@@ -422,19 +423,6 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## shared metadata
   ## I wish I were this confident with %>% and transmute, I always get confused by them
-  ##shared_metadata <- dat %>% dplyr::transmute(
-  ##                                    BiocVersion=as.character(BiocInstaller::biocVersion()),
-  ##                                    Genome=sub(".gff", "", basename(URLgff)),
-  ##                                    NumGenes=genecount,
-  ##                                    NumOrthologs=orthologcount,
-  ##                                    SourceType="GFF",
-  ##                                    SourceUrl=URLgff,
-  ##                                    SourceVersion=db_version,
-  ##                                    Species=organism,
-  ##                                    TaxonomyId=ncbi_tax_id,
-  ##                                    Coordinate_1_based=TRUE,
-  ##                                    DataProvider=project_id,
-  ##                                    Maintainer="Keith Hughitt <khughitt@umd.edu>")
   shared_metadata <- dat %>% dplyr::transmute(
                                       "BiocVersion"=as.character(BiocInstaller::biocVersion()),
                                       "Genome"=sub(".gff", "", basename(.data[["URLgff"]])),
@@ -696,11 +684,12 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   }
 
   ## Compile list of arguments for makeOrgPackage call
+  version_string <- format(Sys.time(), "%Y.%m")
   orgdb_args <- list(
     "gene_info"  = tables[["gff"]],
     "chromosome" = chr_mapping,
     "type" = tables[["genes"]],
-    "version" = paste0(entry[["SourceVersion"]], ".0"),
+    "version" = version_string,
     "author" = entry[["Maintainer"]],
     "maintainer" = entry[["Maintainer"]],
     "tax_id" = as.character(entry[["TaxonomyId"]]),
@@ -871,12 +860,13 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   dbType <- GenomicFeatures:::.getMetaDataValue(txdb, "Db type")
   authors <- GenomicFeatures:::.normAuthor(entry[["Maintainer"]], entry[["Maintainer"]])
   template_path <- system.file("txdb-template", package = "GenomicFeatures")
+  version_string <- format(Sys.time(), "%Y.%m")
   symvals <- list(
     "PKGTITLE" = paste("Annotation package for", dbType, "object(s)"),
     "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from",
                              GenomicFeatures:::.getMetaDataValue(txdb, "Data source"),
                              "by exposing these as", dbType, "objects"),
-    "PKGVERSION" = paste0(entry[["SourceVersion"]], ".0"),
+    "PKGVERSION" = version_string,
     "AUTHOR" = paste(authors, collapse = ", "),
     "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
     "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),

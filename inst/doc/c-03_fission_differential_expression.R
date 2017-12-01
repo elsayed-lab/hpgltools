@@ -131,9 +131,9 @@ head(pombe_goids_simple)
 head(pombe_goids)
 
 ## This used to work, but does so no longer and I do not know why.
-pombe <- sm(GenomicFeatures::makeTxDbFromBiomart(biomart="fungal_mart",
-                                                 dataset="spombe_eg_gene",
-                                                 host="fungi.ensembl.org"))
+## pombe <- sm(GenomicFeatures::makeTxDbFromBiomart(biomart="fungal_mart",
+##                                                  dataset="spombe_eg_gene",
+##                                                  host="fungi.ensembl.org"))
 
 ## This was found at the bottom of: https://www.biostars.org/p/232005/
 link <- "ftp://ftp.ensemblgenomes.org/pub/release-34/fungi/gff3/schizosaccharomyces_pombe/Schizosaccharomyces_pombe.ASM294v2.34.gff3.gz"

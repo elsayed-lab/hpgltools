@@ -1,5 +1,4 @@
 ## ----options, include=FALSE----------------------------------------------
-## These are the options I tend to favor
 library("hpgltools")
 knitr::opts_knit$set(progress=TRUE,
                      verbose=TRUE,
@@ -14,18 +13,13 @@ old_options <- options(digits=4,
                        knitr.duplicate.label="allow")
 ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
+ver <- "20170820"
 rmd_file <- "d-04_pasilla.Rmd"
 
 ## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  ## This block is used to render a document from within it.
 #  rmarkdown::render(rmd_file)
 #  
-#  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-#  
-#  ## Or to save/load large Rdata files.
-#  hpgltools:::saveme()
-#  hpgltools:::loadme()
-#  rm(list=ls())
+#  rmarkdown::render(rmd_file, output_format="pdf_document")
 
 ## ----load_data-----------------------------------------------------------
 tt <- sm(library(hpgltools)) ## I use sm to keep functions from printing too much (well, anything really)
@@ -92,6 +86,7 @@ norm_metrics$disheat
 norm_metrics$smd
 norm_metrics$pcaplot
 
-## ----sysinfo, results='asis'---------------------------------------------
+## ----saveme--------------------------------------------------------------
 pander::pander(sessionInfo())
+message(paste0("This is hpgltools commit: ", get_git_commit()))
 
