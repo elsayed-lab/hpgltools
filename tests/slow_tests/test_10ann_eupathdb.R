@@ -4,7 +4,7 @@ library(hpgltools)
 context("10ann_eupathdb.R: Is it possible to extract EuPathDB data?\n")
 
 eupath_metadata <- download_eupathdb_metadata()
-expected <- c(281, 19)
+expected <- c(285, 19)
 actual <- dim(eupath_metadata)
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)

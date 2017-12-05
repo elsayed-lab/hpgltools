@@ -203,11 +203,9 @@ head(expt$design)
 ## elt stands for: "early/late in thy"
 batch_a <- subset_expt(expt, subset="batch=='a'")
 batch_b <- subset_expt(expt, subset="batch=='b'")
-```
 
-```{r view_subsets}
-a_metrics <- graph_metrics(batch_a)
-b_metrics <- graph_metrics(batch_b)
+a_metrics <- sm(graph_metrics(batch_a))
+b_metrics <- sm(graph_metrics(batch_b))
 a_metrics$pcaplot
 b_metrics$pcaplot
 a_metrics$tsneplot
@@ -322,7 +320,7 @@ Finally, extract_significant_genes() may choose 'significant' genes based upon a
 including z-score vs. the distribution of logFC; a logFC cutoff, (ajusted)p-value cutoff, and/or
 top/bottom n genes.
 
-```{r sig_genes_test}
+```{r sig_genes_test, fig.show="hide"}
 spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 ```
@@ -341,7 +339,7 @@ mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
-circos_test <- circos_prefix()
+circos_test <- sm(circos_prefix())
 ## Fill it in with the data for s.pyogenes
 circos_kary <- circos_karyotype("mgas", length=1895017)
 ## Fill in the gene category annotations by gene-strand
