@@ -39,15 +39,27 @@ load_parasite_annotations <- function(...) {
 load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
                                    ## fields=c("CHR", "GENENAME", "TXSTRAND",
                                    fields=NULL, sum_exons=FALSE) {
+
+
   ## "TXSTART", "TXEND", "TYPE")) {
   keytype <- toupper(keytype)
   all_fields <- AnnotationDbi::columns(orgdb)
+
   if (is.null(fields)) {
-    fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
+    fields <- c("CHR", "TXSTRAND", "TXSTART", "TXEND")
   } else if (fields[[1]] == "all") {
     fields <- all_fields
   } else {
     fields <- toupper(fields)
+  }
+
+  # Work-around 2017/02/16
+  # TYPE and GENENAME may be unavailable in recent versions GenomicFeatures
+  if ('TYPE' %in% columns(orgdb)) {
+    fields <- c(fields, 'TYPE')
+  }
+  if ('GENENAME' %in% columns(orgdb)) {
+    fields <- c(fields, 'GENENAME')
   }
 
   if (sum(fields %in% all_fields) != length(fields)) {
