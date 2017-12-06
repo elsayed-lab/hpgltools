@@ -1,4 +1,10 @@
-
+#' Read a uniprot text file and extract as much information from it as possible.
+#'
+#' I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
+#'
+#' @param file  Uniprot file to read and parse
+#' @return  Big dataframe of annotation data.
+#' @export
 load_uniprot_annotations <- function(file) {
   ## file <-  "uniprot_3AUP000001584.txt.gz"
   read_vec <- readr::read_lines(file, progress=TRUE)
