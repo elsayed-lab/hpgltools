@@ -14,6 +14,8 @@ exclude_genes_expt(expt, column = "txtype", method = "remove", ids = NULL,
 
 \item{method}{Either remove explicit rows, or keep them.}
 
+\item{ids}{Specific IDs to exclude.}
+
 \item{patterns}{Character list of patterns to remove/keep}
 
 \item{...}{Extra arguments are passed to arglist, currently unused.}

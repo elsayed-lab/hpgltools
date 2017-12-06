@@ -7,7 +7,9 @@
 tnseq_saturation(data, column = "Reads")
 }
 \arguments{
-\item{file}{a file created using the perl script 'essentiality_tas.pl'}
+\item{data}{data to plot}
+
+\item{column}{which column to use for plotting}
 }
 \value{
 A plot and some numbers

@@ -30,8 +30,6 @@ followed by 2 fold and 4 fold cutoffs.}
 \item{maximum}{Set a specific limit on the number of genes on the x-axis.}
 
 \item{...}{More arguments are passed to arglist.}
-
-\item{t_type}{Adjusted?}
 }
 \value{
 list containing the significance bar plots and some information to hopefully help interpret them.

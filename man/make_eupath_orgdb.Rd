@@ -4,21 +4,32 @@
 \alias{make_eupath_orgdb}
 \title{Generate OrgDb for EuPathDB organism}
 \usage{
-make_eupath_orgdb(entry, dir = ".", kegg_abbreviation = NULL,
-  overwrite = FALSE)
+make_eupath_orgdb(species = NULL, entry = NULL, dir = "eupathdb",
+  kegg_abbreviation = NULL, reinstall = FALSE, metadata = NULL, ...)
 }
 \arguments{
+\item{species}{Single species to work on.}
+
 \item{entry}{One dimensional dataframe with organism metadata}
 
 \item{dir}{Where to put the data}
 
 \item{kegg_abbreviation}{A kegg abbreviation when it cannot be automatically determined.}
+
+\item{reinstall}{Overwrite an existing installed package?}
+
+\item{metadata}{Large metadata dataframe.}
+
+\item{...}{Extra arguments when downloading metadata.}
 }
 \value{
-OrgDb instance
+OrgDb instance package name.
 }
 \description{
-Generate OrgDb for EuPathDB organism
+This is probably the most difficult function in this family, as orgdb instances are rather
+more complex than the other annotation data (at least for the eupathdb).  It gathers the
+KEGG/GO/gene/etc data and bundles it into a single sqlite instance and does some
+rudimentary sanity checks on the result.
 }
 \author{
 Keith Hughitt

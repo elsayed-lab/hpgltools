@@ -15,11 +15,6 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "a-01_bacterial_example.Rmd"
 
-## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  rmarkdown::render(rmd_file)
-#  
-#  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-
 ## ----loading_data--------------------------------------------------------
 library(hpgltools)
 data_file <- system.file("cdm_expt.rda", package="hpgltools")
@@ -48,6 +43,7 @@ raw_metrics$boxplot
 raw_metrics$density
 ## quantile/quantile plots compared to the median of all samples
 raw_metrics$qqrat
+raw_metrics$tsneplot
 ## Here we can see some samples are differently 'shaped' compared to the median than others
 ## There are other plots one may view, but this data set is a bit too crowded as is.
 ## The following summary shows the other available plots:
@@ -56,8 +52,8 @@ summary(raw_metrics)
 ## ----subset_data, fig.show='hide'----------------------------------------
 head(expt$design)
 ## elt stands for: "early/late in thy"
-batch_a <- expt_subset(expt, subset="batch=='a'")
-batch_b <- expt_subset(expt, subset="batch=='b'")
+batch_a <- subset_expt(expt, subset="batch=='a'")
+batch_b <- subset_expt(expt, subset="batch=='b'")
 
 ## ----view_subsets--------------------------------------------------------
 a_metrics <- graph_metrics(batch_a)
@@ -153,6 +149,25 @@ getwd()
 
 ## ----genoplot------------------------------------------------------------
 genoplot_chromosome()
+
+## ----wt_mga, fig.show="hide"---------------------------------------------
+wt_mga_expt <- set_expt_condition(expt=expt, fact="type")
+wt_mga_plots <- sm(graph_metrics(wt_mga_expt))
+wt_mga_norm <- sm(normalize_expt(wt_mga_expt, transform="log2", convert="raw", filter=TRUE, norm="quant"))
+wt_mga_nplots <- sm(graph_metrics(wt_mga_norm))
+wt_mga_de <- sm(all_pairwise(input=wt_mga_expt,
+                          combined_excel="wt_mga.xlsx",
+                          sig_excel="wt_mga_sig.xlsx",
+                          abundant_excel="wt_mga_abundant.xlsx"))
+## How well do the various DE tools agree on this data?
+wt_mga_de$combined$comp_plot
+
+## ----wt_mga_plots--------------------------------------------------------
+wt_mga_plots$tsneplot
+wt_mga_nplots$pcaplot
+wt_mga_de$combined$limma_plots$WT_vs_mga$scatter
+wt_mga_de$combined$limma_ma_plots$WT_vs_mga$plot
+wt_mga_de$combined$limma_vol_plots$WT_vs_mga$plot
 
 ## ----sysinfo, results='asis'---------------------------------------------
 pander::pander(sessionInfo())

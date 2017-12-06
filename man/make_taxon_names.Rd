@@ -9,6 +9,10 @@ make_taxon_names(entry)
 \arguments{
 \item{entry}{An entry of the eupathdb metadata.}
 }
+\value{
+A list of hopefully valid nomenclature names to be used elsewhere in this family.
+}
 \description{
-Iterate through the various ways of representing taxon names
+Spend some time making sure they are valid, too.  Thus we want to get rid of weird characters
+like hash marks, pipes, etc.
 }

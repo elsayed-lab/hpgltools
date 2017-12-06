@@ -5,14 +5,14 @@
 \title{Returns a mapping of gene ID to gene type for a specified organism}
 \usage{
 get_eupath_gene_types(provider = "TriTrypDB", species = "Leishmania major",
-  dir = ".")
+  dir = "eupathdb")
 }
 \arguments{
+\item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+
 \item{species}{Full name of organism, as used by EuPathDB APIs}
 
 \item{dir}{Where to put the downloaded data?}
-
-\item{data_provider}{Name of data provider to query (e.g. 'TriTrypDB')}
 }
 \value{
 Dataframe with 'GID' and 'TYPE' columns.

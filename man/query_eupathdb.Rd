@@ -6,7 +6,7 @@
 representation of the result.}
 \usage{
 query_eupathdb(provider = "TriTrypDB", species = "Leishmania major",
-  dir = ".", prefix = "table", query_args = NULL,
+  dir = "eupathdb", prefix = "table", query_args = NULL,
   wadl = "GeneQuestions/GenesByTaxon", format = "json")
 }
 \arguments{

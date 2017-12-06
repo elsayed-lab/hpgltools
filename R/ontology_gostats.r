@@ -7,6 +7,7 @@
 #'
 #' @param sig_genes  Input list of differentially expressed genes.
 #' @param gff  Annotation information for this genome.
+#' @param gff_df  I do not remember what this is for.
 #' @param go_db  Set of GOids, as before in the format ID/GO.
 #' @param universe_merge  Column from which to create the universe of genes.
 #' @param second_merge_try  If the first universe merge fails, try this.

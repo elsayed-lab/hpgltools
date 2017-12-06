@@ -22,6 +22,9 @@ load_biomart_annotations(species = "hsapiens", overwrite = FALSE,
 
 \item{host}{Ensembl hostname to use.}
 
+\item{drop_haplotypes}{Some chromosomes have stupid names because they are from non-standard
+haplotypes and they should go away.  Setting this to false stops that.}
+
 \item{trymart}{Biomart has become a circular dependency, this makes me sad, now to list the
 marts, you need to have a mart loaded...}
 

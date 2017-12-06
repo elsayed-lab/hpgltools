@@ -37,11 +37,9 @@ load_parasite_annotations <- function(...) {
 #' }
 #' @export
 load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
-                                   ## fields=c("CHR", "GENENAME", "TXSTRAND",
                                    fields=NULL, sum_exons=FALSE) {
 
 
-  ## "TXSTART", "TXEND", "TYPE")) {
   keytype <- toupper(keytype)
   all_fields <- AnnotationDbi::columns(orgdb)
 
@@ -67,7 +65,6 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
     stop(paste0("Some requested fields are not available.  The following were found: ",
                 toString(all_fields)))
   }
-  ## fields <- c("CHR", "GENENAME", "TXSTRAND", "TXSTART", "TXEND", "TYPE")
 
   ## Gene IDs
   if (is.null(gene_ids)) {

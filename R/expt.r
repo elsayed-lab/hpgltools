@@ -571,6 +571,7 @@ analyses more difficult/impossible.")
 #' @param expt  Expressionset containing expt object.
 #' @param column  fData column to use for subsetting.
 #' @param method  Either remove explicit rows, or keep them.
+#' @param ids  Specific IDs to exclude.
 #' @param patterns  Character list of patterns to remove/keep
 #' @param ...  Extra arguments are passed to arglist, currently unused.
 #' @return  A smaller expt
@@ -1614,6 +1615,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
 #' Extend Biobase::exprs to handle expt ojects.
 #'
 #' @name exprs
+#' @aliases exprs
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase exprs
 #' @export exprs
@@ -1626,6 +1628,7 @@ setMethod("exprs", signature="expt",
 #' Extend Biobase::fData to handle expt objects.
 #'
 #' @name fData
+#' @aliases fData
 #' @param object  An expt from which to extract the expressionset.
 #' @importFrom Biobase fData
 #' @export fData
@@ -1637,6 +1640,7 @@ setMethod("fData", signature="expt",
 #' Extend Biobase::pData to handle expt objects.
 #'
 #' @name pData
+#' @aliases pData
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase pData
 #' @export pData
@@ -1648,6 +1652,7 @@ setMethod("pData", signature="expt",
 #' Extend Biobase::notes to handle expt objects.
 #'
 #' @name notes
+#' @aliases notes
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase notes
 #' @export notes

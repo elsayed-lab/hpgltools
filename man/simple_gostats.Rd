@@ -17,6 +17,8 @@ simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
 
 \item{gff}{Annotation information for this genome.}
 
+\item{gff_df}{I do not remember what this is for.}
+
 \item{universe_merge}{Column from which to create the universe of genes.}
 
 \item{second_merge_try}{If the first universe merge fails, try this.}

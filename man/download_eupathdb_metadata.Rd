@@ -5,12 +5,16 @@
 \title{Returns metadata for all eupathdb organisms.}
 \usage{
 download_eupathdb_metadata(overwrite = FALSE, webservice = "eupathdb",
-  dir = ".", use_savefile = TRUE)
+  dir = "eupathdb", use_savefile = TRUE)
 }
 \arguments{
 \item{overwrite}{Overwrite existing data?}
 
+\item{webservice}{Optional alternative webservice for hard-to-find species.}
+
 \item{dir}{Where to put the json.}
+
+\item{use_savefile}{Make a savefile of the data for future reference.}
 }
 \value{
 Dataframe with lots of rows for the various species in eupathdb.

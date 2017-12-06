@@ -13,6 +13,8 @@ clean_pkg(path, removal = "-like", replace = "", sqlite = TRUE)
 \item{removal}{String to remove from the instance.}
 
 \item{replace}{What to replace removal with, when necessary.}
+
+\item{sqlite}{Also modify the sqlite database?}
 }
 \value{
 A new OrgDb/TxDb/OrganismDbi

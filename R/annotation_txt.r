@@ -1,30 +1,37 @@
+#' Read a csv file and make an annotation data frame.
+#'
+#' Yay!
+#'
+#' @param trinotate  CSV of trinotate annotation data.
+#' @return  Dataframe of fun data.
+#' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
 
   split_data <- big_table %>%
-    tidyr::separate(sprot_Top_BLASTX_hit,
+    tidyr::separate("sprot_Top_BLASTX_hit",
                     c("blastx_name", "blastx_name2", "blastx_hitlocation",
                       "blastx_identity", "blastx_evalue",
                       "blastx_recname", "blastx_taxonomy"),
                     "\\^") %>%
-    tidyr::separate(sprot_Top_BLASTP_hit,
+    tidyr::separate("sprot_Top_BLASTP_hit",
                     c("blastp_name", "blastp_name2", "blastp_hitlocation",
                       "blastp_identity", "blastp_evalue",
                       "blastp_recname", "blastp_taxonomy"),
                     "\\^") %>%
-    tidyr::separate(TmHMM,
+    tidyr::separate("TmHMM",
                     c("tmhmm_expaa", "tmhmm_predicted_helices", "tmhmm_topology"),
                     "\\^") %>%
-    tidyr::separate(eggnog,
+    tidyr::separate("eggnog",
                     c("eggnog_id", "eggnog_description"),
                     "\\^") %>%
-    tidyr::separate(blastx_hitlocation,
+    tidyr::separate("blastx_hitlocation",
                     c("blastx_queryloc", "blastx_hitloc"),
                     "\\,") %>%
-    tidyr::separate(blastp_hitlocation,
+    tidyr::separate("blastp_hitlocation",
                     c("blastp_queryloc", "blastp_hitloc"),
                     "\\,") %>%
-    tidyr::separate(RNAMMER,
+    tidyr::separate("RNAMMER",
                     c("rrna_subunit", "rrna_subunit_region"),
                     "\\^")
 
@@ -125,6 +132,13 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   return(split_data)
 }
 
+#' Read a csv file and make a GO data frame.
+#'
+#' Yay!
+#'
+#' @param trinotate  CSV of trinotate annotation data.
+#' @return  Dataframe of fun data.
+#' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
   big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
@@ -135,9 +149,9 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   dots <- go_data == "."
   go_data[dots] <- ""
 
-  expanded <- go_data %>% dplyr::mutate(GO = strsplit(as.character(go_blast), "`")) %>%
-    tidyr::unnest(GO) %>%
-    tidyr::separate(GO,
+  expanded <- go_data %>% dplyr::mutate("GO"=strsplit(as.character(.data[["go_blast"]]), "`")) %>%
+    tidyr::unnest("GO") %>%
+    tidyr::separate("GO",
                     c("GO", "GO_ont", "GO_name"),
                     "\\^")
 
@@ -159,3 +173,5 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
     "length_table" = length_table)
   return(retlist)
 }
+
+## EOF

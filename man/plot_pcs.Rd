@@ -9,30 +9,32 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   size_column = NULL, rug = TRUE, cis = c(0.95, 0.9), ...)
 }
 \arguments{
-\item{pca_data}{a dataframe of principle components PC1 .. PCN with any other arbitrary information.}
+\item{pca_data}{Dataframe of principle components PC1 .. PCN with any other arbitrary information.}
 
-\item{first}{principle component PCx to put on the x axis.}
+\item{first}{Principle component PCx to put on the x axis.}
 
-\item{second}{principle component PCy to put on the y axis.}
+\item{second}{Principle component PCy to put on the y axis.}
 
-\item{variances}{a list of the percent variance explained by each component.}
+\item{variances}{List of the percent variance explained by each component.}
 
-\item{design}{the experimental design with condition batch factors.}
+\item{design}{Experimental design with condition batch factors.}
 
-\item{plot_title}{a title for the plot.}
+\item{plot_title}{Title for the plot.}
 
-\item{plot_labels}{a parameter for the labels on the plot.}
+\item{plot_labels}{Parameter for the labels on the plot.}
 
-\item{plot_size}{The size of the dots on the plot}
+\item{plot_size}{Size of the dots on the plot}
 
-\item{size_column}{an experimental factor to use for sizing the glyphs}
+\item{size_column}{Experimental factor to use for sizing the glyphs}
 
 \item{rug}{Include the rugs on the sides of the plot?}
 
-\item{...}{extra arguments dropped into arglist}
+\item{cis}{What (if any) confidence intervals to include.}
+
+\item{...}{Extra arguments dropped into arglist}
 }
 \value{
-a ggplot2 PCA plot
+gplot2 PCA plot
 }
 \description{
 A quick and dirty PCA plotter of arbitrary components against one another.

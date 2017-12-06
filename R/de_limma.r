@@ -552,7 +552,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     contrasts_performed <- names(limma_tables)
   } 
 
-  result <- list(
+  retlist <- list(
     "all_pairwise" = all_pairwise,
     "all_tables" = limma_tables,
     "batches" = batches,
@@ -573,7 +573,10 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  return(result)
+  if (!is.null(arglist[["limma_excel"]])) {
+    retlist[["limma_excel"]] <- write_limma(retlist, excel=arglist[["limma_excel"]])
+  }
+  return(retlist)
 }
 
 #' Plot arbitrary data from limma as a scatter plot.
