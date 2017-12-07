@@ -92,10 +92,10 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"
     },
-    "qsmooth" = {
-      count_table <- qsmooth::qsmooth(count_table, groups=design[["condition"]], plot=TRUE)
-      norm_performed <- "qsmooth"
-    },
+    ##"qsmooth" = {
+    ##  count_table <- qsmooth::qsmooth(count_table, groups=design[["condition"]], plot=TRUE)
+    ##  norm_performed <- "qsmooth"
+    ##},
     "qshrink" = {
       count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
                                   plot=TRUE)

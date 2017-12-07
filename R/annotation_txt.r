@@ -7,6 +7,7 @@
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
+  .data <- NULL
 
   split_data <- big_table %>%
     tidyr::separate("sprot_Top_BLASTX_hit",
@@ -75,7 +76,6 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                                         x=split_data[["tmhmm_helices"]])
   split_data[["tmhmm_topology"]] <- gsub(pattern="Topology=", replacement="",
                                          x=split_data[["tmhmm_topology"]])
-
   split_data[["blastx_identity"]] <- gsub(pattern="%ID", replacement="",
                                           x=split_data[["blastx_identity"]])
   split_data[["blastx_evalue"]] <- gsub(pattern="E:", replacement="",
@@ -88,7 +88,6 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                                          x=split_data[["blastx_recname"]])
   split_data[["blastx_recname"]] <- gsub(pattern="Full=", replacement="",
                                          x=split_data[["blastx_recname"]])
-
   split_data[["blastp_identity"]] <- gsub(pattern="%ID", replacement="",
                                           x=split_data[["blastp_identity"]])
   split_data[["blastp_evalue"]] <- gsub(pattern="E:", replacement="",
@@ -163,7 +162,7 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
 
   length_data <- expanded[, c("gene_id", "transcript_id", "length")]
   length_table <- data.table::setDT(length_data)
-  length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)]
+  length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)] ## I am not sure what to do for this.
   names(length_table) <- c("ID", "length")
 
   retlist <- list(

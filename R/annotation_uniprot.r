@@ -3,6 +3,7 @@
 #' I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
 #'
 #' @param file  Uniprot file to read and parse
+#' @param savefile  Do a save?
 #' @return  Big dataframe of annotation data.
 #' @export
 load_uniprot_annotations <- function(file, savefile=TRUE) {
@@ -347,8 +348,10 @@ load_uniprot_annotations <- function(file, savefile=TRUE) {
   for (type in id_types) {
     uniprot_data[[type]] <- many_ids[[type]]
   }
-  ##if (savefile != FALSE) {
-  ##  saved <- save(list="uniprot_data", file=savefile)
-  ##}
+  if (!is.null(savefile)) {
+    if (savefile != FALSE) {
+      saved <- save(list="uniprot_data", file=savefile)
+    }
+  }
   return(uniprot_data)
 }

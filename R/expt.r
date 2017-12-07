@@ -752,7 +752,7 @@ read_metadata <- function(file, ...) {
     }
   } else if (tools::file_ext(file) == "xls") {
     ## This is not correct, but it is a start
-    definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
+    definitions <- readxl::read_xls(path=file, sheet=1)
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }

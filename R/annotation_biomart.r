@@ -108,7 +108,8 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
                                  all.x=TRUE)
     biomart_annotations <- as.data.frame(biomart_annotations)
   } else {
-    biomart_annotations <- biomart_annotation
+    ## Do not include the lengths
+    biomart_annotations <- as.data.frame(biomart_annotations)
   }
   ## rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
   ## It is not valid to arbitrarily set it to 'transcriptID' because we cannot guarantee that will

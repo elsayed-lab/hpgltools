@@ -220,7 +220,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   inner_count <- 0
   contrasts <- c()
   total_contrasts <- length(condition_levels)
-  total_contrasts <- total_contrasts(total_contrasts + 1) / 2
+  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   bar <- utils::txtProgressBar(style=3)
   for (c in 1:(length(condition_levels) - 1)) {
     denominator <- condition_levels[c]

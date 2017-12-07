@@ -166,7 +166,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   lrt_list <- list()
   sc <- vector("list", length(apc[["names"]]))
   end <- length(apc[["names"]])
-  bar <- utils::txtProgressar(style=3)
+  bar <- utils::txtProgressBar(style=3)
   for (con in 1:length(apc[["names"]])) {
     name <- apc[["names"]][[con]]
     pct_done <- con / length(apc[["names"]])
