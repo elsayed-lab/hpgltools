@@ -412,48 +412,30 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   voom_plot <- NULL
   if (which_voom == "hpgl_weighted") {
     message("Limma step 2/6: running hpgl_voomweighted(), switch with the argument 'which_voom'.")
-    fun_voom <- hpgl_voomweighted(data, chosen_model,
-                                  libsize=libsize,
-                                  voom_norm=voom_norm,
-                                  span=0.5, var.design=NULL,
-                                  method="genebygene",
-                                  maxiter=50, tol=1E-10,
-                                  trace=FALSE, replace.weights=TRUE, col=NULL,
-                                  logged=loggedp,
-                                  converted=convertedp)
+    fun_voom <- hpgl_voomweighted(
+      data, chosen_model, libsize=libsize, voom_norm=voom_norm,
+      span=0.5, var.design=NULL, method="genebygene",
+      maxiter=50, tol=1E-10, trace=FALSE, replace.weights=TRUE, col=NULL,
+      logged=loggedp, converted=convertedp)
     voom_plot <- fun_voom[["plot"]]
   } else if (which_voom == "hpgl") {
     message("Limma step 2/6: running hpgl_voom(), switch with the argument 'which_voom'.")
-    fun_voom <- hpgl_voom(data,
-                          chosen_model,
-                          libsize=libsize,
-                          logged=loggedp,
-                          converted=convertedp)
+    fun_voom <- hpgl_voom(
+      data, chosen_model, libsize=libsize,
+      logged=loggedp, converted=convertedp)
     voom_plot <- fun_voom[["plot"]]
   } else if (which_voom == "limma_weighted") {
     message("Limma step 2/6: running limma::voomWithQualityWeights(), switch with the argument 'which_voom'.")
-    fun_voom <- try(limma::voomWithQualityWeights(counts=data,
-                                                  design=chosen_model,
-                                                  lib.size=libsize,
-                                                  normalize.method=voom_norm,
-                                                  plot=TRUE,
-                                                  span=0.5,
-                                                  var.design=NULL,
-                                                  method="genebygene",
-                                                  maxiter=50,
-                                                  tol=1E-10,
-                                                  trace=FALSE,
-                                                  replace.weights=TRUE,
-                                                  col=NULL))
+    fun_voom <- try(limma::voomWithQualityWeights(
+                             counts=data, design=chosen_model, lib.size=libsize,
+                             normalize.method=voom_norm, plot=TRUE, span=0.5,
+                             var.design=NULL, method="genebygene", maxiter=50,
+                             tol=1E-10, trace=FALSE, replace.weights=TRUE, col=NULL))
     if (class(fun_voom) == "try-error") {
       message("voomWithQualityWeights failed, falling back to voom.")
-      fun_voom <- limma::voom(counts=data,
-                              design=chosen_model,
-                              lib.size=libsize,
-                              normalize.method=voom_norm,
-                              span=0.5,
-                              plot=TRUE,
-                              save.plot=TRUE)
+      fun_voom <- limma::voom(
+                           counts=data, design=chosen_model, lib.size=libsize,
+                           normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     }
     voom_plot <- grDevices::recordPlot()
   } else {
@@ -461,13 +443,9 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     message(paste0("Using normalize.method=", voom_norm, " for voom."))
     ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
     ## normalize.method="none", lib.size=NULL, design=NULL
-    fun_voom <- limma::voom(counts=data,
-                            design=chosen_model,
-                            lib.size=libsize,
-                            normalize.method=voom_norm,
-                            span=0.5,
-                            plot=TRUE,
-                            save.plot=TRUE)
+    fun_voom <- limma::voom(
+                         counts=data, design=chosen_model, lib.size=libsize,
+                         normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     voom_plot <- grDevices::recordPlot()
   }
 

@@ -166,9 +166,11 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   lrt_list <- list()
   sc <- vector("list", length(apc[["names"]]))
   end <- length(apc[["names"]])
+  bar <- utils::txtProgressar(style=3)
   for (con in 1:length(apc[["names"]])) {
     name <- apc[["names"]][[con]]
-    message(paste0("EdgeR step 9/9: ", con, "/", end, ": Creating table: ", name, ".")) ## correct
+    pct_done <- con / length(apc[["names"]])
+    utils::setTxtProgressBar(bar, pct_done)
     sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
     tt <- parse(text=sc[[name]])
     ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=model_data)")
@@ -194,6 +196,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
     result_list[[name]] <- res
   } ## End for loop
+  close(bar)
 
   dispersions <- sm(try(edgeR::plotBCV(y=final_norm), silent=TRUE))
   dispersion_plot <- NULL
