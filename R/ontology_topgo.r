@@ -362,7 +362,6 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", go_db=NULL, overwri
       new_go <- reshape2::dcast(go_db, ID~., value.var="GO",
                                 fun.aggregate=paste, collapse = ",")
 
-      ##new_go <- dplyr::ddply(go_db, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
       write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
       rm(id2go_test)
     }
@@ -375,7 +374,6 @@ make_id2gomap <- function(goid_map="reference/go/id2go.map", go_db=NULL, overwri
         message("Attempting to generate a id2go file in the format expected by topGO.")
         new_go <- reshape2::dcast(go_db, ID~., value.var="GO",
                                   fun.aggregate=paste, collapse = ",")
-        ##new_go <- plyr::ddply(go_db, plyr::.("ID"), "summarise", GO=paste(unique("GO"), collapse=','))
         write.table(new_go, file=goid_map, sep="\t", row.names=FALSE, quote=FALSE, col.names=FALSE)
         id2go_test <- file.info(goid_map)
       }

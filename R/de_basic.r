@@ -90,16 +90,17 @@ basic_pairwise <- function(input=NULL, design=NULL,
   num_comparisons <- sum(1:lenminus)
 
   contrasts_performed <- c()
+  bar <- utils::txtProgressBar(style=3)
   for (c in 1:lenminus) {
     c_name <- types[c]
     nextc <- c + 1
     for (d in nextc:length(types)) {
       num_done <- num_done + 1
+      pct_done <- num_done / num_comparisons
+      utils::setTxtProgressBar(bar, pct_done)
       d_name <- types[d]
       contrast <- paste0(d_name, "_vs_", c_name)
       contrasts_performed <- append(contrast, contrasts_performed)
-      message(paste0("Basic step 2/3: ", num_done, "/", num_comparisons,
-                     ": Performing log2 subtraction: ", contrast, "."))
       division <- data.frame(
         median_table[, d] - median_table[, c])
       comparison_name <- paste0(d_name, "_vs_", c_name)
@@ -135,6 +136,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
       }
     } ## End for each d
   }  ## End for each c
+  close(bar)
 
   ## Because of the way I made tvalues/pvalues into a list
   ## If only 1 comparison was performed, the resulting data structure never gets coerced into a

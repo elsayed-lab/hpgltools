@@ -219,16 +219,19 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   number_comparisons <- sum(1:(length(condition_levels) - 1))
   inner_count <- 0
   contrasts <- c()
+  total_contrasts <- length(condition_levels)
+  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  bar <- utils::txtProgressBar(style=3)
   for (c in 1:(length(condition_levels) - 1)) {
     denominator <- condition_levels[c]
     nextc <- c + 1
     for (d in nextc:length(condition_levels)) {
       inner_count <- inner_count + 1
+      pct_done <- inner_count / total_contrasts
+      utils::setTxtProgressBar(bar, pct_done)
       numerator <- condition_levels[d]
       comparison <- paste0(numerator, "_vs_", denominator)
       contrasts <- append(comparison, contrasts)
-      message(paste0("DESeq2 step 5/5: ", inner_count, "/",
-                     number_comparisons, ": Creating table: ", comparison))
       result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", numerator, denominator),
                                               format="DataFrame"))
@@ -255,7 +258,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     denominator <- names(conditions_table[length(conditions)])
     ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
   }  ## End for each c
-
+  close(bar)
   ## The logic here is a little tortuous.
   ## Here are some sample column names from an arbitrary coef() call:
   ## "Intercept" "SV1" "SV2" "SV3" "condition_mtc_wtu_vs_mtc_mtu"

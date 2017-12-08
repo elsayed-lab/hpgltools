@@ -46,6 +46,16 @@ deps:
 	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { biocLite(t) }"
 
+suggests:
+	@echo "Installing suggested packages."
+	R -e "source('http://bioconductor.org/biocLite.R');\
+library(desc);\
+d = description\$$new(); suggests = d\$$get('Suggests');\
+ suggests = gsub(pattern='\\n', replacement='', x=suggests);\
+ suggests = gsub(pattern=' ', replacement='', x=suggests);\
+ suggests = strsplit(x=suggests, split=',');\
+ for (pkg in suggests[[1]]) { if (! pkg %in% installed.packages()) { biocLite(pkg); } else { message(paste0(pkg, ' is already installed.')) } };"
+
 dep_push: deps snap
 	echo "Setting default commit message and pushing."
 	git commit -a -m 'packrat modification.'

@@ -66,13 +66,25 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
   }
 
   colors <- as.character(colors)
+  sum <- NULL
   libsize_df <- data.frame("id" = colnames(data),
                            "sum" = colSums(data),
                            "condition" = condition,
                            "colors" = as.character(colors))
+  summary_df <- data.table::setDT(libsize_df)[, list("min"=min(sum),
+                                                     "1st"=quantile(x=sum, probs=0.25),
+                                                     "median"=median(x=sum),
+                                                     "mean"=mean(sum),
+                                                     "3rd"=quantile(x=sum, probs=0.75),
+                                                     "max"=max(sum)),
+                                              by="condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
                                    names=names, text=text, title=title, yscale=yscale, ...)
-  return(libsize_plot)
+  retlist <- list(
+    "plot" = libsize_plot,
+    "table" = libsize_df,
+    "summary" = summary_df)
+  return(retlist)
 }
 
 #' Make a ggplot graph of the percentage/number of reads kept/removed.

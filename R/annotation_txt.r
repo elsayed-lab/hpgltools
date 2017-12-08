@@ -7,8 +7,10 @@
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
+  split_data <- data.table::as.data.table(big_table)
+  .data <- NULL  ## Shut up, R CMD check
 
-  split_data <- big_table %>%
+  split_data <- split_data %>%
     tidyr::separate("sprot_Top_BLASTX_hit",
                     c("blastx_name", "blastx_name2", "blastx_hitlocation",
                       "blastx_identity", "blastx_evalue",
@@ -75,7 +77,6 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                                         x=split_data[["tmhmm_helices"]])
   split_data[["tmhmm_topology"]] <- gsub(pattern="Topology=", replacement="",
                                          x=split_data[["tmhmm_topology"]])
-
   split_data[["blastx_identity"]] <- gsub(pattern="%ID", replacement="",
                                           x=split_data[["blastx_identity"]])
   split_data[["blastx_evalue"]] <- gsub(pattern="E:", replacement="",
@@ -88,7 +89,6 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                                          x=split_data[["blastx_recname"]])
   split_data[["blastx_recname"]] <- gsub(pattern="Full=", replacement="",
                                          x=split_data[["blastx_recname"]])
-
   split_data[["blastp_identity"]] <- gsub(pattern="%ID", replacement="",
                                           x=split_data[["blastp_identity"]])
   split_data[["blastp_evalue"]] <- gsub(pattern="E:", replacement="",
@@ -129,6 +129,13 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   split_data[na_test, "blastp_evalue"] <- 1
 
   rownames(split_data) <- make.names(split_data[["transcript_id"]], unique=TRUE)
+  ## split_data[["rownames"]] <- make.names(split_data[["transcript_id"]], unique=TRUE)
+  ## Use the 'transcript_seq' field to provide gene lengths
+  ## split_data[["length"]] <- ""
+  if (!is.null(split_data[["transcript_seq"]])) {
+    split_data[, "length" := nchar(transcript_seq)]
+  }
+
   return(split_data)
 }
 
@@ -148,6 +155,7 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   colnames(go_data) <- c("gene_id", "transcript_id", "go_blast", "go_pfam", "length")
   dots <- go_data == "."
   go_data[dots] <- ""
+  .data <- NULL  ## Shush, R CMD check
 
   expanded <- go_data %>% dplyr::mutate("GO"=strsplit(as.character(.data[["go_blast"]]), "`")) %>%
     tidyr::unnest("GO") %>%
@@ -163,7 +171,11 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
 
   length_data <- expanded[, c("gene_id", "transcript_id", "length")]
   length_table <- data.table::setDT(length_data)
-  length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)]
+  ## From the data.table documentation:
+  ## The expression ‘.()‘ is a shorthand alias to list(); they both mean the same.
+  ## length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)]
+  length <- gene_id <- NULL
+  length_table <- length_table[, list(mean_gene_length = mean(length)), by=list(gene_id)]
   names(length_table) <- c("ID", "length")
 
   retlist <- list(

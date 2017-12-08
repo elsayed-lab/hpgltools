@@ -12,17 +12,17 @@
 #'  \code{\link[variancePartition]{plotPercentBars}}
 #' @export
 replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing=TRUE) {
-    sorted <- varpart_output[["sorted_df"]]
-    if (!is.null(column)) {
-        if (column %in% colnames(sorted)) {
-            sorted <- sorted[ order(sorted[[column]], decreasing=decreasing), ]
-        } else {
-            message(paste0("The column ", column, "is not in the sorted data frame returned by varpart()."))
-            message("Leaving the data frame alone.")
-        }
+  sorted <- varpart_output[["sorted_df"]]
+  if (!is.null(column)) {
+    if (column %in% colnames(sorted)) {
+      sorted <- sorted[ order(sorted[[column]], decreasing=decreasing), ]
+    } else {
+      message(paste0("The column ", column, "is not in the sorted data frame returned by varpart()."))
+      message("Leaving the data frame alone.")
     }
-    new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
-    return(new_plot)
+  }
+  new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
+  return(new_plot)
 }
 
 #' Use variancePartition to try and understand where the variance lies in a data set.
@@ -43,62 +43,84 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @export
 varpart <- function(expt, predictor="condition", factors=c("batch"),
                     chosen_factor="batch",
-                    cpus=6, genes=40, parallel=TRUE) {
-    cl <- NULL
-    para <- NULL
-    if (isTRUE(parallel)) {
-        cl <- parallel::makeCluster(cpus)
-        para <- doParallel::registerDoParallel(cl)
-    }
-    design <- pData(expt)
-    num_batches <- length(levels(as.factor(design[[chosen_factor]])))
-    if (num_batches == 1) {
-        message("varpart sees only 1 batch, adjusting the model accordingly.")
-        factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
-    }
-    model_string <- "~ "
-    if (!is.null(predictor)) {
-        model_string <- paste0(model_string, predictor, " +")
-    }
-    for (fact in factors) {
-        model_string <- paste0(model_string, " (1|", fact, ") +")
-    }
-    model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
-    message(paste0("Attempting mixed linear model with: ", model_string))
-    my_model <- as.formula(model_string)
-    norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- exprs(norm)
+                    cpus=6, genes=40, parallel=TRUE,
+                    modify_expt=FALSE) {
+  cl <- NULL
+  para <- NULL
+  if (isTRUE(parallel)) {
+    cl <- parallel::makeCluster(cpus)
+    para <- doParallel::registerDoParallel(cl)
+  }
+  design <- pData(expt)
+  num_batches <- length(levels(as.factor(design[[chosen_factor]])))
+  if (num_batches == 1) {
+    message("varpart sees only 1 batch, adjusting the model accordingly.")
+    factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
+  }
+  model_string <- "~ "
+  if (!is.null(predictor)) {
+    model_string <- paste0(model_string, predictor, " +")
+  }
+  for (fact in factors) {
+    model_string <- paste0(model_string, " (1|", fact, ") +")
+  }
+  model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
+  message(paste0("Attempting mixed linear model with: ", model_string))
+  my_model <- as.formula(model_string)
+  norm <- sm(normalize_expt(expt, filter=TRUE))
+  data <- exprs(norm)
 
-    message("Fitting the expressionset to the model, this is slow.")
-    message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
-    ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
-    ##message("Extracting the variances.")
-    ##my_extract <- try(variancePartition::extractVarPart(my_fit))
-    my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
-    if (class(my_extract) == "try-error") {
-        stop("An error like 'vtv downdated' may be because there are too many 0s, try and filter the data and rerun.")
-    }
-    chosen_column <- predictor
-    if (is.null(predictor)) {
-        chosen_column <- factors[[1]]
-        message(paste0("Placing factor: ", chosen_column, " at the beginning of the model."))
-    }
+  message("Fitting the expressionset to the model, this is slow.")
+  message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
+  ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
+  ##message("Extracting the variances.")
+  ##my_extract <- try(variancePartition::extractVarPart(my_fit))
+  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
+  if (class(my_extract) == "try-error") {
+    message("A couple of common errors:
+An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
+An error like 'number of levels of each grouping factor must be < number of observations' means
+that the factor used is not appropriate for the analysis - it really only works for factors
+which are shared among multiple samples.")
+    stop()
+  }
+  chosen_column <- predictor
+  if (is.null(predictor)) {
+    chosen_column <- factors[[1]]
+    message(paste0("Placing factor: ", chosen_column, " at the beginning of the model."))
+  }
 
-    my_sorted <- variancePartition::sortCols(my_extract)
-    order_idx <- order(my_sorted[[chosen_column]], decreasing=TRUE)
-    my_sorted <- my_sorted[order_idx, ]
-    percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
-    partition_plot <- variancePartition::plotVarPart(my_sorted)
-    if (isTRUE(parallel)) {
-        para <- parallel::stopCluster(cl)
+  my_sorted <- variancePartition::sortCols(my_extract)
+  order_idx <- order(my_sorted[[chosen_column]], decreasing=TRUE)
+  my_sorted <- my_sorted[order_idx, ]
+  percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
+  partition_plot <- variancePartition::plotVarPart(my_sorted)
+  if (isTRUE(parallel)) {
+    para <- parallel::stopCluster(cl)
+  }
+
+  ret <- list(
+    "model_used" = my_model,
+    "percent_plot" = percent_plot,
+    "partition_plot" = partition_plot,
+    "sorted_df" = my_sorted,
+    "fitted_df" = my_extract)
+  if (isTRUE(modify_expt)) {
+    new_expt <- expt
+    tmp_annot <- fData(new_expt)
+    tmp_annot <- merge(tmp_annot, my_sorted, by="row.names")
+    rownames(tmp_annot) <- tmp_annot[["Row.names"]]
+    tmp_annot <- tmp_annot[, -1]
+    ## Make it possible to use a generic expressionset, though maybe this is
+    ## impossible for this function.
+    if (class(new_expt) == "ExpressionSet") {
+      Biobase::fData(new_expt) <- tmp_annot
+    } else {
+      Biobase::fData(new_expt[["expressionset"]]) <- tmp_annot
     }
-    ret <- list(
-        "model_used" = my_model,
-        "percent_plot" = percent_plot,
-        "partition_plot" = partition_plot,
-        "sorted_df" = my_sorted,
-        "fitted_df" = my_extract)
-    return(ret)
+    ret[["modified_expt"]] <- new_expt
+  }
+  return(ret)
 }
 
 #' Attempt to use variancePartition's fitVarPartModel() function.
@@ -111,19 +133,19 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
 #' @return  Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
 #' @seealso \pkg{variancePartition}
 varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
-    cl <- parallel::makeCluster(cpus)
-    doParallel::registerDoParallel(cl)
-    model_string <- paste0("~ ")
-    for (fact in factors) {
-        model_string <- paste0(model_string, " (1|", fact, ") + ")
-    }
-    model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
-    my_model <- as.formula(model_string)
-    norm <- sm(normalize_expt(expt, filter=TRUE))
-    data <- exprs(norm)
-    design <- expt[["design"]]
-    summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
-    return(summaries)
+  cl <- parallel::makeCluster(cpus)
+  doParallel::registerDoParallel(cl)
+  model_string <- paste0("~ ")
+  for (fact in factors) {
+    model_string <- paste0(model_string, " (1|", fact, ") + ")
+  }
+  model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
+  my_model <- as.formula(model_string)
+  norm <- sm(normalize_expt(expt, filter=TRUE))
+  data <- exprs(norm)
+  design <- expt[["design"]]
+  summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn=summary)
+  return(summaries)
 }
 
 ## EOF

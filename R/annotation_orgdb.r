@@ -38,8 +38,6 @@ load_parasite_annotations <- function(...) {
 #' @export
 load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
                                    fields=NULL, sum_exons=FALSE) {
-
-
   keytype <- toupper(keytype)
   all_fields <- AnnotationDbi::columns(orgdb)
 
@@ -53,10 +51,10 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
 
   # Work-around 2017/02/16
   # TYPE and GENENAME may be unavailable in recent versions GenomicFeatures
-  if ('TYPE' %in% columns(orgdb)) {
+  if ('TYPE' %in% AnnotationDbi::columns(orgdb)) {
     fields <- c(fields, 'TYPE')
   }
-  if ('GENENAME' %in% columns(orgdb)) {
+  if ('GENENAME' %in% AnnotationDbi::columns(orgdb)) {
     fields <- c(fields, 'GENENAME')
   }
 

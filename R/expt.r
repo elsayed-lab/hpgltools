@@ -272,7 +272,7 @@ analyses more difficult/impossible.")
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
-    ## all_count_tables <- read_counts_expt(sample_ids, filenames)
+    ## all_count_tables <- read_counts_expt(sample_ids, filenames, arglist)
     if (all_count_tables[["source"]] == "tximport") {
       tximport_data <- list("raw" = all_count_tables[["tximport"]],
                             "scaled" = all_count_tables[["tximport_scaled"]])
@@ -309,9 +309,21 @@ analyses more difficult/impossible.")
       tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
       gene_info <- data.table::as.data.table(annotation, keep.rownames="rownames")
     }
-  } else if (class(gene_info) == "list" & !is.null(gene_info[["genes"]])) {
+  } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames="rownames")
+  } else if (class(gene_info)[[1]] == "data.table") {
+    ## Try to make the data table usage consistent by rownames.
+    ## Sometimes we take these from data which did "keep.rownames='some_column'"
+    ## Sometimes we take these from data which set rownames(dt)
+    ## And sometimes the rownames were never set.
+    ## Therefore I will use rownames(dt) as the master, dt$rownames as secondary, and
+    ## as a fallback take the first column in the data.
+    if (is.null(rownames(gene_info)) & is.null(gene_info[["rownames"]])) {
+      gene_info[["rownames"]] <- make.names(rownames[[1]], unique=TRUE)
+    } else if (!is.null(rownames(gene_info))) {
+      gene_info[["rownames"]] <- rownames(gene_info)
+    }
   } else {
     gene_info <- data.table::as.data.table(gene_info, keep.rownames="rownames")
   }
@@ -752,7 +764,7 @@ read_metadata <- function(file, ...) {
     }
   } else if (tools::file_ext(file) == "xls") {
     ## This is not correct, but it is a start
-    definitions <- XLConnect::read.xls(xlsFile=file, sheet=1)
+    definitions <- readxl::read_xls(path=file, sheet=1)
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
@@ -1616,8 +1628,10 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
 #'
 #' @name exprs
 #' @aliases exprs
-#' @param object  The expt object from which to extract the expressionset.
+#' @param expt  The expt object from which to extract the expressionset.
 #' @importFrom Biobase exprs
+#' @docType methods
+#' @rdname exprs-methods
 #' @export exprs
 setOldClass("expt")
 setMethod("exprs", signature="expt",
@@ -1629,8 +1643,10 @@ setMethod("exprs", signature="expt",
 #'
 #' @name fData
 #' @aliases fData
-#' @param object  An expt from which to extract the expressionset.
+#' @param expt  An expt from which to extract the expressionset.
 #' @importFrom Biobase fData
+#' @docType methods
+#' @rdname fData-methods
 #' @export fData
 setMethod("fData", signature="expt",
           function(object) {
@@ -1641,8 +1657,10 @@ setMethod("fData", signature="expt",
 #'
 #' @name pData
 #' @aliases pData
-#' @param object  The expt object from which to extract the expressionset.
+#' @param expt  The expt object from which to extract the expressionset.
 #' @importFrom Biobase pData
+#' @docType methods
+#' @rdname pData-methods
 #' @export pData
 setMethod("pData", signature="expt",
           function(object) {
@@ -1653,8 +1671,10 @@ setMethod("pData", signature="expt",
 #'
 #' @name notes
 #' @aliases notes
-#' @param object  The expt object from which to extract the expressionset.
+#' @param expt  The expt object from which to extract the expressionset.
 #' @importFrom Biobase notes
+#' @docType methods
+#' @rdname notes-methods
 #' @export notes
 setMethod("notes", signature="expt",
           function(object) {

@@ -51,6 +51,7 @@ convert_counts <- function(data, convert="raw", ...) {
     },
     "rpkm" = {
       count_table <- hpgl_rpkm(count_table, annotations=annotations, ...)
+      ## count_table <- hpgl_rpkm(count_table, annotations=annotations, arglist)
     },
     "cp_seq_m" = {
       counts <- edgeR::cpm(count_table)
@@ -232,7 +233,7 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #' Express a data frame of counts as reads per kilobase(gene) per million(library). This function
 #' wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
 #'
-#' @param df Data frame of counts, alternately an edgeR DGEList.
+#' @param count_table Data frame of counts, alternately an edgeR DGEList.
 #' @param ... extra options including annotations for defining gene lengths.
 #' @return Data frame of counts expressed as rpkm.
 #' @seealso \pkg{edgeR}
@@ -242,39 +243,44 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #'  rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
 #' }
 #' @export
-hpgl_rpkm <- function(df, ...) {
+hpgl_rpkm <- function(count_table, ...) {
   arglist <- list(...)
   annotations <- arglist[["annotations"]]
   ## holy crapola I wrote this when I had no clue what I was doing.
-  if (class(df) == "edgeR") {
-    df <- df[["counts"]]
+  if (class(count_table) == "edgeR") {
+    count_table <- count_table[["counts"]]
   }
-  df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ],
+  count_table_in <- as.data.frame(count_table[rownames(count_table) %in% rownames(annotations), ],
                          stringsAsFactors=FALSE)
-  if (dim(df_in)[1] == 0) {
-    message("When the annotations and df were checked against each other
-  the result was null.  Perhaps your annotation or df's rownames are not set?
+  if (dim(count_table_in)[1] == 0) {
+    message("When the annotations and count_table were checked against each other
+  the result was null.  Perhaps your annotation or count_table's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
     rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
-    df_in <- as.data.frame(df[rownames(df) %in% rownames(annotations), ],
+    count_table_in <- as.data.frame(count_table[rownames(count_table) %in% rownames(annotations), ],
                            stringsAsFactors=FALSE)
-    if (dim(df_in)[1] == 0) {
+    if (dim(count_table_in)[1] == 0) {
       stop("The ID column failed too.")
     }
   }
-  colnames(df_in) <- colnames(df)
-  df_in[["temporary_id_number"]] <- 1:nrow(df_in)
-  merged_annotations <- merge(df_in, annotations, by="row.names", all.x=TRUE)
+  colnames(count_table_in) <- colnames(count_table)
+  count_table_in[["temporary_id_number"]] <- 1:nrow(count_table_in)
+  merged_annotations <- merge(count_table_in, annotations, by="row.names", all.x=TRUE)
   rownames(merged_annotations) <- merged_annotations[, "Row.names"]
   merged_annotations <- merged_annotations[-1]
   merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
-  merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(df) ]
+  merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(count_table) ]
   merged_annot <- merged_annotations[, colnames(merged_annotations) %in% colnames(annotations) ]
 
-  ##rownames(df_in) = merged_annotations[,"Row.names"]
+  ##rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
+  if (is.null(arglist[["column"]]) &
+      is.null(merged_annot[["length"]]) &
+      is.null(merged_annot[["width"]])) {
+    stop("There appears to be no annotation data providing gene length.")
+  }
   if (!is.null(arglist[["column"]])) {
     lenvec <- as.vector(as.numeric(merged_annot[[arglist[["column"]]]]))
   } else if (is.null(merged_annot[["width"]])) {
@@ -284,9 +290,9 @@ hpgl_rpkm <- function(df, ...) {
   }
   names(lenvec) <- rownames(merged_annot)
   tt <- sm(requireNamespace("edgeR"))
-  rpkm_df <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
-  colnames(rpkm_df) <- colnames(df)
-  return(rpkm_df)
+  rpkm_count_table <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
+  colnames(rpkm_count_table) <- colnames(count_table)
+  return(rpkm_count_table)
 }
 
 ## EOF

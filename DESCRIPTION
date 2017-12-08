@@ -17,19 +17,32 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
- R.utils, pasilla, biomaRt, DESeq, directlabels, edgeR, preprocessCore, gtools, gplots,
- matrixStats, corpcor, ggrepel, Rtsne, DESeq2, survJamda, RUVSeq, statmod, variancePartition,
- openxlsx, goseq, inflection, AnnotationHub, OrganismDbi, mygene, genbankr, RMySQL, dplyr,
- clusterProfiler, topGO, GOstats, Rgraphviz, gProfileR, pathview, AnnotationDbi, AnnotationForge,
- BiocGenerics, BiocInstaller, Biostrings, Category, DBI, DOSE, EDASeq, GO.db, GSEABase,
- GenomicFeatures, GenomicRanges, Heatplus, IRanges, KEGGREST, KEGGgraph, RColorBrewer, RCurl,
- RSQLite, Rsamtools, S4Vectors, Vennerable, XLConnect, affy, corrplot, devEMF, devtools,
- doParallel, ffpe, genefilter, genoPlotR, ggdendro, googleVis, graph, httr, jsonlite, lattice,
- limma, motifRG, packrat, plyr, qvalue, rGADEM, readr, reshape2, rjson, rmarkdown, robust,
- robustbase, rtracklayer, scales, seqLogo, stringi, sva, taxize, testthat, tximport, venneuler,
- AnnotationForge, Vennerable, doParallel, foreach, iterators, parallel, ruv, tximport
+  affy, AnnotationDbi, AnnotationForge, AnnotationHub,
+  BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
+  Category, cleaver, clusterProfiler, corpcor, corrplot,
+  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, dplyr,
+  EDASeq, edgeR,
+  ffpe,
+  genbankr, genefilter, GenomicFeatures, GenomicRanges, genoPlotR, ggdendro, ggrepel, goseq,
+  GO.db, googleVis, GOstats, graph, gtools, gplots, gProfileR, GSEABase,
+  Heatplus, Hmisc, httr,
+  inflection, IRanges, iterators,
+  jsonlite,
+  KEGGREST, KEGGgraph,
+  lattice, limma, locfit,
+  matrixStats, motifRG, mygene,
+  openxlsx, OrganismDbi,
+  packrat, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
+  qvalue,
+  R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rjson,
+  rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne, rtracklayer,
+  ruv, RUVSeq,
+  S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
+  taxize, testthat, tidyr, topGO, tximport,
+  variancePartition, Vennerable, venneuler,
+  XLConnect
 Imports:
- Biobase, data.table, knitr, ggplot2, magrittr, methods, foreach
+  Biobase, data.table, foreach, ggplot2, knitr, magrittr, methods
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression

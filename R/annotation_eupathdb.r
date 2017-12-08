@@ -388,7 +388,7 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   }
 
   db_version <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
-
+  .data <- NULL  ## To satisfy R CMD CHECK
   shared_tags <- c("Annotation", "EuPathDB", "Eukaryote", "Pathogen", "Parasite")
   tags <- list(
     "AmoebaDB" = c(shared_tags, "Amoeba"),
@@ -483,14 +483,15 @@ download_eupathdb_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   ## generate separate metadata table for OrgDB and GRanges targets
   granges_metadata <- shared_metadata %>%
     dplyr::mutate(
-             Title=sprintf("Transcript information for %s", Species),
+             Title=sprintf("Transcript information for %s", .data[["Species"]]),
              Description=sprintf("%s %s transcript information for %s",
-                                 DataProvider, SourceVersion, Species),
+                                 .data[["DataProvider"]], .data[["SourceVersion"]],
+                                 .data[["Species"]]),
              RDataClass="GRanges",
              DispatchClass="GRanges",
-             ResourceName=sprintf("GRanges.%s.%s%s.rda", gsub("[ /.]+", "_", Species),
-                                  tolower(DataProvider), SourceVersion, "rda")) %>%
-    dplyr::mutate(DataPath=file.path("EuPathDB", "GRanges", BiocVersion, ResourceName))
+             ResourceName=sprintf("GRanges.%s.%s%s.rda", gsub("[ /.]+", "_", .data[["Species"]]),
+                                  tolower(.data[["DataProvider"]]), .data[["SourceVersion"]], "rda")) %>%
+    dplyr::mutate(DataPath=file.path("EuPathDB", "GRanges", .data[["BiocVersion"]], .data[["ResourceName"]]))
 
   metadata <- shared_metadata %>%
     dplyr::mutate(
@@ -1355,9 +1356,11 @@ retrieve_eupathdb_attributes <- function(provider="TriTrypDB",
   dat[["id"]] <- unlist(sapply(dat[["fields"]], function(x) { strsplit(x[, "value"], ",")[1] }))
 
   message(sprintf("- Parsing %d rows in %s table for %s.", nrow(dat), table, species))
-
+  bar <- utils::txtProgressBar(style=3)
   ## iterate over remaining genes and extract table entries for them
   for (i in 1:nrow(dat)) {
+    pct_done <- i / nrow(dat)
+    setTxtProgressBar(bar, pct_done)
     ## example entry:
     ##
     ## > dat$tables[[1]]$rows[[1]]$fields[[1]]
@@ -1371,12 +1374,8 @@ retrieve_eupathdb_attributes <- function(provider="TriTrypDB",
     table_entries <- dat[["tables"]][[i]]
     rows <- t(sapply(table_entries[["rows"]][[1]][["fields"]], function(x) { x[["value"]] }))
     result <- rbind(result, cbind(dat[["id"]][i], rows))
-
-    if (i %% 1000 == 0) {
-      message(sprintf(" - Parsing row %d/%d in %s table for %s.",
-                      i, nrow(dat), table, species))
-    }
   }
+  close(bar)
 
   for (col in colnames(result)) {
     if (class(result[[col]]) != "numeric") {
