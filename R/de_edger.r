@@ -131,7 +131,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
       message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
       final_norm <- try(edgeR::estimateGLMTagwiseDisp(glm_trended, model_data))
       if (class(final_norm) == "try-error") {
-        warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp.()")
+        warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp().")
         state <- FALSE
       }
     }

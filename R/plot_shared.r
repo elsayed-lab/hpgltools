@@ -87,7 +87,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   message("Graphing number of non-zero genes with respect to CPM by library.")
   nonzero_plot <- try(plot_nonzero(expt, title=nonzero_title, ...))
   message("Graphing library sizes.")
-  libsize_plot <- try(plot_libsize(expt, title=libsize_title, ...))
+  libsize <- try(plot_libsize(expt, title=libsize_title, ...))
   message("Graphing a boxplot.")
   boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
   message("Graphing a correlation heatmap.")
@@ -124,7 +124,9 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
 
   ret_data <- list(
     "nonzero" = nonzero_plot,
-    "libsize" = libsize_plot,
+    "libsize" = libsize[["plot"]],
+    "libsizes" = libsize[["table"]],
+    "libsize_summary" = libsize[["summary"]],
     "boxplot" = boxplot,
     "corheat" = corheat[["plot"]],
     "smc" = smc,

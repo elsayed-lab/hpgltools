@@ -25,7 +25,7 @@
 read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
                              suffix=NULL, ...) {
   ## load first sample
-  arglist <- list(...)
+  arglist <- list(...) 
   skippers <- (files == "" | files == "undef" | is.null(files))
   files <- files[!skippers]
   lower_filenames <- files
@@ -72,6 +72,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   txout <- TRUE
   tx_gene_map <- NULL
   if (!is.null(arglist[["tx_gene_map"]])) {
+    message("Using the transcript<->gene mapping.")
     txout <- FALSE
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
