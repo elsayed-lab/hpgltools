@@ -32,7 +32,7 @@ Suggests:
   lattice, limma, locfit,
   matrixStats, motifRG, mygene,
   openxlsx, OrganismDbi,
-  packrat, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
+  packrat, pander, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rjson,
   rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne, rtracklayer,

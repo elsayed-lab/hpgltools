@@ -5,11 +5,11 @@ context("53gsea_clusterp.R: Does clusterProfiler work?\n")
 
 load("gsea_siggenes.rda")
 
-dmel_cp <- simple_clusterprofiler(
+dmel_cp <- sm(simple_clusterprofiler(
   sig_genes=z_sig_genes,
   de_table=table,
   do_david=FALSE,
-  orgdb="org.Dm.eg.db")
+  orgdb="org.Dm.eg.db"))
 
 ## Looks like another version of clusterprofiler gives a new set of results
 ##expected <- c("GO:0001071", "GO:0001871", "GO:0003700",

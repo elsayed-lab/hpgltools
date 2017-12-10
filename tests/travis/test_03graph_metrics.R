@@ -30,9 +30,11 @@ test_that("The non-zero genes is as expected?", {
 })
 
 ## These tests have also been affected by the changed order of expressionsets.
-density_plot <- sm(plot_density(pasilla_expt))
+density <- sm(plot_density(pasilla_expt))
+density_plot <- density[["plot"]]
+density_table <- density[["table"]]
 expected <- c(92, 5, 4664, 583, 10, 1446)
-actual <- head(density_plot[["data"]][["counts"]])
+actual <- head(density_table[["counts"]])
 test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })

@@ -259,7 +259,8 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     "plot" = densityplot,
     "condition_summary" = condition_summary,
     "batch_summary" = batch_summary,
-    "sample_summary" = sample_summary)
+    "sample_summary" = sample_summary,
+    "table" = melted)
     return(retlist)
 }
 
