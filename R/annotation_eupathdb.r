@@ -132,7 +132,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   taxa <- make_taxon_names(entry)
   pkgnames <- make_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["bsgenome"]]
-  if (isTRUE(pkgnames[["bsgenome_installed"]]) & !isTRUE(reinstall)) {
+  if (pkgname %in% installed.packages() & !isTRUE(reinstall)) {
     message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
     retlist <- list(
       "bsgenome_name" = pkgname

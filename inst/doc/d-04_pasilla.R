@@ -16,11 +16,6 @@ set.seed(1)
 ver <- "20170820"
 rmd_file <- "d-04_pasilla.Rmd"
 
-## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  rmarkdown::render(rmd_file)
-#  
-#  rmarkdown::render(rmd_file, output_format="pdf_document")
-
 ## ----load_data-----------------------------------------------------------
 tt <- sm(library(hpgltools)) ## I use sm to keep functions from printing too much (well, anything really)
 tt <- sm(library(pasilla))
@@ -29,9 +24,9 @@ tt <- sm(data(pasillaGenes))
 ## ----biomart-------------------------------------------------------------
 ## Try loading some annotation information for this species.
 gene_info <- sm(load_biomart_annotations(species="dmelanogaster"))
-info_idx <- gene_info[["Type"]] == "protein_coding"
+info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
-rownames(gene_info) <- make.names(gene_info[["geneID"]], unique=TRUE)
+rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique=TRUE)
 head(gene_info)
 
 ## ----load_counts---------------------------------------------------------
@@ -51,7 +46,8 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata, savefile="pasilla", gene_info=gene_info))
+pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata,
+                               savefile="pasilla", gene_info=gene_info))
 
 ## ----graph_metrics, fig.show="hide"--------------------------------------
 pasilla_metrics <- sm(graph_metrics(pasilla_expt, ma=TRUE, qq=TRUE))
@@ -85,6 +81,14 @@ norm_metrics$smc
 norm_metrics$disheat
 norm_metrics$smd
 norm_metrics$pcaplot
+
+## ----perform_pairwise----------------------------------------------------
+pasilla_pairwise <- all_pairwise(pasilla_expt)
+pasilla_tables <- sm(combine_de_tables(all_pairwise_result=pasilla_pairwise,
+                                       excel="pasilla_tables.xlsx",
+                                       sig_excel="pasilla_sig.xlsx",
+                                       abundant_excel="pasilla_abundant.xlsx"))
+pasilla_tables$deseq_ma_plots[[1]]$plot
 
 ## ----saveme--------------------------------------------------------------
 pander::pander(sessionInfo())

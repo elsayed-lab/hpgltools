@@ -217,6 +217,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     "dispersion_plot" = dispersion_plot,
     "input_data" = input,
     "lrt" = lrt_list,
+    "method" = "edger",
     "model" = model_data,
     "model_string" = model_string)
   if (!is.null(arglist[["edger_excel"]])) {

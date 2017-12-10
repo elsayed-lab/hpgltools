@@ -1498,7 +1498,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     ## In that case, a p-value assertion should still know the difference between up and down
     ## But it should also still know the difference between ratio and log changes
     if (fold == "plusminus" | fold == "log") {
-      message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
+      ## message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
       ## up_idx <- up_genes[, column] > 0.0
       up_idx <- as.numeric(up_genes[[column]]) > 0.0
       up_genes <- up_genes[up_idx, ]
@@ -1519,12 +1519,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" | fold == "log") {
-      message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
+      ## message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
       ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
       down_genes <- down_genes[down_idx, ]
     } else {
-      message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
+      ## message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]

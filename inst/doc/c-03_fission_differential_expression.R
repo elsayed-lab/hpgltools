@@ -17,19 +17,8 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "c-03_fission_differential_expression.Rmd"
 
-## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  rmarkdown::render(rmd_file)
-#  
-#  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-
-## ----setup, include=TRUE-------------------------------------------------
-## These first 4 lines are not needed once hpgltools is installed.
-## source("http://bioconductor.org/biocLite.R")
-## biocLite("devtools")
-## library(devtools)
-## install_github("elsayed-lab/hpgltools")
+## ----setup---------------------------------------------------------------
 library(hpgltools)
-require.auto("fission")
 tt <- sm(library(fission))
 tt <- data(fission)
 
@@ -48,41 +37,51 @@ fission_data <- fission@assays$data$counts
 fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
 
 ## ----simple_subset-------------------------------------------------------
-fun_data <- expt_subset(fission_expt, subset="condition=='wt.120'|condition=='wt.30'")
-fun_norm <- sm(normalize_expt(fun_data, batch="limma", norm="quant", transform="log2", convert="cpm"))
+fun_data <- subset_expt(fission_expt,
+                        subset="condition=='wt.120'|condition=='wt.30'")
+fun_norm <- sm(normalize_expt(fun_data, batch="limma", norm="quant",
+                              transform="log2", convert="cpm"))
 
 ## ----simple_limma--------------------------------------------------------
 limma_comparison <- sm(limma_pairwise(fun_data))
 names(limma_comparison$all_tables)
 summary(limma_comparison$all_tables$wt.30_vs_wt.120)
-scatter_wt_mut <- extract_coefficient_scatter(limma_comparison, type="limma", x="wt.30", y="wt.120", gvis_filename=NULL)
+scatter_wt_mut <- extract_coefficient_scatter(limma_comparison, type="limma",
+                                              x="wt.30", y="wt.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 scatter_wt_mut$both_histogram$plot + ggplot2::scale_y_continuous(limits=c(0,0.20))
-ma_wt_mut <- extract_de_ma(limma_comparison, type="limma")
-ma_wt_mut$plot
+ma_wt_mut <- extract_de_plots(limma_comparison, type="limma")
+ma_wt_mut$ma$plot
+ma_wt_mut$volcano$plot
 
 ## ----simple_deseq2-------------------------------------------------------
 deseq_comparison <- sm(deseq2_pairwise(fun_data))
 summary(deseq_comparison$all_tables$wt.30_vs_wt.120)
-scatter_wt_mut <- extract_coefficient_scatter(deseq_comparison, type="deseq", x="wt.30", y="wt.120", gvis_filename=NULL)
+scatter_wt_mut <- extract_coefficient_scatter(deseq_comparison, type="deseq",
+                                              x="wt.30", y="wt.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
-ma_wt_mut <- extract_de_ma(deseq_comparison, type="deseq")
-ma_wt_mut$plot
+plots_wt_mut <- extract_de_plots(deseq_comparison, type="deseq")
+plots_wt_mut$ma$plot
+plots_wt_mut$volcano$plot
 
 ## ----simple_edger--------------------------------------------------------
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
-scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger", x="wt.30", y="wt.120", gvis_filename=NULL)
+plots_wt_mut <- extract_de_plots(edger_comparison, type="edger")
+scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
+                                              x="wt.30", y="wt.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
-ma_wt_mut <- extract_de_ma(edger_comparison, type="edger")
-ma_wt_mut$plot
+plots_wt_mut$ma$plot
+plots_wt_mut$volcano$plot
 
 ## ----simple_basic--------------------------------------------------------
 basic_comparison <- sm(basic_pairwise(fun_data))
 summary(basic_comparison$all_tables$wt.30_vs_wt.120)
-scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type="basic")
+scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type="basic",
+                                              x="wt.30", y="wt.120", gvis_filename=NULL)
 scatter_wt_mut$scatter
-ma_wt_mut <- extract_de_ma(basic_comparison, type="basic")
-ma_wt_mut$plot
+plots_wt_mut <- extract_de_plots(basic_comparison, type="basic")
+plots_wt_mut$ma$plot
+plots_wt_mut$volcano$plot
 
 ## ----simple_all----------------------------------------------------------
 all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE))
@@ -109,10 +108,11 @@ table <- limma_results$wt.30_vs_wt.120
 dim(table)
 gene_names <- rownames(table)
 
-updown_genes <- get_sig_genes(table, p=0.05, fc=0.4, p_column="P.Value")
+updown_genes <- get_sig_genes(table, p=0.05, lfc=0.4, p_column="P.Value")
 tt <- require.auto("GenomicFeatures")
 tt <- require.auto("biomaRt")
-ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene", host="fungi.ensembl.org")
+ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene",
+                                  host="fungi.ensembl.org")
 pombe_filters <- biomaRt::listFilters(ensembl_pombe)
 head(pombe_filters, n=20) ## 11 looks to be my guy
 
@@ -135,6 +135,7 @@ head(pombe_goids)
 ##                                                  dataset="spombe_eg_gene",
 ##                                                  host="fungi.ensembl.org"))
 
+## I bet I can get all this information from ensembl now.
 ## This was found at the bottom of: https://www.biostars.org/p/232005/
 link <- "ftp://ftp.ensemblgenomes.org/pub/release-34/fungi/gff3/schizosaccharomyces_pombe/Schizosaccharomyces_pombe.ASM294v2.34.gff3.gz"
 pombe <- GenomicFeatures::makeTxDbFromGFF(link, format="gff3", organism="Schizosaccharomyces pombe",
@@ -155,15 +156,15 @@ summary(updown_genes)
 test_genes <- updown_genes$down_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
 lengths$ID <- paste0(lengths$ID, ".1")
-funkytown <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
-head(funkytown$alldata)
-funkytown$pvalue_plots$mfp_plot
+goseq_result <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
+head(goseq_result$alldata)
+goseq_result$pvalue_plots$mfp_plot
 
 test_genes <- updown_genes$up_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-funkytown <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
-head(funkytown$alldata)
-funkytown$pvalue_plots$bpp_plot
+goseq_result <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
+head(goseq_result$alldata)
+goseq_result$pvalue_plots$bpp_plot
 
 ## ----sysinfo, results='asis'---------------------------------------------
 pander::pander(sessionInfo())

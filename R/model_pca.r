@@ -550,6 +550,7 @@ u_plot <- function(plotted_us) {
 #' @param num_components   a number of principle components to compare the design factors against.
 #'  If left null, it will query the same number of components as factors asked for.
 #' @param plot_pcas   plot the set of PCA plots for every pair of PCs queried.
+#' @param ...  Extra arguments for the pca plotter
 #' @return a list of fun pca information:
 #'  svd_u/d/v: The u/d/v parameters from fast.svd
 #'  rsquared_table: A table of the rsquared values between each factor and principle component
@@ -570,12 +571,10 @@ u_plot <- function(plotted_us) {
 #' }
 #' @export
 pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition", "batch"),
-                            num_components=NULL, plot_pcas=FALSE) {
+                            num_components=NULL, plot_pcas=FALSE, ...) {
   ## Start out with some sanity tests
   colors_chosen <- NULL
   exprs_data <- NULL
-  expt_data <- NULL
-  expt_design <- NULL
   data_class <- class(expt_data)[1]
   if (data_class == "expt") {
     expt_design <- expt_data[["design"]]

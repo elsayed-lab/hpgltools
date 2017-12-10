@@ -638,8 +638,11 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
   non_zero_plot <- non_zero_plot +
     ggplot2::theme(axis.ticks=ggplot2::element_blank(),
                    axis.text=ggplot2::element_text(size=10, colour="black"))
-##                   axis.text.x=ggplot2::element_text(angle=90))
-  return(non_zero_plot)
+
+  retlist <- list(
+    "plot" = non_zero_plot,
+    "table" = nz_df)
+  return(retlist)
 }
 
 #' Plot all pairwise MA plots in an experiment.

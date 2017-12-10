@@ -495,10 +495,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       yname <- splitted[[1]][2]
       limma_plots[[tab]] <-  limma_ma_plots[[tab]] <- edger_plots[[tab]] <- NULL
       edger_ma_plots[[tab]] <- deseq_plots[[tab]] <- deseq_ma_plots[[tab]] <- NULL
-      if (isTRUE(include_limma)) {
+      if (isTRUE(include_limma) & isTRUE(do_excel)) {
         limma_try <- sm(try(extract_coefficient_scatter(
           limma, type="limma", loess=loess, x=xname, y=yname)))
-        limma_ma_vol <- sm(try(extract_de_plots(combined, type="limma", table=tab)))
+        limma_ma_vol <- try(extract_de_plots(combined, type="limma", table=tab))
         if (class(limma_ma_vol) == "list") {
           limma_plots[[tab]] <- limma_try
         }
@@ -1532,10 +1532,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     do_excel=TRUE
     if (is.null(excel)) {
       do_excel <- FALSE
-      message("Not printing excel sheets for the significant genes.")
     } else if (excel == FALSE) {
       do_excel <- FALSE
-      message("Still not printing excel sheets for the significant genes.")
     } else {
       message(paste0("Printing significant genes to the file: ", excel))
       xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
@@ -1696,7 +1694,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     down_table <- downs[[table_count]]
     up_title <- up_titles[[table_count]]
     down_title <- down_titles[[table_count]]
-    message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", up_name))
+    message(paste0(table_count, "/", num_tables, ": Creating significant table ", up_name))
     xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
     ## This is in case the sheet name is past the 30 character limit.
     sheet_name <- xls_result[["sheet"]]
@@ -1709,7 +1707,6 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
                                     start_row=ma_row, start_col=ma_col)
       }
     }
-    message(paste0(table_count, "/", num_tables, ": Writing excel data sheet ", down_name))
     xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
   } ## End for each name in ups
   return(xls_result)
@@ -1752,7 +1749,13 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05,
     if (!file.exists(testdir)) {
       dir.create(testdir, recursive=TRUE)
     }
+    total <- length(names(up_result_list))
+    bar <- utils::txtProgressBar(style=3)
+    done <- 0
     for (tab in names(up_result_list)) {  ## Get the tables back
+      done <- done + 1
+      pct_done <- done / total
+      setTxtProgressBar(bar, pct_done)
       tabname <- paste0("up_", tab)
       row_num <- 1
       xl_result <- write_xls(
@@ -1822,6 +1825,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05,
                      ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
     }
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    close(bar)
   } ## End if isTRUE(excel)
   return_list <- append(up_result_list, down_result_list)
   return(return_list)

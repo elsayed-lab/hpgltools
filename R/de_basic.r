@@ -194,13 +194,14 @@ basic_pairwise <- function(input=NULL, design=NULL,
   names(all_tables) <- colnames(comparisons)
 
   retlist <- list(
-    "input_data" = data,
-    "conditions_table" = table(conditions),
-    "conditions" = conditions,
     "all_pairwise" = comparisons,
     "all_tables" = all_tables,
-    "medians" = median_table,
+    "conditions_table" = table(conditions),
+    "conditions" = conditions,
     "contrasts_performed" = contrasts_performed,
+    "input_data" = data,
+    "medians" = median_table,
+    "method" = "basic",
     "variances" = variance_table)
   if (!is.null(arglist[["basic_excel"]])) {
     retlist[["basic_excel"]] <- write_basic(retlist, excel=arglist[["basic_excel"]])

@@ -16,19 +16,19 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "b-02_fission_data_exploration.Rmd"
 
-## ----rendering, include=FALSE, eval=FALSE--------------------------------
-#  rmarkdown::render(rmd_file)
-#  
-#  rmarkdown::render(rmd_file, output_format="pdf_document", output_options=c("skip_html"))
-
-## ----setup, include=TRUE-------------------------------------------------
-## These first 4 lines are not needed once hpgltools is installed.
-## source("http://bioconductor.org/biocLite.R")
-## biocLite("devtools")
-## library(devtools)
-## install_github("elsayed-lab/hpgltools")
-library(hpgltools)
-require.auto("fission")
+## ----setup---------------------------------------------------------------
+if (! "BiocInstaller" %in% installed.packages()) {
+  source("http://bioconductor.org/biocLite.R")
+}
+if (! "devtools" %in% installed.packages()) {
+  biocLite("devtools")
+}
+if (! "hpgltools" %in% installed.packages()) {
+  devtools::install_github("elsayed-lab/hpgltools")
+}
+if (! "fission" %in% installed.packages()) {
+  biocLite("fission")
+}
 ## I use the function 'sm()' to quiet loud functions.
 tt <- sm(library(fission))
 tt <- sm(data(fission))
@@ -52,34 +52,44 @@ fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
 ## Notice that the colors were auto-chosen by create_expt() and they should
 ## be maintained throughout this process
 fis_libsize <- plot_libsize(fission_expt)
-fis_libsize
+fis_libsize$plot
 ## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
 fis_nonzero <- plot_nonzero(fission_expt, labels="boring", title="nonzero vs. cpm")
-fis_nonzero
+fis_nonzero$plot
+
+fis_density <- plot_density(fission_expt)
+fis_density$plot
+fis_density$condition_summary
+fis_density$batch_summary
+fis_density$sample_summary
 
 ## ----pca-----------------------------------------------------------------
 ## Something in this is causing a build loop on travis...
 ## Unsurprisingly, the raw data doesn't cluster well at all...
-fis_rawpca <- plot_pca(fission_expt, expt_labels=fission_expt$condition)
+fis_rawpca <- plot_pca(fission_expt, expt_labels=fission_expt$condition, cis=NULL)
 fis_rawpca$plot
 ## So, normalize the data
 norm_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm"))
 ## And try the pca again
-fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca")
+fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca", cis=NULL)
 fis_normpca$plot
 
 summary(fis_normpca)
 
 ## ----normalized_pca------------------------------------------------------
-normbatch_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm", batch="sva"))
-fis_normbatchpca <- plot_pca(normbatch_expt, title="Normalized PCA with batch effect correction.")
+normbatch_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant",
+                                    convert="cpm", batch="sva"))
+fis_normbatchpca <- plot_pca(normbatch_expt,
+                             title="Normalized PCA with batch effect correction.", cis=NULL)
 fis_normbatchpca$plot
 ## ok, that caused the 0, 60, 15, and 30 minute samples to cluster nicely
 ## the 120 and 180 minute samples are still a bit tight
 
 ## pca_information provides some more information about the call to
 ## fast.svd that went into making the pca plot
-fis_info <- pca_information(norm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
+fis_info <- pca_information(norm_expt,
+                            expt_factors=c("condition","batch","strain","minute"),
+                            num_components=6)
 ## The r^2 table shows that quite a lot of the variance in the data is explained by condition
 head(fis_info$rsquared_table)
 ## We can look at the correlation between the principle components and the factors in the experiment
@@ -89,10 +99,13 @@ fis_info$pca_cor
 fis_info$anova_p
 
 ## Try again with batch removed data
-batchnorm_expt <- sm(normalize_expt(fission_expt, batch="limma", norm="quant", transform="log2", convert="cpm"))
-fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca")
+batchnorm_expt <- sm(normalize_expt(fission_expt, batch="limma", norm="quant",
+                                    transform="log2", convert="cpm"))
+fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca", cis=NULL)
 fis_batchnormpca$plot
-test_pca <- pca_information(batchnorm_expt, expt_factors=c("condition","batch","strain","minute"), num_components=6)
+test_pca <- pca_information(batchnorm_expt,
+                            expt_factors=c("condition","batch","strain","minute"),
+                            num_components=6)
 
 ## ----distributions-------------------------------------------------------
 fission_boxplot <- sm(plot_boxplot(fission_expt))
@@ -111,11 +124,11 @@ fission_boxplot <- sm(plot_boxplot(up_expt))
 fission_boxplot
 
 fission_density <- plot_density(norm_expt)
-fission_density
+fission_density$plot
 fission_density <- plot_density(sf_expt)
-fission_density
+fission_density$plot
 fission_density <- plot_density(tm_expt)
-fission_density
+fission_density$plot
 
 compare_12 <- plot_single_qq(fission_expt, x=1, y=2)
 compare_12$log

@@ -25,13 +25,15 @@ rm(data_file)
 ls()
 
 ## ----create_expt---------------------------------------------------------
-expt <- create_expt(count_dataframe=cdm$cdm_counts, metadata=cdm$cdm_metadata, gene_info=cdm$gene_info)
+expt <- create_expt(count_dataframe=cdm$cdm_counts,
+                    metadata=cdm$cdm_metadata,
+                    gene_info=cdm$gene_info)
 
 knitr::kable(head(expt$design))
 summary(expt)
 
 ## ----graph_original, show.fig='hide'-------------------------------------
-raw_metrics <- sm(graph_metrics(expt, qq=TRUE))
+raw_metrics <- sm(graph_metrics(expt, qq=TRUE, cis=NULL))
 
 ## ----show_original_plots-------------------------------------------------
 ## View a raw library size plot
@@ -55,9 +57,8 @@ head(expt$design)
 batch_a <- subset_expt(expt, subset="batch=='a'")
 batch_b <- subset_expt(expt, subset="batch=='b'")
 
-## ----view_subsets--------------------------------------------------------
-a_metrics <- graph_metrics(batch_a)
-b_metrics <- graph_metrics(batch_b)
+a_metrics <- sm(graph_metrics(batch_a, cis=NULL))
+b_metrics <- sm(graph_metrics(batch_b, cis=NULL))
 a_metrics$pcaplot
 b_metrics$pcaplot
 a_metrics$tsneplot
@@ -66,22 +67,22 @@ b_metrics$tsneplot
 ## ----normalize_subset, fig.show="hide"-----------------------------------
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
 norm_test <- normalize_expt(expt, transform="log2")
-l2_metrics <- sm(graph_metrics(norm_test))
+l2_metrics <- sm(graph_metrics(norm_test, cis=NULL))
 ## a quantile normalization alone affect some, but not all of the data
 norm_test <- sm(normalize_expt(expt, norm="quant"))
-q_metrics <- sm(graph_metrics(norm_test))  ## q for quant, oh oh oh!
+q_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## q for quant, oh oh oh!
 ## cpm alone brings out some samples, too
 norm_test <- sm(normalize_expt(expt, convert="cpm"))
-c_metrics <- sm(graph_metrics(norm_test))  ## c for cpm!
+c_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## c for cpm!
 ## low count filtering has some effect, too
 norm_test <- sm(normalize_expt(expt, filter="pofa"))
-f_metrics <- sm(graph_metrics(norm_test))  ## f for filter!
+f_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## f for filter!
 ## how about if we mix and match methods?
 norm_test <- sm(normalize_expt(expt, transform="log2", convert="cpm",
                                norm="quant", batch="combat_scale", filter=TRUE,
                                batch_step=4, low_to_zero=TRUE))
 ## Some metrics are not very useful on (especially quantile) normalized data
-norm_graphs <- sm(graph_metrics(norm_test))
+norm_graphs <- sm(graph_metrics(norm_test, cis=NULL))
 
 ## ----view_metrics--------------------------------------------------------
 l2_metrics$pcaplot
@@ -122,7 +123,7 @@ summary(spyogenes_tables)
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE, padj_type="BH"))
 head(spyogenes_tables$data[[1]])
 
-## ----sig_genes_test------------------------------------------------------
+## ----sig_genes_test, fig.show="hide"-------------------------------------
 spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 
@@ -133,15 +134,18 @@ mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
-circos_test <- circos_prefix()
+circos_test <- sm(circos_prefix())
 ## Fill it in with the data for s.pyogenes
 circos_kary <- circos_karyotype("mgas", length=1895017)
 ## Fill in the gene category annotations by gene-strand
 circos_plus <- circos_plus_minus(mgas_df, circos_test)
 
-circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df, circos_test, outer=circos_plus)
-circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df, circos_test, outer=circos_limma_hist)
-circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df, circos_test, outer=circos_deseq_hist)
+circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df,
+                                 circos_test, outer=circos_plus)
+circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df,
+                                 circos_test, outer=circos_limma_hist)
+circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
+                                 circos_test, outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
 circos_made <- circos_make(target="mgas")
 ## For some reason this fails weirdly when not run interactively.

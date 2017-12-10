@@ -4,10 +4,12 @@
 \alias{load_uniprot_annotations}
 \title{Read a uniprot text file and extract as much information from it as possible.}
 \usage{
-load_uniprot_annotations(file)
+load_uniprot_annotations(file, savefile = TRUE)
 }
 \arguments{
 \item{file}{Uniprot file to read and parse}
+
+\item{savefile}{Do a save?}
 }
 \value{
 Big dataframe of annotation data.

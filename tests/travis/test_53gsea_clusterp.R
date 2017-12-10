@@ -5,29 +5,53 @@ context("53gsea_clusterp.R: Does clusterProfiler work?\n")
 
 load("gsea_siggenes.rda")
 
-dmel_cp <- sm(simple_clusterprofiler(z_sig_genes, table,
-				     do_david=FALSE,
-                                     orgdb="org.Dm.eg.db"))
+dmel_cp <- simple_clusterprofiler(
+  sig_genes=z_sig_genes,
+  de_table=table,
+  do_david=FALSE,
+  orgdb="org.Dm.eg.db")
 
-expected <- c("GO:0001071", "GO:0001871", "GO:0003700",
-              "GO:0004175", "GO:0004222", "GO:0004252")
+## Looks like another version of clusterprofiler gives a new set of results
+##expected <- c("GO:0001071", "GO:0001871", "GO:0003700",
+##              "GO:0004175", "GO:0004222", "GO:0004252")
+expected <- c("GO:0000981", "GO:0001228", "GO:0001871",
+              "GO:0003690", "GO:0003700", "GO:0004175")
 actual <- head(sort(dmel_cp[["enrich_go"]][["MF_all"]][["ID"]]))
 test_that("Does the set of MF_all have the expected IDs?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0005975", "GO:0006030", "GO:0006040",
-              "GO:0006811", "GO:0006812", "GO:0006820")
+actual <- length(dmel_cp[["enrich_go"]][["MF_all"]][["ID"]])
+test_that("Do we get a similar number of MF ids?", {
+  expect_gt(actual, 90)
+})
+
+##expected <- c("GO:0005975", "GO:0006030", "GO:0006040",
+##              "GO:0006811", "GO:0006812", "GO:0006820")
+expected <- c("GO:0006030", "GO:0006040", "GO:0006811",
+              "GO:0006812", "GO:0006814", "GO:0006820")
 actual <- head(sort(dmel_cp[["enrich_go"]][["BP_all"]][["ID"]]))
 test_that("Does the set of BP_all have the expected IDs?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0005615", "GO:0005887", "GO:0031012",
-              "GO:0031226", "GO:0034702", "GO:0044665")
+actual <- length(dmel_cp[["enrich_go"]][["BP_all"]][["ID"]])
+test_that("Do we get a similar number of BP ids?", {
+  expect_gt(actual, 10)
+})
+
+##expected <- c("GO:0005615", "GO:0005887", "GO:0031012",
+##              "GO:0031226", "GO:0034702", "GO:0044665")
+expected <- c("GO:0005887", "GO:0009986", "GO:0031012",
+              "GO:0031226", "GO:0045202")
 actual <- head(sort(dmel_cp[["enrich_go"]][["CC_all"]][["ID"]]))
 test_that("Does the set of CC_all have the expected IDs?", {
     expect_equal(expected, actual)
+})
+
+actual <- length(dmel_cp[["enrich_go"]][["CC_all"]][["ID"]])
+test_that("Do we get a similar number of CC ids?", {
+  expect_gt(actual, 4)
 })
 
 ## Gather some scores
@@ -38,13 +62,14 @@ test_that("Does the set of MF_sig have the expected p.adjusts?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-expected <- c(5.177694e-05, 1.848659e-04, 2.963600e-02, 4.130014e-02)
+##expected <- c(5.177694e-05, 1.848659e-04, 2.963600e-02, 4.130014e-02)
+expected <- c(1.716209e-05, 1.131091e-02)
 actual <- head(sort(dmel_cp[["enrich_go"]][["BP_sig"]][["p.adjust"]]))
 test_that("Does the set of BP_sig have the expected p.adjusts?", {
     expect_equal(expected, actual, tolerance=0.00001)
 })
 
-expected <- c(0.002323077, 0.003417315)
+expected <- c(9.011412e-07, 9.011412e-07, 1.277089e-03)
 actual <- head(sort(dmel_cp[["enrich_go"]][["CC_sig"]][["p.adjust"]]))
 test_that("Does the set of CC_sig have the expected p.adjusts?", {
     expect_equal(expected, actual, tolerance=0.0001)
@@ -57,8 +82,10 @@ test_that("Did cp pick up consistent KEGG categories?", {
     expect_equal(expected, actual)
 })
 
+##expected <- c("GO:0000075", "GO:0000728", "GO:0000734",
+##              "GO:0000742", "GO:0000749", "GO:0000751")
 expected <- c("GO:0000075", "GO:0000728", "GO:0000734",
-              "GO:0000742", "GO:0000749", "GO:0000751")
+              "GO:0000742", "GO:0000743", "GO:0000749")
 actual <- head(sort(rownames(dmel_cp[["group_go"]][["BP"]])))
 test_that("Does cp find consistent group_go categories in biological processes?", {
     expect_equal(expected, actual)

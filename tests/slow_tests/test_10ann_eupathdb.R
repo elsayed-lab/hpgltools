@@ -17,10 +17,11 @@ test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)
 })
 
-## You know what, making all of these will take days, just pull a random 5
+## You know what, making all of these will take days, just pull a random 2
 ok <- RNGkind()
 RNGkind("Super")#matches  "Super-Duper"
 set.seed(.Random.seed)
+## Apparently this is insufficient, I still get the same 2...
 chosen <- sample(1:nrow(eupath_metadata), 2)
 eupath_names <- eupath_metadata[["Species"]]
 for (index in chosen) {

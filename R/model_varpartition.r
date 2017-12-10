@@ -38,6 +38,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
+#' @param modify_expt  Add annotation columns with the variance/factor?
 #' @return partitions  List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
@@ -71,7 +72,6 @@ varpart <- function(expt, predictor="condition", factors=c("batch"),
   data <- exprs(norm)
 
   message("Fitting the expressionset to the model, this is slow.")
-  message("(Eg. Take the projected run time and mulitply by 3-6 and round up.)")
   ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
   ##message("Extracting the variances.")
   ##my_extract <- try(variancePartition::extractVarPart(my_fit))
