@@ -18,13 +18,7 @@ test_that("Is the eupathdb metadata the expected size?", {
 })
 
 ## You know what, making all of these will take days, just pull a random 2
-if (!(file.exists("random.Rdata"))) {
-  randomOrg <- random::randomNumbers(n=3, min=1, max=nrow(eupath_metadata), col=1)
-  save(randomOrg, file="random.Rdata")
-} else {
-  load("random.Rdata")
-}
-## Apparently this is insufficient, I still get the same 2...
+randomOrg <- random::randomNumbers(n=3, min=1, max=nrow(eupath_metadata), col=1)
 chosen <- randomOrg[, 1]
 eupath_names <- eupath_metadata[["Species"]]
 for (i in 1:length(chosen)) {

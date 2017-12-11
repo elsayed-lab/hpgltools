@@ -32,4 +32,3 @@ test_that("Do we get expected values of variance by condition?", {
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 19varpart.R in ", elapsed,  " seconds."))
-tt <- try(clear_session())

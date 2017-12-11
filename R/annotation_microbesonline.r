@@ -273,7 +273,7 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
   }
   org <- result_df[1, 1] ## Grab the identifier
   message(paste0("The abbreviation for ", id, " is ", org, "."))
-  genepaths <- get_kegg_genepaths(abbreviation=org)
+  genepaths <- load_kegg_annotations(abbreviation=org)
   return(genepaths)
 }
 

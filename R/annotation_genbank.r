@@ -17,7 +17,7 @@
 #'  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
 #' }
 #' @export
-gbk2txdb <- function(accession="AE009949", savetxdb=FALSE) {
+load_genbank_annotations <- function(accession="AE009949", savetxdb=FALSE) {
     gbk <- NULL
     input_file <- paste0(accession, ".gb")
     if (file.exists(input_file)) {

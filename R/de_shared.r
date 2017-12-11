@@ -786,9 +786,9 @@ compare_de_results <- function(first, second, cor_method="pearson") {
       for (comparison in comparisons) {
         message(paste0("Comparing ", method, ", ", table, ", ", comparison, "."))
         column_name <- paste0(method, "_", comparison)
-        f_column <- as.numeric(first[["data"]][[table]][[column_name]])
+        f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         names(f_column) <- rownames(first[["data"]][[table]])
-        s_column <- as.numeric(second[["data"]][[table]][[column_name]])
+        s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
         names(s_column) <- rownames(second[["data"]][[table]])
         fs <- merge(f_column, s_column, by="row.names")
         comp <- cor(x=fs[["x"]], y=fs[["y"]], method=cor_method)

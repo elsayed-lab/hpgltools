@@ -19,12 +19,12 @@
 #'  data <- translate_ids_querymany(genes)
 #' }
 #' @export
-translate_ids_querymany <- function(queries,
-                                    ##from="ensembl",
-                                    email="abelew@gmail.com",
-                                    ##fields=c("uniprot", "ensembl.gene", "entrezgene", "go"),
-                                    fields="all",
-                                    species="all") {
+load_querymany_annotations <- function(queries,
+                                       ##from="ensembl",
+                                       email="abelew@gmail.com",
+                                       ##fields=c("uniprot", "ensembl.gene", "entrezgene", "go"),
+                                       fields="all",
+                                       species="all") {
     ##from_field <- from
     ##if (!is.null(from)) {
     ##    if (from == "ensembl") {
@@ -53,3 +53,4 @@ translate_ids_querymany <- function(queries,
     return(result)
 }
 
+## EOF

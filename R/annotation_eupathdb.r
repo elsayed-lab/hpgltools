@@ -217,7 +217,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   annoying <- sm(BSgenome::forgeBSgenomeDataPkg(description_file))
 
   if (class(annoying) != "try-error") {
-    inst <- try(devtools::install(pkgname))
+    inst <- sm(try(devtools::install(pkgname)))
   }
   
   retlist <- list()
@@ -225,7 +225,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
     retlist[["bsgenome_name"]] <- pkgname
     ## Clean up a little.
     deleted <- unlink(x=bsgenome_dir, recursive=TRUE, force=TRUE)
-    built <- try(devtools::build(pkgname))
+    built <- sm(try(devtools::build(pkgname)))
     if (class(built) != "try-error") {
       moved <- file.rename(paste0(pkgname, "_", version_string, ".tar.gz"),
                            paste0(bsgenome_dir, "_", version_string, ".tar.gz"))
@@ -340,9 +340,9 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   organdb_path <- clean_pkg(organdb_path, removal="_", replace="", sqlite=FALSE)
   organdb_path <- clean_pkg(organdb_path, removal="_like", replace="like", sqlite=FALSE)
   if (class(organdb) == "list") {
-    inst <- try(devtools::install(organdb_path))
+    inst <- sm(try(devtools::install(organdb_path)))
     if (class(inst) != "try-error") {
-      built <- try(devtools::build(organdb_path))
+      built <- sm(try(devtools::build(organdb_path)))
       if (class(built) != "try-error") {
         final_deleted <- unlink(x=organdb_path, recursive=TRUE, force=TRUE)
       }
@@ -555,9 +555,9 @@ do_eupath_table <- function(type, granges=NULL, provider=NULL, genus_species=NUL
       a_result <- try(get_eupath_interpro_table(provider=provider, species=species, dir=dir))
     },
     "kegg" = {
-      a_result <- try(get_kegg_genepaths(species=genus_species,
-                                         flatten=flatten,
-                                         abbreviation=abbreviation))
+      a_result <- try(load_kegg_annotations(species=genus_species,
+                                            flatten=flatten,
+                                            abbreviation=abbreviation))
     },
     "orthologs" = {
       a_result <- try(get_eupath_ortholog_table(provider=provider, species=species,
@@ -779,7 +779,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   ## And install the resulting package.
   inst <- sm(try(devtools::install(orgdb_path)))
   if (class(inst) != "try-error") {
-    built <- try(devtools::build(orgdb_path))
+    built <- sm(try(devtools::build(orgdb_path)))
     if (class(built) != "try-error") {
       final_deleted <- unlink(x=orgdb_path, recursive=TRUE, force=TRUE)
     }
@@ -917,9 +917,9 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   install_dir <- clean_pkg(install_dir, removal="_", replace="")
   install_dir <- clean_pkg(install_dir, removal="_like", replace="like")
 
-  inst <- try(devtools::install(install_dir))
+  inst <- sm(try(devtools::install(install_dir)))
   if (class(inst) != "try-error") {
-    built <- try(devtools::build(install_dir))
+    built <- sm(try(devtools::build(install_dir)))
     if (class(built) != "try-error") {
       final_deleted <- unlink(x=install_dir, recursive=TRUE, force=TRUE)
     }

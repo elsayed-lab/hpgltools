@@ -12,24 +12,22 @@ dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
 
 expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
-actual_lengths <- head(dmel_annotations[["cds_length"]])
+actual_lengths <- head(dmel_annotations[["annotation"]][["cds_length"]])
 test_that("Did the gene lengths come out?", {
     expect_equal(expected_lengths, actual_lengths)
 })
 
-expected_ids <- c("FBgn0041711", "FBgn0041711", "FBgn0041711", "FBgn0041711", "FBgn0032283", "FBgn0042110")
-actual_ids <- head(dmel_go[["ID"]])
+expected_ids <- c("FBgn0041711", "FBgn0041711", "FBgn0041711",
+                  "FBgn0041711", "FBgn0032283", "FBgn0042110")
+actual_ids <- head(dmel_go[["go"]][["ID"]])
 expected_go <- c("GO:0005576", "GO:0048067", "GO:0016853", "GO:0042438", "", "GO:0016772")
-actual_go <- head(dmel_go[["GO"]])
-test_that("Did the ontologies come out (ids)?", {
-    expect_equal(expected_ids, actual_ids)
+actual_go <- head(dmel_go[["go"]][["GO"]])
+test_that("Did the ontologies come out?", {
+  expect_equal(expected_ids, actual_ids)
+  expect_equal(expected_go, actual_go)
 })
 
-test_that("Did the ontologies come out (go)?", {
-    expect_equal(expected_go, actual_go)
-})
-
-query_many <- try(translate_ids_querymany(actual_ids))
+query_many <- try(load_querymany_annotations(actual_ids))
 expected <- c("yellow-e", "CG7296", "CG18765")
 actual <- as.character(query_many[["symbol"]])
 test_that("Does queryMany return sensible outputs?", {
@@ -37,10 +35,10 @@ test_that("Does queryMany return sensible outputs?", {
 })
 
 test_genes <- head(rownames(sig_genes))
-linkage_test <- biomart_orthologs(test_genes, first_species="dmelanogaster",
-                                  second_species="mmusculus",
-                                  first_attributes=c("ensembl_gene_id"),
-                                  second_attributes=c("ensembl_gene_id","hgnc_symbol"))
+linkage_test <- load_biomart_orthologs(test_genes, first_species="dmelanogaster",
+                                       second_species="mmusculus",
+                                       first_attributes=c("ensembl_gene_id"),
+                                       second_attributes=c("ensembl_gene_id","hgnc_symbol"))
 linked_genes <- linkage_test[["linked_genes"]]
 expected_linkage <- c("ENSMUSG00000025815", "ENSMUSG00000033006",
                       "ENSMUSG00000024176", "ENSMUSG00000000567")
@@ -49,7 +47,7 @@ test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)
 })
 
-gbk2txdb_test <- sm(gbk2txdb())
+gbk2txdb_test <- sm(load_genbank_annotations())
 expected <- 1895017
 actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
 test_that("The genbank txdb S.pyogenes genome's size is correct?", {

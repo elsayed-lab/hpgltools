@@ -5,7 +5,7 @@
 #' @param flatten  Flatten nested tables?
 #' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.
 #' @export
-get_kegg_genepaths <- function(species="ecoli", abbreviation=NULL, flatten=TRUE) {
+load_kegg_annotations <- function(species="ecoli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
   if (!is.null(abbreviation)) {
     species=NULL
