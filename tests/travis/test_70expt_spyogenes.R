@@ -62,7 +62,7 @@ test_that("Do we find some significant genes in the mga/wt fructose analysis?", 
   expect_equal(expected, actual)
 })
 
-mgas_data <- sm(gbk2txdb(accession="AE009949"))
+mgas_data <- sm(load_genbank_annotations(accession="AE009949"))
 expected <- 1895017
 actual <- GenomicRanges::width(mgas_data[["seq"]])  ## This fails on travis?
 actual_width <- actual

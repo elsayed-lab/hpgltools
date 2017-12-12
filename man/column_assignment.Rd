@@ -3,9 +3,6 @@
 \name{:=}
 \alias{:=}
 \title{data.table's funky column assignment operator}
-\usage{
-lhs := rhs
-}
 \description{
 Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
 }

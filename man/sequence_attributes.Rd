@@ -4,7 +4,7 @@
 \alias{sequence_attributes}
 \title{Gather some simple sequence attributes.}
 \usage{
-sequence_attributes(fasta, gff = NULL, type = "gene", key = "locus_tag")
+sequence_attributes(fasta, gff = NULL, type = "gene", key = NULL)
 }
 \arguments{
 \item{fasta}{Genome encoded as a fasta file.}

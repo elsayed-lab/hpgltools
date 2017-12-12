@@ -12,7 +12,7 @@ make_eupath_pkgnames(species = "Coprinosis.cinerea.okayama7#130",
 
 \item{metadata}{Eupathdb metadata.}
 
-\item{...}{Further arguments to pass to download_eupathdb_metadata()}
+\item{...}{Further arguments to pass to download_eupath_metadata()}
 }
 \value{
 List of package names and some booleans to see if they have already been installed.

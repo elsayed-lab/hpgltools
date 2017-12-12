@@ -1628,7 +1628,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
 #'
 #' @name exprs
 #' @aliases exprs
-#' @param expt  The expt object from which to extract the expressionset.
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase exprs
 #' @docType methods
 #' @rdname exprs-methods
@@ -1643,7 +1643,7 @@ setMethod("exprs", signature="expt",
 #'
 #' @name fData
 #' @aliases fData
-#' @param expt  An expt from which to extract the expressionset.
+#' @param object  An expt from which to extract the expressionset.
 #' @importFrom Biobase fData
 #' @docType methods
 #' @rdname fData-methods
@@ -1657,7 +1657,7 @@ setMethod("fData", signature="expt",
 #'
 #' @name pData
 #' @aliases pData
-#' @param expt  The expt object from which to extract the expressionset.
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase pData
 #' @docType methods
 #' @rdname pData-methods
@@ -1671,7 +1671,7 @@ setMethod("pData", signature="expt",
 #'
 #' @name notes
 #' @aliases notes
-#' @param expt  The expt object from which to extract the expressionset.
+#' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase notes
 #' @docType methods
 #' @rdname notes-methods

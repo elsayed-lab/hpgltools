@@ -43,7 +43,6 @@ NULL
 #' @keywords internal
 #' @export
 #' @importFrom data.table :=
-#' @usage lhs := rhs
 NULL
 
 #' dopar

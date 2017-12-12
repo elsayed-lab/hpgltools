@@ -25,6 +25,9 @@ do_eupath_table(type, granges = NULL, provider = NULL,
 
 \item{dir}{Where to dump the data.}
 }
+\value{
+Table of eupathdb information.
+}
 \description{
 This small function provides a single entrypoint for multiple get_eupath functions.
 }

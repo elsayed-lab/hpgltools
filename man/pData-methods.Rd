@@ -8,7 +8,7 @@
 \S4method{pData}{expt}(object)
 }
 \arguments{
-\item{expt}{The expt object from which to extract the expressionset.}
+\item{object}{The expt object from which to extract the expressionset.}
 }
 \description{
 Extend Biobase::pData to handle expt objects.
