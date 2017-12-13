@@ -11,16 +11,6 @@ if (class(test_result) == "try-error") {
   test_result <- data.frame()
 }
 
-notravis <- data.frame()
-if (!identical(Sys.getenv("TRAVIS"), "true")) {
-  message("Beginning test_dir('slow_tests')")
-  notravis <- try(testthat::test_dir("tests/slow_tests"))
-  if (class(notravis) == "try-error") {
-    result <- result + 1
-    notravis <- data.frame()
-  }
-}
-
 all_functions <- data.frame()
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
   message("Beginning test_dir('all_functions')")
@@ -31,12 +21,20 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
   }
 }
 
+notravis <- data.frame()
+if (!identical(Sys.getenv("TRAVIS"), "true")) {
+  message("Beginning test_dir('slow_tests')")
+  notravis <- try(testthat::test_dir("tests/slow_tests"))
+  if (class(notravis) == "try-error") {
+    result <- result + 1
+    notravis <- data.frame()
+  }
+}
+
 if (result > 0) {
   message(paste0("There were ", result, " errors."))
 }
 
 summary(as.data.frame(test_result))
-summary(as.data.frame(notravis))
 summary(as.data.frame(all))
-
-
+summary(as.data.frame(notravis))

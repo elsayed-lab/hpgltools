@@ -296,7 +296,6 @@ analyses more difficult/impossible.")
 
   ## Try a couple different ways of getting gene-level annotations into the expressionset.
   annotation <- NULL
-  tooltip_data <- NULL
   if (is.null(gene_info)) {
     ## Including, if all else fails, just grabbing the gene names from the count tables.
     if (is.null(include_gff)) {
@@ -306,7 +305,6 @@ analyses more difficult/impossible.")
       ## Or reading a gff file.
       message("create_expt(): Reading annotation gff, this is slow.")
       annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
-      tooltip_data <- make_tooltips(annotations=annotation, type=gff_type, ...)
       gene_info <- data.table::as.data.table(annotation, keep.rownames="rownames")
     }
   } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
@@ -537,7 +535,6 @@ analyses more difficult/impossible.")
   expt[["design"]] <- sample_definitions
   expt[["annotation"]] <- annotation
   expt[["gff_file"]] <- include_gff
-  expt[["tooltip"]] <- tooltip_data
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
     "lowfilter" = "raw",
@@ -1627,7 +1624,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
 #' Extend Biobase::exprs to handle expt ojects.
 #'
 #' @name exprs
-#' @aliases exprs
+#' @aliases exprs, exprs-methods
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase exprs
 #' @docType methods
@@ -1642,7 +1639,7 @@ setMethod("exprs", signature="expt",
 #' Extend Biobase::fData to handle expt objects.
 #'
 #' @name fData
-#' @aliases fData
+#' @aliases fData, fData-methods
 #' @param object  An expt from which to extract the expressionset.
 #' @importFrom Biobase fData
 #' @docType methods
@@ -1656,7 +1653,7 @@ setMethod("fData", signature="expt",
 #' Extend Biobase::pData to handle expt objects.
 #'
 #' @name pData
-#' @aliases pData
+#' @aliases pData, pData-methods
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase pData
 #' @docType methods
@@ -1670,7 +1667,7 @@ setMethod("pData", signature="expt",
 #' Extend Biobase::notes to handle expt objects.
 #'
 #' @name notes
-#' @aliases notes
+#' @aliases notes, notes-methods
 #' @param object  The expt object from which to extract the expressionset.
 #' @importFrom Biobase notes
 #' @docType methods

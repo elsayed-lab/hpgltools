@@ -93,7 +93,7 @@ check_eupath_species <- function(species="Leishmania major strain Friedlin", met
   grepped_hits <- all_species[grep_hits]
   if (species %in% all_species) {
     entry <- metadata[metadata[["Species"]] == species, ]
-    message(paste0("Yay, found: ", entry[["Species"]]))
+    message(paste0("Found: ", entry[["Species"]]))
   } else if (sum(grep_hits > 0)) {
     species <- grepped_hits[[1]]
     entry <- metadata[metadata[["Species"]] == species, ]
@@ -161,7 +161,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
     created <- dir.create(bsgenome_dir, recursive=TRUE)
   }
   ## Download them to this directory.
-  downloaded <- download.file(url=fasta_url, destfile=genome_filename, quiet=TRUE)
+  downloaded <- download.file(url=fasta_url, destfile=genome_filename, quiet=FALSE)
   ## And extract all the individual chromosomes into this directory.
   input <- Biostrings::readDNAStringSet(genome_filename)
   output_list <- list()
@@ -411,7 +411,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## retrieve organism metadata from EuPathDB
   metadata_json <- paste0(dir, "/metadata.json")
-  file <- download.file(url=request_url, destfile=metadata_json, method="curl", quiet=TRUE)
+  file <- download.file(url=request_url, destfile=metadata_json, method="curl", quiet=FALSE)
   result <- jsonlite::fromJSON(metadata_json)
   records <- result[["response"]][["recordset"]][["records"]]
   message(paste0("Downloaded: ", request_url))
@@ -629,7 +629,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
 
   ## save gff as tempfile
   input_gff <- file.path(dir, paste0(pkgname, ".gff"))
-  downloaded <- download.file(entry[["SourceUrl"]], input_gff, quiet=TRUE)
+  downloaded <- download.file(entry[["SourceUrl"]], input_gff, quiet=FALSE)
 
   ## get chromosome information from GFF file
   gff <- try(rtracklayer::import.gff3(input_gff))
@@ -827,7 +827,7 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   ## save gff as tempfile
   input_gff <- file.path(dir, paste0(pkgname, ".gff"))
   tt <- sm(download.file(url=entry[["SourceUrl"]], destfile=input_gff,
-                         method="internal", quiet=TRUE))
+                         method="internal", quiet=FALSE))
 
   chr_entries <- read.delim(file=input_gff, header=FALSE, sep="")
   chromosomes <- chr_entries[["V1"]] == "##sequence-region"
@@ -1381,11 +1381,13 @@ retrieve_eupathdb_attributes <- function(provider="TriTrypDB",
 #' @param question_type  Usually GeneQuestions, I am not sure what other types are in use.
 #' @param question  There are a bunch of possible query types, GenesByTaxon is
 #'   the most comprehensive.
+#' @param ...  Arguments passed to download_eupath_metadata()
 #' @return data table of fun annotation data.
 #' @export
 get_eupath_text <- function(species=NULL, entry=NULL,
                             dir="eupathdb", metadata=NULL,
-                            question_type="GeneQuestions", question="GenesByTaxon") {
+                            question_type="GeneQuestions",
+                            question="GenesByTaxon", ...) {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1443,7 +1445,7 @@ get_eupath_text <- function(species=NULL, entry=NULL,
                                     organism_filename, ".json"))
   if (!file.exists(destfile)) {
     original_options <- options(timeout=300)
-    file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=TRUE)
+    file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=FALSE)
     temp_options <- options(original_options)
   }
   result <- jsonlite::fromJSON(destfile)

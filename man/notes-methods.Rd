@@ -3,6 +3,8 @@
 \docType{methods}
 \name{notes}
 \alias{notes}
+\alias{notes,}
+\alias{notes-methods}
 \title{Extend Biobase::notes to handle expt objects.}
 \usage{
 \S4method{notes}{expt}(object)

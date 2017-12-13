@@ -6,7 +6,7 @@
 \usage{
 get_eupath_text(species = NULL, entry = NULL, dir = "eupathdb",
   metadata = NULL, question_type = "GeneQuestions",
-  question = "GenesByTaxon")
+  question = "GenesByTaxon", ...)
 }
 \arguments{
 \item{species}{Species to query.}
@@ -21,6 +21,8 @@ get_eupath_text(species = NULL, entry = NULL, dir = "eupathdb",
 
 \item{question}{There are a bunch of possible query types, GenesByTaxon is
 the most comprehensive.}
+
+\item{...}{Arguments passed to download_eupath_metadata()}
 }
 \value{
 data table of fun annotation data.

@@ -24,17 +24,17 @@ test_that("Do we get some granges?", {
 
 intergenic_data <- summary(invocation$intergenic)
 test_that("Do we get some granges?", {
-  expect_equal("GRanges object with 1492 ranges and 1 metadata columns", intergenic_data)
+  expect_equal("GRanges object with 1492 ranges and 1 metadata column", intergenic_data)
 })
 
 genes_data <- summary(invocation$genes)
 test_that("Do we get some granges?", {
-  expect_equal("GRanges object with 1857 ranges and 5 metadata columns", genes_Data)
+  expect_equal("GRanges object with 1857 ranges and 5 metadata columns", genes_data)
 })
 
-txdb_data <- load_orgdb_annotations(invocation$txdb, keytype="TXID",
-                                    fields=c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
-                                             "GENEID", "TXID", "TXNAME"))
+txdb_data <- sm(load_orgdb_annotations(invocation$txdb, keytype="TXID",
+                                       fields=c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
+                                                "GENEID", "TXID", "TXNAME")))
 txdb_transcripts <- as.data.frame(txdb_data$transcripts)
 test_that("Do we get some transcript sequence names?", {
   expect_equal(as.character(head(txdb_transcripts$seqnames)),

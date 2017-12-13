@@ -3,6 +3,8 @@
 \docType{methods}
 \name{pData}
 \alias{pData}
+\alias{pData,}
+\alias{pData-methods}
 \title{Extend Biobase::pData to handle expt objects.}
 \usage{
 \S4method{pData}{expt}(object)

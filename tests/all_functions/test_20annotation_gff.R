@@ -9,7 +9,7 @@ context("20annotation_gff.R: Test functions in annotation_genbank.r")
 ## I moved get_gff_gene_lengths() to get_genelengths() and made it less stupid.
 
 pa_gff <- system.file("paeruginosa_pa14.gff", package="hpgltools")
-pa_gff <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
+pa_fasta <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
 
 ## gff2irange()
 pa_irange <- sm(gff2irange(gff=pa_gff))
@@ -19,7 +19,7 @@ test_that("Do we get suitable irange data?", {
 })
 
 ## load_gff_annotations()
-pa_annot <- load_gff_annotations(gff=pa_gff)
+pa_annot <- sm(load_gff_annotations(gff=pa_gff))
 test_that("Do we get some gff data for Pseudomonas?", {
   expect_equal(11946, nrow(pa_annot))
   expect_equal(16, ncol(pa_annot))

@@ -225,6 +225,7 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
 
   condition_summary <- data.table::data.table()
   batch_summary <- data.table::data.table()
+  counts <- NULL
   if (!is.null(design)) {
     if (!is.null(design[["condition"]])) {
       melted[, 'condition' := design[sample, "condition"]]
