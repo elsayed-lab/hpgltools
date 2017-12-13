@@ -27,13 +27,6 @@ test_that("Did the ontologies come out?", {
   expect_equal(expected_go, actual_go)
 })
 
-query_many <- try(load_querymany_annotations(actual_ids))
-expected <- c("yellow-e", "CG7296", "CG18765")
-actual <- as.character(query_many[["symbol"]])
-test_that("Does queryMany return sensible outputs?", {
-    expect_equal(expected, actual)
-})
-
 test_genes <- head(rownames(sig_genes))
 linkage_test <- load_biomart_orthologs(test_genes, first_species="dmelanogaster",
                                        second_species="mmusculus",

@@ -96,9 +96,6 @@ load_annotations <- function(type=NULL, ...) {
     "microbesonline" = {
       annotations <- load_microbesonline_annotations(...)
     },
-    "querymany" = {
-      annotations <- load_querymany_annotations(...)
-    },
     "trinotate" = {
       annotations <- load_trinotate_annotations(...)
     },

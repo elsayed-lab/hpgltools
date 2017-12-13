@@ -4,7 +4,7 @@
 \alias{load_kegg_annotations}
 \title{Create a data frame of pathways to gene IDs from KEGGREST}
 \usage{
-load_kegg_annotations(species = "ecoli", abbreviation = NULL,
+load_kegg_annotations(species = "coli", abbreviation = NULL,
   flatten = TRUE)
 }
 \arguments{
