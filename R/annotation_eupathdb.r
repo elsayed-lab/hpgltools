@@ -252,6 +252,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
 make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", entry=NULL,
                                     dir="eupathdb", reinstall=FALSE, metadata=NULL,
                                     kegg_abbreviation=NULL, ...) {
+  arglist <- list()
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -288,14 +289,6 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
     dir=dir,
     reinstall=reinstall)
 
-  message("Joining the txdb and orgdb objects.")
-  version <- paste0(entry[["SourceVersion"]], ".0")
-  graph_data <- list(
-    "join1" = c(GO.db="GOID", orgdb="GO_ID"),
-    "join2" = c(orgdb="GID",  txdb="GENEID")
-  )
-  names(graph_data[["join1"]]) = c("GO.db", orgdb_name)
-  names(graph_data[["join2"]]) = c(orgdb_name, txdb_name)
   tt <- sm(requireNamespace(orgdb_name))
   tt <- sm(requireNamespace(txdb_name))
   libstring <- paste0("library(", orgdb_name, ")")
@@ -304,6 +297,18 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   eval(parse(text=libstring))
   organism <- taxa[["taxon"]]
   required <- sm(requireNamespace("OrganismDbi"))
+
+  ## Create the orgdb data structure on the fly.
+
+  message("Finding viable joins between the orgdb/txdb/GO.db packages, this may take a while.")
+  version <- paste0(entry[["SourceVersion"]], ".0")
+  start_graph <- orgdb_match_keytypes(orgdb_name, txdb_name)
+  new_start <- length(graph_data) + 1
+  go_graph <- orgdb_match_keytypes("GO.db", orgdb_name, starting=new_start)
+  graph_data <- append(start_graph, go_graph)
+  new_start <- length(graph_data) + 1
+  reactome_graph <- orgdb_match_keytypes("reactome.db", orgdb_name, starting=new_start)
+  graph_data <- append(graph_data, reactome_graph)
 
   author <- as.character(entry[["Maintainer"]])
   maintainer <- as.character(entry[["Maintainer"]])
@@ -336,9 +341,9 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
                             destDir=tmp_pkg_dir,
                             license="Artistic-2.0"
                           )
-  organdb_path <- clean_pkg(final_dir)
-  organdb_path <- clean_pkg(organdb_path, removal="_", replace="", sqlite=FALSE)
-  organdb_path <- clean_pkg(organdb_path, removal="_like", replace="like", sqlite=FALSE)
+  organdb_path <- sm(clean_pkg(final_dir))
+  organdb_path <- sm(clean_pkg(organdb_path, removal="_", replace="", sqlite=FALSE))
+  organdb_path <- sm(clean_pkg(organdb_path, removal="_like", replace="like", sqlite=FALSE))
   if (class(organdb) == "list") {
     inst <- sm(try(devtools::install(organdb_path, quiet=TRUE)))
     if (class(inst) != "try-error") {
@@ -751,7 +756,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
  backing it up."))
     ret <- file.rename(first_path, backup_path)
   }
-  orgdb_path <- do.call("makeOrgPackage", orgdb_args)
+  orgdb_path <- sm(do.call("makeOrgPackage", orgdb_args))
 
   ## Fix name in sqlite metadata table
   dbpath <- file.path(
@@ -771,9 +776,9 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   Sys.chmod(dbpath, mode="0444")
 
   ## Clean up any strangeness in the DESCRIPTION file
-  orgdb_path <- clean_pkg(orgdb_path)
-  orgdb_path <- clean_pkg(orgdb_path, removal="_", replace="")
-  orgdb_path <- clean_pkg(orgdb_path, removal="_like", replace="like")
+  orgdb_path <- sm(clean_pkg(orgdb_path))
+  orgdb_path <- sm(clean_pkg(orgdb_path, removal="_", replace=""))
+  orgdb_path <- sm(clean_pkg(orgdb_path, removal="_like", replace="like"))
   testthat::expect_equal(first_path, orgdb_path)
   ## And install the resulting package.
   inst <- sm(try(devtools::install(orgdb_path, quiet=TRUE)))
@@ -913,9 +918,9 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   }
 
   install_dir <- file.path(dir, pkgname)
-  install_dir <- clean_pkg(install_dir)
-  install_dir <- clean_pkg(install_dir, removal="_", replace="")
-  install_dir <- clean_pkg(install_dir, removal="_like", replace="like")
+  install_dir <- sm(clean_pkg(install_dir))
+  install_dir <- sm(clean_pkg(install_dir, removal="_", replace=""))
+  install_dir <- sm(clean_pkg(install_dir, removal="_like", replace="like"))
 
   inst <- sm(try(devtools::install(install_dir, quiet=TRUE)))
   if (class(inst) != "try-error") {

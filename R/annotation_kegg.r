@@ -113,4 +113,39 @@ but it is very transient, so try reloading your R until I figure out what is goi
   return(result)
 }
 
+#' Maps KEGG identifiers to ENSEMBL gene ids.
+#'
+#' Takes a list of KEGG gene identifiers and returns a list of ENSEMBL
+#' ids corresponding to those genes.
+#'
+#' @param kegg_ids List of KEGG identifiers to be mapped.
+#' @return Ensembl IDs as a character list.
+#' @seealso \pkg{KEGGREST}
+#'  \code{\link[KEGGREST]{keggGet}}
+#' @examples
+#' \dontrun{
+#' ensembl_list <- kegg_to_ensembl("a")
+#' }
+#' @export
+map_kegg_ensembl <- function(kegg_ids) {
+  ## query gene ids 10 at a time (max allowed)
+  result <- c()
+  for (x in split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))) {
+    ## print(x)
+    query <- KEGGREST::keggGet(x)
+    for (item in query) {
+      dblinks <- item[["DBLINKS"]]
+      ensembl_id <- dblinks[grepl("Ensembl", dblinks)]
+      if (length(ensembl_id) > 0) {
+        result <- append(result, substring(ensembl_id, 10))
+        ## TESTING
+        if (length(ensembl_id) > 1) {
+          warning(sprintf("One to many KEGG mapping for gene %s", x))
+        }
+      }
+    }
+  }
+  return(result)
+}
+
 ## EOF

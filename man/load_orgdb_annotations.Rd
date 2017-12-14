@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_orgdb.r
 \name{load_orgdb_annotations}
 \alias{load_orgdb_annotations}
-\title{Load organism annotation data (parasite).}
+\title{Load organism annotation data.}
 \usage{
 load_orgdb_annotations(orgdb, gene_ids = NULL, include_go = FALSE,
   keytype = "ENSEMBL", fields = NULL, sum_exons = FALSE)

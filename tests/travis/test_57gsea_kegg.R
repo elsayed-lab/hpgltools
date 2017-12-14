@@ -20,8 +20,9 @@ test_that("Is it possible to look up a kegg species ID?", {
 })
 
 ## Make a map of the weird flybase IDs FBgn to the also weird Cg ids.
-dm_orgdb <- sm(choose_orgdb("drosophila_melanogaster"))
-mapping <- sm(orgdb_idmap(dm_orgdb, mapto=c("ENSEMBL","ENTREZID","FLYBASE","FLYBASECG","GENENAME")))
+tt <- sm(library(org.Dm.eg.db))
+dm_orgdb <- org.Dm.eg.db
+mapping <- sm(map_orgdb_ids(dm_orgdb, mapto=c("ENSEMBL","ENTREZID","FLYBASE","FLYBASECG","GENENAME")))
 expected <- c("FBgn0040373", "FBgn0040372", "FBgn0261446", "FBgn0000316", "FBgn0005427", "FBgn0040370")
 actual <- head(mapping[["flybase"]])
 test_that("Did orgdb give useful ID mappings? (FBgn IDs)", {
