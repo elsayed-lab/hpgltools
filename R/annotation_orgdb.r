@@ -25,6 +25,9 @@ load_host_annotations <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
   if (is.null(orgdb)) {
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
+  } else if (class(orgdb) == "character") {
+    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    eval(parse(text=org_pkgstring))
   }
   keytype <- toupper(keytype)
   chromosome_column <- toupper(chromosome_column)
@@ -102,33 +105,72 @@ load_host_annotations <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 #' @examples
 #' \dontrun{
-#'  one_gene <- load_annotations(org, c("LmJF.01.0010"))
+#'  one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
 #' }
 #' @export
-load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keytype="ENSEMBL",
+load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, keytype="ensembl",
+                                   strand_column="txstrand", start_column="txstart",
+                                   end_column="txend",  chromosome_column="chr",
+                                   type_column="type", name_column="genename",
                                    fields=NULL, sum_exons=FALSE) {
+  if (is.null(orgdb)) {
+    message("Assuming Homo.sapiens.")
+    org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
+    eval(parse(text=org_pkgstring))
+  } else if (class(orgdb) == "character") {
+    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    eval(parse(text=org_pkgstring))
+  }
   keytype <- toupper(keytype)
+  strand_column <- toupper(strand_column)
+  start_column <- toupper(start_column)
+  end_column <- toupper(end_column)
+  chromosome_column <- toupper(chromosome_column)
+  type_column <- toupper(type_column)
+  name_column <- toupper(name_column)
+  fields <- toupper(fields)
   all_fields <- AnnotationDbi::columns(orgdb)
 
-  if (is.null(fields)) {
-    fields <- c("CHR", "TXSTRAND", "TXSTART", "TXEND")
-  } else if (fields[[1]] == "all") {
-    fields <- all_fields
-  } else {
-    fields <- toupper(fields)
+  if (! name_column %in% all_fields) {
+    a_name <- grepl(pattern="NAME", x=all_fields)
+    new_name_column <- all_fields[a_name][1]
+    message(paste0("Unable to find ", name_column, ", setting it to ", new_name_column, "."))
+    name_column <- new_name_column
+  }
+  if (! type_column %in% all_fields) {
+    message(paste0("Unable to find ", type_column, " in the db, removing it."))
+    type_column <- NULL
+  }
+  if (! chromosome_column %in% all_fields) {
+    message(paste0("Unable to find ", chromosome_column, " in the db, removing it."))
+    chromosome_column <- NULL
+  }
+  if (! strand_column %in% all_fields) {
+    message(paste0("Unable to find ", strand_column, " in the db, removing it."))
+    strand_column <- NULL
+  }
+  if (! start_column %in% all_fields) {
+    message(paste0("Unable to find ", start_column, " in the db, removing it."))
+    start_column <- NULL
+  }
+  if (! end_column %in% all_fields) {
+    message(paste0("Unable to find ", end_column, " in the db, removing it."))
+    end_column <- NULL
   }
 
-  # Work-around 2017/02/16
-  # TYPE and GENENAME may be unavailable in recent versions GenomicFeatures
-  if ('TYPE' %in% AnnotationDbi::columns(orgdb)) {
-    fields <- c(fields, 'TYPE')
+  if (is.null(fields)) {
+    fields <- c(name_column, type_column, chromosome_column, strand_column, start_column, end_column)
+  } else {
+    fields <- c(name_column, type_column, chromosome_column, strand_column, start_column, end_column, fields)
   }
-  if ('GENENAME' %in% AnnotationDbi::columns(orgdb)) {
-    fields <- c(fields, 'GENENAME')
+
+  if (fields[1] == "all") {
+    message(paste0("Selecting the following fields, this might be too many: \n",
+                   toString(all_fields)))
+    fields <- all_fields
   }
 
   if (sum(fields %in% all_fields) != length(fields)) {
-    message(toString(fields %in% all_fields))
     stop(paste0("Some requested fields are not available.  The following were found: ",
                 toString(all_fields)))
   }
@@ -149,10 +191,11 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
   }
   ## Note querying by "GENEID" will exclude noncoding RNAs
 
-  gene_info <- AnnotationDbi::select(x=orgdb,
-                                     keys=gene_ids,
-                                     keytype=keytype,
-                                     columns=fields)
+  gene_info <- AnnotationDbi::select(
+                                x=orgdb,
+                                keys=gene_ids,
+                                keytype=keytype,
+                                columns=fields)
 
   ## Compute total transcript lengths (for all exons)
   ## https://www.biostars.org/p/83901/
@@ -205,10 +248,17 @@ load_orgdb_annotations <- function(orgdb, gene_ids=NULL, include_go=FALSE, keyty
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
 #' @export
-load_orgdb_go <- function(orgdb, gene_ids=NULL, keytype="ensembl",
+load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
                           columns=c("go","goall","goid")) {
+  if (is.null(orgdb)) {
+    message("Assuming Homo.sapiens.")
+    org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
+    eval(parse(text=org_pkgstring))
+  } else if (class(orgdb) == "character") {
+    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    eval(parse(text=org_pkgstring))
+  }
   tt <- sm(requireNamespace("GO.db"))
-  tt <- sm(requireNamespace("magrittr"))
   keytype <- toupper(keytype)
   columns <- toupper(columns)
   if (is.null(gene_ids)) {
@@ -258,55 +308,19 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
   }
   ## Deduplicate
   go_terms <- go_terms[!duplicated(go_terms), ]
-  go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
-  go_term_names <- sm(AnnotationDbi::select(x=GO.db::GO.db,
-                                            keys=unique(go_terms$GO),
-                                            columns=c("TERM", "GOID", "ONTOLOGY")))
-  go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
+  if ("GO" %in% chosen_columns) {
+    go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
+    go_term_names <- sm(AnnotationDbi::select(x=GO.db::GO.db,
+                                              keys=unique(go_terms[["GO"]]),
+                                              columns=c("TERM", "GOID", "ONTOLOGY")))
+    go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
+  }
 
-                                        # Remove redundant annotations which differ only in source/evidence
-                                        # and rename ONTOLOGYALL column
-                                        #unique(go_terms %>% rename(ONTOLOGY=ONTOLOGYALL) %>% na.omit())
+  ## Remove redundant annotations which differ only in source/evidence
+  ## and rename ONTOLOGYALL column
+  ##unique(go_terms %>% rename(ONTOLOGY=ONTOLOGYALL) %>% na.omit())
   go_terms <- unique(dplyr::tbl_df(go_terms) %>% na.omit())
   return(go_terms)
-}
-
-#' Creates a gene/KEGG mapping dataframe.
-#'
-#' In much the same way AnnotationDbi provides GO data, it also provides KEGG data.
-#'
-#' Tested in test_45ann_organdb.R
-#' Perhaps this function should be merged with the GO above?
-#'
-#' @param orgdb  OrganismDb instance.
-#' @param gene_ids  Identifiers of the genes to retrieve annotations.
-#' @param keytype  The keytype, eg. the primary key used to query the orgdb.
-#' @param columns  Columns to extract.
-#' @return Df of kegg mappings
-#' @seealso \pkg{AnnotationDbi} \pkg{dplyr}
-#'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
-#' @examples
-#' \dontrun{
-#'  kegg_data <- load_kegg_mapping(org, c("a","b"))
-#' }
-#' @export
-load_orgdb_kegg <- function(orgdb, gene_ids=NULL, keytype="ensembl", columns=c("KEGG_PATH")) {
-  keytype <- toupper(keytype)
-  columns <- toupper(columns)
-  if (is.null(gene_ids)) {
-    gene_ids <- AnnotationDbi::keys(orgdb)
-  }
-  kegg_mapping <- try(dplyr::tbl_df(AnnotationDbi::select(x=orgdb, keys=gene_ids,
-                                                          keytype=keytype,
-                                                          columns=columns)) %>% na.omit())
-  if (class(kegg_mapping)[[1]] == "try-error") {
-    stop(paste0("Unable to find the mappings, the available keytypes are: ",
-                toString(AnnotationDbi::keytypes(orgdb))))
-  }
-  kegg_mapping <- as.data.frame(kegg_mapping, stringsAsFactors=FALSE)
-  ##colnames(kegg_mapping) <- c("gene", "category")
-  ## goseq does not support tbl_df instances
-  return(kegg_mapping)
 }
 
 #' I see no reason to have load_host_annotations and load_parasite_annotations.
@@ -317,43 +331,6 @@ load_orgdb_kegg <- function(orgdb, gene_ids=NULL, keytype="ensembl", columns=c("
 #' @export
 load_parasite_annotations <- function(...) {
   load_orgdb_annotations(...)
-}
-
-#' Create an orgdb from an taxonID
-#'
-#' This function is a bit more fragile than I would like.  I am not completely sold
-#' on AnnotationHub yet.
-#'
-#' @param taxid  TaxonID from AnnotationHub
-#' @return An Orgdb instance
-#' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
-#' @examples
-#' \dontrun{
-#'  orgdbi <- mytaxIdToOrgDb(taxid)
-#' }
-make_orgdb_from_ah <- function(taxid) {
-  ## packageTaxIds <- .packageTaxIds()
-  packageTaxIds <- NULL
-  if (taxid %in% names(packageTaxIds)) {
-    pkg <- packageTaxIds[names(packageTaxIds) %in% taxid]
-    nmspc <- loadNamespace(pkg)
-    res <- get(pkg, nmspc)
-  } else {
-    loadNamespace("AnnotationHub")
-    ah <- AnnotationHub::AnnotationHub()
-    ah <- subset(ah, ah[["rdataclass"]] == "OrgDb")
-    mc <- S4Vectors::mcols(ah)[, "taxonomyid", drop = FALSE]
-    AHID <- rownames(mc[mc[["taxonomyid"]] == taxid, , drop = FALSE])
-    if (!length(AHID)) {
-      message("No organismdbi exists for this taxonomy id.")
-    } else if (length(AHID) > 1) {
-      message("There is more than one AHID for this taxon, taking the first.")
-      res <- ah[[ AHID[[1]] ]]
-    } else {
-      res <- ah[[AHID]]
-    }
-  }
-  res
 }
 
 #' Load organism annotation data (mouse/human).
@@ -422,13 +399,25 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
 #' @param starting  What number join to start from
 #' @return  A list named join# where the number is the nth join discovered and the elements
 #'   are non-zero matches between the sqlite packages described by first_name and second_name.
-orgdb_match_keytypes <- function(first_name, second_name, starting=1) {
+orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NULL) {
+  tt <- sm(requireNamespace(first_name))
+  tt <- sm(try(attachNamespace(first_name), silent=TRUE))
+  tt <- sm(requireNamespace(second_name))
+  tt <- sm(try(attachNamespace(second_name), silent=TRUE))
   org_pkgstring <- paste0("org_pkg <- ", first_name)
   eval(parse(text=org_pkgstring))
   tx_pkgstring <- paste0("tx_pkg <- ", second_name)
   eval(parse(text=tx_pkgstring))
   org_keytypes <- AnnotationDbi::keytypes(org_pkg)
+  if (!is.null(exclude)) {
+    keepers <- ! org_keytypes %in% exclude
+    org_keytypes <- org_keytypes[keepers]
+  }
   tx_keytypes <- AnnotationDbi::keytypes(tx_pkg)
+  if (!is.null(exclude)) {
+    keepers <- ! tx_keytypes %in% exclude
+    tx_keys <- tx_keytypes[keepers]
+  }
 
   key_matches <- list()
   join_number <- starting
@@ -453,6 +442,65 @@ orgdb_match_keytypes <- function(first_name, second_name, starting=1) {
     }
   }
   return(key_matches)
+}
+
+#' Create an orgdb from an taxonID
+#'
+#' This function is a bit more fragile than I would like.  I am not completely sold
+#' on AnnotationHub yet.
+#'
+#' @param taxid  TaxonID from AnnotationHub
+#' @return An Orgdb instance
+#' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
+#' @examples
+#' \dontrun{
+#'  orgdbi <- mytaxIdToOrgDb(taxid)
+#' }
+#' @export
+take_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
+  ## Other available types:
+  tt <- sm(loadNamespace("AnnotationHub"))
+  ah <- sm(AnnotationHub::AnnotationHub())
+  message(paste0("Available types: \n", toString(levels(as.factor(ah$rdataclass)))))
+
+  if (!is.null(type)) {
+    ah <- AnnotationHub::query(x=ah, pattern=type)
+  }
+  if (is.null(title) & is.null(species) & is.null(ahid)) {
+    ahid <- "AH57973"  ## org.Hs.eg.db.sqlite
+  } else if (is.null(ahid) & is.null(title)) {
+    ## Then we got a species
+    possible <- ah$species
+    titles <- ah$title
+    hits_idx <- grepl(pattern=species, x=possible)
+    first_true <- which.max(hits_idx)
+    first_true_name <- titles[first_true]
+    hits <- names(ah)[hits_idx]
+    message(paste0("The possible hits are: \n",
+                   toString(hits), "\nchoosing: ", hits[1],
+                   "\nwhich is ", first_true_name))
+    ahid <- hits[1]
+  } else if (is.null(ahid) & is.null(species)) {
+    ## We got a title
+    possible <- ah$title
+    hits_idx <- grepl(pattern=title, x=possible)
+    first_true <- which.max(hits_idx)
+    first_true_name <- possible[first_true]
+    hits <- names(ah)[hits_idx]
+    message(paste0("The possible hits are: \n",
+                   toString(hits), "\nchoosing: ", hits[1],
+                   "\nwhich is ", first_true_name))
+    ahid <- hits[1]
+  }
+
+  ah_names <- names(ah)
+  ah_titles <- ah$title
+  hit_idx <- ah_names == ahid
+  hit_num <- which.max(hit_idx)
+  hit_title <- ah_titles[hit_num]
+  message(paste0("Chose ", ahid, " which is ", hit_title, "."))
+  res <- ah[[ahid]]
+  return(res)
 }
 
 ## EOF

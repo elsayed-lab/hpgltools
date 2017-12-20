@@ -106,6 +106,7 @@ but it is very transient, so try reloading your R until I figure out what is goi
   result[["ncbi_proteinid"]] <- gsub(pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
   result[["uniprotid"]] <- gsub(pattern="up:", replacement="", x=result[["uniprotid"]])
   result[["pathways"]] <- gsub(pattern="path:", replacement="", x=result[["pathways"]])
+  result[["kegg_geneid"]] <- paste0(chosen, ":", result[["GID"]])
   ## Now we have a data frame of all genes <-> ncbi-ids, pathways
   result_nas <- is.na(result)
   result[result_nas] <- ""
@@ -127,24 +128,34 @@ but it is very transient, so try reloading your R until I figure out what is goi
 #' ensembl_list <- kegg_to_ensembl("a")
 #' }
 #' @export
-map_kegg_ensembl <- function(kegg_ids) {
+map_kegg_dbs <- function(kegg_ids) {
   ## query gene ids 10 at a time (max allowed)
-  result <- c()
-  for (x in split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))) {
+  result <- data.frame()
+  split_kegg <- split(kegg_ids, ceiling(seq_along(kegg_ids) / 3))
+  count <- 0
+  for (x in split_kegg) {
+    x <- as.character(unlist(x))
     ## print(x)
     query <- KEGGREST::keggGet(x)
-    for (item in query) {
-      dblinks <- item[["DBLINKS"]]
-      ensembl_id <- dblinks[grepl("Ensembl", dblinks)]
-      if (length(ensembl_id) > 0) {
-        result <- append(result, substring(ensembl_id, 10))
-        ## TESTING
-        if (length(ensembl_id) > 1) {
-          warning(sprintf("One to many KEGG mapping for gene %s", x))
-        }
+    for (d in 1:length(query)) {
+      count <- count + 1
+      item <- query[d]
+      dblinks <- item[[1]][["DBLINKS"]]
+      row_names <- gsub(pattern="^(.*): (.*)$", replacement="\\1", x=dblinks)
+      row_values <- gsub(pattern="^(.*): (.*)$", replacement="\\2", x=dblinks)
+      column <- as.data.frame(row_values)
+      rownames(column) <- row_names
+      colnames(column) <- kegg_ids[count]
+      if (count == 1) {
+        result <- column
+      } else {
+        result <- merge(result, column, by="row.names", all=TRUE)
+        rownames(result) <- result[["Row.names"]]
+        result <- result[, -1]
       }
     }
   }
+  result <- t(result)
   return(result)
 }
 

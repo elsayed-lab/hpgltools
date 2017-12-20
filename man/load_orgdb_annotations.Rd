@@ -4,8 +4,11 @@
 \alias{load_orgdb_annotations}
 \title{Load organism annotation data.}
 \usage{
-load_orgdb_annotations(orgdb, gene_ids = NULL, include_go = FALSE,
-  keytype = "ENSEMBL", fields = NULL, sum_exons = FALSE)
+load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
+  keytype = "ensembl", strand_column = "txstrand",
+  start_column = "txstart", end_column = "txend",
+  chromosome_column = "chr", type_column = "type",
+  name_column = "genename", fields = NULL, sum_exons = FALSE)
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
@@ -33,7 +36,7 @@ This defaults to a few fields which I have found most useful, but the brave can 
 }
 \examples{
 \dontrun{
- one_gene <- load_annotations(org, c("LmJF.01.0010"))
+ one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
 }
 }
 \seealso{

@@ -54,10 +54,11 @@ actual <- pct_citrate[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {
     expect_equal(expected, actual, tolerance=0.1)
 })
-##
+
+## Check percentages found
 pathways <- c("00010", "00020", "00030", "00040","nonexistent", "00051")
 all_percentages <- sm(pct_all_kegg(all_ids, sig_ids, pathways=pathways, organism="dme"))
-expected <- c(5.556, 4.651, 0, 12.000, NA, 3.448)
+expected <- c(7.273, 4.651, 0, 12.000, NA, 3.448)
 actual <- all_percentages[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes from multiple pathways?", {
     expect_equal(expected, actual, tolerance=0.1)
@@ -66,11 +67,9 @@ test_that("Can we extract the percent differentially expressed genes from multip
 ## Try testing out pathview
 mel_id <- get_kegg_orgn("melanogaster")
 rownames(sig_up) <- make.names(sig_up[["flybasecg"]], unique=TRUE)
-
 funkytown <- sm(simple_pathview(sig_up, fc_column="logFC", species="dme", pathway=pathways,
                                 from_list=c("CG"), to_list=c("Dmel_CG")))
-
-expected <- c(0, 3, 2, 3, 4)
+expected <- c(0, 3, 2, 3, 5)
 actual <- head(funkytown[["total_mapped_nodes"]])
 test_that("Did pathview work? (total mapped nodes)", {
     expect_equal(expected, actual, tolerance=0.1)

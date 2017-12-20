@@ -3,14 +3,6 @@ library(methods)
 library(testthat)
 library(hpgltools)
 
-message("Beginning test_dir('travis')")
-test_result <- try(testthat::test_dir("tests/travis"))
-result <- 0
-if (class(test_result) == "try-error") {
-  result <- result + 1
-  test_result <- data.frame()
-}
-
 all_functions <- data.frame()
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
   message("Beginning test_dir('all_functions')")
@@ -19,6 +11,14 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     result <- result + 1
     all <- data.frame()
   }
+}
+
+message("Beginning test_dir('travis')")
+test_result <- try(testthat::test_dir("tests/travis"))
+result <- 0
+if (class(test_result) == "try-error") {
+  result <- result + 1
+  test_result <- data.frame()
 }
 
 notravis <- data.frame()

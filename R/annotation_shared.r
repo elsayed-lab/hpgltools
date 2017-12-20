@@ -25,9 +25,15 @@
 #' ## 6 YAL068W-A     3
 #' }
 #' @export
-get_genesizes <- function(type="gff", gene_type="gene", type_column="type",
-                          key=NULL, length_names=NULL, ...) {
-  annot <- load_annotations(type=type, ...)
+get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
+                          type_column="type", key=NULL, length_names=NULL, ...) {
+  annot <- NULL
+  if (is.null(annotation)) {
+    annot <- load_annotations(type=type, ...)
+  } else {
+    annot <- annotation
+  }
+  
   ## Pull out the rows of interest.
   if (!is.null(gene_type)) {
     desired_rows <- annot[, type_column] == gene_type
@@ -54,11 +60,31 @@ get_genesizes <- function(type="gff", gene_type="gene", type_column="type",
 
   ## Now try to a column with the information of interest.
   if (is.null(length_names)) {
-    length_names <- c("width", "length", "gene_size")
+    length_names <- c("width", "length", "gene_size", "cds_length")
   }
   for (ln in length_names) {
     if (!is.null(annot[[ln]])) {
       ret[["gene_size"]] <- annot[[ln]]
+    }
+  }
+  if (is.null(ret[["gene_size"]])) {
+    ## Try subtracting end - start
+    start_names <- c("start", "start_position")
+    end_names <- c("end", "end_position")
+    chosen_start <- NULL
+    chosen_end <- NULL
+    for (st in start_names) {
+      if (!is.null(annot[[st]])) {
+        chosen_start <- st
+      }
+    }
+    for (en in end_names) {
+      if (!is.null(annot[[en]])) {
+        chosen_end <- en
+      }
+    }
+    if (!is.null(st) & !is.null(en)) {
+      ret[["gene_size"]] <- annot[[en]] - annot[[st]]
     }
   }
 

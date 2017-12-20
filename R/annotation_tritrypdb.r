@@ -385,7 +385,6 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
     "join1" = c(GO.db="GOID", orgdb="GO"),
     "join2" = c(orgdb="GID",  txdb="GENEID")
   )
-
   names(graph_data[["join1"]]) = c("GO.db", orgdb_package)
   names(graph_data[["join2"]]) = c(orgdb_package, txdb_package)
 

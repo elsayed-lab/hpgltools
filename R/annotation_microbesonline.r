@@ -219,6 +219,25 @@ load_microbesonline_go <- function(id="160490", name_type="ncbi_tag", name=NULL)
   return(result_df)
 }
 
+#' Extract the set of KEGG categories by microbesonline locus
+#'
+#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
+#' to query.
+#'
+#' Tested in test_42ann_microbes.R
+#' I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
+#' At the very least, it does return a large number of them, which is a start.
+#'
+#' @param id Which species to query.
+#' @param name  Allowing for non-specific searches by species name.
+#' @return data frame of GO terms from pub.microbesonline.org
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  go_df <- get_loci_go(id="160490")
+#' }
+#' @export
 load_microbesonline_kegg <- function(id="160490", name=NULL) {
   chosen <- id
   if (!is.null(name)) {

@@ -4,7 +4,7 @@
 \alias{load_uniprot_annotations}
 \title{Read a uniprot text file and extract as much information from it as possible.}
 \usage{
-load_uniprot_annotations(file, savefile = TRUE)
+load_uniprot_annotations(file = NULL, savefile = TRUE)
 }
 \arguments{
 \item{file}{Uniprot file to read and parse}

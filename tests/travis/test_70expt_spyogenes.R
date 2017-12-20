@@ -99,7 +99,7 @@ test_that("Did the mgas annotations download?", {
     expect_equal(expected, actual)
 })
 
-mgas_go <- load_microbesonline_go(taxon)
+mgas_go <- sm(load_microbesonline_go(taxon))
 mgas_go <- mgas_go[, c("name", "acc")]
 mgas_go <- unique(mgas_go)
 expected <- c(2806, 2)
