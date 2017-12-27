@@ -11,8 +11,8 @@ load("gsea_siggenes.rda")
 ## File does not exist."
 ## Strangely, running it interactively does not give this at any point.
 ## Thus I am not sure where to fix it.
-tp_result <- simple_topgo(fcp_sig_genes, go_db=dmel_ontologies,
-                          excel="topgo.xlsx", pval_column="adj.P.Val")
+tp_result <- sm(simple_topgo(fcp_sig_genes, go_db=dmel_ontologies,
+                             excel="topgo.xlsx", pval_column="adj.P.Val"))
 test_that("Did we get an excel output?", {
   expect_true(file.exists("topgo.xlsx"))
 })

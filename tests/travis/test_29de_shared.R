@@ -314,19 +314,19 @@ combined_sva <- sm(combine_de_tables(hpgl_sva_result,
                                      keepers=test_keepers))
 sva_batch_test <- sm(compare_de_results(combined_excel, combined_sva))
 expected <- 0.96
-actual <- sva_batch_test[["limma"]][["treated_vs_untreated"]][["logfc"]]
+actual <- sva_batch_test[["result"]][["limma"]][["treated_vs_untreated"]][["logfc"]]
 test_that("Do limma with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
 })
 
 expected <- 0.99
-actual <- sva_batch_test[["deseq"]][["treated_vs_untreated"]][["logfc"]]
+actual <- sva_batch_test[["result"]][["deseq"]][["treated_vs_untreated"]][["logfc"]]
 test_that("Do deseq with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
 })
 
 expected <- 0.99
-actual <- sva_batch_test[["edger"]][["treated_vs_untreated"]][["logfc"]]
+actual <- sva_batch_test[["result"]][["edger"]][["treated_vs_untreated"]][["logfc"]]
 test_that("Do edger with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
 })

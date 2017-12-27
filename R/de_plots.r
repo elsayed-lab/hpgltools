@@ -324,7 +324,16 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' }
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
-  ## arglist <- list(...)
+  arglist <- list(...)
+  if (!is.null(table[["data"]])) {
+    ## Then this is the result of combine_de
+    retlist <- list()
+    for (i in 1:length(names(table[["data"]]))) {
+      a_table <- table[["data"]][[i]]
+      retlist[[i]] <- de_venn(a_table, adjp=adjp, euler=euler, p=p, lfc=lfc, arglist)
+    }
+    return(retlist)
+  }
   combine_tables <- function(d, e, l) {
     ddf <- as.data.frame(l[, "limma_logfc"])
     rownames(ddf) <- rownames(l)

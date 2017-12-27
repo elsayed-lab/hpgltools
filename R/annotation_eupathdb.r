@@ -89,10 +89,6 @@ do_eupath_table <- function(type, granges=NULL, provider=NULL, genus_species=NUL
   if (class(a_result) == "try-error") {
     a_result <- data.frame()
   }
-  colnames(a_result) <- toupper(colnames(a_result))
-
-  end_time <- as.POSIXlt(Sys.time())
-  elapsed_time <- round(x=as.numeric(end_time) - as.numeric(start_time))
   
   retlist <- list("type" = type,
                   "elapsed" = elapsed_time,
@@ -487,6 +483,7 @@ get_eupath_text <- function(species=NULL, entry=NULL,
   } else if (is.null(entry)) {
     if (is.null(metadata)) {
       metadata <- download_eupath_metadata(dir=dir, ...)
+    ##  metadata <- download_eupath_metadata(dir=dir)
     }
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
@@ -542,7 +539,12 @@ get_eupath_text <- function(species=NULL, entry=NULL,
     file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=FALSE)
     temp_options <- options(original_options)
   }
-  result <- jsonlite::fromJSON(destfile)
+  result <- try(jsonlite::fromJSON(destfile))
+  if (class(result) == "try-error") {
+    message("The request seems to have failed:")
+    message(request_url)
+    return(NULL)
+  }
   message("- Finished query.")
   dat <- data.table::as.data.table(result[["response"]][["recordset"]][["records"]])
   data <- data.table::as.data.table(dat[["id"]])
@@ -1531,6 +1533,16 @@ retrieve_eupathdb_attributes <- function(provider="TriTrypDB",
     saved <- save(list="result", file=savefile)
   }
   return(result)
+}
+
+get_snps_by_gene_sample <- function(retlst, annotation) {
+  ## At some point we will want to identify genes with the
+  ## snps by sample.
+  ## Pieces taken from: https://support.bioconductor.org/p/67118/
+  cnv = makeGRangesFromDataFrame(df)
+  gns = geneRanges(Homo.sapiens, column="SYMBOL")
+  symInCnv = splitByOverlap(gns, cnv, "SYMBOL")
+
 }
 
 ## EOF

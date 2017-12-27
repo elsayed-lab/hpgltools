@@ -56,7 +56,7 @@ test_that("Do we get the expected keytypes from an ah orgdb?", {
 })
 
 ## map_orgdb_ids()
-testing <- map_orgdb_ids(orgdb=testing)
+testing <- sm(map_orgdb_ids(orgdb=testing))
 expected <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
               "ENSG00000171428", "ENSG00000156006", NA)
 actual <- head(testing[["ensembl"]])

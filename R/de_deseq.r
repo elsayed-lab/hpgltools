@@ -246,6 +246,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
       result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
       result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
+      result_nas <- is.na(result)
+      result[result_nas] <- 0
       result_name <- paste0(numerator, "_vs_", denominator)
       denominators[[result_name]] <- denominator
       numerators[[result_name]] <- numerator

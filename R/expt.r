@@ -829,6 +829,44 @@ median_by_factor <- function(data, fact="condition") {
   return(medians)
 }
 
+#' Create a Schizosaccharomyces cerevisiae expt.
+#'
+#' @param annotation  Add annotation data?
+#' @export
+make_pombe_expt <- function(annotation=TRUE) {
+  tt <- sm(require.auto("fission"))
+  tt <- sm(requireNamespace("fission"))
+  tt <- sm(try(attachNamespace("fission"), silent=TRUE))
+  tt <- data(fission)
+  meta <- as.data.frame(fission@colData)
+  meta[["condition"]] <- paste0(meta[["strain"]], ".", meta[["minute"]])
+  meta[["batch"]] <- meta[["replicate"]]
+  meta[["sample.id"]] <- rownames(meta)
+  fission_data <- fission@assays$data[["counts"]]
+
+  annotations <- NULL
+  if (isTRUE(annotation)) {
+    ## Neat, it works, and even figures out that the default mart is incorrect by itself.
+    pombe_annotations <- sm(load_biomart_annotations(
+      host="fungi.ensembl.org",
+      trymart="fungal_mart",
+      trydataset="spombe_eg_gene",
+      gene_requests=c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+                      "hgnc_symbol", "description", "gene_biotype"),
+      species="spombe", overwrite=TRUE))
+    pombe_mart <- pombe_annotations[["mart"]]
+    annotations <- pombe_annotations[["annotation"]]
+    rownames(annotations) <- make.names(gsub(pattern="\\.\\d+$",
+                                             replacement="",
+                                             x=rownames(annotations)), unique=TRUE)
+  }
+  pombe_expt <- sm(create_expt(metadata=meta,
+                               count_dataframe=fission_data,
+                               gene_info=annotations))
+  detach("package:fission")
+  return(pombe_expt)
+}
+
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
 #' It is worth noting that this function has some logic intended for the elsayed lab's data
@@ -1047,13 +1085,13 @@ read_metadata <- function(file, ...) {
 #' @param ids  Specific samples to change.
 #' @param ...  Extra options are like spinach.
 #' @return  The original expt with some new metadata.
-#' @seealso \code{\link{create_expt}} \code{\link{set_expt_condition}}
+#' @seealso \code{\link{create_expt}} \code{\link{set_expt_conditions}}
 #' @examples
 #' \dontrun{
-#'  expt = set_expt_batch(big_expt, factor=c(some,stuff,here))
+#'  expt = set_expt_batches(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
-set_expt_batch <- function(expt, fact, ids=NULL, ...) {
+set_expt_batches <- function(expt, fact, ids=NULL, ...) {
   arglist <- list(...)
   original_batches <- expt[["batches"]]
   original_length <- length(original_batches)
@@ -1085,7 +1123,7 @@ set_expt_batch <- function(expt, fact, ids=NULL, ...) {
 #' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
 #' @param change_by  Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
@@ -1188,13 +1226,13 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @param ids Specific sample IDs to change.
 #' @param ...  Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_batch}} \code{\link{create_expt}}
+#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
 #' @examples
 #' \dontrun{
-#'  expt = set_expt_condition(big_expt, factor=c(some,stuff,here))
+#'  expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
-set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
+set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
   arglist <- list(...)
   original_conditions <- expt[["conditions"]]
   original_length <- length(original_conditions)
@@ -1247,7 +1285,7 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
 #' @param ids Specific sample IDs to change.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition="column", batch="another_column")
@@ -1256,10 +1294,10 @@ set_expt_condition <- function(expt, fact=NULL, ids=NULL, ...) {
 set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
   arglist <- list(...)
   if (!is.null(condition)) {
-    expt <- set_expt_condition(expt, fact=condition, ...)
+    expt <- set_expt_conditions(expt, fact=condition, ...)
   }
   if (!is.null(batch)) {
-    expt <- set_expt_batch(expt, fact=batch, ...)
+    expt <- set_expt_batches(expt, fact=batch, ...)
   }
   return(expt)
 }
@@ -1271,7 +1309,7 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 #' @param expt Expt to modify
 #' @param newnames New names, currently only a character vector.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
@@ -2022,6 +2060,34 @@ setMethod("fData", signature="expt",
 setMethod("pData", signature="expt",
           function(object) {
             Biobase::pData(object[["expressionset"]])
+          })
+
+#' Extend Biobase::sampleNames to handle expt objects.
+#'
+#' @name sampleNames
+#' @aliases sampleNames, sampleNames-methods
+#' @param object  The expt object from which to extract the expressionset.
+#' @importFrom Biobase sampleNames
+#' @docType methods
+#' @rdname sampleNames-methods
+#' @export sampleNames
+setMethod("sampleNames", signature="expt",
+          function(object) {
+            Biobase::sampleNames(object[["expressionset"]])
+          })
+
+#' Extend Biobase::sampleNames<- to handle expt objects.
+#'
+#' @name sampleNames<-
+#' @aliases sampleNames<-, sampleNames<--methods
+#' @param object  The expt object from which to extract the expressionset.
+#' @importFrom Biobase sampleNames<-
+#' @docType methods
+#' @rdname sampleNamesto-methods
+#' @export sampleNames<-
+setMethod("sampleNames<-", signature="expt",
+          function(object) {
+            set_expt_samplenames(object)
           })
 
 #' Extend Biobase::notes to handle expt objects.

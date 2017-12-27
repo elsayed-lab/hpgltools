@@ -6,8 +6,8 @@
 \usage{
 choose_model(input, conditions = NULL, batches = NULL, model_batch = TRUE,
   model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
-  alt_string = NULL, intercept = 0, reverse = FALSE, surrogates = "be",
-  ...)
+  alt_string = NULL, intercept = 0, reverse = FALSE, contr = NULL,
+  surrogates = "be", ...)
 }
 \arguments{
 \item{input}{Input data used to make the model.}

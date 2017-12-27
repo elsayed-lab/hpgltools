@@ -1271,19 +1271,26 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
       kept_annotations <- names(abundances)
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
-      used_data <- merge(data.frame(abundances), annotations, by="row.names", all.x=TRUE)
-      rownames(used_data) <- used_data[["Row.names"]]
-      used_data <- used_data[, -1]
-      title <- paste0("Table SXXX: Abundant genes in ", coef, " according to ", according, ".")
-      xls_result <- write_xls(data=used_data, wb=wb, sheet=sheetname, title=title)
+      if (nrow(annotations) > 0 & ncol(annotations) > 0) {
+        used_data <- merge(data.frame(abundances), annotations, by="row.names", all.x=TRUE)
+        rownames(used_data) <- used_data[["Row.names"]]
+        used_data <- used_data[, -1]
+      } else {
+        used_data <- as.data.frame(abundances)
+      }
+      if (class(excel) == "character") {
+        title <- paste0("Table SXXX: Abundant genes in ", coef, " according to ", according, ".")
+        xls_result <- write_xls(data=used_data, wb=wb, sheet=sheetname, title=title)
+      }
     }
   }
 
-  excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+  if (class(excel) == "character") {
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+  }
   ret <- list(
     "with_annotations" = final_list,
     "abundances" = abundant_lists)
-
   return(ret)
 }
 
@@ -1888,6 +1895,9 @@ make_intersect <- function(limma, deseq, edger) {
 #' @export
 write_de_table <- function(data, type="limma", ...) {
   arglist <- list(...)
+  if (!is.null(data[[type]])) {
+    data <- data[[type]]    
+  }
   excel <- arglist[["excel"]]
   if (is.null(excel)) {
     excel <- "table.xlsx"

@@ -86,7 +86,9 @@ basic_pairwise <- function(input=NULL, design=NULL,
   lenminus <- num_conds - 1
   num_done <- 0
   column_list <- c()
-  message("Basic step 2/3: Performing comparisons.")
+  total_contrasts <- length(levels(as.factor(conditions)))
+  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  message(paste0("Basic step 2/3: Performing ", total_contrasts, " comparisons."))
   num_comparisons <- sum(1:lenminus)
 
   contrasts_performed <- c()

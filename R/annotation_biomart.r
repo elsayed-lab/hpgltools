@@ -30,6 +30,7 @@
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                      host="dec2016.archive.ensembl.org", drop_haplotypes=TRUE,
                                      trymart="ENSEMBL_MART_ENSEMBL",
+                                     trydataset=NULL,
                                      gene_requests=c("ensembl_gene_id",
                                                      "version",
                                                      "ensembl_transcript_id",
@@ -74,11 +75,16 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     used_mart <- trymart
   }
   chosen_dataset <- NULL
-  dataset <- paste0(species, "_gene_ensembl")
+  dataset <- NULL
+  if (!is.null(trydataset)) {
+    dataset <- trydataset
+  } else {
+    dataset <- paste0(species, "_gene_ensembl")
+  }
   second_dataset <- paste0(species, "_eg_gene")
   ensembl <- try(biomaRt::useDataset(dataset, mart=mart))
   if (class(ensembl) == "try-error") {
-    ensembl <- try(biomaRt::useDataset(second_dataset, mart=mart))
+    ensembl <- try(biomaRt::useDataset(second_dataset, mart=mart), silent=TRUE)
     if (class(ensembl) == "try-error") {
       message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ", dataset, "."))
       datasets <- biomaRt::listDatasets(mart=mart)

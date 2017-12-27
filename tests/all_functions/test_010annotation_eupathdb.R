@@ -28,7 +28,7 @@ if (class(eupath_test) != "try-error") {
 } else {
   message(paste0("Creation of orgdb/etc failed for ", species))
 }
-bsgenome_test <- make_eupath_bsgenome(species, reinstall=TRUE)
+bsgenome_test <- sm(make_eupath_bsgenome(species, reinstall=TRUE))
 test_that("Did the bsgenome get installed?", {
   expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
 })
