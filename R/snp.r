@@ -378,6 +378,47 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
   return(data_by_chr)
 }
 
+snps_vs_intersections <- function(expt, snp_result) {
+  features <- fData(expt)
+  features[["start"]] <- sm(as.numeric(features[["start"]]))
+  na_starts <- is.na(features[["start"]])
+  features <- features[!na_starts, ]
+  features[["end"]] <- as.numeric(features[["end"]])
+  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$", replacement="\\1", x=features[["seqnames"]])
+  expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
+
+  set_names <- snp_result[["set_names"]]
+  summaries <- list()
+  inters <- list()
+  for (inter in names(snp_result[["intersections"]])) {
+    inter_name <- set_names[[inter]]
+    inter_df <- data.frame(row.names=snp_result[["intersections"]][[inter]])
+    inter_df[["seqnames"]] <- gsub(pattern="^.+_(.+)_.+_.+_.+$",
+                                   replacement="\\1",
+                                   x=rownames(inter_df))
+    inter_df[["start"]] <- as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+                                           replacement="\\1",
+                                           x=rownames(inter_df)))
+    inter_df[["end"]] <- inter_df[["start"]] + 1
+    inter_df[["strand"]] <- "+"
+    inter_granges <- GenomicRanges::makeGRangesFromDataFrame(inter_df)
+    inter_by_gene <- IRanges::subsetByOverlaps(inter_granges,
+                                               expt_granges,
+                                               type="within",
+                                               ignore.strand=TRUE)
+    inters[[inter_name]] <- inter_by_gene
+    summarized_by_gene <- data.table::as.data.table(inter_by_gene)
+    summarized_by_gene[ , count := .N, by = list(seqnames)]
+    summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
+    summaries[[inter_name]] <- summarized_by_gene
+  }
+  
+  retlist <- list(
+    "inters" = inters,
+    "summaries" = summaries)
+  return(retlist)
+}
+
 #' Make a summary of the observed snps/gene
 #'
 #' @param expt  The original expressionset
@@ -390,6 +431,16 @@ snps_vs_genes <- function(expt, snp_result) {
   na_starts <- is.na(features[["start"]])
   features <- features[!na_starts, ]
   features[["end"]] <- as.numeric(features[["end"]])
+
+  ## I don't quite want 5'/3' UTRs, I just want the coordinates starting with
+  ## (either 1 or) the end of the last gene and ending with the beginning of the
+  ## current gene with respect to the beginning of each chromosome.
+  ## That is a weirdly difficult problem for creatures with more than 1 chromosome.
+  ## inter_features <- features[, c("start", "end", "seqnames")]
+  ## inter_features[["chr_start"]] <- paste0(inter_features[["seqnames"]], "_",
+  ##                                         inter_features[["start"]])
+  ## inter_feature_order <- order(inter_features[["chr_start"]])
+  ## inter_features <- inter_features[inter_feature_order, ]
 
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 

@@ -121,7 +121,6 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
   }
 
   retlist <- list()
-  print(id_list)
   for (t in 1:length(id_list)) {
     name <- names(id_list)[[t]]
     message(paste0("Querying microbesonline for: ", name, "."))

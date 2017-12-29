@@ -7,6 +7,12 @@ pa_ids <- sm(get_microbesonline_ids("PA14"))
 pa_id <- pa_ids[1, 1]
 pa_annotations <- sm(load_microbesonline_annotations(ids=pa_id)[[1]])
 pa_annotations <- data.table::as.data.table(pa_annotations)
+expected <- 6188
+actual <- nrow(pa_annotations)
+test_that("Do we get suitable Pseudomonas annotations?", {
+  expect_equal(expected, actual)
+})
+
 ## This provides the following columns:
 ## locusId, accession, GI, scaffoldId, start, stop, strand, sysName
 ## name, desc, COG, COGFun, COGDesc, TIGRFam, TIGRRoles, GO, EC, ECDesc
