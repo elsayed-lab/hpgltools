@@ -9,8 +9,8 @@ bioc_all(release = "3.5", mirror = "bioconductor.statistik.tu-dortmund.de",
   suppress_auto = TRUE, force = FALSE)
 }
 \arguments{
-\item{release}{Bioconductor release to use, should probably be adjusted to automatically find
-it.}
+\item{release}{Bioconductor release to use, should probably be adjusted to
+automatically find it.}
 
 \item{mirror}{Bioconductor mirror to use.}
 
@@ -28,9 +28,10 @@ it.}
 a number of packages installed
 }
 \description{
-This uses jsonlite to get a copy of all bioconductor packages by name and then iterates through
-them with BiocInstaller to install all of them.  It performs a sleep between each installation in
-an attempt to avoid being obnoxious.  As a result, it will of a necessity take forever.
+This uses jsonlite to get a copy of all bioconductor packages by name and
+then iterates through them with BiocInstaller to install all of them.  It
+performs a sleep between each installation in an attempt to avoid being
+obnoxious.  As a result, it will of a necessity take forever.
 }
 \examples{
 \dontrun{

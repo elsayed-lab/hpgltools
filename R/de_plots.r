@@ -206,7 +206,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
                                         p=NULL, lfc=NULL, n=NULL, loess=FALSE,
-                                        color_low="#DD0000", color_high="#7B9F35", ...) {
+                                        alpha=0.4, color_low="#DD0000", z_lines=FALSE,
+                                        color_high="#7B9F35", ...) {
   arglist <- list(...)
   ## This is an explicit test against all_pairwise() and reduces it to result from type.
   if (!is.null(output[[type]])) {
@@ -295,9 +296,9 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
   minvalue <- min(coefficient_df) - 1.0
   plot <- sm(plot_linear_scatter(df=coefficient_df, loess=loess, gvis_filename=gvis_filename,
                                  gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                 tooltip_data=tooltip_data, base_url=base_url,
+                                 tooltip_data=tooltip_data, base_url=base_url, alpha=alpha,
                                  pretty_colors=FALSE, color_low=color_low, color_high=color_high,
-                                 p=p, lfc=lfc, n=n, z=z))
+                                 p=p, lfc=lfc, n=n, z=z, z_lines=z_lines))
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits=c(minvalue, maxvalue)) +
     ggplot2::scale_y_continuous(limits=c(minvalue, maxvalue))

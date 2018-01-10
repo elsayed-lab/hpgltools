@@ -40,7 +40,7 @@ test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)
 })
 
-gbk2txdb_test <- sm(load_genbank_annotations())
+gbk2txdb_test <- sm(load_genbank_annotations(accession="AE009949"))
 expected <- 1895017
 actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
 test_that("The genbank txdb S.pyogenes genome's size is correct?", {

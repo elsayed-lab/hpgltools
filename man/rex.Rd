@@ -2,7 +2,8 @@
 % Please edit documentation in R/helpers_misc.r
 \name{rex}
 \alias{rex}
-\title{Resets the display and xauthority variables to the new computer I am using so that plot() works.}
+\title{Resets the display and xauthority variables to the new computer I am using so
+that plot() works.}
 \usage{
 rex(display = ":0")
 }

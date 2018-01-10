@@ -8,6 +8,7 @@
 #' genomes and such from genbank and dumping them into a local txdb instance.
 #'
 #' @param accession Accession to download and import
+#' @param reread  Re-read (download) the file from genbank
 #' @param savetxdb  Save a txdb package from this? FIXME THIS DOES NOT WORK.
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
@@ -17,10 +18,10 @@
 #'  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
 #' }
 #' @export
-load_genbank_annotations <- function(accession="AE009949", savetxdb=FALSE) {
+load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
     gbk <- NULL
     input_file <- paste0(accession, ".gb")
-    if (file.exists(input_file)) {
+    if (!isTRUE(reread) & file.exists(input_file)) {
         gbk <- genbankr::import(input_file)
         ## The file exists, read it
     } else {
