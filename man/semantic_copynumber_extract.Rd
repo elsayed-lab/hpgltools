@@ -4,36 +4,14 @@
 \alias{semantic_copynumber_extract}
 \title{Extract multicopy genes from up/down gene expression lists.}
 \usage{
-semantic_copynumber_extract(de_list, min_copies = 2, semantic = c("mucin",
-  "sialidase", "RHS", "MASP", "DGF", "GP63"), semantic_column = "1.tooltip")
+semantic_copynumber_extract(...)
 }
 \arguments{
-\item{de_list}{List of sets of genes deemed significantly
-up/down with a column expressing approximate count numbers.}
-
-\item{min_copies}{Keep only those genes with >= n putative
-copies.}
-
-\item{semantic}{Set of strings with gene names to exclude.}
-
-\item{semantic_column}{Column in the DE table used to find the
-semantic strings for removal.}
-}
-\value{
-Smaller list of up/down genes.
+\item{...}{Arguments for semantic_copynumber_filter()}
 }
 \description{
 The function semantic_copynumber_filter() is the inverse of this.
 }
 \details{
 Currently untested, used for Trypanosome analyses primarily, thus the default strings.
-}
-\examples{
- \dontrun{
-  pruned_tables <- semantic_copynumber_extract(combined)
-  ## Remove sialidases, mucin, RHS, MASP, DGF, and GP63 from a combined result.
-}
-}
-\seealso{
-\code{\link{semantic_copynumber_filter}}
 }

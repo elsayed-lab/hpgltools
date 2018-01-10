@@ -5,8 +5,10 @@ context("51gsea_siggenes.R: Do we get consistent sets of 'significant' genes for
 
 ## Use biomart's result to get the gene lengths etc.
 dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
+dmel_annotations <- dmel_annotations[["annotation"]]
 ## And ontology cateogies.
 dmel_ontologies <- sm(load_biomart_go(species="dmelanogaster"))
+dmel_ontologies <- dmel_ontologies[["go"]]
 ## Get the annotations ready to be recast as a gff file.
 dmel_annotations[["strand"]] <- ifelse(dmel_annotations[["strand"]] == "1", "+", "-")
 colnames(dmel_annotations) <- c("transcript_id", "gene_id", "gene_version", "transcript_version",

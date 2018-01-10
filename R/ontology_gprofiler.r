@@ -70,6 +70,8 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
   for (type in names(do_lst)) {
     message(sprintf(message_string, type, length(gene_ids), species))
     Sys.sleep(5)
+    ## To avoid the error: "'names' attribute [14] must be the same length as the vector [1]"
+    gene_ids <- as.vector(gene_ids)
     a_result <- try(gProfileR::gprofiler(
                                  query=gene_ids,
                                  organism=species,

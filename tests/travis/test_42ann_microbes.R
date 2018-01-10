@@ -39,7 +39,7 @@ test_that("Do we get the correct gene names for Streptococcus pyogenes?", {
 })
 
 ## The default is 160490, an E. coli strain.
-go_ids <- load_microbesonline_go(name="pyogenes%5005")
+go_ids <- sm(load_microbesonline_go(name="pyogenes%5005"))
 actual <- head(sort(unique(go_ids[["acc"]])))
 expected <- c("GO:0000015", "GO:0000062", "GO:0000074",
               "GO:0000105", "GO:0000150", "GO:0000154")

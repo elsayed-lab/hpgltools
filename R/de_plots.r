@@ -19,77 +19,67 @@
 extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
                              pval_cutoff=0.05, invert=FALSE, ...) {
   arglist <- list(...)
-
-  expr_col <- NULL
-  p_col <- NULL
-  fc_col <- "logFC"
-  if (type == "edger") {
-    expr_col <- "logCPM"
-    p_col <- "FDR"
-  } else if (type == "deseq") {
-    expr_col <- "baseMean"  ## This column will need to be changed from base 10 to log scale.
-    p_col <- "adj.P.Val"
-  } else if (type == "limma") {
-    expr_col <- "AveExpr"
-    p_col <- "adj.P.Val"
-  } else if (type == "basic") {
-    expr_col <- "numerator_median"
-    p_col <- "p"
-  } else {
-    stop("Unable to determine the type of plot to perform: deseq, limma, edger, or basic.")
+  table_source <- "all_pairwise"
+  ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
+  ## edger_pairwise, basic_pairwise, combine_de_tables.
+  if (!is.null(pairwise[["method"]])) {
+    if (pairwise[["method"]] != type) {
+      stop("The requested pairwise type and the provided input type do not match.")
+    }
   }
 
-  ## Step 1,  figure out of this is the result of: pairwise_edger(),
-  ## all_pairwise(),  or combine_de_tables().
-  ## Check if this is the result of all_pairwise()
-  ## If it is the result of all_pairwise(),  then it will have
-  ## the result of de_edger() sitting in the edger slot.
-  ## Therefore we are really only testing between combine() or all()
-
-  ## This is an explicit test against all_pairwise() and reduces it to the edger result.
-  if (!is.null(pairwise[[type]])) {
-    pairwise <- pairwise[[type]]
-  }
-  ## Unfortunately, the structure of a combine_de_tables() is different from that
-  ## of de_edger().  Ergo,  a little work will be required to get the data out
-  ## properly.
-
-  ## combined_de_tables provides: slots including 'data' and 'de_summary'
-  ## while de_edger provides: 'all_tables',  'contrasts_performed' and such.
-  possible_tables <- NULL
-  all_tables <- list()
-  the_table <- NULL
+  ## If the user did not ask for a specific table, assume the first one
+  wanted_table <- NULL
   if (is.null(table)) {
-    table <- 1
+    wanted_table <- 1
+  } else {
+    wanted_table <- table
   }
 
-  if (!is.null(pairwise[["data"]]) & class(pairwise[["data"]]) == "data.frame") {
-    ## This is from combining a single table.
-    ## Thus we need only pull the correct column names.
-    fc_col <- paste0(type, "_logfc")
-    p_col <- paste0(type, "_adjp")
-    expr_col <- NULL
-    all_tables[[table]] <- pairwise[["data"]]
-    possible_tables <- table
-    if (type == "deseq") {
-      expr_col <- "deseq_basemean"
-    } else if (type == "edger") {
-      expr_col <- "edger_logcpm"
-    } else if (type == "limma") {
-      expr_col <- "limma_ave"
-    } else if (type == "basic") {
-      expr_col <- "basic_nummed"
-    }
-    the_table <- pairwise[["data"]]
+  ## if it is in fact all_pairwise, then there should be a set of
+  ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
+  ## essentially convert the input by extracting the relevant type.
+  if (!is.null(pairwise[[type]])) {
+    table_source <- paste0(type, "_pairwise")
+    pairwise <- pairwise[[type]]
+  } else if (!is.null(pairwise[["data"]])) {
+    ## Then this came from combine_de...
+    table_source <- "combined"
+  } else if (!is.null(pairwise[["method"]])) {
+    table_source <- paste0(pairwise[["method"]], "_pairwise")
   } else {
-    ## Then this is combined_tables() output.
-    ## This makes things a bit more complicated, as we have multiple tables to search through and must set the correct columns for them.
-    ## Set the column names here, and choose the correct table below.
-    possible_tables <- pairwise[["contrast_list"]]
-    all_tables <- pairwise[["data"]]
-    fc_col <- paste0(type, "_logfc")
-    p_col <- paste0(type, "_adjp")
-    expr_col <- NULL
+    stop("Unable to determine the source of this data.")
+  }
+
+  ## Depending on the source, choose appropriate column names.
+  ## The expression column is the same across combined and _pairwise tables.
+  ## The fc and p columns change depending on context.
+  ## So does the set of possible tables.
+  expr_col <- NULL
+  fc_col <- NULL
+  p_col <- NULL
+  all_tables <- NULL
+  if (table_source == "deseq_pairwise") {
+    expr_col <- "baseMean"  ## This column will need to be changed from base 10 to log scale.
+    fc_col <- "logFC"  ## The most common
+    p_col <- "adj.P.Val"
+    all_tables <- pairwise[["all_tables"]]
+  } else if (table_source == "edger_pairwise") {
+    expr_col <- "logCPM"
+    fc_col <- "logFC"  ## The most common
+    p_col <- "FDR"
+    all_tables <- pairwise[["all_tables"]]
+  } else if (table_source == "limma_pairwise") {
+    expr_col <- "AveExpr"
+    fc_col <- "logFC"  ## The most common
+    p_col <- "adj.P.Val"
+    all_tables <- pairwise[["all_tables"]]
+  } else if (table_source == "basic_pairwise") {
+    expr_col <- "numerator_median"
+    fc_col <- "logFC"  ## The most common
+    p_col <- "p"
+    all_tables <- pairwise[["all_tables"]]
+  } else if (table_source == "combined") {
     if (type == "deseq") {
       expr_col <- "deseq_basemean"
     } else if (type == "edger") {
@@ -99,62 +89,73 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     } else if (type == "basic") {
       expr_col <- "basic_nummed"
     }
+    fc_col <- paste0(type, "_logfc")
+    p_col <- paste0(type, "_adjp")
+    all_tables <- pairwise[["data"]]
+  } else {
+    stop("Something went wrong, we should have only _pairwise and combined here.")
+  }
 
-    ## Now that we have the columns, figure out which table.
-    if (is.numeric(table)) {
-      ## It is possible to just request the 1st, second, etc table
-      the_table <- pairwise[["data"]][[table]]
-    } else if (grepl(pattern="_vs_", x=table)) {
-      ## The requested table might be a_vs_b, but sometimes a and b get flipped.
-      ## Figure that out here and return the appropriate table.
-      the_table <- table
-      revname <- strsplit(x=the_table, split="_vs_")
-      revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
-      possible_tables <- names(pairwise[["data"]])
-      if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
-        message("Trey you doofus, you reversed the name of the table.")
-        the_table <- revname
-      } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
-        stop("Unable to find the table in the set of possible tables.")
-      } else {
-        the_table <- pairwise[["data"]][[the_table]]
-      }
-    } else if (length(table) == 1) {
-      ## One might request a name from the keepers list
-      ## If so, figure that out here.
-      table_parts <- pairwise[["keepers"]][[table]]
-      if (is.null(table_parts)) {
-        stop("Unable to find the table in the set of possible tables.")
-      }
-      fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
-      revname <- paste0(table_parts[[2]], "_vs_", table_parts[[1]])
-      final_fwd_table <- pairwise[["data"]][[fwdname]]
-      final_rev_table <- pairwise[["data"]][[revname]]
-      if (is.null(final_fwd_table) & is.null(final_rev_table)) {
-        stop("The table seems to be missing?")
-      } else if (is.null(final_fwd_table)) {
-        message("Trey you doofus, you reversed the name of the table.")
-        the_table <- final_rev_table
-      } else {
-        the_table <- final_fwd_table
-      }
-    } else if (length(table) == 2) {
-      ## Perhaps one will ask for c(numerator, denominator)
-      the_table <- paste0(table[[1]], "_vs_", table[[2]])
-      revname <- strsplit(x=the_table, split="_vs_")
-      revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
-      possible_tables <- names(pairwise[["data"]])
-      if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
-        message("Trey you doofus, you reversed the name of the table.")
-        the_table <- revname
-      } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
-        stop("Unable to find the table in the set of possible tables.")
-      } else {
-        the_table <- pairwise[["data"]][[the_table]]
-      }
+  the_table <- NULL
+  ## Now that we have the columns, figure out which table.
+  if (class(all_tables) == "data.frame") {
+    ## This came from the creation of combine_de_tables()
+    the_table <- all_tables
+  } else if (is.numeric(wanted_table)) {
+    ## It is possible to just request the 1st, second, etc table
+    ##the_table <- pairwise[["data"]][[table]]
+    the_table <- all_tables[[wanted_table]]
+  } else if (grepl(pattern="_vs_", x=wanted_table)) {
+    ## The requested table might be a_vs_b, but sometimes a and b get flipped.
+    ## Figure that out here and return the appropriate table.
+    the_table <- wanted_table
+    revname <- strsplit(x=the_table, split="_vs_")
+    revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+    possible_tables <- names(all_tables)
+    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+      message("Trey you doofus, you reversed the name of the table.")
+      the_table <- all_tables[[revname]]
+    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+      stop("Unable to find the table in the set of possible tables.")
     } else {
-      stop("Unable to discern the table requested.")
+      the_table <- all_tables[[the_table]]
     }
+  } else if (length(wanted_table) == 1) {
+    ## One might request a name from the keepers list
+    ## If so, figure that out here.
+    table_parts <- pairwise[["keepers"]][[table]]
+    if (is.null(table_parts)) {
+      stop("Unable to find the table in the set of possible tables.")
+    }
+    fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
+    revname <- paste0(table_parts[[2]], "_vs_", table_parts[[1]])
+    final_fwd_table <- pairwise[["data"]][[fwdname]]
+    final_rev_table <- pairwise[["data"]][[revname]]
+    if (is.null(final_fwd_table) & is.null(final_rev_table)) {
+      stop("The table seems to be missing?")
+    } else if (is.null(final_fwd_table)) {
+      message("Trey you doofus, you reversed the name of the table.")
+      the_table <- all_tables[[final_rev_table]]
+    } else {
+      the_table <- all_tables[[final_fwd_table]]
+    }
+  } else if (length(wanted_table) == 2) {
+    ## Perhaps one will ask for c(numerator, denominator)
+    the_table <- paste0(wanted_table[[1]], "_vs_", wanted_table[[2]])
+    revname <- strsplit(x=the_table, split="_vs_")
+    revname <- paste0(revname[[1]][2], "_vs_", revname[[1]][1])
+    possible_tables <- names(pairwise[["data"]])
+    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+      message("Trey you doofus, you reversed the name of the table.")
+      the_table <- all_tables[[revname]]
+    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+      stop("Unable to find the table in the set of possible tables.")
+    } else {
+      ##the_table <- pairwise[["data"]][[the_table]]
+      the_tale <- all_tables[[the_table]]
+    }
+  } else {
+    stop("Unable to discern the table requested.")
   }
 
   ## DESeq2 returns the median values as base 10, but we are using log2 (or log10?)
@@ -171,6 +172,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     table=the_table, fc_col=fc_col,
     p_col=p_col, logfc_cutoff=logfc,
     pval_cutoff=pval_cutoff, ...) ##)
+
   retlist <- list(
     "ma" = ma_material,
     "volcano" = vol_material)
@@ -204,7 +206,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
                                         p=NULL, lfc=NULL, n=NULL, loess=FALSE,
-                                        color_low="#DD0000", color_high="#7B9F35", ...) {
+                                        alpha=0.4, color_low="#DD0000", z_lines=FALSE,
+                                        color_high="#7B9F35", ...) {
   arglist <- list(...)
   ## This is an explicit test against all_pairwise() and reduces it to result from type.
   if (!is.null(output[[type]])) {
@@ -293,9 +296,9 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
   minvalue <- min(coefficient_df) - 1.0
   plot <- sm(plot_linear_scatter(df=coefficient_df, loess=loess, gvis_filename=gvis_filename,
                                  gvis_trendline=gvis_trendline, first=xname, second=yname,
-                                 tooltip_data=tooltip_data, base_url=base_url,
+                                 tooltip_data=tooltip_data, base_url=base_url, alpha=alpha,
                                  pretty_colors=FALSE, color_low=color_low, color_high=color_high,
-                                 p=p, lfc=lfc, n=n, z=z))
+                                 p=p, lfc=lfc, n=n, z=z, z_lines=z_lines))
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits=c(minvalue, maxvalue)) +
     ggplot2::scale_y_continuous(limits=c(minvalue, maxvalue))
@@ -322,7 +325,16 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' }
 #' @export
 de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
-  ## arglist <- list(...)
+  arglist <- list(...)
+  if (!is.null(table[["data"]])) {
+    ## Then this is the result of combine_de
+    retlist <- list()
+    for (i in 1:length(names(table[["data"]]))) {
+      a_table <- table[["data"]][[i]]
+      retlist[[i]] <- de_venn(a_table, adjp=adjp, euler=euler, p=p, lfc=lfc, arglist)
+    }
+    return(retlist)
+  }
   combine_tables <- function(d, e, l) {
     ddf <- as.data.frame(l[, "limma_logfc"])
     rownames(ddf) <- rownames(l)

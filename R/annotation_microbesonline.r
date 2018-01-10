@@ -29,7 +29,6 @@ get_microbesonline_ids <- function(name="Escherichia", exact=FALSE) {
   } else {
     query <- paste0(query, "like '%", name, "%'")
   }
-  message(query)
   result <- DBI::dbSendQuery(connection, query)
   result_df <- DBI::fetch(result, n=-1)
   clear <- try(DBI::dbClearResult(result))
@@ -122,7 +121,6 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
   }
 
   retlist <- list()
-  print(id_list)
   for (t in 1:length(id_list)) {
     name <- names(id_list)[[t]]
     message(paste0("Querying microbesonline for: ", name, "."))
@@ -134,35 +132,6 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
     retlist[[name]] <- data
   }
   return(retlist)
-}
-
-#' Get the description of a microbesonline genomics table
-#'
-#' This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
-#' it might prove useful.
-#'
-#' @param table  Choose a table to query.
-#' @return Data frame describing the relevant table
-#' @seealso \pkg{DBI}
-#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
-#' @examples
-#' \dontrun{
-#'  description <- mdesc_table(table="Locus2Go")
-#' }
-mdesc_table <- function(table="Locus2Go") {
-  db_driver <- DBI::dbDriver("MySQL")
-  connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
-                               host="pub.microbesonline.org", dbname="genomics")
-  query <- paste0("DESCRIBE ", table)
-  message(query)
-  result <- DBI::dbSendQuery(connection, query)
-  result_df <- DBI::fetch(result, n=-1)
-  clear <- DBI::dbClearResult(result)
-  disconnect <- DBI::dbDisconnect(connection)
-  if (class(clear) == "try-error" | class(disconnect) == "try-error") {
-    warning("Did not disconnect cleanly.")
-  }
-  return(result_df)
 }
 
 #' Extract the set of GO categories by microbesonline locus
@@ -187,7 +156,10 @@ mdesc_table <- function(table="Locus2Go") {
 #' @export
 load_microbesonline_go <- function(id="160490", name_type="ncbi_tag", name=NULL) {
   chosen <- id
-  if (!is.null(name)) {
+  if (is.null(name)) {
+    name <- get_microbesonline_name(id=id)
+    message(paste0("Collecting go data for: ", name[1, 1], "."))
+  } else {
     chosen <- get_microbesonline_ids(name=name)
     message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
     chosen <- chosen[1, 1]
@@ -246,6 +218,25 @@ load_microbesonline_go <- function(id="160490", name_type="ncbi_tag", name=NULL)
   return(result_df)
 }
 
+#' Extract the set of KEGG categories by microbesonline locus
+#'
+#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
+#' to query.
+#'
+#' Tested in test_42ann_microbes.R
+#' I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
+#' At the very least, it does return a large number of them, which is a start.
+#'
+#' @param id Which species to query.
+#' @param name  Allowing for non-specific searches by species name.
+#' @return data frame of GO terms from pub.microbesonline.org
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  go_df <- get_loci_go(id="160490")
+#' }
+#' @export
 load_microbesonline_kegg <- function(id="160490", name=NULL) {
   chosen <- id
   if (!is.null(name)) {
@@ -273,8 +264,36 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
   }
   org <- result_df[1, 1] ## Grab the identifier
   message(paste0("The abbreviation for ", id, " is ", org, "."))
-  genepaths <- get_kegg_genepaths(abbreviation=org)
+  genepaths <- load_kegg_annotations(abbreviation=org)
   return(genepaths)
+}
+
+#' Get the description of a microbesonline genomics table
+#'
+#' This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
+#' it might prove useful.
+#'
+#' @param table  Choose a table to query.
+#' @return Data frame describing the relevant table
+#' @seealso \pkg{DBI}
+#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @examples
+#' \dontrun{
+#'  description <- mdesc_table(table="Locus2Go")
+#' }
+mdesc_table <- function(table="Locus2Go") {
+  db_driver <- DBI::dbDriver("MySQL")
+  connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
+                               host="pub.microbesonline.org", dbname="genomics")
+  query <- paste0("DESCRIBE ", table)
+  result <- DBI::dbSendQuery(connection, query)
+  result_df <- DBI::fetch(result, n=-1)
+  clear <- DBI::dbClearResult(result)
+  disconnect <- DBI::dbDisconnect(connection)
+  if (class(clear) == "try-error" | class(disconnect) == "try-error") {
+    warning("Did not disconnect cleanly.")
+  }
+  return(result_df)
 }
 
 ## EOF

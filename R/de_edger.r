@@ -66,7 +66,8 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   conditions <- as.factor(conditions)
   batches <- as.factor(batches)
 
-  model_choice <- choose_model(input, conditions, batches,
+  model_choice <- choose_model(input, conditions=conditions,
+                               batches=batches,
                                model_batch=model_batch,
                                model_cond=model_cond,
                                model_intercept=model_intercept,
@@ -155,7 +156,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   message("EdgeR step 8/9: Making pairwise contrasts.")
   apc <- make_pairwise_contrasts(model_data, conditions,
                                  extra_contrasts=extra_contrasts,
-                                 do_identities=FALSE)
+                                 do_identities=FALSE, ...)
   contrast_string <- apc[["contrast_string"]]
 
   ## This section is convoluted because glmLRT only seems to take up to 7 contrasts at a time.
@@ -173,11 +174,12 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     utils::setTxtProgressBar(bar, pct_done)
     sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
     tt <- parse(text=sc[[name]])
-    ctr_string <- paste0("tt = limma::makeContrasts(", tt, ", levels=model_data)")
+    ctr_string <- paste0("tt = mymakeContrasts(", tt, ", levels=model_data)")
     eval(parse(text=ctr_string))
     contrast_list[[name]] <- tt
     lrt_list[[name]] <- NULL
-    tt <- sm(library(edgeR))
+    tt <- sm(requireNamespace("edgeR"))
+    tt <- sm(try(attachNamespace("edgeR"), silent=TRUE))
     if (edger_test == "lrt") {
       lrt_list[[name]] <- edgeR::glmLRT(cond_fit, contrast=contrast_list[[name]])
     } else {
@@ -217,6 +219,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     "dispersion_plot" = dispersion_plot,
     "input_data" = input,
     "lrt" = lrt_list,
+    "method" = "edger",
     "model" = model_data,
     "model_string" = model_string)
   if (!is.null(arglist[["edger_excel"]])) {

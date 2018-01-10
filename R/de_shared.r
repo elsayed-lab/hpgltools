@@ -303,236 +303,90 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   return(ret)
 }
 
-#' Try out a few experimental models and return a likely working option.
+#' A sanity check that a given set of data is suitable for analysis by edgeR or DESeq2.
 #'
-#' The _pairwise family of functions all demand an experimental model.  This tries to choose a
-#' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
-#' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
+#' Take an expt and poke at it to ensure that it will not result in troubled results.
 #'
-#' Invoked by the _pairwise() functions.
+#' Invoked by deseq_pairwise() and edger_pairwise().
 #'
-#' @param input  Input data used to make the model.
-#' @param conditions  Factor of conditions in the putative model.
-#' @param batches  Factor of batches in the putative model.
-#' @param model_batch  Try to include batch in the model?
-#' @param model_cond  Try to include condition in the model? (Yes!)
-#' @param model_intercept  Use an intercept model instead of cell-means?
-#' @param alt_model  Use your own model.
-#' @param alt_string  String describing an alternate model.
-#' @param intercept  Choose an intercept for the model as opposed to 0.
-#' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
-#'  to test.
-#' @param surrogates  Number of or method used to choose the number of surrogate variables.
-#' @param ...  Further options are passed to arglist.
-#' @return List including a model matrix and strings describing cell-means and intercept models.
-#' @seealso \pkg{stats}
-#'  \code{\link[stats]{model.matrix}}
-#' @examples
-#'  \dontrun{
-#'   a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
-#'   a_model$chosen_model
-#'   ## ~ 0 + condition + batch
-#' }
-#' @export
-choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
-                         model_cond=TRUE, model_intercept=FALSE,
-                         alt_model=NULL, alt_string=NULL,
-                         intercept=0, reverse=FALSE,
-                         surrogates="be", ...) {
-  arglist <- list(...)
-  design <- pData(input)
-  if (is.null(design)) {
-    conditions <- as.factor(conditions)
-    batches <- as.factor(batches)
-    design <- data.frame("condition" = conditions,
-                         "batch" = batches,
-                         stringsAsFactors=TRUE)
-  }
-  ## Make a model matrix which will have one entry for
-  ## each of the condition/batches
-  ## It would be much smarter to generate the models in the following if() {} blocks
-  ## But I have it in my head to eventually compare results using different models.
+#' @param input Expressionset containing expt object.
+#' @param force Ignore every warning and just use this data.
+#' @param ... Extra arguments passed to arglist.
+#' @return dataset suitable for limma analysis
+#' @seealso \pkg{DESeq2} \pkg{edgeR}
+choose_binom_dataset <- function(input, force=FALSE, ...) {
+  ## arglist <- list(...)
+  input_class <- class(input)[1]
+  ## I think I would like to make this function smarter so that it will remove the log2 from
+  ## transformed data.
+  data <- NULL
+  warn_user <- 0
+  if (input_class == "expt") {
+    conditions <- input[["conditions"]]
+    batches <- input[["batches"]]
+    data <- as.data.frame(exprs(input))
+    ## As I understand it, EdgeR fits a binomial distribution
+    ## and expects data as integer counts, not floating point nor a log2 transformation
+    ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
+    ## violation of its stated preferred/demanded input.  There are of course ways around this
+    ## but one should not take them lightly, or ever.
+    tran_state <- input[["state"]][["transform"]]
+    if (is.null(tran_state)) {
+      tran_state <- "raw"
+    }
+    conv_state <- input[["state"]][["conversion"]]
+    if (is.null(conv_state)) {
+      conv_state <- "raw"
+    }
+    norm_state <- input[["state"]][["normalization"]]
+    if (is.null(norm_state)) {
+      norm_state <- "raw"
+    }
+    filt_state <- input[["state"]][["filter"]]
+    if (is.null(filt_state)) {
+      filt_state <- "raw"
+    }
+    if (norm_state == "round") {
+      norm_state <- "raw"
+    }
 
-  ## The previous iteration of this had an explicit contrasts.arg set, like this:
-  ##contrasts.arg=list(condition="contr.treatment"))
-  ## Which looked like this for a full invocation:
-  ## condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-  ##                                                contrasts.arg=list(condition="contr.treatment",
-  ##                                                                   batch="contr.treatment")),
-  ## The contrasts.arg has been removed because it seems to result in the same model.
-
-  cond_noint_string <- "~ 0 + condition"
-  cond_noint_model <- try(stats::model.matrix(as.formula(cond_noint_string),
-                                              data=design), silent=TRUE)
-
-  batch_noint_string <- "~ 0 + batch"
-  batch_noint_model <- try(stats::model.matrix(as.formula(batch_noint_string),
-                                               data=design), silent=TRUE)
-  condbatch_noint_string <- "~ 0 + condition + batch"
-
-  condbatch_noint_model <- try(stats::model.matrix(as.formula(condbatch_noint_string),
-                                                   data=design), silent=TRUE)
-  batchcond_noint_string <- "~ 0 + batch + condition"
-  batchcond_noint_model <- try(stats::model.matrix(as.formula(batchcond_noint_string),
-                                                   data=design), silent=TRUE)
-  cond_int_string <- "~ condition"
-  cond_int_model <- try(stats::model.matrix(as.formula(cond_int_string),
-                                            data=design), silent=TRUE)
-  batch_int_string <- "~ batch"
-  batch_int_model <- try(stats::model.matrix(as.formula(batch_int_string),
-                                             data=design), silent=TRUE)
-  condbatch_int_string <- "~ condition + batch"
-  condbatch_int_model <- try(stats::model.matrix(as.formula(condbatch_int_string),
-                                                 data=design), silent=TRUE)
-  batchcond_int_string <- "~ batch + condition"
-  batchcond_int_model <- try(stats::model.matrix(as.formula(batchcond_int_string),
-                                                 data=design), silent=TRUE)
-
-  noint_model <- NULL
-  int_model <- NULL
-  noint_string <- NULL
-  int_string <- NULL
-  including <- NULL
-  if (!is.null(alt_model)) {
-    chosen_model <- stats::model.matrix(object=as.formula(alt_model), data=design)
-    int_model <- chosen_model
-    noint_model <- chosen_model
-    int_string <- alt_model
-    notint_string <- alt_model
-    including <- "alt"
-  } else if (is.null(model_batch)) {
-    int_model <- cond_int_model
-    noint_model <- cond_noint_model
-    int_string <- cond_int_string
-    noint_string <- cond_noint_string
-    including <- "condition"
-  } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
-    if (class(condbatch_int_model) == "try-error") {
-      message("The condition+batch model failed.  Does your experimental design support
-both condition and batch? Using only a conditional model.")
-      int_model <- cond_int_model
-      noint_model <- cond_noint_model
-      int_string <- cond_int_string
-      noint_string <- cond_noint_string
-      including <- "condition"
-    } else if (isTRUE(reverse)) {
-      int_model <- batchcond_int_model
-      noint_model <- batchcond_noint_model
-      int_string <- batchcond_int_string
-      noint_string <- batchcond_noint_string
-      including <- "batch+condition"
+    if (isTRUE(force)) {
+      ## Setting force to TRUE allows one to round the data to fool edger/deseq into accepting it
+      ## This is a pretty terrible thing to do
+      message("About to round the data, this is a pretty terrible thing to do. But if you,
+like me, want to see what happens when you put non-standard data into deseq, then here you go.")
+      data <- round(data)
+      less_than <- data < 0
+      data[less_than] <- 0
+      warn_user <- 1
+    } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
+      ## These if statements may be insufficient to check for the appropriate input for deseq.
+      data <- exprs(input[["original_expressionset"]])
+    } else if (norm_state != "raw" | tran_state != "raw") {
+      ## This makes use of the fact that the order of operations in the normalization
+      ## function is static. filter->normalization->convert->batch->transform.
+      ## Thus, if the normalized state is not raw, we can look back either to the filtered
+      ## or original data. The same is true for the transformation state.
+      message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
+      data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
+      if (is.null(data)) {
+        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
+      }
     } else {
-      int_model <- condbatch_int_model
-      noint_model <- condbatch_noint_model
-      int_string <- condbatch_int_string
-      noint_string <- condbatch_noint_string
-      including <- "condition+batch"
+      message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
+the state of the count table and ensure that it is in integer counts.")
     }
-  } else if (class(model_batch) == "character") {
-    ## Then calculate the estimates using get_model_adjust
-    message("Extracting surrogate estimate from sva/ruv/pca and adding them to the model.")
-    model_batch_info <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
-    ## Changing model_batch from 'sva' to the resulting matrix.
-    ## Hopefully this will simplify things later for me.
-    model_batch <- model_batch_info[["model_adjust"]]
-    int_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    sv_names <- paste0("SV", 1:ncol(model_batch))
-    noint_string <- cond_noint_string
-    int_string <- cond_int_string
-    sv_string <- ""
-    for (sv in sv_names) {
-      sv_string <- paste0(sv_string, " + ", sv)
-    }
-    noint_string <- paste0(noint_string, sv_string)
-    int_string <- paste0(int_string, sv_string)
-    rownames(model_batch) <- rownames(int_model)
-    including <- paste0("condition", sv_string)
-  } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
-    message("Including batch estimates from sva/ruv/pca in the model.")
-    int_model <- stats::model.matrix(~ condition + model_batch, data=design)
-    noint_model <- stats::model.matrix(~ 0 + condition + model_batch, data=design)
-    sv_names <- paste0("SV", 1:ncol(model_batch))
-    int_string <- cond_int_string
-    noint_string <- cond_noint_string
-    sv_string <- ""
-    for (sv in sv_names) {
-      sv_string <- paste0(sv_string, " + ", sv)
-    }
-    int_string <- paste0(int_string, sv_string)
-    noint_string <- paste0(noint_string, sv_string)
-    rownames(model_batch) <- rownames(int_model)
-    including <- paste0("condition", sv_string)
-  } else if (isTRUE(model_cond)) {
-    int_model <- cond_int_model
-    noint_model <- cond_noint_model
-    int_string <- cond_int_string
-    noint_string <- cond_noint_string
-    including <- "condition"
-  } else if (isTRUE(model_batch)) {
-    int_model <- batch_int_model
-    noint_model <- batch_noint_model
-    int_string <- batch_int_string
-    noint_string <- batch_noint_string
-    including <- "batch"
+    ## End testing if normalization has been performed
   } else {
-    ## Default to the conditional model
-    int_model <- cond_int_model
-    noint_model <- cond_noint_model
-    int_string <- cond_int_string
-    noint_string <- cond_noint_string
-    including <- "condition"
+    data <- as.data.frame(input)
   }
-
-  tmpnames <- colnames(int_model)
-  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
-  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
-  ## The next lines ensure that conditions/batches which are all numeric will not cause weird
-  ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
-  ## Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub(pattern="^condition(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="^batch(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
-  colnames(int_model) <- tmpnames
-
-  tmpnames <- colnames(noint_model)
-  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
-  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
-  ## The next lines ensure that conditions/batches which are all numeric will not cause weird
-  ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
-  ## Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub(pattern="condition^(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="batch^(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
-  colnames(noint_model) <- tmpnames
-
-  chosen_model <- NULL
-  chosen_string <- NULL
-  if (isTRUE(model_intercept)) {
-    message("Choosing the intercept containing model.")
-    chosen_model <- int_model
-    chosen_string <- int_string
-  } else {
-    message("Choosing the non-intercept containing model.")
-    chosen_model <- noint_model
-    chosen_string <- noint_string
-  }
-
   retlist <- list(
-    "int_model" = int_model,
-    "noint_model" = noint_model,
-    "int_string" = int_string,
-    "noint_string" = noint_string,
-    "chosen_model" = chosen_model,
-    "chosen_string" = chosen_string,
-    "model_batch" = model_batch,
-    "including" = including)
+    "conditions" = conditions,
+    "batches" = batches,
+    "data" = data)
+  if (warn_user == 1) {
+    warning("This data was inappropriately forced into integers.")
+  }
   return(retlist)
 }
 
@@ -668,90 +522,274 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
   return(retlist)
 }
 
-#' A sanity check that a given set of data is suitable for analysis by edgeR or DESeq2.
+#' Try out a few experimental models and return a likely working option.
 #'
-#' Take an expt and poke at it to ensure that it will not result in troubled results.
+#' The _pairwise family of functions all demand an experimental model.  This tries to choose a
+#' consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
+#' nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
 #'
-#' Invoked by deseq_pairwise() and edger_pairwise().
+#' Invoked by the _pairwise() functions.
 #'
-#' @param input Expressionset containing expt object.
-#' @param force Ignore every warning and just use this data.
-#' @param ... Extra arguments passed to arglist.
-#' @return dataset suitable for limma analysis
-#' @seealso \pkg{DESeq2} \pkg{edgeR}
-choose_binom_dataset <- function(input, force=FALSE, ...) {
-  ## arglist <- list(...)
-  input_class <- class(input)[1]
-  ## I think I would like to make this function smarter so that it will remove the log2 from
-  ## transformed data.
-  data <- NULL
-  warn_user <- 0
-  if (input_class == "expt") {
-    conditions <- input[["conditions"]]
-    batches <- input[["batches"]]
-    data <- as.data.frame(exprs(input))
-    ## As I understand it, EdgeR fits a binomial distribution
-    ## and expects data as integer counts, not floating point nor a log2 transformation
-    ## Thus, having the 'normalization' state set to something other than 'raw' is a likely
-    ## violation of its stated preferred/demanded input.  There are of course ways around this
-    ## but one should not take them lightly, or ever.
-    tran_state <- input[["state"]][["transform"]]
-    if (is.null(tran_state)) {
-      tran_state <- "raw"
-    }
-    conv_state <- input[["state"]][["conversion"]]
-    if (is.null(conv_state)) {
-      conv_state <- "raw"
-    }
-    norm_state <- input[["state"]][["normalization"]]
-    if (is.null(norm_state)) {
-      norm_state <- "raw"
-    }
-    filt_state <- input[["state"]][["filter"]]
-    if (is.null(filt_state)) {
-      filt_state <- "raw"
-    }
-    if (norm_state == "round") {
-      norm_state <- "raw"
-    }
+#' @param input  Input data used to make the model.
+#' @param conditions  Factor of conditions in the putative model.
+#' @param batches  Factor of batches in the putative model.
+#' @param model_batch  Try to include batch in the model?
+#' @param model_cond  Try to include condition in the model? (Yes!)
+#' @param model_intercept  Use an intercept model instead of cell-means?
+#' @param alt_model  Use your own model.
+#' @param alt_string  String describing an alternate model.
+#' @param intercept  Choose an intercept for the model as opposed to 0.
+#' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
+#'  to test.
+#' @param surrogates  Number of or method used to choose the number of surrogate variables.
+#' @param ...  Further options are passed to arglist.
+#' @return List including a model matrix and strings describing cell-means and intercept models.
+#' @seealso \pkg{stats}
+#'  \code{\link[stats]{model.matrix}}
+#' @examples
+#'  \dontrun{
+#'   a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
+#'   a_model$chosen_model
+#'   ## ~ 0 + condition + batch
+#' }
+#' @export
+choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
+                         model_cond=TRUE, model_intercept=FALSE,
+                         alt_model=NULL, alt_string=NULL,
+                         intercept=0, reverse=FALSE, contr=NULL,
+                         surrogates="be", ...) {
+  arglist <- list(...)
+  design <- pData(input)
+  if (is.null(design)) {
+    conditions <- as.factor(conditions)
+    batches <- as.factor(batches)
+    design <- data.frame("condition" = conditions,
+                         "batch" = batches,
+                         stringsAsFactors=TRUE)
+  }
+  ## Make a model matrix which will have one entry for
+  ## each of the condition/batches
+  ## It would be much smarter to generate the models in the following if() {} blocks
+  ## But I have it in my head to eventually compare results using different models.
 
-    if (isTRUE(force)) {
-      ## Setting force to TRUE allows one to round the data to fool edger/deseq into accepting it
-      ## This is a pretty terrible thing to do
-      message("About to round the data, this is a pretty terrible thing to do. But if you,
-like me, want to see what happens when you put non-standard data into deseq, then here you go.")
-      data <- round(data)
-      less_than <- data < 0
-      data[less_than] <- 0
-      warn_user <- 1
-    } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
-      ## These if statements may be insufficient to check for the appropriate input for deseq.
-      data <- exprs(input[["original_expressionset"]])
-    } else if (norm_state != "raw" | tran_state != "raw") {
-      ## This makes use of the fact that the order of operations in the normalization
-      ## function is static. filter->normalization->convert->batch->transform.
-      ## Thus, if the normalized state is not raw, we can look back either to the filtered
-      ## or original data. The same is true for the transformation state.
-      message("EdgeR/DESeq expect raw data as input, reverting to the count filtered data.")
-      data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
-      if (is.null(data)) {
-        data <- input[["normalized"]][["intermediate_counts"]][["original"]]
-      }
-    } else {
-      message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
-the state of the count table and ensure that it is in integer counts.")
+  ## The previous iteration of this had an explicit contrasts.arg set, like this:
+  ##contrasts.arg=list(condition="contr.treatment"))
+  ## Which looked like this for a full invocation:
+  ## condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
+  ##                                                contrasts.arg=list(condition="contr.treatment",
+  ##                                                                   batch="contr.treatment")),
+  ## The contrasts.arg has been removed because it seems to result in the same model.
+
+  clist <- list("condition" = "contr.treatment")
+  blist <- list("batch" = "contr.treatment")
+  cblist <- list("condition" = "contr.treatment", "batch" = "contr.treatment")
+  if (!is.null(contr)) {
+    if (!is.null(contr[["condition"]]) & !is.null(contr[["batch"]])) {
+      cblist <- list("condition" = contr[["condition"]], "batch" = contr[["batch"]])
+    } else if (!is.null(contr[["condition"]])) {
+      clist <- list("condition" = contr[["condition"]])
+      cblist[["condition"]] <- contr[["condition"]]
+    } else if (!is.null(contr[["batch"]])) {
+      blist <- list("batch" = contr[["batch"]])
+      cblist[["batch"]] <- contr[["batch"]]
+    } 
+  }
+
+  cond_noint_string <- "~ 0 + condition"
+  cond_noint_model <- try(stats::model.matrix(object=as.formula(cond_noint_string),
+                                              contrasts.arg=clist,
+                                              data=design), silent=TRUE)
+
+  batch_noint_string <- "~ 0 + batch"
+  batch_noint_model <- try(stats::model.matrix(object=as.formula(batch_noint_string),
+                                               contrasts.arg=blist,
+                                               data=design), silent=TRUE)
+
+  condbatch_noint_string <- "~ 0 + condition + batch"
+
+  condbatch_noint_model <- try(stats::model.matrix(object=as.formula(condbatch_noint_string),
+                                                   contrasts.arg=cblist,
+                                                   data=design), silent=TRUE)
+  batchcond_noint_string <- "~ 0 + batch + condition"
+  batchcond_noint_model <- try(stats::model.matrix(object=as.formula(batchcond_noint_string),
+                                                   contrasts.arg=cblist,
+                                                   data=design), silent=TRUE)
+  cond_int_string <- "~ condition"
+  cond_int_model <- try(stats::model.matrix(object=as.formula(cond_int_string),
+                                            contrasts.arg=clist,
+                                            data=design), silent=TRUE)
+  batch_int_string <- "~ batch"
+  batch_int_model <- try(stats::model.matrix(object=as.formula(batch_int_string),
+                                             contrasts.arg=blist,
+                                             data=design), silent=TRUE)
+  condbatch_int_string <- "~ condition + batch"
+  condbatch_int_model <- try(stats::model.matrix(object=as.formula(condbatch_int_string),
+                                                 contrasts.arg=cblist,
+                                                 data=design), silent=TRUE)
+  batchcond_int_string <- "~ batch + condition"
+  batchcond_int_model <- try(stats::model.matrix(object=as.formula(batchcond_int_string),
+                                                 contrasts.arg=cblist,
+                                                 data=design), silent=TRUE)
+
+  noint_model <- NULL
+  int_model <- NULL
+  noint_string <- NULL
+  int_string <- NULL
+  including <- NULL
+  if (!is.null(alt_model)) {
+    chosen_model <- stats::model.matrix(object=as.formula(alt_model),
+                                        data=design)
+    if (!is.null(contr)) {
+      chosen_model <- stats::model.matrix(object=as.formula(alt_model),
+                                          contrasts.arg=contr,
+                                          data=design)
     }
-    ## End testing if normalization has been performed
+    int_model <- chosen_model
+    noint_model <- chosen_model
+    int_string <- alt_model
+    notint_string <- alt_model
+    including <- "alt"
+  } else if (is.null(model_batch)) {
+    int_model <- cond_int_model
+    noint_model <- cond_noint_model
+    int_string <- cond_int_string
+    noint_string <- cond_noint_string
+    including <- "condition"
+  } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
+    if (class(condbatch_int_model) == "try-error") {
+      message("The condition+batch model failed.  Does your experimental design support
+both condition and batch? Using only a conditional model.")
+      int_model <- cond_int_model
+      noint_model <- cond_noint_model
+      int_string <- cond_int_string
+      noint_string <- cond_noint_string
+      including <- "condition"
+    } else if (isTRUE(reverse)) {
+      int_model <- batchcond_int_model
+      noint_model <- batchcond_noint_model
+      int_string <- batchcond_int_string
+      noint_string <- batchcond_noint_string
+      including <- "batch+condition"
+    } else {
+      int_model <- condbatch_int_model
+      noint_model <- condbatch_noint_model
+      int_string <- condbatch_int_string
+      noint_string <- condbatch_noint_string
+      including <- "condition+batch"
+    }
+  } else if (class(model_batch) == "character") {
+    ## Then calculate the estimates using get_model_adjust
+    message("Extracting surrogate estimate from sva/ruv/pca and adding them to the model.")
+    model_batch_info <- get_model_adjust(input, estimate_type=model_batch, surrogates=surrogates)
+    ## Changing model_batch from 'sva' to the resulting matrix.
+    ## Hopefully this will simplify things later for me.
+    model_batch <- model_batch_info[["model_adjust"]]
+    int_model <- stats::model.matrix(~ condition + model_batch,
+                                     contrasts.arg=clist,
+                                     data=design)
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
+                                       contrasts.arg=clist,
+                                       data=design)
+    sv_names <- paste0("SV", 1:ncol(model_batch))
+    noint_string <- cond_noint_string
+    int_string <- cond_int_string
+    sv_string <- ""
+    for (sv in sv_names) {
+      sv_string <- paste0(sv_string, " + ", sv)
+    }
+    noint_string <- paste0(noint_string, sv_string)
+    int_string <- paste0(int_string, sv_string)
+    rownames(model_batch) <- rownames(int_model)
+    including <- paste0("condition", sv_string)
+  } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
+    message("Including batch estimates from sva/ruv/pca in the model.")
+    int_model <- stats::model.matrix(~ condition + model_batch,
+                                     contrasts.arg=clist,
+                                     data=design)
+    noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
+                                       contrasts.arg=clist,
+                                       data=design)
+    sv_names <- paste0("SV", 1:ncol(model_batch))
+    int_string <- cond_int_string
+    noint_string <- cond_noint_string
+    sv_string <- ""
+    for (sv in sv_names) {
+      sv_string <- paste0(sv_string, " + ", sv)
+    }
+    int_string <- paste0(int_string, sv_string)
+    noint_string <- paste0(noint_string, sv_string)
+    rownames(model_batch) <- rownames(int_model)
+    including <- paste0("condition", sv_string)
+  } else if (isTRUE(model_cond)) {
+    int_model <- cond_int_model
+    noint_model <- cond_noint_model
+    int_string <- cond_int_string
+    noint_string <- cond_noint_string
+    including <- "condition"
+  } else if (isTRUE(model_batch)) {
+    int_model <- batch_int_model
+    noint_model <- batch_noint_model
+    int_string <- batch_int_string
+    noint_string <- batch_noint_string
+    including <- "batch"
   } else {
-    data <- as.data.frame(input)
+    ## Default to the conditional model
+    int_model <- cond_int_model
+    noint_model <- cond_noint_model
+    int_string <- cond_int_string
+    noint_string <- cond_noint_string
+    including <- "condition"
   }
+
+  tmpnames <- colnames(int_model)
+  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
+  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
+  ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+  ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
+  ## Similarly, a batch '01' will be 'b01'
+  tmpnames <- gsub(pattern="^condition(\\d+)$", replacement="c\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="^batch(\\d+)$", replacement="b\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
+  colnames(int_model) <- tmpnames
+
+  tmpnames <- colnames(noint_model)
+  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
+  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
+  ## The next lines ensure that conditions/batches which are all numeric will not cause weird
+  ## errors for contrasts. Ergo, if a condition is something like '111', now it will be 'c111'
+  ## Similarly, a batch '01' will be 'b01'
+  tmpnames <- gsub(pattern="condition^(\\d+)$", replacement="c\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="batch^(\\d+)$", replacement="b\\1", x=tmpnames)
+  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
+  colnames(noint_model) <- tmpnames
+
+  chosen_model <- NULL
+  chosen_string <- NULL
+  if (isTRUE(model_intercept)) {
+    message("Choosing the intercept containing model.")
+    chosen_model <- int_model
+    chosen_string <- int_string
+  } else {
+    message("Choosing the non-intercept containing model.")
+    chosen_model <- noint_model
+    chosen_string <- noint_string
+  }
+
   retlist <- list(
-    "conditions" = conditions,
-    "batches" = batches,
-    "data" = data)
-  if (warn_user == 1) {
-    warning("This data was inappropriately forced into integers.")
-  }
+    "int_model" = int_model,
+    "noint_model" = noint_model,
+    "int_string" = int_string,
+    "noint_string" = noint_string,
+    "chosen_model" = chosen_model,
+    "chosen_string" = chosen_string,
+    "model_batch" = model_batch,
+    "including" = including)
   return(retlist)
 }
 
@@ -776,6 +814,9 @@ the state of the count table and ensure that it is in integer counts.")
 #' @export
 compare_de_results <- function(first, second, cor_method="pearson") {
   result <- list()
+  logfc_result <- list()
+  p_result <- list()
+  adjp_result <- list()
   comparisons <- c("logfc", "p", "adjp")
   methods <- c("limma", "deseq", "edger")
   for (method in methods) {
@@ -786,17 +827,38 @@ compare_de_results <- function(first, second, cor_method="pearson") {
       for (comparison in comparisons) {
         message(paste0("Comparing ", method, ", ", table, ", ", comparison, "."))
         column_name <- paste0(method, "_", comparison)
-        f_column <- as.numeric(first[["data"]][[table]][[column_name]])
+        f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         names(f_column) <- rownames(first[["data"]][[table]])
-        s_column <- as.numeric(second[["data"]][[table]][[column_name]])
+        s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
         names(s_column) <- rownames(second[["data"]][[table]])
         fs <- merge(f_column, s_column, by="row.names")
         comp <- cor(x=fs[["x"]], y=fs[["y"]], method=cor_method)
         result[[method]][[table]][[comparison]] <- comp
+        if (comparison == "logfc") {
+          logfc_result[table] <- comp
+          tmp <- as.vector(as.numeric(logfc_result))
+          names(tmp) <- names(logfc_result)
+          logfc_result <- tmp
+        } else if (comparison == "p") {
+          p_result[table] <- comp
+          tmp <- as.vector(as.numeric(p_result))
+          names(tmp) <- names(p_result)
+          p_result <- tmp
+        } else if (comparison == "adjp") {
+          adjp_result[table] <- comp
+          tmp <- as.vector(as.numeric(adjp_result))
+          names(tmp) <- names(adjp_result)
+          adjp_result <- tmp
+        }
       }
     }
   }
-  return(result)
+  retlist <- list(
+    "result" = result,
+    "logfc" = logfc_result,
+    "p" = p_result,
+    "adjp" = adjp_result)
+  return(retlist)
 }
 
 #' See how similar are results from limma/deseq/edger.
@@ -988,7 +1050,21 @@ compare_logfc_plots <- function(combined_tables) {
   } else {
     data <- combined_tables
   }
-  for (count in 1:length(data)) {
+  tt <- sm(requireNamespace("parallel"))
+  tt <- sm(requireNamespace("doParallel"))
+  tt <- sm(requireNamespace("iterators"))
+  tt <- sm(requireNamespace("foreach"))
+  tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
+  cores <- parallel::detectCores()
+  cl <- parallel::makeCluster(cores)
+  doSNOW::registerDoSNOW(cl)
+  num_levels <- length(data)
+  bar <- utils::txtProgressBar(max=num_levels, style=3)
+  progress <- function(n) { setTxtProgressBar(bar, n) }
+  pb_opts <- list(progress=progress)
+  returns <- list()
+  res <- list()
+  res <- foreach(count=1:num_levels, .packages=c("hpgltools", "ggplot2", "doParallel"), .options.snow=pb_opts) %dopar% {
     tab <- data[[count]]
     le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
     le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
@@ -1004,11 +1080,19 @@ compare_logfc_plots <- function(combined_tables) {
     eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
     name <- names(data)[[count]]
     compared <- list(
+      "name" = name,
       "le" = le, "ld" = ld, "de" = de,
       "lb" = lb, "db" = db, "eb" = eb)
-    plots[[name]] <- compared
+    ## plots[[name]] <- compared
   }
-  return(plots)
+  close(bar)
+  parallel::stopCluster(cl)
+  retlist <- list()
+  for (i in 1:length(res)) {
+    name <- res[[i]][["name"]]
+    retlist[[name]] <- res[[i]]
+  }
+  return(retlist)
 }
 
 #' Implement a cleaner version of 'subset_significants' from analyses with Maria Adelaida.
@@ -1077,58 +1161,69 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
                         "up_weights", "down_weights", "up_venn", "down_venn")
   } else if (length(contrasts) == 3) {
     first <- contrasts[[1]]
-    f_name <- contrast_names[[1]]
+    f_name <- contrast_names[[first]]
     second <- contrasts[[2]]
-    s_name <- contrast_names[[2]]
+    s_name <- contrast_names[[second]]
     third <- contrasts[[3]]
-    t_name <- contrast_names[[3]]
-    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[first]])
-    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[second]])
-    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[first]])
-    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[second]])
-    third_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[third]])
-    third_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[third]])
+    t_name <- contrast_names[[third]]
+    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[f_name]])
+    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[s_name]])
+    third_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[t_name]])
+    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[f_name]])
+    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[s_name]])
+    third_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[t_name]])
 
     first_solo_up_idx <- (! first_up_genes %in% second_up_genes) &
       (! first_up_genes %in% third_up_genes)
     first_solo_up <- first_up_genes[first_solo_up_idx]
-    second_solo_up_idx <- (! second_up_genes %in% first_up_genes) &
-      (! second_up_genes %in% third_up_genes)
-    second_solo_up <- second_up_genes[second_solo_up_idx]
-    third_solo_up_idx <- (! third_up_genes %in% first_up_genes) &
-      (! third_up_genes %in% second_up_genes)
-    third_solo_up <- third_up_genes[second_solo_up_idx]
-    fs_up_idx <- (first_up_genes %in% second_up_genes) &
-      (! first_up_genes %in% third_up_genes) & (! second_up_genes %in% third_up_genes)
-    fs_up <- first_up_genes[fs_up_idx]
-    st_up_idx <- (second_up_genes %in% third_up_genes) &
-      (! second_up_genes %in% first_up_genes) & (! third_up_genes %in% first_up_genes)
-    st_up <- second_up_genes[st_up_idx]
-    ft_up_idx <- (first_up_genes %in% third_up_genes) &
-      (! first_up_genes %in% second_up_genes) & (! third_up_genes %in% second_up_genes)
-    ft_up <- first_up_genes[ft_up_idx]
-    shared_up_idx <- (first_up_genes %in% second_up_genes) &
-      (first_up_genes %in% third_up_genes)
-    shared_up <- first_up_genes[shared_up_idx]
-
     first_solo_down_idx <- (! first_down_genes %in% second_down_genes) &
       (! first_down_genes %in% third_down_genes)
     first_solo_down <- first_down_genes[first_solo_down_idx]
+
+    second_solo_up_idx <- (! second_up_genes %in% first_up_genes) &
+      (! second_up_genes %in% third_up_genes)
+    second_solo_up <- second_up_genes[second_solo_up_idx]
     second_solo_down_idx <- (! second_down_genes %in% first_down_genes) &
       (! second_down_genes %in% third_down_genes)
     second_solo_down <- second_down_genes[second_solo_down_idx]
+
+    third_solo_up_idx <- (! third_up_genes %in% first_up_genes) &
+      (! third_up_genes %in% second_up_genes)
+    third_solo_up <- third_up_genes[second_solo_up_idx]
     third_solo_down_idx <- (! third_down_genes %in% first_down_genes) &
       (! third_down_genes %in% second_down_genes)
     third_solo_down <- third_down_genes[second_solo_down_idx]
-    fs_down_idx <- (first_down_genes %in% second_down_genes) &
-      (! first_down_genes %in% third_down_genes) & (! second_down_genes %in% third_down_genes)
+
+    fs_up_idx <- (first_up_genes %in% second_up_genes)
+    fs_up <- first_up_genes[fs_up_idx]
+    fs_up_idx <- ! fs_up %in% third_up_genes
+    fs_up <- first_up_genes[fs_up_idx]
+    fs_down_idx <- (first_down_genes %in% second_down_genes)
     fs_down <- first_down_genes[fs_down_idx]
-    st_down_idx <- (second_down_genes %in% third_down_genes) &
-      (! second_down_genes %in% first_down_genes) & (! third_down_genes %in% first_down_genes)
+    fs_down_idx <- ! fs_down %in% third_down_genes
+    fs_down <- first_down_genes[fs_down_idx]
+
+    st_up_idx <- (second_up_genes %in% third_up_genes)
+    st_up <- second_up_genes[st_up_idx]
+    st_up_idx <- ! st_up %in% first_up_genes
+    st_up <- second_up_genes[st_up_idx]
+    st_down_idx <- (second_down_genes %in% third_down_genes)
     st_down <- second_down_genes[st_down_idx]
-    ft_down_idx <- (first_down_genes %in% third_down_genes) &
-      (! first_down_genes %in% second_down_genes) & (! third_down_genes %in% second_down_genes)
+    st_down_idx <- ! st_down %in% first_down_genes
+    st_down <- second_down_genes[st_down_idx]
+
+    ft_up_idx <- (first_up_genes %in% third_up_genes)
+    ft_up <- first_up_genes[ft_up_idx]
+    ft_up_idx <- ! ft_up %in% second_up_genes
+    ft_up <- first_up_genes[ft_up_idx]
+    ft_down_idx <- (first_down_genes %in% third_down_genes)
     ft_down <- first_down_genes[ft_down_idx]
+    ft_down_idx <- ! ft_down %in% second_down_genes
+    ft_down <- first_down_genes[ft_down_idx]
+
+    shared_up_idx <- (first_up_genes %in% second_up_genes) &
+      (first_up_genes %in% third_up_genes)
+    shared_up <- first_up_genes[shared_up_idx]
     shared_down_idx <- (first_down_genes %in% second_down_genes) &
       (first_down_genes %in% third_down_genes)
     shared_down <- first_down_genes[shared_down_idx]
@@ -1139,7 +1234,7 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
     fs_up_name <- paste0(f_name, "_", s_name, "_up")
     st_up_name <- paste0(s_name, "_", t_name, "_up")
     ft_up_name <- paste0(f_name, "_", t_name, "_up")
-    shared_name <- "shared_up"
+    shared_up_name <- "shared_up"
 
     first_solo_down_name <- paste0(f_name, "_solo_down")
     second_solo_down_name <- paste0(s_name, "_solo_down")
@@ -1147,22 +1242,26 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
     fs_down_name <- paste0(f_name, "_", s_name, "_down")
     st_down_name <- paste0(s_name, "_", t_name, "_down")
     ft_down_name <- paste0(f_name, "_", t_name, "_down")
-    shared_name <- "shared_down"
+    shared_down_name <- "shared_down"
 
-    up_weights <- c(0, nrow(first_solo_up), nrow(second_solo_up), nrow(third_solo_up),
-                    nrow(fs_up), nrow(st_up), nrow(ft_up), nrow(shared_up))
-    down_weights <- c(0, nrow(first_solo_down), nrow(second_solo_down), nrow(third_solo_down),
-                      nrow(fs_down), nrow(st_down), nrow(ft_down), nrow(shared_down))
+    up_weights <- c(0, length(first_solo_up),
+                    length(second_solo_up), length(third_solo_up),
+                    length(fs_up), length(st_up), length(ft_up), length(shared_up))
+    down_weights <- c(0, length(first_solo_down),
+                      length(second_solo_down), length(third_solo_down),
+                      length(fs_down), length(st_down), length(ft_down), length(shared_down))
     up_venn <- Vennerable::Venn(SetNames=c(first_solo_up_name,
                                            second_solo_up_name,
                                            third_solo_up_name),
                                 Weight=up_weights)
     up_venn_result <- Vennerable::plot(up_venn, doWeights=FALSE)
+    up_venn_plot <- recordPlot()
     down_venn <- Vennerable::Venn(SetNames=c(first_solo_down_name,
                                              second_solo_down_name,
                                              third_solo_down_name),
                                   Weight=down_weights)
     down_venn_result <- Vennerable::plot(down_venn, doWeights=FALSE)
+    down_venn_plot <- recordPlot()
 
     retlist <- list(
       "first_solo_up_name" = sig_tables[[compare_by]][["ups"]][[first]][first_solo_up, ],
@@ -1189,6 +1288,8 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contra
       first_solo_down_name, second_solo_down_name, third_solo_down_name,
       fs_down_name, st_down_name, ft_down_name, shared_down_name,
       "up_weights", "down_weights", "up_venn", "down_venn")
+    retlist[["up_venn_plot"]] <- up_venn_plot
+    retlist[["down_venn_plot"]] <- down_venn_plot
   } else {
     stop("Currently this handles only 2 or 3 contrasts.")
   }
@@ -1301,6 +1402,17 @@ do_pairwise <- function(type, ...) {
 get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE, least=FALSE) {
   if (is.null(z) & is.null(n)) {
     n <- 100
+  }
+  if (!is.null(datum[["limma"]])) {
+    if (type == "basic") {
+      datum <- datum[["basic"]]
+    } else if (type == "edger") {
+      datum <- datum[["edger"]]
+    } else if (type == "deseq") {
+      datum <- datum[["deseq"]]
+    } else {
+      datum <- datum[["limma"]]
+    }
   }
 
   ## Extract the coefficent df
@@ -1498,7 +1610,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     ## In that case, a p-value assertion should still know the difference between up and down
     ## But it should also still know the difference between ratio and log changes
     if (fold == "plusminus" | fold == "log") {
-      message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
+      ## message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
       ## up_idx <- up_genes[, column] > 0.0
       up_idx <- as.numeric(up_genes[[column]]) > 0.0
       up_genes <- up_genes[up_idx, ]
@@ -1519,12 +1631,12 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" | fold == "log") {
-      message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
+      ## message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
       ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
       down_genes <- down_genes[down_idx, ]
     } else {
-      message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
+      ## message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]
@@ -1599,7 +1711,8 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
-                                    do_pairwise=TRUE, extra_contrasts=NULL) {
+                                    do_pairwise=TRUE, extra_contrasts=NULL, ...) {
+  arglist <- list(...)
   tmpnames <- colnames(model)
   tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
   tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
@@ -1781,13 +1894,14 @@ mymakeContrasts <- function (..., contrasts=NULL, levels) {
 #'   ## Get rid of all genes with 'ribosomal' in the annotations.
 #' }
 #' @export
-semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
+semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, invert=TRUE,
                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
-                                       semantic_column='1.tooltip') {
+                                       semantic_column="1.tooltip") {
   table_type <- "significance"
   if (!is.null(de_list[["data"]])) {
     table_type <- "combined"
   }
+  type <- "Kept"
 
   table_list <- NULL
   if (table_type == "combined") {
@@ -1796,6 +1910,9 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
     ## The set of significance tables will be 2x the number of contrasts
     ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
     table_list <- c(de_list[["ups"]], de_list[["downs"]])
+    upnames <- paste0("up_", names(de_list[["ups"]]))
+    downnames <- paste0("down_", names(de_list[["downs"]]))
+    names(table_list) <- c(upnames, downnames)
     up_to_down <- length(de_list[["ups"]])
   }
 
@@ -1826,14 +1943,22 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
     kept_list <- new_table <- NULL
     for (string in semantic) {
       pre_remove_size <- nrow(tab)
-      idx <- grep(pattern=string, x=tab[, semantic_column])
-      num_removed <- length(idx)
+      idx <- NULL
+      if (semantic_column == "rownames") {
+        idx <- grepl(pattern=string, x=rownames(tab))
+      } else {
+        idx <- grepl(pattern=string, x=tab[, semantic_column])
+      }
+      type <- "Removed"
+      if (!isTRUE(invert)) {
+        idx <- !idx
+        type <- "Kept"
+      }
+      num_removed <- sum(idx)
       numbers_removed[[table_name]][[string]] <- num_removed
       if (num_removed > 0) {
-        tab <- tab[-idx, ]
-        type <- "Removed"
+        tab <- tab[idx, ]
         table_list[[count]] <- tab
-
         message(paste0("Table started with: ", pre_remove_size, ". ", type,
                        " entries with string ", string,
                        ", found ", num_removed, "; table has ",
@@ -1842,25 +1967,30 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
         message("Found no entries of type ", string, ".")
       }
     } ## End of the foreach semantic thing to remove
-  } ## End of for each table
-
-  ## Now recreate the original table lists as either de talbes or significance.
-  if (table_type == "combined") {
-    for (count in 1:length(table_list)) {
-      de_list[["data"]][[count]] <- table_list[[count]]
-    }
-  } else {  ## Then it is a set of significance tables.
-    if (count <= up_to_down) {
-      de_list[["ups"]][[count]] <- table_list[[count]]
-    } else {
-      de_list[["downs"]][[count]] <- table_list[[count]]
+    
+    ## Now recreate the original table lists as either de tables or significance.
+    if (table_type == "combined") {
+      for (count in 1:length(table_list)) {
+        de_list[["data"]][[count]] <- table_list[[count]]
+      }
+    } else {  ## Then it is a set of significance tables.
+      if (count <= up_to_down) {
+        table_name <- names(table_list)[count]
+        if (grep(pattern="^up_", table_name)) {
+          newname <- gsub(pattern="^up_", replacement="", x=table_name)
+          de_list[["ups"]][[newname]] <- table_list[[count]]
+        } else {
+          newname <- gsub(pattern="^down_", replacement="", x=table_name)
+          de_list[["downs"]][[newname]] <- table_list[[count]]
+        }
+      }
     }
   }
   ## Now the tables should be reconstructed.
   de_list[["numbers_removed"]] <- numbers_removed
+  de_list[["type"]] <- type
   return(de_list)
 }
-
 
 #' Extract multicopy genes from up/down gene expression lists.
 #'
@@ -1868,87 +1998,11 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE,
 #'
 #' Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 #'
-#' @param de_list  List of sets of genes deemed significantly
-#'  up/down with a column expressing approximate count numbers.
-#' @param min_copies  Keep only those genes with >= n putative
-#'  copies.
-#' @param semantic  Set of strings with gene names to exclude.
-#' @param semantic_column  Column in the DE table used to find the
-#'  semantic strings for removal.
-#' @return Smaller list of up/down genes.
-#' @seealso \code{\link{semantic_copynumber_filter}}
-#' @examples
-#'  \dontrun{
-#'   pruned_tables <- semantic_copynumber_extract(combined)
-#'   ## Remove sialidases, mucin, RHS, MASP, DGF, and GP63 from a combined result.
-#' }
+#' @param ...  Arguments for semantic_copynumber_filter()
 #' @export
-semantic_copynumber_extract <- function(de_list, min_copies=2,
-                                        semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
-                                        semantic_column='1.tooltip') {
-  table_type <- "significance"
-  if (!is.null(de_list[["data"]])) {
-    table_type <- "combined"
-  }
-
-  table_list <- NULL
-  if (table_type == "combined") {
-    table_list <- de_list[["data"]]
-  } else {
-    ## The set of significance tables will be 2x the number of contrasts
-    ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
-    table_list <- c(de_list[["ups"]], de_list[["downs"]])
-    up_to_down <- length(de_list[["ups"]])
-  }
-
-  numbers_found <- list()
-  for (count in 1:length(table_list)) {
-    tab <- table_list[[count]]
-    table_name <- names(table_list)[[count]]
-    numbers_found[[table_name]] <- list()
-    message(paste0("Working on ", table_name))
-    ## Now remove genes by name.
-    kept_list <- new_table <- NULL
-    for (string in semantic) {
-      pre_remove_size <- nrow(tab)
-      ## idx <- grep(pattern=string, x=tab[, semantic_column], invert=TRUE)
-      idx <- grep(pattern=string, x=tab[, semantic_column], invert=FALSE)
-      num_found <- length(idx)
-      numbers_found[[table_name]][[string]] <- num_found
-      if (num_found > 0) {
-        type <- "Kept"
-        kept_list[[string]] <- tab[idx, ]
-        message(paste0("Table started with: ", pre_remove_size, ". ", type,
-                       " entries with string ", string,
-                       ", found ", num_found, "."))
-      } else {
-        message("Found no entries of type ", string, ".")
-        kept_list[[string]] <- NULL
-      }
-    } ## End of the foreach semantic thing to remove
-    table_list[[table_name]] <- kept_list
-  } ## End of for each table
-
-  ## Now recreate the original table lists as either de tables or significance.
-  if (table_type == "combined") {
-    for (count in 1:length(table_list)) {
-      table_name <- names(table_list)[[count]]
-      de_list[["data"]][[table_name]] <- table_list[[table_name]]
-    }
-  }
-  else {  ## Then it is a set of significance tables.
-    for (count in 1:length(table_list)) {
-      table_name <- names(table_list)[[count]]
-      if (count <= up_to_down) {
-        de_list[["ups"]][[count]] <- table_list[[count]]
-      } else {
-        de_list[["downs"]][[count]] <- table_list[[count]]
-      }
-    }
-  }
-
-  de_list[["numbers_found"]] <- numbers_found
-  return(de_list)
+semantic_copynumber_extract <- function(...) {
+  ret <- semantic_copynumber_filter(..., invert=TRUE)
+  return(ret)
 }
 
 ## EOF

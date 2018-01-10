@@ -1,270 +1,3 @@
-#' Compute variance of each principal component and how they correlate with batch and cond
-#'
-#' This was copy/pasted from cbcbSEQ
-#' https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
-#'
-#' @param v from makeSVD
-#' @param d from makeSVD
-#' @param condition factor describing experiment
-#' @param batch factor describing batch
-#' @return A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
-#' @seealso \code{\link{plot_pca}}
-#' @export
-pcRes <- function(v, d, condition=NULL, batch=NULL){
-  pcVar <- round((d ^ 2) / sum(d ^ 2) * 100, 2)
-  cumPcVar <- cumsum(pcVar)
-  calculate_rsquared_condition <- function(data) {
-    lm_result <- lm(data ~ condition)
-  }
-  if(!is.null(condition)) {
-    cond.R2 <- function(y) {
-      round(summary(lm(y ~ condition))$r.squared * 100, 2)
-    }
-    cond.R2 <- apply(v, 2, cond.R2)
-  }
-  if(!is.null(batch)) {
-    batch.R2 <- function(y) {
-      round(summary(lm(y ~ batch))$r.squared * 100, 2)
-    }
-    batch.R2 <- apply(v, 2, batch.R2)
-  }
-  if(is.null(condition) & is.null(batch)){
-    res <- data.frame("propVar" = pcVar,
-                      "cumPropVar" = cumPcVar)
-  }
-  if(!is.null(batch) & is.null(condition)){
-    res <- data.frame("propVar" = pcVar,
-                      "cumPropVar" = cumPcVar,
-                      "batch.R2" = batch.R2)
-  }
-  if(!is.null(condition) & is.null(batch)){
-    res <- data.frame("propVar" = pcVar,
-                      "cumPropVar" = cumPcVar,
-                      "cond.R2" = cond.R2)
-  }
-  if(!is.null(condition) & !is.null(batch)){
-    res <- data.frame("propVar" = pcVar,
-                      "cumPropVar" = cumPcVar,
-                      "cond.R2" = cond.R2,
-                      "batch.R2" = batch.R2)
-  }
-  return(res)
-}
-
-#' Make a ggplot PCA plot describing the samples' clustering.
-#'
-#' @param data  an expt set of samples.
-#' @param design   a design matrix and.
-#' @param plot_colors   a color scheme.
-#' @param plot_title   a title for the plot.
-#' @param plot_size   size for the glyphs on the plot.
-#' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
-#' @param size_column use an experimental factor to size the glyphs of the plot
-#' @param ...  arglist from elipsis!
-#' @return a list containing the following:
-#' \enumerate{
-#'  \item  pca = the result of fast.svd()
-#'  \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
-#'  \item  table = a table of the PCA plot data
-#'  \item  res = a table of the PCA res data
-#'  \item  variance = a table of the PCA plot variance
-#' }
-#' @seealso \pkg{directlabels}
-#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
-#' @examples
-#' \dontrun{
-#'  pca_plot <- plot_pca(expt=expt)
-#'  pca_plot
-#' }
-#' @export
-plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                     plot_title=NULL, plot_size=5, size_column=NULL, ...) {
-  ## I have been using hpgl_env for keeping aes() from getting contaminated.
-  ## I think that this is no longer needed because I have been smater(sic) about how
-  ## I invoke aes_string() and ggplot2()
-  hpgl_env <- environment()
-  arglist <- list(...)
-  plot_names <- arglist[["plot_names"]]
-  ## Set default columns in the experimental design for condition and batch
-  ## changing these may be used to query other experimental factors with pca.
-  cond_column <- "condition"
-  if (!is.null(arglist[["cond_column"]])) {
-    cond_column <- arglist[["cond_column"]]
-    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
-  }
-  batch_column <- "batch"
-  if (!is.null(arglist[["batch_column"]])) {
-    batch_column <- arglist[["batch_column"]]
-    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
-  }
-
-  ## The following if() series is used to check the type of data provided and extract the available
-  ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
-  ## specific to that.  However, the functions in this package should be smart enough to deal when
-  ## that is not true.
-  ## The primary things this particular function is seeking to acquire are: design, colors, counts.
-  ## The only thing it absolutely requires to function is counts, it will make up the rest if it cannot
-  ## find them.
-  data_class <- class(data)[1]
-  names <- NULL
-  expt <- NULL
-  if (data_class == "expt") {
-    expt <- data
-    design <- data[["design"]]
-    if (cond_column == "condition") {
-      plot_colors <- data[["colors"]]
-    } else {
-      plot_colors <- NULL
-    }
-    plot_names <- data[["samplenames"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-  } else if (data_class == "list") {
-    data <- data[["count_table"]]
-    if (is.null(data)) {
-      stop("The list provided contains no count_table element.")
-    }
-  } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
-  } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-  }
-
-  ## Check that the given design works with the data
-  ## Prune the design if necessary
-  ## Also take into account the fact that sometimes I change the case of hpgl<->HPGL
-  given_samples <- tolower(colnames(data))
-  colnames(data) <- given_samples
-  ## I hate uppercase characters, I ADMIT IT.
-  avail_samples <- tolower(rownames(design))
-  rownames(design) <- avail_samples
-  if (sum(given_samples %in% avail_samples) == length(given_samples)) {
-    design <- design[given_samples, ]
-  }
-
-  ## If nothing has given this some colors for the plot, make them up now.
-  if (is.null(plot_colors)) {
-    plot_colors <- as.numeric(as.factor(design[[cond_column]]))
-    plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
-  }
-
-  ## Similarly, if there is no information which may be used as a design yet, make one up.
-  if (is.null(design)) {
-    message("No design was provided.  Making one with x conditions, 1 batch.")
-    design <- cbind(plot_names, 1)
-    design <- as.data.frame(design)
-    design[["condition"]] <- as.numeric(design[["plot_labels"]])
-    colnames(design) <- c("name", "batch", "condition")
-    design <- design[, c("name", "condition", "batch")]
-    plot_names <- design[["name"]]
-  }
-
-  ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
-  ## condition_batch; this handles that as eloquently as I am able.
-  label_list <- NULL
-  if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
-    label_list <- design[["sampleid"]]
-  } else if (is.null(arglist[["label_list"]])) {
-    label_list <- plot_names
-  } else if (arglist[["label_list"]] == "concat") {
-    label_list <- paste(design[[cond_column]], design[[batch_column]], sep="_")
-  } else {
-    label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
-  }
-
-  svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
-  v_vector <- svd_result[["v"]]
-  rownames(v_vector) <- colnames(data)
-  svd_result[["v"]] <- v_vector
-  ##pca <- makeSVD(data)
-  ## Pull out the batches and conditions used in this plot.
-  ## Probably could have just used xxx[stuff, drop=TRUE]
-  included_batches <- as.factor(as.character(design[[batch_column]]))
-  included_conditions <- as.factor(as.character(design[[cond_column]]))
-
-  ## Depending on how much batch/condition information is available, invoke pcRes() to get some idea of how
-  ## much variance in a batch model is accounted for with each PC.
-  if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
-    warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
-  } else if (length(levels(included_conditions)) == 1) {
-    warning("There is only one condition, but more than one batch.
-Going to run pcRes with the batch information.")
-    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
-  } else if (length(levels(included_batches)) == 1) {
-    message("There is just one batch in this data.")
-    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
-                     condition=design[, cond_column])
-  } else {
-    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
-                     condition=design[, cond_column], batch=design[, batch_column])
-  }
-
-  ## By a similar token, get the percentage of variance accounted for in each PC
-  pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
-  ## These will provide metrics on the x/y axes showing the amount of variance on those
-  ## components of our plot.
-  xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
-  yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-
-  ## Create a data frame with all the material of interest in the actual PCA plot
-  pca_data <- data.frame(
-    "sampleid" = as.character(design[["sampleid"]]),
-    "condition" = as.character(design[[cond_column]]),
-    "batch" = as.character(design[[batch_column]]),
-    "batch_int" = as.integer(as.factor(design[[batch_column]])),
-    "PC1" = svd_result[["v"]][, 1],
-    "PC2" = svd_result[["v"]][, 2],
-    "colors" = as.character(plot_colors),
-    "labels" = label_list,
-    stringsAsFactors=FALSE)
-
-  ## Add an optional column which may be used to change the glyph sizes in the plot
-  if (!is.null(size_column)) {
-    pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
-    pca_data[[size_column]] <- pca_data[[size_column]] + 1
-  }
-
-  pca_plot <- NULL
-  ## The plot_pcs() function gives a decent starting plot
-  pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
-                       design=design, plot_labels=plot_labels,
-                       plot_size=plot_size, size_column=size_column, ...)
-  ##pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
-  ##                     design=design, plot_labels=plot_labels,
-  ##                     plot_size=plot_size, size_column=size_column)
-
-  ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
-  pca_plot <- pca_plot +
-    ggplot2::xlab(xl) +
-    ggplot2::ylab(yl) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   legend.key.size=grid::unit(0.5, "cm"))
-
-  ## If plot_title is NULL, print nothing, if it is TRUE
-  ## Then give some information about what happened to the data to make the plot.
-  if (isTRUE(plot_title)) {
-    data_title <- what_happened(expt=expt)
-    pca_plot <- pca_plot + ggplot2::ggtitle(data_title)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt=expt)
-    plot_title <- paste0(plot_title, "; ", data_title)
-    pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
-  } else {
-    ## Leave the title blank.
-  }
-
-  ## Finally, return a list of the interesting bits of what happened.
-  pca_return <- list(
-    "pca" = svd_result,
-    "plot" = pca_plot,
-    "table" = pca_data,
-    "res" = pca_res,
-    "variance" = pca_variance)
-  return(pca_return)
-}
-
 #' Collect the r^2 values from a linear model fitting between a singular
 #' value decomposition and factor.
 #'
@@ -298,234 +31,6 @@ factor_rsquared <- function(svd_v, fact, type="factor") {
   return(result)
 }
 
-#' A quick and dirty PCA plotter of arbitrary components against one another.
-#'
-#' @param pca_data  Dataframe of principle components PC1 .. PCN with any other arbitrary information.
-#' @param first   Principle component PCx to put on the x axis.
-#' @param second   Principle component PCy to put on the y axis.
-#' @param variances   List of the percent variance explained by each component.
-#' @param design   Experimental design with condition batch factors.
-#' @param plot_title   Title for the plot.
-#' @param plot_labels   Parameter for the labels on the plot.
-#' @param plot_size  Size of the dots on the plot
-#' @param size_column  Experimental factor to use for sizing the glyphs
-#' @param rug  Include the rugs on the sides of the plot?
-#' @param cis  What (if any) confidence intervals to include.
-#' @param ...  Extra arguments dropped into arglist
-#' @return  gplot2 PCA plot
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[directlabels]{geom_dl}}
-#' @examples
-#' \dontrun{
-#'  pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
-#' }
-#' @export
-plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
-                     design=NULL, plot_title=TRUE, plot_labels=NULL,
-                     plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
-  arglist <- list(...)
-  hpgl_env <- environment()
-  batches <- pca_data[["batch"]]
-  label_column <- "condition"
-  if (!is.null(arglist[["label_column"]])) {
-    label_column <- arglist[["label_column"]]
-  }
-  point_labels <- factor(pca_data[[label_column]])
-  if (is.null(plot_title)) {
-    plot_title <- paste(first, " vs. ", second, sep="")
-  }
-  num_batches <- length(unique(batches))
-  pca_plot <- NULL
-
-  color_listing <- pca_data[, c("condition", "colors")]
-  color_listing <- unique(color_listing)
-  color_list <- as.character(color_listing[["colors"]])
-  names(color_list) <- as.character(color_listing[["condition"]])
-  ## Ok, so this is shockingly difficult.  For <5 batch data I want properly colored points with black outlines
-  ## The legend colors need to match, in addition, the legend needs to have the shapes noted.
-  ## In order to do this, one must do, _in_order_:
-  ## 1.  Set up the normal ggplot object
-  ## 2.  Set up a geom_point with color _and_ fill as the proper color.
-  ##     The color but _NOT_ fill is used to color the legend's copy of the glyph.
-  ## 3.  Then set up a new geom_point with color=black _and_ show_guide=FALSE
-  ## 4.  Then set scale_color_manual to the proper color_list
-  ## 5.  Then set scale_fill_manual to the proper color_list
-  ## 6.  Finally, set the shape manual with a guide_legend override
-
-  ## Step 1
-  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
-
-  if (is.null(size_column) & num_batches <= 5) {
-    pca_plot <- pca_plot +
-      ggplot2::geom_point(size=plot_size,
-                          aes_string(shape="as.factor(batches)",
-                                     colour="as.factor(condition)",
-                                     fill="as.factor(condition)")) +
-      ggplot2::geom_point(size=plot_size, colour="black", show.legend=FALSE,
-                          aes_string(shape="as.factor(batches)",
-                                     fill="as.factor(condition)")) +
-      ggplot2::scale_color_manual(name="Condition",
-                                  guide="legend",
-                                  values=color_list) +
-      ggplot2::scale_fill_manual(name="Condition",
-                                 guide="legend",
-                                 values=color_list) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
-                                  values=21:25)
-  } else if (is.null(size_column) & num_batches > 5) {
-    pca_plot <- pca_plot +
-      ggplot2::geom_point(size=plot_size,
-                          aes_string(shape="as.factor(batches)",
-                                     colour="as.factor(condition)")) +
-      ggplot2::scale_color_manual(name="Condition",
-                                  guide="legend",
-                                  values=color_list) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
-                                  values=1:num_batches)
-  } else if (!is.null(size_column) & num_batches <= 5) {
-    ## This will require the 6 steps above and one more
-    maxsize <- max(pca_data[[size_column]])
-    pca_plot <- pca_plot +
-      ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
-                                              size=size_column,
-                                              colour="as.factor(condition)",
-                                              fill="as.factor(condition)")) +
-      ggplot2::geom_point(colour="black", show.legend=FALSE,
-                          aes_string(shape="as.factor(batches)",
-                                     size=size_column,
-                                     fill="as.factor(condition)")) +
-      ggplot2::scale_color_manual(name="Condition",
-                                  guide="legend",
-                                  values=color_list) +
-      ggplot2::scale_fill_manual(name="Condition",
-                                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
-                                 values=color_list) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
-                                  values=21:25) +
-      ggplot2::scale_size(range=c(2, 7))
-  } else if (!is.null(size_column) & num_batches > 5) {
-    maxsize <- max(pca_data[[size_column]])
-    pca_plot <- pca_plot +
-      ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
-                                              colour="pca_data[['condition']]",
-                                              size=size_column)) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
-                                  values=1:num_batches) +
-      ggplot2::scale_color_identity(name="Condition",
-                                    guide="legend",
-                                    values=color_list) +
-      ggplot2::scale_size(range=c(2, 7))
-  } else {
-    stop("This should be an impossible state.")
-  }
-
-  if (!is.null(variances)) {
-    x_var_num <- as.numeric(gsub("PC", "", first))
-    y_var_num <- as.numeric(gsub("PC", "", second))
-    x_label <- paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
-    y_label <- paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
-    pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
-  }
-
-  if (isTRUE(rug)) {
-    pca_plot <- pca_plot + ggplot2::geom_rug(colour="gray50", alpha=0.7)
-  }
-
-  if (is.null(plot_labels)) {
-    plot_labels <- "repel"
-  }
-  if (plot_labels == FALSE) {
-    message("Not putting labels on the plot.")
-  } else if (plot_labels == "normal") {
-    pca_plot <- pca_plot +
-      ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
-                                             angle=45, size=4, vjust=2))
-  } else if (plot_labels == "repel") {
-    pca_plot <- pca_plot +
-      ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
-                               size=5, box.padding=ggplot2::unit(0.5, "lines"),
-                               point.padding=ggplot2::unit(1.6, "lines"),
-                               arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
-  } else if (plot_labels == "dlsmart") {
-    pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
-  } else {
-    pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
-  }
-
-  if (!is.null(cis)) {
-    alpha <- 0
-    for (ci in cis) {
-      alpha <- alpha + 0.1
-      ## message(paste0("Adding ", ci, " with alpha ", alpha))
-      pca_plot <- pca_plot +
-        ggplot2::stat_ellipse(
-                   mapping=aes_string(group="condition", fill="condition"),
-                   geom="polygon", type="t", level=ci, alpha=alpha)
-    }
-  }
-
-  return(pca_plot)
-}
-
-## An alternate to plotting rank order of svd$u
-## The plotted_u1s and such below
-## y-axis is z(i), x-axis is i
-## z(i) = cumulative sum of $u squared
-## z = cumsum((svd$u ^ 2))
-
-#' Plot the rank order svd$u elements to get a view of how much
-#' the first genes contribute to the total variance by PC.
-#'
-#' @param plotted_us  a list of svd$u elements
-#' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
-#' @export
-u_plot <- function(plotted_us) {
-  plotted_us <- abs(plotted_us[, c(1, 2, 3)])
-  plotted_u1s <- plotted_us[order(plotted_us[, 1], decreasing=TRUE), ]
-  plotted_u2s <- plotted_us[order(plotted_us[, 2], decreasing=TRUE), ]
-  plotted_u3s <- plotted_us[order(plotted_us[, 3], decreasing=TRUE), ]
-  ## allS <- BiocGenerics::rank(allS, ties.method = "random")
-  ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
-  plotted_u1s <- cbind(plotted_u1s, rev(rank(plotted_u1s[, 1], ties.method="random")))
-  plotted_u1s <- plotted_u1s[, c(1, 4)]
-  colnames(plotted_u1s) <- c("PC1", "rank")
-  plotted_u1s <- data.frame(plotted_u1s)
-  plotted_u1s$ID <- as.character(rownames(plotted_u1s))
-  plotted_u2s <- cbind(plotted_u2s, rev(rank(plotted_u2s[, 2], ties.method="random")))
-  plotted_u2s <- plotted_u2s[, c(2, 4)]
-  colnames(plotted_u2s) <- c("PC2", "rank")
-  plotted_u2s <- data.frame(plotted_u2s)
-  plotted_u2s$ID <- as.character(rownames(plotted_u2s))
-  plotted_u3s <- cbind(plotted_u3s, rev(rank(plotted_u3s[, 3], ties.method="random")))
-  plotted_u3s <- plotted_u3s[, c(3, 4)]
-  colnames(plotted_u3s) <- c("PC3", "rank")
-  plotted_u3s <- data.frame(plotted_u3s)
-  plotted_u3s$ID <- as.character(rownames(plotted_u3s))
-  plotted_us <- merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
-  plotted_us <- merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
-  colnames(plotted_us) <- c("rank", "PC1", "ID1", "PC2", "ID2", "PC3", "ID3")
-  rm(plotted_u1s)
-  rm(plotted_u2s)
-  rm(plotted_u3s)
-  ## top_threePC = head(plotted_us, n=20)
-  plotted_us <- plotted_us[, c("PC1", "PC2", "PC3")]
-  plotted_us[, "ID"] <- rownames(plotted_us)
-  message("More shallow curves in these plots suggest more genes in this principle component.")
-  plot(plotted_us)
-  u_plot <- grDevices::recordPlot()
-  return(u_plot)
-}
-
 #' Gather information about principle components.
 #'
 #' Calculate some information useful for generating PCA plots.
@@ -550,6 +55,7 @@ u_plot <- function(plotted_us) {
 #' @param num_components   a number of principle components to compare the design factors against.
 #'  If left null, it will query the same number of components as factors asked for.
 #' @param plot_pcas   plot the set of PCA plots for every pair of PCs queried.
+#' @param ...  Extra arguments for the pca plotter
 #' @return a list of fun pca information:
 #'  svd_u/d/v: The u/d/v parameters from fast.svd
 #'  rsquared_table: A table of the rsquared values between each factor and principle component
@@ -570,12 +76,10 @@ u_plot <- function(plotted_us) {
 #' }
 #' @export
 pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("condition", "batch"),
-                            num_components=NULL, plot_pcas=FALSE) {
+                            num_components=NULL, plot_pcas=FALSE, ...) {
   ## Start out with some sanity tests
   colors_chosen <- NULL
   exprs_data <- NULL
-  expt_data <- NULL
-  expt_design <- NULL
   data_class <- class(expt_data)[1]
   if (data_class == "expt") {
     expt_design <- expt_data[["design"]]
@@ -856,11 +360,22 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 #'  information$pca_bitplot  ## oo pretty
 #' }
 #' @export
-pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
-  ## Another method of using PCA
-  ## cond = as.factor(as.numeric(conditions))
-  ## batch = as.factor(as.numeric(batches))
-  another_pca <- try(stats::princomp(x=df, cor=TRUE, scores=TRUE, formula=~0 + cond + batch))
+pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
+  if (isTRUE(logged)) {
+    if (expt[["state"]][["transform"]] == "raw") {
+      expt <- sm(normalize_expt(expt, transform="log2"))
+    }
+  }
+
+  data <- as.data.frame(exprs(expt))
+  if (!is.null(vs)) {
+    if (vs == "means") {
+      data <- as.matrix(data) - rowMeans(as.matrix(data))
+    } else if (vs == "medians") {
+      data <- as.matrix(data) - rowMedians(as.matrix(data))
+    }
+  }
+  another_pca <- try(princomp(x=data, cor=cor))
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
   biplot(another_pca)
@@ -882,16 +397,479 @@ pca_highscores <- function(df=NULL, conditions=NULL, batches=NULL, n=20) {
   colnames(highest) <- colnames(another_pca[["scores"]])
   colnames(lowest) <- colnames(another_pca[["scores"]])
   ret_list <- list(
+    "scores" = another_pca[["scores"]],
     "pca_hist" = pca_hist,
     "pca_biplot" = pca_biplot,
     "highest" = highest,
-    "lowest" = lowest)
+    "lowest" = lowest,
+    "result" = another_pca)
   return(ret_list)
 }
 
-test_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                     scale="none", center=TRUE,
+#' Compute variance of each principal component and how they correlate with batch and cond
+#'
+#' This was copy/pasted from cbcbSEQ
+#' https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
+#'
+#' @param v from makeSVD
+#' @param d from makeSVD
+#' @param condition factor describing experiment
+#' @param batch factor describing batch
+#' @return A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
+#' @seealso \code{\link{plot_pca}}
+#' @export
+pcRes <- function(v, d, condition=NULL, batch=NULL){
+  pcVar <- round((d ^ 2) / sum(d ^ 2) * 100, 2)
+  cumPcVar <- cumsum(pcVar)
+  calculate_rsquared_condition <- function(data) {
+    lm_result <- lm(data ~ condition)
+  }
+  if(!is.null(condition)) {
+    cond.R2 <- function(y) {
+      round(summary(lm(y ~ condition))$r.squared * 100, 2)
+    }
+    cond.R2 <- apply(v, 2, cond.R2)
+  }
+  if(!is.null(batch)) {
+    batch.R2 <- function(y) {
+      round(summary(lm(y ~ batch))$r.squared * 100, 2)
+    }
+    batch.R2 <- apply(v, 2, batch.R2)
+  }
+  if(is.null(condition) & is.null(batch)){
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar)
+  }
+  if(!is.null(batch) & is.null(condition)){
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "batch.R2" = batch.R2)
+  }
+  if(!is.null(condition) & is.null(batch)){
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "cond.R2" = cond.R2)
+  }
+  if(!is.null(condition) & !is.null(batch)){
+    res <- data.frame("propVar" = pcVar,
+                      "cumPropVar" = cumPcVar,
+                      "cond.R2" = cond.R2,
+                      "batch.R2" = batch.R2)
+  }
+  return(res)
+}
+
+#' Make a ggplot PCA plot describing the samples' clustering.
+#'
+#' @param data  an expt set of samples.
+#' @param design   a design matrix and.
+#' @param plot_colors   a color scheme.
+#' @param plot_title   a title for the plot.
+#' @param plot_size   size for the glyphs on the plot.
+#' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param size_column use an experimental factor to size the glyphs of the plot
+#' @param ...  arglist from elipsis!
+#' @return a list containing the following:
+#' \enumerate{
+#'  \item  pca = the result of fast.svd()
+#'  \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+#'  \item  table = a table of the PCA plot data
+#'  \item  res = a table of the PCA res data
+#'  \item  variance = a table of the PCA plot variance
+#' }
+#' @seealso \pkg{directlabels}
+#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @examples
+#' \dontrun{
+#'  pca_plot <- plot_pca(expt=expt)
+#'  pca_plot
+#' }
+#' @export
+plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
                      plot_title=NULL, plot_size=5, size_column=NULL, ...) {
+  ## I have been using hpgl_env for keeping aes() from getting contaminated.
+  ## I think that this is no longer needed because I have been smater(sic) about how
+  ## I invoke aes_string() and ggplot2()
+  hpgl_env <- environment()
+  arglist <- list(...)
+  plot_names <- arglist[["plot_names"]]
+  ## Set default columns in the experimental design for condition and batch
+  ## changing these may be used to query other experimental factors with pca.
+  cond_column <- "condition"
+  if (!is.null(arglist[["cond_column"]])) {
+    cond_column <- arglist[["cond_column"]]
+    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+  }
+  batch_column <- "batch"
+  if (!is.null(arglist[["batch_column"]])) {
+    batch_column <- arglist[["batch_column"]]
+    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+  }
+
+  ## The following if() series is used to check the type of data provided and extract the available
+  ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
+  ## specific to that.  However, the functions in this package should be smart enough to deal when
+  ## that is not true.
+  ## The primary things this particular function is seeking to acquire are: design, colors, counts.
+  ## The only thing it absolutely requires to function is counts, it will make up the rest if it cannot
+  ## find them.
+  data_class <- class(data)[1]
+  names <- NULL
+  expt <- NULL
+  if (data_class == "expt") {
+    expt <- data
+    design <- data[["design"]]
+    if (cond_column == "condition") {
+      plot_colors <- data[["colors"]]
+    } else {
+      plot_colors <- NULL
+    }
+    plot_names <- data[["samplenames"]]
+    data <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    data <- exprs(data)
+  } else if (data_class == "list") {
+    data <- data[["count_table"]]
+    if (is.null(data)) {
+      stop("The list provided contains no count_table element.")
+    }
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  ## Check that the given design works with the data
+  ## Prune the design if necessary
+  ## Also take into account the fact that sometimes I change the case of hpgl<->HPGL
+  given_samples <- tolower(colnames(data))
+  colnames(data) <- given_samples
+  ## I hate uppercase characters, I ADMIT IT.
+  avail_samples <- tolower(rownames(design))
+  rownames(design) <- avail_samples
+  if (sum(given_samples %in% avail_samples) == length(given_samples)) {
+    design <- design[given_samples, ]
+  }
+
+  ## If nothing has given this some colors for the plot, make them up now.
+  if (is.null(plot_colors)) {
+    plot_colors <- as.numeric(as.factor(design[[cond_column]]))
+    plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
+  }
+
+  ## Similarly, if there is no information which may be used as a design yet, make one up.
+  if (is.null(design)) {
+    message("No design was provided.  Making one with x conditions, 1 batch.")
+    design <- cbind(plot_names, 1)
+    design <- as.data.frame(design)
+    design[["condition"]] <- as.numeric(design[["plot_labels"]])
+    colnames(design) <- c("name", "batch", "condition")
+    design <- design[, c("name", "condition", "batch")]
+    plot_names <- design[["name"]]
+  }
+
+  ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
+  ## condition_batch; this handles that as eloquently as I am able.
+  label_list <- NULL
+  if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
+    label_list <- design[["sampleid"]]
+  } else if (is.null(arglist[["label_list"]])) {
+    label_list <- plot_names
+  } else if (arglist[["label_list"]] == "concat") {
+    label_list <- paste(design[[cond_column]], design[[batch_column]], sep="_")
+  } else {
+    label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
+  }
+
+  svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
+  v_vector <- svd_result[["v"]]
+  rownames(v_vector) <- colnames(data)
+  svd_result[["v"]] <- v_vector
+  ##pca <- makeSVD(data)
+  ## Pull out the batches and conditions used in this plot.
+  ## Probably could have just used xxx[stuff, drop=TRUE]
+  included_batches <- as.factor(as.character(design[[batch_column]]))
+  included_conditions <- as.factor(as.character(design[[cond_column]]))
+
+  ## Depending on how much batch/condition information is available, invoke pcRes() to get some idea of how
+  ## much variance in a batch model is accounted for with each PC.
+  if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
+    warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
+  } else if (length(levels(included_conditions)) == 1) {
+    warning("There is only one condition, but more than one batch.
+Going to run pcRes with the batch information.")
+    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]], batch=design[, batch_column])
+  } else if (length(levels(included_batches)) == 1) {
+    message("There is just one batch in this data.")
+    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                     condition=design[, cond_column])
+  } else {
+    pca_res <- pcRes(v=svd_result[["v"]], d=svd_result[["d"]],
+                     condition=design[, cond_column], batch=design[, batch_column])
+  }
+
+  ## By a similar token, get the percentage of variance accounted for in each PC
+  pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
+  ## These will provide metrics on the x/y axes showing the amount of variance on those
+  ## components of our plot.
+  xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
+  yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
+
+  ## Create a data frame with all the material of interest in the actual PCA plot
+  pca_data <- data.frame(
+    "sampleid" = as.character(design[["sampleid"]]),
+    "condition" = as.character(design[[cond_column]]),
+    "batch" = as.character(design[[batch_column]]),
+    "batch_int" = as.integer(as.factor(design[[batch_column]])),
+    "PC1" = svd_result[["v"]][, 1],
+    "PC2" = svd_result[["v"]][, 2],
+    "colors" = as.character(plot_colors),
+    "labels" = label_list,
+    stringsAsFactors=FALSE)
+
+  ## Add an optional column which may be used to change the glyph sizes in the plot
+  if (!is.null(size_column)) {
+    pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
+    pca_data[[size_column]] <- pca_data[[size_column]] + 1
+  }
+
+  pca_plot <- NULL
+  ## The plot_pcs() function gives a decent starting plot
+  pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+                       design=design, plot_labels=plot_labels,
+                       plot_size=plot_size, size_column=size_column, ...)
+  ##pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+  ##                     design=design, plot_labels=plot_labels,
+  ##                     plot_size=plot_size, size_column=size_column)
+
+  ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
+  pca_plot <- pca_plot +
+    ggplot2::xlab(xl) +
+    ggplot2::ylab(yl) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   legend.key.size=grid::unit(0.5, "cm"))
+
+  ## If plot_title is NULL, print nothing, if it is TRUE
+  ## Then give some information about what happened to the data to make the plot.
+  if (isTRUE(plot_title)) {
+    data_title <- what_happened(expt=expt)
+    pca_plot <- pca_plot + ggplot2::ggtitle(data_title)
+  } else if (!is.null(plot_title)) {
+    data_title <- what_happened(expt=expt)
+    plot_title <- paste0(plot_title, "; ", data_title)
+    pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
+  } else {
+    ## Leave the title blank.
+  }
+
+  ## Finally, return a list of the interesting bits of what happened.
+  pca_return <- list(
+    "pca" = svd_result,
+    "plot" = pca_plot,
+    "table" = pca_data,
+    "res" = pca_res,
+    "variance" = pca_variance)
+  return(pca_return)
+}
+
+#' A quick and dirty PCA plotter of arbitrary components against one another.
+#'
+#' @param pca_data  Dataframe of principle components PC1 .. PCN with any other arbitrary information.
+#' @param first   Principle component PCx to put on the x axis.
+#' @param second   Principle component PCy to put on the y axis.
+#' @param variances   List of the percent variance explained by each component.
+#' @param design   Experimental design with condition batch factors.
+#' @param plot_title   Title for the plot.
+#' @param plot_labels   Parameter for the labels on the plot.
+#' @param plot_size  Size of the dots on the plot
+#' @param size_column  Experimental factor to use for sizing the glyphs
+#' @param rug  Include the rugs on the sides of the plot?
+#' @param cis  What (if any) confidence intervals to include.
+#' @param ...  Extra arguments dropped into arglist
+#' @return  gplot2 PCA plot
+#' @seealso \pkg{ggplot2}
+#'  \code{\link[directlabels]{geom_dl}}
+#' @examples
+#' \dontrun{
+#'  pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+#' }
+#' @export
+plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
+                     design=NULL, plot_title=TRUE, plot_labels=NULL,
+                     plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
+  arglist <- list(...)
+  hpgl_env <- environment()
+  batches <- pca_data[["batch"]]
+  label_column <- "condition"
+  if (!is.null(arglist[["label_column"]])) {
+    label_column <- arglist[["label_column"]]
+  }
+  point_labels <- factor(pca_data[[label_column]])
+  if (is.null(plot_title)) {
+    plot_title <- paste(first, " vs. ", second, sep="")
+  }
+  num_batches <- length(unique(batches))
+  pca_plot <- NULL
+
+  color_listing <- pca_data[, c("condition", "colors")]
+  color_listing <- unique(color_listing)
+  color_list <- as.character(color_listing[["colors"]])
+  names(color_list) <- as.character(color_listing[["condition"]])
+  ## Ok, so this is shockingly difficult.  For <5 batch data I want properly colored points with black outlines
+  ## The legend colors need to match, in addition, the legend needs to have the shapes noted.
+  ## In order to do this, one must do, _in_order_:
+  ## 1.  Set up the normal ggplot object
+  ## 2.  Set up a geom_point with color _and_ fill as the proper color.
+  ##     The color but _NOT_ fill is used to color the legend's copy of the glyph.
+  ## 3.  Then set up a new geom_point with color=black _and_ show_guide=FALSE
+  ## 4.  Then set scale_color_manual to the proper color_list
+  ## 5.  Then set scale_fill_manual to the proper color_list
+  ## 6.  Finally, set the shape manual with a guide_legend override
+
+  ## Step 1
+  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+
+  if (is.null(size_column) & num_batches <= 5) {
+    pca_plot <- pca_plot +
+      ggplot2::geom_point(size=plot_size,
+                          aes_string(shape="as.factor(batches)",
+                                     colour="as.factor(condition)",
+                                     fill="as.factor(condition)")) +
+      ggplot2::geom_point(size=plot_size, colour="black", show.legend=FALSE,
+                          aes_string(shape="as.factor(batches)",
+                                     fill="as.factor(condition)")) +
+      ggplot2::scale_color_manual(name="Condition",
+                                  guide="legend",
+                                  values=color_list) +
+      ggplot2::scale_fill_manual(name="Condition",
+                                 guide="legend",
+                                 values=color_list) +
+      ggplot2::scale_shape_manual(name="Batch",
+                                  labels=levels(as.factor(pca_data[["batch"]])),
+                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                                  values=21:25)
+  } else if (is.null(size_column) & num_batches > 5) {
+    pca_plot <- pca_plot +
+      ggplot2::geom_point(size=plot_size,
+                          aes_string(shape="as.factor(batches)",
+                                     colour="as.factor(condition)")) +
+      ggplot2::scale_color_manual(name="Condition",
+                                  guide="legend",
+                                  values=color_list) +
+      ggplot2::scale_shape_manual(name="Batch",
+                                  labels=levels(as.factor(pca_data[["batch"]])),
+                                  guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
+                                  values=1:num_batches)
+  } else if (!is.null(size_column) & num_batches <= 5) {
+    ## This will require the 6 steps above and one more
+    maxsize <- max(pca_data[[size_column]])
+    pca_plot <- pca_plot +
+      ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
+                                              size=size_column,
+                                              colour="as.factor(condition)",
+                                              fill="as.factor(condition)")) +
+      ggplot2::geom_point(colour="black", show.legend=FALSE,
+                          aes_string(shape="as.factor(batches)",
+                                     size=size_column,
+                                     fill="as.factor(condition)")) +
+      ggplot2::scale_color_manual(name="Condition",
+                                  guide="legend",
+                                  values=color_list) +
+      ggplot2::scale_fill_manual(name="Condition",
+                                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
+                                 values=color_list) +
+      ggplot2::scale_shape_manual(name="Batch",
+                                  labels=levels(as.factor(pca_data[["batch"]])),
+                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                                  values=21:25) +
+      ggplot2::scale_size(range=c(2, 7))
+  } else if (!is.null(size_column) & num_batches > 5) {
+    maxsize <- max(pca_data[[size_column]])
+    pca_plot <- pca_plot +
+      ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
+                                              colour="pca_data[['condition']]",
+                                              size=size_column)) +
+      ggplot2::scale_shape_manual(name="Batch",
+                                  labels=levels(as.factor(pca_data[["batch"]])),
+                                  guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
+                                  values=1:num_batches) +
+      ggplot2::scale_color_identity(name="Condition",
+                                    guide="legend",
+                                    values=color_list) +
+      ggplot2::scale_size(range=c(2, 7))
+  } else {
+    stop("This should be an impossible state.")
+  }
+
+  if (!is.null(variances)) {
+    x_var_num <- as.numeric(gsub("PC", "", first))
+    y_var_num <- as.numeric(gsub("PC", "", second))
+    x_label <- paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
+    y_label <- paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
+    pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
+  }
+
+  if (isTRUE(rug)) {
+    pca_plot <- pca_plot + ggplot2::geom_rug(colour="gray50", alpha=0.7)
+  }
+
+  if (is.null(plot_labels)) {
+    plot_labels <- "repel"
+  }
+  if (plot_labels == FALSE) {
+    message("Not putting labels on the plot.")
+  } else if (plot_labels == "normal") {
+    pca_plot <- pca_plot +
+      ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
+                                             angle=45, size=4, vjust=2))
+  } else if (plot_labels == "repel") {
+    pca_plot <- pca_plot +
+      ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
+                               size=5, box.padding=ggplot2::unit(0.5, "lines"),
+                               point.padding=ggplot2::unit(1.6, "lines"),
+                               arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
+  } else if (plot_labels == "dlsmart") {
+    pca_plot <- pca_plot +
+      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
+  } else {
+    pca_plot <- pca_plot +
+      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
+  }
+
+  if (!is.null(cis)) {
+    alpha <- 0
+    for (ci in cis) {
+      alpha <- alpha + 0.1
+      ## message(paste0("Adding ", ci, " with alpha ", alpha))
+      pca_plot <- pca_plot +
+        ggplot2::stat_ellipse(
+                   mapping=aes_string(group="condition", fill="condition"),
+                   geom="polygon", type="t", level=ci, alpha=alpha)
+    }
+  }
+
+  return(pca_plot)
+}
+
+#' The pcaMethods package has some interesting methods to test PCA methodologies.
+#'
+#' I made this function to be able to test out some of them.
+#'
+#' @param data expt to poke
+#' @param design  Experimental design
+#' @param plot_colors  Colors to use when plotting
+#' @param plot_labels  Labels for the plots.
+#' @param scale  Scale them?
+#' @param center  Center them?
+#' @param plot_title  Title them?
+#' @param plot_size  Size of the sigils.
+#' @param size_column  A factor to size the sigils.
+#' @param ...  arglist
+#' @export
+test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+                             scale="none", center=TRUE,
+                             plot_title=NULL, plot_size=5, size_column=NULL, ...) {
 
   hpgl_env <- environment()
   arglist <- list(...)
@@ -958,6 +936,55 @@ test_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     "nipals" = nipals
   )
   return(retlist)
+}
+
+## An alternate to plotting rank order of svd$u
+## The plotted_u1s and such below
+## y-axis is z(i), x-axis is i
+## z(i) = cumulative sum of $u squared
+## z = cumsum((svd$u ^ 2))
+
+#' Plot the rank order svd$u elements to get a view of how much
+#' the first genes contribute to the total variance by PC.
+#'
+#' @param plotted_us  a list of svd$u elements
+#' @return a recordPlot() plot showing the first 3 PCs by rank-order svd$u.
+#' @export
+u_plot <- function(plotted_us) {
+  plotted_us <- abs(plotted_us[, c(1, 2, 3)])
+  plotted_u1s <- plotted_us[order(plotted_us[, 1], decreasing=TRUE), ]
+  plotted_u2s <- plotted_us[order(plotted_us[, 2], decreasing=TRUE), ]
+  plotted_u3s <- plotted_us[order(plotted_us[, 3], decreasing=TRUE), ]
+  ## allS <- BiocGenerics::rank(allS, ties.method = "random")
+  ## plotted_us$rank = rank(plotted_us[,1], ties.method="random")
+  plotted_u1s <- cbind(plotted_u1s, rev(rank(plotted_u1s[, 1], ties.method="random")))
+  plotted_u1s <- plotted_u1s[, c(1, 4)]
+  colnames(plotted_u1s) <- c("PC1", "rank")
+  plotted_u1s <- data.frame(plotted_u1s)
+  plotted_u1s[["ID"]] <- as.character(rownames(plotted_u1s))
+  plotted_u2s <- cbind(plotted_u2s, rev(rank(plotted_u2s[, 2], ties.method="random")))
+  plotted_u2s <- plotted_u2s[, c(2, 4)]
+  colnames(plotted_u2s) <- c("PC2", "rank")
+  plotted_u2s <- data.frame(plotted_u2s)
+  plotted_u2s[["ID"]] <- as.character(rownames(plotted_u2s))
+  plotted_u3s <- cbind(plotted_u3s, rev(rank(plotted_u3s[, 3], ties.method="random")))
+  plotted_u3s <- plotted_u3s[, c(3, 4)]
+  colnames(plotted_u3s) <- c("PC3", "rank")
+  plotted_u3s <- data.frame(plotted_u3s)
+  plotted_u3s[["ID"]] <- as.character(rownames(plotted_u3s))
+  plotted_us <- merge(plotted_u1s, plotted_u2s, by.x="rank", by.y="rank")
+  plotted_us <- merge(plotted_us, plotted_u3s, by.x="rank", by.y="rank")
+  colnames(plotted_us) <- c("rank", "PC1", "ID1", "PC2", "ID2", "PC3", "ID3")
+  rm(plotted_u1s)
+  rm(plotted_u2s)
+  rm(plotted_u3s)
+  ## top_threePC = head(plotted_us, n=20)
+  plotted_us <- plotted_us[, c("PC1", "PC2", "PC3")]
+  plotted_us[, "ID"] <- rownames(plotted_us)
+  message("More shallow curves in these plots suggest more genes in this principle component.")
+  plot(plotted_us)
+  u_plot <- grDevices::recordPlot()
+  return(u_plot)
 }
 
 ## EOF

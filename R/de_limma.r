@@ -438,6 +438,21 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                            normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     }
     voom_plot <- grDevices::recordPlot()
+  } else if (which_voom == "limma") {
+    message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
+    message(paste0("Using normalize.method=", voom_norm, " for voom."))
+    ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
+    ## normalize.method="none", lib.size=NULL, design=NULL
+    fun_voom <- limma::voom(
+                         counts=data, design=chosen_model, lib.size=libsize,
+                         normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
+    voom_plot <- grDevices::recordPlot()
+  } else if (which_voom == "none") {
+    ## Reyy reminded me today that one does not necessarily need voom, but
+    ## logcpm might be sufficient when the data distributions are nice and
+    ## consistent.
+    message("Limma step 2/6: using edgeR::cpm(), switch with the argument 'which_voom'.")
+    fun_voom <- edgeR::cpm(data, log=TRUE, prior.count=3)
   } else {
     message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
     message(paste0("Using normalize.method=", voom_norm, " for voom."))
@@ -448,7 +463,6 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                          normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     voom_plot <- grDevices::recordPlot()
   }
-
   one_replicate <- FALSE
   if (is.null(fun_voom)) {
     ## Apparently voom returns null where there is only 1 replicate.
@@ -545,6 +559,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     "identity_tables" = limma_identities,
     "identity_comparisons" = all_identity_comparisons,
     "input_data" = data,
+    "method" = "limma",
     "model" = model,
     "model_string" = model_string,
     "pairwise_comparisons" = all_pairwise_comparisons,
@@ -555,63 +570,6 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     retlist[["limma_excel"]] <- write_limma(retlist, excel=arglist[["limma_excel"]])
   }
   return(retlist)
-}
-
-#' Plot arbitrary data from limma as a scatter plot.
-#'
-#' Extract the adjusted abundances for the two conditions used in the pairw
-#'
-#' @param all_pairwise_result Result from calling balanced_pairwise().
-#' @param first_table First table from all_pairwise_result$limma_result to look at (may be a name or number).
-#' @param first_column Name of the column to plot from the first table.
-#' @param second_table Second table inside all_pairwise_result$limma_result (name or number).
-#' @param second_column Column to compare against.
-#' @param type Type of scatter plot (linear model, distance, vanilla).
-#' @param ... Use the elipsis to feed options to the html graphs.
-#' @return plot_linear_scatter() set of plots comparing the chosen columns.  If you forget to
-#'  specify tables to compare, it will try the first vs the second.
-#' @seealso \pkg{limma}
-#'  \code{\link{plot_linear_scatter}}
-#' @examples
-#' \dontrun{
-#'  compare_logFC <- limma_scatter(all_pairwise, first_table="wild_type", second_column="mutant",
-#'                                 first_table="AveExpr", second_column="AveExpr")
-#'  compare_B <- limma_scatter(all_pairwise, first_column="B", second_column="B")
-#' }
-#' @export
-limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logFC",
-                          second_table=2, second_column="logFC", type="linear_scatter", ...) {
-  tables <- all_pairwise_result[["all_tables"]]
-  if (is.numeric(first_table)) {
-    x_name <- paste(names(tables)[first_table], first_column, sep=":")
-  }
-  if (is.numeric(second_table)) {
-    y_name <- paste(names(tables)[second_table], second_column, sep=":")
-  }
-
-  ## This section is a little bit paranoid
-  ## I want to make absolutely certain that I am adding only the
-  ## two columns I care about and that nothing gets reordered
-  ## As a result I am explicitly pulling a single column, setting
-  ## the names, then pulling the second column, then cbind()ing them.
-  x_name <- paste(first_table, first_column, sep=":")
-  y_name <- paste(second_table, second_column, sep=":")
-  df <- data.frame(x=tables[[first_table]][[first_column]])
-  rownames(df) <- rownames(tables[[first_table]])
-  second_column_list <- tables[[second_table]][[second_column]]
-  names(second_column_list) <- rownames(tables[[second_table]])
-  df <- cbind(df, second_column_list)
-  colnames(df) <- c(x_name, y_name)
-  plots <- NULL
-  if (type == "linear_scatter") {
-    plots <- plot_linear_scatter(df, loess=TRUE, ...)
-  } else if (type == "dist_scatter") {
-    plots <- plot_dist_scatter(df, ...)
-  } else {
-    plots <- plot_scatter(df, ...)
-  }
-  plots[["dataframe"]] <- df
-  return(plots)
 }
 
 #' Writes out the results of a limma search using toptable().
@@ -636,7 +594,6 @@ limma_scatter <- function(all_pairwise_result, first_table=1, first_column="logF
 #'  finished_comparison = eBayes(limma_output)
 #'  table = make_limma_tables(finished_comparison, adjust="fdr")
 #' }
-#' @export
 make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
                               annot_df=NULL, intercept=FALSE) {
   ## Figure out the number of genes if not provided

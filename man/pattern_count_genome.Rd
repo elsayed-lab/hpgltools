@@ -5,7 +5,7 @@
 \title{Find how many times a given pattern occurs in every gene of a genome.}
 \usage{
 pattern_count_genome(fasta, gff = NULL, pattern = "TA", type = "gene",
-  key = "locus_tag")
+  key = NULL)
 }
 \arguments{
 \item{fasta}{Genome sequence.}

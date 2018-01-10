@@ -245,8 +245,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     }
     dev.off()
   }
-  fileName <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
-  png_ret <- try(png(filename=fileName,
+  png_name <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
+  png_ret <- try(png(filename=png_name,
                      width=width,
                      height=height,
                      units=units,
@@ -261,11 +261,16 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     png_print_ret <- try(plot(a_plot, ...))
   }
   dev.off()
-  insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=fileName, width=width,
-                                          height=height, startRow=start_row, startCol=start_col,
-                                          units=units, dpi=res))
-  if (class(insert_ret) == "try-error") {
-    message(paste0("There was an error inserting the image at: ", fileName))
+  insert_ret <- NULL
+  if (file.exists(png_name)) {
+    insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name, width=width,
+                                            height=height, startRow=start_row, startCol=start_col,
+                                            units=units, dpi=res))
+    if (class(insert_ret) == "try-error") {
+      message(paste0("There was an error inserting the image at: ", png_name))
+    }
+  } else {
+    message(paste0("The png file name did not exist: ", png_name))
   }
   ret <- list(
     "png_print" = png_print_ret,

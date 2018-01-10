@@ -6,7 +6,7 @@
 \usage{
 do_eupath_table(type, granges = NULL, provider = NULL,
   genus_species = NULL, species = NULL, flatten = FALSE,
-  abbreviation = NULL, dir = "eupathdb")
+  abbreviation = NULL, dir = "eupathdb", do_kegg = TRUE)
 }
 \arguments{
 \item{type}{One of: gff, genes, go, pathways, etc. (The type of table to download.)}
@@ -24,6 +24,9 @@ do_eupath_table(type, granges = NULL, provider = NULL,
 \item{abbreviation}{Used for kegg downloads.}
 
 \item{dir}{Where to dump the data.}
+}
+\value{
+Table of eupathdb information.
 }
 \description{
 This small function provides a single entrypoint for multiple get_eupath functions.

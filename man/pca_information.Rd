@@ -5,7 +5,7 @@
 \title{Gather information about principle components.}
 \usage{
 pca_information(expt_data, expt_design = NULL, expt_factors = c("condition",
-  "batch"), num_components = NULL, plot_pcas = FALSE)
+  "batch"), num_components = NULL, plot_pcas = FALSE, ...)
 }
 \arguments{
 \item{expt_data}{the data to analyze (usually exprs(somedataset)).}
@@ -20,6 +20,8 @@ for R^2 against the fast.svd of the data.}
 If left null, it will query the same number of components as factors asked for.}
 
 \item{plot_pcas}{plot the set of PCA plots for every pair of PCs queried.}
+
+\item{...}{Extra arguments for the pca plotter}
 }
 \value{
 a list of fun pca information:

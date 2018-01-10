@@ -385,7 +385,6 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
     "join1" = c(GO.db="GOID", orgdb="GO"),
     "join2" = c(orgdb="GID",  txdb="GENEID")
   )
-
   names(graph_data[["join1"]]) = c("GO.db", orgdb_package)
   names(graph_data[["join2"]]) = c(orgdb_package, txdb_package)
 
@@ -426,7 +425,7 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
   organdb_path <- clean_pkg(organdb_path)
   organdb_path <- clean_pkg(organdb_path, removal="_like", replace="like")
   if (class(organdb) == "list") {
-    inst <- devtools::install(organdb_path)
+    inst <- sm(try(devtools::install(organdb_path)))
   }
   return(inst)
 }
@@ -594,7 +593,7 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                           )
   if (isTRUE(kegg)) {
     kegg_species <- paste0(cfg[["genus"]], " ", cfg[["species"]])
-    kegg_info <- get_kegg_genepaths(species=kegg_species)
+    kegg_info <- load_kegg_annotations(species=kegg_species)
     test_kegg_info <- duplicated(kegg_info)
     kegg_info <- kegg_info[!test_kegg_info, ]
     kegg_info[["GID"]] <- as.character(kegg_info[["GID"]])

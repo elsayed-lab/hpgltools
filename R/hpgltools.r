@@ -34,6 +34,17 @@
 #' @usage lhs \%>\% rhs
 NULL
 
+#' data.table's funky column assignment operator
+#'
+#' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
+#'
+#' @name :=
+#' @rdname column_assignment
+#' @keywords internal
+#' @export
+#' @importFrom data.table :=
+NULL
+
 #' dopar
 #'
 #' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32

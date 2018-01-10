@@ -31,6 +31,12 @@ more complex than the other annotation data (at least for the eupathdb).  It gat
 KEGG/GO/gene/etc data and bundles it into a single sqlite instance and does some
 rudimentary sanity checks on the result.
 }
+\details{
+FIXME: The eupathdb family is moving away from the json-based queries.  The
+get_something() family of functions upon which this process depends is
+therefore not likely to continue to work over time.  It needs therefore to be
+migrated to queries similar to what is performed in get_eupath_text().
+}
 \author{
 Keith Hughitt
 }

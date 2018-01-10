@@ -9,7 +9,8 @@ clear_session(keepers = NULL, depth = 10)
 \arguments{
 \item{keepers}{List of namespaces to leave alone (unimplemented).}
 
-\item{depth}{Cheesy forloop of attempts to remove packages stops after this many tries.}
+\item{depth}{Cheesy forloop of attempts to remove packages stops after this
+many tries.}
 }
 \value{
 A spring-fresh R session, hopefully.

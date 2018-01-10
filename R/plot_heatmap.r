@@ -116,7 +116,8 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 
     if (is.null(expt_colors)) {
         num_cols <- ncol(expt_data)
-        expt_colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_cols))
+        expt_colors <- sm(grDevices::colorRampPalette(
+                                       RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_cols))
     }
     if (is.null(expt_names)) {
         expt_names <- colnames(expt_data)
@@ -128,6 +129,11 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     if (type == "correlation") {
         heatmap_data <- hpgl_cor(expt_data, method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
+        if (method == "cordist") {
+          heatmap_colors <- grDevices::colorRampPalette(
+                                         c("yellow2", "goldenrod", "darkred"),
+                                         bias=0.5)(100)
+        }
     } else if (type == "distance") {
         heatmap_data <- as.matrix(dist(t(expt_data)), method=method)
         heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)

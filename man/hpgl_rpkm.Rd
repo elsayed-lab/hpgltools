@@ -4,10 +4,10 @@
 \alias{hpgl_rpkm}
 \title{Reads/(kilobase(gene) * million reads)}
 \usage{
-hpgl_rpkm(df, ...)
+hpgl_rpkm(count_table, ...)
 }
 \arguments{
-\item{df}{Data frame of counts, alternately an edgeR DGEList.}
+\item{count_table}{Data frame of counts, alternately an edgeR DGEList.}
 
 \item{...}{extra options including annotations for defining gene lengths.}
 }

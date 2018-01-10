@@ -1,3 +1,58 @@
+#' Download the txt uniprot data for a given accession/species
+#'
+#' @param accession  Which accession to grab?
+#' @param species  Or perhaps species?
+#' @param all  If there are more than 1 hit, grab them all?
+#' @param first  Or perhaps just grab the first hit?
+#' @return A filename/accession tuple.
+#' @export
+download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, first=FALSE) {
+  if (is.null(accession) & is.null(species)) {
+    message("Defaulting to the Mycobacterium tuberculosis H37Rv strain.")
+    accession <- "UP000001584"
+  } else if (is.null(accession)) {
+    request_url <- paste0("http://www.uniprot.org/proteomes/?query=", xml2::url_escape(species))
+    result <- xml2::read_html(request_url)
+    test <- rvest::html_nodes(result, "tr")
+    test_text <- rvest::html_text(test)
+    test_text <- test_text[3:length(test_text)] ## The first two elements are headers
+    accessions <- gsub(x=test_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\1")
+    species <- gsub(x=test_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\2")
+    if (length(accessions) == 1) {
+      accession <- accessions
+    } else if (isTRUE(all)) {
+        for (a in 1:length(accessions)) {
+          name <- species[a]
+          accession <- accessions[a]
+          message(paste0("Downloading the proteome for ", name, "."))
+          tmp <- download_uniprot_proteome(accession=accession)
+          Sys.sleep(time=3)
+        }
+    } else if (isTRUE(first)) {
+      accession <- accessions[1]
+      name <- species[1]
+      message(paste0("Downloading the proteome for ", name, "."))
+      tmp <- download_uniprot_proteome(accession=accession)
+    } else {
+      message("Here are the species found, please choose one and try again.")
+      for (a in 1:length(accessions)) {
+        name <- species[a]
+        accession <- accessions[a]
+        message(paste0(a, ") ", accession, ": ", name))
+      }
+      message(toString(species))
+      return(NULL)
+    }
+  }
+  request_url <- paste0("http://www.uniprot.org/uniprot/?query=proteome:", accession, "&compress=yes&force=true&format=txt")
+  destination <- paste0(accession, ".txt.gz")
+  file <- download.file(url=request_url, destfile=destination, method="curl", quiet=TRUE)
+  retlist <- list(
+    "filename" = destination,
+    "accession" = accession)
+  return(retlist)
+}
+
 #' Read a uniprot text file and extract as much information from it as possible.
 #'
 #' I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
@@ -6,7 +61,7 @@
 #' @param savefile  Do a save?
 #' @return  Big dataframe of annotation data.
 #' @export
-load_uniprot_annotations <- function(file, savefile=TRUE) {
+load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
   ## file <-  "uniprot_3AUP000001584.txt.gz"
   if (isTRUE(savefile)) {
     savefile <- "uniprot.rda"

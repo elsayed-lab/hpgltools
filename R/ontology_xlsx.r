@@ -1073,7 +1073,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
 
   table_list <- topgo_result[["tables"]]
   result_list <- topgo_result[["results"]]
-
+  trees <- NULL
   if (class(excel) == "character") {
     message("Writing a sheet containing the legend.")
     wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -1106,26 +1106,26 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
       printme <- "Histogram of observed ontology p-values by topgo."
       xl_result <- openxlsx::writeData(wb, "legend", x=printme,
                                        startRow=summary_row - 1, startCol=1)
-      plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["fisher"]],
-                                wb=wb, sheet="legend", start_col=1,
-                                start_row=summary_row, plotname="fisher_histogram",
-                                savedir=excel_basename)
-      plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["KS"]],
-                                wb=wb, sheet="legend", start_col=11,
-                                start_row=summary_row, plotname="ks_histogram",
-                                savedir=excel_basename)
-      plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["EL"]],
-                                wb=wb, sheet="legend", start_col=21,
-                                start_row=summary_row, plotname="el_histogram",
-                                savedir=excel_basename)
-      plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["weight"]],
-                                wb=wb, sheet="legend", start_col=1,
-                                start_row=summary_row + 31, plotname="weight_histogram",
-                                savedir=excel_basename)
-      plot_try <- xlsx_plot_png(topgo_result[["pvalue_histograms"]][["qs"]],
-                                wb=wb, sheet="legend", start_col=11,
-                                start_row=summary_row + 31, plotname="q_histogram",
-                                savedir=excel_basename)
+      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["fisher"]],
+                                   wb=wb, sheet="legend", start_col=1,
+                                   start_row=summary_row, plotname="fisher_histogram",
+                                   savedir=excel_basename))
+      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["KS"]],
+                                   wb=wb, sheet="legend", start_col=11,
+                                   start_row=summary_row, plotname="ks_histogram",
+                                   savedir=excel_basename))
+      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["EL"]],
+                                   wb=wb, sheet="legend", start_col=21,
+                                   start_row=summary_row, plotname="el_histogram",
+                                   savedir=excel_basename))
+      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["weight"]],
+                                   wb=wb, sheet="legend", start_col=1,
+                                   start_row=summary_row + 31, plotname="weight_histogram",
+                                   savedir=excel_basename))
+      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["qs"]],
+                                   wb=wb, sheet="legend", start_col=11,
+                                   start_row=summary_row + 31, plotname="q_histogram",
+                                   savedir=excel_basename))
       trees <- topgo_trees(topgo_result)
     }
   }  ## End making sure that an excel is desired.
@@ -1174,14 +1174,20 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- topgo_result[["pvalue_plots"]][[p_plot_name]]
-      plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
-                                start_col=ncol(categories) + 2, start_row=new_row,
-                                plotname=p_plot_name, savedir=excel_basename, doWeights=FALSE)
-      plot_try <- xlsx_plot_png(trees[[tree_plot_name]], wb=wb, sheet=ont, width=12, height=12,
-                                start_col=ncol(categories) + 2, start_row=80, res=210,
-                                plotname=tree_plot_name, savedir=excel_basename)
+      if (!is.null(a_plot)) {
+        plot_try <- sm(xlsx_plot_png(
+          a_plot, wb=wb, sheet=ont, width=width, height=height,
+          start_col=ncol(categories) + 2, start_row=new_row,
+          plotname=p_plot_name, savedir=excel_basename, doWeights=FALSE))
+      }
+      a_plot <- trees[[tree_plot_name]]
+      if (!is.null(a_plot)) {
+        plot_try <- sm(xlsx_plot_png(
+          trees[[tree_plot_name]], wb=wb, sheet=ont, width=12, height=12,
+          start_col=ncol(categories) + 2, start_row=80, res=210,
+          plotname=tree_plot_name, savedir=excel_basename))
+      }
     }
-
     new_row <- new_row + nrow(categories) + 2 ## I think not needed.
     openxlsx::setColWidths(wb, sheet=ont, cols=2:9, widths="auto")
     openxlsx::setColWidths(wb, sheet=ont, cols=6:7, widths=30)

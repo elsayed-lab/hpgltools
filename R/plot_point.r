@@ -164,9 +164,9 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' }
 #' @export
 plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
-                                size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL,
+                                size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL, z_lines=FALSE,
                                 first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
-                                color_high=NULL, color_low=NULL, ...) {
+                                color_high=NULL, color_low=NULL, alpha=0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
   arglist <- list(...)
@@ -255,8 +255,21 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
     low_index <- rownames(original_df) %in% rownames(low_subset)
     low_df <- original_df[low_index, ]
     first_vs_second <- first_vs_second +
-      ggplot2::geom_point(colour="black", size=size, alpha=0.4)
+      ggplot2::geom_point(colour="black", size=size, alpha=alpha)
   }
+
+  if (isTRUE(z_lines)) {
+    z <- 1.5
+    if (!is.null(arglist[["z"]])) {
+      z <- arglist[["z"]]
+    }
+    first_vs_second <- first_vs_second +
+      ggplot2::geom_abline(colour="grey", slope=linear_model_slope,
+                           intercept=linear_model_intercept + z, size=line_size / 3) +
+      ggplot2::geom_abline(colour="grey", slope=linear_model_slope,
+                           intercept=linear_model_intercept - z, size=line_size / 3)
+  }
+
   ## Add a color to the dots which are lower than the identity line by some amount
   if (!is.null(color_low)) {
     first_vs_second <- first_vs_second + ggplot2::geom_point(data=low_df, colour=color_low)
@@ -267,13 +280,13 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
   if (isTRUE(pretty_colors)) {
     first_vs_second <- first_vs_second +
-      ggplot2::geom_point(size=size, alpha=0.4,
+      ggplot2::geom_point(size=size, alpha=alpha,
                           colour=grDevices::hsv(linear_model_weights * 9/20,
                                                 linear_model_weights/20 + 19/20,
                                                 (1.0 - linear_model_weights)))
   } else {
     first_vs_second <- first_vs_second +
-      ggplot2::geom_point(colour="black", size=size, alpha=0.4)
+      ggplot2::geom_point(colour="black", size=size, alpha=alpha)
   }
 
   if (loess == TRUE) {
@@ -638,8 +651,11 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
   non_zero_plot <- non_zero_plot +
     ggplot2::theme(axis.ticks=ggplot2::element_blank(),
                    axis.text=ggplot2::element_text(size=10, colour="black"))
-##                   axis.text.x=ggplot2::element_text(angle=90))
-  return(non_zero_plot)
+
+  retlist <- list(
+    "plot" = non_zero_plot,
+    "table" = nz_df)
+  return(retlist)
 }
 
 #' Plot all pairwise MA plots in an experiment.

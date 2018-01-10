@@ -4,11 +4,15 @@
 \alias{get_git_commit}
 \title{Get the current git commit for hpgltools}
 \usage{
-get_git_commit(gitdir = "/home/trey/hpgltools")
+get_git_commit(gitdir = "~/hpgltools")
 }
 \arguments{
 \item{gitdir}{Directory containing the git repository.}
 }
 \description{
-Get the current git commit for hpgltools
+One might reasonably ask about this function: "Why?"  I invoke this function
+at the end of my various knitr documents so that if necessary I can do a
+> git reset <commit id> and get back to the exact state of my code.  As a
+bonus, since I have this under packrat I can furthermore use packrat reset to
+get the exact state of all the packages, too!
 }

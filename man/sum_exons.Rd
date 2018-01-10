@@ -4,7 +4,7 @@
 \alias{sum_exons}
 \title{Given a data frame of exon counts and annotation information, sum the exons.}
 \usage{
-sum_exons(data, gff = NULL, annotdf = NULL, parent = "Parent",
+sum_exons(data = NULL, gff = NULL, annotdf = NULL, parent = "Parent",
   child = "row.names")
 }
 \arguments{

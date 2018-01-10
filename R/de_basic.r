@@ -86,7 +86,9 @@ basic_pairwise <- function(input=NULL, design=NULL,
   lenminus <- num_conds - 1
   num_done <- 0
   column_list <- c()
-  message("Basic step 2/3: Performing comparisons.")
+  total_contrasts <- length(levels(as.factor(conditions)))
+  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  message(paste0("Basic step 2/3: Performing ", total_contrasts, " comparisons."))
   num_comparisons <- sum(1:lenminus)
 
   contrasts_performed <- c()
@@ -194,13 +196,14 @@ basic_pairwise <- function(input=NULL, design=NULL,
   names(all_tables) <- colnames(comparisons)
 
   retlist <- list(
-    "input_data" = data,
-    "conditions_table" = table(conditions),
-    "conditions" = conditions,
     "all_pairwise" = comparisons,
     "all_tables" = all_tables,
-    "medians" = median_table,
+    "conditions_table" = table(conditions),
+    "conditions" = conditions,
     "contrasts_performed" = contrasts_performed,
+    "input_data" = data,
+    "medians" = median_table,
+    "method" = "basic",
     "variances" = variance_table)
   if (!is.null(arglist[["basic_excel"]])) {
     retlist[["basic_excel"]] <- write_basic(retlist, excel=arglist[["basic_excel"]])

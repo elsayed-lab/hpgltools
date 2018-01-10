@@ -1,92 +1,47 @@
-#' Grab gene lengths from a gff file.
+#' Extract annotation information from a gff file into an irange object.
 #'
-#' This function attempts to be robust to the differences in output from importing gff2/gff3 files.
-#' But it certainly isn't perfect.
+#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
+#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
+#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
+#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
+#' valid from rtracklayer, so this does that for me, I have another function which returns the
+#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
+#' sometimes those functions fail in unpredictable ways.
 #'
-#' @param gff Gff file with (hopefully) IDs and widths.
-#' @param type Annotation type to use (3rd column).
-#' @param key Identifier in the 10th column of the gff file to use.
-#' @param ... Extra arguments likely for load_gff_annotations()
-#' @return Data frame of gene IDs and widths.
-#' @seealso \pkg{rtracklayer}
-#'  \code{\link{load_gff_annotations}}
-#' @examples
-#' \dontrun{
-#'  tt = get_genelengths('reference/fun.gff.gz')
-#'  head(tt)
-#' ##           ID width
-#' ## 1   YAL069W   312
-#' ## 2   YAL069W   315
-#' ## 3   YAL069W     3
-#' ## 4 YAL068W-A   252
-#' ## 5 YAL068W-A   255
-#' ## 6 YAL068W-A     3
-#' }
-#' @export
-get_gff_genelengths <- function(gff, type="gene", key="ID", ...) {
-  ret <- load_gff_annotations(gff, ...)
-  ret <- ret[ret[["type"]] == type, ]
-  ret <- ret[, c(key, "width")]
-  colnames(ret) <- c("ID", "width")
-  if (dim(ret)[1] == 0) {
-    stop(paste0("No genelengths were found. ",
-                "Perhaps you are using the wrong 'type' or 'key' arguments, type is: ",
-                type, ", key is: ", key))
-  }
-  return(ret)
-}
-
-#' Given a data frame of exon counts and annotation information, sum the exons.
+#' This is essentially load_gff_annotations(), but returns data suitable for getSet()
 #'
-#' This function will merge a count table to an annotation table by the child column.
-#' It will then sum all rows of exons by parent gene and sum the widths of the exons.
-#' Finally it will return a list containing a df of gene lengths and summed counts.
-#'
-#' @param data Count tables of exons.
 #' @param gff Gff filename.
-#' @param annotdf Dataframe of annotations (probably from load_gff_annotations).
-#' @param parent Column from the annotations with the gene names.
-#' @param child Column from the annotations with the exon names.
-#' @return List of 2 data frames, counts and lengths by summed exons.
-#' @seealso \pkg{rtracklayer}
-#'  \code{\link{load_gff_annotations}}
+#' @param type Subset to extract.
+#' @return Iranges! (useful for getSeq().)
+#' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
+#'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
 #' \dontrun{
-#' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
+#'  library(BSgenome.Tcruzi.clbrener.all)
+#'  tc_clb_all <- BSgenome.Tcruzi.clbrener.all
+#'  cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
+#'  cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
 #' }
 #' @export
-sum_exons <- function(data, gff=NULL, annotdf=NULL, parent="Parent", child="row.names") {
-  if (is.null(annotdf) & is.null(gff)) {
-    stop("I need either a df with parents, children, and widths; or a gff filename.")
-  } else if (is.null(annotdf)) {
-    annotdf <- load_gff_annotations(gff)
+gff2irange <- function(gff, type=NULL) {
+  ret <- NULL
+  annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+  if (class(annotations) == "try-error") {
+    annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
+    if (class(annotations) == "try-error") {
+      stop("Could not extract the widths from the gff file.")
+    } else {
+      ret <- annotations
+    }
+  } else {
+    ret <- annotations
   }
-
-  tmp_data <- merge(data, annotdf, by=child)
-  rownames(tmp_data) <- tmp_data[["Row.names"]]
-  tmp_data <- tmp_data[-1]
-  ## Start out by summing the gene widths
-  column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
-  new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
-  rownames(new_data) <- column[["Parent"]]
-  colnames(new_data) <- c("width")
-
-  for (c in 1:length(colnames(data))) {
-    column_name <- colnames(data)[[c]]
-    column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
-    rownames(column) <- column[["Parent"]]
-    new_data <- cbind(new_data, column[["x"]])
-  } ## End for loop
-
-  width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
-  rownames(width_df) <- rownames(new_data)
-  colnames(width_df) <- c("width")
-  new_data <- new_data[-1]
-  colnames(new_data) <- colnames(data)
-  rownames(new_data) <- rownames(column)
-  ret <- list(
-    "width" = width_df,
-    "counts" = new_data)
+  ## The call to as.data.frame must be specified with the GenomicRanges namespace,
+  ## otherwise one gets an error about no method to coerce an S4 class to a vector.
+  if (!is.null(type)) {
+    index <- ret[, "type"] == type
+    ret <- ret[index, ]
+  }
   return(ret)
 }
 
@@ -182,104 +137,6 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
   return(ret)
 }
 
-#' Extract annotation information from a gff file into an irange object.
-#'
-#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
-#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
-#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
-#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
-#' valid from rtracklayer, so this does that for me, I have another function which returns the
-#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
-#' sometimes those functions fail in unpredictable ways.
-#'
-#' This is essentially load_gff_annotations(), but returns data suitable for getSet()
-#'
-#' @param gff Gff filename.
-#' @param type Subset to extract.
-#' @return Iranges! (useful for getSeq().)
-#' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
-#'  \code{\link[rtracklayer]{import.gff}}
-#' @examples
-#' \dontrun{
-#'  library(BSgenome.Tcruzi.clbrener.all)
-#'  tc_clb_all <- BSgenome.Tcruzi.clbrener.all
-#'  cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
-#'  cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
-#' }
-#' @export
-gff2irange <- function(gff, type=NULL) {
-  ret <- NULL
-  annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
-  if (class(annotations) == "try-error") {
-    annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
-    if (class(annotations) == "try-error") {
-      stop("Could not extract the widths from the gff file.")
-    } else {
-      ret <- annotations
-    }
-  } else {
-    ret <- annotations
-  }
-  ## The call to as.data.frame must be specified with the GenomicRanges namespace,
-  ## otherwise one gets an error about no method to coerce an S4 class to a vector.
-  if (!is.null(type)) {
-    index <- ret[, "type"] == type
-    ret <- ret[index, ]
-  }
-  return(ret)
-}
-
-#' Create a simple df from a gff which contains tooltips usable in googleVis graphs.
-#'
-#' The tooltip column is a handy proxy for more thorough anontations information when it would
-#' otherwise be too troublesome to acquire.
-#'
-#' @param annotations Either a gff file or annotation data frame (which likely came from a gff file.).
-#' @param desc_col Gff column from which to gather data.
-#' @param type Gff type to use as the master key.
-#' @param id_col Which annotation column to cross reference against?
-#' @param ... Extra arguments dropped into arglist.
-#' @return Df of tooltip information or name of a gff file.
-#' @seealso \pkg{googleVis}
-#'  \code{\link{load_gff_annotations}}
-#' @examples
-#' \dontrun{
-#'  tooltips <- make_tooltips('reference/gff/saccharomyces_cerevisiae.gff.gz')
-#' }
-#' @export
-make_tooltips <- function(annotations, desc_col="description", type="gene", id_col="ID", ...) {
-  ## arglist <- list(...)
-  tooltip_data <- NULL
-  if (class(annotations) == "character") {
-    tooltip_data <- load_gff_annotations(gff=annotations, type=type)
-  } else if (class(annotations) == "data.frame") {
-    tooltip_data <- annotations
-  } else {
-    stop("This requires either a filename or data frame.")
-  }
-  if (is.null(tooltip_data[[id_col]])) {
-    tooltip_data[["ID"]] <- rownames(tooltip_data)
-  }
-
-  ## Attempt to use multiple columns if a c() was given
-  tooltip_data[["tooltip"]] <- tooltip_data[[id_col]]
-  for (col in desc_col) {
-    if (is.null(tooltip_data[[col]])) {
-      message(paste0("The column ", col, " is null, not using it."))
-    } else {
-      tooltip_data[["tooltip"]] <- paste0(tooltip_data[["tooltip"]], ": ", tooltip_data[[col]])
-    }
-  }
-  tooltip_data[["tooltip"]] <- gsub("\\+", " ", tooltip_data[["tooltip"]])
-  tooltip_data[["tooltip"]] <- gsub(": $", "", tooltip_data[["tooltip"]])
-  tooltip_data[["tooltip"]] <- gsub("^: ", "", tooltip_data[["tooltip"]])
-  rownames(tooltip_data) <- make.names(tooltip_data[[id_col]], unique=TRUE)
-  ## Now remove extraneous columns
-  tooltip_data <- tooltip_data[, c("tooltip"), drop=FALSE]
-  colnames(tooltip_data) <- c("1.tooltip")
-  return(tooltip_data)
-}
-
 #' Find how many times a given pattern occurs in every gene of a genome.
 #'
 #' There are times when knowing how many times a given string appears in a genome/CDS is helpful.
@@ -300,17 +157,29 @@ make_tooltips <- function(annotations, desc_col="description", type="gene", id_c
 #'  num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
 #' @export
-pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key="locus_tag") {
+pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
+  if (is.null(key)) {
+    key <- c("ID", "locus_tag")
+  }
   if (is.null(gff)) {
     entry_sequences <- rawseq
   } else {
-    entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
-    ## type_entries <- subset(entries, type==type)
+    ## entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    entries <- rtracklayer::import.gff(gff)
+    ## keep only the ones of the type of interest (gene).
     type_entries <- entries[entries$type == type, ]
+    ## Set some hopefully sensible names.
     names(type_entries) <- rownames(type_entries)
+    ## Get the sequence from the genome for them.
     entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
-    names(entry_sequences) <- entry_sequences[[, key]]
+    tmp_entries <- as.data.frame(type_entries)
+    ## Give them some sensible names
+    for (k in key) {
+      if (!is.null(tmp_entries[[k]])) {
+        names(entry_sequences) <- tmp_entries[[k]]
+      }
+    }
   }
   dict <- Biostrings::PDict(pattern, max.mismatch=0)
   result <- Biostrings::vcountPDict(dict, entry_sequences)
@@ -318,6 +187,7 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
     "name" = names(entry_sequences),
     "num" = as.data.frame(t(result)),
     stringsAsFactors=FALSE)
+  colnames(num_pattern) <- c("name", "number")
   return(num_pattern)
 }
 
@@ -338,17 +208,29 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #'  num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
 #' @export
-sequence_attributes <- function(fasta, gff=NULL, type="gene", key="locus_tag") {
+sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
+  if (is.null(key)) {
+    key <- c("ID", "locus_tag")
+  }
   if (is.null(gff)) {
-    entry_sequences <- rawseq
+    entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
-    entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
-    ## type_entries <- subset(entries, type==type)
-    type_entries <- entries[entries[["type"]] == type, ]
-    ##names(type_entries) <- rownames(type_entries)
+    ## entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    entries <- rtracklayer::import.gff(gff)
+    ## keep only the ones of the type of interest (gene).
+    type_entries <- entries[entries$type == type, ]
+    ## Set some hopefully sensible names.
+    names(type_entries) <- rownames(type_entries)
+    ## Get the sequence from the genome for them.
     entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
-    names(entry_sequences) <- type_entries[["Name"]]
+    tmp_entries <- as.data.frame(type_entries)
+    ## Give them some sensible names
+    for (k in key) {
+      if (!is.null(tmp_entries[[k]])) {
+        names(entry_sequences) <- tmp_entries[[k]]
+      }
+    }
   }
   attribs <- data.frame(
     "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
@@ -356,9 +238,63 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key="locus_tag") {
     "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
     "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE),
     stringsAsFactors=FALSE)
-  rownames(attribs) <- type_entries[["locus_tag"]]
+  rownames(attribs) <- names(entry_sequences)
   colnames(attribs) <- c("gc", "at", "gt", "ac")
   return(attribs)
+}
+
+#' Given a data frame of exon counts and annotation information, sum the exons.
+#'
+#' This function will merge a count table to an annotation table by the child column.
+#' It will then sum all rows of exons by parent gene and sum the widths of the exons.
+#' Finally it will return a list containing a df of gene lengths and summed counts.
+#'
+#' @param data Count tables of exons.
+#' @param gff Gff filename.
+#' @param annotdf Dataframe of annotations (probably from load_gff_annotations).
+#' @param parent Column from the annotations with the gene names.
+#' @param child Column from the annotations with the exon names.
+#' @return List of 2 data frames, counts and lengths by summed exons.
+#' @seealso \pkg{rtracklayer}
+#'  \code{\link{load_gff_annotations}}
+#' @examples
+#' \dontrun{
+#' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
+#' }
+#' @export
+sum_exons <- function(data=NULL, gff=NULL, annotdf=NULL, parent="Parent", child="row.names") {
+  if (is.null(annotdf) & is.null(gff)) {
+    stop("I need either a df with parents, children, and widths; or a gff filename.")
+  } else if (is.null(annotdf)) {
+    annotdf <- load_gff_annotations(gff)
+  }
+
+  tmp_data <- merge(data, annotdf, by=child)
+  rownames(tmp_data) <- tmp_data[["Row.names"]]
+  tmp_data <- tmp_data[-1]
+  ## Start out by summing the gene widths
+  column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
+  new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
+  rownames(new_data) <- column[["Parent"]]
+  colnames(new_data) <- c("width")
+
+  for (c in 1:length(colnames(data))) {
+    column_name <- colnames(data)[[c]]
+    column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
+    rownames(column) <- column[["Parent"]]
+    new_data <- cbind(new_data, column[["x"]])
+  } ## End for loop
+
+  width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
+  rownames(width_df) <- rownames(new_data)
+  colnames(width_df) <- c("width")
+  new_data <- new_data[-1]
+  colnames(new_data) <- colnames(data)
+  rownames(new_data) <- rownames(column)
+  ret <- list(
+    "width" = width_df,
+    "counts" = new_data)
+  return(ret)
 }
 
 ## EOF

@@ -17,8 +17,9 @@ hpgl_cor(df, method = "pearson", ...)
 Some fun correlation statistics.
 }
 \description{
-Take covRob's robust correlation coefficient and add it to the set of correlations available when
-one calls cor().
+Take covRob's robust correlation coefficient and add it to the set of
+correlations available when one calls cor().  I should reimplement this using
+S4.
 }
 \examples{
 \dontrun{

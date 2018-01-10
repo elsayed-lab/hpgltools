@@ -4,9 +4,11 @@
 \alias{load_host_annotations}
 \title{Load organism annotation data (mouse/human).}
 \usage{
-load_host_annotations(orgdb, gene_ids = NULL, keytype = "ENSEMBL",
-  fields = c("TXCHROM", "GENENAME", "TXSTRAND", "TXSTART", "TXEND"),
-  biomart_dataset = "hsapiens_gene_ensembl")
+load_host_annotations(orgdb = NULL, gene_ids = NULL, keytype = "ensembl",
+  chromosome_column = "txchrom", strand_column = "txstrand",
+  start_column = "txstart", end_column = "txend",
+  description_column = "genename", fields = c("geneid"),
+  biomart_dataset = NULL)
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}

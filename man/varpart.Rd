@@ -5,7 +5,8 @@
 \title{Use variancePartition to try and understand where the variance lies in a data set.}
 \usage{
 varpart(expt, predictor = "condition", factors = c("batch"),
-  chosen_factor = "batch", cpus = 6, genes = 40, parallel = TRUE)
+  chosen_factor = "batch", cpus = 6, genes = 40, parallel = TRUE,
+  modify_expt = FALSE)
 }
 \arguments{
 \item{expt}{Some data}
@@ -21,6 +22,8 @@ varpart(expt, predictor = "condition", factors = c("batch"),
 \item{genes}{Number of genes to count.}
 
 \item{parallel}{use doParallel?}
+
+\item{modify_expt}{Add annotation columns with the variance/factor?}
 }
 \value{
 partitions  List of plots and variance data frames

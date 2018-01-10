@@ -5,7 +5,7 @@
 \title{Run makeContrasts() with all pairwise comparisons.}
 \usage{
 make_pairwise_contrasts(model, conditions, do_identities = FALSE,
-  do_pairwise = TRUE, extra_contrasts = NULL)
+  do_pairwise = TRUE, extra_contrasts = NULL, ...)
 }
 \arguments{
 \item{model}{Describe the conditions/batches/etc in the experiment.}

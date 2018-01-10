@@ -132,6 +132,7 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   ## split_data[["rownames"]] <- make.names(split_data[["transcript_id"]], unique=TRUE)
   ## Use the 'transcript_seq' field to provide gene lengths
   ## split_data[["length"]] <- ""
+  transcript_seq <- NULL  ## transcript_seq in this context is handled by data.table I think.
   if (!is.null(split_data[["transcript_seq"]])) {
     split_data[, "length" := nchar(transcript_seq)]
   }

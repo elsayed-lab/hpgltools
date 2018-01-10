@@ -62,7 +62,7 @@ test_that("Do we find some significant genes in the mga/wt fructose analysis?", 
   expect_equal(expected, actual)
 })
 
-mgas_data <- sm(gbk2txdb(accession="AE009949"))
+mgas_data <- sm(load_genbank_annotations(accession="AE009949"))
 expected <- 1895017
 actual <- GenomicRanges::width(mgas_data[["seq"]])  ## This fails on travis?
 actual_width <- actual
@@ -99,7 +99,7 @@ test_that("Did the mgas annotations download?", {
     expect_equal(expected, actual)
 })
 
-mgas_go <- load_microbesonline_go(taxon)
+mgas_go <- sm(load_microbesonline_go(taxon))
 mgas_go <- mgas_go[, c("name", "acc")]
 mgas_go <- unique(mgas_go)
 expected <- c(2806, 2)

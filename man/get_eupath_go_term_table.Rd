@@ -16,6 +16,9 @@ get_eupath_go_term_table(provider = "TriTrypDB",
 
 \item{dir}{Where to dump the data.}
 }
+\value{
+Table of GO terms/gene IDs
+}
 \description{
 Returns a mapping of gene ID to gene GO categories for a given organism.
 }

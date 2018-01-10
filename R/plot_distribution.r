@@ -133,6 +133,7 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   ## also position='stack'
   plot_env <- environment()
   data_class <- class(data)[1]
+  design <- NULL
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
@@ -174,7 +175,7 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   }
   ## If the columns lose the connectivity between the sample and values, then
   ## the ggplot below will fail with env missing.
-  melted <- reshape2::melt(data)
+  melted <- data.table::as.data.table(reshape2::melt(data))
   if (dim(melted)[2] == 3) {
     colnames(melted) <- c("id", "sample", "counts")
   } else if (dim(melted)[2] == 2) {
@@ -221,7 +222,47 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   if (isTRUE(direct)) {
     densityplot <- directlabels::direct.label(densityplot)
   }
-  return(densityplot)
+
+  condition_summary <- data.table::data.table()
+  batch_summary <- data.table::data.table()
+  counts <- NULL
+  if (!is.null(design)) {
+    if (!is.null(design[["condition"]])) {
+      melted[, 'condition' := design[sample, "condition"]]
+      condition_summary <- data.table::setDT(melted)[, list("min"=min(counts),
+                                                            "1st"=quantile(x=counts, probs=0.25),
+                                                            "median"=median(x=counts),
+                                                            "mean"=mean(counts),
+                                                            "3rd"=quantile(x=counts, probs=0.75),
+                                                            "max"=max(counts)),
+                                                     by="condition"]
+    }
+    if (!is.null(design[["batch"]])) {
+      melted[, 'batch' := design[sample, "batch"]]
+      batch_summary <- data.table::setDT(melted)[, list("min"=min(counts),
+                                                        "1st"=quantile(x=counts, probs=0.25),
+                                                        "median"=median(x=counts),
+                                                        "mean"=mean(counts),
+                                                        "3rd"=quantile(x=counts, probs=0.75),
+                                                        "max"=max(counts)),
+                                                 by="batch"]
+    }
+  }
+
+  sample_summary <- data.table::setDT(melted)[, list("min"=min(counts),
+                                                     "1st"=quantile(x=counts, probs=0.25),
+                                                     "median"=median(x=counts),
+                                                     "mean"=mean(counts),
+                                                     "3rd"=quantile(x=counts, probs=0.75),
+                                                     "max"=max(counts)),
+                                              by="sample"]
+  retlist <- list(
+    "plot" = densityplot,
+    "condition_summary" = condition_summary,
+    "batch_summary" = batch_summary,
+    "sample_summary" = sample_summary,
+    "table" = melted)
+    return(retlist)
 }
 
 #' Quantile/quantile comparison of the mean of all samples vs. each sample.

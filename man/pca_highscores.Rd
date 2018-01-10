@@ -4,16 +4,16 @@
 \alias{pca_highscores}
 \title{Get the highest/lowest scoring genes for every principle component.}
 \usage{
-pca_highscores(df = NULL, conditions = NULL, batches = NULL, n = 20)
+pca_highscores(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE)
 }
 \arguments{
+\item{n}{the number of genes to extract.}
+
 \item{df}{a dataframe of (pseudo)counts}
 
 \item{conditions}{a factor or character of conditions in the experiment.}
 
 \item{batches}{a factor or character of batches in the experiment.}
-
-\item{n}{the number of genes to extract.}
 }
 \value{
 a list including the princomp biplot, histogram, and tables

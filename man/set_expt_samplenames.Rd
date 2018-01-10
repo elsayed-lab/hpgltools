@@ -23,5 +23,5 @@ Sometimes one does not like the hpgl identifiers, so provide a way to change the
 }
 }
 \seealso{
-\code{\link{set_expt_condition}} \code{\link{set_expt_batch}}
+\code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
 }

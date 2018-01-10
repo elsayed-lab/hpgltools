@@ -16,23 +16,25 @@ if (isTRUE(FALSE)) {
 
 ## What graphs can we make!?
 libsize_plot <- plot_libsize(pasilla_expt)
-actual <- libsize_plot[["data"]][["sum"]]
+actual <- libsize_plot[["table"]][["sum"]]
 expected <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
 test_that("The libsize plot is as expected?", {
     expect_equal(expected, actual)
 })
 
 nonzero_plot <- plot_nonzero(pasilla_expt)
-actual <- nonzero_plot[["data"]][["nonzero_genes"]]
+actual <- nonzero_plot[["table"]][["nonzero_genes"]]
 expected <- c(9863, 10074, 9730, 9786, 10087, 9798, 9797)
 test_that("The non-zero genes is as expected?", {
     expect_equal(expected, actual)
 })
 
 ## These tests have also been affected by the changed order of expressionsets.
-density_plot <- sm(plot_density(pasilla_expt))
+density <- sm(plot_density(pasilla_expt))
+density_plot <- density[["plot"]]
+density_table <- density[["table"]]
 expected <- c(92, 5, 4664, 583, 10, 1446)
-actual <- head(density_plot[["data"]][["counts"]])
+actual <- head(density_table[["counts"]])
 test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })

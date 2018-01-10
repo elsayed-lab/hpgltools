@@ -12,7 +12,7 @@ check_eupath_species(species = "Leishmania major strain Friedlin",
 
 \item{metadata}{Eupathdb metadata.}
 
-\item{...}{Extra arguments passed to download_eupathdb_metadata()}
+\item{...}{Extra arguments passed to download_eupath_metadata()}
 }
 \value{
 A single entry from the eupathdb metadata.
