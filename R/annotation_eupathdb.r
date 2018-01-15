@@ -193,137 +193,6 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
-#' Gather most(all?) of the data which used to be in the .txt files from the eupathdb.
-#'
-#' Starting with revision 33, the eupathdb discontinued maintaining the
-#' downloadable text tables. For much of the eupath data, this was not a
-#' significant concern, Keith wrote the get_eupath_ family of functions which
-#' provided a reasonable facsimile of that information.  Some pieces remained
-#' missing, this function attempts to address that.
-#'
-#' @param species  Species to query.
-#' @param entry  Metadata entry to use.
-#' @param dir  Directory in which to put intermediate data.
-#' @param metadata  Existing dataframe of metadata.
-#' @param question_type  Usually GeneQuestions, I am not sure what other types are in use.
-#' @param question  There are a bunch of possible query types, GenesByTaxon is
-#'   the most comprehensive.
-#' @param ...  Arguments passed to download_eupath_metadata()
-#' @return data table of fun annotation data.
-#' @export
-get_eupath_text <- function(species=NULL, entry=NULL,
-                            dir="eupathdb", metadata=NULL,
-                            question_type="GeneQuestions",
-                            question="GenesByTaxon", ...) {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- download_eupath_metadata(dir=dir, ...)
-    ##  metadata <- download_eupath_metadata(dir=dir)
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-  }
-  species <- entry[["Species"]]
-  provider <- entry[["DataProvider"]]
-
-  defaults <- list(
-    "GenesByMolecularWeight" = list(
-      "min_molecular_weight" = 10000,
-      "max_molecular_weight" = 50000,
-      "o-fields" = "gene_type, organism"),
-    "GenesByLocation" = list(
-      "start_point" = 1,
-      "end_point" = 10,
-      "sequenceId" = NULL,
-      "chromosome" = NULL),
-    "GenesByExonCount" = list(
-      "num_exons_gt" = 1,
-      "num_exons_lt" = 2,
-      "scope" = NULL),
-    "GenesByTextSearch" = list(
-      "text_expression" = "DGF",
-      "text_fields" = "all"),
-    "GenesWithSignalPeptide" = list(
-      "min_sigp_sum_score" = 1,
-      "min_sigp_d_score" = 0,
-      "min_sigp_signal_probability" = 0),
-    "GenesByTransmembraneDomains" = list(
-      "o-fields" = "primary_key,tm_count",
-      "min_tm" = "0",
-      "max_tm" = "100"),
-    "GenesByTaxon" = list(
-      "o-fields" = "primary_key,sequence_id,chromosome,organism,gene_type,gene_location_text,gene_name,gene_exon_count,is_pseudo,gene_transcript_count,gene_ortholog_number,gene_paralog_number,gene_orthomcl_name,gene_total_hts_snps,gene_hts_nonsynonymous_snps,gene_hts_noncoding_snps,gene_hts_stop_codon_snps,gene_hts_nonsyn_syn_ratio,uniprot_id,gene_entrez_id,transcript_length,exon_count,strand,cds_length,tm_count,molecular_weight,isoelectric_point,signalp_scores,signalp_peptide,annotated_go_function,annotated_go_process,annotated_go_component,annotated_go_id_function,annotated_go_id_process,annotated_go_id_component,predicted_go_id_function,predicted_go_id_process,predicted_go_id_component,ec_numbers,ec_numbers_derived,five_prime_utr_length,three_prime_utr_length,location_text,gene_previous_ids,protein_sequence,cds")
-  )
-
-  query_url <- sprintf("http://%s.org/webservices/%s/%s.json?",
-                       tolower(provider), question_type, question)
-  query_arglst <- list(
-    "organism" = utils::URLencode(species, reserved=TRUE))
-  for (arg in names(defaults[[question]])) {
-    query_arglst[[arg]] <- defaults[[question]][[arg]]
-  }
-
-  query_string <- paste0(paste(names(query_arglst), query_arglst, sep="="),
-                         collapse="&")
-  request_url <- paste0(query_url, query_string)
-  message(sprintf("- Querying %s", request_url))
-  organism_filename <- gsub(pattern="\\s+|[[:punct:]]", replacement="", x=species)
-  destfile <- file.path(dir, paste0(provider, "_", question, "_",
-                                    organism_filename, ".json"))
-  if (!file.exists(destfile)) {
-    original_options <- options(timeout=300)
-    file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=FALSE)
-    temp_options <- options(original_options)
-  }
-  result <- try(jsonlite::fromJSON(destfile))
-  if (class(result) == "try-error") {
-    message("The request seems to have failed:")
-    message(request_url)
-    return(NULL)
-  }
-  message("- Finished query.")
-  dat <- data.table::as.data.table(result[["response"]][["recordset"]][["records"]])
-  data <- data.table::as.data.table(dat[["id"]])
-  colnames(data) <- "id"
-  count <- 0
-  final_names <- colnames(data)
-  bar <- utils::txtProgressBar(style=3)
-  all_n <- length(dat[["fields"]][[1]][, "name"])
-  for (n in dat[["fields"]][[1]][, "name"]) {
-    count <- count + 1
-    pct_done <- count / all_n
-    setTxtProgressBar(bar, pct_done)
-    final_names <- c(final_names, n)
-    data[[n]] <- sapply(dat[["fields"]], function(x) { x[, "value"][count] })
-  }
-  close(bar)
-
-  ## Drop columns which are all NA
-  not_all_nas <- colSums(is.na(data)) != nrow(data)
-  data <- data[, not_all_nas, with=FALSE]
-
-  ## Lets take a moment and set some column data types.
-  avail_columns <- colnames(data)
-  numeric_patterns <- c("^isoelectric_point$", "^molecular_weight$",
-                         "^.+_count$", "^.+_length$", "^.+_number$")
-  for (pattern in numeric_patterns) {
-    found_cols <- grepl(pattern=pattern, x=avail_columns)
-    for (change in avail_columns[found_cols]) {
-      data[[change]] <- as.numeric(data[[change]])
-    }
-  }
-  factor_patterns <- c("strand")
-  for (pattern in factor_patterns) {
-    found_cols <- grepl(pattern=pattern, x=avail_columns)
-    for (change in avail_columns[found_cols]) {
-      data[[change]] <- as.factor(data[[change]])
-    }
-  }
-
-  return(data)
-}
-
 #' Generate a BSgenome package from the eupathdb.
 #'
 #' Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packages, it
@@ -693,8 +562,22 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   return(retlist)
 }
 
+#' Create an orgdb SQLite database from the tables in eupathdb.
+#'
+#' This now uses the new POST version of the eupathdb.  Theoretically it is better,
+#' I am not yet convinced, but the QUERY version of the eupathdb apparently will not
+#' be supported over time.
+#'
+#' @param species  A specific species ID to query
+#' @param entry  If not provided, then species will get this, it contains all the information.
+#' @param dir  Where to put all the various temporary files.
+#' @param kegg_abbreviation  If known, provide the kegg abbreviation.
+#' @param reinstall  Re-install an already existing orgdb?
+#' @param metadata  Use an existing metadata table to get the entry?
+#' @param ...  Extra parameters when searching for metadata
+#' @return  Currently only the name of the installed package.  This should probably change.
 make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
-                                kegg_abbreviation=NULL, reinstall=FALSE, metadata=NULL, ...) {
+                              kegg_abbreviation=NULL, reinstall=FALSE, metadata=NULL, ...) {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1110,6 +993,20 @@ make_taxon_names <- function(entry) {
   return(taxa)
 }
 
+#' The new eupath system provides 3 output types for downloading data.  This uses the raw one.
+#'
+#' For the life of me, I could not figure out how to query the big text tables as the
+#' tabular format.  Every query I sent came back telling me I gave it incorrect parameter
+#' despite the fact that I was copy/pasting the example given me by the eupathdb maintainers.
+#' So, I got mad and asked it for the raw format, and so this function was born.
+#'
+#' @param entry  Annotation entry for a given species
+#' @param question  Which query to try?  Molecular weight is the easiest, as it was their example.
+#' @param table_name  Used to make sure all columns are unique by prefixing them with the table name.
+#' @param parameters  Query parameters when posting
+#' @param columns  Columns for which to ask.
+#' @param minutes  How long to wait until giving up and throwing an error.
+#' @return  A hopefully huge table of eupath data.
 post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeight",
                             table_name=NULL, parameters=NULL, columns="primary_key",
                             minutes=20) {
@@ -1273,7 +1170,8 @@ post_eupath_table <- function(entry, query_body, table_name=NULL, minutes=20) {
   non_stupid_columns <- colnames(result) != "X"
   result <- result[, non_stupid_columns]
 
-  ## simplify column names
+  ## simplify column names, the are downloaded with
+  ## annoyingly stupid names like:
   ## > colnames(dat)
   ## [1] "X.Gene.ID."                        "X.pathway_source_id."
   ## [3] "X.Pathway."                        "X.Pathway.Source."
@@ -1300,8 +1198,19 @@ post_eupath_table <- function(entry, query_body, table_name=NULL, minutes=20) {
   return(result)
 }
 
+#' Gather all available annotation data for a given eupathdb species.
+#'
+#' This function fills in the parameters to post_eupath_raw() so that one can download
+#' all the available data for a given parasite into one massive table.  It should also
+#' provide some constraints to the data rather than leaving it all as characters.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
 post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
-                                    metadata=NULL, overwrite=FALSE, dir="eupathdb") {
+                                    metadata=NULL, dir="eupathdb") {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1351,8 +1260,15 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   return(result)
 }
 
+#'  Use the post interface to get GO data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
 post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
-                                 metadata=NULL, overwrite=FALSE, dir="eupathdb") {
+                                 metadata=NULL, dir="eupathdb") {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1388,8 +1304,15 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
   return(result)
 }
 
+#'  Use the post interface to get ortholog data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
 post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
-                                       metadata=NULL, overwrite=FALSE, dir="eupathdb") {
+                                       metadata=NULL, dir="eupathdb") {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1426,8 +1349,15 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
   return(result)
 }
 
+#'  Use the post interface to get interpro data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
 post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin", entry=NULL,
-                                       metadata=NULL, overwrite=FALSE, dir="eupathdb") {
+                                       metadata=NULL, dir="eupathdb") {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -1464,8 +1394,15 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
   return(result)
 }
 
+#'  Use the post interface to get pathway data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
 post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
-                                      metadata=NULL, overwrite=FALSE, dir="eupathdb") {
+                                      metadata=NULL, dir="eupathdb") {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
