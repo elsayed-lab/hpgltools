@@ -70,7 +70,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   pre_pca <- NULL
   post_pca <- NULL
   if (isTRUE(test_pca)) {
-    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE, transform="log2"))
+    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
+                                   transform="log2", convert="cpm", norm="quant"))
     pre_pca <- plot_pca(pre_batch)[["plot"]]
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
@@ -79,7 +80,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
       message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
-      post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type, transform="log2"))
+      post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type,
+                                      transform="log2", convert="cpm", norm="quant"))
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
@@ -102,17 +104,11 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     tt <- sm(requireNamespace("foreach"))
     res <- foreach(c=1:length(names(results)), .packages=c("hpgltools")) %dopar% {
       type <- names(results)[c]
-      results[[type]] <- do_pairwise(type,
-                                     input=input,
-                                     conditions=conditions,
-                                     batches=batches,
-                                     model_cond=model_cond,
-                                     model_batch=model_batch,
-                                     model_intercept=model_intercept,
-                                     extra_contrasts=extra_contrasts,
-                                     alt_model=alt_model,
-                                     libsize=libsize,
-                                     annot_df=annot_df, ...)
+      results[[type]] <- do_pairwise(
+        type, input=input, conditions=conditions, batches=batches,
+        model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
+        extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize,
+        annot_df=annot_df, ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     message("Finished running DE analyses, collecting outputs.")

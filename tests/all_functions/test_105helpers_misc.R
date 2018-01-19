@@ -1,4 +1,4 @@
- FOstart <- as.POSIXlt(Sys.time())
+start <- as.POSIXlt(Sys.time())
 context("105helpers_misc.R:\n")
 ## 2017-12, exported functions in helpers_misc:
 ## bioc_all() clear_session() cordist() get_git_commit()

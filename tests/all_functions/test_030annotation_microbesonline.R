@@ -32,7 +32,7 @@ test_that("Can we convert a name to id back to a name?", {
 ## load_microbesonline_annotations()
 spy_annot <- sm(load_microbesonline_annotations())
 actual <- dim(spy_annot[[1]])
-expected <- c(1871, 18)
+expected <- c(1865, 17)
 test_that("Do we get the expected amount of pyogenes data?", {
   expect_equal(expected[1], actual[1])
   expect_equal(expected[2], actual[2])

@@ -353,7 +353,6 @@ make_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
   grepped_hits <- all_species[grep_hits]
   if (species %in% all_species) {
     entry <- metadata[metadata[["Species"]] == species, ]
-    message(paste0("Found: ", entry[["Species"]]))
   } else if (sum(grep_hits > 0)) {
     species <- grepped_hits[[1]]
     entry <- metadata[metadata[["Species"]] == species, ]
@@ -380,19 +379,15 @@ make_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
 
   inst <- as.data.frame(installed.packages())
   if (pkg_list[["bsgenome"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["bsgenome"]], " is already installed."))
     pkg_list[["bsgenome_installed"]] <- TRUE
   }
   if (pkg_list[["organismdbi"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["organismdbi"]], " is already installed."))
     pkg_list[["organismdbi_installed"]] <- TRUE
   }
   if (pkg_list[["orgdb"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["orgdb"]], " is already installed."))
     pkg_list[["orgdb_installed"]] <- TRUE
   }
   if (pkg_list[["txdb"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["txdb"]], " is already installed."))
     pkg_list[["txdb_installed"]] <- TRUE
   }
 
@@ -437,7 +432,6 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   }
   orgdb_name <- pkgnames[["orgdb"]]
   txdb_name <- pkgnames[["txdb"]]
-
   orgdb_ret <- make_eupath_orgdb(
     species=species,
     entry=entry,
@@ -460,18 +454,20 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 
   tt <- sm(requireNamespace(orgdb_name))
   tt <- sm(requireNamespace(txdb_name))
-  libstring <- paste0("library(", orgdb_name, ")")
-  library_ret <- try(eval(parse(text=libstring)))
-  if (class(library_ret) == "try-error") {
-    message("The orgdb failed to load.")
-    return(NULL)
-  }
-  libstring <- paste0("library(", txdb_name, ")")
-  library_ret <- try(eval(parse(text=libstring)))
-  if (class(library_ret) == "try-error") {
-    message("The orgdb failed to load.")
-    return(NULL)
-  }
+  ##libstring <- paste0("library(", orgdb_name, ")")
+  ##library_ret <- try(eval(parse(text=libstring)))
+  ##if (class(library_ret) == "try-error") {
+  ##  message("The orgdb failed to load.")
+  ##  return(NULL)
+  ##}
+  test <- sm(do.call("library", as.list(orgdb_name)))
+  ##libstring <- paste0("library(", txdb_name, ")")
+  ##library_ret <- try(eval(parse(text=libstring)))
+  ##if (class(library_ret) == "try-error") {
+  ##  message("The orgdb failed to load.")
+  ##  return(NULL)
+  ##}
+  test <- sm(do.call("library", as.list(txdb_name)))
   organism <- taxa[["taxon"]]
   required <- sm(requireNamespace("OrganismDbi"))
 
@@ -489,24 +485,28 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   }
   required <- sm(requireNamespace("GO.db"))
   required <- sm(try(attachNamespace("GO.db"), silent=TRUE))
-
+  ## FIXME Theoretically we should no longer have columns with names like
+  ## GO_GO
+  orgdb_go_col <- "GO_GO_ID"
   goids_found <- "GOID" %in% AnnotationDbi::keytypes(get("GO.db")) &&
-    "GO_ID" %in% AnnotationDbi::keytypes(get(orgdb_name))
+    orgdb_go_col %in% AnnotationDbi::keytypes(get(orgdb_name))
   if (isTRUE(goids_found)) {
     count <- count + 1
     name <- paste0("join", count)
-    graph_data[[name]] <- c(GO.db="GOID", orgdb="GO_ID")
+    graph_data[[name]] <- c(GO.db="GOID", orgdb=orgdb_go_col)
     names(graph_data[[name]]) <- c("GO.db", orgdb_name)
   }
-
+  ## FIXME Theoretically we should no longer have columns with names like
+  ## PATHWAY_PATHWAY
   required <- sm(requireNamespace("reactome.db"))
   required <- sm(try(attachNamespace("reactome.db"), silent=TRUE))
+  orgdb_path_col <- "PATHWAY_PATHWAY"
   reactomeids_found <- "REACTOMEID" %in% AnnotationDbi::keytypes(get("reactome.db")) &&
-    "REACTIONS" %in% AnnotationDbi::keytypes(get(orgdb_name))
+    orgdb_path_col %in% AnnotationDbi::keytypes(get(orgdb_name))
   if (isTRUE(reactomeids_found)) {
     count <- count + 1
     name <- paste0("join", count)
-    graph_data[[name]] <- c(reactome.db="REACTOMEID", orgdb="REACTIONS")
+    graph_data[[name]] <- c(reactome.db="REACTOMEID", orgdb=orgdb_path_col)
     names(graph_data[[name]]) <- c("reactome.db", orgdb_name)
   }
 
@@ -612,39 +612,44 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   chosen_provider <- entry[["DataProvider"]]
   chosen_species <- entry[["Species"]]
 
-  gene_table <- try(post_eupath_annotations(species=chosen_species, entry=entry,
-                                            table_name="master", overwrite=overwrite, dir=dir))
+  message("Downloading full annotation table.")
+  gene_table <- try(post_eupath_annotations(species=chosen_species, entry=entry, dir=dir))
   if (class(gene_table) == "try-error") {
     gene_table <- data.frame()
   }
-  go_table <- try(post_eupath_go_table(species=chosen_species, entry=entry,
-                                       table_name="go", overwrite=overwrite, dir=dir))
+  message("Downloading GO table.")
+  go_table <- try(post_eupath_go_table(species=chosen_species, entry=entry, dir=dir))
   if (class(go_table) == "try-error") {
     go_table <- data.frame()
   }
-  ortholog_table <- try(post_eupath_ortholog_table(species=chosen_species, entry=entry,
-                                                   table_name="ortho", overwrite=overwrite, dir=dir))
+  message("Downloading ortholog table.")
+  ortholog_table <- try(post_eupath_ortholog_table(species=chosen_species, entry=entry, dir=dir))
   if (class(ortholog_table) == "try-error") {
     ortholog_table <- data.frame()
   }
-  interpro_table <- try(post_eupath_interpro_table(species=chosen_species, entry=entry,
-                                                   table_name="interpro", overwrite=overwrite, dir=dir))
+  message("Downloading interpro table.")
+  interpro_table <- try(post_eupath_interpro_table(species=chosen_species, entry=entry, dir=dir))
   if (class(interpro_table) == "try-error") {
     interpro_table <- data.frame()
   }
-  pathway_table <- try(post_eupath_pathway_table(species=chosen_species, entry=entry,
-                                                 table_name="pathway", overwrite=overwrite, dir=dir))
+  message("Downloading pathway table.")
+  pathway_table <- try(post_eupath_pathway_table(species=chosen_species, entry=entry, dir=dir))
   if (class(pathway_table) == "try-error") {
     pathway_table <- data.frame()
   }
+  message("Downloading kegg table.")
   kegg_table <- try(load_kegg_annotations(species=taxa[["genus_species"]],
                                           flatten=FALSE, abbreviation=kegg_abbreviation))
   if (class(kegg_table) == "try-error") {
     kegg_table <- data.frame()
   }
-  chromosome_table <- gene_table[, c("GID", "MASTER_GENOMIC_SEQUENCE_ID")]
+  if (nrow(gene_table) == 0) {
+    warning("Unable to create an orgdb for this species.")
+    return(NULL)
+  }
+  chromosome_table <- gene_table[, c("GID", "GENOMIC_SEQUENCE_ID")]
   colnames(chromosome_table) <- c("GID", "CHR_ID")
-  type_table <- gene_table[, c("GID", "MASTER_GENE_TYPE")]
+  type_table <- gene_table[, c("GID", "GENE_TYPE")]
   colnames(type_table) <- c("GID", "GENE_TYPE")
 
   ## Compile list of arguments for makeOrgPackage call
@@ -1009,7 +1014,7 @@ make_taxon_names <- function(entry) {
 #' @return  A hopefully huge table of eupath data.
 post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeight",
                             table_name=NULL, parameters=NULL, columns="primary_key",
-                            minutes=20) {
+                            minutes=40) {
   species <- entry[["Species"]]
   provider <- tolower(entry[["DataProvider"]])
   ## determine appropriate prefix to use
@@ -1110,8 +1115,13 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   if (!is.null(table_name)) {
     for (c in 2:length(colnames(information))) {
       col_name <- colnames(information)[c]
-      new_col <- paste0(toupper(table_name), "_", toupper(col_name))
-      colnames(information)[c] <- new_col
+      prefix_string <- paste0(toupper(table_name), "_")
+      ## Use if() test this to avoid column names like 'GO_GO_ID'
+      foundp <- grepl(pattern=paste0("^", prefix_string), x=toupper(col_name))
+      if (!foundp) {
+        new_col <- paste0(toupper(table_name), "_", toupper(col_name))
+        colnames(information)[c] <- new_col
+      }
     }
   }
   return(information)
@@ -1156,9 +1166,16 @@ post_eupath_table <- function(entry, query_body, table_name=NULL, minutes=20) {
                     body=body,
                     httr::content_type("application/json"),
                     httr::timeout(minutes * 60))
-  ## check status
-  ## if (res$status_code == 404) { ... }
-  ## return response contents
+  if (result[["status_code"]] == "422") {
+    warning("The provided species does not have a table of weights.")
+    return(data.frame())
+  } else if (result[["status_code"]] != "200") {
+    warning("An error status code was returned.")
+    return(data.frame())
+  } else if (length(result[["content"]]) < 100) {
+    warning("A minimal amount of content was returned.")
+  }
+
   result <- httr::content(result)
   result <- read.delim(textConnection(result), sep="\t")
   ## If nothing was received, return nothing.
@@ -1257,6 +1274,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   for (col in factor_columns) {
     result[[col]] <- as.factor(result[[col]])
   }
+  colnames(result) <- toupper(colnames(result))
   return(result)
 }
 
@@ -1299,8 +1317,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_table(entry, query_body)
+  result <- post_eupath_table(entry, query_body, table_name="go")
   return(result)
 }
 
@@ -1344,8 +1361,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_table(entry, query_body)
+  result <- post_eupath_table(entry, query_body, table_name="orthologs")
   return(result)
 }
 
@@ -1389,8 +1405,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_table(entry, query_body)
+  result <- post_eupath_table(entry, query_body, table_name="interpro")
   return(result)
 }
 
@@ -1433,8 +1448,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_table(entry, query_body)
+  result <- post_eupath_table(entry, query_body, table_name="pathway")
   return(result)
 }
 

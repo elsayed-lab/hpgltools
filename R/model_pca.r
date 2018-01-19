@@ -198,7 +198,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
                                          variances=pca_variance,
                                          first=name,
                                          second=second_name)))
-          pca_plots[[list_name]] <- tmp_plot
+          pca_plots[[list_name]] <- tmp_plot[["plot"]]
         }
       }
     }
@@ -386,9 +386,9 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
     tmphigh <- another_pca[["scores"]]
     tmplow <- another_pca[["scores"]]
     tmphigh <- tmphigh[order(tmphigh[, pc], decreasing=TRUE), ]
-    tmphigh <- head(tmphigh, n=20)
+    tmphigh <- head(tmphigh, n=n)
     tmplow <- tmplow[order(tmplow[, pc], decreasing=FALSE), ]
-    tmplow <- head(tmplow, n=20)
+    tmplow <- head(tmplow, n=n)
     high_column <- paste0(signif(tmphigh[, pc], 4), ":", rownames(tmphigh))
     low_column <- paste0(signif(tmplow[, pc], 4), ":", rownames(tmplow))
     highest <- cbind(highest, high_column)
@@ -396,14 +396,15 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
   }
   colnames(highest) <- colnames(another_pca[["scores"]])
   colnames(lowest) <- colnames(another_pca[["scores"]])
-  ret_list <- list(
+  retlist <- list(
     "scores" = another_pca[["scores"]],
     "pca_hist" = pca_hist,
     "pca_biplot" = pca_biplot,
     "highest" = highest,
     "lowest" = lowest,
     "result" = another_pca)
-  return(ret_list)
+  retlist[["score_heat"]] <- plot_disheat(expt_data=another_pca[["scores"]])
+  return(retlist)
 }
 
 #' Compute variance of each principal component and how they correlate with batch and cond
@@ -868,10 +869,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @param ...  arglist
 #' @export
 test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                             scale="none", center=TRUE,
+                             scale="uv", center=TRUE, eset=TRUE,
                              plot_title=NULL, plot_size=5, size_column=NULL, ...) {
 
-  hpgl_env <- environment()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -899,7 +899,7 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- data[["design"]]
+    design <- pData(data)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
@@ -920,20 +920,90 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
+  if (isTRUE(eset)) {
+    data <- data
+    if (class(data) == "expt") {
+      data <- data[["expressionset"]]
+    }
+  }
+
   ready <- pcaMethods::prep(data, scale=scale, center=center)
+  message("Performing svd.")
   svd <- pcaMethods::pca(ready, method="svd", center=FALSE, nPcs=2)
+  message("Performing ppca.")
   ppca <- pcaMethods::pca(ready, method="ppca", center=FALSE, nPcs=2)
+  ## When the data is an expressionset, this seems to not return, ever.
+  message("Performing bpca, this can be slow.")
   bpca <- pcaMethods::pca(ready, method="bpca", center=FALSE, nPcs=2)
+  message("Performing svdi.")
   svdi <- pcaMethods::pca(ready, method="svdImpute", center=FALSE, nPcs=2)
+  message("Performing nipals.")
   nipals <- pcaMethods::pca(ready, method="nipals", center=FALSE, nPcs=2)
+  message("Skipping nlpca, it is slow.")
   ## nlpca <- pcaMethods::pca(ready, method="nlpca", center=FALSE, nPcs=2, maxSteps=300)
+
+  table_lst <- list()
+  plot_lst <- list()
+  if (isTRUE(eset)) {
+    svd_table <- as.data.frame(svd@scores)
+    svd_table <- merge(svd_table, design, by="row.names")
+    rownames(svd_table) <- svd_table[["Row.names"]]
+    svd_table <- svd_table[, -1]
+    svd_table[["colors"]] <- as.character(plot_colors)
+    svd_table[["labels"]] <- as.character(rownames(svd_table))
+    svd_table[["batch_int"]] <- as.numeric(svd_table[["batch"]])
+    table_lst[["svd"]] <- svd_table
+    plot_lst[["svd"]] <- plot_pcs(pca_data=svd_table)
+
+    ppca_table <- as.data.frame(ppca@scores)
+    ppca_table <- merge(ppca_table, design, by="row.names")
+    rownames(ppca_table) <- ppca_table[["Row.names"]]
+    ppca_table <- ppca_table[, -1]
+    ppca_table[["colors"]] <- as.character(plot_colors)
+    ppca_table[["labels"]] <- as.character(rownames(ppca_table))
+    ppca_table[["batch_int"]] <- as.numeric(ppca_table[["batch"]])
+    table_lst[["ppca"]] <- ppca_table
+    plot_lst[["ppca"]] <- plot_pcs(pca_data=ppca_table)
+
+    bpca_table <- as.data.frame(bpca@scores)
+    bpca_table <- merge(bpca_table, design, by="row.names")
+    rownames(bpca_table) <- bpca_table[["Row.names"]]
+    bpca_table <- bpca_table[, -1]
+    bpca_table[["colors"]] <- as.character(plot_colors)
+    bpca_table[["labels"]] <- as.character(rownames(bpca_table))
+    bpca_table[["batch_int"]] <- as.numeric(bpca_table[["batch"]])
+    table_lst[["bpca"]] <- bpca_table
+    plot_lst[["bpca"]] <- plot_pcs(pca_data=bpca_table)
+
+    svdi_table <- as.data.frame(svdi@scores)
+    svdi_table <- merge(svdi_table, design, by="row.names")
+    rownames(svdi_table) <- svdi_table[["Row.names"]]
+    svdi_table <- svdi_table[, -1]
+    svdi_table[["colors"]] <- as.character(plot_colors)
+    svdi_table[["labels"]] <- as.character(rownames(svdi_table))
+    svdi_table[["batch_int"]] <- as.numeric(svdi_table[["batch"]])
+    table_lst[["svdi"]] <- svdi_table
+    plot_lst[["svdi"]] <- plot_pcs(pca_data=svdi_table)
+
+    nipals_table <- as.data.frame(nipals@scores)
+    nipals_table <- merge(nipals_table, design, by="row.names")
+    rownames(nipals_table) <- nipals_table[["Row.names"]]
+    nipals_table <- nipals_table[, -1]
+    nipals_table[["colors"]] <- as.character(plot_colors)
+    nipals_table[["labels"]] <- as.character(rownames(nipals_table))
+    nipals_table[["batch_int"]] <- as.numeric(nipals_table[["batch"]])
+    table_lst[["nipals"]] <- nipals_table
+    plot_lst[["nipals"]] <- plot_pcs(pca_data=nipals_table)
+  }
 
   retlist <- list(
     "svd" = svd,
     "ppca" = ppca,
     "bpca" = bpca,
     "svdi" = svdi,
-    "nipals" = nipals
+    "nipals" = nipals,
+    "tables" = table_lst,
+    "plots" = plot_lst
   )
   return(retlist)
 }

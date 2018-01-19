@@ -6,7 +6,7 @@
 \usage{
 post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
   table_name = NULL, parameters = NULL, columns = "primary_key",
-  minutes = 20)
+  minutes = 40)
 }
 \arguments{
 \item{entry}{Annotation entry for a given species}

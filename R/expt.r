@@ -2028,7 +2028,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
 #' @docType methods
 #' @rdname exprs-methods
 #' @export exprs
-setOldClass("expt")
+## setOldClass("expt")
 setMethod("exprs", signature="expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
