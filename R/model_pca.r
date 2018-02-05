@@ -118,7 +118,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 
   ## Extract the variance for each of the included PCs
   ## Also extract the r^2 values by component.
-  component_variance <- round((positives^2) / sum(positives^2) * 100, 3)
+  component_variance <- round((positives ^ 2) / sum(positives ^ 2) * 100, 3)
   cumulative_pc_variance <- cumsum(component_variance)
   if (is.null(expt_factors)) {
     expt_factors <- colnames(expt_design)
@@ -141,7 +141,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     component_rsquared_table[[component]] <- column
   }
 
-  pca_variance <- round((positives ^ 2) / sum(positives ^2) * 100, 2)
+  pca_variance <- round((positives ^ 2) / sum(positives ^ 2) * 100, 2)
   xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
   yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
 
@@ -425,33 +425,33 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
   calculate_rsquared_condition <- function(data) {
     lm_result <- lm(data ~ condition)
   }
-  if(!is.null(condition)) {
+  if (!is.null(condition)) {
     cond.R2 <- function(y) {
       round(summary(lm(y ~ condition))$r.squared * 100, 2)
     }
     cond.R2 <- apply(v, 2, cond.R2)
   }
-  if(!is.null(batch)) {
+  if (!is.null(batch)) {
     batch.R2 <- function(y) {
       round(summary(lm(y ~ batch))$r.squared * 100, 2)
     }
     batch.R2 <- apply(v, 2, batch.R2)
   }
-  if(is.null(condition) & is.null(batch)){
+  if (is.null(condition) & is.null(batch)) {
     res <- data.frame("propVar" = pcVar,
                       "cumPropVar" = cumPcVar)
   }
-  if(!is.null(batch) & is.null(condition)){
+  if (!is.null(batch) & is.null(condition)) {
     res <- data.frame("propVar" = pcVar,
                       "cumPropVar" = cumPcVar,
                       "batch.R2" = batch.R2)
   }
-  if(!is.null(condition) & is.null(batch)){
+  if (!is.null(condition) & is.null(batch)) {
     res <- data.frame("propVar" = pcVar,
                       "cumPropVar" = cumPcVar,
                       "cond.R2" = cond.R2)
   }
-  if(!is.null(condition) & !is.null(batch)){
+  if (!is.null(condition) & !is.null(batch)) {
     res <- data.frame("propVar" = pcVar,
                       "cumPropVar" = cumPcVar,
                       "cond.R2" = cond.R2,
@@ -897,6 +897,7 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
   data_class <- class(data)[1]
   names <- NULL
   expt <- NULL
+  mtrx <- NULL
   if (data_class == "expt") {
     expt <- data
     design <- pData(data)
@@ -906,37 +907,37 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
       plot_colors <- NULL
     }
     plot_names <- data[["samplenames"]]
-    data <- exprs(data)
+    mtrx <- exprs(data)
   } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
+    mtrx <- exprs(data)
   } else if (data_class == "list") {
-    data <- data[["count_table"]]
+    mtrx <- data[["count_table"]]
     if (is.null(data)) {
       stop("The list provided contains no count_table element.")
     }
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    mtrx <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (isTRUE(eset)) {
-    data <- data
+    mtrx <- data
     if (class(data) == "expt") {
-      data <- data[["expressionset"]]
+      mtrx <- data[["expressionset"]]
     }
   }
 
-  ready <- pcaMethods::prep(data, scale=scale, center=center)
+  ready <- pcaMethods::prep(mtrx, scale=scale, center=center)
   message("Performing svd.")
   svd <- pcaMethods::pca(ready, method="svd", center=FALSE, nPcs=2)
   message("Performing ppca.")
   ppca <- pcaMethods::pca(ready, method="ppca", center=FALSE, nPcs=2)
   ## When the data is an expressionset, this seems to not return, ever.
   message("Performing bpca, this can be slow.")
-  bpca <- pcaMethods::pca(ready, method="bpca", center=FALSE, nPcs=2)
+  bpca <- sm(pcaMethods::pca(ready, method="bpca", center=FALSE, nPcs=2))
   message("Performing svdi.")
-  svdi <- pcaMethods::pca(ready, method="svdImpute", center=FALSE, nPcs=2)
+  svdi <- sm(pcaMethods::pca(ready, method="svdImpute", center=FALSE, nPcs=2))
   message("Performing nipals.")
   nipals <- pcaMethods::pca(ready, method="nipals", center=FALSE, nPcs=2)
   message("Skipping nlpca, it is slow.")
@@ -946,7 +947,7 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
   plot_lst <- list()
   if (isTRUE(eset)) {
     svd_table <- as.data.frame(svd@scores)
-    svd_table <- merge(svd_table, design, by="row.names")
+    svd_table <- merge(svd_table, design, by="row.names", all.x=TRUE)
     rownames(svd_table) <- svd_table[["Row.names"]]
     svd_table <- svd_table[, -1]
     svd_table[["colors"]] <- as.character(plot_colors)

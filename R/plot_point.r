@@ -50,7 +50,8 @@ plot_bcv <- function(data) {
     ##ggplot2::stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
     ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
     ## I remember looking at it a while ago and being confused
-    ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
+    ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"),
+                            contour=FALSE, show.legend=FALSE) +
     ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method="loess") +
     ggplot2::stat_function(fun=f, colour="red") +
@@ -497,7 +498,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                                 values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
     ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +                  
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +
     ##             axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
@@ -540,7 +541,7 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
   }
 
   point_index <- rownames(df) %in% ids
-  newdf <- df[ point_index, ]
+  newdf <- df[point_index, ]
   newplot <- plot + ggplot2::geom_point(data=newdf,  colour=color, fill=color, alpha=alpha)
   return(newplot)
 }
@@ -837,7 +838,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
 
   color_column <- "pcut"
   color_column_number <- 2
-  default_color_list=c("FALSE"="darkred", "TRUE"="darkblue")
+  default_color_list <- c("FALSE"="darkred", "TRUE"="darkblue")
   if (color_by != "p") {
     color_column <- "state"
     color_column_number <- 4

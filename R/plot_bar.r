@@ -335,11 +335,11 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
 
   up_sums <- list()
   down_sums <- list()
-  comp_names <- ups[ ups[["variable"]] == "a_up_inner", ][["comparisons"]]
+  comp_names <- ups[ups[["variable"]] == "a_up_inner", ][["comparisons"]]
   for (comp in 1:length(comp_names)) {
     comp_name <- comp_names[[comp]]
-    up_sums[[comp_name]] <- sum(as.numeric(ups[ ups[["comparisons"]] == comp_name, ][["value"]]))
-    down_sums[[comp_name]] <- sum(as.numeric(downs[ downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
+    up_sums[[comp_name]] <- sum(as.numeric(ups[ups[["comparisons"]] == comp_name, ][["value"]]))
+    down_sums[[comp_name]] <- sum(as.numeric(downs[downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
   }
 
   if (is.null(maximum)) {

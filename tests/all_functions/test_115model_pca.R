@@ -30,7 +30,7 @@ testing <- plot_pca(pombe_expt)
 expected <- c(6008536.5, 1329859.1, 550763.0, 214403.7, 203382.4, 176304.0)
 actual <- head(testing$pca$d)
 test_that("plot_pca() provides expected SVD data?", {
-  expect_equal(expected, actual)
+  expect_equal(expected, actual, tolerance=1.0)
 })
 
 test_that("plot_pca() provides a plot!?", {
@@ -56,8 +56,8 @@ test_that("We get variances from pcRes?", {
 })
 
 ## 06 test_pca_methods()
-testing <- test_pca_methods(pombe_expt)
-expected <- c("svd", "ppca", "bpca", "svdi", "nipals", "table", "plots")
+testing <- sm(test_pca_methods(pombe_expt))
+expected <- c("svd", "ppca", "bpca", "svdi", "nipals", "tables", "plots")
 actual <- names(testing)
 test_that("We get some information from test_pca_methods?", {
   expect_equal(expected, actual)

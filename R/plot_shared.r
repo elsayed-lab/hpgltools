@@ -8,6 +8,32 @@
 ## where this is a danger, it is a likely good idea to cast it as a
 ## data frame.
 
+check_plot_scale <- function(data, scale=NULL) {
+  if (max(data) > 10000 & min(data) < 10) {
+    message("This data will benefit from being displayed on the log scale.")
+    message("If this is not desired, set scale='raw'")
+    scale <- "log"
+    negative_idx <- data < 0
+    if (sum(negative_idx) > 0) {
+      message("Some data are negative.  We are on log scale, setting them to 0.")
+      data[negative_idx] <- 0
+      message(paste0("Changed ", sum(negative_idx), " negative features."))
+    }
+    zero_idx <- data == 0
+    if (sum(zero_idx) > 0) {
+      message("Some entries are 0.  We are on log scale, adding 1 to the data.")
+      data <- data + 1
+      message(paste0("Changed ", sum(zero_idx), " zero count features."))
+    }
+  } else {
+    scale <- "raw"
+  }
+  retlist <- list(
+    "data" = data,
+    "scale" = scale)
+  return(retlist)
+}
+
 #' Make lots of graphs!
 #'
 #' Plot out a set of metrics describing the state of an experiment
@@ -72,6 +98,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   pca_title <- "Principle Component Analysis"
   tsne_title <- "T-SNE Analysis"
   dens_title <- "Density plot"
+  topn_title <- "Top-n representation"
   if (!is.null(title_suffix)) {
     nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
     libsize_title <- paste0(libsize_title, ": ", title_suffix)
@@ -83,6 +110,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     pca_title <- paste0(pca_title, ": ", title_suffix)
     tsne_title <- paste0(tsne_title, ": ", title_suffix)
     dens_title <- paste0(dens_title, ": ", title_suffix)
+    topn_title <- paste0(topn_title, ": ", title_suffix)
   }
   message("Graphing number of non-zero genes with respect to CPM by library.")
   nonzero <- try(plot_nonzero(expt, title=nonzero_title, ...))
@@ -103,7 +131,9 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   message("Graphing a T-SNE plot.")
   tsne <- try(plot_tsne(expt, title=tsne_title, ...))
   message("Plotting a density plot.")
-  density <- try(plot_density(expt, title=dens_title))
+  density <- try(plot_density(expt, title=dens_title, ...))
+  message("Plotting the representation of the top-n genes.")
+  topn <- try(plot_topn(expt, title=topn_title, ...))
   message("Printing a color to condition legend.")
   legend <- try(plot_legend(pca[["plot"]]))
 
@@ -123,29 +153,31 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   }
 
   ret_data <- list(
-    "nonzero" = nonzero[["plot"]],
-    "nonzero_table" = nonzero[["table"]],
+    "boxplot" = boxplot,
+    "corheat" = corheat[["plot"]],
+    "density" = density,
+    "disheat" = disheat[["plot"]],
+    "legend" = legend,
     "libsize" = libsize[["plot"]],
     "libsizes" = libsize[["table"]],
     "libsize_summary" = libsize[["summary"]],
-    "boxplot" = boxplot,
-    "corheat" = corheat[["plot"]],
-    "smc" = smc,
-    "disheat" = disheat[["plot"]],
-    "smd" = smd,
+    "ma" = ma_plots,
+    "nonzero" = nonzero[["plot"]],
+    "nonzero_table" = nonzero[["table"]],
     "pcaplot" = pca[["plot"]],
     "pcatable" = pca[["table"]],
     "pcares" = pca[["res"]],
     "pcavar" = pca[["variance"]],
+    "qqlog" = qq_logs,
+    "qqrat" = qq_ratios,
+    "smc" = smc,
+    "smd" = smd,
+    "topnplot" = topn[["plot"]],
     "tsneplot" = tsne[["plot"]],
     "tsnetable" = tsne[["table"]],
     "tsneres" = tsne[["res"]],
-    "tsnevar" = tsne[["variance"]],
-    "density" = density,
-    "legend" = legend,
-    "qqlog" = qq_logs,
-    "qqrat" = qq_ratios,
-    "ma" = ma_plots)
+    "tsnevar" = tsne[["variance"]]  
+  )
   new_options <- options(old_options)
   return(ret_data)
 }

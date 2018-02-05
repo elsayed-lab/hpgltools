@@ -109,7 +109,7 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         expt_data <- exprs(expt_data)
     } else if (data_class == "matrix" | data_class == "data.frame") {
         ## some functions prefer matrix, so I am keeping this explicit for the moment
-        expt_data <- as.data.frame(expt_data) 
+        expt_data <- as.data.frame(expt_data)
     } else {
         stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
     }
@@ -184,12 +184,77 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
 #'
 #' @param fundata   A data frame to plot.
-plot_heatplus <- function(fundata) {
-    heatmap_data <- hpgl_cor(fundata)
-    heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
-    funkytown <- Heatplus::annHeatmap2(heatmap_data)
-    plot(funkytown)
-    ret <- grDevices::recordPlot()
+#' @export
+plot_heatplus <- function(expt, type="correlation", method="pearson", annot_columns="batch",
+                          annot_rows="condition", cutoff=1.0, cluster_colors=NULL, scale="none",
+                          cluster_width=2.0, cluster_function=NULL, heat_colors=NULL) {
+  data <- exprs(expt)
+  if (type == "correlation") {
+    data <- hpgl_cor(data, method=method)
+  } else {
+    data <- hpgl_dist(data, method="euclidean")
+  }
+
+  if (is.null(cluster_function)) {
+    cluster_function <- hclust
+  }
+
+  mydendro <- list(
+    "clustfun" = cluster_function,
+    "lwd" = cluster_width)
+  des <- pData(expt)
+  col_data <- as.data.frame(des[, annot_columns])
+  colnames(col_data) <- annot_columns
+  row_data <- as.data.frame(des[, annot_rows])
+  colnames(row_data) <- annot_rows
+
+  myannot <- list(
+    "inclRef" = FALSE,
+    "Col" = list("data" = col_data),
+    "Row" = list("data" = row_data))
+
+  if (is.null(cluster_colors)) {
+    cluster_colors <- Heatplus::BrewerClusterCol
+  }
+  myclust <- list("cuth" = cutoff,
+                  "col" = cluster_colors)
+  mylabs <- list(
+    "Row" = list("nrow" = 4),
+    "Col" = list("nrow" = 4))
+
+  first_map <- Heatplus::annHeatmap2(
+                           data,
+                           dendrogram=mydendro,
+                           annotation=myannot,
+                           cluster=myclust,
+                           labels=mylabs)
+
+  number_colors <- length(levels(as.factor(first_map[["data"]][["x"]])))
+  if (is.null(heatmap_colors)) {
+    heatmap_colors <- colorRampPalette(c("darkblue", "beige"))(number_colors)
+  }
+
+  if (is.null(cluster_colors)) {
+    num_clusters <- max(first_map[["cluster"]][["Row"]][["grp"]])
+    chosen_palette <- "Dark2"
+    new_colors <- sm(grDevices::colorRampPalette(
+                                  RColorBrewer::brewer.pal(num_clusters, chosen_palette))(num_clusters))
+  }
+  myclust <- list("cuth" = 1.0,
+                  "col" = new_colors)
+
+  final_map <- annHeatmap2(
+    data,
+    dendrogram=mydendro,
+    annotation=myannot,
+    cluster=myclust,
+    labels=mylabs,
+    scale=scale,
+    col=hmcols)
+
+  plot(final_map)
+  ret <- grDevices::recordPlot()
+  return(ret)
 }
 
 #' Taken from https://plot.ly/ggplot2/ggdendro-dendrograms/
@@ -350,11 +415,11 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' @return a heatmap!
 #' @seealso \code{\link[gplots]{heatmap.2}}
 #' @export
-heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
+heatmap.3 <- function(x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
                        distfun=dist, hclustfun=hclust, dendrogram=c("both", "row", "column", "none"),
                        reorderfun=function(d, w) reorder(d, w),
                        symm=FALSE, scale=c("none", "row", "column"),
-                       na.rm=TRUE, revC=identical(Colv,"Rowv"), add.expr, breaks,
+                       na.rm=TRUE, revC=identical(Colv, "Rowv"), add.expr, breaks,
                        symbreaks=min(x < 0, na.rm=TRUE) || scale != "none",
                        col="heat.colors", colsep, rowsep, sepcolor="white",
                        sepwidth=c(0.05, 0.05), cellnote, notecex=1, notecol="cyan",
@@ -616,7 +681,7 @@ heatmap.3 <- function (x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
     else {
         if (is.numeric(srtCol)) {
             if (missing(adjCol) || is.null(adjCol))
-                adjCol = c(1, NA)
+                adjCol <- c(1, NA)
             xpd.orig <- par("xpd")
             par(xpd = NA)
             xpos <- axis(1, 1:nc, labels = rep("", nc), las = 2,

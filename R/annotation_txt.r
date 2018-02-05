@@ -158,7 +158,8 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   go_data[dots] <- ""
   .data <- NULL  ## Shush, R CMD check
 
-  expanded <- go_data %>% dplyr::mutate("GO"=strsplit(as.character(.data[["go_blast"]]), "`")) %>%
+  expanded <- go_data %>%
+    dplyr::mutate("GO"=strsplit(as.character(.data[["go_blast"]]), "`")) %>%
     tidyr::unnest("GO") %>%
     tidyr::separate("GO",
                     c("GO", "GO_ont", "GO_name"),

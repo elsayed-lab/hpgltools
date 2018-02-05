@@ -15,7 +15,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
   sorted <- varpart_output[["sorted_df"]]
   if (!is.null(column)) {
     if (column %in% colnames(sorted)) {
-      sorted <- sorted[ order(sorted[[column]], decreasing=decreasing), ]
+      sorted <- sorted[order(sorted[[column]], decreasing=decreasing), ]
     } else {
       message(paste0("The column ", column, "is not in the sorted data frame returned by varpart()."))
       message("Leaving the data frame alone.")

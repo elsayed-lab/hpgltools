@@ -297,7 +297,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
                                                      angle=90, hjust=1))
 
-            
+
   return(sm_plot)
 }
 

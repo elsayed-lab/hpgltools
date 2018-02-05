@@ -284,7 +284,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                            annot_df=NULL, libsize=NULL,
                            force=FALSE, ...) {
   arglist <- list(...)
-  
+
   ## This is used in the invocation of a voom() implementation for normalization.
   voom_norm <- "quantile"  ## a normalize.method supported by limma.
   if (!is.null(arglist[["voom_norm"]])) {
@@ -296,19 +296,19 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     which_voom <- arglist[["which_voom"]]
   }
   ## This is for the lmFit() call.
-  limma_method="ls" ## or robust
+  limma_method <- "ls" ## or robust
   if (!is.null(arglist[["limma_method"]])) {
     limma_method <- arglist[["limma_method"]]
   }
   ## This is for the eBayes() call.
-  limma_robust=FALSE
+  limma_robust <- FALSE
   if (!is.null(arglist[["limma_robust"]])) {
     if (!identical(arglist[["limma_robus"]], FALSE)) {
       limma_robust <- TRUE
     }
   }
   ## This is also used in eBayes()
-  limma_trend=FALSE
+  limma_trend <- FALSE
   if (!is.null(arglist[["limma_trend"]])) {
     limma_trend <- arglist[["limma_trend"]]
   }
@@ -540,9 +540,9 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     identity_results <- make_limma_tables(fit=all_identity_comparisons, adjust="BH",
                                           n=0, coef=NULL, annot_df=NULL)
     limma_identities <- identity_results[["identities"]]
-    
+
     contrasts_performed <- names(limma_tables)
-  } 
+  }
 
   retlist <- list(
     "all_pairwise" = all_pairwise,

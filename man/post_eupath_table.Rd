@@ -7,7 +7,8 @@ dataframe representation of the result.
 Note: As of 2017/07/13, POST requests are not yet supported on EuPathDB.
 Note: 2017/07/13 POST queries can only use the new API}
 \usage{
-post_eupath_table(entry, query_body, table_name = NULL, minutes = 20)
+post_eupath_table(species = NULL, entry = NULL, metadata = NULL,
+  query_body, table_name = NULL, minutes = 20)
 }
 \arguments{
 \item{query_body}{String of additional query arguments}

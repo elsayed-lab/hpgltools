@@ -52,9 +52,9 @@ inst: roxygen restore install test
 
 install:
 	@echo "Performing R CMD INSTALL hpgltools globally."
-	@mv .Rprofile .Rprofile.bak
+	@mv .Rprofile dotRprofile
 	R CMD INSTALL .
-	@mv .Rprofile.bak .Rprofile
+	@mv dotRprofile .Rprofile
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"

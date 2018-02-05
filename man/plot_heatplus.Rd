@@ -4,7 +4,10 @@
 \alias{plot_heatplus}
 \title{Potential replacement for heatmap.2 based plots.}
 \usage{
-plot_heatplus(fundata)
+plot_heatplus(expt, type = "correlation", method = "pearson",
+  annot_columns = "batch", annot_rows = "condition", cutoff = 1,
+  cluster_colors = NULL, scale = "none", cluster_width = 2,
+  cluster_function = NULL, heat_colors = NULL)
 }
 \arguments{
 \item{fundata}{A data frame to plot.}

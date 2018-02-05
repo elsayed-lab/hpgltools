@@ -76,7 +76,8 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     "ToxoDB" = c(shared_tags, "Toxoplasmosis"),
     "TrichDB" = c(shared_tags, "Trichomonas"),
     "TriTrypDB" = c(shared_tags, "Trypanosome", "Kinetoplastid", "Leishmania"))
-  tag_strings <- lapply(tags, function(x) { paste(x, collapse=",") })
+  tag_strings <- lapply(tags, function(x) {
+    paste(x, collapse=",") })
 
   ## construct API request URL
   ##base_url <- "http://eupathdb.org/eupathdb/webservices/"
@@ -92,8 +93,9 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   message(paste0("Downloaded: ", request_url))
 
   ## convert to a dataframe
-  dat <- data.frame(t(sapply(records[["fields"]], function (x) { x[,"value"] } )),
-                    stringsAsFactors=FALSE)
+  dat <- data.frame(t(sapply(records[["fields"]], function(x) {
+    x[, "value"] })),
+    stringsAsFactors=FALSE)
   colnames(dat) <- records[["fields"]][[1]][["name"]]
 
   ## shared metadata
@@ -114,10 +116,11 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## Add project-specific tags for each entry
   shared_metadata[["Tags"]] <- sapply(shared_metadata[["DataProvider"]],
-                                      function(x) { tag_strings[[x]] })
+                                      function(x) {
+                                        tag_strings[[x]] })
 
   ## replace missing taxonomy ids with NAs
-  shared_metadata[["TaxonomyId"]][shared_metadata[["TaxonomyId"]] == ''] <- NA
+  shared_metadata[["TaxonomyId"]][shared_metadata[["TaxonomyId"]] == ""] <- NA
 
   ## overide missing taxonomy ids for strains where it can be assigned; ideally
   ## OrgDb and GRanges objects should not depend on taxonomy id information since
@@ -131,7 +134,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   taxon_mask <- shared_metadata[["Species"]] %in% known_taxon_ids[["species"]]
   ind <- match(shared_metadata[taxon_mask, "Species"], known_taxon_ids[["species"]])
-  shared_metadata[taxon_mask,][["TaxonomyId"]] <- as.character(known_taxon_ids[["taxonomy_id"]][ind])
+  shared_metadata[taxon_mask, ][["TaxonomyId"]] <- as.character(known_taxon_ids[["taxonomy_id"]][ind])
 
   ## exclude remaining species which are missing taxonomy information from
   ## metadata; cannot construct GRanges/OrgDb instances for them since they are
@@ -308,7 +311,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   if (class(annoying) != "try-error") {
     inst <- sm(try(devtools::install(pkgname, quiet=TRUE)))
   }
-  
+
   retlist <- list()
   if (class(inst) != "try-error") {
     retlist[["bsgenome_name"]] <- pkgname
@@ -755,7 +758,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   message(sprintf("- Fixing sqlite Orgdb sqlite database %s", dbpath))
 
   ## make sqlite database editable
-  Sys.chmod(dbpath, mode='0644')
+  Sys.chmod(dbpath, mode="0644")
   db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=dbpath)
   ## update SPECIES field
   query <- sprintf('UPDATE metadata SET value="%s" WHERE name="SPECIES";', entry[["Species"]])
@@ -871,7 +874,7 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
     "LIC" = "Artistic-2.0",
     "DBTYPE" = dbType,
-    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb,"Organism"),
+    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
     "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
     "PROVIDER" = provider,
     "PROVIDERVERSION" = providerVersion,
@@ -1140,8 +1143,22 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
 #' ----------------
 #' 1. http://tritrypdb.org/tritrypdb/serviceList.jsp
 #' @author Keith Hughitt
-post_eupath_table <- function(entry, query_body, table_name=NULL, minutes=20) {
+#' @export
+post_eupath_table <- function(species=NULL, entry=NULL, metadata=NULL, query_body,
+                              table_name=NULL, minutes=20) {
+
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      metadata <- download_eupath_metadata(dir=dir, ...)
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
+  }
+
   ## determine appropriate prefix to use
+  species <- entry[["Species"]]
+  provider <- tolower(entry[["DataProvider"]])
   prefix_mapping <- list(
     "amoebadb" = "amoeba",
     "microbiomedb" = "mbio",
@@ -1151,7 +1168,6 @@ post_eupath_table <- function(entry, query_body, table_name=NULL, minutes=20) {
     "schistodb" = "schisto",
     "toxodb" = "toxo"
   )
-  provider <- tolower(entry[["DataProvider"]])
   uri_prefix <- provider
   if (uri_prefix %in% names(prefix_mapping)) {
     uri_prefix <- prefix_mapping[[uri_prefix]]

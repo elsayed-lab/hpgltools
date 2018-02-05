@@ -38,6 +38,9 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   ##      gene2GO=geneID2GO, nodeSize=2)
   ## The following library invocation is in case it was unloaded for pathview
   gomap_info <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
+  if (is.null(gomap_info)) {
+    warning("There appears to have been a problem generating the gomap.")
+  }
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
   if (is.null(go_db)) {
@@ -75,7 +78,6 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
     "MF" = list(),
     "CC" = list())
   returns <- list()
-  onts <- c("BP", "MF", "CC")
   methods <- c("fisher", "KS", "EL", "weight")
   cl <- parallel::makeCluster(5)
   doParallel::registerDoParallel(cl)
@@ -90,8 +92,10 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
                                 ks_genes=ks_interesting_genes)
   }
   stopped <- parallel::stopCluster(cl)
+  if (class(stopped) == "try-error") {
+    warning("There was a problem stopping the parallel cluster.")
+  }
   for (r in 1:length(methods)) {
-    method <- methods[[r]]
     a_result <- res[[r]]
     type <- a_result[["MF"]][["type"]]
     ontology_result[["MF"]][[type]] <- a_result[["MF"]]
@@ -108,7 +112,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
         bins=20))
     }
   }
-  
+
   results <- list(
     ## The godata
     "fbp_godata" = ontology_result[["BP"]][["fisher"]][["godata"]],
@@ -195,7 +199,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Q-value.")
   retlist[["pvalue_histograms"]] <- pval_histograms
-  
+
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
     excel_ret <- try(write_topgo_data(retlist, excel=excel))
@@ -540,15 +544,15 @@ getEdgeWeights <- function(graph) {
 #' @return Topgo plot!
 #' @seealso \pkg{topGO}
 #' @export
-hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
-                        nodeShape.type=c('box','circle','ellipse','plaintext')[3],
+hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
+                        nodeShape.type=c("box", "circle", "ellipse", "plaintext")[3],
                         genNodes=NULL, wantedNodes=NULL, showEdges=TRUE, useFullNames=TRUE,
                         oldSigNodes=NULL, nodeInfo=NULL, maxchars=30) {
   ## Original function definition had nodeInfo=nodeInfo
   if(!missing(sigNodes)) {
-    sigNodeInd = TRUE
+    sigNodeInd <- TRUE
   } else {
-    sigNodeInd = FALSE
+    sigNodeInd <- FALSE
   }
 
   ## we set the global Graphviz attributes
@@ -681,7 +685,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name='GO terms', edgeTypes=TRUE,
 #' @param ranks Rank order the set of ontologies?
 #' @param rm.one Remove pvalue=1 groups?
 #' @return plot of group densities.
-hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
+hpgl_GroupDensity <- function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
   groupMembers <- try(topGO::genesInTerm(object, whichGO)[[1]])
   if (class(groupMembers)[1] == "try-error") {
     return(NULL)
@@ -699,7 +703,7 @@ hpgl_GroupDensity = function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
   xx <- data.frame(score=allS, group = factor(group,
                                               labels=paste(c("complementary", whichGO),
                                                            "  (", table(group), ")", sep="")))
-  plot = lattice::densityplot( ~ score | group, data=xx, layout=c(1,2), xlab=xlab)
+  plot <- lattice::densityplot(~ score | group, data=xx, layout=c(1, 2), xlab=xlab)
   return(plot)
 }
 

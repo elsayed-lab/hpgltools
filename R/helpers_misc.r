@@ -270,7 +270,7 @@ get_git_commit <- function(gitdir="~/hpgltools") {
 #'  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 #' }
 #' @export
-hpgl_arescore <- function (x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
+hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                            d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                            aub.p.to.end=0.55) {
   ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
@@ -347,8 +347,17 @@ hpgl_cor <- function(df, method="pearson", ...) {
   return(correlation)
 }
 
+#' Because I am not smart enough to remember t()
+#'
+#' @export
+hpgl_dist <- function(df, method="euclidean", ...) {
+  input <- t(as.matrix(df))
+  result <- as.matrix(dist(input), method=method)
+  return(result)
+}
+
 #'  Install the set of local packrat packages so everyone may use them!
-#' 
+#'
 #' @export
 install_packrat_globally <- function() {
   packrat_installed <- packrat::status()
@@ -487,7 +496,7 @@ make_report <- function(name="report", type="pdf") {
 #'
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
-  xtype = match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
+  xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
   stopifnot(S4Vectors::isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
   stopifnot(S4Vectors::isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
   stopifnot(S4Vectors::isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
@@ -514,7 +523,7 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     stats::end(blocks) <- ifelse(stats::end(blocks) > widths[i], widths[i], stats::end(blocks))
     IRanges::reduce(blocks)
   }
-  au.blocks = lapply(1:length(x), fun)
+  au.blocks <- lapply(1:length(x), fun)
   ret <- IRanges::IRangesList(au.blocks)
   return(ret)
 }
@@ -648,11 +657,12 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   message(paste0("The savefile is: ", savefile))
   backup_file(savefile, backups=backups)
   ## The following save strings work:
-  save_string <- paste0("con <- pipe(paste0('pxz -T", cpus, " > ",
-                        savefile,
-                        "'), 'wb');\n",
-                        "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
-                        "close(con)")
+  save_string <- paste0(
+    "con <- pipe(paste0('pxz -T", cpus, " > ",
+    savefile,
+    "'), 'wb');\n",
+    "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
+    "close(con)")
   message(paste0("The save string is: ", save_string))
   eval(parse(text=save_string))
 }

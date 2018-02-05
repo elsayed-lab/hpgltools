@@ -159,7 +159,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
         batches2 <- as.factor(design[[batch2]])
         count_table <- limma::removeBatchEffect(count_table, batch=batches, batch2=batches2)
       }
-      message("If you receive a warning: 'NANs produced', one potential reason is that the data was quantile normalized.")
+      message(strwrap(prefix=" ", initial="", "If you receive a warning: 'NANs produced', one
+ potential reason is that the data was quantile normalized."))
       if (expt_state[["transform"]] == "raw") {
         count_table <- (2 ^ count_table) - 1
       }
@@ -283,7 +284,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
       }
     }
   )  ## Ending the switch statement.
-  count_table[ is.na(count_table) ] <- 0
+  count_table[is.na(count_table)] <- 0
   num_low <- sum(count_table <= 0)
   if (is.null(num_low)) {
     num_low <- 0
@@ -402,7 +403,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
   ## This is taken from sva's github repository in helper.R
   Beta.NA <- function(y, X) {
     des <- X[!is.na(y), ]
-    y1 <- y[!is.na(y) ]
+    y1 <- y[!is.na(y)]
     B <- solve(t(des)%*%des)%*%t(des)%*%y1
     B
   }
@@ -434,7 +435,7 @@ I set it to 1 not knowing what its purpose is.")
   s.data <- (dat - stand.mean) / (sqrt(var.pooled) %*% t(rep(1, n.array)))
   if (noScale) {
     m.data <- dat - stand.mean
-    mse <- ((dat - t(design %*% B.hat))^2) %*% rep(1/(n.array - ncol(design)), n.array)
+    mse <- ((dat - t(design %*% B.hat)) ^ 2) %*% rep(1 / (n.array - ncol(design)), n.array)
     hld <- NULL
     bayesdata <- dat
     for (k in 1:n.batch) {

@@ -446,7 +446,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
           }
         }
 
-      } else {  ## End checking that we found the numerator/denominator
+      } else {
+        ## End checking that we found the numerator/denominator
         warning(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
         message(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
         break
@@ -620,7 +621,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       ## I was getting some weird errors which magically disappeared when I did the following
       ## two lines.  This is obviously not how things are supposed to work.
       ddd <- combo[[count]]
-      oddness = summary(ddd)
+      oddness <- summary(ddd)
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname,
@@ -1536,7 +1537,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       "down_titles" = down_titles,
       "counts_title" = summary_title,
       "ma_plots" = ma_plots)
-    do_excel=TRUE
+    do_excel <- TRUE
     if (is.null(excel)) {
       do_excel <- FALSE
     } else if (excel == FALSE) {
@@ -1759,7 +1760,8 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05,
     total <- length(names(up_result_list))
     bar <- utils::txtProgressBar(style=3)
     done <- 0
-    for (tab in names(up_result_list)) {  ## Get the tables back
+    for (tab in names(up_result_list)) {
+      ## Get the tables back
       done <- done + 1
       pct_done <- done / total
       setTxtProgressBar(bar, pct_done)
@@ -1896,7 +1898,7 @@ make_intersect <- function(limma, deseq, edger) {
 write_de_table <- function(data, type="limma", ...) {
   arglist <- list(...)
   if (!is.null(data[[type]])) {
-    data <- data[[type]]    
+    data <- data[[type]]
   }
   excel <- arglist[["excel"]]
   if (is.null(excel)) {

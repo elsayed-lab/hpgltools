@@ -53,7 +53,7 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
 load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
   if (!is.null(abbreviation)) {
-    species=NULL
+    species <- NULL
   }
   if (is.null(abbreviation) & is.null(species)) {
     stop("This requires either a species or 3 letter kegg id.")

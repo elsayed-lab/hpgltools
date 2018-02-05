@@ -63,7 +63,7 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
   if (!is.null(name)) {
     chosen <- get_microbesonline_ids(name=name)
     message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
-    chosen <- chosen[1,1]
+    chosen <- chosen[1, 1]
   }
   tt <- sm(requireNamespace("RMySQL"))
   db_driver <- DBI::dbDriver("MySQL")
@@ -207,7 +207,7 @@ load_microbesonline_go <- function(id="160490", name_type="ncbi_tag", name=NULL)
      type_number, "' and T.term_id = G.goID and A.id = G.goID")
 
   ## Adding suppressWarnings to stop stupidly unhelpful 'Unsigned INTEGER in col 1 imported as numeric'
-  result <- suppressWarnings(DBI::dbSendQuery(connection, query))  
+  result <- suppressWarnings(DBI::dbSendQuery(connection, query))
   result_df <- DBI::fetch(result, n=-1)
   result_df <- unique(result_df)
   clear <- DBI::dbClearResult(result)
@@ -242,7 +242,7 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
   if (!is.null(name)) {
     chosen <- get_microbesonline_ids(name=name)
     message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
-    chosen <- chosen[1,1]
+    chosen <- chosen[1, 1]
   }
 
   tt <- sm(requireNamespace("RMySQL"))
@@ -250,11 +250,11 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
   connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
                                host="pub.microbesonline.org", dbname="genomics")
 
-  query <- paste0("SELECT * FROM KEGG2Taxonomy WHERE 
+  query <- paste0("SELECT * FROM KEGG2Taxonomy WHERE
      taxonomyId = '", id, "'")
 
   ## Adding suppressWarnings to stop stupidly unhelpful 'Unsigned INTEGER in col 1 imported as numeric'
-  result <- suppressWarnings(DBI::dbSendQuery(connection, query))  
+  result <- suppressWarnings(DBI::dbSendQuery(connection, query))
   result_df <- DBI::fetch(result, n=-1)
   result_df <- unique(result_df)
   clear <- DBI::dbClearResult(result)

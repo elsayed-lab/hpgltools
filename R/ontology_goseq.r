@@ -34,23 +34,12 @@ goseq_table <- function(df, file=NULL) {
     if (is.null(df[["ontology"]])) {
         df[["ontology"]] <- goont(df[["category"]])
     }
-    ## df = subset(df, !is.null(term))
-    ## Something about this is a disaster FIXME
-    ## df = df[ which(!is.null(df$term)), ]
     message("Testing that go categories are defined.")
     df[["good"]] <- gotest(df[["category"]])
     message("Removing undefined categories.")
-    ## df = subset(df, good == 1)
-    df <- df[ which(df[["good"]] == 1), ]
+    df <- df[which(df[["good"]] == 1), ]
     message("Gathering synonyms.")
     df[["synonym"]] <- gosyn(df[["category"]])
-    ##message("Gathering secondary ids.")
-    ##secondary <- try(gosec(df$category), silent=TRUE)
-    ##if (class(secondary) != 'try-error') {
-    ##    df$secondary <- secondary
-    ##}
-    ## print("Gather approximate go levels.")  ## This function is too slow, commented it out.
-    ## df[["level"]] = golevel(df[["categoy"]])
     message("Gathering category definitions.")
     df[["definition"]] <- godef(df[["category"]])
     df <- df[, c("category", "numDEInCat", "numInCat", "over_represented_pvalue",
@@ -107,7 +96,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                          bioc_length_db="ensGene", excel=NULL,
                          ...) {
   arglist <- list(...)
-    
+
   minimum_interesting <- 1
   if (!is.null(arglist[["minimum_interesting"]])) {
     minimum_interesting <- arglist[["minimum_interesting"]]
@@ -149,7 +138,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   de_genelist <- as.data.frame(gene_list)
   de_genelist[["DE"]] <- 1
   colnames(de_genelist) <- c("ID", "DE")
-  
+
   ## Database of lengths may be a gff file, TxDb, or OrganismDb
   metadf <- NULL
   if (class(length_db)[1] == "data.table") {
@@ -190,7 +179,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     colnames(metadf) <- gsub(x=colnames(metadf), pattern="width", replacement="length")
   }
   ## Now I should have the gene list and gene lengths
-  
+
     godf <- data.frame()
     if (class(go_db)[[1]] == "character") {
       ## A text table or species name
@@ -231,7 +220,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])
   ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is everything
   ## I am supposed to need for goseq.
-  
+
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
   message(paste0("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
@@ -262,7 +251,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     pwf_plot <- recordPlot()
   }
   godata <- goseq::goseq(pwf, gene2cat=godf, use_genes_without_cat=TRUE, method=goseq_method)
-  
+
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins=50))
   ## goseq_p_second <- sort(unique(table(goseq_p[["data"]])), decreasing=TRUE)[2]
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
@@ -309,7 +298,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   message("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata)
   ## mf_subset <- subset(godata, ontology == "MF")
-  
+
   mf_subset <- godata[godata[["ontology"]] == "MF", ]
   rownames(mf_subset) <- mf_subset[["category"]]
   ##bp_subset <- subset(godata, ontology == "BP")
@@ -319,7 +308,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   cc_subset <- godata[godata[["ontology"]] == "CC", ]
   rownames(cc_subset) <- cc_subset[["category"]]
   ## mf_interesting <- subset(godata_interesting, ontology == "MF")
-  
+
   mf_interesting <- godata_interesting[godata_interesting[["ontology"]] == "MF", ]
   rownames(mf_interesting) <- mf_interesting[["category"]]
   mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
@@ -334,12 +323,12 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   rownames(cc_interesting) <- cc_interesting[["category"]]
   cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
-  
+
   pval_plots <- list(
     "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
     "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
     "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
-  
+
   retlist <- list(
     "input" = sig_genes,
     "pwf" = pwf,

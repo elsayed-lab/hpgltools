@@ -270,8 +270,8 @@ hpgl_rpkm <- function(count_table, ...) {
   rownames(merged_annotations) <- merged_annotations[, "Row.names"]
   merged_annotations <- merged_annotations[-1]
   merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
-  merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(count_table) ]
-  merged_annot <- merged_annotations[, colnames(merged_annotations) %in% colnames(annotations) ]
+  merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(count_table)]
+  merged_annot <- merged_annotations[, colnames(merged_annotations) %in% colnames(annotations)]
 
   ##rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...

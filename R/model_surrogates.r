@@ -306,7 +306,7 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- supervised_sva
     }
   ) ## End of the switch.
-  
+
   rownames(model_adjust) <- sample_names
   sv_names <- paste0("SV", 1:ncol(model_adjust))
   colnames(model_adjust) <- sv_names

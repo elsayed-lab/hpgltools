@@ -9,7 +9,7 @@ context("060expt.R:\n")
 ## S4 methods: exprs(), fData(), pData(), notes()
 
 ## make_pombe_expt() invokes create_expt()
-pombe_expt <- make_pombe_expt()
+pombe_expt <- sm(make_pombe_expt())
 
 ## fData()
 testing <- fData(pombe_expt)
@@ -90,7 +90,7 @@ test_that("Do we get expected features greater than some cutoffs?", {
 })
 
 ## make_exampledata()
-testing <- counts(make_exampledata())
+testing <- DESeq2::counts(make_exampledata())
 actual <- dim(testing)
 expected <- c(1000, 5)
 test_that("Do we get some example data from make_exampledata()?", {
@@ -173,7 +173,7 @@ testing <- sm(write_expt(pombe_expt, excel="testing_write_expt.xlsx"))
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))
 })
-file.remove("testing_write_expt.xlsx")
+tt <- file.remove("testing_write_expt.xlsx")
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

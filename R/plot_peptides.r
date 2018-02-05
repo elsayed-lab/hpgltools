@@ -67,12 +67,14 @@ cleavage_histogram <- function(pep_sequences, enzyme="trypsin",
     return(ret)
   }
 
-  new_df <- prod_df %>% dplyr::rowwise() %>% dplyr::mutate(mass=gather_masses(sequence))
-  
+  new_df <- prod_df %>%
+    dplyr::rowwise() %>%
+    dplyr::mutate(mass=gather_masses(sequence))
+
   plot <- ggplot2::ggplot(data=new_df, ggplot2::aes_string(x="mass")) +
     ggplot2::geom_histogram(binwidth=1, colour=color) +
     ggplot2::scale_x_continuous(limits=c(start, end))
-  
+
   retlist <- list(
     "plot" = plot,
     "masses" = new_df)

@@ -88,7 +88,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     }
     post_pca <- plot_pca(post_batch)[["plot"]]
   }
-  
+
   results <- list(
     "limma" = NULL,
     "deseq" = NULL,
@@ -290,7 +290,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     "original_pvalues" = original_pvalues,
     "pre_batch" = pre_pca,
     "post_batch" = post_pca)
-  
+
   if (!is.null(arglist[["combined_excel"]])) {
     message("Invoking combine_de_tables().")
     combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
@@ -588,7 +588,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     } else if (!is.null(contr[["batch"]])) {
       blist <- list("batch" = contr[["batch"]])
       cblist[["batch"]] <- contr[["batch"]]
-    } 
+    }
   }
 
   cond_noint_string <- "~ 0 + condition"
@@ -1056,7 +1056,9 @@ compare_logfc_plots <- function(combined_tables) {
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(data)
   bar <- utils::txtProgressBar(max=num_levels, style=3)
-  progress <- function(n) { setTxtProgressBar(bar, n) }
+  progress <- function(n) {
+    setTxtProgressBar(bar, n)
+  }
   pb_opts <- list(progress=progress)
   returns <- list()
   res <- list()
@@ -1100,7 +1102,8 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param compare_by  Use which program for the comparisons?
 #' @param contrasts  A list of contrasts to compare.
 #' @export
-compare_significant_contrasts <- function(sig_tables, compare_by="deseq", contrasts=c(1,2,3)) {
+compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
+                                          contrasts=c(1, 2, 3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
   if (length(contrasts) == 2) {
@@ -1317,7 +1320,7 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
   ## pval <- BiocGenerics::pmax(contrast_fit[["p.val"]][, coef1], contrast_fit[["p.val"]][, coef2])
   stat <- BiocGenerics::pmin(abs(contrast_fit[["t"]][, conj_contrasts]))
   pval <- BiocGenerics::pmax(contrast_fit[["p.value"]][, conj_contrasts])
-  
+
   adj.pval <- p.adjust(pval, method="BH")
   fcs <- as.data.frame(contrast_fit[["coef"]][, conj_contrasts])
   names(fcs) <- paste("logFC", names(fcs), sep=":")
@@ -1512,7 +1515,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     for (cond in conds) {
       expression_mtrx[, cond] <- datum[["limma"]][["identity_tables"]][[cond]][row_order, "logFC"]
       t_mtrx[, cond] <- datum[["limma"]][["identity_tables"]][[cond]][row_order, "t"]
-      
+
       ## When attempting to extract something suitable for error bars:
       ## https://support.bioconductor.org/p/79349/
       ## The discussion seems to me to have settled on:
@@ -1544,9 +1547,10 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     expression_table <- merge(expression_table, errors, by="row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
-    expression_written <- write_xls(data=expression_table,
-                                    sheet="expression_values",
-                                    title="Values making up the contrast logFCs and errors by dividing expression / t-statistic")
+    expression_written <- write_xls(
+      data=expression_table,
+      sheet="expression_values",
+      title="Values making up the contrast logFCs and errors by dividing expression / t-statistic")
     write_result <- openxlsx::saveWorkbook(wb=expression_written[["workbook"]],
                                            file=excel, overwrite=TRUE)
   }
@@ -1670,7 +1674,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
   }
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing=FALSE), ]
-  ret = list(
+  ret <- list(
     "up_genes" = up_genes,
     "down_genes" = down_genes)
   return(ret)
@@ -1801,7 +1805,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
 ## and if a model has first:second, make.names() turns the ':' to a '.'
 ## and then the equivalence test fails, causing makeContrasts() to error
 ## spuriously (I think).
-mymakeContrasts <- function (..., contrasts=NULL, levels) {
+mymakeContrasts <- function(..., contrasts=NULL, levels) {
   e <- substitute(list(...))
   if (is.factor(levels)) {
     levels <- levels(levels)
@@ -1824,13 +1828,13 @@ mymakeContrasts <- function (..., contrasts=NULL, levels) {
   levelsenv <- new.env()
   for (i in 1:n) assign(levels[i], indicator(i, n), pos = levelsenv)
   if (!is.null(contrasts)) {
-    if (length(e) > 1) 
+    if (length(e) > 1)
       stop("Can't specify both ... and contrasts")
     e <- as.character(contrasts)
     ne <- length(e)
-    cm <- matrix(0, n, ne, dimnames = list(Levels = levels, 
+    cm <- matrix(0, n, ne, dimnames = list(Levels = levels,
                                            Contrasts = e))
-    if (ne == 0) 
+    if (ne == 0)
       return(cm)
     for (j in 1:ne) {
       ej <- parse(text = e[j])
@@ -1841,21 +1845,21 @@ mymakeContrasts <- function (..., contrasts=NULL, levels) {
   ne <- length(e)
   enames <- names(e)[2:ne]
   easchar <- as.character(e)[2:ne]
-  if (is.null(enames)) 
+  if (is.null(enames))
     cn <- easchar
   else cn <- ifelse(enames == "", easchar, enames)
-  cm <- matrix(0, n, ne - 1, dimnames = list(Levels = levels, 
+  cm <- matrix(0, n, ne - 1, dimnames = list(Levels = levels,
                                              Contrasts = cn))
-  if (ne < 2) 
+  if (ne < 2)
     return(cm)
   for (j in 1:(ne - 1)) {
     ej <- e[[j + 1]]
-    if (is.character(ej)) 
+    if (is.character(ej))
       ej <- parse(text = ej)
     ej <- eval(ej, envir = levelsenv)
     if (!is.numeric(ej)) {
       colnames(cm)[j] <- as.character(ej)[1]
-      if (is.character(ej)) 
+      if (is.character(ej))
         ej <- parse(text = ej)
       ej <- eval(ej, envir = levelsenv)
     }
@@ -1891,7 +1895,7 @@ mymakeContrasts <- function (..., contrasts=NULL, levels) {
 #' }
 #' @export
 semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, invert=TRUE,
-                                       semantic=c("mucin","sialidase","RHS","MASP","DGF","GP63"),
+                                       semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                        semantic_column="1.tooltip") {
   table_type <- "significance"
   if (!is.null(de_list[["data"]])) {
@@ -1927,7 +1931,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
       }
       tmpdf <- try(read.table(file), silent=TRUE)
       if (class(tmpdf) == "data.frame") {
-        colnames(tmpdf) = c("ID", "members")
+        colnames(tmpdf) <- c("ID", "members")
         tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
         rownames(tab) <- tab[["Row.names"]]
         tab <- tab[, -1, drop=FALSE]
@@ -1963,13 +1967,14 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
         message("Found no entries of type ", string, ".")
       }
     } ## End of the foreach semantic thing to remove
-    
+
     ## Now recreate the original table lists as either de tables or significance.
     if (table_type == "combined") {
       for (count in 1:length(table_list)) {
         de_list[["data"]][[count]] <- table_list[[count]]
       }
-    } else {  ## Then it is a set of significance tables.
+    } else {
+      ## Then it is a set of significance tables.
       if (count <= up_to_down) {
         table_name <- names(table_list)[count]
         if (grep(pattern="^up_", table_name)) {

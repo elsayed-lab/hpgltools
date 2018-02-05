@@ -51,17 +51,17 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
       gene_ids[gene_num] <- gene_id
       if (verbose) {
         if ((gene_num %% 100) == 0) {
-          message(sprintf('Processing gene %d: %s', gene_num, gene_id))
+          message(sprintf("Processing gene %d: %s", gene_num, gene_id))
         }
       }
-    } else if(grepl("^Molecular Weight", line)) {
+    } else if (grepl("^Molecular Weight", line)) {
       ## Example: Molecular Weight: 37091
       if (grepl("^Molecular Weight: Not Assigned", line)) {
         mweight <- NA
       } else {
         mweight <- as.numeric(local_get_value(line))
       }
-    } else if(grepl("^Isoelectric Point", line)) {
+    } else if (grepl("^Isoelectric Point", line)) {
       ## Example: Isoelectric Point: 7.79
       if (grepl("^Isoelectric Point: Not Assigned", line)) {
         ipoint <- NA
@@ -74,7 +74,8 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
       ## And, since it comes before the Chromosome line, I will need a check in the chromosome assignment below.
       seqid <- as.character(local_get_value(line))
       ## message(paste0("Set seqid to ", seqid))
-    } else if (grepl("^Chromosome", line)) { ## Example: Chromosome: Not Assigned
+    } else if (grepl("^Chromosome", line)) {
+      ## Example: Chromosome: Not Assigned
       if (grepl("^Chromosome: Not Assigned", line)) {
         chromosome <- seqid
       } else {
@@ -95,7 +96,8 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     } else if (grepl("^Transcript Length", line)) {
       ## Example: Transcript length: 585
       transcript_length <- as.numeric(local_get_value(line))
-    } else if (grepl("^CDS Length", line)) { ## Example: CDS length: 585
+    } else if (grepl("^CDS Length", line)) {
+      ## Example: CDS length: 585
       val <- local_get_value(line)
       if (val == "null") {
         cds_length <- NA
@@ -109,7 +111,7 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
       ## Gene ontology terms
       go_num <- go_num + 1
       go_gene_ids[go_num] <- gene_id
-      go_rows[go_num, ] <- c(head(unlist(strsplit(line, '\t')), 5))
+      go_rows[go_num, ] <- c(head(unlist(strsplit(line, "\t")), 5))
       ##} else if (grepl("^PFAM", line)) { ## PFAM IDs
       ##    pfam_id <- unlist(strsplit(line, "\t"))[2]
       ##    pfam_ids <- paste0(pfam_id, " ", pfam_ids)
@@ -150,7 +152,7 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
     genedb[, colname] <- as.character(genedb[, colname])
   }
   ## sort data frame
-  genedb <- genedb[with(genedb, order(chromosome, start)),]
+  genedb <- genedb[with(genedb, order(chromosome, start)), ]
   ret <- list(
     "genes" = genedb,
     "go" = go_rows)
@@ -167,7 +169,7 @@ parse_gene_info_table <- function(file, verbose=FALSE) {
 #'         because each gene may have multiple GO terms, a single gene ID may
 #'         appear on multiple lines.
 #' @export
-parse_gene_go_terms <- function (filepath, verbose=FALSE) {
+parse_gene_go_terms <- function(filepath, verbose=FALSE) {
   ##require(tools)
   if (tools::file_ext(filepath) == "gz") {
     fp <- gzfile(filepath, open="rb")
@@ -385,8 +387,8 @@ make_tritrypdb_organismdbi <- function(id="lmajor_friedlin",
     "join1" = c(GO.db="GOID", orgdb="GO"),
     "join2" = c(orgdb="GID",  txdb="GENEID")
   )
-  names(graph_data[["join1"]]) = c("GO.db", orgdb_package)
-  names(graph_data[["join2"]]) = c(orgdb_package, txdb_package)
+  names(graph_data[["join1"]]) <- c("GO.db", orgdb_package)
+  names(graph_data[["join2"]]) <- c(orgdb_package, txdb_package)
 
   requireNamespace(orgdb_package)
   requireNamespace(txdb_package)
@@ -560,7 +562,7 @@ make_tritrypdb_orgdb <- function(orgdb_info, id="lmajor_friedlin", cfg=NULL,
                             ".",
                             gsub(x=cfg[["strain"]], pattern="[[:punct:]]", replacement=""),
                             ".eg")
-  
+
   orgdb_pkg_name <- paste0(orgdb_base_name, ".db")
   orgdb_sqlite_name <- paste0(orgdb_base_name, ".sqlite")
   assumed_dir <- paste0(orgdb_pre, "/", orgdb_pkg_name)

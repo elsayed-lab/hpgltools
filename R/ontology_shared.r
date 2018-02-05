@@ -1,3 +1,13 @@
+#' Perform a simple_ontology() on some random data.
+#'
+#' At the very least, the result should be less significant than the actual data!
+#'
+#' @param input  Some input data
+#' @param method  goseq, clusterp, topgo, gostats, gprofiler.
+#' @param n  how many 'genes' to analyse?
+#' @param ...  Arguments passed to the method.
+#' @return  An ontology result
+#' @export
 random_ontology <- function(input, method="goseq", n=200, ...) {
   ## Lets assume the result of *_pairwise() or combine_de_tables()
   input_table <- NULL
@@ -35,7 +45,7 @@ random_ontology <- function(input, method="goseq", n=200, ...) {
       message("Not sure what to do with this method.")
       random_result <- NULL
     })
-  
+
   return(random_result)
 }
 
@@ -441,7 +451,8 @@ gotest <- function(go) {
 
 #' Use the orgdb instances from clusterProfiler to gather annotation data for GO.
 #'
-#' Since clusterprofiler no longer builds gomaps, I need to start understanding how to properly get information from orgDBs.
+#' Since clusterprofiler no longer builds gomaps, I need to start understanding
+#' how to properly get information from orgDBs.
 #'
 #' @param goseq_data  Some data from goseq and friends.
 #' @param orgdb_go  The orgDb instance with GO data.
@@ -780,7 +791,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
             if (class(GO) != "character") {
                 golevels[["level"]] <- as.numeric(golevels[["level"]])
                 save(golevels, file=savefile, compress="xz")
-                return (golevels)
+                return(golevels)
             } else {
                 tmpdf <- as.data.frame(cbind(GO, level))
                 ## This (hopefully) ensures that each GO id is added only once,

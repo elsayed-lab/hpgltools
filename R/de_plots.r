@@ -490,11 +490,12 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     down_nums <- rbind(down_nums, c(current_down_fc, num_down))
     p_nums <- rbind(p_nums, c(current_p, num_pup, num_pdown))
   }
-  colnames(p_nums) <- c("p","up","down")
-  colnames(up_nums) <- c("fc","num")
+  colnames(p_nums) <- c("p", "up", "down")
+  colnames(up_nums) <- c("fc", "num")
   colnames(down_nums) <- c("fc", "num")
 
-  putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]), y=as.matrix(up_nums[[2]]), 0)
+  putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]),
+                                                   y=as.matrix(up_nums[[2]]), 0)
   up_point_num <- putative_up_inflection[2,1]
   up_label <- paste0("At lfc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
                      ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
@@ -505,7 +506,7 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     ggplot2::geom_vline(xintercept=1.0, colour="red")
 
   putative_down_inflection <- inflection::findiplist(x=as.matrix(down_nums[[1]]), y=as.matrix(down_nums[[2]]), 0)
-  down_point_num <- putative_down_inflection[1,2]
+  down_point_num <- putative_down_inflection[1, 2]
   down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="num")) +
     ggplot2::geom_point() + ggplot2::geom_line() +
     ggplot2::geom_hline(yintercept=down_nums[[2]][[down_point_num]]) +
@@ -513,9 +514,9 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     ggplot2::geom_vline(xintercept=-1.0, colour="red")
 
   putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  pup_point_num <- putative_pup_inflection[2,1]
+  pup_point_num <- putative_pup_inflection[2, 1]
   putative_pdown_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  pdown_point_num <- putative_pdown_inflection[2,1]
+  pdown_point_num <- putative_pdown_inflection[2, 1]
   p_plot <- ggplot(data=p_nums) +
     ggplot2::geom_point(aes_string(x="p", y="up"), colour="darkred") +
     ggplot2::geom_point(aes_string(x="p", y="down"), colour="darkblue") +

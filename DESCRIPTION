@@ -20,12 +20,12 @@ Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   Biobase, BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
   Category, cleaver, clusterProfiler, corpcor, corrplot,
-  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, dplyr,
+  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW, dplyr,
   EDASeq, edgeR,
   ffpe,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, genoPlotR, ggdendro, ggrepel, goseq,
   GO.db, googleVis, GOstats, graph, gtools, gplots, gProfileR, GSEABase,
-  Heatplus, Hmisc, httr,
+  Heatplus, Hmisc, Homo.sapiens, httr,
   inflection, IRanges, iterators,
   jsonlite,
   KEGGREST, KEGGgraph,
@@ -34,7 +34,7 @@ Suggests:
   openxlsx, OrganismDbi,
   packrat, pander, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rjson,
+  R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rhdf5, rjson,
   rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne, rtracklayer,
   ruv, RUVSeq,
   S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
@@ -47,3 +47,64 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 RoxygenNote: 6.0.1
+Collate: 
+    'annotation_biomart.r'
+    'annotation_eupathdb.r'
+    'annotation_genbank.r'
+    'annotation_gff.r'
+    'annotation_kegg.r'
+    'annotation_microbesonline.r'
+    'annotation_orgdb.r'
+    'annotation_shared.r'
+    'annotation_tritrypdb.r'
+    'annotation_txt.r'
+    'annotation_uniprot.r'
+    'de_basic.r'
+    'de_deseq.r'
+    'de_edger.r'
+    'de_limma.r'
+    'de_plots.r'
+    'de_shared.r'
+    'de_xlsx.r'
+    'expt.r'
+    'helpers_misc.r'
+    'hpgltools.r'
+    'model_pca.r'
+    'model_surrogates.r'
+    'model_testing.r'
+    'model_tsne.r'
+    'model_varpartition.r'
+    'motif.r'
+    'nmer.r'
+    'normalize_batch.r'
+    'normalize_convert.r'
+    'normalize_filter.r'
+    'normalize_norm.r'
+    'normalize_shared.r'
+    'normalize_transform.r'
+    'ontology_clusterprofiler.r'
+    'ontology_goseq.r'
+    'ontology_gostats.r'
+    'ontology_gprofiler.r'
+    'ontology_kegg.r'
+    'ontology_plots.r'
+    'ontology_shared.r'
+    'ontology_topgo.r'
+    'ontology_xlsx.r'
+    'plot_bar.r'
+    'plot_circos.r'
+    'plot_distribution.r'
+    'plot_dotplot.r'
+    'plot_genplot.r'
+    'plot_gvis.r'
+    'plot_heatmap.r'
+    'plot_hist.r'
+    'plot_misc.r'
+    'plot_peptides.r'
+    'plot_point.r'
+    'plot_shared.r'
+    'plot_venn.r'
+    'proteomics.r'
+    'snp.r'
+    'tnseq.r'
+    'xlsx.r'

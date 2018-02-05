@@ -30,6 +30,7 @@
 #' }
 #' @export
 plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
+  arglist <- list(...)
   plot_env <- environment()
   data_class <- class(data)[1]
   if (data_class == "expt") {
@@ -46,27 +47,10 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
-  if (is.null(scale)) {
-    if (max(data) > 10000) {
-      message("This data will benefit from being displayed on the log scale.")
-      message("If this is not desired, set scale='raw'")
-      scale <- "log"
-      negative_idx <- data < 0
-      if (sum(negative_idx) > 0) {
-        message("Some data are negative.  We are on log scale, setting them to 0.5.")
-        data[negative_idx] <- 0.5
-        message(paste0("Changed ", sum(negative_idx), " negative features."))
-      }
-      zero_idx <- data == 0
-      if (sum(zero_idx) > 0) {
-        message("Some entries are 0.  We are on log scale, setting them to 0.5.")
-        data[zero_idx] <- 0.5
-        message(paste0("Changed ", sum(zero_idx), " zero count features."))
-      }
-    } else {
-      scale <- "raw"
-    }
-  }
+  ## I am now using this check of the data in a few places, so I function'd it.
+  scale_data <- check_plot_scale(data, scale)
+  scale <- scale_data[["scale"]]
+  data <- scale_data[["data"]]
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(data)[2])
@@ -228,7 +212,7 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   counts <- NULL
   if (!is.null(design)) {
     if (!is.null(design[["condition"]])) {
-      melted[, 'condition' := design[sample, "condition"]]
+      melted[, "condition" := design[sample, "condition"]]
       condition_summary <- data.table::setDT(melted)[, list("min"=min(counts),
                                                             "1st"=quantile(x=counts, probs=0.25),
                                                             "median"=median(x=counts),
@@ -238,7 +222,7 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
                                                      by="condition"]
     }
     if (!is.null(design[["batch"]])) {
-      melted[, 'batch' := design[sample, "batch"]]
+      melted[, "batch" := design[sample, "batch"]]
       batch_summary <- data.table::setDT(melted)[, list("min"=min(counts),
                                                         "1st"=quantile(x=counts, probs=0.25),
                                                         "median"=median(x=counts),
@@ -528,6 +512,76 @@ plot_qq_all_pairwise <- function(data) {
   means_heatmap <- grDevices::recordPlot()
   plots <- list(logs=log_plots, ratios=ratio_plots, means=means_heatmap)
   return(plots)
+}
+
+#' Plot the representation of the top-n genes in the total counts / sample.
+#'
+#' One question we might ask is: how much do the most abundant genes in a
+#' samples comprise the entire sample?  This plot attempts to provide a visual
+#' hint toward answering this question.  It does so by rank-ordering all the
+#' genes in every sample and dividing their counts by the total number of reads
+#' in that sample.  It then smooths the points to provide the resulting trend.
+#' The steeper the resulting line, the more over-represented these top-n genes
+#' are.  I suspect, but haven't tried yet, that the inflection point of the
+#' resulting curve is also a useful diagnostic in this question.
+#'
+#' @param data  Dataframe to perform pairwise qqplots with.
+#' @param title  A title for the plot.
+#' @param num  The N in top-n genes, if null, do them all.
+#' @param ...  Extra arguments, currently unused.
+#' @return List containing the ggplot2
+#' @export
+plot_topn <- function(data, title=NULL, num=100, ...) {
+  plot_env <- environment()
+  data_class <- class(data)
+  if (data_class == "expt") {
+    design <- pData(data)
+    colors <- data[["colors"]]
+    names <- data[["names"]]
+    data <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    data <- exprs(data)
+    design <- pData(data)
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  columns <- colSums(data)
+  testing <- data / columns
+
+  newdf <- data.frame(row.names=1:nrow(testing))
+  for (col in colnames(testing)) {
+    ranked <- order(testing[, col], decreasing=TRUE)
+    newdf[, col] <- testing[ranked, col]
+  }
+
+  if (num > 0) {
+    newdf <- head(newdf, n=num)
+  }
+  if (num < 0) {
+    newdf <- tail(newdf, n=-1 * num)
+  }
+  newdf[["rank"]] <- rownames(newdf)
+
+  tmpdf <- reshape2::melt(newdf)
+  colnames(tmpdf) <- c("rank", "sample", "pct")
+  tmpdf[["rank"]] <- as.numeric(tmpdf[["rank"]])
+  tmpdf[["value"]] <- as.numeric(tmpdf[["pct"]])
+  tmpdf[["sample"]] <- as.factor(tmpdf[["sample"]])
+
+  topn_plot <- ggplot(tmpdf, aes_string(x="rank", y="pct", color="sample")) +
+    ggplot2::geom_smooth(method="auto", level=0.5)
+
+  if (!is.null(title)) {
+    topn_plot <- topn_plot + ggplot2::ggtitle(title)
+  }
+
+  retlist <- list(
+    "plot" = topn_plot,
+    "table" = tmpdf)
+  return(retlist)
 }
 
 ## EOF

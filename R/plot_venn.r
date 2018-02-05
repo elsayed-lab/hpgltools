@@ -7,7 +7,8 @@
 #' @param threes  Character list of tripletone categories
 #' @param fours  Character list of quad categories
 #' @param fives  Character list of quint categories
-#' @param factor Currently unused, but intended to change the radial distance to the label from the center of each circle.
+#' @param factor Currently unused, but intended to change the radial distance to
+#'   the label from the center of each circle.
 #' @return Two element list containing the venneuler data and the plot.
 #' @seealso \pkg{venneuler}
 #' @export

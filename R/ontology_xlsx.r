@@ -81,7 +81,7 @@ gather_ontology_genes <- function(result, ontology=NULL,
   }
   input <- result[["input"]]
   ##categories <- subset(categories, over_represented_pvalue <= pval)
-  categories <- categories[ categories[[column]] <= pval, ]
+  categories <- categories[categories[[column]] <= pval, ]
   cats <- rownames(categories)
   go_db <- result[["go_db"]]
   genes_per_ont <- function(cat) {
@@ -98,7 +98,7 @@ gather_ontology_genes <- function(result, ontology=NULL,
     ## Extract the limma logFC for all genes.
     all_names <- toString(all_entries)
     ## Now find the 'significant' genes in this set.
-    entries_in_sig <- input[ rownames(input) %in% all_entries, ]
+    entries_in_sig <- input[rownames(input) %in% all_entries, ]
     ## And get their names.
     sig_names <- toString(as.character(rownames(entries_in_sig)))
     ## Along with the logFC from limma
@@ -214,7 +214,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ## Pull out the relevant portions of the cp data
   ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
   cp_mf <- cp_result[["enrich_go"]][["MF_sig"]]
-  cp_mf <- cp_mf[ cp_mf[["pvalue"]] <= pval, ]
+  cp_mf <- cp_mf[cp_mf[["pvalue"]] <= pval, ]
   cp_mf_genes <- gather_cp_genes(cp_result[["enrich_go"]][["MF_sig"]], cp_result[["all_mappings"]])
   cp_mf[["named_genes"]] <- cp_mf_genes
   mf_idx <- order(cp_mf[[order_by]], decreasing=decreasing)
@@ -222,7 +222,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   cp_mf[["Ontology"]] <- "MF"
 
   cp_bp <- cp_result[["enrich_go"]][["BP_sig"]]
-  cp_bp <- cp_bp[ cp_bp[["pvalue"]] <= pval, ]
+  cp_bp <- cp_bp[cp_bp[["pvalue"]] <= pval, ]
   cp_bp_genes <- gather_cp_genes(cp_result[["enrich_go"]][["BP_sig"]], cp_result[["all_mappings"]])
   cp_bp[["named_genes"]] <- cp_bp_genes
   bp_idx <- order(cp_bp[[order_by]], decreasing=decreasing)
@@ -230,7 +230,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   cp_bp[["Ontology"]] <- "BP"
 
   cp_cc <- cp_result[["enrich_go"]][["CC_sig"]]
-  cp_cc <- cp_cc[ cp_cc[["pvalue"]] <= pval, ]
+  cp_cc <- cp_cc[cp_cc[["pvalue"]] <= pval, ]
   cp_cc_genes <- gather_cp_genes(cp_result[["enrich_go"]][["CC_sig"]], cp_result[["all_mappings"]])
   cp_cc[["named_genes"]] <- cp_cc_genes
   cc_idx <- order(cp_cc[[order_by]], decreasing=decreasing)
@@ -1135,7 +1135,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
   for (ont in c("BP", "MF", "CC")) {
     table_name <- paste0(tolower(ont), "_subset")
     categories <- table_list[[table_name]]
-    categories <- categories[ categories[[order_by]] <= pval, ]
+    categories <- categories[categories[[order_by]] <= pval, ]
     genes_per_category <- gather_ontology_genes(topgo_result, ontology=ont,
                                                 pval=pval, column=order_by)
     categories <- merge(categories, genes_per_category, by="row.names")
@@ -1155,7 +1155,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
       "Ontology", "Category", "Term", "Annotated genes in cat.",
       "Significant genes in cat.", "Expected genes in cat.", "Fisher score",
       "KS score", "EL score", "weighted score", "qvalue",
-      "All genes in cat.", "DE genes in cat.", 
+      "All genes in cat.", "DE genes in cat.",
       "FC from limma", "FC from DESeq", "FC from edgeR")
     better_column_names <- better_column_names[kept_columns_idx]
     colnames(categories) <- better_column_names
@@ -1684,7 +1684,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_cc"]],
                                tableStyle=table_style, startRow=new_row)
       links <- up_stuff[["gostats_cc"]][["Link"]]
-      class(links) <- 'hyperlink'
+      class(links) <- "hyperlink"
       names(links) <- up_stuff[["gostats_cc"]][["Category"]]
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["cc_plot_over"]]
@@ -2007,7 +2007,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     savedir=excel_basename)
       }
       links <- down_stuff[["gostats_bp"]][["Link"]]
-      class(links) <- 'hyperlink'
+      class(links) <- "hyperlink"
       names(links) <- down_stuff[["gostats_bp"]][["Category"]]
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
       new_row <- new_row + nrow(down_stuff[["gostats_bp"]]) + 2
@@ -2032,7 +2032,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     savedir=excel_basename)
       }
       links <- down_stuff[["gostats_mf"]][["Link"]]
-      class(links) <- 'hyperlink'
+      class(links) <- "hyperlink"
       names(links) <- down_stuff[["gostats_mf"]][["Category"]]
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
       new_row <- new_row + nrow(down_stuff[["gostats_mf"]]) + 2
@@ -2057,7 +2057,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     savedir=excel_basename)
       }
       links <- down_stuff[["gostats_cc"]][["Link"]]
-      class(links) <- 'hyperlink'
+      class(links) <- "hyperlink"
       names(links) <- down_stuff[["gostats_cc"]][["Category"]]
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
     }
@@ -2156,11 +2156,11 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 #' @export
 write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/merged_go",
                          dated=TRUE, n=30, overwritefile=TRUE) {
-  n <- get0('n')
+  n <- get0("n")
   if (is.null(n)) {
     n <- 30
   }
-  file <- get0('file')
+  file <- get0("file")
   if (is.null(file)) {
     file <- "excel/merged_go"
   }
@@ -2190,9 +2190,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   goseq_mf <- head(goseq[["mf_subset"]], n=n)
   goseq_bp <- head(goseq[["bp_subset"]], n=n)
   goseq_cc <- head(goseq[["cc_subset"]], n=n)
-  goseq_mf <- goseq_mf[, c(7,1,6,2,4,5,8)]
-  goseq_bp <- goseq_bp[, c(7,1,6,2,4,5,8)]
-  goseq_cc <- goseq_cc[, c(7,1,6,2,4,5,8)]
+  goseq_mf <- goseq_mf[, c(7, 1, 6, 2, 4, 5, 8)]
+  goseq_bp <- goseq_bp[, c(7, 1, 6, 2, 4, 5, 8)]
+  goseq_cc <- goseq_cc[, c(7, 1, 6, 2, 4, 5, 8)]
   colnames(goseq_mf) <- c("Ontology", "Category", "Term", "Over p-value",
                           "Num. DE", "Num. in cat.", "Q-value")
   colnames(goseq_bp) <- c("Ontology", "Category", "Term", "Over p-value",
@@ -2210,9 +2210,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   cluster_mf[["ontology"]] <- "MF"
   cluster_bp[["ontology"]] <- "BP"
   cluster_cc[["ontology"]] <- "CC"
-  cluster_mf <- cluster_mf[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
-  cluster_bp <- cluster_bp[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
-  cluster_cc <- cluster_cc[,c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+  cluster_mf <- cluster_mf[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+  cluster_bp <- cluster_bp[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
+  cluster_cc <- cluster_cc[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
   colnames(cluster_mf) <- c("Ontology", "Category", "Term", "Over p-value", "Gene ratio",
                             "BG ratio", "Adj. p-value", "Q-value", "Count", "Genes")
   colnames(cluster_bp) <- c("Ontology", "Category", "Term", "Over p-value", "Gene ratio",
@@ -2224,9 +2224,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   topgo_mf <- head(topgo[["tables"]][["mf_interesting"]], n=n)
   topgo_bp <- head(topgo[["tables"]][["bp_interesting"]], n=n)
   topgo_cc <- head(topgo[["tables"]][["cc_interesting"]], n=n)
-  topgo_mf <- topgo_mf[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
-  topgo_bp <- topgo_bp[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
-  topgo_cc <- topgo_cc[,c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+  topgo_mf <- topgo_mf[, c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+  topgo_bp <- topgo_bp[, c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
+  topgo_cc <- topgo_cc[, c(2, 1, 11, 6, 7, 8, 9, 10, 4, 3, 5)]
   colnames(topgo_mf) <- c("Ontology", "Category", "Term", "Fisher p-value", "Q-value", "KS score",
                           "EL score", "Weight score", "Num. DE", "Num. in cat.", "Exp. in cat.")
   colnames(topgo_bp) <- c("Ontology", "Category", "Term", "Fisher p-value", "Q-value", "KS score",
@@ -2247,9 +2247,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   gostats_mf[["ont"]] <- "MF"
   gostats_bp[["ont"]] <- "BP"
   gostats_cc[["ont"]] <- "CC"
-  gostats_mf <- gostats_mf[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
-  gostats_bp <- gostats_bp[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
-  gostats_cc <- gostats_cc[,c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+  gostats_mf <- gostats_mf[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+  gostats_bp <- gostats_bp[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
+  gostats_cc <- gostats_cc[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
   colnames(gostats_mf) <- c("Ontology", "Category", "Term", "Fisher p-value", "Num. DE",
                             "Num. in cat.", "Odds ratio", "Exp. in cat.", "Q-value", "Link")
   colnames(gostats_bp) <- c("Ontology", "Category", "Term", "Fisher p-value", "Num. DE",
@@ -2343,7 +2343,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_bp"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   links <- lst[["gostats_bp"]][["Link"]]
-  class(links) <- 'hyperlink'
+  class(links) <- "hyperlink"
   names(links) <- lst[["gostats_bp"]][["Category"]]
   openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
   new_row <- new_row + nrow(lst[["gostats_bp"]]) + 2
@@ -2353,7 +2353,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_mf"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   links <- lst[["gostats_mf"]][["Link"]]
-  class(links) <- 'hyperlink'
+  class(links) <- "hyperlink"
   names(links) <- lst[["gostats_mf"]][["Category"]]
   openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
   new_row <- new_row + nrow(lst[["gostats_mf"]]) + 2
@@ -2363,7 +2363,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_cc"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   links <- lst[["gostats_cc"]][["Link"]]
-  class(links) <- 'hyperlink'
+  class(links) <- "hyperlink"
   names(links) <- lst[["gostats_cc"]][["Category"]]
   openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
