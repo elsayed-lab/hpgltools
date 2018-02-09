@@ -196,6 +196,195 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
+#' Given 2 species names from the eupathdb, make orthology tables betwixt them.
+#'
+#' The eupathdb provides such a tremendous wealth of information.  For me
+#' though, it is difficult sometimes to boil it down into just the bits of
+#' comparison I want for 1 species or between 2 species.  A singularly common
+#' question I am asked is: "What are the most similar genes between species x
+#' and y among these two arbitrary parasites?"  There are lots of ways to poke
+#' at this question: run BLAST/fasta36, use biomart, query the ortholog tables
+#' from the eupathdb, etc...  However, in all these cases, it is not trivial to
+#' ask the next question:  What about: a:b and b:a?
+#' This function attempts to address that for the case of two eupath species
+#' from the same domain. (tritrypdb/fungidb/etc.)  It does however assume that
+#' the sqlite package has been installed locally, if not it suggests you run the
+#' make_organismdbi function in order to do that.
+#'
+#' @param first  Species name from one eupath database.
+#' @param second Another species name from the same eupath database.
+#' @param abbrev  It is likely you do not care about the reciprocals and such,
+#'   in that case the second species is irrelvant and just a species
+#'   abbreviation is sufficient.
+#' @param xref  Cross reference the stuff in the sqlite vs. the abbreviation?
+#'   If no, then this will just return the entire ortholog table.
+#'
+#' The xref parameter reminds me, this function does make a peculiar attempt to
+#'   handle a lot of corner cases without failure, but instead to try to always
+#'   provide some useful information, even if that information is not precisely
+#'   what you want, but the only thing I can find.
+#' With that in mind, one could easily argue that this function is too long and
+#'   it should be split into a couple pieces, but hopefully it is sufficiently
+#'   clear that this is not necessary -- or I will do it later.
+#' @return List containing the information available given the species provided
+#'   and/or the abbreviation/xref.
+#' @export
+extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...) {
+  arglist <- list(...)
+
+  ortholog_column <- "ORTHOLOGS_ORTHOLOG"
+  if (!is.null(arglist[["ortholog_column"]])) {
+    ortholog_column <- arglist[["ortholog_column"]]
+  }
+
+  ##metadata <- download_eupath_metadata(...)
+  metadata <- download_eupath_metadata()
+  first_name <- check_eupath_species(first)[["Species"]]
+  second_name <- check_eupath_species(second)[["Species"]]
+
+  first_pkg <- make_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
+  second_pkg <- make_eupath_pkgnames(species=second_name, metadata=metadata)[["orgdb"]]
+
+  num_found <- 0
+  pkgs <- list()
+  tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
+  if (class(tt) == "try-error") {
+    message(paste0("Did not find the package: ",
+                   first_pkg,
+                   ". Will not be able to do reciprocal hits."))
+    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+                   first_name, "')"))
+  } else {
+    num_found <- num_found + 1
+    pkgs[[first_name]] <- get(first_pkg)
+  }
+
+  tt <- try(do.call("library", as.list(second_pkg)), silent=TRUE)
+  if (class(tt) == "try-error") {
+    message(paste0("Did not find the package: ",
+                   second_pkg,
+                   ". Will not be able to do reciprocal hits."))
+    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+                   second_name, "')"))
+  } else {
+    num_found <- num_found + 1
+    pkgs[[second_name]] <- get(second_pkg)
+  }
+  if (num_found == 0) {
+    stop("Found neither package.  Cannot continue.")
+  }
+
+  all_orthos <- list()
+  gene_lists <- list()
+  for (i in 1:length(pkgs)) {
+    name <- names(pkgs)[[i]]
+    pkg <- pkgs[[i]]
+    gene_lists[[name]] <- AnnotationDbi::keys(pkg)
+    all_orthos[[name]] <- AnnotationDbi::select(x=pkg,
+                                                keytype="GID",
+                                                keys=gene_list,
+                                                columns=ortholog_column)
+  }
+
+  ## If a single pkg is found, then we cannot do a cross reference of two species,
+  ## but we _can_ extract all genes which match a given species prefix pattern.
+  retlist <- list()
+  if (num_found == 1) {
+    retlist[["all_genes"]] <- gene_lists[[1]]
+    if (is.null(abbrev)) {
+      message(paste0("Extracting all orthologs for ", names(pkgs)[[1]], "."))
+      retlist[["orthologs"]] <- all_orthos[[1]]
+      return(retlist)
+    } else {
+      ortho_idx <- grepl(pattern=paste0("^", abbrev), x=all_orthos[[1]][[ortholog_column]])
+      if (sum(ortho_idx) == 0) {
+        warning(paste0("The abbreviation: ", abbrev, " did not match any of the ortholog table."))
+        warning("Returning the entire ortholog table so that you can figure out where things went wrong.")
+        retlist[["orthologs"]] <- all_orthos[[1]]
+      } else {
+        retlist[["orthologs"]] <- all_orthos[ortho_idx, 1]
+      }
+      return(retlist)
+    }
+  }
+
+  ## We have finished handling the case where we have 1 table to search in
+  ## Now what to do when we have two?
+  ## Well, the way I envision this:
+  ## 1. Use table 1's keys to set the prefix for table 2
+  ## 2. Use table 2's ... for table 1
+  ## 3. Index each of the two tables using the other key's prefix
+
+  ## The following code should only therefore get hit if the above did _not_.
+  ## In order to get the appropriate eupathdb-specific prefix, we want to gsub out the
+  ## beginning of the genes from each package until either a '.' or '_'.
+  first_string <- gene_lists[[1]][[1]]  ## Grab the first gene in each set of genes.
+  second_string <- gene_lists[[2]][[1]]
+
+  ## My pattern needs to greedily(use the ?) match at the beginning of the string(^)
+  ## A set of characters(()) which matches anything(.) at least for one character(+)
+  ## Then it needs to match a set(()) of either(|) a dot(\\.) or underscore(_)
+  ## not greedily(no ?) followed by anything(.*) until the end of the string($).
+  idx_pattern <- "^(.+?)(\\.|_).*$"
+  ## When performing the replacement, pull out the first set of the 2 sets above(\\1)
+  ## And it needs to acquire this information from the first gene in both sets of genes.
+  first_idx_pattern <- gsub(pattern=idx_pattern,
+                            replacement="\\1",
+                            x=first_string,
+                            perl=TRUE)
+  second_idx_pattern  <- gsub(pattern=idx_pattern,
+                              replacement="\\1",
+                              x=second_string,
+                              perl=TRUE)
+  ## When doing the grep, make sure it searches from the beginning of each string(^).
+  ## Also make sure to pull it from the second column of each of the two dataframes of orthologs.
+  colnames(all_orthos[[1]]) <- c("first_gene", "second_ortholog") ## Explicitly rename the columns
+  ## so that it is easier to see where I am pulling the index information.
+  colnames(all_orthos[[2]]) <- c("second_gene", "first_ortholog")
+  second_species_idx_in_first_db <- grepl(pattern=paste0("^", second_idx_pattern),
+                                          x=all_orthos[[1]][, "second_ortholog"])
+  first_species_idx_in_second_db <- grepl(pattern=paste0("^", first_idx_pattern),
+                                       x=all_orthos[[2]][, "first_ortholog"])
+  first_species_orthologs <- all_orthos[[1]][second_species_idx_in_first_db, ]
+  second_species_orthologs <- all_orthos[[2]][first_species_idx_in_second_db, ]
+
+  ## Now test for reciprocal best hittedness (yeah, that is not a word).
+  ## To do this I will merge the two tables of orthologs and see where the ortholog makes a
+  ## bridge from geneW_speciesA -> orthologX_speciesB -> geneW_speciesA and/or
+  ##             geneY_speciesB -> orthologZ_speciesA -> geneY_speciesB
+  shared_genes_first_second <- merge(first_species_orthologs,
+                                     second_species_orthologs,
+                                     by.x="first_gene",
+                                     by.y="first_ortholog")
+  shared_genes_second_first <- merge(second_species_orthologs,
+                                     first_species_orthologs,
+                                     by.x="second_gene",
+                                     by.y="second_ortholog")
+  reciprocal_idx_first <- shared_genes_first_second[["first_gene"]] ==
+    shared_genes_first_second[["second_gene"]]
+  reciprocals_first <- shared_genes_first_second[reciprocal_idx_first, ]
+  reciprocal_idx_second <- shared_genes_second_first[["first_gene"]] ==
+    shared_genes_second_first[["second_gene"]]
+  reciprocals_second <- shared_genes_second_first[reciprocal_idx_second, ]
+
+  ## While we are at it, lets get the set of genes in speciesA which do not show up in the
+  ## orthologous list for speciesB and vice-versa
+  first_non_orthologous_idx <- !(gene_lists[[1]] %in% all_orthos[[2]][["first_ortholog"]])
+  first_non_orthologous <- gene_lists[[1]][first_non_orthologous_idx]
+  second_non_orthologous_idx <- !(gene_lists[[2]] %in% all_orthos[[1]][["second_ortholog"]])
+  second_non_orthologous <- gene_lists[[2]][first_non_orthologous_idx]
+  retlist <- list(
+    "non_orthologs_first_species" = first_non_orthologous,
+    "non_orthologs_second_species" = second_non_orthologous,
+    "reciprocal_match_first_second" = reciprocals_first,
+    "reciprocal_match_second_first" = reciprocals_second,
+    "first_genes_second_orthologs" = first_species_orthologs,
+    "second_genes_first_orthologs" = second_species_orthologs,
+    "first_orthologs_merged" = shared_genes_first_second,
+    "second_orthologs_merged" = shared_genes_second_first)
+  return(retlist)
+}
+
 #' Generate a BSgenome package from the eupathdb.
 #'
 #' Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packages, it
@@ -1144,7 +1333,7 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
 #' 1. http://tritrypdb.org/tritrypdb/serviceList.jsp
 #' @author Keith Hughitt
 #' @export
-post_eupath_table <- function(species=NULL, entry=NULL, metadata=NULL, query_body,
+post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NULL,
                               table_name=NULL, minutes=20) {
 
   if (is.null(entry) & is.null(species)) {
@@ -1307,8 +1496,8 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
     if (is.null(metadata)) {
-      ## metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      metadata <- sm(download_eupath_metadata(dir=dir))
+      metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      ## metadata <- sm(download_eupath_metadata(dir=dir))
     }
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
@@ -1333,7 +1522,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  result <- post_eupath_table(entry, query_body, table_name="go")
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="go")
   return(result)
 }
 
@@ -1377,7 +1566,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  result <- post_eupath_table(entry, query_body, table_name="orthologs")
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="orthologs")
   return(result)
 }
 
@@ -1421,7 +1610,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  result <- post_eupath_table(entry, query_body, table_name="interpro")
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="interpro")
   return(result)
 }
 
@@ -1464,7 +1653,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  result <- post_eupath_table(entry, query_body, table_name="pathway")
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="pathway")
   return(result)
 }
 

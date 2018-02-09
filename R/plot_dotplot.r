@@ -40,8 +40,8 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
     ##ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
     ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="samplenames"),
                        angle=45, size=3, vjust=2) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +
-    ggplot2::theme_bw()
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black")) +
+    ggplot2::theme_bw(base_size=base_size)
   return(sv_plot)
 }
 
@@ -128,9 +128,9 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
                           fill=factor_df[["fill"]]) +
     ggplot2::geom_text(aes_string(x="sample", y="svs", label="batch"),
                        size=4, vjust=2) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
                                                      angle=90, hjust=1)) +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw(base_size=base_size)
 
   plots <- list(
     "sample_factor" = sample_factor,
@@ -168,8 +168,8 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
     ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
     ggplot2::ylab(paste0("1st surrogate variable estimation")) +
     ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black")) +
-    ggplot2::theme_bw()
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black")) +
+    ggplot2::theme_bw(base_size=base_size)
   return(sv_plot)
 }
 
@@ -293,8 +293,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     ggplot2::ylab(paste0("Standard Median ", method)) +
     ggplot2::xlab(paste0("Sample")) +
     ggplot2::ggtitle(title) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=10, colour="black",
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
                                                      angle=90, hjust=1))
 
 

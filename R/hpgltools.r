@@ -69,7 +69,7 @@ NULL
 #' \item Perform some simple TnSeq analyses.
 #' }
 #'
-#' To see examples of this inaction, check out the vignettes:
+#' To see examples of this inaction (haha that is funny, honest!), check out the vignettes:
 #' \code{browseVignettes(package = 'hpgltools')}
 #'
 #' @docType package
@@ -86,3 +86,6 @@ NULL
 #' @import stats
 #' @import utils
 NULL
+
+#' What happens if I set a base ggplot2 text size here?
+base_size <- 16

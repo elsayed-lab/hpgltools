@@ -31,7 +31,6 @@
 #' @export
 plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, ...) {
   arglist <- list(...)
-  plot_env <- environment()
   data_class <- class(data)[1]
   if (data_class == "expt") {
     design <- pData(data)
@@ -69,8 +68,8 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
                              fill=colors, size=0.5,
                              outlier.size=1.5,
                              outlier.colour=ggplot2::alpha("black", 0.2))) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
     ggplot2::xlab("Sample") + ggplot2::ylab("Per-gene (pseudo)count distribution")
   if (!is.null(title)) {
@@ -115,7 +114,6 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity", direct=TRUE,
                          fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
   ## also position='stack'
-  plot_env <- environment()
   data_class <- class(data)[1]
   design <- NULL
   if (data_class == "expt") {
@@ -170,21 +168,19 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   densityplot <- NULL
   if (is.null(fill)) {
     densityplot <- ggplot2::ggplot(data=melted,
-                                   ggplot2::aes_string(x="counts", colour="sample"),
-                                   environment=plot_env)
+                                   ggplot2::aes_string(x="counts", colour="sample"))
   } else {
     fill <- "sample"
     densityplot <- ggplot2::ggplot(data=melted,
-                                   ggplot2::aes_string(x="counts", colour="sample", fill="fill"),
-                                   environment=plot_env)
+                                   ggplot2::aes_string(x="counts", colour="sample", fill="fill"))
   }
 
   densityplot <- densityplot +
     ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"),
                           position=position, na.rm=TRUE) +
     ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    legend.key.size=ggplot2::unit(0.3, "cm"))
   if (!is.null(title)) {
     densityplot <- densityplot + ggplot2::ggtitle(title)
@@ -325,7 +321,6 @@ plot_qq_all <- function(data, labels="short") {
 #' @seealso \pkg{Biobase}
 #' @export
 plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
-  plot_env <- environment()
   data_class <- class(data)[1]
   if (data_class == "expt") {
     design <- pData(data)
@@ -362,8 +357,7 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
   }
   ratio_plot <- ggplot2::ggplot(ratio_df,
-                                ggplot2::aes_string(x="increment", y="ratio"),
-                                environment=plot_env) +
+                                ggplot2::aes_string(x="increment", y="ratio")) +
     ggplot2::geom_point(colour=sm(grDevices::densCols(ratio_df[["ratio"]])), stat="identity",
                         size=1, alpha=0.2, na.rm=TRUE) +
     ggplot2::scale_y_continuous(limits=c(0, 2))
@@ -371,12 +365,12 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     ratio_plot <- ratio_plot +
       ggplot2::xlab("Sorted gene") +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {
     ratio_plot <- ratio_plot +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
                      axis.ticks=ggplot2::element_blank(),
@@ -389,7 +383,7 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
                      plot.background=ggplot2::element_blank())
   } else {
     ratio_plot <- ratio_plot +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(axis.line=ggplot2::element_blank(),
                      axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
@@ -411,8 +405,7 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
   log_df[["sub"]] <- log_df[, 1] - log_df[, 2]
   sorted_x <- as.vector(log_df[, 1])
   log_ratio_plot <- ggplot2::ggplot(log_df,
-                                    ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)"),
-                                    environment=plot_env) +
+                                    ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)")) +
     ggplot2::geom_point(colour=grDevices::densCols(x=sorted_x), stat="identity") +
     ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
     ggplot2::scale_x_continuous(limits=c(0, gg_max))
@@ -420,13 +413,13 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab(paste("log sorted ", xlabel)) +
       ggplot2::ylab(paste("log sorted ", ylabel)) +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab("gene") +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
                      axis.ticks=ggplot2::element_blank(),
@@ -439,7 +432,7 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
                      plot.background=ggplot2::element_blank())
   } else {
     log_ratio_plot <- log_ratio_plot +
-      ggplot2::theme_bw() +
+      ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(axis.line=ggplot2::element_blank(),
                      axis.text.x=ggplot2::element_blank(),
                      axis.text.y=ggplot2::element_blank(),
@@ -532,7 +525,7 @@ plot_qq_all_pairwise <- function(data) {
 #' @return List containing the ggplot2
 #' @export
 plot_topn <- function(data, title=NULL, num=100, ...) {
-  plot_env <- environment()
+  arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt") {
     design <- pData(data)
@@ -565,14 +558,25 @@ plot_topn <- function(data, title=NULL, num=100, ...) {
   }
   newdf[["rank"]] <- rownames(newdf)
 
-  tmpdf <- reshape2::melt(newdf)
+  ## Choose the smoothing algorithm
+  smoother <- "loess"
+  if (is.null(arglist[["smoother"]])) {
+    if (nrow(newdf) > 5000) {
+      smoother <- "gam"
+    }
+  } else {
+    smoother <- arglist[["smoother"]]
+  }
+
+  tmpdf <- reshape2::melt(newdf, id.vars="rank")
   colnames(tmpdf) <- c("rank", "sample", "pct")
   tmpdf[["rank"]] <- as.numeric(tmpdf[["rank"]])
   tmpdf[["value"]] <- as.numeric(tmpdf[["pct"]])
   tmpdf[["sample"]] <- as.factor(tmpdf[["sample"]])
 
   topn_plot <- ggplot(tmpdf, aes_string(x="rank", y="pct", color="sample")) +
-    ggplot2::geom_smooth(method="auto", level=0.5)
+    ggplot2::geom_smooth(method=smoother, level=0.5, na.rm=TRUE) +
+    ggplot2::theme_bw(base_size=base_size)
 
   if (!is.null(title)) {
     topn_plot <- topn_plot + ggplot2::ggtitle(title)

@@ -186,9 +186,9 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
     ggplot2::xlab("Sample ID") +
     ggplot2::ylab("Library size in (pseudo)counts.") +
     ## theme_bw() sets a bunch of reasonable defaults.
-    ggplot2::theme_bw() +
+    ggplot2::theme_bw(base_size=base_size) +
     ## angle=90 puts the text vertically, vjust=0.5 centers the labels below the tick mark.
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
 
@@ -287,7 +287,7 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
     ggplot2::geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
     ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
     ggplot2::geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue") +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw(base_size=base_size)
   plot(my_plot)
 
 }
@@ -362,7 +362,7 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
                                         "b_down_middle"="orchid",
                                         "c_down_outer"="purple4")) +
     ggplot2::coord_flip() +
-    ggplot2::theme_bw() +
+    ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(panel.grid.minor=ggplot2::element_blank(),
                    legend.position="none")
 

@@ -647,8 +647,8 @@ Going to run pcRes with the batch information.")
   pca_plot <- pca_plot +
     ggplot2::xlab(xl) +
     ggplot2::ylab(yl) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    legend.key.size=grid::unit(0.5, "cm"))
 
   ## If plot_title is NULL, print nothing, if it is TRUE

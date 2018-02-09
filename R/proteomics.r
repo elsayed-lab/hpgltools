@@ -10,14 +10,15 @@
 #' @param write_acquisitions  If a filename is provided, write a tab separated table of windows.
 #' @return List containing a table of scan and precursor data.
 #' @export
-extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
+extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   if (is.null(id)) {
     id <- file
   }
+  message(paste0("Reading ", file))
   input <- xml2::read_html(file, options="NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
-  message("Extracting instrument information.")
+  message(paste0("Extracting instrument information for ", file))
   instruments <- rvest::xml_nodes(input, "msinstrument")
   instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
   instrument_values <- c("msmanufacturer", "msmodel", "msionisation", "msmassanalyzer",
@@ -31,7 +32,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
   instrument_data[["software_name"]] <- datum %>% rvest::html_attr("name")
   instrument_data[["software_version"]] <- datum %>% rvest::html_attr("version")
 
-  message("Extracting scan information.")
+  message(paste0("Extracting scan information for ", file))
   scans <- rvest::xml_nodes(input, "scan")
   scan_data <- data.frame(row.names=(1:length(scans)), stringsAsFactors=FALSE)
   scan_wanted <- c("peakscount", "scantype", "centroided", "mslevel", "polarity",
@@ -51,7 +52,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
     scan_data[[n]] <- as.factor(scan_data[[n]])
   }
 
-  message("Extracting precursor information.")
+  message(paste0("Extracting precursor information for ", file))
   precursors <- rvest::xml_nodes(scans, "precursormz")
   precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors=FALSE)
   precursor_wanted <- c("precursorintensity", "activationmethod",
@@ -73,14 +74,21 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
   precursor_data[["window_end"]] <- precursor_data[["window_center"]] +
     (precursor_data[["windowwideness"]] / 2)
 
-  message("Coalescing the acquisition windows.")
+  message(paste0("Coalescing the acquisition windows for ", file))
   acquisition_windows <- precursor_data[, c("window_start", "window_end")]
   acquisition_unique <- !duplicated(x=acquisition_windows)
   acquisition_windows <- acquisition_windows[acquisition_unique, ]
   colnames(acquisition_windows) <- c("start", "end")
   ## If requested, write out the acquisition windows in a format acceptable to openswath.
   if (write_acquisitions != FALSE) {
-    acq_dir <- dirname(write_acquisitions)
+    acq_dir <- "windows"
+    acq_file <- "acquisitions.txt"
+    if (isTRUE(write_acquisitions)) {
+      acq_file <- paste0(gsub(pattern="\\.mzXML", replacement="", x=basename(file)), ".txt")
+    } else {
+      acq_dir <- dirname(write_acquisitions)
+      acq_file <- write_acquisitions
+    }
     if (!file.exists(acq_dir)) {
       dir.create(acq_dir, recursive=TRUE)
     }
@@ -89,10 +97,14 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
     ## column headers (part of making the spectral libraries), while the
     ## invocation of OpenSwathWorkFlow or whatever it is, _requires_ them.
     ## So, yeah, that is annoying, but whatever.
-    no_cols <- write.table(x=acquisition_windows, file=write_acquisitions, sep="\t", quote=FALSE,
+    pre_file <- file.path(acq_dir, acq_file)
+    message(paste0("Hopefully writing acquisition file to ", pre_file))
+    no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
-    openswath_acquisitions <- paste0("openswath_", write_acquisitions)
-    plus_cols <-write.table(x=acquisition_windows, file=openswath_acquisitions,
+    osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
+    ## This is the file for openswathworkflow.
+    message(paste0("Hopefully writing osw acquisitions to ", osw_file))
+    plus_cols <- write.table(x=acquisition_windows, file=osw_file,
                             sep="\t", quote=FALSE,
                             row.names=FALSE, col.names=TRUE)
   }
@@ -118,7 +130,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=FALSE) {
 #'   stuff like that.
 #' @return  metadata!#'
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, ...) {
+extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -148,7 +160,6 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, ...) {
     sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
 
-  message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
   ## sample_definitions <- extract_metadata(metadata)
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
@@ -162,36 +173,38 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, ...) {
   meta <- meta[existing_files, ]
 
   ## Set up the 'cluster' and process the mzXML files.
-  tt <- sm(requireNamespace("parallel"))
-  tt <- sm(requireNamespace("doParallel"))
-  tt <- sm(requireNamespace("iterators"))
-  tt <- sm(requireNamespace("foreach"))
-  tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
-  ## cores <- parallel::detectCores() / 2
-  cores <- 4
-  cl <- parallel::makeCluster(cores)
-  doSNOW::registerDoSNOW(cl)
-  num_files <- nrow(meta)
-  bar <- utils::txtProgressBar(max=num_files, style=3)
-  progress <- function(n) {
-    setTxtProgressBar(bar, n)
-  }
-  pb_opts <- list(progress=progress)
   returns <- list()
   res <- list()
-  res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
-    file <- meta[i, "file"]
-    id <- meta[i, "id"]
-    window_file <- FALSE
-    if (isTRUE(write_windows)) {
-      file_base <- basename(file)
-      file_base <- gsub(pattern="\\.mzXML", replacement="_windows.txt", x=file_base)
-      window_file <- paste0("windows/", file_base)
+  num_files <- nrow(meta)
+  if (isTRUE(parallel)) {
+    tt <- sm(requireNamespace("parallel"))
+    tt <- sm(requireNamespace("doParallel"))
+    tt <- sm(requireNamespace("iterators"))
+    tt <- sm(requireNamespace("foreach"))
+    tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
+    ## cores <- parallel::detectCores() / 2
+    cores <- 4
+    cl <- parallel::makeCluster(cores)
+    doSNOW::registerDoSNOW(cl)
+    bar <- utils::txtProgressBar(max=num_files, style=3)
+    progress <- function(n) {
+      setTxtProgressBar(bar, n)
     }
-    returns[[file]] <- extract_scan_data(file, id=id, write_acquisitions=window_file)
+    pb_opts <- list(progress=progress)
+    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
+      file <- meta[i, "file"]
+      id <- meta[i, "id"]
+      returns[[file]] <- try(extract_scan_data(file, id=id))
+    }
+      close(bar)
+      parallel::stopCluster(cl)
+  } else {
+    for (i in 1:num_files) {
+      file <- meta[i, "file"]
+      id <- meta[i, "id"]
+      res[[file]] <- try(extract_scan_data(file, id=id))
+    }
   }
-  close(bar)
-  parallel::stopCluster(cl)
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -363,7 +376,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 #' @param ...  Extra arguments for the downstream functions.
 #' @return  ggplot2 goodness.
 #' @export
-plot_intensity_mz <- function(mzxml_data, loess=FALSE, ...) {
+plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
   arglist <- list(...)
   metadata <- mzxml_data[["metadata"]]
   colors <- mzxml_data[["colors"]]
@@ -392,9 +405,14 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, ...) {
 
   int_vs_mz <- ggplot(data=plot_df, aes_string(x="mz", y="intensity",
                                                fill="sample", colour="sample")) +
-    ggplot2::geom_point(alpha=0.2) +
-    ggplot2::scale_fill_manual(name="as.factor(sample)", values=sample_colors) +
-    ggplot2::scale_color_manual(name="as.factor(sample)", values=sample_colors)
+    ggplot2::geom_point(alpha=alpha, size=0.5) +
+    ggplot2::scale_fill_manual(
+               name="Sample", values=sample_colors,
+               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
+    ggplot2::scale_color_manual(
+               name="Sample", values=sample_colors,
+               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
+    ggplot2::theme_bw(base_size=base_size)
   if (isTRUE(lowess)) {
     int_vs_mz <- int_vs_mz +
       ggplot2::geom_smooth(method="loess", size=1.0)
@@ -452,8 +470,8 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
                              size=0.5,
                              outlier.size=1.5,
                              outlier.colour=ggplot2::alpha("black", 0.2))) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
     ggplot2::xlab("Sample") + ggplot2::ylab(column)
   if (!is.null(title)) {
