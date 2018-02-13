@@ -152,6 +152,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
+  ## sample_definitions <- extract_metadata(metadata)
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -212,20 +213,31 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## At this point sample_definitions$file should be filled in no matter what;
   ## so read the files.
   tximport_data <- NULL
+  ## The count_data list should include a set of IDs and tables which are coherent
+  ## Therefore, we will want to check in with it later.
+  ## Notably, it has slots for: 'kept_ids' which should match 1:1 with the slot 'kept_files',
+  ## 'source' which should remind us if the data came from htseq/tximport/etc.
+  ## and count_table which should have one column for every kept_id/kept_file.
+  count_data <- NULL
   if (is.null(all_count_tables)) {
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
-    all_count_tables <- read_counts_expt(sample_ids, filenames, ...)
-    ## all_count_tables <- read_counts_expt(sample_ids, filenames, arglist)
-    if (all_count_tables[["source"]] == "tximport") {
-      tximport_data <- list("raw" = all_count_tables[["tximport"]],
-                            "scaled" = all_count_tables[["tximport_scaled"]])
+    count_data <- read_counts_expt(sample_ids, filenames, ...)
+    ## count_data <- read_counts_expt(sample_ids, filenames)
+    if (count_data[["source"]] == "tximport") {
+      tximport_data <- list("raw" = count_data[["tximport"]],
+                            "scaled" = count_data[["tximport_scaled"]])
     }
-    all_count_tables <- all_count_tables[["count_table"]]
+    all_count_tables <- count_data[["count_table"]]
   }
-
+  ## Here we will prune the metadata for any files/ids which were dropped
+  ## when reading in the count tables.
+  kept_definitions_idx <- rownames(sample_definitions) %in% count_data[["kept_ids"]]
+  sample_definitions <- sample_definitions[kept_definitions_idx, ]
+  ## While we are removing stuff...
   ## I have had a couple data sets with incomplete counts, get rid of those rows before moving on.
   all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+
   numeric_columns <- colnames(all_count_tables) != "rownames"
   for (col in colnames(all_count_tables)[numeric_columns]) {
     ## Ensure there are no stupid entries like target_id est_counts
@@ -924,8 +936,15 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
                              suffix=NULL, ...) {
   ## load first sample
   arglist <- list(...)
-  skippers <- (files == "" | files == "undef" | is.null(files))
+  retlist <- list()
+  skippers <- (files == "" | files == "undef" | is.null(files) | is.na(files))
   files <- files[!skippers]
+  ids <- ids[!skippers]
+  skippers <- (ids == "" | ids == "undef" | is.null(ids) | is.na(ids))
+  files <- files[!skippers]
+  ids <- ids [!skippers]
+  retlist[["kept_ids"]] <- ids
+  retlist[["kept_files"]] <- files
   lower_filenames <- files
   dirs <- dirname(lower_filenames)
   low_files <- tolower(basename(files))
@@ -957,6 +976,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       files[f] <- file.path(getwd(), files[f])
     }
   }
+
   ## When I start using sailfish/salmon/etc, I will need to add more conditions to this
   ## and probably change it to a switch to more prettily take them into account.
 
@@ -966,7 +986,6 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   ## These columns should be definition be available in my fData annotation.
   ## Therefore, I will set the flags tx2gene and txOut accordingly.
   message("Reading count tables.")
-  retlist <- list()
   txout <- TRUE
   tx_gene_map <- NULL
   if (!is.null(arglist[["tx_gene_map"]])) {
@@ -992,7 +1011,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
                                              txOut=txout, countsFromAbundance="lengthScaledTPM"))
     }
     retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
-    tt <- setkey(retlist[["count_table"]], rownames)
+    retlist[["count_table"]] <- setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
@@ -1009,16 +1028,29 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       import_scaled <- tximport::tximport(files=files, type="rsem", tx2gene=tx_gene_map,
                                           txOut=txout, countsFromAbundance="lengthScaledTPM")
     }
-    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
+    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]],
+                                                          keep.rownames="rownames")
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
+
     ## This is used when 'normal' htseq-based counts were generated.
-    count_table <- try(read.table(files[1], header=header))
+    message(paste0("TESTME: ", header, " THERE?"))
+    if (header == FALSE) {
+      message("The header is false")
+    } else if (isTRUE(header)) {
+      message("The header is true.")
+    } else {
+      message("the header is something else.")
+    }
+    message(paste0("pre: ", files[1], " ", header))
+    count_table <- read.table(files[1], header=header)
+    message("first")
     colnames(count_table) <- c("rownames", ids[1])
+    message("second")
     count_table <- data.table::as.data.table(count_table)
-    tt <- data.table::setkey(count_table, rownames)
+    count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
       stop(paste0("There was an error reading: ", files[1]))
     }
@@ -1063,7 +1095,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       retlist[["count_table"]] <- count_table
       retlist[["source"]] <- "htseq"
     } ## End the difference between tximport and reading tables.
-      tt <- setkey(retlist[["count_table"]], rownames)
+    retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
   return(retlist)
 }

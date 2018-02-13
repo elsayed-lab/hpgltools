@@ -256,6 +256,7 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
                    first_name, "')"))
   } else {
     num_found <- num_found + 1
+    message(paste0("Loaded: ", first_pkg))
     pkgs[[first_name]] <- get(first_pkg)
   }
 
@@ -268,6 +269,7 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
                    second_name, "')"))
   } else {
     num_found <- num_found + 1
+    message(paste0("Loaded: ", second_pkg))
     pkgs[[second_name]] <- get(second_pkg)
   }
   if (num_found == 0) {
@@ -282,7 +284,7 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
     gene_lists[[name]] <- AnnotationDbi::keys(pkg)
     all_orthos[[name]] <- AnnotationDbi::select(x=pkg,
                                                 keytype="GID",
-                                                keys=gene_list,
+                                                keys=gene_lists[[name]],
                                                 columns=ortholog_column)
   }
 
@@ -302,7 +304,9 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
         warning("Returning the entire ortholog table so that you can figure out where things went wrong.")
         retlist[["orthologs"]] <- all_orthos[[1]]
       } else {
-        retlist[["orthologs"]] <- all_orthos[ortho_idx, 1]
+        tmp_table <- all_orthos[[1]]
+        colnames(tmp_table) <- c(names(pkgs)[1], abbrev)
+        retlist[["orthologs"]] <- tmp_table[ortho_idx, ]
       }
       return(retlist)
     }

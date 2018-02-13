@@ -117,6 +117,222 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   return(retlist)
 }
 
+#' Get some data from a peptideprophet run.
+#'
+#' I am not sure what if any parameters this should have, but it seeks to
+#' extract the useful data from a peptide prophet run.  In the situation in
+#' which I wish to use it, the input command was:
+#' > xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
+#' Eg. It is a peptideprophet result provided by TPP.
+#' I want to read the resulting xml table and turn it into a data.table so that
+#' I can plot some metrics from it.
+#'
+#' @param pepxml  The file resulting from the xinteract invocation
+#' @return data table of all the information I saw fit to extract
+#' The columns are:
+#' * protein: The name of the matching sequence (DECOYs allowed here)
+#' * decoy: TRUE/FALSE, is this one of our decoys?
+#' * peptide: The sequence of the matching spectrum.
+#' * start_scan: The scan in which this peptide was observed
+#' * end scan: Ibid
+#' * index This seems to just increment
+#' * precursor_neutral_mass: Calculated mass of this fragment assuming no
+#'   isotope shenanigans (yeah, looking at you C13).
+#' * assumed_charge: The expected charge state of this peptide.
+#' * retention_time_sec: The time at which this peptide eluted during the run.
+#' * peptide_prev_aa:  The amino acid before the match.
+#' * peptide_next_aa:  and the following amino acid.
+#' * num_tot_proteins: The number of matches not counting decoys.
+#' * num_matched_ions: How many ions for this peptide matched?
+#' * tot_num_ions:  How many theoreticalions are in this fragment?
+#' * matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
+#' * cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
+#'   recalculated by peptideProphet, so if there is a discrepency we should yell
+#'   at someone!
+#' * massdiff How far off is the observed mass vs. the calculated? (also
+#'   redundant with massd later)
+#' * num_tol_term: The number of peptide termini which are consistent with the
+#'   cleavage (hopefully 2), but potentially 1 or even 0 if digestion was
+#'   bad. (redundant with ntt later)
+#' * num_missed_cleavages: How many cleavages must have failed in order for this
+#'   to be a good match?
+#' * num_matched_peptides: Number of alternate possible peptide matches.
+#' * xcorr: cross correlation of the experimental and theoretical spectra (this
+#'   is supposedly only used by sequest, but I seem to have it here...)
+#' * deltacn: The normalized difference between the xcorr values for the best hit and next
+#'   best hit.  Thus higher numbers suggest better matches.
+#' * deltacnstar: Apparently 'important for things like phospho-searches
+#'   containing homologous top-scoring peptides when analyzed by
+#'   peptideprophet...' -- the comet release notes.
+#' * spscore: The raw value of preliminary score from the sequest algorithm.
+#' * sprank: The rank of the match in a preliminary score. 1 is good.
+#' * expect: E-value of the given peptide hit.  Thus how many identifications
+#'   one expect to observe by chance, lower is therefore better
+#' * prophet_probability: The peptide prophet probability score, higher is
+#'   better.
+#' * fval: 0.6(the dot function + 0.4(the delta dot function) - (the dot bias
+#'   penalty function) -- which is to say... well I dunno, but it is supposed to
+#'   provide information about how similar this match is to other potential
+#'   matches, so I presume higher means the match is more ambiguous.
+#' * ntt: Redundant with num_tol_term above, but this time from peptide prophet.
+#' * nmc: Redundant with num_missed_cleavages, except it coalesces them.
+#' * massd: Redundant with massdiff
+#' * isomassd: The mass difference, but taking into account stupid C13.
+#' * RT: Retention time
+#' * RT_score: The score of the retention time!
+#' * modified_peptides: A string describing modifications in the found peptide
+#' * variable_mods: A comma separated list of the variable modifications
+#'   observed.
+#' * static_mods: A comma separated list of the static modifications observed.
+#' @export
+extract_peprophet_data <- function(pepxml, ...) {
+  input <- xml2::read_html(pepxml, options="NOBLANKS")
+
+  message("Extracting spectrum queries.")
+  spectrum_queries <- rvest::xml_nodes(input, "spectrum_query")
+  spectra <- spectrum_queries %>% rvest::html_attr("spectrum")
+  query_data <- data.frame(row.names=spectra)
+  ## The interesting material at the beginning of a spectrum, these are in the <spectrum query> tag.
+
+  message("Extracting the spectrum_query metadata.")
+  toplevel_interesting <- c("start_scan", "end_scan", "precursor_neutral_mass", "assumed_charge",
+                            "index", "retention_time_sec")
+  for (t in toplevel_interesting) {
+    query_data[[t]] <- spectrum_queries %>%
+      rvest::html_attr(t)
+  }
+
+  message("Extracting the search_result metadata.")
+  search_results <- rvest::xml_nodes(spectrum_queries, "search_result")
+  search_hits <- search_results %>%
+    rvest::html_node(xpath="search_hit")
+  ## The set of fields which look interesting to me in the search_hit data.
+  search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa", "protein", "num_tot_proteins",
+                     "num_matched_ions", "tot_num_ions", "calc_neutral_pep_mass", "massdiff",
+                     "num_tol_term", "num_missed_cleavages", "num_matched_peptides")
+  for (s in search_fields) {
+    query_data[[s]] <- search_hits %>%
+      rvest::html_attr(s)
+  }
+  query_data[["decoy"]] <- FALSE
+  decoy_idx <- grepl(pattern="^DECOY_", x=query_data[["protein"]])
+  query_data[decoy_idx, "decoy"] <- TRUE
+  query_data[["matched_ion_ratio"]] <-
+    as.numeric(query_data[["num_matched_ions"]]) /
+    as.numeric(query_data[["tot_num_ions"]])
+
+
+  ## Get modification info
+  message("Extracting modification metadata.")
+  query_data[["modified_peptides"]] <- search_hits %>%
+    rvest::html_node(xpath="modification_info") %>%
+    rvest::html_attr("modified_peptide")
+  na_idx <- is.na(query_data[["modified_peptides"]])
+  query_data[na_idx, "modified_peptides"] <- ""
+
+  query_data[["variable_mods"]] <- ""
+  query_data[["static_mods"]] <- ""
+  modification_test <- search_hits %>%
+    rvest::html_node(xpath="modification_info")
+  message("Filling in modification information, this is slow.")
+  bar <- utils::txtProgressBar(style=3)
+  for (i in 1:length(modification_test)) {
+    pct_done <- i / length(modification_test)
+    setTxtProgressBar(bar, pct_done)
+    test <- modification_test[[i]]
+    if (!is.na(test)) {
+      variables <- test %>%
+        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_attr("variable")
+      statics <- test %>%
+        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_attr("static")
+      positions <- test %>%
+        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_attr("position")
+      masses <- test %>%
+        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_attr("mass")
+      variable_idx <- !is.na(variables)
+      if (sum(variable_idx) > 0) {
+        variable_string <- toString(paste0("position: ", positions[variable_idx],
+                                           " mass: ", masses[variable_idx],
+                                           " mod: ", variables[variable_idx]))
+        query_data[i, "variable_mods"] <- variable_string
+      }
+      static_idx <- !is.na(statics)
+      if (sum(static_idx) > 0) {
+        static_string <- toString(paste0("position: ", positions[static_idx],
+                                         " mass: ", masses[static_idx],
+                                         " mod: ", statics[static_idx]))
+        query_data[i, "static_mods"] <- static_string
+      }
+    }
+  }
+  close(bar)
+
+  ## Extracting the search_score tags
+  message("Extracting the search_score metadata.")
+  score_results <- rvest::xml_nodes(search_hits, "search_score")
+  score_names <- score_results %>%
+    rvest::html_attr("name")
+  score_values <- score_results %>%
+    rvest::html_attr("value")
+  names(score_values) <- score_names
+  for (v in unique(score_names)) {
+    query_data[[v]] <- score_values[names(score_values) == v]
+  }
+
+  ## Get the peptideprophet_result
+  message("Extracting the peptideprophet_result probabilities.")
+  peptide_prophets <- rvest::xml_nodes(spectrum_queries, "peptideprophet_result")
+  query_data[["prophet_probability"]] <- peptide_prophets %>%
+    rvest::html_attr("probability")
+
+  ## Get the peptideprophet parameters
+  message("Extracting the search parameters.")
+  parameter_results <- rvest::xml_nodes(spectrum_queries, "parameter")
+  parameter_names <- parameter_results %>%
+    rvest::html_attr("name")
+  parameter_values <- parameter_results %>%
+    rvest::html_attr("value")
+  names(parameter_values) <- parameter_names
+  for (p in unique(parameter_names)) {
+    query_data[[p]] <- parameter_values[names(parameter_values) == p]
+  }
+
+  numeric_columns <- c("start_scan", "end_scan", "precursor_neutral_mass", "index",
+                       "retention_time_sec", "calc_neutral_pep_mass",
+                       "massdiff", "num_matched_peptides", "xcorr", "deltacn", "deltacnstar",
+                       "spscore", "expect", "prophet_probability", "fval", "massd", "RT",
+                       "RT_score")
+  factor_columns <- c("assumed_charge", "num_tot_proteins", "num_matched_ions", "num_tol_term",
+                      "num_missed_cleavages", "sprank", "ntt", "nmc", "isomassd")
+  for (n in numeric_columns) {
+    query_data[[n]] <- as.numeric(query_data[[n]])
+  }
+  for (f in factor_columns) {
+    query_data[[f]] <- as.factor(query_data[[f]])
+  }
+
+  new_order <- c("protein", "decoy", "peptide", "start_scan", "end_scan",
+                 "index", "precursor_neutral_mass", "assumed_charge",
+                 "retention_time_sec", "peptide_prev_aa", "peptide_next_aa",
+                 "num_tot_proteins", "num_matched_ions", "tot_num_ions",
+                 "matched_ion_ratio", "calc_neutral_pep_mass", "massdiff",
+                 "num_tol_term", "num_missed_cleavages", "num_matched_peptides",
+                 "xcorr", "deltacn", "deltacnstar", "spscore", "sprank",
+                 "expect", "prophet_probability", "fval", "ntt", "nmc", "massd",
+                 "isomassd", "RT", "RT_score", "modified_peptides",
+                 "variable_mods", "static_mods")
+  query_data <- query_data[, new_order]
+  check_masses <- testthat::expect_equal(query_data[["precursor_neutral_mass"]],
+                                         query_data[["calc_neutral_pep_mass"]],
+                                         tolerance=0.1)
+  result <- data.table::as.data.table(query_data)
+  return(result)
+}
+
 #' Read a bunch of mzXML files to acquire their metadata.
 #'
 #' I have had difficulties getting the full set of correct parameters for a
@@ -490,3 +706,131 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   }
   return(boxplot)
 }
+
+#' Plot some data from the result of extract_peprophet_data()
+#'
+#' extract_peprophet_data() provides a ridiculously large data table of a comet
+#' result after processing by RefreshParser and xinteract/peptideProphet.
+#' This table has some 37-ish columns and I am not entirely certain which ones
+#' are useful as diagnostics of the data.  I chose a few and made options to
+#' pull some/most of the rest.  Lets play!
+#'
+#' @param table  Big honking data table from extract_peprophet_data()
+#' @param xaxis  Column to plot on the a-axis
+#' @param yaxis  guess!
+#' @param ... extra options which may be used for plotting.
+#' @return a plot!
+#' @export
+plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
+                         yaxis="num_matched_ions", yscale=NULL,
+                         size_column="prophet_probability", ...) {
+  arglist <- list(...)
+
+  color_column <- "decoy"
+  if (!is.null(arglist[["color_column"]])) {
+    color_column <- arglist[["color_column"]]
+  }
+  if (is.null(table[[color_column]])) {
+    table[["color"]] <- "black"
+  } else {
+    table[["color"]] <- as.factor(table[[color_column]])
+  }
+  color_list <- NULL
+  num_colors <- nlevels(as.factor(table[["color"]]))
+  if (color_num == 2) {
+    color_list <- c("darkred", "darkblue")
+  } else {
+    color_list <- sm(grDevices::colorRampPalette(
+                                  RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_colors))
+  }
+
+  if (is.null(table[[xaxis]])) {
+    stop(paste0("The x-axis column: ", xaxis, " does not appear in the data."))
+  }
+  if (is.null(table[[yaxis]])) {
+    stop(paste0("The y-axis column: ", yaxis, " does not appear in the data."))
+  }
+
+  table <- as.data.frame(table)
+  if (is.null(table[[size_column]])) {
+    table[["size"]] <- 1
+  } else {
+    if (class(table[[size_column]]) == "numeric") {
+      ## quants <- as.numeric(quantile(unique(table[[size_column]])))
+      ## size_values <- c(4, 8, 12, 16, 20)
+      ## names(size_values) <- quants
+      table[["size"]] <- table[[size_column]]
+    } else {
+      table[["size"]] <- 1
+    }
+  }
+  ##min_val <- min(table[[size_column]])
+  ##max_val <- max(table[[size_column]])
+  range <- as.numeric(quantile(unique(table[["size"]])))
+  table[table[["size"]] >= range[[5]], "size"] <- "06biggest"
+  table[table[["size"]] >= range[[4]] &
+        table[["size"]] < range[[5]], "size"] <- "05big"
+  table[table[["size"]] >= range[[3]] &
+        table[["size"]] < range[[4]], "size"] <- "04medium_big"
+  table[table[["size"]] >= range[[2]] &
+        table[["size"]] < range[[3]], "size"] <- "03medium_small"
+  table[table[["size"]] >= range[[1]] &
+        table[["size"]] < range[[2]], "size"] <- "02small"
+  table[table[["size"]] < range[[1]], "size"] <- "01smallest"
+
+  table[["size"]] <- as.factor(table[["size"]])
+  levels(table[["size"]]) <- c("01smallest", "02small", "03medium_small",
+                              "04medium_big", "05big", "06biggest")
+  my_sizes <- c("01smallest"=0.4, "02small"=8, "03medium_small"=1.2,
+                "04medium_big"=1.6, "05big"=2.0, "06biggest"=2.4)
+
+  scale_x_cont <- "raw"
+  if (!is.null(xscale)) {
+    if (is.numeric(xscale)) {
+      table[[xaxis]] <- log(table[[xaxis]] + 1) / log(xscale)
+    } else if (xscale == "log2") {
+      scale_x_cont <- "log2"
+    } else if (xscale == "log10") {
+      scale_x_cont <- "log10"
+    } else {
+      message("I do not understand your scale.")
+    }
+  }
+  scale_y_cont <- "raw"
+  if (!is.null(yscale)) {
+    if (is.numeric(yscale)) {
+      table[[xaxis]] <- log(table[[yaxis]] + 1) / log(yscale)
+    } else if (yscale == "log2") {
+      scale_y_cont <- "log2"
+    } else if (yscale == "log10") {
+      scale_y_cont <- "log10"
+    } else {
+      message("I do not understand your scale.")
+    }
+  }
+
+  a_plot <- ggplot(data=table, aes_string(x=xaxis,
+                                          y=yaxis,
+                                          color="color",
+                                          size="size")) +
+    ggplot2::geom_point(alpha=0.4, aes_string(fill="color",
+                                              color="color")) +
+    ggplot2::scale_color_manual(name="color",
+                                values=color_list) +
+    ggplot2::geom_rug() +
+    ggplot2::scale_size_manual(values=c(0.2, 0.6, 1.0, 1.4, 1.8, 2.2))
+  if (scale_x_cont == "log2") {
+    a_plot <- ggplot2::scale_x_continuous(trans=log2_trans())
+  } else if (scale_x_cont == "log10") {
+    a_plot <- ggplot2::scale_x_continuous(trans=log10_trans())
+  }
+  if (scale_y_cont == "log2") {
+    a_plot <- ggplot2::scale_y_continuous(trans=log2_trans())
+  } else if (scale_y_cont == "log10") {
+    a_plot <- ggplot2::scale_y_continuous(trans=log10_trans())
+  }
+
+  return(a_plot)
+}
+
+## EOF
