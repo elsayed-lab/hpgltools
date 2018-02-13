@@ -4,8 +4,8 @@
 \alias{compare_surrogate_estimates}
 \title{Perform a comparison of the surrogate estimators demonstrated by Jeff Leek.}
 \usage{
-compare_surrogate_estimates(expt, extra_factors = NULL, do_catplots = FALSE,
-  surrogates = "be")
+compare_surrogate_estimates(expt, extra_factors = NULL, filter_it = TRUE,
+  filter_type = TRUE, do_catplots = FALSE, surrogates = "be", ...)
 }
 \arguments{
 \item{expt}{Experiment containing a design and other information.}

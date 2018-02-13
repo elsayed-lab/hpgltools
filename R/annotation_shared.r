@@ -33,7 +33,7 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
   } else {
     annot <- annotation
   }
-  
+
   ## Pull out the rows of interest.
   if (!is.null(gene_type)) {
     desired_rows <- annot[, type_column] == gene_type

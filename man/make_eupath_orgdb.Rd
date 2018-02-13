@@ -2,41 +2,31 @@
 % Please edit documentation in R/annotation_eupathdb.r
 \name{make_eupath_orgdb}
 \alias{make_eupath_orgdb}
-\title{Generate OrgDb for EuPathDB organism}
+\title{Create an orgdb SQLite database from the tables in eupathdb.}
 \usage{
 make_eupath_orgdb(species = NULL, entry = NULL, dir = "eupathdb",
   kegg_abbreviation = NULL, reinstall = FALSE, metadata = NULL, ...)
 }
 \arguments{
-\item{species}{Single species to work on.}
+\item{species}{A specific species ID to query}
 
-\item{entry}{One dimensional dataframe with organism metadata}
+\item{entry}{If not provided, then species will get this, it contains all the information.}
 
-\item{dir}{Where to put the data}
+\item{dir}{Where to put all the various temporary files.}
 
-\item{kegg_abbreviation}{A kegg abbreviation when it cannot be automatically determined.}
+\item{kegg_abbreviation}{If known, provide the kegg abbreviation.}
 
-\item{reinstall}{Overwrite an existing installed package?}
+\item{reinstall}{Re-install an already existing orgdb?}
 
-\item{metadata}{Large metadata dataframe.}
+\item{metadata}{Use an existing metadata table to get the entry?}
 
-\item{...}{Extra arguments when downloading metadata.}
+\item{...}{Extra parameters when searching for metadata}
 }
 \value{
-OrgDb instance package name.
+Currently only the name of the installed package.  This should probably change.
 }
 \description{
-This is probably the most difficult function in this family, as orgdb instances are rather
-more complex than the other annotation data (at least for the eupathdb).  It gathers the
-KEGG/GO/gene/etc data and bundles it into a single sqlite instance and does some
-rudimentary sanity checks on the result.
-}
-\details{
-FIXME: The eupathdb family is moving away from the json-based queries.  The
-get_something() family of functions upon which this process depends is
-therefore not likely to continue to work over time.  It needs therefore to be
-migrated to queries similar to what is performed in get_eupath_text().
-}
-\author{
-Keith Hughitt
+This now uses the new POST version of the eupathdb.  Theoretically it is better,
+I am not yet convinced, but the QUERY version of the eupathdb apparently will not
+be supported over time.
 }

@@ -5,8 +5,8 @@
 \title{The pcaMethods package has some interesting methods to test PCA methodologies.}
 \usage{
 test_pca_methods(data, design = NULL, plot_colors = NULL,
-  plot_labels = NULL, scale = "none", center = TRUE, plot_title = NULL,
-  plot_size = 5, size_column = NULL, ...)
+  plot_labels = NULL, scale = "uv", center = TRUE, eset = TRUE,
+  plot_title = NULL, plot_size = 5, size_column = NULL, ...)
 }
 \arguments{
 \item{data}{expt to poke}

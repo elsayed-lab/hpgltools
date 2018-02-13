@@ -227,7 +227,7 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
             unique_pathway <- pathway_data
             rownames(unique_pathway) <- make.names(unique_pathway[["kegg.names"]], unique=TRUE)
             unique_path_genes <- make.names(unique(unique_pathway[["kegg.names"]]))
-            unique_pathway <- unique_pathway[ unique_path_genes, ]
+            unique_pathway <- unique_pathway[unique_path_genes, ]
             unique_mapped <- unique_pathway[["all.mapped"]] != ""
             unique_pct_mapped <- signif(mean(unique_mapped) * 100.0, 4)
 
@@ -742,7 +742,8 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
 myretrieveKGML <- function(pathwayid, organism, destfile, method="wget",
                            hostname="http://www.kegg.jp", ...) {
     kgml <- mygetKGMLurl(pathwayid=pathwayid, organism=organism, hostname=hostname)
-    referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=", pathwayid, "&mapscale=&show_description=hide")
+    referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=",
+                      pathwayid, "&mapscale=&show_description=hide")
     cmdline <- paste0("wget --header=",
                       shQuote("Accept: text/html"),
                       " --user-agent=",
@@ -756,7 +757,7 @@ myretrieveKGML <- function(pathwayid, organism, destfile, method="wget",
     return(invisible(kgml))
 }
 
-mygetKGMLurl <- function (pathwayid, organism="hsa", hostname="http://www.kegg.jp", ...) {
+mygetKGMLurl <- function(pathwayid, organism="hsa", hostname="http://www.kegg.jp", ...) {
     arglist <- list(...)
     if (!is.null(arglist[["hostname"]])) {
         hostname <- arglist[["hostname"]]

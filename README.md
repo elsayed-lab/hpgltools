@@ -128,6 +128,7 @@ Listed by function then filename in R/.
 
 # Notes to self
 
+* Just use data.table.
 * Single and double quotes are actually interchangeable in R, I have been assuming there was a
   difference with respect to character/vector or interpolation or escaping and just that I hadn't
   hit a case where it mattered.  This is untrue, in fact the only arbiter I have seen suggests that

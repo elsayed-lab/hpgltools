@@ -50,12 +50,14 @@ plot_bcv <- function(data) {
     ##ggplot2::stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
     ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
     ## I remember looking at it a while ago and being confused
-    ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"), contour=FALSE, show.legend=FALSE) +
+    ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"),
+                            contour=FALSE, show.legend=FALSE) +
     ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method="loess") +
     ggplot2::stat_function(fun=f, colour="red") +
+    ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(legend.position="none",
-                   axis.text=ggplot2::element_text(size=10, colour="black"))
+                   axis.text=ggplot2::element_text(size=base_size, colour="black"))
   ret <- list("data"=disp_df, "plot"=disp_plot)
   return(ret)
 }
@@ -119,8 +121,9 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
     ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
     ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
     ggplot2::geom_point(colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]), alpha=0.6, size=size) +
+    ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(legend.position="none",
-                   axis.text=ggplot2::element_text(size=10, colour="black"))
+                   axis.text=ggplot2::element_text(size=base_size, colour="black"))
   if (!is.null(gvis_filename)) {
     plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename)
   }
@@ -300,9 +303,9 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   }
 
   first_vs_second <- first_vs_second +
-    ggplot2::theme_bw() +
+    ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(legend.position="none",
-                   axis.text=ggplot2::element_text(size=10, colour="black"))
+                   axis.text=ggplot2::element_text(size=base_size, colour="black"))
 
   if (!is.null(gvis_filename)) {
     plot_gvis_scatter(df, tooltip_data=tooltip_data, filename=gvis_filename,
@@ -496,8 +499,8 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     ggplot2::scale_color_manual(name="as.factor(pcut)",
                                 values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black")) +                  
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black")) +
     ##             axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
@@ -540,7 +543,7 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
   }
 
   point_index <- rownames(df) %in% ids
-  newdf <- df[ point_index, ]
+  newdf <- df[point_index, ]
   newplot <- plot + ggplot2::geom_point(data=newdf,  colour=color, fill=color, alpha=alpha)
   return(newplot)
 }
@@ -632,7 +635,7 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
                                values=color_list) +
     ggplot2::ylab("Number of non-zero genes observed.") +
     ggplot2::xlab("Observed CPM") +
-    ggplot2::theme_bw()
+    ggplot2::theme_bw(base_size=base_size)
 
   if (!is.null(labels)) {
     if (labels[[1]] == "fancy") {
@@ -650,7 +653,7 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
   }
   non_zero_plot <- non_zero_plot +
     ggplot2::theme(axis.ticks=ggplot2::element_blank(),
-                   axis.text=ggplot2::element_text(size=10, colour="black"))
+                   axis.text=ggplot2::element_text(size=base_size, colour="black"))
 
   retlist <- list(
     "plot" = non_zero_plot,
@@ -837,7 +840,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
 
   color_column <- "pcut"
   color_column_number <- 2
-  default_color_list=c("FALSE"="darkred", "TRUE"="darkblue")
+  default_color_list <- c("FALSE"="darkred", "TRUE"="darkblue")
   if (color_by != "p") {
     color_column <- "state"
     color_column_number <- 4
@@ -911,8 +914,8 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     ggplot2::xlab(label=fc_name) +
     ggplot2::ylab(label=p_name) +
     ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
   ##  axis.text.x=ggplot2::element_text(angle=-90))
 
   gvis_result <- NULL

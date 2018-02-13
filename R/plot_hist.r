@@ -44,8 +44,8 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
     ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"),
                         color=color, linetype="dashed", size=1) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
   if (log) {
     log_histogram <- try(a_histogram + ggplot2::scale_x_log10())
     if (log_histogram != "try-error") {
@@ -121,8 +121,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
     ggplot2::geom_vline(data=play_cdf,
                         ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),
                         linetype="dashed", size=0.75) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"))
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
   if (log) {
     logged <- try(hpgl_multi + ggplot2::scale_x_log10())
     if (class(logged) != "try-error") {

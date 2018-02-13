@@ -1,6 +1,6 @@
 ## Going to try and recapitulate the analyses found at:
 ## https://github.com/jtleek/svaseq/blob/master/recount.Rmd
-## and use the results to attempt to more completely understand batch effects in our data
+## and use the results to attempt to more completely understand surrogates in our data
 
 #' Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.
 #'
@@ -306,7 +306,7 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- supervised_sva
     }
   ) ## End of the switch.
-  
+
   rownames(model_adjust) <- sample_names
   sv_names <- paste0("SV", 1:ncol(model_adjust))
   colnames(model_adjust) <- sv_names
@@ -350,9 +350,14 @@ the dataset, please try doing a filtering of the data and retry.")
 #' @return List of the results.
 #' @seealso \code{\link{get_model_adjust}}
 #' @export
-compare_surrogate_estimates <- function(expt, extra_factors=NULL,
-                                        do_catplots=FALSE, surrogates="be") {
+compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE, filter_type=TRUE,
+                                        do_catplots=FALSE, surrogates="be", ...) {
+  arglist <- list(...)
   design <- expt[["design"]]
+  if (isTRUE(filter_it) & expt[["state"]][["lowfilter"]] == "raw") {
+    message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
+    expt <- sm(normalize_expt(expt, filter=filter_type, ...))
+  }
   pca_plots <- list()
   pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
 
@@ -446,6 +451,14 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
   ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
   ## This needs to be redone to take into account how I organized the adjustments!!!
   num_adjust <- length(adjustments)
+  if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+    catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
+                                        -rank(tstats[["null"]]),
+                                        maxrank=1000,
+                                        make.plot=TRUE)
+  } else {
+    catplots[["null"]] <- NULL
+  }
   oldpar <- par(mar=c(5, 5, 5, 5))
   for (adjust in adjustments) {
     counter <- counter + 1
@@ -464,22 +477,32 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL,
         require.auto("ffpe")
       }
       if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-        catplots[[counter]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
-                                             -rank(tstats[["null"]]),
-                                             maxrank=1000,
-                                             make.plot=TRUE)
+        catplots[[adjust]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
+                                            -rank(tstats[["null"]]),
+                                            maxrank=1000,
+                                            make.plot=TRUE)
       } else {
-        catplots[[counter]] <- NULL
+        catplots[[adjust]] <- NULL
       }
-      plot(catplots[["pca"]], ylim=c(0, 1), col="black",
+      plot(catplots[["null"]], ylim=c(0, 1), col="black",
            lwd=3, type="l", xlab="Rank",
            ylab="Concordance between study and different methods.")
-      lines(catplots[["sva_sup"]], col="red", lwd=3, lty=2)
-      lines(catplots[["sva_unsup"]], col="blue", lwd=3)
-      lines(catplots[["ruv_sup"]], col="green", lwd=3, lty=3)
-      lines(catplots[["ruv_resid"]], col="orange", lwd=3)
-      lines(catplots[["ruv_emp"]], col="purple", lwd=3)
-      legend(200, 0.5, legend=c("some stuff about methods used."), lty=c(1, 2, 1, 3, 1), lwd=3)
+      catplot_colors <- list(
+        "pca" = "darkblue",
+        "sva_sup" = "red",
+        "sva_unsup" = "blue",
+        "ruv_sup" = "green",
+        "ruv_resid" = "orange",
+        "ruv_emp" = "purple")
+
+      for (method in 1:length(catplots)) {
+        type <- names(catplots)[[method]]
+        line_type <- method %% 3  ## 1,2,3,1,2,3...
+        if (type == "null") {
+          next
+        }
+        lines(catplots[[type]], col=catplot_colors[[type]], lwd=3, lty=line_type)
+      }
       catplot_together <- grDevices::recordPlot()
       newpar <- par(oldpar)
     } ## End checking whether to do catplots

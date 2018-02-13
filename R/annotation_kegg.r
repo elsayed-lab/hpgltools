@@ -53,7 +53,7 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
 load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
   if (!is.null(abbreviation)) {
-    species=NULL
+    species <- NULL
   }
   if (is.null(abbreviation) & is.null(species)) {
     stop("This requires either a species or 3 letter kegg id.")
@@ -74,8 +74,8 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
   genes_vector <- try(KEGGREST::keggConv("ncbi-geneid", chosen))
   if (class(genes_vector) == "try-error") {
     if (grepl(pattern="HTTP 400", x=genes_vector)) {
-      stop("KEGGREST returned bad request, I think it might be due to libxml conflicts,
-but it is very transient, so try reloading your R until I figure out what is going on.")
+      warning("KEGGREST returned bad request.")
+      return(data.frame())
     }
   }
   genes_df <- kegg_vector_to_df(genes_vector, final_colname="ncbi_geneid", flatten=flatten)

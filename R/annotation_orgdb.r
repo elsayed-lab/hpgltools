@@ -249,7 +249,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
 #' }
 #' @export
 load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
-                          columns=c("go","goall","goid")) {
+                          columns=c("go", "goall", "goid")) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"

@@ -19,35 +19,38 @@
 #' }
 #' @export
 load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
-    gbk <- NULL
-    input_file <- paste0(accession, ".gb")
-    if (!isTRUE(reread) & file.exists(input_file)) {
-        gbk <- genbankr::import(input_file)
-        ## The file exists, read it
-    } else {
-        tt <- sm(require.auto("rentrez"))
-        gba <- genbankr::GBAccession(accession)
-        gbk <- genbankr::readGenBank(gba, partial=FALSE)
-    }
-    gbr <- genbankr::makeTxDbFromGenBank(gbk)
-    seq <- genbankr::getSeq(gbk)
-    others <- genbankr::otherFeatures(gbk)
-    genes <- genbankr::genes(gbk)
-    exons <- genbankr::exons(gbk)
-    intergenic <- genbankr::intergenic(gbk)
-    cds <- genbankr::cds(gbk)
-    if (isTRUE(savetxdb)) {
-        message("The genbankr txdb objects are incomplete.  This does not work.")
-    }
-    ret <- list(
-        "others" = others,
-        "exons" = exons,
-        "cds" = cds,
-        "intergenic" = intergenic,
-        "genes" = genes,
-        "txdb" = gbr,
-        "seq" = seq)
-    return(ret)
+  gbk <- NULL
+  input_file <- paste0(accession, ".gb")
+  if (!isTRUE(reread) & file.exists(input_file)) {
+    gbk <- genbankr::import(input_file)
+    ## The file exists, read it
+  } else {
+    gba <- genbankr::GBAccession(accession)
+    ## Something here is fubar, it falls down with:
+    ## Error in split.default(text, fldnames) :
+    ## group length is 0 but data length > 0
+    gbk <- genbankr::readGenBank(file=gba, partial=TRUE, verbose=TRUE)
+    ## gbk <- parseGenBank(gba, partial=TRUE, verbose=TRUE, ret.anno=TRUE, ret.seq=TRUE)
+  }
+  gbr <- genbankr::makeTxDbFromGenBank(gbk)
+  seq <- genbankr::getSeq(gbk)
+  others <- genbankr::otherFeatures(gbk)
+  genes <- genbankr::genes(gbk)
+  exons <- genbankr::exons(gbk)
+  intergenic <- genbankr::intergenic(gbk)
+  cds <- genbankr::cds(gbk)
+  if (isTRUE(savetxdb)) {
+    message("The genbankr txdb objects are incomplete.  This does not work.")
+  }
+  ret <- list(
+    "others" = others,
+    "exons" = exons,
+    "cds" = cds,
+    "intergenic" = intergenic,
+    "genes" = genes,
+    "txdb" = gbr,
+    "seq" = seq)
+  return(ret)
 }
 
 #' Extract some useful information from a gbk imported as a txDb.
@@ -69,19 +72,19 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 #' }
 #' @export
 gbk_annotations <- function(gbr) {
-    ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
-    genes <- AnnotationDbi::keys(gbr)
-    ## keytypes <- AnnotationDbi::keytypes(gbr)
-    ## columns <- AnnotationDbi::columns(gbr)
-    lengths <- sm(AnnotationDbi::select(gbr,
-                                        ## columns=columns,
-                                        columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
-                                                  "CDSSTRAND", "CDSID", "TXNAME"),
-                                        keys=genes, keytype="GENEID"))
-                                        ## keys=genes, keytype=keytypes))
-    lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
-    granges <- GenomicFeatures::transcripts(gbr)
-    return(granges)
+  ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
+  genes <- AnnotationDbi::keys(gbr)
+  ## keytypes <- AnnotationDbi::keytypes(gbr)
+  ## columns <- AnnotationDbi::columns(gbr)
+  lengths <- sm(AnnotationDbi::select(gbr,
+                                      ## columns=columns,
+                                      columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
+                                                "CDSSTRAND", "CDSID", "TXNAME"),
+                                      keys=genes, keytype="GENEID"))
+  ## keys=genes, keytype=keytypes))
+  lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
+  granges <- GenomicFeatures::transcripts(gbr)
+  return(granges)
 }
 
 #' A genbank accession downloader scurrilously stolen from ape.
@@ -102,42 +105,42 @@ gbk_annotations <- function(gbr) {
 #' }
 #' @export
 download_gbk <- function(accessions="AE009949", write=TRUE) {
-    N <- length(accessions)
-    nrequest <- N %/% 400 + as.logical(N%%400)
-    downloaded <- character(0)
-    num_downloaded <- 0
-    strings <- list()
-    for (i in 1:nrequest) {
-        a <- (i - 1) * 400 + 1
-        b <- 400 * i
-        if (i == nrequest) {
-            b <- N
-        }
+  num_acc <- length(accessions)
+  nrequest <- num_acc %/% 400 + as.logical(num_acc %% 400)
+  downloaded <- character(0)
+  num_downloaded <- 0
+  strings <- list()
+  for (i in 1:nrequest) {
+    a <- (i - 1) * 400 + 1
+    b <- 400 * i
+    if (i == nrequest) {
+      b <- num_acc
+    }
 
-        URL <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
-                     paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
+    url <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
+                  paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
-        dl_file <- paste0(accessions[1], ".gb")
-        data <- try(download.file(url=URL, destfile=dl_file, method="wget", quiet=TRUE))
-        scanned <- NULL
-        if (class(data) != "try-error") {
-            scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
-        }
-        if (class(scanned) != "try-error") {
-            downloaded <- c(downloaded, scanned)
-            num_downloaded <- num_downloaded + 1
-        }
-        strings[i] <- downloaded
-        if (isTRUE(write)) {
-            file_connection <- file(paste0(accessions[a], ".gb"))
-            writeLines(downloaded, file_connection)
-            close(file_connection)
-        }
-    } ## End of for loop
-    retlist <- list(
-        "num_success" = num_downloaded,
-        "strings" = strings)
-    return(retlist)
+    dl_file <- paste0(accessions[1], ".gb")
+    data <- try(download.file(url=url, destfile=dl_file, method="wget", quiet=TRUE))
+    scanned <- NULL
+    if (class(data) != "try-error") {
+      scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
+    }
+    if (class(scanned) != "try-error") {
+      downloaded <- c(downloaded, scanned)
+      num_downloaded <- num_downloaded + 1
+    }
+    strings[i] <- downloaded
+    if (isTRUE(write)) {
+      file_connection <- file(paste0(accessions[a], ".gb"))
+      writeLines(downloaded, file_connection)
+      close(file_connection)
+    }
+  } ## End of for loop
+  retlist <- list(
+    "num_success" = num_downloaded,
+    "strings" = strings)
+  return(retlist)
 }
 
 ## EOF

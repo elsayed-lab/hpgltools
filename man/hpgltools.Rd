@@ -18,6 +18,6 @@ It falls under a few main topics
 \item Perform some simple TnSeq analyses.
 }
 
-To see examples of this inaction, check out the vignettes:
+To see examples of this inaction (haha that is funny, honest!), check out the vignettes:
 \code{browseVignettes(package = 'hpgltools')}
 }

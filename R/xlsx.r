@@ -212,12 +212,13 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     stop("A workbook was passed to this, but the format is not understood.")
   }
   high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
-  fancy_print_ret <- png_print_ret <- NULL
+  png_print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {
       dir.create(savedir, recursive=TRUE)
     }
     high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
+    fancy_ret <- NULL
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file=high_quality))
     } else if (fancy_type == "ps") {
@@ -230,6 +231,9 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
       ## Default to pdf
       high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
       fancy_ret <- try(pdf(file=high_quality_renamed))
+    }
+    if (is.null(fancy_ret)) {
+      warning("Printing pretty images may have failed.")
     }
 
     ## I do not understand why some images are plot()ed while others

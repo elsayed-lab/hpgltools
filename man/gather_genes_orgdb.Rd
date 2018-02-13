@@ -17,7 +17,8 @@ gather_genes_orgdb(goseq_data, orgdb_go, orgdb_ensembl)
 a go mapping
 }
 \description{
-Since clusterprofiler no longer builds gomaps, I need to start understanding how to properly get information from orgDBs.
+Since clusterprofiler no longer builds gomaps, I need to start understanding
+how to properly get information from orgDBs.
 }
 \seealso{
 \pkg{clusterProfiler}

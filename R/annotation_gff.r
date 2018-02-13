@@ -70,7 +70,7 @@ gff2irange <- function(gff, type=NULL) {
 #' }
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
-                                 second_id_col="locus_tag", try=NULL) {
+                                 second_id_col="locus_tag", try=NULL, row.names=NULL) {
   if (!file.exists(gff)) {
     stop(paste0("Unable to find the gff file: ", gff))
   }
@@ -132,6 +132,10 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
     } else if (class(ret[[col]]) == "factor") {
       ret[[col]] <- as.character(ret[[col]])
     }
+  }
+
+  if (!is.null(row.names)) {
+    rownames(ret) <- ret[[row.names]]
   }
 
   return(ret)

@@ -60,7 +60,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   }
   mart <- NULL
   used_mart <- NULL
-  mart <- try(biomaRt::useMart(biomart=trymart, host=host))
+  mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
   if (class(mart) == "try-error") {
     message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                    host, " ", trymart, "."))
@@ -82,7 +82,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     dataset <- paste0(species, "_gene_ensembl")
   }
   second_dataset <- paste0(species, "_eg_gene")
-  ensembl <- try(biomaRt::useDataset(dataset, mart=mart))
+  ensembl <- try(biomaRt::useDataset(dataset, mart=mart), silent=TRUE)
   if (class(ensembl) == "try-error") {
     ensembl <- try(biomaRt::useDataset(second_dataset, mart=mart), silent=TRUE)
     if (class(ensembl) == "try-error") {
@@ -104,7 +104,8 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
   found_attribs <- gene_requests %in% available_attribs
   if (length(gene_requests) != sum(found_attribs)) {
-    message(paste0("Some attributes in your request list were not in the ensembl database. At some point I will show them here..."))
+    message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
+ ensembl database. At some point I will show them here..."))
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes=gene_requests,
@@ -115,7 +116,8 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   if (isTRUE(include_lengths)) {
     found_attribs <- length_requests %in% available_attribs
     if (length(length_requests) != sum(found_attribs)) {
-      message(paste0("Some attributes in your request list were not in the ensembl database. At some point I will show them here..."))
+      message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
+ ensembl database. At some point I will show them here..."))
       length_requests <- length_requests[found_attribs]
     }
     structure_annotations <- biomaRt::getBM(attributes=length_requests,
@@ -150,7 +152,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   ## associated with haplotype chromosomes with names like 'CHR_HSCHR6_MHC_DBB_CTG1' as opposed
   ## to the rather simpler chromosome name '6'.
   ## Thus, if one wishes to get rid of these putatively spurious annotations, we should be
-  ## able to grep -v chromosomes with MHC in them. 
+  ## able to grep -v chromosomes with MHC in them.
   if (isTRUE(drop_haplotypes)) {
     message("Dropping haplotype chromosome annotations, set drop_haplotypes=FALSE if this is bad.")
     good_idx <- grepl(x=biomart_annotations[["chromosome_name"]], pattern="^[[:alnum:]]{1,2}$")
@@ -337,7 +339,7 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
                                    first_attributes="ensembl_gene_id",
                                    second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
   first_mart <- NULL
-  first_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
+  first_mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
   if (class(first_mart) == "try-error") {
     message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                    host, " ", trymart, "."))
@@ -349,7 +351,7 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
     first_mart <- biomaRt::useMart(biomart=first_marts[[1, 1]], host=host)
   }
   first_dataset <- paste0(first_species, "_gene_ensembl")
-  first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart))
+  first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart), silent=TRUE)
   if (class(first_ensembl) == "try-error") {
     message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
                    first_ensembl, "."))
@@ -359,7 +361,7 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
   }
 
   second_mart <- NULL
-  second_mart <- try(biomaRt::useMart(biomart=trymart, host=host))
+  second_mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
   if (class(second_mart) == "try-error") {
     message(paste0("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                    host, " ", trymart, "."))
@@ -371,7 +373,7 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
     second_mart <- biomaRt::useMart(biomart=second_marts[[1, 1]], host=host)
   }
   second_dataset <- paste0(second_species, "_gene_ensembl")
-  second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart))
+  second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart), silent=TRUE)
   if (class(second_ensembl) == "try-error") {
     message(paste0("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
                    second_ensembl, "."))

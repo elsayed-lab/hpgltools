@@ -18,7 +18,8 @@ plot_fun_venn(ones = c(), twos = c(), threes = c(), fours = c(),
 
 \item{fives}{Character list of quint categories}
 
-\item{factor}{Currently unused, but intended to change the radial distance to the label from the center of each circle.}
+\item{factor}{Currently unused, but intended to change the radial distance to
+the label from the center of each circle.}
 }
 \value{
 Two element list containing the venneuler data and the plot.

@@ -205,14 +205,14 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
     normExprs[, k] <- x[RANKS[, k]]
   }
 
-  aveTies = function (ranks, y) {
-    tab = table(ranks)
-    sel = tab > 1
+  aveTies <- function (ranks, y) {
+    tab <- table(ranks)
+    sel <- tab > 1
     if (sum(sel) != 0) {
-      ties = as.numeric(names(tab[sel]))
+      ties <- as.numeric(names(tab[sel]))
       for (k in ties) {
-        sel = ranks==k
-        y[sel] = mean(y[sel])
+        sel <- ranks==k
+        y[sel] <- mean(y[sel])
       }
     }
     y
@@ -261,8 +261,8 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
 #'  qstatted <- hpgl_qstats(data, conditions)
 #' }
 #' @export
-hpgl_qstats <- function (data, groups, refType="mean",
-                         groupLoc="mean", window=99) {
+hpgl_qstats <- function(data, groups, refType="mean",
+                        groupLoc="mean", window=99) {
   ## require.auto("matrixStats")
   Q <- apply(data, 2, sort)
   if (refType == "median") {
@@ -299,13 +299,14 @@ hpgl_qstats <- function (data, groups, refType="mean",
   if (groupLoc == "mean") {
     TAU <- matrixStats::rowVars(QBETAS)
     SIGMA <- rowMeans(SIGMA)
-  } else { ## median
+  } else {
+    ## median
     TAU <- matrixStats::rowMads(QBETAS)^2
     SIGMA <- matrixStats::rowMedians(SIGMA)
   }
-  roughWeights <- SIGMA/(SIGMA + TAU)
-  roughWeights[is.nan(roughWeights)] = 0 ## is this backward?
-  roughWeights[SIGMA < 10^(-6) & TAU < 10^(-6)] = 1
+  roughWeights <- SIGMA / (SIGMA + TAU)
+  roughWeights[is.nan(roughWeights)] <- 0 ## is this backward?
+  roughWeights[SIGMA < 10 ^ -6 & TAU < 10 ^ -6] <- 1
   smoothWeights <- stats::runmed(roughWeights, k=window, endrule="constant")
   qstats_model <- model.matrix(~0 + factor(groups, levels=uGroups))
   qstats_result <- list(Q=Q, Qref=Qref, QBETAS=QBETAS, TAU=TAU,

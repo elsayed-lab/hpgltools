@@ -44,7 +44,8 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
       return(NULL)
     }
   }
-  request_url <- paste0("http://www.uniprot.org/uniprot/?query=proteome:", accession, "&compress=yes&force=true&format=txt")
+  request_url <- paste0("http://www.uniprot.org/uniprot/?query=proteome:",
+                        accession, "&compress=yes&force=true&format=txt")
   destination <- paste0(accession, ".txt.gz")
   file <- download.file(url=request_url, destfile=destination, method="curl", quiet=TRUE)
   retlist <- list(
@@ -137,7 +138,8 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
     if (grepl(pattern="^GN\\s+", x=line)) {
       pat <- "^GN\\s+.*OrderedLocusNames=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
-        ## message(paste0("Got a locusname on line ", i, " for gene number ", gene_num)) ## i=565 is first interesting one.
+        ## message(paste0("Got a locusname on line ", i, " for gene number ", gene_num))
+        ## i=565 is first interesting one.
         tmp_ids <- gsub(pattern=pat, replacement="\\1", x=line)
         tmp_ids <- gsub(pattern="^(.*?),.*", replacement="\\1", x=tmp_ids)
         many_ids[["loci"]][gene_num] <- gsub(pattern="^(.*?) \\{.*", replacement="\\1", x=tmp_ids)

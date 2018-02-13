@@ -15,7 +15,8 @@
 #' @param pcutoff  P-value cutoff for 'significant' analyses.
 #' @param qcutoff  Q-value cutoff for 'significant' analyses.
 #' @param fc_column  When extracting vectors of all genes, what column should be used?
-#' @param second_fc_column  When extracting vectors of all genes, what column should be tried the second time around?
+#' @param second_fc_column  When extracting vectors of all genes, what column
+#'   should be tried the second time around?
 #' @param updown  Include the less than expected ontologies?
 #' @param permutations  How many permutations for GSEA-ish analyses?
 #' @param min_groupsize  Minimum size of an ontology before it is included.
@@ -255,7 +256,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   kegg_sig_ids <- unique(as.character(small_universe))
   ##kegg_sig_ids <- unique(as.character(kegg_universe[kegg_sig_intersect]))
   kegg_sig_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_sig_ids)
-  
+
   message("Performing KEGG analyses.")
   all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
                                           keyType="kegg",
@@ -279,7 +280,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     kegg_all_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_all_ids)
     names(kegg_genelist) <- kegg_all_ids
 
-    internal=FALSE
+    internal <- FALSE
     gse_all_kegg <- sm(clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
                                                 nPerm=permutations, minGSSize=min_groupsize,
                                                 pvalueCutoff=1.0, use_internal_data=internal))

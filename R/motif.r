@@ -151,7 +151,7 @@ flanking_sequence <- function(bsgenome, annotation, distance=200, type="gene", p
     after <- GenomicRanges::GRanges(seqnames=S4Vectors::Rle(annotations[, "seqnames"]),
                                     ranges=IRanges::IRanges(annotations[, "end"],
                                                             end=ifelse(annotations[, "seqlengths"] <=
-                                                                       (annotations[,'end'] + distance),
+                                                                       (annotations[, "end"] + distance),
                                                                        annotations[, "seqlengths"],
                                                                        annotations[, "end"] + distance)),
                                     strand=S4Vectors::Rle(annotations[, "strand"]),

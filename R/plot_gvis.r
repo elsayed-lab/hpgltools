@@ -28,14 +28,14 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
                           "LogFC" = df[["logfc"]],
                           "AdjPVal" = df[["pval"]])
     ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
-    gvis_sig <- gvis_df[ which(gvis_df[["AdjPVal"]] <= 0.05), ]
+    gvis_sig <- gvis_df[which(gvis_df[["AdjPVal"]] <= 0.05), ]
     gvis_sig <- gvis_sig[, c(1, 2)]
     gvis_sig <- merge(gvis_sig, tooltip_data, by="row.names")
     rownames(gvis_sig) <- gvis_sig[["Row.names"]]
     gvis_sig <- gvis_sig[, -1]
     colnames(gvis_sig) <- c("AvgExp", "Significant", "sig.tooltip")
     ## gvis_nonsig = subset(gvis_df, AdjPVal > 0.05)
-    gvis_nonsig <- gvis_df[ which(gvis_df[["AdjPVal"]] > 0.05), ]
+    gvis_nonsig <- gvis_df[which(gvis_df[["AdjPVal"]] > 0.05), ]
     gvis_nonsig <- gvis_nonsig[, c(1, 2)]
     gvis_nonsig <- merge(gvis_nonsig, tooltip_data, by="row.names")
     rownames(gvis_nonsig) <- gvis_nonsig[["Row.names"]]
@@ -99,9 +99,9 @@ plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
         gvis_raw_df <- merge(gvis_raw_df, tooltip_data, by="row.names")
     }
     ## gvis_sig = subset(gvis_raw_df, P.Value <= p_cutoff)
-    gvis_sig <- gvis_raw_df[ which(gvis_raw_df$P.Value <= p_cutoff), ]
+    gvis_sig <- gvis_raw_df[which(gvis_raw_df$P.Value <= p_cutoff), ]
     ## gvis_nsig = subset(gvis_raw_df, P.Value > p_cutoff)
-    gvis_nsig <- gvis_raw_df[ which(gvis_raw_df$P.Value > p_cutoff), ]
+    gvis_nsig <- gvis_raw_df[which(gvis_raw_df$P.Value > p_cutoff), ]
     colnames(gvis_sig) <- c("Row.names", "logFCsig", "sig_modp", "sig_p", "sig.tooltip")
     colnames(gvis_nsig) <- c("Row.names", "logFCnsig", "nsig_modp", "nsig_p", "nsig.tooltip")
     gvis_sig <- gvis_sig[, c("Row.names", "sig_modp", "sig.tooltip")]
@@ -173,7 +173,8 @@ plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter
                              gvis.listener.jscode=scatter_jscode,
                              axisTitlesPosition="out")
     } else {
-        trendline_string <- sprintf("{0: {type: '%s', visibleInLegend: 'true', color: 'green', lineWidth: 10, opacity: 0.5}}", trendline)
+      trendline_string <- sprintf(
+        "{0: {type: '%s', visibleInLegend: 'true', color: 'green', lineWidth: 10, opacity: 0.5}}", trendline)
         gvis_options <- list(pointSize=2, height=800, width=800,
                              tooltip="[{isHtml: true},{trigger:'selection'}]",
                              gvis.listener.jscode=scatter_jscode,

@@ -134,7 +134,10 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))
   colnames(plotting_mf) <- c("term", "pvalue", "score")
-  mf_pval_plot <- plot_ontpval(plotting_mf, ontology="MF")
+  mf_pval_plot <- plot_ontpval(plotting_mf,
+                               ontology="MF",
+                               numerator="numDEInCat",
+                               denominator="numInCat")
 
   plotting_bp <- subset(goterms, complete.cases(goterms))
   plotting_bp[["score"]] <- plotting_bp[["numDEInCat"]] / plotting_bp[["numInCat"]]
@@ -150,7 +153,10 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
   plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]],
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))
-  bp_pval_plot <- plot_ontpval(plotting_bp, ontology="BP")
+  bp_pval_plot <- plot_ontpval(plotting_bp,
+                               ontology="BP",
+                               numerator="numDEInCat",
+                               denominator="numInCat")
 
   plotting_cc <- subset(goterms, complete.cases(goterms))
   plotting_cc[["score"]] <- plotting_cc[["numDEInCat"]] / plotting_cc[["numInCat"]]
@@ -166,7 +172,10 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
   plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]],
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))
-  cc_pval_plot <- plot_ontpval(plotting_cc, ontology="CC")
+  cc_pval_plot <- plot_ontpval(plotting_cc,
+                               ontology="CC",
+                               numerator="numDEInCat",
+                               denominator="numInCat")
 
   pval_plots <- list(
     "mfp_plot_over" = mf_pval_plot,

@@ -32,68 +32,6 @@ check_eupath_species <- function(species="Leishmania major strain Friedlin", met
   return(entry)
 }
 
-#' Invoke the appropriate get_eupath_ function.
-#'
-#' This small function provides a single entrypoint for multiple get_eupath functions.
-#'
-#' @param type  One of: gff, genes, go, pathways, etc. (The type of table to download.)
-#' @param granges  When downloading a gff, use this.
-#' @param provider  Generally only tritrypdb or eupathdb
-#' @param genus_species  A string identifying the genus and species
-#' @param species  As opposed to just the species
-#' @param flatten  Flatten the resulting table (if it is a table of tables)
-#' @param abbreviation  Used for kegg downloads.
-#' @param dir  Where to dump the data.
-#' @return Table of eupathdb information.
-do_eupath_table <- function(type, granges=NULL, provider=NULL, genus_species=NULL,
-                            species=NULL, flatten=FALSE, abbreviation=NULL,
-                            dir="eupathdb", do_kegg=TRUE) {
-  message(paste0("Starting collection of the ", type, " data."))
-  a_result <- NULL
-  switchret <- switch(
-    type,
-    "gff" = {
-      a_result <- try(get_eupath_gff_table(granges))
-    },
-    "genes" = {
-      a_result <- try(get_eupath_gene_types(provider=provider, species=species, dir=dir))
-    },
-    "go" = {
-      a_result <- try(get_eupath_go_term_table(provider=provider, species=species, dir=dir))
-    },
-    "pathways" = {
-      a_result <- try(get_eupath_pathway_table(provider=provider, species=species, dir=dir))
-    },
-    "interpro" = {
-      a_result <- try(get_eupath_interpro_table(provider=provider, species=species, dir=dir))
-    },
-    "kegg" = {
-      if (isTRUE(do_kegg)) {
-        a_result <- try(load_kegg_annotations(species=genus_species,
-                                              flatten=flatten,
-                                              abbreviation=abbreviation))
-      } else {
-        a_result <- NULL
-      }
-    },
-    "orthologs" = {
-      a_result <- try(get_eupath_ortholog_table(provider=provider, species=species,
-                                                dir=dir))
-    },
-    {
-      message("Do not recognize this table.")
-      a_result <- data.frame()
-    }
-  ) ## End of the switch.
-  if (class(a_result) == "try-error") {
-    a_result <- data.frame()
-  }
-  
-  retlist <- list("type" = type,
-                  "result" = a_result)
-  return(retlist)
-}
-
 #' Returns metadata for all eupathdb organisms.
 #'
 #' @param overwrite  Overwrite existing data?
@@ -104,7 +42,7 @@ do_eupath_table <- function(type, granges=NULL, provider=NULL, genus_species=NUL
 #' @author  Keith Hughitt
 #' @export
 download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
-                                     dir="eupathdb", use_savefile=TRUE) {
+                                     dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
   savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
@@ -138,7 +76,8 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     "ToxoDB" = c(shared_tags, "Toxoplasmosis"),
     "TrichDB" = c(shared_tags, "Trichomonas"),
     "TriTrypDB" = c(shared_tags, "Trypanosome", "Kinetoplastid", "Leishmania"))
-  tag_strings <- lapply(tags, function(x) { paste(x, collapse=",") })
+  tag_strings <- lapply(tags, function(x) {
+    paste(x, collapse=",") })
 
   ## construct API request URL
   ##base_url <- "http://eupathdb.org/eupathdb/webservices/"
@@ -154,8 +93,9 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   message(paste0("Downloaded: ", request_url))
 
   ## convert to a dataframe
-  dat <- data.frame(t(sapply(records[["fields"]], function (x) { x[,"value"] } )),
-                    stringsAsFactors=FALSE)
+  dat <- data.frame(t(sapply(records[["fields"]], function(x) {
+    x[, "value"] })),
+    stringsAsFactors=FALSE)
   colnames(dat) <- records[["fields"]][[1]][["name"]]
 
   ## shared metadata
@@ -176,10 +116,11 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## Add project-specific tags for each entry
   shared_metadata[["Tags"]] <- sapply(shared_metadata[["DataProvider"]],
-                                      function(x) { tag_strings[[x]] })
+                                      function(x) {
+                                        tag_strings[[x]] })
 
   ## replace missing taxonomy ids with NAs
-  shared_metadata[["TaxonomyId"]][shared_metadata[["TaxonomyId"]] == ''] <- NA
+  shared_metadata[["TaxonomyId"]][shared_metadata[["TaxonomyId"]] == ""] <- NA
 
   ## overide missing taxonomy ids for strains where it can be assigned; ideally
   ## OrgDb and GRanges objects should not depend on taxonomy id information since
@@ -193,7 +134,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   taxon_mask <- shared_metadata[["Species"]] %in% known_taxon_ids[["species"]]
   ind <- match(shared_metadata[taxon_mask, "Species"], known_taxon_ids[["species"]])
-  shared_metadata[taxon_mask,][["TaxonomyId"]] <- as.character(known_taxon_ids[["taxonomy_id"]][ind])
+  shared_metadata[taxon_mask, ][["TaxonomyId"]] <- as.character(known_taxon_ids[["taxonomy_id"]][ind])
 
   ## exclude remaining species which are missing taxonomy information from
   ## metadata; cannot construct GRanges/OrgDb instances for them since they are
@@ -255,337 +196,197 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
-#' Extract gene information from a GFF file
+#' Given 2 species names from the eupathdb, make orthology tables betwixt them.
 #'
-#' @param granges GenomicRanges instance as returned by `import.gff3`
-#' @return data.frame containing basic gene information (ID, description,
-#' etc.)
-#' @author Keith Hughitt
+#' The eupathdb provides such a tremendous wealth of information.  For me
+#' though, it is difficult sometimes to boil it down into just the bits of
+#' comparison I want for 1 species or between 2 species.  A singularly common
+#' question I am asked is: "What are the most similar genes between species x
+#' and y among these two arbitrary parasites?"  There are lots of ways to poke
+#' at this question: run BLAST/fasta36, use biomart, query the ortholog tables
+#' from the eupathdb, etc...  However, in all these cases, it is not trivial to
+#' ask the next question:  What about: a:b and b:a?
+#' This function attempts to address that for the case of two eupath species
+#' from the same domain. (tritrypdb/fungidb/etc.)  It does however assume that
+#' the sqlite package has been installed locally, if not it suggests you run the
+#' make_organismdbi function in order to do that.
+#'
+#' @param first  Species name from one eupath database.
+#' @param second Another species name from the same eupath database.
+#' @param abbrev  It is likely you do not care about the reciprocals and such,
+#'   in that case the second species is irrelvant and just a species
+#'   abbreviation is sufficient.
+#' @param xref  Cross reference the stuff in the sqlite vs. the abbreviation?
+#'   If no, then this will just return the entire ortholog table.
+#'
+#' The xref parameter reminds me, this function does make a peculiar attempt to
+#'   handle a lot of corner cases without failure, but instead to try to always
+#'   provide some useful information, even if that information is not precisely
+#'   what you want, but the only thing I can find.
+#' With that in mind, one could easily argue that this function is too long and
+#'   it should be split into a couple pieces, but hopefully it is sufficiently
+#'   clear that this is not necessary -- or I will do it later.
+#' @return List containing the information available given the species provided
+#'   and/or the abbreviation/xref.
 #' @export
-get_eupath_gff_table <- function(granges=NULL) {
-  ## get gene features and convert to a dataframe
-  if (class(granges) != "GRanges") {
-    return(data.frame())
-  }
-  genes <- granges[granges$type == "gene"]
-  gene_info <- as.data.frame(GenomicRanges::elementMetadata(genes))
+extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...) {
+  arglist <- list(...)
 
-  ## drop any empty and NA columns
-  na_mask <- apply(gene_info, 2, function(x) { sum(!is.na(x)) > 0 })
-  empty_mask <- apply(gene_info, 2, function(x) { length(unlist(x)) > 0 })
-  gene_info <- gene_info[, na_mask & empty_mask]
-
-  ## remove problematic GENECOLOUR field if it exists.
-  ## Found for "Leishmania braziliensis MHOM/BR/75/M2904" -- only one row
-  ## has a non-empty value and it does not appear to be correct:
-  ## > gene_info$GENECOLOUR[1859]
-  ## [[1]]
-  ## [1] "10"                  "LbrM15.0470"         "LbrM.15.0630"
-  ## "LbrM15_V2.0630"      "LbrM15_V2.0630:pep"  "LbrM15_V2.0630:mRNA"
-  gene_info <- gene_info[, colnames(gene_info) != "GENECOLOUR"]
-
-  ## Convert form-encoded description string to human-readable
-  gene_info[["description"]] <- gsub("\\+", " ", gene_info[["description"]])
-
-  ## Normalize columns names
-  colnames(gene_info) <- toupper(colnames(gene_info))
-  colnames(gene_info)[colnames(gene_info) == "ID"] <- "GID"
-
-  ## Move gid to the front of the line.
-  gid_index <- grep("GID", colnames(gene_info))
-  gene_info <- gene_info[, c(gid_index, (1:ncol(gene_info))[-gid_index])]
-  colnames(gene_info) <- paste0("GENE", colnames(gene_info))
-  colnames(gene_info)[1] <- "GID"
-
-  ## fix type for GENEALIAS column if present (found in version 28 and
-  ## earlier)
-  if ("GENEALIAS" %in% colnames(gene_info)) {
-    gene_info[["GENEALIAS"]] <- as.character(gene_info[["GENEALIAS"]])
-
-    ## Remove any newlines present in GENEALIAS field;
-    ## as.character inserts newlines for objects with >500 characters.
-    ## https://stat.ethz.ch/R-manual/R-devel/library/base/html/character.html
-    gene_info[["GENEALIAS"]] <- gsub("\n", "", gene_info[["GENEALIAS"]])
+  ortholog_column <- "ORTHOLOGS_ORTHOLOG"
+  if (!is.null(arglist[["ortholog_column"]])) {
+    ortholog_column <- arglist[["ortholog_column"]]
   }
 
-  return(gene_info)
-}
+  ##metadata <- download_eupath_metadata(...)
+  metadata <- download_eupath_metadata()
+  first_name <- check_eupath_species(first)[["Species"]]
+  second_name <- check_eupath_species(second)[["Species"]]
 
-#' Returns a mapping of gene ID to gene type for a specified organism
-#'
-#' @param provider Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species Full name of organism, as used by EuPathDB APIs
-#' @param dir  Where to put the downloaded data?
-#' @return Dataframe with 'GID' and 'TYPE' columns.
-#' @author Keith Hughitt
-#' @export
-get_eupath_gene_types <- function(provider="TriTrypDB", species="Leishmania major",
-                                  dir="eupathdb") {
-  ## query EuPathDB API
-  res <- query_eupathdb(
-    provider=provider,
-    species=species,
-    dir=dir,
-    prefix="types",
-    list(`o-fields` = "primary_key,gene_type"))
-  dat <- res[["response"]][["recordset"]][["records"]]
-  ## get vector of types
-  ids <- unlist(sapply(dat[["fields"]], function(x) { strsplit(x[, "value"], ",")[1] }))
-  types <- unlist(sapply(dat[["fields"]], function(x) { strsplit(x[, "value"], ",")[2] }))
+  first_pkg <- make_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
+  second_pkg <- make_eupath_pkgnames(species=second_name, metadata=metadata)[["orgdb"]]
 
-  df <- data.frame("GID" = ids,
-                   "TYPE" = types,
-                   stringsAsFactors=FALSE)
-  ## remove duplicated rows and return
-  df <- df[!duplicated(df), ]
-  return(df)
-}
-
-#'  Returns a mapping of gene ID to gene GO categories for a given organism.
-#'
-#' @param provider  Name of data provider to query.
-#' @param species  Full name of the organism as per the eupathdb api.
-#' @param overwrite  Overwrite the existing table?
-#' @param dir  Where to dump the data.
-#' @return Table of GO terms/gene IDs
-#' @export
-get_eupath_go_term_table <- function(provider="TriTrypDB", species="Leishmania major",
-                                     overwrite=FALSE, dir="eupathdb") {
-  result <- retrieve_eupathdb_attributes(
-    provider=provider,
-    species=species,
-    table="GOTerms",
-    overwrite=FALSE,
-    dir=dir)
-
-  if (nrow(result) == 0) {
-    return(result)
+  num_found <- 0
+  pkgs <- list()
+  tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
+  if (class(tt) == "try-error") {
+    message(paste0("Did not find the package: ",
+                   first_pkg,
+                   ". Will not be able to do reciprocal hits."))
+    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+                   first_name, "')"))
+  } else {
+    num_found <- num_found + 1
+    message(paste0("Loaded: ", first_pkg))
+    pkgs[[first_name]] <- get(first_pkg)
   }
 
-  ## convert column names to uppercase for consistency
-  colnames(result) <- toupper(colnames(result))
-  ## drop uneeded columns
-  result <- result[, colnames(result) %in% c("GID", "ONTOLOGY", "GO_ID",
-                                             "GO_TERM_NAME", "SOURCE",
-                                             "EVIDENCE_CODE")]
-  ## remove duplicated entries resulting from alternative sources / envidence
-  ## codes
-  result <- result[!duplicated(result), ]
-  ## remove rows missing the ontology field (Bug in EuPathDB 33; affects only
-  ## a small number of entries)
-  result <- result[!is.na(result[["ONTOLOGY"]]), ]
-  return(result)
-}
-
-#' Returns a mapping of gene ID to metabolic pathways (KEGG, LeishCyc, etc.)
-#'
-#' @param provider  Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species  Full name of organism, as used by EuPathDB APIs
-#' @param overwrite  Overwrite already existing data?
-#' @param dir  Where to place the data.
-#' @return Dataframe with gene/pathway mapping
-#' @author Keith Hughitt
-#' @export
-get_eupath_pathway_table <- function(provider="TriTrypDB", species="Leishmania major",
-                                     overwrite=FALSE, dir="eupathdb") {
-  result <- retrieve_eupathdb_attributes(
-    provider=provider,
-    species=species,
-    table="MetabolicPathways",
-    overwrite=overwrite,
-    dir=dir)
-  colnames(result) <- toupper(sub("_+$", "", sub("^X_+", "", gsub("\\.", "_", colnames(result)))))
-  result <- result[!duplicated(result), ]
-  return(result)
-}
-
-#' Returns a mapping of gene ID to InterPro domains for a specified organism
-#'
-#' @param provider  Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species  Full name of organism, as used by EuPathDB APIs
-#' @param overwrite  Overwrite existing data?
-#' @param dir  Where to place the downloaded data.
-#' @return Dataframe with ....
-#' @author Keith Hughitt
-#' @export
-get_eupath_interpro_table <- function(provider="TriTrypDB", species="Leishmania major",
-                                      overwrite=FALSE, dir="eupathdb") {
-  result <- retrieve_eupathdb_attributes(
-    provider=provider,
-    species=species,
-    table="InterPro",
-    overwrite=overwrite,
-    dir=dir)
-  ## fix numeric types
-  result[["interpro_e_value"]] <- as.numeric(result[["interpro_e_value"]])
-  result[["interpro_start_min"]] <- as.numeric(result[["interpro_start_min"]])
-  result[["interpro_end_min"]] <- as.numeric(result[["interpro_end_min"]])
-
-  ## fix column names and return result
-  colnames(result) <- toupper(colnames(result))
-  ## replace NA"s with empty strings (occur in INTERPRO_FAMILY_ID and
-  ## INTERPRO_SECONDARY_ID fields)
-  ## result[is.na(result)] <- ""
-  for (col in colnames(result)) {
-    if (class(result[[col]]) != "numeric") {
-      nas <- is.na(result[[col]])
-      result[nas, col] <- ""
-    }
+  tt <- try(do.call("library", as.list(second_pkg)), silent=TRUE)
+  if (class(tt) == "try-error") {
+    message(paste0("Did not find the package: ",
+                   second_pkg,
+                   ". Will not be able to do reciprocal hits."))
+    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+                   second_name, "')"))
+  } else {
+    num_found <- num_found + 1
+    message(paste0("Loaded: ", second_pkg))
+    pkgs[[second_name]] <- get(second_pkg)
   }
-  return(result)
-}
-
-#' Returns a mapping of gene ID to ortholog genes
-#'
-#' @param provider  Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species  Full name of organism, as used by EuPathDB APIs
-#' @param overwrite  Overwrite existing data?
-#' @param dir  Where to place the data.
-#' @return Dataframe with ....
-#' @author Keith Hughitt
-#' @export
-get_eupath_ortholog_table <- function(provider="TriTrypDB", species="Leishmania major",
-                                      overwrite=FALSE, dir="eupathdb") {
-  result <- retrieve_eupathdb_attributes(
-    provider=provider,
-    species=species,
-    table="Orthologs",
-    overwrite=overwrite,
-    dir=dir)
-  ## fix column names and return result
-  colnames(result) <- toupper(colnames(result))
-  return(result)
-}
-
-#' Gather most(all?) of the data which used to be in the .txt files from the eupathdb.
-#'
-#' Starting with revision 33, the eupathdb discontinued maintaining the
-#' downloadable text tables. For much of the eupath data, this was not a
-#' significant concern, Keith wrote the get_eupath_ family of functions which
-#' provided a reasonable facsimile of that information.  Some pieces remained
-#' missing, this function attempts to address that.
-#'
-#' @param species  Species to query.
-#' @param entry  Metadata entry to use.
-#' @param dir  Directory in which to put intermediate data.
-#' @param metadata  Existing dataframe of metadata.
-#' @param question_type  Usually GeneQuestions, I am not sure what other types are in use.
-#' @param question  There are a bunch of possible query types, GenesByTaxon is
-#'   the most comprehensive.
-#' @param ...  Arguments passed to download_eupath_metadata()
-#' @return data table of fun annotation data.
-#' @export
-get_eupath_text <- function(species=NULL, entry=NULL,
-                            dir="eupathdb", metadata=NULL,
-                            question_type="GeneQuestions",
-                            question="GenesByTaxon", ...) {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- download_eupath_metadata(dir=dir, ...)
-    ##  metadata <- download_eupath_metadata(dir=dir)
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-  }
-  species <- entry[["Species"]]
-  provider <- entry[["DataProvider"]]
-
-  defaults <- list(
-    "GenesByMolecularWeight" = list(
-      "min_molecular_weight" = 10000,
-      "max_molecular_weight" = 50000,
-      "o-fields" = "gene_type, organism"),
-    "GenesByLocation" = list(
-      "start_point" = 1,
-      "end_point" = 10,
-      "sequenceId" = NULL,
-      "chromosome" = NULL),
-    "GenesByExonCount" = list(
-      "num_exons_gt" = 1,
-      "num_exons_lt" = 2,
-      "scope" = NULL),
-    "GenesByTextSearch" = list(
-      "text_expression" = "DGF",
-      "text_fields" = "all"),
-    "GenesWithSignalPeptide" = list(
-      "min_sigp_sum_score" = 1,
-      "min_sigp_d_score" = 0,
-      "min_sigp_signal_probability" = 0),
-    "GenesByTransmembraneDomains" = list(
-      "o-fields" = "primary_key,tm_count",
-      "min_tm" = "0",
-      "max_tm" = "100"),
-    "GenesByTaxon" = list(
-      "o-fields" = "primary_key,sequence_id,chromosome,organism,gene_type,gene_location_text,gene_name,gene_exon_count,is_pseudo,gene_transcript_count,gene_ortholog_number,gene_paralog_number,gene_orthomcl_name,gene_total_hts_snps,gene_hts_nonsynonymous_snps,gene_hts_noncoding_snps,gene_hts_stop_codon_snps,gene_hts_nonsyn_syn_ratio,uniprot_id,gene_entrez_id,transcript_length,exon_count,strand,cds_length,tm_count,molecular_weight,isoelectric_point,signalp_scores,signalp_peptide,annotated_go_function,annotated_go_process,annotated_go_component,annotated_go_id_function,annotated_go_id_process,annotated_go_id_component,predicted_go_id_function,predicted_go_id_process,predicted_go_id_component,ec_numbers,ec_numbers_derived,five_prime_utr_length,three_prime_utr_length,location_text,gene_previous_ids,protein_sequence,cds")
-  )
-
-  query_url <- sprintf("http://%s.org/webservices/%s/%s.json?",
-                       tolower(provider), question_type, question)
-  query_arglst <- list(
-    "organism" = utils::URLencode(species, reserved=TRUE))
-  for (arg in names(defaults[[question]])) {
-    query_arglst[[arg]] <- defaults[[question]][[arg]]
+  if (num_found == 0) {
+    stop("Found neither package.  Cannot continue.")
   }
 
-  query_string <- paste0(paste(names(query_arglst), query_arglst, sep="="),
-                         collapse="&")
-  request_url <- paste0(query_url, query_string)
-  message(sprintf("- Querying %s", request_url))
-  organism_filename <- gsub(pattern="\\s+|[[:punct:]]", replacement="", x=species)
-  destfile <- file.path(dir, paste0(provider, "_", question, "_",
-                                    organism_filename, ".json"))
-  if (!file.exists(destfile)) {
-    original_options <- options(timeout=300)
-    file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=FALSE)
-    temp_options <- options(original_options)
+  all_orthos <- list()
+  gene_lists <- list()
+  for (i in 1:length(pkgs)) {
+    name <- names(pkgs)[[i]]
+    pkg <- pkgs[[i]]
+    gene_lists[[name]] <- AnnotationDbi::keys(pkg)
+    all_orthos[[name]] <- AnnotationDbi::select(x=pkg,
+                                                keytype="GID",
+                                                keys=gene_lists[[name]],
+                                                columns=ortholog_column)
   }
-  result <- try(jsonlite::fromJSON(destfile))
-  if (class(result) == "try-error") {
-    message("The request seems to have failed:")
-    message(request_url)
-    return(NULL)
-  }
-  message("- Finished query.")
-  dat <- data.table::as.data.table(result[["response"]][["recordset"]][["records"]])
-  data <- data.table::as.data.table(dat[["id"]])
-  colnames(data) <- "id"
-  count <- 0
-  final_names <- colnames(data)
-  bar <- utils::txtProgressBar(style=3)
-  all_n <- length(dat[["fields"]][[1]][, "name"])
-  for (n in dat[["fields"]][[1]][, "name"]) {
-    count <- count + 1
-    pct_done <- count / all_n
-    setTxtProgressBar(bar, pct_done)
-    final_names <- c(final_names, n)
-    data[[n]] <- sapply(dat[["fields"]], function(x) { x[, "value"][count] })
-  }
-  close(bar)
 
-  ## Drop columns which are all NA
-  not_all_nas <- colSums(is.na(data)) != nrow(data)
-  data <- data[, not_all_nas, with=FALSE]
-
-  ## Lets take a moment and set some column data types.
-  avail_columns <- colnames(data)
-  numeric_patterns <- c("^isoelectric_point$", "^molecular_weight$",
-                         "^.+_count$", "^.+_length$", "^.+_number$")
-  for (pattern in numeric_patterns) {
-    found_cols <- grepl(pattern=pattern, x=avail_columns)
-    for (change in avail_columns[found_cols]) {
-      data[[change]] <- as.numeric(data[[change]])
-    }
-  }
-  factor_patterns <- c("strand")
-  for (pattern in factor_patterns) {
-    found_cols <- grepl(pattern=pattern, x=avail_columns)
-    for (change in avail_columns[found_cols]) {
-      data[[change]] <- as.factor(data[[change]])
+  ## If a single pkg is found, then we cannot do a cross reference of two species,
+  ## but we _can_ extract all genes which match a given species prefix pattern.
+  retlist <- list()
+  if (num_found == 1) {
+    retlist[["all_genes"]] <- gene_lists[[1]]
+    if (is.null(abbrev)) {
+      message(paste0("Extracting all orthologs for ", names(pkgs)[[1]], "."))
+      retlist[["orthologs"]] <- all_orthos[[1]]
+      return(retlist)
+    } else {
+      ortho_idx <- grepl(pattern=paste0("^", abbrev), x=all_orthos[[1]][[ortholog_column]])
+      if (sum(ortho_idx) == 0) {
+        warning(paste0("The abbreviation: ", abbrev, " did not match any of the ortholog table."))
+        warning("Returning the entire ortholog table so that you can figure out where things went wrong.")
+        retlist[["orthologs"]] <- all_orthos[[1]]
+      } else {
+        tmp_table <- all_orthos[[1]]
+        colnames(tmp_table) <- c(names(pkgs)[1], abbrev)
+        retlist[["orthologs"]] <- tmp_table[ortho_idx, ]
+      }
+      return(retlist)
     }
   }
 
-  return(data)
+  ## We have finished handling the case where we have 1 table to search in
+  ## Now what to do when we have two?
+  ## Well, the way I envision this:
+  ## 1. Use table 1's keys to set the prefix for table 2
+  ## 2. Use table 2's ... for table 1
+  ## 3. Index each of the two tables using the other key's prefix
+
+  ## The following code should only therefore get hit if the above did _not_.
+  ## In order to get the appropriate eupathdb-specific prefix, we want to gsub out the
+  ## beginning of the genes from each package until either a '.' or '_'.
+  first_string <- gene_lists[[1]][[1]]  ## Grab the first gene in each set of genes.
+  second_string <- gene_lists[[2]][[1]]
+
+  ## My pattern needs to greedily(use the ?) match at the beginning of the string(^)
+  ## A set of characters(()) which matches anything(.) at least for one character(+)
+  ## Then it needs to match a set(()) of either(|) a dot(\\.) or underscore(_)
+  ## not greedily(no ?) followed by anything(.*) until the end of the string($).
+  idx_pattern <- "^(.+?)(\\.|_).*$"
+  ## When performing the replacement, pull out the first set of the 2 sets above(\\1)
+  ## And it needs to acquire this information from the first gene in both sets of genes.
+  first_idx_pattern <- gsub(pattern=idx_pattern,
+                            replacement="\\1",
+                            x=first_string,
+                            perl=TRUE)
+  second_idx_pattern  <- gsub(pattern=idx_pattern,
+                              replacement="\\1",
+                              x=second_string,
+                              perl=TRUE)
+  ## When doing the grep, make sure it searches from the beginning of each string(^).
+  ## Also make sure to pull it from the second column of each of the two dataframes of orthologs.
+  colnames(all_orthos[[1]]) <- c("first_gene", "second_ortholog") ## Explicitly rename the columns
+  ## so that it is easier to see where I am pulling the index information.
+  colnames(all_orthos[[2]]) <- c("second_gene", "first_ortholog")
+  second_species_idx_in_first_db <- grepl(pattern=paste0("^", second_idx_pattern),
+                                          x=all_orthos[[1]][, "second_ortholog"])
+  first_species_idx_in_second_db <- grepl(pattern=paste0("^", first_idx_pattern),
+                                       x=all_orthos[[2]][, "first_ortholog"])
+  first_species_orthologs <- all_orthos[[1]][second_species_idx_in_first_db, ]
+  second_species_orthologs <- all_orthos[[2]][first_species_idx_in_second_db, ]
+
+  ## Now test for reciprocal best hittedness (yeah, that is not a word).
+  ## To do this I will merge the two tables of orthologs and see where the ortholog makes a
+  ## bridge from geneW_speciesA -> orthologX_speciesB -> geneW_speciesA and/or
+  ##             geneY_speciesB -> orthologZ_speciesA -> geneY_speciesB
+  shared_genes_first_second <- merge(first_species_orthologs,
+                                     second_species_orthologs,
+                                     by.x="first_gene",
+                                     by.y="first_ortholog")
+  shared_genes_second_first <- merge(second_species_orthologs,
+                                     first_species_orthologs,
+                                     by.x="second_gene",
+                                     by.y="second_ortholog")
+  reciprocal_idx_first <- shared_genes_first_second[["first_gene"]] ==
+    shared_genes_first_second[["second_gene"]]
+  reciprocals_first <- shared_genes_first_second[reciprocal_idx_first, ]
+  reciprocal_idx_second <- shared_genes_second_first[["first_gene"]] ==
+    shared_genes_second_first[["second_gene"]]
+  reciprocals_second <- shared_genes_second_first[reciprocal_idx_second, ]
+
+  ## While we are at it, lets get the set of genes in speciesA which do not show up in the
+  ## orthologous list for speciesB and vice-versa
+  first_non_orthologous_idx <- !(gene_lists[[1]] %in% all_orthos[[2]][["first_ortholog"]])
+  first_non_orthologous <- gene_lists[[1]][first_non_orthologous_idx]
+  second_non_orthologous_idx <- !(gene_lists[[2]] %in% all_orthos[[1]][["second_ortholog"]])
+  second_non_orthologous <- gene_lists[[2]][first_non_orthologous_idx]
+  retlist <- list(
+    "non_orthologs_first_species" = first_non_orthologous,
+    "non_orthologs_second_species" = second_non_orthologous,
+    "reciprocal_match_first_second" = reciprocals_first,
+    "reciprocal_match_second_first" = reciprocals_second,
+    "first_genes_second_orthologs" = first_species_orthologs,
+    "second_genes_first_orthologs" = second_species_orthologs,
+    "first_orthologs_merged" = shared_genes_first_second,
+    "second_orthologs_merged" = shared_genes_second_first)
+  return(retlist)
 }
 
 #' Generate a BSgenome package from the eupathdb.
@@ -703,7 +504,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   if (class(annoying) != "try-error") {
     inst <- sm(try(devtools::install(pkgname, quiet=TRUE)))
   }
-  
+
   retlist <- list()
   if (class(inst) != "try-error") {
     retlist[["bsgenome_name"]] <- pkgname
@@ -748,7 +549,6 @@ make_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
   grepped_hits <- all_species[grep_hits]
   if (species %in% all_species) {
     entry <- metadata[metadata[["Species"]] == species, ]
-    message(paste0("Found: ", entry[["Species"]]))
   } else if (sum(grep_hits > 0)) {
     species <- grepped_hits[[1]]
     entry <- metadata[metadata[["Species"]] == species, ]
@@ -775,19 +575,15 @@ make_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
 
   inst <- as.data.frame(installed.packages())
   if (pkg_list[["bsgenome"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["bsgenome"]], " is already installed."))
     pkg_list[["bsgenome_installed"]] <- TRUE
   }
   if (pkg_list[["organismdbi"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["organismdbi"]], " is already installed."))
     pkg_list[["organismdbi_installed"]] <- TRUE
   }
   if (pkg_list[["orgdb"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["orgdb"]], " is already installed."))
     pkg_list[["orgdb_installed"]] <- TRUE
   }
   if (pkg_list[["txdb"]] %in% inst[["Package"]]) {
-    message(paste0(pkg_list[["txdb"]], " is already installed."))
     pkg_list[["txdb_installed"]] <- TRUE
   }
 
@@ -832,7 +628,6 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   }
   orgdb_name <- pkgnames[["orgdb"]]
   txdb_name <- pkgnames[["txdb"]]
-
   orgdb_ret <- make_eupath_orgdb(
     species=species,
     entry=entry,
@@ -855,18 +650,20 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 
   tt <- sm(requireNamespace(orgdb_name))
   tt <- sm(requireNamespace(txdb_name))
-  libstring <- paste0("library(", orgdb_name, ")")
-  library_ret <- try(eval(parse(text=libstring)))
-  if (class(library_ret) == "try-error") {
-    message("The orgdb failed to load.")
-    return(NULL)
-  }
-  libstring <- paste0("library(", txdb_name, ")")
-  library_ret <- try(eval(parse(text=libstring)))
-  if (class(library_ret) == "try-error") {
-    message("The orgdb failed to load.")
-    return(NULL)
-  }
+  ##libstring <- paste0("library(", orgdb_name, ")")
+  ##library_ret <- try(eval(parse(text=libstring)))
+  ##if (class(library_ret) == "try-error") {
+  ##  message("The orgdb failed to load.")
+  ##  return(NULL)
+  ##}
+  test <- sm(do.call("library", as.list(orgdb_name)))
+  ##libstring <- paste0("library(", txdb_name, ")")
+  ##library_ret <- try(eval(parse(text=libstring)))
+  ##if (class(library_ret) == "try-error") {
+  ##  message("The orgdb failed to load.")
+  ##  return(NULL)
+  ##}
+  test <- sm(do.call("library", as.list(txdb_name)))
   organism <- taxa[["taxon"]]
   required <- sm(requireNamespace("OrganismDbi"))
 
@@ -884,24 +681,28 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   }
   required <- sm(requireNamespace("GO.db"))
   required <- sm(try(attachNamespace("GO.db"), silent=TRUE))
-
+  ## FIXME Theoretically we should no longer have columns with names like
+  ## GO_GO
+  orgdb_go_col <- "GO_GO_ID"
   goids_found <- "GOID" %in% AnnotationDbi::keytypes(get("GO.db")) &&
-    "GO_ID" %in% AnnotationDbi::keytypes(get(orgdb_name))
+    orgdb_go_col %in% AnnotationDbi::keytypes(get(orgdb_name))
   if (isTRUE(goids_found)) {
     count <- count + 1
     name <- paste0("join", count)
-    graph_data[[name]] <- c(GO.db="GOID", orgdb="GO_ID")
+    graph_data[[name]] <- c(GO.db="GOID", orgdb=orgdb_go_col)
     names(graph_data[[name]]) <- c("GO.db", orgdb_name)
   }
-
+  ## FIXME Theoretically we should no longer have columns with names like
+  ## PATHWAY_PATHWAY
   required <- sm(requireNamespace("reactome.db"))
   required <- sm(try(attachNamespace("reactome.db"), silent=TRUE))
+  orgdb_path_col <- "PATHWAY_PATHWAY"
   reactomeids_found <- "REACTOMEID" %in% AnnotationDbi::keytypes(get("reactome.db")) &&
-    "REACTIONS" %in% AnnotationDbi::keytypes(get(orgdb_name))
+    orgdb_path_col %in% AnnotationDbi::keytypes(get(orgdb_name))
   if (isTRUE(reactomeids_found)) {
     count <- count + 1
     name <- paste0("join", count)
-    graph_data[[name]] <- c(reactome.db="REACTOMEID", orgdb="REACTIONS")
+    graph_data[[name]] <- c(reactome.db="REACTOMEID", orgdb=orgdb_path_col)
     names(graph_data[[name]]) <- c("reactome.db", orgdb_name)
   }
 
@@ -957,28 +758,20 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   return(retlist)
 }
 
-#' Generate OrgDb for EuPathDB organism
+#' Create an orgdb SQLite database from the tables in eupathdb.
 #'
-#' This is probably the most difficult function in this family, as orgdb instances are rather
-#' more complex than the other annotation data (at least for the eupathdb).  It gathers the
-#' KEGG/GO/gene/etc data and bundles it into a single sqlite instance and does some
-#' rudimentary sanity checks on the result.
+#' This now uses the new POST version of the eupathdb.  Theoretically it is better,
+#' I am not yet convinced, but the QUERY version of the eupathdb apparently will not
+#' be supported over time.
 #'
-#' FIXME: The eupathdb family is moving away from the json-based queries.  The
-#' get_something() family of functions upon which this process depends is
-#' therefore not likely to continue to work over time.  It needs therefore to be
-#' migrated to queries similar to what is performed in get_eupath_text().
-#'
-#' @param species  Single species to work on.
-#' @param entry One dimensional dataframe with organism metadata
-#' @param dir  Where to put the data
-#' @param kegg_abbreviation  A kegg abbreviation when it cannot be automatically determined.
-#' @param reinstall  Overwrite an existing installed package?
-#' @param metadata  Large metadata dataframe.
-#' @param ...  Extra arguments when downloading metadata.
-#' @return OrgDb instance package name.
-#' @author Keith Hughitt
-#' @export
+#' @param species  A specific species ID to query
+#' @param entry  If not provided, then species will get this, it contains all the information.
+#' @param dir  Where to put all the various temporary files.
+#' @param kegg_abbreviation  If known, provide the kegg abbreviation.
+#' @param reinstall  Re-install an already existing orgdb?
+#' @param metadata  Use an existing metadata table to get the entry?
+#' @param ...  Extra parameters when searching for metadata
+#' @return  Currently only the name of the installed package.  This should probably change.
 make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
                               kegg_abbreviation=NULL, reinstall=FALSE, metadata=NULL, ...) {
   if (is.null(entry) & is.null(species)) {
@@ -1012,119 +805,109 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     }
   }
 
-  ## save gff as tempfile
-  input_gff <- file.path(dir, paste0(pkgname, ".gff"))
-  downloaded <- download.file(entry[["SourceUrl"]], input_gff, quiet=FALSE)
-
-  ## get chromosome information from GFF file
-  gff <- try(rtracklayer::import.gff3(input_gff))
-  genes <- data.frame()
-  chr_mapping <- data.frame()
-  if (class(gff) == "try-error") {
-    message(paste0("Check the file ", input_gff, " for problems."))
-  } else {
-    ## gene/chr mapping
-    genes <- gff[gff$type == "gene"]
-    chr_mapping <- data.frame(
-      "GID" = genes$ID,
-      "CHR" = as.character(GenomicRanges::seqnames(genes)),
-      stringsAsFactors=FALSE)
-  }
-
-  tables <- list(
-    "gff" = NULL,
-    "genes" = NULL,
-    "go" = NULL, 
-    "pathways" = NULL,
-    "interpro" = NULL, 
-    "kegg" = NULL, 
-    "orthologs" = NULL)
-  res <- NULL
   chosen_provider <- entry[["DataProvider"]]
   chosen_species <- entry[["Species"]]
-  results <- list()
-  for (c in 1:length(names(tables))) {
-    type <- names(tables)[c]
-    results[[type]] <- do_eupath_table(
-      type, provider=chosen_provider, species=chosen_species, genus_species=taxa[["genus_species"]],
-      flatten=FALSE, abbreviation=kegg_abbreviation, granges=gff, dir=dir, do_kegg=do_kegg)
-    tables[[type]] <- results[[type]][["result"]]
-    if (is.null(tables[[type]])) {
-      message(paste0("After do_eupath_table, the ", type, " table is still empty."))
-      tables[[type]] <- data.frame()
-    }
-  }
-  rm(results)
 
-  if (nrow(tables[["gff"]]) == 0) {
-    message("Something is wrong with the gene_info table.")
-    message("Rerunning gene_info generator.")
-    tmp <- do_eupath_table("gff", granges=gff, dir=dir)
-    tables[["gff"]] <- tmp[["result"]]
-    rm(tmp)
+  message("Downloading full annotation table.")
+  gene_table <- try(post_eupath_annotations(species=chosen_species, entry=entry, dir=dir))
+  if (class(gene_table) == "try-error") {
+    gene_table <- data.frame()
   }
-  if (nrow(tables[["genes"]]) == 0) {
-    message("Something is wrong with the gene types table.")
-    message("Rerunning the genes generator.")
-    tmp <- do_eupath_table("genes",
-                           provider=chosen_provider,
-                           species=chosen_species,
-                           dir=dir)
-    tables[["genes"]] <- tmp[["result"]]
-    rm(tmp)
+  message("Downloading GO table.")
+  go_table <- try(post_eupath_go_table(species=chosen_species, entry=entry, dir=dir))
+  if (class(go_table) == "try-error") {
+    go_table <- data.frame()
   }
+  message("Downloading ortholog table.")
+  ortholog_table <- try(post_eupath_ortholog_table(species=chosen_species, entry=entry, dir=dir))
+  if (class(ortholog_table) == "try-error") {
+    ortholog_table <- data.frame()
+  }
+  message("Downloading interpro table.")
+  interpro_table <- try(post_eupath_interpro_table(species=chosen_species, entry=entry, dir=dir))
+  if (class(interpro_table) == "try-error") {
+    interpro_table <- data.frame()
+  }
+  message("Downloading pathway table.")
+  pathway_table <- try(post_eupath_pathway_table(species=chosen_species, entry=entry, dir=dir))
+  if (class(pathway_table) == "try-error") {
+    pathway_table <- data.frame()
+  }
+  message("Downloading kegg table.")
+  kegg_table <- try(load_kegg_annotations(species=taxa[["genus_species"]],
+                                          flatten=FALSE, abbreviation=kegg_abbreviation))
+  if (class(kegg_table) == "try-error") {
+    kegg_table <- data.frame()
+  }
+  if (nrow(gene_table) == 0) {
+    warning("Unable to create an orgdb for this species.")
+    return(NULL)
+  }
+  chromosome_table <- gene_table[, c("GID", "GENOMIC_SEQUENCE_ID")]
+  colnames(chromosome_table) <- c("GID", "CHR_ID")
+  type_table <- gene_table[, c("GID", "GENE_TYPE")]
+  colnames(type_table) <- c("GID", "GENE_TYPE")
 
   ## Compile list of arguments for makeOrgPackage call
   version_string <- format(Sys.time(), "%Y.%m")
   orgdb_args <- list(
-    "gene_info"  = tables[["gff"]],
-    "chromosome" = chr_mapping,
-    "type" = tables[["genes"]],
+    "gene_info"  = gene_table,
+    "chromosome" = chromosome_table,
+    "type" = type_table,
     "version" = version_string,
     "author" = entry[["Maintainer"]],
     "maintainer" = entry[["Maintainer"]],
     "tax_id" = as.character(entry[["TaxonomyId"]]),
     "genus" = taxa[["genus"]],
     "species" = paste0(taxa[["species_strain"]], ".v", entry[["SourceVersion"]]),
-    ##unlink = TRUE,
     "outputDir" = dir)
-  
+
   ## add non-empty tables
-  if (is.null(tables[["go"]])) {
+  if (is.null(go_table)) {
     message("This should not be possible, but the go table is still null.")
-  } else if (nrow(tables[["go"]]) > 0) {
-    orgdb_args[["go"]] <- tables[["go"]]
+  } else if (nrow(go_table) > 0) {
+    orgdb_args[["go"]] <- go_table
   }
-
-  if (is.null(tables[["pathways"]])) {
-    message("This should not be possible, but the pathways table is still null.")
-  } else if (nrow(tables[["pathways"]]) > 0) {
-    orgdb_args[["pathways"]] <- tables[["pathways"]]
+  if (is.null(ortholog_table)) {
+    message("This should not be possible, but the ortholog table is still null.")
+  } else if (nrow(ortholog_table) > 0) {
+    orgdb_args[["orthologs"]] <- ortholog_table
   }
-
-  if (is.null(tables[["interpro"]])) {
+  if (is.null(interpro_table)) {
     message("This should not be possible, but the interpro table is still null.")
-  } else if (nrow(tables[["interpro"]]) > 0) {
-    orgdb_args[["interpro"]] <- tables[["interpro"]]
+  } else if (nrow(interpro_table) > 0) {
+    orgdb_args[["interpro"]] <- interpro_table
   }
-
-  if (is.null(tables[["orthologs"]])) {
-    message("This should not be possible, but the orthologs table is still null.")
-  } else if (nrow(tables[["orthologs"]]) > 0) {
-    orgdb_args[["orthologs"]] <- tables[["orthologs"]]
+  if (is.null(pathway_table)) {
+    message("This should not be possible, but the pathway table is still null.")
+  } else if (nrow(pathway_table) > 0) {
+    orgdb_args[["pathway"]] <- pathway_table
   }
-
-  if (is.null(tables[["kegg"]])) {
+  if (is.null(kegg_table)) {
     message("This should not be possible, but the kegg table is still null.")
-  } else if (nrow(tables[["kegg"]]) > 0) {
-    orgdb_args[["kegg"]] <- tables[["kegg"]]
+  } else if (nrow(kegg_table) > 0) {
+    orgdb_args[["kegg"]] <- kegg_table
   }
 
   ## Make sure no duplicated stuff snuck through, or makeOrgPackage throws an error.
   ## Make sure that every GID field is character, too
   ## -- otherwise you get 'The type of data in the 'GID' columns must be the same for all data.frames.'
+  used_columns <- c()
   for (i in 1:length(orgdb_args)) {
-    if (class(orgdb_args[[i]]) == "data.frame") {
+    argname <- names(orgdb_args)[i]
+    if (class(orgdb_args[[i]])[1] == "data.frame") {
+      ## Make sure that the column names in this data frame are unique.
+      ## This starts at 2 because the first column should _always_ by 'GID'
+      for (cn in 2:length(colnames(orgdb_args[[i]]))) {
+        colname <- colnames(orgdb_args[[i]])[cn]
+        if (colname %in% used_columns) {
+          new_colname <- paste0(toupper(argname), "_", colname)
+          colnames(orgdb_args[[i]])[cn] <- new_colname
+          used_columns <- c(used_columns, new_colname)
+        } else {
+          used_columns <- c(used_columns, colname)
+        }
+      }
       ## First swap out NA to ""
       na_tmp <- orgdb_args[[i]]
       na_set <- is.na(na_tmp)
@@ -1139,11 +922,9 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
       }
       ## Finally, make sure all GID columns are characters
       orgdb_args[[i]][["GID"]] <- as.character(orgdb_args[[i]][["GID"]])
-    }
+    } ## End checking for data.frames
   }
 
-  tt <- sm(require("AnnotationForge"))
-  message(sprintf("- Calling makeOrgPackage for %s", entry[["Species"]]))
   ## The following lines are because makeOrgPackage fails stupidly if the directory exists.
   backup_path <- file.path(dir, paste0(pkgname, ".bak"))
   first_path <- file.path(dir, pkgname)
@@ -1156,6 +937,9 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
  backing it up."))
     ret <- file.rename(first_path, backup_path)
   }
+
+  tt <- sm(require("AnnotationForge"))
+  message(sprintf("- Calling makeOrgPackage for %s", entry[["Species"]]))
   orgdb_path <- sm(try(do.call("makeOrgPackage", orgdb_args)))
   if (class(orgdb_path) == "try-error") {
     return(NULL)
@@ -1167,7 +951,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   message(sprintf("- Fixing sqlite Orgdb sqlite database %s", dbpath))
 
   ## make sqlite database editable
-  Sys.chmod(dbpath, mode='0644')
+  Sys.chmod(dbpath, mode="0644")
   db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname=dbpath)
   ## update SPECIES field
   query <- sprintf('UPDATE metadata SET value="%s" WHERE name="SPECIES";', entry[["Species"]])
@@ -1197,6 +981,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     "orgdb_name" = pkgname
   )
   return(retlist)
+
 }
 
 #' Generate TxDb for EuPathDB organism
@@ -1282,7 +1067,7 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     "GFVERSION" = GenomicFeatures:::.getMetaDataValue(txdb, "GenomicFeatures version at creation time"),
     "LIC" = "Artistic-2.0",
     "DBTYPE" = dbType,
-    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb,"Organism"),
+    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
     "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
     "PROVIDER" = provider,
     "PROVIDERVERSION" = providerVersion,
@@ -1409,20 +1194,25 @@ make_taxon_names <- function(entry) {
   return(taxa)
 }
 
-#' Queries one of the EuPathDB APIs using a POST request and returns a
-#' dataframe representation of the result.
-#' Note: As of 2017/07/13, POST requests are not yet supported on EuPathDB.
-#' Note: 2017/07/13 POST queries can only use the new API
+#' The new eupath system provides 3 output types for downloading data.  This uses the raw one.
 #'
-#' @param provider Name of data provider to query (e.g. 'TriTrypDB')
-#' @param query_body String of additional query arguments
-#' @return list containing response from API request.
+#' For the life of me, I could not figure out how to query the big text tables as the
+#' tabular format.  Every query I sent came back telling me I gave it incorrect parameter
+#' despite the fact that I was copy/pasting the example given me by the eupathdb maintainers.
+#' So, I got mad and asked it for the raw format, and so this function was born.
 #'
-#' More information
-#' ----------------
-#' 1. http://tritrypdb.org/tritrypdb/serviceList.jsp
-#' @author Keith Hughitt
-post_eupath_query <- function(entry, query_body, minutes=20) {
+#' @param entry  Annotation entry for a given species
+#' @param question  Which query to try?  Molecular weight is the easiest, as it was their example.
+#' @param table_name  Used to make sure all columns are unique by prefixing them with the table name.
+#' @param parameters  Query parameters when posting
+#' @param columns  Columns for which to ask.
+#' @param minutes  How long to wait until giving up and throwing an error.
+#' @return  A hopefully huge table of eupath data.
+post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeight",
+                            table_name=NULL, parameters=NULL, columns="primary_key",
+                            minutes=40) {
+  species <- entry[["Species"]]
+  provider <- tolower(entry[["DataProvider"]])
   ## determine appropriate prefix to use
   prefix_mapping <- list(
     "amoebadb" = "amoeba",
@@ -1433,223 +1223,48 @@ post_eupath_query <- function(entry, query_body, minutes=20) {
     "schistodb" = "schisto",
     "toxodb" = "toxo"
   )
-  provider <- tolower(entry[["DataProvider"]])
   uri_prefix <- provider
   if (uri_prefix %in% names(prefix_mapping)) {
     uri_prefix <- prefix_mapping[[uri_prefix]]
   }
+  if (is.null(parameters)) {
+    parameters <- list("organism" = jsonlite::unbox(species))
+  }
 
-  ##provider = "fungidb"
-  ##uri_prefix = "fungidb"
-  ##tt <- '{"answerSpec": {"questionName": "GeneQuestions.GenesByMolecularWeight","parameters": { "organism": "Aspergillus clavatus", "min_molecular_weight":"10000", "max_molecular_weight":"50000" }, "filters": [] }, "formatting": { "formatConfig": { "includeHeader": true, "attributes": [ "organism", "gene_type" ], "attachmentType": "plain" }, "format": "fullRecord" } }'
-  ## tt =   '{"answerSpec":{"questionName": "GeneQuestions.GenesByMolecularWeight","parameters": { "organism": "Leishmania major strain Friedlin","min_molecular_weight":"10","max_molecular_weight":"500000"},"filters":[]},"formatting":{"formatConfig":{"includeHeader":true,"attributes":["organism", "gene_type"],"attachmentType":"plain"},"format":"fullRecord"}}'
-  ## construct API query
-  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
-  ##result <- httr::POST(api_uri, body=tt,
+  query_body <- list(
+    ## 3 elements, answerSpec, formatting, format.
+    "answerSpec" = list(
+      "questionName" = jsonlite::unbox(question),
+      "parameters" = parameters,
+      "viewFilters" = list(),
+      "filters" = list()
+    ),
+    "formatting" = list(
+      "formatConfig" = list(
+        "includeHeaders" = jsonlite::unbox("true"),
+        "attributes" = columns,
+        "attachmentType" = jsonlite::unbox("plain")
+    ),
+    "format" = jsonlite::unbox("fullRecord")
+    ))
   body <- jsonlite::toJSON(query_body)
+
+  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
   result <- httr::POST(
                     api_uri,
                     body=body,
                     httr::content_type("application/json"),
                     httr::timeout(minutes * 60))
-  ## check status
-  ## if (res$status_code == 404) { ... }
-  ## return response contents
-  result <- httr::content(result)
-  result <- read.delim(textConnection(result), sep="\t")
-
-  ## If nothing was received, return nothing.
-  if (nrow(result) == 0) {
+  if (result[["status_code"]] == "422") {
+    warning("The provided species does not have a table of weights.")
     return(data.frame())
+  } else if (result[["status_code"]] != "200") {
+    warning("An error status code was returned.")
+    return(data.frame())
+  } else if (length(result[["content"]]) < 100) {
+    warning("A minimal amount of content was returned.")
   }
 
-  ## If a column is just 'X', then I think it can go away.
-  non_stupid_columns <- colnames(result) != "X"
-  result <- result[, non_stupid_columns]
-
-  ## simplify column names
-  ## > colnames(dat)
-  ## [1] "X.Gene.ID."                        "X.pathway_source_id."
-  ## [3] "X.Pathway."                        "X.Pathway.Source."
-  ## [5] "X.EC.Number.Matched.in.Pathway."   "X.expasy_url."
-  ## [7] "X...Reactions.Matching.EC.Number."
-  new_colnames <- toupper(colnames(result))
-  ## Get rid of dumb X. prefix
-  new_colnames <- gsub("^X\\.+", replacement="", x=new_colnames)
-  ## Get rid of spurious end .
-  new_colnames <- gsub("\\.$", replacement="", x=new_colnames)
-  ## Get rid of internal .'s
-  new_colnames <- gsub("\\.", replacement="_", x=new_colnames)
-  colnames(result) <- new_colnames
-  colnames(result)[1] <- "GID"
-  ## remove duplicated rows
-  result <- result[!duplicated(result), ]
-  return(result)
-}
-
-post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
-                                 metadata=NULL, overwrite=FALSE, dir="eupathdb") {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      ## metadata <- sm(download_eupath_metadata(dir=dir))
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-  }
-  ## query body as a structured list
-  ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
-  ## from Cristina
-  query_body <- list(
-    ## 3 elements, answerSpec, formatting, format.
-    "answerSpec" = list(
-      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
-      "parameters" = list("organism" = jsonlite::unbox(species)),
-      "viewFilters" = list(),
-      "filters" = list()
-    ),
-    "formatting" = list(
-      "formatConfig" = list(
-        "tables" = "GOTerms",
-        "includeEmptyTables" = jsonlite::unbox("true"),
-        "attachmentType" = jsonlite::unbox("plain")
-      ),
-      "format" = jsonlite::unbox("tableTabular")
-    ))
-
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_query(entry, query_body)
-
-  return(result)
-}
-
-post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
-                                       metadata=NULL, overwrite=FALSE, dir="eupathdb") {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      ##metadata <- sm(download_eupath_metadata(dir=dir))
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-  }
-  ## query body as a structured list
-  query_body <- list(
-    "answerSpec" = list(
-      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
-      "parameters" = list("organism" = jsonlite::unbox(species)),
-      "viewFilters" = list(),
-      "filters" = list()
-    ),
-    "formatting" = list(
-      "formatConfig" = list(
-        "tables" = "MetabolicPathways",
-        "includeHeader" = jsonlite::unbox("true"),
-        "attachmentType" = jsonlite::unbox("plain")
-      ),
-      "format" = jsonlite::unbox("tableTabular")
-    ))
-
-  message("Posting these queries might take a while, be warned.")
-  result <- post_eupath_query(entry, query_body)
-  return(result)
-}
-
-post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
-                                      metadata=NULL, overwrite=FALSE, dir="eupathdb") {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      ## metadata <- sm(download_eupath_metadata(dir=dir))
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-  }
-  ## query body as a structured list
-  query_body <- list(
-    "answerSpec" = list(
-      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
-      "parameters" = list(organism=jsonlite::unbox(species)),
-      "viewFilters" = list(),
-      "filters" = list()
-    ),
-    "formatting" = list(
-      "formatConfig" = list(
-        "tables" = "MetabolicPathways",
-        "includeHeader" = jsonlite::unbox("true"),
-        "attachmentType" = jsonlite::unbox("plain")
-      ),
-      "format" = jsonlite::unbox("tableTabular")
-    ))
-  result <- post_eupath_query(entry, query_body)
-  return(result)
-}
-
-post_eupath_text <- function(species="Leishmania major", entry=NULL,
-                             metadata=NULL, overwrite=FALSE, dir="eupathdb") {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      ## metadata <- sm(download_eupath_metadata(dir=dir))
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-    species <- entry[["Species"]]
-  }
-  ## query body as a structured list
-  field_list <- c(
-    "primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
-    "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
-    "gene_paralog_number", "gene_orthomcl_name", "gene_total_hts_snps",
-    "gene_hts_nonsynonymous_snps", "gene_hts_noncoding_snps", "gene_hts_stop_codon_snps",
-    "gene_hts_nonsyn_syn_ratio", "uniprot_id", "gene_entrez_id", "transcript_length",
-    "exon_count", "strand", "cds_length", "tm_count", "molecular_weight", "isoelectric_point",
-    "signalp_scores", "signalp_peptide", "annotated_go_function", "annotated_go_process",
-    "annotated_go_component", "annotated_go_id_function", "annotated_go_id_process",
-    "annotated_go_id_component", "predicted_go_id_function", "predicted_go_id_process",
-    "predicted_go_id_component", "ec_numbers", "ec_numbers_derived", "five_prime_utr_length",
-    "three_prime_utr_length", "location_text", "gene_previous_ids", "protein_sequence", "cds")
-
-  query_body <- list(
-    "answerSpec" = list(
-      ## So, using GenesByTaxon or GenesByTaxonGene both fail with utterly spurious crap
-      ## about not providing the proper formatting, so since this is the example the pdf
-      ## gave me, I will  use it with utterly stupid values.
-      "questionName" = jsonlite::unbox("GeneQuestions.GenesByMolecularWeight"),
-      "parameters" = list(
-        "organism" = jsonlite::unbox(species),
-        "min_molecular_weight" = jsonlite::unbox("1"),
-        "max_molecular_weight" = jsonlite::unbox("10000000000000000")
-        ),
-      "filters" = list()),
-    "formatting" = list(
-      "formatConfig" = list(
-        "includeHeader" = jsonlite::unbox("true"),
-        "attributes" = field_list,
-        "attachmentType" = jsonlite::unbox("plain")),
-      "format" = jsonlite::unbox("fullRecord"))
-  )
-  body <- jsonlite::toJSON(query_body)
-  ## The following is a known valid json input.  The formatting of my query body
-  ## must be precisely the same as the following format, or some form of error 400 will happen.
-  ##tt <- '{"answerSpec": {"questionName": "GeneQuestions.GenesByMolecularWeight",
-  ##           "parameters": { "organism": "Leishmania major strain Friedlin",
-  ##                           "min_molecular_weight":"10000",
-  ##                           "max_molecular_weight":"50000" },
-  ##           "filters": [] },
-  ##        "formatting": { "formatConfig": { "includeHeader": true,
-  ##                        "attributes": [ "primary_key", "organism", "gene_type" ],
-  ##                        "attachmentType": "plain" },
-  ##         "format": "fullRecord" } }'
-  ## body
-
-  ## We should have a valid request now, so send it to the eupathdb server and see what happens...
-  result <- httr::POST(api_uri, body=body, httr::content_type("application/json"),
-                       httr::timeout(minutes * 60))
   ## Get the content, this will take a while, as the result from eupathdb might be > 50 Mb of stuff.
   cont <- httr::content(result)
   ## Sadly, most of that stuff is completely unwanted.  This is because we are using the
@@ -1674,12 +1289,12 @@ post_eupath_text <- function(species="Leishmania major", entry=NULL,
   ## Finally, I do not accept column names with spaces.
   column_names <- gsub(pattern=" ", replacement="_", x=column_names)
   column_names[1] <- "GID"
-  tmp <- data.frame(row.names=1:length(entries))
+  information <- data.frame(row.names=1:length(entries))
   for (col in column_names) {
     new_col <- rep(NA, times=length(entries))
-    tmp <- cbind(tmp, new_col)
+    information <- cbind(information, new_col)
   }
-  colnames(tmp) <- column_names
+  colnames(information) <- column_names
   bar <- utils::txtProgressBar(style=3)
   ## Now fill in the data using the other side of my regular expression.
   for (c in 1:length(entries)) {
@@ -1687,155 +1302,362 @@ post_eupath_text <- function(species="Leishmania major", entry=NULL,
     setTxtProgressBar(bar, pct_done)
     stuff <- read.delim(textConnection(entries[c]), sep="\n", header=FALSE)
     material <- gsub(pattern="^(.+?)\\: (.+)?$", replacement="\\2", x=stuff[["V1"]])
-    tmp[c, ] <- material
+    information[c, ] <- material
   }
   close(bar)
-  information <- data.table::as.data.table(tmp)
+  ## remove duplicated rows
+  information <- information[!duplicated(information), ]
+  ## In some cases we will want to prefix the columns with the table name...
+  if (!is.null(table_name)) {
+    for (c in 2:length(colnames(information))) {
+      col_name <- colnames(information)[c]
+      prefix_string <- paste0(toupper(table_name), "_")
+      ## Use if() test this to avoid column names like 'GO_GO_ID'
+      foundp <- grepl(pattern=paste0("^", prefix_string), x=toupper(col_name))
+      if (!foundp) {
+        new_col <- paste0(toupper(table_name), "_", toupper(col_name))
+        colnames(information)[c] <- new_col
+      }
+    }
+  }
   return(information)
 }
 
-#' Queries one of the EuPathDB APIs using a GET request and returns a dataframe
-#' representation of the result.
+#' Queries one of the EuPathDB APIs using a POST request and returns a
+#' dataframe representation of the result.
+#' Note: As of 2017/07/13, POST requests are not yet supported on EuPathDB.
+#' Note: 2017/07/13 POST queries can only use the new API
 #'
 #' @param provider Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species Full name of organism, as used by EuPathDB APIs
-#' @param dir  Where to place the data
-#' @param prefix  A prefix when writing the data file
-#' @param query_args String of additional query arguments
-#' @param wadl String specifying API service to be queried
-#' @param format String specifying API response type (currently only 'json'
-#'        is supported)
+#' @param query_body String of additional query arguments
 #' @return list containing response from API request.
 #'
 #' More information
 #' ----------------
 #' 1. http://tritrypdb.org/tritrypdb/serviceList.jsp
 #' @author Keith Hughitt
-query_eupathdb <- function(provider="TriTrypDB", species="Leishmania major",
-                           dir="eupathdb", prefix="table", query_args=NULL,
-                           wadl="GeneQuestions/GenesByTaxon", format="json") {
-  ## construct API query
-  base_url <- sprintf("http://%s.org/webservices/%s.%s?",
-                      tolower(provider), wadl, format)
-  ## add organism to query arguments
-  query_args[["organism"]] <- utils::URLencode(species, reserved=TRUE)
-  query_string <- paste(paste(names(query_args), query_args, sep="="), collapse="&")
-  request_url <- paste0(base_url, query_string)
-  message(sprintf("- Querying %s", request_url))
-  result <- NULL
-  destfile <- paste0(dir, "/", provider, "_", prefix, ".json")
-  if (!file.exists(destfile)) {
-    original_options <- options(timeout=300)
-    file <- download.file(url=request_url, destfile=destfile, method="curl", quiet=TRUE)
-    temp_options <- options(original_options)
+#' @export
+post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NULL,
+                              table_name=NULL, minutes=20) {
+
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      metadata <- download_eupath_metadata(dir=dir, ...)
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
   }
-  result <- jsonlite::fromJSON(destfile)
-  message("- Finished query.")
+
+  ## determine appropriate prefix to use
+  species <- entry[["Species"]]
+  provider <- tolower(entry[["DataProvider"]])
+  prefix_mapping <- list(
+    "amoebadb" = "amoeba",
+    "microbiomedb" = "mbio",
+    "microsporidiadb" = "micro",
+    "piroplasmadb" = "piro",
+    "plasmodb" = "plasmo",
+    "schistodb" = "schisto",
+    "toxodb" = "toxo"
+  )
+  uri_prefix <- provider
+  if (uri_prefix %in% names(prefix_mapping)) {
+    uri_prefix <- prefix_mapping[[uri_prefix]]
+  }
+
+  ## construct API query
+  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
+  ##result <- httr::POST(api_uri, body=tt,
+  body <- jsonlite::toJSON(query_body)
+  result <- httr::POST(
+                    api_uri,
+                    body=body,
+                    httr::content_type("application/json"),
+                    httr::timeout(minutes * 60))
+  if (result[["status_code"]] == "422") {
+    warning("The provided species does not have a table of weights.")
+    return(data.frame())
+  } else if (result[["status_code"]] != "200") {
+    warning("An error status code was returned.")
+    return(data.frame())
+  } else if (length(result[["content"]]) < 100) {
+    warning("A minimal amount of content was returned.")
+  }
+
+  result <- httr::content(result)
+  result <- read.delim(textConnection(result), sep="\t")
+  ## If nothing was received, return nothing.
+  if (nrow(result) == 0) {
+    return(data.frame())
+  }
+
+  ## If a column is just 'X', then I think it can go away.
+  non_stupid_columns <- colnames(result) != "X"
+  result <- result[, non_stupid_columns]
+
+  ## simplify column names, the are downloaded with
+  ## annoyingly stupid names like:
+  ## > colnames(dat)
+  ## [1] "X.Gene.ID."                        "X.pathway_source_id."
+  ## [3] "X.Pathway."                        "X.Pathway.Source."
+  ## [5] "X.EC.Number.Matched.in.Pathway."   "X.expasy_url."
+  ## [7] "X...Reactions.Matching.EC.Number."
+  new_colnames <- toupper(colnames(result))
+  ## Get rid of dumb X. prefix
+  new_colnames <- gsub("^X\\.+", replacement="", x=new_colnames)
+  ## Get rid of spurious end .
+  new_colnames <- gsub("\\.$", replacement="", x=new_colnames)
+  ## Get rid of internal .'s
+  new_colnames <- gsub("\\.", replacement="_", x=new_colnames)
+  colnames(result) <- new_colnames
+  colnames(result)[1] <- "GID"
+  ## remove duplicated rows
+  result <- result[!duplicated(result), ]
+  if (!is.null(table_name)) {
+    for (c in 2:length(colnames(result))) {
+      col_name <- colnames(result)[c]
+      new_col <- paste0(toupper(table_name), "_", toupper(col_name))
+      colnames(result)[c] <- new_col
+    }
+  }
   return(result)
 }
 
-#' Queries one of the EuPathDB APIs for gene data
+#' Gather all available annotation data for a given eupathdb species.
 #'
-#' Note that as of version 30, EuPathDB no longer supports table queries for
-#' genes, and as such this method must be used instead. Support for tables
-#' queries is likely to be returned in future versions of EuPathDB.
+#' This function fills in the parameters to post_eupath_raw() so that one can download
+#' all the available data for a given parasite into one massive table.  It should also
+#' provide some constraints to the data rather than leaving it all as characters.
 #'
-#' @param provider Name of data provider to query (e.g. 'TriTrypDB')
-#' @param species Full name of organism, as used by EuPathDB APIs
-#' @param table Name of the particular table to be retrieved (e.g.
-#' 'GoTerms')
-#' @param wadl String specifying API service to be queried
-#' @param format String specifying API response type (currently only 'json'
-#'        is supported)
-#' @param overwrite  Overwrite existing data?
-#' @param dir  Where to place the downloaded information?
-#' @return list containing response from API request.
-#' @author Keith Hughitt
-retrieve_eupathdb_attributes <- function(provider="TriTrypDB",
-                                         species="Leishmania major",
-                                         table="GOTerms",
-                                         wadl="GeneQuestions/GenesByTaxonGene",
-                                         format="json",
-                                         overwrite=FALSE,
-                                         dir="eupathdb") {
-  ## Adding a savefile check because the eupathdb does not always respond in a timely manner.
-  savefile <- file.path(dir, paste0(table, "-v", format(Sys.time(), "%Y%m"), ".rda"))
-  if (isTRUE(overwrite)) {
-    file.remove(savefile)
-  }
-  if (!file.exists(dir)) {
-    dir.create(dir, recursive=TRUE)
-  }
-  if (file.exists(savefile)) {
-    result <- new.env()
-    loaded <- load(savefile, envir=result)
-    result <- result[["result"]]
-    return(result)
-  }
-
-  ## query EuPathDB API
-  res <- query_eupathdb(
-    provider=provider,
-    species=species,
-    dir=dir,
-    prefix=table,
-    query_args=list(
-      `o-tables`=table,
-      `o-fields`="primary_key"),
-    wadl=wadl,
-    format="json")
-  dat <- res[["response"]][["recordset"]][["records"]]
-  if (is.null(dat)) {
-    message(paste0("Nothing was returned for the ", table, " table."))
-    return(NULL)
-  }
-
-  message(sprintf("- Parsing %s table for %s.", table, species))
-  ## drop genes with no associated table entries
-  gene_mask <- sapply(dat[, "tables"], function(x) { length(x[["rows"]][[1]]) > 0})
-  dat <- dat[gene_mask, ]
-  ## create empty data frame to store result in
-  result <- data.frame(stringsAsFactors=FALSE)
-  ## if no rows found, return empty data.frame
-  if (nrow(dat) == 0) {
-    return(result)
-  }
-
-  ## fix id field
-  dat[["id"]] <- unlist(sapply(dat[["fields"]], function(x) { strsplit(x[, "value"], ",")[1] }))
-  message(sprintf("- Parsing %d rows in %s table for %s.", nrow(dat), table, species))
-  bar <- utils::txtProgressBar(style=3)
-  ## iterate over remaining genes and extract table entries for them
-  for (i in 1:nrow(dat)) {
-    pct_done <- i / nrow(dat)
-    setTxtProgressBar(bar, pct_done)
-    ## example entry:
-    ##
-    ## > dat$tables[[1]]$rows[[1]]$fields[[1]]
-    ##         name                      value
-    ## 1         go_id                 GO:0007018
-    ## 2      ontology         Biological Process
-    ## 3  go_term_name microtubule-based movement
-    ## 4        source                   Interpro
-    ## 5 evidence_code                        IEA
-    ## 6        is_not                       <NA>
-    table_entries <- dat[["tables"]][[i]]
-    rows <- t(sapply(table_entries[["rows"]][[1]][["fields"]], function(x) { x[["value"]] }))
-    result <- rbind(result, cbind(dat[["id"]][i], rows))
-  }
-  close(bar)
-
-  for (col in colnames(result)) {
-    if (class(result[[col]]) != "numeric") {
-      result[[col]] <- as.character(result[[col]])
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
+post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
+                                    metadata=NULL, dir="eupathdb") {
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      ## metadata <- sm(download_eupath_metadata(dir=dir))
     }
+    entry <- check_eupath_species(species=species, metadata=metadata)
+    species <- entry[["Species"]]
   }
-  ## set column names for result
-  colnames(result) <- c("GID", dat[["tables"]][[1]][["rows"]][[1]][["fields"]][[1]][["name"]])
+  ## query body as a structured list
+  field_list <- c(
+    "primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
+    "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
+    "gene_paralog_number", "gene_orthomcl_name", "gene_total_hts_snps",
+    "gene_hts_nonsynonymous_snps", "gene_hts_noncoding_snps", "gene_hts_stop_codon_snps",
+    "gene_hts_nonsyn_syn_ratio", "uniprot_id", "gene_entrez_id", "transcript_length",
+    "exon_count", "strand", "cds_length", "tm_count", "molecular_weight", "isoelectric_point",
+    "signalp_scores", "signalp_peptide", "annotated_go_function", "annotated_go_process",
+    "annotated_go_component", "annotated_go_id_function", "annotated_go_id_process",
+    "annotated_go_id_component", "predicted_go_id_function", "predicted_go_id_process",
+    "predicted_go_id_component", "ec_numbers", "ec_numbers_derived", "five_prime_utr_length",
+    "three_prime_utr_length", "location_text", "gene_previous_ids", "protein_sequence", "cds")
+  parameters <- list(
+    "organism" = jsonlite::unbox(species),
+    "min_molecular_weight" = jsonlite::unbox("1"),
+    "max_molecular_weight" = jsonlite::unbox("10000000000000000")
+  )
+  result <- post_eupath_raw(entry,
+                            question="GeneQuestions.GenesByMolecularWeight",
+                            parameters=parameters,
+                            columns=field_list)
+  colnames(result) <- tolower(colnames(result))
+  numeric_columns <- c(
+    "exons_in_gene", "transcripts", "ortholog_count", "paralog_count", "total_snps_all_strains",
+    "nonsynonymous_snps_all_strains", "noncoding_snps_all_strains", "snps_with_stop_codons_all_strains",
+    "nonsynsyn_snp_ratio_all_strains", "transcript_length", "cds_length",
+    "molecular_weight", "isoelectric_point", "annotated_5_utr_length", "annotated_3_utr_length")
+  for (col in numeric_columns) {
+    result[[col]] <- as.numeric(result[[col]])
+  }
+  factor_columns <- c(
+    "chromosome", "gene_type", "is_pseudo", "gene_strand", "tm_domains", "exons_in_transcript")
+  for (col in factor_columns) {
+    result[[col]] <- as.factor(result[[col]])
+  }
+  colnames(result) <- toupper(colnames(result))
+  return(result)
+}
 
-  if (isTRUE(overwrite) | !file.exists(savefile)) {
-    saved <- save(list="result", file=savefile)
+#'  Use the post interface to get GO data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
+post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
+                                 metadata=NULL, dir="eupathdb") {
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      ## metadata <- sm(download_eupath_metadata(dir=dir))
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
   }
+  species <- entry[["Species"]]
+  ## query body as a structured list
+  ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
+  ## from Cristina
+  query_body <- list(
+    ## 3 elements, answerSpec, formatting, format.
+    "answerSpec" = list(
+      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
+      "parameters" = list("organism" = jsonlite::unbox(species)),
+      "viewFilters" = list(),
+      "filters" = list()
+    ),
+    "formatting" = list(
+      "formatConfig" = list(
+        "tables" = "GOTerms",
+        "includeEmptyTables" = jsonlite::unbox("true"),
+        "attachmentType" = jsonlite::unbox("plain")
+      ),
+      "format" = jsonlite::unbox("tableTabular")
+    ))
+
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="go")
+  return(result)
+}
+
+#'  Use the post interface to get ortholog data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
+post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
+                                       metadata=NULL, dir="eupathdb") {
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      ## metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      metadata <- sm(download_eupath_metadata(dir=dir))
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
+  }
+  species <- entry[["Species"]]
+
+  ## query body as a structured list
+  ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
+  ## from Cristina
+  query_body <- list(
+    ## 3 elements, answerSpec, formatting, format.
+    "answerSpec" = list(
+      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
+      "parameters" = list("organism" = jsonlite::unbox(species)),
+      "viewFilters" = list(),
+      "filters" = list()
+    ),
+    "formatting" = list(
+      "formatConfig" = list(
+        "tables" = "Orthologs",
+        "includeEmptyTables" = jsonlite::unbox("true"),
+        "attachmentType" = jsonlite::unbox("plain")
+      ),
+      "format" = jsonlite::unbox("tableTabular")
+    ))
+
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="orthologs")
+  return(result)
+}
+
+#'  Use the post interface to get interpro data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
+post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin", entry=NULL,
+                                       metadata=NULL, dir="eupathdb") {
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      ## metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      metadata <- sm(download_eupath_metadata(dir=dir))
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
+  }
+
+  species <- entry[["Species"]]
+  ## query body as a structured list
+  ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
+  ## from Cristina
+  query_body <- list(
+    ## 3 elements, answerSpec, formatting, format.
+    "answerSpec" = list(
+      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
+      "parameters" = list("organism" = jsonlite::unbox(species)),
+      "viewFilters" = list(),
+      "filters" = list()
+    ),
+    "formatting" = list(
+      "formatConfig" = list(
+        "tables" = "InterPro",
+        "includeEmptyTables" = jsonlite::unbox("true"),
+        "attachmentType" = jsonlite::unbox("plain")
+      ),
+      "format" = jsonlite::unbox("tableTabular")
+    ))
+
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="interpro")
+  return(result)
+}
+
+#'  Use the post interface to get pathway data.
+#'
+#' @param species  guess.
+#' @param entry  The full annotation entry.
+#' @param metadata  A metadata table from which to get some annotation data.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @return  A big honking table.
+post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
+                                      metadata=NULL, dir="eupathdb") {
+  if (is.null(entry) & is.null(species)) {
+    stop("Need either an entry or species.")
+  } else if (is.null(entry)) {
+    if (is.null(metadata)) {
+      ## metadata <- sm(download_eupath_metadata(dir=dir, ...))
+      metadata <- sm(download_eupath_metadata(dir=dir))
+    }
+    entry <- check_eupath_species(species=species, metadata=metadata)
+  }
+  species <- entry[["Species"]]
+  ## query body as a structured list
+  ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
+  ## from Cristina
+  query_body <- list(
+    ## 3 elements, answerSpec, formatting, format.
+    "answerSpec" = list(
+      "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
+      "parameters" = list("organism" = jsonlite::unbox(species)),
+      "viewFilters" = list(),
+      "filters" = list()
+    ),
+    "formatting" = list(
+      "formatConfig" = list(
+        "tables" = "MetabolicPathways",
+        "includeEmptyTables" = jsonlite::unbox("true"),
+        "attachmentType" = jsonlite::unbox("plain")
+      ),
+      "format" = jsonlite::unbox("tableTabular")
+    ))
+
+  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="pathway")
   return(result)
 }
 

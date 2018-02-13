@@ -16,7 +16,7 @@
 #' @param component_x  Put which component on the x-axis?
 #' @param component_y  And which component on the y-axis?
 #' @param ...  Arglist arguments.
-#' @export 
+#' @export
 plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
                             chosen_features=NULL, number_features=NULL,
                             perplexity=NULL, min_variance=0.01, plot_title=NULL,
@@ -134,7 +134,7 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
     }
     plotting_indexes <- order(variances, decreasing=TRUE)[1:number_features]
   }
-  
+
   plotting_data <- data[plotting_indexes, ]
   ## This I do understand and think is cool
   ## Drop features with low variance
@@ -332,7 +332,7 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
     }
     plotting_indexes <- order(variances, decreasing=TRUE)[1:number_features]
   }
-  
+
   plotting_data <- data[plotting_indexes, ]
   ## This I do understand and think is cool
   ## Drop features with low variance
@@ -450,7 +450,7 @@ tsne_res <- function(Y, costs, condition=NULL, batch=NULL) {
     }
     conditional_rsquared <- apply(Y, 2, cond.R2)
   }
-  if(!is.null(batch)) {
+  if (!is.null(batch)) {
     batch.R2 <- function(y) {
       round(summary(lm(y ~ batch))[["r.squared"]] * 100, 2)
     }

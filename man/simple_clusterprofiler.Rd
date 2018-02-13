@@ -31,7 +31,8 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
 
 \item{fc_column}{When extracting vectors of all genes, what column should be used?}
 
-\item{second_fc_column}{When extracting vectors of all genes, what column should be tried the second time around?}
+\item{second_fc_column}{When extracting vectors of all genes, what column
+should be tried the second time around?}
 
 \item{updown}{Include the less than expected ontologies?}
 

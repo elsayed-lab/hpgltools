@@ -10,10 +10,7 @@
 #' @param tolower  Lowercase stuff like 'HPGL'?
 #' @return  A new expt object
 #' @export
-count_expt_snps <- function(expt,
-                            type="counts",
-                            input_dir="preprocessing/outputs",
-                            tolower=TRUE) {
+count_expt_snps <- function(expt, type="counts", input_dir="preprocessing/outputs", tolower=TRUE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -33,7 +30,7 @@ count_expt_snps <- function(expt,
   snp_features <- data.table::as.data.table(snp_dt)
   snp_features[, c("species","chromosome","position","original","new") :=
                    data.table::tstrsplit(snp_features[["rownames"]], "_", fixed=TRUE)]
-  snp_features <- snp_features[, c("species","chromosome","position","original","new")]
+  snp_features <- snp_features[, c("species", "chromosome", "position", "original", "new")]
   snp_features <- as.data.frame(snp_features)
   rownames(snp_features) <- snp_dt[["rownames"]]
 
@@ -54,7 +51,7 @@ count_expt_snps <- function(expt,
 }
 
 #' Extract the observed snps unique to individual categories in a snp set.
-#' 
+#'
 #' The result of get_snp_sets provides sets of snps for all possible
 #' categories.  This is cool and all, but most of the time we just want the
 #' results of a single group in that rather large set (2^number of categories)
@@ -118,7 +115,9 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(levels(as.factor(chr)))
   bar <- utils::txtProgressBar(max=num_levels, style=3)
-  progress <- function(n) { setTxtProgressBar(bar, n) }
+  progress <- function(n) {
+    setTxtProgressBar(bar, n)
+  }
   pb_opts <- list(progress=progress)
   returns <- list()
   res <- list()
@@ -408,11 +407,11 @@ snps_vs_intersections <- function(expt, snp_result) {
                                                ignore.strand=TRUE)
     inters[[inter_name]] <- inter_by_gene
     summarized_by_gene <- data.table::as.data.table(inter_by_gene)
-    summarized_by_gene[ , count := .N, by = list(seqnames)]
+    summarized_by_gene[, count := .N, by = list(seqnames)]
     summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
     summaries[[inter_name]] <- summarized_by_gene
   }
-  
+
   retlist <- list(
     "inters" = inters,
     "summaries" = summaries)
@@ -445,8 +444,12 @@ snps_vs_genes <- function(expt, snp_result) {
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 
   snp_positions <- snp_result[["medians"]]
-  snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$", replacement="\\1", x=rownames(snp_positions))
-  snp_positions[["start"]] <- as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$", replacement="\\1", x=rownames(snp_positions)))
+  snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$",
+                                      replacement="\\1",
+                                      x=rownames(snp_positions))
+  snp_positions[["start"]] <- as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+                                              replacement="\\1",
+                                              x=rownames(snp_positions)))
   snp_positions[["end"]] <- snp_positions[["start"]] + 1
   snp_positions[["strand"]] <- "+"
   snp_positions <- snp_positions[, c("seqnames", "start", "end", "strand")]
@@ -454,7 +457,7 @@ snps_vs_genes <- function(expt, snp_result) {
 
   snps_by_gene <- IRanges::subsetByOverlaps(snp_granges, expt_granges, type="within", ignore.strand=TRUE)
   summarized_by_gene <- data.table::as.data.table(snps_by_gene)
-  summarized_by_gene[ , count := .N, by = list(seqnames)]
+  summarized_by_gene[, count := .N, by = list(seqnames)]
   summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
   retlist <- list(
     "expt_granges" = expt_granges,
