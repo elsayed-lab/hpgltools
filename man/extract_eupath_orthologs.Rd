@@ -37,7 +37,7 @@ comparison I want for 1 species or between 2 species.  A singularly common
 question I am asked is: "What are the most similar genes between species x
 and y among these two arbitrary parasites?"  There are lots of ways to poke
 at this question: run BLAST/fasta36, use biomart, query the ortholog tables
-from the eupathdb, etc...  However, in all these cases, it is not trivial to
+from the eupathdb, etc.  However, in all these cases, it is not trivial to
 ask the next question:  What about: a:b and b:a?
 This function attempts to address that for the case of two eupath species
 from the same domain. (tritrypdb/fungidb/etc.)  It does however assume that

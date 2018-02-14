@@ -8,12 +8,22 @@ Note: As of 2017/07/13, POST requests are not yet supported on EuPathDB.
 Note: 2017/07/13 POST queries can only use the new API}
 \usage{
 post_eupath_table(query_body, species = NULL, entry = NULL,
-  metadata = NULL, table_name = NULL, minutes = 20)
+  metadata = NULL, table_name = NULL, minutes = 20, ...)
 }
 \arguments{
 \item{query_body}{String of additional query arguments}
 
-\item{provider}{Name of data provider to query (e.g. 'TriTrypDB')}
+\item{species}{Species name if missing an entry}
+
+\item{entry}{The single metadatum containing the base url of the provider, species, etc.}
+
+\item{metadata}{If no entry is provided, then it may be retrieved given a species and this.}
+
+\item{table_name}{The name of the table to extract, this is provided to make for prettier labeling.}
+
+\item{minutes}{A timeout when querying the eupathdb.}
+
+\item{...}{Extra arguments for stuff like download_metadtata()}
 }
 \value{
 list containing response from API request.

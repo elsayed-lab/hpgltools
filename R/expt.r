@@ -1034,28 +1034,16 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
-
-    ## This is used when 'normal' htseq-based counts were generated.
-    message(paste0("TESTME: ", header, " THERE?"))
-    if (header == FALSE) {
-      message("The header is false")
-    } else if (isTRUE(header)) {
-      message("The header is true.")
-    } else {
-      message("the header is something else.")
-    }
-    message(paste0("pre: ", files[1], " ", header))
+    ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header=header)
-    message("first")
     colnames(count_table) <- c("rownames", ids[1])
-    message("second")
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
       stop(paste0("There was an error reading: ", files[1]))
     }
     message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
-        ## Following lines not needed for data.table
+    ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
     ## count_table <- count_table[, -1, drop=FALSE]
     ## iterate over and append remaining samples

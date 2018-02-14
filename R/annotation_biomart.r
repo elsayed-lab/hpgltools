@@ -15,7 +15,7 @@
 #' @param drop_haplotypes  Some chromosomes have stupid names because they are from non-standard
 #'   haplotypes and they should go away.  Setting this to false stops that.
 #' @param trymart  Biomart has become a circular dependency, this makes me sad, now to list the
-#'  marts, you need to have a mart loaded...
+#'  marts, you need to have a mart loaded.
 #' @param gene_requests  Set of columns to query for description-ish annotations.
 #' @param length_requests  Set of columns to query for location-ish annotations.
 #' @param include_lengths  Also perform a search on structural elements in the genome?
@@ -105,7 +105,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   found_attribs <- gene_requests %in% available_attribs
   if (length(gene_requests) != sum(found_attribs)) {
     message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
- ensembl database. At some point I will show them here..."))
+ ensembl database. At some point I will show them here."))
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes=gene_requests,
@@ -117,7 +117,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     found_attribs <- length_requests %in% available_attribs
     if (length(length_requests) != sum(found_attribs)) {
       message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
- ensembl database. At some point I will show them here..."))
+ ensembl database. At some point I will show them here."))
       length_requests <- length_requests[found_attribs]
     }
     structure_annotations <- biomaRt::getBM(attributes=length_requests,

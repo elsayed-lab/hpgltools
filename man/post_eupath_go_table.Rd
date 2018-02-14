@@ -5,7 +5,7 @@
 \title{Use the post interface to get GO data.}
 \usage{
 post_eupath_go_table(species = "Leishmania major", entry = NULL,
-  metadata = NULL, dir = "eupathdb")
+  metadata = NULL, dir = "eupathdb", ...)
 }
 \arguments{
 \item{species}{guess.}
@@ -15,6 +15,8 @@ post_eupath_go_table(species = "Leishmania major", entry = NULL,
 \item{metadata}{A metadata table from which to get some annotation data.}
 
 \item{dir}{FIXME: I want to write some intermediate data to dir in case of transient error.}
+
+\item{...}{Extra options when downloading metadata.}
 }
 \value{
 A big honking table.
