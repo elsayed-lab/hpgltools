@@ -542,15 +542,15 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 pp <- function(file, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
   if (ext == "png") {
-    res <- png(filename=file, width=width, height=height, units="in", res=res) ##, ...)
+    res <- png(filename=file, width=width, height=height, units="in", res=res, ...)
   } else if (ext == "svg") {
-    res <- svg(filename=file)
+    res <- svg(filename=file, ...)
   } else if (ext == "ps") {
     res <- postscript(file=file, width=width, height=height, ...)
   } else if (ext == "eps") {
     res <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {
-    res <- pdf(file=file, ...)
+    res <- cairo_pdf(file=file, ...)
   } else {
     message("Defaulting to tiff.")
     res <- tiff(filename=file, width=width, height=height, units="in", ...)

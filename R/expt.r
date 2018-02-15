@@ -152,7 +152,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
-  ## sample_definitions <- extract_metadata(metadata)
+  ##  sample_definitions <- extract_metadata(metadata)
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -220,6 +220,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## and count_table which should have one column for every kept_id/kept_file.
   count_data <- NULL
   if (is.null(all_count_tables)) {
+    ## If all_count_tables does not exist, then we want to read the various files
+    ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     count_data <- read_counts_expt(sample_ids, filenames, ...)
@@ -229,6 +231,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                             "scaled" = count_data[["tximport_scaled"]])
     }
     all_count_tables <- count_data[["count_table"]]
+  } else {
+    ## if all_count_tables _did_ exist, then we already had the count tables and so
+    ## count_data should have them and all ids as 'kept'.
+    count_data <- list(
+      "source" = "dataframe",
+      "raw" = all_count_tables,
+      "kept_ids" = as.character(sample_definitions[[sample_column]]))
   }
   ## Here we will prune the metadata for any files/ids which were dropped
   ## when reading in the count tables.

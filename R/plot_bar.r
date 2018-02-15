@@ -87,6 +87,64 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
   return(retlist)
 }
 
+#' Thanks to Sandra Correia for this!
+#' @export
+plot_libsize_prepost <- function(expt, low_limit=2) {
+  start <- plot_libsize(expt, text=FALSE)
+  norm <- sm(normalize_expt(expt, filter=TRUE))
+  end <- plot_libsize(norm)
+
+  lt_min_start <- colSums(exprs(expt) <= low_limit)
+  lt_min_end <- colSums(exprs(norm) <= low_limit)
+
+  start_tab <- as.data.frame(start[["table"]])
+  start_tab[["sum"]] <- as.numeric(start_tab[["sum"]])
+  start_tab[["colors"]] <- as.character(start_tab[["colors"]])
+  start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
+  start_tab[["low"]] <- lt_min_start
+  start_tab[["subtraction"]] <- ""
+  start_tab[["sub_low"]] <- start_tab[["low"]] - end_tab[["low"]]
+  end_tab <- as.data.frame(end[["table"]])
+  end_tab[["sum"]] <- as.numeric(end_tab[["sum"]])
+  end_tab[["colors"]] <- as.character(end_tab[["colors"]])
+  end_tab[["alpha"]] <- ggplot2::alpha(end_tab[["colors"]], 1.0)
+  end_tab[["subtraction"]] <- start_tab[["sum"]] - end_tab[["sum"]]
+  end_tab[["low"]] <- lt_min_end
+  end_tab[["sub_low"]] <- ""
+  all_tab <- rbind(start_tab, end_tab)
+
+  count_columns <- ggplot(all_tab, aes_string(x="id", y="sum")) +
+    ggplot2::geom_col(position="identity", color="black", aes_string(fill="colors")) +
+    ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                       aes_string(
+                         x="id",
+                         label='as.character(all_tab$subtraction)')) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
+                   legend.position="none")
+
+  low_columns <- ggplot(all_tab, aes_string(x="id", y="low")) +
+    ggplot2::geom_col(position="identity", color="black", aes_string(alpha="alpha", fill="colors")) +
+    scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="black", hjust=1.2,
+                       aes_string(
+                         x="id",
+                         label='as.character(all_tab$sub_low)')) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
+                   legend.position="none")
+
+  retlist <- list(
+    "start" = start,
+    "end" = end,
+    "table" = all_tab,
+    "count_plot" = count_columns,
+    "lowgene_plot" = low_columns
+  )
+  return(retlist)
+}
+
 #' Make a ggplot graph of the percentage/number of reads kept/removed.
 #'
 #' The function expt_exclude_genes() removes some portion of the original reads.
