@@ -222,7 +222,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 #' The xref parameter reminds me, this function does make a peculiar attempt to
 #'   handle a lot of corner cases without failure, but instead to try to always
 #'   provide some useful information, even if that information is not precisely
-#'   what you want, but the only thing I can find.
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       #'   what you want, but the only thing I can find.
 #' With that in mind, one could easily argue that this function is too long and
 #'   it should be split into a couple pieces, but hopefully it is sufficiently
 #'   clear that this is not necessary -- or I will do it later.

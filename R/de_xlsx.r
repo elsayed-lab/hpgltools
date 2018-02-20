@@ -832,6 +832,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (is.null(retlist)) {
     ret <- list(
       "data" = combo,
+      "input" = all_pairwise_result,
       "limma_plots" = limma_plots,
       "edger_plots" = edger_plots,
       "deseq_plots" = deseq_plots,
@@ -1042,7 +1043,9 @@ Defaulting to fdr."))
   }
   if (!is.null(annot_df)) {
     ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
-    colnames(annot_df) <- gsub("[[:punct:]]", "", colnames(annot_df))
+    colnames(annot_df) <- gsub(pattern="[[:punct:]]",
+                               replacement="",
+                               x=colnames(annot_df))
     comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
     rownames(comb) <- comb[["Row.names"]]
     comb <- comb[, -1, drop=FALSE]
@@ -1597,7 +1600,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     }
 
     ## I messed up something here.  The plots and tables
-    ## at this point should start 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
+    ## at this point should start:
+    ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
     if ("limma" %in% according_to) {
       xl_result <- openxlsx::writeData(
                                wb, "number_changed", x="Significant limma genes.",
@@ -1608,7 +1612,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
         savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
       summary_row <- plot_row
       summary_col <- plot_col + 11
-      limma_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["limma"]], sig_bar_plots[["downs"]][["limma"]])
+      limma_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["limma"]],
+                                           sig_bar_plots[["downs"]][["limma"]])
       limma_xls_summary <- write_xls(
         data=limma_summary, wb=wb, sheet="number_changed", rownames=TRUE,
         start_row=summary_row, start_col=summary_col)
@@ -1660,66 +1665,6 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   return(ret)
 }
 
-#' Reprint the output from extract_significant_genes().
-#'
-#' I found myself needing to reprint these excel sheets because I
-#' added some new information. This shortcuts that process for me.
-#'
-#' @param upsdowns  Output from extract_significant_genes().
-#' @param wb  Workbook object to use for writing, or start a new one.
-#' @param excel  Filename for writing the data.
-#' @param according  Use limma, deseq, or edger for defining 'significant'.
-#' @param summary_count  For spacing sequential tables one after another.
-#' @param ma  Include ma plots?
-#' @return Return from write_xls.
-#' @seealso \code{\link{combine_de_tables}}
-#' @export
-print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx",
-                            according="limma", summary_count=1, ma=FALSE) {
-  xls_result <- NULL
-  if (is.null(wb)) {
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-  ups <- upsdowns[["ups"]]
-  downs <- upsdowns[["downs"]]
-  up_titles <- upsdowns[["up_titles"]]
-  down_titles <- upsdowns[["down_titles"]]
-  summary <- as.data.frame(upsdowns[["counts"]])
-  summary_title <- upsdowns[["counts_title"]]
-  ma_plots <- upsdowns[["ma_plots"]]
-  table_count <- 0
-  summary_count <- summary_count - 1
-  num_tables <- length(names(ups))
-  summary_start <- ((num_tables + 2) * summary_count) + 1
-  xls_summary_result <- write_xls(wb=wb, data=summary, start_col=1, start_row=summary_start,
-                                  sheet="number_changed", title=summary_title)
-  for (base_name in names(ups)) {
-    table_count <- table_count + 1
-    up_name <- paste0("up_", table_count, according, "_", base_name)
-    down_name <- paste0("down_", table_count, according, "_", base_name)
-    up_table <- ups[[table_count]]
-    down_table <- downs[[table_count]]
-    up_title <- up_titles[[table_count]]
-    down_title <- down_titles[[table_count]]
-    message(paste0(table_count, "/", num_tables, ": Creating significant table ", up_name))
-    xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
-    ## This is in case the sheet name is past the 30 character limit.
-    sheet_name <- xls_result[["sheet"]]
-    if (isTRUE(ma)) {
-      ma_row <- 1
-      ma_col <- xls_result[["end_col"]] + 1
-      if (!is.null(ma_plots[[base_name]])) {
-        try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
-                                    plotname="ma", savedir=excel_basename,
-                                    start_row=ma_row, start_col=ma_col)
-      }
-    }
-    xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
-  } ## End for each name in ups
-  return(xls_result)
-}
-
 #' Find the sets of intersecting significant genes
 #'
 #' Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.
@@ -1732,8 +1677,14 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' @param excel  An optional excel workbook to which to write.
 #' @export
 intersect_significant <- function(combined, lfc=1.0, p=0.05,
-                                  z=NULL, p_type="adj",
+                                  z=NULL, p_type="adj", extra_annot=NULL,
                                   excel="excel/intersect_significant.xlsx") {
+  annot_df <- fData(combine[["input"]])
+  if (!is.null(extra_annot)) {
+    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
+    rownames(annot_df) <- annot_df[["Row.names"]]
+    annot_df <- annot_df[, -1, drop=FALSE]
+  }
   sig_genes <- sm(extract_significant_genes(combined, lfc=lfc, p=p,
                                             z=z, p_type=p_type, excel=NULL))
 
@@ -1838,6 +1789,66 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05,
   } ## End if isTRUE(excel)
   return_list <- append(up_result_list, down_result_list)
   return(return_list)
+}
+
+#' Reprint the output from extract_significant_genes().
+#'
+#' I found myself needing to reprint these excel sheets because I
+#' added some new information. This shortcuts that process for me.
+#'
+#' @param upsdowns  Output from extract_significant_genes().
+#' @param wb  Workbook object to use for writing, or start a new one.
+#' @param excel  Filename for writing the data.
+#' @param according  Use limma, deseq, or edger for defining 'significant'.
+#' @param summary_count  For spacing sequential tables one after another.
+#' @param ma  Include ma plots?
+#' @return Return from write_xls.
+#' @seealso \code{\link{combine_de_tables}}
+#' @export
+print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx",
+                            according="limma", summary_count=1, ma=FALSE) {
+  xls_result <- NULL
+  if (is.null(wb)) {
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
+  }
+  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  ups <- upsdowns[["ups"]]
+  downs <- upsdowns[["downs"]]
+  up_titles <- upsdowns[["up_titles"]]
+  down_titles <- upsdowns[["down_titles"]]
+  summary <- as.data.frame(upsdowns[["counts"]])
+  summary_title <- upsdowns[["counts_title"]]
+  ma_plots <- upsdowns[["ma_plots"]]
+  table_count <- 0
+  summary_count <- summary_count - 1
+  num_tables <- length(names(ups))
+  summary_start <- ((num_tables + 2) * summary_count) + 1
+  xls_summary_result <- write_xls(wb=wb, data=summary, start_col=1, start_row=summary_start,
+                                  sheet="number_changed", title=summary_title)
+  for (base_name in names(ups)) {
+    table_count <- table_count + 1
+    up_name <- paste0("up_", table_count, according, "_", base_name)
+    down_name <- paste0("down_", table_count, according, "_", base_name)
+    up_table <- ups[[table_count]]
+    down_table <- downs[[table_count]]
+    up_title <- up_titles[[table_count]]
+    down_title <- down_titles[[table_count]]
+    message(paste0(table_count, "/", num_tables, ": Creating significant table ", up_name))
+    xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
+    ## This is in case the sheet name is past the 30 character limit.
+    sheet_name <- xls_result[["sheet"]]
+    if (isTRUE(ma)) {
+      ma_row <- 1
+      ma_col <- xls_result[["end_col"]] + 1
+      if (!is.null(ma_plots[[base_name]])) {
+        try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
+                                    plotname="ma", savedir=excel_basename,
+                                    start_row=ma_row, start_col=ma_col)
+      }
+    }
+    xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
+  } ## End for each name in ups
+  return(xls_result)
 }
 
 make_intersect <- function(limma, deseq, edger) {
@@ -1946,6 +1957,145 @@ write_de_table <- function(data, type="limma", ...) {
 
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   return(save_result)
+}
+
+#' Attempt to find the significant shared genes between edger/deseq/limma or a subset thereof.
+#'
+#' @param tables The result from extract_significant_genes() or similar.
+#' @param excel  An excel file to write.
+#' @param ... Extra arguments for writing the file (currently unused).
+#' @return a list of shared genes by table name.
+#' @export
+write_intersect_significant <- function(tables, excel="excel/significant_shared.xlsx",
+                                        extra_annot=NULL, ...) {
+  arglist <- list(...)
+  annot_df <- data.frame()
+  if (!is.null(tables[["input"]])) {
+    input <- tables[["input"]]
+    if (!is.null(input[["input"]])) {
+      annot_df <- fData(input[["input"]])
+    } else {
+      annot_df <- fData(tables[["input"]])
+    }
+  }
+
+  if (!is.null(extra_annot)) {
+    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
+    rownames(annot_df) <- annot_df[["Row.names"]]
+    annot_df <- annot_df[, -1, drop=FALSE]
+  }
+
+  if (!is.null(tables[["significant"]])) {
+    ## This came from combine_de_tables
+    tables <- tables[["significant"]]
+  }
+  num_tables <- length(tables[[1]][["ups"]])
+  methods <- c()
+
+  ## Figure out what to intersect.
+  if ("limma" %in% names(tables)) {
+    methods <- "limma"
+  }
+  if ("edger" %in% names(tables)) {
+    methods <- c(methods, "edger")
+  }
+  if ("deseq" %in% names(tables)) {
+    methods <- c(methods, "deseq")
+  }
+  wb <- NULL
+  if (class(excel) == "character") {
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
+  }
+
+  retlist <- list()
+  for (t in 1:num_tables) {
+    table_name <- names(tables[[1]][["ups"]])[[t]]
+    up_intersect <- data.frame()
+    down_intersect <- data.frame()
+    if (length(methods) < 2) {
+      stop("There is nothing to intersect.")
+    } else if (length(methods) == 2) {
+      first_ups <- tables[[methods[1]]][["ups"]][[t]]
+      number_found <- length(rownames(first_ups))
+      second_ups <- tables[[methods[2]]][["ups"]][[t]]
+      first_downs <- tables[[methods[1]]][["downs"]][[t]]
+      number_found <- length(rownames(first_downs))
+      second_downs <- tables[[methods[2]]][["downs"]][[t]]
+      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
+      up_intersect <- first_ups[up_intersect, ]
+      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
+      up_intersect <- second_ups[up_intersect, ]
+      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
+      down_intersect <- first_downs[down_intersect, ]
+      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
+      down_intersect <- second_downs[down_intersect, ]
+    } else if (length(methods) == 3) {
+      first_ups <- tables[[methods[1]]][["ups"]][[t]]
+      number_found <- length(rownames(first_ups))
+      second_ups <- tables[[methods[2]]][["ups"]][[t]]
+      third_ups <- tables[[methods[3]]][["ups"]][[t]]
+      first_downs <- tables[[methods[1]]][["downs"]][[t]]
+      number_found <- length(rownames(first_downs))
+      second_downs <- tables[[methods[2]]][["downs"]][[t]]
+      third_downs <- tables[[methods[3]]][["downs"]][[t]]
+      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
+      up_intersect <- first_ups[up_intersect, ]
+      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
+      up_intersect <- second_ups[up_intersect, ]
+      up_intersect <- rownames(third_ups) %in% rownames(up_intersect)
+      up_intersect <- third_ups[up_intersect, ]
+      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
+      down_intersect <- first_downs[down_intersect, ]
+      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
+      down_intersect <- second_downs[down_intersect, ]
+      down_intersect <- rownames(third_downs) %in% rownames(down_intersect)
+      down_intersect <- third_downs[down_intersect, ]
+    } else {
+      stop("There are too many things to intersect, that is confusing!")
+    }
+    ## Now that we have collected the intersections for this set of tables, write them.
+    if (!is.null(wb)) {
+      message(paste0("Writing data for ", table_name))
+
+      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
+                                 replacement="",
+                                 x=colnames(annot_df))
+      up_intersect <- merge(annot_df, up_intersect, by="row.names", all.y=TRUE)
+      rownames(up_intersect) <- up_intersect[["Row.names"]]
+      up_intersect <- up_intersect[, -1, drop=FALSE]
+      colnames(up_intersect) <- make.names(tolower(colnames(up_intersect)), unique=TRUE)
+
+      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
+                                 replacement="",
+                                 x=colnames(annot_df))
+      down_intersect <- merge(annot_df, down_intersect, by="row.names", all.y=TRUE)
+      rownames(down_intersect) <- down_intersect[["Row.names"]]
+      down_intersect <- down_intersect[, -1, drop=FALSE]
+      colnames(down_intersect) <- make.names(tolower(colnames(down_intersect)), unique=TRUE)
+
+      up_xls_result <- write_xls(
+        wb,
+        data=up_intersect,
+        sheet=paste0("sharedup_", table_name),
+        title=paste0("Shared genes up between: ", methods[1], " and ", methods[2],
+                     " for the contrast ", table_name, "."))
+      down_xls_result <- write_xls(
+        wb,
+        data=down_intersect,
+        sheet=paste0("shareddown_", table_name),
+        title=paste0("Shared genes down between: ", methods[1], " and ", methods[2],
+                     " for the contrast ", table_name, "."))
+    }
+    retlist[[table_name]][["up_shared"]] <- up_intersect
+    retlist[[table_name]][["down_shared"]] <- down_intersect
+  } ## End examining each set of tables.
+
+  if (!is.null(wb)) {
+    message(paste0("Writing the file: ", excel))
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+  }
+  return(retlist)
 }
 
 ## EOF

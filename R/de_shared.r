@@ -48,7 +48,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     surrogates <- arglist[["surrogates"]]
   }
   if (is.null(model_cond)) {
-    model_cond <- TRUE
+   model_cond <- TRUE
   }
   if (is.null(model_batch)) {
     model_batch <- FALSE
@@ -2004,111 +2004,6 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
 semantic_copynumber_extract <- function(...) {
   ret <- semantic_copynumber_filter(..., invert=TRUE)
   return(ret)
-}
-
-#' Attempt to find the significant shared genes between edger/deseq/limma or a subset thereof.
-#'
-#' @param tables The result from extract_significant_genes() or similar.
-#' @param excel  An excel file to write.
-#' @param ... Extra arguments for writing the file (currently unused).
-#' @return a list of shared genes by table name.
-#' @export
-write_intersect_significant <- function(tables, excel="significant_shared.xlsx", ...) {
-  arglist <- list(...)
-  if (!is.null(tables[["significant"]])) {
-    ## This came from combine_de_tables
-    tables <- tables[["significant"]]
-  }
-  num_tables <- length(tables[[1]][["ups"]])
-  methods <- c()
-
-  ## Figure out what to intersect.
-  if ("limma" %in% names(tables)) {
-    methods <- "limma"
-  }
-  if ("edger" %in% names(tables)) {
-    methods <- c(methods, "edger")
-  }
-  if ("deseq" %in% names(tables)) {
-    methods <- c(methods, "deseq")
-  }
-  wb <- NULL
-  if (class(excel) == "character") {
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-
-  retlist <- list()
-  for (t in 1:num_tables) {
-    table_name <- names(tables[[1]][["ups"]])[[t]]
-    up_intersect <- data.frame()
-    down_intersect <- data.frame()
-    if (length(methods) < 2) {
-      stop("There is nothing to intersect.")
-    } else if (length(methods) == 2) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-    } else if (length(methods) == 3) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      third_ups <- tables[[methods[3]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      third_downs <- tables[[methods[3]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      up_intersect <- rownames(third_ups) %in% rownames(up_intersect)
-      up_intersect <- third_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-      down_intersect <- rownames(third_downs) %in% rownames(down_intersect)
-      down_intersect <- third_downs[down_intersect, ]
-    } else {
-      stop("There are too many things to intersect, that is confusing!")
-    }
-    ## Now that we have collected the intersections for this set of tables, write them.
-    if (!is.null(wb)) {
-      message(paste0("Writing data for ", table_name))
-      up_xls_result <- write_xls(
-        wb,
-        data=up_intersect,
-        sheet=paste0("sharedup_", table_name),
-        title=paste0("Shared genes up between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-      down_xls_result <- write_xls(
-        wb,
-        data=down_intersect,
-        sheet=paste0("shareddown_", table_name),
-        title=paste0("Shared genes down between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-    }
-    retlist[[table_name]][["up_shared"]] <- up_intersect
-    retlist[[table_name]][["down_shared"]] <- down_intersect
-  } ## End examining each set of tables.
-
-  if (!is.null(wb)) {
-    message(paste0("Writing the file: ", excel))
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-  }
-  return(retlist)
 }
 
 ## EOF

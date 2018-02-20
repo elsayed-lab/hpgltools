@@ -543,13 +543,21 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 
   current_colnames <- colnames(protein_df)
   current_colnames <- tolower(current_colnames)
+  ## percent signs are stupid in columns.
   current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
+  ## as are spaces.
   current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
+  ## A bunch of columns have redundant adjectives.
   current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
+  ## Extra text in a column name is useless
   current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+  ## Get rid of a bunch of doofusy punctuation.
   current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+  ## At this point we should not have any leading underscores.
   current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
+  ## Now should we have any double underscores.
   current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
+  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
   current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
   current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
   current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
