@@ -334,9 +334,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       dat <- NULL
       plt <- NULL
       summary <- NULL
-      limma_plt <- limma_ma_plt <- limma_vol_plt <- NULL
-      edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
-      deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
+      limma_plt <- NULL
+      limma_ma_plt <- NULL
+      limma_vol_plt <- NULL
+      edger_plt <- NULL
+      edger_ma_plt <- NULL
+      edger_vol_plt <- NULL
+      deseq_plt <- NULL
+      deseq_ma_plt <- NULL
+      deseq_vol_plt <- NULL
 
       ## Make sure there were no errors and die if things went catastrophically wrong.
       contrasts_performed <- NULL
@@ -485,17 +491,22 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       name_list[a] <- tab
       message(paste0("Working on table ", a, "/", names_length, ": ", tab))
       sheet_count <- sheet_count + 1
+      splitted <- strsplit(x=tab, split="_vs_")
+      xname <- splitted[[1]][1]
+      yname <- splitted[[1]][2]
+
       combined <- combine_de_table(
         limma, edger, deseq, basic, tab, annot_df=annot_df, include_basic=include_basic,
         include_deseq=include_deseq, include_edger=include_edger, include_limma=include_limma,
         excludes=excludes, padj_type=padj_type)
       de_summaries <- rbind(de_summaries, combined[["summary"]])
       combo[[tab]] <- combined[["data"]]
-      splitted <- strsplit(x=tab, split="_vs_")
-      xname <- splitted[[1]][1]
-      yname <- splitted[[1]][2]
-      limma_plots[[tab]] <-  limma_ma_plots[[tab]] <- edger_plots[[tab]] <- NULL
-      edger_ma_plots[[tab]] <- deseq_plots[[tab]] <- deseq_ma_plots[[tab]] <- NULL
+      limma_plots[[tab]] <- NULL
+      limma_ma_plots[[tab]] <- NULL
+      edger_plots[[tab]] <- NULL
+      edger_ma_plots[[tab]] <- NULL
+      deseq_plots[[tab]] <- NULL
+      deseq_ma_plots[[tab]] <- NULL
       if (isTRUE(include_limma) & isTRUE(do_excel)) {
         limma_try <- sm(try(extract_coefficient_scatter(
           limma, type="limma", loess=loess, x=xname, y=yname)))
@@ -905,54 +916,91 @@ Defaulting to fdr."))
     padj_type <- "fdr"
   }
 
+  num_den_names <- strsplit(x=table_name, split="_vs_")[[1]]
+  num_name <- num_den_names[[1]]
+  den_name <- num_den_names[[2]]
+  inverse_name <- paste0(den_name, "_vs_", num_name)
+
+  lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
+                     "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
+  dedf <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
+                     "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
+  eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
+                     "edger_p" = 0, "edger_adjp" = 0)
+  badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+                     "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   ## Check that the limma result is valid.
   if (is.null(li) | class(li) == "try-error") {
-    li <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
-                     "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
+    warning("Something is wrong with the limma table, filled it with null.")
   } else {
-    li <- li[["all_tables"]][[table_name]]
+    lidf <- li[["all_tables"]][[table_name]]
+    if (is.null(lidf)) {
+      lidf <- li[["all_tables"]][[inverse_name]]
+      message("Used the inverse table, might need to -1 the logFC.")
+      if (is.null(lidf)) {
+        stop("The limma table seems to be missing.")
+      }
+    }
   }
 
   ## Check that the deseq result is valid.
   if (is.null(de) | class(de) == "try-error") {
-    de <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
-                     "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
+    warning("Something is wrong with the deseq table, filled with with null.")
   } else {
-    de <- de[["all_tables"]][[table_name]]
+    dedf <- de[["all_tables"]][[table_name]]
+    if (is.null(dedf)) {
+      dedf <- de[["all_tables"]][[inverse_name]]
+      message("Used the inverse table, might need to -1 the logFC and stat.")
+      if (is.null(dedf)) {
+        stop("The deseq table seems to be missing.")
+      }
+    }
   }
 
   ## Check that the edger result is valid.
   if (is.null(ed) | class(ed) == "try-error") {
-    ed <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
-                     "edger_p" = 0, "edger_adjp" = 0)
+    warning("Something is wrong with the edger table, filled it with null.")
   } else {
-    ed <- ed[["all_tables"]][[table_name]]
+    eddf <- ed[["all_tables"]][[table_name]]
+    if (is.null(eddf)) {
+      eddf <- ed[["all_tables"]][[inverse_table]]
+      message("Used the inverse table, might need to -1 the logFC.")
+      if (is.null(eddf)) {
+        stop("The edger table seems to be missing.")
+      }
+    }
   }
 
   ## And finally, check that my stupid basic result is valid.
   if (is.null(ba) | class(ba) == "try-error") {
-    ba <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
-                     "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
+    warning("Something is wrong with the basic table, filled it with null.")
   } else {
-    ba <- ba[["all_tables"]][[table_name]]
+    badf <- ba[["all_tables"]][[table_name]]
+    if (is.null(badf)) {
+      badf <- ba[["all_tables"]][[inverse_table]]
+      message("Used the inverse table, might need to -1 the logFC.")
+      if (is.null(badf)) {
+        stop("The basic table seems to be missing.")
+      }
+    }
   }
 
-  colnames(li) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
-                    "limma_adjp", "limma_b")
-  li_stats <- li[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
-  li_lfc_adjp <- li[, c("limma_logfc", "limma_adjp")]
+  colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
+                      "limma_adjp", "limma_b")
+  li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
+  li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
 
-  colnames(de) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
-                    "deseq_stat", "deseq_p", "deseq_adjp")
-  de_stats <- de[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
-  de_lfc_adjp <- de[, c("deseq_logfc", "deseq_adjp")]
+  colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
+                      "deseq_stat", "deseq_p", "deseq_adjp")
+  de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
+  de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
 
-  colnames(ed) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
-  ed_stats <- ed[, c("edger_logcpm", "edger_lr", "edger_p")]
-  ed_lfc_adjp <- ed[, c("edger_logfc", "edger_adjp")]
+  colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
+  ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
+  ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
 
-  ba_stats <- ba[, c("numerator_median", "denominator_median", "numerator_var",
-                     "denominator_var", "logFC", "t", "p", "adjp")]
+  ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
+                       "denominator_var", "logFC", "t", "p", "adjp")]
   colnames(ba_stats) <- c("basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
                           "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
@@ -1679,7 +1727,13 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 intersect_significant <- function(combined, lfc=1.0, p=0.05,
                                   z=NULL, p_type="adj", extra_annot=NULL,
                                   excel="excel/intersect_significant.xlsx") {
-  annot_df <- fData(combine[["input"]])
+  annot_df <- NULL
+  if (class(combined[["input"]]) == "expt") {
+    annot_df <- fData(combined[["input"]])
+  } else if (class(combined[["input"]][["input"]]) == "expt") {
+    annot_df <- fData(combined[["input"]][["input"]])
+  }
+
   if (!is.null(extra_annot)) {
     annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
     rownames(annot_df) <- annot_df[["Row.names"]]

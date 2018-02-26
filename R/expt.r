@@ -437,8 +437,10 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Adding these so that deseq does not complain about characters when
   ## calling DESeqDataSetFromMatrix()
-  sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
-  sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
+  ## I think these lines are not needed any longer, as I explicitly set the
+  ## parameters of these factors now in extract_metadata()
+  ##sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
+  ##sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
   ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
   requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
@@ -481,13 +483,16 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     "transform" = "raw")
   expt[["state"]] <- starting_state
   ## Just in case there are condition names which are not used.
-  expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+  ## Ditto here, this should not be needed.
+  ## expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+  expt[["conditions"]] <- sample_definitions[["condition"]]
   ## This might be redundant, but it ensures that no all-numeric conditions exist.
-  expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
+  ## expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
   names(expt[["conditions"]]) <- rownames(sample_definitions)
   ## Ditto for batches
-  expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
-  expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
+  expt[["batches"]] <- sample_definitions[["batch"]]
+  ## expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
+  ## expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
   names(expt[["batches"]]) <- rownames(sample_definitions)
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
   expt[["original_metadata"]] <- metadata
@@ -683,10 +688,19 @@ analyses more difficult/impossible.")
   }
   ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
   ## prefix them with 'c' and 'b' respectively.
+  pre_condition <- unique(sample_definitions[["condition"]])
+  pre_batch <- unique(sample_definitions[["batch"]])
   sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1",
                                             x=sample_definitions[["condition"]])
   sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1",
                                         x=sample_definitions[["batch"]])
+  sample_definitions[["condition"]] <- factor(sample_definitions[["condition"]],
+                                              levels=unique(sample_definitions[["condition"]]),
+                                              labels=pre_condition)
+  sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
+                                          levels=unique(sample_definitions[["batch"]]),
+                                          labels=pre_batch)
+
   return(sample_definitions)
 }
 

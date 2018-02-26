@@ -491,7 +491,6 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   ## I have been using hpgl_env for keeping aes() from getting contaminated.
   ## I think that this is no longer needed because I have been smater(sic) about how
   ## I invoke aes_string() and ggplot2()
-  hpgl_env <- environment()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -519,7 +518,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- data[["design"]]
+    design <- pData(data)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
@@ -619,8 +618,8 @@ Going to run pcRes with the batch information.")
   ## Create a data frame with all the material of interest in the actual PCA plot
   pca_data <- data.frame(
     "sampleid" = as.character(design[["sampleid"]]),
-    "condition" = as.character(design[[cond_column]]),
-    "batch" = as.character(design[[batch_column]]),
+    "condition" = design[[cond_column]],
+    "batch" = design[[batch_column]],
     "batch_int" = as.integer(as.factor(design[[batch_column]])),
     "PC1" = svd_result[["v"]][, 1],
     "PC2" = svd_result[["v"]][, 2],
@@ -700,7 +699,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
                      plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
   arglist <- list(...)
-  hpgl_env <- environment()
   batches <- pca_data[["batch"]]
   label_column <- "condition"
   if (!is.null(arglist[["label_column"]])) {
@@ -729,7 +727,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   ## 6.  Finally, set the shape manual with a guide_legend override
 
   ## Step 1
-  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"))
 
   if (is.null(size_column) & num_batches <= 5) {
     pca_plot <- pca_plot +

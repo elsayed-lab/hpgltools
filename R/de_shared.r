@@ -80,8 +80,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
       message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
-      post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type,
-                                      transform="log2", convert="cpm", norm="quant"))
+      post_batch <- sm(try(normalize_expt(input, filter=TRUE, batch=model_type,
+                                          transform="log2", convert="cpm", norm="quant"),
+                           silent=TRUE))
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
@@ -271,7 +272,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                                             deseq=results[["deseq"]],
                                             edger=results[["edger"]],
                                             basic=results[["basic"]],
-                                            annot_df=annot_df, ...)
+                                            annot_df=annot_df) #, ...)
   }
   ## The first few elements of this list are being passed through into the return
   ## So that if I use combine_tables() I can report in the resulting tables
@@ -914,10 +915,57 @@ compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     ## assume all three have the same names() -- note that limma has more than the other two though
     cc <- cc + 1
     message(paste0("Comparing analyses ", cc, "/", len, ": ", comp))
-    l <- data.frame(limma[[comp]])
-    e <- data.frame(edger[[comp]])
-    d <- data.frame(deseq[[comp]])
-    b <- data.frame(basic[[comp]])
+    num_den_names <- strsplit(x=comp, split="_vs_")[[1]]
+    num_name <- num_den_names[1]
+    den_name <- num_den_names[2]
+    rev_comp <- paste0(den_name, "_vs_", num_name)
+    num_reversed <- 0
+    l <- limma[[comp]]
+    if (is.null(l)) {
+      l <- limma[[rev_comp]]
+      l[["logFC"]] <- l[["logFC"]] * -1
+      message("Used reverse contrast for limma.")
+      num_reversed <- num_reversed + 1
+    }
+    e <- edger[[comp]]
+    if (is.null(e)) {
+      e <- edger[[rev_comp]]
+      e[["logFC"]] <- e[["logFC"]] * -1
+      message("Used reverse contrast for edger.")
+      num_reversed <- num_reversed + 1
+    }
+    d <- deseq[[comp]]
+    if (is.null(d)) {
+      d <- deseq[[rev_comp]]
+      d[["logFC"]] <- d[["logFC"]] * -1
+      d[["stat"]] <- d[["stat"]] * -1
+      message("Used reverse contrast for deseq.")
+      num_reversed <- num_reversed + 1
+    }
+    b <- basic[[comp]]
+    if (is.null(b)) {
+      b <- basic[[rev_comp]]
+      b[["logFC"]] <- b[["logFC"]] * -1
+      message("Used reverse contrast for basic.")
+      num_reversed <- num_reversed + 1
+    }
+    ## How odd, why did they get reversed?
+    if (num_reversed == 4) {
+      comp <- rev_comp
+    }
+    if (is.null(l)) {
+      stop("Could not find either the comparison nor its reverse for limma.")
+    }
+    if (is.null(e)) {
+      stop("Could not find either the comparison nor its reverse for edger.")
+    }
+    if (is.null(d)) {
+      stop("Could not find either the comparison nor its reverse for deseq.")
+    }
+    if (is.null(b)) {
+      stop("Could not find either the comparison nor its reverse for basic.")
+    }
+
     le <- merge(l, e, by.x="row.names", by.y="row.names")
     le <- le[, c("logFC.x", "logFC.y")]
     colnames(le) <- c("limma logFC", "edgeR logFC")

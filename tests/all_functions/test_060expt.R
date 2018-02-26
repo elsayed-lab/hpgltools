@@ -10,6 +10,9 @@ context("060expt.R:\n")
 
 ## make_pombe_expt() invokes create_expt()
 pombe_expt <- sm(make_pombe_expt())
+chosen_genes <- c("SPAC212.11", "SPAC212.09c", "SPNCRNA.70",
+                  "SPAC212.12", "SPAC212.04c", "SPAC212.03",
+                  "SPAC212.02", "SPAC212.01c", "SPAC977.03")
 
 ## fData()
 testing <- fData(pombe_expt)
@@ -19,8 +22,9 @@ test_that("Do we get annotation data from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
 })
-actual <- head(testing$start_position)
-expected <- c("1", "7619", "11027", "15855", "21381", "23589")
+actual <- testing[chosen_genes, "start_position"]
+expected <- c("1", "7619", "11027", "15855", "21381",
+              "23589", "27353", "28738", "33835")
 test_that("Do we get annotation data from our expt?", {
   expect_equal(actual, expected)
 })
@@ -100,14 +104,11 @@ test_that("Do we get some example data from make_exampledata()?", {
 
 ## median_by_factor()
 medians <- sm(median_by_factor(pombe_expt))
-actual <- head(medians)
-row1 <- c(7, 2, 12, 6, 6, 1, 8, 3, 19, 10, 9, 8)
-row2 <- c(41, 51, 34, 48, 61, 86, 31, 55, 33, 43, 75, 73)
-row3 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+actual <- medians[chosen_genes, 1]
+expected <- c(8, 31, 0, 0, 21, 0, 0, 2, 0)
 test_that("Do we get expected medians?", {
-  expect_equal(row1, as.numeric(actual[1, ]))
-  expect_equal(row2, as.numeric(actual[2, ]))
-  expect_equal(row3, as.numeric(actual[3, ]))
+  expect_equal(expected, actual)
 })
 
 ## set_expt_batches()

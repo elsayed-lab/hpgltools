@@ -15,27 +15,27 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                     c("blastx_name", "blastx_name2", "blastx_hitlocation",
                       "blastx_identity", "blastx_evalue",
                       "blastx_recname", "blastx_taxonomy"),
-                    "\\^") %>%
+                    "\\^", extra="drop", fill="right") %>%
     tidyr::separate("sprot_Top_BLASTP_hit",
                     c("blastp_name", "blastp_name2", "blastp_hitlocation",
                       "blastp_identity", "blastp_evalue",
                       "blastp_recname", "blastp_taxonomy"),
-                    "\\^") %>%
+                    "\\^", extra="drop", fill="right") %>%
     tidyr::separate("TmHMM",
                     c("tmhmm_expaa", "tmhmm_predicted_helices", "tmhmm_topology"),
-                    "\\^") %>%
+                    "\\^", extra="drop", fill="right") %>%
     tidyr::separate("eggnog",
                     c("eggnog_id", "eggnog_description"),
-                    "\\^") %>%
+                    "\\^", extra="drop", fill="right") %>%
     tidyr::separate("blastx_hitlocation",
                     c("blastx_queryloc", "blastx_hitloc"),
-                    "\\,") %>%
+                    "\\,", extra="drop", fill="right") %>%
     tidyr::separate("blastp_hitlocation",
                     c("blastp_queryloc", "blastp_hitloc"),
-                    "\\,") %>%
+                    "\\,", extra="drop", fill="right") %>%
     tidyr::separate("RNAMMER",
                     c("rrna_subunit", "rrna_subunit_region"),
-                    "\\^")
+                    "\\^", extra="drop", fill="right")
 
   split_data <- split_data[, c("X.gene_id", "transcript_id",
                                "blastx_name", "blastx_queryloc", "blastx_hitloc",
@@ -134,7 +134,8 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   ## split_data[["length"]] <- ""
   transcript_seq <- NULL  ## transcript_seq in this context is handled by data.table I think.
   if (!is.null(split_data[["transcript_seq"]])) {
-    split_data[, "length" := nchar(transcript_seq)]
+    lengths <- nchar(split_data[["transcript_seq"]])
+    split_data[, "length"] <- lengths
   }
 
   return(split_data)

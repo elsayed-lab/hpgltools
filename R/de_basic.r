@@ -142,7 +142,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
 
   ## Because of the way I made tvalues/pvalues into a list
   ## If only 1 comparison was performed, the resulting data structure never gets coerced into a
-  ## data frame therefore I am performing this check which, if a single comparison was done, adds
+  ## data frame.  Therefore I am performing this check which, if a single comparison was done, adds
   ## a second column, performs the coercion, then strips it away.  This is a stupid way
   ## of doing what I want.
   if (num_done == 1) {
