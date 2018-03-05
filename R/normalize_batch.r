@@ -391,8 +391,6 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
   if (sum(check) > 0 & !is.null(numCovs)) {
     numCovs <- numCovs - 1
   }
-  ##    design <- sva:::design.mat(mod, numCov = numCovs)
-  ## require.auto("survJamda")
   design <- survJamda::design.mat(mod)
   batches <- survJamda::list.batch(mod)
   n.batch <- length(batches)

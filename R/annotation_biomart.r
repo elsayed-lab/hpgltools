@@ -322,7 +322,9 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @param trymart Assumed mart name to use.
 #' @param first_attributes  Key(s) of the first database to use.
 #' @param second_attributes  Key(s) of the second database to use.
-#' @return Df of orthologs.
+#' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
+#'   to always send them all; the second is the subset corresponding to the
+#'   actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 #' @seealso \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
 #'  \code{\link[biomaRt]{useMart}}
 #' @examples
@@ -334,7 +336,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @export
 load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
                                    second_species="mmusculus",
-                                   host="dec2015.archive.ensembl.org",
+                                   host="dec2016.archive.ensembl.org",
                                    trymart="ENSEMBL_MART_ENSEMBL",
                                    first_attributes="ensembl_gene_id",
                                    second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {

@@ -532,14 +532,16 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #'
 #' I hate remembering my options for png()
 #'
-#' @param file a filename to write
+#' @param file Filename to write
+#' @param image Optionally, add the image you wish to plot and this will both
+#'   print it to file and screen.
 #' @param width  How wide?
 #' @param height  How high?
 #' @param res  The chosen resolution.
 #' @param ...  Arguments passed to the image plotters.
 #' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 #' @export
-pp <- function(file, width=9, height=9, res=180, ...) {
+pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
   if (ext == "png") {
     res <- png(filename=file, width=width, height=height, units="in", res=res, ...)
@@ -555,6 +557,20 @@ pp <- function(file, width=9, height=9, res=180, ...) {
     message("Defaulting to tiff.")
     res <- tiff(filename=file, width=width, height=height, units="in", ...)
   }
+  if (!is.null(image)) {
+    if (class(image)[[1]] == "recordedplot") {
+      print(image)
+    } else {
+      plot(image)
+    }
+    dev.off()
+    message(paste0("Wrote the image to: ", file))
+    if (class(image)[[1]] == "recordedplot") {
+      print(image)
+    } else {
+      plot(image)
+    }
+  }
   return(res)
 }
 
@@ -564,6 +580,7 @@ pp <- function(file, width=9, height=9, res=180, ...) {
 #'
 #' This was taken from:
 #' http://sbamin.com/2012/11/05/tips-for-working-in-r-automatically-install-missing-package/
+#' and initially provided by Ramzi Temanni.
 #'
 #' @param lib String name of a library to check/install.
 #' @param update Update packages?
@@ -575,7 +592,7 @@ pp <- function(file, width=9, height=9, res=180, ...) {
 #'  require.auto("ggplot2")
 #' }
 #' @export
-require.auto <- function(lib, update=FALSE) {
+please_install <- function(lib, update=FALSE) {
   count <- 0
   local({
     r <- getOption("repos")

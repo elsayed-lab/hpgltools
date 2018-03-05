@@ -4,7 +4,8 @@
 \alias{extract_eupath_orthologs}
 \title{Given 2 species names from the eupathdb, make orthology tables betwixt them.}
 \usage{
-extract_eupath_orthologs(first, second, abbrev = NULL, xref = TRUE, ...)
+extract_eupath_orthologs(first, second, master = "GID", abbrev = NULL,
+  xref = TRUE, ...)
 }
 \arguments{
 \item{first}{Species name from one eupath database.}

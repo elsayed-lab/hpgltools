@@ -229,51 +229,60 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 #' @return List containing the information available given the species provided
 #'   and/or the abbreviation/xref.
 #' @export
-extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...) {
+extract_eupath_orthologs <- function(first, second, master="GID", abbrev=NULL, xref=TRUE, ...) {
   arglist <- list(...)
 
-  ortholog_column <- "ORTHOLOGS_ORTHOLOG"
+  ortholog_column <- c("ORTHOLOGS_ORTHOLOG", "ORTHO_GENE_SOURCE_ID")
   if (!is.null(arglist[["ortholog_column"]])) {
     ortholog_column <- arglist[["ortholog_column"]]
   }
 
-  metadata <- download_eupath_metadata(...)
-  ## metadata <- download_eupath_metadata()
-  first_name <- check_eupath_species(first)[["Species"]]
-  second_name <- check_eupath_species(second)[["Species"]]
+  load_pkg <- function(name, ...) {
+    metadata <- download_eupath_metadata(...)
+    ## metadata <- download_eupath_metadata()
+    first_name <- check_eupath_species(name)[["Species"]]
+    first_pkg <- make_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
+    tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
+    if (class(tt) == "try-error") {
+      message(paste0("Did not find the package: ",
+                     first_pkg,
+                     ". Will not be able to do reciprocal hits."))
+      message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+                     first_name, "')"))
+      pkg <- NULL
+    } else {
+      message(paste0("Loaded: ", first_pkg))
+      pkg <- get(first_pkg)
+    }
+    return(pkg)
+  }
 
-  first_pkg <- make_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
-  second_pkg <- make_eupath_pkgnames(species=second_name, metadata=metadata)[["orgdb"]]
+  pkgs <- list()
+  if (class(first)[1] == "OrgDb") {
+    pkgs[[1]] <- first
+    names(pkgs)[1] <- "first"
+  } else if (class(first)[1] == "character") {
+    pkgs[[1]] <- load_pkg(first)
+    names(pkgs)[1] <- first
+  } else {
+    stop("I only understand orgdbs or the name of a species.")
+  }
+  if (class(second)[1] == "OrgDb") {
+    pkgs[[2]] <- second
+    names(pkgs)[2] <- "second"
+  } else if (class(second)[1] == "character") {
+    pkgs[[2]] <- load_pkg(second)
+    names(pkgs)[2] <- second
+  } else {
+    stop("I only understand orgdbs or the name of a species.")
+  }
 
   num_found <- 0
-  pkgs <- list()
-  tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
-  if (class(tt) == "try-error") {
-    message(paste0("Did not find the package: ",
-                   first_pkg,
-                   ". Will not be able to do reciprocal hits."))
-    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
-                   first_name, "')"))
-  } else {
+  if (!is.null(pkgs[1])) {
     num_found <- num_found + 1
-    message(paste0("Loaded: ", first_pkg))
-    pkgs[[first_name]] <- get(first_pkg)
   }
-
-  tt <- try(do.call("library", as.list(second_pkg)), silent=TRUE)
-  if (class(tt) == "try-error") {
-    message(paste0("Did not find the package: ",
-                   second_pkg,
-                   ". Will not be able to do reciprocal hits."))
-    message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
-                   second_name, "')"))
-  } else {
+  if (!is.null(pkgs[2])) {
     num_found <- num_found + 1
-    message(paste0("Loaded: ", second_pkg))
-    pkgs[[second_name]] <- get(second_pkg)
-  }
-  if (num_found == 0) {
-    stop("Found neither package.  Cannot continue.")
   }
 
   all_orthos <- list()
@@ -281,16 +290,29 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
   for (i in 1:length(pkgs)) {
     name <- names(pkgs)[[i]]
     pkg <- pkgs[[i]]
-    gene_lists[[name]] <- AnnotationDbi::keys(pkg)
+    ## Unfortunately, there are multiple _types_ of gene IDs
+    ## So I will need to whittle this down after pulling the orthologs.
+    gene_lists[[name]] <- AnnotationDbi::keys(pkg, keytype=master)
+    avail_columns <- AnnotationDbi::keytypes(pkg)
+    actual_column_idx <- ortholog_column %in% avail_columns
+    if (sum(actual_column_idx) == 0) {
+      stop(paste0("Could not find the ortholog column in the package, tried: ", ortholog_column))
+    }
+    chosen_column <- ortholog_column[actual_column_idx]
     all_orthos[[name]] <- AnnotationDbi::select(x=pkg,
-                                                keytype="GID",
+                                                keytype=master,
                                                 keys=gene_lists[[name]],
-                                                columns=ortholog_column)
+                                                columns=chosen_column)
+    ## Here is where I will drop the non-standard GIDs.
+    kept_orthos_idx <- complete.cases(all_orthos[[name]])
+    all_orthos[[name]] <- all_orthos[[name]][kept_orthos_idx, ]
+    ortho_gene_ids <- unique(all_orthos[[name]][["GID"]])
+    gene_lists[[name]] <- ortho_gene_ids
   }
 
+  retlist <- list()
   ## If a single pkg is found, then we cannot do a cross reference of two species,
   ## but we _can_ extract all genes which match a given species prefix pattern.
-  retlist <- list()
   if (num_found == 1) {
     retlist[["all_genes"]] <- gene_lists[[1]]
     if (is.null(abbrev)) {
@@ -364,19 +386,44 @@ extract_eupath_orthologs <- function(first, second, abbrev=NULL, xref=TRUE, ...)
                                      first_species_orthologs,
                                      by.x="second_gene",
                                      by.y="second_ortholog")
-  reciprocal_idx_first <- shared_genes_first_second[["first_gene"]] ==
+
+  reciprocal_idx_first <- shared_genes_first_second[["second_ortholog"]] ==
     shared_genes_first_second[["second_gene"]]
+  message(paste0("Found ", sum(reciprocal_idx_first),
+                 " genes identical from the first orthologs to the first genes."))
   reciprocals_first <- shared_genes_first_second[reciprocal_idx_first, ]
-  reciprocal_idx_second <- shared_genes_second_first[["first_gene"]] ==
-    shared_genes_second_first[["second_gene"]]
+
+  reciprocal_idx_second <- shared_genes_second_first[["first_ortholog"]] ==
+    shared_genes_second_first[["first_gene"]]
+  message(paste0("Found ", sum(reciprocal_idx_second),
+                 " genes identical from the second orthologs to the second genes."))
   reciprocals_second <- shared_genes_second_first[reciprocal_idx_second, ]
 
   ## While we are at it, lets get the set of genes in speciesA which do not show up in the
   ## orthologous list for speciesB and vice-versa
-  first_non_orthologous_idx <- !(gene_lists[[1]] %in% all_orthos[[2]][["first_ortholog"]])
+  first_non_orthologous_idx <- !gene_lists[[1]] %in% all_orthos[[2]][["first_ortholog"]]
   first_non_orthologous <- gene_lists[[1]][first_non_orthologous_idx]
+  message(paste0("Found ", sum(first_non_orthologous_idx),
+                 " genes which do not match across the ortholog tables first->second."))
+
   second_non_orthologous_idx <- !(gene_lists[[2]] %in% all_orthos[[1]][["second_ortholog"]])
   second_non_orthologous <- gene_lists[[2]][first_non_orthologous_idx]
+  message(paste0("Found ", sum(second_non_orthologous_idx),
+                 " genes which do not match across the ortholog tables second->first."))
+
+  ## I am resonably certain the following is redundant.
+  ##test_first <- reciprocals_first
+  ##colnames(test_first) <- c("f_first_gene", "f_second_ortholog", "f_second_gene")
+  ##test_first <- data.table::as.data.table(test_first)
+  ##test_second <- reciprocals_second
+  ##colnames(test_second) <- c("s_second_gene", "s_first_ortholog", "s_first_gene")
+  ##test_second <- data.table::as.data.table(test_second)
+  ##big_merge <- merge(test_first, test_second, by.x="f_first_gene", by.y="s_first_gene", allow.cartesian=TRUE)
+  ##big_same_idx <- big_merge[["f_second_ortholog"]] == big_merge[["f_second_gene"]] &
+  ##  big_merge[["f_second_ortholog"]] == big_merge[["s_second_gene"]] &
+  ##  big_merge[["f_second_gene"]] == big_merge[["s_second_gene"]]
+  ##reciprocals <- big_merge[big_same_idx, ]
+
   retlist <- list(
     "non_orthologs_first_species" = first_non_orthologous,
     "non_orthologs_second_species" = second_non_orthologous,
@@ -843,6 +890,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     warning("Unable to create an orgdb for this species.")
     return(NULL)
   }
+
   chromosome_table <- gene_table[, c("GID", "GENOMIC_SEQUENCE_ID")]
   colnames(chromosome_table) <- c("GID", "CHR_ID")
   type_table <- gene_table[, c("GID", "GENE_TYPE")]
@@ -1343,7 +1391,7 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
 #' @author Keith Hughitt
 #' @export
 post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NULL,
-                              table_name=NULL, minutes=20, ...) {
+                              table_name=NULL, minutes=30, ...) {
 
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
@@ -1375,6 +1423,8 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
   api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
   ##result <- httr::POST(api_uri, body=tt,
   body <- jsonlite::toJSON(query_body)
+  ##message("The request is:")
+  ##message(body)
   result <- httr::POST(
                     api_uri,
                     body=body,

@@ -1,5 +1,6 @@
 start <- as.POSIXlt(Sys.time())
 context("010annotation_eupathdb.R\n")
+## 2018-02: Hey, there is a new eupathdb release!  Some stuff has changed!
 ## 2017-12, exported functions in annotation_eupathdb:
 ##  make_eupath_bsgenome(), make_eupath_organismdbi() download_eupath_metadata(),
 ##  make_eupath_orgdb(), make_eupath_txdb(), get_eupath_gff_table(),
@@ -8,7 +9,7 @@ context("010annotation_eupathdb.R\n")
 ##  Most of these are implicitly tested via make_eupath_organismdbi().
 
 testing <- sm(download_eupath_metadata())
-expected <- c(285, 19)
+expected <- c(300, 19)
 actual <- dim(testing)
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)

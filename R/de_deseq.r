@@ -62,6 +62,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   arglist <- list(...)
 
   message("Starting DESeq2 pairwise comparisons.")
+  input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force=force)
   ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
   ## from my expt classes.

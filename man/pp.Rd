@@ -4,10 +4,13 @@
 \alias{pp}
 \title{png() shortcut}
 \usage{
-pp(file, width = 9, height = 9, res = 180, ...)
+pp(file, image = NULL, width = 9, height = 9, res = 180, ...)
 }
 \arguments{
-\item{file}{a filename to write}
+\item{file}{Filename to write}
+
+\item{image}{Optionally, add the image you wish to plot and this will both
+print it to file and screen.}
 
 \item{width}{How wide?}
 

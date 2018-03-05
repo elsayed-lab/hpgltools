@@ -391,12 +391,12 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
   up_threes <- c("d&e&l" = up_del)
   up_fun <- up_venneuler <- up_venn_data <- NULL
   if (isTRUE(euler)) {
-    tt <- sm(require.auto("venneuler"))
+    tt <- sm(please_install("venneuler"))
     up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
     up_venneuler <- up_fun[["plot"]]
     up_venn_data <- up_fun[["data"]]
   }
-  tt <- sm(require.auto("js229/Vennerable"))
+  tt <- sm(please_install("js229/Vennerable"))
   up_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
                               Weight = c(0, up_d, up_e, up_de,
                                          up_l, up_dl, up_el,

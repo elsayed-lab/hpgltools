@@ -820,20 +820,20 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     message("Not putting labels on the plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
-      ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
-                                             angle=45, size=4, vjust=2))
+      ggplot2::geom_text(aes_string(x="PC1", y="PC2", label="labels",
+                                    angle=45, size=4, vjust=2))
   } else if (plot_labels == "repel") {
     pca_plot <- pca_plot +
-      ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
+      ggrepel::geom_text_repel(aes_string(label="labels"),
                                size=5, box.padding=ggplot2::unit(0.5, "lines"),
                                point.padding=ggplot2::unit(1.6, "lines"),
                                arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
   } else if (plot_labels == "dlsmart") {
     pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
+      directlabels::geom_dl(aes_string(label="labels"), method="smart.grid")
   } else {
     pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
+      directlabels::geom_dl(aes_string(label="labels"), method="first.qp")
   }
 
   if (!is.null(cis)) {

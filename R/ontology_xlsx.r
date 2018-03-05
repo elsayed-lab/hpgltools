@@ -450,6 +450,12 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     keeper_idx <- categories[["over_represented_pvalue"]] <= pval
     categories <- categories[keeper_idx, ]
+    if (sum(keeper_idx) == 0) {
+      message(paste0("No data survived to be written for the ", ont, " ontology."))
+      next
+    }
+
+    ## There is nothing to write.
     genes_per_category <- gather_ontology_genes(goseq_result, ontology=ont,
                                                 pval=pval)
     categories <- merge(categories, genes_per_category, by="row.names")
@@ -2269,7 +2275,6 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
               "gostats_mf" = gostats_mf,
               "gostats_bp" = gostats_bp,
               "gostats_cc" = gostats_cc)
-  ## require.auto("awalker89/openxlsx")
   wb <- openxlsx::createWorkbook(creator="atb")
   hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT",
                                textDecoration="bold", border="Bottom", fontSize="30")

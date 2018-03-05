@@ -56,6 +56,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     edger_test <- arglist[["edger_test"]]
   }
   message("Starting edgeR pairwise comparisons.")
+  input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force=force)
   design <- pData(input)
   conditions <- input_data[["conditions"]]

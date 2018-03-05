@@ -35,7 +35,7 @@ test_that("Basic performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 4
 test_that("Basic got some expected results (logFC)?", {
@@ -62,9 +62,9 @@ test_that("DESeq performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 if (is.null(test)) {
-  test <- testing[["all_tables"]][["mut.0_vs_wt.0"]]
+  test <- testing[["all_tables"]][["mut0_vs_wt0"]]
 }
 actual <- sum(test[["logFC"]] > 2)
 expected <- 57
@@ -92,14 +92,14 @@ test_that("edgeR performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 65
 test_that("edgeR got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
-actual <- sum(as.numeric(test$PValue) < 0.1)
+actual <- sum(as.numeric(test[["PValue"]]) < 0.1)
 expected <- 433
 test_that("edgeR got some expected results (adjp)?", {
   expect_equal(expected, actual)
@@ -123,7 +123,7 @@ test_that("limma performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 10
 test_that("limma got some expected results (logFC)?", {

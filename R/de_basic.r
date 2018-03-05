@@ -36,6 +36,7 @@ basic_pairwise <- function(input=NULL, design=NULL,
     batches <- arglist[["force"]]
   }
   message("Starting basic pairwise comparison.")
+  input <- sanitize_expt(input)
   input_data <- choose_basic_dataset(input, force=force)
   design <- pData(input)
   conditions <- input_data[["conditions"]]

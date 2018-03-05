@@ -80,9 +80,14 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
       message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
+      test_norm <- "quant"
+      if (model_type != "TRUE" & model_type != FALSE) {
+        ## Then it is probably some sort of sva which will have a hard time with quantile.
+        test_norm <- "raw"
+      }
+      message(paste0("Performing a test normalization with: ", test_norm))
       post_batch <- sm(try(normalize_expt(input, filter=TRUE, batch=model_type,
-                                          transform="log2", convert="cpm", norm="quant"),
-                           silent=TRUE))
+                                          transform="log2", convert="cpm", norm=test_norm)))
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
@@ -134,7 +139,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                                      extra_contrasts=extra_contrasts,
                                      alt_model=alt_model,
                                      libsize=libsize,
-                                     annot_df=annot_df, ...)
+                                     annot_df=annot_df,
+                                     ...)
     }
   } ## End performing a serial comparison
 
@@ -2039,6 +2045,31 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
   de_list[["numbers_removed"]] <- numbers_removed
   de_list[["type"]] <- type
   return(de_list)
+}
+
+#' Get rid of characters which will mess up contrast making and such before playing with an expt.
+#'
+#' @param expt  An expt object to clean.
+sanitize_expt <- function(expt) {
+  design <- pData(expt)
+  conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=as.character(design[["condition"]]))
+  batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=as.character(design[["batch"]]))
+  ## To be honest, there is absolutely no way I would have thought of this regular expression:
+  ## https://stackoverflow.com/questions/30945993/split-string-on-punct-except-for-underscore-in-r
+  ## In theory I am pretty good with regexes, but the idea
+  conditions <- gsub(pattern="[^\\PP_]", replacement="", x=conditions, perl=TRUE)
+  batches <- gsub(pattern="[^\\PP_]", replacement="", x=batches, perl=TRUE)
+  conditions <- gsub(pattern="[[:blank:]]", replacement="", x=conditions)
+  batches <- gsub(pattern="[[:blank:]]", replacement="", x=batches)
+  conditions <- as.factor(conditions)
+  batches <- as.factor(batches)
+  expressionset <- expt[["expressionset"]]
+  Biobase::pData(expressionset)[["condition"]] <- conditions
+  Biobase::pData(expressionset)[["batch"]] <- batches
+  expt[["expressionset"]] <- expressionset
+  expt[["conditions"]] <- conditions
+  expt[["batches"]] <- batches
+  return(expt)
 }
 
 #' Extract multicopy genes from up/down gene expression lists.

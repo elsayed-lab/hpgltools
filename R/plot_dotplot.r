@@ -202,7 +202,8 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #'  smc_plot = hpgl_smc(expt=expt)
 #' }
 #' @export
-plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
+plot_sm <- function(data, colors=NULL, method="pearson",
+                    names=NULL, title=NULL, dot_size=5, ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   conditions <- NULL
@@ -291,11 +292,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     sm_plot <- ggplot(sm_df, aes_string(
                                x="num", y="sm", shape="batch", fill="condition")) +
       ggplot2::geom_hline(colour="red", yintercept=ylimit, size=1) +
-      ggplot2::geom_point(size=7,
+      ggplot2::geom_point(size=dot_size,
                           aes_string(shape="batch",
                                      colour="condition",
                                      fill="condition")) +
-      ggplot2::geom_point(size=7, colour="black", show.legend=FALSE,
+      ggplot2::geom_point(size=dot_size, colour="black", show.legend=FALSE,
                           aes_string(shape="batch", fill="condition")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
@@ -305,7 +306,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
                                  values=color_list) +
       ggplot2::scale_shape_manual(name="Batch",
                                   labels=levels(as.factor(sm_df[["batch"]])),
-                                  guide=ggplot2::guide_legend(override.aes=list(size=5, fill="grey")),
+                                  guide=ggplot2::guide_legend(
+                                                   override.aes=list(size=5, fill="grey")),
                                   values=21:25) +
       ggplot2::scale_x_continuous(labels=sm_df[["sample"]],
                                   breaks=1:nrow(sm_df),

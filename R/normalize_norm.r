@@ -263,7 +263,6 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
 #' @export
 hpgl_qstats <- function(data, groups, refType="mean",
                         groupLoc="mean", window=99) {
-  ## require.auto("matrixStats")
   Q <- apply(data, 2, sort)
   if (refType == "median") {
     Qref <- matrixStats::rowMedians(Q)

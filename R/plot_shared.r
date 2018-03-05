@@ -88,6 +88,14 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ##old_options <- options(device = function(...) {
   ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
   ##})
+  ## Make sure to close any open plotting devices, as that would be too confusing.
+  if (!is.null(dev.list())) {
+    all_devices <- names(dev.list())
+    for (dev in names(dev.list())) {
+      off_please <- dev.off()
+    }
+    message(paste0("Closing the ", toString(all_devices), " plotting device(s) before printing plots."))
+  }
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"
   boxplot_title <- "Boxplot"
@@ -155,9 +163,11 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ret_data <- list(
     "boxplot" = boxplot,
     "corheat" = corheat[["plot"]],
-    "density" = density,
+    "density" = density[["plot"]],
+    "density_table" = density[["table"]],
     "disheat" = disheat[["plot"]],
-    "legend" = legend,
+    "legend" = legend[["plot"]],
+    "legend_colors" = legend[["colors"]],
     "libsize" = libsize[["plot"]],
     "libsizes" = libsize[["table"]],
     "libsize_summary" = libsize[["summary"]],
@@ -176,7 +186,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     "tsneplot" = tsne[["plot"]],
     "tsnetable" = tsne[["table"]],
     "tsneres" = tsne[["res"]],
-    "tsnevar" = tsne[["variance"]]  
+    "tsnevar" = tsne[["variance"]]
   )
   new_options <- options(old_options)
   return(ret_data)

@@ -151,8 +151,9 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata, ...)
+  sample_definitions <- extract_metadata(metadata, arglist)
   ##  sample_definitions <- extract_metadata(metadata)
+  message(paste0("The sample definitions comprises: ", toString(dim(sample_definitions)), " rows, columns."))
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -224,7 +225,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
-    count_data <- read_counts_expt(sample_ids, filenames, ...)
+    count_data <- read_counts_expt(sample_ids, filenames, arglist)
     ## count_data <- read_counts_expt(sample_ids, filenames)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
@@ -445,7 +446,15 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
   requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
   metadata <- methods::new("AnnotatedDataFrame", sample_definitions)
-  Biobase::sampleNames(metadata) <- colnames(final_counts)
+  new_samplenames <- try(Biobase::sampleNames(metadata) <- colnames(final_counts))
+  if (class(new_samplenames) == "try-error") {
+    message("Something is wrong with the sample names for the experimental metadata.")
+    message(paste0("They must be set to the column names of the count table, which are: ", toString(colnames(final_counts))))
+    message("If the above column names have .x/.y in them, they may be duplicated, check your sample sheet.")
+    message("The sample definitions are:")
+    print(knitr::kable(sample_definitions))
+    stop()
+  }
 
   feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
   Biobase::featureNames(feature_data) <- rownames(final_counts)
@@ -453,6 +462,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                              exprs=final_counts,
                              phenoData=metadata,
                              featureData=feature_data)
+
   Biobase::notes(experiment) <- toString(notes)
 
   ## These entries in new_expt are intended to maintain a record of
@@ -634,6 +644,7 @@ extract_metadata <- function(metadata, ...) {
                                        replacement="s\\1",
                                        x=rownames(sample_definitions))
   empty_samples <- which(sample_definitions[, sample_column] == "" |
+                         grepl(x=sample_definitions[, sample_column], pattern="^undef") |
                          is.na(sample_definitions[, sample_column]) |
                          grepl(pattern="^#", x=sample_definitions[, sample_column]))
   if (length(empty_samples) > 0) {
@@ -898,7 +909,7 @@ median_by_factor <- function(data, fact="condition") {
 #' @return  Expressionset/expt of fission.
 #' @export
 make_pombe_expt <- function(annotation=TRUE) {
-  tt <- sm(require.auto("fission"))
+  tt <- sm(please_install("fission"))
   tt <- sm(requireNamespace("fission"))
   tt <- sm(try(attachNamespace("fission"), silent=TRUE))
   tt <- data(fission)
@@ -1053,6 +1064,28 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]],
                                                           keep.rownames="rownames")
+    retlist[["tximport"]] <- import
+    retlist[["tximport_scaled"]] <- import_scaled
+    retlist[["source"]] <- "tximport"
+  } else if (grepl(pattern="\\.sf", x=files[1])) {
+    ## This hits if we are using the salmon outputs.
+    names(files) <- ids
+    if (!all(file.exists(files))) {
+      warning(paste0("Not all the files exist: ", files))
+    }
+    import <- NULL
+    import_scaled <- NULL
+    if (is.null(tx_gene_map)) {
+      import <- sm(tximport::tximport(files=files, type="salmon", txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="salmon",
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
+    } else {
+      import <- sm(tximport::tximport(files=files, type="salmon", tx2gene=tx_gene_map, txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="salmon", tx2gene=tx_gene_map,
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
+    }
+    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
+    retlist[["count_table"]] <- setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
@@ -1701,7 +1734,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  density_plot <- metrics[["density"]]
+  density_plot <- metrics[["density"]][["plot"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
@@ -1906,7 +1939,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Normalized Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  ndensity_plot <- norm_metrics[["density"]]
+  ndensity_plot <- norm_metrics[["density"]][["plot"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,

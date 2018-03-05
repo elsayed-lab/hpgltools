@@ -309,7 +309,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       message("The keepers has no elements in the coefficients.")
       message(paste0("Here are the keepers: ", toString(all_keepers)))
       message(paste0("Here are the coefficients: ", toString(all_coefficients)))
-      stop("Fix this and try again.")
+      stop("Unable to find the set of contrasts to keep, fix this and try again.")
     }
     ## Then keep specific tables in specific orientations.
     a <- 0
@@ -1895,8 +1895,9 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
       ma_row <- 1
       ma_col <- xls_result[["end_col"]] + 1
       if (!is.null(ma_plots[[base_name]])) {
+        plot_name <- paste0("ma_", according, "_", base_name)
         try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
-                                    plotname="ma", savedir=excel_basename,
+                                    plotname=plot_name, savedir=excel_basename,
                                     start_row=ma_row, start_col=ma_col)
       }
     }
