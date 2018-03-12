@@ -151,7 +151,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata, arglist)
+  sample_definitions <- extract_metadata(metadata, ...)
   ##  sample_definitions <- extract_metadata(metadata)
   message(paste0("The sample definitions comprises: ", toString(dim(sample_definitions)), " rows, columns."))
   num_samples <- nrow(sample_definitions)
@@ -225,7 +225,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
-    count_data <- read_counts_expt(sample_ids, filenames, arglist)
+    count_data <- read_counts_expt(sample_ids, filenames, ...)
     ## count_data <- read_counts_expt(sample_ids, filenames)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
@@ -1141,6 +1141,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     } ## End the difference between tximport and reading tables.
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
+  message("Finished reading count tables.")
   return(retlist)
 }
 
