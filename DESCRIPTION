@@ -1,8 +1,8 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2017.10
-Date: 2017-10-30
+Version: 2018.03
+Date: 2018-03-01
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
@@ -47,7 +47,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 RoxygenNote: 6.0.1
-Collate: 
+Collate:
     'alt_splicing.r'
     'annotation_biomart.r'
     'annotation_eupathdb.r'

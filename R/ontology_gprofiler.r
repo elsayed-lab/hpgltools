@@ -98,9 +98,10 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
 
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- sm(write_gprofiler_data(retlist, excel=excel))
+    excel_ret <- sm(try(write_gprofiler_data(retlist, excel=excel)))
+    retlist[["excel"]] <- excel_ret
+    message("Finished writing data.")
   }
-  message("Finished writing data.")
   return(retlist)
 }
 

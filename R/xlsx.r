@@ -232,9 +232,6 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
       high_quality_renamed <- gsub(pattern="\\..*$", replacement="\\.pdf", x=high_quality)
       fancy_ret <- try(pdf(file=high_quality_renamed))
     }
-    if (is.null(fancy_ret)) {
-      warning("Printing pretty images may have failed.")
-    }
 
     ## I do not understand why some images are plot()ed while others
     ## seem to need to be print()ed.  Adding a try to attempt

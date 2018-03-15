@@ -4,7 +4,7 @@
 \alias{sm}
 \title{Silence, m...}
 \usage{
-sm(...)
+sm(..., wrap = TRUE)
 }
 \arguments{
 \item{...}{Some code to shut up.}

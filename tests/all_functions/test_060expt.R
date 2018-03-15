@@ -94,7 +94,7 @@ test_that("Do we get expected features greater than some cutoffs?", {
 })
 
 ## make_exampledata()
-testing <- DESeq2::counts(make_exampledata())
+testing <- sm(DESeq2::counts(make_exampledata()))
 actual <- dim(testing)
 expected <- c(1000, 5)
 test_that("Do we get some example data from make_exampledata()?", {
@@ -104,7 +104,6 @@ test_that("Do we get some example data from make_exampledata()?", {
 
 ## median_by_factor()
 medians <- sm(median_by_factor(pombe_expt))
-
 actual <- medians[chosen_genes, 1]
 expected <- c(8, 31, 0, 0, 21, 0, 0, 2, 0)
 test_that("Do we get expected medians?", {

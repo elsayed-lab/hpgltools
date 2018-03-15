@@ -27,7 +27,7 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
   } else if (class(df) == "list") {
     df <- data.frame(unlist(df))
     colnames(df) <- c("values")
-  } else if (class(df) == "numeric") {
+  } else if (class(df) == "numeric" | class(df) == "integer") {
     df <- data.frame(unlist(df))
     colnames(df) <- c("values")
   }

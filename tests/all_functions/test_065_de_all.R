@@ -174,7 +174,7 @@ test_that("choose_model provides expected models?", {
 ## I think I should therefore ensure fully that the conditions of the model
 ## match the conditions in the original design.
 model_df <- as.data.frame(cond_model[["chosen_model"]])
-test_df <- data.frame(row.names=names(input[["conditions"]]))
+test_df <- data.frame(row.names=names(pombe_subset[["conditions"]]))
 for (cond in pombe_subset[["conditions"]]) {
   test_df[[cond]] <- 0
 }
@@ -292,13 +292,13 @@ test_that("Did get_pairwise_gene_abundances() get some stuff?", {
 
 ## 18 get_sig_genes()
 testing <- sm(get_sig_genes(table=test_sva$deseq$all_tables[[1]]))
-expected <- c(209, 6)
+expected <- c(109, 6)
 actual <- dim(testing[["up_genes"]])
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_equal(expected[2], actual[2])
 })
-expected <- c(334, 6)
+expected <- c(58, 6)
 actual <- dim(testing[["down_genes"]])
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
@@ -329,7 +329,7 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 testing <- sm(semantic_copynumber_filter(de_list=cb_sig$limma,
                                          semantic="RNA",
                                          semantic_column="rownames"))
-table <- "wt.120_vs_wt.0"
+table <- "wt120_vs_wt0"
 pre <- nrow(cb_sig[["limma"]][["ups"]][[table]])
 post1 <- nrow(testing[["ups"]][[table]])
 expect_lt(post1, pre)

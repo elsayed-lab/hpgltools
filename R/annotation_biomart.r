@@ -404,8 +404,8 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
   colnames(linked_genes) <- new_colnames
 
   linked_genes <- list(
-    "all_gene_list" = linked_genes,
-    "linked_genes" = kept_genes,
+    "all_linked_genes" = linked_genes,
+    "subset_linked_genes" = kept_genes,
     "first_attribs" = possible_first_attributes,
     "second_attribs" = possible_second_attributes)
   return(linked_genes)

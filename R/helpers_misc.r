@@ -736,10 +736,24 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' @param ... Some code to shut up.
 #' @return Whatever the code would have returned.
 #' @export
-sm <- function(...) {
+sm <- function(..., wrap=TRUE) {
   ret <- NULL
   output <- capture.output(type="output", {
-    ret <- suppressWarnings(suppressMessages(...))
+    if (isTRUE(wrap)) {
+      ret <- try(suppressWarnings(suppressMessages(...)), silent=TRUE)
+      if (class(ret)[1] == "try-error") {
+        if (grepl(pattern=" there is no package called", x=ret)) {
+          uninstalled <- trimws(gsub(pattern="^.* there is no package called ‘(.*)’.*$",
+                                     replacement="\\1",
+                                     x=ret, perl=TRUE))
+          message(paste0("Going to attempt to install: ", uninstalled))
+          tt <- please_install(uninstalled)
+        }
+        ret <- sm(..., wrap=FALSE)
+      }
+    } else {
+      ret <- suppressWarnings(suppressMessages(...))
+    }
   })
   return(ret)
 }

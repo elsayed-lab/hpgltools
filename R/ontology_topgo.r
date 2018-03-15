@@ -202,7 +202,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
 
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- try(write_topgo_data(retlist, excel=excel))
+    excel_ret <- sm(try(write_topgo_data(retlist, excel=excel)))
     retlist[["excel"]] <- excel_ret
   }
   return(retlist)

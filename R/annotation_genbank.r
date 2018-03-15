@@ -25,11 +25,12 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
     gbk <- genbankr::import(input_file)
     ## The file exists, read it
   } else {
-    ## gba <- genbankr::GBAccession(accession)
+    gba <- genbankr::GBAccession(accession)
+    gbk <- genbankr::readGenBank(gba, partial=TRUE, verbose=TRUE)
     ## Something here is fubar, it falls down with:
     ## Error in split.default(text, fldnames) :
     ## group length is 0 but data length > 0
-    gbk <- genbankr::readGenBank(file=input_file, partial=TRUE, verbose=TRUE)
+    ## gbk <- genbankr::readGenBank(file=input_file, partial=TRUE, verbose=TRUE)
     ## gbk <- parseGenBank(input_file, partial=TRUE, verbose=TRUE, ret.anno=TRUE, ret.seq=TRUE)
   }
   gbr <- genbankr::makeTxDbFromGenBank(gbk)
