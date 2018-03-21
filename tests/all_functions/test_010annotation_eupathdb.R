@@ -9,7 +9,7 @@ context("010annotation_eupathdb.R\n")
 ##  Most of these are implicitly tested via make_eupath_organismdbi().
 
 testing <- sm(download_eupath_metadata())
-expected <- c(300, 19)
+expected <- c(301, 19)
 actual <- dim(testing)
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)

@@ -11,7 +11,11 @@
 random_ontology <- function(input, method="goseq", n=200, ...) {
   ## Lets assume the result of *_pairwise() or combine_de_tables()
   input_table <- NULL
-  if (!is.null(input[[]])) {
+  if (class(input) == "expt" | class(input) == "ExpressionSet") {
+    input_table <- data.frame(row.names=rownames(exprs(input)))
+    input_table[["ID"]] <- rownames(input_table)
+    input_table[["DE"]] <- 1
+  } else if (!is.null(input[["data"]])) {
     ## Then it is from combine_de_tables
 
   } else if (!is.null()) {

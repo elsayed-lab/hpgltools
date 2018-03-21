@@ -202,7 +202,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #'  smc_plot = hpgl_smc(expt=expt)
 #' }
 #' @export
-plot_sm <- function(data, colors=NULL, method="pearson",
+plot_sm <- function(data, colors=NULL, method="pearson", legend=FALSE,
                     names=NULL, title=NULL, dot_size=5, ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
@@ -338,6 +338,10 @@ plot_sm <- function(data, colors=NULL, method="pearson",
       ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
                                                        angle=90, hjust=1))
 
+  }
+  if (!isTRUE(legend)) {
+    sm_plot <- sm_plot +
+      ggplot2::theme(legend.position="none")
   }
   return(sm_plot)
 }

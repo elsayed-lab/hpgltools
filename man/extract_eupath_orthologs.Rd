@@ -4,13 +4,13 @@
 \alias{extract_eupath_orthologs}
 \title{Given 2 species names from the eupathdb, make orthology tables betwixt them.}
 \usage{
-extract_eupath_orthologs(first, second, master = "GID", abbrev = NULL,
-  xref = TRUE, ...)
+extract_eupath_orthologs(first, master = "GID",
+  query_species = c("L. braziliensis MHOM/BR/75/M2903",
+  "L. mexicana MHOM/GT/2001/U1103"), group_columns = c("Ortholog_ID",
+  "Ortholog_Group", "Organism"), abbrev = NULL, xref = TRUE, ...)
 }
 \arguments{
 \item{first}{Species name from one eupath database.}
-
-\item{second}{Another species name from the same eupath database.}
 
 \item{abbrev}{It is likely you do not care about the reciprocals and such,
 in that case the second species is irrelvant and just a species
@@ -26,6 +26,8 @@ The xref parameter reminds me, this function does make a peculiar attempt to
 With that in mind, one could easily argue that this function is too long and
   it should be split into a couple pieces, but hopefully it is sufficiently
   clear that this is not necessary -- or I will do it later.}
+
+\item{second}{Another species name from the same eupath database.}
 }
 \value{
 List containing the information available given the species provided

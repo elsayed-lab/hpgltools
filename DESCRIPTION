@@ -67,6 +67,7 @@ Collate:
     'de_plots.r'
     'de_shared.r'
     'de_xlsx.r'
+    'eupath_webservices.r'
     'expt.r'
     'helpers_misc.r'
     'hpgltools.r'

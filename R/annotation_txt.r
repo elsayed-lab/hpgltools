@@ -171,6 +171,11 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   go_table <- data.table::setDT(go_data)
   go_table <- go_table[, c("gene_id", "GO")]
   names(go_table) <- c("ID", "GO")
+  keepers <- complete.cases(go_table)
+  go_table <- go_table[keepers, ]
+  ## Some stupid quotations are sneaking through.
+  go_table[["ID"]] <- gsub(pattern='"', replacement="", x=go_table[["ID"]])
+  go_table[["GO"]] <- gsub(pattern='"', replacement="", x=go_table[["GO"]])
 
   length_data <- expanded[, c("gene_id", "transcript_id", "length")]
   length_table <- data.table::setDT(length_data)
