@@ -751,8 +751,7 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   result <- httr::POST(
                     url=api_uri,
                     body=body,
-                    httr::content_type("application/json"),
-                    httr::timeout(minutes * 60))
+                    httr::content_type("application/json"))
 
   if (result[["status_code"]] == "422") {
     stop("There is a missing parameter.")
