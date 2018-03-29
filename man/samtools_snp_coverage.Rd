@@ -5,7 +5,8 @@
 \title{Use Rsamtools to read alignments and get snp coverage.}
 \usage{
 samtools_snp_coverage(expt, type = "counts",
-  input_dir = "preprocessing/outputs", tolower = TRUE)
+  input_dir = "preprocessing/outputs", tolower = TRUE,
+  bam_suffix = ".bam")
 }
 \arguments{
 \item{expt}{Expressionset to analyze}

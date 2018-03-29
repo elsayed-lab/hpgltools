@@ -570,7 +570,7 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #'  nonzero_plot  ## ooo pretty
 #' }
 #' @export
-plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL, ...) {
+plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title=NULL, ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   names <- NULL
@@ -587,20 +587,6 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     data <- as.data.frame(data)
   } else {
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-  }
-
-  if (is.null(labels)) {
-    if (is.null(names)) {
-      labels <- colnames(data)
-    } else {
-      labels <- names
-    }
-  } else if (labels[1] == "boring") {
-    if (is.null(names)) {
-      labels <- colnames(data)
-    } else {
-      labels <- names
-    }
   }
 
   shapes <- as.integer(as.factor(design[["batch"]]))
@@ -637,17 +623,29 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, labels=NULL, title=NULL
     ggplot2::xlab("Observed CPM") +
     ggplot2::theme_bw(base_size=base_size)
 
-  if (!is.null(labels)) {
-    if (labels[[1]] == "fancy") {
-      non_zero_plot <- non_zero_plot +
-        directlabels::geom_dl(aes_string(label="labels"),
-                              method="smart.grid", colour=colors)
-    } else {
-      non_zero_plot <- non_zero_plot +
-        ggplot2::geom_text(aes_string(x="cpm", y="nonzero_genes", label="labels"),
-                           angle=45, size=4, vjust=2)
-    }
+  if (is.null(plot_labels)) {
+    plot_labels <- "repel"
   }
+  if (plot_labels == FALSE) {
+    message("Not putting labels on the plot.")
+  } else if (plot_labels == "normal") {
+    non_zero_plot <- non_zero_plot +
+      ggplot2::geom_text(ggplot2::aes_string(x="cpm", y="nonzero_genes", label="id",
+                                             angle=45, size=4, vjust=2))
+  } else if (plot_labels == "repel") {
+    non_zero_plot <- non_zero_plot +
+      ggrepel::geom_text_repel(ggplot2::aes_string(label="id"),
+                               size=5, box.padding=ggplot2::unit(0.5, "lines"),
+                               point.padding=ggplot2::unit(1.6, "lines"),
+                               arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
+  } else if (plot_labels == "dlsmart") {
+    non_zero_plot <- non_zero_plot +
+      directlabels::geom_dl(ggplot2::aes_string(label="id"), method="smart.grid")
+  } else {
+    non_zero_plot <- non_zero_plot +
+      directlabels::geom_dl(ggplot2::aes_string(label="id"), method="first.qp")
+  }
+
   if (!is.null(title)) {
     non_zero_plot <- non_zero_plot + ggplot2::ggtitle(title)
   }

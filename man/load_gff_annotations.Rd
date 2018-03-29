@@ -20,6 +20,8 @@ load_gff_annotations(gff, type = NULL, id_col = "ID",
 \item{second_id_col}{Second column to check.}
 
 \item{try}{Give your own function call to use for importing.}
+
+\item{row.names}{Choose another column for setting the rownames of the data frame.}
 }
 \value{
 Dataframe of the annotation information found in the gff file.

@@ -5,7 +5,7 @@
 \title{Use biomart to get orthologs between supported species.}
 \usage{
 load_biomart_orthologs(gene_ids, first_species = "hsapiens",
-  second_species = "mmusculus", host = "dec2015.archive.ensembl.org",
+  second_species = "mmusculus", host = "dec2016.archive.ensembl.org",
   trymart = "ENSEMBL_MART_ENSEMBL", first_attributes = "ensembl_gene_id",
   second_attributes = c("ensembl_gene_id", "hgnc_symbol"))
 }
@@ -25,7 +25,9 @@ load_biomart_orthologs(gene_ids, first_species = "hsapiens",
 \item{second_attributes}{Key(s) of the second database to use.}
 }
 \value{
-Df of orthologs.
+list of 4 elements:  The first is the set of all ids, as getLDS seems
+  to always send them all; the second is the subset corresponding to the
+  actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 }
 \description{
 Biomart's function getLDS is incredibly powerful, but it makes me think very polite people are

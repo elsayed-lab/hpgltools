@@ -87,5 +87,5 @@ NULL
 #' @import utils
 NULL
 
-#' What happens if I set a base ggplot2 text size here?
+#' The following sets the ggplot2 default text size.
 base_size <- 16

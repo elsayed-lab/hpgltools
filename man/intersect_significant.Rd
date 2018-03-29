@@ -5,7 +5,8 @@
 \title{Find the sets of intersecting significant genes}
 \usage{
 intersect_significant(combined, lfc = 1, p = 0.05, z = NULL,
-  p_type = "adj", excel = "excel/intersect_significant.xlsx")
+  p_type = "adj", extra_annot = NULL,
+  excel = "excel/intersect_significant.xlsx")
 }
 \arguments{
 \item{combined}{A result from combine_de_tables().}
@@ -17,6 +18,8 @@ intersect_significant(combined, lfc = 1, p = 0.05, z = NULL,
 \item{z}{Or z-score.}
 
 \item{p_type}{Use normal or adjusted p-values.}
+
+\item{extra_annot}{Provide an extra set of annotation columns?}
 
 \item{excel}{An optional excel workbook to which to write.}
 }

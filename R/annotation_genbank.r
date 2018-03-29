@@ -26,19 +26,20 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
     ## The file exists, read it
   } else {
     gba <- genbankr::GBAccession(accession)
+    gbk <- genbankr::readGenBank(gba, partial=TRUE, verbose=TRUE)
     ## Something here is fubar, it falls down with:
     ## Error in split.default(text, fldnames) :
     ## group length is 0 but data length > 0
-    gbk <- genbankr::readGenBank(file=gba, partial=TRUE, verbose=TRUE)
-    ## gbk <- parseGenBank(gba, partial=TRUE, verbose=TRUE, ret.anno=TRUE, ret.seq=TRUE)
+    ## gbk <- genbankr::readGenBank(file=input_file, partial=TRUE, verbose=TRUE)
+    ## gbk <- parseGenBank(input_file, partial=TRUE, verbose=TRUE, ret.anno=TRUE, ret.seq=TRUE)
   }
   gbr <- genbankr::makeTxDbFromGenBank(gbk)
-  seq <- genbankr::getSeq(gbk)
+  seq <- Biostrings::getSeq(gbk)
   others <- genbankr::otherFeatures(gbk)
-  genes <- genbankr::genes(gbk)
-  exons <- genbankr::exons(gbk)
-  intergenic <- genbankr::intergenic(gbk)
-  cds <- genbankr::cds(gbk)
+  genes <- GenomicFeatures::genes(gbk)
+  exons <- GenomicFeatures::exons(gbk)
+  ## intergenic <- genbankr:::intergenic(gbk)
+  cds <- GenomicFeatures::cds(gbk)
   if (isTRUE(savetxdb)) {
     message("The genbankr txdb objects are incomplete.  This does not work.")
   }
@@ -46,7 +47,7 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
     "others" = others,
     "exons" = exons,
     "cds" = cds,
-    "intergenic" = intergenic,
+  ##  "intergenic" = intergenic,
     "genes" = genes,
     "txdb" = gbr,
     "seq" = seq)

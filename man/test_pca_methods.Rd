@@ -21,6 +21,8 @@ test_pca_methods(data, design = NULL, plot_colors = NULL,
 
 \item{center}{Center them?}
 
+\item{eset}{Check the input data type.}
+
 \item{plot_title}{Title them?}
 
 \item{plot_size}{Size of the sigils.}

@@ -6,6 +6,11 @@
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype a, umm keytype? I need to properly read this code.
+#' @param chromosome_column  Which column contains the chromosome information?
+#' @param strand_column Ibid' but for the gene's strand.
+#' @param start_column  Ibid' but to find where each gene starts.
+#' @param end_column  Ibid' but to find where each gene ends.
+#' @param description_column  Ibid' but to find gene descriptions.
 #' @param fields Columns to include in the output.
 #' @param biomart_dataset Name of the biomaRt dataset to query for gene type.
 #' @return a table of gene information
@@ -404,6 +409,8 @@ orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NU
   tt <- sm(try(attachNamespace(first_name), silent=TRUE))
   tt <- sm(requireNamespace(second_name))
   tt <- sm(try(attachNamespace(second_name), silent=TRUE))
+  org_pkg <- NULL
+  tx_pkg <- NULL
   org_pkgstring <- paste0("org_pkg <- ", first_name)
   eval(parse(text=org_pkgstring))
   tx_pkgstring <- paste0("tx_pkg <- ", second_name)
@@ -449,7 +456,10 @@ orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NU
 #' This function is a bit more fragile than I would like.  I am not completely sold
 #' on AnnotationHub yet.
 #'
-#' @param taxid  TaxonID from AnnotationHub
+#' @param ahid  TaxonID from AnnotationHub
+#' @param title  Title for the annotation hub instance
+#' @param species  Species to download
+#' @param type  Datatype to download
 #' @return An Orgdb instance
 #' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
 #' @examples

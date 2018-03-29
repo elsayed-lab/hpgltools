@@ -35,14 +35,14 @@ test_that("Basic performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 4
 test_that("Basic got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
-actual <- sum(as.numeric(test$p) < 0.1)
+actual <- sum(as.numeric(test[["p"]]) < 0.1)
 expected <- 363
 test_that("Basic got some expected results (p)?", {
   expect_equal(expected, actual)
@@ -62,14 +62,17 @@ test_that("DESeq performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
+if (is.null(test)) {
+  test <- testing[["all_tables"]][["mut0_vs_wt0"]]
+}
 actual <- sum(test[["logFC"]] > 2)
 expected <- 57
 test_that("DESeq got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
-actual <- sum(as.numeric(test$P.Value) < 0.1)
+actual <- sum(as.numeric(test[["P.Value"]]) < 0.1)
 expected <- 403
 test_that("DESeq got some expected results (adjp)?", {
   expect_equal(expected, actual)
@@ -89,14 +92,14 @@ test_that("edgeR performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 65
 test_that("edgeR got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
-actual <- sum(as.numeric(test$PValue) < 0.1)
+actual <- sum(as.numeric(test[["PValue"]]) < 0.1)
 expected <- 433
 test_that("edgeR got some expected results (adjp)?", {
   expect_equal(expected, actual)
@@ -120,14 +123,14 @@ test_that("limma performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
 
-test <- testing[["all_tables"]][["wt.0_vs_mut.0"]]
+test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 10
 test_that("limma got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
-actual <- sum(as.numeric(test$P.Value) < 0.1)
+actual <- sum(as.numeric(test[["P.Value"]]) < 0.1)
 expected <- 462
 test_that("limma got some expected results (adjp)?", {
   expect_equal(expected, actual)
@@ -142,20 +145,20 @@ test_that("write_limma() did something?", {
 ## 08 all_pairwise()
 ## Setting parallel to FALSE so that I can make changes and test them
 ## immediately without having to reinstall.
-test_condbatch <- sm(all_pairwise(pombe_subset, parallel=FALSE))
+test_condbatch <- sm(all_pairwise(pombe_subset))
 test_that("all_pairwise() provided results reasonably similar (batch in model)?", {
-  expect_gt(min(test_condbatch$comparison$comp), 0.75)
+  expect_gt(min(test_condbatch[["comparison"]][["comp"]]), 0.75)
 })
 
-test_cond <- sm(all_pairwise(pombe_subset, model_batch=FALSE, parallel=FALSE))
+test_cond <- sm(all_pairwise(pombe_subset, model_batch=FALSE))
 test_that("all_pairwise() provided results reasonably similar (no batch in model)?", {
-  expect_gt(min(test_cond$comparison$comp), 0.75)
+  expect_gt(min(test_cond[["comparison"]][["comp"]]), 0.75)
 })
 
 tmp <- sm(normalize_expt(pombe_subset, filter=TRUE))
-test_sva <- sm(all_pairwise(tmp, model_batch="svaseq", parallel=FALSE))
+test_sva <- sm(all_pairwise(tmp, model_batch="svaseq"))
 test_that("all_pairwise() provided results reasonably similar? (svaseq in model)", {
-  expect_gt(min(test_sva$comparison$comp), 0.65)
+  expect_gt(min(test_sva[["comparison"]][["comp"]]), 0.65)
 })
 
 ## 09 choose_model()
@@ -166,11 +169,22 @@ test_that("choose_model provides expected models?", {
   expect_equal(expected, actual)
 })
 
-expected <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-              1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-actual <- as.numeric(cond_model$chosen_model[, 1])
-test_that("choose_model provides an expected model column?", {
-  expect_equal(expected, actual)
+## I think forcing the expt to keep conditions as specifically ordered factors
+## has caused some oddities in how the downstream model is getting made.
+## I think I should therefore ensure fully that the conditions of the model
+## match the conditions in the original design.
+model_df <- as.data.frame(cond_model[["chosen_model"]])
+test_df <- data.frame(row.names=names(pombe_subset[["conditions"]]))
+for (cond in pombe_subset[["conditions"]]) {
+  test_df[[cond]] <- 0
+}
+for (c in 1:length(pombe_subset[["conditions"]])) {
+  name <- names(pombe_subset[["conditions"]])[c]
+  value <- as.character(pombe_subset[["conditions"]][c])
+  test_df[name, value] <- 1
+}
+test_that("choose_model provides a model which matches the design?", {
+  expect_equal(model_df, test_df)
 })
 
 condbatch_model <- sm(choose_model(pombe_subset))
@@ -315,7 +329,7 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 testing <- sm(semantic_copynumber_filter(de_list=cb_sig$limma,
                                          semantic="RNA",
                                          semantic_column="rownames"))
-table <- "wt.120_vs_wt.0"
+table <- "wt120_vs_wt0"
 pre <- nrow(cb_sig[["limma"]][["ups"]][[table]])
 post1 <- nrow(testing[["ups"]][[table]])
 expect_lt(post1, pre)

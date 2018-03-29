@@ -48,7 +48,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     surrogates <- arglist[["surrogates"]]
   }
   if (is.null(model_cond)) {
-    model_cond <- TRUE
+   model_cond <- TRUE
   }
   if (is.null(model_batch)) {
     model_batch <- FALSE
@@ -80,8 +80,14 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
       message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
-      post_batch <- sm(normalize_expt(input, filter=TRUE, batch=model_type,
-                                      transform="log2", convert="cpm", norm="quant"))
+      test_norm <- "quant"
+      if (model_type != "TRUE" & model_type != FALSE) {
+        ## Then it is probably some sort of sva which will have a hard time with quantile.
+        test_norm <- "raw"
+      }
+      message(paste0("Performing a test normalization with: ", test_norm))
+      post_batch <- sm(try(normalize_expt(input, filter=TRUE, batch=model_type,
+                                          transform="log2", convert="cpm", norm=test_norm)))
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
@@ -133,7 +139,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                                      extra_contrasts=extra_contrasts,
                                      alt_model=alt_model,
                                      libsize=libsize,
-                                     annot_df=annot_df, ...)
+                                     annot_df=annot_df,
+                                     ...)
     }
   } ## End performing a serial comparison
 
@@ -271,7 +278,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                                             deseq=results[["deseq"]],
                                             edger=results[["edger"]],
                                             basic=results[["basic"]],
-                                            annot_df=annot_df, ...)
+                                            annot_df=annot_df) #, ...)
   }
   ## The first few elements of this list are being passed through into the return
   ## So that if I use combine_tables() I can report in the resulting tables
@@ -537,6 +544,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @param intercept  Choose an intercept for the model as opposed to 0.
 #' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 #'  to test.
+#' @param contr  List of contrasts.arg possibilities.
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
@@ -821,7 +829,6 @@ compare_de_results <- function(first, second, cor_method="pearson") {
     for (table in tables) {
       result[[method]][[table]] <- list()
       for (comparison in comparisons) {
-        message(paste0("Comparing ", method, ", ", table, ", ", comparison, "."))
         column_name <- paste0(method, "_", comparison)
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         names(f_column) <- rownames(first[["data"]][[table]])
@@ -914,10 +921,57 @@ compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
     ## assume all three have the same names() -- note that limma has more than the other two though
     cc <- cc + 1
     message(paste0("Comparing analyses ", cc, "/", len, ": ", comp))
-    l <- data.frame(limma[[comp]])
-    e <- data.frame(edger[[comp]])
-    d <- data.frame(deseq[[comp]])
-    b <- data.frame(basic[[comp]])
+    num_den_names <- strsplit(x=comp, split="_vs_")[[1]]
+    num_name <- num_den_names[1]
+    den_name <- num_den_names[2]
+    rev_comp <- paste0(den_name, "_vs_", num_name)
+    num_reversed <- 0
+    l <- limma[[comp]]
+    if (is.null(l)) {
+      l <- limma[[rev_comp]]
+      l[["logFC"]] <- l[["logFC"]] * -1
+      message("Used reverse contrast for limma.")
+      num_reversed <- num_reversed + 1
+    }
+    e <- edger[[comp]]
+    if (is.null(e)) {
+      e <- edger[[rev_comp]]
+      e[["logFC"]] <- e[["logFC"]] * -1
+      message("Used reverse contrast for edger.")
+      num_reversed <- num_reversed + 1
+    }
+    d <- deseq[[comp]]
+    if (is.null(d)) {
+      d <- deseq[[rev_comp]]
+      d[["logFC"]] <- d[["logFC"]] * -1
+      d[["stat"]] <- d[["stat"]] * -1
+      message("Used reverse contrast for deseq.")
+      num_reversed <- num_reversed + 1
+    }
+    b <- basic[[comp]]
+    if (is.null(b)) {
+      b <- basic[[rev_comp]]
+      b[["logFC"]] <- b[["logFC"]] * -1
+      message("Used reverse contrast for basic.")
+      num_reversed <- num_reversed + 1
+    }
+    ## How odd, why did they get reversed?
+    if (num_reversed == 4) {
+      comp <- rev_comp
+    }
+    if (is.null(l)) {
+      stop("Could not find either the comparison nor its reverse for limma.")
+    }
+    if (is.null(e)) {
+      stop("Could not find either the comparison nor its reverse for edger.")
+    }
+    if (is.null(d)) {
+      stop("Could not find either the comparison nor its reverse for deseq.")
+    }
+    if (is.null(b)) {
+      stop("Could not find either the comparison nor its reverse for basic.")
+    }
+
     le <- merge(l, e, by.x="row.names", by.y="row.names")
     le <- le[, c("logFC.x", "logFC.y")]
     colnames(le) <- c("limma logFC", "edgeR logFC")
@@ -1056,6 +1110,7 @@ compare_logfc_plots <- function(combined_tables) {
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(data)
   bar <- utils::txtProgressBar(max=num_levels, style=3)
+  count <- 1
   progress <- function(n) {
     setTxtProgressBar(bar, n)
   }
@@ -1883,6 +1938,7 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 #' @param max_copies  Keep only those genes with <= n putative
 #'  copies.
 #' @param use_files  Use a set of sequence alignments to define the copy numbers?
+#' @param invert  Keep these genes rather than drop them?
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.
@@ -1991,6 +2047,31 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
   de_list[["numbers_removed"]] <- numbers_removed
   de_list[["type"]] <- type
   return(de_list)
+}
+
+#' Get rid of characters which will mess up contrast making and such before playing with an expt.
+#'
+#' @param expt  An expt object to clean.
+sanitize_expt <- function(expt) {
+  design <- pData(expt)
+  conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=as.character(design[["condition"]]))
+  batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=as.character(design[["batch"]]))
+  ## To be honest, there is absolutely no way I would have thought of this regular expression:
+  ## https://stackoverflow.com/questions/30945993/split-string-on-punct-except-for-underscore-in-r
+  ## In theory I am pretty good with regexes, but the idea
+  conditions <- gsub(pattern="[^\\PP_]", replacement="", x=conditions, perl=TRUE)
+  batches <- gsub(pattern="[^\\PP_]", replacement="", x=batches, perl=TRUE)
+  conditions <- gsub(pattern="[[:blank:]]", replacement="", x=conditions)
+  batches <- gsub(pattern="[[:blank:]]", replacement="", x=batches)
+  conditions <- as.factor(conditions)
+  batches <- as.factor(batches)
+  expressionset <- expt[["expressionset"]]
+  Biobase::pData(expressionset)[["condition"]] <- conditions
+  Biobase::pData(expressionset)[["batch"]] <- batches
+  expt[["expressionset"]] <- expressionset
+  expt[["conditions"]] <- conditions
+  expt[["batches"]] <- batches
+  return(expt)
 }
 
 #' Extract multicopy genes from up/down gene expression lists.

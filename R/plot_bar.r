@@ -60,10 +60,13 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                                                     chosen_palette))(ncol(data))
   }
 
-                                        # Get conditions
+  ## Get conditions
   if (is.null(condition)) {
     stop("Missing condition label vector.")
   }
+
+  values <- as.numeric(data)
+  integerp <- all.equal(values, as.integer(values))
 
   colors <- as.character(colors)
   sum <- NULL
@@ -78,12 +81,82 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                                                      "3rd"=quantile(x=sum, probs=0.75),
                                                      "max"=max(sum)),
                                               by="condition"]
-  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors, integerp=integerp,
                                    names=names, text=text, title=title, yscale=yscale, ...)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
     "summary" = summary_df)
+  return(retlist)
+}
+
+#' Thanks to Sandra Correia for this!  This function attempts to represent the
+#' change in the number of genes which are well/poorly represented in the data
+#' before and after performing a low-count filter.
+#'
+#' @param expt Input expressionset.
+#' @param low_limit  A threshold to define 'low-representation.'
+#' @param filter  Method used to low-count filter the data.
+#' @param ...  Extra arbitrary arguments to pass to normalize_expt()
+#' @return  Bar plot showing the number of genes below the low_limit before and
+#'   after filtering the data.
+#' @export
+plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
+  start <- plot_libsize(expt, text=FALSE)
+  norm <- sm(normalize_expt(expt, filter=filter, ...))
+  end <- plot_libsize(norm)
+
+  lt_min_start <- colSums(exprs(expt) <= low_limit)
+  lt_min_end <- colSums(exprs(norm) <= low_limit)
+
+  start_tab <- as.data.frame(start[["table"]])
+  end_tab <- as.data.frame(end[["table"]])
+
+  start_tab[["sum"]] <- as.numeric(start_tab[["sum"]])
+  start_tab[["colors"]] <- as.character(start_tab[["colors"]])
+  start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
+  start_tab[["low"]] <- lt_min_start
+  start_tab[["subtraction"]] <- ""
+
+  end_tab[["sum"]] <- as.numeric(end_tab[["sum"]])
+  end_tab[["colors"]] <- as.character(end_tab[["colors"]])
+  end_tab[["alpha"]] <- ggplot2::alpha(end_tab[["colors"]], 1.0)
+  end_tab[["subtraction"]] <- start_tab[["sum"]] - end_tab[["sum"]]
+  end_tab[["low"]] <- lt_min_end
+  end_tab[["sub_low"]] <- ""
+
+  start_tab[["sub_low"]] <- start_tab[["low"]] - end_tab[["low"]]
+  all_tab <- rbind(start_tab, end_tab)
+
+  count_columns <- ggplot(all_tab, aes_string(x="id", y="sum")) +
+    ggplot2::geom_col(position="identity", color="black", aes_string(fill="colors")) +
+    ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                       aes_string(
+                         x="id",
+                         label='as.character(all_tab$subtraction)')) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
+                   legend.position="none")
+
+  low_columns <- ggplot(all_tab, aes_string(x="id", y="low")) +
+    ggplot2::geom_col(position="identity", color="black", aes_string(alpha="alpha", fill="colors")) +
+    ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="black", hjust=1.2,
+                       aes_string(
+                         x="id",
+                         label='as.character(all_tab$sub_low)')) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
+                   legend.position="none")
+
+  retlist <- list(
+    "start" = start,
+    "end" = end,
+    "table" = all_tab,
+    "count_plot" = count_columns,
+    "lowgene_plot" = low_columns
+  )
   return(retlist)
 }
 
@@ -163,7 +236,7 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
   return(kept_plot)
 }
 
-plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
+plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL, integerp=FALSE,
                              names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
   hpgl_env <- environment()
   arglist <- list(...)
@@ -173,6 +246,11 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["colors"]])
   names(color_list) <- as.character(color_listing[["condition"]])
+
+  y_label <- "Library size in pseudocounts."
+  if (isTRUE(integerp)) {
+    y_label <- "Library size in counts."
+  }
 
   sample_plot <- ggplot(data=sample_df,
                         environment=hpgl_env,
@@ -184,16 +262,17 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
                       fill=sample_df[["colors"]],
                       aes_string(x="order")) +
     ggplot2::xlab("Sample ID") +
-    ggplot2::ylab("Library size in (pseudo)counts.") +
+    ggplot2::ylab(y_label) +
     ## theme_bw() sets a bunch of reasonable defaults.
     ggplot2::theme_bw(base_size=base_size) +
     ## angle=90 puts the text vertically, vjust=0.5 centers the labels below the tick mark.
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
-
   if (isTRUE(text)) {
-    sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
+    if (!isTRUE(integerp)) {
+      sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
+    }
     ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
     sample_plot <- sample_plot +
       ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
@@ -229,7 +308,9 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
 #' Make relatively pretty bar plots of coverage in a genome.
 #'
 #' This was written for ribosome profiling coverage / gene.
-#' It should however, work for any data with little or no modification.
+#' It should however, work for any data with little or no modification, it was
+#' also written when I was first learning R and when I look at it now I see a
+#' few obvious places which can use improvement.
 #'
 #' @param input  Coverage / position filename.
 #' @param workdir  Where to put the resulting images.
@@ -288,8 +369,8 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
     ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
     ggplot2::geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue") +
     ggplot2::theme_bw(base_size=base_size)
-  plot(my_plot)
 
+  return(my_plot)
 }
 
 #' Make a bar plot of the numbers of significant genes by contrast.
@@ -351,16 +432,16 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
   names(color_list) <- color_names
   levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
   levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
-
   sigbar_plot <- ggplot() +
     ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
     ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-    ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
-                                        "b_up_middle"="lightskyblue",
-                                        "c_up_outer"="dodgerblue",
-                                        "a_down_inner"="plum1",
-                                        "b_down_middle"="orchid",
-                                        "c_down_outer"="purple4")) +
+    ## ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
+    ##                                     "b_up_middle"="lightskyblue",
+    ##                                     "c_up_outer"="dodgerblue",
+    ##                                     "a_down_inner"="plum1",
+    ##                                     "b_down_middle"="orchid",
+    ##                                     "c_down_outer"="purple4")) +
+    ggplot2::scale_fill_manual(values=color_list) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(panel.grid.minor=ggplot2::element_blank(),

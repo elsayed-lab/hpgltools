@@ -12,6 +12,8 @@ filenames.}
 
 \item{write_windows}{Write out SWATH window frames.}
 
+\item{parallel}{Perform operations using an R foreach cluster?}
+
 \item{...}{Extra arguments, presumably color palettes and column names and
 stuff like that.}
 }

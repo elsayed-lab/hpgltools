@@ -188,7 +188,7 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #' @export
 plot_heatplus <- function(expt, type="correlation", method="pearson", annot_columns="batch",
                           annot_rows="condition", cutoff=1.0, cluster_colors=NULL, scale="none",
-                          cluster_width=2.0, cluster_function=NULL, heat_colors=NULL) {
+                          cluster_width=2.0, cluster_function=NULL, heatmap_colors=NULL) {
     data <- exprs(expt)
     if (type == "correlation") {
         data <- hpgl_cor(data, method=method)
@@ -244,14 +244,14 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
     myclust <- list("cuth" = 1.0,
                     "col" = new_colors)
 
-    final_map <- annHeatmap2(
+    final_map <- Heatplus::annHeatmap2(
         data,
         dendrogram=mydendro,
         annotation=myannot,
         cluster=myclust,
         labels=mylabs,
         scale=scale,
-        col=hmcols)
+        col=heatmap_colors)
 
     plot(final_map)
     ret <- grDevices::recordPlot()
@@ -421,7 +421,7 @@ plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         ggplot2::scale_fill_gradient(low=first_cor_colors[1],
                                      high=first_cor_colors[length(first_cor_colors)],
                                      name="first comparison") +
-        ggplot::geom_text(ggplot2::aes_string(fill=plotted_data[["value"]],
+        ggplot2::geom_text(ggplot2::aes_string(fill=plotted_data[["value"]],
                                               label=round(plotted_data[["value"]], digits=2)))
 
     return(fun_heatmap)

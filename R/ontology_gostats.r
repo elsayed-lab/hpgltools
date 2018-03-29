@@ -347,7 +347,7 @@ perhaps change gff_type to make the merge work.")
 
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- sm(write_gostats_data(retlist, excel=excel))
+    excel_ret <- sm(try(write_gostats_data(retlist, excel=excel)))
   }
   return(retlist)
 }

@@ -17,6 +17,8 @@ copies.}
 
 \item{use_files}{Use a set of sequence alignments to define the copy numbers?}
 
+\item{invert}{Keep these genes rather than drop them?}
+
 \item{semantic}{Set of strings with gene names to exclude.}
 
 \item{semantic_column}{Column in the DE table used to find the

@@ -152,7 +152,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
-  ## sample_definitions <- extract_metadata(metadata)
+  ##  sample_definitions <- extract_metadata(metadata)
+  message(paste0("The sample definitions comprises: ", toString(dim(sample_definitions)), " rows, columns."))
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -160,8 +161,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   filenames <- NULL
   all_count_tables <- NULL
   if (!is.null(count_dataframe)) {
+    ## Lets set the order of the count data to that of the sample definitions.
+    if (all.equal(sort(colnames(count_dataframe)), sort(rownames(sample_definitions)))) {
+      count_dataframe <- count_dataframe[, rownames(sample_definitions)]
+    } else {
+      stop("The count table column names are not the same as the sample definition row names.")
+    }
     all_count_tables <- data.table::as.data.table(count_dataframe, keep.rownames="rownames")
-    testthat::expect_equal(colnames(all_count_tables), c("rownames", rownames(sample_definitions)))
     ## If neither of these cases is true, start looking for the files in the
     ## processed_data/ directory
   } else if (is.null(sample_definitions[[file_column]])) {
@@ -220,6 +226,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## and count_table which should have one column for every kept_id/kept_file.
   count_data <- NULL
   if (is.null(all_count_tables)) {
+    ## If all_count_tables does not exist, then we want to read the various files
+    ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     count_data <- read_counts_expt(sample_ids, filenames, ...)
@@ -229,6 +237,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                             "scaled" = count_data[["tximport_scaled"]])
     }
     all_count_tables <- count_data[["count_table"]]
+  } else {
+    ## if all_count_tables _did_ exist, then we already had the count tables and so
+    ## count_data should have them and all ids as 'kept'.
+    count_data <- list(
+      "source" = "dataframe",
+      "raw" = all_count_tables,
+      "kept_ids" = as.character(sample_definitions[[sample_column]]))
   }
   ## Here we will prune the metadata for any files/ids which were dropped
   ## when reading in the count tables.
@@ -428,13 +443,23 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Adding these so that deseq does not complain about characters when
   ## calling DESeqDataSetFromMatrix()
-  sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
-  sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
+  ## I think these lines are not needed any longer, as I explicitly set the
+  ## parameters of these factors now in extract_metadata()
+  ##sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
+  ##sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
   ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
   requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
   metadata <- methods::new("AnnotatedDataFrame", sample_definitions)
-  Biobase::sampleNames(metadata) <- colnames(final_counts)
+  new_samplenames <- try(Biobase::sampleNames(metadata) <- colnames(final_counts))
+  if (class(new_samplenames) == "try-error") {
+    message("Something is wrong with the sample names for the experimental metadata.")
+    message(paste0("They must be set to the column names of the count table, which are: ", toString(colnames(final_counts))))
+    message("If the above column names have .x/.y in them, they may be duplicated, check your sample sheet.")
+    message("The sample definitions are:")
+    print(knitr::kable(sample_definitions))
+    stop()
+  }
 
   feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
   Biobase::featureNames(feature_data) <- rownames(final_counts)
@@ -442,6 +467,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                              exprs=final_counts,
                              phenoData=metadata,
                              featureData=feature_data)
+
   Biobase::notes(experiment) <- toString(notes)
 
   ## These entries in new_expt are intended to maintain a record of
@@ -472,13 +498,16 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     "transform" = "raw")
   expt[["state"]] <- starting_state
   ## Just in case there are condition names which are not used.
-  expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+  ## Ditto here, this should not be needed.
+  ## expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
+  expt[["conditions"]] <- sample_definitions[["condition"]]
   ## This might be redundant, but it ensures that no all-numeric conditions exist.
-  expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
+  ## expt[["conditions"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=expt[["conditions"]])
   names(expt[["conditions"]]) <- rownames(sample_definitions)
   ## Ditto for batches
-  expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
-  expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
+  expt[["batches"]] <- sample_definitions[["batch"]]
+  ## expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
+  ## expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
   names(expt[["batches"]]) <- rownames(sample_definitions)
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
   expt[["original_metadata"]] <- metadata
@@ -582,27 +611,34 @@ extract_metadata <- function(metadata, ...) {
   }
 
   meta_dataframe <- NULL
+  meta_file <- NULL
   if (class(metadata) == "character") {
     ## This is a filename containing the metadata
-    file <- metadata
+    meta_file <- metadata
   } else if (class(metadata) == "data.frame") {
     ## A data frame of metadata was passed.
     meta_dataframe <- metadata
   } else {
     stop("This requires either a file or meta data.frame.")
   }
+
   ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
-  if (is.null(meta_dataframe) & is.null(file)) {
+  if (is.null(meta_dataframe) & is.null(meta_file)) {
     stop("This requires either a csv file or dataframe of metadata describing the samples.")
-  } else if (is.null(file)) {
+  } else if (is.null(meta_file)) {
     ## punctuation is the devil
     sample_definitions <- meta_dataframe
     colnames(sample_definitions) <- tolower(colnames(sample_definitions))
     colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                          x=colnames(sample_definitions))
   }  else {
-    sample_definitions <- read_metadata(file, ...)
+    sample_definitions <- read_metadata(meta_file, ...)
     ## sample_definitions <- read_metadata(file)
+  }
+
+  ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
+  if (sample_column != "sampleid") {
+    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
   }
 
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -620,6 +656,7 @@ extract_metadata <- function(metadata, ...) {
                                        replacement="s\\1",
                                        x=rownames(sample_definitions))
   empty_samples <- which(sample_definitions[, sample_column] == "" |
+                         grepl(x=sample_definitions[, sample_column], pattern="^undef") |
                          is.na(sample_definitions[, sample_column]) |
                          grepl(pattern="^#", x=sample_definitions[, sample_column]))
   if (length(empty_samples) > 0) {
@@ -674,10 +711,19 @@ analyses more difficult/impossible.")
   }
   ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
   ## prefix them with 'c' and 'b' respectively.
+  pre_condition <- unique(sample_definitions[["condition"]])
+  pre_batch <- unique(sample_definitions[["batch"]])
   sample_definitions[["condition"]] <- gsub(pattern="^(\\d+)$", replacement="c\\1",
                                             x=sample_definitions[["condition"]])
   sample_definitions[["batch"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1",
                                         x=sample_definitions[["batch"]])
+  sample_definitions[["condition"]] <- factor(sample_definitions[["condition"]],
+                                              levels=unique(sample_definitions[["condition"]]),
+                                              labels=pre_condition)
+  sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
+                                          levels=unique(sample_definitions[["batch"]]),
+                                          labels=pre_batch)
+
   return(sample_definitions)
 }
 
@@ -875,10 +921,13 @@ median_by_factor <- function(data, fact="condition") {
 #' @return  Expressionset/expt of fission.
 #' @export
 make_pombe_expt <- function(annotation=TRUE) {
-  tt <- sm(require.auto("fission"))
+  fission <- new.env()
+  tt <- sm(please_install("fission"))
   tt <- sm(requireNamespace("fission"))
   tt <- sm(try(attachNamespace("fission"), silent=TRUE))
-  tt <- data(fission)
+  tt <- data(fission, envir=fission)
+  ## some minor shenanigans to get around the oddities of loading from data()
+  fission <- fission[["fission"]]
   meta <- as.data.frame(fission@colData)
   meta[["condition"]] <- paste0(meta[["strain"]], ".", meta[["minute"]])
   meta[["batch"]] <- meta[["replicate"]]
@@ -1033,29 +1082,39 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
-  } else {
-
-    ## This is used when 'normal' htseq-based counts were generated.
-    message(paste0("TESTME: ", header, " THERE?"))
-    if (header == FALSE) {
-      message("The header is false")
-    } else if (isTRUE(header)) {
-      message("The header is true.")
-    } else {
-      message("the header is something else.")
+  } else if (grepl(pattern="\\.sf", x=files[1])) {
+    ## This hits if we are using the salmon outputs.
+    names(files) <- ids
+    if (!all(file.exists(files))) {
+      warning(paste0("Not all the files exist: ", files))
     }
-    message(paste0("pre: ", files[1], " ", header))
+    import <- NULL
+    import_scaled <- NULL
+    if (is.null(tx_gene_map)) {
+      import <- sm(tximport::tximport(files=files, type="salmon", txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="salmon",
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
+    } else {
+      import <- sm(tximport::tximport(files=files, type="salmon", tx2gene=tx_gene_map, txOut=txout))
+      import_scaled <- sm(tximport::tximport(files=files, type="salmon", tx2gene=tx_gene_map,
+                                             txOut=txout, countsFromAbundance="lengthScaledTPM"))
+    }
+    retlist[["count_table"]] <- data.table::as.data.table(import[["counts"]], keep.rownames="rownames")
+    retlist[["count_table"]] <- setkey(retlist[["count_table"]], rownames)
+    retlist[["tximport"]] <- import
+    retlist[["tximport_scaled"]] <- import_scaled
+    retlist[["source"]] <- "tximport"
+  } else {
+    ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header=header)
-    message("first")
     colnames(count_table) <- c("rownames", ids[1])
-    message("second")
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
       stop(paste0("There was an error reading: ", files[1]))
     }
     message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
-        ## Following lines not needed for data.table
+    ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
     ## count_table <- count_table[, -1, drop=FALSE]
     ## iterate over and append remaining samples
@@ -1097,6 +1156,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     } ## End the difference between tximport and reading tables.
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
+  message("Finished reading count tables.")
   return(retlist)
 }
 
@@ -1690,7 +1750,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  density_plot <- metrics[["density"]]
+  density_plot <- metrics[["density"]][["plot"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
@@ -1895,7 +1955,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Normalized Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  ndensity_plot <- norm_metrics[["density"]]
+  ndensity_plot <- norm_metrics[["density"]][["plot"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,

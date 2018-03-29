@@ -439,7 +439,10 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 
   trees <- NULL
   if (isTRUE(add_trees)) {
-    trees <- goseq_trees(goseq_result, pval_column=pval_column)
+    trees <- try(goseq_trees(goseq_result, pval_column=pval_column), silent=TRUE)
+    if (class(trees)[1] == "try-error") {
+      trees <- NULL
+    }
   }
 
   table_list <- list()
@@ -450,6 +453,12 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
     keeper_idx <- categories[["over_represented_pvalue"]] <= pval
     categories <- categories[keeper_idx, ]
+    if (sum(keeper_idx) == 0) {
+      message(paste0("No data survived to be written for the ", ont, " ontology."))
+      next
+    }
+
+    ## There is nothing to write.
     genes_per_category <- gather_ontology_genes(goseq_result, ontology=ont,
                                                 pval=pval)
     categories <- merge(categories, genes_per_category, by="row.names")
@@ -581,7 +590,10 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   trees <- NULL
   if (isTRUE(add_trees)) {
-    trees <- gostats_trees(gostats_result, pval_column=pval_column)
+    trees <- try(gostats_trees(gostats_result, pval_column=pval_column), silent=TRUE)
+    if (class(trees[1]) == "try-error") {
+      trees <- NULL
+    }
   }
 
   table_list <- list()
@@ -1005,7 +1017,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     openxlsx::addWorksheet(wb, sheetName=sheet)
     corum_data <- gprofiler_result[["corum"]]
     corum_order <- order(corum_data[[order_by]], decreasing=decreasing)
-    corum_data <- corum_data[corum_data, ]
+    corum_data <- corum_data[corum_order, ]
     openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
@@ -1126,7 +1138,10 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                                    wb=wb, sheet="legend", start_col=11,
                                    start_row=summary_row + 31, plotname="q_histogram",
                                    savedir=excel_basename))
-      trees <- topgo_trees(topgo_result)
+      trees <- try(topgo_trees(topgo_result), silent=TRUE)
+      if (class(trees)[1] == "try-error") {
+        trees <- NULL
+      }
     }
   }  ## End making sure that an excel is desired.
 
@@ -2269,7 +2284,6 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
               "gostats_mf" = gostats_mf,
               "gostats_bp" = gostats_bp,
               "gostats_cc" = gostats_cc)
-  ## require.auto("awalker89/openxlsx")
   wb <- openxlsx::createWorkbook(creator="atb")
   hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT",
                                textDecoration="bold", border="Bottom", fontSize="30")

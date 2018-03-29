@@ -4,7 +4,7 @@ library(hpgltools)
 library(pasilla)
 tt <- sm(library(edgeR))
 data(pasillaGenes)
-num_installed <- require.auto("kokrah/cbcbSEQ")
+num_installed <- please_install("kokrah/cbcbSEQ")
 cbcb <- sm(library(cbcbSEQ))
 context("05cbcbseq.R: Compare cbcbSEQ output to hpgltools.\n")
 ## This test is intended to compare Kwame Okrah/Hector Corrada Bravo's cbcbSEQ output

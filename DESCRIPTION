@@ -1,8 +1,8 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2017.10
-Date: 2017-10-30
+Version: 2018.03
+Date: 2018-03-01
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
              person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
@@ -22,7 +22,7 @@ Suggests:
   Category, cleaver, clusterProfiler, corpcor, corrplot,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW, dplyr,
   EDASeq, edgeR,
-  ffpe,
+  ffpe, fission,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, genoPlotR, ggdendro, ggrepel, goseq,
   GO.db, googleVis, GOstats, graph, gtools, gplots, gProfileR, GSEABase,
   Heatplus, Hmisc, Homo.sapiens, httr,
@@ -34,20 +34,21 @@ Suggests:
   openxlsx, OrganismDbi,
   packrat, pander, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rhdf5, rjson,
-  rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne, rtracklayer,
-  ruv, RUVSeq,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
+  rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
   variancePartition, Vennerable, venneuler,
-  XLConnect
+  XLConnect, xml2
 Imports:
   Biobase, data.table, foreach, ggplot2, knitr, magrittr, methods
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 RoxygenNote: 6.0.1
-Collate: 
+Collate:
+    'alt_splicing.r'
     'annotation_biomart.r'
     'annotation_eupathdb.r'
     'annotation_genbank.r'
@@ -66,6 +67,7 @@ Collate:
     'de_plots.r'
     'de_shared.r'
     'de_xlsx.r'
+    'eupath_webservices.r'
     'expt.r'
     'helpers_misc.r'
     'hpgltools.r'

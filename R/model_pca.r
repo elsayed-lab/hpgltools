@@ -491,7 +491,6 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   ## I have been using hpgl_env for keeping aes() from getting contaminated.
   ## I think that this is no longer needed because I have been smater(sic) about how
   ## I invoke aes_string() and ggplot2()
-  hpgl_env <- environment()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -506,6 +505,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     batch_column <- arglist[["batch_column"]]
     message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
   }
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+  label_size <- 4
+  if (!is.null(arglist[["label_size"]])) {
+    label_size <<- arglist[["label_size"]]
+  }
 
   ## The following if() series is used to check the type of data provided and extract the available
   ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
@@ -519,7 +525,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- data[["design"]]
+    design <- pData(data)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
@@ -529,6 +535,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
+    design <- pData(data)
   } else if (data_class == "list") {
     data <- data[["count_table"]]
     if (is.null(data)) {
@@ -538,6 +545,11 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  ## Small modification for reusing some of my very oldest experimental designs.
+  if (is.null(design[["sampleid"]])) {
+    design[["sampleid"]] <- rownames(design)
   }
 
   ## Check that the given design works with the data
@@ -619,8 +631,8 @@ Going to run pcRes with the batch information.")
   ## Create a data frame with all the material of interest in the actual PCA plot
   pca_data <- data.frame(
     "sampleid" = as.character(design[["sampleid"]]),
-    "condition" = as.character(design[[cond_column]]),
-    "batch" = as.character(design[[batch_column]]),
+    "condition" = design[[cond_column]],
+    "batch" = design[[batch_column]],
     "batch_int" = as.integer(as.factor(design[[batch_column]])),
     "PC1" = svd_result[["v"]][, 1],
     "PC2" = svd_result[["v"]][, 2],
@@ -700,7 +712,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
                      plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
   arglist <- list(...)
-  hpgl_env <- environment()
   batches <- pca_data[["batch"]]
   label_column <- "condition"
   if (!is.null(arglist[["label_column"]])) {
@@ -711,6 +722,14 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     plot_title <- paste(first, " vs. ", second, sep="")
   }
   num_batches <- length(unique(batches))
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+  label_size <- 4
+  if (!is.null(arglist[["label_size"]])) {
+    label_size <<- arglist[["label_size"]]
+  }
+
   pca_plot <- NULL
 
   color_listing <- pca_data[, c("condition", "colors")]
@@ -729,7 +748,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   ## 6.  Finally, set the shape manual with a guide_legend override
 
   ## Step 1
-  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"), environment=hpgl_env)
+  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"))
 
   if (is.null(size_column) & num_batches <= 5) {
     pca_plot <- pca_plot +
@@ -822,20 +841,20 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     message("Not putting labels on the plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
-      ggplot2::geom_text(ggplot2::aes_string(x="PC1", y="PC2", label="labels",
-                                             angle=45, size=4, vjust=2))
+      ggplot2::geom_text(aes_string(x="PC1", y="PC2", label="labels",
+                                    angle=45, size=label_size, vjust=2))
   } else if (plot_labels == "repel") {
     pca_plot <- pca_plot +
-      ggrepel::geom_text_repel(ggplot2::aes_string(label="labels"),
-                               size=5, box.padding=ggplot2::unit(0.5, "lines"),
+      ggrepel::geom_text_repel(aes_string(label="labels"),
+                               size=label_size, box.padding=ggplot2::unit(0.5, "lines"),
                                point.padding=ggplot2::unit(1.6, "lines"),
                                arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
   } else if (plot_labels == "dlsmart") {
     pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="smart.grid")
+      directlabels::geom_dl(aes_string(label="labels"), method="smart.grid")
   } else {
     pca_plot <- pca_plot +
-      directlabels::geom_dl(ggplot2::aes_string(label="labels"), method="first.qp")
+      directlabels::geom_dl(aes_string(label="labels"), method="first.qp")
   }
 
   if (!is.null(cis)) {
@@ -863,6 +882,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @param plot_labels  Labels for the plots.
 #' @param scale  Scale them?
 #' @param center  Center them?
+#' @param eset  Check the input data type.
 #' @param plot_title  Title them?
 #' @param plot_size  Size of the sigils.
 #' @param size_column  A factor to size the sigils.

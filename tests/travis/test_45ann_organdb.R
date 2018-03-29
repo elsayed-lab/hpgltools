@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 context("45ann_organdb.R: Is it possible to manipulate OrgDb/OrganismDbi instances?\n")
 
-tt <- sm(require.auto("org.Dm.eg.db"))
+tt <- sm(please_install("org.Dm.eg.db"))
 fly_annotations <- sm(load_orgdb_annotations(
   "org.Dm.eg.db",
   keytype="ensembl",

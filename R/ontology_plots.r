@@ -32,6 +32,9 @@ plot_topgo_densities <- function(godata, table) {
 #'  \code{\link[goseq]{goseq}}
 #' @export
 plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denominator=NULL) {
+  if (nrow(df) == 0) {
+    return(NULL)
+  }
   y_name <- paste("Enriched ", ontology, " categories.", sep="")
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
@@ -115,12 +118,19 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
     keepers <- rbind(keepers, cc_go)
     message("Extracting the goterms in your chosen level.")
     goterms <- merge(goterms, keepers, by.x="category", by.y="GO")
-  }
-  plotting_mf <- subset(goterms, complete.cases(goterms))
+  } ## End if a go level was provided.
+  complete_idx <- complete.cases(goterms)
+  goterms_complete <- goterms[complete_idx, ]
+  mf_idx <- goterms_complete[["ontology"]] == "MF"
+  bp_idx <- goterms_complete[["ontology"]] == "BP"
+  cc_idx <- goterms_complete[["ontology"]] == "CC"
+  plotting_mf <- goterms_complete[mf_idx, ]
+  plotting_bp <- goterms_complete[bp_idx, ]
+  plotting_cc <- goterms_complete[cc_idx, ]
+
   plotting_mf[["score"]] <- plotting_mf[["numDEInCat"]] / plotting_mf[["numInCat"]]
   new_order <- order(plotting_mf[["score"]], decreasing=FALSE)
   plotting_mf <- plotting_mf[new_order, ]
-  plotting_mf <- plotting_mf[plotting_mf[["ontology"]] == "MF", ]
   plotting_mf <- plotting_mf[plotting_mf[["term"]] != "NULL", ]
   plotting_mf <- plotting_mf[plotting_mf[["over_represented_pvalue"]] <= cutoff, ]
   plotting_mf <- plotting_mf[plotting_mf[["numInCat"]] >= mincat, ]
@@ -139,11 +149,9 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
                                numerator="numDEInCat",
                                denominator="numInCat")
 
-  plotting_bp <- subset(goterms, complete.cases(goterms))
   plotting_bp[["score"]] <- plotting_bp[["numDEInCat"]] / plotting_bp[["numInCat"]]
   new_order <- order(plotting_bp[["score"]], decreasing=FALSE)
   plotting_bp <- plotting_bp[new_order, ]
-  plotting_bp <- plotting_bp[plotting_bp[["ontology"]] == "BP", ]
   plotting_bp <- plotting_bp[plotting_bp[["term"]] != "NULL", ]
   plotting_bp <- plotting_bp[plotting_bp[["over_represented_pvalue"]] <= cutoff, ]
   plotting_bp <- plotting_bp[plotting_bp[["numInCat"]] >= mincat, ]
@@ -158,11 +166,9 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
                                numerator="numDEInCat",
                                denominator="numInCat")
 
-  plotting_cc <- subset(goterms, complete.cases(goterms))
   plotting_cc[["score"]] <- plotting_cc[["numDEInCat"]] / plotting_cc[["numInCat"]]
   new_order <- order(plotting_cc[["score"]], decreasing=FALSE)
   plotting_cc <- plotting_cc[new_order, ]
-  plotting_cc <- plotting_cc[plotting_cc[["ontology"]] == "CC", ]
   plotting_cc <- plotting_cc[plotting_cc[["term"]] != "NULL", ]
   plotting_cc <- plotting_cc[plotting_cc[["over_represented_pvalue"]] <= cutoff, ]
   plotting_cc <- plotting_cc[plotting_cc[["numInCat"]] >= mincat, ]

@@ -11,9 +11,15 @@ plot_prophet(table, xaxis = "precursor_neutral_mass", xscale = NULL,
 \arguments{
 \item{table}{Big honking data table from extract_peprophet_data()}
 
-\item{xaxis}{Column to plot on the a-axis}
+\item{xaxis}{Column to plot on the x-axis}
+
+\item{xscale}{Change the scale of the x-axis?}
 
 \item{yaxis}{guess!}
+
+\item{yscale}{Change the scale of the y-axis?}
+
+\item{size_column}{Use a column for scaling the sizes of dots in the plot?}
 
 \item{...}{extra options which may be used for plotting.}
 }

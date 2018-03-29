@@ -15,7 +15,8 @@
 #' @param drop_haplotypes  Some chromosomes have stupid names because they are from non-standard
 #'   haplotypes and they should go away.  Setting this to false stops that.
 #' @param trymart  Biomart has become a circular dependency, this makes me sad, now to list the
-#'  marts, you need to have a mart loaded...
+#'  marts, you need to have a mart loaded.
+#' @param trydataset  Choose the biomart dataset from which to query.
 #' @param gene_requests  Set of columns to query for description-ish annotations.
 #' @param length_requests  Set of columns to query for location-ish annotations.
 #' @param include_lengths  Also perform a search on structural elements in the genome?
@@ -105,7 +106,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   found_attribs <- gene_requests %in% available_attribs
   if (length(gene_requests) != sum(found_attribs)) {
     message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
- ensembl database. At some point I will show them here..."))
+ ensembl database. At some point I will show them here."))
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes=gene_requests,
@@ -117,7 +118,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     found_attribs <- length_requests %in% available_attribs
     if (length(length_requests) != sum(found_attribs)) {
       message(strwrap(prefix=" ", initial="", "Some attributes in your request list were not in the
- ensembl database. At some point I will show them here..."))
+ ensembl database. At some point I will show them here."))
       length_requests <- length_requests[found_attribs]
     }
     structure_annotations <- biomaRt::getBM(attributes=length_requests,
@@ -322,7 +323,9 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @param trymart Assumed mart name to use.
 #' @param first_attributes  Key(s) of the first database to use.
 #' @param second_attributes  Key(s) of the second database to use.
-#' @return Df of orthologs.
+#' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
+#'   to always send them all; the second is the subset corresponding to the
+#'   actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 #' @seealso \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
 #'  \code{\link[biomaRt]{useMart}}
 #' @examples
@@ -334,7 +337,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @export
 load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
                                    second_species="mmusculus",
-                                   host="dec2015.archive.ensembl.org",
+                                   host="dec2016.archive.ensembl.org",
                                    trymart="ENSEMBL_MART_ENSEMBL",
                                    first_attributes="ensembl_gene_id",
                                    second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
@@ -402,8 +405,8 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
   colnames(linked_genes) <- new_colnames
 
   linked_genes <- list(
-    "all_gene_list" = linked_genes,
-    "linked_genes" = kept_genes,
+    "all_linked_genes" = linked_genes,
+    "subset_linked_genes" = kept_genes,
     "first_attribs" = possible_first_attributes,
     "second_attribs" = possible_second_attributes)
   return(linked_genes)

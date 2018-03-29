@@ -3,6 +3,8 @@
 #' This function tries to gather an appropriate gene length column from
 #' whatever annotation data source is provided.
 #'
+#' @param annotation  There are a few likely data sources when getting gene
+#'   sizes, choose one with this.
 #' @param type What type of annotation data are we using?
 #' @param gene_type Annotation type to use (3rd column of a gff file).
 #' @param type_column Type identifier (10th column of a gff file).

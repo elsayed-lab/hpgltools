@@ -8,6 +8,9 @@ get_genesizes(annotation = NULL, type = "gff", gene_type = "gene",
   type_column = "type", key = NULL, length_names = NULL, ...)
 }
 \arguments{
+\item{annotation}{There are a few likely data sources when getting gene
+sizes, choose one with this.}
+
 \item{type}{What type of annotation data are we using?}
 
 \item{gene_type}{Annotation type to use (3rd column of a gff file).}

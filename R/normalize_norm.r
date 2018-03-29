@@ -92,6 +92,15 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"
     },
+    "quantile" = {
+      ## Quantile normalization (Bolstad et al., 2003)
+      count_rownames <- rownames(count_table)
+      count_colnames <- colnames(count_table)
+      count_table <- preprocessCore::normalize.quantiles(as.matrix(count_table), copy=TRUE)
+      rownames(count_table) <- count_rownames
+      colnames(count_table) <- count_colnames
+      norm_performed <- "quant"
+    },
     ##"qsmooth" = {
     ##  count_table <- qsmooth::qsmooth(count_table, groups=design[["condition"]], plot=TRUE)
     ##  norm_performed <- "qsmooth"
@@ -263,7 +272,6 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
 #' @export
 hpgl_qstats <- function(data, groups, refType="mean",
                         groupLoc="mean", window=99) {
-  ## require.auto("matrixStats")
   Q <- apply(data, 2, sort)
   if (refType == "median") {
     Qref <- matrixStats::rowMedians(Q)

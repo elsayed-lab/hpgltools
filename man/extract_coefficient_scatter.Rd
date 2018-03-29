@@ -30,7 +30,11 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 
 \item{loess}{Add a loess estimation (This is slow.)}
 
+\item{alpha}{How see-through to make the dots.}
+
 \item{color_low}{Color for the genes less than the mean.}
+
+\item{z_lines}{Add lines to show the z-score demarcations.}
 
 \item{color_high}{Color for the genes greater than the mean.}
 

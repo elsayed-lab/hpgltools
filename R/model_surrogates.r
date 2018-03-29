@@ -345,16 +345,21 @@ the dataset, please try doing a filtering of the data and retry.")
 #' @param expt Experiment containing a design and other information.
 #' @param extra_factors Character list of extra factors which may be included in the final plot of
 #'  the data.
+#' @param filter_it  Most of the time these surrogate methods get mad if there
+#'   are 0s in the data.  Filter it?
+#' @param filter_type  Type of filter to use when filtering the input data.
 #' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
-#' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a number.
+#' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a
+#'   number.
+#' @param ...  Extra arguments when filtering.
 #' @return List of the results.
 #' @seealso \code{\link{get_model_adjust}}
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE, filter_type=TRUE,
                                         do_catplots=FALSE, surrogates="be", ...) {
   arglist <- list(...)
-  design <- expt[["design"]]
-  if (isTRUE(filter_it) & expt[["state"]][["lowfilter"]] == "raw") {
+  design <- pData(expt)
+  if (isTRUE(filter_it) & expt[["state"]][["filter"]] == "raw") {
     message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
     expt <- sm(normalize_expt(expt, filter=filter_type, ...))
   }
@@ -474,7 +479,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     if (isTRUE(do_catplots)) {
       if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
         ## ffpe has some requirements which do not install all the time.
-        require.auto("ffpe")
+        tt <- please_install("ffpe")
       }
       if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
         catplots[[adjust]] <- ffpe::CATplot(-rank(tstats[[adjust]]),

@@ -342,6 +342,7 @@ extract_peprophet_data <- function(pepxml, ...) {
 #' @param metadata  Data frame describing the samples, including the mzXML
 #'   filenames.
 #' @param write_windows  Write out SWATH window frames.
+#' @param parallel  Perform operations using an R foreach cluster?
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
 #' @return  metadata!#'
@@ -543,13 +544,21 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 
   current_colnames <- colnames(protein_df)
   current_colnames <- tolower(current_colnames)
+  ## percent signs are stupid in columns.
   current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
+  ## as are spaces.
   current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
+  ## A bunch of columns have redundant adjectives.
   current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
+  ## Extra text in a column name is useless
   current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+  ## Get rid of a bunch of doofusy punctuation.
   current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+  ## At this point we should not have any leading underscores.
   current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
+  ## Now should we have any double underscores.
   current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
+  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
   current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
   current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
   current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
@@ -716,8 +725,11 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #' pull some/most of the rest.  Lets play!
 #'
 #' @param table  Big honking data table from extract_peprophet_data()
-#' @param xaxis  Column to plot on the a-axis
+#' @param xaxis  Column to plot on the x-axis
+#' @param xscale Change the scale of the x-axis?
 #' @param yaxis  guess!
+#' @param yscale  Change the scale of the y-axis?
+#' @param size_column  Use a column for scaling the sizes of dots in the plot?
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
@@ -725,7 +737,10 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
                          yaxis="num_matched_ions", yscale=NULL,
                          size_column="prophet_probability", ...) {
   arglist <- list(...)
-
+  chosen_palette <- "Dark2"
+  if (!is.null(arglist[["chosen_palette"]])) {
+    chosen_palette <- arglist[["chosen_palette"]]
+  }
   color_column <- "decoy"
   if (!is.null(arglist[["color_column"]])) {
     color_column <- arglist[["color_column"]]
@@ -737,11 +752,11 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
   }
   color_list <- NULL
   num_colors <- nlevels(as.factor(table[["color"]]))
-  if (color_num == 2) {
+  if (num_colors == 2) {
     color_list <- c("darkred", "darkblue")
   } else {
     color_list <- sm(grDevices::colorRampPalette(
-                                  RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_colors))
+                                  RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
   }
 
   if (is.null(table[[xaxis]])) {
@@ -820,14 +835,14 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
     ggplot2::geom_rug() +
     ggplot2::scale_size_manual(values=c(0.2, 0.6, 1.0, 1.4, 1.8, 2.2))
   if (scale_x_cont == "log2") {
-    a_plot <- ggplot2::scale_x_continuous(trans=log2_trans())
+    a_plot <- ggplot2::scale_x_continuous(trans=scales::log2_trans())
   } else if (scale_x_cont == "log10") {
-    a_plot <- ggplot2::scale_x_continuous(trans=log10_trans())
+    a_plot <- ggplot2::scale_x_continuous(trans=scales::log10_trans())
   }
   if (scale_y_cont == "log2") {
-    a_plot <- ggplot2::scale_y_continuous(trans=log2_trans())
+    a_plot <- ggplot2::scale_y_continuous(trans=scales::log2_trans())
   } else if (scale_y_cont == "log10") {
-    a_plot <- ggplot2::scale_y_continuous(trans=log10_trans())
+    a_plot <- ggplot2::scale_y_continuous(trans=scales::log10_trans())
   }
 
   return(a_plot)

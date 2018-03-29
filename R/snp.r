@@ -4,9 +4,8 @@
 #' make it testable etc.
 #'
 #' @param expt an expressionset from which to extract information.
+#' @param type  Use counts / samples or ratios?
 #' @param input_dir  Directory to scan for snps output files.
-#' @param file_suffix  What to add on the end of the files for the resulting output.
-#' @param bam_suffix  How do we find the bam files?
 #' @param tolower  Lowercase stuff like 'HPGL'?
 #' @return  A new expt object
 #' @export
@@ -28,7 +27,7 @@ count_expt_snps <- function(expt, type="counts", input_dir="preprocessing/output
   snp_exprs <- as.matrix(snp_exprs[, -1])
 
   snp_features <- data.table::as.data.table(snp_dt)
-  snp_features[, c("species","chromosome","position","original","new") :=
+  snp_features[, c("species", "chromosome", "position", "original", "new") :=
                    data.table::tstrsplit(snp_features[["rownames"]], "_", fixed=TRUE)]
   snp_features <- snp_features[, c("species", "chromosome", "position", "original", "new")]
   snp_features <- as.data.frame(snp_features)
@@ -55,6 +54,8 @@ count_expt_snps <- function(expt, type="counts", input_dir="preprocessing/output
 #' The result of get_snp_sets provides sets of snps for all possible
 #' categories.  This is cool and all, but most of the time we just want the
 #' results of a single group in that rather large set (2^number of categories)
+#'
+#' @param retlist  The result from get_snp_sets().
 get_individual_snps <- function(retlist) {
   individual_lst <- list()
   possibilities <- retlist[["possibilities"]]
@@ -120,6 +121,7 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   }
   pb_opts <- list(progress=progress)
   returns <- list()
+  i <- 1
   res <- list()
   res <- foreach(i=1:num_levels, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("snp_by_chr")) %dopar% {
     chromosome_name <- levels(as.factor(chr))[i]
@@ -227,7 +229,8 @@ read_snp_columns <- function(samples,
 samtools_snp_coverage <- function(expt,
                                   type="counts",
                                   input_dir="preprocessing/outputs",
-                                  tolower=TRUE) {
+                                  tolower=TRUE,
+                                  bam_suffix=".bam") {
   snp_counts <- count_expt_snps(expt, type=type, input_dir=input_dir, tolower=tolower)
   snp_counts <- fData(snp_counts)
   samples <- rownames(pData(expt))
@@ -243,7 +246,7 @@ samtools_snp_coverage <- function(expt,
   for (sample_num in 1:length(samples)) {
     bam_filenames[sample_num] <- paste0(file.path(input_dir, sample), bam_suffix)
     if (!file.exists(bam_filenames[sample_num])) {
-      warn(paste0("The bam filename does not exist: ", bam_filenames[sample_num]))
+      warning(paste0("The bam filename does not exist: ", bam_filenames[sample_num]))
     }
   }
 
@@ -256,7 +259,7 @@ samtools_snp_coverage <- function(expt,
                     as.numeric(snp_counts[["position"]]) - 1, "-",
                     as.numeric(snp_counts[["position"]]) + 1)
   which <- GenomicRanges::GRanges(queries)
-  which_list <- split(which, seqnames(which))
+  which_list <- split(which, GenomicRanges::seqnames(which))
   returns <- list()
   res <- list()
   what <- "seq"
@@ -297,6 +300,13 @@ samtools_snp_coverage <- function(expt,
   ## coverage_list <- result[[snp_dt_row]][[info]][2, ]
   ## coverage_list is in turn a character list named by filename (which begins with the sample ID)
   ## We will therefore extract the hpglID from it and the coverage for every sample
+
+  ## I am not sure if the following line is correct, but I think it is -- either
+  ## way, snp_dt is missing without it.  Somewhere along the way I forgot to
+  ## make sure to keep the variable snp_dt alive, the most logical existence for
+  ## it is as a recasting of the matrix resulting from exprs(snp_counts)
+  ## For a reminder of why I say this, check out the first 15 lines of count_expt_snps()
+  snp_dt <- data.table::as.data.table(exprs(snp_counts))
   names(coverage_result) <- snp_dt[["rownames"]]
 
   ## Now extract from the rather strange coverage_result data the coverage by position/sample

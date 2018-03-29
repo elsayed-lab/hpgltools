@@ -62,6 +62,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   arglist <- list(...)
 
   message("Starting DESeq2 pairwise comparisons.")
+  input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force=force)
   ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
   ## from my expt classes.
@@ -219,48 +220,53 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   ## The following is an attempted simplification of the contrast formulae
   number_comparisons <- sum(1:(length(condition_levels) - 1))
   inner_count <- 0
+  ## Something peculiar has happened, since making the condition levels
+  ## ordered in the expts, deseq no longer necessarily orders it contrasts
+  ## the same as limma/edger.
+  ## This change in ordering is quite annoying.
+  ## Therefore, I will invoke make_pairwise_contrasts() here
+  ## rather than make all the contrasts myself, then use that ordering
+  ## to handle DESeq's contrast method.
+  apc <- make_pairwise_contrasts(model_data, conditions,
+                                 extra_contrasts=extra_contrasts,
+                                 do_identities=FALSE,
+                                 ...)
+  contrast_order <- apc[["names"]]
   contrasts <- c()
   total_contrasts <- length(condition_levels)
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   bar <- utils::txtProgressBar(style=3)
-  for (c in 1:(length(condition_levels) - 1)) {
-    denominator <- condition_levels[c]
-    nextc <- c + 1
-    for (d in nextc:length(condition_levels)) {
-      inner_count <- inner_count + 1
-      pct_done <- inner_count / total_contrasts
-      utils::setTxtProgressBar(bar, pct_done)
-      numerator <- condition_levels[d]
-      comparison <- paste0(numerator, "_vs_", denominator)
-      contrasts <- append(comparison, contrasts)
-      result <- as.data.frame(DESeq2::results(deseq_run,
-                                              contrast=c("condition", numerator, denominator),
-                                              format="DataFrame"))
-      result <- result[order(result[["log2FoldChange"]]), ]
-      colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
-      ## From here on everything is the same.
-      result[is.na(result[["P.Value"]]), "P.Value"] <- 1 ## Some p-values come out as NA
-      result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] <- 1 ## Some p-values come out as NA
-      result[["baseMean"]] <- signif(x=as.numeric(result[["baseMean"]]), digits=4)
-      result[["logFC"]] <- signif(x=as.numeric(result[["logFC"]]), digits=4)
-      result[["lfcSE"]] <- signif(x=as.numeric(result[["lfcSE"]]), digits=4)
-      result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
-      result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
-      result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
-      result_nas <- is.na(result)
-      result[result_nas] <- 0
-      result_name <- paste0(numerator, "_vs_", denominator)
-      denominators[[result_name]] <- denominator
-      numerators[[result_name]] <- numerator
-      if (!is.null(annot_df)) {
-        result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
-      }
-      result_list[[result_name]] <- result
-    } ## End for each d
-    ## Fill in the last coefficient (since the for loop above goes from 1 to n-1
-    denominator <- names(conditions_table[length(conditions)])
-    ## denominator_name = paste0("condition", denominator)  ## maybe needed in 6 lines
-  }  ## End for each c
+  for (c in 1:length(contrast_order)) {
+    contrast_name <- contrast_order[[c]]
+    pct_done <- c / length(contrast_order)
+    utils::setTxtProgressBar(bar, pct_done)
+    num_den_string <- strsplit(x=contrast_name, split="_vs_")[[1]]
+    num_name <- num_den_string[1]
+    den_name <- num_den_string[2]
+    denominators[[contrast_name]] <- den_name
+    numerators[[contrast_name]] <- num_name
+    contrasts <- append(contrast_name, contrasts)
+    result <- as.data.frame(DESeq2::results(deseq_run,
+                                            contrast=c("condition", num_name, den_name),
+                                            format="DataFrame"))
+    result <- result[order(result[["log2FoldChange"]]), ]
+    colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
+    ## From here on everything is the same.
+    result[is.na(result[["P.Value"]]), "P.Value"] <- 1 ## Some p-values come out as NA
+    result[is.na(result[["adj.P.Val"]]), "adj.P.Val"] <- 1 ## Some p-values come out as NA
+    result[["baseMean"]] <- signif(x=as.numeric(result[["baseMean"]]), digits=4)
+    result[["logFC"]] <- signif(x=as.numeric(result[["logFC"]]), digits=4)
+    result[["lfcSE"]] <- signif(x=as.numeric(result[["lfcSE"]]), digits=4)
+    result[["stat"]] <- signif(x=as.numeric(result[["stat"]]), digits=4)
+    result[["P.Value"]] <- signif(x=as.numeric(result[["P.Value"]]), digits=4)
+    result[["adj.P.Val"]] <- signif(x=as.numeric(result[["adj.P.Val"]]), digits=4)
+    result_nas <- is.na(result)
+    result[result_nas] <- 0
+    if (!is.null(annot_df)) {
+      result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
+    }
+    result_list[[contrast_name]] <- result
+  }
   close(bar)
   ## The logic here is a little tortuous.
   ## Here are some sample column names from an arbitrary coef() call:

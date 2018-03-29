@@ -6,6 +6,13 @@
 \usage{
 hpgl_dist(df, method = "euclidean", ...)
 }
+\arguments{
+\item{df}{data frame from which to calculate distances.}
+
+\item{method}{Which distance calculation to use?}
+
+\item{...}{Extra arguments for dist.}
+}
 \description{
-Because I am not smart enough to remember t()
+It seems to me there should be a function as easy for distances are there is for correlations.
 }

@@ -349,7 +349,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "qdata" = qdata)
   if (!is.null(excel)) {
     message(paste0("Writing data to: ", excel, "."))
-    excel_ret <- sm(write_goseq_data(retlist, excel=excel))
+    excel_ret <- sm(try(write_goseq_data(retlist, excel=excel)))
   }
   return(retlist)
 }

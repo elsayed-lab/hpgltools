@@ -314,6 +314,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   }
 
   message("Starting limma pairwise comparison.")
+  input <- sanitize_expt(input)
   input_data <- choose_limma_dataset(input, force=force, which_voom=which_voom)
   design <- pData(input)
   if (is.null(conditions)) {
@@ -365,7 +366,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                         model_batch=model_batch,
                         model_cond=model_cond,
                         model_intercept=model_intercept,
-                        alt_model=alt_model, ...)
+                        alt_model=alt_model,
+                        ...)
   ##model <- choose_model(input, conditions, batches,
   ##                      model_batch=model_batch,
   ##                      model_cond=model_cond,

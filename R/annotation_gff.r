@@ -61,6 +61,7 @@ gff2irange <- function(gff, type=NULL) {
 #' @param ret_type  Return a data.frame or something else?
 #' @param second_id_col Second column to check.
 #' @param try Give your own function call to use for importing.
+#' @param row.names  Choose another column for setting the rownames of the data frame.
 #' @return Dataframe of the annotation information found in the gff file.
 #' @seealso \pkg{rtracklayer} \pkg{GenomicRanges}
 #'  \code{\link[rtracklayer]{import.gff}}

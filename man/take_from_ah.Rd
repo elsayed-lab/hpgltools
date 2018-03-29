@@ -7,7 +7,13 @@
 take_from_ah(ahid = NULL, title = NULL, species = NULL, type = "OrgDb")
 }
 \arguments{
-\item{taxid}{TaxonID from AnnotationHub}
+\item{ahid}{TaxonID from AnnotationHub}
+
+\item{title}{Title for the annotation hub instance}
+
+\item{species}{Species to download}
+
+\item{type}{Datatype to download}
 }
 \value{
 An Orgdb instance

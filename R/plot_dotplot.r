@@ -202,9 +202,10 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #'  smc_plot = hpgl_smc(expt=expt)
 #' }
 #' @export
-plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL, ...) {
-  data_class <- class(data)[1]
+plot_sm <- function(data, colors=NULL, method="pearson", legend=FALSE,
+                    names=NULL, title=NULL, dot_size=5, ...) {
   arglist <- list(...)
+  data_class <- class(data)[1]
   conditions <- NULL
   if (data_class == "expt") {
     design <- data[["design"]]
@@ -217,9 +218,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
     conditions <- pData(data)[["conditions"]]
     data <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
+    ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function currently only understands classes of type:
+ expt, ExpressionSet, data.frame, and matrix.")
   }
 
   chosen_palette <- "Dark2"
@@ -232,7 +235,8 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
   }
 
   if (is.null(colors)) {
-    colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
+    colors <- grDevices::colorRampPalette(
+                           RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
   }
   colors <- as.character(colors)
 
@@ -273,31 +277,72 @@ plot_sm <- function(data, colors=NULL, method="pearson", names=NULL, title=NULL,
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["color"]])
   names(color_list) <- as.character(color_listing[["condition"]])
+  sm_df[["num"]] <- 1:nrow(sm_df)
+  if (is.null(design[["batch"]])) {
+    sm_df[["batch"]] <- "undefined"
+  } else {
+    sm_df[["batch"]] <- as.factor(design[["batch"]])
+  }
+  num_batches <- nlevels(sm_df[["batch"]])
 
   minval <- min(sm_df[["sm"]])
   maxval <- max(sm_df[["sm"]])
   my_binwidth <- (maxval - minval) / 40
-
-  sm_plot <- ggplot2::ggplot(sm_df, aes_string(x="sample", y="sm", fill="condition")) +
-    ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
-    ggplot2::geom_dotplot(binwidth=my_binwidth,
-                          binaxis="y",
-                          stackdir="center",
-                          binpositions="all",
-                          colour="black",
-                          dotsize=1,
-                          aes_string(fill="as.factor(condition)")) +
-    ggplot2::scale_fill_manual(name="Condition",
-                               guide="legend",
-                               values=color_list) +
+  if (num_batches <= 5) {
+    sm_plot <- ggplot(sm_df, aes_string(
+                               x="num", y="sm", shape="batch", fill="condition")) +
+      ggplot2::geom_hline(colour="red", yintercept=ylimit, size=1) +
+      ggplot2::geom_point(size=dot_size,
+                          aes_string(shape="batch",
+                                     colour="condition",
+                                     fill="condition")) +
+      ggplot2::geom_point(size=dot_size, colour="black", show.legend=FALSE,
+                          aes_string(shape="batch", fill="condition")) +
+      ggplot2::scale_color_manual(name="Condition",
+                                  guide="legend",
+                                  values=color_list) +
+      ggplot2::scale_fill_manual(name="Condition",
+                                 guide="legend",
+                                 values=color_list) +
+      ggplot2::scale_shape_manual(name="Batch",
+                                  labels=levels(as.factor(sm_df[["batch"]])),
+                                  guide=ggplot2::guide_legend(
+                                                   override.aes=list(size=5, fill="grey")),
+                                  values=21:25) +
+      ggplot2::scale_x_continuous(labels=sm_df[["sample"]],
+                                  breaks=1:nrow(sm_df),
+                                  limits=c(1, nrow(sm_df))) +
     ggplot2::ylab(paste0("Standard Median ", method)) +
-    ggplot2::xlab(paste0("Sample")) +
+    ggplot2::xlab("Sample") +
     ggplot2::ggtitle(title) +
     ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
-                                                     angle=90, hjust=1))
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
 
+  } else {
+    sm_plot <- ggplot2::ggplot(sm_df,
+                               aes_string(x="sample", y="sm", shape="batch", fill="condition")) +
+      ggplot2::geom_hline(color="red", yintercept=ylimit, size=1) +
+      ggplot2::geom_dotplot(binwidth=my_binwidth,
+                            binaxis="y",
+                            stackdir="center",
+                            binpositions="all",
+                            colour="black",
+                            dotsize=1,
+                            aes_string(fill="as.factor(condition)")) +
+      ggplot2::ylab(paste0("Standard Median ", method)) +
+      ggplot2::xlab("Sample") +
+      ggplot2::ggtitle(title) +
+      ggplot2::theme_bw(base_size=base_size) +
+      ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
+                                                       angle=90, hjust=1))
+
+  }
+  if (!isTRUE(legend)) {
+    sm_plot <- sm_plot +
+      ggplot2::theme(legend.position="none")
+  }
   return(sm_plot)
 }
 
