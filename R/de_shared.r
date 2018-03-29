@@ -544,6 +544,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @param intercept  Choose an intercept for the model as opposed to 0.
 #' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 #'  to test.
+#' @param contr  List of contrasts.arg possibilities.
 #' @param surrogates  Number of or method used to choose the number of surrogate variables.
 #' @param ...  Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and intercept models.
@@ -1109,6 +1110,7 @@ compare_logfc_plots <- function(combined_tables) {
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(data)
   bar <- utils::txtProgressBar(max=num_levels, style=3)
+  count <- 1
   progress <- function(n) {
     setTxtProgressBar(bar, n)
   }
@@ -1936,6 +1938,7 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 #' @param max_copies  Keep only those genes with <= n putative
 #'  copies.
 #' @param use_files  Use a set of sequence alignments to define the copy numbers?
+#' @param invert  Keep these genes rather than drop them?
 #' @param semantic  Set of strings with gene names to exclude.
 #' @param semantic_column  Column in the DE table used to find the
 #'  semantic strings for removal.

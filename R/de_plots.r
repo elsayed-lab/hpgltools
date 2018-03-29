@@ -116,7 +116,9 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       message("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
     } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
-      stop("Unable to find the table in the set of possible tables.")
+      message("Unable to find the table in the set of possible tables.")
+      message(paste0("The possible tables are: ", toString(possible_tables)))
+      stop()
     } else {
       the_table <- all_tables[[the_table]]
     }
@@ -125,7 +127,9 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     ## If so, figure that out here.
     table_parts <- pairwise[["keepers"]][[table]]
     if (is.null(table_parts)) {
-      stop("Unable to find the table in the set of possible tables.")
+      message("Unable to find the table in the set of possible tables.")
+      message(paste0("The possible tables are: ", toString(possible_tables)))
+      stop()
     }
     fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
     revname <- paste0(table_parts[[2]], "_vs_", table_parts[[1]])
@@ -194,8 +198,10 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' @param lfc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
 #' @param n  Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).
 #' @param loess  Add a loess estimation (This is slow.)
+#' @param alpha  How see-through to make the dots.
 #' @param color_low  Color for the genes less than the mean.
 #' @param color_high  Color for the genes greater than the mean.
+#' @param z_lines  Add lines to show the z-score demarcations.
 #' @param ...  More arguments are passed to arglist.
 #' @seealso \pkg{ggplot2}
 #'  \code{\link{plot_linear_scatter}}

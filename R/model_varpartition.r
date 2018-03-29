@@ -42,10 +42,10 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @return partitions  List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
-varpart <- function(expt, predictor="condition", factors=c("batch"),
+varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                     chosen_factor="batch",
                     cpus=6, genes=40, parallel=TRUE,
-                    modify_expt=FALSE) {
+                    modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
   if (isTRUE(parallel)) {
@@ -108,7 +108,9 @@ which are shared among multiple samples.")
   if (isTRUE(modify_expt)) {
     new_expt <- expt
     tmp_annot <- fData(new_expt)
-    tmp_annot <- merge(tmp_annot, my_sorted, by="row.names")
+    added_data <- my_sorted
+    colnames(added_data) <- paste0("variance_", colnames(added_data))
+    tmp_annot <- merge(tmp_annot, added_data, by="row.names")
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
     tmp_annot <- tmp_annot[, -1]
     ## Make it possible to use a generic expressionset, though maybe this is

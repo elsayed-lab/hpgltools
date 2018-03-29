@@ -8,7 +8,7 @@
 #' @author  Keith Hughitt
 #' @export
 download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
-                                     dir="eupathdb", use_savefile=TRUE, ...) {
+                                     dir="eupathdb", use_savefile=TRUE) {
   ## Get EuPathDB version (same for all databases)
   savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
@@ -46,24 +46,14 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     paste(x, collapse=",") })
 
   ## construct API request URL
-  ##base_url <- "https://eupathdb.org/eupathdb/webservices/"
   base_url <- paste0("https://", webservice, ".org/", webservice, "/webservices/")
   query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
   request_url <- paste0(base_url, query_string)
 
   ## retrieve organism metadata from EuPathDB
   metadata_json <- paste0(dir, "/metadata.json")
-  ##curl_opts = RCurl::curlOptions(curlopts_ssl_verifyhost=FALSE)
   file <- download.file(url=request_url, destfile=metadata_json)
-  ##method="curl", quiet=FALSE, extra=curl_opts)
-  ##my_curl = RCurl::getCurlHandle()
-  ##my_options <- list(ssl.verifyhost=FALSE, verbose=TRUE)
-  ##curl_opts <- RCurl::curlSetOpt(.opts=my_options, curl=my_curl)
-  ##downloaded_data <- RCurl::getURL(request_url, curl=my_curl)
-  ##downloaded_data <- RCurl::getURLContent(request_url, ssl.verifypeer=FALSE, timeout=100,
-  ##                                        useragent="R", ssl.verifyhost=FALSE)
   result <- jsonlite::fromJSON(metadata_json)
-  ##result <- jsonlite::fromJSON(downloaded_data)
   records <- result[["response"]][["recordset"]][["records"]]
   message(paste0("Downloaded: ", request_url))
 
@@ -651,8 +641,19 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
   return(result)
 }
 
+#' Query ortholog tables from the eupathdb one gene at a time.
+#'
+#' Querying the full ortholog table at eupathdb.org fails mysteriously.
+#' This is a horrible brute-force approach to get around this.
+#'
+#' @param species  What species to query
+#' @param dir  Directory to which to save intermediate data (currently unused)
+#' @param entry  An entry from the eupathdb metadata to use for other parameters.
+#' @param metadata  The set of eupathdb metadata from which to query.
+#' @param ...  Extra parameters for downloading eupathdb metadata.
+#' @export
 get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
-                                    entry=NULL, metadata=NULL) {
+                                    entry=NULL, metadata=NULL, ...) {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -692,7 +693,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
 }
 
 get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.0010",
-                               dir="eupathdb", entry=NULL, metadata=NULL) {
+                               dir="eupathdb", entry=NULL, metadata=NULL, ...) {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -805,86 +806,3 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
 }
 
 ## EOF
-
-get_pathways_all_genes <- function(species="Leishmania major", dir="eupathdb",
-                                   entry=NULL, metadata=NULL, minutes=20) {
-  if (is.null(entry) & is.null(species)) {
-    stop("Need either an entry or species.")
-  } else if (is.null(entry)) {
-    if (is.null(metadata)) {
-      metadata <- sm(download_eupath_metadata(dir=dir, ...))
-      ##metadata <- sm(download_eupath_metadata(dir=dir))
-    }
-    entry <- check_eupath_species(species=species, metadata=metadata)
-    species <- entry[["Species"]]
-  }
-  provider <- tolower(entry[["DataProvider"]])
-  prefix_mapping <- list(
-    "amoebadb" = "amoeba",
-    "microbiomedb" = "mbio",
-    "microsporidiadb" = "micro",
-    "piroplasmadb" = "piro",
-    "plasmodb" = "plasmo",
-    "schistodb" = "schisto",
-    "toxodb" = "toxo"
-  )
-  uri_prefix <- provider
-  if (uri_prefix %in% names(prefix_mapping)) {
-    uri_prefix <- prefix_mapping[[uri_prefix]]
-  }
-
-  ## query body as a structured list
-  field_list <- c(
-    "primary_key")
-  parameters <- list(
-    "organism" = jsonlite::unbox(species),
-    "min_molecular_weight" = jsonlite::unbox("1"),
-    "max_molecular_weight" = jsonlite::unbox("10000000000000000")
-  )
-  message("Getting the set of possible genes.")
-  all_genes <- post_eupath_raw(entry,
-                               question="GeneQuestions.GenesByMolecularWeight",
-                               parameters=parameters,
-                               columns=field_list)
-
-  ## Now try and get the pathway data
-  parameters <- list(
-    "pathways_source" = jsonlite::unbox("Any"),
-    "ds_gene_ids_type" = jsonlite::unbox("data"),
-    "gene_ids" = jsonlite::unbox(toString(all_genes)),
-    "ds_gene_ids" = jsonlite::unbox(toString(all_genes)),
-    "exact_match_only" = jsonlite::unbox("No"),
-    "exclude_incomplete_ec" = jsonlite::unbox("No"),
-    "any_or_all_pathway" = jsonlite::unbox("any")
-  )
-  ##columns <- c("primary_key", "name", "genes", "ec_gene", "ec_pathway",
-  ##             "wdk_weight", "source", "total_compound_count", "total_enzyme_count")
-  columns <- c("name", "gene")
-  query_body <- list(
-    ## 3 elements, answerSpec, formatting, format.
-    "answerSpec" = list(
-      "questionName" = jsonlite::unbox("PathwayQuestions.PathwaysByGeneList"),
-      "parameters" = parameters,
-      "filters" = list()
-    ),
-    "formatting" = list(
-      "formatConfig" = list(
-        "tables" = c("KEGG"),
-        "includeHeaders" = jsonlite::unbox("true"),
-        ## "attributes" = columns,
-        "attributes" = jsonlite::unbox("__ALL_ATTRIBUTES__"),
-        "attachmentType" = jsonlite::unbox("plain")
-      )),
-    "format" = jsonlite::unbox("fullRecord")
-  )
-  ## ))
-  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
-  body <- jsonlite::toJSON(query_body)
-  result <- httr::POST(
-                    url=api_uri,
-                    body=body,
-                    httr::content_type("application/json"),
-                    httr::timeout(minutes * 60))
-  result
-  ## No matter what I provide, I get back a damn 500.
-}

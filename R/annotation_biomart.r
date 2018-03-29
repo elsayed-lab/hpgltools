@@ -16,6 +16,7 @@
 #'   haplotypes and they should go away.  Setting this to false stops that.
 #' @param trymart  Biomart has become a circular dependency, this makes me sad, now to list the
 #'  marts, you need to have a mart loaded.
+#' @param trydataset  Choose the biomart dataset from which to query.
 #' @param gene_requests  Set of columns to query for description-ish annotations.
 #' @param length_requests  Set of columns to query for location-ish annotations.
 #' @param include_lengths  Also perform a search on structural elements in the genome?

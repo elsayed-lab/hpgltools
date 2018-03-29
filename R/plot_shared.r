@@ -89,13 +89,13 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
   ##})
   ## Make sure to close any open plotting devices, as that would be too confusing.
-  if (!is.null(dev.list())) {
-    all_devices <- names(dev.list())
-    for (dev in names(dev.list())) {
-      off_please <- dev.off()
-    }
-    message(paste0("Closing the ", toString(all_devices), " plotting device(s) before printing plots."))
-  }
+  ##if (!is.null(dev.list())) {
+  ##  all_devices <- names(dev.list())
+  ##  for (dev in names(dev.list())) {
+  ##    off_please <- dev.off()
+  ##  }
+  ##  message(paste0("Closing the ", toString(all_devices), " plotting device(s) before printing plots."))
+  ##}
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"
   boxplot_title <- "Boxplot"

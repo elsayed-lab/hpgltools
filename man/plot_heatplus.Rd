@@ -7,7 +7,7 @@
 plot_heatplus(expt, type = "correlation", method = "pearson",
   annot_columns = "batch", annot_rows = "condition", cutoff = 1,
   cluster_colors = NULL, scale = "none", cluster_width = 2,
-  cluster_function = NULL, heat_colors = NULL)
+  cluster_function = NULL, heatmap_colors = NULL)
 }
 \arguments{
 \item{fundata}{A data frame to plot.}

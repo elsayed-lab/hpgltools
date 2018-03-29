@@ -161,8 +161,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   filenames <- NULL
   all_count_tables <- NULL
   if (!is.null(count_dataframe)) {
+    ## Lets set the order of the count data to that of the sample definitions.
+    if (all.equal(sort(colnames(count_dataframe)), sort(rownames(sample_definitions)))) {
+      count_dataframe <- count_dataframe[, rownames(sample_definitions)]
+    } else {
+      stop("The count table column names are not the same as the sample definition row names.")
+    }
     all_count_tables <- data.table::as.data.table(count_dataframe, keep.rownames="rownames")
-    testthat::expect_equal(colnames(all_count_tables), c("rownames", rownames(sample_definitions)))
     ## If neither of these cases is true, start looking for the files in the
     ## processed_data/ directory
   } else if (is.null(sample_definitions[[file_column]])) {
@@ -606,27 +611,34 @@ extract_metadata <- function(metadata, ...) {
   }
 
   meta_dataframe <- NULL
+  meta_file <- NULL
   if (class(metadata) == "character") {
     ## This is a filename containing the metadata
-    file <- metadata
+    meta_file <- metadata
   } else if (class(metadata) == "data.frame") {
     ## A data frame of metadata was passed.
     meta_dataframe <- metadata
   } else {
     stop("This requires either a file or meta data.frame.")
   }
+
   ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
-  if (is.null(meta_dataframe) & is.null(file)) {
+  if (is.null(meta_dataframe) & is.null(meta_file)) {
     stop("This requires either a csv file or dataframe of metadata describing the samples.")
-  } else if (is.null(file)) {
+  } else if (is.null(meta_file)) {
     ## punctuation is the devil
     sample_definitions <- meta_dataframe
     colnames(sample_definitions) <- tolower(colnames(sample_definitions))
     colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                          x=colnames(sample_definitions))
   }  else {
-    sample_definitions <- read_metadata(file, ...)
+    sample_definitions <- read_metadata(meta_file, ...)
     ## sample_definitions <- read_metadata(file)
+  }
+
+  ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
+  if (sample_column != "sampleid") {
+    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
   }
 
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -909,10 +921,13 @@ median_by_factor <- function(data, fact="condition") {
 #' @return  Expressionset/expt of fission.
 #' @export
 make_pombe_expt <- function(annotation=TRUE) {
+  fission <- new.env()
   tt <- sm(please_install("fission"))
   tt <- sm(requireNamespace("fission"))
   tt <- sm(try(attachNamespace("fission"), silent=TRUE))
-  tt <- data(fission)
+  tt <- data(fission, envir=fission)
+  ## some minor shenanigans to get around the oddities of loading from data()
+  fission <- fission[["fission"]]
   meta <- as.data.frame(fission@colData)
   meta[["condition"]] <- paste0(meta[["strain"]], ".", meta[["minute"]])
   meta[["batch"]] <- meta[["replicate"]]

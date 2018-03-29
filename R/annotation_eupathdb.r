@@ -47,29 +47,35 @@ check_eupath_species <- function(species="Leishmania major strain Friedlin", met
 #' the sqlite package has been installed locally, if not it suggests you run the
 #' make_organismdbi function in order to do that.
 #'
-#' @param first  Species name from one eupath database.
-#' @param second Another species name from the same eupath database.
-#' @param abbrev  It is likely you do not care about the reciprocals and such,
-#'   in that case the second species is irrelvant and just a species
-#'   abbreviation is sufficient.
-#' @param xref  Cross reference the stuff in the sqlite vs. the abbreviation?
-#'   If no, then this will just return the entire ortholog table.
-#'
-#' The xref parameter reminds me, this function does make a peculiar attempt to
-#'   handle a lot of corner cases without failure, but instead to try to always
-#'   provide some useful information, even if that information is not precisely
-#'   what you want, but the only thing I can find.
-#' With that in mind, one could easily argue that this function is too long and
-#'   it should be split into a couple pieces, but hopefully it is sufficiently
-#'   clear that this is not necessary -- or I will do it later.
-#' @return List containing the information available given the species provided
-#'   and/or the abbreviation/xref.
+#' @param db  Species name (subset) from one eupath database.
+#' @param master  Primary keytype to use for indexing the various tables.
+#' @param query_species A list of exact species names to search for.  If uncertain
+#'   about them, add print_speciesnames=TRUE and be ready for a big blob of
+#'   text.  If left null, then it will pull all species.
+#' @param id_column What column in the database provides the set of ortholog IDs?
+#' @param org_column What column provides the species name?
+#' @param url_column What column provides the orthomcl group ID?
+#' @param count_column Name of the column with the count of species represented.
+#' @param print_speciesnames Dump the species names for diagnostics?
+#' @return A big table of orthoMCL families, the columns are:
+#'   1.  GID: The gene ID
+#'   2.  ORTHOLOG_ID: The gene ID of the associated ortholog.
+#'   3.  ORTHOLOG_SPECIES: The species of the associated ortholog.
+#'   4.  ORTHOLOG_URL: The OrthoMCL group ID's URL.
+#'   5.  ORTHOLOG_COUNT: The number of all genes from all species represented in
+#'   this group.
+#'   6.  ORTHOLOG_GROUP: The family ID
+#'   7.  QUERIES_IN_GROUP: How many of the query species are represented in this
+#'   group?
+#'   8.  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
 #' @export
-extract_eupath_orthologs <- function(first, master="GID",
-                                     query_species=c("L. braziliensis MHOM/BR/75/M2903", "L. mexicana MHOM/GT/2001/U1103"),
-                                     group_columns=c("Ortholog_ID", "Ortholog_Group", "Organism"),
-                                     abbrev=NULL, xref=TRUE, ...) {
-  arglist <- list(...)
+extract_eupath_orthologs <- function(db, master="GID",
+                                     query_species=NULL,
+                                     id_column="ORTHOLOG_ID",
+                                     org_column="ORTHOLOGS_ORGANISM",
+                                     url_column="ORTHOLOGS_ORTHOLOG_GROUP",
+                                     count_column="ORTHOLOGS_ORTHOLOG_COUNT",
+                                     print_speciesnames=FALSE) {
 
   load_pkg <- function(name, ...) {
     metadata <- download_eupath_metadata(...)
@@ -92,37 +98,63 @@ extract_eupath_orthologs <- function(first, master="GID",
   }
 
   pkg <- NULL
-  if (class(first)[1] == "OrgDb") {
-    pkg <- first
+  if (class(db)[1] == "OrgDb") {
+    pkg <- db
   } else if (class(first)[1] == "character") {
-    pkg <- load_pkg(first)
+    pkg <- load_pkg(db)
   } else {
     stop("I only understand orgdbs or the name of a species.")
   }
 
+  columns <- c(id_column, org_column, url_column, count_column)
   gene_set <- AnnotationDbi::keys(pkg, keytype=master)
   all_orthos <- AnnotationDbi::select(x=pkg,
                                       keytype=master,
                                       keys=gene_set,
-                                      columns=group_columns)
-  all_orthos[["Ortholog_Group_ID"]] <- gsub(pattern="^.*>(.*)<\\/a>$",
+                                      columns=columns)
+  all_orthos[["ORTHOLOG_GROUP_ID"]] <- gsub(pattern="^.*>(.*)<\\/a>$",
                                             replacement="\\1",
-                                            x=all_orthos[["Ortholog_Group"]])
+                                            x=all_orthos[[url_column]])
 
-  query_species <- c("L. braziliensis MHOM/BR/75/M2903","L. mexicana MHOM/GT/2001/U1103")
+  num_possible <- 1
+  species_names <- unique(all_orthos[[org_column]])
+  if (is.null(query_species)) {
+    query_species <- species_names
+  }
+  num_possible <- length(species_names)
+  message(paste0("There are ", num_possible, " possible species in this group."))
+
+  if (isTRUE(print_speciesnames)) {
+    print(toString(species_names))
+    return(invisible())
+  }
+
   ## Now pull out the species of interest
   found_species <- 0
   for (sp in query_species) {
-    if (sp %in% all_orthos[["Organism"]]) {
+    if (sp %in% all_orthos[[org_column]]) {
       message(paste0("Found species: ", sp))
     } else {
       message(paste0("Did not find species: ", sp))
     }
   }
-  kept_orthos_idx <- all_orthos[["Organism"]] %in% query_species
+  kept_orthos_idx <- all_orthos[[org_column]] %in% query_species
   kept_orthos <- all_orthos[kept_orthos_idx, ]
+  colnames(kept_orthos) <- c(master, "ORTHOLOG_ID", "ORTHOLOG_SPECIES",
+                             "ORTHOLOG_URL", "ORTHOLOG_COUNT", "ORTHOLOG_GROUP")
+  kept_orthos[["ORTHOLOG_COUNT"]] <- as.integer(kept_orthos[["ORTHOLOG_COUNT"]])
 
-  return(kept_orthos)
+  kept_orthos_dt <- data.table::as.data.table(kept_orthos) %>%
+    dplyr::group_by_(master) %>%
+    dplyr::add_count_(master)
+  colnames(kept_orthos_dt) <- c(master, "ORTHOLOG_ID", "ORTHOLOG_SPECIES",
+                             "ORTHOLOG_URL", "ORTHOLOG_COUNT", "ORTHOLOG_GROUP",
+                             "QUERIES_IN_GROUP")
+
+  kept_orthos_dt[["GROUP_REPRESENTATION"]] <- kept_orthos_dt[["ORTHOLOG_COUNT"]] / num_possible
+  num_queries <- length(query_species)
+
+  return(kept_orthos_dt)
 }
 
 #' Generate a BSgenome package from the eupathdb.

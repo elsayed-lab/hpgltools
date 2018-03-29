@@ -8,6 +8,8 @@ sm(..., wrap = TRUE)
 }
 \arguments{
 \item{...}{Some code to shut up.}
+
+\item{wrap}{Wrap the invocation and try again if it failed?}
 }
 \value{
 Whatever the code would have returned.

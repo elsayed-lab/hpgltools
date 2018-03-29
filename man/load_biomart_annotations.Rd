@@ -28,6 +28,8 @@ haplotypes and they should go away.  Setting this to false stops that.}
 \item{trymart}{Biomart has become a circular dependency, this makes me sad, now to list the
 marts, you need to have a mart loaded.}
 
+\item{trydataset}{Choose the biomart dataset from which to query.}
+
 \item{gene_requests}{Set of columns to query for description-ish annotations.}
 
 \item{length_requests}{Set of columns to query for location-ish annotations.}

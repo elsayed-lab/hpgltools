@@ -208,6 +208,27 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   return(retlist)
 }
 
+#' An attempt to make topgo invocations a bit more standard.
+#'
+#' My function 'simple_topgo()' was excessively long and a morass of copy/pasted
+#'   fragments.  This attempts to simplify that and converge on a single piece
+#'   of code for all the methodologies provided by topgo.
+#'
+#' @param type  Type of topgo search to perform: fisher, KS, EL, or weight.
+#' @param go_map  Mappings of gene and GO IDs.
+#' @param fisher_genes  List of genes used for fisher analyses.
+#' @param ks_genes  List of genes used for KS analyses.
+#' @param selector  Function to use when selecting genes.
+#' @param sigforall  Provide significance metrics for all ontologies observed,
+#'   not only the ones deemed statistically significant.
+#' @param numchar A limit on characters printed when printing topgo tables
+#'   (used?)
+#' @param pval_column  Column from which to extract DE p-values.
+#' @param overwrite  Overwrite an existing gene ID/GO mapping?
+#' @param cutoff  Define 'significant'?
+#' @param densities  Perform gene density plots by ontology?
+#' @param pval_plots  Print p-values plots as per clusterProfiler?
+#' @return A list of results from the various tests in topGO.
 #' @export
 do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, selector="topDiffGenes",
                      sigforall=TRUE, numchar=300, pval_column="adj.P.Val", overwrite=FALSE,
@@ -228,15 +249,15 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, select
           description=ont,
           ontology=ont,
           allGenes=fisher_genes,
-          annot=annFUN.gene2GO,
+          annot=topGO::annFUN.gene2GO,
           gene2GO=go_map)
         retlist[[ont]][["test_stat"]] <- new(
           "classicCount",
-          testStatistic=GOFisherTest,
+          testStatistic=topGO::GOFisherTest,
           name="Fisher test")
-        retlist[[ont]][["test_result"]] <- getSigGroups(
-          retlist[[ont]][["godata"]],
-          retlist[[ont]][["test_stat"]])
+        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                    retlist[[ont]][["godata"]],
+                                                    retlist[[ont]][["test_stat"]])
       },
       "KS" = {
         retlist[[ont]][["type"]] <- "KS"
@@ -246,15 +267,15 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, select
           ontology=ont,
           allGenes=ks_genes,
           geneSel=get(selector),
-          annot=annFUN.gene2GO,
+          annot=topGO::annFUN.gene2GO,
           gene2GO=go_map)
         retlist[[ont]][["test_stat"]] <- new(
           "classicScore",
           testStatistic=GOKSTest,
           name="KS test")
-        retlist[[ont]][["test_result"]] <- getSigGroups(
-          retlist[[ont]][["godata"]],
-          retlist[[ont]][["test_stat"]])
+        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                    retlist[[ont]][["godata"]],
+                                                    retlist[[ont]][["test_stat"]])
       },
       "EL" = {
         retlist[[ont]][["type"]] <- "EL"
@@ -264,16 +285,16 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, select
           ontology=ont,
           allGenes=ks_genes,
           geneSel=get(selector),
-          annot=annFUN.gene2GO,
+          annot=topGO::annFUN.gene2GO,
           gene2GO=go_map)
         retlist[[ont]][["test_stat"]] <- new(
           "elimScore",
-          testStatistic=GOKSTest,
+          testStatistic=topGO::GOKSTest,
           name="KS test",
           cutOff=cutoff)
-        retlist[[ont]][["test_result"]] <- getSigGroups(
-          retlist[[ont]][["godata"]],
-          retlist[[ont]][["test_stat"]])
+        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                    retlist[[ont]][["godata"]],
+                                                    retlist[[ont]][["test_stat"]])
       },
       "weight" = {
         retlist[[ont]][["type"]] <- "weight"
@@ -282,16 +303,16 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, select
           description=ont,
           ontology=ont,
           allGenes=fisher_genes,
-          annot=annFUN.gene2GO,
+          annot=topGO::annFUN.gene2GO,
           gene2GO=go_map)
         retlist[[ont]][["test_stat"]] <- new(
           "weightCount",
-          testStatistic=GOFisherTest,
+          testStatistic=topGO::GOFisherTest,
           name="Fisher test",
           sigRatio="ratio")
-        retlist[[ont]][["test_result"]] <- getSigGroups(
-          retlist[[ont]][["godata"]],
-          retlist[[ont]][["test_stat"]])
+        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                    retlist[[ont]][["godata"]],
+                                                    retlist[[ont]][["test_stat"]])
       },
       {
         message("I do not know that type.")

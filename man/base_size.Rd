@@ -3,12 +3,12 @@
 \docType{data}
 \name{base_size}
 \alias{base_size}
-\title{What happens if I set a base ggplot2 text size here?}
+\title{The following sets the ggplot2 default text size.}
 \format{An object of class \code{numeric} of length 1.}
 \usage{
 base_size
 }
 \description{
-What happens if I set a base ggplot2 text size here?
+The following sets the ggplot2 default text size.
 }
 \keyword{datasets}

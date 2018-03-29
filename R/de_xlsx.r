@@ -963,7 +963,7 @@ Defaulting to fdr."))
   } else {
     eddf <- ed[["all_tables"]][[table_name]]
     if (is.null(eddf)) {
-      eddf <- ed[["all_tables"]][[inverse_table]]
+      eddf <- ed[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(eddf)) {
         stop("The edger table seems to be missing.")
@@ -977,7 +977,7 @@ Defaulting to fdr."))
   } else {
     badf <- ba[["all_tables"]][[table_name]]
     if (is.null(badf)) {
-      badf <- ba[["all_tables"]][[inverse_table]]
+      badf <- ba[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(badf)) {
         stop("The basic table seems to be missing.")
@@ -1722,6 +1722,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 #' @param p  Or p-value.
 #' @param z  Or z-score.
 #' @param p_type  Use normal or adjusted p-values.
+#' @param extra_annot  Provide an extra set of annotation columns?
 #' @param excel  An optional excel workbook to which to write.
 #' @export
 intersect_significant <- function(combined, lfc=1.0, p=0.05,
@@ -2018,6 +2019,7 @@ write_de_table <- function(data, type="limma", ...) {
 #'
 #' @param tables The result from extract_significant_genes() or similar.
 #' @param excel  An excel file to write.
+#' @param extra_annot  Extra annotations to add to the tables.
 #' @param ... Extra arguments for writing the file (currently unused).
 #' @return a list of shared genes by table name.
 #' @export

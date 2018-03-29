@@ -90,11 +90,20 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
   return(retlist)
 }
 
-#' Thanks to Sandra Correia for this!
+#' Thanks to Sandra Correia for this!  This function attempts to represent the
+#' change in the number of genes which are well/poorly represented in the data
+#' before and after performing a low-count filter.
+#'
+#' @param expt Input expressionset.
+#' @param low_limit  A threshold to define 'low-representation.'
+#' @param filter  Method used to low-count filter the data.
+#' @param ...  Extra arbitrary arguments to pass to normalize_expt()
+#' @return  Bar plot showing the number of genes below the low_limit before and
+#'   after filtering the data.
 #' @export
-plot_libsize_prepost <- function(expt, low_limit=2) {
+plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
   start <- plot_libsize(expt, text=FALSE)
-  norm <- sm(normalize_expt(expt, filter=TRUE))
+  norm <- sm(normalize_expt(expt, filter=filter, ...))
   end <- plot_libsize(norm)
 
   lt_min_start <- colSums(exprs(expt) <= low_limit)
@@ -299,7 +308,9 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
 #' Make relatively pretty bar plots of coverage in a genome.
 #'
 #' This was written for ribosome profiling coverage / gene.
-#' It should however, work for any data with little or no modification.
+#' It should however, work for any data with little or no modification, it was
+#' also written when I was first learning R and when I look at it now I see a
+#' few obvious places which can use improvement.
 #'
 #' @param input  Coverage / position filename.
 #' @param workdir  Where to put the resulting images.
@@ -358,8 +369,8 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
     ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
     ggplot2::geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue") +
     ggplot2::theme_bw(base_size=base_size)
-  plot(my_plot)
 
+  return(my_plot)
 }
 
 #' Make a bar plot of the numbers of significant genes by contrast.

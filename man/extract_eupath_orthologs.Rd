@@ -4,34 +4,42 @@
 \alias{extract_eupath_orthologs}
 \title{Given 2 species names from the eupathdb, make orthology tables betwixt them.}
 \usage{
-extract_eupath_orthologs(first, master = "GID",
-  query_species = c("L. braziliensis MHOM/BR/75/M2903",
-  "L. mexicana MHOM/GT/2001/U1103"), group_columns = c("Ortholog_ID",
-  "Ortholog_Group", "Organism"), abbrev = NULL, xref = TRUE, ...)
+extract_eupath_orthologs(db, master = "GID", query_species = NULL,
+  id_column = "ORTHOLOG_ID", org_column = "ORTHOLOGS_ORGANISM",
+  url_column = "ORTHOLOGS_ORTHOLOG_GROUP",
+  count_column = "ORTHOLOGS_ORTHOLOG_COUNT", print_speciesnames = FALSE)
 }
 \arguments{
-\item{first}{Species name from one eupath database.}
+\item{db}{Species name (subset) from one eupath database.}
 
-\item{abbrev}{It is likely you do not care about the reciprocals and such,
-in that case the second species is irrelvant and just a species
-abbreviation is sufficient.}
+\item{master}{Primary keytype to use for indexing the various tables.}
 
-\item{xref}{Cross reference the stuff in the sqlite vs. the abbreviation?
-  If no, then this will just return the entire ortholog table.
+\item{query_species}{A list of exact species names to search for.  If uncertain
+about them, add print_speciesnames=TRUE and be ready for a big blob of
+text.  If left null, then it will pull all species.}
 
-The xref parameter reminds me, this function does make a peculiar attempt to
-  handle a lot of corner cases without failure, but instead to try to always
-  provide some useful information, even if that information is not precisely
-  what you want, but the only thing I can find.
-With that in mind, one could easily argue that this function is too long and
-  it should be split into a couple pieces, but hopefully it is sufficiently
-  clear that this is not necessary -- or I will do it later.}
+\item{id_column}{What column in the database provides the set of ortholog IDs?}
 
-\item{second}{Another species name from the same eupath database.}
+\item{org_column}{What column provides the species name?}
+
+\item{url_column}{What column provides the orthomcl group ID?}
+
+\item{count_column}{Name of the column with the count of species represented.}
+
+\item{print_speciesnames}{Dump the species names for diagnostics?}
 }
 \value{
-List containing the information available given the species provided
-  and/or the abbreviation/xref.
+A big table of orthoMCL families, the columns are:
+  1.  GID: The gene ID
+  2.  ORTHOLOG_ID: The gene ID of the associated ortholog.
+  3.  ORTHOLOG_SPECIES: The species of the associated ortholog.
+  4.  ORTHOLOG_URL: The OrthoMCL group ID's URL.
+  5.  ORTHOLOG_COUNT: The number of all genes from all species represented in
+  this group.
+  6.  ORTHOLOG_GROUP: The family ID
+  7.  QUERIES_IN_GROUP: How many of the query species are represented in this
+  group?
+  8.  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
 }
 \description{
 The eupathdb provides such a tremendous wealth of information.  For me

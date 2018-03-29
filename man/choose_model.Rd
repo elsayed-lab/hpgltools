@@ -31,6 +31,8 @@ choose_model(input, conditions = NULL, batches = NULL, model_batch = TRUE,
 \item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
 to test.}
 
+\item{contr}{List of contrasts.arg possibilities.}
+
 \item{surrogates}{Number of or method used to choose the number of surrogate variables.}
 
 \item{...}{Further options are passed to arglist.}

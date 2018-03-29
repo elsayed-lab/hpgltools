@@ -17,6 +17,16 @@ load_host_annotations(orgdb = NULL, gene_ids = NULL, keytype = "ensembl",
 
 \item{keytype}{a, umm keytype? I need to properly read this code.}
 
+\item{chromosome_column}{Which column contains the chromosome information?}
+
+\item{strand_column}{Ibid' but for the gene's strand.}
+
+\item{start_column}{Ibid' but to find where each gene starts.}
+
+\item{end_column}{Ibid' but to find where each gene ends.}
+
+\item{description_column}{Ibid' but to find gene descriptions.}
+
 \item{fields}{Columns to include in the output.}
 
 \item{biomart_dataset}{Name of the biomaRt dataset to query for gene type.}

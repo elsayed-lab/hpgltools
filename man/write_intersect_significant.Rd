@@ -12,6 +12,8 @@ write_intersect_significant(tables, excel = "excel/significant_shared.xlsx",
 
 \item{excel}{An excel file to write.}
 
+\item{extra_annot}{Extra annotations to add to the tables.}
+
 \item{...}{Extra arguments for writing the file (currently unused).}
 }
 \value{

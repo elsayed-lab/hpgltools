@@ -174,8 +174,8 @@ clear_session <- function(keepers=NULL, depth=10) {
 #' matrix. The LHS of the equation is simply the sign of the correlation
 #' function, which serves to preserve the sign of the interaction. The RHS
 #' combines the Pearson correlation and the log inverse Euclidean distance with
-#' equal weights. The result is a number in the range [ − 1, 1], where values
-#' close to −1 indicate a strong negative correlation and values close to 1
+#' equal weights. The result is a number in the range from -1 to 1 where values
+#' close to -1 indicate a strong negative correlation and values close to 1
 #' indicate a strong positive corelation.  While the Pearson correlation and
 #' Euclidean distance each contribute equally in the above equation, one could
 #' also assign tuning parameters to each of the metrics to allow for unequal
@@ -349,10 +349,15 @@ hpgl_cor <- function(df, method="pearson", ...) {
 
 #' Because I am not smart enough to remember t()
 #'
+#' It seems to me there should be a function as easy for distances are there is for correlations.
+#'
+#' @param df data frame from which to calculate distances.
+#' @param method  Which distance calculation to use?
+#' @param ...  Extra arguments for dist.
 #' @export
 hpgl_dist <- function(df, method="euclidean", ...) {
   input <- t(as.matrix(df))
-  result <- as.matrix(dist(input), method=method)
+  result <- as.matrix(dist(input, method=method, ...))
   return(result)
 }
 
@@ -542,36 +547,42 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 #' @export
 pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
+##pp <- function(file, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
+  result <- NULL
   if (ext == "png") {
-    res <- png(filename=file, width=width, height=height, units="in", res=res, ...)
+    result <- png(filename=file, width=width, height=height, units="in", res=res, ...)
   } else if (ext == "svg") {
-    res <- svg(filename=file, ...)
+    result <- svg(filename=file, ...)
   } else if (ext == "ps") {
-    res <- postscript(file=file, width=width, height=height, ...)
+    result <- postscript(file=file, width=width, height=height, ...)
   } else if (ext == "eps") {
-    res <- cairo_ps(filename=file, width=width, height=height, ...)
+    result <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {
-    res <- cairo_pdf(file=file, ...)
+    result <- cairo_pdf(filename=file, ...)
   } else {
     message("Defaulting to tiff.")
-    res <- tiff(filename=file, width=width, height=height, units="in", ...)
+    result <- tiff(filename=file, width=width, height=height, units="in", ...)
   }
+
+  ## Check and make sure I am not looking at something containing a plot, as a bunch of
+  ## my functions are lists with a plot slot.
+  if (class(image)[[1]] == "list") {
+    if (!is.null(image[["plot"]])) {
+      image <- image[["plot"]]
+    }
+  }
+
   if (!is.null(image)) {
     if (class(image)[[1]] == "recordedplot") {
       print(image)
     } else {
       plot(image)
     }
-    dev.off()
-    message(paste0("Wrote the image to: ", file))
-    if (class(image)[[1]] == "recordedplot") {
-      print(image)
-    } else {
-      plot(image)
-    }
   }
-  return(res)
+  dev.off()
+  message(paste0("Wrote the image to: ", file))
+  return(image)
 }
 
 #' Automatic loading and/or installing of packages.
@@ -734,6 +745,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' This is a simpler silence peasant.
 #'
 #' @param ... Some code to shut up.
+#' @param wrap  Wrap the invocation and try again if it failed?
 #' @return Whatever the code would have returned.
 #' @export
 sm <- function(..., wrap=TRUE) {

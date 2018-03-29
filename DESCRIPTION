@@ -22,7 +22,7 @@ Suggests:
   Category, cleaver, clusterProfiler, corpcor, corrplot,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW, dplyr,
   EDASeq, edgeR,
-  ffpe,
+  ffpe, fission,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, genoPlotR, ggdendro, ggrepel, goseq,
   GO.db, googleVis, GOstats, graph, gtools, gplots, gProfileR, GSEABase,
   Heatplus, Hmisc, Homo.sapiens, httr,
@@ -34,13 +34,13 @@ Suggests:
   openxlsx, OrganismDbi,
   packrat, pander, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, readxl, reshape2, rGADEM, Rgraphviz, rhdf5, rjson,
-  rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne, rtracklayer,
-  ruv, RUVSeq,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
+  rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
   variancePartition, Vennerable, venneuler,
-  XLConnect
+  XLConnect, xml2
 Imports:
   Biobase, data.table, foreach, ggplot2, knitr, magrittr, methods
 VignetteBuilder: knitr

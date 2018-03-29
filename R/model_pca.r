@@ -505,6 +505,13 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     batch_column <- arglist[["batch_column"]]
     message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
   }
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+  label_size <- 4
+  if (!is.null(arglist[["label_size"]])) {
+    label_size <<- arglist[["label_size"]]
+  }
 
   ## The following if() series is used to check the type of data provided and extract the available
   ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
@@ -528,6 +535,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
+    design <- pData(data)
   } else if (data_class == "list") {
     data <- data[["count_table"]]
     if (is.null(data)) {
@@ -537,6 +545,11 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  ## Small modification for reusing some of my very oldest experimental designs.
+  if (is.null(design[["sampleid"]])) {
+    design[["sampleid"]] <- rownames(design)
   }
 
   ## Check that the given design works with the data
@@ -709,6 +722,14 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     plot_title <- paste(first, " vs. ", second, sep="")
   }
   num_batches <- length(unique(batches))
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+  label_size <- 4
+  if (!is.null(arglist[["label_size"]])) {
+    label_size <<- arglist[["label_size"]]
+  }
+
   pca_plot <- NULL
 
   color_listing <- pca_data[, c("condition", "colors")]
@@ -821,11 +842,11 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
       ggplot2::geom_text(aes_string(x="PC1", y="PC2", label="labels",
-                                    angle=45, size=4, vjust=2))
+                                    angle=45, size=label_size, vjust=2))
   } else if (plot_labels == "repel") {
     pca_plot <- pca_plot +
       ggrepel::geom_text_repel(aes_string(label="labels"),
-                               size=5, box.padding=ggplot2::unit(0.5, "lines"),
+                               size=label_size, box.padding=ggplot2::unit(0.5, "lines"),
                                point.padding=ggplot2::unit(1.6, "lines"),
                                arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
   } else if (plot_labels == "dlsmart") {
@@ -861,6 +882,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @param plot_labels  Labels for the plots.
 #' @param scale  Scale them?
 #' @param center  Center them?
+#' @param eset  Check the input data type.
 #' @param plot_title  Title them?
 #' @param plot_size  Size of the sigils.
 #' @param size_column  A factor to size the sigils.

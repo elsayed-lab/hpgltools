@@ -30,7 +30,9 @@ coverage plot surrounging the ORF of interest
 }
 \description{
 This was written for ribosome profiling coverage / gene.
-It should however, work for any data with little or no modification.
+It should however, work for any data with little or no modification, it was
+also written when I was first learning R and when I look at it now I see a
+few obvious places which can use improvement.
 }
 \seealso{
 \pkg{ggplot2}

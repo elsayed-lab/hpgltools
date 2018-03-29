@@ -19,6 +19,8 @@ intersect_significant(combined, lfc = 1, p = 0.05, z = NULL,
 
 \item{p_type}{Use normal or adjusted p-values.}
 
+\item{extra_annot}{Provide an extra set of annotation columns?}
+
 \item{excel}{An optional excel workbook to which to write.}
 }
 \description{

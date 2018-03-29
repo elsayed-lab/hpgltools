@@ -6,6 +6,9 @@
 \usage{
 get_individual_snps(retlist)
 }
+\arguments{
+\item{retlist}{The result from get_snp_sets().}
+}
 \description{
 The result of get_snp_sets provides sets of snps for all possible
 categories.  This is cool and all, but most of the time we just want the

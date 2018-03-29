@@ -145,7 +145,7 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05) {
                                 guide=ggplot2::guide_legend(override.aes=list(size=5))) +
     ggrepel::geom_text_repel(data=label_subset,
                              show.legend=FALSE,
-                             arrow=ggplot2::arrow(length=unit(0.01, "npc")),
+                             arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")),
                              aes_string(x="avglogtpm", y="dpsi", label="gene_name")) +
     ggplot2::xlab("Average log(transcripts per million).") +
     ggplot2::ylab("Delta PSI calculated by Suppa.") +

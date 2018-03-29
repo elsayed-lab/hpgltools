@@ -27,8 +27,8 @@ and the dist function returns the Euclidean distance matrix for the input
 matrix. The LHS of the equation is simply the sign of the correlation
 function, which serves to preserve the sign of the interaction. The RHS
 combines the Pearson correlation and the log inverse Euclidean distance with
-equal weights. The result is a number in the range [ − 1, 1], where values
-close to −1 indicate a strong negative correlation and values close to 1
+equal weights. The result is a number in the range from -1 to 1 where values
+close to -1 indicate a strong negative correlation and values close to 1
 indicate a strong positive corelation.  While the Pearson correlation and
 Euclidean distance each contribute equally in the above equation, one could
 also assign tuning parameters to each of the metrics to allow for unequal

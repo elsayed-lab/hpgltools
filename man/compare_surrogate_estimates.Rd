@@ -13,9 +13,17 @@ compare_surrogate_estimates(expt, extra_factors = NULL, filter_it = TRUE,
 \item{extra_factors}{Character list of extra factors which may be included in the final plot of
 the data.}
 
+\item{filter_it}{Most of the time these surrogate methods get mad if there
+are 0s in the data.  Filter it?}
+
+\item{filter_type}{Type of filter to use when filtering the input data.}
+
 \item{do_catplots}{Include the catplots?  They don't make a lot of sense yet, so probably no.}
 
-\item{surrogates}{Use 'be' or 'leek' surrogate estimates, or choose a number.}
+\item{surrogates}{Use 'be' or 'leek' surrogate estimates, or choose a
+number.}
+
+\item{...}{Extra arguments when filtering.}
 }
 \value{
 List of the results.

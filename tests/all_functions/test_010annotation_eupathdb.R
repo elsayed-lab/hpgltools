@@ -25,15 +25,15 @@ if (class(random_org) == "try-error") {
 }
 eupath_names <- testing[["Species"]]
 species <- eupath_names[chosen]
-message(paste0("\nGoing to attempt making packages for: ", species))
-eupath_test <- make_eupath_organismdbi(species=species, metadata=testing, reinstall=TRUE)
-if (class(eupath_test) != "try-error") {
-  test_that("Did the organismdbi get installed?", {
-    expect_true(eupath_test[["organdb_name"]] %in% installed.packages())
-  })
-} else {
-  message(paste0("Creation of orgdb/etc failed for ", species))
-}
+##message(paste0("\nGoing to attempt making packages for: ", species))
+##eupath_test <- make_eupath_organismdbi(species=species, metadata=testing, reinstall=TRUE)
+##if (class(eupath_test) != "try-error") {
+##  test_that("Did the organismdbi get installed?", {
+##    expect_true(eupath_test[["organdb_name"]] %in% installed.packages())
+##  })
+##} else {
+##  message(paste0("Creation of orgdb/etc failed for ", species))
+##}
 bsgenome_test <- sm(make_eupath_bsgenome(species, reinstall=TRUE))
 test_that("Did the bsgenome get installed?", {
   expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
