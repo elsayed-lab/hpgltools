@@ -321,8 +321,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @param second_species Linnean species name for the second species.
 #' @param host Ensembl server to query.
 #' @param trymart Assumed mart name to use.
-#' @param first_attributes  Key(s) of the first database to use.
-#' @param second_attributes  Key(s) of the second database to use.
+#' @param attributes Key to query
 #' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
 #'   to always send them all; the second is the subset corresponding to the
 #'   actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
@@ -339,8 +338,7 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
                                    second_species="mmusculus",
                                    host="dec2016.archive.ensembl.org",
                                    trymart="ENSEMBL_MART_ENSEMBL",
-                                   first_attributes="ensembl_gene_id",
-                                   second_attributes=c("ensembl_gene_id", "hgnc_symbol")) {
+                                   attributes="ensembl_gene_id") {
   first_mart <- NULL
   first_mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
   if (class(first_mart) == "try-error") {
@@ -390,16 +388,24 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
 
   ## That is right, I had forgotten but it seems to me that no matter
   ## what list of genes I give this stupid thing, it returns all genes.
-  linked_genes <- biomaRt::getLDS(attributes=first_attributes,
+
+  ## Note: As of 2018-03 getLDS is more stringent in the queries it allows.  One must choose the same
+  ## attributes from the first and second marts, otherwise it throws an error which looks like:
+  ## "The query to the BioMart webservice returned an invalid result: the number
+  ## of columns in the result table does not equal the number of attributes in
+  ## the query. Please report this to the mailing list."
+  ## Therefore I am dropping the arguments first_attributes/second_attributes
+  ## and just leaving behind 'attributes'.
+  linked_genes <- biomaRt::getLDS(attributes=attributes,
                                   values=gene_ids,
                                   mart=first_ensembl,
-                                  attributesL=second_attributes,
+                                  attributesL=attributes,
                                   martL=second_ensembl)
   kept_idx <- linked_genes[[1]] %in% gene_ids
   kept_genes <- linked_genes[kept_idx, ]
   new_colnames <- colnames(linked_genes)
   new_colnames[[1]] <- first_species
-  second_position <- length(first_attributes) + 1
+  second_position <- length(attributes) + 1
   new_colnames[[second_position]] <- second_species
   colnames(kept_genes) <- new_colnames
   colnames(linked_genes) <- new_colnames

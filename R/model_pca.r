@@ -773,10 +773,14 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     pca_plot <- pca_plot +
       ggplot2::geom_point(size=plot_size,
                           aes_string(shape="as.factor(batches)",
+                                     fill="as.factor(condition)",
                                      colour="as.factor(condition)")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
                                   values=color_list) +
+      ggplot2::scale_fill_manual(name="Condition",
+                                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
+                                 values=color_list) +
       ggplot2::scale_shape_manual(name="Batch",
                                   labels=levels(as.factor(pca_data[["batch"]])),
                                   guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),

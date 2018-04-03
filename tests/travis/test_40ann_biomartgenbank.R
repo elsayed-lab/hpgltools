@@ -30,10 +30,9 @@ test_that("Did the ontologies come out?", {
 test_genes <- head(rownames(sig_genes))
 linkage_test <- load_biomart_orthologs(test_genes, first_species="dmelanogaster",
                                        second_species="mmusculus",
-                                       first_attributes=c("ensembl_gene_id"),
-                                       second_attributes=c("ensembl_gene_id","hgnc_symbol"))
-linked_genes <- linkage_test[["linked_genes"]]
-expected_linkage <- c("ENSMUSG00000025815", "ENSMUSG00000033006",
+                                       attributes="ensembl_gene_id")
+linked_genes <- linkage_test[["subset_linked_genes"]]
+expected_linkage <- c("ENSMUSG00000033006", "ENSMUSG00000025815",
                       "ENSMUSG00000024176", "ENSMUSG00000000567")
 actual_linkage <- linked_genes[["mmusculus"]]
 test_that("Can I link some melanogaster and mouse genes?", {

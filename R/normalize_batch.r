@@ -94,7 +94,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
   ## We want to use this to back-convert or reconvert data to the appropriate scale on return.
   if (is.null(expt_state)) {
     expt_state <- list(
-      "lowfilter" = "raw",
+      "filter" = "raw",
       "normalization" = "raw",
       "conversion" = "raw",
       "batch" = "raw",

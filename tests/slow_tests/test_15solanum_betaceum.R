@@ -4,7 +4,7 @@ library(hpgltools)
 context("15solanum_betaceum.R: Test some Pseudomonas data.\n")
 
 sb_annot <- load_trinotate_annotations(
-  trinotate=system.file("sb/trinotate.csv.xz", package="hpgltools"))
+  trinotate=system.file("sb/trinotate_head.csv.xz", package="hpgltools"))
 
 expected <- c(136152, 33)
 actual <- dim(sb_annot)

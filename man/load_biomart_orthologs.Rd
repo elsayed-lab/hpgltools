@@ -6,8 +6,7 @@
 \usage{
 load_biomart_orthologs(gene_ids, first_species = "hsapiens",
   second_species = "mmusculus", host = "dec2016.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL", first_attributes = "ensembl_gene_id",
-  second_attributes = c("ensembl_gene_id", "hgnc_symbol"))
+  trymart = "ENSEMBL_MART_ENSEMBL", attributes = "ensembl_gene_id")
 }
 \arguments{
 \item{gene_ids}{List of gene IDs to translate.}
@@ -20,9 +19,7 @@ load_biomart_orthologs(gene_ids, first_species = "hsapiens",
 
 \item{trymart}{Assumed mart name to use.}
 
-\item{first_attributes}{Key(s) of the first database to use.}
-
-\item{second_attributes}{Key(s) of the second database to use.}
+\item{attributes}{Key to query}
 }
 \value{
 list of 4 elements:  The first is the set of all ids, as getLDS seems

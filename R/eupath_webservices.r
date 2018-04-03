@@ -198,22 +198,36 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
     parameters <- list("organism" = jsonlite::unbox(species))
   }
 
+  ##query_body <- list(
+  ##  ## 3 elements, answerSpec, formatting, format.
+  ##  "answerSpec" = list(
+  ##    "questionName" = jsonlite::unbox(question),
+  ##    "parameters" = parameters,
+  ##    "viewFilters" = list(),
+  ##    "filters" = list()
+  ##  ),
+  ##  "formatting" = list(
+  ##    "formatConfig" = list(
+  ##      "includeHeaders" = jsonlite::unbox("true"),
+  ##      "attributes" = columns,
+  ##      "attachmentType" = jsonlite::unbox("plain")
+  ##    ),
+  ##    "format" = jsonlite::unbox("fullRecord")
+  ##  ))
+  answerlist <- list(
+    "questionName" = jsonlite::unbox(question),
+    "parameters" = parameters,
+    "viewFilters" = list(),
+    "filters" = list())
+  formattinglist <- list(
+    "formatConfig" = list(
+      "includeHeaders" = jsonlite::unbox("true"),
+      "attributes" = columns,
+      "attachmentType" = jsonlite::unbox("plain")),
+    "format" = jsonlite::unbox("fullRecord"))
   query_body <- list(
-    ## 3 elements, answerSpec, formatting, format.
-    "answerSpec" = list(
-      "questionName" = jsonlite::unbox(question),
-      "parameters" = parameters,
-      "viewFilters" = list(),
-      "filters" = list()
-    ),
-    "formatting" = list(
-      "formatConfig" = list(
-        "includeHeaders" = jsonlite::unbox("true"),
-        "attributes" = columns,
-        "attachmentType" = jsonlite::unbox("plain")
-      ),
-      "format" = jsonlite::unbox("fullRecord")
-    ))
+    "answerSpec" = answerlist,
+    "formatting" = formattinglist)
   body <- jsonlite::toJSON(query_body)
 
   api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
@@ -224,6 +238,47 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
                     httr::timeout(minutes * 60))
   if (result[["status_code"]] == "422") {
     warning("The provided species does not have a table of weights.")
+    return(data.frame())
+  } else if (result[["status_code"]] == "400") {
+    warning("Status 400 was returned, likely a bad formatConfig.")
+    ## Interesting, querying a tritrypdb entry with the above query_body works fine,
+    ## but querying microsporidiadb.org with it fails with 'Could not configure reporter 'fullRecord' with passed formatConfig.
+    ## I wonder what is different between them?
+    ## Weirdly, if I remove the format fields from the formatting list, then I get a nested response,
+    ## But this response requires a subset of the original columns and is in yet another format.
+    ##columns <- c("primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
+    ##             "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
+    ##             "gene_orthomcl_name", "gene_entrez_id", "transcript_length", "exon_count", "strand",
+    ##             "cds_length", "tm_count", "molecular_weight", "isoelectric_point", "signalp_scores",
+    ##             "signalp_peptide", "annotated_go_function", "annotated_go_process", "annotated_go_component",
+    ##             "annotated_go_id_function", "annotated_go_id_process", "annotated_go_id_component",
+    ##             "predicted_go_id_function", "predicted_go_id_process", "predicted_go_id_component",
+    ##             "ec_numbers", "ec_numbers_derived", "five_prime_utr_length", "three_prime_utr_length",
+    ##             "location_text", "gene_previous_ids", "protein_sequence", "cds")
+    ##answerlist <- list(
+    ##"questionName" = jsonlite::unbox(question),
+    ##"parameters" = parameters,
+    ##"viewFilters" = list(),
+    ##"filters" = list())
+    ##formattinglist <- list(
+    ##  "formatConfig" = list(
+    ##    "includeHeaders" = jsonlite::unbox("true"),
+    ##    "attributes" = columns,
+    ##    "attachmentType" = jsonlite::unbox("plain")),
+    ##  "format" = jsonlite::unbox("tableTabular"))
+    ##query_body <- list(
+    ##  "answerSpec" = answerlist,
+    ##  "formatting" = formattinglist,
+    ##  "format" = jsonlite::unbox("fullRecord"))
+    ##)
+    ##body <- jsonlite::toJSON(query_body)
+    ##api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
+    ##result <- httr::POST(
+    ##                  url=api_uri,
+    ##                  body=body,
+    ##                  httr::content_type("application/json"),
+    ##                  httr::timeout(minutes * 60))
+    ##cont <- httr::content(result)
     return(data.frame())
   } else if (result[["status_code"]] != "200") {
     warning("An error status code was returned.")
@@ -621,7 +676,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
   ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
   ## from Cristina
   query_body <- list(
-    ## 3 elements, answerSpec, formatting, format.
+    ## 2 elements, answerSpec, formatting.
     "answerSpec" = list(
       "questionName" = jsonlite::unbox("GeneQuestions.GenesByTaxonGene"),
       "parameters" = list("organism" = jsonlite::unbox(species)),

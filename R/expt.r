@@ -80,6 +80,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @param include_type I have usually assumed that all gff annotations should be used, but that is
 #'     not always true, this allows one to limit to a specific annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
+#' @param file_column  Column to use in a gene information dataframe for
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -95,7 +96,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL,
-                        include_type="all", include_gff=NULL,
+                        include_type="all", include_gff=NULL, file_column="file",
                         savefile="expt", low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
@@ -130,19 +131,15 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (!is.null(arglist[["include_type"]])) {
     gff_type <- arglist[["include_type"]]
   }
-  file_column <- "file"
-  if (!is.null(arglist[["file_column"]])) {
-    file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-    file_column <- tolower(file_column)
-    file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
-    ## tables / sample in one sheet.
-  }
   sample_column <- "sampleid"
   if (!is.null(arglist[["sample_column"]])) {
     sample_column <- arglist[["sample_column"]]
     sample_column <- tolower(sample_column)
     sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
+
+  file_column <- tolower(file_column)
+  file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
 
   round <- FALSE
   if (!is.null(arglist[["round"]])) {
@@ -491,7 +488,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   expt[["gff_file"]] <- include_gff
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
-    "lowfilter" = "raw",
+    "filter" = "raw",
     "normalization" = "raw",
     "conversion" = "raw",
     "batch" = "raw",
@@ -1043,6 +1040,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern="\\.tsv|\\.h5", x=files[1])) {
+    message("Reading kallisto inputs with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1065,6 +1063,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern="\\.genes\\.results", x=files[1])) {
+    message("Reading rsem inputs with tximport.")
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -1083,6 +1082,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern="\\.sf", x=files[1])) {
+    message("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1105,9 +1105,15 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
+    message("Reading count tables with read.table().")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header=header)
     colnames(count_table) <- c("rownames", ids[1])
+    count_table[, 2] <- as.numeric(count_table[, 2])
+    na_idx <- is.na(count_table[, 2])
+    na_rownames <- count_table[na_idx, "rownames"]
+    keepers_idx <- count_table[["rownames"]] != na_rownames
+    count_table <- count_table[keepers_idx, ]
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
@@ -1127,6 +1133,10 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
         files[table] <- lower_filenames[table]
       }
       tmp_count <- try(read.table(files[table], header=header))
+      ## Drop the rows with NAs before coercing to numeric.
+      keepers_idx <- tmp_count[[1]] != na_rownames
+      tmp_count <- tmp_count[keepers_idx, ]
+      tmp_count[, 2] <- as.numeric(tmp_count[, 2])
       if (class(tmp_count)[1] == "try-error") {
         stop(paste0("There was an error reading: ", files[table]))
       }
@@ -1141,6 +1151,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       message(paste0(files[table], " contains ", pre_merge,
                      " rows and merges to ", post_merge, " rows."))
     }
+
     ## remove summary fields added by HTSeq
     if (!isTRUE(include_summary_rows)) {
       ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'

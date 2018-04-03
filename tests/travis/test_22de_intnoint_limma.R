@@ -33,7 +33,7 @@ int_contrasts <- limma::contrasts.fit(int_fit, int_contrast_matrix)
 noint_eb <- limma::eBayes(noint_fit)
 int_eb <- limma::eBayes(int_contrasts)
 
-noint_table <- limma::topTable(noint_eb, coef="conditionuntreated", n=Inf, adjust="BH")
+noint_table <- limma::topTable(noint_eb, coef="conditiontreated", n=Inf, adjust="BH")
 int_table <- limma::topTable(int_eb, coef="untreat_vs_treated", n=Inf, adjust="BH")
 
 head(noint_table)
@@ -53,5 +53,5 @@ interaction_model <- stats::model.matrix(~ condition + batch + condition:batch, 
 interaction_voom <- limma::voom(counts, interaction_model, plot=TRUE, normalize.method="quantile")
 interaction_fit <- limma::lmFit(interaction_voom, interaction_model)
 interaction_eb <- limma::eBayes(interaction_fit)
-interaction_table <- limma::topTable(interaction_eb, coef="conditionuntreated", n=Inf, adjust="BH")
+interaction_table <- limma::topTable(interaction_eb, coef="conditiontreated", n=Inf, adjust="BH")
 head(interaction_table)
