@@ -6,7 +6,7 @@ context("15solanum_betaceum.R: Test some Pseudomonas data.\n")
 sb_annot <- load_trinotate_annotations(
   trinotate=system.file("sb/trinotate_head.csv.xz", package="hpgltools"))
 
-expected <- c(136152, 33)
+expected <- c(49999, 33)
 actual <- dim(sb_annot)
 test_that("Do we get the expected trinotate annotation data?", {
   expect_equal(expected, actual)

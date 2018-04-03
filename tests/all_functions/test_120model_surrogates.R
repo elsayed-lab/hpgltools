@@ -13,7 +13,7 @@ pombe_expt <- sm(make_pombe_expt())
 pombe_result <- sm(compare_surrogate_estimates(pombe_expt, do_catplots=TRUE))
 ## Hmm I am not sure what to test in this.
 expected <- 4
-actual <- ncol(pombe_result$adjustments$pca_adjust)
+actual <- ncol(pombe_result[["adjustments"]][["pca_adjust"]])
 test_that("Do we get expected results from compare_surrogate_estimates()?", {
   expect_equal(actual, expected)
 })
