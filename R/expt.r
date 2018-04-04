@@ -157,6 +157,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## or it can attempt to figure out the location of the files from the sample names.
   filenames <- NULL
   all_count_tables <- NULL
+  ## This set of if() statements is too complex and requires some reworking.
   if (!is.null(count_dataframe)) {
     ## Lets set the order of the count data to that of the sample definitions.
     if (all.equal(sort(colnames(count_dataframe)), sort(rownames(sample_definitions)))) {
@@ -983,6 +984,12 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   ## load first sample
   arglist <- list(...)
   retlist <- list()
+  ## Add an optional directory if I don't feel like specifying in the sample sheet.
+  countdir <- NULL
+  if (!is.null(arglist[["countdir"]])) {
+    countdir <- arglist[["countdir"]]
+    files <- file.path(countdir, files)
+  }
   skippers <- (files == "" | files == "undef" | is.null(files) | is.na(files))
   files <- files[!skippers]
   ids <- ids[!skippers]
@@ -1011,10 +1018,6 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     files[1] <- lower_filenames[1]
   }
 
-  ## Add an optional directory if I don't feel like specifying in the sample sheet.
-  if (!is.null(arglist[["countdir"]])) {
-    files <- file.path(arglist[["countdir"]], files)
-  }
   count_table <- NULL
   for (f in 1:length(files)) {
     files[f] <- gsub(pattern=" ", replacement="", x=files[f])
@@ -1107,11 +1110,17 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   } else {
     message("Reading count tables with read.table().")
     ## Use this codepath when we are working with htseq
-    count_table <- read.table(files[1], header=header)
+    count_table <- read.table(files[1], header=header, stringsAsFactors=FALSE)
     colnames(count_table) <- c("rownames", ids[1])
     count_table[, 2] <- as.numeric(count_table[, 2])
-    na_idx <- is.na(count_table[, 2])
-    na_rownames <- count_table[na_idx, "rownames"]
+    na_idx <- is.na(count_table[[2]])
+    ## This is a bit more circuituous than I would like.
+    ## I want to make sure that na_rownames does not evaluate to something annoying like 'logical(0)'
+    ## which it will if there are no nas in the count table and you just ask for is.na(count_table).
+    na_rownames <- ""
+    if (sum(na_idx) > 0) {
+      na_rownames <- count_table[na_idx, "rownames"]
+    }
     keepers_idx <- count_table[["rownames"]] != na_rownames
     count_table <- count_table[keepers_idx, ]
     count_table <- data.table::as.data.table(count_table)
