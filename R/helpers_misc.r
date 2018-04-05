@@ -576,6 +576,7 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
   if (is.null(image)) {
     message(paste0("Going to write the image to: ", file, " when dev.off() is called."))
   } else {
+    message(paste0("Writing the image to: ", file, " and calling dev.off()."))
     if (class(image)[[1]] == "recordedplot") {
       print(image)
     } else {

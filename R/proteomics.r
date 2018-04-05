@@ -347,7 +347,7 @@ extract_peprophet_data <- function(pepxml, ...) {
 #'   stuff like that.
 #' @return  metadata!#'
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, ...) {
+extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -427,6 +427,10 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, ...)
     "colors" = chosen_colors,
     "metadata" = sample_definitions,
     "sample_data" = res)
+  if (!is.null(savefile)) {
+    mzxml_data <- retlist
+    save_result <- try(save(list = c("mzxml_data"), file=savefile), silent=TRUE)
+  }
   return(retlist)
 }
 
@@ -824,8 +828,11 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
     }
   }
 
+  table[["text"]] <- paste0(table[["protein"]], ":", table[["peptide"]])
+
   a_plot <- ggplot(data=table, aes_string(x=xaxis,
                                           y=yaxis,
+                                          text="text",
                                           color="color",
                                           size="size")) +
     ggplot2::geom_point(alpha=0.4, aes_string(fill="color",

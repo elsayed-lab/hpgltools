@@ -4,7 +4,8 @@
 \alias{extract_mzxml_data}
 \title{Read a bunch of mzXML files to acquire their metadata.}
 \usage{
-extract_mzxml_data(metadata, write_windows = TRUE, parallel = TRUE, ...)
+extract_mzxml_data(metadata, write_windows = TRUE, parallel = TRUE,
+  savefile = NULL, ...)
 }
 \arguments{
 \item{metadata}{Data frame describing the samples, including the mzXML

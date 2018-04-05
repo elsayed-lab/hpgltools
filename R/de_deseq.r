@@ -98,6 +98,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   model_data <- model_choice[["chosen_model"]]
   model_including <- model_choice[["including"]]
   model_string <- model_choice[["chosen_string"]]
+  ## This is redundant with the definition of design above.
   column_data <- pData(input)
   if (class(model_choice[["model_batch"]]) == "matrix") {
     ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.
@@ -411,8 +412,19 @@ surrogates explicitly stated with the option surrogates=number.")
 import_deseq <- function(data, column_data, model_string,
                          tximport=NULL) {
   summarized <- NULL
-
+  ## column_data_na_idx <- is.na(column_data)
+  ## column_data[column_data_na_idx] <- "undefined"
   ## The default.
+
+  ## DESeq explicitly limits the input of the data to the range of 2^32 integers.
+  ## If one is insane and wants to dump intensity data into deseq, this might get violated.
+  integer_limit <- .Machine[["integer.max"]]
+  too_big_idx <- data > integer_limit
+  if (sum(too_big_idx) > 0) {
+    warning(paste0("Converted down ", sum(too_big_idx), " elements because they are larger than the maximum integer size."))
+  }
+  data[too_big_idx] <- integer_limit
+
   if (is.null(tximport)) {
     summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
                                                  colData=column_data,

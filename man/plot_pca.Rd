@@ -5,7 +5,8 @@
 \title{Make a ggplot PCA plot describing the samples' clustering.}
 \usage{
 plot_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
-  plot_title = NULL, plot_size = 5, size_column = NULL, ...)
+  plot_title = NULL, plot_size = 5, size_column = NULL, x_pc = 1,
+  y_pc = 2, ...)
 }
 \arguments{
 \item{data}{an expt set of samples.}
@@ -21,6 +22,10 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_labels = NULL,
 \item{plot_size}{size for the glyphs on the plot.}
 
 \item{size_column}{use an experimental factor to size the glyphs of the plot}
+
+\item{x_pc}{Component to put on the x axis.}
+
+\item{y_pc}{Component to put on the y axis.}
 
 \item{...}{arglist from elipsis!}
 }

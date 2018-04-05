@@ -129,7 +129,7 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
     string <- RCurl::getURL(url)
     con <- textConnection(string)
     data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
-    if (grepl(pattern="Time-out", x=data[3, ])) {
+    if (grepl(pattern="Time-out", x=data[3, ][[1]])) {
       message("The request timed out.  Try again later?")
       retlist[[name]] <- NULL
     } else {

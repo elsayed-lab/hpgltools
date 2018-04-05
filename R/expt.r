@@ -1500,6 +1500,7 @@ set_expt_samplenames <- function(expt, newnames) {
 subset_expt <- function(expt, subset=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
+  starting_samples <- sampleNames(expt)
   if (class(expt)[[1]] == "ExpressionSet") {
     starting_expressionset <- expt
     starting_metadata <- pData(starting_expressionset)
@@ -1568,6 +1569,9 @@ subset_expt <- function(expt, subset=NULL) {
     "original_libsize" = subset_original_libsize,
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
+  final_samples <- sampleNames(new_expt)
+  message(paste0("There were ", length(starting_samples), ", now there are ",
+                 length(final_samples), " samples."))
   return(new_expt)
 }
 

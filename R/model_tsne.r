@@ -420,7 +420,6 @@ Going to run pcRes with the batch information.")
   yl <- sprintf("Comp%s: %.2f%% rsquared", component_y, tsne_residuals[["batch.R2"]][[1]])
 
   ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
-  message(paste0("TESTME WHAT IS: ", base_size))
   a_plot <- a_plot +
     ggplot2::xlab(xl) +
     ggplot2::ylab(yl) +

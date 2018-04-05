@@ -54,6 +54,36 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
   return(ret)
 }
 
+load_uniprot_annotations <- function(id=NULL, species="Mycobacterium tuberculosis",
+                                     keytype="GI_NUMBER*", chosen_columns=NULL) {
+  if (is.null(id)) {
+    result_df <- UniProt.ws::availableUniprotSpecies(pattern=species)
+    if (nrow(result_df) == 0) {
+      message("Unable to find an id corresponding to the provided species.")
+      return(data.frame())
+    } else if (nrow(result_df) > 1) {
+      message("More than 1 species was returned, they follow; the first was chosen arbitrarily.")
+      print(result_df)
+      id <- result_df[1, 1]
+    } else {
+      message(paste0("Found 1 species, using its ID: ", result_df[1, 1], "."))
+      id <- result_df[1, 1]
+    }
+  }
+
+  mtb_data <- UniProt.ws::UniProt.ws(as.numeric(id))
+  ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL GENOMES,
+  ## ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
+  ## yeah there are more, but I am tired of waiting for this stupid thing.
+  possible_keys <- AnnotationDbi::keys(x=mtb_data, keytype=keytype)
+  possible_columns <- AnnotationDbi::columns(x=mtb_data)
+  if (is.null(chosen_columns)) {
+    chosen_columns <- c("ENTREZ_GENE", "GO", "INTERPRO", "PATHWAY", "LENGTH", "EGGNOG")
+  }
+  ret <- sm(select(x=mtb_data, keytype=keytype, columns=chosen_columns, keys=possible_keys))
+  return(ret)
+}
+
 #' Extract some useful information from a gbk imported as a txDb.
 #'
 #' Maybe this should get pulled into the previous function?

@@ -361,6 +361,8 @@ like me, want to see what happens when you put non-standard data into deseq, the
       data <- round(data)
       less_than <- data < 0
       data[less_than] <- 0
+      na_idx <- is.na(data)
+      data[na_idx] <- 0
       warn_user <- 1
     } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
       ## These if statements may be insufficient to check for the appropriate input for deseq.

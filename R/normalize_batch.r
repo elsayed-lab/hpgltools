@@ -91,6 +91,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     warning("Both num_surrogates and surrogate_method were defined.
 This will choose the number of surrogates differently depending on method chosen.")
   }
+  message(paste0("In norm_batch, after testing logic of surrogate method/number, the
+number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_method, "."))
 
   cpus <- 4
   if (!is.null(arglist[["cpus"]])) {
