@@ -71,15 +71,29 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
   if (!is.null(arglist[["low_to_zero"]])) {
     low_to_zero <- arglist[["low_to_zero"]]
   }
-  num_surrogates <- 1
+  num_surrogates <- NULL
   surrogate_method <- NULL
-  if (!is.null(arglist[["num_surrogates"]])) {
+  if (is.null(arglist[["num_surrogates"]]) & is.null(arglist[["surrogate_method"]])) {
+    surrogate_method <- "be"
+  } else if (!is.null(arglist[["num_surrogates"]])) {
     if (class(arglist[["num_surrogates"]]) == "character") {
       surrogate_method <- arglist[["num_surrogates"]]
     } else {
       num_surrogates <- arglist[["num_surrogates"]]
     }
+  } else if (!is.null(arglist[["surrogate_method"]])) {
+    if (class(arglist[["surrogate_method"]]) == "numeric") {
+      num_surrogates <- arglist[["surrogate_method"]]
+    } else {
+      surrogate_method <- arglist[["surrogate_method"]]
+    }
+  } else {
+    warning("Both num_surrogates and surrogate_method were defined.
+This will choose the number of surrogates differently depending on method chosen.")
   }
+  message(paste0("In norm_batch, after testing logic of surrogate method/number, the
+number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_method, "."))
+
   cpus <- 4
   if (!is.null(arglist[["cpus"]])) {
     cpus <- arglist[["cpus"]]
@@ -94,7 +108,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
   ## We want to use this to back-convert or reconvert data to the appropriate scale on return.
   if (is.null(expt_state)) {
     expt_state <- list(
-      "lowfilter" = "raw",
+      "filter" = "raw",
       "normalization" = "raw",
       "conversion" = "raw",
       "batch" = "raw",
@@ -138,6 +152,7 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     message("This will end badly, so setting num_surrogates to 1.")
     num_surrogates <- 1
   }
+  message(paste0("After checking/setting the number of surrogates, it is: ", num_surrogates, "."))
 
   switchret <- switch(
     batch,
@@ -278,7 +293,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     {
       message("Passing the batch method to get_model_adjust().")
       message("It understands a few additional batch methods.")
-      surrogate_result <- try(get_model_adjust(count_table, design, estimate_type=batch, ...))
+      surrogate_result <- try(get_model_adjust(
+        count_table, design=design, estimate_type=batch, surrogates=num_surrogates,  ...))
       if (class(surrogate_result) != "try-error") {
         count_table <- surrogate_result[["new_counts"]]
       }

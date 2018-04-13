@@ -22,10 +22,6 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
                             perplexity=NULL, min_variance=0.01, plot_title=NULL,
                             components=2, iterations=1000, theta=0.3, pca=TRUE,
                             component_x=1, component_y=2,  ...) {
-  ## I have been using hpgl_env for keeping aes() from getting contaminated.
-  ## I think that this is no longer needed because I have been smater(sic) about how
-  ## I invoke aes_string() and ggplot2()
-  hpgl_env <- environment()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -220,10 +216,6 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
                       min_variance=0.001, plot_title=NULL, plot_size=5,
                       size_column=NULL, components=2, iterations=1000,
                       theta=0.3, pca=TRUE, component_x=1, component_y=2,  ...) {
-  ## I have been using hpgl_env for keeping aes() from getting contaminated.
-  ## I think that this is no longer needed because I have been smater(sic) about how
-  ## I invoke aes_string() and ggplot2()
-  hpgl_env <- environment()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -238,6 +230,13 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
     batch_column <- arglist[["batch_column"]]
     message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
   }
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+  ##label_size <- 4
+  ##if (!is.null(arglist[["label_size"]])) {
+  ##  label_size <<- arglist[["label_size"]]
+  ##}
 
   ## The following if() series is used to check the type of data provided and extract the available
   ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
@@ -397,6 +396,15 @@ Going to run pcRes with the batch information.")
   tsne_data[[compname_x]] <- sne_df[[paste0("V", component_x)]]
   tsne_data[[compname_y]] <- sne_df[[paste0("V", component_y)]]
 
+  ## Add an optional column which may be used to change the glyph sizes in the plot
+  if (!is.null(size_column)) {
+    ## Adding a column with the same name as the size column from the experimental design
+    ## and making sure it is a factor.
+    tsne_data[[size_column]] <- as.factor(design[, size_column])
+    ## Just forcing the size to be numeric non-zero.
+    tsne_data[["size"]] <- as.factor(as.integer(design[[size_column]]) + 1)
+  }
+
   a_plot <- plot_pcs(
     tsne_data,
     first=compname_x,
@@ -410,12 +418,14 @@ Going to run pcRes with the batch information.")
   tsne_variance <- round((sne[["costs"]] ^ 2) / sum(sne[["costs"]] ^ 2) * 100, 2)
   xl <- sprintf("Comp%s: %.2f%% rsquared", component_x, tsne_residuals[["cond.R2"]][[1]])
   yl <- sprintf("Comp%s: %.2f%% rsquared", component_y, tsne_residuals[["batch.R2"]][[1]])
+
   ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
   a_plot <- a_plot +
     ggplot2::xlab(xl) +
     ggplot2::ylab(yl) +
-    ggplot2::theme_bw() +
-    ggplot2::theme(legend.key.size=grid::unit(0.5, "cm"))
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   legend.key.size=grid::unit(0.5, "cm"))
 
   ## If plot_title is NULL, print nothing, if it is TRUE
   ## Then give some information about what happened to the data to make the plot.

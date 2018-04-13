@@ -30,36 +30,34 @@ test_that("Did the ontologies come out?", {
 test_genes <- head(rownames(sig_genes))
 linkage_test <- load_biomart_orthologs(test_genes, first_species="dmelanogaster",
                                        second_species="mmusculus",
-                                       first_attributes=c("ensembl_gene_id"),
-                                       second_attributes=c("ensembl_gene_id","hgnc_symbol"))
-linked_genes <- linkage_test[["linked_genes"]]
-expected_linkage <- c("ENSMUSG00000025815", "ENSMUSG00000033006",
+                                       attributes="ensembl_gene_id")
+linked_genes <- linkage_test[["subset_linked_genes"]]
+expected_linkage <- c("ENSMUSG00000033006", "ENSMUSG00000025815",
                       "ENSMUSG00000024176", "ENSMUSG00000000567")
 actual_linkage <- linked_genes[["mmusculus"]]
 test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)
 })
 
-## genbankr seems to be borken, skipping this test.
-#gbk2txdb_test <- sm(load_genbank_annotations(accession="AE009949"))
-#expected <- 1895017
-#actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
-#test_that("The genbank txdb S.pyogenes genome's size is correct?", {
-#    expect_equal(expected, actual)
-#})
-#expected <- c("spyM18_0001", "spyM18_0002", "spyM18_0004",
-#              "spyM18_0005", "spyM18_0007", "spyM18_0008")
-#actual <- head(as.data.frame(gbk2txdb_test[["cds"]])[["locus_tag"]])
-#test_that("The first few genbank S.pyogenes cds spyIDs downloaded?", {
-#    expect_equal(expected, actual)
-#})
-#
-#gene_annotations <- gbk_annotations(gbk2txdb_test[["txdb"]])
-#expected <- c(1356, 1137, 1116, 570, 3504, 273)
-#actual <- head(GenomicRanges::width(gene_annotations))
-#test_that("I can extract the gene lengths of the first few S.pyogenes genes?", {
-#    expect_equal(expected, actual)
-#})
+gbk2txdb_test <- sm(load_genbank_annotations(accession="AE009949"))
+expected <- 1895017
+actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
+test_that("The genbank txdb S.pyogenes genome's size is correct?", {
+    expect_equal(expected, actual)
+})
+expected <- c("spyM18_0001", "spyM18_0002", "spyM18_0004",
+              "spyM18_0005", "spyM18_0007", "spyM18_0008")
+actual <- head(as.data.frame(gbk2txdb_test[["cds"]])[["locus_tag"]])
+test_that("The first few genbank S.pyogenes cds spyIDs downloaded?", {
+    expect_equal(expected, actual)
+})
+
+gene_annotations <- gbk_annotations(gbk2txdb_test[["txdb"]])
+expected <- c(1356, 1137, 1116, 570, 3504, 273)
+actual <- head(GenomicRanges::width(gene_annotations))
+test_that("I can extract the gene lengths of the first few S.pyogenes genes?", {
+    expect_equal(expected, actual)
+})
 
 grabbed_accession <- sm(download_gbk())
 actual <- grabbed_accession[["strings"]][[1]]

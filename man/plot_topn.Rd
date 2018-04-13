@@ -4,7 +4,7 @@
 \alias{plot_topn}
 \title{Plot the representation of the top-n genes in the total counts / sample.}
 \usage{
-plot_topn(data, title = NULL, num = 100, ...)
+plot_topn(data, title = NULL, direct = TRUE, num = 100, ...)
 }
 \arguments{
 \item{data}{Dataframe to perform pairwise qqplots with.}

@@ -7,8 +7,8 @@ information.}
 \usage{
 create_expt(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   sample_colors = NULL, title = NULL, notes = NULL,
-  include_type = "all", include_gff = NULL, savefile = "expt",
-  low_files = FALSE, ...)
+  include_type = "all", include_gff = NULL, file_column = "file",
+  savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
 \item{metadata}{Comma separated file (or excel) describing the samples with information like
@@ -31,6 +31,8 @@ using colorBrewer.}
 not always true, this allows one to limit to a specific annotation type.}
 
 \item{include_gff}{Gff file to help in sorting which features to keep.}
+
+\item{file_column}{Column to use in a gene information dataframe for}
 
 \item{savefile}{Rdata filename prefix for saving the data of the resulting expt.}
 

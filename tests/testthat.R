@@ -30,11 +30,3 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
     notravis <- data.frame()
   }
 }
-
-if (result > 0) {
-  message(paste0("There were ", result, " errors."))
-}
-
-summary(as.data.frame(test_result))
-summary(as.data.frame(all))
-summary(as.data.frame(notravis))

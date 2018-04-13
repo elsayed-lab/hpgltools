@@ -38,11 +38,6 @@ bsgenome_test <- sm(make_eupath_bsgenome(species, reinstall=TRUE))
 test_that("Did the bsgenome get installed?", {
   expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
 })
-text_test <- sm(post_eupath_table(species=species, metadata=testing))
-test_that("Do we get interesting text data?", {
-  expect_gt(nrow(text_test), 1000)
-  expect_gt(ncol(text_test), 10)
-})
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

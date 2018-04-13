@@ -29,7 +29,7 @@ concatenate_runs <- function(expt, column="replicate") {
   samplenames <- list()
   for (rep in replicates) {
     expression <- paste0(column, "=='", rep, "'")
-    tmp_expt <- subset_expt(expt, expression)
+    tmp_expt <- sm(subset_expt(expt, expression))
     tmp_data <- rowSums(exprs(tmp_expt))
     tmp_design <- tmp_expt[["design"]][1, ]
     final_data <- cbind(final_data, tmp_data)
@@ -80,6 +80,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @param include_type I have usually assumed that all gff annotations should be used, but that is
 #'     not always true, this allows one to limit to a specific annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
+#' @param file_column  Column to use in a gene information dataframe for
 #' @param savefile Rdata filename prefix for saving the data of the resulting expt.
 #' @param low_files Explicitly lowercase the filenames when searching the filesystem?
 #' @param ... More parameters are fun!
@@ -95,7 +96,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL,
-                        include_type="all", include_gff=NULL,
+                        include_type="all", include_gff=NULL, file_column="file",
                         savefile="expt", low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
@@ -130,19 +131,15 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (!is.null(arglist[["include_type"]])) {
     gff_type <- arglist[["include_type"]]
   }
-  file_column <- "file"
-  if (!is.null(arglist[["file_column"]])) {
-    file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-    file_column <- tolower(file_column)
-    file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
-    ## tables / sample in one sheet.
-  }
   sample_column <- "sampleid"
   if (!is.null(arglist[["sample_column"]])) {
     sample_column <- arglist[["sample_column"]]
     sample_column <- tolower(sample_column)
     sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
+
+  file_column <- tolower(file_column)
+  file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
 
   round <- FALSE
   if (!is.null(arglist[["round"]])) {
@@ -152,7 +149,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
-  ##  sample_definitions <- extract_metadata(metadata)
+  ## sample_definitions <- extract_metadata(metadata)
   message(paste0("The sample definitions comprises: ", toString(dim(sample_definitions)), " rows, columns."))
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
@@ -160,11 +157,16 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## or it can attempt to figure out the location of the files from the sample names.
   filenames <- NULL
   all_count_tables <- NULL
+  ## This set of if() statements is too complex and requires some reworking.
   if (!is.null(count_dataframe)) {
     ## Lets set the order of the count data to that of the sample definitions.
-    if (all.equal(sort(colnames(count_dataframe)), sort(rownames(sample_definitions)))) {
+    test_col_rownames <- all.equal(sort(colnames(count_dataframe)),
+                                   sort(rownames(sample_definitions)))
+    if (isTRUE(test_col_rownames)) {
       count_dataframe <- count_dataframe[, rownames(sample_definitions)]
     } else {
+      message(paste0("The count table column names are: ", toString(sort(colnames(count_dataframe)))))
+      message(paste0("The  meta   data  row  names are: ", toString(sort(rownames(sample_definitions)))))
       stop("The count table column names are not the same as the sample definition row names.")
     }
     all_count_tables <- data.table::as.data.table(count_dataframe, keep.rownames="rownames")
@@ -478,7 +480,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Now that the expressionset has been created, pack it into an expt object so that I
   ## can keep backups etc.
-  expt <- subset_expt(experiment) ## I think this is spurious now.
+  expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
   expt[["original_expressionset"]] <- experiment
   expt[["original_metadata"]] <- Biobase::pData(experiment)
 
@@ -491,7 +493,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   expt[["gff_file"]] <- include_gff
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
-    "lowfilter" = "raw",
+    "filter" = "raw",
     "normalization" = "raw",
     "conversion" = "raw",
     "batch" = "raw",
@@ -744,26 +746,95 @@ analyses more difficult/impossible.")
 #'  features <- features_greater_than(expt)
 #' }
 #' @export
-features_greater_than <- function(data, cutoff=1, hard=TRUE) {
+features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
   if (class(data) == "expt" | class(data) == "ExpressionSet") {
     data <- as.data.frame(exprs(data))
   } else {
     data <- as.data.frame(data)
   }
-  result <- numeric(length=ncol(data))
-  names(result) <- colnames(data)
+  number_table <- numeric(length=ncol(data))
+  feature_tables <- list()
   for (col in 1:length(colnames(data))) {
     column_name <- colnames(data)[[col]]
     column_data <- data[[column_name]]
     num_features <- NULL
     if (isTRUE(hard)) {
-      num_features <- sum(column_data > cutoff)
+      if (isTRUE(inverse)) {
+        feature_idx <- column_data < cutoff
+      } else {
+        feature_idx <- column_data > cutoff
+      }
     } else {
-      num_features <- sum(column_data >= cutoff)
+      if (isTRUE(inverse)) {
+        feature_idx <- column_data <= cutoff
+      } else {
+        feature_idx <- column_data >= cutoff
+      }
     }
-    result[[column_name]] <- num_features
+    num_features <- sum(feature_idx)
+    number_table[[column_name]] <- num_features
+    passed_filter <- rownames(data)[feature_idx]
+    feature_tables[[column_name]] <- passed_filter
   }
+  result <- list(
+    "number" = number_table,
+    "features" = feature_tables)
   return(result)
+}
+
+#' I want an easy way to answer the question: what features are in condition x but no others.
+#'
+#' The answer to this lies in a combination of subset_expt() and features_greater_than().
+features_in_single_condition <- function(expt, cutoff=2) {
+  condition_set <- levels(as.factor(pData(expt)[["condition"]]))
+  solo_this_list <- list()
+  solo_other_list <- list()
+  shared_list <- list()
+  neither_list <- list()
+  for (cond in condition_set) {
+    extract_string <- paste0("condition == '", cond, "'")
+    single_expt <- sm(subset_expt(expt=expt, subset=extract_string))
+    extract_string <- paste0("condition != '", cond, "'")
+    others_expt <- sm(subset_expt(expt=expt, subset=extract_string))
+    single_data <- exprs(single_expt)
+    others_data <- exprs(others_expt)
+
+    single_positive_idx <- rowSums(single_data) >= cutoff
+    single_negative_idx <- rowSums(single_data) < cutoff
+    single_positive <- single_data[single_positive_idx, ]
+    single_negative <- single_data[single_negative_idx, ]
+
+    others_positive_idx <- rowSums(others_data) >= cutoff
+    others_negative_idx <- rowSums(others_data) < cutoff
+    others_positive <- others_data[others_positive_idx, ]
+    others_negative <- others_data[others_negative_idx, ]
+
+    in_both_sets_idx <- rownames(single_positive) %in% rownames(others_positive)
+    in_both_sets <- rownames(single_positive)[in_both_sets_idx]
+
+    only_this_set_idx <- rownames(single_positive) %in% rownames(others_negative)
+    only_this_set <- rownames(single_positive)[only_this_set_idx]
+
+    only_other_set_idx <- rownames(others_positive) %in% rownames(single_negative)
+    only_other_set <- rownames(others_positive)[only_other_set_idx]
+
+    neither_set_this_idx <- rownames(single_negative) %in% rownames(others_negative)
+    neither_set_this <- rownames(single_negative)[neither_set_this_idx]
+    neither_set_that_idx <- rownames(others_negative) %in% rownames(single_negative)
+    neither_set_that <- rownames(others_negative)[neither_set_that_idx]
+
+    shared_list[[cond]] <- in_both_sets
+    solo_this_list[[cond]] <- only_this_set
+    solo_other_list[[cond]] <- only_other_set
+    neither_list[[cond]] <- neither_set_this
+  }
+  retlist <- list(
+    "shared" = shared_list,
+    "solo_this" = solo_this_list,
+    "solo_other" = solo_other_list,
+    "neither" = neither_list
+  )
+  return(retlist)
 }
 
 #' Set up default colors for a data structure containing usable metadata
@@ -986,6 +1057,12 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   ## load first sample
   arglist <- list(...)
   retlist <- list()
+  ## Add an optional directory if I don't feel like specifying in the sample sheet.
+  countdir <- NULL
+  if (!is.null(arglist[["countdir"]])) {
+    countdir <- arglist[["countdir"]]
+    files <- file.path(countdir, files)
+  }
   skippers <- (files == "" | files == "undef" | is.null(files) | is.na(files))
   files <- files[!skippers]
   ids <- ids[!skippers]
@@ -1014,10 +1091,6 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     files[1] <- lower_filenames[1]
   }
 
-  ## Add an optional directory if I don't feel like specifying in the sample sheet.
-  if (!is.null(arglist[["countdir"]])) {
-    files <- file.path(arglist[["countdir"]], files)
-  }
   count_table <- NULL
   for (f in 1:length(files)) {
     files[f] <- gsub(pattern=" ", replacement="", x=files[f])
@@ -1043,6 +1116,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern="\\.tsv|\\.h5", x=files[1])) {
+    message("Reading kallisto inputs with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1065,6 +1139,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern="\\.genes\\.results", x=files[1])) {
+    message("Reading rsem inputs with tximport.")
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -1083,6 +1158,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern="\\.sf", x=files[1])) {
+    message("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1105,9 +1181,21 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
+    message("Reading count tables with read.table().")
     ## Use this codepath when we are working with htseq
-    count_table <- read.table(files[1], header=header)
+    count_table <- read.table(files[1], header=header, stringsAsFactors=FALSE)
     colnames(count_table) <- c("rownames", ids[1])
+    count_table[, 2] <- as.numeric(count_table[, 2])
+    na_idx <- is.na(count_table[[2]])
+    ## This is a bit more circuituous than I would like.
+    ## I want to make sure that na_rownames does not evaluate to something annoying like 'logical(0)'
+    ## which it will if there are no nas in the count table and you just ask for is.na(count_table).
+    na_rownames <- ""
+    if (sum(na_idx) > 0) {
+      na_rownames <- count_table[na_idx, "rownames"]
+    }
+    keepers_idx <- count_table[["rownames"]] != na_rownames
+    count_table <- count_table[keepers_idx, ]
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
@@ -1127,6 +1215,10 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
         files[table] <- lower_filenames[table]
       }
       tmp_count <- try(read.table(files[table], header=header))
+      ## Drop the rows with NAs before coercing to numeric.
+      keepers_idx <- tmp_count[[1]] != na_rownames
+      tmp_count <- tmp_count[keepers_idx, ]
+      tmp_count[, 2] <- as.numeric(tmp_count[, 2])
       if (class(tmp_count)[1] == "try-error") {
         stop(paste0("There was an error reading: ", files[table]))
       }
@@ -1141,6 +1233,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       message(paste0(files[table], " contains ", pre_merge,
                      " rows and merges to ", post_merge, " rows."))
     }
+
     ## remove summary fields added by HTSeq
     if (!isTRUE(include_summary_rows)) {
       ## Depending on what happens when the data is read in, these rows may get prefixed with 'X'
@@ -1480,6 +1573,7 @@ set_expt_samplenames <- function(expt, newnames) {
 subset_expt <- function(expt, subset=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
+  starting_samples <- sampleNames(expt)
   if (class(expt)[[1]] == "ExpressionSet") {
     starting_expressionset <- expt
     starting_metadata <- pData(starting_expressionset)
@@ -1548,6 +1642,9 @@ subset_expt <- function(expt, subset=NULL) {
     "original_libsize" = subset_original_libsize,
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
+  final_samples <- sampleNames(new_expt)
+  message(paste0("There were ", length(starting_samples), ", now there are ",
+                 length(final_samples), " samples."))
   return(new_expt)
 }
 

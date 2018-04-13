@@ -81,7 +81,7 @@ extract_eupath_orthologs <- function(db, master="GID",
     metadata <- download_eupath_metadata(...)
     ## metadata <- download_eupath_metadata()
     first_name <- check_eupath_species(name)[["Species"]]
-    first_pkg <- make_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
+    first_pkg <- get_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
     tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
     if (class(tt) == "try-error") {
       message(paste0("Did not find the package: ",
@@ -183,7 +183,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
   taxa <- make_taxon_names(entry)
-  pkgnames <- make_eupath_pkgnames(species=species, metadata=metadata)
+  pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["bsgenome"]]
   if (pkgname %in% installed.packages() & !isTRUE(reinstall)) {
     message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
@@ -303,8 +303,9 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
 #' @param metadata  Eupathdb metadata.
 #' @param ...  Further arguments to pass to download_eupath_metadata()
 #' @return  List of package names and some booleans to see if they have already been installed.
-make_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
+get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
                                  metadata=NULL, ...) {
+  arglist <- list(...)
   if (is.null(metadata)) {
     message("Starting metadata download.")
     metadata <- sm(download_eupath_metadata(...))
@@ -385,7 +386,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
   taxa <- make_taxon_names(entry)
-  pkgnames <- make_eupath_pkgnames(species=species, metadata=metadata)
+  pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["organismdbi"]]
   if (isTRUE(pkgnames[["organismdbi_installed"]]) & !isTRUE(reinstall)) {
     message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
@@ -551,7 +552,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
   taxa <- make_taxon_names(entry)
-  pkgnames <- make_eupath_pkgnames(species=species, metadata=metadata)
+  pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["orgdb"]]
   if (isTRUE(pkgnames[["orgdb_installed"]]) & !isTRUE(reinstall)) {
     message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
@@ -777,7 +778,7 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
   taxa <- make_taxon_names(entry)
-  pkgnames <- make_eupath_pkgnames(species=species, metadata=metadata)
+  pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["txdb"]]
 
   if (isTRUE(pkgnames[["txdb_installed"]]) & !isTRUE(reinstall)) {

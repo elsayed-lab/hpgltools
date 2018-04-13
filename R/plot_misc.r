@@ -1,4 +1,61 @@
-## plot_isc.r:  Silly plots
+## plot_misc.r:  Silly plots and plotting helpers.
+
+#' png() shortcut
+#'
+#' I hate remembering my options for png()
+#'
+#' @param file Filename to write
+#' @param image Optionally, add the image you wish to plot and this will both
+#'   print it to file and screen.
+#' @param width  How wide?
+#' @param height  How high?
+#' @param res  The chosen resolution.
+#' @param ...  Arguments passed to the image plotters.
+#' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
+#' @export
+pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
+  ext <- tools::file_ext(file)
+  result <- NULL
+  if (ext == "png") {
+    result <- png(filename=file, width=width, height=height, units="in", res=res, ...)
+  } else if (ext == "svg") {
+    result <- svg(filename=file, ...)
+  } else if (ext == "ps") {
+    result <- postscript(file=file, width=width, height=height, ...)
+  } else if (ext == "eps") {
+    result <- cairo_ps(filename=file, width=width, height=height, ...)
+  } else if (ext == "pdf") {
+    result <- cairo_pdf(filename=file, ...)
+  } else {
+    message("Defaulting to tiff.")
+    result <- tiff(filename=file, width=width, height=height, units="in", ...)
+  }
+
+  ## Check and make sure I am not looking at something containing a plot, as a bunch of
+  ## my functions are lists with a plot slot.
+  if (class(image)[[1]] == "list") {
+    if (!is.null(image[["plot"]])) {
+      image <- image[["plot"]]
+    }
+  }
+
+  if (is.null(image)) {
+    message(paste0("Going to write the image to: ", file, " when dev.off() is called."))
+    return(invisible(image))
+  } else {
+    message(paste0("Writing the image to: ", file, " and calling dev.off()."))
+    if (class(image)[[1]] == "recordedplot") {
+      print(image)
+    } else {
+      plot(image)
+    }
+    dev.off()
+  }
+
+  return(image)
+}
+
+
 
 #' Make spirographs!
 #'

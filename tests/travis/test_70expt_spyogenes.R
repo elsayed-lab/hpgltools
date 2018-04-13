@@ -83,31 +83,31 @@ test_that("Do we find some significant genes in the mga/wt fructose analysis?", 
 #    expect_equal(expected, actual)
 #})
 
-expected <- c("293653", "Streptococcus pyogenes MGAS5005")
-actual <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
-test_that("Can I get data from microbesonline?", {
-    expect_equal(expected, actual)
-})
-
-taxon <- expected[[1]][[1]]
-mgas_df <- sm(load_microbesonline_annotations(taxon))[[1]]
-mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
-rownames(mgas_df) <- make.names(mgas_df[["sysName"]], unique=TRUE)
-
-expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
-actual <- as.character(head(mgas_df[["name"]]))
-test_that("Did the mgas annotations download?", {
-    expect_equal(expected, actual)
-})
-
-mgas_go <- sm(load_microbesonline_go(taxon))
-mgas_go <- mgas_go[, c("name", "acc")]
-mgas_go <- unique(mgas_go)
-expected <- c(2806, 2)
-actual <- dim(mgas_go)
-test_that("Do we get expected gene ontology information?", {
-  expect_equal(expected, actual)
-})
+##expected <- c("293653", "Streptococcus pyogenes MGAS5005")
+##actual <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
+##test_that("Can I get data from microbesonline?", {
+##    expect_equal(expected, actual)
+##})
+##
+##taxon <- expected[[1]][[1]]
+##mgas_df <- sm(load_microbesonline_annotations(taxon))[[1]]
+##mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
+##rownames(mgas_df) <- make.names(mgas_df[["sysName"]], unique=TRUE)
+##
+##expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
+##actual <- as.character(head(mgas_df[["name"]]))
+##test_that("Did the mgas annotations download?", {
+##    expect_equal(expected, actual)
+##})
+##
+##mgas_go <- sm(load_microbesonline_go(taxon))
+##mgas_go <- mgas_go[, c("name", "acc")]
+##mgas_go <- unique(mgas_go)
+##expected <- c(2806, 2)
+##actual <- dim(mgas_go)
+##test_that("Do we get expected gene ontology information?", {
+##  expect_equal(expected, actual)
+##})
 
 ## Plot the coefficients of latelog glucose
 glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]

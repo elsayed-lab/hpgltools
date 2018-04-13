@@ -469,6 +469,8 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @param plot_size   size for the glyphs on the plot.
 #' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
 #' @param size_column use an experimental factor to size the glyphs of the plot
+#' @param x_pc  Component to put on the x axis.
+#' @param y_pc  Component to put on the y axis.
 #' @param ...  arglist from elipsis!
 #' @return a list containing the following:
 #' \enumerate{
@@ -487,7 +489,7 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' }
 #' @export
 plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
-                     plot_title=NULL, plot_size=5, size_column=NULL, ...) {
+                     plot_title=NULL, plot_size=5, size_column=NULL, x_pc=1, y_pc=2, ...) {
   ## I have been using hpgl_env for keeping aes() from getting contaminated.
   ## I think that this is no longer needed because I have been smater(sic) about how
   ## I invoke aes_string() and ggplot2()
@@ -508,10 +510,10 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
   }
-  label_size <- 4
-  if (!is.null(arglist[["label_size"]])) {
-    label_size <<- arglist[["label_size"]]
-  }
+  ##label_size <- 4
+  ##if (!is.null(arglist[["label_size"]])) {
+  ##  label_size <<- arglist[["label_size"]]
+  ##}
 
   ## The following if() series is used to check the type of data provided and extract the available
   ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
@@ -625,33 +627,42 @@ Going to run pcRes with the batch information.")
   pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
   ## These will provide metrics on the x/y axes showing the amount of variance on those
   ## components of our plot.
-  xl <- sprintf("PC1: %.2f%% variance", pca_variance[1])
-  yl <- sprintf("PC2: %.2f%% variance", pca_variance[2])
-
+  xl <- sprintf("PC1: %.2f%% variance", pca_variance[x_pc])
+  yl <- sprintf("PC2: %.2f%% variance", pca_variance[y_pc])
   ## Create a data frame with all the material of interest in the actual PCA plot
+  xpc_name <- paste0("PC", x_pc)
+  ypc_name <- paste0("PC", y_pc)
   pca_data <- data.frame(
     "sampleid" = as.character(design[["sampleid"]]),
     "condition" = design[[cond_column]],
     "batch" = design[[batch_column]],
     "batch_int" = as.integer(as.factor(design[[batch_column]])),
-    "PC1" = svd_result[["v"]][, 1],
-    "PC2" = svd_result[["v"]][, 2],
     "colors" = as.character(plot_colors),
     "labels" = label_list,
     stringsAsFactors=FALSE)
+  pca_data[[xpc_name]] <- svd_result[["v"]][, x_pc]
+  pca_data[[ypc_name]] <- svd_result[["v"]][, y_pc]
 
   ## Add an optional column which may be used to change the glyph sizes in the plot
   if (!is.null(size_column)) {
-    pca_data[[size_column]] <- as.integer(as.factor(design[, size_column]))
-    pca_data[[size_column]] <- pca_data[[size_column]] + 1
+    ## Adding a column with the same name as the size column from the experimental design
+    ## and making sure it is a factor.
+    pca_data[[size_column]] <- as.factor(design[, size_column])
+    ## Just forcing the size to be numeric non-zero.
+    pca_data[["size"]] <- as.factor(as.integer(design[[size_column]]) + 1)
   }
 
   pca_plot <- NULL
   ## The plot_pcs() function gives a decent starting plot
-  pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
-                       design=design, plot_labels=plot_labels,
-                       plot_size=plot_size, size_column=size_column, ...)
-  ##pca_plot <- plot_pcs(pca_data, first="PC1", second="PC2",
+  pca_plot <- plot_pcs(
+    pca_data,
+    first=xpc_name,
+    second=ypc_name,
+    design=design,
+    plot_labels=plot_labels,
+    plot_size=plot_size,
+    size_column=size_column, ...)
+  ##pca_plot <- plot_pcs(pca_data, first=xpc_name, second=ypc_name,
   ##                     design=design, plot_labels=plot_labels,
   ##                     plot_size=plot_size, size_column=size_column)
 
@@ -748,7 +759,17 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   ## 6.  Finally, set the shape manual with a guide_legend override
 
   ## Step 1
-  pca_plot <- ggplot(data=as.data.frame(pca_data), aes_string(x="get(first)", y="get(second)"))
+  pca_plot <- ggplot(data=as.data.frame(pca_data),
+                     aes_string(
+                       x="get(first)",
+                       y="get(second)",
+                       text="sampleid"))
+  minimum_size <- 2
+  maximum_size <- 2
+  if (!is.null(size_column)) {
+    maximum_size <- max(levels(pca_data[["size"]]))
+  }
+  ## message(paste0("The minimum size is: ", minimum_size, " and the maximum size is: ", maximum_size))
 
   if (is.null(size_column) & num_batches <= 5) {
     pca_plot <- pca_plot +
@@ -773,25 +794,28 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     pca_plot <- pca_plot +
       ggplot2::geom_point(size=plot_size,
                           aes_string(shape="as.factor(batches)",
+                                     fill="as.factor(condition)",
                                      colour="as.factor(condition)")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
                                   values=color_list) +
+      ggplot2::scale_fill_manual(name="Condition",
+                                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
+                                 values=color_list) +
       ggplot2::scale_shape_manual(name="Batch",
                                   labels=levels(as.factor(pca_data[["batch"]])),
                                   guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
                                   values=1:num_batches)
   } else if (!is.null(size_column) & num_batches <= 5) {
     ## This will require the 6 steps above and one more
-    maxsize <- max(pca_data[[size_column]])
     pca_plot <- pca_plot +
       ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
-                                              size=size_column,
+                                              size="size",
                                               colour="as.factor(condition)",
                                               fill="as.factor(condition)")) +
       ggplot2::geom_point(colour="black", show.legend=FALSE,
                           aes_string(shape="as.factor(batches)",
-                                     size=size_column,
+                                     size="size",
                                      fill="as.factor(condition)")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
@@ -803,13 +827,14 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                   labels=levels(as.factor(pca_data[["batch"]])),
                                   guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
                                   values=21:25) +
-      ggplot2::scale_size(range=c(2, 7))
+      ggplot2::scale_size_manual(name=size_column,
+                                 labels=levels(pca_data[[size_column]]),
+                                 values=as.numeric(levels(pca_data[["size"]])))
   } else if (!is.null(size_column) & num_batches > 5) {
-    maxsize <- max(pca_data[[size_column]])
     pca_plot <- pca_plot +
       ggplot2::geom_point(ggplot2::aes_string(shape="as.factor(batches)",
                                               colour="pca_data[['condition']]",
-                                              size=size_column)) +
+                                              size="size")) +
       ggplot2::scale_shape_manual(name="Batch",
                                   labels=levels(as.factor(pca_data[["batch"]])),
                                   guide=ggplot2::guide_legend(overwrite.aes=list(size=plot_size)),
@@ -817,7 +842,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
       ggplot2::scale_color_identity(name="Condition",
                                     guide="legend",
                                     values=color_list) +
-      ggplot2::scale_size(range=c(2, 7))
+      ggplot2::scale_size_manual(name=size_column,
+                                 labels=levels(pca_data[[size_column]]),
+                                 values=as.numeric(levels(pca_data[["size"]])))
   } else {
     stop("This should be an impossible state.")
   }

@@ -144,7 +144,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #' * peptide_next_aa:  and the following amino acid.
 #' * num_tot_proteins: The number of matches not counting decoys.
 #' * num_matched_ions: How many ions for this peptide matched?
-#' * tot_num_ions:  How many theoreticalions are in this fragment?
+#' * tot_num_ions:  How many theoretical ions are in this fragment?
 #' * matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
 #' * cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
 #'   recalculated by peptideProphet, so if there is a discrepency we should yell
@@ -347,7 +347,7 @@ extract_peprophet_data <- function(pepxml, ...) {
 #'   stuff like that.
 #' @return  metadata!#'
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, ...) {
+extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -427,6 +427,10 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, ...)
     "colors" = chosen_colors,
     "metadata" = sample_definitions,
     "sample_data" = res)
+  if (!is.null(savefile)) {
+    mzxml_data <- retlist
+    save_result <- try(save(list = c("mzxml_data"), file=savefile), silent=TRUE)
+  }
   return(retlist)
 }
 
@@ -824,8 +828,11 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
     }
   }
 
+  table[["text"]] <- paste0(table[["protein"]], ":", table[["peptide"]])
+
   a_plot <- ggplot(data=table, aes_string(x=xaxis,
                                           y=yaxis,
+                                          text="text",
                                           color="color",
                                           size="size")) +
     ggplot2::geom_point(alpha=0.4, aes_string(fill="color",

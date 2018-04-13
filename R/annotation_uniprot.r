@@ -412,3 +412,52 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
   }
   return(uniprot_data)
 }
+
+#' Extract annotation data from the uniprot webservices.
+#'
+#' I keep thinking that this is in fact querying NCBI, but I think that is incorrect.
+#' This is because all of the examples are using ENTREZ_GENE as the primary key
+#' I bet.  In any event, this function seeks to simplify getting useful
+#' annotation from UniProt.ws by filling in some of the arguments and hopefully
+#' telling the user when things do not go according to plan.
+#'
+#' @param id  Species ID, if not provided, then this will try to find it using
+#'  the species
+#' @param species  Assuming no ID, use this to find one.
+#' @param keytype  The primary keytype when doing the final select statement.
+#' @param chosen_columns  What columns are desired from the webservices data?
+#'   If not provided, this will attempt to choose useful ones.
+#' @return Data frame from selecting the hopefully appropriate columns with
+#'   AnnotationDbi.
+#' @export
+load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculosis",
+                                     keytype="GI_NUMBER*", chosen_columns=NULL) {
+  if (is.null(id)) {
+    result_df <- UniProt.ws::availableUniprotSpecies(pattern=species)
+    if (nrow(result_df) == 0) {
+      message("Unable to find an id corresponding to the provided species.")
+      return(data.frame())
+    } else if (nrow(result_df) > 1) {
+      message("More than 1 species was returned, they follow; the first was chosen arbitrarily.")
+      print(result_df)
+      id <- result_df[1, 1]
+    } else {
+      message(paste0("Found 1 species, using its ID: ", result_df[1, 1], "."))
+      id <- result_df[1, 1]
+    }
+  }
+
+  downloaded_data <- UniProt.ws::UniProt.ws(as.numeric(id))
+  ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL GENOMES,
+  ## ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
+  ## yeah there are more, but I am tired of waiting for this stupid thing.
+  possible_keys <- AnnotationDbi::keys(x=downloaded_data, keytype=keytype)
+  possible_columns <- AnnotationDbi::columns(x=downloaded_data)
+  if (is.null(chosen_columns)) {
+    chosen_columns <- c("ENTREZ_GENE", "GO", "INTERPRO", "PATHWAY", "LENGTH", "EGGNOG")
+  }
+  ret <- sm(select(x=downloaded_data, keytype=keytype, columns=chosen_columns, keys=possible_keys))
+  return(ret)
+}
+
+## EOF

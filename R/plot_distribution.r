@@ -524,7 +524,7 @@ plot_qq_all_pairwise <- function(data) {
 #' @param ...  Extra arguments, currently unused.
 #' @return List containing the ggplot2
 #' @export
-plot_topn <- function(data, title=NULL, num=100, ...) {
+plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
   arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt") {
@@ -580,6 +580,10 @@ plot_topn <- function(data, title=NULL, num=100, ...) {
 
   if (!is.null(title)) {
     topn_plot <- topn_plot + ggplot2::ggtitle(title)
+  }
+
+  if (isTRUE(direct)) {
+    topn_plot <- topn_plot + directlabels::geom_dl(aes_string(label="sample"), method="smart.grid")
   }
 
   retlist <- list(

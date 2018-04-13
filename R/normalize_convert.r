@@ -24,10 +24,14 @@ convert_counts <- function(data, convert="raw", ...) {
   data_class <- class(data)[1]
   annotations <- arglist[["annotations"]]
   if (data_class == "expt") {
-    annotations <- fData(data)
+    if (is.null(annotations)) {
+      annotations <- fData(data)
+    }
     count_table <- exprs(data)
   } else if (data_class == "ExpressionSet") {
-    annotations <- fData(data)
+    if (is.null(annotations)) {
+      annotations <- fData(data)
+    }
     count_table <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
@@ -56,7 +60,7 @@ convert_counts <- function(data, convert="raw", ...) {
     "cp_seq_m" = {
       counts <- edgeR::cpm(count_table)
       count_table <- divide_seq(counts, annotations=annotations, ...)
-      ##count_table <- divide_seq(counts, annotations=annotations, genome=genome)
+      ## count_table <- divide_seq(counts, annotations=annotations, genome=genome)
     },
     {
       message(paste0("Not sure what to do with the method: ", convert))
@@ -91,33 +95,6 @@ divide_seq <- function(counts, ...) {
   genome <- arglist[["genome"]]
   pattern <- arglist[["pattern"]]
 
-  ## The annotation data needs to have columns 'start', 'end', and 'chromosome'
-  ## If they are named something else, I need to rename those columns.
-  start_column <- "start"
-  if (!is.null(arglist[["start_column"]])) {
-    start_column <- arglist[["start_column"]]
-    if (start_column != "start") {
-      hit_idx <- colnames(annotations) == start_column
-      colnames(annotations)[hit_idx] <- "start"
-    }
-  }
-  end_column <- "end"
-  if (!is.null(arglist[["end_column"]])) {
-    end_column <- arglist[["end_column"]]
-    if (end_column != "end") {
-      hit_idx <- colnames(annotations) == end_column
-      colnames(annotations)[hit_idx] <- "end"
-    }
-  }
-  chromosome_column <- "chromosome"
-  if (!is.null(arglist[["chromosome_column"]])) {
-    chromosome_column <- arglist[["chromosome_column"]]
-    if (chromosome_column != "chromosome") {
-      hit_idx <- colnames(annotations) == chromosome_column
-      colnames(annotations)[hit_idx] <- "chromosome"
-    }
-  }
-
   if (is.null(pattern)) {
     pattern <- "TA"
   }
@@ -125,9 +102,12 @@ divide_seq <- function(counts, ...) {
 
   compression <- NULL
   genome_class <- class(genome)[1]
+  raw_seq <- NULL
+  genome_granges <- NULL
   if (genome_class == "character") {
     ## This is presumably a fasta file, then.
     ## Sadly as of the last time I checked, FaFile doesn't handle compressed fasta
+    compression <- NULL
     if (grepl(pattern="gz$", x=genome)) {
       compression <- "gzip"
       system(paste0("gunzip ", genome))
@@ -135,57 +115,119 @@ divide_seq <- function(counts, ...) {
       compression <- "xz"
       system(paste0("xz -d ", genome))
     }
+
     raw_seq <- try(Rsamtools::FaFile(genome))
+    genome_granges <- Rsamtools::scanFaIndex(raw_seq)
+
     if (class(raw_seq)[1] == "try-error") {
       stop(paste0("There was a problem reading: ", genome))
     }
-    system(paste0(compression, " ", sub("^([^.]*).*", "\\1", genome)))
+
+    ## Recompress the file if it was compressed before.
+    if (!is.null(compression)) {
+      system(paste0(compression, " ", sub("^([^.]*).*", "\\1", genome)))
+    }
+
   } else if (genome_class == "BSgenome") {
     raw_seq <- genome
+  } else if (genome_class == "GRanges") {
+    raw_seq <- genome
+    genome_granges <- genome
   } else {
     stop("Need a genome to search.")
   }
 
-  ## Test that the annotations and genome have the same seqnames
-  genome_seqnames <- sort(levels(as.factor(GenomicRanges::seqnames(genome))))
-  annotation_seqnames <- sort(levels(as.factor(annotations[["chromosome"]])))
-  hits <- sum(annotation_seqnames %in% genome_seqnames)
-  if (hits == 0) {
-    ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
-    annotations[["chromosome"]] <- paste0("chr", annotations[["chromosome"]])
-  } else if (hits < length(annotation_seqnames)) {
-    warning("Not all the annotation sequences were found, this will probably end badly.")
-  }
-
+  ## First make sure we have a valid annotation_df
+  ## Then, using it, make annotation_gr.
   annotation_class <- class(annotations)[1]
-  annotation_entries <- NULL
+  annotation_df <- data.frame()
+  annotation_gr <- NULL
   if (annotation_class == "character") {
     ## This is presumably a gff file, then
-    annotation_entries <- gff2irange(annotations, ...)
+    annotation_df <- load_gff_annotations(annotations)
   } else if (annotation_class == "data.frame") {
-    colnames(annotations) <- tolower(colnames(annotations))
-    annotations <- annotations[complete.cases(annotations), ]
-    numberp <- sum(grepl(pattern="1", x=annotations[["strand"]]))
-    if (numberp > 0) {
-      annotations[["strand"]] <- as.numeric(annotations[["strand"]])
-      annotations[["strand"]] <- ifelse(annotations[["strand"]] > 0, "+", "-")
-    }
-    ## Remove entries in annotations with start==NA
-    na_idx <- is.na(sm(as.numeric(annotations[["start"]])))
-    annotations <- annotations[!na_idx, ]
-    annotation_entries <- GenomicRanges::makeGRangesFromDataFrame(annotations)
+    annotation_df <- annotations
   } else if (annotation_class == "Granges") {
-    annotations <- as.data.frame(annotations, stringsAsFactors=FALSE)
-    colnames(annotations) <- tolower(colnames(annotations))
-    annotation_entries <- annotations
+    annotation_df <- as.data.frame(annotations, stringsAsFactors=FALSE)
+    annotation_gr <- annotations
   } else if (annotation_class == "orgDb") {
     ## TODO: Extract the annotation data frame
   } else {
     stop("Need some annotation information.")
   }
 
-  cds_seq <- Biostrings::getSeq(raw_seq, annotation_entries)
-  ## names(cds_seq) <- annotation_entries[[entry_type]]
+  ## Now we should have annotation_df and maybe annotation_gr.
+  ## Spend this time sanitizing annotation_df
+  ## The annotation data needs to have columns 'start', 'end', and 'chromosome'
+  ## If they are named something else, I need to rename those columns.
+  colnames(annotation_df) <- tolower(colnames(annotation_df))
+  start_column <- "start"
+  if (!is.null(arglist[["start_column"]])) {
+    start_column <- arglist[["start_column"]]
+    if (start_column != "start") {
+      hit_idx <- colnames(annotation_df) == start_column
+      colnames(annotation_df)[hit_idx] <- "start"
+    }
+  }
+  end_column <- "end"
+  if (!is.null(arglist[["end_column"]])) {
+    end_column <- arglist[["end_column"]]
+    if (end_column != "end") {
+      hit_idx <- colnames(annotation_df) == end_column
+      colnames(annotation_df)[hit_idx] <- "end"
+    }
+  }
+  chromosome_column <- "chromosome"
+  if (!is.null(arglist[["chromosome_column"]])) {
+    chromosome_column <- arglist[["chromosome_column"]]
+    if (chromosome_column != "chromosome") {
+      hit_idx <- colnames(annotation_df) == chromosome_column
+      colnames(annotation_df)[hit_idx] <- "chromosome"
+    }
+  }
+  if (is.null(annotation_df[["chromosome"]]) & !is.null(annotation_df[["seqnames"]])) {
+    annotation_df[["chromosome"]] <- annotation_df[["seqnames"]]
+  }
+
+  numberp <- sum(grepl(pattern="1", x=annotation_df[["strand"]]))
+  if (numberp > 0) {
+    annotation_df[["strand"]] <- as.numeric(annotation_df[["strand"]])
+    annotation_df[["strand"]] <- ifelse(annotation_df[["strand"]] > 0, "+", "-")
+  }
+  ## Remove entries in annotations with start==NA
+  na_idx <- is.na(sm(as.numeric(annotation_df[["start"]])))
+  annotation_df <- annotation_df[!na_idx, ]
+
+  ## We should have a sanitized annotation_df now.
+  if (is.null(annotation_gr)) {
+    annot_df <- annotation_df
+    annotation_gr <- GenomicRanges::makeGRangesFromDataFrame(
+                                           annotation_df,
+                                           seqnames.field="chromosome")
+  }
+
+  ## Test that the annotations and genome have the same seqnames
+  genome_seqnames <- NULL
+  if (is.null(genome_granges)) {
+    ## This should be true if the provided genome is a BSGenome.
+    genome_seqnames <- sort(levels(as.factor(GenomicRanges::seqnames(raw_seq))))
+  } else {
+    genome_seqnames <- sort(levels(as.factor(GenomicRanges::seqnames(genome_granges))))
+  }
+  annotation_seqnames <- sort(levels(as.factor(annotation_df[["chromosome"]])))
+  hits <- sum(annotation_seqnames %in% genome_seqnames)
+  if (hits == 0) {
+    ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
+    new_levels <- c(seqlevels(annotation_gr), paste0("chr", unique(seqnames(annotation_gr))))
+    seqlevels(annotation_gr) <- new_levels
+    seqnames(annotation_gr) <- factor(paste0("chr", seqnames(annotation_gr)), levels=new_levels)
+  } else if (hits < length(annotation_seqnames)) {
+    warning("Not all the annotation sequences were found, this will probably end badly.")
+  }
+
+  cds_seq <- Biostrings::getSeq(raw_seq, annotation_gr)
+  names(cds_seq) <- rownames(annotation_df)
+  ##names(cds_seq) <- annotation_entries[[entry_type]]
   dict <- Biostrings::PDict(pattern, max.mismatch=0)
   result <- Biostrings::vcountPDict(dict, cds_seq)
   num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
@@ -196,7 +238,7 @@ divide_seq <- function(counts, ...) {
   num_tas[["pattern"]] <- num_tas[["pattern"]] / factor
   merged_tas <- merge(counts, num_tas, by="row.names", all.x=TRUE)
   rownames(merged_tas) <- merged_tas[["Row.names"]]
-  merged_tas <- merged_tas[-1]
+  merged_tas <- merged_tas[, -1]
   merged_tas <- merged_tas[, -which(colnames(merged_tas) %in% c("name"))]
   merged_tas <- merged_tas / merged_tas[["pattern"]]
   ##merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...

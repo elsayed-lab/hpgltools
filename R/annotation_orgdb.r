@@ -176,8 +176,12 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
   }
 
   if (sum(fields %in% all_fields) != length(fields)) {
-    stop(paste0("Some requested fields are not available.  The following were found: ",
-                toString(all_fields)))
+    missing_idx <- ! fields %in% all_fields
+    missing_fields <- fields[missing_idx]
+    found_fields <- fields %in% all_fields
+    fields <- fields[found_fields]
+    message(paste0("Some requested columns are not available: ", toString(missing_fields), "."))
+    message(paste0("The following are available: ", toString(all_fields)))
   }
 
   ## Gene IDs
