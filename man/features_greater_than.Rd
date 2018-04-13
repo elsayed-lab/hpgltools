@@ -4,7 +4,7 @@
 \alias{features_greater_than}
 \title{Count the number of features(genes) greater than x in a data set.}
 \usage{
-features_greater_than(data, cutoff = 1, hard = TRUE)
+features_greater_than(data, cutoff = 1, hard = TRUE, inverse = FALSE)
 }
 \arguments{
 \item{data}{A dataframe/exprs/matrix/whatever of counts.}
