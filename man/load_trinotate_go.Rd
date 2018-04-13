@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_txt.r
 \name{load_trinotate_go}
 \alias{load_trinotate_go}
-\title{Read a csv file and make a GO data frame.}
+\title{Read a csv file from trinotate and extract ontology data from it.}
 \usage{
 load_trinotate_go(trinotate = "reference/trinotate.csv")
 }
@@ -10,8 +10,16 @@ load_trinotate_go(trinotate = "reference/trinotate.csv")
 \item{trinotate}{CSV of trinotate annotation data.}
 }
 \value{
-Dataframe of fun data.
+List of the extracted GO data, a table of it, length data, and the
+  resulting length table.
 }
 \description{
-Yay!
+Trinotate performs some neat sequence searches in order to seek out likely
+annotations for the trinity contigs.  This function extracts ontology data
+from it.  Keep in mind that this data is primarily from Blast2GO.
+}
+\examples{
+\dontrun{
+ go_lst <- load_trinotate_go("trinotate.csv.xz")
+}
 }

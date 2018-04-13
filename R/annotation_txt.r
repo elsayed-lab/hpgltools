@@ -1,9 +1,17 @@
-#' Read a csv file and make an annotation data frame.
+#' Read a csv file from trinotate and make an annotation data frame.
 #'
-#' Yay!
+#' Trinotate performs some neat sequence searches in order to seek out likely
+#' annotations for the trinity contigs.  The resulting csv file is encoded in a
+#' peculiar fashion, so this function attempts to make it easier to read and put
+#' them into a format usable in an expressionset.
 #'
 #' @param trinotate  CSV of trinotate annotation data.
 #' @return  Dataframe of fun data.
+#' @examples
+#' \dontrun{
+#'  annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
+#'  expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
+#' }
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
@@ -141,12 +149,19 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   return(split_data)
 }
 
-#' Read a csv file and make a GO data frame.
+#' Read a csv file from trinotate and extract ontology data from it.
 #'
-#' Yay!
+#' Trinotate performs some neat sequence searches in order to seek out likely
+#' annotations for the trinity contigs.  This function extracts ontology data
+#' from it.  Keep in mind that this data is primarily from Blast2GO.
 #'
 #' @param trinotate  CSV of trinotate annotation data.
-#' @return  Dataframe of fun data.
+#' @return  List of the extracted GO data, a table of it, length data, and the
+#'   resulting length table.
+#' @examples
+#' \dontrun{
+#'  go_lst <- load_trinotate_go("trinotate.csv.xz")
+#' }
 #' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)

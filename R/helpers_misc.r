@@ -229,6 +229,44 @@ get_git_commit <- function(gitdir="~/hpgltools") {
   return(result)
 }
 
+#' I rather like makeContrasts() from limma.  I troubled me to have to manually
+#' create a contrast matrix when using MSstats.  It turns out it troubled me for
+#' good reason because I managed to reverse my damn terms and end up with the
+#' opposite contrasts of what I intended.  Ergo this function.
+#'
+#' feed ghetto_contrast_matrix() a series of numerators and denominators names
+#' after the conditions of interest in an experiment and it returns a contrast
+#' matrix in a format acceptable to MSstats (and other similar tools).
+#'
+#' @param numerators  Character list of conditions which are the numerators of a
+#'   series of a/b comparisons.
+#' @param denominators  Character list of conditions which are the denominators of a
+#'   series of a/b comparisons.
+#' @return  Contrast matrix
+#' @export
+ghetto_contrast_matrix <- function(numerators, denominators) {
+  if (length(numerators) != length(denominators)) {
+    stop("Need a constant number of numerators and denominators.")
+  }
+  conditions <- unique(c(numerators, denominators))
+  contrasts <- matrix(nrow=length(numerators), ncol=length(conditions))
+  colnames(contrasts) <- conditions
+  rownames(contrasts) <- numerators
+  for (col in (colnames(contrasts))) {
+    contrasts[, col] <- 0
+  }
+  for (n in 1:length(numerators)) {
+    num <- numerators[[n]]
+    den <- denominators[[n]]
+    cont <- paste0(num, "-", den)
+    contrasts[n, num] <- 1
+    contrasts[n, den] <- -1
+    rownames(contrasts)[n] <- cont
+  }
+  return(contrasts)
+}
+
+
 #' Implement the arescan function in R
 #'
 #' This function was taken almost verbatim from AREScore() in SeqTools
@@ -531,61 +569,6 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
   au.blocks <- lapply(1:length(x), fun)
   ret <- IRanges::IRangesList(au.blocks)
   return(ret)
-}
-
-#' png() shortcut
-#'
-#' I hate remembering my options for png()
-#'
-#' @param file Filename to write
-#' @param image Optionally, add the image you wish to plot and this will both
-#'   print it to file and screen.
-#' @param width  How wide?
-#' @param height  How high?
-#' @param res  The chosen resolution.
-#' @param ...  Arguments passed to the image plotters.
-#' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
-#' @export
-pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
-##pp <- function(file, width=9, height=9, res=180, ...) {
-  ext <- tools::file_ext(file)
-  result <- NULL
-  if (ext == "png") {
-    result <- png(filename=file, width=width, height=height, units="in", res=res, ...)
-  } else if (ext == "svg") {
-    result <- svg(filename=file, ...)
-  } else if (ext == "ps") {
-    result <- postscript(file=file, width=width, height=height, ...)
-  } else if (ext == "eps") {
-    result <- cairo_ps(filename=file, width=width, height=height, ...)
-  } else if (ext == "pdf") {
-    result <- cairo_pdf(filename=file, ...)
-  } else {
-    message("Defaulting to tiff.")
-    result <- tiff(filename=file, width=width, height=height, units="in", ...)
-  }
-
-  ## Check and make sure I am not looking at something containing a plot, as a bunch of
-  ## my functions are lists with a plot slot.
-  if (class(image)[[1]] == "list") {
-    if (!is.null(image[["plot"]])) {
-      image <- image[["plot"]]
-    }
-  }
-
-  if (is.null(image)) {
-    message(paste0("Going to write the image to: ", file, " when dev.off() is called."))
-  } else {
-    message(paste0("Writing the image to: ", file, " and calling dev.off()."))
-    if (class(image)[[1]] == "recordedplot") {
-      print(image)
-    } else {
-      plot(image)
-    }
-    dev.off()
-  }
-
-  return(image)
 }
 
 #' Automatic loading and/or installing of packages.

@@ -1110,7 +1110,7 @@ Defaulting to fdr."))
         remove_idx <- grep(pattern=exclude, x=remove_column, perl=TRUE, invert=TRUE)
         removed_num <- sum(as.numeric(remove_idx))
         message(paste0("Removed ", removed_num, " genes using ",
-                       exclude, " as a string against column ", remove_column, "."))
+                       exclude, " as a string against column ", col, "."))
         comb <- comb[remove_idx, ]
       }  ## End iterating through every string to exclude
     }  ## End iterating through every element of the exclude list

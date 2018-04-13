@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_txt.r
 \name{load_trinotate_annotations}
 \alias{load_trinotate_annotations}
-\title{Read a csv file and make an annotation data frame.}
+\title{Read a csv file from trinotate and make an annotation data frame.}
 \usage{
 load_trinotate_annotations(trinotate = "reference/trinotate.csv")
 }
@@ -13,5 +13,14 @@ load_trinotate_annotations(trinotate = "reference/trinotate.csv")
 Dataframe of fun data.
 }
 \description{
-Yay!
+Trinotate performs some neat sequence searches in order to seek out likely
+annotations for the trinity contigs.  The resulting csv file is encoded in a
+peculiar fashion, so this function attempts to make it easier to read and put
+them into a format usable in an expressionset.
+}
+\examples{
+\dontrun{
+ annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
+ expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
+}
 }
