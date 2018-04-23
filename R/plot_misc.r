@@ -28,7 +28,7 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     result <- cairo_pdf(filename=file, ...)
   } else {
     message("Defaulting to tiff.")
-    result <- tiff(filename=file, width=width, height=height, units="in", ...)
+    result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
   }
 
   ## Check and make sure I am not looking at something containing a plot, as a bunch of

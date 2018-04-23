@@ -431,7 +431,7 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
 #'   AnnotationDbi.
 #' @export
 load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculosis",
-                                     keytype="GI_NUMBER*", chosen_columns=NULL) {
+                                       keytype="GI_NUMBER*", chosen_columns=NULL) {
   if (is.null(id)) {
     result_df <- UniProt.ws::availableUniprotSpecies(pattern=species)
     if (nrow(result_df) == 0) {
@@ -450,13 +450,14 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
   downloaded_data <- UniProt.ws::UniProt.ws(as.numeric(id))
   ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL GENOMES,
   ## ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
-  ## yeah there are more, but I am tired of waiting for this stupid thing.
+  ## I wonder if the * at the end of GI_NUMBER is telling me that this is the real primary key?
   possible_keys <- AnnotationDbi::keys(x=downloaded_data, keytype=keytype)
   possible_columns <- AnnotationDbi::columns(x=downloaded_data)
   if (is.null(chosen_columns)) {
     chosen_columns <- c("ENTREZ_GENE", "GO", "INTERPRO", "PATHWAY", "LENGTH", "EGGNOG")
   }
-  ret <- sm(select(x=downloaded_data, keytype=keytype, columns=chosen_columns, keys=possible_keys))
+  ret <- sm(AnnotationDbi::select(x=downloaded_data, keytype=keytype,
+                                  columns=chosen_columns, keys=possible_keys))
   return(ret)
 }
 

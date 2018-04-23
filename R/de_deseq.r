@@ -89,7 +89,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                model_batch=model_batch,
                                model_cond=model_cond,
                                model_intercept=model_intercept,
-                               alt_model=alt_model, ...)
+                               alt_model=alt_model,
+                               ...)
   ## model_choice <- choose_model(input, conditions, batches,
   ##                              model_batch=model_batch,
   ##                              model_cond=model_cond,
@@ -125,7 +126,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- import_deseq(data, column_data, model_string)
+    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch) == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
@@ -133,7 +134,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- import_deseq(data, column_data, sv_model_string)
+    summarized <- import_deseq(data, column_data, sv_model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
     ## I think the following lines are no longer needed now that I properly add the SVs to the model.
     ##passed <- FALSE
@@ -146,7 +147,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     ##model_string <- "~ condition"
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- import_deseq(data, column_data, model_string)
+    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   }
 
@@ -422,8 +423,8 @@ import_deseq <- function(data, column_data, model_string,
   too_big_idx <- data > integer_limit
   if (sum(too_big_idx) > 0) {
     warning(paste0("Converted down ", sum(too_big_idx), " elements because they are larger than the maximum integer size."))
+    data[too_big_idx] <- integer_limit
   }
-  data[too_big_idx] <- integer_limit
 
   if (is.null(tximport)) {
     summarized <- DESeq2::DESeqDataSetFromMatrix(countData=data,
@@ -441,9 +442,17 @@ import_deseq <- function(data, column_data, model_string,
     ## First make sure that if we subsetted the data, that is maintained from
     ## the data to the tximportted data
     keepers <- rownames(data)
-    tximport[["abundance"]] <- tximport[["abundance"]][keepers, ]
-    tximport[["counts"]] <- tximport[["counts"]][keepers, ]
-    tximport[["length"]] <- tximport[["length"]][keepers, ]
+    ## These recasts were because some matrix subsets were failing.
+    abundances <- as.data.frame(tximport[["abundance"]])
+    counts <- as.data.frame(tximport[["counts"]])
+    lengths <- as.data.frame(tximport[["length"]])
+    ## That should no longer be a problem now that I explicitly change the
+    ## rownames of all the tximport data to match the rownames from
+    ## as.data.table() but I am leaving it for now.
+    tximport[["abundance"]] <- as.matrix(abundances[keepers, ])
+    ##tximport[["abundance"]] <- tximport[["abundance"]][keepers, ]
+    tximport[["counts"]] <- as.matrix(counts[keepers, ])
+    tximport[["length"]] <- as.matrix(lengths[keepers, ])
     summarized <- DESeq2::DESeqDataSetFromTximport(txi=tximport,
                                                    colData=column_data,
                                                    design=as.formula(model_string))

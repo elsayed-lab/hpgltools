@@ -14,7 +14,8 @@ features_greater_than(data, cutoff = 1, hard = TRUE, inverse = FALSE)
 \item{hard}{Greater-than is hard, greater-than-equals is not.}
 }
 \value{
-Number of genes.
+A list of two elements, the first comprised of the number of genes
+  greater than the cutoff, the second with the identities of said genes.
 }
 \description{
 Sometimes I am asked how many genes have >= x counts.  Well, here you go.

@@ -267,6 +267,46 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                                                     x=all_count_tables[["rownames"]]),
                                                unique=TRUE)
 
+  ## There is an important caveat here!!
+  ## data.table::as.data.table(stuff, keep.rownames='column') will change the rownames to remove
+  ## punctuation including ':'!  Which means that if I have a rowname that looks like
+  ## 'LmjF.01.0010:mRNA', it will get changed to 'LmjF.01.0010.mRNA'
+  ## Which will of course kill any downstream analyses which depend on consistent
+  ## rownames between the count table and any tximport data, since the tximport data
+  ## will still have the ':'...
+  ## I am not certain what the best solution is, I am thinking perhaps to recast
+  ## the tximport data as a set of data tables so that whatever silly stuff it
+  ## does it will at least do consistently.  That of course will have unintended
+  ## consequences for other tools which use tximport data (DESeq2), but if my
+  ## rownames are consistent, then other problems will be easier to handle via
+  ## recasting the data to a matrix or df or whatever the downstream tool
+  ## requires.
+  ## In contrast, I can take a simpler but less transparent route and change the
+  ## rownames of all the tximport imported data to match that returned by
+  ## as.data.table().
+  if (!is.null(tximport_data[["raw"]])) {
+    rownames(tximport_data[["raw"]][["abundance"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["raw"]][["abundance"]]))
+    rownames(tximport_data[["raw"]][["counts"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["raw"]][["counts"]]))
+    rownames(tximport_data[["raw"]][["length"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["raw"]][["length"]]))
+  }
+  if (!is.null(tximport_data[["scaled"]])) {
+    rownames(tximport_data[["scaled"]][["abundance"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["scaled"]][["abundance"]]))
+    rownames(tximport_data[["scaled"]][["counts"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["scaled"]][["counts"]]))
+    rownames(tximport_data[["scaled"]][["length"]]) <- gsub(
+      pattern=":", replacement="\\.",
+      x=rownames(tximport_data[["scaled"]][["length"]]))
+  }
+
   ## Try a couple different ways of getting gene-level annotations into the expressionset.
   annotation <- NULL
   if (is.null(gene_info)) {
@@ -739,7 +779,8 @@ analyses more difficult/impossible.")
 #' @param data  A dataframe/exprs/matrix/whatever of counts.
 #' @param cutoff  Minimum number of counts.
 #' @param hard  Greater-than is hard, greater-than-equals is not.
-#' @return  Number of genes.
+#' @return  A list of two elements, the first comprised of the number of genes
+#'   greater than the cutoff, the second with the identities of said genes.
 #' @seealso \pkg{Biobase}
 #' @examples
 #' \dontrun{
@@ -753,9 +794,10 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
     data <- as.data.frame(data)
   }
   number_table <- numeric(length=ncol(data))
+  names(number_table) <- colnames(data)
   feature_tables <- list()
   for (col in 1:length(colnames(data))) {
-    column_name <- colnames(data)[[col]]
+    column_name <- colnames(data)[col]
     column_data <- data[[column_name]]
     num_features <- NULL
     if (isTRUE(hard)) {
@@ -963,13 +1005,16 @@ median_by_factor <- function(data, fact="condition") {
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
   fact <- as.factor(fact)
+  used_columns <- c()
   for (type in levels(fact)) {
     columns <- grep(pattern=type, x=fact)
     med <- NULL
     if (length(columns) < 1) {
-      warning("This level of the factor has no columns.")
+      warning(paste0("The level ", type, " of the factor has no columns."))
       next
-    } else if (length(columns) == 1) {
+    }
+    used_columns <- c(used_columns, type)
+    if (length(columns) == 1) {
       message(paste0("The factor ", type, " has only 1 row."))
       med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
     } else {
@@ -979,7 +1024,9 @@ median_by_factor <- function(data, fact="condition") {
     medians <- cbind(medians, med)
   }
   medians <- medians[, -1, drop=FALSE]
-  colnames(medians) <- levels(fact)
+  ## Sometimes not all levels of the original experimental design are used.
+  ## Thus lets make sure to use only those which appeared.
+  colnames(medians) <- used_columns
   return(medians)
 }
 
@@ -2184,7 +2231,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   new_col <- 1
   new_row <- 1
   median_data <- median_by_factor(exprs(norm_data),
-                                  norm_data[["conditions"]])
+                                  fact=norm_data[["conditions"]])
   median_data_merged <- merge(median_data, info, by="row.names")
   xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")

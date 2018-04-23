@@ -139,19 +139,33 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
-circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="chr1",
+circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr1",
                               outer=1.0, width=0.08, spacing=0.0) {
-  if (is.null(go_table[["start"]]) | is.null(go_table[["stop"]]) |
-      is.null(go_table[["strand"]]) | is.null(go_table[["COGFun"]])) {
+  end_col <- "end"
+  if (!is.null(table[["stop"]])) {
+    end_col <- "stop"
+  }
+  number_pluses <- sum(table[["strand"]] == "+")
+  number_ones <- sum(table[["strand"]] == 1)
+  plus_string <- "+"
+  minus_string <- "-"
+  if (number_pluses + number_ones == 0) {
+    stop("This function requires some way of understanding plus/minus strand.")
+  } else if (number_ones > 0) {
+    plus_string <- 1
+    minus_string <- -1
+  }
+  if (is.null(table[["start"]]) | is.null(table[[end_col]]) |
+      is.null(table[["strand"]]) | is.null(table[["COGFun"]])) {
     stop("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
   }
   plus_cfg_file <- cfgout
   minus_cfg_file <- cfgout
   plus_cfg_file <- gsub(".conf$", "_plus_go.conf", plus_cfg_file)
   minus_cfg_file <- gsub(".conf$", "_minus_go.conf", minus_cfg_file)
-  go_table <- go_table[, c("start", "stop", "strand", "COGFun")]
-  go_plus <- as.data.frame(go_table[go_table[["strand"]] == "+", ])
-  go_minus <- as.data.frame(go_table[go_table[["strand"]] == "-", ])
+  table <- table[, c("start", "stop", "strand", "COGFun")]
+  go_plus <- as.data.frame(table[table[["strand"]] == plus_string, ])
+  go_minus <- as.data.frame(table[table[["strand"]] == minus_string, ])
   go_plus[["chr"]] <- chr
   go_minus[["chr"]] <- chr
   ##    go_plus = go_plus[, c(5, 1, 2, 4)]

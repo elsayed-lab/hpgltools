@@ -55,7 +55,6 @@ convert_counts <- function(data, convert="raw", ...) {
     },
     "rpkm" = {
       count_table <- hpgl_rpkm(count_table, annotations=annotations, ...)
-      ## count_table <- hpgl_rpkm(count_table, annotations=annotations, arglist)
     },
     "cp_seq_m" = {
       counts <- edgeR::cpm(count_table)
@@ -321,15 +320,23 @@ hpgl_rpkm <- function(count_table, ...) {
   if (is.null(arglist[["column"]]) &
       is.null(merged_annot[["length"]]) &
       is.null(merged_annot[["width"]])) {
+    message("There appears to be no gene length annotation data, here are the possible columns:")
+    message(toString(colnames(annotations)))
+    message("If one is appropriate, redo the function call with: column='good column'")
     stop("There appears to be no annotation data providing gene length.")
   }
+
+  chosen_column <- "width"
   if (!is.null(arglist[["column"]])) {
-    lenvec <- as.vector(as.numeric(merged_annot[[arglist[["column"]]]]))
+    chosen_column <- arglist[["column"]]
   } else if (is.null(merged_annot[["width"]])) {
-    lenvec <- as.vector(as.numeric(merged_annot[["length"]]))
-  } else {
-    lenvec <- as.vector(as.numeric(merged_annot[["width"]]))
+    chosen_column <- "length"
   }
+  ## Keep in mind that I set missing material to 'undefined'
+  ## So lets set those to NA now.
+  undef_idx <- merged_annot[[chosen_column]] == "undefined"
+  merged_annot[undef_idx, chosen_column] <- NA
+  lenvec <- as.vector(as.numeric(merged_annot[[chosen_column]]))
   names(lenvec) <- rownames(merged_annot)
   tt <- sm(requireNamespace("edgeR"))
   rpkm_count_table <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)

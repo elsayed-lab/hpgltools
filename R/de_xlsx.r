@@ -1546,8 +1546,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
         ma_plots[[table_name]] <- single_ma
       }
 
-      message(paste0("Writing excel data sheet ", table_count, "/", num_tables, ": ", table_name))
       table_count <- table_count + 1
+      factor <- length(according_to)
+      message(paste0("Writing excel data for ", table_name, ": ", table_count, "/", num_tables * factor, "."))
+
       table <- all_tables[[table_name]]
       fc_column <- paste0(according, "_logfc")
       p_column <- paste0(according, "_adjp")

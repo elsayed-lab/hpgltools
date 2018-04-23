@@ -4,12 +4,10 @@
 \alias{circos_plus_minus}
 \title{Write tiles of bacterial ontology groups using the categories from microbesonline.org.}
 \usage{
-circos_plus_minus(go_table, cfgout = "circos/conf/default.conf",
-  chr = "chr1", outer = 1, width = 0.08, spacing = 0)
+circos_plus_minus(table, cfgout = "circos/conf/default.conf", chr = "chr1",
+  outer = 1, width = 0.08, spacing = 0)
 }
 \arguments{
-\item{go_table}{Dataframe with starts/ends and categories.}
-
 \item{cfgout}{Master configuration file to write.}
 
 \item{chr}{Name of the chromosome.}
@@ -19,6 +17,8 @@ circos_plus_minus(go_table, cfgout = "circos/conf/default.conf",
 \item{width}{Radial width of each tile.}
 
 \item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
+
+\item{go_table}{Dataframe with starts/ends and categories.}
 }
 \value{
 Radius after adding the plus/minus information and the spacing between them.

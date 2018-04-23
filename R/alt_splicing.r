@@ -4,7 +4,8 @@
 #' along with the same for the average log tpm data (acquired from suppa
 #' diffSplice with --save_tpm_events)
 #' @export
-plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05) {
+plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
+                       label_type=NULL, alpha=0.7) {
   dpsi_data <- NULL
   if (class(psi) == "character") {
     dpsi_data <- read.table(dpsi, sep="\t")
@@ -119,6 +120,10 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05) {
   plotting_subset <- plotting_data[plotting_subset_idx, ]
   label_subset_idx <- plotting_subset[["psig"]] == TRUE
   label_subset <- plotting_subset[label_subset_idx, ]
+  if (!is.null(label_type)) {
+    type_subset_idx <- label_subset[["plot_cat"]] == label_type
+    label_subset <- label_subset[type_subset_idx, ]
+  }
 
   color_values <- c("Skipping exon" = "#92250E",
                     "Mutually exclusive exons" = "#717600",
@@ -133,7 +138,7 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05) {
   sig_splicing_maplot <- ggplot(plotting_subset,
                                 aes_string(x="avglogtpm", y="dpsi",
                                            color="plot_cat", fill="plot_cat")) +
-    ggplot2::geom_point(alpha=0.5) +
+    ggplot2::geom_point(alpha=alpha) +
     ggplot2::scale_shape_manual(values=21) +
     ggplot2::scale_fill_manual(name="Category",
                                guide="legend",
