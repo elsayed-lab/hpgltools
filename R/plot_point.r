@@ -43,7 +43,8 @@ plot_bcv <- function(data) {
                         "disp" = sqrt(disper))
   fitted_disp <- gplots::lowess(disp_df[["A"]], disp_df[["disp"]], f=0.5)
   f <- stats::approxfun(fitted_disp, rule=2)
-  disp_plot <- ggplot(disp_df, aes_string(x="A", y="disp")) +
+  disp_df[["label"]] <- rownames(disp_df)
+  disp_plot <- ggplot(disp_df, aes_string(x="A", y="disp", label="label")) +
     ggplot2::geom_point() +
     ggplot2::xlab("Average log(CPM)") +
     ggplot2::ylab("Dispersion of Biological Variance") +
@@ -92,7 +93,6 @@ plot_bcv <- function(data) {
 #' }
 #' @export
 plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
-  hpgl_env <- environment()
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -111,7 +111,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
   mydist[["dist"]] <- mydist[["x"]] * mydist[["y"]]
   mydist[["dist"]] <- mydist[["dist"]] / max(mydist[["dist"]])
   line_size <- size / 2
-  first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
+  df[["label"]] <- rownames(df)
+  first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
     ggplot2::xlab(paste("Expression of", df_x_axis)) +
     ggplot2::ylab(paste("Expression of", df_y_axis)) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -173,7 +174,6 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
   arglist <- list(...)
-  hpgl_env <- environment()
   if (isTRUE(color_high)) {
     color_high <- "#FF0000"
   }
@@ -232,7 +232,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   first_mad <- stats::mad(df[["first"]], na.rm=TRUE)
   second_mad <- stats::mad(df[["second"]], na.rm=TRUE)
   line_size <- size / 2
-  first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
+  df[["label"]] <- rownames(df)
+  first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
     ggplot2::xlab(paste("Expression of", df_x_axis)) +
     ggplot2::ylab(paste("Expression of", df_y_axis)) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
@@ -460,6 +461,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   df[["pval"]] <- as.numeric(df[[3]])
   df[["pcut"]] <- as.factor(df[[4]])
   df[["state"]] <- as.factor(df[[5]])
+  df[["label"]] <- rownames(df)
 
   ## Set up the labels for the legend by significance.
   ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
@@ -472,6 +474,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                 ## I am setting x, y, fill color, outline color, and the shape.
                 aes_string(x="avg",
                            y="logfc",
+                           label="label",
                            fill="as.factor(pcut)",
                            colour="as.factor(pcut)",
                            shape="as.factor(state)")) +
@@ -604,9 +607,10 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["color"]])
   names(color_list) <- as.character(color_listing[["condition"]])
+  nz_df[["label"]] <- rownames(nz_df)
 
   non_zero_plot <- ggplot(data=nz_df,
-                          aes_string(x="cpm", y="nonzero_genes"),
+                          aes_string(x="cpm", y="nonzero_genes", label="label"),
                           environment=hpgl_env) +
     ggplot2::geom_point(size=3, shape=21,
                         aes_string(colour="as.factor(condition)",
@@ -755,7 +759,9 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   colnames(df) <- c("first", "second")
-  first_vs_second <- ggplot(df, aes_string(x="first", y="second"), environment=hpgl_env) +
+  df[["label"]] <- rownames(df)
+  first_vs_second <- ggplot(df, aes_string(x="first", y="second",
+                                           label="label"), environment=hpgl_env) +
     ggplot2::xlab(paste("Expression of", df_x_axis)) +
     ggplot2::ylab(paste("Expression of", df_y_axis)) +
     ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
@@ -831,6 +837,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
                           "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
+  df[["label"]] <- rownames(df)
 
   ## shape 25 is the down arrow, 22 is the square, 23 the diamond, 24 the up arrow
   state_shapes <- c(25, 22, 23, 24)
@@ -861,6 +868,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     plt <- ggplot(data=df,
                   aes_string(x="xaxis",
                              y="logyaxis",
+                             label="label",
                              fill=color_column,
                              colour=color_column,
                              shape="state"))
@@ -868,6 +876,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     plt <- ggplot(data=df,
                   aes_string(x="xaxis",
                              y="logyaxis",
+                             label="label",
                              fill=color_column,
                              colour=color_column))
   }

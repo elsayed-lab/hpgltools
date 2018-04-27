@@ -303,6 +303,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
 #' @param metadata  Eupathdb metadata.
 #' @param ...  Further arguments to pass to download_eupath_metadata()
 #' @return  List of package names and some booleans to see if they have already been installed.
+#' @export
 get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
                                  metadata=NULL, ...) {
   arglist <- list(...)

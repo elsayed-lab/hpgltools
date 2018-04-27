@@ -89,7 +89,7 @@ roxygen:
 
 snap:
 	echo "Snapshotting packrat."
-	R -e "packrat::snapshot()"
+	R -e "packrat::snapshot(ignore.stale=TRUE, snapshot.source=FALSE, infer.dependencies=FALSE)"
 
 suggests:
 	@echo "Installing suggested packages."

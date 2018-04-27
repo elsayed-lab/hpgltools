@@ -38,12 +38,23 @@ into the hpgltools/ directory and:
 
 > make install
 
+One important caveat for newer versions of hpgltools: it now uses packrat to
+keep a database of the package versions which I used.  If one wishes to attempt
+installing my versions of these packages:
+
+> make packrat_install
+
+A few packages appear to have fallen out of bioconductor/CRAN and so sometimes
+packrat installation has annoying errors.
+
 If you wish to run some tests and (re)build the documentation:
 
 > make
 
-This rebuilds the documentation strings, runs check, build, create vignettes, and runs
-the tests.  make install does what it says on the tin.
+There are a bunch of other potential targets available in the Makefile which
+might be interesting. Simply running make rebuilds the documentation strings,
+runs check, build, create vignettes, and runs the tests.  make install does what
+it says on the tin.
 
 Instead, one may perform:
 
@@ -70,57 +81,81 @@ set, pasilla, and a bacterial data set.
 Listed by function then filename in R/.
 
 * annotations: Handles loading annotation data from sources like OrganismDb.
-    - **annotation_biomart**:  Uses the biomaRt interface to query ensembl.
-    - **annotation_genbank**:  Uses Rentrez to query genbank.
-    - **annotation_microbesonline**:  Uses some XML/MySQL to query microbesonline.org.
-    - **annotation_orgdb**:  Uses the DBI interface to query OrganismDbi/TxDb/OrgDb instances.
-    - **annotation_tritrypdb**:  Uses a mix of http/xml/text queries to hit up tritrypdb.org.
-* ExpressionSets:  Attempts to simplify gathering together counts/annotations/designs.
-    - **count_tables**:  A few functions to read count tables and merge them
+    - **biomart**:  Uses the biomaRt interface to query ensembl.
+    - **genbank**:  Uses Rentrez to query genbank.
+    - **microbesonline**:  Uses some XML/MySQL to query microbesonline.org --
+      though I apparently queried them too often in testing from my workstation,
+      so I got blacklisted :(
+    - **orgdb**:  Uses the DBI interface to query OrganismDbi/TxDb/OrgDb
+      instances.
+    - **eupathdb**:  Uses a mix of http/xml/text queries to query up
+      eupathdb.org.
+    - **uniprot**:  Extract data from either uniprot text files or their
+      webservices.
+    - **gff**: Read gff files and take annotation data from them.
+    - **text**: Extract putative annotation data from various text formats,
+      primarily the csv files from trinity.
+    - ** kegg**: Use the KEGG webservices api.
+* ExpressionSets:  Attempts to simplify gathering together
+  counts/annotations/designs.
+    - **tximport**:  Uses tximport when given filenames ending in supprted extensions.
+    - **read metadata**:  Able to read metadata from xlsx/csv/etc and extract
+      count table filenames from them.
+    - **write expressionsets**:  Writes rdata files of the expressionsets along
+      with xlsx files with the raw data, normalized data, and plots.
     - **expt**:  A light S3 object wrapper around ExpressionSets to hopefully make them easier to play with.
 * Helpers:  Miscellaneous functions which don't fit elsewhere
-    - **helpers_install**:  Will attempt biocLite() or install_github() etc for given packages, or install _all_ of bioconductor.
-    - **helpers_misc**:  Arbitrary (hopefully) helpful functions.
+    - **installation**:  please_install() attempts to install packages from
+      various sources, including biocLite(), install.packages(), install_github(), etc for
+      given packages.  Also provides a function to install _all_ of bioconductor
+      for the truly self-flagellating.
+    - **miscellaneous**:  Arbitrary (hopefully) helpful functions including sm()
+      to silence most (all?) functions and pp() to fill in default values when
+      making plots.
 * Visualization and Sample Metrics:  Plotters and distribution visualizers before doing expression analysis
-    - **plot_bar**: Some re-used bar plots like library size.
-    - **plot_circos**: Make using circos less obnoxious.
-    - **plot_distribution**: Plot some distributions/density plots.
-    - **plot_dotplot**: Plot some common dot plots.
-    - **plot_genplot**: Attempt to make genoplotR less annoying.
-    - **plot_gvis**: Small wrappers for gvis.
-    - **plot_heatmap**: Various heatmap shortcuts.
-    - **plot_hist**: Reused histograms.
-    - **plot_misc**: Some misc plots which have no other home.
-    - **plot_point**: Creates various reused scatter/point plots.
-    - **plot_shared**: Invokes a series of plots on new data.
+    - **bar**: Some re-used bar plots like library size.
+    - **circos**: Make using circos less obnoxious.
+    - **distribution**: Plot some distributions/density plots.
+    - **dotplot**: Plot some common dot plots.
+    - **genplot**: Attempt to make genoplotR less annoying.
+    - **gvis**: Small wrappers for gvis.
+    - **heatmap**: Various heatmap shortcuts.
+    - **hist**: Reused histograms.
+    - **misc**: Some misc plots which have no other home.
+    - **point**: Creates various reused scatter/point plots.
+    - **shared**: Invokes a series of plots on new data.
 * Model Tests / Batch Evaluation:  Play with models, visualize the changes they evoke.
-    - **model_pca**: Functions to simplify PCA analyses.
-    - **model_surrogates**: Different ways of evaluating surrogate variables(often batch) as per Leek et al.
-    - **model_testing**: Query the rank of various models.
-    - **model_varpartition**: Use variancePartition to evaluate the contribution of experimental factors in data sets.
+    - **pca**: Functions to simplify PCA analyses.
+    - **TSNE**: Functions to simplify TSNE analyses.
+    - **surrogates**: Different ways of evaluating surrogate variables(often batch) as per Leek et al.
+    - **model testing**: Query the rank of various models.
+    - **varpartition**: Use variancePartition to evaluate the contribution of experimental factors in data sets.
 * Normalization:  Various data normalizers under a single roof
-    - **norm_batch**: Batch correction via limma, sva, ruv.
-    - **norm_convert**: Perform cpm/rpkm/patternkm normalizations.
-    - **norm_filter**: Low-count filtering via cbcb and genefilter.
-    - **norm_norm**: Normalizations taken from cbcb, DESeq, and edgeR.
-    - **norm_shared**: Calls functions in the norm_* files.
-    - **norm_transform**: Performs logn transformations of data.
+    - **batch**: Batch correction via limma, sva, ruv.
+    - **convert**: Perform cpm/rpkm/patternkm normalizations.
+    - **filter**: Low-count filtering via cbcb and genefilter.
+    - **norm**: Normalizations taken from cbcb, DESeq, and edgeR.
+    - **transform**: Performs logn transformations of data.
+    - **shared**: Calls functions in the norm_* files.
 * Differential Expression:  Functions to simplify invoking the various differential expression tools
-    - **de_basic**: Completely naive differential expression, provides baseline for comparison.
-    - **de_deseq**: Invokes DESeq2 for all pairwise comparisons of a data set.
-    - **de_edger**: Invokes edgeR for all pairwise comparisons of a data set.
-    - **de_limma**: Invokes limma for all pairwise comparisons of a data set.
-    - **de_shared**: Shared functions across all tools.
+    - **basic**: Completely naive differential expression, provides baseline for comparison.
+    - **deseq**: Invokes DESeq2 for all pairwise comparisons of a data set.
+    - **edger**: Invokes edgeR for all pairwise comparisons of a data set.
+    - **limma**: Invokes limma for all pairwise comparisons of a data set.
+    - **shared**: Shared functions across all tools.
 * Ontology, KEGG, and friends:  Query if given sets of genes are significantly over represented in various annotation schemes.
-    - **ontology_clusterprofiler**: Invokes the clusterProfiler family of ontology searches.
-    - **ontology_goseq**: Invokes goseq for ontology searches, helps graph results.
-    - **ontology_gostats**: Invokes gostats for ontology searches, helps graph results.
-    - **ontology_gprofiler**: Invokes gProfiler for ontology searches.
-    - **ontology_kegg**: Functions to poke at KEGG enrichment.
-    - **ontology_reactome**: Functions to poke at reactome enrichment.
-    - **ont_topgo**: Invokes topGO for ontology searches, graphs results.
-    - **ont_shared**: Calls functions in the ontology_* files.
+    - **clusterprofiler**: Invokes the clusterProfiler family of ontology searches.
+    - **goseq**: Invokes goseq for ontology searches, helps graph results.
+    - **gostats**: Invokes gostats for ontology searches, helps graph results.
+    - **gprofiler**: Invokes gProfiler for ontology searches.
+    - **kegg**: Functions to poke at KEGG enrichment.
+    - **reactome**: Functions to poke at reactome enrichment.
+    - **topgo**: Invokes topGO for ontology searches, graphs results.
+    - **shared**: Calls functions in the ontology_* files.
 * Random bits:
+    - **snp**: Some functions to gather snp data into hopefully easier data
+      structures.
+    - **proteomics**: Parsers for mzXML data, plotters for the data they contain.
     - **kmeans**: A couple functions for kmeans clustering and visualization from Keith and Ginger.
     - **motif**: Some motif analysis wrappers.
     - **nmer**: Simplifying functions when working with nmers.
@@ -161,4 +196,3 @@ lst[[1]] you get just '1' -- trying lst[[c(1,2)]] ends badly, I am not sure why.
 * fac[1:2, drop=TRUE]
 * array[c(1,2), drop=TRUE]  TRUE is the default
 * df[['id']] or df[, 'id']  drop=TRUE is default
-

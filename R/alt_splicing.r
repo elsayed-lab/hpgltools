@@ -210,3 +210,208 @@ write_suppa_table <- function(table, annotations=NULL, by_table="gene_name", by_
   ## Now coerce numeric columns
   xlsx_result <- write_xls(data=xls_data, excel=excel)
 }
+
+plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
+                       sig_threshold=0.05, dpsi_threshold=0.7,
+                       label_type=NULL, alpha=0.7) {
+  if (is.null(se) & is.null(a5ss) & is.null(a3ss) & is.null(mxe) & is.null(ri)) {
+    stop("No data was provided.")
+  }
+
+  se_data <- data.frame()
+  if (class(se) == "character") {
+    se_data <- read.table(se, header=TRUE)
+  } else if (class(se) == "data.frame" | class(se) == "NULL") {
+    se_data <- se_data
+  } else {
+    stop("I only understand filenames and data frames, your psi are neither.")
+  }
+
+  a5ss_data <- data.frame()
+  if (class(a5ss) == "character") {
+    a5ss_data <- read.table(a5ss, header=TRUE)
+  } else if (class(a5ss) == "data.frame" | class(a5ss) == "NULL") {
+    a5ss_data <- a5ss_data
+  } else {
+    stop("I only understand filenames and data frames, your psi are neither.")
+  }
+
+  a3ss_data <- data.frame()
+  if (class(a3ss) == "character") {
+    a3ss_data <- read.table(a3ss, header=TRUE)
+  } else if (class(a3ss) == "data.frame" | class(a3ss) == "NULL") {
+    a3ss_data <- a3ss_data
+  } else {
+    stop("I only understand filenames and data frames, your psi are neither.")
+  }
+
+  mxe_data <- data.frame()
+  if (class(mxe) == "character") {
+    mxe_data <- read.table(mxe, header=TRUE)
+  } else if (class(mxe) == "data.frame" | class(mxe) == "NULL") {
+    mxe_data <- mxe_data
+  } else {
+    stop("I only understand filenames and data frames, your psi are neither.")
+  }
+
+  ri_data <- data.frame()
+  if (class(ri) == "character") {
+    ri_data <- read.table(ri, header=TRUE)
+  } else if (class(ri) == "data.frame" | class(ri) == "NULL") {
+    ri_data <- ri_data
+  } else {
+    stop("I only understand filenames and data frames, your psi are neither.")
+  }
+
+  all_data <- data.frame()
+  kept_columns <- c("GeneID", "PValue", "FDR", "IncLevel1",
+                    "IncLevel2", "IncLevelDifference")
+  new_colnames <- c("gene_id", "pvalue", "adjp", "level1", "level2", "dpsi")
+
+  if (nrow(se_data > 0)) {
+    se_subset <- se_data[, kept_columns]
+    colnames(se_subset) <- new_colnames
+    se_subset[["event"]] <- "SE"
+    all_data <- rbind(all_data, se_subset)
+  }
+  if (nrow(a5ss_data) > 0) {
+    a5ss_subset <- a5ss_data[, kept_columns]
+    colnames(a5ss_subset) <- new_colnames
+    a5ss_subset[["event"]] <- "A5"
+    all_data <- rbind(all_data, a5ss_subset)
+  }
+  if (nrow(a3ss_data) > 0) {
+    a3ss_subset <- a3ss_data[, kept_columns]
+    colnames(a3ss_subset) <- new_colnames
+    a3ss_subset[["event"]] <- "A3"
+    all_data <- rbind(all_data, a3ss_subset)
+  }
+  if (nrow(mxe_data) > 0) {
+    mxe_subset <- mxe_data[, kept_columns]
+    colnames(mxe_subset) <- new_colnames
+    mxe_subset[["event"]] <- "MX"
+    all_data <- rbind(all_data, mxe_subset)
+  }
+  if (nrow(ri_data) > 0) {
+    ri_subset <- ri_data[, kept_columns]
+    colnames(ri_subset) <- new_colnames
+    ri_subset[["event"]] <- "RI"
+    all_data <- rbind(all_data, ri_subset)
+  }
+
+  all_data <- data.table::as.data.table(all_data)
+  plotting_data <- all_data %>%
+    tidyr::separate("level1", c("l1a", "l1b"), "\\,") %>%
+    tidyr::separate("level2", c("l2a", "l2b"), "\\,")
+  plotting_data[["l1a"]] <- as.numeric(plotting_data[["l1a"]])
+  plotting_data[["l1b"]] <- as.numeric(plotting_data[["l1b"]])
+  plotting_data[["l2a"]] <- as.numeric(plotting_data[["l2a"]])
+  plotting_data[["l2b"]] <- as.numeric(plotting_data[["l2b"]])
+  plotting_data[["id"]] <- rownames(plotting_data)
+  plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm=TRUE)), by=id]
+  plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm=TRUE)), by=id]
+  plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm=TRUE)), by=id]
+  plotting_data[["check"]] <- plotting_data[["l1mean"]] - plotting_data[["l2mean"]]
+  test <- all.equal(plotting_data[["check"]], plotting_data[["dpsi"]], tolerance=0.01)
+  plotting_data[["log10pval"]] <- -1.0 * log10(plotting_data[["pvalue"]])
+  plotting_data[["log10adjpval"]] <- -1.0 * log10(plotting_data[["adjp"]])
+
+  plotting_data[["psig"]] <- FALSE
+  plotting_data[["adjpsig"]] <- FALSE
+
+  plotting_data[["plot_cat"]] <- plotting_data[["event"]]
+  plotting_data[["plot_cat"]] <- ifelse(
+    test=plotting_data[["plot_cat"]] == "SE",
+    yes="Skipping exon",
+    no=ifelse(
+      test=plotting_data[["plot_cat"]] == "MX",
+      yes="Mutually exclusive exons",
+      no=ifelse(
+        test=plotting_data[["plot_cat"]] == "A5",
+        yes="Alternate 5 prime",
+        no=ifelse(
+          test=plotting_data[["plot_cat"]] == "A3",
+          yes="Alternate 3 prime",
+          no=ifelse(
+            test=plotting_data[["plot_cat"]] == "RI",
+            yes="Retained intron",
+            no=ifelse(plotting_data[["plot_cat"]] == "AF",
+                      yes="Alternate first exon",
+                      no=ifelse(plotting_data[["plot_cat"]] == "AL",
+                                yes="Alternate last exon",
+                                no="Unknown")))))))
+  plotting_data[["category"]] <- plotting_data[["plot_cat"]]
+  insig_idx <- plotting_data[["adjp"]] > sig_threshold
+  plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
+  ## If, somehow something is observed as unknown, make it insignificant.
+  unknown_idx <- plotting_data[["plot_cat"]] == "Unknown"
+  plotting_data[unknown_idx, "plot_cat"] <- "Insignificant"
+
+  level_names <- c("Skipping exon", "Mutually exclusive exons", "Alternate 5 prime",
+                   "Alternate 3 prime", "Retained intron", "Alternate first exon",
+                   "Alternate last exon", "Insignificant")
+  plotting_data[["category"]] <- factor(plotting_data[["category"]], levels=level_names,
+                                        labels=level_names)
+  plotting_data[["event"]] <- rownames(plotting_data)
+
+  psig_idx <- plotting_data[["adjp"]] <= sig_threshold
+  plotting_data[psig_idx, "psig"] <- TRUE
+  adjpsig_idx <- plotting_data[["adjp"]] <= sig_threshold
+  plotting_data[adjpsig_idx, "adjpsig"] <- TRUE
+
+  ## A quick volcano plot, which should be made prettier soon.
+  sig_splicing_volplot <- ggplot(plotting_data, aes_string(x="dpsi", y="log10pval", color="psig")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_vline(xintercept=c(-0.5, 0.5), size=1) +
+    ggplot2::geom_hline(yintercept=1.3, size=1)
+
+  ## Now a somewhat more involved ma plot, first dropping the super-low tpm stuff
+  label_subset_idx <- plotting_data[["psig"]] == TRUE
+  label_subset <- plotting_data[label_subset_idx, ]
+  label_subset_idx <- abs(label_subset[["dpsi"]]) > dpsi_threshold ## |
+  ##    abs(label_subset[["all_mean"]] - 0.5) > (dpsi_threshold / 2)
+  label_subset <- label_subset[label_subset_idx, ]
+  ##label_subset_idx <- label_subset[["plot_cat"]] != "Insignificant"
+  ##label_subset <- label_subset[label_subset_idx, ]
+  if (!is.null(label_type)) {
+    type_subset_idx <- label_subset[["plot_cat"]] == label_type
+    label_subset <- label_subset[type_subset_idx, ]
+  }
+
+  color_values <- c("Skipping exon" = "#92250E",
+                    "Mutually exclusive exons" = "#717600",
+                    "Alternate 5 prime" = "#5B095A",
+                    "Alternate 3 prime" = "#1D6E72",
+                    "Retained intron" = "#31326D",
+                    "Alternate first exon" = "black",
+                    "Alternate last exon" = "#003300",
+                    "Insignificant" = "#666666")
+
+  ## Now make a quick and dirty ma plot.
+  sig_splicing_maplot <- ggplot(plotting_data,
+                                aes_string(x="all_mean", y="dpsi",
+                                           color="plot_cat", fill="plot_cat")) +
+    ggplot2::geom_point(alpha=alpha) +
+    ggplot2::scale_shape_manual(values=21) +
+    ggplot2::scale_fill_manual(name="Category",
+                               guide="legend",
+                               breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                               values=color_values) +
+    ggplot2::scale_color_manual(name="Category",
+                                values=color_values,
+                                breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                                guide=ggplot2::guide_legend(override.aes=list(size=5))) +
+    ggrepel::geom_text_repel(data=label_subset,
+                             show.legend=FALSE,
+                             arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")),
+                             aes_string(x="all_mean", y="dpsi", label="gene_id")) +
+    ggplot2::xlab("Average Inclusion.") +
+    ggplot2::ylab("Delta PSI calculated by rMATS.") +
+    ggplot2::theme_bw(base_size=base_size)
+
+  retlist <- list(
+    "volcano" = sig_splicing_volplot,
+    "ma" = sig_splicing_maplot,
+    "data" = plotting_data)
+  return(retlist)
+}

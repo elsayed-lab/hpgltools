@@ -1,5 +1,5 @@
 auto.snapshot: TRUE
-use.cache: FALSE
+use.cache: TRUE
 print.banner.on.startup: auto
 vcs.ignore.lib: TRUE
 vcs.ignore.src: FALSE
@@ -7,8 +7,11 @@ external.packages:
 local.repos: 
 load.external.packages.on.startup: TRUE
 ignored.packages: 
+ignored.directories:
+    data
+    inst
 quiet.package.installation: TRUE
-snapshot.recommended.packages: FALSE
+snapshot.recommended.packages: TRUE
 snapshot.fields:
     Imports
     Depends

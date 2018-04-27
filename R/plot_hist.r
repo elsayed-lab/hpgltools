@@ -91,6 +91,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   } else {
     stop("This can only work with a list or data frame.")
   }
+  play_all[["expression"]] <- as.numeric(play_all[["expression"]])
+  play_all[["cond"]] <- as.factor(play_all[["cond"]])
   play_cdf <- plyr::ddply(play_all, "cond",
                           plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
   uncor_t <- stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]], p.adjust="none")
