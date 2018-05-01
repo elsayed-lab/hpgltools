@@ -243,10 +243,11 @@ the dataset, please try doing a filtering of the data and retry.")
       if (min(rowSums(base10_mtrx)) == 0) {
         warning("empirical.controls will likely fail because some rows are all 0.")
       }
-      control_likelihoods <- sm(sva::empirical.controls(dat=log2_mtrx,
-                                                        mod=conditional_model,
-                                                        mod0=null_model,
-                                                        n.sv=surrogate_estimate))
+      control_likelihoods <- sm(sva::empirical.controls(
+                                       dat=log2_mtrx,
+                                       mod=conditional_model,
+                                       mod0=null_model,
+                                       n.sv=surrogate_estimate))
       ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
                                  k=surrogate_estimate,
                                  cIdx=as.logical(control_likelihoods))
