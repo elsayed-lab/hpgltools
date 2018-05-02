@@ -1405,21 +1405,45 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
   chosen_colors <- expt[["conditions"]]
+  chosen_names <- names(chosen_colors)
   sample_colors <- NULL
   if (is.null(colors) | isTRUE(colors)) {
     sample_colors <- sm(
       grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
+  } else if (class(colors) == "factor") {
+    if (change_by == "condition") {
+      message("The new colors are a factor, changing according to condition.")
+      ## In this case, we have every color accounted for in the set of conditions.
+      mapping <- colors
+      chosen_colors <- mapping[as.character(chosen_colors)]
+      names(chosen_colors) <- chosen_names
+    } else if (change_by == "sample") {
+      message("The new colors are a factor, changing according to sampleID.")
+      ## This is changing them by sample id.
+      ## In this instance, we are changing specific colors to the provided colors.
+      chosen_colors <- expt[["colors"]]
+      for (snum in 1:length(names(colors))) {
+        sampleid <- names(colors)[snum]
+        sample_color <- colors[[snum]]
+        chosen_colors[[sampleid]] <- sample_color
+      }
+    }
+    chosen_idx <- complete.cases(chosen_colors)
+    chosen_colors <- chosen_colors[chosen_idx]
   } else if (class(colors) == "character") {
     if (is.null(names(colors))) {
       names(colors) <- levels(as.factor(expt[["conditions"]]))
     }
     if (change_by == "condition") {
+      message("The new colors are a character, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
-      chosen_colors <- mapping[chosen_colors]
+      chosen_colors <- mapping[as.character(chosen_colors)]
+      names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
+      message("The new colors are a character, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1433,11 +1457,13 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (class(colors) == "list") {
     if (change_by == "condition") {
+      message("The new colors are a list, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- as.character(colors)
       names(mapping) <- names(colors)
       chosen_colors <- mapping[chosen_colors]
     } else if (change_by == "sample") {
+      message("The new colors are a list, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1460,6 +1486,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
     chosen_idx <- complete.cases(chosen_colors)
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (is.null(colors)) {
+    message("Setting colors according to a color ramp.")
     colors <- sm(grDevices::colorRampPalette(RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     ## Check that all conditions are named in the color list:
     mapping <- setNames(colors, unique(chosen_colors))
@@ -1472,7 +1499,11 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
   }
-  names(chosen_colors) <- sample_ids
+
+  ## Catchall in case I forgot to set the names before now.
+  if (is.null(names(chosen_colors))) {
+    names(chosen_colors) <- chosen_names
+  }
 
   expt[["colors"]] <- chosen_colors
   return(expt)

@@ -95,7 +95,7 @@ Listed by function then filename in R/.
     - **gff**: Read gff files and take annotation data from them.
     - **text**: Extract putative annotation data from various text formats,
       primarily the csv files from trinity.
-    - ** kegg**: Use the KEGG webservices api.
+    - **kegg**: Use the KEGG webservices api.
 * ExpressionSets:  Attempts to simplify gathering together
   counts/annotations/designs.
     - **tximport**:  Uses tximport when given filenames ending in supprted extensions.
@@ -154,7 +154,7 @@ Listed by function then filename in R/.
     - **shared**: Calls functions in the ontology_* files.
 * Random bits:
     - **snp**: Some functions to gather snp data into hopefully easier data
-      structures.
+               structures.
     - **proteomics**: Parsers for mzXML data, plotters for the data they contain.
     - **kmeans**: A couple functions for kmeans clustering and visualization from Keith and Ginger.
     - **motif**: Some motif analysis wrappers.
@@ -174,25 +174,25 @@ Listed by function then filename in R/.
   probably be careful to use the preserving method: (http://adv-r.had.co.nz/Subsetting.html#subsetting-operators)
   Here are the preserving methods for the first and third elements of each type:
 
-    ** vec <- as.vector(c(1,2,3,4,5,6))   :: vec[c(1,3)]
-    ** lst <- as.list(c(1,2,3,4,5,6))     :: lst[c(1,3)]
-    ** fac <- as.factor(c(1,2,3,4,5,6))   :: fac[c(1,3), drop=FALSE]
+    * vec <- as.vector(c(1,2,3,4,5,6))   :: vec[c(1,3)]
+    * lst <- as.list(c(1,2,3,4,5,6))     :: lst[c(1,3)]
+    * fac <- as.factor(c(1,2,3,4,5,6))   :: fac[c(1,3), drop=FALSE]
 
- FALSE is default, which is important if you want to get rid of unused levels, at least for my work
- drop=TRUE is helpful
+* FALSE is default, which is important if you want to get rid of unused levels, at least for my work
+  drop=TRUE is helpful
 
-    ** arr <- as.array(c(1,2,3,4,5,6))    :: arr[c(1,3), drop=FALSE]
-              Hadley's example doesn't work for me x[, 1, drop=FALSE]
-    ** df <- data.frame(id=c('a','b','c','d'), data=c(1,2,3,4))  :: df[, 'id', drop=FALSE]
+    * arr <- as.array(c(1,2,3,4,5,6))    :: arr[c(1,3), drop=FALSE]
+             Hadley's example doesn't work for me x[, 1, drop=FALSE]
+    * df <- data.frame(id=c('a','b','c','d'), data=c(1,2,3,4))  :: df[, 'id', drop=FALSE]
 
-In contrast, the simplifying methods coerce the results into a different data type, which may be
-either awesome or obnoxious depending on context.  An example of awesome would include times when
-you want to subset a list and just get the character representation of what is left after the
-subset.  If you take the above lst[c(1,3)] you get back the names and values, but if you instead do
-lst[[1]] you get just '1' -- trying lst[[c(1,2)]] ends badly, I am not sure why.
+* In contrast, the simplifying methods coerce the results into a different data type, which may be
+  either awesome or obnoxious depending on context.  An example of awesome would include times when
+  you want to subset a list and just get the character representation of what is left after the
+  subset.  If you take the above lst[c(1,3)] you get back the names and values, but if you instead do
+  lst[[1]] you get just '1' -- trying lst[[c(1,2)]] ends badly, I am not sure why.
 
-* vec[[1]]
-* lst[[1]]
-* fac[1:2, drop=TRUE]
-* array[c(1,2), drop=TRUE]  TRUE is the default
-* df[['id']] or df[, 'id']  drop=TRUE is default
+    * vec[[1]]
+    * lst[[1]]
+    * fac[1:2, drop=TRUE]
+    * array[c(1,2), drop=TRUE]  TRUE is the default
+    * df[['id']] or df[, 'id']  drop=TRUE is default

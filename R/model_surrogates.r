@@ -115,7 +115,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx,
                                             mod=conditional_model, method=surrogates))
       }
-      message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
+      message(paste0("The ", surrogates, " method chose ",
+                     chosen_surrogates, " surrogate variable(s)."))
     } else if (class(surrogates) == "numeric") {
       message(paste0("A specific number of surrogate variables was chosen: ", surrogates, "."))
       chosen_surrogates <- surrogates
@@ -457,13 +458,16 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
   ## This needs to be redone to take into account how I organized the adjustments!!!
   num_adjust <- length(adjustments)
-  if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-    catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
-                                        -rank(tstats[["null"]]),
-                                        maxrank=1000,
-                                        make.plot=TRUE)
-  } else {
-    catplots[["null"]] <- NULL
+  if (isTRUE(do_catplots)) {
+    if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+      catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
+                                          -rank(tstats[["null"]]),
+                                          maxrank=1000,
+                                          make.plot=TRUE)
+    } else {
+      message("ffpe is not in the list of installed packages, not doing catplots.")
+      catplots[["null"]] <- NULL
+    }
   }
   oldpar <- par(mar=c(5, 5, 5, 5))
   for (adjust in adjustments) {
