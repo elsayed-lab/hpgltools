@@ -1336,6 +1336,13 @@ read_metadata <- function(file, ...) {
   return(definitions)
 }
 
+semantic_expt_filter <- function(input, max_copies=2, invert=TRUE,
+                                 semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
+                                 semantic_column="description") {
+  message("Not done yet.")
+  return(output)
+}
+
 #' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the conditions/batches of

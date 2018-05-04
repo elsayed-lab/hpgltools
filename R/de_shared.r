@@ -1952,26 +1952,32 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 #'   ## Get rid of all genes with 'ribosomal' in the annotations.
 #' }
 #' @export
-semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, invert=TRUE,
+semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, invert=TRUE,
                                        semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                        semantic_column="1.tooltip") {
+  if (class(input) == "expt") {
+    result <- semantic_expt_filter(input, max_copies=max_copies, invert=invert,
+                                   semantic=semantic, semantic_column=semantic_column)
+    return(result)
+  }
+
   table_type <- "significance"
-  if (!is.null(de_list[["data"]])) {
+  if (!is.null(input[["data"]])) {
     table_type <- "combined"
   }
   type <- "Kept"
 
   table_list <- NULL
   if (table_type == "combined") {
-    table_list <- de_list[["data"]]
+    table_list <- input[["data"]]
   } else {
     ## The set of significance tables will be 2x the number of contrasts
     ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
-    table_list <- c(de_list[["ups"]], de_list[["downs"]])
-    upnames <- paste0("up_", names(de_list[["ups"]]))
-    downnames <- paste0("down_", names(de_list[["downs"]]))
+    table_list <- c(input[["ups"]], input[["downs"]])
+    upnames <- paste0("up_", names(input[["ups"]]))
+    downnames <- paste0("down_", names(input[["downs"]]))
     names(table_list) <- c(upnames, downnames)
-    up_to_down <- length(de_list[["ups"]])
+    up_to_down <- length(input[["ups"]])
   }
 
   numbers_removed <- list()
@@ -2029,7 +2035,7 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
     ## Now recreate the original table lists as either de tables or significance.
     if (table_type == "combined") {
       for (count in 1:length(table_list)) {
-        de_list[["data"]][[count]] <- table_list[[count]]
+        input[["data"]][[count]] <- table_list[[count]]
       }
     } else {
       ## Then it is a set of significance tables.
@@ -2037,18 +2043,18 @@ semantic_copynumber_filter <- function(de_list, max_copies=2, use_files=FALSE, i
         table_name <- names(table_list)[count]
         if (grep(pattern="^up_", table_name)) {
           newname <- gsub(pattern="^up_", replacement="", x=table_name)
-          de_list[["ups"]][[newname]] <- table_list[[count]]
+          input[["ups"]][[newname]] <- table_list[[count]]
         } else {
           newname <- gsub(pattern="^down_", replacement="", x=table_name)
-          de_list[["downs"]][[newname]] <- table_list[[count]]
+          input[["downs"]][[newname]] <- table_list[[count]]
         }
       }
     }
   }
   ## Now the tables should be reconstructed.
-  de_list[["numbers_removed"]] <- numbers_removed
-  de_list[["type"]] <- type
-  return(de_list)
+  input[["numbers_removed"]] <- numbers_removed
+  input[["type"]] <- type
+  return(input)
 }
 
 #' Get rid of characters which will mess up contrast making and such before playing with an expt.

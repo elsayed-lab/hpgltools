@@ -114,9 +114,9 @@ load_host_annotations <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
 #' }
 #' @export
 load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, keytype="ensembl",
-                                   strand_column="txstrand", start_column="txstart",
-                                   end_column="txend",  chromosome_column="chr",
-                                   type_column="type", name_column="genename",
+                                   strand_column="txstrand", start_column="cdsstart",
+                                   end_column="cdsend",  chromosome_column="cdschrom",
+                                   type_column="gene_type", name_column="cdsname",
                                    fields=NULL, sum_exons=FALSE) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
@@ -135,6 +135,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
   name_column <- toupper(name_column)
   fields <- toupper(fields)
   all_fields <- AnnotationDbi::columns(orgdb)
+  chosen_fields <- c()
 
   if (! name_column %in% all_fields) {
     a_name <- grepl(pattern="NAME", x=all_fields)
@@ -164,24 +165,26 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
   }
 
   if (is.null(fields)) {
-    fields <- c(name_column, type_column, chromosome_column, strand_column, start_column, end_column)
+    chosen_fields <- c(name_column, type_column, chromosome_column, strand_column,
+                       start_column, end_column)
   } else {
-    fields <- c(name_column, type_column, chromosome_column, strand_column, start_column, end_column, fields)
+    chosen_fields <- c(name_column, type_column, chromosome_column, strand_column,
+                       start_column, end_column, fields)
+  }
+
+  if (sum(chosen_fields %in% all_fields) != length(chosen_fields)) {
+    missing_idx <- ! chosen_fields %in% all_fields
+    missing_fields <- chosen_fields[missing_idx]
+    found_fields <- chosen_fields %in% all_fields
+    chosen_fields <- chosen_fields[found_fields]
+    message(paste0("Some requested columns are not available: ", toString(missing_fields), "."))
+    message(paste0("The following are available: ", toString(all_fields)))
   }
 
   if (fields[1] == "all") {
     message(paste0("Selecting the following fields, this might be too many: \n",
                    toString(all_fields)))
-    fields <- all_fields
-  }
-
-  if (sum(fields %in% all_fields) != length(fields)) {
-    missing_idx <- ! fields %in% all_fields
-    missing_fields <- fields[missing_idx]
-    found_fields <- fields %in% all_fields
-    fields <- fields[found_fields]
-    message(paste0("Some requested columns are not available: ", toString(missing_fields), "."))
-    message(paste0("The following are available: ", toString(all_fields)))
+    chosen_fields <- all_fields
   }
 
   ## Gene IDs
@@ -199,12 +202,18 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
     }
   }
   ## Note querying by "GENEID" will exclude noncoding RNAs
-
-  gene_info <- AnnotationDbi::select(
-                                x=orgdb,
-                                keys=gene_ids,
-                                keytype=keytype,
-                                columns=fields)
+  message(paste0("Attempting to select: ", toString(fields)))
+  gene_info <- try(AnnotationDbi::select(
+                                    x=orgdb,
+                                    keys=gene_ids,
+                                    keytype=keytype,
+                                    columns=chosen_fields))
+  if (class(gene_info) == "try-error") {
+    message("Select statement failed, this is most commonly because there is not a provided join between the transcript table and others.")
+    message("Thus it says some stupid crap about 'please add gtc to the interpolator' which I think references select-method.R in GenomicFeatures.")
+    message("So, try replacing columns with stuff like 'tx*' with 'cds*'?")
+    stop()
+  }
 
   ## Compute total transcript lengths (for all exons)
   ## https://www.biostars.org/p/83901/

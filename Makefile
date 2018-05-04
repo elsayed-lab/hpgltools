@@ -22,10 +22,10 @@ clean:
 	for testdir in travis all_functions slow_tests; do \
 	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
 	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview \
-	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb ;\
+	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb tests/$${testdir}/BSgenome* ;\
 	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
 	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \
-	    tests/$${testdir}/*.Rdata ;\
+	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json ;\
 	done
 
 clean_vignette:

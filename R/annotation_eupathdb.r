@@ -549,6 +549,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   } else if (is.null(entry)) {
     if (is.null(metadata)) {
       metadata <- download_eupath_metadata(dir=dir, ...)
+      ## metadata <- download_eupath_metadata(dir=dir)
     }
     entry <- check_eupath_species(species=species, metadata=metadata)
   }
