@@ -157,6 +157,27 @@ extract_eupath_orthologs <- function(db, master="GID",
   return(kept_orthos_dt)
 }
 
+#' Clean up the gene location field from eupathdb derived gene location data.
+#'
+#' @param annot_df Data frame resulting from load_orgdb_annotations()
+#' @param column Name of the column to extract the start/end/length/etc from.
+#' @return Somewhat nicer data frame.
+#' @export
+extract_gene_locations <- function(annot_df, column="annot_gene_location_text") {
+  newdf <- annot_df %>%
+    tidyr::separate(column,
+                    c("chromosome", "location"), ":")
+  newdf <- newdf %>%
+    tidyr::separate("location", c("start", "end"), "\\.\\.")
+  newdf[["start"]] <- as.numeric(gsub(pattern="\\,", replacement="", x=newdf[["start"]]))
+  newdf <- newdf %>%
+    tidyr::separate("end", c("end", "strand"), "\\(")
+  newdf[["end"]] <- as.numeric(gsub(pattern="\\,", replacement="", x=newdf[["end"]]))
+  newdf[["strand"]] <- as.factor(gsub(pattern="\\)", replacement="", x=newdf[["strand"]]))
+  newdf[["length"]] <- abs(newdf[["start"]] - newdf[["end"]])
+  return(newdf)
+}
+
 #' Generate a BSgenome package from the eupathdb.
 #'
 #' Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packages, it
@@ -333,7 +354,7 @@ get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
   pkg_list <- list(
     "bsgenome" = paste0("BSGenome.", taxa[["taxon"]], ".v", entry[["SourceVersion"]]),
     "bsgenome_installed" = FALSE,
-    "organismdbi" = paste0(taxa[["taxon"]], ".v", entry[["SourceVersion"]]),
+    "organismdbi" = paste0("eupathdb.", taxa[["taxon"]], ".v", entry[["SourceVersion"]]),
     "organismdbi_installed" = FALSE,
     "orgdb" = paste0("org.", first_char, taxa[["species_strain"]], ".v",
                      entry[["SourceVersion"]], ".eg.db"),
@@ -579,33 +600,32 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   chosen_provider <- entry[["DataProvider"]]
   chosen_species <- entry[["Species"]]
 
-  message("Downloading full annotation table.")
   gene_table <- try(post_eupath_annotations(species=chosen_species, entry=entry, dir=dir))
   if (class(gene_table) == "try-error") {
     gene_table <- data.frame()
   }
-  message("Downloading GO table.")
+
   go_table <- try(post_eupath_go_table(species=chosen_species, entry=entry, dir=dir))
   if (class(go_table) == "try-error") {
     go_table <- data.frame()
   }
-  message("Downloading ortholog table.")
+
   ## ortholog_table <- try(post_eupath_ortholog_table(species=chosen_species, entry=entry, dir=dir))
   ortholog_table <- try(get_orthologs_all_genes(species=chosen_species, entry=entry, dir=dir))
   if (class(ortholog_table) == "try-error") {
     ortholog_table <- data.frame()
   }
-  message("Downloading interpro table.")
+
   interpro_table <- try(post_eupath_interpro_table(species=chosen_species, entry=entry, dir=dir))
   if (class(interpro_table) == "try-error") {
     interpro_table <- data.frame()
   }
-  message("Downloading pathway table.")
+
   pathway_table <- try(post_eupath_pathway_table(species=chosen_species, entry=entry, dir=dir))
   if (class(pathway_table) == "try-error") {
     pathway_table <- data.frame()
   }
-  ## message("Downloading kegg table.")
+
   ## kegg_table <- try(load_kegg_annotations(species=taxa[["genus_species"]],
   ##                                         flatten=FALSE, abbreviation=kegg_abbreviation))
   kegg_table <- data.frame()
@@ -617,15 +637,15 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
     return(NULL)
   }
 
-  chromosome_table <- gene_table[, c("GID", "GENOMIC_SEQUENCE_ID")]
+  chromosome_table <- gene_table[, c("GID", "ANNOT_SEQUENCE_ID")]
   colnames(chromosome_table) <- c("GID", "CHR_ID")
-  type_table <- gene_table[, c("GID", "GENE_TYPE")]
+  type_table <- gene_table[, c("GID", "ANNOT_GENE_TYPE")]
   colnames(type_table) <- c("GID", "GENE_TYPE")
 
   ## Compile list of arguments for makeOrgPackage call
   version_string <- format(Sys.time(), "%Y.%m")
   orgdb_args <- list(
-    "gene_info"  = gene_table,
+    "gene_info" = gene_table,
     "chromosome" = chromosome_table,
     "type" = type_table,
     "version" = version_string,

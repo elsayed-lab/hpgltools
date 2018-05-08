@@ -6,9 +6,9 @@
 \usage{
 load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
   keytype = "ensembl", strand_column = "txstrand",
-  start_column = "txstart", end_column = "txend",
-  chromosome_column = "chr", type_column = "type",
-  name_column = "genename", fields = NULL, sum_exons = FALSE)
+  start_column = "cdsstart", end_column = "cdsend",
+  chromosome_column = "cdschrom", type_column = "gene_type",
+  name_column = "cdsname", fields = NULL, sum_exons = FALSE)
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
