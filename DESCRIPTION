@@ -57,7 +57,6 @@ Collate:
     'annotation_microbesonline.r'
     'annotation_orgdb.r'
     'annotation_shared.r'
-    'annotation_tritrypdb.r'
     'annotation_txt.r'
     'annotation_uniprot.r'
     'de_basic.r'

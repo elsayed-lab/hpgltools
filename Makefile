@@ -17,8 +17,8 @@ clean:
 	rm -rf ./..Rcheck &
 	rm -rf hpgltools.Rcheck/
 	rm -f hpgltools_${VERSION}.tar.gz
-	rm -rf vignettes/circos
-	rm -f vignettes/*.gff vignettes/*.pdf
+	rm -rf vignettes/circos vignettes/pasilla_*
+	rm -f vignettes/*.gff vignettes/*.pdf 
 	for testdir in travis all_functions slow_tests; do \
 	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
 	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview \
