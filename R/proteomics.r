@@ -362,23 +362,29 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
     chosen_palette <- arglist[["palette"]]
   }
 
-  file_column <- "file"
-  if (!is.null(arglist[["file_column"]])) {
-    file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-    file_column <- tolower(file_column)
-    file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
-    ## tables / sample in one sheet.
+  sample_definitions <- data.frame()
+  if (class(metadata) == "data.frame") {
+    sample_definitions <- metadata
+  } else {
+    file_column <- "file"
+    if (!is.null(arglist[["file_column"]])) {
+      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+      file_column <- tolower(file_column)
+      file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
+      ## tables / sample in one sheet.
+    }
+
+    sample_column <- "sampleid"
+    if (!is.null(arglist[["sample_column"]])) {
+      sample_column <- arglist[["sample_column"]]
+      sample_column <- tolower(sample_column)
+      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
 
-  sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+    sample_definitions <- extract_metadata(metadata, ...)
+    ## sample_definitions <- extract_metadata(metadata)
   }
 
-  sample_definitions <- extract_metadata(metadata, ...)
-  ## sample_definitions <- extract_metadata(metadata)
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
   meta <- sample_definitions[, c("sampleid", file_column)]
@@ -411,15 +417,21 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      returns[[file]] <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        returns[[file]] <- file_result
+      }
     }
-      close(bar)
-      parallel::stopCluster(cl)
+    close(bar)
+    parallel::stopCluster(cl)
   } else {
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      res[[file]] <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        res[[file]] <- file_result
+      }
     }
   }
 
@@ -605,16 +617,20 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 #' @param ...  Extra arguments for the downstream functions.
 #' @return  ggplot2 goodness.
 #' @export
-plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
+plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, y_scale=NULL, ...) {
   arglist <- list(...)
   metadata <- mzxml_data[["metadata"]]
   colors <- mzxml_data[["colors"]]
   sample_data <- mzxml_data[["sample_data"]]
   plot_df <- data.frame()
   samples <- length(sample_data)
-
+  keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
+    if (class(sample_data[[i]]) == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
     message(paste0("Adding ", name))
     plotted_table <- sample_data[[i]][["scans"]]
     plotted_data <- plotted_table[, c("basepeakmz", "basepeakintensity")]
@@ -624,6 +640,11 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
     ## Re-order the columns because I like sample first.
     plot_df <- rbind(plot_df, plotted_data)
   }
+
+  ## Drop rows from the metadata and colors which had errors.
+  metadata <- metadata[, keepers]
+  colors <- colors[keepers]
+
   chosen_palette <- "Dark2"
   sample_colors <- sm(
     grDevices::colorRampPalette(
@@ -631,6 +652,13 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
 
   ## Randomize the rows of the df so we can see if any sample is actually overrepresented
   plot_df <- plot_df[sample(nrow(plot_df)), ]
+
+  if (!is.null(x_scale)) {
+    plot_df[["mz"]] <- check_plot_scale(plot_df[["mz"]], scale)[["data"]]
+  }
+  if (!is.null(y_scale)) {
+    plot_df[["intensity"]] <- check_plot_scale(plot_df[["intensity"]], scale)[["data"]]
+  }
 
   int_vs_mz <- ggplot(data=plot_df, aes_string(x="mz", y="intensity",
                                                fill="sample", colour="sample")) +
@@ -642,6 +670,14 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
                name="Sample", values=sample_colors,
                guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
     ggplot2::theme_bw(base_size=base_size)
+
+  if (!is.null(x_scale)) {
+    int_vs_mz <- int_vs_mz + ggplot2::scale_x_continuous(trans=scales::log2_trans())
+  }
+  if (!is.null(y_scale)) {
+    int_vs_mz <- int_vs_mz + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+  }
+
   if (isTRUE(lowess)) {
     int_vs_mz <- int_vs_mz +
       ggplot2::geom_smooth(method="loess", size=1.0)
@@ -676,8 +712,13 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   sample_data <- mzxml_data[["sample_data"]]
   plot_df <- data.frame()
   samples <- length(sample_data)
+  keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
+    if (class(sample_data[[i]]) == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
     message(paste0("Adding ", name))
     plotted_table <- sample_data[[i]][[table]]
     plotted_data <- as.data.frame(plotted_table[[column]])
@@ -688,8 +729,14 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
     plot_df <- rbind(plot_df, plotted_data)
   }
 
+  ## Drop rows from the metadata and colors which had errors.
+  metadata <- metadata[, keepers]
+  colors <- colors[keepers]
+
   scale_data <- check_plot_scale(plot_df[[column]], scale)
-  scale <- scale_data[["scale"]]
+  if (is.null(scale)) {
+    scale <- scale_data[["scale"]]
+  }
   plot_df[[column]] <- scale_data[["data"]]
 
   boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +

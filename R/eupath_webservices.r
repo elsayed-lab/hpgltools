@@ -474,7 +474,7 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
 #' @return  A big honking table.
 post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
                                     metadata=NULL, dir="eupathdb", ...) {
-  savefile <- "annotations.rda"
+  savefile <- file.path(dir, "annotations.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -618,7 +618,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
 #' @return  A big honking table.
 post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
                                  metadata=NULL, dir="eupathdb", ...) {
-  savefile <- "go_table.rda"
+  savefile <- file.path(dir, "go_table.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -675,7 +675,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
 #' @return  A big honking table.
 post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
                                        metadata=NULL, dir="eupathdb", ...) {
-  savefile <- "ortholog_table.rda"
+  savefile <- file.path(dir, "ortholog_table.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -765,7 +765,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- "interpro_table"
+  savefile <- file.path(dir, "interpro_table")
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -823,7 +823,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- "pathway_table.rda"
+  savefile <- file.path(dir, "pathway_table.rda")
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -877,7 +877,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
                             parameters=parameters,
                             columns=field_list)
 
-  savefile <- "ortholog_table.rda"
+  savefile <- file.path(dir, "ortholog_table.rda")
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -888,7 +888,6 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
   }
 
   all_orthologs <- data.frame()
-
   message("Downloading orthologs, one gene at a time.")
   bar <- utils::txtProgressBar(style=3)
   for (c in 1:length(result)) {
@@ -933,13 +932,17 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   }
 
   question <- "GenesOrthologousToAGivenGene"
-  params_uri <- sprintf("http://%s.org/%s/webservices/GeneQuestions/%s.wadl", provider, uri_prefix, question)
+  ## I am not sure what I was doing with the following 5 lines of code.
+  ## It looks like I was intending to gather the set of required parameters programmatically.
+  ## However I did not finish the logic.
+  params_uri <- sprintf("http://%s.org/%s/webservices/GeneQuestions/%s.wadl",
+                        provider, uri_prefix, question)
   result <- xml2::read_html(params_uri)
   test <- rvest::html_nodes(result, "param")
   param_string <- rvest::html_attr(x=test, name="default")[[1]]
 
   parameters <- list(
-    "organism" = jsonlite::unbox(param_string),
+    "organism" = jsonlite::unbox(species),
     "single_gene_id" = jsonlite::unbox(gene))
   columns <- c("primary_key", "organism", "orthomcl_link",
                "gene_ortholog_number", "gene_paralog_number")
