@@ -8,7 +8,7 @@
 #' @author  Keith Hughitt
 #' @export
 download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
-                                     dir="eupathdb", use_savefile=TRUE) {
+                                     dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
   savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
@@ -43,16 +43,28 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     "TrichDB" = c(shared_tags, "Trichomonas"),
     "TriTrypDB" = c(shared_tags, "Trypanosome", "Kinetoplastid", "Leishmania"))
   tag_strings <- lapply(tags, function(x) {
-    paste(x, collapse=",") })
+    paste(x, collapse=",")
+  })
 
   ## construct API request URL
+  ##base_url <- paste0("https://", webservice, ".org/", webservice, "/webservices/")
   base_url <- paste0("https://", webservice, ".org/", webservice, "/webservices/")
   query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
   request_url <- paste0(base_url, query_string)
 
   ## retrieve organism metadata from EuPathDB
   metadata_json <- paste0(dir, "/metadata.json")
-  file <- download.file(url=request_url, destfile=metadata_json)
+  file <- try(download.file(url=request_url, destfile=metadata_json), silent=TRUE)
+  if (class(file) == "try-error") {
+    ## Try again without https?
+    base_url <- paste0("http://", webservice, ".org/", webservice, "/webservices/")
+    query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
+    request_url <- paste0(base_url, query_string)
+    ## retrieve organism metadata from EuPathDB
+    metadata_json <- paste0(dir, "/metadata.json")
+    file <- download.file(url=request_url, destfile=metadata_json)
+  }
+
   result <- jsonlite::fromJSON(metadata_json)
   records <- result[["response"]][["recordset"]][["records"]]
   message(paste0("Downloaded: ", request_url))
@@ -474,7 +486,6 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
 #' @return  A big honking table.
 post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
                                     metadata=NULL, dir="eupathdb", ...) {
-  savefile <- file.path(dir, "annotations.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -482,10 +493,11 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
       metadata <- sm(download_eupath_metadata(dir=dir, ...))
       ## metadata <- sm(download_eupath_metadata(dir=dir))
     }
-    entry <- check_eupath_species(species=species, metadata=metadata)
+    entry <- check_eupath_species(species=species, metadata=metadata, ...)
     species <- entry[["Species"]]
   }
 
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "_annotations.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -618,7 +630,6 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
 #' @return  A big honking table.
 post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
                                  metadata=NULL, dir="eupathdb", ...) {
-  savefile <- file.path(dir, "go_table.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -633,6 +644,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
   ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
   ## from Cristina
 
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "_go_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -675,7 +687,6 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
 #' @return  A big honking table.
 post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
                                        metadata=NULL, dir="eupathdb", ...) {
-  savefile <- file.path(dir, "ortholog_table.rda")
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -708,6 +719,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "_ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -765,7 +777,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, "interpro_table")
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "_interpro_table"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -823,7 +835,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, "pathway_table.rda")
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "_pathway_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
@@ -877,7 +889,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
                             parameters=parameters,
                             columns=field_list)
 
-  savefile <- file.path(dir, "ortholog_table.rda")
+  savefile <- file.path(dir, paste0(entry[["Genome"]], "ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message(paste0("Delete the file ", savefile, " to regenerate."))
