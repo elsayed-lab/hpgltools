@@ -890,10 +890,11 @@ features_in_single_condition <- function(expt, cutoff=2) {
 #'   column.
 #' @param ...  Other arguments like a color palette, etc.
 #' @return  Colors!
-generate_expt_colors <- function(sample_definitions, ...) {
+generate_expt_colors <- function(sample_definitions, cond_column="condition", ...) {
   arglist <- list(...)
   ## First figure out how many conditions we have
-  chosen_colors <- as.character(sample_definitions[["condition"]])
+  colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+  chosen_colors <- as.character(sample_definitions[[cond_column]])
   num_conditions <- length(levels(as.factor(chosen_colors)))
 
   chosen_palette <- "Dark2"

@@ -366,23 +366,23 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
   if (class(metadata) == "data.frame") {
     sample_definitions <- metadata
   } else {
-    file_column <- "file"
-    if (!is.null(arglist[["file_column"]])) {
-      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-      file_column <- tolower(file_column)
-      file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
-      ## tables / sample in one sheet.
-    }
+      sample_definitions <- extract_metadata(metadata, ...)
+      ## sample_definitions <- extract_metadata(metadata)
+  }
 
-    sample_column <- "sampleid"
-    if (!is.null(arglist[["sample_column"]])) {
+  file_column <- "file"
+  if (!is.null(arglist[["file_column"]])) {
+      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+      ##file_column <- tolower(file_column)
+      ##file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
+      ## tables / sample in one sheet.
+  }
+
+  sample_column <- "sampleid"
+  if (!is.null(arglist[["sample_column"]])) {
       sample_column <- arglist[["sample_column"]]
       sample_column <- tolower(sample_column)
       sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
-
-    sample_definitions <- extract_metadata(metadata, ...)
-    ## sample_definitions <- extract_metadata(metadata)
   }
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
