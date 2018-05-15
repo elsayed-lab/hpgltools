@@ -5,7 +5,7 @@
 \title{Returns metadata for all eupathdb organisms.}
 \usage{
 download_eupath_metadata(overwrite = FALSE, webservice = "eupathdb",
-  dir = "eupathdb", use_savefile = TRUE)
+  dir = "eupathdb", use_savefile = TRUE, ...)
 }
 \arguments{
 \item{overwrite}{Overwrite existing data?}

@@ -267,7 +267,8 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
 #' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 #' }
 #' @export
-sum_exons <- function(data=NULL, gff=NULL, annotdf=NULL, parent="Parent", child="row.names") {
+sum_exon_widths <- function(data=NULL, gff=NULL, annotdf=NULL,
+                            parent="Parent", child="row.names") {
   if (is.null(annotdf) & is.null(gff)) {
     stop("I need either a df with parents, children, and widths; or a gff filename.")
   } else if (is.null(annotdf)) {

@@ -103,7 +103,7 @@ load_host_annotations <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype mmm the key type used?
 #' @param fields Columns included in the output.
-#' @param sum_exons Perform a sum of the exons in the data set?
+#' @param sum_exon_widths Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 #' @seealso \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
 #'  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
@@ -117,7 +117,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
                                    strand_column="txstrand", start_column="cdsstart",
                                    end_column="cdsend",  chromosome_column="cdschrom",
                                    type_column="gene_type", name_column="cdsname",
-                                   fields=NULL, sum_exons=FALSE) {
+                                   fields=NULL, sum_exon_widths=FALSE) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
@@ -226,7 +226,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
     transcripts <- NULL
   }
   colnames(gene_info) <- tolower(colnames(gene_info))
-  if (isTRUE(sum_exons)) {
+  if (isTRUE(sum_exon_widths)) {
     message("Summing exon lengths, this takes a while.")
     lengths <- lapply(gene_exons, function(x) {
       sum(BiocGenerics::width(GenomicRanges::reduce(x)))

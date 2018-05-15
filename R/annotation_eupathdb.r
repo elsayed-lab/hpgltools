@@ -151,9 +151,9 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
 extract_eupath_orthologs <- function(db, master="GID",
                                      query_species=NULL,
                                      id_column="ORTHOLOG_ID",
-                                     org_column="ORTHOLOGS_ORGANISM",
-                                     url_column="ORTHOLOGS_ORTHOLOG_GROUP",
-                                     count_column="ORTHOLOGS_ORTHOLOG_COUNT",
+                                     org_column="ORGANISM",
+                                     url_column="ORTHOLOG_GROUP",
+                                     count_column="ORTHOLOG_COUNT",
                                      print_speciesnames=FALSE) {
 
   load_pkg <- function(name, ...) {
@@ -187,6 +187,17 @@ extract_eupath_orthologs <- function(db, master="GID",
 
   columns <- c(id_column, org_column, url_column, count_column)
   gene_set <- AnnotationDbi::keys(pkg, keytype=master)
+  column_set <- AnnotationDbi::columns(pkg)
+  column_intersect <- columns %in% column_set
+  if (sum(column_intersect) == length(columns)) {
+    message("Found all the required columns!")
+  } else {
+    missing_idx <- ! columns %in% column_set
+    missing <- columns[missing_idx]
+    message(paste0("Some columns were missing: ", toString(missing)))
+    message("Removing them, which may end badly.")
+    columns <- columns[column_intersect]
+  }
   all_orthos <- AnnotationDbi::select(x=pkg,
                                       keytype=master,
                                       keys=gene_set,
@@ -491,10 +502,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   pkgname <- pkgnames[["organismdbi"]]
   if (isTRUE(pkgnames[["organismdbi_installed"]]) & !isTRUE(reinstall)) {
     message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
-    retlist <- list(
-      "organdb_name" = pkgname
-    )
-    return(retlist)
+    return(pkgnames)
   }
   orgdb_name <- pkgnames[["orgdb"]]
   txdb_name <- pkgnames[["txdb"]]
