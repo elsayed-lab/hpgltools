@@ -8,7 +8,7 @@ load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
   keytype = "ensembl", strand_column = "txstrand",
   start_column = "cdsstart", end_column = "cdsend",
   chromosome_column = "cdschrom", type_column = "gene_type",
-  name_column = "cdsname", fields = NULL, sum_exons = FALSE)
+  name_column = "cdsname", fields = NULL, sum_exon_widths = FALSE)
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
@@ -21,7 +21,7 @@ load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
 
 \item{fields}{Columns included in the output.}
 
-\item{sum_exons}{Perform a sum of the exons in the data set?}
+\item{sum_exon_widths}{Perform a sum of the exons in the data set?}
 }
 \value{
 Table of geneids, chromosomes, descriptions, strands, types, and lengths.
