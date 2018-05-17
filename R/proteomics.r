@@ -730,8 +730,12 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   }
 
   ## Drop rows from the metadata and colors which had errors.
-  metadata <- metadata[, keepers]
-  colors <- colors[keepers]
+  if (length(keepers) > 0) {
+    metadata <- metadata[keepers, ]
+    colors <- colors[keepers]
+  } else {
+    stop("Something bad happened to the set of kept samples.")
+  }
 
   scale_data <- check_plot_scale(plot_df[[column]], scale)
   if (is.null(scale)) {
