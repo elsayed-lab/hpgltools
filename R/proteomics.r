@@ -642,7 +642,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, 
   }
 
   ## Drop rows from the metadata and colors which had errors.
-  metadata <- metadata[, keepers]
+  metadata <- metadata[keepers, ]
   colors <- colors[keepers]
 
   chosen_palette <- "Dark2"
@@ -682,7 +682,10 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, 
     int_vs_mz <- int_vs_mz +
       ggplot2::geom_smooth(method="loess", size=1.0)
   }
-  return(int_vs_mz)
+  retlist <- list(
+    "data" = plotted_data,
+    "plot" = int_vs_mz)
+  return(retlist)
 }
 
 #' Make a boxplot out of some of the various data available in the mzxml data.
