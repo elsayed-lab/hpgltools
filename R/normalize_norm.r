@@ -286,7 +286,7 @@ hpgl_qstats <- function(data, groups, refType="mean",
   for (g in uGroups) {
     index <- (g == groups)
     if (sum(index) == 1) {
-      message(paste0("There was only replicate of type: ", g))
+      message("There was only replicate of type: ", g)
       message("This will likely do terrible things to qsmooth.")
       QBETAS <- cbind(QBETAS, Q[, index])
       SIGMA <- cbind(SIGMA, 0)

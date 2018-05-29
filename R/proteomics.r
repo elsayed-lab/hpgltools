@@ -14,11 +14,11 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   if (is.null(id)) {
     id <- file
   }
-  message(paste0("Reading ", file))
+  message("Reading ", file)
   input <- xml2::read_html(file, options="NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
-  message(paste0("Extracting instrument information for ", file))
+  message("Extracting instrument information for ", file)
   instruments <- rvest::xml_nodes(input, "msinstrument")
   instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
   instrument_values <- c("msmanufacturer", "msmodel", "msionisation", "msmassanalyzer",
@@ -32,7 +32,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   instrument_data[["software_name"]] <- datum %>% rvest::html_attr("name")
   instrument_data[["software_version"]] <- datum %>% rvest::html_attr("version")
 
-  message(paste0("Extracting scan information for ", file))
+  message("Extracting scan information for ", file)
   scans <- rvest::xml_nodes(input, "scan")
   scan_data <- data.frame(row.names=(1:length(scans)), stringsAsFactors=FALSE)
   scan_wanted <- c("peakscount", "scantype", "centroided", "mslevel", "polarity",
@@ -52,7 +52,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     scan_data[[n]] <- as.factor(scan_data[[n]])
   }
 
-  message(paste0("Extracting precursor information for ", file))
+  message("Extracting precursor information for ", file)
   precursors <- rvest::xml_nodes(scans, "precursormz")
   precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors=FALSE)
   precursor_wanted <- c("precursorintensity", "activationmethod",
@@ -74,7 +74,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   precursor_data[["window_end"]] <- precursor_data[["window_center"]] +
     (precursor_data[["windowwideness"]] / 2)
 
-  message(paste0("Coalescing the acquisition windows for ", file))
+  message("Coalescing the acquisition windows for ", file)
   acquisition_windows <- precursor_data[, c("window_start", "window_end")]
   acquisition_unique <- !duplicated(x=acquisition_windows)
   acquisition_windows <- acquisition_windows[acquisition_unique, ]
@@ -98,12 +98,12 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     ## invocation of OpenSwathWorkFlow or whatever it is, _requires_ them.
     ## So, yeah, that is annoying, but whatever.
     pre_file <- file.path(acq_dir, acq_file)
-    message(paste0("Hopefully writing acquisition file to ", pre_file))
+    message("Hopefully writing acquisition file to ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
     osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
     ## This is the file for openswathworkflow.
-    message(paste0("Hopefully writing osw acquisitions to ", osw_file))
+    message("Hopefully writing osw acquisitions to ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
                             sep="\t", quote=FALSE,
                             row.names=FALSE, col.names=TRUE)
@@ -347,7 +347,8 @@ extract_peprophet_data <- function(pepxml, ...) {
 #'   stuff like that.
 #' @return  metadata!#'
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, savefile=NULL, ...) {
+extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
+                               parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -434,6 +435,8 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
       }
     }
   }
+  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
+  names(res) <- rownames(sample_definitions)
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -459,7 +462,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
 #' @export
 read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   old_options <- options(java.parameters="-Xmx20G")
-  message(paste0("Reading ", xlsx_file))
+  message("Reading ", xlsx_file)
   result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
   group_data <- list()
   bar <- utils::txtProgressBar(style=3)
@@ -539,7 +542,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   protein_df <- data.frame()
   peptide_df <- data.frame()
   protein_names <- c()
-  message(paste0("Starting to iterate over ", length(group_data),  " groups."))
+  message("Starting to iterate over ", length(group_data),  " groups.")
   bar <- utils::txtProgressBar(style=3)
   for (g in 1:length(group_data)) {
     pct_done <- g / length(group_data)
@@ -631,7 +634,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, 
       next
     }
     keepers <- c(keepers, i)
-    message(paste0("Adding ", name))
+    message("Adding ", name)
     plotted_table <- sample_data[[i]][["scans"]]
     plotted_data <- plotted_table[, c("basepeakmz", "basepeakintensity")]
     plotted_data[["sample"]] <- name
@@ -722,7 +725,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
       next
     }
     keepers <- c(keepers, i)
-    message(paste0("Adding ", name))
+    message("Adding ", name)
     plotted_table <- sample_data[[i]][[table]]
     plotted_data <- as.data.frame(plotted_table[[column]])
     plotted_data[["sample"]] <- name

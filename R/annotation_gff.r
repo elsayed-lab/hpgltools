@@ -73,7 +73,7 @@ gff2irange <- function(gff, type=NULL) {
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL, row.names=NULL) {
   if (!file.exists(gff)) {
-    stop(paste0("Unable to find the gff file: ", gff))
+    stop("Unable to find the gff file: ", gff)
   }
   ret <- NULL
   attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
@@ -89,7 +89,7 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
   annot <- NULL
   for (att in 1:length(attempts)) {
     annotations <- NULL
-    message(paste0("Trying attempt: ", attempts[[att]]))
+    message("Trying attempt: ", attempts[[att]])
     attempt <- attempts[[att]]
     eval_string <- paste0("annotations <- try(", attempt, ", silent=TRUE)")
     eval(parse(text=eval_string))
@@ -113,11 +113,11 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
       index <- ret[, "type"] == type
       ret <- ret[index, ]
     }
-    message(paste0("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+    message("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows.")
   } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
     ret <- annot
     rm(annot)
-    message(paste0("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows."))
+    message("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows.")
   } else {
     stop("Unable to load gff file.")
   }

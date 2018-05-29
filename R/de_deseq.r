@@ -394,9 +394,9 @@ deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   model_columns <- ncol(data_model)
   model_rank <- qr(data_model)[["rank"]]
   if (model_rank < model_columns) {
-    message(paste0("Including ", num_sv, " will fail because the resulting model is too low rank."))
+    message("Including ", num_sv, " will fail because the resulting model is too low rank.")
     num_sv <- num_sv - 1
-    message(paste0("Trying again with ", num_sv, " surrogates."))
+    message("Trying again with ", num_sv, " surrogates.")
     message("You should consider rerunning the pairwise comparison with the number of
 surrogates explicitly stated with the option surrogates=number.")
     ret <- deseq_try_sv(data, summarized, svs, (num_sv - 1))
@@ -422,7 +422,8 @@ import_deseq <- function(data, column_data, model_string,
   integer_limit <- .Machine[["integer.max"]]
   too_big_idx <- data > integer_limit
   if (sum(too_big_idx) > 0) {
-    warning(paste0("Converted down ", sum(too_big_idx), " elements because they are larger than the maximum integer size."))
+    warning("Converted down ", sum(too_big_idx),
+            " elements because they are larger than the maximum integer size.")
     data[too_big_idx] <- integer_limit
   }
 

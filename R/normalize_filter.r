@@ -201,7 +201,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
   count_table <- count_table[answer, ]
 
   removed <- num_before - nrow(count_table)
-  message(paste0("Removing ", removed, " low-count genes (", nrow(count_table), " remaining)."))
+  message("Removing ", removed, " low-count genes (", nrow(count_table), " remaining).")
 
   libsize <- colSums(count_table)
   counts <- list(count_table=count_table, libsize=libsize)

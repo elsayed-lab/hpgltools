@@ -24,21 +24,21 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
         for (a in 1:length(accessions)) {
           name <- species[a]
           accession <- accessions[a]
-          message(paste0("Downloading the proteome for ", name, "."))
+          message("Downloading the proteome for ", name, ".")
           tmp <- download_uniprot_proteome(accession=accession)
           Sys.sleep(time=3)
         }
     } else if (isTRUE(first)) {
       accession <- accessions[1]
       name <- species[1]
-      message(paste0("Downloading the proteome for ", name, "."))
+      message("Downloading the proteome for ", name, ".")
       tmp <- download_uniprot_proteome(accession=accession)
     } else {
       message("Here are the species found, please choose one and try again.")
       for (a in 1:length(accessions)) {
         name <- species[a]
         accession <- accessions[a]
-        message(paste0(a, ") ", accession, ": ", name))
+        message(a, ") ", accession, ": ", name)
       }
       message(toString(species))
       return(NULL)
@@ -138,7 +138,7 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
     if (grepl(pattern="^GN\\s+", x=line)) {
       pat <- "^GN\\s+.*OrderedLocusNames=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
-        ## message(paste0("Got a locusname on line ", i, " for gene number ", gene_num))
+        ## message("Got a locusname on line ", i, " for gene number ", gene_num)
         ## i=565 is first interesting one.
         tmp_ids <- gsub(pattern=pat, replacement="\\1", x=line)
         tmp_ids <- gsub(pattern="^(.*?),.*", replacement="\\1", x=tmp_ids)
@@ -442,7 +442,7 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
       print(result_df)
       id <- result_df[1, 1]
     } else {
-      message(paste0("Found 1 species, using its ID: ", result_df[1, 1], "."))
+      message("Found 1 species, using its ID: ", result_df[1, 1], ".")
       id <- result_df[1, 1]
     }
   }

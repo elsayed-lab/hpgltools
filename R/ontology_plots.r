@@ -824,7 +824,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map="id2go.map", go_db=NULL,
   interesting_genes <- factor(annotated_genes %in% de_genes[["ID"]])
   names(interesting_genes) <- annotated_genes
 
-  message(paste0("Checking the de_table for a p-value column:", pval_column))
+  message("Checking the de_table for a p-value column:", pval_column)
   if (is.null(de_genes[[pval_column]])) {
     mf_GOdata <- new("topGOdata", ontology="MF", allGenes=interesting_genes,
                      annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)

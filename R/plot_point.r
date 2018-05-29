@@ -853,7 +853,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
   }
   ## Now make sure that the color column has the correct number of elements.
   if (length(color_list) != color_column_number) {
-    message(paste0("The color list must have ", color_column_number, ", setting it to the default."))
+    message("The color list must have ", color_column_number, ", setting it to the default.")
     color_list <- default_color_list
   }
 

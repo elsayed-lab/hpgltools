@@ -14,17 +14,17 @@
 model_test <- function(design, goal="condition", factors=NULL, ...) {
   arglist <- list(...)
   ## For testing, use some existing matrices/data
-  message(paste0("There are ", length(levels(as.factor(design[, goal]))),
-                 " levels in the goal: ", goal, "."))
+  message("There are ", length(levels(as.factor(design[, goal]))),
+          " levels in the goal: ", goal, ".")
   ret_list <- list()
   if (is.null(factors)) {
-    message(paste0("Testing an experimental design with only ", goal, "."))
+    message("Testing an experimental design with only ", goal, ".")
     matrix_all_formula <- as.formula(paste0("~ 0 + ", goal))
     matrix_test <- model.matrix(matrix_all_formula, data=design)
     num_columns <- ncol(matrix_test)
     matrix_decomp <- qr(matrix_test)
-    message(paste0("The model of ", goal, "has ", num_columns,
-                   " levels and rank ", matrix_decomp[["rank"]], "."))
+    message("The model of ", goal, "has ", num_columns,
+            " levels and rank ", matrix_decomp[["rank"]], ".")
     if (matrix_decomp[["rank"]] < num_columns) {
       message("This will not work, a different factor should be used.")
       ret_list[[goal]] <- 0
@@ -35,19 +35,19 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
       if (factor == goal) {
         next
       }
-      message(paste0("Testing an experimental design with ", goal, " and ", factor, "."))
+      message("Testing an experimental design with ", goal, " and ", factor, ".")
       matrix_goal <- design[, goal]
       matrix_factor <- design[, factor]
       if (length(levels(as.factor(matrix_factor))) == 1) {
-        message(paste0("Factor ", factor, " has only 1 level, skipping it."))
+        message("Factor ", factor, " has only 1 level, skipping it.")
         next
       }
       matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
       matrix_test <- model.matrix(matrix_all_formula, data=design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)
-      message(paste0("The model of ", goal, " and ", factor, " has ", num_columns,
-                     " and rank ", matrix_decomp[["rank"]]))
+      message("The model of ", goal, " and ", factor, " has ", num_columns,
+              " and rank ", matrix_decomp[["rank"]])
       if (matrix_decomp[["rank"]] < num_columns) {
         message("This will not work, a different factor should be used.")
         ret_list[[factor]] <- 0
@@ -63,8 +63,8 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
       matrix_test <- model.matrix(matrix_all_formula, data=design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)
-      message(paste0("The model of ", goal, " and ", factor, " has ", num_columns,
-                     " and rank ", matrix_decomp[["rank"]]))
+      message("The model of ", goal, " and ", factor, " has ", num_columns,
+              " and rank ", matrix_decomp[["rank"]])
       if (matrix_decomp[["rank"]] < num_columns) {
         message("This will not work, a different factor should be used.")
         ret_list[[factor]] <- 0

@@ -442,7 +442,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     voom_plot <- grDevices::recordPlot()
   } else if (which_voom == "limma") {
     message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
-    message(paste0("Using normalize.method=", voom_norm, " for voom."))
+    message("Using normalize.method=", voom_norm, " for voom.")
     ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
     ## normalize.method="none", lib.size=NULL, design=NULL
     fun_voom <- limma::voom(
@@ -457,7 +457,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     fun_voom <- edgeR::cpm(data, log=TRUE, prior.count=3)
   } else {
     message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
-    message(paste0("Using normalize.method=", voom_norm, " for voom."))
+    message("Using normalize.method=", voom_norm, " for voom.")
     ## Note to self, the defaults are span=0.5, plot=FALSE, save.plot=FALSE,
     ## normalize.method="none", lib.size=NULL, design=NULL
     fun_voom <- limma::voom(
@@ -479,7 +479,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   ## Do the lmFit() using this model
   pairwise_fits <- NULL
   identity_fits <- NULL
-  message(paste0("Limma step 3/6: running lmFit with method: ", limma_method, "."))
+  message("Limma step 3/6: running lmFit with method: ", limma_method, ".")
   fitted_data <- limma::lmFit(object=fun_voom,
                               design=chosen_model,
                               method=limma_method)
@@ -494,8 +494,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     identity_contrasts <- NULL
     identities <- NULL
     identity_fits <- fitted_data
-    message(paste0("Limma step 5/6: Running eBayes with robust=",
-                   limma_robust, " and trend=", limma_trend, "."))
+    message("Limma step 5/6: Running eBayes with robust=",
+            limma_robust, " and trend=", limma_trend, ".")
     all_pairwise_comparisons <- limma::eBayes(fitted_data,
                                               robust=limma_robust,
                                               trend=limma_trend)
@@ -522,8 +522,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                                                   do_identities=TRUE, do_pairwise=FALSE)
     identities <- identity_contrasts[["all_pairwise_contrasts"]]
     identity_fits <- limma::contrasts.fit(fit=fitted_data, contrasts=identities)
-    message(paste0("Limma step 5/6: Running eBayes with robust=",
-                   limma_robust, " and trend=", limma_trend, "."))
+    message("Limma step 5/6: Running eBayes with robust=",
+            limma_robust, " and trend=", limma_trend, ".")
     if (isTRUE(one_replicate)) {
       all_pairwise_comparisons <- pairwise_fits[["coefficients"]]
       all_identity_comparisons <- pairwise_fits[["coefficients"]]
@@ -656,8 +656,8 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
     ## Then extract the coefficients and identities separately.
     for (c in 1:end) {
       comparison <- coef[c]
-      message(paste0("Limma step 6/6: ", c, "/", end, ": Creating table: ",
-                     comparison, ".  Adjust=", adjust))
+      message("Limma step 6/6: ", c, "/", end, ": Creating table: ",
+              comparison, ".  Adjust=", adjust)
       data_tables[[c]] <- limma::topTable(fit,
                                           adjust.method=adjust,
                                           n=n,

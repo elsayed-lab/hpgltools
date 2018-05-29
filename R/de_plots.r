@@ -117,7 +117,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       the_table <- all_tables[[revname]]
     } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
       message("Unable to find the table in the set of possible tables.")
-      message(paste0("The possible tables are: ", toString(possible_tables)))
+      message("The possible tables are: ", toString(possible_tables))
       stop()
     } else {
       the_table <- all_tables[[the_table]]
@@ -128,7 +128,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     table_parts <- pairwise[["keepers"]][[table]]
     if (is.null(table_parts)) {
       message("Unable to find the table in the set of possible tables.")
-      message(paste0("The possible tables are: ", toString(possible_tables)))
+      message("The possible tables are: ", toString(possible_tables))
       stop()
     }
     fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
@@ -267,7 +267,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
   } else {
     yname <- y
   }
-  message(paste0("Actually comparing ", xname, " and ", yname, "."))
+  message("Actually comparing ", xname, " and ", yname, ".")
 
   ## Now extract the coefficent df
   if (type == "edger") {

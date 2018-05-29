@@ -139,13 +139,13 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
       if (sum(negative_idx) > 0) {
         message("Some data are negative.  We are on log scale, setting them to 0.5.")
         data[negative_idx] <- 0.5
-        message(paste0("Changed ", sum(negative_idx), " negative features."))
+        message("Changed ", sum(negative_idx), " negative features.")
       }
       zero_idx <- data == 0
       if (sum(zero_idx) > 0) {
         message("Some entries are 0.  We are on log scale, setting them to 0.5.")
         data[zero_idx] <- 0.5
-        message(paste0("Changed ", sum(zero_idx), " zero count features."))
+        message("Changed ", sum(zero_idx), " zero count features.")
       }
     } else {
       scale <- "raw"
@@ -290,7 +290,7 @@ plot_qq_all <- function(data, labels="short") {
   count <- 1
   for (i in 1:comparisons) {
     ith <- colnames(data)[i]
-    message(paste("Making plot of ", ith, "(", i, ") vs. a sample distribution.", sep=""))
+    message("Making plot of ", ith, "(", i, ") vs. a sample distribution.")
     tmpdf <- data.frame("ith"=data[, i],
                         "mean"=sample_data[["mean"]])
     colnames(tmpdf) <- c(ith, "mean")
@@ -489,7 +489,7 @@ plot_qq_all_pairwise <- function(data) {
     for (j in 1:rows) {
       ith <- colnames(data)[i]
       jth <- colnames(data)[j]
-      message(paste("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".", sep=""))
+      message("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".")
       tmp <- plot_single_qq(data, x=i, y=j, labels=names)
       logs[[count]] <- tmp[["log"]]
       ratios[[count]] <- tmp[["ratio"]]

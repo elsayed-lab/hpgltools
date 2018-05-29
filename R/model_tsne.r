@@ -29,12 +29,12 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   cond_column <- "condition"
   if (!is.null(arglist[["cond_column"]])) {
     cond_column <- arglist[["cond_column"]]
-    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+    message("Using ", cond_column, " as the condition column in the experimental design.")
   }
   batch_column <- "batch"
   if (!is.null(arglist[["batch_column"]])) {
     batch_column <- arglist[["batch_column"]]
-    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+    message("Using ", batch_column, " as the batch column in the experimental design.")
   }
 
   ## The following if() series is used to check the type of data provided and extract the available
@@ -223,12 +223,12 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
   cond_column <- "condition"
   if (!is.null(arglist[["cond_column"]])) {
     cond_column <- arglist[["cond_column"]]
-    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+    message("Using ", cond_column, " as the condition column in the experimental design.")
   }
   batch_column <- "batch"
   if (!is.null(arglist[["batch_column"]])) {
     batch_column <- arglist[["batch_column"]]
-    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+    message("Using ", batch_column, " as the batch column in the experimental design.")
   }
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]

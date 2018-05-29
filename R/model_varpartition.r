@@ -17,7 +17,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
     if (column %in% colnames(sorted)) {
       sorted <- sorted[order(sorted[[column]], decreasing=decreasing), ]
     } else {
-      message(paste0("The column ", column, "is not in the sorted data frame returned by varpart()."))
+      message("The column ", column, "is not in the sorted data frame returned by varpart().")
       message("Leaving the data frame alone.")
     }
   }
@@ -66,7 +66,7 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
     model_string <- paste0(model_string, " (1|", fact, ") +")
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
-  message(paste0("Attempting mixed linear model with: ", model_string))
+  message("Attempting mixed linear model with: ", model_string)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter=TRUE))
   data <- exprs(norm)
@@ -87,7 +87,7 @@ which are shared among multiple samples.")
   chosen_column <- predictor
   if (is.null(predictor)) {
     chosen_column <- factors[[1]]
-    message(paste0("Placing factor: ", chosen_column, " at the beginning of the model."))
+    message("Placing factor: ", chosen_column, " at the beginning of the model.")
   }
 
   my_sorted <- variancePartition::sortCols(my_extract)

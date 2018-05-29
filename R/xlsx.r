@@ -42,7 +42,6 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   current_sheets <- wb@.xData[[".->sheet_names"]]
   found_sheets <- 0
   if (sheet %in% current_sheets) {
-    ##message(paste0("The sheet: ", sheet, " is in ", toString(current_sheets), "."))
     found_sheets <- found_sheets + 1
   } else {
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
@@ -70,7 +69,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
           }
         }
       } else {
-        message(paste0("Unknown error: ", newsheet))
+        message("Unknown error: ", newsheet)
       }
     }
   }
@@ -96,7 +95,6 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
     ## Originally, this was a single test condition, but I fear I need to do separate tasks for each data type.
     ## If that proves to be the case, I am ready, but until then it remains a series of as.character() castings.
     if (class(data[, test_column]) == "list") {
-      ##  message(paste0("The column: ", col, " is a list."))
       ## The above did not work, trying what I found in:
       ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
       ##list_entries <- is.list(data[, test_column])
@@ -104,13 +102,10 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
       ##cbind(data[!ListCols], t(apply(data[ListCols], 1, unlist)))
       data[, test_column] <- as.character(data[, test_column])
     } else if (class(data[, test_column]) == "vector") {
-      ##  message(paste0("The column: ", col, " is a vector."))
       data[, test_column] <- as.character(data[, test_column])
     } else if (class(data[, test_column]) == "factor") {
-      ##  message(paste0("The column: ", col, " is a factor."))
       data[, test_column] <- as.character(data[, test_column])
     } else if (class(data[, test_column]) == "AsIs") {
-      ##  message(paste0("The column: ", col, " is an AsIs."))
       data[, test_column] <- as.character(data[, test_column])
     }
   }  ## Finished adjusting stupid column types.
@@ -156,7 +151,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
     "end_row" = new_row,
     "end_col" = end_col)
   if (!is.null(excel)) {
-    message(paste0("Saving to: ", excel))
+    message("Saving to: ", excel)
     save_result <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
     ret[["save_result"]] <- save_result
   }
@@ -268,10 +263,10 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                                             height=height, startRow=start_row, startCol=start_col,
                                             units=units, dpi=res))
     if (class(insert_ret) == "try-error") {
-      message(paste0("There was an error inserting the image at: ", png_name))
+      message("There was an error inserting the image at: ", png_name)
     }
   } else {
-    message(paste0("The png file name did not exist: ", png_name))
+    message("The png file name did not exist: ", png_name)
   }
   ret <- list(
     "png_print" = png_print_ret,

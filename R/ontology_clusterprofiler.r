@@ -97,7 +97,6 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
         orgdb_from <- k
         num_hits <- test_num_hits
         de_table_namedf <- test_genes_df
-        ## message(paste0(k, " has more hits with ", num_hits, "."))
       }
       test_sig_hits <- nrow(test_sig_df)
       if (test_sig_hits > num_sig) {
@@ -106,10 +105,10 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
         sig_genes_namedf <- test_sig_df
       }
     }
-    message(paste0("Chose keytype: ", orgdb_from, " for all genes because it had ", num_hits,
-                   " out of ", length(all_genenames), " genes."))
-    message(paste0("Chose keytype: ", orgdb_sig_from, " for sig genes because it had ", num_sig,
-                   " out of ", length(sig_genenames), " genes."))
+    message("Chose keytype: ", orgdb_from, " for all genes because it had ", num_hits,
+            " out of ", length(all_genenames), " genes.")
+    message("Chose keytype: ", orgdb_sig_from, " for sig genes because it had ", num_sig,
+            " out of ", length(sig_genenames), " genes.")
   }
 
   if (is.null(sig_genes[[fc_column]]) & is.null(sig_genes[[second_fc_column]])) {
@@ -143,9 +142,9 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "BP" = as.data.frame(ggo_bp, stringsAsFactors=FALSE),
     "CC" = as.data.frame(ggo_cc, stringsAsFactors=FALSE)
   )
-  message(paste0("Found ", nrow(group_go[["MF"]]),
-                 " MF, ", nrow(group_go[["BP"]]),
-                 " BP, and ", nrow(group_go[["CC"]]), " CC hits."))
+  message("Found ", nrow(group_go[["MF"]]),
+          " MF, ", nrow(group_go[["BP"]]),
+          " BP, and ", nrow(group_go[["CC"]]), " CC hits.")
 
   message("Calculating enriched GO groups.")
   enrich_results <- list(
@@ -187,9 +186,9 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "BP_sig" = as.data.frame(ego_sig_bp, stringsAsFactors=FALSE),
     "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors=FALSE),
     "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors=FALSE))
-  message(paste0("Found ", nrow(enrich_go[["MF_sig"]]),
-                 " MF, ", nrow(enrich_go[["BP_sig"]]),
-                 " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits."))
+  message("Found ", nrow(enrich_go[["MF_sig"]]),
+          " MF, ", nrow(enrich_go[["BP_sig"]]),
+          " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
 
   gse_go <- list()
   de_table_merged <- NULL
@@ -232,9 +231,9 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
       "BP_sig" = as.data.frame(gse_sig_bp, stringsAsFactors=FALSE),
       "CC_all" = as.data.frame(gse_all_cc, stringsAsFactors=FALSE),
       "CC_sig" = as.data.frame(gse_sig_cc, stringsAsFactors=FALSE))
-    message(paste0("Found ", nrow(gse_go[["MF_sig"]]),
-                   " MF, ", nrow(gse_go[["BP_sig"]]),
-                   " BP, and ", nrow(gse_go[["CC_sig"]]), " CC enriched hits."))
+    message("Found ", nrow(gse_go[["MF_sig"]]),
+            " MF, ", nrow(gse_go[["BP_sig"]]),
+            " BP, and ", nrow(gse_go[["CC_sig"]]), " CC enriched hits.")
   }
 
   ## Now extract the kegg organism/gene IDs.
@@ -250,7 +249,8 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   kegg_universe <- KEGGREST::keggConv(kegg_organism, "ncbi-geneid")
   kegg_sig_names <- paste0("ncbi-geneid:", sig_gene_list)
   kegg_sig_intersect <- kegg_sig_names %in% names(kegg_universe)
-  message(paste0("Found ", sum(kegg_sig_intersect), " matches between the significant gene list and kegg universe."))
+  message("Found ", sum(kegg_sig_intersect),
+          " matches between the significant gene list and kegg universe.")
   all_names <- names(kegg_universe)
   small_universe <- kegg_universe[intersect(kegg_sig_names, names(kegg_universe))]
   kegg_sig_ids <- unique(as.character(small_universe))
@@ -273,7 +273,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
 
     kegg_all_names <- paste0("ncbi-geneid:", names(kegg_genelist))
     kegg_all_intersect <- kegg_all_names %in% names(kegg_universe)
-    message(paste0("Found ", sum(kegg_all_intersect), " matches between the gene list and kegg universe."))
+    message("Found ", sum(kegg_all_intersect), " matches between the gene list and kegg universe.")
     all_names <- names(kegg_universe)
     large_universe <- kegg_universe[intersect(kegg_all_names, names(kegg_universe))]
     kegg_all_ids <- unique(as.character(large_universe))
@@ -299,7 +299,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "kegg_sig" = as.data.frame(enrich_kegg, stringsAsFactors=FALSE),
     "kegg_gse_all" = as.data.frame(gse_all_kegg, stringsAsFactors=FALSE),
     "kegg_gse_sig" = as.data.frame(gse_sig_kegg, stringsAsFactors=FALSE))
-  message(paste0("Found ", nrow(kegg_data[["kegg_sig"]]), " KEGG enriched hits."))
+  message("Found ", nrow(kegg_data[["kegg_sig"]]), " KEGG enriched hits.")
 
   david_data <- NULL
   if (isTRUE(do_david)) {
@@ -313,7 +313,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     } else {
       david_data <- as.data.frame(david_search, stringsAsFactors=FALSE)
     }
-    message(paste0("Found ", nrow(david_data), " DAVID hits."))
+    message("Found ", nrow(david_data), " DAVID hits.")
   }
 
   ##testing <- clusterProfiler::enrichPathway(sig_gene_list)
@@ -461,7 +461,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "pvalue_plots" = plotlist)
 
   if (!is.null(excel)) {
-    message(paste0("Writing data to: ", excel, "."))
+    message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_cp_data(retlist, excel=excel)))
     if (class(excel_ret) == "try-error") {
       message("Writing the data to excel failed.")

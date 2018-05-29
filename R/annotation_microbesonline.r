@@ -62,7 +62,7 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
   chosen <- id
   if (!is.null(name)) {
     chosen <- get_microbesonline_ids(name=name)
-    message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
+    message("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], ".")
     chosen <- chosen[1, 1]
   }
   tt <- sm(requireNamespace("RMySQL"))
@@ -123,7 +123,7 @@ load_microbesonline_annotations <- function(ids="160490", name=NULL) {
   retlist <- list()
   for (t in 1:length(id_list)) {
     name <- names(id_list)[[t]]
-    message(paste0("Querying microbesonline for: ", name, "."))
+    message("Querying microbesonline for: ", name, ".")
     id <- id_list[[t]]
     url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
     string <- RCurl::getURL(url)
@@ -163,10 +163,11 @@ load_microbesonline_go <- function(id="160490", name_type="ncbi_tag", name=NULL)
   chosen <- id
   if (is.null(name)) {
     name <- get_microbesonline_name(id=id)
-    message(paste0("Collecting go data for: ", name[1, 1], "."))
+    message("Collecting go data for: ", name[1, 1], ".")
   } else {
     chosen <- get_microbesonline_ids(name=name)
-    message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
+    message("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ",
+            chosen[1, 2], ".")
     chosen <- chosen[1, 1]
   }
   tt <- sm(requireNamespace("RMySQL"))
@@ -246,7 +247,8 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
   chosen <- id
   if (!is.null(name)) {
     chosen <- get_microbesonline_ids(name=name)
-    message(paste0("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ", chosen[1, 2], "."))
+    message("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ",
+            chosen[1, 2], ".")
     chosen <- chosen[1, 1]
   }
 
@@ -268,7 +270,7 @@ load_microbesonline_kegg <- function(id="160490", name=NULL) {
     warning("Did not disconnect cleanly.")
   }
   org <- result_df[1, 1] ## Grab the identifier
-  message(paste0("The abbreviation for ", id, " is ", org, "."))
+  message("The abbreviation for ", id, " is ", org, ".")
   genepaths <- load_kegg_annotations(abbreviation=org)
   return(genepaths)
 }

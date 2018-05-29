@@ -326,14 +326,14 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 })
 
 ## 20 semantic_copynumber_filter()
-testing <- sm(semantic_copynumber_filter(de_list=cb_sig$limma,
+testing <- sm(semantic_copynumber_filter(cb_sig[["limma"]],
                                          semantic="RNA",
                                          semantic_column="rownames"))
 table <- "wt120_vs_wt0"
 pre <- nrow(cb_sig[["limma"]][["ups"]][[table]])
 post1 <- nrow(testing[["ups"]][[table]])
 expect_lt(post1, pre)
-testing <- sm(semantic_copynumber_filter(de_list=cb_sig$limma,
+testing <- sm(semantic_copynumber_filter(cb_sig[["limma"]],
                                          invert=FALSE,
                                          semantic="RNA",
                                          semantic_column="rownames"))

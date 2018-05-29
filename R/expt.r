@@ -150,7 +150,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
   ## sample_definitions <- extract_metadata(metadata)
-  message(paste0("The sample definitions comprises: ", toString(dim(sample_definitions)), " rows, columns."))
+  message("The sample definitions comprises: ", toString(dim(sample_definitions)),
+          " rows, columns.")
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -165,8 +166,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     if (isTRUE(test_col_rownames)) {
       count_dataframe <- count_dataframe[, rownames(sample_definitions)]
     } else {
-      message(paste0("The count table column names are: ", toString(sort(colnames(count_dataframe)))))
-      message(paste0("The  meta   data  row  names are: ", toString(sort(rownames(sample_definitions)))))
+      message("The count table column names are: ", toString(sort(colnames(count_dataframe))))
+      message("The  meta   data  row  names are: ", toString(sort(rownames(sample_definitions))))
       stop("The count table column names are not the same as the sample definition row names.")
     }
     all_count_tables <- data.table::as.data.table(count_dataframe, keep.rownames="rownames")
@@ -356,7 +357,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     message("Here are the first few rownames from the gene information table:")
     message(toString(head(gene_info[["rownames"]])))
   } else {
-      message(paste0("Matched ", found_sum, " annotations and counts."))
+      message("Matched ", found_sum, " annotations and counts.")
   }
 
   ## Take a moment to remove columns which are blank
@@ -496,7 +497,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   new_samplenames <- try(Biobase::sampleNames(metadata) <- colnames(final_counts))
   if (class(new_samplenames) == "try-error") {
     message("Something is wrong with the sample names for the experimental metadata.")
-    message(paste0("They must be set to the column names of the count table, which are: ", toString(colnames(final_counts))))
+    message("They must be set to the column names of the count table, which are: ",
+            toString(colnames(final_counts)))
     message("If the above column names have .x/.y in them, they may be duplicated, check your sample sheet.")
     message("The sample definitions are:")
     print(knitr::kable(sample_definitions))
@@ -591,7 +593,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   ex <- expt[["expressionset"]]
   annotations <- Biobase::fData(ex)
   if (is.null(ids) & is.null(annotations[[column]])) {
-    message(paste0("The ", column, " column is null, doing nothing."))
+    message("The ", column, " column is null, doing nothing.")
     return(expt)
   }
   pattern_string <- ""
@@ -619,8 +621,8 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
     removed <- ex[!idx, ]
   }
 
-  message(paste0("Before removal, there were ", nrow(Biobase::fData(ex)), " entries."))
-  message(paste0("Now there are ", nrow(Biobase::fData(kept)), " entries."))
+  message("Before removal, there were ", nrow(Biobase::fData(ex)), " entries.")
+  message("Now there are ", nrow(Biobase::fData(kept)), " entries.")
   all_tables <- Biobase::exprs(ex)
   all_sums <- colSums(all_tables)
   kept_tables <- Biobase::exprs(kept)
@@ -633,8 +635,8 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
                                "pct_kept", "pct_removed")
-  message(paste0("Percent kept: ", toString(sprintf(fmt="%.3f", pct_kept))))
-  message(paste0("Percent removed: ", toString(sprintf(fmt="%.3f", pct_removed))))
+  message("Percent kept: ", toString(sprintf(fmt="%.3f", pct_kept)))
+  message("Percent removed: ", toString(sprintf(fmt="%.3f", pct_removed)))
   expt[["expressionset"]] <- kept
   expt[["summary_table"]] <- summary_table
   return(expt)
@@ -1011,15 +1013,15 @@ median_by_factor <- function(data, fact="condition") {
     columns <- grep(pattern=type, x=fact)
     med <- NULL
     if (length(columns) < 1) {
-      warning(paste0("The level ", type, " of the factor has no columns."))
+      warning("The level ", type, " of the factor has no columns.")
       next
     }
     used_columns <- c(used_columns, type)
     if (length(columns) == 1) {
-      message(paste0("The factor ", type, " has only 1 row."))
+      message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
     } else {
-      message(paste0("The factor ", type, " has ", length(columns), " rows."))
+      message("The factor ", type, " has ", length(columns), " rows.")
       med <- matrixStats::rowMedians(data[, columns])
     }
     medians <- cbind(medians, med)
@@ -1210,7 +1212,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
-      warning(paste0("Not all the files exist: ", files))
+      warning("Not all the files exist: ", files)
     }
     import <- NULL
     import_scaled <- NULL
@@ -1247,9 +1249,9 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
     if (class(count_table)[1] == "try-error") {
-      stop(paste0("There was an error reading: ", files[1]))
+      stop("There was an error reading: ", files[1])
     }
-    message(paste0(files[1], " contains ", length(rownames(count_table)), " rows."))
+    message(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique=TRUE)
     ## count_table <- count_table[, -1, drop=FALSE]
@@ -1268,7 +1270,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       tmp_count <- tmp_count[keepers_idx, ]
       tmp_count[, 2] <- as.numeric(tmp_count[, 2])
       if (class(tmp_count)[1] == "try-error") {
-        stop(paste0("There was an error reading: ", files[table]))
+        stop("There was an error reading: ", files[table])
       }
       colnames(tmp_count) <- c("rownames", ids[table])
       tmp_count <- data.table::as.data.table(tmp_count)
@@ -1278,8 +1280,8 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       ## count_table <- count_table[, -1, drop=FALSE]
       ## post_merge <- length(rownames(count_table))
       post_merge <- nrow(count_table)
-      message(paste0(files[table], " contains ", pre_merge,
-                     " rows and merges to ", post_merge, " rows."))
+      message(files[table], " contains ", pre_merge,
+              " rows and merges to ", post_merge, " rows.")
     }
 
     ## remove summary fields added by HTSeq
@@ -1326,7 +1328,7 @@ read_metadata <- function(file, ...) {
     ## tmp_definitions = readWorksheet(xls, 1)
     definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
     if (class(definitions) == "try-error") {
-      stop(paste0("Unable to read the metadata file: ", file))
+      stop("Unable to read the metadata file: ", file)
     }
   } else if (tools::file_ext(file) == "xls") {
     ## This is not correct, but it is a start
@@ -1729,8 +1731,8 @@ subset_expt <- function(expt, subset=NULL) {
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
-  message(paste0("There were ", length(starting_samples), ", now there are ",
-                 length(final_samples), " samples."))
+  message("There were ", length(starting_samples), ", now there are ",
+          length(final_samples), " samples.")
   return(new_expt)
 }
 
@@ -1919,7 +1921,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   sheet <- "raw_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
   if (class(newsheet) == "try-error") {
-    warning(paste0("Failed to add the sheet: ", sheet))
+    warning("Failed to add the sheet: ", sheet)
   }
   metrics <- sm(graph_metrics(expt, qq=TRUE))
   ## Start with library sizes.

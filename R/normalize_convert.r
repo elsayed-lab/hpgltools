@@ -62,7 +62,7 @@ convert_counts <- function(data, convert="raw", ...) {
       ## count_table <- divide_seq(counts, annotations=annotations, genome=genome)
     },
     {
-      message(paste0("Not sure what to do with the method: ", convert))
+      message("Not sure what to do with the method: ", convert)
     }
   ) ## End of the switch
 
@@ -97,7 +97,7 @@ divide_seq <- function(counts, ...) {
   if (is.null(pattern)) {
     pattern <- "TA"
   }
-  message(paste0("Using pattern: ", pattern, " instead of length for an rpkm-ish normalization."))
+  message("Using pattern: ", pattern, " instead of length for an rpkm-ish normalization.")
 
   compression <- NULL
   genome_class <- class(genome)[1]

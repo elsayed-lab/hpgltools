@@ -79,13 +79,13 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       message("Using limma's removeBatchEffect to visualize before/after batch inclusion.")
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
-      message(paste0("Using ", model_type, " to visualize before/after batch inclusion."))
+      message("Using ", model_type, " to visualize before/after batch inclusion.")
       test_norm <- "quant"
       if (model_type != "TRUE" & model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
-      message(paste0("Performing a test normalization with: ", test_norm))
+      message("Performing a test normalization with: ", test_norm)
       post_batch <- sm(try(normalize_expt(input, filter=TRUE, batch=model_type,
                                           transform="log2", convert="cpm", norm=test_norm)))
     } else {
@@ -163,7 +163,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     ## but when dealing with actual data, it falls a bit short.
     for (it in 1:length(results[["edger"]][["all_tables"]])) {
       name <- names(results[["edger"]][["all_tables"]])[it]
-      message(paste0("Readjusting the p-values for comparison: ", name))
+      message("Readjusting the p-values for comparison: ", name)
       namelst <- strsplit(x=name, split="_vs_")
       ## something like 'mutant'
       first <- namelst[[1]][[1]]
@@ -220,7 +220,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       ## For strange non-pairwise contrasts, the f.pvalue() call is expected to fail.
       if (class(new_pvalues) == "try-error") {
         new_pvalues <- NULL
-        warning(paste0("Unable to adjust pvalues for: ", name))
+        warning("Unable to adjust pvalues for: ", name)
         warning("If this was not for an extra contrast, then this is a serious problem.")
       } else {
         ## Most of the time it should succeed, so do a BH adjustment of the new values.
@@ -922,7 +922,7 @@ compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
   for (comp in names(deseq)) {
     ## assume all three have the same names() -- note that limma has more than the other two though
     cc <- cc + 1
-    message(paste0("Comparing analyses ", cc, "/", len, ": ", comp))
+    message("Comparing analyses ", cc, "/", len, ": ", comp)
     num_den_names <- strsplit(x=comp, split="_vs_")[[1]]
     num_name <- num_den_names[1]
     den_name <- num_den_names[2]
@@ -1652,9 +1652,9 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
   down_genes <- table
 
   if (is.null(table[[column]])) {
-    message(paste0("There is no ", column, " column in the table."))
-    message(paste0("The columns are: ", toString(colnames(table))))
-    stop(paste0("There is no ", column, " column in the table."))
+    message("There is no ", column, " column in the table.")
+    message("The columns are: ", toString(colnames(table)))
+    stop("There is no ", column, " column in the table.")
   }
 
   if (!is.null(p)) {
@@ -1667,7 +1667,6 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     ## In that case, a p-value assertion should still know the difference between up and down
     ## But it should also still know the difference between ratio and log changes
     if (fold == "plusminus" | fold == "log") {
-      ## message(paste0("Assuming the fold changes are on the log scale and so taking >< 0"))
       ## up_idx <- up_genes[, column] > 0.0
       up_idx <- as.numeric(up_genes[[column]]) > 0.0
       up_genes <- up_genes[up_idx, ]
@@ -1680,31 +1679,29 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
       down_idx <- as.numeric(down_genes[[column]]) <= -1.0
       down_genes <- down_genes[down_idx, ]
     }
-    message(paste0("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes."))
-    message(paste0("After (adj)p filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    message("After (adj)p filter, the up genes table has ", dim(up_genes)[1], " genes.")
+    message("After (adj)p filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(lfc)) {
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" | fold == "log") {
-      ## message(paste0("Assuming the fold changes are on the log scale and so taking -1.0 * lfc"))
       ## plusminus refers to a positive/negative number of logfold changes from a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
       down_genes <- down_genes[down_idx, ]
     } else {
-      ## message(paste0("Assuming the fold changes are on a ratio scale and so taking 1/lfc"))
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]
     }
-    message(paste0("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes."))
-    message(paste0("After fold change filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    message("After fold change filter, the up genes table has ", dim(up_genes)[1], " genes.")
+    message("After fold change filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores from the median.
-    message(paste0("Getting the genes >= ", z, " z scores away from the median of all."))
+    message("Getting the genes >= ", z, " z scores away from the median of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm=TRUE)
@@ -1715,19 +1712,19 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[column]]) <= down_median_dist
     down_genes <- down_genes[down_idx, ]
-    message(paste0("After z filter, the up genes table has ", dim(up_genes)[1], " genes."))
-    message(paste0("After z filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    message("After z filter, the up genes table has ", dim(up_genes)[1], " genes.")
+    message("After z filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(n)) {
     ## Take a specific number of genes at the top/bottom of the rank ordered list.
-    message(paste0("Getting the top and bottom ", n, " genes."))
+    message("Getting the top and bottom ", n, " genes.")
     upranked <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
     up_genes <- head(upranked, n=n)
     downranked <- down_genes[order(as.numeric(down_genes[[column]])), ]
     down_genes <- head(downranked, n=n)
-    message(paste0("After top-n filter, the up genes table has ", dim(up_genes)[1], " genes."))
-    message(paste0("After bottom-n filter, the down genes table has ", dim(down_genes)[1], " genes."))
+    message("After top-n filter, the up genes table has ", dim(up_genes)[1], " genes.")
+    message("After bottom-n filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing=FALSE), ]
@@ -1985,13 +1982,14 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
     tab <- table_list[[count]]
     table_name <- names(table_list)[[count]]
     numbers_removed[[table_name]] <- list()
-    message(paste0("Working on ", table_name))
+    message("Working on ", table_name)
     if (isTRUE(use_files)) {
       file <- ""
       if (table_type == "combined") {
-        file <- paste0("singletons/gene_counts/", table_name, ".fasta.out.count")
+        file <- file.path("singletons", "gene_counts", paste0(table_name, ".fasta.out.count"))
       } else {
-        file <- paste0("singletons/gene_counts/up_", table_name, ".fasta.out.count")
+        file <- file.path("singletons", "gene_counts",
+                          paste0("up_", table_name, ".fasta.out.count"))
       }
       tmpdf <- try(read.table(file), silent=TRUE)
       if (class(tmpdf) == "data.frame") {
@@ -2023,10 +2021,10 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
       if (num_removed > 0) {
         tab <- tab[idx, ]
         table_list[[count]] <- tab
-        message(paste0("Table started with: ", pre_remove_size, ". ", type,
-                       " entries with string ", string,
-                       ", found ", num_removed, "; table has ",
-                       nrow(tab),  " rows left."))
+        message("Table started with: ", pre_remove_size, ". ", type,
+                " entries with string ", string,
+                ", found ", num_removed, "; table has ",
+                nrow(tab),  " rows left.")
       } else {
         message("Found no entries of type ", string, ".")
       }

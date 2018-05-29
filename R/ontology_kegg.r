@@ -132,9 +132,9 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
                 ## Test if we have overlaps
                 overlap_test <- paste0(species, ":", names(path_data))
                 num_overlap <- sum(gene_examples %in% overlap_test)
-                message(paste0("Here are some path gene examples: ", example_string))
-                message(paste0("Here are your genes: ", toString(head(names(path_data)))))
-                message(paste0("There were ", num_overlap, " overlapping genes observed."))
+                message("Here are some path gene examples: ", example_string)
+                message("Here are your genes: ", toString(head(names(path_data))))
+                message("There were ", num_overlap, " overlapping genes observed.")
             }
         }
         if (format == "png") {
@@ -245,9 +245,9 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         return_list[[path]][["unique_mapped_nodes"]] <- sum(unique_mapped)
         return_list[[path]][["unique_mapped_pct"]] <- unique_pct_mapped
         if (isTRUE(verbose)) {
-            message(paste0(count, "/", length(paths), ": Finished ",
-                           path_name, " id: ", path, " with ", total_pct_mapped, "% genes mapped(",
-                           total_pct_mapped, " unique)."))
+            message(count, "/", length(paths), ": Finished ",
+                    path_name, " id: ", path, " with ", total_pct_mapped, "% genes mapped(",
+                    total_pct_mapped, " unique).")
         }
     } ## End for loop
 
@@ -305,7 +305,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
     } else if (is.null(abbreviation)) {
         ## Then the species was provided.
         abbreviation <- get_kegg_orgn(species)
-        message(paste0("The abbreviation detected was: ", abbreviation))
+        message("The abbreviation detected was: ", abbreviation)
     }
 
     result <- NULL
@@ -313,7 +313,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
     savefile <- paste0("kegg_", species, ".rda.xz")
     kegg_data <- NULL
     if (file.exists(savefile)) {
-        message(paste0("Reading from the savefile, delete ", savefile, " to regenerate."))
+        message("Reading from the savefile, delete ", savefile, " to regenerate.")
         result <- new.env()
         load(savefile, envir=result)
         result <- result[["result"]]
@@ -354,9 +354,9 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
             total_genes <- total_genes + length(kegg_geneids)
             patterns <- kegg_subst[["patterns"]]
             replaces <- kegg_subst[["replaces"]]
-            message(paste0(count, "/", length(paths), ": Working on path: ",
-                           path, " which has ", length(kegg_geneids), " genes."))
-            for (r in 1:length(kegg_subst[["patterns"]])) {
+            message(count, "/", length(paths), ": Working on path: ",
+                    path, " which has ", length(kegg_geneids), " genes.")
+        for (r in 1:length(kegg_subst[["patterns"]])) {
                 tritryp_geneids <- gsub(pattern=patterns[r], replacement=replaces[r], x=tritryp_geneids)
             }
 
@@ -369,7 +369,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
                                             "KEGG" = path))
             }
         } ## End iterating over pathways
-        message(paste0("Total genes observed: ", total_genes))
+        message("Total genes observed: ", total_genes)
         save(result, file=savefile)
     }
     return(result)
@@ -531,7 +531,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
             path_name <- tolower(path_name)
             path_name <- gsub(" ", "_", path_name)
             path_names[count] <- path_name
-            message(paste0("Extracting data for ", path, ": ", path_name, "."))
+            message("Extracting data for ", path, ": ", path_name, ".")
             if (isTRUE(verbose)) {
                 pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
                                              pathdir=pathdir))
@@ -547,9 +547,9 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
             diff_nodes[count] <- pct_diff[["diff_nodes"]]
             path_edges[count] <- pct_diff[["all_edges"]]
             diff_edges[count] <- pct_diff[["diff_edges"]]
-            message(paste0(count, "/", last_path, ": The path: ", path_names[count],
-                           " was written to ", filenames[count], " and has ", pct_nodes[count],
-                           "% nodesdiff ", pct_edges[count], "% edgesdiff."))
+            message(count, "/", last_path, ": The path: ", path_names[count],
+                    " was written to ", filenames[count], " and has ", pct_nodes[count],
+                    "% nodesdiff ", pct_edges[count], "% edgesdiff.")
         }
     } ## End of the for() loop.
     path_data <- data.frame()
@@ -711,10 +711,10 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
 
     path_data <- KEGGREST::keggGet(pathwayid)
     path_name <- path_data[[1]][["NAME"]]
-    message(paste0(pct_node_diff, "% nodes differentially expressed in pathway ",
-                   pathway, ": '", path_name, "'."))
-    message(paste0(pct_edge_diff, "% edges differentially expressed in pathway ",
-                   pathway, ": '", path_name, "'."))
+    message(pct_node_diff, "% nodes differentially expressed in pathway ",
+            pathway, ": '", path_name, "'.")
+    message(pct_edge_diff, "% edges differentially expressed in pathway ",
+            pathway, ": '", path_name, "'.")
     retlist <- list(
         "pathway" = pathway,
         "filename" = filename,

@@ -20,13 +20,13 @@ check_eupath_species <- function(species="Leishmania major strain Friedlin", met
   grepped_hits <- all_species[grep_hits]
   if (species %in% all_species) {
     entry <- metadata[metadata[["Species"]] == species, ]
-    message(paste0("Found: ", entry[["Species"]]))
+    message("Found: ", entry[["Species"]])
   } else if (sum(grep_hits > 0)) {
     species <- grepped_hits[[1]]
     entry <- metadata[metadata[["Species"]] == species, ]
     message("Found the following hits: ", toString(grepped_hits), ", choosing the first.")
   } else {
-    message(paste0("Here are the possible species: ", toString(all_species)))
+    message("Here are the possible species: ", toString(all_species))
     stop("Did not find your species.")
   }
   return(entry)
@@ -56,12 +56,12 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
   dir <- basename(path)
   full_path <- file.path(basedir, dir)
   at_cmd <- paste0("perl -p -i -e 's/ at /\\@/g' ", full_path, "/DESCRIPTION")
-  message(paste0("Rewriting DESCRIPTION: ", at_cmd))
+  message("Rewriting DESCRIPTION: ", at_cmd)
   system(command=at_cmd)
   ## Since I changed @ to at I figured . could be dot too
   ##dot_cmd <- paste0("sed -i 's/ dot /\\./g' ", path, "/DESCRIPTION")
   dot_cmd <- paste0("perl -p -i -e 's/ dot /\\./g' ", full_path, "/DESCRIPTION")
-  message(paste0("Rewriting DESCRIPTION to remove ' dot ': ", dot_cmd))
+  message("Rewriting DESCRIPTION to remove ' dot ': ", dot_cmd)
   system(dot_cmd)
 
   new_dir <- dir
@@ -72,7 +72,7 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
     new_path <- file.path(basedir, new_dir)
     ## And rename the directory
     mv_cmd <- paste0("mv ", path, " ", new_path)
-    message(paste0("moving orgdb: ", mv_cmd))
+    message("moving orgdb: ", mv_cmd)
     system(mv_cmd)
     ## Collect the text files in the new package and remove all -like instances in them
     ##find_cmd <- paste0("sed -i 's/", removal, "/", replace,
@@ -80,7 +80,7 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
                        removal, "/", replace,
                        "/g' $(find ", new_path,
                        " -type f | grep -v 'sqlite' | grep -v 'zzz' | grep -v 'rda')")
-    message(paste0("rewriting orgdb files: ", find_cmd))
+    message("rewriting orgdb files: ", find_cmd)
     system(find_cmd)
 
     if (isTRUE(sqlite)) {
@@ -95,7 +95,7 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
       new_sqlite_file <- gsub(pattern=removal, replacement=replace, x=old_sqlite_file)
       new_sqlite <- file.path(basedir, new_sqlite_file)
       sqlite_mv_cmd <- paste0("mv ", old_sqlite, " ", new_sqlite)
-      message(paste0("moving sqlite file: ", sqlite_mv_cmd))
+      message("moving sqlite file: ", sqlite_mv_cmd)
       system(sqlite_mv_cmd)
       ## orgdb_dir <- new_dir
       new_pkg_name <- gsub(pattern=removal, replacement=replace, x=sqlite_basename)
@@ -103,7 +103,7 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
       final_sqlite_cmd <- paste0("chmod +w ", new_sqlite, " ; sqlite3 ", new_sqlite,
                                  " \"UPDATE metadata SET value='", new_pkg_name,
                                  "' WHERE name='SPECIES';\" ; chmod -w ", new_sqlite)
-      message(paste0("rewriting sqlite db:", final_sqlite_cmd))
+      message("rewriting sqlite db:", final_sqlite_cmd)
       system(final_sqlite_cmd)
     }
   }
@@ -163,14 +163,14 @@ extract_eupath_orthologs <- function(db, master="GID",
     first_pkg <- get_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
     tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
     if (class(tt) == "try-error") {
-      message(paste0("Did not find the package: ",
-                     first_pkg,
-                     ". Will not be able to do reciprocal hits."))
-      message(paste0("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
-                     first_name, "')"))
+      message("Did not find the package: ",
+              first_pkg,
+              ". Will not be able to do reciprocal hits.")
+      message("Perhaps try invoking the following: hpgltools::make_eupath_organismdbi('",
+              first_name, "')")
       pkg <- NULL
     } else {
-      message(paste0("Loaded: ", first_pkg))
+      message("Loaded: ", first_pkg)
       pkg <- get(first_pkg)
     }
     return(pkg)
@@ -194,7 +194,7 @@ extract_eupath_orthologs <- function(db, master="GID",
   } else {
     missing_idx <- ! columns %in% column_set
     missing <- columns[missing_idx]
-    message(paste0("Some columns were missing: ", toString(missing)))
+    message("Some columns were missing: ", toString(missing))
     message("Removing them, which may end badly.")
     columns <- columns[column_intersect]
   }
@@ -212,7 +212,7 @@ extract_eupath_orthologs <- function(db, master="GID",
     query_species <- species_names
   }
   num_possible <- length(species_names)
-  message(paste0("There are ", num_possible, " possible species in this group."))
+  message("There are ", num_possible, " possible species in this group.")
 
   if (isTRUE(print_speciesnames)) {
     print(toString(species_names))
@@ -223,9 +223,9 @@ extract_eupath_orthologs <- function(db, master="GID",
   found_species <- 0
   for (sp in query_species) {
     if (sp %in% all_orthos[[org_column]]) {
-      message(paste0("Found species: ", sp))
+      message("Found species: ", sp)
     } else {
-      message(paste0("Did not find species: ", sp))
+      message("Did not find species: ", sp)
     }
   }
   kept_orthos_idx <- all_orthos[[org_column]] %in% query_species
@@ -297,7 +297,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["bsgenome"]]
   if (pkgname %in% installed.packages() & !isTRUE(reinstall)) {
-    message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
+    message(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall.")
     retlist <- list(
       "bsgenome_name" = pkgname
     )
@@ -435,7 +435,7 @@ get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
     entry <- metadata[metadata[["Species"]] == species, ]
     message("Found the following hits: ", toString(grepped_hits), ", choosing the first.")
   } else {
-    message(paste0("Here are the possible species: ", toString(all_species)))
+    message("Here are the possible species: ", toString(all_species))
     stop("Did not find your species.")
   }
 
@@ -501,7 +501,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
   pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["organismdbi"]]
   if (isTRUE(pkgnames[["organismdbi_installed"]]) & !isTRUE(reinstall)) {
-    message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
+    message(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall.")
     return(pkgnames)
   }
   orgdb_name <- pkgnames[["orgdb"]]
@@ -665,7 +665,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   pkgnames <- get_eupath_pkgnames(species=species, metadata=metadata)
   pkgname <- pkgnames[["orgdb"]]
   if (isTRUE(pkgnames[["orgdb_installed"]]) & !isTRUE(reinstall)) {
-    message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
+    message(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall.")
     retlist <- list(
       "orgdb_name" = pkgname
     )
@@ -813,12 +813,11 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   backup_path <- file.path(dir, paste0(pkgname, ".bak"))
   first_path <- file.path(dir, pkgname)
   if (file.exists(backup_path)) {
-    message(paste0(backup_path, " already exists, deleting it."))
+    message(backup_path, " already exists, deleting it.")
     ret <- unlink(backup_path, recursive=TRUE)
   }
   if (file.exists(first_path)) {
-    message(paste0(first_path, " already exists,
- backing it up."))
+    message(first_path, " already exists, backing it up.")
     ret <- file.rename(first_path, backup_path)
   }
 
@@ -894,7 +893,7 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   pkgname <- pkgnames[["txdb"]]
 
   if (isTRUE(pkgnames[["txdb_installed"]]) & !isTRUE(reinstall)) {
-    message(paste0(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall."))
+    message(pkgname, " is already installed, set reinstall=TRUE if you wish to reinstall.")
     retlist <- list(
       "txdb_name" = pkgname
     )

@@ -454,7 +454,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
     keeper_idx <- categories[["over_represented_pvalue"]] <= pval
     categories <- categories[keeper_idx, ]
     if (sum(keeper_idx) == 0) {
-      message(paste0("No data survived to be written for the ", ont, " ontology."))
+      message("No data survived to be written for the ", ont, " ontology.")
       next
     }
 
@@ -477,7 +477,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 
     ## Now write the data.
     new_row <- 1
-    message(paste0("Writing the ", ont, " data."))
+    message("Writing the ", ont, " data.")
     openxlsx::addWorksheet(wb, sheetName=ont)
     openxlsx::writeData(wb, ont, paste0(ont, " Results from goseq."), startRow=new_row)
     openxlsx::addStyle(wb, ont, hs1, new_row, 1)
@@ -622,7 +622,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
     ## Now write the data
     new_row <- 1
-    message(paste0("Writing the ", ont, " data."))
+    message("Writing the ", ont, " data.")
     openxlsx::addWorksheet(wb, sheetName=ont)
     openxlsx::writeData(wb, ont, paste0(ont, " Results from gostats."), startRow=new_row)
     openxlsx::addStyle(wb, ont, hs1, new_row, 1)
@@ -1176,7 +1176,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
     colnames(categories) <- better_column_names
 
     ## Now write the data.
-    message(paste0("Writing the ", ont, " data."))
+    message("Writing the ", ont, " data.")
     new_row <- 1
     openxlsx::addWorksheet(wb, sheetName=ont)
     openxlsx::writeData(wb, ont, paste0(ont, " Results from topgo."), startRow=new_row)

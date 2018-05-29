@@ -5,7 +5,7 @@
 \title{Load organism annotation data.}
 \usage{
 load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
-  keytype = "ensembl", strand_column = "txstrand",
+  keytype = "ensembl", strand_column = "cdsstrand",
   start_column = "cdsstart", end_column = "cdsend",
   chromosome_column = "cdschrom", type_column = "gene_type",
   name_column = "cdsname", fields = NULL, sum_exon_widths = FALSE)

@@ -201,7 +201,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   retlist[["pvalue_histograms"]] <- pval_histograms
 
   if (!is.null(excel)) {
-    message(paste0("Writing data to: ", excel, "."))
+    message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_topgo_data(retlist, excel=excel)))
     retlist[["excel"]] <- excel_ret
   }

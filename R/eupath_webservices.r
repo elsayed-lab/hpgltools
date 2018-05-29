@@ -67,7 +67,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   result <- jsonlite::fromJSON(metadata_json)
   records <- result[["response"]][["recordset"]][["records"]]
-  message(paste0("Downloaded: ", request_url))
+  message("Downloaded: ", request_url)
 
   ## convert to a dataframe
   dat <- data.frame(t(sapply(records[["fields"]], function(x) {
@@ -500,7 +500,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   savefile <- file.path(dir, paste0(entry[["Genome"]], "_annotations.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     result <- new.env()
     load(savefile, envir=result)
     result <- result[["result"]]
@@ -615,7 +615,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   }
   colnames(result) <- toupper(colnames(result))
 
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(result, file=savefile)
   return(result)
 }
@@ -647,7 +647,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
   savefile <- file.path(dir, paste0(entry[["Genome"]], "_go_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     result <- new.env()
     load(savefile, envir=result)
     result <- result[["result"]]
@@ -672,7 +672,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
     ))
 
   result <- post_eupath_table(query_body, species=species, entry=entry, table_name="go")
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(result, file=savefile)
   return(result)
 }
@@ -722,7 +722,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
   savefile <- file.path(dir, paste0(entry[["Genome"]], "_ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     result <- new.env()
     load(savefile, envir=result)
     result <- result[["result"]]
@@ -731,7 +731,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
 
   result <- post_eupath_table(query_body, species=species, entry=entry, table_name="orthologs")
 
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(result, file=savefile)
   return(result)
 }
@@ -780,7 +780,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
   savefile <- file.path(dir, paste0(entry[["Genome"]], "_interpro_table"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     result <- new.env()
     load(savefile, envir=result)
     result <- result[["result"]]
@@ -790,7 +790,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
 
   result <- post_eupath_table(query_body, species=species, entry=entry, table_name="interpro")
 
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(result, file=savefile)
   return(result)
 }
@@ -838,7 +838,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
   savefile <- file.path(dir, paste0(entry[["Genome"]], "_pathway_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     result <- new.env()
     load(savefile, envir=result)
     result <- result[["result"]]
@@ -847,7 +847,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
 
   result <- post_eupath_table(query_body, species=species, entry=entry, table_name="pathway")
 
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(result, file=savefile)
   return(result)
 }
@@ -892,7 +892,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
   savefile <- file.path(dir, paste0(entry[["Genome"]], "ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
-    message(paste0("Delete the file ", savefile, " to regenerate."))
+    message("Delete the file ", savefile, " to regenerate.")
     all_orthologs <- new.env()
     load(savefile, envir=all_orthologs)
     all_orthologs <- all_orthologs[["all_orthologs"]]
@@ -911,7 +911,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
   }
   close(bar)
 
-  message(paste0("Saving annotations to ", savefile))
+  message("Saving annotations to ", savefile)
   save(all_orthologs, file=savefile)
   return(all_orthologs)
 }

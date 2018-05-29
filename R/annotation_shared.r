@@ -40,10 +40,10 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
   if (!is.null(gene_type)) {
     desired_rows <- annot[, type_column] == gene_type
     if (sum(desired_rows) == 0) {
-      message(paste0("There appear to be no genes of type ",
-                     gene_type, " in the ", type_column, " column, taking them all."))
+      message("There appear to be no genes of type ",
+              gene_type, " in the ", type_column, " column, taking them all.")
     } else {
-      message(paste0("Taking only the ", sum(desired_rows), " ", gene_type, " rows."))
+      message("Taking only the ", sum(desired_rows), " ", gene_type, " rows.")
       annot <- annot[desired_rows, ]
     }
   }
@@ -131,7 +131,7 @@ load_annotations <- function(type=NULL, ...) {
       annotations <- load_uniprot_annotations(...)
     },
     {
-      message(paste0("Not sure what type you chose, defaulting to biomart."))
+      message("Not sure what type you chose, defaulting to biomart.")
       annotations <- load_biomart_annotations(...)
     })
   return(annotations)
