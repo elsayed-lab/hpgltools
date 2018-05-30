@@ -115,9 +115,10 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx,
                                             mod=conditional_model, method=surrogates))
       }
-      message(paste0("The ", surrogates, " method chose ", chosen_surrogates, " surrogate variable(s)."))
+      message("The ", surrogates, " method chose ",
+              chosen_surrogates, " surrogate variable(s).")
     } else if (class(surrogates) == "numeric") {
-      message(paste0("A specific number of surrogate variables was chosen: ", surrogates, "."))
+      message("A specific number of surrogate variables was chosen: ", surrogates, ".")
       chosen_surrogates <- surrogates
     }
   }
@@ -180,8 +181,8 @@ the dataset, please try doing a filtering of the data and retry.")
   switchret <- switch(
     estimate_type,
     "sva_supervised" = {
-      message(paste0("Attempting sva supervised surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting sva supervised surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "red"
       supervised_sva <- sm(sva::ssva(log2_mtrx,
                                      controls=control_likelihoods,
@@ -190,8 +191,8 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- supervised_sva
     },
     "fsva" = {
-      message(paste0("Attempting fsva surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting fsva surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "darkred"
       sva_object <- sm(sva::sva(log2_mtrx, conditional_model,
                                 null_model, n.sv=chosen_surrogates))
@@ -202,8 +203,8 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- fsva_result
     },
     "svaseq" = {
-      message(paste0("Attempting svaseq estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting svaseq estimation with ",
+              chosen_surrogates, " surrogates.")
       svaseq_result <- sm(sva::svaseq(base10_mtrx,
                                       n.sv=chosen_surrogates,
                                       conditional_model,
@@ -212,8 +213,8 @@ the dataset, please try doing a filtering of the data and retry.")
       model_adjust <- as.matrix(svaseq_result[["sv"]])
     },
     "sva_unsupervised" = {
-      message(paste0("Attempting sva unsupervised surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting sva unsupervised surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "blue"
       if (min(rowSums(base10_mtrx)) == 0) {
         warning("sva will likely fail because some rowSums are 0.")
@@ -226,8 +227,8 @@ the dataset, please try doing a filtering of the data and retry.")
       model_adjust <- as.matrix(unsupervised_sva_batch[["sv"]])
     },
     "pca" = {
-      message(paste0("Attempting pca surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting pca surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "green"
       data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
       svd_result <- corpcor::fast.svd(data_vs_means)
@@ -235,18 +236,19 @@ the dataset, please try doing a filtering of the data and retry.")
       model_adjust <- as.matrix(svd_result[["v"]][, 1:chosen_surrogates])
     },
     "ruv_supervised" = {
-      message(paste0("Attempting ruvseq supervised surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting ruvseq supervised surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "black"
       ## Re-calculating the numer of surrogates with this modified data.
       surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
       if (min(rowSums(base10_mtrx)) == 0) {
         warning("empirical.controls will likely fail because some rows are all 0.")
       }
-      control_likelihoods <- sm(sva::empirical.controls(dat=log2_mtrx,
-                                                        mod=conditional_model,
-                                                        mod0=null_model,
-                                                        n.sv=surrogate_estimate))
+      control_likelihoods <- sm(sva::empirical.controls(
+                                       dat=log2_mtrx,
+                                       mod=conditional_model,
+                                       mod0=null_model,
+                                       n.sv=surrogate_estimate))
       ruv_result <- RUVSeq::RUVg(round(base10_mtrx),
                                  k=surrogate_estimate,
                                  cIdx=as.logical(control_likelihoods))
@@ -255,8 +257,8 @@ the dataset, please try doing a filtering of the data and retry.")
       model_adjust <- as.matrix(ruv_result[["W"]])
     },
     "ruv_residuals" = {
-      message(paste0("Attempting ruvseq residual surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting ruvseq residual surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "purple"
       ## Use RUVSeq and residuals
       ruv_input <- edgeR::DGEList(counts=base10_mtrx, group=conditions)
@@ -271,8 +273,8 @@ the dataset, please try doing a filtering of the data and retry.")
       model_adjust <- as.matrix(ruv_result[["W"]])
     },
     "ruv_empirical" = {
-      message(paste0("Attempting ruvseq empirical surrogate estimation with ",
-                     chosen_surrogates, " surrogates."))
+      message("Attempting ruvseq empirical surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
       type_color <- "orange"
       ruv_input <- edgeR::DGEList(counts=base10_mtrx, group=conditions)
       ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
@@ -296,7 +298,7 @@ the dataset, please try doing a filtering of the data and retry.")
     {
       type_color <- "grey"
       ## If given nothing to work with, use supervised sva
-      message(paste0("Did not understand ", estimate_type, ", assuming supervised sva."))
+      message("Did not understand ", estimate_type, ", assuming supervised sva.")
       supervised_sva <- sva::svaseq(base10_mtrx,
                                     conditional_model,
                                     null_model,
@@ -446,7 +448,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   adjust <- ""
   counter <- 1
   num_adjust <- length(adjustments)
-  message(paste0(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with null in the model."))
+  message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with null in the model.")
   modified_formula <- as.formula(paste0("~ condition ", adjust))
   limma_design <- model.matrix(modified_formula, data=design)
   voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
@@ -456,18 +458,22 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
   ## This needs to be redone to take into account how I organized the adjustments!!!
   num_adjust <- length(adjustments)
-  if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-    catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
-                                        -rank(tstats[["null"]]),
-                                        maxrank=1000,
-                                        make.plot=TRUE)
-  } else {
-    catplots[["null"]] <- NULL
+  if (isTRUE(do_catplots)) {
+    if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+      catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
+                                          -rank(tstats[["null"]]),
+                                          maxrank=1000,
+                                          make.plot=TRUE)
+    } else {
+      message("ffpe is not in the list of installed packages, not doing catplots.")
+      catplots[["null"]] <- NULL
+    }
   }
   oldpar <- par(mar=c(5, 5, 5, 5))
   for (adjust in adjustments) {
     counter <- counter + 1
-    message(paste0(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ", adjust, " in the model."))
+    message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ",
+            adjust, " in the model.")
     modified_formula <- as.formula(paste0("~ condition ", adjust))
     limma_design <- model.matrix(modified_formula, data=design)
     voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)

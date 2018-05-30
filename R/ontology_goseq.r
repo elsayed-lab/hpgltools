@@ -37,7 +37,8 @@ goseq_table <- function(df, file=NULL) {
     message("Testing that go categories are defined.")
     df[["good"]] <- gotest(df[["category"]])
     message("Removing undefined categories.")
-    df <- df[which(df[["good"]] == 1), ]
+    good_idx <- df[["good"]] == 1
+    df <- df[good_idx, ]
     message("Gathering synonyms.")
     df[["synonym"]] <- gosyn(df[["category"]])
     message("Gathering category definitions.")
@@ -180,38 +181,38 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   }
   ## Now I should have the gene list and gene lengths
 
-    godf <- data.frame()
-    if (class(go_db)[[1]] == "character") {
-      ## A text table or species name
-      if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
-          grepl(pattern="\\.tab", x=go_db, perl=TRUE)) {
-        ## table
-        godf <- read.table(go_db, ...)
-        colnames(godf) <- c("ID", "GO")
-      } else {
-        ## Assume species name
-        supported <- TRUE
-        species <- go_db
-      }
-    } else if (class(go_db)[[1]] == "OrganismDb") {
-      godf <- extract_go(go_db, keytype=go_keytype)
-    } else if (class(go_db)[[1]] == "OrgDb") {
-      godf <- extract_go(go_db, keytype=go_keytype)
-    } else if (class(go_db)[[1]] == "data.table") {
-      godf <- as.data.frame(go_db)
-    } else if (class(go_db)[[1]] == "data.frame") {
-      godf <- go_db
-      if (!is.null(godf[["ID"]])) {
-        godf <- godf[, c("ID", "GO")]
-      } else if (!is.null(godf[["GID"]])) {
-        godf <- godf[, c("GID", "GO")]
-        colnames(godf) <- c("ID", "GO")
-      } else {
-        stop("Unable to read the gene ID/ GO columns from the go data frame.")
-      }
+  godf <- data.frame()
+  if (class(go_db)[[1]] == "character") {
+    ## A text table or species name
+    if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
+        grepl(pattern="\\.tab", x=go_db, perl=TRUE)) {
+      ## table
+      godf <- read.table(go_db, ...)
+      colnames(godf) <- c("ID", "GO")
     } else {
-      message("Not sure what to do here.")
+      ## Assume species name
+      supported <- TRUE
+      species <- go_db
     }
+  } else if (class(go_db)[[1]] == "OrganismDb") {
+    godf <- extract_go(go_db, keytype=go_keytype)
+  } else if (class(go_db)[[1]] == "OrgDb") {
+    godf <- extract_go(go_db, keytype=go_keytype)
+  } else if (class(go_db)[[1]] == "data.table") {
+    godf <- as.data.frame(go_db)
+  } else if (class(go_db)[[1]] == "data.frame") {
+    godf <- go_db
+    if (!is.null(godf[["ID"]])) {
+      godf <- godf[, c("ID", "GO")]
+    } else if (!is.null(godf[["GID"]])) {
+      godf <- godf[, c("GID", "GO")]
+      colnames(godf) <- c("ID", "GO")
+    } else {
+      stop("Unable to read the gene ID/ GO columns from the go data frame.")
+    }
+  } else {
+    message("Not sure what to do here.")
+  }
 
   ## entrez IDs are numeric.  This is a problem when doing the pwf function because it sets
   ## the rownames to the IDs.  As a result, we need to call make.names() on them.
@@ -223,11 +224,11 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
 
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
-  message(paste0("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
-                 " from the sig_genes in the go_db."))
+  message("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+          " from the sig_genes in the go_db.")
   id_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
-  message(paste0("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
-                 " from the sig_genes in the length_db."))
+  message("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+          " from the sig_genes in the length_db.")
 
   ## So lets merge the de genes and gene lengths to ensure that they are consistent.
   ## Then make the vectors expected by goseq
@@ -267,7 +268,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
   },
   error=function(cond) {
-    message(paste0("The qvalue estimate failed."))
+    message("The qvalue estimate failed.")
     return(1)
   },
   finally={
@@ -279,17 +280,20 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   colnames(godata) <- c("category", "over_represented_pvalue", "under_represented_pvalue",
                         "numDEInCat", "numInCat", "term", "ontology", "qvalue")
   if (is.null(adjust)) {
-    godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
+    interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
+    godata_interesting <- godata[godata_interesting, ]
     padjust_method <- "none"
   } else {
     ## There is a requested pvalue adjustment
-    godata_interesting <- subset(godata, stats::p.adjust(godata[["over_represented_pvalue"]],
-                                                         method=padjust_method) <= adjust)
+    interesting_idx <- stats::p.adjust(godata[["over_represented_pvalue"]],
+                                       method=padjust_method) <= adjust
+    godata_interesting <- godata[interesting_idx, ]
     if (dim(godata_interesting)[1] < minimum_interesting) {
-      message(paste("simple_goseq(): There are no genes with an adj.p<", adjust, " using: ",
-                    padjust_method, ".", sep=""))
-      message(sprintf("simple_goseq(): Providing genes with raw pvalue<%s", pvalue))
-      godata_interesting <- subset(godata, godata[["over_represented_pvalue"]] <= pvalue)
+      message("simple_goseq(): There are no genes with an adj.p < ", adjust, " using: ",
+              padjust_method, ".")
+      message("simple_goseq(): Providing genes with raw pvalue < ", pvalue, ".")
+      interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
+      godata_interesting <- godata[interesting_idx, ]
       padjust_method <- "none"
     }
   }
@@ -297,28 +301,22 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   godata_interesting <- goseq_table(godata_interesting)
   message("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata)
-  ## mf_subset <- subset(godata, ontology == "MF")
 
   mf_subset <- godata[godata[["ontology"]] == "MF", ]
   rownames(mf_subset) <- mf_subset[["category"]]
-  ##bp_subset <- subset(godata, ontology == "BP")
   bp_subset <- godata[godata[["ontology"]] == "BP", ]
   rownames(bp_subset) <- bp_subset[["category"]]
-  ## cc_subset <- subset(godata, ontology == "CC")
   cc_subset <- godata[godata[["ontology"]] == "CC", ]
   rownames(cc_subset) <- cc_subset[["category"]]
-  ## mf_interesting <- subset(godata_interesting, ontology == "MF")
 
   mf_interesting <- godata_interesting[godata_interesting[["ontology"]] == "MF", ]
   rownames(mf_interesting) <- mf_interesting[["category"]]
   mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
-  ##bp_interesting <- subset(godata_interesting, ontology == "BP")
   bp_interesting <- godata_interesting[godata_interesting[["ontology"]] == "BP", ]
   rownames(bp_interesting) <- bp_interesting[["category"]]
   bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
-  ##cc_interesting <- subset(godata_interesting, ontology == "CC")
   cc_interesting <- godata_interesting[godata_interesting[["ontology"]] == "CC", ]
   rownames(cc_interesting) <- cc_interesting[["category"]]
   cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
@@ -348,7 +346,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "cc_subset" = cc_subset,
     "qdata" = qdata)
   if (!is.null(excel)) {
-    message(paste0("Writing data to: ", excel, "."))
+    message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_goseq_data(retlist, excel=excel)))
   }
   return(retlist)

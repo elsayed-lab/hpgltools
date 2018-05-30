@@ -306,9 +306,15 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
 #' I have made fun of the code quality in msstats, but their heatmap function is really nice.
 #' I want a version of it for other analyses.  Oh, you know what nevermind, this
 #' is actually from SWATH2stats, which is quite nicely written.
+#' Well, let us be honest, this function has no future, but there are some neat ideas
+#' which I do not want to lose, I like the idea of dcasting using a formula in
+#' order to get the mean value by factor(s) and then performing a correlation on
+#' that.  I feel like this is a useful thing to be able to come back to, but I
+#' suspect that it will never find a real use-case scenario.
 plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
                                first_type="correlation", first_method="pearson",
-                               second_type="distance", second_method="euclidean",
+                               second_type="correlation", second_method="spearman",
+                               aggregator=NULL, variables=c("condition", "batch"),
                                expt_names=NULL, batch_row="batch", title=NULL, ...) {
     arglist <- list(...)
     margin_list <- c(12, 9)
@@ -362,20 +368,26 @@ plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     first_dis_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
     second_dis_colors <- gplots::redgreen(75)
 
-    ## Set the batch colors depending on # of observed batches
-    if (is.null(expt_design)) {
-        row_colors <- rep("white", length(expt_colors))
-    } else if (is.null(expt_design[[batch_row]])) {
-        row_colors <- rep("white", length(expt_colors))
-    } else if (length(levels(as.factor(expt_design[[batch_row]]))) >= 2) {
-        ## We have >= 2 batches, and so will fill in the column colors
-        num_batch_colors <- length(levels(as.factor(expt_design[[batch_row]])))
-        batch_color_assignments <- as.integer(as.factor(expt_design[[batch_row]]))
-        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
-    } else {
-        ## If we just have 1 batch, make it... white (to disappear).
-        row_colors <- rep("white", length(expt_colors))
+    ## Do not forget this usage of melt, setting the column names with varnames
+    ## is helpful, and the name of the actual value of interest with value.name.
+    melted <- reshape2::melt(expt_data, value.name="count", varnames=c("gene", "sample"))
+    for (f in factors) {
+      fact <- expt_design[[f]]
+      index <- rownames(expt_design)
+      ## The match function is also something to remember.
+      melted[[f]] <- fact[match(melted[["sample"]], index)]
     }
+    formula_string <- "gene ~ "
+    for (v in variables) {
+      formula_string <- paste0(formula_string, " ", v, " +")
+    }
+    formula_string <- gsub(pattern=" \\+$", replacement="", x=formula_string)
+    chosen_formula <- as.formula(formula_string)
+    ## Do not forget this usage of dcast, it is also useful.
+    casted <- reshape2::dcast(data=melted, formula=chosen_formula,
+                              value.var="count", fun.aggregate=mean)
+    rownames(casted) <- casted[["gene"]]
+    casted <- casted[, -1]
 
     ##plot_correlation_between_samples <- function(data, column.values = "Intensity", Comparison = transition_group_id ~ Condition + BioReplicate, fun.aggregate = NULL, label = TRUE, ...){
     first_comparison <- NULL
@@ -383,29 +395,34 @@ plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     first_colors <- NULL
     second_colors <- NULL
     if (first_type == "correlation") {
-        first_comparison <- hpgl_cor(expt_data, method=first_method)
+        first_comparison <- hpgl_cor(casted, method=first_method)
         first_colors <- first_cor_colors
     } else if (first_type == "distance") {
-        first_comparison <- as.matrix(dist(t(expt_data)), method=first_method)
+        first_comparison <- as.matrix(dist(t(casted)), method=first_method)
         first_colors <- first_dis_colors
     } else {
         warning("Could not identify the first comparison method, arbitrarily choosing a pearson correlation.")
         first_method <- "pearson"
-        first_comparison <- hpgl_cor(expt_data, method=first_method)
+        first_comparison <- hpgl_cor(casted, method=first_method)
         first_colors <- first_cor_colors
     }
     if (second_type == "correlation") {
-        second_comparison <- hpgl_cor(expt_data, method=second_method)
+        second_comparison <- hpgl_cor(casted, method=second_method)
         second_colors <- second_cor_colors
     } else if (second_type == "distance") {
-        second_comparison <- as.matrix(dist(t(expt_data)), method=second_method)
+        second_comparison <- as.matrix(dist(t(casted)), method=second_method)
         second_colors <- second_dis_colors
     } else {
         warning("Could not identify the first comparison method, arbitrarily choosing a spearman correlation.")
         second_method <- "spearman"
-        second_comparison <- hpgl_cor(expt_data, method=second_method)
+        second_comparison <- hpgl_cor(casted, method=second_method)
         second_colors <- second_cor_colors
     }
+
+    lower <- lower.tri(first_comparison)
+    first_comparison[lower] <- NA
+    upper <- upper.tri(second_comparison, diag=TRUE)
+    second_comparison[upper] <- NA
 
     first_melted <- reshape2::melt(first_comparison)
     first_melted[["method"]] <- first_method
@@ -418,12 +435,11 @@ plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     fun_heatmap <- ggplot2::ggplot(plotted_data,
                                    ggplot2::aes_string(x="Var1", y="Var2", fill="value")) +
         ggplot2::geom_tile() +
-        ggplot2::scale_fill_gradient(low=first_cor_colors[1],
-                                     high=first_cor_colors[length(first_cor_colors)],
+        ggplot2::scale_fill_gradient(low="white",
+                                     high="red",
                                      name="first comparison") +
         ggplot2::geom_text(ggplot2::aes_string(fill=plotted_data[["value"]],
                                               label=round(plotted_data[["value"]], digits=2)))
-
     return(fun_heatmap)
 }
 

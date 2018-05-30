@@ -82,7 +82,8 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
 #' }
 #' @export
 plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
-  chosen <- expt[["design"]][[batch_column]]
+  chosen <- pData(expt)[, batch_column]
+  names(chosen) <- sampleNames(expt)
   num_batches <- length(unique(chosen))
 
   factor_df <- data.frame(
@@ -91,46 +92,106 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
     "fill" = expt[["colors"]],
     "condition" = expt[["conditions"]],
     "batch" = expt[["batches"]],
-    "shape" = 21,
     "color" = "black",
     "svs" = svs[, 1])
+  if (num_batches <= 5) {
+    factor_df[["shape"]] <- 20 + as.numeric(factor_df[["batch"]])
+  } else {
+    factor_df[["shape"]] <- 21
+  }
+  factor_df[["shape"]] <- as.factor(factor_df[["shape"]])
+
   color_list <- as.character(factor_df[["fill"]])
   names(color_list) <- as.character(factor_df[["condition"]])
 
-  sample_factor <- ggplot(factor_df, aes_string(x="sample", y="factor")) +
-    ggplot2::geom_dotplot(binaxis="y", stackdir="center",
-                          binpositions="all", colour="black",
-                          ##fill=factor_df[["fill"]])
-                          fill=color_list)
+  sample_factor <- ggplot(factor_df,
+                          aes_string(x="sample",
+                                     y="factor",
+                                     shape="batch",
+                                     fill="condition")) +
+    ggplot2::geom_point(size=5,
+                        aes_string(shape="batch",
+                                   colour="condition",
+                                   fill="condition")) +
+    ggplot2::geom_point(size=5,
+                        colour="black",
+                        show.legend=FALSE,
+                        aes_string(shape="batch",
+                                   fill="condition")) +
+    ggplot2::scale_shape_manual(name="Batch",
+                                labels=levels(as.factor(factor_df[["batch"]])),
+                                guide=ggplot2::guide_legend(
+                                                 override.aes=list(size=5, fill="grey")),
+                                values=21:25) +
+    ggplot2::scale_color_manual(name="Condition",
+                                guide="legend",
+                                values=color_list) +
+    ggplot2::scale_fill_manual(name="Condition",
+                               guide="legend",
+                               values=color_list) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
-  factor_svs <- ggplot2::ggplot(data=as.data.frame(factor_df),
+  factor_svs <- ggplot2::ggplot(factor_df,
                                 aes_string(x="factor",
                                            y="svs",
                                            fill="condition",
                                            colour="condition",
                                            shape="shape")) +
     ggplot2::geom_point(size=5,
-                        aes_string(shape="as.factor(shape)",
+                        aes_string(shape="batch",
                                    colour="condition",
                                    fill="condition")) +
     ggplot2::geom_point(size=5,
                         colour="black",
                         show.legend=FALSE,
-                        aes_string(shape="as.factor(shape)",
+                        aes_string(shape="batch",
                                    fill="condition")) +
-    ggplot2::scale_color_manual(values=color_list) +
-    ggplot2::scale_fill_manual(values=color_list) +
-    ggplot2::scale_shape_manual(values=21, guide=FALSE)
+    ggplot2::scale_shape_manual(name="Batch",
+                                labels=levels(as.factor(factor_df[["batch"]])),
+                                guide=ggplot2::guide_legend(
+                                                 override.aes=list(size=5, fill="grey")),
+                                values=21:25) +
+    ggplot2::scale_color_manual(name="Condition",
+                                guide="legend",
+                                values=color_list) +
+    ggplot2::scale_fill_manual(name="Condition",
+                               guide="legend",
+                               values=color_list) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
-  svs_sample <- ggplot(factor_df, aes_string(x="sample", y="svs")) +
-    ggplot2::geom_dotplot(binaxis="y", stackdir="center",
-                          binpositions="all", colour="black",
-                          fill=factor_df[["fill"]]) +
-    ggplot2::geom_text(aes_string(x="sample", y="svs", label="batch"),
-                       size=4, vjust=2) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black",
-                                                     angle=90, hjust=1)) +
-    ggplot2::theme_bw(base_size=base_size)
+  svs_sample <- ggplot2::ggplot(factor_df,
+                                aes_string(x="sample",
+                                           y="svs",
+                                           fill="condition",
+                                           colour="condition",
+                                           shape="shape")) +
+    ggplot2::geom_point(size=5,
+                        aes_string(shape="batch",
+                                   colour="condition",
+                                   fill="condition")) +
+    ggplot2::geom_point(size=5,
+                        colour="black",
+                        show.legend=FALSE,
+                        aes_string(shape="batch",
+                                   fill="condition")) +
+    ggplot2::scale_shape_manual(name="Batch",
+                                labels=levels(as.factor(factor_df[["batch"]])),
+                                guide=ggplot2::guide_legend(
+                                                 override.aes=list(size=5, fill="grey")),
+                                values=21:25) +
+    ggplot2::scale_color_manual(name="Condition",
+                                guide="legend",
+                                values=color_list) +
+    ggplot2::scale_fill_manual(name="Condition",
+                               guide="legend",
+                               values=color_list) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
 
   plots <- list(
     "sample_factor" = sample_factor,
@@ -168,7 +229,8 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
     ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
     ggplot2::ylab(paste0("1st surrogate variable estimation")) +
     ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
-    ggplot2::theme(axis.text.x=ggplot2::element_text(size=base_size, colour="black")) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) +
     ggplot2::theme_bw(base_size=base_size)
   return(sv_plot)
 }

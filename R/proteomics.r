@@ -14,11 +14,11 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   if (is.null(id)) {
     id <- file
   }
-  message(paste0("Reading ", file))
+  message("Reading ", file)
   input <- xml2::read_html(file, options="NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
-  message(paste0("Extracting instrument information for ", file))
+  message("Extracting instrument information for ", file)
   instruments <- rvest::xml_nodes(input, "msinstrument")
   instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
   instrument_values <- c("msmanufacturer", "msmodel", "msionisation", "msmassanalyzer",
@@ -32,7 +32,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   instrument_data[["software_name"]] <- datum %>% rvest::html_attr("name")
   instrument_data[["software_version"]] <- datum %>% rvest::html_attr("version")
 
-  message(paste0("Extracting scan information for ", file))
+  message("Extracting scan information for ", file)
   scans <- rvest::xml_nodes(input, "scan")
   scan_data <- data.frame(row.names=(1:length(scans)), stringsAsFactors=FALSE)
   scan_wanted <- c("peakscount", "scantype", "centroided", "mslevel", "polarity",
@@ -52,7 +52,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     scan_data[[n]] <- as.factor(scan_data[[n]])
   }
 
-  message(paste0("Extracting precursor information for ", file))
+  message("Extracting precursor information for ", file)
   precursors <- rvest::xml_nodes(scans, "precursormz")
   precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors=FALSE)
   precursor_wanted <- c("precursorintensity", "activationmethod",
@@ -74,7 +74,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   precursor_data[["window_end"]] <- precursor_data[["window_center"]] +
     (precursor_data[["windowwideness"]] / 2)
 
-  message(paste0("Coalescing the acquisition windows for ", file))
+  message("Coalescing the acquisition windows for ", file)
   acquisition_windows <- precursor_data[, c("window_start", "window_end")]
   acquisition_unique <- !duplicated(x=acquisition_windows)
   acquisition_windows <- acquisition_windows[acquisition_unique, ]
@@ -98,12 +98,12 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     ## invocation of OpenSwathWorkFlow or whatever it is, _requires_ them.
     ## So, yeah, that is annoying, but whatever.
     pre_file <- file.path(acq_dir, acq_file)
-    message(paste0("Hopefully writing acquisition file to ", pre_file))
+    message("Hopefully writing acquisition file to ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
     osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
     ## This is the file for openswathworkflow.
-    message(paste0("Hopefully writing osw acquisitions to ", osw_file))
+    message("Hopefully writing osw acquisitions to ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
                             sep="\t", quote=FALSE,
                             row.names=FALSE, col.names=TRUE)
@@ -347,7 +347,8 @@ extract_peprophet_data <- function(pepxml, ...) {
 #'   stuff like that.
 #' @return  metadata!#'
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, savefile=NULL, ...) {
+extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
+                               parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -362,23 +363,29 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
     chosen_palette <- arglist[["palette"]]
   }
 
+  sample_definitions <- data.frame()
+  if (class(metadata) == "data.frame") {
+    sample_definitions <- metadata
+  } else {
+      sample_definitions <- extract_metadata(metadata, ...)
+      ## sample_definitions <- extract_metadata(metadata)
+  }
+
   file_column <- "file"
   if (!is.null(arglist[["file_column"]])) {
-    file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-    file_column <- tolower(file_column)
-    file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
-    ## tables / sample in one sheet.
+      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+      ##file_column <- tolower(file_column)
+      ##file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
+      ## tables / sample in one sheet.
   }
 
   sample_column <- "sampleid"
   if (!is.null(arglist[["sample_column"]])) {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+      sample_column <- arglist[["sample_column"]]
+      sample_column <- tolower(sample_column)
+      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
 
-  sample_definitions <- extract_metadata(metadata, ...)
-  ## sample_definitions <- extract_metadata(metadata)
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
   meta <- sample_definitions[, c("sampleid", file_column)]
@@ -411,17 +418,25 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      returns[[file]] <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        returns[[file]] <- file_result
+      }
     }
-      close(bar)
-      parallel::stopCluster(cl)
+    close(bar)
+    parallel::stopCluster(cl)
   } else {
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      res[[file]] <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        res[[file]] <- file_result
+      }
     }
   }
+  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
+  names(res) <- rownames(sample_definitions)
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -447,7 +462,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, parallel=TRUE, save
 #' @export
 read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   old_options <- options(java.parameters="-Xmx20G")
-  message(paste0("Reading ", xlsx_file))
+  message("Reading ", xlsx_file)
   result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
   group_data <- list()
   bar <- utils::txtProgressBar(style=3)
@@ -527,7 +542,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   protein_df <- data.frame()
   peptide_df <- data.frame()
   protein_names <- c()
-  message(paste0("Starting to iterate over ", length(group_data),  " groups."))
+  message("Starting to iterate over ", length(group_data),  " groups.")
   bar <- utils::txtProgressBar(style=3)
   for (g in 1:length(group_data)) {
     pct_done <- g / length(group_data)
@@ -605,17 +620,21 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 #' @param ...  Extra arguments for the downstream functions.
 #' @return  ggplot2 goodness.
 #' @export
-plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
+plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, y_scale=NULL, ...) {
   arglist <- list(...)
   metadata <- mzxml_data[["metadata"]]
   colors <- mzxml_data[["colors"]]
   sample_data <- mzxml_data[["sample_data"]]
   plot_df <- data.frame()
   samples <- length(sample_data)
-
+  keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
-    message(paste0("Adding ", name))
+    if (class(sample_data[[i]]) == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
     plotted_table <- sample_data[[i]][["scans"]]
     plotted_data <- plotted_table[, c("basepeakmz", "basepeakintensity")]
     plotted_data[["sample"]] <- name
@@ -624,6 +643,11 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
     ## Re-order the columns because I like sample first.
     plot_df <- rbind(plot_df, plotted_data)
   }
+
+  ## Drop rows from the metadata and colors which had errors.
+  metadata <- metadata[keepers, ]
+  colors <- colors[keepers]
+
   chosen_palette <- "Dark2"
   sample_colors <- sm(
     grDevices::colorRampPalette(
@@ -631,6 +655,13 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
 
   ## Randomize the rows of the df so we can see if any sample is actually overrepresented
   plot_df <- plot_df[sample(nrow(plot_df)), ]
+
+  if (!is.null(x_scale)) {
+    plot_df[["mz"]] <- check_plot_scale(plot_df[["mz"]], scale)[["data"]]
+  }
+  if (!is.null(y_scale)) {
+    plot_df[["intensity"]] <- check_plot_scale(plot_df[["intensity"]], scale)[["data"]]
+  }
 
   int_vs_mz <- ggplot(data=plot_df, aes_string(x="mz", y="intensity",
                                                fill="sample", colour="sample")) +
@@ -642,11 +673,22 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ...) {
                name="Sample", values=sample_colors,
                guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
     ggplot2::theme_bw(base_size=base_size)
+
+  if (!is.null(x_scale)) {
+    int_vs_mz <- int_vs_mz + ggplot2::scale_x_continuous(trans=scales::log2_trans())
+  }
+  if (!is.null(y_scale)) {
+    int_vs_mz <- int_vs_mz + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+  }
+
   if (isTRUE(lowess)) {
     int_vs_mz <- int_vs_mz +
       ggplot2::geom_smooth(method="loess", size=1.0)
   }
-  return(int_vs_mz)
+  retlist <- list(
+    "data" = plotted_data,
+    "plot" = int_vs_mz)
+  return(retlist)
 }
 
 #' Make a boxplot out of some of the various data available in the mzxml data.
@@ -676,9 +718,14 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   sample_data <- mzxml_data[["sample_data"]]
   plot_df <- data.frame()
   samples <- length(sample_data)
+  keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
-    message(paste0("Adding ", name))
+    if (class(sample_data[[i]]) == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
     plotted_table <- sample_data[[i]][[table]]
     plotted_data <- as.data.frame(plotted_table[[column]])
     plotted_data[["sample"]] <- name
@@ -688,8 +735,18 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
     plot_df <- rbind(plot_df, plotted_data)
   }
 
+  ## Drop rows from the metadata and colors which had errors.
+  if (length(keepers) > 0) {
+    metadata <- metadata[keepers, ]
+    colors <- colors[keepers]
+  } else {
+    stop("Something bad happened to the set of kept samples.")
+  }
+
   scale_data <- check_plot_scale(plot_df[[column]], scale)
-  scale <- scale_data[["scale"]]
+  if (is.null(scale)) {
+    scale <- scale_data[["scale"]]
+  }
   plot_df[[column]] <- scale_data[["data"]]
 
   boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +

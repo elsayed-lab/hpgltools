@@ -4,7 +4,8 @@
 \alias{plot_suppa}
 \title{Given some psi and tpm data, make a pretty plot!}
 \usage{
-plot_suppa(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.05)
+plot_suppa(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.05,
+  label_type = NULL, alpha = 0.7)
 }
 \description{
 This should take either a dataframe or filename for the psi data from suppa,

@@ -91,8 +91,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_s
     warning("Both num_surrogates and surrogate_method were defined.
 This will choose the number of surrogates differently depending on method chosen.")
   }
-  message(paste0("In norm_batch, after testing logic of surrogate method/number, the
-number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_method, "."))
+  message("In norm_batch, after testing logic of surrogate method/number, the
+number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_method, ".")
 
   cpus <- 4
   if (!is.null(arglist[["cpus"]])) {
@@ -129,11 +129,11 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
     num_low <- 0
   }
   if (num_low > 0) {
-    message(paste0("batch_counts: Before batch correction, ", num_low, " entries 0<x<1."))
+    message("batch_counts: Before batch correction, ", num_low, " entries 0<x<1.")
   }
   num_zero <- sum(count_table <= 0)
   if (num_zero > 0) {
-    message(paste0("batch_counts: Before batch correction, ", num_zero, " entries are >= 0."))
+    message("batch_counts: Before batch correction, ", num_zero, " entries are >= 0.")
   }
   if (isTRUE(batch)) {
     batch <- "limma"
@@ -148,11 +148,11 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
     num_surrogates <- sm(sva::num.sv(count_mtrx, conditional_model, method=surrogate_method))
   }
   if (num_surrogates < 1) {
-    message(paste0("0 surrogates were detected by the ", surrogate_method, " method."))
+    message("0 surrogates were detected by the ", surrogate_method, " method.")
     message("This will end badly, so setting num_surrogates to 1.")
     num_surrogates <- 1
   }
-  message(paste0("After checking/setting the number of surrogates, it is: ", num_surrogates, "."))
+  message("After checking/setting the number of surrogates, it is: ", num_surrogates, ".")
 
   switchret <- switch(
     batch,
@@ -306,8 +306,8 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
     num_low <- 0
   }
   if (num_low > 0) {
-    message(paste0("The number of elements which are < 0 after batch correction is: ", num_low))
-    message(paste0("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero))
+    message("The number of elements which are < 0 after batch correction is: ", num_low)
+    message("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero)
     if (isTRUE(low_to_zero)) {
       count_table[count_table < 0] <- 0
     }
@@ -453,7 +453,7 @@ I set it to 1 not knowing what its purpose is.")
     hld <- NULL
     bayesdata <- dat
     for (k in 1:n.batch) {
-      message(paste0("Fitting 'shrunk' batch ", k, " effects."))
+      message("Fitting 'shrunk' batch ", k, " effects.")
       sel <- batches[[k]]
       gammaMLE <- rowMeans(m.data[, sel])
       mprior <- mean(gammaMLE, na.rm = TRUE)

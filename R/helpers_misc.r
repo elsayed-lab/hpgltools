@@ -18,7 +18,7 @@ backup_file <- function(backup_file, backups=4) {
       }
     }
     newfile <- paste0(backup_file, ".", i)
-    message(paste0("Renaming ", backup_file, " to ", newfile, "."))
+    message("Renaming ", backup_file, " to ", newfile, ".")
     file.copy(backup_file, newfile)
   } else {
     message("The file does not yet exist.")
@@ -52,7 +52,6 @@ bioc_all <- function(release="3.5",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
   dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
-  ## message(paste0("DL: ", dl_url))
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
   ## Sadly, biocLite() does not give different returns for a successfully/failed
@@ -77,7 +76,7 @@ bioc_all <- function(release="3.5",
     suc <- state[["succeeded"]]
     fail <- state[["failed"]]
     alr <- state[["already"]]
-    message(paste0("Installing: ", pkg))
+    message("Installing: ", pkg)
     if (isTRUE(forceme)) {
       installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
                                                    suppressUpdates=update,
@@ -94,7 +93,7 @@ bioc_all <- function(release="3.5",
       }
     } else {
       if (isTRUE(pkg %in% .packages(all.available=TRUE))) {
-        message(paste0("Package ", pkg,  " is already installed."))
+        message("Package ", pkg,  " is already installed.")
         alr <- append(alr, pkg)
         sleep <- 0
       } else {
@@ -222,9 +221,9 @@ get_git_commit <- function(gitdir="~/hpgltools") {
   cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
   date_result <- system(cmdline, intern=TRUE)
   result <- paste0(date_result, ": ", commit_result)
-  message(paste0("If you wish to reproduce this exact build of hpgltools, invoke the following:"))
+  message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
-  message(paste0("> git reset ", commit_result))
+  message("> git reset ", commit_result)
   message("R> packrat::restore()")
   return(result)
 }
@@ -411,7 +410,7 @@ install_packrat_globally <- function() {
   globally_installed <- installed.packages()
 
   newly_installed <- 0
-  message(paste0("Going to check on/install ", num_installed, " packages."))
+  message("Going to check on/install ", num_installed, " packages.")
   for (c in 1:num_installed) {
     pkg_name <- packrat_installed[c, "package"]
     pkg_ver <- packrat_installed[c, "packrat.version"]
@@ -424,17 +423,17 @@ install_packrat_globally <- function() {
     if (pkg_name %in% rownames(globally_installed)) {
       global_version <- globally_installed[pkg_name, "Version"]
       if (global_version == pkg_ver) {
-        message(paste0("Package: ", pkg_name, " is globally installed as the same version."))
+        message("Package: ", pkg_name, " is globally installed as the same version.")
       } else {
-        message(paste0("Package: ", pkg_name, " is globally installed as version: ",
-                       global_version, "; packrat has version ", pkg_ver, "."))
+        message("Package: ", pkg_name, " is globally installed as version: ",
+                global_version, "; packrat has version ", pkg_ver, ".")
         inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
         if (class(inst) != "try-error") {
           newly_installed <- newly_installed + 1
         }
       }
     } else {
-      message(paste0("Package: ", pkg_name, " is not installed."))
+      message("Package: ", pkg_name, " is not installed.")
       inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
       if (class(inst) != "try-error") {
         newly_installed <- newly_installed + 1
@@ -442,7 +441,7 @@ install_packrat_globally <- function() {
     }
   } ## End of the for loop
   paths <- sm(packrat::packrat_mode())
-  message(paste0("Installed ", newly_installed, " packages."))
+  message("Installed ", newly_installed, " packages.")
   return(newly_installed)
 }
 
@@ -463,9 +462,9 @@ install_packrat_globally <- function() {
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
   savefile <- paste0(getwd(), "/", directory, "/", filename)
-  message(paste0("Loading the savefile: ", savefile))
+  message("Loading the savefile: ", savefile)
   load_string <- paste0("load('", savefile, "', envir=globalenv())")
-  message(paste0("Command run: ", load_string))
+  message("Command run: ", load_string)
   eval(parse(text=load_string))
 }
 
@@ -518,8 +517,8 @@ make_report <- function(name="report", type="pdf") {
     output_filename <- paste0(name, "-", output_date, ".pdf")
     output_format <- "pdf_document"
   }
-  message(paste0("About to run: render(input=", input_filename, ", output_file=",
-                 output_filename, " and output_format=", output_format))
+  message("About to run: render(input=", input_filename, ", output_file=",
+          output_filename, " and output_format=", output_format)
   result <- try(rmarkdown::render(
                              "input" = input_filename,
                              "output_file" = output_filename,
@@ -638,7 +637,7 @@ rex <- function(display=":0") {
     display <- read.table(paste0(home, "/.displays/", host, ".last"))[1, 1]
   }
   auth <- paste0(home, "/.Xauthority")
-  message(paste0("Setting display to: ", display))
+  message("Setting display to: ", display)
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
   return(NULL)
@@ -668,7 +667,7 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
     dir.create(directory)
   }
   savefile <- paste0(getwd(), "/", directory, "/", filename)
-  message(paste0("The savefile is: ", savefile))
+  message("The savefile is: ", savefile)
   backup_file(savefile, backups=backups)
   ## The following save strings work:
   save_string <- paste0(
@@ -677,7 +676,7 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
     "'), 'wb');\n",
     "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
     "close(con)")
-  message(paste0("The save string is: ", save_string))
+  message("The save string is: ", save_string)
   eval(parse(text=save_string))
 }
 
@@ -744,7 +743,7 @@ sm <- function(..., wrap=TRUE) {
           uninstalled <- trimws(gsub(pattern="^.* there is no package called ‘(.*)’.*$",
                                      replacement="\\1",
                                      x=ret, perl=TRUE))
-          message(paste0("Going to attempt to install: ", uninstalled))
+          message("Going to attempt to install: ", uninstalled)
           tt <- please_install(uninstalled)
         }
         ret <- sm(..., wrap=FALSE)

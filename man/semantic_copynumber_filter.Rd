@@ -4,14 +4,11 @@
 \alias{semantic_copynumber_filter}
 \title{Remove multicopy genes from up/down gene expression lists.}
 \usage{
-semantic_copynumber_filter(de_list, max_copies = 2, use_files = FALSE,
+semantic_copynumber_filter(input, max_copies = 2, use_files = FALSE,
   invert = TRUE, semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF",
   "GP63"), semantic_column = "1.tooltip")
 }
 \arguments{
-\item{de_list}{List of sets of genes deemed significantly
-up/down with a column expressing approximate count numbers.}
-
 \item{max_copies}{Keep only those genes with <= n putative
 copies.}
 
@@ -23,6 +20,9 @@ copies.}
 
 \item{semantic_column}{Column in the DE table used to find the
 semantic strings for removal.}
+
+\item{de_list}{List of sets of genes deemed significantly
+up/down with a column expressing approximate count numbers.}
 }
 \value{
 Smaller list of up/down genes.

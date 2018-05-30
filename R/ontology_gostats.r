@@ -68,17 +68,17 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
   message("gets pissed, well I tried both ways and I am calling library().")
   message("R CMD check can bite my shiny metal ass.")
   tt <- sm(library("GOstats"))
-  message(paste0("simple_gostats(): gff_type is: ", gff_type,
-                 ". Change that if there are bad merges."))
+  message("simple_gostats(): gff_type is: ", gff_type,
+          ". Change that if there are bad merges.")
   types <- c("cds", "gene", "exon", "protein_coding")
   for (type in types) {
-    message(paste0("simple_gostats(): type ", type, " has ",
-                   sum(annotation[["type"]] == type), " annotations."))
+    message("simple_gostats(): type ", type, " has ",
+            sum(annotation[["type"]] == type), " annotations.")
   }
 
   annotation <- annotation[annotation[["type"]] == gff_type, ]
-  message(paste0("simple_gostats(): the current annotations has: ", nrow(annotation),
-                 " rows and ", ncol(annotation), " columns."))
+  message("simple_gostats(): the current annotations has: ", nrow(annotation),
+          " rows and ", ncol(annotation), " columns.")
   annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)
   if (universe_merge %in% names(annotation)) {
     universe <- annotation[, c(universe_merge, "width")]
@@ -138,7 +138,7 @@ perhaps change gff_type to make the merge work.")
                            conditional=conditional, testDirection="over")
   ## This is where it fell over
   mf_over <- Category::hyperGTest(mf_params)
-  message(paste0("Found ", nrow(GOstats::summary(mf_over)), " over MF categories."))
+  message("Found ", nrow(GOstats::summary(mf_over)), " over MF categories.")
   message("simple_gostats(): Performing BP GSEA.")
   bp_params <- Category::GSEAGOHyperGParams(
                            name=paste("GSEA of ", species, sep=""),
@@ -146,7 +146,7 @@ perhaps change gff_type to make the merge work.")
                            ontology="BP", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")
   bp_over <- Category::hyperGTest(bp_params)
-  message(paste0("Found ", nrow(GOstats::summary(bp_over)), " over BP categories."))
+  message("Found ", nrow(GOstats::summary(bp_over)), " over BP categories.")
   message("simple_gostats(): Performing CC GSEA.")
   cc_params <- Category::GSEAGOHyperGParams(
                            name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
@@ -154,7 +154,7 @@ perhaps change gff_type to make the merge work.")
                            ontology="CC", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")
   cc_over <- Category::hyperGTest(cc_params)
-  message(paste0("Found ", nrow(GOstats::summary(cc_over)), " over CC categories."))
+  message("Found ", nrow(GOstats::summary(cc_over)), " over CC categories.")
   message("simple_gostats(): Performing under MF GSEA.")
   mf_params <- Category::GSEAGOHyperGParams(
                            name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
@@ -162,7 +162,7 @@ perhaps change gff_type to make the merge work.")
                            ontology="MF", pvalueCutoff=pcutoff,
                            conditional=conditional, testDirection="under")
   mf_under <- Category::hyperGTest(mf_params)
-  message(paste0("Found ", nrow(GOstats::summary(mf_under)), " under MF categories."))
+  message("Found ", nrow(GOstats::summary(mf_under)), " under MF categories.")
   message("simple_gostats(): Performing under BP GSEA.")
   bp_params <- Category::GSEAGOHyperGParams(
                            name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
@@ -170,7 +170,7 @@ perhaps change gff_type to make the merge work.")
                            ontology="BP", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="under")
   bp_under <- Category::hyperGTest(bp_params)
-  message(paste0("Found ", nrow(GOstats::summary(bp_under)), " under BP categories."))
+  message("Found ", nrow(GOstats::summary(bp_under)), " under BP categories.")
   message("simple_gostats(): Performing under CC GSEA.")
   cc_params <- Category::GSEAGOHyperGParams(
                            name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
@@ -178,7 +178,7 @@ perhaps change gff_type to make the merge work.")
                            ontology="CC", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="under")
   cc_under <- Category::hyperGTest(cc_params)
-  message(paste0("Found ", nrow(GOstats::summary(cc_under)), " under CC categories."))
+  message("Found ", nrow(GOstats::summary(cc_under)), " under CC categories.")
   mf_over_table <- bp_over_table <- cc_over_table <- NULL
   mf_under_table <- bp_under_table <- cc_under_table <- NULL
   mf_over_table <- GOstats::summary(mf_over, pvalue=1.0, htmlLinks=TRUE)
@@ -346,7 +346,7 @@ perhaps change gff_type to make the merge work.")
   retlist[["pvalue_plots"]] <- pvalue_plots
 
   if (!is.null(excel)) {
-    message(paste0("Writing data to: ", excel, "."))
+    message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gostats_data(retlist, excel=excel)))
   }
   return(retlist)

@@ -117,7 +117,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       the_table <- all_tables[[revname]]
     } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
       message("Unable to find the table in the set of possible tables.")
-      message(paste0("The possible tables are: ", toString(possible_tables)))
+      message("The possible tables are: ", toString(possible_tables))
       stop()
     } else {
       the_table <- all_tables[[the_table]]
@@ -128,7 +128,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     table_parts <- pairwise[["keepers"]][[table]]
     if (is.null(table_parts)) {
       message("Unable to find the table in the set of possible tables.")
-      message(paste0("The possible tables are: ", toString(possible_tables)))
+      message("The possible tables are: ", toString(possible_tables))
       stop()
     }
     fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
@@ -267,7 +267,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
   } else {
     yname <- y
   }
-  message(paste0("Actually comparing ", xname, " and ", yname, "."))
+  message("Actually comparing ", xname, " and ", yname, ".")
 
   ## Now extract the coefficent df
   if (type == "edger") {
@@ -538,6 +538,114 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
     "up_data" = up_nums,
     "down_data" = down_nums,
     "p_data" = p_nums)
+  return(retlist)
+}
+
+#' Plot the rank order of the data in two tables against each other.
+#'
+#' Steve Christensen has some neat plots showing the relationship between two
+#' tables.  I though they were super-cool, so I co-opted the idea in this
+#' function.
+#'
+#' @param first  First table of values.
+#' @param second  Second table of values, if null it will use the first.
+#' @param first_type  Assuming this is from all_pairwise(), use this method.
+#' @param second_type Ibid.
+#' @param first_table  Again, assuming all_pairwise(), use this to choose the
+#'   table to extract.
+#' @param second_table Ibid.
+#' @param column  What column to use to rank-order?
+#' @param p_col  Use this column for pretty colors.
+#' @param p_limit  A p-value limit for coloring dots.
+#' @param both_color  If both columns are 'significant', use this color.
+#' @param first_color  If only the first column is 'significant', this color.
+#' @param second_color If the second column is 'significant', this color.
+#' @param no_color  If neither column is 'significant', then this color.
+#' @return a list with a plot and a couple summary statistics.
+#' @export
+rank_order_scatter <- function(first, second=NULL, first_type="limma",
+                               second_type="limma", first_table=1, alpha=0.5,
+                               second_table=2, first_column="logFC",
+                               second_column="logFC", first_p_col="adj.P.Val",
+                               second_p_col="adj.P.Val", p_limit=0.05,
+                               both_color="red", first_color="green",
+                               second_color="blue", no_color="black") {
+  if (is.null(second)) {
+    second <- first
+  }
+  if (!is.null(first[[first_type]])) {
+    first <- first[[first_type]][["all_tables"]]
+  }
+  if (!is.null(second[[second_type]])) {
+    second <- second[[second_type]][["all_tables"]]
+  }
+  table1 <- first[[first_table]]
+  table2 <- second[[second_table]]
+  merged <- merge(table1, table2, by="row.names")
+  rownames(merged) <- merged[["Row.names"]]
+  merged <- merged[, -1]
+
+  if (first_column == second_column) {
+    c1 <- paste0(column, ".x")
+    c2 <- paste0(column, ".y")
+  } else {
+    c1 <- first_column
+    c2 <- second_column
+  }
+  c1_idx <- order(merged[[c1]])
+  merged <- merged[c1_idx, ]
+  merged[["label"]] <- rownames(merged)
+  c1_idx <- order(merged[[c1]])
+  c2_idx <- order(merged[[c2]])
+  merged[["x"]] <- as.numeric(c1_idx)
+  merged[["y"]] <- as.numeric(c2_idx)
+
+  merged[["state"]] <- "neither"
+  if (first_p_col == second_p_col) {
+    p1 <- paste0(p_col, ".x")
+    p2 <- paste0(p_col, ".y")
+  } else {
+    p1 <- first_p_col
+    p2 <- second_p_col
+  }
+  both_idx <- merged[[p1]] < p_limit & merged[[p2]] < p_limit
+  merged[both_idx, "state"] <- "both"
+  p1_idx <- merged[[p1]] < p_limit & merged[[p2]] >= p_limit
+  merged[p1_idx, "state"] <- "first"
+  p2_idx <- merged[[p2]] < p_limit & merged[[p1]] >= p_limit
+  merged[p2_idx, "state"] <- "second"
+  merged[["state"]] <- as.factor(merged[["state"]])
+
+  first_table_colname <- paste0("Table: ", first_table, ", Type: ", first_type,
+                                ", column: ", first_column)
+  second_table_colname <- paste0("Table: ", second_table, ", Type: ", second_type,
+                                ", column: ", second_column)
+
+  plt <- ggplot(data=merged,
+                aes_string(color="state", fill="state",
+                           x="x", y="y", label="label")) +
+    ggplot2::geom_point(size=1, alpha=alpha) +
+    ggplot2::scale_color_manual(name="state",
+                                values=c("both"=both_color,
+                                         "first"=first_color,
+                                         "second"=second_color,
+                                         "neither"=no_color)) +
+    ggplot2::geom_smooth(method="loess", color="lightblue") +
+    ggplot2::ylab(paste0("Rank order of ", second_table_colname)) +
+    ggplot2::xlab(paste0("Rank order of ", first_table_colname)) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(legend.position="none",
+                   axis.text=ggplot2::element_text(size=base_size, colour="black"))
+
+  model_test <- try(lm(formula=y ~ x, data=merged), silent=TRUE)
+  model_summary <- summary(model_test)
+  cor <- cor.test(merged[[c1]], merged[[c2]], method="pearson")
+  retlist <- list(
+    "plot" = plt,
+    "model" = model_test,
+    "summary" = model_summary,
+    "correlation" = cor)
+
   return(retlist)
 }
 

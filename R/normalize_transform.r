@@ -64,12 +64,12 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
   ## If we are performing a transformation, then the minimum value I want is 1 before performing the logn
   less_zero <- sum(count_table < 0)
   if (less_zero > 0) {
-    message(paste0("transform_counts: Found ", less_zero, " values less than 0."))
+    message("transform_counts: Found ", less_zero, " values less than 0.")
   }
 
   num_zero <- sum(count_table == 0)
   if (num_zero > 0) {
-    message(paste0("transform_counts: Found ", num_zero, " values equal to 0, adding 1 to the matrix."))
+    message("transform_counts: Found ", num_zero, " values equal to 0, adding 1 to the matrix.")
     count_table <- count_table + 1
   }
 

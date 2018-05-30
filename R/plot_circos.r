@@ -54,8 +54,8 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
     cat(string, file=out, sep="\n")
   }
   close(out)
-  message(paste0("Wrote karyotype to ", outfile))
-  message(paste0("This should match the karyotype= line in ", name, ".conf"))
+  message("Wrote karyotype to ", outfile)
+  message("This should match the karyotype= line in ", name, ".conf")
   return(outfile)
 }
 
@@ -115,8 +115,8 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
   end_string <- "\n</ideogram>\n"
   cat(end_string, file=out, sep="")
   close(out)
-  message(paste0("Wrote karyotype to ", out))
-  message(paste0("This should match the karyotype= line in ", name, ".conf"))
+  message("Wrote karyotype to ", out)
+  message("This should match the karyotype= line in ", name, ".conf")
   return(out)
 }
 
@@ -139,19 +139,33 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
-circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="chr1",
+circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr1",
                               outer=1.0, width=0.08, spacing=0.0) {
-  if (is.null(go_table[["start"]]) | is.null(go_table[["stop"]]) |
-      is.null(go_table[["strand"]]) | is.null(go_table[["COGFun"]])) {
+  end_col <- "end"
+  if (!is.null(table[["stop"]])) {
+    end_col <- "stop"
+  }
+  number_pluses <- sum(table[["strand"]] == "+")
+  number_ones <- sum(table[["strand"]] == 1)
+  plus_string <- "+"
+  minus_string <- "-"
+  if (number_pluses + number_ones == 0) {
+    stop("This function requires some way of understanding plus/minus strand.")
+  } else if (number_ones > 0) {
+    plus_string <- 1
+    minus_string <- -1
+  }
+  if (is.null(table[["start"]]) | is.null(table[[end_col]]) |
+      is.null(table[["strand"]]) | is.null(table[["COGFun"]])) {
     stop("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
   }
   plus_cfg_file <- cfgout
   minus_cfg_file <- cfgout
   plus_cfg_file <- gsub(".conf$", "_plus_go.conf", plus_cfg_file)
   minus_cfg_file <- gsub(".conf$", "_minus_go.conf", minus_cfg_file)
-  go_table <- go_table[, c("start", "stop", "strand", "COGFun")]
-  go_plus <- as.data.frame(go_table[go_table[["strand"]] == "+", ])
-  go_minus <- as.data.frame(go_table[go_table[["strand"]] == "-", ])
+  table <- table[, c("start", "stop", "strand", "COGFun")]
+  go_plus <- as.data.frame(table[table[["strand"]] == plus_string, ])
+  go_minus <- as.data.frame(table[table[["strand"]] == minus_string, ])
   go_plus[["chr"]] <- chr
   go_minus[["chr"]] <- chr
   ##    go_plus = go_plus[, c(5, 1, 2, 4)]
@@ -165,11 +179,11 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="
   data_prefix <- gsub(".conf$", "", data_prefix)
 
   plus_file <- paste0(data_prefix, "_plus_go.txt")
-  message(paste0("Writing data file: ", plus_file, " with the + strand GO data."))
+  message("Writing data file: ", plus_file, " with the + strand GO data.")
   write.table(go_plus, file=plus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
 
   minus_file <- paste0(data_prefix, "_minus_go.txt")
-  message(paste0("Writing data file: ", minus_file, " with the - strand GO data."))
+  message("Writing data file: ", minus_file, " with the - strand GO data.")
   write.table(go_minus, file=minus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
 
   first_outer <- outer
@@ -503,7 +517,7 @@ circos_plus_minus <- function(go_table, cfgout="circos/conf/default.conf", chr="
   cat(master_cfg_string, file=master_cfg_out, sep="")
   close(master_cfg_out)
 
-  message(paste0("Returning the inner width: ", second_inner, ".  Use it as the outer for the next ring."))
+  message("Returning the inner width: ", second_inner, ".  Use it as the outer for the next ring.")
   new_outer <- second_inner - spacing
   return(new_outer)
 }
@@ -551,7 +565,7 @@ circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
   data_filename <- paste0(data_prefix, "_", colname, "_tile.txt")
-  message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
+  message("Writing data file: ", data_filename, " with the ", colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
@@ -665,7 +679,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
   data_filename <- paste0(data_prefix, "_", colname, "_heatmap.txt")
-  message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
+  message("Writing data file: ", data_filename, " with the ", colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
@@ -767,7 +781,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
   data_filename <- paste0(data_prefix, "_", colname, "_hist.txt")
-  message(paste0("Writing data file: ", data_filename, " with the ", colname, " column."))
+  message("Writing data file: ", data_filename, " with the ", colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
@@ -829,7 +843,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 circos_make <- function(target="", output="circos/Makefile", circos="circos") {
   circos_dir <- dirname(output)
   if (!file.exists(circos_dir)) {
-    message(paste0("The circos directory does not exist, creating: ", circos_dir))
+    message("The circos directory does not exist, creating: ", circos_dir)
     dir.create(circos_dir, recursive=TRUE)
   }
   out <- file(output, open="w+")
@@ -900,16 +914,16 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col="chr1", 
   first_end_name <- paste0(first_col, "_end")
   second_start_name <- paste0(second_col, "_start")
   second_end_name <- paste0(second_col, "_end")
-  message(paste0("This function assumes an input table including columns: ", first_start_name,
+  message("This function assumes an input table including columns: ", first_start_name,
                  ",", first_end_name, ",", second_start_name, ",", second_end_name, ",",
-                 first_name, ",", second_name, "."))
+                 first_name, ",", second_name, ".")
   df <- df[, c(first_name, second_name, first_start_name,
                first_end_name, second_start_name, second_end_name)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
   data_filename <- paste0(data_prefix, "_", first_col, "_arc.txt")
-  message(paste0("Writing data file: ", data_filename, " with the ", first_col, " column."))
+  message("Writing data file: ", data_filename, " with the ", first_col, " column.")
   print_arc <- function(x) {
     cat(x[5], " chr5005 ", x[1], " ", x[2], "\n", x[5], " chr5448 ", x[3], " ", x[4], "\n\n",
         file="circos/data/crossref_5005_5448.txt", append=TRUE, sep="")
@@ -974,25 +988,25 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
   message("This assumes you have a colors.conf in circos/colors/ and fonts.conf in circos/fonts/")
   message("It also assumes you have conf/ideogram.conf, conf/ticks.conf, and conf/housekeeping.conf")
   cfgout <- paste0(conf_dir, "/", name, ".conf")
-  message(paste0("It will write ", cfgout, " with a reasonable first approximation config file."))
+  message("It will write ", cfgout, " with a reasonable first approximation config file.")
 
   data_dir <- gsub(pattern="conf", replacement="data", x=conf_dir)
   if (!file.exists(data_dir)) {
-    message(paste0("Creating the data directory: ", data_dir))
+    message("Creating the data directory: ", data_dir)
     dir.create(data_dir, recursive=TRUE)
   }
   if (!file.exists(conf_dir)) {
-    message(paste0("The circos directory does not exist, creating: ", conf_dir))
+    message("The circos directory does not exist, creating: ", conf_dir)
     dir.create(conf_dir, recursive=TRUE)
   }
   karyotype_dir <- paste0(conf_dir, "/karyotypes")
   ideogram_dir <- paste0(conf_dir, "/ideograms")
   if (!file.exists(karyotype_dir)) {
-    message(paste0("The karyotype directory does not exist, creating: ", karyotype_dir))
+    message("The karyotype directory does not exist, creating: ", karyotype_dir)
     dir.create(karyotype_dir, recursive=TRUE)
   }
   if (!file.exists(paste0(conf_dir, "/ideograms"))) {
-    message(paste0("The ideogram directory does not exist, creating: ", ideogram_dir))
+    message("The ideogram directory does not exist, creating: ", ideogram_dir)
     dir.create(ideogram_dir, recursive=TRUE)
   }
   karyotype_file <- gsub("circos/conf", "conf/karyotypes", cfgout)

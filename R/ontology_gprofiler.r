@@ -81,7 +81,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
     if (class(a_result) == "try-error") {
       a_result <- data.frame(stringsAsFactors=FALSE)
     }
-    message(paste0(type, " search found ", nrow(a_result), " hits."))
+    message(type, " search found ", nrow(a_result), " hits.")
     result_lst[[type]] <- a_result
   }
 
@@ -97,7 +97,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", first_col="logFC",
   retlist[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlist))
 
   if (!is.null(excel)) {
-    message(paste0("Writing data to: ", excel, "."))
+    message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlist, excel=excel)))
     retlist[["excel"]] <- excel_ret
     message("Finished writing data.")

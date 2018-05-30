@@ -17,15 +17,15 @@ clean:
 	rm -rf ./..Rcheck &
 	rm -rf hpgltools.Rcheck/
 	rm -f hpgltools_${VERSION}.tar.gz
-	rm -rf vignettes/circos
-	rm -f vignettes/*.gff vignettes/*.pdf
+	rm -rf vignettes/circos vignettes/pasilla_*
+	rm -f vignettes/*.gff vignettes/*.pdf 
 	for testdir in travis all_functions slow_tests; do \
 	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
 	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview \
-	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb ;\
+	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb tests/$${testdir}/BSgenome* ;\
 	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
 	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \
-	    tests/$${testdir}/*.Rdata ;\
+	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json ;\
 	done
 
 clean_vignette:
@@ -89,7 +89,7 @@ roxygen:
 
 snap:
 	echo "Snapshotting packrat."
-	R -e "packrat::snapshot()"
+	R -e "packrat::snapshot(ignore.stale=TRUE, snapshot.source=FALSE, infer.dependencies=FALSE)"
 
 suggests:
 	@echo "Installing suggested packages."

@@ -6,11 +6,17 @@
 \usage{
 plot_nifty_heatmap(expt_data, expt_colors = NULL, expt_design = NULL,
   first_type = "correlation", first_method = "pearson",
-  second_type = "distance", second_method = "euclidean",
+  second_type = "correlation", second_method = "spearman",
+  aggregator = NULL, variables = c("condition", "batch"),
   expt_names = NULL, batch_row = "batch", title = NULL, ...)
 }
 \description{
 I have made fun of the code quality in msstats, but their heatmap function is really nice.
 I want a version of it for other analyses.  Oh, you know what nevermind, this
 is actually from SWATH2stats, which is quite nicely written.
+Well, let us be honest, this function has no future, but there are some neat ideas
+which I do not want to lose, I like the idea of dcasting using a formula in
+order to get the mean value by factor(s) and then performing a correlation on
+that.  I feel like this is a useful thing to be able to come back to, but I
+suspect that it will never find a real use-case scenario.
 }

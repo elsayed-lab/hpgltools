@@ -111,16 +111,16 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
         overlap <- gene_list %in% test_meta[[chosen_column]]
         hits_list[[ty]] <- testing
         column_list[[ty]] <- chosen_column
-        message(paste0("Testing ", ty, " with column ", chosen_column, " an overlap of ",
-                       sum(overlap), " was observed out of ", length(gene_list), " genes."))
+        message("Testing ", ty, " with column ", chosen_column, " an overlap of ",
+                sum(overlap), " was observed out of ", length(gene_list), " genes.")
         ## Note it as the best type so far.
         if (sum(overlap) > most_hits) {
           chosen_type <- ty
           most_hits <- sum(overlap)
         }
     }
-    message(paste0("Actually using type ", chosen_type,
-                   " consider one of the above if that is not good enough."))
+    message("Actually using type ", chosen_type,
+            " consider one of the above if that is not good enough.")
     ## Now we have a list of all the lengths by function used to acquire them.
     testing <- hits_list[[chosen_type]]
     ## We have a second list of the columns containing the appropriate IDs.
@@ -382,27 +382,32 @@ golev <- function(go) {
     go <- as.character(go)
     level <- 0
     requireNamespace("GO.db")
-    while (class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]])),
-                     silent=FALSE)) != "try-error") {
-        ontology <- as.character(AnnotationDbi::Ontology(GO.db::GOTERM[[go]]))
-        if (ontology == "MF") {
-            ## I am not certain if GO.db:: will work for this
-            ancestors <- GO.db::GOMFANCESTOR[[go]]
-        } else if (ontology == "BP") {
-            ancestors <- GO.db::GOBPANCESTOR[[go]]
-        } else if (ontology == "CC") {
-            ancestors <- GO.db::GOCCANCESTOR[[go]]
-        } else {
-            ## There was an error
-            message(paste("There was an error getting the ontology: ", as.character(go), sep=""))
-            ancestors <- "error"
-        }
-        go <- ancestors[1]
-        level <- level + 1
-        if (go == "all") {
-            return(level)
-        }
-    }  ## End while
+    while (class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[go])),
+                     silent=TRUE)) != "try-error") {
+      term <- GO.db::GOTERM[go]
+      test <- as.character(AnnotationDbi::Ontology(term))
+      if (class(test) == "try-error") {
+        next
+      }
+
+      if (test == "MF") {
+        ## I am not certain if GO.db:: will work for this
+        ancestors <- GO.db::GOMFANCESTOR[go]
+      } else if (test == "BP") {
+        ancestors <- GO.db::GOBPANCESTOR[go]
+      } else if (test == "CC") {
+        ancestors <- GO.db::GOCCANCESTOR[go]
+      } else {
+        ## There was an error
+        message("There was an error getting the ontology: ", as.character(go))
+        ancestors <- "error"
+      }
+      go <- as.list(ancestors)[[1]][1]
+      level <- level + 1
+      if (go == "all") {
+        return(level)
+      }
+    }  ## End for
     return(level)
 }
 #' Get a go level approximation from a set of IDs.
@@ -440,7 +445,7 @@ golevel <- function(go=c("GO:0032559", "GO:0000001")) {
 gotest <- function(go) {
     gotst <- function(go) {
         go <- as.character(go)
-        value <- try(GO.db::GOTERM[[go]])
+        value <- try(GO.db::GOTERM[go], silent=TRUE)
         if (class(value) == "try-error") {
             return(0)
         }
@@ -579,7 +584,7 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
             datum <- datum[-1]
         }
         comparison <- names(de_out[c])
-        message(paste("Performing ontology search of:", comparison, sep=""))
+        message("Performing ontology search of:", comparison)
         updown_genes <- get_sig_genes(datum, n=n, z=z, lfc=lfc, p=p)
         up_genes <- updown_genes[["up_genes"]]
         down_genes <- updown_genes[["down_genes"]]
@@ -726,27 +731,27 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
         uppers <- up_list[[cluster_count]]
         downers <- down_list[[cluster_count]]
         if (isTRUE(do_goseq)) {
-            message(paste0(cluster_count, "/", names_length, ": Starting goseq"))
+            message(cluster_count, "/", names_length, ": Starting goseq")
             up_goseq[[name]] <- try(simple_goseq(de_genes=uppers, ...))
             down_goseq[[name]] <- try(simple_goseq(de_genes=downers, ...))
         }
         if (isTRUE(do_cluster)) {
-            message(paste0(cluster_count, "/", names_length, ": Starting clusterprofiler"))
+            message(cluster_count, "/", names_length, ": Starting clusterprofiler")
             up_cluster[[name]] <- try(simple_clusterprofiler(uppers, ...))
             down_cluster[[name]] <- try(simple_clusterprofiler(downers, ...))
         }
         if (isTRUE(do_topgo)) {
-            message(paste0(cluster_count, "/", names_length, ": Starting topgo"))
+            message(cluster_count, "/", names_length, ": Starting topgo")
             up_topgo[[name]] <- try(simple_topgo(de_genes=uppers, ...))
             down_topgo[[name]] <- try(simple_topgo(de_genes=downers, ...))
         }
         if (isTRUE(do_gostats)) {
-            message(paste0(cluster_count, "/", names_length, ": Starting gostats"))
+            message(cluster_count, "/", names_length, ": Starting gostats")
             up_gostats[[name]] <- try(simple_gostats(uppers, ...))
             down_gostats[[name]] <- try(simple_gostats(downers, ...))
         }
         if (isTRUE(do_gprofiler)) {
-            message(paste0(cluster_count, "/", names_length, ": starting gprofiler."))
+            message(cluster_count, "/", names_length, ": starting gprofiler.")
             up_gprofiler[[name]] <- try(simple_gprofiler(uppers, ...))
             down_gprofiler[[name]] <- try(simple_gprofiler(downers, ...))
         }

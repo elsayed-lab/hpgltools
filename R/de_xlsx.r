@@ -109,7 +109,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       dir.create(excel_dir, recursive=TRUE)
     }
     if (file.exists(excel)) {
-      message(paste0("Deleting the file ", excel, " before writing the tables."))
+      message("Deleting the file ", excel, " before writing the tables.")
       file.remove(excel)
     }
     wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -307,8 +307,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     ## Just make sure we have something to work with.
     if (found_keepers == 0) {
       message("The keepers has no elements in the coefficients.")
-      message(paste0("Here are the keepers: ", toString(all_keepers)))
-      message(paste0("Here are the coefficients: ", toString(all_coefficients)))
+      message("Here are the keepers: ", toString(all_keepers))
+      message("Here are the coefficients: ", toString(all_coefficients))
       stop("Unable to find the set of contrasts to keep, fix this and try again.")
     }
     ## Then keep specific tables in specific orientations.
@@ -318,7 +318,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     table_names <- list()
     for (name in names(keepers)) {
       a <- a + 1
-      message(paste0("Working on ", a, "/", keeper_len, ": ",  name))
+      message("Working on ", a, "/", keeper_len, ": ",  name)
       ## Each element in the list gets one worksheet.
       sheet_count <- sheet_count + 1
       ## The numerators and denominators will be used to check that we are a_vs_b or b_vs_a
@@ -368,17 +368,17 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
           do_inverse <- FALSE
           found <- found + 1
           found_table <- same_string
-          message(paste0("Found table with ", same_string))
+          message("Found table with ", same_string)
         } else if (tab == inverse_string) {
           do_inverse <- TRUE
           found <- found + 1
           found_table <- inverse_string
-          message(paste0("Found inverse table with ", inverse_string))
+          message("Found inverse table with ", inverse_string)
         }
         name_list[a] <- same_string
       }
       if (found == 0) {
-        message(paste0("Found neither ", same_string, " nor ", inverse_string, "."))
+        message("Found neither ", same_string, " nor ", inverse_string, ".")
         break
       }
 
@@ -454,8 +454,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
       } else {
         ## End checking that we found the numerator/denominator
-        warning(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
-        message(paste0("Did not find either ", same_string, " nor ", inverse_string, "."))
+        warning("Did not find either ", same_string, " nor ", inverse_string, ".")
+        message("Did not find either ", same_string, " nor ", inverse_string, ".")
         break
       }
 
@@ -489,7 +489,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       ret_keepers[[tab]] <- tab
       a <- a + 1
       name_list[a] <- tab
-      message(paste0("Working on table ", a, "/", names_length, ": ", tab))
+      message("Working on table ", a, "/", names_length, ": ", tab)
       sheet_count <- sheet_count + 1
       splitted <- strsplit(x=tab, split="_vs_")
       xname <- splitted[[1]][1]
@@ -555,12 +555,12 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     sheet_count <- sheet_count + 1
     ret_keepers[[table]] <- table
     if (table %in% names(edger[["contrast_list"]])) {
-      message(paste0("I found ", table, " in the available contrasts."))
+      message("I found ", table, " in the available contrasts.")
     } else {
-      message(paste0("I did not find ", table, " in the available contrasts."))
-      message(paste0("The available tables are: ", names(edger[["contrast_list"]])))
+      message("I did not find ", table, " in the available contrasts.")
+      message("The available tables are: ", names(edger[["contrast_list"]]))
       table <- names(edger[["contrast_list"]])[[1]]
-      message(paste0("Choosing the first table: ", table))
+      message("Choosing the first table: ", table)
     }
     combined <- combine_de_table(
       limma, edger, deseq, basic, table, annot_df=annot_df, include_basic=include_basic,
@@ -645,7 +645,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
         plot_column <- xls_result[["end_col"]] + 2
-        message(paste0("Adding venn plots for ", names(combo)[[count]], "."))
+        message("Adding venn plots for ", names(combo)[[count]], ".")
         ## Make some venn diagrams comparing deseq/limma/edger!
         venn_list <- try(de_venn(ddd, lfc=0, adjp=adjp))
         venn_sig_list <- try(de_venn(ddd, lfc=1, adjp=adjp))
@@ -777,8 +777,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         title="Pairwise correlation coefficients among differential expression tools.")
 
       new_row <- xls_result[["end_row"]] + 2
-      message(paste0("Attempting to add the comparison plot to pairwise_summary at row: ",
-                     new_row + 1, " and column: ", 1))
+      message("Attempting to add the comparison plot to pairwise_summary at row: ",
+              new_row + 1, " and column: ", 1)
       if (class(comp[["plot"]]) == "recordedplot") {
         try_result <- xlsx_plot_png(
           comp[["plot"]], wb=wb, sheet=sheetname, plotname="pairwise_summary",
@@ -911,8 +911,8 @@ combine_de_table <- function(li, ed, de, ba, table_name,
                              include_deseq=TRUE, include_edger=TRUE, include_limma=TRUE,
                              include_basic=TRUE, lfc_cutoff=1, p_cutoff=0.05, excludes=NULL) {
   if (!padj_type %in% p.adjust.methods) {
-    warning(paste0("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
-Defaulting to fdr."))
+    warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
+Defaulting to fdr.")
     padj_type <- "fdr"
   }
 
@@ -1109,8 +1109,8 @@ Defaulting to fdr."))
         remove_column <- comb[[col]]
         remove_idx <- grep(pattern=exclude, x=remove_column, perl=TRUE, invert=TRUE)
         removed_num <- sum(as.numeric(remove_idx))
-        message(paste0("Removed ", removed_num, " genes using ",
-                       exclude, " as a string against column ", col, "."))
+        message("Removed ", removed_num, " genes using ",
+                exclude, " as a string against column ", col, ".")
         comb <- comb[remove_idx, ]
       }  ## End iterating through every string to exclude
     }  ## End iterating through every element of the exclude list
@@ -1546,8 +1546,11 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
         ma_plots[[table_name]] <- single_ma
       }
 
-      message(paste0("Writing excel data sheet ", table_count, "/", num_tables, ": ", table_name))
       table_count <- table_count + 1
+      factor <- length(according_to)
+      message("Writing excel data for ", table_name, ": ",
+              table_count, "/", num_tables * factor, ".")
+
       table <- all_tables[[table_name]]
       fc_column <- paste0(according, "_logfc")
       p_column <- paste0(according, "_adjp")
@@ -1594,7 +1597,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     } else if (excel == FALSE) {
       do_excel <- FALSE
     } else {
-      message(paste0("Printing significant genes to the file: ", excel))
+      message("Printing significant genes to the file: ", excel)
       xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
                                   summary_count=summary_count, ma=ma)
       ## This is in case writing the sheet resulted in it being shortened.
@@ -1610,7 +1613,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       according_to=according_to)
     plot_row <- 1
     plot_col <- 1
-    message(paste0("Adding significance bar plots."))
+    message("Adding significance bar plots.")
 
     num_tables <- length(according_to)
     plot_row <- plot_row + ((nrow(change_counts) + 1) * num_tables) + 4
@@ -1888,7 +1891,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     down_table <- downs[[table_count]]
     up_title <- up_titles[[table_count]]
     down_title <- down_titles[[table_count]]
-    message(paste0(table_count, "/", num_tables, ": Creating significant table ", up_name))
+    message(table_count, "/", num_tables, ": Creating significant table ", up_name)
     xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
     ## This is in case the sheet name is past the 30 character limit.
     sheet_name <- xls_result[["sheet"]]
@@ -1994,7 +1997,7 @@ write_de_table <- function(data, type="limma", ...) {
       dir.create(excel_dir, recursive=TRUE)
     }
     if (file.exists(excel)) {
-      message(paste0("Deleting the file ", excel, " before writing the tables."))
+      message("Deleting the file ", excel, " before writing the tables.")
       file.remove(excel)
     }
     wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -2004,7 +2007,7 @@ write_de_table <- function(data, type="limma", ...) {
   end <- length(coef)
   for (c in 1:end) {
     comparison <- coef[c]
-    message(paste0("Writing ", c, "/", end, ": table: ", comparison, "."))
+    message("Writing ", c, "/", end, ": table: ", comparison, ".")
     table <- data[["all_tables"]][[c]]
 
     written <- try(write_xls(
@@ -2113,7 +2116,7 @@ write_intersect_significant <- function(tables, excel="excel/significant_shared.
     }
     ## Now that we have collected the intersections for this set of tables, write them.
     if (!is.null(wb)) {
-      message(paste0("Writing data for ", table_name))
+      message("Writing data for ", table_name)
 
       colnames(annot_df) <- gsub(pattern="[[:punct:]]",
                                  replacement="",
@@ -2149,7 +2152,7 @@ write_intersect_significant <- function(tables, excel="excel/significant_shared.
   } ## End examining each set of tables.
 
   if (!is.null(wb)) {
-    message(paste0("Writing the file: ", excel))
+    message("Writing the file: ", excel)
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   }
   return(retlist)

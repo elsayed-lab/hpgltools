@@ -63,10 +63,10 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
     ## Then the species was provided.
     abbreviation <- get_kegg_orgn(species)
     if (length(abbreviation) == 0) {
-      stop(paste0("Unable to find a matching abbreviation for the search: ", species, "."))
+      stop("Unable to find a matching abbreviation for the search: ", species, ".")
     }
-    message(paste0("The possible abbreviations are: ", toString(abbreviation), "."))
-    message(paste0("Choosing the first one: ", abbreviation[[1]]))
+    message("The possible abbreviations are: ", toString(abbreviation), ".")
+    message("Choosing the first one: ", abbreviation[[1]])
     chosen <- abbreviation[[1]]
   }
 

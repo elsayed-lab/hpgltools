@@ -7,20 +7,11 @@ context("040annotation_orgdb.R\n")
 
 ## Taken by doing head(keys(Homo.sapiens, keytype="ENSEMBL"))
 test_genes <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
-              "ENSG00000171428", "ENSG00000156006", "ENSG00000196136")
-
-## load_host_annotations()
-testing <- sm(load_host_annotations())
-expected <- c(70026, 8)
-actual <- dim(testing)
-test_that("Do we get the expected amount of orgdb data?", {
-  expect_equal(expected[1], actual[1])
-  expect_equal(expected[2], actual[2])
-})
+                "ENSG00000171428", "ENSG00000156006", "ENSG00000196136")
 
 ## load_orgdb_annotations()
 testing <- sm(load_orgdb_annotations())
-expected <- c(74093, 5)
+expected <- c(325128, 6)
 actual <- dim(testing[["genes"]])
 test_that("Do we get the expected amount of orgdb gene data?", {
   expect_equal(expected[1], actual[1])

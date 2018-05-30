@@ -24,21 +24,21 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
         for (a in 1:length(accessions)) {
           name <- species[a]
           accession <- accessions[a]
-          message(paste0("Downloading the proteome for ", name, "."))
+          message("Downloading the proteome for ", name, ".")
           tmp <- download_uniprot_proteome(accession=accession)
           Sys.sleep(time=3)
         }
     } else if (isTRUE(first)) {
       accession <- accessions[1]
       name <- species[1]
-      message(paste0("Downloading the proteome for ", name, "."))
+      message("Downloading the proteome for ", name, ".")
       tmp <- download_uniprot_proteome(accession=accession)
     } else {
       message("Here are the species found, please choose one and try again.")
       for (a in 1:length(accessions)) {
         name <- species[a]
         accession <- accessions[a]
-        message(paste0(a, ") ", accession, ": ", name))
+        message(a, ") ", accession, ": ", name)
       }
       message(toString(species))
       return(NULL)
@@ -138,7 +138,7 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
     if (grepl(pattern="^GN\\s+", x=line)) {
       pat <- "^GN\\s+.*OrderedLocusNames=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
-        ## message(paste0("Got a locusname on line ", i, " for gene number ", gene_num))
+        ## message("Got a locusname on line ", i, " for gene number ", gene_num)
         ## i=565 is first interesting one.
         tmp_ids <- gsub(pattern=pat, replacement="\\1", x=line)
         tmp_ids <- gsub(pattern="^(.*?),.*", replacement="\\1", x=tmp_ids)
@@ -431,7 +431,7 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
 #'   AnnotationDbi.
 #' @export
 load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculosis",
-                                     keytype="GI_NUMBER*", chosen_columns=NULL) {
+                                       keytype="GI_NUMBER*", chosen_columns=NULL) {
   if (is.null(id)) {
     result_df <- UniProt.ws::availableUniprotSpecies(pattern=species)
     if (nrow(result_df) == 0) {
@@ -442,7 +442,7 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
       print(result_df)
       id <- result_df[1, 1]
     } else {
-      message(paste0("Found 1 species, using its ID: ", result_df[1, 1], "."))
+      message("Found 1 species, using its ID: ", result_df[1, 1], ".")
       id <- result_df[1, 1]
     }
   }
@@ -450,13 +450,14 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
   downloaded_data <- UniProt.ws::UniProt.ws(as.numeric(id))
   ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL GENOMES,
   ## ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
-  ## yeah there are more, but I am tired of waiting for this stupid thing.
+  ## I wonder if the * at the end of GI_NUMBER is telling me that this is the real primary key?
   possible_keys <- AnnotationDbi::keys(x=downloaded_data, keytype=keytype)
   possible_columns <- AnnotationDbi::columns(x=downloaded_data)
   if (is.null(chosen_columns)) {
     chosen_columns <- c("ENTREZ_GENE", "GO", "INTERPRO", "PATHWAY", "LENGTH", "EGGNOG")
   }
-  ret <- sm(select(x=downloaded_data, keytype=keytype, columns=chosen_columns, keys=possible_keys))
+  ret <- sm(AnnotationDbi::select(x=downloaded_data, keytype=keytype,
+                                  columns=chosen_columns, keys=possible_keys))
   return(ret)
 }
 

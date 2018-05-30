@@ -374,10 +374,10 @@ hpgl_norm <- function(data, ...) {
             batch <- arglist[["batch"]]
         }
         if (batch == "raw") {
-            message(paste0("Step ", arglist[["batch_step"]], ": not doing batch correction."))
+            message("Step ", arglist[["batch_step"]], ": not doing batch correction.")
         } else {
-            message(paste0("Step ", arglist[["batch_step"]], ": doing batch correction with ",
-                           arglist[["batch"]], "."))
+            message("Step ", arglist[["batch_step"]], ": doing batch correction with ",
+                    arglist[["batch"]], ".")
             tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
             ##tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, arglist))
             if (class(tmp_counts) == "try-error") {
@@ -409,7 +409,7 @@ hpgl_norm <- function(data, ...) {
         if (isTRUE(filter)) {
             filter <- "cbcb"
         }
-        message(paste0("Step 1: performing count filter with option: ", filter))
+        message("Step 1: performing count filter with option: ", filter)
         ## All the other intermediates have a libsize slot, perhaps this should too
         filtered_counts <- filter_counts(count_table, ...)
         ## filtered_counts <- filter_counts(count_table, filter)
@@ -431,7 +431,7 @@ hpgl_norm <- function(data, ...) {
     if (norm == "raw") {
         message("Step 2: not normalizing the data.")
     } else {
-        message(paste0("Step 2: normalizing the data with ", arglist[["norm"]], "."))
+        message("Step 2: normalizing the data with ", arglist[["norm"]], ".")
         if (is.null(expt_design)) {
             message("The experimental design is null.  Some normalizations will therefore fail.")
             message("If you receive an error about an object with no dimensions, that is likely why.")
@@ -457,7 +457,7 @@ hpgl_norm <- function(data, ...) {
     if (convert == "raw") {
         message("Step 3: not converting the data.")
     } else {
-        message(paste0("Step 3: converting the data with ", arglist[["convert"]], "."))
+        message("Step 3: converting the data with ", arglist[["convert"]], ".")
         converted_counts <- convert_counts(count_table, ...)
         ## converted_counts <- convert_counts(count_table, convert=convert)
         count_table <- converted_counts[["count_table"]]
@@ -477,7 +477,7 @@ hpgl_norm <- function(data, ...) {
     if (transform == "raw") {
         message("Step 4: not transforming the data.")
     } else {
-        message(paste0("Step 4: transforming the data with ", arglist[["transform"]], "."))
+        message("Step 4: transforming the data with ", arglist[["transform"]], ".")
         transformed_counts <- transform_counts(count_table, ...)
         ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
         count_table <- transformed_counts[["count_table"]]

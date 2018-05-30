@@ -17,13 +17,13 @@ check_plot_scale <- function(data, scale=NULL) {
     if (sum(negative_idx) > 0) {
       message("Some data are negative.  We are on log scale, setting them to 0.")
       data[negative_idx] <- 0
-      message(paste0("Changed ", sum(negative_idx), " negative features."))
+      message("Changed ", sum(negative_idx), " negative features.")
     }
     zero_idx <- data == 0
     if (sum(zero_idx) > 0) {
       message("Some entries are 0.  We are on log scale, adding 1 to the data.")
       data <- data + 1
-      message(paste0("Changed ", sum(zero_idx), " zero count features."))
+      message("Changed ", sum(zero_idx), " zero count features.")
     }
   } else {
     scale <- "raw"
@@ -94,7 +94,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ##  for (dev in names(dev.list())) {
   ##    off_please <- dev.off()
   ##  }
-  ##  message(paste0("Closing the ", toString(all_devices), " plotting device(s) before printing plots."))
+  ##  message("Closing the ", toString(all_devices), " plotting device(s) before printing plots.")
   ##}
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"

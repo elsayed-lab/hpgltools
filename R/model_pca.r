@@ -134,7 +134,7 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
   for (component in expt_factors) {
     comp <- expt_design[[component]]
     if (is.null(comp)) {
-      message(paste0("The given component is not in the design: ", comp))
+      message("The given component is not in the design: ", comp)
       next
     }
     column <- apply(v, 2, factor_rsquared, fact=comp)
@@ -168,9 +168,9 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
   }
   max_components <- ncol(v)
   if (max_components < num_components) {
-    message(paste0("The u and v components of SVD have only ", max_components,
-                   " columns, but the list of factors is ", num_components, " long."))
-    message(paste0("Therefore, only searching for ", max_components, " PCs."))
+    message("The u and v components of SVD have only ", max_components,
+            " columns, but the list of factors is ", num_components, " long.")
+    message("Therefore, only searching for ", max_components, " PCs.")
     num_components <- max_components
   }
 
@@ -212,8 +212,8 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
     if (!is.null(expt_design[[fact]])) {
       factor_df[[fact]] <- as.numeric(as.factor(as.character(expt_design[, fact])))
     } else {
-      message(paste0("The column ", fact, " seems to be missing from the design."))
-      message(paste0("The available columns are: ", toString(colnames(expt_design)), "."))
+      message("The column ", fact, " seems to be missing from the design.")
+      message("The available columns are: ", toString(colnames(expt_design)), ".")
     }
   }
   factor_df <- factor_df[, -1, drop=FALSE]
@@ -500,12 +500,12 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   cond_column <- "condition"
   if (!is.null(arglist[["cond_column"]])) {
     cond_column <- arglist[["cond_column"]]
-    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+    message("Using ", cond_column, " as the condition column in the experimental design.")
   }
   batch_column <- "batch"
   if (!is.null(arglist[["batch_column"]])) {
     batch_column <- arglist[["batch_column"]]
-    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+    message("Using ", batch_column, " as the batch column in the experimental design.")
   }
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
@@ -769,7 +769,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   if (!is.null(size_column)) {
     maximum_size <- max(levels(pca_data[["size"]]))
   }
-  ## message(paste0("The minimum size is: ", minimum_size, " and the maximum size is: ", maximum_size))
 
   if (is.null(size_column) & num_batches <= 5) {
     pca_plot <- pca_plot +
@@ -888,7 +887,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     alpha <- 0
     for (ci in cis) {
       alpha <- alpha + 0.1
-      ## message(paste0("Adding ", ci, " with alpha ", alpha))
       pca_plot <- pca_plot +
         ggplot2::stat_ellipse(
                    mapping=aes_string(group="condition", fill="condition"),
@@ -926,12 +924,12 @@ test_pca_methods <- function(data, design=NULL, plot_colors=NULL, plot_labels=NU
   cond_column <- "condition"
   if (!is.null(arglist[["cond_column"]])) {
     cond_column <- arglist[["cond_column"]]
-    message(paste0("Using ", cond_column, " as the condition column in the experimental design."))
+    message("Using ", cond_column, " as the condition column in the experimental design.")
   }
   batch_column <- "batch"
   if (!is.null(arglist[["batch_column"]])) {
     batch_column <- arglist[["batch_column"]]
-    message(paste0("Using ", batch_column, " as the batch column in the experimental design."))
+    message("Using ", batch_column, " as the batch column in the experimental design.")
   }
 
   ## The following if() series is used to check the type of data provided and extract the available

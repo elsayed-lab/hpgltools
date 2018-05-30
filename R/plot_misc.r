@@ -28,7 +28,7 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     result <- cairo_pdf(filename=file, ...)
   } else {
     message("Defaulting to tiff.")
-    result <- tiff(filename=file, width=width, height=height, units="in", ...)
+    result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
   }
 
   ## Check and make sure I am not looking at something containing a plot, as a bunch of
@@ -40,10 +40,10 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
   }
 
   if (is.null(image)) {
-    message(paste0("Going to write the image to: ", file, " when dev.off() is called."))
+    message("Going to write the image to: ", file, " when dev.off() is called.")
     return(invisible(image))
   } else {
-    message(paste0("Writing the image to: ", file, " and calling dev.off()."))
+    message("Writing the image to: ", file, " and calling dev.off().")
     if (class(image)[[1]] == "recordedplot") {
       print(image)
     } else {
@@ -131,7 +131,7 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1, revolutions=7, i
   positions <- cbind(positions, y_points)
   positions <- as.data.frame(positions)
   petals <- dist_b / radius_b
-  message(paste0("The spirograph will have ", petals, " petals."))
+  message("The spirograph will have ", petals, " petals.")
   image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
     ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
     ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),

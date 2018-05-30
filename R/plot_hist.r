@@ -35,8 +35,6 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     minval <- min(df, na.rm=TRUE)
     maxval <- max(df, na.rm=TRUE)
     binwidth <- (maxval - minval) / bins
-    ## message(paste("No binwidth provided, setting it to ", binwidth, "
-    ## in order to have ", bins, " bins.", sep=""))
   }
   a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
     ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin", binwidth=binwidth,
@@ -91,6 +89,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   } else {
     stop("This can only work with a list or data frame.")
   }
+  play_all[["expression"]] <- as.numeric(play_all[["expression"]])
+  play_all[["cond"]] <- as.factor(play_all[["cond"]])
   play_cdf <- plyr::ddply(play_all, "cond",
                           plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
   uncor_t <- stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]], p.adjust="none")
@@ -101,14 +101,10 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
     maxval <- max(play_all[["expression"]], na.rm=TRUE)
     bins <- 500
     binwidth <- (maxval - minval) / bins
-    ## message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
   } else if  (is.null(binwidth)) {
     minval <- min(play_all[["expression"]], na.rm=TRUE)
     maxval <- max(play_all[["expression"]], na.rm=TRUE)
     binwidth <- (maxval - minval) / bins
-    ## message(paste("Setting binwidth to ", binwidth, " in order to have ", bins, " bins.", sep=""))
-    ## } else if (is.null(bins)) {
-    ## message(paste("Setting binwidth to ", binwidth, sep=""))
   } else {
     message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
   }
