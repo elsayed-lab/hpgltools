@@ -7,8 +7,8 @@ goseq, and topGO.}
 \usage{
 simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
   universe_merge = "id", second_merge_try = "locus_tag", species = "fun",
-  pcutoff = 0.1, direction = "over", conditional = FALSE,
-  categorysize = NULL, gff_type = "cds", excel = NULL, ...)
+  pcutoff = 0.1, conditional = FALSE, categorysize = NULL,
+  gff_type = "cds", excel = NULL, ...)
 }
 \arguments{
 \item{sig_genes}{Input list of differentially expressed genes.}
@@ -26,8 +26,6 @@ simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
 \item{species}{Genbank organism to use.}
 
 \item{pcutoff}{Pvalue cutoff for deciding significant.}
-
-\item{direction}{Under or over represented categories.}
 
 \item{conditional}{Perform a conditional search?}
 

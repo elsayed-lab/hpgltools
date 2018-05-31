@@ -449,6 +449,84 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   return(retlist)
 }
 
+#' Read a bunch of scored swath outputs from pyprophet to acquire their metrics.
+#'
+#' This function is mostly cribbed from the other extract_ functions in this file.
+#' With it, I hope to be able to provide some metrics of a set of openswath runs, thus
+#' potentially opening the door to being able to objectively compare the same
+#' run with different options and/or different runs.
+#'
+#' @param metadata  Data frame describing the samples, including the mzXML
+#'   filenames.
+#' @param id_column Which column from the metadata provides the requisite filenames?
+#' @param ... Extra arguments, presumably color palettes and column names and
+#'   stuff like that.
+#' @return  metadata!#'
+#' @export
+extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile=NULL) {
+  arglist <- list(...)
+
+  ## Add a little of the code from create_expt to include some design information in the returned
+  ## data structure.
+
+  ## Since I am using this code now in two places, if I can use it without changes, I will
+  ## split it into its own function so make changes in one place happen in both
+  ## but until I can ensure to myself that it is functional in both contexts I will not.
+  ## Palette for colors when auto-chosen
+  chosen_palette <- "Dark2"
+  if (!is.null(arglist[["palette"]])) {
+    chosen_palette <- arglist[["palette"]]
+  }
+
+  sample_definitions <- data.frame()
+  if (class(metadata) == "data.frame") {
+    sample_definitions <- metadata
+  } else {
+      sample_definitions <- extract_metadata(metadata, ...)
+      ## sample_definitions <- extract_metadata(metadata)
+  }
+
+  if (is.null(sample_definitions[[scored_column]])) {
+    stop("This required a column with the tsv scored pyprophet data.")
+  }
+
+  chosen_colors <- generate_expt_colors(sample_definitions, ...)
+  ## chosen_colors <- generate_expt_colors(sample_definitions)
+  meta <- sample_definitions[, c("sampleid", scored_column)]
+  colnames(meta) <- c("id", "scored")
+  existing_files <- complete.cases(meta[["scored"]])
+  if (sum(existing_files) != nrow(meta)) {
+    warning("It appears that some files are missing in the metadata.")
+  }
+  meta <- meta[existing_files, ]
+
+  res <- list()
+  num_files <- nrow(meta)
+  for (i in 1:num_files) {
+    file <- meta[i, "scored"]
+    id <- meta[i, "id"]
+    message("Attempting to read the tsv file for: ", id, ": ", file, ".")
+    file_result <- try(read.csv(file, sep="\t"))
+    if (class(file_result) != "try-error") {
+      res[[id]] <- file_result
+    }
+  }
+  found_ids <- names(res)
+  ## Now cull the sample definitions to only include those we actually found.
+  sample_idx <- sample_definitions[["sampleid"]] %in% found_ids
+  sample_definitions <- sample_definitions[sample_idx, ]
+
+  retlist <- list(
+    "colors" = chosen_colors,
+    "metadata" = sample_definitions,
+    "sample_data" = res)
+  if (!is.null(savefile)) {
+    mzxml_data <- retlist
+    save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
+  }
+  return(retlist)
+}
+
 #' Parse the difficult thermo fisher xlsx file.
 #'
 #' The Thermo(TM) workflow has as its default a fascinatingly horrible excel
@@ -727,6 +805,86 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
     keepers <- c(keepers, i)
     message("Adding ", name)
     plotted_table <- sample_data[[i]][[table]]
+    plotted_data <- as.data.frame(plotted_table[[column]])
+    plotted_data[["sample"]] <- name
+    colnames(plotted_data) <- c(column, "sample")
+    ## Re-order the columns because I like sample first.
+    plotted_data <- plotted_data[, c("sample", column)]
+    plot_df <- rbind(plot_df, plotted_data)
+  }
+
+  ## Drop rows from the metadata and colors which had errors.
+  if (length(keepers) > 0) {
+    metadata <- metadata[keepers, ]
+    colors <- colors[keepers]
+  } else {
+    stop("Something bad happened to the set of kept samples.")
+  }
+
+  scale_data <- check_plot_scale(plot_df[[column]], scale)
+  if (is.null(scale)) {
+    scale <- scale_data[["scale"]]
+  }
+  plot_df[[column]] <- scale_data[["data"]]
+
+  boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
+    sm(ggplot2::geom_boxplot(na.rm=TRUE,
+                             ggplot2::aes_string(fill="sample"),
+                             fill=colors,
+                             size=0.5,
+                             outlier.size=1.5,
+                             outlier.colour=ggplot2::alpha("black", 0.2))) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    ggplot2::xlab("Sample") + ggplot2::ylab(column)
+  if (!is.null(title)) {
+    boxplot <- boxplot + ggplot2::ggtitle(title)
+  }
+  if (!is.null(names)) {
+    boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
+  }
+  scale <- "log"
+  if (scale == "log") {
+    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+  } else if (scale == "logdim") {
+    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+  } else if (isTRUE(scale)) {
+    boxplot <- boxplot + ggplot2::scale_y_log10()
+  }
+  return(boxplot)
+}
+
+#' Make a boxplot out of some of the various data available in the pyprophet data.
+#'
+#' @param pyprophet_data  List containing the pyprophet results.
+#' @param names  Names for the x-axis of the plot.
+#' @param title  Title the plot?
+#' @param scale  Put the data on a specific scale?
+#' @param ...  Further arguments, presumably for colors or some such.
+#' @return  Boxplot goodness!
+#' @export
+plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
+                                   keep_decoys=TRUE, names=NULL, title=NULL, scale=NULL, ...) {
+  arglist <- list(...)
+  metadata <- pyprophet_data[["metadata"]]
+  colors <- pyprophet_data[["colors"]]
+  sample_data <- pyprophet_data[["sample_data"]]
+  plot_df <- data.frame()
+  samples <- length(sample_data)
+  keepers <- c()
+  for (i in 1:samples) {
+    name <- metadata[i, "sampleid"]
+    if (class(sample_data[[i]]) == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
+    plotted_table <- sample_data[[i]]
+    if (!isTRUE(keep_decoys)) {
+      good_idx <- plotted_table[["decoy"]] != 1
+      plotted_table <- plotted_table[good_idx, ]
+    }
     plotted_data <- as.data.frame(plotted_table[[column]])
     plotted_data[["sample"]] <- name
     colnames(plotted_data) <- c(column, "sample")
