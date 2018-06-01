@@ -21,8 +21,8 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   message("Extracting instrument information for ", file)
   instruments <- rvest::xml_nodes(input, "msinstrument")
   instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
-  instrument_values <- c("msmanufacturer", "msmodel", "msionisation", "msmassanalyzer",
-                         "msdetector")
+  instrument_values <- c("msmanufacturer", "msmodel", "msionisation",
+                         "msmassanalyzer", "msdetector")
   for (v in instrument_values) {
     datum <- rvest::xml_nodes(instruments, v)
     instrument_data[[v]] <- datum %>% rvest::html_attr("value")
@@ -57,7 +57,8 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors=FALSE)
   precursor_wanted <- c("precursorintensity", "activationmethod",
                         "windowwideness", "precursorscannum")
-  precursor_numeric <- c("precursorintensity", "precursorscannum", "window_center", "windowwideness")
+  precursor_numeric <- c("precursorintensity", "precursorscannum",
+                         "window_center", "windowwideness")
   precursor_factor <- c("activationmethod")
   for (w in precursor_wanted) {
     precursor_data[[w]] <- precursors %>% rvest::html_attr(w)
@@ -98,12 +99,12 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     ## invocation of OpenSwathWorkFlow or whatever it is, _requires_ them.
     ## So, yeah, that is annoying, but whatever.
     pre_file <- file.path(acq_dir, acq_file)
-    message("Hopefully writing acquisition file to ", pre_file)
+    message("Hopefully writing acquisition file to: ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
     osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
     ## This is the file for openswathworkflow.
-    message("Hopefully writing osw acquisitions to ", osw_file)
+    message("Hopefully writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
                             sep="\t", quote=FALSE,
                             row.names=FALSE, col.names=TRUE)
@@ -118,7 +119,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 }
 
 #' Get some data from a peptideprophet run.
-#'
+#
 #' I am not sure what if any parameters this should have, but it seeks to
 #' extract the useful data from a peptide prophet run.  In the situation in
 #' which I wish to use it, the input command was:
@@ -127,7 +128,8 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #' I want to read the resulting xml table and turn it into a data.table so that
 #' I can plot some metrics from it.
 #'
-#' @param pepxml  The file resulting from the xinteract invocation
+#' @param pepxml  The file resulting from the xinteract invocation.
+#' @param decoy_string  What prefix do decoys have in the data.
 #' @return data table of all the information I saw fit to extract
 #' The columns are:
 #' * protein: The name of the matching sequence (DECOYs allowed here)
@@ -185,7 +187,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #'   observed.
 #' * static_mods: A comma separated list of the static modifications observed.
 #' @export
-extract_peprophet_data <- function(pepxml, ...) {
+extract_peprophet_data <- function(pepxml, decoy_string="DECOY_"...) {
   input <- xml2::read_html(pepxml, options="NOBLANKS")
 
   message("Extracting spectrum queries.")
@@ -195,8 +197,8 @@ extract_peprophet_data <- function(pepxml, ...) {
   ## The interesting material at the beginning of a spectrum, these are in the <spectrum query> tag.
 
   message("Extracting the spectrum_query metadata.")
-  toplevel_interesting <- c("start_scan", "end_scan", "precursor_neutral_mass", "assumed_charge",
-                            "index", "retention_time_sec")
+  toplevel_interesting <- c("start_scan", "end_scan", "precursor_neutral_mass",
+                            "assumed_charge", "index", "retention_time_sec")
   for (t in toplevel_interesting) {
     query_data[[t]] <- spectrum_queries %>%
       rvest::html_attr(t)
@@ -215,25 +217,25 @@ extract_peprophet_data <- function(pepxml, ...) {
       rvest::html_attr(s)
   }
   query_data[["decoy"]] <- FALSE
-  decoy_idx <- grepl(pattern="^DECOY_", x=query_data[["protein"]])
+  decoy_regex <- paste0("^", decoy_string)
+  decoy_idx <- grepl(pattern=decoy_regex, x=query_data[["protein"]])
   query_data[decoy_idx, "decoy"] <- TRUE
-  query_data[["matched_ion_ratio"]] <-
-    as.numeric(query_data[["num_matched_ions"]]) /
+  query_data[["matched_ion_ratio"]] <- as.numeric(query_data[["num_matched_ions"]]) /
     as.numeric(query_data[["tot_num_ions"]])
-
 
   ## Get modification info
   message("Extracting modification metadata.")
   query_data[["modified_peptides"]] <- search_hits %>%
     rvest::html_node(xpath="modification_info") %>%
     rvest::html_attr("modified_peptide")
+
   na_idx <- is.na(query_data[["modified_peptides"]])
   query_data[na_idx, "modified_peptides"] <- ""
-
   query_data[["variable_mods"]] <- ""
   query_data[["static_mods"]] <- ""
   modification_test <- search_hits %>%
     rvest::html_node(xpath="modification_info")
+
   message("Filling in modification information, this is slow.")
   bar <- utils::txtProgressBar(style=3)
   for (i in 1:length(modification_test)) {
@@ -302,10 +304,9 @@ extract_peprophet_data <- function(pepxml, ...) {
   }
 
   numeric_columns <- c("start_scan", "end_scan", "precursor_neutral_mass", "index",
-                       "retention_time_sec", "calc_neutral_pep_mass",
-                       "massdiff", "num_matched_peptides", "xcorr", "deltacn", "deltacnstar",
-                       "spscore", "expect", "prophet_probability", "fval", "massd", "RT",
-                       "RT_score")
+                       "retention_time_sec", "calc_neutral_pep_mass", "massdiff",
+                       "num_matched_peptides", "xcorr", "deltacn", "deltacnstar", "spscore",
+                       "expect", "prophet_probability", "fval", "massd", "RT", "RT_score")
   factor_columns <- c("assumed_charge", "num_tot_proteins", "num_matched_ions", "num_tol_term",
                       "num_missed_cleavages", "sprank", "ntt", "nmc", "isomassd")
   for (n in numeric_columns) {
@@ -342,10 +343,12 @@ extract_peprophet_data <- function(pepxml, ...) {
 #' @param metadata  Data frame describing the samples, including the mzXML
 #'   filenames.
 #' @param write_windows  Write out SWATH window frames.
+#' @param id_column  What column in the sample sheet provides the ID for the samples?
 #' @param parallel  Perform operations using an R foreach cluster?
+#' @param savefile  If not null, save the resulting data structure to an rda file.
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
-#' @return  metadata!#'
+#' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
 extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
                                parallel=TRUE, savefile=NULL, ...) {
@@ -374,8 +377,6 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   file_column <- "file"
   if (!is.null(arglist[["file_column"]])) {
       file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-      ##file_column <- tolower(file_column)
-      ##file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
       ## tables / sample in one sheet.
   }
 
@@ -415,7 +416,8 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       setTxtProgressBar(bar, n)
     }
     pb_opts <- list(progress=progress)
-    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
+    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
+                   .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id=id))
@@ -458,10 +460,11 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 #'
 #' @param metadata  Data frame describing the samples, including the mzXML
 #'   filenames.
-#' @param id_column Which column from the metadata provides the requisite filenames?
+#' @param scored_column Which column from the metadata provides the requisite filenames?
+#' @param savefile  If not null, save the data from this to the given filename.
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
-#' @return  metadata!#'
+#' @return  A list of data from each sample in the pyprophet scored DIA run.
 #' @export
 extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile=NULL) {
   arglist <- list(...)
@@ -617,6 +620,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   } ## End iterating over ever row of this unholy stupid data structure.
   close(bar)
   message("Finished parsing, reorganizing the protein data.")
+
   protein_df <- data.frame()
   peptide_df <- data.frame()
   protein_names <- c()
@@ -689,16 +693,25 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 
 #' Plot the peak intensities with respect to m/z
 #'
-#' I want to have a pretty plot of peak intensities and m/z.
+#' I want to have a pretty plot of peak intensities and m/z.  The plot provided
+#' by this function is interesting, but suffers from some oddities; notably that
+#' it does not currently separate the MS1 and MS2 data.  Since I am stuck on
+#' this forsaken plane with no hope of ever leaving, perhaps I can add that now.
 #'
 #' @param mzxml_data  The data structure from extract_mzxml or whatever it is.
 #' @param loess  Do a loess smoothing from which to extract a function
 #'   describing the data?  This is terribly slow, and in the data I have
 #'   examined so far, not very helpful, so it is FALSE by default.
+#' @param alpha  Make the plotted dots opaque to this degree.
+#' @param ms1  Include MS1 data in the plot?
+#' @param ms2  Include MS2 data in the plot?
+#' @param x_scale  Plot the x-axis on a non linear scale?
+#' @param y_scale  Plot the y-axis on a non linear scale?
 #' @param ...  Extra arguments for the downstream functions.
 #' @return  ggplot2 goodness.
 #' @export
-plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, y_scale=NULL, ...) {
+plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=TRUE,
+                              x_scale=NULL, y_scale=NULL, ...) {
   arglist <- list(...)
   metadata <- mzxml_data[["metadata"]]
   colors <- mzxml_data[["colors"]]
@@ -714,6 +727,17 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, 
     keepers <- c(keepers, i)
     message("Adding ", name)
     plotted_table <- sample_data[[i]][["scans"]]
+    ## Caveat!  I do not have my data while on this fucking plane, so I might
+    ## have forgotten the name of that column in the data.  If so, the following
+    ## will fail.
+    if (!isTRUE(ms1)) {
+      kept_idx <- plotted_table[["level"]] != "MS1"
+      plotted_table <- plotted_table[kept_idx, ]
+    }
+    if (!isTRUE(ms1)) {
+      kept_idx <- plotted_table[["level"]] != "MS2"
+      plotted_table <- plotted_table[kept_idx, ]
+    }
     plotted_data <- plotted_table[, c("basepeakmz", "basepeakintensity")]
     plotted_data[["sample"]] <- name
     plotted_data <- plotted_data[, c("sample", "basepeakmz", "basepeakintensity")]
@@ -786,7 +810,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, x_scale=NULL, 
 #' @param title  Title the plot?
 #' @param scale  Put the data on a specific scale?
 #' @param ...  Further arguments, presumably for colors or some such.
-#' @return  Boxplot goodness!
+#' @return  Boxplot describing the requested column of data in the set of mzXML files.
 #' @export
 plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursorintensity",
                                names=NULL, title=NULL, scale=NULL, ...) {
@@ -852,17 +876,25 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   } else if (isTRUE(scale)) {
     boxplot <- boxplot + ggplot2::scale_y_log10()
   }
+
   return(boxplot)
 }
 
-#' Make a boxplot out of some of the various data available in the pyprophet data.
+#' Make a boxplot out of some of the various data available in the pyprophet
+#' data.
+#'
+#' This function is mostly redundant with the plot_mzxml_boxplot above.
+#' Unfortunately, the two data types are subtly different enough that I felt it
+#' not worth while to generalize the functions.
 #'
 #' @param pyprophet_data  List containing the pyprophet results.
+#' @param column  What column of the pyprophet scored data to plot?
+#' @param keep_decoys  Do we keep the decoys when plotting the data?
 #' @param names  Names for the x-axis of the plot.
 #' @param title  Title the plot?
 #' @param scale  Put the data on a specific scale?
 #' @param ...  Further arguments, presumably for colors or some such.
-#' @return  Boxplot goodness!
+#' @return  A boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
                                    keep_decoys=TRUE, names=NULL, title=NULL, scale=NULL, ...) {
@@ -1012,6 +1044,7 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
         table[["size"]] < range[[2]], "size"] <- "02small"
   table[table[["size"]] < range[[1]], "size"] <- "01smallest"
 
+  ## Setting the factor/vector of sizes is a bit confusing to me.
   table[["size"]] <- as.factor(table[["size"]])
   levels(table[["size"]]) <- c("01smallest", "02small", "03medium_small",
                               "04medium_big", "05big", "06biggest")
@@ -1045,15 +1078,10 @@ plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
 
   table[["text"]] <- paste0(table[["protein"]], ":", table[["peptide"]])
 
-  a_plot <- ggplot(data=table, aes_string(x=xaxis,
-                                          y=yaxis,
-                                          text="text",
-                                          color="color",
-                                          size="size")) +
-    ggplot2::geom_point(alpha=0.4, aes_string(fill="color",
-                                              color="color")) +
-    ggplot2::scale_color_manual(name="color",
-                                values=color_list) +
+  a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis, text="text",
+                                          color="color", size="size")) +
+    ggplot2::geom_point(alpha=0.4, aes_string(fill="color", color="color")) +
+    ggplot2::scale_color_manual(name="color", values=color_list) +
     ggplot2::geom_rug() +
     ggplot2::scale_size_manual(values=c(0.2, 0.6, 1.0, 1.4, 1.8, 2.2))
   if (scale_x_cont == "log2") {
