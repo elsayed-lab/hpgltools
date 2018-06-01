@@ -503,6 +503,17 @@ extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile
   }
   meta <- meta[existing_files, ]
 
+  gather_masses <- function(sequence) {
+    atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
+    if (class(atoms) != "try-error") {
+      d <- BRAIN::useBRAIN(atoms)
+      ret <- round(d[["avgMass"]])
+    } else {
+      ret <- 0
+    }
+    return(ret)
+  }
+
   res <- list()
   num_files <- nrow(meta)
   for (i in 1:num_files) {
@@ -510,6 +521,9 @@ extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
     file_result <- try(read.csv(file, sep="\t"))
+    colnames(file_result) <- tolower(colnames(file_result))
+    file_result <- file_result %>% rowwise() %>% mutate(mass=gather_masses(sequence))
+
     if (class(file_result) != "try-error") {
       res[[id]] <- file_result
     }
@@ -969,6 +983,110 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
 
 #' Plot some data from the result of extract_peprophet_data()
 #'
+#' extract_pyprophet_data() provides a ridiculously large data table of a scored
+#' openswath data after processing by pyprophet.
+#'
+#' @param table  Big honking data table from extract_peprophet_data()
+#' @param xaxis  Column to plot on the x-axis
+#' @param xscale Change the scale of the x-axis?
+#' @param yaxis  guess!
+#' @param yscale  Change the scale of the y-axis?
+#' @param size_column  Use a column for scaling the sizes of dots in the plot?
+#' @param ... extra options which may be used for plotting.
+#' @return a plot!
+#' @export
+plot_pyprophet_data <- function(table, xaxis="mass", xscale=NULL,
+                                yaxis="leftwidth", yscale=NULL,
+                                size_column="prophet_probability", ...) {
+  arglist <- list(...)
+  chosen_palette <- "Dark2"
+  if (!is.null(arglist[["chosen_palette"]])) {
+    chosen_palette <- arglist[["chosen_palette"]]
+  }
+  color_column <- "decoy"
+  if (!is.null(arglist[["color_column"]])) {
+    color_column <- arglist[["color_column"]]
+  }
+  if (is.null(table[[color_column]])) {
+    table[["color"]] <- "black"
+  } else {
+    table[["color"]] <- as.factor(table[[color_column]])
+  }
+  color_list <- NULL
+  num_colors <- nlevels(as.factor(table[["color"]]))
+  if (num_colors == 2) {
+    color_list <- c("darkred", "darkblue")
+  } else {
+    color_list <- sm(grDevices::colorRampPalette(
+                                  RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+  }
+
+  if (is.null(table[[xaxis]])) {
+    stop(paste0("The x-axis column: ", xaxis, " does not appear in the data."))
+  }
+  if (is.null(table[[yaxis]])) {
+    stop(paste0("The y-axis column: ", yaxis, " does not appear in the data."))
+  }
+
+  table <- as.data.frame(table)
+  if (is.null(table[[size_column]])) {
+    table[["size"]] <- 1
+  } else {
+    if (class(table[[size_column]]) == "numeric") {
+      ## quants <- as.numeric(quantile(unique(table[[size_column]])))
+      ## size_values <- c(4, 8, 12, 16, 20)
+      ## names(size_values) <- quants
+      table[["size"]] <- table[[size_column]]
+    } else {
+      table[["size"]] <- 1
+    }
+  }
+
+  scale_x_cont <- "raw"
+  if (!is.null(xscale)) {
+    if (is.numeric(xscale)) {
+      table[[xaxis]] <- log(table[[xaxis]] + 1) / log(xscale)
+    } else if (xscale == "log2") {
+      scale_x_cont <- "log2"
+    } else if (xscale == "log10") {
+      scale_x_cont <- "log10"
+    } else {
+      message("I do not understand your scale.")
+    }
+  }
+  scale_y_cont <- "raw"
+  if (!is.null(yscale)) {
+    if (is.numeric(yscale)) {
+      table[[xaxis]] <- log(table[[yaxis]] + 1) / log(yscale)
+    } else if (yscale == "log2") {
+      scale_y_cont <- "log2"
+    } else if (yscale == "log10") {
+      scale_y_cont <- "log10"
+    } else {
+      message("I do not understand your scale.")
+    }
+  }
+
+  a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis,
+                                          color="color")) +
+    ggplot2::geom_point(alpha=0.4, aes_string(fill="color", color="color")) +
+    ggplot2::scale_color_manual(name="color", values=color_list)
+  if (scale_x_cont == "log2") {
+    a_plot <- ggplot2::scale_x_continuous(trans=scales::log2_trans())
+  } else if (scale_x_cont == "log10") {
+    a_plot <- ggplot2::scale_x_continuous(trans=scales::log10_trans())
+  }
+  if (scale_y_cont == "log2") {
+    a_plot <- ggplot2::scale_y_continuous(trans=scales::log2_trans())
+  } else if (scale_y_cont == "log10") {
+    a_plot <- ggplot2::scale_y_continuous(trans=scales::log10_trans())
+  }
+
+  return(a_plot)
+}
+
+#' Plot some data from the result of extract_peprophet_data()
+#'
 #' extract_peprophet_data() provides a ridiculously large data table of a comet
 #' result after processing by RefreshParser and xinteract/peptideProphet.
 #' This table has some 37-ish columns and I am not entirely certain which ones
@@ -984,9 +1102,9 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
-plot_prophet <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
-                         yaxis="num_matched_ions", yscale=NULL,
-                         size_column="prophet_probability", ...) {
+plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
+                                yaxis="num_matched_ions", yscale=NULL,
+                                size_column="prophet_probability", ...) {
   arglist <- list(...)
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["chosen_palette"]])) {
