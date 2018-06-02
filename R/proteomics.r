@@ -187,7 +187,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #'   observed.
 #' * static_mods: A comma separated list of the static modifications observed.
 #' @export
-extract_peprophet_data <- function(pepxml, decoy_string="DECOY_"...) {
+extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   input <- xml2::read_html(pepxml, options="NOBLANKS")
 
   message("Extracting spectrum queries.")
@@ -466,7 +466,8 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 #'   stuff like that.
 #' @return  A list of data from each sample in the pyprophet scored DIA run.
 #' @export
-extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile=NULL) {
+extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
+                                   savefile=NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design information in the returned
@@ -489,7 +490,7 @@ extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile
       ## sample_definitions <- extract_metadata(metadata)
   }
 
-  if (is.null(sample_definitions[[scored_column]])) {
+  if (is.null(sample_definitions[[pyprophet_column]])) {
     stop("This required a column with the tsv scored pyprophet data.")
   }
 
@@ -516,16 +517,20 @@ extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile
 
   res <- list()
   num_files <- nrow(meta)
+  failed_files <- c()
   for (i in 1:num_files) {
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- try(read.csv(file, sep="\t"))
-    colnames(file_result) <- tolower(colnames(file_result))
-    file_result <- file_result %>% rowwise() %>% mutate(mass=gather_masses(sequence))
-
+    file_result <- try(read.csv(file, sep="\t"), silent=TRUE)
     if (class(file_result) != "try-error") {
+      colnames(file_result) <- tolower(colnames(file_result))
+      file_result <- file_result %>%
+        dplyr::rowwise() %>%
+        dplyr::mutate(mass=gather_masses(sequence))
       res[[id]] <- file_result
+    } else {
+      failed <- c(failed, file)
     }
   }
   found_ids <- names(res)
@@ -534,11 +539,12 @@ extract_pyprophet_data <- function(metadata, scored_column="diascored", savefile
   sample_definitions <- sample_definitions[sample_idx, ]
 
   retlist <- list(
+    "failed" = failed,
     "colors" = chosen_colors,
     "metadata" = sample_definitions,
     "sample_data" = res)
   if (!is.null(savefile)) {
-    mzxml_data <- retlist
+    pyprophet_data <- retlist
     save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
   }
   return(retlist)
@@ -910,7 +916,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #' @param ...  Further arguments, presumably for colors or some such.
 #' @return  A boxplot describing the desired column from the data.
 #' @export
-plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
+plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt", keep_real=TRUE,
                                    keep_decoys=TRUE, names=NULL, title=NULL, scale=NULL, ...) {
   arglist <- list(...)
   metadata <- pyprophet_data[["metadata"]]
@@ -921,7 +927,7 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
   keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]]) == "try-error") {
+    if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
     keepers <- c(keepers, i)
@@ -931,6 +937,10 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
       good_idx <- plotted_table[["decoy"]] != 1
       plotted_table <- plotted_table[good_idx, ]
     }
+    if (!isTRUE(keep_real)) {
+      good_idx <- plotted_table[["decoy"]] != 0
+      plotted_table <- plotted_table[good_idx, ]
+    }
     plotted_data <- as.data.frame(plotted_table[[column]])
     plotted_data[["sample"]] <- name
     colnames(plotted_data) <- c(column, "sample")
@@ -938,6 +948,8 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
     plotted_data <- plotted_data[, c("sample", column)]
     plot_df <- rbind(plot_df, plotted_data)
   }
+  ## I am not certain this is valid.
+  plot_df[[column]] <- abs(plot_df[[column]])
 
   ## Drop rows from the metadata and colors which had errors.
   if (length(keepers) > 0) {
@@ -995,94 +1007,81 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt",
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
-plot_pyprophet_data <- function(table, xaxis="mass", xscale=NULL,
-                                yaxis="leftwidth", yscale=NULL,
-                                size_column="prophet_probability", ...) {
+plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
+                                yaxis="leftwidth", yscale=NULL, alpha=0.4,
+                                size_column="mscore", ...) {
   arglist <- list(...)
+
+  metadata <- pyprophet_data[["metadata"]]
+  colors <- pyprophet_data[["colors"]]
+  sample_data <- pyprophet_data[["sample_data"]]
+  plot_df <- data.frame()
+  samples <- length(sample_data)
+  keepers <- c()
+  for (i in 1:samples) {
+    name <- metadata[i, "sampleid"]
+    if (class(sample_data[[i]])[1] == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
+    plotted_table <- sample_data[[i]]
+    plotted_table[["sample"]] <- name
+    plot_df <- rbind(plot_df, plotted_table)
+  }
+
+  ## Drop rows from the metadata and colors which had errors.
+  metadata <- metadata[keepers, ]
+  colors <- colors[keepers]
+
   chosen_palette <- "Dark2"
-  if (!is.null(arglist[["chosen_palette"]])) {
-    chosen_palette <- arglist[["chosen_palette"]]
+  sample_colors <- sm(
+    grDevices::colorRampPalette(
+                 RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+
+  ## Randomize the rows of the df so we can see if any sample is actually overrepresented
+  plot_df <- plot_df[sample(nrow(plot_df)), ]
+
+  if (is.null(plot_df[[xaxis]])) {
+    stop("The x axis data seems to be missing.")
   }
-  color_column <- "decoy"
-  if (!is.null(arglist[["color_column"]])) {
-    color_column <- arglist[["color_column"]]
-  }
-  if (is.null(table[[color_column]])) {
-    table[["color"]] <- "black"
-  } else {
-    table[["color"]] <- as.factor(table[[color_column]])
-  }
-  color_list <- NULL
-  num_colors <- nlevels(as.factor(table[["color"]]))
-  if (num_colors == 2) {
-    color_list <- c("darkred", "darkblue")
-  } else {
-    color_list <- sm(grDevices::colorRampPalette(
-                                  RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+  if (is.null(plot_df[[yaxis]])) {
+    stop("The y axis data seems to be missing.")
   }
 
-  if (is.null(table[[xaxis]])) {
-    stop(paste0("The x-axis column: ", xaxis, " does not appear in the data."))
+  if (!is.null(x_scale)) {
+    plot_df[[xaxis]] <- check_plot_scale(plot_df[[xaxis]], scale)[["data"]]
   }
-  if (is.null(table[[yaxis]])) {
-    stop(paste0("The y-axis column: ", yaxis, " does not appear in the data."))
-  }
-
-  table <- as.data.frame(table)
-  if (is.null(table[[size_column]])) {
-    table[["size"]] <- 1
-  } else {
-    if (class(table[[size_column]]) == "numeric") {
-      ## quants <- as.numeric(quantile(unique(table[[size_column]])))
-      ## size_values <- c(4, 8, 12, 16, 20)
-      ## names(size_values) <- quants
-      table[["size"]] <- table[[size_column]]
-    } else {
-      table[["size"]] <- 1
-    }
+  if (!is.null(y_scale)) {
+    plot_df[[yaxis]] <- check_plot_scale(plot_df[[yaxis]], scale)[["data"]]
   }
 
-  scale_x_cont <- "raw"
-  if (!is.null(xscale)) {
-    if (is.numeric(xscale)) {
-      table[[xaxis]] <- log(table[[xaxis]] + 1) / log(xscale)
-    } else if (xscale == "log2") {
-      scale_x_cont <- "log2"
-    } else if (xscale == "log10") {
-      scale_x_cont <- "log10"
-    } else {
-      message("I do not understand your scale.")
-    }
+  x_vs_y <- ggplot(data=plot_df, aes_string(x=xaxis, y=yaxis,
+                                            fill="sample", colour="sample")) +
+    ggplot2::geom_point(alpha=alpha, size=0.5) +
+    ggplot2::scale_fill_manual(
+               name="Sample", values=sample_colors,
+               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
+    ggplot2::scale_color_manual(
+               name="Sample", values=sample_colors,
+               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
+    ggplot2::theme_bw(base_size=base_size)
+
+  if (!is.null(x_scale)) {
+    x_vs_y <- x_vs_y + ggplot2::scale_x_continuous(trans=scales::log2_trans())
   }
-  scale_y_cont <- "raw"
-  if (!is.null(yscale)) {
-    if (is.numeric(yscale)) {
-      table[[xaxis]] <- log(table[[yaxis]] + 1) / log(yscale)
-    } else if (yscale == "log2") {
-      scale_y_cont <- "log2"
-    } else if (yscale == "log10") {
-      scale_y_cont <- "log10"
-    } else {
-      message("I do not understand your scale.")
-    }
+  if (!is.null(y_scale)) {
+    x_vs_y <- x_vs_y + ggplot2::scale_y_continuous(trans=scales::log2_trans())
   }
 
-  a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis,
-                                          color="color")) +
-    ggplot2::geom_point(alpha=0.4, aes_string(fill="color", color="color")) +
-    ggplot2::scale_color_manual(name="color", values=color_list)
-  if (scale_x_cont == "log2") {
-    a_plot <- ggplot2::scale_x_continuous(trans=scales::log2_trans())
-  } else if (scale_x_cont == "log10") {
-    a_plot <- ggplot2::scale_x_continuous(trans=scales::log10_trans())
+  if (isTRUE(lowess)) {
+    x_vs_y <- x_vs_y +
+      ggplot2::geom_smooth(method="loess", size=1.0)
   }
-  if (scale_y_cont == "log2") {
-    a_plot <- ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  } else if (scale_y_cont == "log10") {
-    a_plot <- ggplot2::scale_y_continuous(trans=scales::log10_trans())
-  }
-
-  return(a_plot)
+  retlist <- list(
+    "data" = plotted_data,
+    "plot" = x_vs_y)
+  return(retlist)
 }
 
 #' Plot some data from the result of extract_peprophet_data()
