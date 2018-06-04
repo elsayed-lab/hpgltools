@@ -13,13 +13,17 @@ filenames.}
 
 \item{write_windows}{Write out SWATH window frames.}
 
+\item{id_column}{What column in the sample sheet provides the ID for the samples?}
+
 \item{parallel}{Perform operations using an R foreach cluster?}
+
+\item{savefile}{If not null, save the resulting data structure to an rda file.}
 
 \item{...}{Extra arguments, presumably color palettes and column names and
 stuff like that.}
 }
 \value{
-metadata!#'
+A list of data extracted from every sample in the MS run (DIA or DDA).
 }
 \description{
 I have had difficulties getting the full set of correct parameters for a

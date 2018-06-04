@@ -398,7 +398,7 @@ take_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
     ah <- AnnotationHub::query(x=ah, pattern=type)
   }
   if (is.null(title) & is.null(species) & is.null(ahid)) {
-    ahid <- "AH57973"  ## org.Hs.eg.db.sqlite
+    ahid <- "AH61777"  ## org.Hs.eg.db.sqlite
   } else if (is.null(ahid) & is.null(title)) {
     ## Then we got a species
     possible <- ah$species

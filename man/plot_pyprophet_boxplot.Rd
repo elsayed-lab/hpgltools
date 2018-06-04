@@ -2,13 +2,19 @@
 % Please edit documentation in R/proteomics.r
 \name{plot_pyprophet_boxplot}
 \alias{plot_pyprophet_boxplot}
-\title{Make a boxplot out of some of the various data available in the pyprophet data.}
+\title{Make a boxplot out of some of the various data available in the pyprophet
+data.}
 \usage{
 plot_pyprophet_boxplot(pyprophet_data, column = "delta_rt",
-  keep_decoys = TRUE, names = NULL, title = NULL, scale = NULL, ...)
+  keep_real = TRUE, keep_decoys = TRUE, names = NULL, title = NULL,
+  scale = NULL, ...)
 }
 \arguments{
 \item{pyprophet_data}{List containing the pyprophet results.}
+
+\item{column}{What column of the pyprophet scored data to plot?}
+
+\item{keep_decoys}{Do we keep the decoys when plotting the data?}
 
 \item{names}{Names for the x-axis of the plot.}
 
@@ -19,8 +25,10 @@ plot_pyprophet_boxplot(pyprophet_data, column = "delta_rt",
 \item{...}{Further arguments, presumably for colors or some such.}
 }
 \value{
-Boxplot goodness!
+A boxplot describing the desired column from the data.
 }
 \description{
-Make a boxplot out of some of the various data available in the pyprophet data.
+This function is mostly redundant with the plot_mzxml_boxplot above.
+Unfortunately, the two data types are subtly different enough that I felt it
+not worth while to generalize the functions.
 }

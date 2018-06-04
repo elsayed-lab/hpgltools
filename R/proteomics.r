@@ -1049,10 +1049,10 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
     stop("The y axis data seems to be missing.")
   }
 
-  if (!is.null(x_scale)) {
+  if (!is.null(xscale)) {
     plot_df[[xaxis]] <- check_plot_scale(plot_df[[xaxis]], scale)[["data"]]
   }
-  if (!is.null(y_scale)) {
+  if (!is.null(yscale)) {
     plot_df[[yaxis]] <- check_plot_scale(plot_df[[yaxis]], scale)[["data"]]
   }
 
@@ -1067,10 +1067,10 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
                guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
     ggplot2::theme_bw(base_size=base_size)
 
-  if (!is.null(x_scale)) {
+  if (!is.null(xscale)) {
     x_vs_y <- x_vs_y + ggplot2::scale_x_continuous(trans=scales::log2_trans())
   }
-  if (!is.null(y_scale)) {
+  if (!is.null(yscale)) {
     x_vs_y <- x_vs_y + ggplot2::scale_y_continuous(trans=scales::log2_trans())
   }
 

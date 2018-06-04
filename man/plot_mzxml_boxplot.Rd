@@ -25,7 +25,7 @@ likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 \item{...}{Further arguments, presumably for colors or some such.}
 }
 \value{
-Boxplot goodness!
+Boxplot describing the requested column of data in the set of mzXML files.
 }
 \description{
 There are a few data within the mzXML raw data files which are likely

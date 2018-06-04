@@ -4,20 +4,22 @@
 \alias{extract_pyprophet_data}
 \title{Read a bunch of scored swath outputs from pyprophet to acquire their metrics.}
 \usage{
-extract_pyprophet_data(metadata, scored_column = "diascored",
-  savefile = NULL)
+extract_pyprophet_data(metadata, pyprophet_column = "diascored",
+  savefile = NULL, ...)
 }
 \arguments{
 \item{metadata}{Data frame describing the samples, including the mzXML
 filenames.}
 
-\item{id_column}{Which column from the metadata provides the requisite filenames?}
+\item{savefile}{If not null, save the data from this to the given filename.}
 
 \item{...}{Extra arguments, presumably color palettes and column names and
 stuff like that.}
+
+\item{scored_column}{Which column from the metadata provides the requisite filenames?}
 }
 \value{
-metadata!#'
+A list of data from each sample in the pyprophet scored DIA run.
 }
 \description{
 This function is mostly cribbed from the other extract_ functions in this file.

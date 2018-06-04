@@ -4,8 +4,8 @@
 \alias{plot_intensity_mz}
 \title{Plot the peak intensities with respect to m/z}
 \usage{
-plot_intensity_mz(mzxml_data, loess = FALSE, alpha = 0.5, x_scale = NULL,
-  y_scale = NULL, ...)
+plot_intensity_mz(mzxml_data, loess = FALSE, alpha = 0.5, ms1 = TRUE,
+  ms2 = TRUE, x_scale = NULL, y_scale = NULL, ...)
 }
 \arguments{
 \item{mzxml_data}{The data structure from extract_mzxml or whatever it is.}
@@ -14,11 +14,24 @@ plot_intensity_mz(mzxml_data, loess = FALSE, alpha = 0.5, x_scale = NULL,
 describing the data?  This is terribly slow, and in the data I have
 examined so far, not very helpful, so it is FALSE by default.}
 
+\item{alpha}{Make the plotted dots opaque to this degree.}
+
+\item{ms1}{Include MS1 data in the plot?}
+
+\item{ms2}{Include MS2 data in the plot?}
+
+\item{x_scale}{Plot the x-axis on a non linear scale?}
+
+\item{y_scale}{Plot the y-axis on a non linear scale?}
+
 \item{...}{Extra arguments for the downstream functions.}
 }
 \value{
 ggplot2 goodness.
 }
 \description{
-I want to have a pretty plot of peak intensities and m/z.
+I want to have a pretty plot of peak intensities and m/z.  The plot provided
+by this function is interesting, but suffers from some oddities; notably that
+it does not currently separate the MS1 and MS2 data.  Since I am stuck on
+this forsaken plane with no hope of ever leaving, perhaps I can add that now.
 }
