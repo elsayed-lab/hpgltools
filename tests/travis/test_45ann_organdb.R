@@ -15,15 +15,16 @@ test_that("Can we extract annotation information from an orgdb instance with eas
     expect_equal(expected, actual)
 })
 
+## New org.Dm.eg.db seems to have a different order of GO IDs.
 gene_ids <- actual
 orgdb_go <- sm(load_orgdb_go(
   org.Dm.eg.db,
   gene_ids=gene_ids,
   keytype="accnum",
   columns=c("go", "goall", "goid")))
-actual <- head(orgdb_go[["GO"]])
-expected <- c("GO:0006486", "GO:0006486", "GO:0006486",
-              "GO:0006486", "GO:0006486", "GO:0006486")
+actual <- sort(head(unique(orgdb_go[["GO"]])))
+expected <- c("GO:0005783", "GO:0005794", "GO:0006486",
+              "GO:0006493", "GO:0008375", "GO:0008376")
 test_that("Can we use GO.db with Orgdb to extract gene ontology information?", {
     expect_equal(expected, actual)
 })

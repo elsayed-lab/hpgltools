@@ -43,11 +43,14 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
-                    chosen_factor="batch",
+                    chosen_factor="batch", do_fit=FALSE, cor_gene=1,
                     cpus=6, genes=40, parallel=TRUE,
                     modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
+  ## One is not supposed to use library() in packages, but it needs to do all sorts of foolish
+  ## attaching.
+  tt <- sm(library("variancePartition"))
   if (isTRUE(parallel)) {
     cl <- parallel::makeCluster(cpus)
     para <- doParallel::registerDoParallel(cl)
@@ -90,11 +93,24 @@ which are shared among multiple samples.")
     message("Placing factor: ", chosen_column, " at the beginning of the model.")
   }
 
-  my_sorted <- variancePartition::sortCols(my_extract)
+  my_sorted <- variancePartition:::.sortCols(my_extract)
   order_idx <- order(my_sorted[[chosen_column]], decreasing=TRUE)
   my_sorted <- my_sorted[order_idx, ]
   percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
   partition_plot <- variancePartition::plotVarPart(my_sorted)
+
+  if (isTRUE(do_fit)) {
+    message("variancePartition provides time/memory estimates for this operation.  They are lies.")
+    ## Try fitting with lmer4
+    fitting <- fitVarPartModel(exprObj=data, formula=my_model, data=design)
+    idx <- order(design[["condition"]], design[["batch"]])
+    first <- variancePartition::plotCorrStructure(test, reorder=idx)
+    test_strat <- data.frame(Expression=data[3, ],
+                             condition=design[["condition"]],
+                             batch=design[["batch"]])
+    testing <- variancePartition::plotStratify(Expression ~ batch, test_strat)
+  }
+
   if (isTRUE(parallel)) {
     para <- parallel::stopCluster(cl)
   }

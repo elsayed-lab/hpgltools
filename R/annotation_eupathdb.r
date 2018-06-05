@@ -21,10 +21,12 @@ check_eupath_species <- function(species="Leishmania major strain Friedlin", met
   if (species %in% all_species) {
     entry <- metadata[metadata[["Species"]] == species, ]
     message("Found: ", entry[["Species"]])
-  } else if (sum(grep_hits > 0)) {
+  } else if (sum(grep_hits >= 1)) {
     species <- grepped_hits[[1]]
     entry <- metadata[metadata[["Species"]] == species, ]
-    message("Found the following hits: ", toString(grepped_hits), ", choosing the first.")
+    if (sum(grep_hits > 1)) {
+      message("Found the following hits: ", toString(grepped_hits), ", choosing the first.")
+    }
   } else {
     message("Here are the possible species: ", toString(all_species))
     stop("Did not find your species.")

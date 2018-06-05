@@ -460,7 +460,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 #'
 #' @param metadata  Data frame describing the samples, including the mzXML
 #'   filenames.
-#' @param scored_column Which column from the metadata provides the requisite filenames?
+#' @param pyprophet_column Which column from the metadata provides the requisite filenames?
 #' @param savefile  If not null, save the data from this to the given filename.
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
@@ -496,7 +496,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
-  meta <- sample_definitions[, c("sampleid", scored_column)]
+  meta <- sample_definitions[, c("sampleid", pyprophet_column)]
   colnames(meta) <- c("id", "scored")
   existing_files <- complete.cases(meta[["scored"]])
   if (sum(existing_files) != nrow(meta)) {
@@ -530,7 +530,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
         dplyr::mutate(mass=gather_masses(sequence))
       res[[id]] <- file_result
     } else {
-      failed <- c(failed, file)
+      failed_files <- c(failed_files, file)
     }
   }
   found_ids <- names(res)
@@ -539,7 +539,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   sample_definitions <- sample_definitions[sample_idx, ]
 
   retlist <- list(
-    "failed" = failed,
+    "failed" = failed_files,
     "colors" = chosen_colors,
     "metadata" = sample_definitions,
     "sample_data" = res)
@@ -1079,7 +1079,7 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
       ggplot2::geom_smooth(method="loess", size=1.0)
   }
   retlist <- list(
-    "data" = plotted_data,
+    "data" = plot_df,
     "plot" = x_vs_y)
   return(retlist)
 }

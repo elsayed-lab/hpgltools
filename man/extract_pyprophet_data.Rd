@@ -11,12 +11,12 @@ extract_pyprophet_data(metadata, pyprophet_column = "diascored",
 \item{metadata}{Data frame describing the samples, including the mzXML
 filenames.}
 
+\item{pyprophet_column}{Which column from the metadata provides the requisite filenames?}
+
 \item{savefile}{If not null, save the data from this to the given filename.}
 
 \item{...}{Extra arguments, presumably color palettes and column names and
 stuff like that.}
-
-\item{scored_column}{Which column from the metadata provides the requisite filenames?}
 }
 \value{
 A list of data from each sample in the pyprophet scored DIA run.

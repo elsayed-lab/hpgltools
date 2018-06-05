@@ -26,10 +26,12 @@ There are two ways around this problem:
 
 From the fresh R installation:
 
-> source("http://bioconductor.org/biocLite.R")
-> biocLite("devtools")
-> devtools::install_github("mangothecat/remotes")
-> remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite("devtools")
+devtools::install_github("mangothecat/remotes")
+remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+```
 
 * Otherwise, using make and bioconductor
 
