@@ -3,6 +3,15 @@
 #' This should take either a dataframe or filename for the psi data from suppa,
 #' along with the same for the average log tpm data (acquired from suppa
 #' diffSplice with --save_tpm_events)
+#'
+#' @param dpsi  Table provided by suppa containing all the metrics.
+#' @param tpm  Table provided by suppa containing all the tpm values.
+#' @param events  List of event types to include.
+#' @param psi  Limit the set of included events by psi value?
+#' @param sig_threshold  Use this significance threshold.
+#' @param label_type  Choose a type of event to label.
+#' @param alpha  How see-through should the points be in the plot?
+#' @return  List containing the plot and some of the requisite data.
 #' @export
 plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
                        label_type=NULL, alpha=0.7) {

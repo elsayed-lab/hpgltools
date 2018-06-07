@@ -9,6 +9,8 @@ plot_mzxml_boxplot(mzxml_data, table = "precursors",
   scale = NULL, ...)
 }
 \arguments{
+\item{mzxml_data}{Provide a list of mzxml data, one element for each sample.}
+
 \item{table}{One of precursors or scans}
 
 \item{column}{One of the columns from the table; if 'scans' is chosen, then

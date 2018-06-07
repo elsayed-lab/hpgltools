@@ -771,6 +771,16 @@ analyses more difficult/impossible.")
   return(sample_definitions)
 }
 
+#' Do features_greater_than() inverted!
+#'
+#' @param  ...  Arguments passed to features_greather_than()
+#' @return The set of features less than whatever you would have done with
+#'   features_greater_than().
+#' @export
+features_less_than <- function(...) {
+  features_greater_than(..., inverse=TRUE)
+}
+
 #' Count the number of features(genes) greater than x in a data set.
 #'
 #' Sometimes I am asked how many genes have >= x counts.  Well, here you go.
@@ -781,6 +791,7 @@ analyses more difficult/impossible.")
 #' @param data  A dataframe/exprs/matrix/whatever of counts.
 #' @param cutoff  Minimum number of counts.
 #' @param hard  Greater-than is hard, greater-than-equals is not.
+#' @param inverse  when inverted, this provides features less than the cutoff.
 #' @return  A list of two elements, the first comprised of the number of genes
 #'   greater than the cutoff, the second with the identities of said genes.
 #' @seealso \pkg{Biobase}
@@ -828,7 +839,14 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
 
 #' I want an easy way to answer the question: what features are in condition x but no others.
 #'
-#' The answer to this lies in a combination of subset_expt() and features_greater_than().
+#' The answer to this lies in a combination of subset_expt() and
+#' features_greater_than().
+#'
+#' @param expt  An experiment to query.
+#' @param cutoff  What is the minimum number of counts required to define
+#'   'included.'
+#' @return A set of features.
+#' @export
 features_in_single_condition <- function(expt, cutoff=2) {
   condition_set <- levels(as.factor(pData(expt)[["condition"]]))
   solo_this_list <- list()
@@ -890,6 +908,8 @@ features_in_single_condition <- function(expt, cutoff=2) {
 #'
 #' @param sample_definitions  Metadata, presumably containing a 'condition'
 #'   column.
+#' @param cond_column  Which column in the sample data provides the set of
+#'   'conditions' used to define the colors?
 #' @param ...  Other arguments like a color palette, etc.
 #' @return  Colors!
 generate_expt_colors <- function(sample_definitions, cond_column="condition", ...) {

@@ -225,12 +225,10 @@ read_snp_columns <- function(samples,
 #' @param type  counts or percent?
 #' @param input_dir  Directory containing the samtools results.
 #' @param tolower lowercase the sample names?
+#' @param bam_suffix  In case the data came from sam.
 #' @return  It is so slow I no longer know if it works.
-samtools_snp_coverage <- function(expt,
-                                  type="counts",
-                                  input_dir="preprocessing/outputs",
-                                  tolower=TRUE,
-                                  bam_suffix=".bam") {
+samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/outputs",
+                                  tolower=TRUE, bam_suffix=".bam") {
   snp_counts <- count_expt_snps(expt, type=type, input_dir=input_dir, tolower=tolower)
   snp_counts <- fData(snp_counts)
   samples <- rownames(pData(expt))

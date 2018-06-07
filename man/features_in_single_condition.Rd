@@ -6,6 +6,16 @@
 \usage{
 features_in_single_condition(expt, cutoff = 2)
 }
+\arguments{
+\item{expt}{An experiment to query.}
+
+\item{cutoff}{What is the minimum number of counts required to define
+'included.'}
+}
+\value{
+A set of features.
+}
 \description{
-The answer to this lies in a combination of subset_expt() and features_greater_than().
+The answer to this lies in a combination of subset_expt() and
+features_greater_than().
 }

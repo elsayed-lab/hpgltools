@@ -1749,6 +1749,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #' @param do_pairwise Include all pairwise strings? This shouldn't
 #'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
+#' @param ...  Extra arguments passed here are caught by arglist.
 #' @return List including the following information:
 #'  \enumerate{
 #'   \item all_pairwise_contrasts = the result from makeContrasts(...)
@@ -1932,7 +1933,7 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 #'
 #' Currently untested, used for Trypanosome analyses primarily, thus the default strings.
 #'
-#' @param de_list  List of sets of genes deemed significantly
+#' @param input  List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.
 #' @param max_copies  Keep only those genes with <= n putative
 #'  copies.

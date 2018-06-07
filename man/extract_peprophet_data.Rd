@@ -17,6 +17,8 @@ extract_peprophet_data(pepxml, decoy_string = "DECOY_", ...)
 \item{pepxml}{The file resulting from the xinteract invocation.}
 
 \item{decoy_string}{What prefix do decoys have in the data.}
+
+\item{...}{Catch extra arguments passed here, currently unused.}
 }
 \value{
 data table of all the information I saw fit to extract

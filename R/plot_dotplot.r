@@ -241,13 +241,16 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #' Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 #' I reimplemented it using ggplot2 and tried to make it a little more flexible.
 #' The general idea is to take the pairwise correlations/distances of the samples, then take the
-#' medians, and plot them.
+#' medians, and plot them.  This version of the plot is no longer actually a
+#' dotplot, but a point plot, but who is counting?
 #'
 #' @param data Expt, expressionset, or data frame.
 #' @param colors Color scheme if data is not an expt.
 #' @param method Correlation or distance method to use.
+#' @param legend  Include a legend on the side?
 #' @param names Use pretty names for the samples?
 #' @param title Title for the graph.
+#' @param dot_size  How large should the glyphs be?
 #' @param ... More parameters to make you happy!
 #' @return ggplot of the standard median something
 #'  among the samples.  This will also write to an

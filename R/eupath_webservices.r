@@ -4,12 +4,14 @@
 #' @param webservice  Optional alternative webservice for hard-to-find species.
 #' @param dir  Where to put the json.
 #' @param use_savefile  Make a savefile of the data for future reference.
+#' @param ...  Catch any extra arguments passed here, currently unused.
 #' @return  Dataframe with lots of rows for the various species in eupathdb.
 #' @author  Keith Hughitt
 #' @export
 download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                      dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
+  arglist <- list(...)
   savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
   if (!file.exists(dir)) {
@@ -906,6 +908,8 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
     pct_done <- c / length(result)
     setTxtProgressBar(bar, pct_done)
     id <- result[c]
+    ## I keep getting weird timeouts, so I figure I will give the eupath webservers a moment.
+    Sys.sleep(0.5)
     orthos <- sm(get_orthologs_one_gene(species=species, gene=id, entry=entry))
     all_orthologs <- rbind(all_orthologs, orthos)
   }

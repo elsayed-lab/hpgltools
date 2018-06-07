@@ -520,6 +520,7 @@ plot_qq_all_pairwise <- function(data) {
 #'
 #' @param data  Dataframe to perform pairwise qqplots with.
 #' @param title  A title for the plot.
+#' @param direct  Include sample labels with directlabel()?
 #' @param num  The N in top-n genes, if null, do them all.
 #' @param ...  Extra arguments, currently unused.
 #' @return List containing the ggplot2

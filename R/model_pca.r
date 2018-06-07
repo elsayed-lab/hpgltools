@@ -346,10 +346,11 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
 #' for some data and extracts a dataframe of the top n genes for each
 #' component by score.
 #'
-#' @param df   a dataframe of (pseudo)counts
-#' @param conditions   a factor or character of conditions in the experiment.
-#' @param batches   a factor or character of batches in the experiment.
-#' @param n   the number of genes to extract.
+#' @param expt Experiment to poke.
+#' @param n Number of genes to extract.
+#' @param cor Perform correlations?
+#' @param vs Do a mean or median when getting ready to perform the pca?
+#' @param logged  Check for the log state of the data and adjust as deemed necessary?
 #' @return a list including the princomp biplot, histogram, and tables
 #'  of top/bottom n scored genes with their scores by component.
 #' @seealso \pkg{stats}

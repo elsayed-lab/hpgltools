@@ -130,6 +130,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #'
 #' @param pepxml  The file resulting from the xinteract invocation.
 #' @param decoy_string  What prefix do decoys have in the data.
+#' @param ... Catch extra arguments passed here, currently unused.
 #' @return data table of all the information I saw fit to extract
 #' The columns are:
 #' * protein: The name of the matching sequence (DECOYs allowed here)
@@ -821,6 +822,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
 #'   extractor dumps a couple of tables, one must choose a desired table and
 #'   column from it to plot.
 #'
+#' @param mzxml_data  Provide a list of mzxml data, one element for each sample.
 #' @param table  One of precursors or scans
 #' @param column  One of the columns from the table; if 'scans' is chosen, then
 #'   likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
@@ -909,6 +911,8 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #'
 #' @param pyprophet_data  List containing the pyprophet results.
 #' @param column  What column of the pyprophet scored data to plot?
+#' @param keep_real  Do we keep the real data when plotting the data? (perhaps
+#'   we only want the decoys)
 #' @param keep_decoys  Do we keep the decoys when plotting the data?
 #' @param names  Names for the x-axis of the plot.
 #' @param title  Title the plot?
@@ -998,11 +1002,13 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt", keep_real=
 #' extract_pyprophet_data() provides a ridiculously large data table of a scored
 #' openswath data after processing by pyprophet.
 #'
-#' @param table  Big honking data table from extract_peprophet_data()
+#' @param pyprophet_data  List of pyprophet data, one element for each sample,
+#'   taken from  extract_peprophet_data()
 #' @param xaxis  Column to plot on the x-axis
 #' @param xscale Change the scale of the x-axis?
 #' @param yaxis  guess!
 #' @param yscale  Change the scale of the y-axis?
+#' @param alpha  How see-through to make the dots?
 #' @param size_column  Use a column for scaling the sizes of dots in the plot?
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!

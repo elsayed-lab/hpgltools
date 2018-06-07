@@ -481,6 +481,11 @@ get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130",
 #' @param reinstall  Overwrite existing data files?
 #' @param metadata  Use a pre-existing metadata table, or download a new one.
 #' @param kegg_abbreviation  For when we cannot automagically find the kegg species id.
+#' @param exclude_join  I had a harebrained idea to automatically set up the
+#'   joins between columns of GO.db/reactome.db/orgdb/txdb objects.  This
+#'   variable is intended to exclude columns with common IDs that might
+#'   multi-match spuriously -- I think in the end I killed the idea though,
+#'   perhaps this should be removed or resurrected.
 #' @param ...  Extra arguments when downloading metadata.
 #' @return  The result of attempting to install the organismDbi package.
 #' @author  Keith Hughitt

@@ -14,6 +14,9 @@ plot_pyprophet_boxplot(pyprophet_data, column = "delta_rt",
 
 \item{column}{What column of the pyprophet scored data to plot?}
 
+\item{keep_real}{Do we keep the real data when plotting the data? (perhaps
+we only want the decoys)}
+
 \item{keep_decoys}{Do we keep the decoys when plotting the data?}
 
 \item{names}{Names for the x-axis of the plot.}

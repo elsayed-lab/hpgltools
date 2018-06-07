@@ -29,6 +29,8 @@ plot_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
 \item{gvis_trendline}{Add a trendline to the gvis plot?  There are a couple possible types, I
 think linear is the most common.}
 
+\item{z_lines}{Include lines defining the z-score boundaries.}
+
 \item{first}{First column to plot.}
 
 \item{second}{Second column to plot.}
@@ -40,6 +42,8 @@ think linear is the most common.}
 \item{color_high}{Chosen color for points significantly above the mean.}
 
 \item{color_low}{Chosen color for points significantly below the mean.}
+
+\item{alpha}{Choose an alpha channel to define how see-through the dots are.}
 
 \item{...}{Extra args likely used for choosing significant genes.}
 }

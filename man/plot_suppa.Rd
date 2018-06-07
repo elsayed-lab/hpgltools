@@ -7,6 +7,24 @@
 plot_suppa(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.05,
   label_type = NULL, alpha = 0.7)
 }
+\arguments{
+\item{dpsi}{Table provided by suppa containing all the metrics.}
+
+\item{tpm}{Table provided by suppa containing all the tpm values.}
+
+\item{events}{List of event types to include.}
+
+\item{psi}{Limit the set of included events by psi value?}
+
+\item{sig_threshold}{Use this significance threshold.}
+
+\item{label_type}{Choose a type of event to label.}
+
+\item{alpha}{How see-through should the points be in the plot?}
+}
+\value{
+List containing the plot and some of the requisite data.
+}
 \description{
 This should take either a dataframe or filename for the psi data from suppa,
 along with the same for the average log tpm data (acquired from suppa

@@ -19,6 +19,8 @@ use this information while edgeR can not.}
 need to be set to FALSE, but just in case.}
 
 \item{extra_contrasts}{Optional string of extra contrasts to include.}
+
+\item{...}{Extra arguments passed here are caught by arglist.}
 }
 \value{
 List including the following information:

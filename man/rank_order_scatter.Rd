@@ -23,7 +23,17 @@ rank_order_scatter(first, second = NULL, first_type = "limma",
 \item{first_table}{Again, assuming all_pairwise(), use this to choose the
 table to extract.}
 
+\item{alpha}{How see-through to make the dots?}
+
 \item{second_table}{Ibid.}
+
+\item{first_column}{What column to use to rank-order from the first table?}
+
+\item{second_column}{What column to use to rank-order from the second table?}
+
+\item{first_p_col}{Use this column for pretty colors from the first table.}
+
+\item{second_p_col}{Use this column for pretty colors from the second table.}
 
 \item{p_limit}{A p-value limit for coloring dots.}
 
@@ -34,10 +44,6 @@ table to extract.}
 \item{second_color}{If the second column is 'significant', this color.}
 
 \item{no_color}{If neither column is 'significant', then this color.}
-
-\item{column}{What column to use to rank-order?}
-
-\item{p_col}{Use this column for pretty colors.}
 }
 \value{
 a list with a plot and a couple summary statistics.

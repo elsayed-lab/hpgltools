@@ -131,7 +131,7 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #' circos/conf/bob_plus_go.conf and finally adds an include to
 #' circos/bob.conf
 #'
-#' @param go_table Dataframe with starts/ends and categories.
+#' @param table Dataframe with starts/ends and categories.
 #' @param cfgout Master configuration file to write.
 #' @param chr Name of the chromosome.
 #' @param outer Floating point radius of the circle into which to place the plus-strand data.

@@ -14,9 +14,13 @@ plot_sm(data, colors = NULL, method = "pearson", legend = FALSE,
 
 \item{method}{Correlation or distance method to use.}
 
+\item{legend}{Include a legend on the side?}
+
 \item{names}{Use pretty names for the samples?}
 
 \item{title}{Title for the graph.}
+
+\item{dot_size}{How large should the glyphs be?}
 
 \item{...}{More parameters to make you happy!}
 }
@@ -34,7 +38,8 @@ This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
 Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 I reimplemented it using ggplot2 and tried to make it a little more flexible.
 The general idea is to take the pairwise correlations/distances of the samples, then take the
-medians, and plot them.
+medians, and plot them.  This version of the plot is no longer actually a
+dotplot, but a point plot, but who is counting?
 }
 \examples{
 \dontrun{

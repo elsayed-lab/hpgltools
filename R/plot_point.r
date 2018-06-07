@@ -143,12 +143,14 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param loess Add a loess estimation?
 #' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple possible types, I
 #'     think linear is the most common.
+#' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.
 #' @param base_url Base url to add to the plot.
 #' @param pretty_colors Colors!
 #' @param color_high Chosen color for points significantly above the mean.
 #' @param color_low Chosen color for points significantly below the mean.
+#' @param alpha  Choose an alpha channel to define how see-through the dots are.
 #' @param ... Extra args likely used for choosing significant genes.
 #' @return List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
 #'     eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
@@ -559,7 +561,7 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #' @param data Expt, expressionset, or dataframe.
 #' @param design Eesign matrix.
 #' @param colors Color scheme.
-#' @param labels How do you want to label the graph? 'fancy' will use directlabels() to try to match
+#' @param plot_labels How do you want to label the graph? 'fancy' will use directlabels() to try to match
 #'     the labels with the positions without overlapping anything else will just stick them on a 45'
 #'     offset next to the graphed point.
 #' @param title Add a title?

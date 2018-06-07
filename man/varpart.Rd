@@ -5,8 +5,8 @@
 \title{Use variancePartition to try and understand where the variance lies in a data set.}
 \usage{
 varpart(expt, predictor = NULL, factors = c("condition", "batch"),
-  chosen_factor = "batch", cpus = 6, genes = 40, parallel = TRUE,
-  modify_expt = TRUE)
+  chosen_factor = "batch", do_fit = FALSE, cor_gene = 1, cpus = 6,
+  genes = 40, parallel = TRUE, modify_expt = TRUE)
 }
 \arguments{
 \item{expt}{Some data}

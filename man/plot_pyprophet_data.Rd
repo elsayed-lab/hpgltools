@@ -9,6 +9,9 @@ plot_pyprophet_data(pyprophet_data, xaxis = "mass", xscale = NULL,
   size_column = "mscore", ...)
 }
 \arguments{
+\item{pyprophet_data}{List of pyprophet data, one element for each sample,
+taken from  extract_peprophet_data()}
+
 \item{xaxis}{Column to plot on the x-axis}
 
 \item{xscale}{Change the scale of the x-axis?}
@@ -17,11 +20,11 @@ plot_pyprophet_data(pyprophet_data, xaxis = "mass", xscale = NULL,
 
 \item{yscale}{Change the scale of the y-axis?}
 
+\item{alpha}{How see-through to make the dots?}
+
 \item{size_column}{Use a column for scaling the sizes of dots in the plot?}
 
 \item{...}{extra options which may be used for plotting.}
-
-\item{table}{Big honking data table from extract_peprophet_data()}
 }
 \value{
 a plot!

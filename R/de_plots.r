@@ -553,9 +553,12 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param second_type Ibid.
 #' @param first_table  Again, assuming all_pairwise(), use this to choose the
 #'   table to extract.
+#' @param alpha  How see-through to make the dots?
 #' @param second_table Ibid.
-#' @param column  What column to use to rank-order?
-#' @param p_col  Use this column for pretty colors.
+#' @param first_column  What column to use to rank-order from the first table?
+#' @param second_column  What column to use to rank-order from the second table?
+#' @param first_p_col  Use this column for pretty colors from the first table.
+#' @param second_p_col  Use this column for pretty colors from the second table.
 #' @param p_limit  A p-value limit for coloring dots.
 #' @param both_color  If both columns are 'significant', use this color.
 #' @param first_color  If only the first column is 'significant', this color.
