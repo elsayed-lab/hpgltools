@@ -217,9 +217,11 @@ divide_seq <- function(counts, ...) {
   hits <- sum(annotation_seqnames %in% genome_seqnames)
   if (hits == 0) {
     ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
-    new_levels <- c(seqlevels(annotation_gr), paste0("chr", unique(seqnames(annotation_gr))))
-    seqlevels(annotation_gr) <- new_levels
-    seqnames(annotation_gr) <- factor(paste0("chr", seqnames(annotation_gr)), levels=new_levels)
+    new_levels <- c(GenomeInfoDb::seqlevels(annotation_gr),
+                    paste0("chr", unique(GenomicRanges::seqnames(annotation_gr))))
+    GenomeInfoDb::seqlevels(annotation_gr) <- new_levels
+    GenomicRanges::seqnames(annotation_gr) <- factor(paste0(
+                     "chr", GenomicRanges::seqnames(annotation_gr)), levels=new_levels)
   } else if (hits < length(annotation_seqnames)) {
     warning("Not all the annotation sequences were found, this will probably end badly.")
   }

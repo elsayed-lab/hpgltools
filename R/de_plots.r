@@ -589,8 +589,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged <- merged[, -1]
 
   if (first_column == second_column) {
-    c1 <- paste0(column, ".x")
-    c2 <- paste0(column, ".y")
+    c1 <- paste0(first_column, ".x")
+    c2 <- paste0(first_column, ".y")
   } else {
     c1 <- first_column
     c2 <- second_column
@@ -605,8 +605,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 
   merged[["state"]] <- "neither"
   if (first_p_col == second_p_col) {
-    p1 <- paste0(p_col, ".x")
-    p2 <- paste0(p_col, ".y")
+    p1 <- paste0(first_p_col, ".x")
+    p2 <- paste0(first_p_col, ".y")
   } else {
     p1 <- first_p_col
     p2 <- second_p_col

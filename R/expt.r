@@ -1359,11 +1359,57 @@ read_metadata <- function(file, ...) {
   return(definitions)
 }
 
-semantic_expt_filter <- function(input, max_copies=2, invert=TRUE,
+#' Remove/keep specifically named genes from an expt.
+#'
+#' I find subsetting weirdly confusing.  Hopefully this function will allow one
+#' to include/exclude specific genes/families based on string comparisons.
+#'
+#' @param input  Expt to filter.
+#' @param invert  Keep only the things with the provided strings (TRUE), or
+#'   remove them (FALSE).
+#' @param semantic  Character list of strings to search for in the annotation
+#'   data.
+#' @param semantic_column  Column in the annotations to search.
+#' @return A presumably smaller expt.
+#' @export
+semantic_expt_filter <- function(input, invert=FALSE,
                                  semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                  semantic_column="description") {
-  message("Not done yet.")
-  return(output)
+  annots <- fData(input)
+  if (isTRUE(invert)) {
+    new_annots <- data.frame()
+  } else {
+    new_annots <- annots
+  }
+
+  numbers_removed <- 0
+  for (string in semantic) {
+    pre_remove_size <- nrow(annots)
+    idx <- NULL
+    if (semantic_column == "rownames") {
+      idx <- grepl(pattern=string, x=rownames(annots))
+    } else {
+      idx <- grepl(pattern=string, x=annots[, semantic_column])
+    }
+    type <- "Removed"
+    if (isTRUE(invert)) {
+      type <- "Kept"
+      tmp_annots <- annots[idx, ]
+      new_annots <- rbind(new_annots, tmp_annots)
+    } else {
+      type <- "Removed"
+      idx <- !idx
+      new_annots <- new_annots[idx, ]
+    }
+  }
+
+  expressionset <- input[["expressionset"]]
+  keepers <- rownames(new_annots)
+  new_expressionset <- expressionset[keepers, ]
+  new_libsizes <- colSums(exprs(new_expressionset))
+  input[["expressionset"]] <- new_expressionset
+  input[["libsize"]] <- new_libsizes
+  return(input)
 }
 
 #' Change the batches of an expt.

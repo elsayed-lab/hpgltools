@@ -271,7 +271,7 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL, select
           gene2GO=go_map)
         retlist[[ont]][["test_stat"]] <- new(
           "classicScore",
-          testStatistic=GOKSTest,
+          testStatistic=topGO::GOKSTest,
           name="KS test")
         retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
                                                     retlist[[ont]][["godata"]],

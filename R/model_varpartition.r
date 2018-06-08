@@ -35,6 +35,8 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param predictor  Non-categorical predictor factor with which to begin the model.
 #' @param factors  Character list of columns in the experiment design to query
 #' @param chosen_factor  When checking for sane 'batches', what column to extract from the design?
+#' @param do_fit  Perform a fitting using variancePartition?
+#' @param cor_gene  Provide a set of genes to look at the correlations, defaults to the first gene.
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
@@ -102,9 +104,9 @@ which are shared among multiple samples.")
   if (isTRUE(do_fit)) {
     message("variancePartition provides time/memory estimates for this operation.  They are lies.")
     ## Try fitting with lmer4
-    fitting <- fitVarPartModel(exprObj=data, formula=my_model, data=design)
+    fitting <- variancePartition::fitVarPartModel(exprObj=data, formula=my_model, data=design)
     idx <- order(design[["condition"]], design[["batch"]])
-    first <- variancePartition::plotCorrStructure(test, reorder=idx)
+    first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
     test_strat <- data.frame(Expression=data[3, ],
                              condition=design[["condition"]],
                              batch=design[["batch"]])

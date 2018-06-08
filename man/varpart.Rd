@@ -17,6 +17,10 @@ varpart(expt, predictor = NULL, factors = c("condition", "batch"),
 
 \item{chosen_factor}{When checking for sane 'batches', what column to extract from the design?}
 
+\item{do_fit}{Perform a fitting using variancePartition?}
+
+\item{cor_gene}{Provide a set of genes to look at the correlations, defaults to the first gene.}
+
 \item{cpus}{Number cpus to use}
 
 \item{genes}{Number of genes to count.}
