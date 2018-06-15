@@ -225,12 +225,10 @@ read_snp_columns <- function(samples,
 #' @param type  counts or percent?
 #' @param input_dir  Directory containing the samtools results.
 #' @param tolower lowercase the sample names?
+#' @param bam_suffix  In case the data came from sam.
 #' @return  It is so slow I no longer know if it works.
-samtools_snp_coverage <- function(expt,
-                                  type="counts",
-                                  input_dir="preprocessing/outputs",
-                                  tolower=TRUE,
-                                  bam_suffix=".bam") {
+samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/outputs",
+                                  tolower=TRUE, bam_suffix=".bam") {
   snp_counts <- count_expt_snps(expt, type=type, input_dir=input_dir, tolower=tolower)
   snp_counts <- fData(snp_counts)
   samples <- rownames(pData(expt))
@@ -417,6 +415,8 @@ snps_vs_intersections <- function(expt, snp_result) {
                                                ignore.strand=TRUE)
     inters[[inter_name]] <- inter_by_gene
     summarized_by_gene <- data.table::as.data.table(inter_by_gene)
+    ## Faking out r cmd check with a couple empty variables which will be used by data.table
+    seqnames <- count <- NULL
     summarized_by_gene[, count := .N, by = list(seqnames)]
     summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
     summaries[[inter_name]] <- summarized_by_gene
@@ -465,6 +465,8 @@ snps_vs_genes <- function(expt, snp_result) {
   snp_positions <- snp_positions[, c("seqnames", "start", "end", "strand")]
   snp_granges <- GenomicRanges::makeGRangesFromDataFrame(snp_positions)
 
+  ## Faking out r cmd check with a couple empty variables which will be used by data.table
+  seqnames <- count <- NULL
   snps_by_gene <- IRanges::subsetByOverlaps(snp_granges, expt_granges, type="within", ignore.strand=TRUE)
   summarized_by_gene <- data.table::as.data.table(snps_by_gene)
   summarized_by_gene[, count := .N, by = list(seqnames)]

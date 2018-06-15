@@ -5,8 +5,8 @@
 \title{Use variancePartition to try and understand where the variance lies in a data set.}
 \usage{
 varpart(expt, predictor = NULL, factors = c("condition", "batch"),
-  chosen_factor = "batch", cpus = 6, genes = 40, parallel = TRUE,
-  modify_expt = TRUE)
+  chosen_factor = "batch", do_fit = FALSE, cor_gene = 1, cpus = 6,
+  genes = 40, parallel = TRUE, modify_expt = TRUE)
 }
 \arguments{
 \item{expt}{Some data}
@@ -16,6 +16,10 @@ varpart(expt, predictor = NULL, factors = c("condition", "batch"),
 \item{factors}{Character list of columns in the experiment design to query}
 
 \item{chosen_factor}{When checking for sane 'batches', what column to extract from the design?}
+
+\item{do_fit}{Perform a fitting using variancePartition?}
+
+\item{cor_gene}{Provide a set of genes to look at the correlations, defaults to the first gene.}
 
 \item{cpus}{Number cpus to use}
 

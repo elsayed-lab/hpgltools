@@ -4,12 +4,14 @@
 #' @param webservice  Optional alternative webservice for hard-to-find species.
 #' @param dir  Where to put the json.
 #' @param use_savefile  Make a savefile of the data for future reference.
+#' @param ...  Catch any extra arguments passed here, currently unused.
 #' @return  Dataframe with lots of rows for the various species in eupathdb.
 #' @author  Keith Hughitt
 #' @export
 download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                      dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
+  arglist <- list(...)
   savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
 
   if (!file.exists(dir)) {
@@ -578,7 +580,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   result <- post_eupath_raw(entry,
                             question="GeneQuestions.GenesByMolecularWeight",
                             parameters=parameters,
-                            table="annot",
+                            table_name="annot",
                             columns=names(field_list))
   colnames(result) <- tolower(colnames(result))
   numeric_columns <- c(
@@ -895,19 +897,39 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
     message("Delete the file ", savefile, " to regenerate.")
     all_orthologs <- new.env()
     load(savefile, envir=all_orthologs)
-    all_orthologs <- all_orthologs[["all_orthologs"]]
+    all_orthologs <- all_orthologs[["savelist"]]
     return(all_orthologs)
   }
 
   all_orthologs <- data.frame()
-  message("Downloading orthologs, one gene at a time.")
+  message("Downloading orthologs, one gene at a time, and checkpointing for when it inevitably fubars.")
+  ortho_savefile <- paste0("ortho_checkpoint_", entry[["Genome"]], ".rda")
+  savelist <- list(
+    "number_finished" = 0,
+    "all_orthologs" = all_orthologs)
+  if (file.exists(ortho_savefile)) {
+    ortho_progress <- new.env()
+    load(ortho_savefile, envir=ortho_progress)
+    savelist <- ortho_progress[["savelist"]]
+    all_orthologs <- savelist[["all_orthologs"]]
+  } else {
+    save(savelist, file=ortho_savefile)
+  }
+  current_gene <- savelist[["number_finished"]] + 1
   bar <- utils::txtProgressBar(style=3)
-  for (c in 1:length(result)) {
+  for (c in current_gene:length(result)) {
     pct_done <- c / length(result)
     setTxtProgressBar(bar, pct_done)
     id <- result[c]
+    ## I keep getting weird timeouts, so I figure I will give the eupath webservers a moment.
+    Sys.sleep(1.0)
     orthos <- sm(get_orthologs_one_gene(species=species, gene=id, entry=entry))
     all_orthologs <- rbind(all_orthologs, orthos)
+    message("Downloading: ", id, " ", c, "/", length(result),
+            ", and checkpointing to ", ortho_savefile)
+    savelist[["all_orthologs"]] <- all_orthologs
+    savelist[["number_finished"]] <- c
+    save(savelist, file=ortho_savefile)
   }
   close(bar)
 

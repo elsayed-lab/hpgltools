@@ -13,11 +13,26 @@ load_orgdb_annotations(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
 \arguments{
 \item{orgdb}{OrganismDb instance.}
 
-\item{gene_ids}{Gene identifiers for retrieving annotations.}
+\item{gene_ids}{Search for a specific set of genes?}
 
 \item{include_go}{Ask the Dbi for gene ontology information?}
 
 \item{keytype}{mmm the key type used?}
+
+\item{strand_column}{There are a few fields I want to gather by default:
+start, end, strand, chromosome, type, and name; but these do not
+necessarily have consistent names, use this column for the chromosome
+strand.}
+
+\item{start_column}{Use this column for the gene start.}
+
+\item{end_column}{Use this column for the gene end.}
+
+\item{chromosome_column}{Use this column to identify the chromosome.}
+
+\item{type_column}{Use this column to identify the gene type.}
+
+\item{name_column}{Use this column to identify the gene name.}
 
 \item{fields}{Columns included in the output.}
 

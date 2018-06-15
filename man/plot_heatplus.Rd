@@ -10,7 +10,30 @@ plot_heatplus(expt, type = "correlation", method = "pearson",
   cluster_function = NULL, heatmap_colors = NULL)
 }
 \arguments{
-\item{fundata}{A data frame to plot.}
+\item{expt}{Experiment to try plotting.}
+
+\item{type}{What comparison method to use on the data (distance or correlation)?}
+
+\item{method}{What distance/correlation method to perform?}
+
+\item{annot_columns}{Set of columns to include as terminal columns next to the heatmap.}
+
+\item{annot_rows}{Set of columns to include as terminal rows below the heatmap.}
+
+\item{cutoff}{Cutoff used to define color changes in the annotated clustering.}
+
+\item{cluster_colors}{Choose colors for the clustering?}
+
+\item{scale}{Scale the heatmap colors?}
+
+\item{cluster_width}{How much space to include between clustering?}
+
+\item{cluster_function}{Choose an alternate clustering function than hclust()?}
+
+\item{heatmap_colors}{Choose your own heatmap cluster palette?}
+}
+\value{
+List containing the returned heatmap along with some parameters used to create it.
 }
 \description{
 Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.

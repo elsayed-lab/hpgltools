@@ -15,6 +15,8 @@ download_eupath_metadata(overwrite = FALSE, webservice = "eupathdb",
 \item{dir}{Where to put the json.}
 
 \item{use_savefile}{Make a savefile of the data for future reference.}
+
+\item{...}{Catch any extra arguments passed here, currently unused.}
 }
 \value{
 Dataframe with lots of rows for the various species in eupathdb.

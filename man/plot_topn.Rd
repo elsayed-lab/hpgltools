@@ -11,6 +11,8 @@ plot_topn(data, title = NULL, direct = TRUE, num = 100, ...)
 
 \item{title}{A title for the plot.}
 
+\item{direct}{Include sample labels with directlabel()?}
+
 \item{num}{The N in top-n genes, if null, do them all.}
 
 \item{...}{Extra arguments, currently unused.}

@@ -16,6 +16,8 @@ samtools_snp_coverage(expt, type = "counts",
 \item{input_dir}{Directory containing the samtools results.}
 
 \item{tolower}{lowercase the sample names?}
+
+\item{bam_suffix}{In case the data came from sam.}
 }
 \value{
 It is so slow I no longer know if it works.

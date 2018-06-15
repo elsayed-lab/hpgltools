@@ -553,9 +553,12 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
 #' @param second_type Ibid.
 #' @param first_table  Again, assuming all_pairwise(), use this to choose the
 #'   table to extract.
+#' @param alpha  How see-through to make the dots?
 #' @param second_table Ibid.
-#' @param column  What column to use to rank-order?
-#' @param p_col  Use this column for pretty colors.
+#' @param first_column  What column to use to rank-order from the first table?
+#' @param second_column  What column to use to rank-order from the second table?
+#' @param first_p_col  Use this column for pretty colors from the first table.
+#' @param second_p_col  Use this column for pretty colors from the second table.
 #' @param p_limit  A p-value limit for coloring dots.
 #' @param both_color  If both columns are 'significant', use this color.
 #' @param first_color  If only the first column is 'significant', this color.
@@ -586,8 +589,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged <- merged[, -1]
 
   if (first_column == second_column) {
-    c1 <- paste0(column, ".x")
-    c2 <- paste0(column, ".y")
+    c1 <- paste0(first_column, ".x")
+    c2 <- paste0(first_column, ".y")
   } else {
     c1 <- first_column
     c2 <- second_column
@@ -602,8 +605,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 
   merged[["state"]] <- "neither"
   if (first_p_col == second_p_col) {
-    p1 <- paste0(p_col, ".x")
-    p2 <- paste0(p_col, ".y")
+    p1 <- paste0(first_p_col, ".x")
+    p2 <- paste0(first_p_col, ".y")
   } else {
     p1 <- first_p_col
     p2 <- second_p_col

@@ -436,9 +436,11 @@ I set it to 1 not knowing what its purpose is.")
 
   if (NAs) {
     var.pooled <- apply(dat - t(design %*% B.hat), 1, var, na.rm=TRUE)
-  }
-  else {
-    var.pooled <- ((dat - t(design %*% B.hat)) ^ 2) %*% rep(1 / n.array, n.array)
+  } else {
+    transposed <- t(design %*% B.hat)
+    subtracted <- dat - transposed
+    second_half <- rep(1 / n.array, n.array)
+    var.pooled <- as.matrix(subtracted ^ 2) %*% as.matrix(second_half)
   }
   stand.mean <- t(grand.mean) %*% t(rep(1, n.array))
   if (!is.null(design)) {
@@ -447,9 +449,10 @@ I set it to 1 not knowing what its purpose is.")
     stand.mean <- stand.mean + t(tmp %*% B.hat)
   }
   s.data <- (dat - stand.mean) / (sqrt(var.pooled) %*% t(rep(1, n.array)))
-  if (noScale) {
+  if (isTRUE(noScale)) {
     m.data <- dat - stand.mean
-    mse <- ((dat - t(design %*% B.hat)) ^ 2) %*% rep(1 / (n.array - ncol(design)), n.array)
+    second_half <- as.matrix(rep(1 / (n.array - ncol(design)), n.array))
+    mse <- as.matrix((dat - t(design %*% B.hat)) ^ 2) %*% second_half
     hld <- NULL
     bayesdata <- dat
     for (k in 1:n.batch) {
@@ -490,18 +493,20 @@ I set it to 1 not knowing what its purpose is.")
     b.prior <- apply(delta.hat, 1, sva:::bprior)
     if (prior.plots & par.prior) {
       oldpar <- par(mfrow = c(2, 2))
-      tmp <- density(gamma.hat[1, ])
+      tmp <- density(gamma.hat[1, ], na.rm=TRUE)
       plot(tmp, type="l", main="Density Plot")
       xx <- seq(min(tmp$x), max(tmp$x), length = 100)
       lines(xx, dnorm(xx, gamma.bar[1], sqrt(t2[1])), col = 2)
       stats::qqnorm(gamma.hat[1, ])
       stats::qqline(gamma.hat[1, ], col = 2)
-      tmp <- stats::density(delta.hat[1, ])
+      tmp <- stats::density(delta.hat[1, ], na.rm=TRUE)
       invgam <- 1 / stats::rgamma(ncol(delta.hat), a.prior[1], b.prior[1])
-      tmp1 <- stats::density(invgam)
+      tmp1 <- try(stats::density(invgam, na.rm=TRUE))
       plot(tmp, typ="l", main="Density Plot", ylim=c(0, max(tmp$y, tmp1$y)))
-      lines(tmp1, col = 2)
-      stats::qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles")
+      if (class(tmp1)[1] != "try-error") {
+        lines(tmp1, col = 2)
+      }
+      try(stats::qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles"))
       lines(c(0, max(invgam)), c(0, max(invgam)), col=2)
       title("Q-Q Plot")
       newpar <- par(oldpar)

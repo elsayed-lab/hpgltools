@@ -14,13 +14,13 @@ plot_nonzero(data, design = NULL, colors = NULL, plot_labels = NULL,
 
 \item{colors}{Color scheme.}
 
+\item{plot_labels}{How do you want to label the graph? 'fancy' will use directlabels() to try to match
+the labels with the positions without overlapping anything else will just stick them on a 45'
+offset next to the graphed point.}
+
 \item{title}{Add a title?}
 
 \item{...}{rawr!}
-
-\item{labels}{How do you want to label the graph? 'fancy' will use directlabels() to try to match
-the labels with the positions without overlapping anything else will just stick them on a 45'
-offset next to the graphed point.}
 }
 \value{
 a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.

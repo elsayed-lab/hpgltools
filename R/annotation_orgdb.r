@@ -7,9 +7,18 @@
 #' This defaults to a few fields which I have found most useful, but the brave can pass it 'all'.
 #'
 #' @param orgdb OrganismDb instance.
+#' @param gene_ids  Search for a specific set of genes?
 #' @param include_go  Ask the Dbi for gene ontology information?
-#' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param keytype mmm the key type used?
+#' @param strand_column  There are a few fields I want to gather by default:
+#'   start, end, strand, chromosome, type, and name; but these do not
+#'   necessarily have consistent names, use this column for the chromosome
+#'   strand.
+#' @param start_column  Use this column for the gene start.
+#' @param end_column  Use this column for the gene end.
+#' @param chromosome_column  Use this column to identify the chromosome.
+#' @param type_column  Use this column to identify the gene type.
+#' @param name_column Use this column to identify the gene name.
 #' @param fields Columns included in the output.
 #' @param sum_exon_widths Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
@@ -324,6 +333,7 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
 #' @param first_name  Name of the first package to search
 #' @param second_name  Name of the second package to search
 #' @param starting  What number join to start from
+#' @param exclude  Name(s) to exclude when attempting to match columns across databases.
 #' @return  A list named join# where the number is the nth join discovered and the elements
 #'   are non-zero matches between the sqlite packages described by first_name and second_name.
 orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NULL) {
@@ -398,7 +408,7 @@ take_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
     ah <- AnnotationHub::query(x=ah, pattern=type)
   }
   if (is.null(title) & is.null(species) & is.null(ahid)) {
-    ahid <- "AH57973"  ## org.Hs.eg.db.sqlite
+    ahid <- "AH61777"  ## org.Hs.eg.db.sqlite
   } else if (is.null(ahid) & is.null(title)) {
     ## Then we got a species
     possible <- ah$species

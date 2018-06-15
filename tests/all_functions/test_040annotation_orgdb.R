@@ -11,7 +11,7 @@ test_genes <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
 
 ## load_orgdb_annotations()
 testing <- sm(load_orgdb_annotations())
-expected <- c(325128, 6)
+expected <- c(327565, 6)
 actual <- dim(testing[["genes"]])
 test_that("Do we get the expected amount of orgdb gene data?", {
   expect_equal(expected[1], actual[1])
@@ -31,7 +31,7 @@ test_that("Do we get the expected amount of orgdb transcript data?", {
 ## Interesting, querying homo sapiens reminds me that we need to be more careful about which
 ## evidences we accept, as this table is astonishingly redundant.
 testing <- sm(load_orgdb_go(gene_ids=test_genes))
-expected <- c(11312, 10)
+expected <- c(13627, 10)
 actual <- dim(testing)
 test_that("Do we get the expected amount of orgdb GO data?", {
   expect_equal(expected[1], actual[1])
@@ -39,7 +39,7 @@ test_that("Do we get the expected amount of orgdb GO data?", {
 })
 
 ## take_from_ah()
-testing <- sm(take_from_ah())
+testing <- take_from_ah()
 expected <- 26
 actual <- length(AnnotationDbi::keytypes(testing))
 test_that("Do we get the expected keytypes from an ah orgdb?", {

@@ -24,32 +24,40 @@ There are two ways around this problem:
 
 * Using bioconductor, devtools, and remotes
 
-From the fresh R installation:
+From a fresh R installation:
 
-> source("http://bioconductor.org/biocLite.R")
-> biocLite("devtools")
-> devtools::install_github("mangothecat/remotes")
-> remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite("devtools")
+devtools::install_github("mangothecat/remotes")
+remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+```
 
 * Otherwise, using make and bioconductor
 
 Download the package via 'git pull' or a zip or whatever, go
 into the hpgltools/ directory and:
 
-> make install
+```bash
+make install
+```
 
 One important caveat for newer versions of hpgltools: it now uses packrat to
 keep a database of the package versions which I used.  If one wishes to attempt
 installing my versions of these packages:
 
-> make packrat_install
+```bash
+make packrat_install
+```
 
 A few packages appear to have fallen out of bioconductor/CRAN and so sometimes
 packrat installation has annoying errors.
 
 If you wish to run some tests and (re)build the documentation:
 
-> make
+```bash
+make
+```
 
 There are a bunch of other potential targets available in the Makefile which
 might be interesting. Simply running make rebuilds the documentation strings,
@@ -58,11 +66,15 @@ it says on the tin.
 
 Instead, one may perform:
 
-> make prereq
+```bash
+make prereq
+```
 
 or
 
-> make build
+```bash
+make build
+```
 
 to have it regenerate the vignettes and check for (new) problems.
 
@@ -70,8 +82,10 @@ to have it regenerate the vignettes and check for (new) problems.
 
 The easiest way to poke at this and see what it can do is:
 
-R> library(hpgltools)
-R> browseVignettes("hpgltools")
+```r
+library(hpgltools)
+browseVignettes("hpgltools")
+```
 
 As of last count, there were a couple examples using the data(fission)
 set, pasilla, and a bacterial data set.

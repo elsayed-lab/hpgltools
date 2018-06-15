@@ -13,7 +13,6 @@
 #' @param second_merge_try  If the first universe merge fails, try this.
 #' @param species  Genbank organism to use.
 #' @param pcutoff  Pvalue cutoff for deciding significant.
-#' @param direction  Under or over represented categories.
 #' @param conditional  Perform a conditional search?
 #' @param categorysize  Category size below which to not include groups.
 #' @param gff_type  Gff column to use for creating the universe.
@@ -28,8 +27,8 @@
 #' @export
 simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, universe_merge="id",
                            second_merge_try="locus_tag", species="fun", pcutoff=0.1,
-                           direction="over", conditional=FALSE,
-                           categorysize=NULL, gff_type="cds", excel=NULL, ...) {
+                           conditional=FALSE, categorysize=NULL,
+                           gff_type="cds", excel=NULL, ...) {
   ## The import(gff) is being used for this primarily because it uses integers for the rownames
   ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
   ## ought to be pretty much perfect.
@@ -127,29 +126,42 @@ perhaps change gff_type to make the merge work.")
   message("simple_gostats(): Creating the gene set collection.  This is slow.")
   gsc <- GSEABase::GeneSetCollection(gostats_all,
                                      setType=GSEABase::GOCollection())
-
+  ## 20180528: I am getting some odd errors when performing these tests:
+  ## 'argument "go_id" is missing, with no default.
+  ## This is doubly strange, as if I rerun the failing function with no change, it passes
+  ## without error/warning.  Thus I am thinking to wrap these in silent try() blocks to stop
+  ## these peculiar shenanigans.  hmm it appears to also be when I call summary().
+  ## This suggests to me that it might be a bigger problem than I realized.
+  ## The answer appears to be here:
+  ## https://support.bioconductor.org/p/108656/
   mf_over <- bp_over <- cc_over <- NULL
   mf_under <- bp_under <- cc_under <- NULL
   message("simple_gostats(): Performing MF GSEA.")
   mf_params <- Category::GSEAGOHyperGParams(
-                           name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
+                           name=paste0("GSEA of ", species), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="MF", pvalueCutoff=pcutoff,
                            conditional=conditional, testDirection="over")
   ## This is where it fell over
-  mf_over <- Category::hyperGTest(mf_params)
+  mf_over <- try(Category::hyperGTest(mf_params), silent=TRUE)
+  if (class(mf_over) == "try-error") {
+    mf_over <- Category::hyperGTest(mf_params)
+  }
   message("Found ", nrow(GOstats::summary(mf_over)), " over MF categories.")
   message("simple_gostats(): Performing BP GSEA.")
   bp_params <- Category::GSEAGOHyperGParams(
-                           name=paste("GSEA of ", species, sep=""),
-                           geneSetCollection=gsc, geneIds=degenes_ids, universeGeneIds=universe_ids,
+                           name=paste0("GSEA of ", species), geneSetCollection=gsc,
+                           geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="BP", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")
-  bp_over <- Category::hyperGTest(bp_params)
+  bp_over <- try(Category::hyperGTest(bp_params), silent=TRUE)
+  if (class(bp_over) == "try-error") {
+    bp_over <- Category::hyperGTest(bp_params)
+  }
   message("Found ", nrow(GOstats::summary(bp_over)), " over BP categories.")
   message("simple_gostats(): Performing CC GSEA.")
   cc_params <- Category::GSEAGOHyperGParams(
-                           name=paste("GSEA of ", species, sep=""), geneSetCollection=gsc,
+                           name=paste0("GSEA of ", species), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="CC", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")

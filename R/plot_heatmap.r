@@ -184,7 +184,18 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
 #'
 #' Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
 #'
-#' @param fundata   A data frame to plot.
+#' @param expt  Experiment to try plotting.
+#' @param type  What comparison method to use on the data (distance or correlation)?
+#' @param method  What distance/correlation method to perform?
+#' @param annot_columns  Set of columns to include as terminal columns next to the heatmap.
+#' @param annot_rows  Set of columns to include as terminal rows below the heatmap.
+#' @param cutoff  Cutoff used to define color changes in the annotated clustering.
+#' @param cluster_colors  Choose colors for the clustering?
+#' @param scale  Scale the heatmap colors?
+#' @param cluster_width  How much space to include between clustering?
+#' @param cluster_function  Choose an alternate clustering function than hclust()?
+#' @param heatmap_colors  Choose your own heatmap cluster palette?
+#' @return  List containing the returned heatmap along with some parameters used to create it.
 #' @export
 plot_heatplus <- function(expt, type="correlation", method="pearson", annot_columns="batch",
                           annot_rows="condition", cutoff=1.0, cluster_colors=NULL, scale="none",
@@ -254,8 +265,16 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
         col=heatmap_colors)
 
     plot(final_map)
-    ret <- grDevices::recordPlot()
-    return(ret)
+    rec_plot <- grDevices::recordPlot()
+    retlist <- list(
+      "annotations" = myannot,
+      "clusters" = myclust,
+      "labels" = mylabs,
+      "colors" = heatmap_colors,
+      "first_map" = first_map,
+      "map" = final_map,
+      "plot" = rec_plot)
+    return(retlist)
 }
 
 #' Make a heatmap.3 description of the similarity of the genes among samples.
@@ -299,148 +318,6 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, names=NULL, titl
               labCol=names, margins=c(12, 8), trace="none", linewidth=0.5, main=title, Rowv=Rowv)
     hpgl_heatmap_plot <- grDevices::recordPlot()
     return(hpgl_heatmap_plot)
-}
-
-#' Adapt the nifty msstats heatmap to an expressionset
-#'
-#' I have made fun of the code quality in msstats, but their heatmap function is really nice.
-#' I want a version of it for other analyses.  Oh, you know what nevermind, this
-#' is actually from SWATH2stats, which is quite nicely written.
-#' Well, let us be honest, this function has no future, but there are some neat ideas
-#' which I do not want to lose, I like the idea of dcasting using a formula in
-#' order to get the mean value by factor(s) and then performing a correlation on
-#' that.  I feel like this is a useful thing to be able to come back to, but I
-#' suspect that it will never find a real use-case scenario.
-plot_nifty_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
-                               first_type="correlation", first_method="pearson",
-                               second_type="correlation", second_method="spearman",
-                               aggregator=NULL, variables=c("condition", "batch"),
-                               expt_names=NULL, batch_row="batch", title=NULL, ...) {
-    arglist <- list(...)
-    margin_list <- c(12, 9)
-    if (!is.null(arglist[["margin_list"]])) {
-        margin_list <- arglist[["margin_list"]]
-    }
-    chosen_palette <- "Dark2"
-    if (!is.null(arglist[["palette"]])) {
-        chosen_palette <- arglist[["palette"]]
-    }
-    keysize <- 2
-    if (!is.null(arglist[["keysize"]])) {
-        keysize <- arglist[["keysize"]]
-    }
-
-    plot_env <- environment()
-    data_class <- class(expt_data)[1]
-    if (data_class == "expt") {
-        expt_design <- pData(expt_data)
-        expt_colors <- expt_data[["colors"]]
-        if (is.null(expt_names)) {
-            expt_names <- expt_data[["expt_names"]]
-        }
-        expt_data <- exprs(expt_data)
-    } else if (data_class == "ExpressionSet") {
-        expt_data <- exprs(expt_data)
-    } else if (data_class == "matrix" | data_class == "data.frame") {
-        ## some functions prefer matrix, so I am keeping this explicit for the moment
-        expt_data <- as.data.frame(expt_data)
-    } else {
-        stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-    }
-
-    if (is.null(expt_colors)) {
-        num_cols <- ncol(expt_data)
-        expt_colors <- sm(grDevices::colorRampPalette(
-                                         RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_cols))
-    }
-    if (is.null(expt_names)) {
-        expt_names <- colnames(expt_data)
-    }
-    expt_colors <- as.character(expt_colors)
-
-    first_cor_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
-    second_cor_colors <- grDevices::colorRampPalette(
-                                        c("yellow2", "goldenrod", "darkred"),
-                                        bias=0.5)(100)
-    second_cor_colors <- grDevices::colorRampPalette(
-                                        c("yellow", "beige", "#440000"),
-                                        bias=0.5)(100)
-    first_dis_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
-    second_dis_colors <- gplots::redgreen(75)
-
-    ## Do not forget this usage of melt, setting the column names with varnames
-    ## is helpful, and the name of the actual value of interest with value.name.
-    melted <- reshape2::melt(expt_data, value.name="count", varnames=c("gene", "sample"))
-    for (f in factors) {
-      fact <- expt_design[[f]]
-      index <- rownames(expt_design)
-      ## The match function is also something to remember.
-      melted[[f]] <- fact[match(melted[["sample"]], index)]
-    }
-    formula_string <- "gene ~ "
-    for (v in variables) {
-      formula_string <- paste0(formula_string, " ", v, " +")
-    }
-    formula_string <- gsub(pattern=" \\+$", replacement="", x=formula_string)
-    chosen_formula <- as.formula(formula_string)
-    ## Do not forget this usage of dcast, it is also useful.
-    casted <- reshape2::dcast(data=melted, formula=chosen_formula,
-                              value.var="count", fun.aggregate=mean)
-    rownames(casted) <- casted[["gene"]]
-    casted <- casted[, -1]
-
-    ##plot_correlation_between_samples <- function(data, column.values = "Intensity", Comparison = transition_group_id ~ Condition + BioReplicate, fun.aggregate = NULL, label = TRUE, ...){
-    first_comparison <- NULL
-    second_comparison <- NULL
-    first_colors <- NULL
-    second_colors <- NULL
-    if (first_type == "correlation") {
-        first_comparison <- hpgl_cor(casted, method=first_method)
-        first_colors <- first_cor_colors
-    } else if (first_type == "distance") {
-        first_comparison <- as.matrix(dist(t(casted)), method=first_method)
-        first_colors <- first_dis_colors
-    } else {
-        warning("Could not identify the first comparison method, arbitrarily choosing a pearson correlation.")
-        first_method <- "pearson"
-        first_comparison <- hpgl_cor(casted, method=first_method)
-        first_colors <- first_cor_colors
-    }
-    if (second_type == "correlation") {
-        second_comparison <- hpgl_cor(casted, method=second_method)
-        second_colors <- second_cor_colors
-    } else if (second_type == "distance") {
-        second_comparison <- as.matrix(dist(t(casted)), method=second_method)
-        second_colors <- second_dis_colors
-    } else {
-        warning("Could not identify the first comparison method, arbitrarily choosing a spearman correlation.")
-        second_method <- "spearman"
-        second_comparison <- hpgl_cor(casted, method=second_method)
-        second_colors <- second_cor_colors
-    }
-
-    lower <- lower.tri(first_comparison)
-    first_comparison[lower] <- NA
-    upper <- upper.tri(second_comparison, diag=TRUE)
-    second_comparison[upper] <- NA
-
-    first_melted <- reshape2::melt(first_comparison)
-    first_melted[["method"]] <- first_method
-    second_melted <- reshape2::melt(second_comparison)
-    second_melted[["method"]] <- second_method
-
-    plotted_data <- rbind(first_melted, second_melted)
-    plotted_data <- plotted_data[!is.na(plotted_data[["value"]]), ]
-
-    fun_heatmap <- ggplot2::ggplot(plotted_data,
-                                   ggplot2::aes_string(x="Var1", y="Var2", fill="value")) +
-        ggplot2::geom_tile() +
-        ggplot2::scale_fill_gradient(low="white",
-                                     high="red",
-                                     name="first comparison") +
-        ggplot2::geom_text(ggplot2::aes_string(fill=plotted_data[["value"]],
-                                              label=round(plotted_data[["value"]], digits=2)))
-    return(fun_heatmap)
 }
 
 #' a minor change to heatmap.2 makes heatmap.3

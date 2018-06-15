@@ -12,6 +12,8 @@ features_greater_than(data, cutoff = 1, hard = TRUE, inverse = FALSE)
 \item{cutoff}{Minimum number of counts.}
 
 \item{hard}{Greater-than is hard, greater-than-equals is not.}
+
+\item{inverse}{when inverted, this provides features less than the cutoff.}
 }
 \value{
 A list of two elements, the first comprised of the number of genes

@@ -17,7 +17,7 @@ test_that("pca_information() provides a rsquared table?", {
 
 ## 02 pca_highscores()
 testing <- pca_highscores(pombe_expt)
-expected <- c(4.0946442, 2.3214251, 1.0686429, 1.1414550, 2.7090227, 0.5437997)
+expected <- c(-4.0946442, -2.3214251, -1.0686429, -1.1414550, -2.7090227, -0.5437997)
 actual <- head(as.numeric(testing[["scores"]][, "Comp.1"]))
 test_that("pca_highscores() provides some scores by PC?", {
   expect_equal(expected, actual)

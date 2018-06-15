@@ -12,6 +12,8 @@ orgdb_match_keytypes(first_name, second_name, starting = 1, exclude = NULL)
 \item{second_name}{Name of the second package to search}
 
 \item{starting}{What number join to start from}
+
+\item{exclude}{Name(s) to exclude when attempting to match columns across databases.}
 }
 \value{
 A list named join# where the number is the nth join discovered and the elements

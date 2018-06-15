@@ -3,6 +3,15 @@
 #' This should take either a dataframe or filename for the psi data from suppa,
 #' along with the same for the average log tpm data (acquired from suppa
 #' diffSplice with --save_tpm_events)
+#'
+#' @param dpsi  Table provided by suppa containing all the metrics.
+#' @param tpm  Table provided by suppa containing all the tpm values.
+#' @param events  List of event types to include.
+#' @param psi  Limit the set of included events by psi value?
+#' @param sig_threshold  Use this significance threshold.
+#' @param label_type  Choose a type of event to label.
+#' @param alpha  How see-through should the points be in the plot?
+#' @return  List containing the plot and some of the requisite data.
 #' @export
 plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
                        label_type=NULL, alpha=0.7) {
@@ -182,7 +191,23 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
   return(retlist)
 }
 
-write_suppa_table <- function(table, annotations=NULL, by_table="gene_name", by_annot="ensembl_gene_id",
+#' Take a set of results from suppa and attempt to write it to a pretty xlsx file.
+#'
+#' Suppa provides a tremendous amount of output, this attempts to standardize
+#' those results and print them to an excel sheet.
+#'
+#' @param table  Result table from suppa.
+#' @param annotations  Set of annotation data to include with the suppa result.
+#' @param by_table  Use this column to merge the annotations and data tables from
+#'   the perspective of the data table.
+#' @param by_annot  Use this column to merge the annotations and data tables
+#'   from the perspective of the annotations.
+#' @param columns  Choose a subset of columns to include, or leave the defaults.
+#' @param excel  Provide an excel file to write.
+#' @return  Data frame of the merged data.
+#' @export
+write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
+                              by_annot="ensembl_gene_id",
                               columns="default", excel="excel/suppa_table.xlsx") {
   default_columns <- c("ensembl_gene_id", "version", "hgnc_symbol", "description",
                        "gene_biotype", "cds_length", "chromosome_name", "strand",
@@ -209,8 +234,26 @@ write_suppa_table <- function(table, annotations=NULL, by_table="gene_name", by_
   xls_data <- as.data.frame(full_table)
   ## Now coerce numeric columns
   xlsx_result <- write_xls(data=xls_data, excel=excel)
+  return(xls_data)
 }
 
+#' Given some psi and tpm data from suppa, make a pretty plot!
+#'
+#' This should take either a dataframe or filename for the psi data from suppa,
+#' along with the same for the average log tpm data (acquired from suppa
+#' diffSplice with --save_tpm_events)
+#'
+#' @param se  Table of skipped exon data from rmats.
+#' @param a5ss  Table of alternate 5p exons.
+#' @param a3ss  Table of alternate 3p exons.
+#' @param mxe  Table of alternate exons.
+#' @param ri  Table of retained introns.
+#' @param sig_threshold  Use this significance threshold.
+#' @param dpsi_threshold  Use a delta threshold.
+#' @param label_type  Choose a type of event to label.
+#' @param alpha  How see-through should the points be in the plot?
+#' @return  List containing the plot and some of the requisite data.
+#' @export
 plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
                        sig_threshold=0.05, dpsi_threshold=0.7,
                        label_type=NULL, alpha=0.7) {
@@ -300,6 +343,9 @@ plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
   }
 
   all_data <- data.table::as.data.table(all_data)
+  ## Adding stub variables to make dplyr/tidyr NSE operations not throw warnings
+  ## when running R CMD check
+  l1a <- l1b <- l2a <- l2b <- id <- l1mean <- l2mean <- NULL
   plotting_data <- all_data %>%
     tidyr::separate("level1", c("l1a", "l1b"), "\\,") %>%
     tidyr::separate("level2", c("l2a", "l2b"), "\\,")
@@ -415,3 +461,5 @@ plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
     "data" = plotting_data)
   return(retlist)
 }
+
+## EOF

@@ -257,14 +257,13 @@ ghetto_contrast_matrix <- function(numerators, denominators) {
   for (n in 1:length(numerators)) {
     num <- numerators[[n]]
     den <- denominators[[n]]
-    cont <- paste0(num, "-", den)
+    cont <- paste0(num, "_vs_", den)
     contrasts[n, num] <- 1
     contrasts[n, den] <- -1
     rownames(contrasts)[n] <- cont
   }
   return(contrasts)
 }
-
 
 #' Implement the arescan function in R
 #'

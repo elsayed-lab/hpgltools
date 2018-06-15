@@ -9,6 +9,8 @@ plot_mzxml_boxplot(mzxml_data, table = "precursors",
   scale = NULL, ...)
 }
 \arguments{
+\item{mzxml_data}{Provide a list of mzxml data, one element for each sample.}
+
 \item{table}{One of precursors or scans}
 
 \item{column}{One of the columns from the table; if 'scans' is chosen, then
@@ -25,7 +27,7 @@ likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 \item{...}{Further arguments, presumably for colors or some such.}
 }
 \value{
-Boxplot goodness!
+Boxplot describing the requested column of data in the set of mzXML files.
 }
 \description{
 There are a few data within the mzXML raw data files which are likely

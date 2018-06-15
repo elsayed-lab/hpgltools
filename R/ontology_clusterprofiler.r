@@ -319,32 +319,16 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   ##testing <- clusterProfiler::enrichPathway(sig_gene_list)
 
   message("Plotting results.")
-  map_sig_mf <- map_sig_bp <- map_sig_cc <- NULL
-  tt <- try(DOSE::enrichMap(ego_sig_mf), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    map_sig_mf <- recordPlot()
-  }
-  tt <- try(DOSE::enrichMap(ego_sig_bp), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    map_sig_bp <- recordPlot()
-  }
-  tt <- try(DOSE::enrichMap(ego_sig_cc), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    map_sig_cc <- recordPlot()
-  }
-  net_sig_mf <- net_sig_bp <- net_sig_cc <- NULL
-  tt <- try(DOSE::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    net_sig_mf <- recordPlot()
-  }
-  tt <- try(DOSE::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    net_sig_bp <- recordPlot()
-  }
-  tt <- try(DOSE::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist), silent=TRUE)
-  if (class(tt)[[1]] != "try-error") {
-    net_sig_cc <- recordPlot()
-  }
+  map_sig_mf <- try(clusterProfiler::emapplot(ego_sig_mf), silent=TRUE)
+  map_sig_bp <- try(clusterProfiler::emapplot(ego_sig_bp), silent=TRUE)
+  map_sig_cc <- try(clusterProfiler::emapplot(ego_sig_cc), silent=TRUE)
+  net_sig_mf <- try(
+    clusterProfiler::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+  net_sig_bp <- try(
+    clusterProfiler::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+  net_sig_cc <- try(
+    clusterProfiler::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+
   tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
   tree_mf <- sm(try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE))
   if (class(tree_mf)[[1]] != "try-error") {
@@ -398,27 +382,27 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   if (class(ego_sig_cc)[[1]] == "try-error") {
     ego_sig_cc <- NULL
   }
-  dot_all_mf <- sm(try(DOSE::dotplot(ego_all_mf), silent=TRUE))
+  dot_all_mf <- sm(try(clusterProfiler::dotplot(ego_all_mf), silent=TRUE))
   if (class(dot_all_mf)[[1]] == "try-error") {
     dot_all_mf <- NULL
   }
-  dot_all_bp <- try(DOSE::dotplot(ego_all_bp), silent=TRUE)
+  dot_all_bp <- try(clusterProfiler::dotplot(ego_all_bp), silent=TRUE)
   if (class(dot_all_bp)[[1]] == "try-error") {
     dot_all_bp <- NULL
   }
-  dot_all_cc <- try(DOSE::dotplot(ego_all_cc), silent=TRUE)
+  dot_all_cc <- try(clusterProfiler::dotplot(ego_all_cc), silent=TRUE)
   if (class(dot_all_cc)[[1]] == "try-error") {
     dot_all_cc <- NULL
   }
-  dot_sig_mf <- try(DOSE::dotplot(ego_sig_mf), silent=TRUE)
+  dot_sig_mf <- try(clusterProfiler::dotplot(ego_sig_mf), silent=TRUE)
   if (class(dot_sig_mf)[[1]] == "try-error") {
     dot_sig_mf <- NULL
   }
-  dot_sig_bp <- try(DOSE::dotplot(ego_sig_bp), silent=TRUE)
+  dot_sig_bp <- try(clusterProfiler::dotplot(ego_sig_bp), silent=TRUE)
   if (class(dot_sig_bp)[[1]] == "try-error") {
     dot_sig_bp <- NULL
   }
-  dot_sig_cc <- try(DOSE::dotplot(ego_sig_cc), silent=TRUE)
+  dot_sig_cc <- try(clusterProfiler::dotplot(ego_sig_cc), silent=TRUE)
   if (class(dot_sig_cc)[[1]] == "try-error") {
     dot_sig_cc <- NULL
   }

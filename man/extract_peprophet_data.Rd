@@ -2,12 +2,23 @@
 % Please edit documentation in R/proteomics.r
 \name{extract_peprophet_data}
 \alias{extract_peprophet_data}
-\title{Get some data from a peptideprophet run.}
+\title{Get some data from a peptideprophet run.
+I am not sure what if any parameters this should have, but it seeks to
+extract the useful data from a peptide prophet run.  In the situation in
+which I wish to use it, the input command was:
+> xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
+Eg. It is a peptideprophet result provided by TPP.
+I want to read the resulting xml table and turn it into a data.table so that
+I can plot some metrics from it.}
 \usage{
-extract_peprophet_data(pepxml, ...)
+extract_peprophet_data(pepxml, decoy_string = "DECOY_", ...)
 }
 \arguments{
-\item{pepxml}{The file resulting from the xinteract invocation}
+\item{pepxml}{The file resulting from the xinteract invocation.}
+
+\item{decoy_string}{What prefix do decoys have in the data.}
+
+\item{...}{Catch extra arguments passed here, currently unused.}
 }
 \value{
 data table of all the information I saw fit to extract
@@ -68,6 +79,7 @@ The columns are:
 * static_mods: A comma separated list of the static modifications observed.
 }
 \description{
+Get some data from a peptideprophet run.
 I am not sure what if any parameters this should have, but it seeks to
 extract the useful data from a peptide prophet run.  In the situation in
 which I wish to use it, the input command was:

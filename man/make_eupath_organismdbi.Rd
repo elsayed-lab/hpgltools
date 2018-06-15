@@ -21,6 +21,12 @@ make_eupath_organismdbi(species = "Leishmania major strain Friedlin",
 
 \item{kegg_abbreviation}{For when we cannot automagically find the kegg species id.}
 
+\item{exclude_join}{I had a harebrained idea to automatically set up the
+joins between columns of GO.db/reactome.db/orgdb/txdb objects.  This
+variable is intended to exclude columns with common IDs that might
+multi-match spuriously -- I think in the end I killed the idea though,
+perhaps this should be removed or resurrected.}
+
 \item{...}{Extra arguments when downloading metadata.}
 }
 \value{

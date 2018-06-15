@@ -7,13 +7,15 @@
 pca_highscores(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE)
 }
 \arguments{
-\item{n}{the number of genes to extract.}
+\item{expt}{Experiment to poke.}
 
-\item{df}{a dataframe of (pseudo)counts}
+\item{n}{Number of genes to extract.}
 
-\item{conditions}{a factor or character of conditions in the experiment.}
+\item{cor}{Perform correlations?}
 
-\item{batches}{a factor or character of batches in the experiment.}
+\item{vs}{Do a mean or median when getting ready to perform the pca?}
+
+\item{logged}{Check for the log state of the data and adjust as deemed necessary?}
 }
 \value{
 a list including the princomp biplot, histogram, and tables
