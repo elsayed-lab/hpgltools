@@ -1231,8 +1231,10 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     message("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
-    if (!all(file.exists(files))) {
-      warning("Not all the files exist: ", files)
+    missing_idx <-!file.exists(files)
+    if (sum(missing_idx) > 0) {
+      missing_files <- files[missing_idx]
+      warning("Not all the files exist: ", toString(missing_files))
     }
     import <- NULL
     import_scaled <- NULL

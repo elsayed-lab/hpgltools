@@ -5,7 +5,7 @@
 \title{Plot some data from the result of extract_peprophet_data()}
 \usage{
 plot_pyprophet_data(pyprophet_data, xaxis = "mass", xscale = NULL,
-  yaxis = "leftwidth", yscale = NULL, alpha = 0.4,
+  yaxis = "leftwidth", yscale = NULL, alpha = 0.4, legend = TRUE,
   size_column = "mscore", ...)
 }
 \arguments{
@@ -21,6 +21,8 @@ taken from  extract_peprophet_data()}
 \item{yscale}{Change the scale of the y-axis?}
 
 \item{alpha}{How see-through to make the dots?}
+
+\item{legend}{Include a legend of samples?}
 
 \item{size_column}{Use a column for scaling the sizes of dots in the plot?}
 

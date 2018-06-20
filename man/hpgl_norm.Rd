@@ -16,7 +16,8 @@ edgeR's DGEList expression of a count table.  This seems to
  me to be the easiest to deal with.
 }
 \description{
-There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
+There are many possible options to this function.  Refer to normalize_expt()
+for a more complete list.
 }
 \examples{
 \dontrun{

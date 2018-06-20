@@ -139,23 +139,22 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
 #' @param count_column Name of the column with the count of species represented.
 #' @param print_speciesnames Dump the species names for diagnostics?
 #' @return A big table of orthoMCL families, the columns are:
-#'   1.  GID: The gene ID
-#'   2.  ORTHOLOG_ID: The gene ID of the associated ortholog.
-#'   3.  ORTHOLOG_SPECIES: The species of the associated ortholog.
-#'   4.  ORTHOLOG_URL: The OrthoMCL group ID's URL.
-#'   5.  ORTHOLOG_COUNT: The number of all genes from all species represented in
+#'  \enumerate{
+#'   \item  GID: The gene ID
+#'   \item  ORTHOLOG_ID: The gene ID of the associated ortholog.
+#'   \item  ORTHOLOG_SPECIES: The species of the associated ortholog.
+#'   \item  ORTHOLOG_URL: The OrthoMCL group ID's URL.
+#'   \item  ORTHOLOG_COUNT: The number of all genes from all species represented in
 #'   this group.
-#'   6.  ORTHOLOG_GROUP: The family ID
-#'   7.  QUERIES_IN_GROUP: How many of the query species are represented in this
+#'   \item  ORTHOLOG_GROUP: The family ID
+#'   \item  QUERIES_IN_GROUP: How many of the query species are represented in this
 #'   group?
-#'   8.  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
+#'   \item  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
+#'  }
 #' @export
-extract_eupath_orthologs <- function(db, master="GID",
-                                     query_species=NULL,
-                                     id_column="ORTHOLOG_ID",
-                                     org_column="ORGANISM",
-                                     url_column="ORTHOLOG_GROUP",
-                                     count_column="ORTHOLOG_COUNT",
+extract_eupath_orthologs <- function(db, master="GID", query_species=NULL,
+                                     id_column="ORTHOLOG_ID", org_column="ORGANISM",
+                                     url_column="ORTHOLOG_GROUP", count_column="ORTHOLOG_COUNT",
                                      print_speciesnames=FALSE) {
 
   load_pkg <- function(name, ...) {
@@ -252,12 +251,12 @@ extract_eupath_orthologs <- function(db, master="GID",
 #' Clean up the gene location field from eupathdb derived gene location data.
 #'
 #' @param annot_df Data frame resulting from load_orgdb_annotations()
-#' @param column Name of the column to extract the start/end/length/etc from.
+#' @param location_column Name of the column to extract the start/end/length/etc from.
 #' @return Somewhat nicer data frame.
 #' @export
-extract_gene_locations <- function(annot_df, column="annot_gene_location_text") {
+extract_gene_locations <- function(annot_df, location_column="annot_gene_location_text") {
   newdf <- annot_df %>%
-    tidyr::separate(column,
+    tidyr::separate(location_column,
                     c("chromosome", "location"), ":")
   newdf <- newdf %>%
     tidyr::separate("location", c("start", "end"), "\\.\\.")
@@ -535,19 +534,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 
   tt <- sm(requireNamespace(orgdb_name))
   tt <- sm(requireNamespace(txdb_name))
-  ##libstring <- paste0("library(", orgdb_name, ")")
-  ##library_ret <- try(eval(parse(text=libstring)))
-  ##if (class(library_ret) == "try-error") {
-  ##  message("The orgdb failed to load.")
-  ##  return(NULL)
-  ##}
   test <- sm(do.call("library", as.list(orgdb_name)))
-  ##libstring <- paste0("library(", txdb_name, ")")
-  ##library_ret <- try(eval(parse(text=libstring)))
-  ##if (class(library_ret) == "try-error") {
-  ##  message("The orgdb failed to load.")
-  ##  return(NULL)
-  ##}
   test <- sm(do.call("library", as.list(txdb_name)))
   organism <- taxa[["taxon"]]
   required <- sm(requireNamespace("OrganismDbi"))
@@ -657,6 +644,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 #' @param metadata  Use an existing metadata table to get the entry?
 #' @param ...  Extra parameters when searching for metadata
 #' @return  Currently only the name of the installed package.  This should probably change.
+#' @export
 make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb",
                               kegg_abbreviation=NULL, reinstall=FALSE, metadata=NULL, ...) {
   if (is.null(entry) & is.null(species)) {

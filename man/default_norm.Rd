@@ -15,10 +15,10 @@ default_norm(expt, ...)
 The normalized expt
 }
 \description{
-This just calls normalize expt with the most common arguments except log2 transformation, but
-that may be appended with 'transform=log2', so I don't feel bad.  Indeed, it will allow you to
-overwrite any arguments if you wish.  In our work, the most common normalization is:
-quantile(cpm(low-filter(data))).
+This just calls normalize expt with the most common arguments except log2
+transformation, but that may be appended with 'transform=log2', so I don't
+feel bad.  Indeed, it will allow you to overwrite any arguments if you wish.
+In our work, the most common normalization is: quantile(cpm(low-filter(data))).
 }
 \seealso{
 \code{\link{normalize_expt}}

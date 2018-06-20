@@ -1728,8 +1728,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 #' @param extra_annot  Provide an extra set of annotation columns?
 #' @param excel  An optional excel workbook to which to write.
 #' @export
-intersect_significant <- function(combined, lfc=1.0, p=0.05,
-                                  z=NULL, p_type="adj", extra_annot=NULL,
+intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
+                                  include_l=TRUE, include_d=TRUE, include_e=TRUE,
+                                  include_ld=TRUE, include_le=TRUE, include_de=TRUE,
+                                  include_led=TRUE, z=NULL, p_type="adj", extra_annot=NULL,
                                   excel="excel/intersect_significant.xlsx") {
   annot_df <- NULL
   if (class(combined[["input"]]) == "expt") {
@@ -1774,74 +1776,44 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05,
       done <- done + 1
       pct_done <- done / total
       setTxtProgressBar(bar, pct_done)
-      tabname <- paste0("up_", tab)
       row_num <- 1
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by limma."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["l"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by DESeq2."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["d"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by EdgeR."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["e"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma and DESeq2."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma and EdgeR."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["le"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by DESeq2 and EdgeR."))
-      row_num <- row_num + nrow(up_result_list[[tab]][["led"]]) + 2
-      xl_result <- write_xls(
-        data=up_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
 
-      tabname <- paste0("down_", tab)
+      includes <- list(
+        "led" = include_led,
+        "ld" = include_ld,
+        "le" = include_le,
+        "de" = include_de,
+        "l" = include_l,
+        "d" = include_d,
+        "e" = include_e)
+      types <- c("led", "ld", "le", "de", "l", "d", "e")
+      for (t in types) {
+        if (isTRUE(includes[[t]])) {
+          if (nrow(up_result_list[[tab]][[t]]) > 0) {
+            xl_result <- write_xls(
+              data=up_result_list[[tab]][[t]], wb=wb, sheet=tab, start_row=row_num,
+              title=paste0("Genes deemed significant via logFC: ", lfc,
+                           ", p-value: ", p, " by ", t, "."))
+            row_num <- row_num + nrow(up_result_list[[tab]][[t]]) + padding_rows + 2
+          }
+        }
+      }
+
+      tab <- gsub(pattern="^up_", replacement="down_", x=tab)
       row_num <- 1
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["l"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by limma."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["l"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["d"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by DESeq2."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["d"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["e"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc, ", p-value: ", p, " by EdgeR."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["e"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["ld"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma and DESeq2."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["le"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma and EdgeR."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["le"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["de"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by DESeq2 and EdgeR."))
-      row_num <- row_num + nrow(down_result_list[[tab]][["led"]]) + 2
-      xl_result <- write_xls(
-        data=down_result_list[[tab]][["led"]], wb=wb, sheet=tabname, start_row=row_num,
-        title=paste0("Genes deemed significant via logFC: ", lfc,
-                     ", p-value: ", p, " by limma, DESeq2, and EdgeR."))
-    }
+
+      for (t in types) {
+        if (isTRUE(includes[[t]])) {
+          if (nrow(down_result_list[[tab]][[t]]) > 0) {
+            xl_result <- write_xls(
+              data=down_result_list[[tab]][[t]], wb=wb, sheet=tab, start_row=row_num,
+              title=paste0("Genes deemed significant via logFC: ", lfc,
+                           ", p-value: ", p, " by ", t, "."))
+            row_num <- row_num + nrow(down_result_list[[tab]][[t]]) + padding_rows + 2
+          }
+        }
+      }
+    } ## End iterating over every table.
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     close(bar)
   } ## End if isTRUE(excel)

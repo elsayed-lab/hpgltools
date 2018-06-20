@@ -143,6 +143,14 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
   if (class(transcripts) == "try-error") {
     transcripts <- NULL
   }
+  fivep_utr <- try(GenomicFeatures::fiveUTRsByTranscript(orgdb, use.names=TRUE), silent=TRUE)
+  if (class(fivep_utr) == "try-error") {
+    fivep_utr <- NULL
+  }
+  threep_utr <- try(GenomicFeatures::threeUTRsByTranscript(orgdb, use.names=TRUE), silent=TRUE)
+  if (class(threep_utr) == "try-error") {
+    threep_utr <- NULL
+  }
   colnames(gene_info) <- tolower(colnames(gene_info))
   if (isTRUE(sum_exon_widths)) {
     message("Summing exon lengths, this takes a while.")
@@ -158,7 +166,10 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
 
   retlist <- list(
     "genes" = gene_info,
-    "transcripts" = transcripts)
+    "gene_exons" = gene_exons,
+    "transcripts" = transcripts,
+    "fivep_utr" = fivep_utr,
+    "threep_utr" = threep_utr)
   return(retlist)
 }
 

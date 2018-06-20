@@ -99,43 +99,43 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
 #'  annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
 #' }
 #' @export
-load_microbesonline_annotations <- function(ids="160490", name=NULL) {
+load_microbesonline_annotations <- function(id="160490", name=NULL) {
   retlist <- list()
-  id_list <- list()
-  if (is.null(ids) & is.null(name)) {
-    stop("Either ids or species must be defined.")
-  } else if (is.null(ids)) {
-    for (spec in name) {
-      id_df <- get_microbesonline_ids(spec)
-      id_shortlist <- as.list(id_df[[1]])
-      names(id_shortlist) <- id_df[[2]]
-      id_list <- append(x=id_list, values=id_shortlist)
-    }
-  } else {
-    for (id in ids) {
-      idl <- as.list(id)
-      current_name <- get_microbesonline_name(id)
-      names(idl) <- current_name[1, 1]
-      id_list <- append(x=id_list, values=idl)
-    }
-  }
+  ##id_list <- list()
+  ##if (is.null(ids) & is.null(name)) {
+  ##  stop("Either ids or species must be defined.")
+  ##} else if (is.null(ids)) {
+  ##  for (spec in name) {
+  ##    id_df <- get_microbesonline_ids(spec)
+  ##    id_shortlist <- as.list(id_df[[1]])
+  ##    names(id_shortlist) <- id_df[[2]]
+  ##    id_list <- append(x=id_list, values=id_shortlist)
+  ##  }
+  ##} else {
+  ##  for (id in ids) {
+  ##    idl <- as.list(id)
+  ##    current_name <- get_microbesonline_name(id)
+  ##    names(idl) <- current_name[1, 1]
+  ##    id_list <- append(x=id_list, values=idl)
+  ##  }
+  ##}
 
   retlist <- list()
-  for (t in 1:length(id_list)) {
-    name <- names(id_list)[[t]]
-    message("Querying microbesonline for: ", name, ".")
-    id <- id_list[[t]]
-    url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
-    string <- RCurl::getURL(url)
-    con <- textConnection(string)
-    data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
-    if (grepl(pattern="Time-out", x=data[3, ][[1]])) {
-      message("The request timed out.  Try again later?")
-      retlist[[name]] <- NULL
-    } else {
-      retlist[[name]] <- data
-    }
+  ##for (t in 1:length(id_list)) {
+  ##  name <- names(id_list)[[t]]
+  ##  message("Querying microbesonline for: ", name, ".")
+  ##  id <- id_list[[t]]
+  url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
+  string <- RCurl::getURL(url)
+  con <- textConnection(string)
+  data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
+  if (grepl(pattern="Time-out", x=data[3, ][[1]])) {
+    message("The request timed out.  Try again later?")
+    retlist[[name]] <- NULL
+  } else {
+    retlist[[name]] <- data
   }
+  ##}
   return(retlist)
 }
 
