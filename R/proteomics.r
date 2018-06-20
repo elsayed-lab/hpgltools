@@ -920,8 +920,9 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #' @param ...  Further arguments, presumably for colors or some such.
 #' @return  A boxplot describing the desired column from the data.
 #' @export
-plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt", keep_real=TRUE,
-                                   keep_decoys=TRUE, names=NULL, title=NULL, scale=NULL, ...) {
+plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_real=TRUE,
+                                        keep_decoys=TRUE, names=NULL,
+                                        title=NULL, scale=NULL, ...) {
   arglist <- list(...)
   metadata <- pyprophet_data[["metadata"]]
   colors <- pyprophet_data[["colors"]]
@@ -994,7 +995,24 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt", keep_real=
   } else if (isTRUE(scale)) {
     boxplot <- boxplot + ggplot2::scale_y_log10()
   }
-  return(boxplot)
+
+  density <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x=column, colour="sample")) +
+    ggplot2::geom_density(ggplot2::aes_string(x=column, y="..count..", fill="sample"),
+                          position="identity", na.rm=TRUE) +
+    ggplot2::scale_colour_manual(values=as.character(colors)) +
+    ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1)) +
+    ggplot2::ylab("Number of genes.") +
+    ggplot2::xlab("Number of hits/gene.") +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   legend.key.size=ggplot2::unit(0.3, "cm"))
+
+  density <- directlabels::direct.label(density)
+
+  retlist <- list(
+    "boxplot" = boxplot,
+    "density" = density)
+  return(retlist)
 }
 
 #' Plot some data from the result of extract_peprophet_data()
@@ -1009,13 +1027,14 @@ plot_pyprophet_boxplot <- function(pyprophet_data, column="delta_rt", keep_real=
 #' @param yaxis  guess!
 #' @param yscale  Change the scale of the y-axis?
 #' @param alpha  How see-through to make the dots?
+#' @param legend  Include a legend of samples?
 #' @param size_column  Use a column for scaling the sizes of dots in the plot?
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
 plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
                                 yaxis="leftwidth", yscale=NULL, alpha=0.4,
-                                size_column="mscore", ...) {
+                                legend=TRUE, size_column="mscore", ...) {
   arglist <- list(...)
 
   metadata <- pyprophet_data[["metadata"]]
@@ -1079,10 +1098,13 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
   if (!is.null(yscale)) {
     x_vs_y <- x_vs_y + ggplot2::scale_y_continuous(trans=scales::log2_trans())
   }
-
   if (isTRUE(lowess)) {
     x_vs_y <- x_vs_y +
       ggplot2::geom_smooth(method="loess", size=1.0)
+  }
+  if (!isTRUE(legend)) {
+    x_vs_y <- x_vs_y +
+      ggplot2::theme(legend.position="none")
   }
   retlist <- list(
     "data" = plot_df,

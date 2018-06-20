@@ -1954,8 +1954,8 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
                                        semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                        semantic_column="1.tooltip") {
   if (class(input) == "expt") {
-    result <- semantic_expt_filter(input, max_copies=max_copies, invert=invert,
-                                   semantic=semantic, semantic_column=semantic_column)
+    result <- semantic_expt_filter(input, invert=invert, semantic=semantic,
+                                   semantic_column=semantic_column)
     return(result)
   }
 

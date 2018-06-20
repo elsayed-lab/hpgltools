@@ -30,16 +30,18 @@ text.  If left null, then it will pull all species.}
 }
 \value{
 A big table of orthoMCL families, the columns are:
-  1.  GID: The gene ID
-  2.  ORTHOLOG_ID: The gene ID of the associated ortholog.
-  3.  ORTHOLOG_SPECIES: The species of the associated ortholog.
-  4.  ORTHOLOG_URL: The OrthoMCL group ID's URL.
-  5.  ORTHOLOG_COUNT: The number of all genes from all species represented in
+ \enumerate{
+  \item  GID: The gene ID
+  \item  ORTHOLOG_ID: The gene ID of the associated ortholog.
+  \item  ORTHOLOG_SPECIES: The species of the associated ortholog.
+  \item  ORTHOLOG_URL: The OrthoMCL group ID's URL.
+  \item  ORTHOLOG_COUNT: The number of all genes from all species represented in
   this group.
-  6.  ORTHOLOG_GROUP: The family ID
-  7.  QUERIES_IN_GROUP: How many of the query species are represented in this
+  \item  ORTHOLOG_GROUP: The family ID
+  \item  QUERIES_IN_GROUP: How many of the query species are represented in this
   group?
-  8.  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
+  \item  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
+ }
 }
 \description{
 The eupathdb provides such a tremendous wealth of information.  For me

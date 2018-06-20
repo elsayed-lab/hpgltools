@@ -122,6 +122,8 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
     stop("Unable to load gff file.")
   }
 
+  ## Sometimes we get some pretty weird data structures inside the gff data, the
+  ## following two blocks should theoretically simplify the resulting output.
   for (col in colnames(ret)) {
     ret[[col]] <- unAsIs(ret[[col]])
   }
@@ -168,7 +170,7 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
     key <- c("ID", "locus_tag")
   }
   if (is.null(gff)) {
-    entry_sequences <- rawseq
+    entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
     ## entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
     entries <- rtracklayer::import.gff(gff)

@@ -22,7 +22,12 @@ post_eupath_annotations(species = "Leishmania major", entry = NULL,
 A big honking table.
 }
 \description{
-This function fills in the parameters to post_eupath_raw() so that one can download
-all the available data for a given parasite into one massive table.  It should also
-provide some constraints to the data rather than leaving it all as characters.
+This function fills in the parameters to post_eupath_raw() so that one can
+download all the available data for a given parasite into one massive table.
+It should also provide some constraints to the data rather than leaving it
+all as characters.  Caveat:  I manually filled in the list 'field_list' to
+include the variable names and their text associations.  This is likely to
+change in future releases of the tritrypdb.  It is probably possible to
+automagically fill it in.  In addition, I am using GenesByMolecularWeight to
+get the data, which is a bit weird.
 }

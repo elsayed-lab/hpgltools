@@ -4,8 +4,10 @@
 \alias{intersect_significant}
 \title{Find the sets of intersecting significant genes}
 \usage{
-intersect_significant(combined, lfc = 1, p = 0.05, z = NULL,
-  p_type = "adj", extra_annot = NULL,
+intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
+  include_l = TRUE, include_d = TRUE, include_e = TRUE,
+  include_ld = TRUE, include_le = TRUE, include_de = TRUE,
+  include_led = TRUE, z = NULL, p_type = "adj", extra_annot = NULL,
   excel = "excel/intersect_significant.xlsx")
 }
 \arguments{

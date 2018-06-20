@@ -147,8 +147,10 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
              RDataClass="GRanges",
              DispatchClass="GRanges",
              ResourceName=sprintf("GRanges.%s.%s%s.rda", gsub("[ /.]+", "_", .data[["Species"]]),
-                                  tolower(.data[["DataProvider"]]), .data[["SourceVersion"]], "rda")) %>%
-    dplyr::mutate(DataPath=file.path("EuPathDB", "GRanges", .data[["BiocVersion"]], .data[["ResourceName"]]))
+                                  tolower(.data[["DataProvider"]]),
+                                  .data[["SourceVersion"]], "rda")) %>%
+    dplyr::mutate(DataPath=file.path("EuPathDB", "GRanges",
+                                     .data[["BiocVersion"]], .data[["ResourceName"]]))
 
   metadata <- shared_metadata %>%
     dplyr::mutate(
@@ -159,8 +161,9 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                    .data[["Species"]]),
              "RDataClass"="OrgDb",
              "DispatchClass"="SQLiteFile",
-             "ResourceName"=sprintf("org.%s.%s.db.sqlite", gsub("[ /.]+", "_", .data[["Species"]]),
-                                    tolower(substring(.data[["DataProvider"]], 1, nchar(.data[["DataProvider"]]) - 2)))
+             "ResourceName"=sprintf(
+               "org.%s.%s.db.sqlite", gsub("[ /.]+", "_", .data[["Species"]]),
+               tolower(substring(.data[["DataProvider"]], 1, nchar(.data[["DataProvider"]]) - 2)))
            ) %>%
     dplyr::mutate("RDataPath"=file.path("EuPathDB", "OrgDb",
                                         .data[["BiocVersion"]],
@@ -175,7 +178,8 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
-#' The new eupath system provides 3 output types for downloading data.  This uses the raw one.
+#' The new eupath system provides 3 output types for downloading data.  This
+#' uses the raw one.
 #'
 #' For the life of me, I could not figure out how to query the big text tables as the
 #' tabular format.  Every query I sent came back telling me I gave it incorrect parameter
@@ -416,10 +420,7 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
 
   ## construct API query
   api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
-  ##result <- httr::POST(api_uri, body=tt,
   body <- jsonlite::toJSON(query_body)
-  ##message("The request is:")
-  ##message(body)
   result <- httr::POST(
                     url=api_uri,
                     body=body,
@@ -476,9 +477,14 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
 
 #' Gather all available annotation data for a given eupathdb species.
 #'
-#' This function fills in the parameters to post_eupath_raw() so that one can download
-#' all the available data for a given parasite into one massive table.  It should also
-#' provide some constraints to the data rather than leaving it all as characters.
+#' This function fills in the parameters to post_eupath_raw() so that one can
+#' download all the available data for a given parasite into one massive table.
+#' It should also provide some constraints to the data rather than leaving it
+#' all as characters.  Caveat:  I manually filled in the list 'field_list' to
+#' include the variable names and their text associations.  This is likely to
+#' change in future releases of the tritrypdb.  It is probably possible to
+#' automagically fill it in.  In addition, I am using GenesByMolecularWeight to
+#' get the data, which is a bit weird.
 #'
 #' @param species  guess.
 #' @param entry  The full annotation entry.

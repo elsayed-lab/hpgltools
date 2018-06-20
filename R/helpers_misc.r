@@ -477,55 +477,6 @@ local_get_value <- function(x, delimiter=": ") {
   return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
 }
 
-#' Make a knitr report with some defaults set a priori.
-#'
-#' I keep forgetting to set appropriate options for knitr.  This tries to set them.
-#'
-#' @param name Name the document!
-#' @param type Html or pdf reports?
-#' @return Dated report file.
-#' @seealso \pkg{knitr} \pkg{rmarkdown} \pkg{knitrBootstrap}
-#' @export
-make_report <- function(name="report", type="pdf") {
-  knitr::opts_knit$set(
-                     progress = TRUE,
-                     verbose = TRUE,
-                     width = 90,
-                     echo = TRUE)
-  knitr::opts_chunk$set(
-                      error = TRUE,
-                      fig.width = 8,
-                      fig.height = 8,
-                      dpi = 96)
-  options(digits = 4,
-          stringsAsFactors = FALSE,
-          knitr.duplicate.label = "allow")
-  ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
-  set.seed(1)
-  output_date <- format(Sys.time(), "%Y%m%d-%H%M")
-  input_filename <- name
-  ## In case I add .rmd on the end.
-  input_filename <- gsub("\\.rmd", "", input_filename, perl=TRUE)
-  input_filename <- gsub("\\.Rmd", "", input_filename, perl=TRUE)
-  input_filename <- paste0(input_filename, ".Rmd")
-  if (type == "html") {
-    output_filename <- paste0(name, "-", output_date, ".html")
-    output_format <- "html_document"
-    rmarkdown::render(output_filename, output_format)
-  } else {
-    output_filename <- paste0(name, "-", output_date, ".pdf")
-    output_format <- "pdf_document"
-  }
-  message("About to run: render(input=", input_filename, ", output_file=",
-          output_filename, " and output_format=", output_format)
-  result <- try(rmarkdown::render(
-                             "input" = input_filename,
-                             "output_file" = output_filename,
-                             "output_format" = output_format), silent=TRUE)
-
-  return(result)
-}
-
 #' copy/paste the function from SeqTools and figure out where it falls on its ass.
 #'
 #' Yeah, I do not remember what I changed in this function.

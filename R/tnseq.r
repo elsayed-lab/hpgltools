@@ -9,7 +9,23 @@
 #'
 #' @param data  data to plot
 #' @param column which column to use for plotting
-#' @return A plot and some numbers
+#' @return A plot and some numbers:
+#'  \enumerate{
+#'   \item maximum_reads = The maximum number of reads observed in a single position.
+#'   \item hits_by_position = The full table of hits / position
+#'   \item num_hit_table = A table of how many times every number of hits was observed.
+#'   \item eq_0 = How many times were 0 hits observed?
+#'   \item gt_1 = How many positions have > 1 hit?
+#'   \item gt_2 = How many positions have > 2 hits?
+#'   \item gt_4 = How many positions have > 4 hits?
+#'   \item gt_8 = How many positions have > 8 hits?
+#'   \item gt_16 = How many positions have > 16 hits?
+#'   \item gt_32 = How many positions have > 32 hits?
+#'   \item ratios = Character vector of the ratios of each number of hits vs. 0 hits.
+#'   \item hit_positions = 2 column data frame of positions and the number of observed hits.
+#'   \item hits_summary = summary(hit_positions)
+#'   \item plot = Histogram of the number of hits observed.
+#'  }
 #' @seealso \pkg{ggplot2}
 #' @examples
 #'  \dontrun{
@@ -27,6 +43,10 @@ tnseq_saturation <- function(data, column="Reads") {
   } else {
     table <- data
   }
+
+  ## wig_comment removal
+  variablestep_idx <- grepl(pattern="^variable", x=table[["Start"]])
+  table <- table[-variablestep_idx, ]
 
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
@@ -60,6 +80,9 @@ tnseq_saturation <- function(data, column="Reads") {
   names(saturation_ratios) <- c(1, 2, 4, 8, 16, 32)
 
   hit_positions <- table
+  ## Recast
+  hit_positions[[1]] <- as.numeric(hit_positions[[1]])
+  hit_positions[[2]] <- as.numeric(hit_positions[[2]])
   hit_idx <- hit_positions[[column]] != 0
   hit_positions <- hit_positions[hit_idx, 1]
   hit_averages <- vector(length=length(hit_positions - 1))

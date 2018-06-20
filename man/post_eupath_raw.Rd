@@ -2,7 +2,8 @@
 % Please edit documentation in R/eupath_webservices.r
 \name{post_eupath_raw}
 \alias{post_eupath_raw}
-\title{The new eupath system provides 3 output types for downloading data.  This uses the raw one.}
+\title{The new eupath system provides 3 output types for downloading data.  This
+uses the raw one.}
 \usage{
 post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
   table_name = NULL, parameters = NULL, columns = "primary_key",

@@ -2,7 +2,8 @@
 % Please edit documentation in R/normalize_shared.r
 \name{normalize_expt}
 \alias{normalize_expt}
-\title{Normalize the data of an expt object.  Save the original data, and note what was done.}
+\title{Normalize the data of an expt object.  Save the original data, and note what
+was done.}
 \usage{
 normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
   batch = "raw", filter = FALSE, annotations = NULL, fasta = NULL,
@@ -60,12 +61,13 @@ normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
 Expt object with normalized data and the original data saved as 'original_expressionset'
 }
 \description{
-It is the responsibility of normalize_expt() to perform any arbitrary normalizations desired as
-well as to ensure that the data integrity is maintained.  In order to do this, it writes the
-actions performed in expt$state and saves the intermediate steps of the normalization in
-expt$intermediate_counts.  Furthermore, it should tell you every step of the normalization
-process, from count filtering, to normalization, conversion, transformation, and batch
-correction.
+It is the responsibility of normalize_expt() to perform any arbitrary
+normalizations desired as well as to ensure that the data integrity is
+maintained.  In order to do this, it writes the actions performed in
+expt$state and saves the intermediate steps of the normalization in
+expt$intermediate_counts.  Furthermore, it should tell you every step of the
+normalization process, from count filtering, to normalization, conversion,
+transformation, and batch correction.
 }
 \examples{
 \dontrun{

@@ -106,6 +106,7 @@ Collate:
     'plot_shared.r'
     'plot_venn.r'
     'proteomics.r'
+    'sequence.r'
     'snp.r'
     'tnseq.r'
     'xlsx.r'

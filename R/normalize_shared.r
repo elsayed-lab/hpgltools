@@ -1,24 +1,9 @@
-## Note to self, @title and @description are not needed in roxygen
-## comments, the first separate #' is the title, the second the
-## description, the third is the long form description.  Then add in
-## the @param @return @seealso @export etc...
-
-## My root question, to which I think I have a small idea about the answer:
-## Two of the very many paths to toptable()/toptags():
-##  1.  normalize data -> model(~0 + condition + batch) -> limma
-###     Including batch in the model loses some power, but improves the 'truth' of the result
-##  2.  normalize data -> batch correction(factor(batch)) ->  model(~0 + condition) -> limma
-###     Power lost before the model, also improves the 'truth' of the result.
-##  Why is #1 better than #2?
-### More well understood and conservative.
-##  Why have we nonetheless done #2 in a few instances?  (not only because we learned that first)
-
 #' Perform a default normalization of some data
 #'
-#' This just calls normalize expt with the most common arguments except log2 transformation, but
-#' that may be appended with 'transform=log2', so I don't feel bad.  Indeed, it will allow you to
-#' overwrite any arguments if you wish.  In our work, the most common normalization is:
-#' quantile(cpm(low-filter(data))).
+#' This just calls normalize expt with the most common arguments except log2
+#' transformation, but that may be appended with 'transform=log2', so I don't
+#' feel bad.  Indeed, it will allow you to overwrite any arguments if you wish.
+#' In our work, the most common normalization is: quantile(cpm(low-filter(data))).
 #'
 #' @param expt An expressionset containing expt object
 #' @param ... More options to pass to normalize_expt()
@@ -44,14 +29,16 @@ default_norm <- function(expt, ...) {
   return(new)
 }
 
-#' Normalize the data of an expt object.  Save the original data, and note what was done.
+#' Normalize the data of an expt object.  Save the original data, and note what
+#' was done.
 #'
-#' It is the responsibility of normalize_expt() to perform any arbitrary normalizations desired as
-#' well as to ensure that the data integrity is maintained.  In order to do this, it writes the
-#' actions performed in expt$state and saves the intermediate steps of the normalization in
-#' expt$intermediate_counts.  Furthermore, it should tell you every step of the normalization
-#' process, from count filtering, to normalization, conversion, transformation, and batch
-#' correction.
+#' It is the responsibility of normalize_expt() to perform any arbitrary
+#' normalizations desired as well as to ensure that the data integrity is
+#' maintained.  In order to do this, it writes the actions performed in
+#' expt$state and saves the intermediate steps of the normalization in
+#' expt$intermediate_counts.  Furthermore, it should tell you every step of the
+#' normalization process, from count filtering, to normalization, conversion,
+#' transformation, and batch correction.
 #'
 #' @param expt Original expt.
 #' @param transform Transformation desired, usually log2.
@@ -88,10 +75,14 @@ default_norm <- function(expt, ...) {
 normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            ## choose the normalization strategy
                            transform="raw", norm="raw", convert="raw", batch="raw", filter=FALSE,
-                           ## annotations used for rpkm/cpseqm, original may be used to ensure double-normalization isn't performed.
+                           ## annotations used for rpkm/cpseqm, original may be
+                           ## used to ensure double-normalization isn't
+                           ## performed.
                            annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
-                           batch1="batch", batch2=NULL, batch_step=5, low_to_zero=FALSE, ## extra parameters for batch correction
-                           thresh=2, min_samples=2, p=0.01, A=1, k=1, cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
+                           batch1="batch", batch2=NULL, batch_step=5,
+                           low_to_zero=FALSE, ## extra parameters for batch correction
+                           thresh=2, min_samples=2, p=0.01, A=1, k=1,
+                           cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
                            ...) {
   arglist <- list(...)
   expt_state <- expt[["state"]]
@@ -134,7 +125,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   }
 
   message("This function will replace the expt$expressionset slot with:")
-  operations <- what_happened(transform=transform, batch=batch, convert=convert, norm=norm, filter=filter)
+  operations <- what_happened(transform=transform, batch=batch, convert=convert,
+                              norm=norm, filter=filter)
   message(operations)
   message("It backs up the current data into a slot named:
  expt$backup_expressionset. It will also save copies of each step along the way
@@ -233,8 +225,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
   ## This state slot should match the information available in
   ## new_expt$normalized$actions
-  ## I am hoping this will prove a more direct place to access it and provide a chance
-  ## to double-check that things match
+  ## I am hoping this will prove a more direct place to access it and provide a
+  ## chance to double-check that things match
   new_state <- list(
     "filter" = normalized[["actions"]][["filter"]],
     "normalization" = normalized[["actions"]][["normalization"]],
@@ -243,10 +235,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     "transform" = normalized[["actions"]][["transform"]])
   new_expt[["state"]] <- new_state
 
-  ## My concept of the 'best library size' comes from Kwame's work where the libsize was kept after performing
-  ## quantile normalization, but before doing a log2(cpm())
-  ## The problem with this is that, if one does a normalize() then another normalize() then the assumptions used
-  ## may get violated.
+  ## My concept of the 'best library size' comes from Kwame's work where the
+  ## libsize was kept after performing quantile normalization, but before doing
+  ## a log2(cpm()) The problem with this is that, if one does a normalize() then
+  ## another normalize() then the assumptions used  may get violated.
   if (!is.null(normalized[["intermediate_counts"]][["normalization"]][["libsize"]])) {
     new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["normalization"]][["libsize"]]
   } else if (!is.null(normalized[["intermediate_counts"]][["filter"]][["libsize"]])) {
@@ -264,7 +256,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
 #' Normalize a dataframe/expt, express it, and/or transform it
 #'
-#' There are many possible options to this function.  Refer to normalize_expt() for a more complete list.
+#' There are many possible options to this function.  Refer to normalize_expt()
+#' for a more complete list.
 #'
 #' @param data Some data as a df/expt/whatever.
 #' @param ... I should put all those other options here
@@ -328,8 +321,9 @@ hpgl_norm <- function(data, ...) {
       expt_state <- arglist[["expt_state"]]
     }
   } else if (data_class == "matrix" | data_class == "data.frame" | data_class == "data.table") {
-    counts <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
-    ## In the case of data.tables, even if you set the rownames, the first column might still be rowname characters
+    counts <- as.data.frame(data)  ## some functions prefer matrix, so I am
+    ## keeping this explicit for the moment. In the case of data.tables, even if
+    ## you set the rownames, the first column might still be rowname characters
     ## I don't yet fully understand this, so I will add an explicit test here.
     if (data_class == "data.table" & class(counts[[1]]) == "character") {
       rownames(counts) <- make.names(counts[[1]], unique=TRUE)
@@ -379,7 +373,6 @@ hpgl_norm <- function(data, ...) {
       message("Step ", arglist[["batch_step"]], ": doing batch correction with ",
               arglist[["batch"]], ".")
       tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
-      ##tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, arglist))
       if (class(tmp_counts) == "try-error") {
         warning("The batch_counts call failed.  Returning non-batch reduced data.")
         batched_counts <<- NULL
@@ -480,7 +473,6 @@ hpgl_norm <- function(data, ...) {
   } else {
     message("Step 4: transforming the data with ", arglist[["transform"]], ".")
     transformed_counts <- transform_counts(count_table, ...)
-    ## transformed_counts <- transform_counts(count_table, transform=transform, converted=convert_performed)
     count_table <- transformed_counts[["count_table"]]
     if (transform == "round") {
       transform_performed <- "raw"
@@ -495,7 +487,8 @@ hpgl_norm <- function(data, ...) {
     ##count_table <- do_batch(count_table, arglist)
   }
 
-  ## This list provides the list of operations performed on the data in order they were done.
+  ## This list provides the list of operations performed on the data in order
+  ## they were done.
   actions <- list(
     "filter" = filter_performed,
     "normalization" = norm_performed,
@@ -506,8 +499,10 @@ hpgl_norm <- function(data, ...) {
   ## This may be useful if there is a problem in this process.
   ## Each of them also contains the libsize at that point in the process.
   intermediate_counts <- list(
-    "original" = original_counts, ## The original count table, should never change from iteration to iteration
-    "input" = as.matrix(data),  ## The input provided to this function, this may diverge from original
+    "original" = original_counts, ## The original count table, should never
+    ## change from iteration to iteration
+    "input" = as.matrix(data),  ## The input provided to this function, this may
+    ## diverge from original
     "filter" = filtered_counts,  ## After filtering
     "normalization" = normalized_counts,  ## and normalization
     "conversion" = converted_counts,  ## and conversion
