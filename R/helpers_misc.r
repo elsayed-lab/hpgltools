@@ -329,8 +329,8 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
   x <- as(x, "DNAStringSet")
   pmatches <- Biostrings::vmatchPattern(pentamer, x)
   omatches <- Biostrings::vmatchPattern(overmer, x)
-  basal.score <- S4Vectors::elementLengths(pmatches) * basal
-  over.score <- S4Vectors::elementLengths(omatches) * overlapping
+  basal.score <- S4Vectors::elementNROWS(pmatches) * basal
+  over.score <- S4Vectors::elementNROWS(omatches) * overlapping
   no.cluster <- data.frame(d1.3 = 0, d4.6 = 0, d7.9 = 0)
   clust <- lapply(pmatches, function(m) {
     if (length(m) < 2) {
@@ -342,14 +342,15 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
   clust <- do.call(rbind, clust)
   dscores <- clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
   ## require.auto("Biostrings")
-  au.blocks <- my_identifyAUBlocks(x, aub.min.length, aub.p.to.start, aub.p.to.end)
+  au.blocks <- my_identifyAUBlocks(x, min.length=aub.min.length,
+                                   p.to.start=aub.p.to.start, p.to.end=aub.p.to.end)
   aub.score <- sum(IRanges::countOverlaps(pmatches, au.blocks) * within.AU)
   score <- basal.score + over.score + dscores + aub.score
   ans <- S4Vectors::DataFrame(score=score,
-                              n.pentamer=S4Vectors::elementLengths(pmatches),
-                              n.overmer=S4Vectors::elementLengths(omatches),
+                              n.pentamer=S4Vectors::elementNROWS(pmatches),
+                              n.overmer=S4Vectors::elementNROWS(omatches),
                               au.blocks=au.blocks,
-                              n.au.blocks=S4Vectors::elementLengths(au.blocks))
+                              n.au.blocks=S4Vectors::elementNROWS(au.blocks))
   cbind(ans, S4Vectors::DataFrame(clust))
 }
 
@@ -501,6 +502,15 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
   y <- as(x, sprintf("%sStringSet", xtype))
 
   widths <- BiocGenerics::width(x)
+
+
+  ## I don't want to steal lianos' C from his repository.
+  test_seqtools <- "SeqTools" %in% installed.packages()
+  if (!isTRUE(test_seqtools)) {
+    message("Installing lianos/seqtools from github to get the find_au_start_end() C function.")
+    test <- devtools::install_github("lianos/seqtools/R/pkg")
+  }
+  library(SeqTools)
   fun <- function(i) {
     one_seq <- x[[i]]
     au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)
@@ -512,7 +522,9 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     can.end <- au <= p.to.end
     posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE="SeqTools")
     blocks <- IRanges::IRanges(posts$start, posts$end + min.length -  1L)
-    stats::end(blocks) <- ifelse(stats::end(blocks) > widths[i], widths[i], stats::end(blocks))
+    IRanges::end(blocks) <- ifelse(IRanges::end(blocks) > widths[i],
+                                   widths[i],
+                                   IRanges::end(blocks))
     IRanges::reduce(blocks)
   }
   au.blocks <- lapply(1:length(x), fun)

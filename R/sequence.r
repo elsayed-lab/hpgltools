@@ -1,4 +1,4 @@
-gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservice="tritrypdb" ...) {
+gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservice="tritrypdb", ...) {
   metadata <- sm(download_eupath_metadata(webservice=webservice))
   pkg_names <- get_eupath_pkgnames(species=species_name, metadata=metadata)
   bsgenome_name <- pkg_names[["bsgenome"]]
@@ -51,7 +51,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservi
 gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid", chr_column="chromosome",
                                 start_column="start", end_column="end", strand_column="strand",
                                 type_column="annot_gene_type", gene_type="protein coding",
-                                padding=120, name_column="gid", ...) {
+                                padding=120, ...) {
 
   if (!is.null(type_column)) {
     ## Pull the entries which are of the desired type.
