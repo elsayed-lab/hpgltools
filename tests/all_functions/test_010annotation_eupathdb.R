@@ -9,7 +9,8 @@ context("010annotation_eupathdb.R\n")
 ##  Most of these are implicitly tested via make_eupath_organismdbi().
 
 testing <- sm(download_eupath_metadata())
-expected <- c(307, 19)
+## Looks like 4 new species were added.
+expected <- c(311, 19)
 actual <- dim(testing)
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)
@@ -25,19 +26,23 @@ if (class(random_org) == "try-error") {
 }
 eupath_names <- testing[["Species"]]
 species <- eupath_names[chosen]
-## message(paste0("\nGoing to attempt making packages for: ", species))
-## eupath_test <- make_eupath_organismdbi(species=species, metadata=testing, reinstall=TRUE)
-## if (class(eupath_test) != "try-error") {
-##   test_that("Did the organismdbi get installed?", {
-##     expect_true(eupath_test[["organdb_name"]] %in% installed.packages())
-##   })
-## } else {
-##   message(paste0("Creation of orgdb/etc failed for ", species))
-## }
-## bsgenome_test <- sm(make_eupath_bsgenome(species, reinstall=TRUE))
-## test_that("Did the bsgenome get installed?", {
-##   expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
-## })
+
+do_long_tests <- FALSE
+if (isTRUE(do_long_tests)) {
+  message(paste0("\nGoing to attempt making packages for: ", species))
+  eupath_test <- make_eupath_organismdbi(species=species, metadata=testing, reinstall=TRUE)
+  if (class(eupath_test) != "try-error") {
+    test_that("Did the organismdbi get installed?", {
+      expect_true(eupath_test[["organdb_name"]] %in% installed.packages())
+    })
+  } else {
+    message(paste0("Creation of orgdb/etc failed for ", species))
+  }
+  bsgenome_test <- sm(make_eupath_bsgenome(species, reinstall=TRUE))
+  test_that("Did the bsgenome get installed?", {
+    expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
+  })
+}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
