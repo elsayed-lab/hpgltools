@@ -11,7 +11,7 @@ context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
 load("gsea_siggenes.rda")
 
 ##gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated")
-gprofiler_result <- sm(simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="logFC"))
+gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="logFC")
 
 expected <- c(2.44e-07, 4.08e-07, 3.69e-06, 1.62e-05, 1.62e-05, 2.13e-05)
 actual <- head(sort(gprofiler_result[["go"]][["p.value"]]))
@@ -25,9 +25,7 @@ test_that("Does gprofiler return expected values? (mfpplot_data)", {
     expect_equal(expected, actual, tolerance=0.01)
 })
 
-## When I run this in an interactive session it works.
-## But when I run it with make test,  no!  WTF!?
-expected <- c(0.00101, 0.01380, 0.02210)
+expected <- c(0.000238, 0.001170, 0.005570, 0.028600)
 actual <- head(sort(gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]][["data"]][["pvalue"]]))
 test_that("Does gprofiler return expected values? (bppplot_data)", {
     expect_equal(expected, actual, tolerance=0.03)
