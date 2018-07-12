@@ -10,7 +10,7 @@ simple_clusterprofiler(sig_genes, de_table = NULL, orgdb = "org.Dm.eg.db",
   second_fc_column = "limma_logfc", updown = "up", permutations = 100,
   min_groupsize = 5, kegg_prefix = NULL, kegg_organism = NULL,
   do_gsea = TRUE, categories = 12, excel = NULL, do_david = TRUE,
-  david_user = "abelew@umd.edu")
+  david_id = "ENTREZ_GENE_ID", david_user = "abelew@umd.edu")
 }
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}
