@@ -21,12 +21,15 @@ pombe_expt <- make_pombe_expt(annotation=FALSE)
 pombe_strain <- set_expt_conditions(expt=pombe_expt, fact="strain")
 pombe_norm <- normalize_expt(pombe_strain, filter=TRUE, batch="fsva",
                               transform="log2", num_surrogates=1)
-pca_stuff <- plot_pca(pombe_norm, size_column="minute")
-##pca_stuff$plot
 
 tsne_stuff <- plot_tsne(pombe_norm, size_column="minute")
 ##tsne_stuff$plot
-
+expected <- c(36, 10)
+actual <- dim(tsne_stuff[["table"]])
+test_that("Did we get an expected tsne table?", {
+  expect_equal(expected[1], actual[1])
+  expect_equal(expected[2], actual[2])
+})
 
 ## 03 tsne_res()
 

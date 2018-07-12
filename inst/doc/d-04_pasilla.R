@@ -17,7 +17,8 @@ ver <- "20170820"
 rmd_file <- "d-04_pasilla.Rmd"
 
 ## ----load_data-----------------------------------------------------------
-tt <- sm(library(hpgltools)) ## I use sm to keep functions from printing too much (well, anything really)
+## I use sm to keep functions from printing too much (well, anything really)
+tt <- sm(library(hpgltools))
 tt <- sm(library(pasilla))
 tt <- sm(data(pasillaGenes))
 
@@ -55,7 +56,6 @@ pasilla_metrics <- sm(graph_metrics(pasilla_expt, ma=TRUE, qq=TRUE))
 summary(pasilla_metrics)
 
 ## ----print_graphs--------------------------------------------------------
-library(ggplot2)
 pasilla_metrics$libsize
 ## The library sizes range from 8-21 million reads, this might be a problem for some analyses
 pasilla_metrics$nonzero
@@ -81,6 +81,7 @@ norm_metrics$corheat
 norm_metrics$smc
 norm_metrics$disheat
 norm_metrics$smd
+## some samples look a little troublesome here.
 norm_metrics$pcaplot
 
 ## ----perform_pairwise----------------------------------------------------

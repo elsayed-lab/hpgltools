@@ -143,7 +143,7 @@ mistakes, and some easier ways to extract information like conditions/batches/co
 With the above in mind, once we have the various metadata and count data loaded into memory, a most
 common next step is examine the data before molesting it:
 
-```{r graph_original, show.fig='hide'}
+```{r graph_original, fig.show="hide"}
 raw_metrics <- sm(graph_metrics(expt, qq=TRUE, cis=NULL))
 ```
 
@@ -208,6 +208,13 @@ batch_b <- subset_expt(expt, subset="batch=='b'")
 
 a_metrics <- sm(graph_metrics(batch_a, cis=NULL))
 b_metrics <- sm(graph_metrics(batch_b, cis=NULL))
+```
+
+PCA plots of these subsetted data are not likely to be very interesting, as it
+has been reduced to a single sample per condition, but we can look at them
+anyhow.
+
+```{r subset_show_plots}
 a_metrics$pcaplot
 b_metrics$pcaplot
 a_metrics$tsneplot
@@ -335,9 +342,10 @@ this particular organism.
 Much(all) of the following is taken from the material in tests/testthat/test_70mga.R
 
 ```{r circos}
-microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
-mgas_df <- sm(load_microbesonline_annotations(microbe_ids[[1]])[[1]])
-mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
+##microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
+mgas_df <- sm(load_microbesonline_annotations())
+
+mgas_df$sysName <- gsub(pattern="SPy", replacement="M5005_Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
@@ -355,7 +363,6 @@ circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
                                  circos_test, outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
 circos_made <- circos_make(target="mgas")
-## For some reason this fails weirdly when not run interactively.
 getwd()
 ```
 
@@ -373,7 +380,7 @@ Perhaps instead of looking at subsets of the data, we may want to consider wt/mg
 If so, we can just change the condition to any column in the design matrix.
 
 ```{r wt_mga, fig.show="hide"}
-wt_mga_expt <- set_expt_condition(expt=expt, fact="type")
+wt_mga_expt <- set_expt_conditions(expt=expt, fact="type")
 wt_mga_plots <- sm(graph_metrics(wt_mga_expt))
 wt_mga_norm <- sm(normalize_expt(wt_mga_expt, transform="log2", convert="raw", filter=TRUE, norm="quant"))
 wt_mga_nplots <- sm(graph_metrics(wt_mga_norm))
@@ -381,18 +388,18 @@ wt_mga_de <- sm(all_pairwise(input=wt_mga_expt,
                           combined_excel="wt_mga.xlsx",
                           sig_excel="wt_mga_sig.xlsx",
                           abundant_excel="wt_mga_abundant.xlsx"))
-## How well do the various DE tools agree on this data?
-wt_mga_de$combined$comp_plot
 ```
 
 ```{r wt_mga_plots}
+wt_mga_de$combined$comp_plot
+## How well do the various DE tools agree on this data?
+
 wt_mga_plots$tsneplot
 wt_mga_nplots$pcaplot
 wt_mga_de$combined$limma_plots$WT_vs_mga$scatter
 wt_mga_de$combined$limma_ma_plots$WT_vs_mga$plot
 wt_mga_de$combined$limma_vol_plots$WT_vs_mga$plot
 ```
-
 
 [index.html](index.html)
 

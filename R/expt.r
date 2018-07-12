@@ -150,6 +150,14 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, ...)
   ## sample_definitions <- extract_metadata(metadata)
+  ## Add an explicit removal of the file column if the option file_column is NULL.
+  ## This is a just in case measure to avoid conflicts.
+  if (is.null(file_column)) {
+    if (!is.null(metadata[["file"]])) {
+      message("file_column is NULL, removing the column named 'file'.")
+      metadata[["file"]] <- NULL
+    }
+  }
   message("The sample definitions comprises: ", toString(dim(sample_definitions)),
           " rows, columns.")
   num_samples <- nrow(sample_definitions)
@@ -677,7 +685,7 @@ extract_metadata <- function(metadata, ...) {
                                          x=colnames(sample_definitions))
   }  else {
     sample_definitions <- read_metadata(meta_file, ...)
-    ## sample_definitions <- read_metadata(file)
+    ## sample_definitions <- read_metadata(meta_file)
   }
 
   ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.

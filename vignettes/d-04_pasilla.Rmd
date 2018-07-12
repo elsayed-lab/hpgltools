@@ -63,7 +63,8 @@ through ontology searching with appropriate visualizations at each stage.
 In test_01load_data.R I perform load some data into an expressionset and get ready to play with it.
 
 ```{r load_data}
-tt <- sm(library(hpgltools)) ## I use sm to keep functions from printing too much (well, anything really)
+## I use sm to keep functions from printing too much (well, anything really)
+tt <- sm(library(hpgltools))
 tt <- sm(library(pasilla))
 tt <- sm(data(pasillaGenes))
 ```
@@ -131,7 +132,6 @@ summary(pasilla_metrics)
 Now let us print the graphs
 
 ```{r print_graphs}
-library(ggplot2)
 pasilla_metrics$libsize
 ## The library sizes range from 8-21 million reads, this might be a problem for some analyses
 pasilla_metrics$nonzero
@@ -165,6 +165,7 @@ norm_metrics$corheat
 norm_metrics$smc
 norm_metrics$disheat
 norm_metrics$smd
+## some samples look a little troublesome here.
 norm_metrics$pcaplot
 ```
 

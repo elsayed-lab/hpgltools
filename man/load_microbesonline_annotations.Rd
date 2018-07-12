@@ -4,15 +4,13 @@
 \alias{load_microbesonline_annotations}
 \title{Skip the db and download all the text annotations for a given species.}
 \usage{
-load_microbesonline_annotations(id = "160490", name = NULL)
+load_microbesonline_annotations(id = "160490")
 }
 \arguments{
-\item{name}{Species name(s) to use instead.}
-
-\item{ids}{List of ids to query.}
+\item{id}{Microbesonline ID to query.}
 }
 \value{
-List of dataframes with the annotation information.
+Dataframe containing the annotation information.
 }
 \description{
 Like I said, the microbesonline mysqldb is rather more complex than I prefer.  This shortcuts

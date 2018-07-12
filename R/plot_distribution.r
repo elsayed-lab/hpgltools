@@ -103,7 +103,8 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' @param scale Plot on the log scale?
 #' @param title Title for the plot.
 #' @param colors_by Factor for coloring the lines
-#' @return Ggplot2 density plot!
+#' @param ... sometimes extra arguments might come from graph_metrics()
+#' @return ggplot2 density plot!
 #' @seealso \pkg{ggplot2}
 #'  \code{\link[ggplot2]{geom_density}}
 #' @examples
@@ -112,7 +113,7 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
 #' }
 #' @export
 plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity", direct=TRUE,
-                         fill=NULL, title=NULL, scale=NULL, colors_by="condition") {
+                         fill=NULL, title=NULL, scale=NULL, colors_by="condition", ...) {
   ## also position='stack'
   data_class <- class(data)[1]
   design <- NULL

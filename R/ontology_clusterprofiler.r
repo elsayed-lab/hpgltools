@@ -41,7 +41,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                    updown="up", permutations=100, min_groupsize=5,
                                    kegg_prefix=NULL, kegg_organism=NULL, do_gsea=TRUE,
                                    categories=12, excel=NULL, do_david=TRUE,
-                                   david_user="abelew@umd.edu") {
+                                   david_id="ENTREZ_GENE_ID", david_user="abelew@umd.edu") {
   tt <- sm(requireNamespace(package="clusterProfiler", quietly=TRUE))
   tt <- sm(requireNamespace(package="DOSE", quietly=TRUE))
   org <- NULL
@@ -117,6 +117,14 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     fc_column <- second_fc_column
   }
 
+  gsea_fc_column <- fc_column
+  if (is.null(de_table[[gsea_fc_column]]) & is.null(de_table[[second_fc_column]])) {
+    message("Unable to find the fold-change column in the de table, not doing gsea.")
+    do_gsea <- FALSE
+  } else if (is.null(de_table[[gsea_fc_column]])) {
+    gsea_fc_column <- second_fc_column
+  }
+
   ## Acquire the set of IDs against which all queries need to be made
   universe_to <- AnnotationDbi::keys(org, keytype=orgdb_to)
   ## And the set of similar IDs mapped against the significance table.
@@ -125,16 +133,22 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   sig_gene_list <- sig_genes_namedf[[orgdb_to]]
   sig_gene_drop <- !is.na(sig_gene_list)
   sig_gene_list <- sig_gene_list[sig_gene_drop]
+  if (is.null(sig_gene_list)) {
+    stop("No genes were found between the significant genes and the universe.")
+  }
 
   ## Now we have a universe of geneIDs and significant IDs
   ## Let us perform some analyses...
   message("Calculating GO groups.")
   ggo_mf <- ggo_bp <- ggo_cc <- NULL
   ggo_mf <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
+                                        keyType=orgdb_from,
                                         ont="MF", level=go_level))
   ggo_bp <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
+                                        keyType=orgdb_from,
                                         ont="BP", level=go_level))
   ggo_cc <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
+                                        keyType=orgdb_from,
                                         ont="CC", level=go_level))
 
   group_go <- list(
@@ -156,27 +170,27 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "sig_cc" = NULL)
   ego_all_mf <- ego_sig_mf <- ego_all_bp <- ego_sig_bp <- ego_all_cc <- ego_sig_cc <- NULL
   ego_all_mf <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="MF",
+                                             OrgDb=org, ont="MF", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=1.0))
   ego_sig_mf <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="MF",
+                                             OrgDb=org, ont="MF", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=pcutoff))
   ego_all_bp <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="BP",
+                                             OrgDb=org, ont="BP", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=1.0))
   ego_sig_bp <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="BP",
+                                             OrgDb=org, ont="BP", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=pcutoff))
   ego_all_cc <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="CC",
+                                             OrgDb=org, ont="CC", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=1.0))
   ego_sig_cc <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="CC",
+                                             OrgDb=org, ont="CC", keyType=orgdb_from,
                                              minGSSize=min_groupsize, pAdjustMethod="BH",
                                              pvalueCutoff=pcutoff))
   enrich_go <- list(
@@ -197,31 +211,37 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     ## Add the entrezIDs to the end
     de_table_merged <- merge(de_table, de_table_namedf, by.x="row.names", by.y=1)
     if (updown == "up") {
-      de_table_merged <- de_table_merged[ order(de_table_merged[[fc_column]], decreasing=TRUE), ]
+      de_table_merged <- de_table_merged[ order(de_table_merged[[gsea_fc_column]], decreasing=TRUE), ]
     } else {
-      de_table_merged <- de_table_merged[ order(de_table_merged[[fc_column]], decreasing=FALSE), ]
+      de_table_merged <- de_table_merged[ order(de_table_merged[[gsea_fc_column]], decreasing=FALSE), ]
     }
 
     message("Performing GSE analyses of gene lists (this is slow).")
-    genelist <- as.vector(de_table_merged[[fc_column]])
-    names(genelist) <- de_table_merged[[orgdb_to]]
+    genelist <- as.vector(de_table_merged[[gsea_fc_column]])
+    names(genelist) <- de_table_merged[["Row.names"]]
     gse_all_mf <- gse_sig_mf <- gse_all_bp <- gse_sig_bp <- gse_all_cc <- gse_sig_cc <- NULL
-    gse_all_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+    gse_all_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="MF", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=1.0))
-    gse_sig_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="MF",
+    gse_sig_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="MF", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=pcutoff))
-    gse_all_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+    gse_all_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="BP", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=1.0))
-    gse_sig_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="BP",
+    gse_sig_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="BP", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=pcutoff))
-    gse_all_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+    gse_all_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="CC", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=1.0))
-    gse_sig_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org, ont="CC",
+    gse_sig_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                            ont="CC", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,
                                             pvalueCutoff=pcutoff))
     gse_go <- list(
@@ -251,21 +271,30 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   kegg_sig_intersect <- kegg_sig_names %in% names(kegg_universe)
   message("Found ", sum(kegg_sig_intersect),
           " matches between the significant gene list and kegg universe.")
-  all_names <- names(kegg_universe)
-  small_universe <- kegg_universe[intersect(kegg_sig_names, names(kegg_universe))]
-  kegg_sig_ids <- unique(as.character(small_universe))
-  ##kegg_sig_ids <- unique(as.character(kegg_universe[kegg_sig_intersect]))
-  kegg_sig_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_sig_ids)
+  all_kegg <- enrich_kegg <- NULL
+  if (sum(kegg_sig_intersect) > 0) {
+    all_names <- names(kegg_universe)
+    small_universe <- kegg_universe[intersect(kegg_sig_names, names(kegg_universe))]
+    kegg_sig_ids <- unique(as.character(small_universe))
+    ##kegg_sig_ids <- unique(as.character(kegg_universe[kegg_sig_intersect]))
+    kegg_sig_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_sig_ids)
 
-  message("Performing KEGG analyses.")
-  all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
-                                          keyType="kegg",
-                                          pvalueCutoff=1.0)
-  enrich_kegg <- sm(clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
-                                                keyType="kegg",
-                                                pvalueCutoff=pcutoff))
+    message("Performing KEGG analyses.")
+    all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
+                                            keyType="kegg",
+                                            pvalueCutoff=1.0)
+    enrich_kegg <- sm(clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
+                                                  keyType="kegg",
+                                                  pvalueCutoff=pcutoff))
+  }
+  if (is.null(all_kegg)) {
+    do_gsea <- FALSE
+  }
 
-  do_gsea <- TRUE
+  gse_all_kegg <- NULL
+  gse_sig_kegg <- NULL
+  gse_all_mkegg <- NULL
+  gse_sig_mkegg <- NULL
   if (isTRUE(do_gsea)) {
     lastcol <- ncol(de_table_merged)
     kegg_genelist <- as.vector(de_table_merged[[fc_column]])
@@ -287,12 +316,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     gse_sig_kegg <- sm(clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
                                                 nPerm=permutations, minGSSize=min_groupsize,
                                                 pvalueCutoff=pcutoff, use_internal_data=internal))
-  } else {
-    gse_all_kegg <- NULL
-    gse_sig_kegg <- NULL
   }
-  gse_all_mkegg <- NULL
-  gse_sig_mkegg <- NULL
 
   kegg_data <- list(
     "kegg_all" = as.data.frame(all_kegg, stringsAsFactors=FALSE),
@@ -302,12 +326,13 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   message("Found ", nrow(kegg_data[["kegg_sig"]]), " KEGG enriched hits.")
 
   david_data <- NULL
+  tt <- sm(please_install("RDAVIDWebService"))
   if (isTRUE(do_david)) {
     message("Attempting DAVID search.")
     david_search <- try(clusterProfiler::enrichDAVID(gene=sig_gene_list,
                                                      minGSSize=min_groupsize,
-                                                     idType="ENTREZ_GENE_ID",
-                                                     david.user=david_user))
+                                                     idType=david_id,
+                                                     david.user=david_user), silent=TRUE)
     if (class(david_search)[[1]] == "try-error") {
       david_data <- NULL
     } else {

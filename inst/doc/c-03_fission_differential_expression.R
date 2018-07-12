@@ -45,20 +45,20 @@ fun_norm <- sm(normalize_expt(fun_data, batch="limma", norm="quant",
 ## ----simple_limma--------------------------------------------------------
 limma_comparison <- sm(limma_pairwise(fun_data))
 names(limma_comparison$all_tables)
-summary(limma_comparison$all_tables$wt.30_vs_wt.120)
+summary(limma_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(limma_comparison, type="limma",
-                                              x="wt.30", y="wt.120", gvis_filename=NULL)
+                                              x="wt30", y="wt120")
 scatter_wt_mut$scatter
-scatter_wt_mut$both_histogram$plot + ggplot2::scale_y_continuous(limits=c(0,0.20))
+scatter_wt_mut$both_histogram$plot + ggplot2::scale_y_continuous(limits=c(0, 0.20))
 ma_wt_mut <- extract_de_plots(limma_comparison, type="limma")
 ma_wt_mut$ma$plot
 ma_wt_mut$volcano$plot
 
 ## ----simple_deseq2-------------------------------------------------------
 deseq_comparison <- sm(deseq2_pairwise(fun_data))
-summary(deseq_comparison$all_tables$wt.30_vs_wt.120)
+summary(deseq_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(deseq_comparison, type="deseq",
-                                              x="wt.30", y="wt.120", gvis_filename=NULL)
+                                              x="wt30", y="wt120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 plots_wt_mut <- extract_de_plots(deseq_comparison, type="deseq")
 plots_wt_mut$ma$plot
@@ -68,16 +68,16 @@ plots_wt_mut$volcano$plot
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
 plots_wt_mut <- extract_de_plots(edger_comparison, type="edger")
 scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
-                                              x="wt.30", y="wt.120", gvis_filename=NULL)
+                                              x="wt30", y="wt120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
 ## ----simple_basic--------------------------------------------------------
 basic_comparison <- sm(basic_pairwise(fun_data))
-summary(basic_comparison$all_tables$wt.30_vs_wt.120)
+summary(basic_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type="basic",
-                                              x="wt.30", y="wt.120", gvis_filename=NULL)
+                                              x="wt30", y="wt120", gvis_filename=NULL)
 scatter_wt_mut$scatter
 plots_wt_mut <- extract_de_plots(basic_comparison, type="basic")
 plots_wt_mut$ma$plot
@@ -104,26 +104,27 @@ yeast_barplots$deseq
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
 names(limma_results)
-table <- limma_results$wt.30_vs_wt.120
+table <- limma_results$wt30_vs_wt120
 dim(table)
 gene_names <- rownames(table)
 
 updown_genes <- get_sig_genes(table, p=0.05, lfc=0.4, p_column="P.Value")
-tt <- require.auto("GenomicFeatures")
-tt <- require.auto("biomaRt")
-ensembl_pombe <- biomaRt::useMart("fungal_mart", dataset="spombe_eg_gene",
-                                  host="fungi.ensembl.org")
-pombe_filters <- biomaRt::listFilters(ensembl_pombe)
-head(pombe_filters, n=20) ## 11 looks to be my guy
+tt <- please_install("GenomicFeatures")
+tt <- please_install("biomaRt")
+available_marts <- biomaRt::listMarts(host="fungi.ensembl.org")
+available_marts
+ensembl_mart <- biomaRt::useMart("fungi_mart", host="fungi.ensembl.org")
+available_datasets <- biomaRt::listDatasets(ensembl_pombe)
+pombe_hit <- grep(pattern="pombe", x=available_datasets[["description"]])
+pombe_name <- available_datasets[pombe_hit, "dataset"]
+pombe_mart <- biomaRt::useDataset(pombe_name, mart=ensembl_mart)
 
-possible_pombe_attributes <- biomaRt::listAttributes(ensembl_pombe)
-##pombe_goids <- biomaRt::getBM(attributes=c('pombase_gene_name', 'go_accession'), filters="biotype",
-##                              values=gene_names, mart=ensembl_pombe)
+pombe_goids <- biomaRt::getBM(attributes=c("pombase_transcript", "go_id"),
+                              values=gene_names, mart=pombe_mart)
+colnames(pombe_goids) <- c("ID", "GO")
 
-pombe_goids <- biomaRt::getBM(attributes=c('pombase_transcript', 'go_id'),
-                              values=gene_names, mart=ensembl_pombe)
-colnames(pombe_goids) <- c("ID","GO")
-
+## ----ontology_setup_hpgltools--------------------------------------------
+## In theory, the above should work with a single function call:
 pombe_goids_simple <- load_biomart_go(species="spombe", overwrite=TRUE,
                                       dl_rows=c("pombase_transcript", "go_id"),
                                       host="fungi.ensembl.org")
@@ -139,7 +140,7 @@ head(pombe_goids)
 ## This was found at the bottom of: https://www.biostars.org/p/232005/
 link <- "ftp://ftp.ensemblgenomes.org/pub/release-34/fungi/gff3/schizosaccharomyces_pombe/Schizosaccharomyces_pombe.ASM294v2.34.gff3.gz"
 pombe <- GenomicFeatures::makeTxDbFromGFF(link, format="gff3", organism="Schizosaccharomyces pombe",
-                                          taxonomyId="4896")
+                                          taxonomyId=4896)
 
 pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
 lengths <- pombe_transcripts[, c("group_name","width")]
@@ -166,6 +167,42 @@ goseq_result <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_
 head(goseq_result$alldata)
 goseq_result$pvalue_plots$bpp_plot
 
-## ----sysinfo, results='asis'---------------------------------------------
+## ----test_cp, eval=FALSE-------------------------------------------------
+#  ## holy crap makeOrgPackageFromNCBI is slow, no slower than some of mine, so who am I to complain.
+#  orgdb <- AnnotationForge::makeOrgPackageFromNCBI(version="0.1", author="atb <abelew@gmail.com>",
+#                                                   maintainer="atb <abelew@gmail.com>", tax_id="4896",
+#                                                   genus="Schizosaccharomyces", species="pombe")
+#  ## This created the directory 'org.spombe.eg.db'
+#  devtools::install_local("org.Spombe.eg.db")
+#  library(org.Spombe.eg.db)
+#  ## Don't forget to remove the terminal .1 from the gene names...
+#  ## If you do forget this, it will fail for no easily visible reason until you remember
+#  ## this and get really mad at yourself.
+#  rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
+#  pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
+#  cp_result <- simple_clusterprofiler(sig_genes=test_genes, do_david=FALSE, do_gsea=FALSE,
+#                                      de_table=all_combined$data[[1]],
+#                                      orgdb=org.Spombe.eg.db, orgdb_to="ALIAS")
+#  cp_result[["pvalue_plots"]][["ego_all_mf"]]
+#  ## Yay bar plots!
+
+## ----test_tp, eval=FALSE-------------------------------------------------
+#  ## Get rid of those stupid terminal .1s.
+#  rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
+#  pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
+#  tp_result <- sm(simple_topgo(sig_genes=test_genes, go_db=pombe_goids, pval_column="limma_adjp"))
+
+## ----gst_test, eval=FALSE------------------------------------------------
+#  ## Get rid of those stupid terminal .1s.
+#  rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
+#  pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
+#  ## universe_merge is the column in the final data frame when.
+#  ## gff_type is the field in the gff file providing the id, this may be redundant with
+#  ## universe merge, that is something to check on...
+#  gst_result <- sm(simple_gostats(sig_genes=test_genes, go_db=pombe_goids, universe_merge="id",
+#                                  gff_type="gene",
+#                                  gff="pombe.gff", pval_column="limma_adjp"))
+
+## ----sysinfo, results="asis"---------------------------------------------
 pander::pander(sessionInfo())
 

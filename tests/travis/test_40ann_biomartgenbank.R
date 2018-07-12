@@ -17,6 +17,8 @@ test_that("Did the gene lengths come out?", {
     expect_equal(expected_lengths, actual_lengths)
 })
 
+## I am not sure why, but these tests are failing when I do not run them interactively...
+## But when I run them myself, no problems...
 expected_ids <- c("FBgn0041711", "FBgn0041711", "FBgn0041711",
                   "FBgn0041711", "FBgn0032283", "FBgn0042110")
 actual_ids <- head(dmel_go[["go"]][["ID"]])
@@ -32,8 +34,11 @@ linkage_test <- load_biomart_orthologs(test_genes, first_species="dmelanogaster"
                                        second_species="mmusculus",
                                        attributes="ensembl_gene_id")
 linked_genes <- linkage_test[["subset_linked_genes"]]
-expected_linkage <- c("ENSMUSG00000033006", "ENSMUSG00000025815",
-                      "ENSMUSG00000024176", "ENSMUSG00000000567")
+## Hard-set the order of the genes to avoid test failures for silly reasons.
+linked_order <- order(linked_genes[["mmusculus"]])
+linked_genes <- linked_genes[linked_order, ]
+expected_linkage <- c("ENSMUSG00000000567", "ENSMUSG00000024176",
+                      "ENSMUSG00000025815", "ENSMUSG00000033006")
 actual_linkage <- linked_genes[["mmusculus"]]
 test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)

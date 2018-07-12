@@ -44,7 +44,7 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
       return(NULL)
     }
   }
-  request_url <- paste0("http://www.uniprot.org/uniprot/?query=proteome:",
+  request_url <- paste0("https://www.uniprot.org/uniprot/?query=proteome:",
                         accession, "&compress=yes&force=true&format=txt")
   destination <- paste0(accession, ".txt.gz")
   file <- download.file(url=request_url, destfile=destination, method="curl", quiet=TRUE)
