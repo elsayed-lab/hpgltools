@@ -89,9 +89,8 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
 #' There is so much awesome information in microbesonline, but damn is it annoying to download.
 #' This function makes that rather easier, or so I hope at least.
 #'
-#' @param ids List of ids to query.
-#' @param name Species name(s) to use instead.
-#' @return List of dataframes with the annotation information.
+#' @param id Microbesonline ID to query.
+#' @return Dataframe containing the annotation information.
 #' @seealso \pkg{RCurl}
 #'  \code{\link[RCurl]{getURL}}
 #' @examples
@@ -99,44 +98,12 @@ get_microbesonline_name <- function(id=316385, name=NULL) {
 #'  annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
 #' }
 #' @export
-load_microbesonline_annotations <- function(id="160490", name=NULL) {
-  retlist <- list()
-  ##id_list <- list()
-  ##if (is.null(ids) & is.null(name)) {
-  ##  stop("Either ids or species must be defined.")
-  ##} else if (is.null(ids)) {
-  ##  for (spec in name) {
-  ##    id_df <- get_microbesonline_ids(spec)
-  ##    id_shortlist <- as.list(id_df[[1]])
-  ##    names(id_shortlist) <- id_df[[2]]
-  ##    id_list <- append(x=id_list, values=id_shortlist)
-  ##  }
-  ##} else {
-  ##  for (id in ids) {
-  ##    idl <- as.list(id)
-  ##    current_name <- get_microbesonline_name(id)
-  ##    names(idl) <- current_name[1, 1]
-  ##    id_list <- append(x=id_list, values=idl)
-  ##  }
-  ##}
-
-  retlist <- list()
-  ##for (t in 1:length(id_list)) {
-  ##  name <- names(id_list)[[t]]
-  ##  message("Querying microbesonline for: ", name, ".")
-  ##  id <- id_list[[t]]
+load_microbesonline_annotations <- function(id="160490") {
   url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
   string <- RCurl::getURL(url)
   con <- textConnection(string)
   data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
-  if (grepl(pattern="Time-out", x=data[3, ][[1]])) {
-    message("The request timed out.  Try again later?")
-    retlist[[name]] <- NULL
-  } else {
-    retlist[[name]] <- data
-  }
-  ##}
-  return(retlist)
+  return(data)
 }
 
 #' Extract the set of GO categories by microbesonline locus

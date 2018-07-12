@@ -37,6 +37,9 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   ##      allGenes = entire_geneList, geneSel=topDiffGenes, annot=annFUN.gene2GO,
   ##      gene2GO=geneID2GO, nodeSize=2)
   ## The following library invocation is in case it was unloaded for pathview
+  if (isTRUE(overwrite)) {
+    removed <- file.remove(goid_map)
+  }
   gomap_info <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   if (is.null(gomap_info)) {
     warning("There appears to have been a problem generating the gomap.")

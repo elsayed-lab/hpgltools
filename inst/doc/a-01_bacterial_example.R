@@ -32,7 +32,7 @@ expt <- create_expt(count_dataframe=cdm$cdm_counts,
 knitr::kable(head(expt$design))
 summary(expt)
 
-## ----graph_original, show.fig='hide'-------------------------------------
+## ----graph_original, fig.show="hide"-------------------------------------
 raw_metrics <- sm(graph_metrics(expt, qq=TRUE, cis=NULL))
 
 ## ----show_original_plots-------------------------------------------------
@@ -59,6 +59,8 @@ batch_b <- subset_expt(expt, subset="batch=='b'")
 
 a_metrics <- sm(graph_metrics(batch_a, cis=NULL))
 b_metrics <- sm(graph_metrics(batch_b, cis=NULL))
+
+## ----subset_show_plots---------------------------------------------------
 a_metrics$pcaplot
 b_metrics$pcaplot
 a_metrics$tsneplot
@@ -128,9 +130,10 @@ spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 
 ## ----circos--------------------------------------------------------------
-microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
-mgas_df <- sm(load_microbesonline_annotations(microbe_ids[[1]])[[1]])
-mgas_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df$sysName)
+##microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
+mgas_df <- sm(load_microbesonline_annotations())
+
+mgas_df$sysName <- gsub(pattern="SPy", replacement="M5005_Spy", x=mgas_df$sysName)
 rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
 
 ## First make a template configuration
@@ -148,14 +151,13 @@ circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
                                  circos_test, outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
 circos_made <- circos_make(target="mgas")
-## For some reason this fails weirdly when not run interactively.
 getwd()
 
 ## ----genoplot------------------------------------------------------------
 genoplot_chromosome()
 
 ## ----wt_mga, fig.show="hide"---------------------------------------------
-wt_mga_expt <- set_expt_condition(expt=expt, fact="type")
+wt_mga_expt <- set_expt_conditions(expt=expt, fact="type")
 wt_mga_plots <- sm(graph_metrics(wt_mga_expt))
 wt_mga_norm <- sm(normalize_expt(wt_mga_expt, transform="log2", convert="raw", filter=TRUE, norm="quant"))
 wt_mga_nplots <- sm(graph_metrics(wt_mga_norm))
@@ -163,10 +165,11 @@ wt_mga_de <- sm(all_pairwise(input=wt_mga_expt,
                           combined_excel="wt_mga.xlsx",
                           sig_excel="wt_mga_sig.xlsx",
                           abundant_excel="wt_mga_abundant.xlsx"))
-## How well do the various DE tools agree on this data?
-wt_mga_de$combined$comp_plot
 
 ## ----wt_mga_plots--------------------------------------------------------
+wt_mga_de$combined$comp_plot
+## How well do the various DE tools agree on this data?
+
 wt_mga_plots$tsneplot
 wt_mga_nplots$pcaplot
 wt_mga_de$combined$limma_plots$WT_vs_mga$scatter

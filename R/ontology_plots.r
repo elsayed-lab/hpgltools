@@ -139,15 +139,16 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
   ## ergo tail here. This ordering will be maintained in the plot by setting the levels of the
   ## factor in plot_ontpval, which should have a note.
   plotting_mf <- tail(plotting_mf, n=n)
-  plotting_mf <- plotting_mf[, c("term", "over_represented_pvalue", "score")]
+  plotting_mf <- plotting_mf[, c("term", "over_represented_pvalue", "score",
+                                 "numDEInCat", "numInCat")]
   plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]],
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))
-  colnames(plotting_mf) <- c("term", "pvalue", "score")
+  colnames(plotting_mf) <- c("term", "pvalue", "score", "num_de", "num_cat")
   mf_pval_plot <- plot_ontpval(plotting_mf,
                                ontology="MF",
-                               numerator="numDEInCat",
-                               denominator="numInCat")
+                               numerator="num_de",
+                               denominator="num_cat")
 
   plotting_bp[["score"]] <- plotting_bp[["numDEInCat"]] / plotting_bp[["numInCat"]]
   new_order <- order(plotting_bp[["score"]], decreasing=FALSE)
@@ -156,8 +157,9 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
   plotting_bp <- plotting_bp[plotting_bp[["over_represented_pvalue"]] <= cutoff, ]
   plotting_bp <- plotting_bp[plotting_bp[["numInCat"]] >= mincat, ]
   plotting_bp <- tail(plotting_bp, n=n)
-  plotting_bp <- plotting_bp[, c("term", "over_represented_pvalue", "score")]
-  colnames(plotting_bp) <- c("term", "pvalue", "score")
+  plotting_bp <- plotting_bp[, c("term", "over_represented_pvalue", "score",
+                                 "numDEInCat", "numInCat")]
+  colnames(plotting_bp) <- c("term", "pvalue", "score", "num_de", "num_cat")
   plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]],
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))
@@ -173,8 +175,9 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
   plotting_cc <- plotting_cc[plotting_cc[["over_represented_pvalue"]] <= cutoff, ]
   plotting_cc <- plotting_cc[plotting_cc[["numInCat"]] >= mincat, ]
   plotting_cc <- head(plotting_cc, n=n)
-  plotting_cc <- plotting_cc[, c("term", "over_represented_pvalue", "score")]
-  colnames(plotting_cc) <- c("term", "pvalue", "score")
+  plotting_cc <- plotting_cc[, c("term", "over_represented_pvalue", "score",
+                                 "numDEInCat", "numInCat")]
+  colnames(plotting_cc) <- c("term", "pvalue", "score", "num_de", "num_cat")
   plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]],
                                                        wrapped_width,
                                                        simplify=FALSE), paste, collapse="\n"))

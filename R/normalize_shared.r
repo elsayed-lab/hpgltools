@@ -461,7 +461,6 @@ hpgl_norm <- function(data, ...) {
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
     count_table <- do_batch(count_table, ...)
-    count_table <- do_batch(count_table)
   }
   transformed_counts <- NULL
   transform <- "raw"

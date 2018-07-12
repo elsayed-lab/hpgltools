@@ -6,7 +6,7 @@
 \usage{
 plot_density(data, colors = NULL, sample_names = NULL,
   position = "identity", direct = TRUE, fill = NULL, title = NULL,
-  scale = NULL, colors_by = "condition")
+  scale = NULL, colors_by = "condition", ...)
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}
@@ -26,9 +26,11 @@ plot_density(data, colors = NULL, sample_names = NULL,
 \item{scale}{Plot on the log scale?}
 
 \item{colors_by}{Factor for coloring the lines}
+
+\item{...}{sometimes extra arguments might come from graph_metrics()}
 }
 \value{
-Ggplot2 density plot!
+ggplot2 density plot!
 }
 \description{
 Density plots and boxplots are cousins and provide very similar views of data distributions.

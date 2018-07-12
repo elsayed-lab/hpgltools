@@ -17,6 +17,8 @@ test_that("Did the gene lengths come out?", {
     expect_equal(expected_lengths, actual_lengths)
 })
 
+## I am not sure why, but these tests are failing when I do not run them interactively...
+## But when I run them myself, no problems...
 expected_ids <- c("FBgn0041711", "FBgn0041711", "FBgn0041711",
                   "FBgn0041711", "FBgn0032283", "FBgn0042110")
 actual_ids <- head(dmel_go[["go"]][["ID"]])

@@ -27,7 +27,7 @@
 #' @export
 simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, universe_merge="id",
                            second_merge_try="locus_tag", species="fun", pcutoff=0.1,
-                           conditional=FALSE, categorysize=NULL,
+                           conditional=FALSE, categorysize=NULL, gff_id="ID",
                            gff_type="cds", excel=NULL, ...) {
   ## The import(gff) is being used for this primarily because it uses integers for the rownames
   ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
@@ -39,7 +39,7 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
   } else if (is.null(gff)) {
     annotation <- gff_df
   } else {
-    annotation <- load_gff_annotations(gff, type=gff_type)
+    annotation <- load_gff_annotations(gff, type=gff_type, id_col=gff_id)
   }
   colnames(annotation) <- tolower(colnames(annotation))
   colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
@@ -75,7 +75,8 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
             sum(annotation[["type"]] == type), " annotations.")
   }
 
-  annotation <- annotation[annotation[["type"]] == gff_type, ]
+  annotation_idx <- annotation[["type"]] == gff_type
+  annotation <- annotation[annotation_idx, ]
   message("simple_gostats(): the current annotations has: ", nrow(annotation),
           " rows and ", ncol(annotation), " columns.")
   annotation[, universe_merge] <- make.names(annotation[, universe_merge], unique=TRUE)

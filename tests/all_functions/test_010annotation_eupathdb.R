@@ -16,19 +16,18 @@ test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)
 })
 
-## You know what, making all of these will take days, just pull a random 2
-random_org <- try(random::randomNumbers(n=1, min=1, max=nrow(testing), col=1), silent=TRUE)
-chosen <- 1
-if (class(random_org) == "try-error") {
-  chosen <- sample(1:nrow(testing), 1)
-} else {
-  chosen <- random_org[, 1]
-}
-eupath_names <- testing[["Species"]]
-species <- eupath_names[chosen]
-
 do_long_tests <- FALSE
 if (isTRUE(do_long_tests)) {
+  ## You know what, making all of these will take days, just pull a random 2
+  random_org <- try(random::randomNumbers(n=1, min=1, max=nrow(testing), col=1), silent=TRUE)
+  chosen <- 1
+  if (class(random_org) == "try-error") {
+    chosen <- sample(1:nrow(testing), 1)
+  } else {
+    chosen <- random_org[, 1]
+  }
+  eupath_names <- testing[["Species"]]
+  species <- eupath_names[chosen]
   message(paste0("\nGoing to attempt making packages for: ", species))
   eupath_test <- make_eupath_organismdbi(species=species, metadata=testing, reinstall=TRUE)
   if (class(eupath_test) != "try-error") {
