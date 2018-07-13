@@ -343,10 +343,31 @@ Much(all) of the following is taken from the material in tests/testthat/test_70m
 
 ```{r circos}
 ##microbe_ids <- as.character(sm(get_microbesonline_ids("pyogenes MGAS5005")))
-mgas_df <- sm(load_microbesonline_annotations())
+## A caveat!  The new version of microbesonline changed the IDs so that they no longer
+## match my old rnaseq analysis!!  Thus I put my old gff file used for mapping into inst/
+## and will load the annotation data from that; but I will use this data to gather
+## the COG information.
+mgas_gff_df <- sm(load_gff_annotations(gff=system.file("gas.gff", package="hpgltools")))
+mgas_gff_df <- mgas_gff_df[-1, ]
+mgas_gff_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_gff_df[["locus_tag"]])
+rownames(mgas_gff_df) <- make.names(mgas_gff_df[["sysName"]], unique=TRUE)
 
-mgas_df$sysName <- gsub(pattern="SPy", replacement="M5005_Spy", x=mgas_df$sysName)
-rownames(mgas_df) <- make.names(mgas_df$sysName, unique=TRUE)
+## I need to manually set the ID now, as my SQL-based selections are failing...
+mgas_microbes_df <- sm(load_microbesonline_annotations(id=293653))
+mgas_microbes_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_microbes_df$sysName)
+rownames(mgas_microbes_df) <- make.names(mgas_microbes_df$sysName, unique=TRUE)
+
+mgas_df <- merge(x=mgas_gff_df, y=mgas_microbes_df, by="row.names")
+rownames(mgas_df) <- mgas_df[["Row.names"]]
+mgas_df <- mgas_df[, -1]
+colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", "type",
+                       "score", "phase", "ID", "Dbxref"       "Is_circular"  "gbkey"        "genome"       "mol_type"
+                       [16] "strain"       "Name"         "Note"         "gene"         "locus_tag"
+                       [21] "Parent"       "product"      "protein_id"   "transl_table" "gene_synonym"
+                       [26] "sysName.x"    "locusId"      "accession"    "GI"           "scaffoldId"
+                       [31] "start.y"      "stop"         "strand.y"     "sysName.y"    "name"
+                       [36] "desc"         "COG"          "COGFun"       "COGDesc"      "TIGRFam"
+                       [41] "TIGRRoles"    "GO"           "EC"           "ECDesc"
 
 ## First make a template configuration
 circos_test <- sm(circos_prefix())
@@ -356,11 +377,11 @@ circos_kary <- circos_karyotype("mgas", length=1895017)
 circos_plus <- circos_plus_minus(mgas_df, circos_test)
 
 circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df,
-                                 circos_test, outer=circos_plus)
+                                 cfgout=circos_test, basename="limma", outer=circos_plus)
 circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df,
-                                 circos_test, outer=circos_limma_hist)
+                                 cfgout=circos_test, basename="deseq", outer=circos_limma_hist)
 circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
-                                 circos_test, outer=circos_deseq_hist)
+                                 cfgout=circos_test, basename="edger", outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
 circos_made <- circos_make(target="mgas")
 getwd()

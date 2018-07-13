@@ -760,13 +760,14 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC", chr="chr1",
-                        color="blue", fill_color="blue", outer=0.9, width=0.08, spacing=0.0) {
+circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
+                        chr="chr1", basename="", color="blue", fill_color="blue",
+                        outer=0.9, width=0.08, spacing=0.0) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
-  full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
+  full_table <- merge(df, annot_df, by="row.names")
   if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) |
       is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
     stop("This requires columns: start, end, rownames, and datum")
@@ -774,14 +775,14 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
   full_table <- full_table[, c("start", "stop", colname)]
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_hist.conf")
+  datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_hist.conf")
   full_table[["chr"]] <- chr
   full_table <- full_table[, c("chr", "start", "stop", colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", colname, "_hist.txt")
-  message("Writing data file: ", data_filename, " with the ", colname, " column.")
+  data_filename <- paste0(data_prefix, "_", basename, colname, "_hist.txt")
+  message("Writing data file: ", data_filename, " with the ", basename, colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
@@ -840,7 +841,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
 #' @return a kitten
 #' @export
-circos_make <- function(target="", output="circos/Makefile", circos="circos") {
+circos_make <- function(target="", output="circos/Makefile", circos="circos", verbose=FALSE) {
   circos_dir <- dirname(output)
   if (!file.exists(circos_dir)) {
     message("The circos directory does not exist, creating: ", circos_dir)

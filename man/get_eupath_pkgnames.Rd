@@ -5,7 +5,7 @@
 \title{Generate standardized package names for the various eupathdb species.}
 \usage{
 get_eupath_pkgnames(species = "Coprinosis.cinerea.okayama7#130",
-  metadata = NULL, ...)
+  version = NULL, metadata = NULL, ...)
 }
 \arguments{
 \item{species}{Guess.}

@@ -5,8 +5,8 @@
 \title{Generate a BSgenome package from the eupathdb.}
 \usage{
 make_eupath_bsgenome(species = "Leishmania major strain Friedlin",
-  entry = NULL, dir = "eupathdb", reinstall = FALSE, metadata = NULL,
-  ...)
+  entry = NULL, version = NULL, dir = "eupathdb", reinstall = FALSE,
+  metadata = NULL, ...)
 }
 \arguments{
 \item{species}{Species to create.}

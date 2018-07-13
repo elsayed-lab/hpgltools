@@ -37,8 +37,9 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
     },
     "voom" = {
       libsize <- colSums(count_table)
-      model_choice <- choose_model(count_table, design[["condition"]],
-                                   design[["batch"]])
+      model_choice <- choose_model(count_table,
+                                   conditions=design[["condition"]],
+                                   batches=design[["batch"]], ...)
       fun_model <- model_choice[["chosen_model"]]
       voomed <- limma::voom(counts=count_table, design=fun_model)
       counts <- list(count_table=voomed[["E"]], libsize=libsize)

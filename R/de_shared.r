@@ -565,7 +565,10 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                          intercept=0, reverse=FALSE, contr=NULL,
                          surrogates="be", ...) {
   arglist <- list(...)
-  design <- pData(input)
+  design <- NULL
+  if (class(input) != "matrix" & class(input) != "data.frame") {
+    design <- pData(input)
+  }
   if (is.null(design)) {
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)
