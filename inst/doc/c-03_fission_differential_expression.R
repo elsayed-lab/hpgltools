@@ -114,7 +114,7 @@ tt <- please_install("biomaRt")
 available_marts <- biomaRt::listMarts(host="fungi.ensembl.org")
 available_marts
 ensembl_mart <- biomaRt::useMart("fungi_mart", host="fungi.ensembl.org")
-available_datasets <- biomaRt::listDatasets(ensembl_pombe)
+available_datasets <- biomaRt::listDatasets(ensembl_mart)
 pombe_hit <- grep(pattern="pombe", x=available_datasets[["description"]])
 pombe_name <- available_datasets[pombe_hit, "dataset"]
 pombe_mart <- biomaRt::useDataset(pombe_name, mart=ensembl_mart)
@@ -186,11 +186,14 @@ goseq_result$pvalue_plots$bpp_plot
 #  cp_result[["pvalue_plots"]][["ego_all_mf"]]
 #  ## Yay bar plots!
 
-## ----test_tp, eval=FALSE-------------------------------------------------
-#  ## Get rid of those stupid terminal .1s.
-#  rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
-#  pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
-#  tp_result <- sm(simple_topgo(sig_genes=test_genes, go_db=pombe_goids, pval_column="limma_adjp"))
+## ----test_tp-------------------------------------------------------------
+## Get rid of those stupid terminal .1s.
+rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
+pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
+tp_result <- sm(simple_topgo(sig_genes=test_genes, go_db=pombe_goids, pval_column="limma_adjp"))
+
+tp_result[["pvalue_plots"]][["mfp_plot_over"]]
+tp_result[["pvalue_plots"]][["bpp_plot_over"]]
 
 ## ----gst_test, eval=FALSE------------------------------------------------
 #  ## Get rid of those stupid terminal .1s.
