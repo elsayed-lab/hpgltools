@@ -118,6 +118,123 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   return(retlist)
 }
 
+#' Read a bunch of mzXML files to acquire their metadata.
+#'
+#' I have had difficulties getting the full set of correct parameters for a
+#' DDA/DIA experiment.  After some poking, I eventually found most of these
+#' required prameters in the mzXML raw files.  Ergo, this function uses them.
+#'
+#' @param metadata  Data frame describing the samples, including the mzXML
+#'   filenames.
+#' @param write_windows  Write out SWATH window frames.
+#' @param id_column  What column in the sample sheet provides the ID for the samples?
+#' @param parallel  Perform operations using an R foreach cluster?
+#' @param savefile  If not null, save the resulting data structure to an rda file.
+#' @param ... Extra arguments, presumably color palettes and column names and
+#'   stuff like that.
+#' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
+#' @export
+extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
+                               parallel=TRUE, savefile=NULL, ...) {
+  arglist <- list(...)
+
+  ## Add a little of the code from create_expt to include some design information in the returned
+  ## data structure.
+
+  ## Since I am using this code now in two places, if I can use it without changes, I will
+  ## split it into its own function so make changes in one place happen in both
+  ## but until I can ensure to myself that it is functional in both contexts I will not.
+  ## Palette for colors when auto-chosen
+  chosen_palette <- "Dark2"
+  if (!is.null(arglist[["palette"]])) {
+    chosen_palette <- arglist[["palette"]]
+  }
+
+  sample_definitions <- data.frame()
+  if (class(metadata) == "data.frame") {
+    sample_definitions <- metadata
+  } else {
+      sample_definitions <- extract_metadata(metadata, ...)
+      ## sample_definitions <- extract_metadata(metadata)
+  }
+
+  file_column <- "file"
+  if (!is.null(arglist[["file_column"]])) {
+      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
+      ## tables / sample in one sheet.
+  }
+
+  sample_column <- "sampleid"
+  if (!is.null(arglist[["sample_column"]])) {
+      sample_column <- arglist[["sample_column"]]
+      sample_column <- tolower(sample_column)
+      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+  }
+
+  chosen_colors <- generate_expt_colors(sample_definitions, ...)
+  ## chosen_colors <- generate_expt_colors(sample_definitions)
+  meta <- sample_definitions[, c("sampleid", file_column)]
+  colnames(meta) <- c("id", "file")
+  existing_files <- complete.cases(meta[["file"]])
+  if (sum(existing_files) != nrow(meta)) {
+    warning("It appears that some files are missing in the metadata.")
+  }
+  meta <- meta[existing_files, ]
+
+  ## Set up the 'cluster' and process the mzXML files.
+  returns <- list()
+  res <- list()
+  num_files <- nrow(meta)
+  if (isTRUE(parallel)) {
+    tt <- sm(requireNamespace("parallel"))
+    tt <- sm(requireNamespace("doParallel"))
+    tt <- sm(requireNamespace("iterators"))
+    tt <- sm(requireNamespace("foreach"))
+    tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
+    ## cores <- parallel::detectCores() / 2
+    cores <- 4
+    cl <- parallel::makeCluster(cores)
+    doSNOW::registerDoSNOW(cl)
+    bar <- utils::txtProgressBar(max=num_files, style=3)
+    progress <- function(n) {
+      setTxtProgressBar(bar, n)
+    }
+    pb_opts <- list(progress=progress)
+    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
+                   .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
+      file <- meta[i, "file"]
+      id <- meta[i, "id"]
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        returns[[file]] <- file_result
+      }
+    }
+    close(bar)
+    parallel::stopCluster(cl)
+  } else {
+    for (i in 1:num_files) {
+      file <- meta[i, "file"]
+      id <- meta[i, "id"]
+      file_result <- try(extract_scan_data(file, id=id))
+      if (class(file_result) != "try-error") {
+        res[[file]] <- file_result
+      }
+    }
+  }
+  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
+  names(res) <- rownames(sample_definitions)
+
+  retlist <- list(
+    "colors" = chosen_colors,
+    "metadata" = sample_definitions,
+    "sample_data" = res)
+  if (!is.null(savefile)) {
+    mzxml_data <- retlist
+    save_result <- try(save(list = c("mzxml_data"), file=savefile), silent=TRUE)
+  }
+  return(retlist)
+}
+
 #' Get some data from a peptideprophet run.
 #
 #' I am not sure what if any parameters this should have, but it seeks to
@@ -335,123 +452,6 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   return(result)
 }
 
-#' Read a bunch of mzXML files to acquire their metadata.
-#'
-#' I have had difficulties getting the full set of correct parameters for a
-#' DDA/DIA experiment.  After some poking, I eventually found most of these
-#' required prameters in the mzXML raw files.  Ergo, this function uses them.
-#'
-#' @param metadata  Data frame describing the samples, including the mzXML
-#'   filenames.
-#' @param write_windows  Write out SWATH window frames.
-#' @param id_column  What column in the sample sheet provides the ID for the samples?
-#' @param parallel  Perform operations using an R foreach cluster?
-#' @param savefile  If not null, save the resulting data structure to an rda file.
-#' @param ... Extra arguments, presumably color palettes and column names and
-#'   stuff like that.
-#' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
-#' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
-                               parallel=TRUE, savefile=NULL, ...) {
-  arglist <- list(...)
-
-  ## Add a little of the code from create_expt to include some design information in the returned
-  ## data structure.
-
-  ## Since I am using this code now in two places, if I can use it without changes, I will
-  ## split it into its own function so make changes in one place happen in both
-  ## but until I can ensure to myself that it is functional in both contexts I will not.
-  ## Palette for colors when auto-chosen
-  chosen_palette <- "Dark2"
-  if (!is.null(arglist[["palette"]])) {
-    chosen_palette <- arglist[["palette"]]
-  }
-
-  sample_definitions <- data.frame()
-  if (class(metadata) == "data.frame") {
-    sample_definitions <- metadata
-  } else {
-      sample_definitions <- extract_metadata(metadata, ...)
-      ## sample_definitions <- extract_metadata(metadata)
-  }
-
-  file_column <- "file"
-  if (!is.null(arglist[["file_column"]])) {
-      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-      ## tables / sample in one sheet.
-  }
-
-  sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
-      sample_column <- arglist[["sample_column"]]
-      sample_column <- tolower(sample_column)
-      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
-
-  chosen_colors <- generate_expt_colors(sample_definitions, ...)
-  ## chosen_colors <- generate_expt_colors(sample_definitions)
-  meta <- sample_definitions[, c("sampleid", file_column)]
-  colnames(meta) <- c("id", "file")
-  existing_files <- complete.cases(meta[["file"]])
-  if (sum(existing_files) != nrow(meta)) {
-    warning("It appears that some files are missing in the metadata.")
-  }
-  meta <- meta[existing_files, ]
-
-  ## Set up the 'cluster' and process the mzXML files.
-  returns <- list()
-  res <- list()
-  num_files <- nrow(meta)
-  if (isTRUE(parallel)) {
-    tt <- sm(requireNamespace("parallel"))
-    tt <- sm(requireNamespace("doParallel"))
-    tt <- sm(requireNamespace("iterators"))
-    tt <- sm(requireNamespace("foreach"))
-    tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
-    ## cores <- parallel::detectCores() / 2
-    cores <- 4
-    cl <- parallel::makeCluster(cores)
-    doSNOW::registerDoSNOW(cl)
-    bar <- utils::txtProgressBar(max=num_files, style=3)
-    progress <- function(n) {
-      setTxtProgressBar(bar, n)
-    }
-    pb_opts <- list(progress=progress)
-    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
-                   .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
-      file <- meta[i, "file"]
-      id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id))
-      if (class(file_result) != "try-error") {
-        returns[[file]] <- file_result
-      }
-    }
-    close(bar)
-    parallel::stopCluster(cl)
-  } else {
-    for (i in 1:num_files) {
-      file <- meta[i, "file"]
-      id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id))
-      if (class(file_result) != "try-error") {
-        res[[file]] <- file_result
-      }
-    }
-  }
-  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
-  names(res) <- rownames(sample_definitions)
-
-  retlist <- list(
-    "colors" = chosen_colors,
-    "metadata" = sample_definitions,
-    "sample_data" = res)
-  if (!is.null(savefile)) {
-    mzxml_data <- retlist
-    save_result <- try(save(list = c("mzxml_data"), file=savefile), silent=TRUE)
-  }
-  return(retlist)
-}
-
 #' Read a bunch of scored swath outputs from pyprophet to acquire their metrics.
 #'
 #' This function is mostly cribbed from the other extract_ functions in this file.
@@ -548,167 +548,6 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     pyprophet_data <- retlist
     save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
   }
-  return(retlist)
-}
-
-#' Parse the difficult thermo fisher xlsx file.
-#'
-#' The Thermo(TM) workflow has as its default a fascinatingly horrible excel
-#' output.  This function parses that into a series of data frames.
-#'
-#' @param xlsx_file  The input xlsx file
-#' @param test_row  A single row in the xlsx file to use for testing, as I have
-#'   not yet seen two of these accursed files which had the same headers.
-#' @return  List containing the protein names, group data, protein dataframe,
-#'   and peptide dataframe.
-#' @export
-read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
-  old_options <- options(java.parameters="-Xmx20G")
-  message("Reading ", xlsx_file)
-  result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
-  group_data <- list()
-  bar <- utils::txtProgressBar(style=3)
-  for (r in 1:nrow(result)) {
-    row <- as.data.frame(result[r, ])
-    row[, is.na(row)] <- ""
-    pct_done <- r / nrow(result)
-    setTxtProgressBar(bar, pct_done)
-    ## The following 3 stanzas handle the creation of the levels of our data structure
-    ## The first defines the protein group
-    if (row[, 1] == "Checked") {
-      group_colnames <- as.character(row)
-      group_keepers <- !grepl(pattern="^$", x=group_colnames)
-      group_keepers[1] <- FALSE
-      group_colnames <- group_colnames[group_keepers]
-      next
-    }
-    ## When the 2nd column is 'Checked', then this defines a new protein in the group.
-    if (row[, 2] == "Checked") {
-      protein_colnames <- as.character(row)
-      protein_keepers <- !grepl(pattern="^$", x=protein_colnames)
-      protein_keepers[2] <- FALSE
-      protein_colnames <- protein_colnames[protein_keepers]
-      next
-    }
-    ## When the 3rd column is 'Checked', then this starts a peptide definition
-    if (row[, 3] == "Checked") {
-      peptide_colnames <- as.character(row)
-      peptide_keepers <- !grepl(pattern="^$", x=peptide_colnames)
-      peptide_keepers[3] <- FALSE
-      peptide_colnames <- peptide_colnames[peptide_keepers]
-      next
-    }
-    ## Once the column names for the data are defined, we consider how to
-    ## Fill in the actual data, the protein group is probably the least interesting.
-    if (row[, 1] == FALSE | row[, 1] == TRUE) {
-      group_information <- row[group_keepers]
-      colnames(group_information) <- group_colnames
-      group_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
-                                       replacement="\\1",
-                                       x=group_information[["Group Description"]])
-      group_accession <- group_information[["Protein Group ID"]]
-      group_list <- list(
-        "summary" = group_information,
-        "data" = list())
-      group_data[[group_accession]] <- group_list
-      next
-    }
-    ## When the 2nd column is FALSE, then this defined a protein in the group.
-    ## The protein data structure is likely the most interesting.
-    if (row[, 2] == FALSE | row[, 2] == TRUE) {
-      protein_information <- row[protein_keepers]
-      colnames(protein_information) <- protein_colnames
-      protein_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
-                                         replacement="\\1",
-                                         x=protein_information[["Description"]])
-      protein_accession <- protein_information[["Accession"]]
-      protein_list <- list(
-        "summary" = protein_information,
-        "data" = data.frame())
-      group_data[[group_accession]][["data"]][[protein_accession]] <- protein_list
-      next
-    }
-    ## When the 3rd group is FALSE, then this adds a peptide.
-    ## The peptide data structure is the most detailed, but probably not the most interesting.
-    if (row[, 3] == FALSE | row[, 3] == TRUE) {
-      peptide_information <- row[peptide_keepers]
-      colnames(peptide_information) <- peptide_colnames
-      current <- group_data[[group_accession]][["data"]][[protein_accession]][["data"]]
-      new <- rbind(current, peptide_information)
-      group_data[[group_accession]][["data"]][[protein_accession]][["data"]] <- new
-      next
-    }
-  } ## End iterating over ever row of this unholy stupid data structure.
-  close(bar)
-  message("Finished parsing, reorganizing the protein data.")
-
-  protein_df <- data.frame()
-  peptide_df <- data.frame()
-  protein_names <- c()
-  message("Starting to iterate over ", length(group_data),  " groups.")
-  bar <- utils::txtProgressBar(style=3)
-  for (g in 1:length(group_data)) {
-    pct_done <- g / length(group_data)
-    setTxtProgressBar(bar, pct_done)
-    group <- as.character(names(group_data)[g])
-    protein_group <- group_data[[group]][["data"]]
-    protein_accessions <- names(protein_group)
-    for (p in 1:length(protein_accessions)) {
-      protein <- protein_accessions[p]
-      protein_names <- c(protein_names, protein)
-      protein_summary <- group_data[[group]][["data"]][[protein]][["summary"]]
-      protein_df <- rbind(protein_df, protein_summary)
-      peptide_data <- group_data[[group]][["data"]][[protein]][["data"]]
-      peptide_df <- rbind(peptide_df, peptide_data)
-    }
-  } ## End of the for loop
-  close(bar)
-
-  current_colnames <- colnames(protein_df)
-  current_colnames <- tolower(current_colnames)
-  ## percent signs are stupid in columns.
-  current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
-  ## as are spaces.
-  current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
-  ## A bunch of columns have redundant adjectives.
-  current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
-  ## Extra text in a column name is useless
-  current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
-  ## Get rid of a bunch of doofusy punctuation.
-  current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
-  ## At this point we should not have any leading underscores.
-  current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
-  ## Now should we have any double underscores.
-  current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
-  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
-  current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
-  current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
-  current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
-  colnames(protein_df) <- current_colnames
-
-  ## Now make sure the columns which should be numeric, are numeric.
-  numeric_cols <- c(
-    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot", "expt_qvalue_sequest",
-    "coverage_pct", "unique_peptides", "aas", "mw_kda", "calc_pi", "score_mascot",
-    "score_sequest", "peptides_mascot", "peptides_sequest")
-  for (col in numeric_cols) {
-    if (!is.null(protein_df[[col]])) {
-      protein_df[[col]] <- as.numeric(protein_df[[col]])
-    }
-  }
-
-  ## Make sure columns which are 'found_in' are factors
-  for (col in colnames(protein_df)) {
-    if (grepl(pattern="^found_in_", x=col)) {
-      protein_df[[col]] <- as.factor(protein_df[[col]])
-    }
-  }
-
-  retlist <- list(
-    "names" = protein_names,
-    "group_data" = group_data,
-    "protein_data" = protein_df,
-    "peptide_data" = peptide_df)
   return(retlist)
 }
 
@@ -996,8 +835,8 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
     boxplot <- boxplot + ggplot2::scale_y_log10()
   }
 
-  density <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x=column, colour="sample")) +
-    ggplot2::geom_density(ggplot2::aes_string(x=column, y="..count..", fill="sample"),
+  density <- ggplot(data=plot_df, ggplot2::aes_string(x=column, colour="sample")) +
+    ggplot2::geom_density(aes_string(x=column, y="..count..", fill="sample"),
                           position="identity", na.rm=TRUE) +
     ggplot2::scale_colour_manual(values=as.character(colors)) +
     ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1)) +
@@ -1006,11 +845,15 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    legend.key.size=ggplot2::unit(0.3, "cm"))
-
   density <- directlabels::direct.label(density)
+
+  dotboxplot <- boxplot +
+    ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
+                         size=2, alpha=0.2)
 
   retlist <- list(
     "boxplot" = boxplot,
+    "dotboxplot" = dotboxplot,
     "density" = density)
   return(retlist)
 }
@@ -1241,6 +1084,204 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
   }
 
   return(a_plot)
+}
+
+#' Parse the difficult thermo fisher xlsx file.
+#'
+#' The Thermo(TM) workflow has as its default a fascinatingly horrible excel
+#' output.  This function parses that into a series of data frames.
+#'
+#' @param xlsx_file  The input xlsx file
+#' @param test_row  A single row in the xlsx file to use for testing, as I have
+#'   not yet seen two of these accursed files which had the same headers.
+#' @return  List containing the protein names, group data, protein dataframe,
+#'   and peptide dataframe.
+#' @export
+read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
+  old_options <- options(java.parameters="-Xmx20G")
+  message("Reading ", xlsx_file)
+  result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
+  group_data <- list()
+  bar <- utils::txtProgressBar(style=3)
+  for (r in 1:nrow(result)) {
+    row <- as.data.frame(result[r, ])
+    row[, is.na(row)] <- ""
+    pct_done <- r / nrow(result)
+    setTxtProgressBar(bar, pct_done)
+    ## The following 3 stanzas handle the creation of the levels of our data structure
+    ## The first defines the protein group
+    if (row[, 1] == "Checked") {
+      group_colnames <- as.character(row)
+      group_keepers <- !grepl(pattern="^$", x=group_colnames)
+      group_keepers[1] <- FALSE
+      group_colnames <- group_colnames[group_keepers]
+      next
+    }
+    ## When the 2nd column is 'Checked', then this defines a new protein in the group.
+    if (row[, 2] == "Checked") {
+      protein_colnames <- as.character(row)
+      protein_keepers <- !grepl(pattern="^$", x=protein_colnames)
+      protein_keepers[2] <- FALSE
+      protein_colnames <- protein_colnames[protein_keepers]
+      next
+    }
+    ## When the 3rd column is 'Checked', then this starts a peptide definition
+    if (row[, 3] == "Checked") {
+      peptide_colnames <- as.character(row)
+      peptide_keepers <- !grepl(pattern="^$", x=peptide_colnames)
+      peptide_keepers[3] <- FALSE
+      peptide_colnames <- peptide_colnames[peptide_keepers]
+      next
+    }
+    ## Once the column names for the data are defined, we consider how to
+    ## Fill in the actual data, the protein group is probably the least interesting.
+    if (row[, 1] == FALSE | row[, 1] == TRUE) {
+      group_information <- row[group_keepers]
+      colnames(group_information) <- group_colnames
+      group_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
+                                       replacement="\\1",
+                                       x=group_information[["Group Description"]])
+      group_accession <- group_information[["Protein Group ID"]]
+      group_list <- list(
+        "summary" = group_information,
+        "data" = list())
+      group_data[[group_accession]] <- group_list
+      next
+    }
+    ## When the 2nd column is FALSE, then this defined a protein in the group.
+    ## The protein data structure is likely the most interesting.
+    if (row[, 2] == FALSE | row[, 2] == TRUE) {
+      protein_information <- row[protein_keepers]
+      colnames(protein_information) <- protein_colnames
+      protein_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
+                                         replacement="\\1",
+                                         x=protein_information[["Description"]])
+      protein_accession <- protein_information[["Accession"]]
+      protein_list <- list(
+        "summary" = protein_information,
+        "data" = data.frame())
+      group_data[[group_accession]][["data"]][[protein_accession]] <- protein_list
+      next
+    }
+    ## When the 3rd group is FALSE, then this adds a peptide.
+    ## The peptide data structure is the most detailed, but probably not the most interesting.
+    if (row[, 3] == FALSE | row[, 3] == TRUE) {
+      peptide_information <- row[peptide_keepers]
+      colnames(peptide_information) <- peptide_colnames
+      current <- group_data[[group_accession]][["data"]][[protein_accession]][["data"]]
+      new <- rbind(current, peptide_information)
+      group_data[[group_accession]][["data"]][[protein_accession]][["data"]] <- new
+      next
+    }
+  } ## End iterating over ever row of this unholy stupid data structure.
+  close(bar)
+  message("Finished parsing, reorganizing the protein data.")
+
+  protein_df <- data.frame()
+  peptide_df <- data.frame()
+  protein_names <- c()
+  message("Starting to iterate over ", length(group_data),  " groups.")
+  bar <- utils::txtProgressBar(style=3)
+  for (g in 1:length(group_data)) {
+    pct_done <- g / length(group_data)
+    setTxtProgressBar(bar, pct_done)
+    group <- as.character(names(group_data)[g])
+    protein_group <- group_data[[group]][["data"]]
+    protein_accessions <- names(protein_group)
+    for (p in 1:length(protein_accessions)) {
+      protein <- protein_accessions[p]
+      protein_names <- c(protein_names, protein)
+      protein_summary <- group_data[[group]][["data"]][[protein]][["summary"]]
+      protein_df <- rbind(protein_df, protein_summary)
+      peptide_data <- group_data[[group]][["data"]][[protein]][["data"]]
+      peptide_df <- rbind(peptide_df, peptide_data)
+    }
+  } ## End of the for loop
+  close(bar)
+
+  current_colnames <- colnames(protein_df)
+  current_colnames <- tolower(current_colnames)
+  ## percent signs are stupid in columns.
+  current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
+  ## as are spaces.
+  current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
+  ## A bunch of columns have redundant adjectives.
+  current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
+  ## Extra text in a column name is useless
+  current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+  ## Get rid of a bunch of doofusy punctuation.
+  current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+  ## At this point we should not have any leading underscores.
+  current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
+  ## Now should we have any double underscores.
+  current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
+  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
+  current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
+  current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
+  current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
+  colnames(protein_df) <- current_colnames
+
+  ## Now make sure the columns which should be numeric, are numeric.
+  numeric_cols <- c(
+    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot", "expt_qvalue_sequest",
+    "coverage_pct", "unique_peptides", "aas", "mw_kda", "calc_pi", "score_mascot",
+    "score_sequest", "peptides_mascot", "peptides_sequest")
+  for (col in numeric_cols) {
+    if (!is.null(protein_df[[col]])) {
+      protein_df[[col]] <- as.numeric(protein_df[[col]])
+    }
+  }
+
+  ## Make sure columns which are 'found_in' are factors
+  for (col in colnames(protein_df)) {
+    if (grepl(pattern="^found_in_", x=col)) {
+      protein_df[[col]] <- as.factor(protein_df[[col]])
+    }
+  }
+
+  retlist <- list(
+    "names" = protein_names,
+    "group_data" = group_data,
+    "protein_data" = protein_df,
+    "peptide_data" = peptide_df)
+  return(retlist)
+}
+
+subset_pyprophet_data <- function(lst, subset=NULL, column="protein_id", operator="in") {
+  data <- lst[["sample_data"]]
+  ## First, I want to get the simple Rv ID from the data, this is annoyingly Tb
+  ## specific and should be removed or in some way made generic for other data.
+  for (c in 1:length(data)) {
+    datum <- data[[c]]
+    datum[["protein_id"]] <- gsub(x=datum[["proteinname"]], pattern="^1/",
+                                  replacement="")
+    datum[["protein_id"]] <- gsub(x=datum[["protein_id"]], pattern="_.*$",
+                                  replacement="")
+    data[[c]] <- datum
+  }
+
+  ## Now, separately subset the data to find the proteins of interest.
+  for (c in 1:length(data)) {
+    datum <- data[[c]]
+    datum_idx <- rep(TRUE, nrow(datum))
+    if (operator == "in") {
+      datum_idx <- datum[[column]] %in% subset
+    } else if (operator == "equals") {
+      datum_idx <- datum[[column]] == subset
+    } else if (operator == "gt") {
+      datum_idx <- datum[[column]] > subset
+    } else if (operator == "lt") {
+      datum_idx <- datum[[column]] < subset
+    } else {
+      message("I do not know this operator, doing nothing.")
+      return(lst)
+    }
+    datum <- datum[datum_idx, ]
+    data[[c]] <- datum
+  }
+  lst[["sample_data"]] <- data
+
+  return(lst)
 }
 
 ## EOF

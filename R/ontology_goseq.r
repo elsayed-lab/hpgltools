@@ -64,7 +64,6 @@ goseq_table <- function(df, file=NULL) {
 #' @param doplot  Include pwf plots?
 #' @param adjust  Minimum adjusted pvalue for 'significant.'
 #' @param pvalue  Minimum pvalue for 'significant.'
-#' @param qvalue  Minimum qvalue for 'significant.'
 #' @param length_keytype  Keytype to provide to extract lengths
 #' @param go_keytype  Keytype to provide to extract go IDs
 #' @param goseq_method  Statistical test for goseq to use.
@@ -91,7 +90,7 @@ goseq_table <- function(df, file=NULL) {
 #' }
 #' @export
 simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
-                         adjust=0.1, pvalue=0.1, qvalue=0.1,
+                         adjust=0.1, pvalue=0.1,
                          length_keytype="transcripts", go_keytype="entrezid",
                          goseq_method="Wallenius", padjust_method="BH",
                          bioc_length_db="ensGene", excel=NULL,
@@ -300,7 +299,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   message("simple_goseq(): Filling godata with terms, this is slow.")
   godata_interesting <- goseq_table(godata_interesting)
   message("simple_goseq(): Making pvalue plots for the ontologies.")
-  pvalue_plots <- plot_goseq_pval(godata)
+  pvalue_plots <- plot_goseq_pval(godata, ...)
 
   mf_subset <- godata[godata[["ontology"]] == "MF", ]
   rownames(mf_subset) <- mf_subset[["category"]]

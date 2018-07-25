@@ -133,7 +133,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     chosen_annotations <- c(chosen_annotations, length_requests)
   } else {
     ## Do not include the lengths
-    biomart_annotations <- as.data.frame(biomart_annotations)
+    biomart_annotations <- as.data.frame(gene_annotations)
   }
   ## rownames(biomart_annotations) <- make.names(biomart_annotations[, "transcriptID"], unique=TRUE)
   ## It is not valid to arbitrarily set it to 'transcriptID' because we cannot guarantee that will
@@ -155,9 +155,13 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   ## Thus, if one wishes to get rid of these putatively spurious annotations, we should be
   ## able to grep -v chromosomes with MHC in them.
   if (isTRUE(drop_haplotypes)) {
-    message("Dropping haplotype chromosome annotations, set drop_haplotypes=FALSE if this is bad.")
-    good_idx <- grepl(x=biomart_annotations[["chromosome_name"]], pattern="^[[:alnum:]]{1,2}$")
-    biomart_annotations <- biomart_annotations[good_idx, ]
+    if (!is.null(biomart_annotations[["chromosome_name"]])) {
+      message("Dropping haplotype chromosome annotations, set drop_haplotypes=FALSE if this is bad.")
+      good_idx <- grepl(x=biomart_annotations[["chromosome_name"]], pattern="^[[:alnum:]]{1,2}$")
+      biomart_annotations <- biomart_annotations[good_idx, ]
+    } else {
+      message("drop_haplotypes is true, but there is no chromosome information.")
+    }
   }
 
   if (isTRUE(do_save)) {
@@ -171,6 +175,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     "host" = host,
     "mart_name" = used_mart,
     "rows" = chosen_annotations,
+    "possible_attribs" = available_attribs,
     "dataset" = chosen_dataset
   )
   return(retlist)

@@ -4,7 +4,8 @@
 \alias{circos_make}
 \title{Write a simple makefile for circos.}
 \usage{
-circos_make(target = "", output = "circos/Makefile", circos = "circos")
+circos_make(target = "", output = "circos/Makefile", circos = "circos",
+  verbose = FALSE)
 }
 \arguments{
 \item{target}{Default make target.}

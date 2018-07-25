@@ -49,16 +49,18 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- data[["design"]]
+    design <- fdata(expt)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
       plot_colors <- NULL
     }
     plot_names <- data[["samplenames"]]
-    data <- exprs(data)
+    data <- exprs(expt)
   } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
+    expt <- data
+    data <- exprs(expt)
+    design <- fData(expt)
   } else if (data_class == "list") {
     data <- data[["count_table"]]
     if (is.null(data)) {
@@ -162,7 +164,6 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   included_batches <- as.factor(as.character(design[[batch_column]]))
   included_conditions <- as.factor(as.character(design[[cond_column]]))
 
-
   tsne_data <- data.frame(
     "sampleid" = as.character(design[["sampleid"]]),
     "condition" = as.character(design[[cond_column]]),
@@ -250,16 +251,18 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- data[["design"]]
+    design <- pData(expt)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
       plot_colors <- NULL
     }
     plot_names <- data[["samplenames"]]
-    data <- exprs(data)
+    data <- exprs(expt)
   } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
+    expt <- data
+    design <- pData(expt)
+    data <- exprs(expt)
   } else if (data_class == "list") {
     data <- data[["count_table"]]
     if (is.null(data)) {
@@ -285,8 +288,13 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
 
   ## If nothing has given this some colors for the plot, make them up now.
   if (is.null(plot_colors)) {
-    plot_colors <- as.numeric(as.factor(design[[cond_column]]))
-    plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
+    if (is.null(design[[cond_column]])) {
+      plot_colors <- as.numeric(as.factor(colnames(data)))
+      plot_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(length(plot_colors))
+    } else {
+      plot_colors <- as.numeric(as.factor(design[[cond_column]]))
+      plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
+    }
   }
 
   ## Similarly, if there is no information which may be used as a design yet, make one up.
@@ -354,7 +362,8 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
                       theta=theta,
                       perplexity=perplexity)
   sne_df <- as.data.frame(sne[["Y"]])
-  rownames(sne_df) <- rownames(design)
+  ## Changing these assignments because of my new attempts to use GSVA
+  rownames(sne_df) <- colnames(data)
   sne_df <- sne_df[, 1:components]
 
   ## Pull out the batches and conditions used in this plot.
@@ -363,6 +372,12 @@ plot_tsne <- function(data, design=NULL, plot_colors=NULL, seed=1,
   included_conditions <- as.factor(as.character(design[[cond_column]]))
   if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
     warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
+    tsne_residuals <- tsne_res(Y=sne[["Y"]],
+                               costs=sne[["costs"]])
+  } else if (length(levels(included_conditions)) == 0 | length(levels(included_batches)) == 0) {
+    warning("There are no conditions/batches.")
+    tsne_residuals <- tsne_res(Y=sne[["Y"]],
+                               costs=sne[["costs"]])
   } else if (length(levels(included_conditions)) == 1) {
     warning("There is only one condition, but more than one batch.
 Going to run pcRes with the batch information.")
@@ -384,16 +399,32 @@ Going to run pcRes with the batch information.")
   if (component_x > components | component_y > components) {
     stop("The components plotted must be smaller than the number of components calculated.")
   }
+
+  tsne_data <- data.frame(row.names=colnames(data))
+  tsne_data[["sampleid"]] <- rownames(tsne_data)
+  if (is.null(design[[cond_column]])) {
+    tsne_data[["condition"]] <- "undefined"
+  } else {
+    tsne_data[["condition"]] <- design[[cond_column]]
+  }
+  if (is.null(design[[batch_column]])) {
+    tsne_data[["batch"]] <- "undefined"
+    tsne_data[["batch_int"]] <- 1
+  } else {
+    tsne_data[["batch"]] <- design[[cond_column]]
+    tsne_data[["batch_int"]] <- as.integer(as.factor(tsne_data[["batch"]]))
+  }
+  if (!is.null(plot_colors)) {
+    tsne_data[["colors"]] <- as.character(plot_colors)
+  }
+  if (!is.null(label_list)) {
+    tsne_data[["labels"]] <- label_list
+  }
+
   compname_x <- paste0("Comp", component_x)
-  compname_y <- paste0("Comp", component_y)
-  tsne_data <- data.frame(
-    "sampleid" = as.character(design[["sampleid"]]),
-    "condition" = as.character(design[[cond_column]]),
-    "batch" = as.character(design[[batch_column]]),
-    "batch_int" = as.integer(as.factor(design[[batch_column]])),
-    "colors" = as.character(plot_colors),
-    "labels" = label_list)
   tsne_data[[compname_x]] <- sne_df[[paste0("V", component_x)]]
+
+  compname_y <- paste0("Comp", component_y)
   tsne_data[[compname_y]] <- sne_df[[paste0("V", component_y)]]
 
   ## Add an optional column which may be used to change the glyph sizes in the plot

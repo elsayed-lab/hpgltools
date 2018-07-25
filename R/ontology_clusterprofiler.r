@@ -142,13 +142,13 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   message("Calculating GO groups.")
   ggo_mf <- ggo_bp <- ggo_cc <- NULL
   ggo_mf <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
-                                        keyType=orgdb_from,
+                                        keyType=orgdb_to,
                                         ont="MF", level=go_level))
   ggo_bp <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
-                                        keyType=orgdb_from,
+                                        keyType=orgdb_to,
                                         ont="BP", level=go_level))
   ggo_cc <- sm(clusterProfiler::groupGO(gene=sig_gene_list, OrgDb=org,
-                                        keyType=orgdb_from,
+                                        keyType=orgdb_to,
                                         ont="CC", level=go_level))
 
   group_go <- list(
@@ -168,31 +168,30 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "sig_bp" = NULL,
     "all_cc" = NULL,
     "sig_cc" = NULL)
-  ego_all_mf <- ego_sig_mf <- ego_all_bp <- ego_sig_bp <- ego_all_cc <- ego_sig_cc <- NULL
-  ego_all_mf <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="MF", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=1.0))
-  ego_sig_mf <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="MF", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=pcutoff))
-  ego_all_bp <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="BP", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=1.0))
-  ego_sig_bp <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="BP", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=pcutoff))
-  ego_all_cc <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="CC", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=1.0))
-  ego_sig_cc <- sm(clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
-                                             OrgDb=org, ont="CC", keyType=orgdb_from,
-                                             minGSSize=min_groupsize, pAdjustMethod="BH",
-                                             pvalueCutoff=pcutoff))
+  ego_all_mf <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="MF", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=1.0)
+  ego_sig_mf <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="MF", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=pcutoff)
+  ego_all_bp <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="BP", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=1.0)
+  ego_sig_bp <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="BP", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=pcutoff)
+  ego_all_cc <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="CC", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=1.0)
+  ego_sig_cc <- clusterProfiler::enrichGO(gene=sig_gene_list, universe=universe_to,
+                                          OrgDb=org, ont="CC", keyType=orgdb_to,
+                                          minGSSize=min_groupsize, pAdjustMethod="BH",
+                                          pvalueCutoff=pcutoff)
   enrich_go <- list(
     "MF_all" = as.data.frame(ego_all_mf, stringsAsFactors=FALSE),
     "MF_sig" = as.data.frame(ego_sig_mf, stringsAsFactors=FALSE),
@@ -216,10 +215,10 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
       de_table_merged <- de_table_merged[ order(de_table_merged[[gsea_fc_column]], decreasing=FALSE), ]
     }
 
+    ## Hmm this is odd, in the previous calls, I used orgdb_to, but in this set I am using orgdb_from...
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(de_table_merged[[gsea_fc_column]])
     names(genelist) <- de_table_merged[["Row.names"]]
-    gse_all_mf <- gse_sig_mf <- gse_all_bp <- gse_sig_bp <- gse_all_cc <- gse_sig_cc <- NULL
     gse_all_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
                                             ont="MF", keyType=orgdb_from,
                                             nPerm=permutations, minGSSize=min_groupsize,

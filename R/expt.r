@@ -114,6 +114,14 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (is.null(notes)) {
     notes <- paste0("Created on ", date(), ".\n")
   }
+  ## An expressionset needs to have a Biobase::annotation() in order for GSEABase to work with it.
+  ## Reading the documentation, these are primarily used for naming the type of microarray chip used.
+  ## I am guessing
+  annotation_name <- "Fill me in with a package name containing the annotations.
+(hgu95a seems to work for gsva())."
+  if (!is.null(arglist[["annotation"]])) {
+    annotation_name <- arglist[["annotation"]]
+  }
   ## Palette for colors when auto-chosen
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["palette"]])) {
@@ -518,10 +526,10 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   experiment <- methods::new("ExpressionSet",
                              exprs=final_counts,
                              phenoData=metadata,
+                             annotation=annotation_name,
                              featureData=feature_data)
 
   Biobase::notes(experiment) <- toString(notes)
-
   ## These entries in new_expt are intended to maintain a record of
   ## the transformation status of the data, thus if we now call
   ## normalize_expt() it should change these.

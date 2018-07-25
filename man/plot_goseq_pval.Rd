@@ -5,7 +5,7 @@
 \title{Make a pvalue plot from goseq data.}
 \usage{
 plot_goseq_pval(goterms, wrapped_width = 30, cutoff = 0.1, n = 30,
-  mincat = 5, level = NULL)
+  mincat = 5, level = NULL, ...)
 }
 \arguments{
 \item{goterms}{Some data from goseq!}
@@ -19,6 +19,8 @@ plot_goseq_pval(goterms, wrapped_width = 30, cutoff = 0.1, n = 30,
 \item{mincat}{Minimum size of the category for inclusion.}
 
 \item{level}{Levels of the ontology tree to use.}
+
+\item{...}{Arguments passed from simple_goseq()}
 }
 \value{
 Plots!

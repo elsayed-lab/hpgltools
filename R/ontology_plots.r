@@ -84,12 +84,13 @@ plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denomin
 #' @param n How many groups to include?
 #' @param mincat Minimum size of the category for inclusion.
 #' @param level Levels of the ontology tree to use.
+#' @param ... Arguments passed from simple_goseq()
 #' @return Plots!
 #' @seealso \pkg{goseq} \pkg{clusterProfiler}
 #'  \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
 #' @export
 plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
-                            n=30, mincat=5, level=NULL) {
+                            n=30, mincat=5, level=NULL, ...) {
   if (!is.null(level)) {
     keepers <- data.frame()
     message("Getting all go levels.  This takes a moment.")
@@ -165,8 +166,8 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
                                                        simplify=FALSE), paste, collapse="\n"))
   bp_pval_plot <- plot_ontpval(plotting_bp,
                                ontology="BP",
-                               numerator="numDEInCat",
-                               denominator="numInCat")
+                               numerator="num_de",
+                               denominator="num_cat")
 
   plotting_cc[["score"]] <- plotting_cc[["numDEInCat"]] / plotting_cc[["numInCat"]]
   new_order <- order(plotting_cc[["score"]], decreasing=FALSE)
@@ -183,8 +184,8 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
                                                        simplify=FALSE), paste, collapse="\n"))
   cc_pval_plot <- plot_ontpval(plotting_cc,
                                ontology="CC",
-                               numerator="numDEInCat",
-                               denominator="numInCat")
+                               numerator="num_de",
+                               denominator="num_cat")
 
   pval_plots <- list(
     "mfp_plot_over" = mf_pval_plot,
