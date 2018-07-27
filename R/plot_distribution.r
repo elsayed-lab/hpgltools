@@ -71,7 +71,8 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL, scale=NULL, 
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-    ggplot2::xlab("Sample") + ggplot2::ylab("Per-gene (pseudo)count distribution")
+    ggplot2::xlab("Sample") +
+    ggplot2::ylab("Per-gene (pseudo)count distribution")
   if (!is.null(title)) {
     boxplot <- boxplot + ggplot2::ggtitle(title)
   }
@@ -175,7 +176,6 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     densityplot <- ggplot2::ggplot(data=melted,
                                    ggplot2::aes_string(x="counts", colour="sample", fill="fill"))
   }
-
   densityplot <- densityplot +
     ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"),
                           position=position, na.rm=TRUE) +
@@ -592,6 +592,137 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
     "plot" = topn_plot,
     "table" = tmpdf)
   return(retlist)
+}
+
+#' Look at the (biological)coefficient of variation/quartile coefficient of dispersion
+#' with respect to an experimental factor.
+#'
+#' I want to look at the (B)CV of some data with respect to condition/batch/whatever.
+#' This function should make that possible, with some important caveats.  The
+#' most appropriate metric  is actually the biological coefficient of variation
+#' as calculated by DESeq2/EdgeR; but the metrics I am currently taking are the
+#' simpler and less appropriate CV(sd/mean) and QCD(q3-q1/q3+q1).
+#'
+#' @param data  Expressionset/epxt to poke at.
+#' @param x_axis  Factor in the experimental design we may use to group the data
+#'   and calculate the dispersion metrics.
+#' @return List of plots showing the coefficients vs. genes along with the data.
+#' @export
+plot_variances <- function(data, x_axis="condition", ...) {
+  arglist <- list(...)
+  data = hs_expt
+  data_class <- class(data)
+  if (data_class == "expt") {
+    design <- pData(data)
+    colors <- data[["colors"]]
+    names <- data[["names"]]
+    data <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    data <- exprs(data)
+    design <- pData(data)
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  melted <- data.table::as.data.table(reshape2::melt(data))
+  if (ncol(melted) == 3) {
+    colnames(melted) <- c("gene", "sample", "exprs")
+  } else if (dim(melted)[2] == 2) {
+    colnames(melted) <- c("sample", "exprs")
+  } else {
+    stop("Could not properly melt the data.")
+  }
+
+  for (add in x_axis) {
+    if (add %in% colnames(design)) {
+      tmp_df <- as.data.frame(design[[add]])
+      colnames(tmp_df) <- add
+      tmp_df[["sample"]] <- rownames(design)
+      rownames(tmp_df) <- rownames(design)
+      melted <- merge(melted, tmp_df, by="sample")
+    } else if (add %in% colnames(melted)) {
+      message("Skipping variable: ", add, " because it is in the data.")
+    } else {
+      stop("Could not find the metadata variable: ", add)
+    }
+  }
+
+  ## The various forms of evaluation in the hadleyverse is getting ridiculous.
+  message("Naively calculating coefficient of variation and quartile dispersion with respect to ",
+          x_axis, ".")
+  cv_data <- melted %>%
+    dplyr::group_by(.data[["gene"]], .data[[x_axis]]) %>%
+    dplyr::summarize(
+             "mean_exprs" = mean(.data[["exprs"]], na.rm=TRUE),
+             "sd_exprs" = sd(.data[["exprs"]], na.rm=TRUE),
+             "q1" = quantile(.data[["exprs"]], probs=0.25),
+             "q3" = quantile(.data[["exprs"]], probs=0.75))
+  cv_data[["cv"]] <- cv_data[["sd_exprs"]] / cv_data[["mean_exprs"]]
+  cv_data[["disp"]] <- (cv_data[["q3"]] - cv_data[["q1"]]) / (cv_data[["q3"]] + cv_data[["q1"]])
+  na_idx <- is.na(cv_data[["cv"]])
+  cv_data[na_idx, "cv"] <- 0
+  na_idx <- is.na(cv_data[["disp"]])
+  cv_data[na_idx, "disp"] <- 0
+
+  ## The metrics of dispersion taken so far are not really appropriate for RNASeq distributed data.
+  ## Ideally, I would like to subset the expressionset according to the x_axis factor
+  ## and perform a DESeq2/edgeR dispersion estimate for the remaining pile of data, then
+  ## add the results to cv_data.
+  ## The following piece of code is a simple way to get the normal, pooled dispersion information.
+  ## In theory I should be able to refactor this to do what I want.
+  ## message("Using edgeR to calculate dispersions with respect to: ", x_axis)
+  ## test <- import_edger(data, design[[x_axis]])
+  ## disp_model <- model.matrix(object=as.formula(paste0("~", x_axis)), data=design)
+  ## disp_data <- edgeR::estimateDisp(test, design=disp_model, group=design[[x_axis]])
+  ## ## The problem here is that the tagwise.dispersions do not have names, I think we
+  ## ## we can assume that they are in the same order as the original rownames.
+  ## cv_data[["bcv"]] <- disp_data[["tagwise.dispersion"]]
+  ## message("Finished calculating dispersions.")
+
+  color_list <- NULL
+  if (x_axis == "condition") {
+    names(colors) <- design[, "condition"]
+    color_list <- colors
+  } else if (!is.null(arglist[["colors"]])) {
+    color_list <- arglist[["colors"]]
+  } else {
+    num_colors <- length(levels(cv_data[["x_axis"]]))
+    color_list <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(num_colors)
+    names(color_list) <- levels(cv_data[["x_axis"]])
+  }
+
+  get_mean_cv <- function(x) {
+    data.frame("y" = mean(x),
+               "label" = signif(mean(x, na.rm=TRUE), digits = 2))
+  }
+
+  y_labels <- list(
+    "cv" = "Coefficient of variation",
+    "bcv" = "Biological coefficient of variation",
+    "disp" = "Quartile coefficient of dispersion")
+  retlst <- list()
+  for (type in c("cv", "disp")) {
+    retlst[[type]] <- ggplot(cv_data, aes_string(x="x_axis", y=type)) +
+      ggplot2::geom_violin(aes_string(fill="x_axis"), width=1, scale="area") +
+      ggplot2::scale_fill_manual(values=color_list, name=x_axis) +
+      ggplot2::stat_summary(fun.data=get_mean_cv, geom="text",
+                            position=ggplot2::position_fill(vjust=-0.1)) +
+      ggplot2::theme_bw(base_size=base_size) +
+      ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                     axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+      ggplot2::ylab(y_labels[[type]]) +
+      ggplot2::xlab("")
+    if (!is.null(title)) {
+      retlst[[type]] <- retlst[[type]] + ggplot2::ggtitle(title)
+    }
+    if (!is.null(names)) {
+      retlst[[type]] <- retlst[[type]] + ggplot2::scale_x_discrete(labels=names)
+    }
+  }
+  retlst[["data"]] <- cv_data
+  return(retlst)
 }
 
 ## EOF

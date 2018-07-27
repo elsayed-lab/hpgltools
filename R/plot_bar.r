@@ -24,7 +24,7 @@
 #' }
 #' @export
 plot_libsize <- function(data, condition=NULL, colors=NULL,
-                         names=NULL, text=TRUE,
+                         names=NULL, text=TRUE, order=NULL,
                          title=NULL,  yscale=NULL, ...) {
   hpgl_env <- environment()
   arglist <- list(...)
@@ -37,16 +37,17 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
   if (!is.null(arglist[["palette"]])) {
     chosen_palette <- arglist[["palette"]]
   }
-
+  design <- NULL
   data_class <- class(data)[1]
   if (data_class == "expt") {
-    condition <- data[["design"]][["condition"]]
+    design <- pData(data)
+    condition <- design[["condition"]]
     colors <- data[["colors"]]
     names <- data[["names"]]
-    data <- exprs(data)  ## Why does this need the simplifying
-    ## method of extracting an element? (eg. data['expressionset'] does not work)
-    ## that is _really_ weird!
+    data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
+    design <- pData(data)
+    condition <- design[["condition"]]
     data <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
     data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
@@ -81,8 +82,14 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                                                      "3rd"=quantile(x=sum, probs=0.75),
                                                      "max"=max(sum)),
                                               by="condition"]
-  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors, integerp=integerp,
-                                   names=names, text=text, title=title, yscale=yscale, ...)
+  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+                                   names=names, text=text,
+                                   order=order, title=title, integerp=integerp,
+                                   yscale=yscale, ...)
+  ##libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+  ##                                 names=names, text=text,
+  ##                                 order=order, title=title, integerp=integerp,
+  ##                                 yscale=yscale)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -236,24 +243,37 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
   return(kept_plot)
 }
 
-plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL, integerp=FALSE,
-                             names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
-  hpgl_env <- environment()
+plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
+                             integerp=FALSE, order=NULL, names=NULL,
+                             text=TRUE, title=NULL, yscale=NULL, ...) {
   arglist <- list(...)
+
+  y_label <- "Library size in pseudocounts."
+  if (isTRUE(integerp)) {
+    y_label <- "Library size in counts."
+  }
+  if (!is.null(arglist[["y_label"]])) {
+    y_label <- arglist[["y_label"]]
+  }
+
   sample_df[["order"]] <- factor(sample_df[["id"]], as.character(sample_df[["id"]]))
+  if (!is.null(order)) {
+    new_df <- data.frame()
+    for (o in order) {
+      matches <- grep(pattern=o, x=sample_df[["order"]])
+      adders <- sample_df[matches, ]
+      new_df <- rbind(new_df, adders)
+    }
+    sample_df <- new_df
+    sample_df[["order"]] <- factor(sample_df[["order"]], as.character(sample_df[["order"]]))
+  }
 
   color_listing <- sample_df[, c("condition", "colors")]
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["colors"]])
   names(color_list) <- as.character(color_listing[["condition"]])
 
-  y_label <- "Library size in pseudocounts."
-  if (isTRUE(integerp)) {
-    y_label <- "Library size in counts."
-  }
-
   sample_plot <- ggplot(data=sample_df,
-                        environment=hpgl_env,
                         colour=colors,
                         aes_string(x="order",
                                    y="sum")) +

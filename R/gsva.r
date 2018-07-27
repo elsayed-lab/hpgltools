@@ -18,13 +18,11 @@
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
                         current_id="ENSEMBL", required_id="ENTREZID",
                         orgdb="org.Hs.eg.db") {
-
-  previous_file <- "02_estimation_macrophage.Rmd"
-  ver <- "20170820"
-  tmp <- sm(loadme(filename=paste0(gsub(pattern="\\.Rmd", replace="",
-                                        x=previous_file), "-v", ver, ".rda.xz")))
-  expt <- hs_expt
-
+  ##previous_file <- "02_estimation_macrophage.Rmd"
+  ##ver <- "20170820"
+  ##tmp <- sm(loadme(filename=paste0(gsub(pattern="\\.Rmd", replace="",
+  ##                                      x=previous_file), "-v", ver, ".rda.xz")))
+  ##expt <- hs_expt
   ## Make sure some data is loaded.  Assume the c2BroadSets from GSVAdata.
   sig_data <- NULL
   if (exists(datasets)) {
@@ -72,6 +70,14 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
   }
 
   gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE)
+  fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
+  fdata_df[["description"]] <- ""
+  fdata_df[["ids"]] <- ""
+  for (i in 1:length(sig_data)) {
+    fdata_df[i, "description"] <- description(sig_data[[i]])
+    fdata_df[i, "ids"] <- toString(geneIds(sig_data[[i]]))
+  }
+
   result(gsva_result)
 }
 
@@ -108,6 +114,44 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
   message("After subsetting, ", length(remaining), " entries remain.")
   remaining <- sig_data[kept_idx]
   return(remaining)
+}
+
+#' Create a metadata dataframe of msigdb data, this hopefully will be usable to
+#' fill the fData slot of a gsva returned expressionset.
+#'
+#' @param sig_data  GeneSetCollection from the broad msigdb.
+#' @param msig_xml  msig XML file downloaded from broad.
+#' @return list containing 2 data frames: all metadata from broad, and the set
+#'   matching the sig_data GeneSets.
+#' @export
+get_msigdb_metadata <- function(sig_data, msig_xml="msigdb_v6.2.xml", gsva_result=NULL) {
+  msig_result <- xml2::read_xml(msig_xml)
+
+  db_data <- rvest::xml_nodes(msig_result, xpath="//MSIGDB")
+  db_name <- rvest::html_attr(x=db_data, name="NAME")
+  db_ver <- rvest::html_attr(x=db_data, name="VERSION")
+  db_date <- rvest::html_attr(x=db_data, name="BUILD_DATE")
+
+  genesets <- rvest::xml_nodes(msig_result, "GENESET")
+  row_names <- rvest::html_attr(x=genesets, name="STANDARD_NAME")
+  column_names <- names(rvest::html_attrs(x=genesets[[1]]))
+  all_data <- data.frame(row.names=row_names)
+  for (i in 2:length(column_names)) {
+    c_name <- column_names[i]
+    c_data <- rvest::html_attr(x=genesets, name=c_name)
+    all_data[[c_name]] <- c_data
+  }
+
+  sig_found_idx <- rownames(all_data) %in% names(sig_data)
+  ret_data <- all_data[sig_found_idx, ]
+  retlist <- list(
+    "all_data" = all_data,
+    "sub_data" = ret_data)
+  if (!is.null(gsva_result)) {
+    fData(gsva_result) <- ret_data
+    retlist[["gsva_result"]] <- gsva_result
+  }
+  return(retlist)
 }
 
 ## EOF

@@ -5,7 +5,7 @@
 \title{Make a ggplot graph of library sizes.}
 \usage{
 plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
-  text = TRUE, title = NULL, yscale = NULL, ...)
+  text = TRUE, order = NULL, title = NULL, yscale = NULL, ...)
 }
 \arguments{
 \item{data}{Expt, dataframe, or expressionset of samples.}
