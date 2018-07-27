@@ -608,9 +608,9 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
 #'   and calculate the dispersion metrics.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
-plot_variances <- function(data, x_axis="condition", ...) {
+plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
+                                       sample_names=NULL, title=NULL, ...) {
   arglist <- list(...)
-  data = hs_expt
   data_class <- class(data)
   if (data_class == "expt") {
     design <- pData(data)
@@ -665,7 +665,6 @@ plot_variances <- function(data, x_axis="condition", ...) {
   cv_data[na_idx, "cv"] <- 0
   na_idx <- is.na(cv_data[["disp"]])
   cv_data[na_idx, "disp"] <- 0
-
   ## The metrics of dispersion taken so far are not really appropriate for RNASeq distributed data.
   ## Ideally, I would like to subset the expressionset according to the x_axis factor
   ## and perform a DESeq2/edgeR dispersion estimate for the remaining pile of data, then
@@ -679,7 +678,7 @@ plot_variances <- function(data, x_axis="condition", ...) {
   ## ## The problem here is that the tagwise.dispersions do not have names, I think we
   ## ## we can assume that they are in the same order as the original rownames.
   ## cv_data[["bcv"]] <- disp_data[["tagwise.dispersion"]]
-  ## message("Finished calculating dispersions.")
+  message("Finished calculating dispersion estimates.")
 
   color_list <- NULL
   if (x_axis == "condition") {
@@ -698,9 +697,14 @@ plot_variances <- function(data, x_axis="condition", ...) {
                "label" = signif(mean(x, na.rm=TRUE), digits = 2))
   }
 
+  ## Add the number of samples of each type to the top of the plot with this.
+  sample_numbers <- list()
+  for (l in levels(plotted_df[["x_axis"]])) {
+    sample_numbers[[l]] <- sum(design[[x_axis]] == l)
+  }
   y_labels <- list(
-    "cv" = "Coefficient of variation",
     "bcv" = "Biological coefficient of variation",
+    "cv" = "Coefficient of variation",
     "disp" = "Quartile coefficient of dispersion")
   retlst <- list()
   for (type in c("cv", "disp")) {
@@ -709,16 +713,19 @@ plot_variances <- function(data, x_axis="condition", ...) {
       ggplot2::scale_fill_manual(values=color_list, name=x_axis) +
       ggplot2::stat_summary(fun.data=get_mean_cv, geom="text",
                             position=ggplot2::position_fill(vjust=-0.1)) +
+      ggplot2::annotate("text", x=1:length(sample_numbers),
+                        y=max(cv_data[[type]] + (0.05 * max(cv_data[[type]]))),
+                        label=as.character(sample_numbers)) +
       ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                      axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-      ggplot2::ylab(y_labels[[type]]) +
+      ggplot2::ylab(as.character(y_labels[type])) +
       ggplot2::xlab("")
     if (!is.null(title)) {
       retlst[[type]] <- retlst[[type]] + ggplot2::ggtitle(title)
     }
-    if (!is.null(names)) {
-      retlst[[type]] <- retlst[[type]] + ggplot2::scale_x_discrete(labels=names)
+    if (!is.null(sample_names)) {
+      retlst[[type]] <- retlst[[type]] + ggplot2::scale_x_discrete(labels=sample_names)
     }
   }
   retlst[["data"]] <- cv_data
