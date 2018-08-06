@@ -487,8 +487,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   if (class(metadata) == "data.frame") {
     sample_definitions <- metadata
   } else {
-      sample_definitions <- extract_metadata(metadata, ...)
-      ## sample_definitions <- extract_metadata(metadata)
+    sample_definitions <- extract_metadata(metadata, ...)
+    ## sample_definitions <- extract_metadata(metadata)
   }
 
   if (is.null(sample_definitions[[pyprophet_column]])) {
@@ -847,11 +847,21 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
                    legend.key.size=ggplot2::unit(0.3, "cm"))
   density <- directlabels::direct.label(density)
 
+  violin <- ggplot(data=plot_df, aes_string(x="sample", y=column)) +
+    ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
+    ggplot2::geom_boxplot(aes_string(fill="sample"), outlier.alpha=0.01, width=0.2) +
+    ggplot2::scale_fill_manual(values=as.character(colors)) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, hjust=1),
+                   legend.position="none")
+
   dotboxplot <- boxplot +
     ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
                          size=2, alpha=0.2)
 
   retlist <- list(
+    "violin" = violin,
     "boxplot" = boxplot,
     "dotboxplot" = dotboxplot,
     "density" = density)

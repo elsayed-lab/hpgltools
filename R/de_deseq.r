@@ -60,6 +60,10 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                             annot_df=NULL, force=FALSE,
                             deseq_method="long", ...) {
   arglist <- list(...)
+  fittype <- "parametric"
+  if (!is.null(arglist[["fittype"]])) {
+    fittype <- arglist[["fittype"]]
+  }
 
   message("Starting DESeq2 pairwise comparisons.")
   input <- sanitize_expt(input)
@@ -119,14 +123,16 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
+    summarized <- import_deseq(data, column_data,
+                               model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (isTRUE(model_batch)) {
     message("DESeq2 step 1/5: Including only batch in the deseq model.")
     ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
-    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
+    summarized <- import_deseq(data, column_data,
+                               model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch) == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
@@ -134,7 +140,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- import_deseq(data, column_data, sv_model_string, tximport=input[["tximport"]][["raw"]])
+    summarized <- import_deseq(data, column_data,
+                               sv_model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
     ## I think the following lines are no longer needed now that I properly add the SVs to the model.
     ##passed <- FALSE
@@ -147,7 +154,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     model_string <- model_choice[["chosen_string"]]
     ##model_string <- "~ condition"
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    summarized <- import_deseq(data, column_data, model_string, tximport=input[["tximport"]][["raw"]])
+    summarized <- import_deseq(data, column_data,
+                               model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   }
 
@@ -155,7 +163,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   chosen_beta <- model_intercept
   if (deseq_method == "short") {
     message("DESeq steps 2-4 in one shot.")
-    deseq_run <- try(DESeq2::DESeq(dataset, fitType="parametric", betaPrior=chosen_beta), silent=TRUE)
+    deseq_run <- try(DESeq2::DESeq(dataset, fitType=fittype, betaPrior=chosen_beta), silent=TRUE)
     if (class(deseq_run) == "try-error") {
       message("A fitType of 'parametric' failed for this data, trying 'mean'.")
       deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
@@ -177,7 +185,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     message("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
     message("DESeq2 step 3/5: Estimate dispersions.")
-    deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="parametric"), silent=TRUE)
+    deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType=fittype), silent=TRUE)
     if (class(deseq_disp) == "try-error") {
       message("Trying a mean fitting.")
       deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"), silent=TRUE)
@@ -195,9 +203,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     } else {
       message("Using a parametric fitting seems to have worked.")
     }
-    ## deseq_run = nbinomWaldTest(deseq_disp, betaPrior=FALSE)
     message("DESeq2 step 4/5: nbinomWaldTest.")
-    ## deseq_run <- DESeq2::DESeq(deseq_disp)
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
   }
 
