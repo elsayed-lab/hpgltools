@@ -150,9 +150,9 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         row_colors <- rep("white", length(expt_colors))
     } else if (length(levels(as.factor(expt_design[[batch_row]]))) >= 2) {
         ## We have >= 2 batches, and so will fill in the column colors
-        num_batch_colors <- length(levels(as.factor(expt_design[[batch_row]])))
-        batch_color_assignments <- as.integer(as.factor(expt_design[[batch_row]]))
-        row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
+      num_batch_colors <- length(levels(as.factor(expt_design[[batch_row]])))
+      batch_color_assignments <- as.integer(as.factor(expt_design[[batch_row]]))
+      row_colors <- RColorBrewer::brewer.pal(12, "Set3")[batch_color_assignments]
     } else {
         ## If we just have 1 batch, make it... white (to disappear).
         row_colors <- rep("white", length(expt_colors))

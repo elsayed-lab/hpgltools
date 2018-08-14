@@ -17,8 +17,9 @@
 #' }
 #' @export
 concatenate_runs <- function(expt, column="replicate") {
-  design <- expt[["design"]]
-  replicates <- levels(as.factor(design[, column]))
+  design <- pData(expt)
+  message("The original expressionset has ", nrow(design), " samples.")
+  replicates <- levels(as.factor(design[[column]]))
   final_expt <- expt
   final_data <- NULL
   final_design <- NULL
@@ -31,7 +32,7 @@ concatenate_runs <- function(expt, column="replicate") {
     expression <- paste0(column, "=='", rep, "'")
     tmp_expt <- sm(subset_expt(expt, expression))
     tmp_data <- rowSums(exprs(tmp_expt))
-    tmp_design <- tmp_expt[["design"]][1, ]
+    tmp_design <- pData(tmp_expt)[1, ]
     final_data <- cbind(final_data, tmp_data)
     final_design <- rbind(final_design, tmp_design)
     column_names[[rep]] <- as.character(tmp_design[, "sampleid"])
@@ -55,6 +56,7 @@ concatenate_runs <- function(expt, column="replicate") {
   final_expt[["batches"]] <- as.character(batches)
   final_expt[["conditions"]] <- as.character(conditions)
   final_expt[["samplenames"]] <- as.character(samplenames)
+  message("The final expressionset has ", nrow(pData(final_expt)), " samples.")
   return(final_expt)
 }
 
@@ -118,7 +120,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Reading the documentation, these are primarily used for naming the type of microarray chip used.
   ## I am guessing
   annotation_name <- "Fill me in with a package name containing the annotations.
-(hgu95a seems to work for gsva())."
+(org.hs.eg.db seems to work for gsva())."
   if (!is.null(arglist[["annotation"]])) {
     annotation_name <- arglist[["annotation"]]
   }
@@ -166,8 +168,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
       metadata[["file"]] <- NULL
     }
   }
-  message("The sample definitions comprises: ", toString(dim(sample_definitions)),
-          " rows, columns.")
+  message("The sample definitions comprises: ", nrow(sample_definitions), " rows(samples) and ",
+          ncol(sample_definitions), " columns(metadata fields).")
   num_samples <- nrow(sample_definitions)
   ## Create a matrix of counts with columns as samples and rows as genes
   ## This may come from either a data frame/matrix, a list of files from the metadata
@@ -263,6 +265,11 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
       "source" = "dataframe",
       "raw" = all_count_tables,
       "kept_ids" = as.character(sample_definitions[[sample_column]]))
+    ## Remember that R does not like rownames to start with a number, and if they do
+    ## I already changed the count table rownames to begin with 's'.
+    count_data[["kept_ids"]] <- gsub(pattern="^([[:digit:]])",
+                                     replacement="s\\1",
+                                     x=count_data[["kept_ids"]])
   }
   ## Here we will prune the metadata for any files/ids which were dropped
   ## when reading in the count tables.
@@ -1217,6 +1224,17 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       import_scaled <- sm(tximport::tximport(files=files, type="kallisto",
                                              txOut=txout, countsFromAbundance="lengthScaledTPM"))
     } else {
+      ## Made a small change to check for new tximport rownames in the gene information.
+      ## This should automagically check and fix rownames when they would otherwise not match after using tximport.
+      if (rownames(gene_info) ! %in% tx_gene_map[[2]]) {
+        message("Hey, your new gene map IDs are not the rownames of your gene information, changing them now.")
+        if (names(tx_gene_map)[2] %in% colnames(gene_info)) {
+          new_name <- names(tx_gene_map)[2]
+          rownames(gene_info) <- make.names(tx_gene_map[[new_name]], unique=TRUE)
+        } else {
+          warning("Unable to find the appropriate column in your gene_info and cowardly refusing to blindly use the tx_map.")
+        }
+      }
       import <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map, txOut=txout))
       import_scaled <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map,
                                              txOut=txout, countsFromAbundance="lengthScaledTPM"))

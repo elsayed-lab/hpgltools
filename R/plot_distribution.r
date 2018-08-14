@@ -63,16 +63,15 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL,
   colnames(dataframe) <- c("gene", "variable", "value")
   ## The use of data= and aes() leads to no visible binding for global variable warnings
   ## I am not sure what to do about them in this context.
-  boxplot <- ggplot2::ggplot(data=dataframe, ggplot2::aes_string(x="variable", y="value"))
+  boxplot <- ggplot2::ggplot(data=dataframe, aes_string(x="variable", y="value"))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill="variable"), width=1, scale="area") +
-      sm(ggplot2::geom_boxplot(aes_string(fill="variable"), outlier.alpha=0.01, width=0.2))
+      ggplot2::geom_violin(aes_string(fill=colors), width=1, scale="area", show.legend=FALSE) +
+      sm(ggplot2::geom_boxplot(aes_string(fill=colors), outlier.alpha=0.01, width=0.2))
   } else {
     boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(na.rm=TRUE,
-                               ggplot2::aes_string(fill="variable"),
-                               fill=colors, size=0.5,
+      sm(ggplot2::geom_boxplot(aes_string(fill="variable"),
+                               na.rm=TRUE, fill=colors, size=0.5,
                                outlier.size=1.5,
                                outlier.colour=ggplot2::alpha("black", 0.2)))
   }
@@ -696,7 +695,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   } else if (!is.null(arglist[["colors"]])) {
     color_list <- arglist[["colors"]]
   } else {
-    num_colors <- length(levels(cv_data[["x_axis"]]))
+    num_colors <- length(levels(as.factor(cv_data[["x_axis"]])))
     color_list <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(num_colors)
     names(color_list) <- levels(cv_data[["x_axis"]])
   }
@@ -708,7 +707,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
 
   ## Add the number of samples of each type to the top of the plot with this.
   sample_numbers <- list()
-  for (l in levels(cv_data[["x_axis"]])) {
+  for (l in levels(as.factor(cv_data[["x_axis"]]))) {
     sample_numbers[[l]] <- sum(design[[x_axis]] == l)
   }
   y_labels <- list(

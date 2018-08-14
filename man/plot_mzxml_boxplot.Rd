@@ -5,8 +5,8 @@
 \title{Make a boxplot out of some of the various data available in the mzxml data.}
 \usage{
 plot_mzxml_boxplot(mzxml_data, table = "precursors",
-  column = "precursorintensity", names = NULL, title = NULL,
-  scale = NULL, ...)
+  column = "precursorintensity", violin = FALSE, names = NULL,
+  title = NULL, scale = NULL, ...)
 }
 \arguments{
 \item{mzxml_data}{Provide a list of mzxml data, one element for each sample.}

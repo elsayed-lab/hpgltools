@@ -18,11 +18,7 @@
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
                         current_id="ENSEMBL", required_id="ENTREZID",
                         orgdb="org.Hs.eg.db") {
-  ##previous_file <- "02_estimation_macrophage.Rmd"
-  ##ver <- "20170820"
-  ##tmp <- sm(loadme(filename=paste0(gsub(pattern="\\.Rmd", replace="",
-  ##                                      x=previous_file), "-v", ver, ".rda.xz")))
-  ##expt <- hs_expt
+
   ## Make sure some data is loaded.  Assume the c2BroadSets from GSVAdata.
   sig_data <- NULL
   if (exists(datasets)) {
@@ -78,7 +74,31 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
     fdata_df[i, "ids"] <- toString(geneIds(sig_data[[i]]))
   }
 
-  result(gsva_result)
+  fData(gsva_result) <- fdata_df
+  new_expt <- expt
+  new_expt[["expressionset"]] <- gsva_result
+
+  retlist <- list(
+    "expt" = new_expt,
+    "gsva" = gsva_result,
+    "fdata" = fdata_df)
+  return(retlist)
+}
+
+simple_xcell <- function(expt) {
+  xcell_annot <- load_biomart_annotations()
+  xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
+  xcell_input <- sm(exprs(normalize_expt(expt, norm="quant", convert="cpm", transform="log2")))
+  xcell_input <- merge(xcell_input, xref, by.x="row.names", by.y="ensembl_gene_id")
+  rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique=TRUE)
+  xcell_input[["Row.names"]] <- NULL
+  xcell_input[["hgnc_symbol"]] <- NULL
+
+  library(xCell)
+  data("xCell.data", package="xCell")
+  xcell_result <- xCell::xCellAnalysis(xcell_input)
+
+  return(xcell_result)
 }
 
 #' Extract the GeneSets corresponding to the provided name(s).

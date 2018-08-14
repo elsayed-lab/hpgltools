@@ -49,7 +49,7 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   expt <- NULL
   if (data_class == "expt") {
     expt <- data
-    design <- fdata(expt)
+    design <- fData(expt)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
     } else {
@@ -163,16 +163,6 @@ plot_tsne_genes <- function(data, design=NULL, plot_colors=NULL, seed=1,
   ## Probably could have just used xxx[stuff, drop=TRUE]
   included_batches <- as.factor(as.character(design[[batch_column]]))
   included_conditions <- as.factor(as.character(design[[cond_column]]))
-
-  tsne_data <- data.frame(
-    "sampleid" = as.character(design[["sampleid"]]),
-    "condition" = as.character(design[[cond_column]]),
-    "batch" = as.character(design[[batch_column]]),
-    "batch_int" = as.integer(as.factor(design[[batch_column]])),
-    "colors" = as.character(plot_colors),
-    "labels" = label_list)
-  ##tsne_data[[compname_x]] <- sne_df[[paste0("V", component_x)]]
-  ##tsne_data[[compname_y]] <- sne_df[[paste0("V", component_y)]]
 
   a_plot <- plot_scatter(sne_df)
   return(a_plot)
