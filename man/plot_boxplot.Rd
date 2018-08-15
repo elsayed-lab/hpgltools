@@ -5,7 +5,7 @@
 \title{Make a ggplot boxplot of a set of samples.}
 \usage{
 plot_boxplot(data, colors = NULL, names = NULL, title = NULL,
-  scale = NULL, ...)
+  violin = FALSE, scale = NULL, ...)
 }
 \arguments{
 \item{data}{Expt or data frame set of samples.}

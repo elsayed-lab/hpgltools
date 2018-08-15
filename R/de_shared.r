@@ -378,7 +378,7 @@ like me, want to see what happens when you put non-standard data into deseq, the
         data <- input[["normalized"]][["intermediate_counts"]][["original"]]
       }
     } else {
-      message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
+      message("The data should be suitable for EdgeR/DESeq/EBSeq. If they freak out, check
 the state of the count table and ensure that it is in integer counts.")
     }
     ## End testing if normalization has been performed
@@ -565,7 +565,10 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                          intercept=0, reverse=FALSE, contr=NULL,
                          surrogates="be", ...) {
   arglist <- list(...)
-  design <- pData(input)
+  design <- NULL
+  if (class(input) != "matrix" & class(input) != "data.frame") {
+    design <- pData(input)
+  }
   if (is.null(design)) {
     conditions <- as.factor(conditions)
     batches <- as.factor(batches)

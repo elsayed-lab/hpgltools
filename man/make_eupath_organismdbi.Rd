@@ -5,8 +5,9 @@
 \title{Create an organismDbi instance for an eupathdb organism.}
 \usage{
 make_eupath_organismdbi(species = "Leishmania major strain Friedlin",
-  entry = NULL, dir = "eupathdb", reinstall = FALSE, metadata = NULL,
-  kegg_abbreviation = NULL, exclude_join = "ENTREZID", ...)
+  entry = NULL, version = NULL, dir = "eupathdb", reinstall = FALSE,
+  metadata = NULL, kegg_abbreviation = NULL, exclude_join = "ENTREZID",
+  ...)
 }
 \arguments{
 \item{species}{A species in the eupathDb metadata.}

@@ -106,6 +106,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   pca_title <- "Principle Component Analysis"
   tsne_title <- "T-SNE Analysis"
   dens_title <- "Density plot"
+  cv_title <- "Coefficient of variance plot"
   topn_title <- "Top-n representation"
   if (!is.null(title_suffix)) {
     nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
@@ -118,6 +119,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     pca_title <- paste0(pca_title, ": ", title_suffix)
     tsne_title <- paste0(tsne_title, ": ", title_suffix)
     dens_title <- paste0(dens_title, ": ", title_suffix)
+    cv_title <- paste0(cv_title, ": ", title_suffix)
     topn_title <- paste0(topn_title, ": ", title_suffix)
   }
   message("Graphing number of non-zero genes with respect to CPM by library.")
@@ -140,6 +142,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   tsne <- try(plot_tsne(expt, title=tsne_title, ...))
   message("Plotting a density plot.")
   density <- try(plot_density(expt, title=dens_title, ...))
+  message("Plotting a CV plot.")
+  cv <- try(plot_variance_coefficients(expt, title=dens_title, ...))
   message("Plotting the representation of the top-n genes.")
   topn <- try(plot_topn(expt, title=topn_title, ...))
   message("Printing a color to condition legend.")
@@ -182,6 +186,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     "qqrat" = qq_ratios,
     "smc" = smc,
     "smd" = smd,
+    "cvplot" = cv[["plot"]],
     "topnplot" = topn[["plot"]],
     "tsneplot" = tsne[["plot"]],
     "tsnetable" = tsne[["table"]],

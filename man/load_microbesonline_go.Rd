@@ -4,14 +4,15 @@
 \alias{load_microbesonline_go}
 \title{Extract the set of GO categories by microbesonline locus}
 \usage{
-load_microbesonline_go(id = "160490", name_type = "ncbi_tag", name = NULL)
+load_microbesonline_go(id = "160490", id_column = "name",
+  data_column = "GO", name = NULL)
 }
 \arguments{
 \item{id}{Which species to query.}
 
-\item{name_type}{The column to use as GID.}
-
 \item{name}{Allowing for non-specific searches by species name.}
+
+\item{name_type}{The column to use as GID.}
 }
 \value{
 data frame of GO terms from pub.microbesonline.org

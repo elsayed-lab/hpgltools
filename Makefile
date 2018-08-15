@@ -17,11 +17,14 @@ clean:
 	rm -rf ./..Rcheck &
 	rm -rf hpgltools.Rcheck/
 	rm -f hpgltools_${VERSION}.tar.gz
-	rm -rf vignettes/circos vignettes/pasilla_*
-	rm -f vignettes/*.gff vignettes/*.pdf 
+	rm -f inst/*.fai
+	rm -rf vignettes/circos vignettes/pasilla_* vignettes/org.Spombe.eg.db \
+      vignettes/wt_mga  vignettes/wt_mga_sig
+	rm -f vignettes/*.gff vignettes/*.pdf vignettes/gene2pubmed.gz vignettes/NCBI.sqlite
+	rm -rf R/.Rhistory vignettes/.Rhistory R/eupathdb R/*.rda R/*.Rdata
 	for testdir in travis all_functions slow_tests; do \
-	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
-	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview tests/$${testdir}/UP000* \
+	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test tests/$${testdir}/preprocessing tests/$${testdir}/test_gprofiler \
+	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview tests/$${testdir}/UP000* tests/$${testdir}/topgo \
 	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb tests/$${testdir}/BSgenome* tests/$${testdir}/testing_write_expt ;\
 	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
 	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \

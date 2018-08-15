@@ -5,7 +5,7 @@
 \title{Generate TxDb for EuPathDB organism}
 \usage{
 make_eupath_txdb(species = NULL, entry = NULL, dir = "eupathdb",
-  reinstall = FALSE, metadata = NULL, ...)
+  version = NULL, reinstall = FALSE, metadata = NULL, ...)
 }
 \arguments{
 \item{species}{guess}

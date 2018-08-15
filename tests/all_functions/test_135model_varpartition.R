@@ -10,7 +10,7 @@ expected <- "(1 | condition) + (1 | batch)"
 actual <- as.character(pombe_varpart[["model_used"]])[2]
 test_that("Do we get the assumed model?", {
   expect_equal(expected, actual)
-}
+})
 expected <- c(5810, 3)
 actual <- dim(pombe_varpart[["fitted_df"]])
 test_that("Did we get an expected table of post-fitting percentages?", {

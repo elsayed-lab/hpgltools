@@ -609,6 +609,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
 
   ## Depending on how much batch/condition information is available, invoke pcRes() to get some idea of how
   ## much variance in a batch model is accounted for with each PC.
+  pca_res <- NULL
   if (length(levels(included_conditions)) == 1 & length(levels(included_batches)) == 1) {
     warning("There is only one condition and one batch, it is impossible to get meaningful pcRes information.")
   } else if (length(levels(included_conditions)) == 1) {

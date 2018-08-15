@@ -362,6 +362,12 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
                                         do_catplots=FALSE, surrogates="be", ...) {
   arglist <- list(...)
   design <- pData(expt)
+  do_batch <- TRUE
+  if (length(levels(design[["batch"]])) == 1) {
+    message("There is 1 batch in the data, fitting condition+batch will fail.")
+    do_batch <- FALSE
+  }
+
   if (isTRUE(filter_it) & expt[["state"]][["filter"]] == "raw") {
     message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
     expt <- sm(normalize_expt(expt, filter=filter_type, ...))
@@ -473,6 +479,12 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   oldpar <- par(mar=c(5, 5, 5, 5))
   for (adjust in adjustments) {
     counter <- counter + 1
+    if (counter == 2 & !isTRUE(do_batch)) {
+      message("A friendly reminder that there is only 1 batch in the data.")
+      tstats[[adjust]] <- NULL
+      catplots[[adjust]] <- NULL
+      next
+    }
     message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ",
             adjust, " in the model.")
     modified_formula <- as.formula(paste0("~ condition ", adjust))
