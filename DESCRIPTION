@@ -61,6 +61,7 @@ Collate:
     'annotation_uniprot.r'
     'de_basic.r'
     'de_deseq.r'
+    'de_ebseq.r'
     'de_edger.r'
     'de_limma.r'
     'de_plots.r'

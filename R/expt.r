@@ -413,6 +413,22 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   message("Bringing together the count matrix and gene information.")
   ## The method here is to create a data.table of the counts and annotation data,
   ## merge them, then split them apart.
+
+  ## Made a small change to check for new tximport rownames in the gene information.
+  ## This should automagically check and fix rownames when they would otherwise not match after using tximport.
+  if (!is.null(arglist[["tx_gene_map"]])) {
+    tx_gene_map <- arglist[["tx_gene_map"]]
+    if (! rownames(gene_info) %in% tx_gene_map[[2]]) {
+      message("Hey, your new gene map IDs are not the rownames of your gene information, changing them now.")
+      if (names(tx_gene_map)[2] %in% colnames(gene_info)) {
+        new_name <- names(tx_gene_map)[2]
+        rownames(gene_info) <- make.names(tx_gene_map[[new_name]], unique=TRUE)
+      } else {
+        warning("Unable to find the appropriate column in your gene_info and cowardly refusing to blindly use the tx_map.")
+      }
+    }
+  }
+
   counts_and_annotations <- merge(all_count_tables, gene_info, by="rownames", all.x=TRUE)
   ## In some cases, the above merge will result in columns being set to NA
   ## We should set all the NA fields to something I think.
@@ -1224,17 +1240,6 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
       import_scaled <- sm(tximport::tximport(files=files, type="kallisto",
                                              txOut=txout, countsFromAbundance="lengthScaledTPM"))
     } else {
-      ## Made a small change to check for new tximport rownames in the gene information.
-      ## This should automagically check and fix rownames when they would otherwise not match after using tximport.
-      if (rownames(gene_info) ! %in% tx_gene_map[[2]]) {
-        message("Hey, your new gene map IDs are not the rownames of your gene information, changing them now.")
-        if (names(tx_gene_map)[2] %in% colnames(gene_info)) {
-          new_name <- names(tx_gene_map)[2]
-          rownames(gene_info) <- make.names(tx_gene_map[[new_name]], unique=TRUE)
-        } else {
-          warning("Unable to find the appropriate column in your gene_info and cowardly refusing to blindly use the tx_map.")
-        }
-      }
       import <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map, txOut=txout))
       import_scaled <- sm(tximport::tximport(files=files, type="kallisto", tx2gene=tx_gene_map,
                                              txOut=txout, countsFromAbundance="lengthScaledTPM"))

@@ -378,7 +378,7 @@ like me, want to see what happens when you put non-standard data into deseq, the
         data <- input[["normalized"]][["intermediate_counts"]][["original"]]
       }
     } else {
-      message("The data should be suitable for EdgeR/DESeq. If EdgeR/DESeq freaks out, check
+      message("The data should be suitable for EdgeR/DESeq/EBSeq. If they freak out, check
 the state of the count table and ensure that it is in integer counts.")
     }
     ## End testing if normalization has been performed
