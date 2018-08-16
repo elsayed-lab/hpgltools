@@ -753,6 +753,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
+#' @param basename Location to write the circos data (usually cwd).
 #' @param color Color of the plotted data.
 #' @param fill_color Guess!
 #' @param outer Floating point radius of the circle into which to place the data.
@@ -841,7 +842,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
 #' @return a kitten
 #' @export
-circos_make <- function(target="", output="circos/Makefile", circos="circos", verbose=FALSE) {
+circos_make <- function(target="", output="circos/Makefile", circos="circos") {
   circos_dir <- dirname(output)
   if (!file.exists(circos_dir)) {
     message("The circos directory does not exist, creating: ", circos_dir)

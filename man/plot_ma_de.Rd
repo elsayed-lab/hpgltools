@@ -4,10 +4,10 @@
 \alias{plot_ma_de}
 \title{Make a pretty MA plot from one of limma, deseq, edger, or basic.}
 \usage{
-plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
-  pval_cutoff = 0.05, alpha = 0.4, logfc_cutoff = 1,
-  label_numbers = TRUE, size = 2, tooltip_data = NULL,
-  gvis_filename = NULL, invert = FALSE, ...)
+plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
+  p_col = "qvalue", pval_cutoff = 0.05, alpha = 0.4,
+  logfc_cutoff = 1, label_numbers = TRUE, size = 2,
+  tooltip_data = NULL, gvis_filename = NULL, invert = FALSE, ...)
 }
 \arguments{
 \item{table}{Df of linear-modelling, normalized counts by sample-type,}

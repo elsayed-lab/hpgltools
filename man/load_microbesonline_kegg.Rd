@@ -4,12 +4,10 @@
 \alias{load_microbesonline_kegg}
 \title{Extract the set of KEGG categories by microbesonline locus}
 \usage{
-load_microbesonline_kegg(id = "160490", name = NULL)
+load_microbesonline_kegg(id = "160490")
 }
 \arguments{
 \item{id}{Which species to query.}
-
-\item{name}{Allowing for non-specific searches by species name.}
 }
 \value{
 data frame of GO terms from pub.microbesonline.org

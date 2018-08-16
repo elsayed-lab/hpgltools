@@ -10,12 +10,15 @@ load_microbesonline_go(id = "160490", id_column = "name",
 \arguments{
 \item{id}{Which species to query.}
 
-\item{name}{Allowing for non-specific searches by species name.}
+\item{id_column}{This no longer uses MySQL, so which column from the html table to pull?}
 
-\item{name_type}{The column to use as GID.}
+\item{data_column}{Similar to above, there are lots of places from which one might
+extract the data.}
+
+\item{name}{Allowing for non-specific searches by species name.}
 }
 \value{
-data frame of GO terms from pub.microbesonline.org
+data frame of GO terms from www.microbesonline.org
 }
 \description{
 The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
@@ -30,8 +33,4 @@ At the very least, it does return a large number of them, which is a start.
 \dontrun{
  go_df <- get_loci_go(id="160490")
 }
-}
-\seealso{
-\pkg{DBI}
- \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
 }

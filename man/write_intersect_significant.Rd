@@ -4,8 +4,8 @@
 \alias{write_intersect_significant}
 \title{Attempt to find the significant shared genes between edger/deseq/limma or a subset thereof.}
 \usage{
-write_intersect_significant(tables, excel = "excel/significant_shared.xlsx",
-  extra_annot = NULL, ...)
+write_intersect_significant(tables,
+  excel = "excel/significant_shared.xlsx", extra_annot = NULL, ...)
 }
 \arguments{
 \item{tables}{The result from extract_significant_genes() or similar.}

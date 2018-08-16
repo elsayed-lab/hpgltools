@@ -4,8 +4,8 @@
 \alias{count_expt_snps}
 \title{Gather snp information for an expt}
 \usage{
-count_expt_snps(expt, type = "counts", input_dir = "preprocessing/outputs",
-  tolower = TRUE)
+count_expt_snps(expt, type = "counts",
+  input_dir = "preprocessing/outputs", tolower = TRUE)
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}

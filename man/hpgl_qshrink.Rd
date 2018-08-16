@@ -5,7 +5,8 @@
 \title{A hacked copy of Kwame's qsmooth/qstats code.}
 \usage{
 hpgl_qshrink(data = NULL, groups = NULL, refType = "mean",
-  groupLoc = "mean", window = 99, groupCol = NULL, plot = TRUE, ...)
+  groupLoc = "mean", window = 99, groupCol = NULL, plot = TRUE,
+  ...)
 }
 \arguments{
 \item{data}{Count table to modify}

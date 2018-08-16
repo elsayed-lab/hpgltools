@@ -18,6 +18,8 @@ likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 'precursors' is chosen, then the only likely choice for the moment is
 'precursorintensity'.}
 
+\item{violin}{Print the samples as violins rather than only box/whiskers?}
+
 \item{names}{Names for the x-axis of the plot.}
 
 \item{title}{Title the plot?}

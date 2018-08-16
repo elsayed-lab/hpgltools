@@ -4,8 +4,8 @@
 \alias{plot_gvis_ma}
 \title{Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).}
 \usage{
-plot_gvis_ma(df, tooltip_data = NULL, filename = "html/gvis_ma_plot.html",
-  base_url = "", ...)
+plot_gvis_ma(df, tooltip_data = NULL,
+  filename = "html/gvis_ma_plot.html", base_url = "", ...)
 }
 \arguments{
 \item{df}{Data frame of counts which have been normalized counts by sample-type, which is to say the

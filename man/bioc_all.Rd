@@ -4,9 +4,10 @@
 \alias{bioc_all}
 \title{Grab a copy of all bioconductor packages and install them by type}
 \usage{
-bioc_all(release = "3.5", mirror = "bioconductor.statistik.tu-dortmund.de",
-  base = "packages", type = "software", suppress_updates = TRUE,
-  suppress_auto = TRUE, force = FALSE)
+bioc_all(release = "3.5",
+  mirror = "bioconductor.statistik.tu-dortmund.de", base = "packages",
+  type = "software", suppress_updates = TRUE, suppress_auto = TRUE,
+  force = FALSE)
 }
 \arguments{
 \item{release}{Bioconductor release to use, should probably be adjusted to

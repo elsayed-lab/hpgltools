@@ -89,10 +89,10 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @return  experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
-#'  \code{\link{read_counts_expt}} \code{\link[hash]{as.list.hash}}
+#'  \code{\link{read_counts_expt}}
 #' @examples
 #' \dontrun{
-#'  new_experiment <- create_expt("some_csv_file.csv", color_hash)
+#'  new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
 #'  ## Remember that this depends on an existing data structure of gene annotations.
 #' }
 #' @export
@@ -682,6 +682,11 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 }
 
 #' Pull metadata from a table (xlsx/xls/csv/whatever)
+#'
+#' @param metadata file or df of metadata
+#' @param ... Arguments to pass to the child functions.
+#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
+#'
 #' @export
 extract_metadata <- function(metadata, ...) {
   arglist <- list(...)

@@ -12,6 +12,8 @@ get_msigdb_metadata(sig_data, msig_xml = "msigdb_v6.2.xml",
 \item{sig_data}{GeneSetCollection from the broad msigdb.}
 
 \item{msig_xml}{msig XML file downloaded from broad.}
+
+\item{gsva_result}{Some data from GSVA to modify.}
 }
 \value{
 list containing 2 data frames: all metadata from broad, and the set

@@ -4,7 +4,8 @@
 \alias{hpgl_combatMod}
 \title{A modified version of comBatMod.}
 \usage{
-hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE, ...)
+hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE,
+  ...)
 }
 \arguments{
 \item{dat}{Df to modify.}

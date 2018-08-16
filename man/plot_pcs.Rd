@@ -5,8 +5,9 @@
 \title{A quick and dirty PCA plotter of arbitrary components against one another.}
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
-  design = NULL, plot_title = TRUE, plot_labels = NULL, plot_size = 5,
-  size_column = NULL, rug = TRUE, cis = c(0.95, 0.9), ...)
+  design = NULL, plot_title = TRUE, plot_labels = NULL,
+  plot_size = 5, size_column = NULL, rug = TRUE, cis = c(0.95,
+  0.9), ...)
 }
 \arguments{
 \item{pca_data}{Dataframe of principle components PC1 .. PCN with any other arbitrary information.}

@@ -5,9 +5,9 @@
 \title{Given the set of significant genes from combine_de_tables(), provide a view of how many are
 significant up/down.}
 \usage{
-significant_barplots(combined, lfc_cutoffs = c(0, 1, 2), invert = FALSE,
-  p = 0.05, z = NULL, p_type = "adj", according_to = "all",
-  order = NULL, maximum = NULL, ...)
+significant_barplots(combined, lfc_cutoffs = c(0, 1, 2),
+  invert = FALSE, p = 0.05, z = NULL, p_type = "adj",
+  according_to = "all", order = NULL, maximum = NULL, ...)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables and/or extract_significant_genes().}

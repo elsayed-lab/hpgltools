@@ -5,9 +5,10 @@
 \title{Given a limma, edger, and deseq table, combine them into one.}
 \usage{
 combine_de_table(li, ed, de, ba, table_name, annot_df = NULL,
-  inverse = FALSE, adjp = TRUE, padj_type = "fdr", include_deseq = TRUE,
-  include_edger = TRUE, include_limma = TRUE, include_basic = TRUE,
-  lfc_cutoff = 1, p_cutoff = 0.05, excludes = NULL)
+  inverse = FALSE, adjp = TRUE, padj_type = "fdr",
+  include_deseq = TRUE, include_edger = TRUE, include_limma = TRUE,
+  include_basic = TRUE, lfc_cutoff = 1, p_cutoff = 0.05,
+  excludes = NULL)
 }
 \arguments{
 \item{li}{Limma output table.}

@@ -10,6 +10,7 @@
 #' @param colors Color scheme if the data is not an expt.
 #' @param names Alternate names for the x-axis.
 #' @param text Add the numeric values inside the top of the bars of the plot?
+#' @param order  Explicitly set the order of samples in the plot?
 #' @param title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... More parameters for your good time!

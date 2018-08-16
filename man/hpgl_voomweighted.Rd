@@ -5,9 +5,10 @@
 \title{A minor change to limma's voom with quality weights to attempt to address some corner cases.}
 \usage{
 hpgl_voomweighted(data, fun_model, libsize = NULL,
-  normalize.method = "none", plot = TRUE, span = 0.5, var.design = NULL,
-  method = "genebygene", maxiter = 50, tol = 1e-10, trace = FALSE,
-  replace.weights = TRUE, col = NULL, ...)
+  normalize.method = "none", plot = TRUE, span = 0.5,
+  var.design = NULL, method = "genebygene", maxiter = 50,
+  tol = 1e-10, trace = FALSE, replace.weights = TRUE, col = NULL,
+  ...)
 }
 \arguments{
 \item{data}{Some data!}

@@ -12,6 +12,7 @@
 #' @param names Another version of the sample names for printing.
 #' @param scale Whether to log scale the y-axis.
 #' @param title A title!
+#' @param violin  Print this as a violin rather than a just box/whiskers?
 #' @param ... More parameters are more fun!
 #' @return Ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
@@ -618,6 +619,10 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
 #' @param data  Expressionset/epxt to poke at.
 #' @param x_axis  Factor in the experimental design we may use to group the data
 #'   and calculate the dispersion metrics.
+#' @param colors  Set of colors to use when making the violins
+#' @param sample_names  A vector of names for the samples.
+#' @param title Optional title to include with the plot.
+#' @param ...  Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
 plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
@@ -662,6 +667,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   }
 
   ## The various forms of evaluation in the hadleyverse is getting ridiculous.
+  .data <- NULL
   message("Naively calculating coefficient of variation and quartile dispersion with respect to ",
           x_axis, ".")
   cv_data <- melted %>%

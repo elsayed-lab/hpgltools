@@ -6,10 +6,12 @@
 \usage{
 topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
   do_mf_fisher_tree = TRUE, do_bp_fisher_tree = TRUE,
-  do_cc_fisher_tree = TRUE, do_mf_ks_tree = FALSE, do_bp_ks_tree = FALSE,
-  do_cc_ks_tree = FALSE, do_mf_el_tree = FALSE, do_bp_el_tree = FALSE,
+  do_cc_fisher_tree = TRUE, do_mf_ks_tree = FALSE,
+  do_bp_ks_tree = FALSE, do_cc_ks_tree = FALSE,
+  do_mf_el_tree = FALSE, do_bp_el_tree = FALSE,
   do_cc_el_tree = FALSE, do_mf_weight_tree = FALSE,
-  do_bp_weight_tree = FALSE, do_cc_weight_tree = FALSE, parallel = FALSE)
+  do_bp_weight_tree = FALSE, do_cc_weight_tree = FALSE,
+  parallel = FALSE)
 }
 \arguments{
 \item{tg}{Data from simple_topgo().}

@@ -1722,8 +1722,16 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 #'
 #' @param combined  A result from combine_de_tables().
 #' @param lfc  Define significant via fold-change.
+#' @param padding_rows How much space to put between groups of data?
+#' @param include_l  Include limma?
+#' @param include_d  Include deseq?
+#' @param include_e  Include edger?
+#' @param include_ld  Include the set of limma shared with deseq?
+#' @param include_le  Include the set of limma shared with edger?
+#' @param include_de  Include the set of edger shared with deseq?
+#' @param include_led  Include the full intersection?
+#' @param z  Use a z-score filter?
 #' @param p  Or p-value.
-#' @param z  Or z-score.
 #' @param p_type  Use normal or adjusted p-values.
 #' @param extra_annot  Provide an extra set of annotation columns?
 #' @param excel  An optional excel workbook to which to write.

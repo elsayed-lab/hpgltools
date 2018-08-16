@@ -4,8 +4,9 @@
 \alias{plot_num_siggenes}
 \title{Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.}
 \usage{
-plot_num_siggenes(table, p_column = "limma_adjp", fc_column = "limma_logfc",
-  bins = 100, constant_p = 0.05, constant_fc = 0)
+plot_num_siggenes(table, p_column = "limma_adjp",
+  fc_column = "limma_logfc", bins = 100, constant_p = 0.05,
+  constant_fc = 0)
 }
 \arguments{
 \item{table}{DE table to examine.}

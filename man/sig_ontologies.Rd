@@ -5,7 +5,8 @@
 \title{Take the result from extract_significant_genes() and perform ontology searches.}
 \usage{
 sig_ontologies(significant_result, excel_prefix = "excel/sig_ontologies",
-  search_by = "deseq", excel_suffix = ".xlsx", type = "gprofiler", ...)
+  search_by = "deseq", excel_suffix = ".xlsx", type = "gprofiler",
+  ...)
 }
 \arguments{
 \item{significant_result}{Result from extract_siggenes()}

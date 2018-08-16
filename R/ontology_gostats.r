@@ -15,6 +15,7 @@
 #' @param pcutoff  Pvalue cutoff for deciding significant.
 #' @param conditional  Perform a conditional search?
 #' @param categorysize  Category size below which to not include groups.
+#' @param gff_id  key in the gff file containing the unique IDs.
 #' @param gff_type  Gff column to use for creating the universe.
 #' @param excel  Print the results to an excel file?
 #' @param ...  More parameters!

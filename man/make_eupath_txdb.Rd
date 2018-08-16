@@ -14,6 +14,8 @@ make_eupath_txdb(species = NULL, entry = NULL, dir = "eupathdb",
 
 \item{dir}{Base directory for building the package.}
 
+\item{version}{Which version of the eupathdb to use for creating this package?}
+
 \item{reinstall}{Overwrite an existing installed package?}
 
 \item{metadata}{dataframe of eupathdb metadata.}

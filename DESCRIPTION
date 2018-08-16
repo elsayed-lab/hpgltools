@@ -46,7 +46,7 @@ Imports:
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Collate:
     'alt_splicing.r'
     'annotation_biomart.r'

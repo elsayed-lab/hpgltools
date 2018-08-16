@@ -19,6 +19,8 @@ circos_hist(df, annot_df, cfgout = "circos/conf/default.conf",
 
 \item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
+\item{basename}{Location to write the circos data (usually cwd).}
+
 \item{color}{Color of the plotted data.}
 
 \item{fill_color}{Guess!}

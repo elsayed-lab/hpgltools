@@ -102,7 +102,10 @@ ebseq_pairwise_subset <- function(input=NULL, conditions=NULL, patterns=NULL,
   return(retlst)
 }
 
-ebseq_many <- function(data, conditions, patterns="all_same") {
+ebseq_many <- function(data, conditions, patterns="all_same",
+                       ng_vector=ng_vector, rounds=rounds,
+                       target_fdr=target_fdr, norm=norm) {
+
   if (patterns == "all_same") {
     patterns <- data.frame(row.names="Pattern1")
     for (i in conditions) {

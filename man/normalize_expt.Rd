@@ -5,12 +5,12 @@
 \title{Normalize the data of an expt object.  Save the original data, and note what
 was done.}
 \usage{
-normalize_expt(expt, transform = "raw", norm = "raw", convert = "raw",
-  batch = "raw", filter = FALSE, annotations = NULL, fasta = NULL,
-  entry_type = "gene", use_original = FALSE, batch1 = "batch",
-  batch2 = NULL, batch_step = 5, low_to_zero = FALSE, thresh = 2,
-  min_samples = 2, p = 0.01, A = 1, k = 1, cv_min = 0.01,
-  cv_max = 1000, ...)
+normalize_expt(expt, transform = "raw", norm = "raw",
+  convert = "raw", batch = "raw", filter = FALSE,
+  annotations = NULL, fasta = NULL, entry_type = "gene",
+  use_original = FALSE, batch1 = "batch", batch2 = NULL,
+  batch_step = 5, low_to_zero = FALSE, thresh = 2, min_samples = 2,
+  p = 0.01, A = 1, k = 1, cv_min = 0.01, cv_max = 1000, ...)
 }
 \arguments{
 \item{expt}{Original expt.}
