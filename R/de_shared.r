@@ -24,6 +24,11 @@
 #' @param test_pca  Perform some tests of the data before/after applying a given batch effect.
 #' @param annot_df  Annotations to add to the result tables.
 #' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
+#' @param do_basic  Perform a basic analysis?
+#' @param do_deseq  Perform DESeq2 pairwise?
+#' @param do_ebseq  Perform EBSeq (caveat, this is NULL as opposed to TRUE/FALSE so it can choose).
+#' @param do_edger  Perform EdgeR?
+#' @param do_limma  Perform limma?
 #' @param ...  Picks up extra arguments into arglist, currently only passed to write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
@@ -41,7 +46,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          modify_p=FALSE, model_batch=TRUE,
                          model_intercept=FALSE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, test_pca=TRUE,
-                         annot_df=NULL, parallel=TRUE, ...) {
+                         annot_df=NULL, parallel=TRUE,
+                         do_basic=TRUE, do_deseq=TRUE, do_ebseq=NULL,
+                         do_edger=TRUE, do_limma=TRUE, ...) {
   arglist <- list(...)
   surrogates <- "be"
   if (!is.null(arglist[["surrogates"]])) {
@@ -95,11 +102,42 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     post_pca <- plot_pca(post_batch)[["plot"]]
   }
 
-  results <- list(
-    "limma" = NULL,
-    "deseq" = NULL,
-    "edger" = NULL,
-    "basic" = NULL)
+  ## do_ebseq defaults to NULL, this is so that we can query the number of
+  ## conditions and choose accordingly. EBSeq is very slow, so if there are more
+  ## than 3 or 4 conditions I do not think I want to wait for it.
+  num_conditions <- 0
+  if (is.null(conditions)) {
+    num_conditions <- length(levels(as.factor(input[["conditions"]])))
+  } else {
+    num_conditions <- length(levels(as.factor(conditions)))
+  }
+  if (is.null(do_ebseq)) {
+    if (num_conditions > 4) {
+      do_ebseq <- FALSE
+    } else if (num_conditions < 2) {
+      stop("Unable to find the number of conditions in the data.")
+    } else {
+      do_ebseq <- TRUE
+    }
+  }
+
+  results <- list()
+  if (isTRUE(do_basic)) {
+    results[["basic"]] <- list()
+  }
+  if (isTRUE(do_deseq)) {
+    results[["deseq"]] <- list()
+  }
+  if (isTRUE(do_ebseq)) {
+    results[["ebseq"]] <- list()
+  }
+  if (isTRUE(do_edger)) {
+    results[["edger"]] <- list()
+  }
+  if (isTRUE(do_limma)) {
+    results[["limma"]] <- list()
+  }
+
   res <- NULL
   if (isTRUE(parallel)) {
     cl <- parallel::makeCluster(4)
@@ -129,18 +167,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     ## End performing parallel comparisons
   } else {
     for (type in names(results)) {
-      results[[type]] <- do_pairwise(type,
-                                     input=input,
-                                     conditions=conditions,
-                                     batches=batches,
-                                     model_cond=model_cond,
-                                     model_batch=model_batch,
-                                     model_intercept=model_intercept,
-                                     extra_contrasts=extra_contrasts,
-                                     alt_model=alt_model,
-                                     libsize=libsize,
-                                     annot_df=annot_df,
-                                     ...)
+      results[[type]] <- do_pairwise(
+        type, input=input, conditions=conditions, batches=batches,
+        model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
+        extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize,
+        annot_df=annot_df,
+        ...)
     }
   } ## End performing a serial comparison
 
@@ -272,13 +304,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   result_comparison <- list()
   if (class(results[["limma"]]) == "list" &
       class(results[["deseq"]]) == "list" &
+      class(results[["ebseq"]]) == "list" &
       class(results[["edger"]]) == "list" &
       class(results[["basic"]]) == "list") {
-    result_comparison <- compare_led_tables(limma=results[["limma"]],
-                                            deseq=results[["deseq"]],
-                                            edger=results[["edger"]],
-                                            basic=results[["basic"]],
-                                            annot_df=annot_df) #, ...)
+    result_comparison <- correlate_de_tables(results=results,
+                                             annot_df=annot_df,
+                                             ...)
   }
   ## The first few elements of this list are being passed through into the return
   ## So that if I use combine_tables() I can report in the resulting tables
@@ -286,6 +317,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   ret <- list(
     "basic" = results[["basic"]],
     "deseq" = results[["deseq"]],
+    "ebseq" = results[["ebseq"]],
     "edger" = results[["edger"]],
     "limma" = results[["limma"]],
     "batch_type" = model_type,
@@ -827,7 +859,7 @@ compare_de_results <- function(first, second, cor_method="pearson") {
   p_result <- list()
   adjp_result <- list()
   comparisons <- c("logfc", "p", "adjp")
-  methods <- c("limma", "deseq", "edger")
+  methods <- c("limma", "deseq", "edger", "ebseq")
   for (method in methods) {
     result[[method]] <- list()
     tables <- names(first[["data"]])
@@ -869,7 +901,7 @@ compare_de_results <- function(first, second, cor_method="pearson") {
   return(retlist)
 }
 
-#' See how similar are results from limma/deseq/edger.
+#' See how similar are results from limma/deseq/edger/ebseq.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions.
 #' and choices about what makes a meaningful set of differentially.
@@ -878,10 +910,7 @@ compare_de_results <- function(first, second, cor_method="pearson") {
 #'
 #' Invoked by all_pairwise().
 #'
-#' @param limma Data from limma_pairwise().
-#' @param deseq Data from deseq2_pairwise().
-#' @param edger Data from edger_pairwise().
-#' @param basic Data from basic_pairwise().
+#' @param results  Data from do_pairwise()
 #' @param include_basic include the basic data?
 #' @param annot_df Include annotation data?
 #' @param ... More options!
@@ -896,162 +925,78 @@ compare_de_results <- function(first, second, cor_method="pearson") {
 #'  fun = compare_led_tables(limma=l, deseq=d, edger=e)
 #' }
 #' @export
-compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
-                               include_basic=TRUE, annot_df=NULL, ...) {
+correlate_de_tables <- function(results, annot_df=NULL, ...) {
   ## arglist <- list(...)
   ## Fill each column/row of these with the correlation between tools for one contrast performed
-  if (class(limma) == "list") {
-    ## Then this was fed the raw output from limma_pairwise,
-    ## lets assume the same is true for deseq/edger too and pull out the result tables.
-    limma <- limma[["all_tables"]]
-    deseq <- deseq[["all_tables"]]
-    edger <- edger[["all_tables"]]
-    basic <- basic[["all_tables"]]
+  retlst <- list()
+  if (class(results[["limma"]]) == "list") {
+    retlst[["limma"]] <- results[["limma"]][["all_tables"]]
   }
-  len <- length(names(deseq))
-  limma_vs_edger <- list()
-  limma_vs_deseq <- list()
-  limma_vs_basic <- list()
-  edger_vs_deseq <- list()
-  edger_vs_basic <- list()
-  deseq_vs_basic <- list()
-  limma_vs_edger_scatter <- list()
-  limma_vs_deseq_scatter <- list()
-  limma_vs_basic_scatter <- list()
-  edger_vs_deseq_scatter <- list()
-  edger_vs_basic_scatter <- list()
-  deseq_vs_basic_scatter <- list()
-  cc <- 0
-  for (comp in names(deseq)) {
-    ## assume all three have the same names() -- note that limma has more than the other two though
-    cc <- cc + 1
-    message("Comparing analyses ", cc, "/", len, ": ", comp)
-    num_den_names <- strsplit(x=comp, split="_vs_")[[1]]
-    num_name <- num_den_names[1]
-    den_name <- num_den_names[2]
-    rev_comp <- paste0(den_name, "_vs_", num_name)
-    num_reversed <- 0
-    l <- limma[[comp]]
-    if (is.null(l)) {
-      l <- limma[[rev_comp]]
-      l[["logFC"]] <- l[["logFC"]] * -1
-      message("Used reverse contrast for limma.")
-      num_reversed <- num_reversed + 1
-    }
-    e <- edger[[comp]]
-    if (is.null(e)) {
-      e <- edger[[rev_comp]]
-      e[["logFC"]] <- e[["logFC"]] * -1
-      message("Used reverse contrast for edger.")
-      num_reversed <- num_reversed + 1
-    }
-    d <- deseq[[comp]]
-    if (is.null(d)) {
-      d <- deseq[[rev_comp]]
-      d[["logFC"]] <- d[["logFC"]] * -1
-      d[["stat"]] <- d[["stat"]] * -1
-      message("Used reverse contrast for deseq.")
-      num_reversed <- num_reversed + 1
-    }
-    b <- basic[[comp]]
-    if (is.null(b)) {
-      b <- basic[[rev_comp]]
-      b[["logFC"]] <- b[["logFC"]] * -1
-      message("Used reverse contrast for basic.")
-      num_reversed <- num_reversed + 1
-    }
-    ## How odd, why did they get reversed?
-    if (num_reversed == 4) {
-      comp <- rev_comp
-    }
-    if (is.null(l)) {
-      stop("Could not find either the comparison nor its reverse for limma.")
-    }
-    if (is.null(e)) {
-      stop("Could not find either the comparison nor its reverse for edger.")
-    }
-    if (is.null(d)) {
-      stop("Could not find either the comparison nor its reverse for deseq.")
-    }
-    if (is.null(b)) {
-      stop("Could not find either the comparison nor its reverse for basic.")
-    }
+  if (class(results[["deseq"]]) == "list") {
+    retlst[["deseq"]] <- results[["deseq"]][["all_tables"]]
+  }
+  if (class(results[["edger"]]) == "list") {
+    retlst[["edger"]] <- results[["edger"]][["all_tables"]]
+  }
+  if (class(results[["ebseq"]]) == "list") {
+    retlst[["ebseq"]] <- results[["ebseq"]][["all_tables"]]
+  }
+  if (class(results[["basic"]]) == "list") {
+    retlst[["basic"]] <- results[["basic"]][["all_tables"]]
+  }
 
-    le <- merge(l, e, by.x="row.names", by.y="row.names")
-    le <- le[, c("logFC.x", "logFC.y")]
-    colnames(le) <- c("limma logFC", "edgeR logFC")
-    lec <- stats::cor.test(x=le[, 1], y=le[, 2])[["estimate"]]
-    les <- plot_scatter(le) + ggplot2::labs(title=paste0(comp, ": limma vs. edgeR.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    ld <- merge(l, d, by.x="row.names", by.y="row.names")
-    ld <- ld[, c("logFC.x", "logFC.y")]
-    colnames(ld) <- c("limma logFC", "DESeq2 logFC")
-    ldc <- stats::cor.test(ld[, 1], ld[, 2])[["estimate"]]
-    lds <- plot_scatter(ld) + ggplot2::labs(title=paste0(comp, ": limma vs. DESeq2.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    lb <- merge(l, b, by.x="row.names", by.y="row.names")
-    lb <- lb[, c("logFC.x", "logFC.y")]
-    colnames(lb) <- c("limma logFC", "basic logFC")
-    lbc <- stats::cor.test(lb[, 1], lb[, 2])[["estimate"]]
-    lbs <- plot_scatter(lb) + ggplot2::labs(title=paste0(comp, ": limma vs. basic.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    ed <- merge(e, d, by.x="row.names", by.y="row.names")
-    ed <- ed[, c("logFC.x", "logFC.y")]
-    colnames(ed) <- c("edgeR logFC", "DESeq2 logFC")
-    edc <- stats::cor.test(ed[, 1], ed[, 2])[["estimate"]]
-    eds <- plot_scatter(ed) + ggplot2::labs(title=paste0(comp, ": edgeR vs. DESeq2.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    eb <- merge(e, b, by.x="row.names", by.y="row.names")
-    eb <- eb[, c("logFC.x", "logFC.y")]
-    colnames(eb) <- c("edgeR logFC", "basic logFC")
-    ebc <- stats::cor.test(eb[, 1], eb[, 2])[["estimate"]]
-    ebs <- plot_scatter(eb) + ggplot2::labs(title=paste0(comp, ": edgeR vs. basic.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    db <- merge(d, b, by.x="row.names", by.y="row.names")
-    db <- db[, c("logFC.x", "logFC.y")]
-    colnames(db) <- c("DESeq2 logFC", "basic logFC")
-    dbc <- stats::cor.test(db[, 1], db[, 2])[["estimate"]]
-    dbs <- plot_scatter(db) +
-      ggplot2::labs(title=paste0(comp, ": DESeq2 vs basic.")) +
-      ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
-    limma_vs_edger[[comp]] <- lec
-    limma_vs_deseq[[comp]] <- ldc
-    edger_vs_deseq[[comp]] <- edc
-    limma_vs_basic[[comp]] <- lbc
-    edger_vs_basic[[comp]] <- ebc
-    deseq_vs_basic[[comp]] <- dbc
-    limma_vs_edger_scatter[[comp]] <- les
-    limma_vs_deseq_scatter[[comp]] <- lds
-    edger_vs_deseq_scatter[[comp]] <- eds
-    limma_vs_basic_scatter[[comp]] <- lbs
-    edger_vs_basic_scatter[[comp]] <- ebs
-    deseq_vs_basic_scatter[[comp]] <- dbs
+  complst <- list()
+  plotlst <- list()
+  methods <- c("limma", "edger", "deseq", "ebseq", "basic")
+  comparison_df <- data.frame()
+  lenminus <- length(methods) - 1
+  for (c in 1:lenminus) {
+    c_name <- methods[c]
+    nextc <- c + 1
+    for (d in nextc:length(methods)) {
+      d_name <- methods[d]
+      method_comp_name <- paste0(c_name, "_vs_", d_name)
+      cc <- 0
+      len <- length(names(retlst[["deseq"]]))
+      for (contr in names(retlst[["deseq"]])) {
+        ## assume all three have the same names() -- note that limma has more than the other two though
+        cc <- cc + 1
+        message("Comparing analyses ", cc, "/", len, ": ", contr)
+        num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
+        num_name <- num_den_names[1]
+        den_name <- num_den_names[2]
+        rev_contr <- paste0(den_name, "_vs_", num_name)
+        num_reversed <- 0
+        fst <- retlst[[c_name]][[contr]]
+        scd <- retlst[[d_name]][[contr]]
+        if (is.null(fst)) {
+          fst <- retlst[[c_name]][[rev_contr]]
+          fst[["logFC"]] <- fst[["logFC"]] * -1
+          message("Used reverse contrast for ", c_name, ".")
+          num_reversed <- num_reversed + 1
+        }
+        if (is.null(scd)) {
+          scd <- retlst[[d_name]][[rev_contr]]
+          scd[["logFC"]] <- scd[["logFC"]] * -1
+          message("Used reverse contrast for ", d_name, ".")
+          num_reversed <- num_reversed + 1
+        }
+        fs <- merge(fst, scd, by="row.names")
+        fs <- fs[, c("logFC.x", "logFC.y")]
+        colnames(fs) <- c(paste0(c_name, " logFC"), paste0(d_name, " logFC"))
+        fs_cor <- stats::cor.test(x=fs[, 1], y=fs[, 2])[["estimate"]]
+        comparison_df[method_comp_name, contr] <- fs_cor
+        fs_plt <- plot_scatter(fs) +
+          ggplot2::labs(title=paste0(contr, ": ", c_name, " vs. ", d_name, ".")) +
+          ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+        complst[[method_comp_name]] <- fs_cor
+        plotlst[[method_comp_name]] <- fs_plt
+      }
+    }
   } ## End loop
-  names(limma_vs_edger) <- names(deseq)
-  names(limma_vs_deseq) <- names(deseq)
-  names(edger_vs_deseq) <- names(deseq)
-  names(limma_vs_basic) <- names(deseq)
-  names(edger_vs_basic) <- names(deseq)
-  names(deseq_vs_basic) <- names(deseq)
-  names(limma_vs_edger_scatter) <- names(deseq)
-  names(limma_vs_deseq_scatter) <- names(deseq)
-  names(edger_vs_deseq_scatter) <- names(deseq)
-  names(limma_vs_basic_scatter) <- names(deseq)
-  names(edger_vs_basic_scatter) <- names(deseq)
-  names(deseq_vs_basic_scatter) <- names(deseq)
 
-  comparison_df <- rbind(as.numeric(limma_vs_edger), as.numeric(limma_vs_deseq))
-  comparison_df <- rbind(comparison_df, as.numeric(edger_vs_deseq))
-  if (isTRUE(include_basic)) {
-    comparison_df <- rbind(comparison_df, as.numeric(limma_vs_basic))
-    comparison_df <- rbind(comparison_df, as.numeric(edger_vs_basic))
-    comparison_df <- rbind(comparison_df, as.numeric(deseq_vs_basic))
-    rownames(comparison_df) <- c("le", "ld", "ed", "lb", "eb", "db")
-  } else {
-    rownames(comparison_df) <- c("le", "ld", "ed")
-  }
   comparison_df <- as.matrix(comparison_df)
-  colnames(comparison_df) <- names(deseq)
+  colnames(comparison_df) <- names(retlst[["deseq"]])
   heat_colors <- grDevices::colorRampPalette(c("white", "black"))
   comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
                                       trace="none", keysize=1.5,
@@ -1063,21 +1008,9 @@ compare_led_tables <- function(limma=NULL, deseq=NULL, edger=NULL, basic=NULL,
   if (class(comparison_heatmap) != "try-error") {
     heat <- recordPlot()
   }
-  ret <- list(
-    "limma_vs_edger" = limma_vs_edger,
-    "limma_vs_deseq" = limma_vs_deseq,
-    "limma_vs_basic" = limma_vs_basic,
-    "edger_vs_deseq" = edger_vs_deseq,
-    "edger_vs_basic" = edger_vs_basic,
-    "deseq_vs_basic" = deseq_vs_basic,
-    "limma_vs_edger_scatter" = limma_vs_edger_scatter,
-    "limma_vs_deseq_scatter" = limma_vs_deseq_scatter,
-    "limma_vs_basic_scatter" = limma_vs_basic_scatter,
-    "edger_vs_deseq_scatter" = edger_vs_deseq_scatter,
-    "edger_vs_basic_scatter" = edger_vs_basic_scatter,
-    "deseq_vs_basic_scatter" = deseq_vs_basic_scatter,
-    "comp" = comparison_df,
-    "heat" = heat)
+  ret <- append(complst, plotlst)
+  ret[["comp"]] <- comparison_df
+  ret[["heat"]] <- heat
   return(ret)
 }
 
@@ -1422,6 +1355,8 @@ do_pairwise <- function(type, ...) {
   res <- NULL
   if (type == "limma") {
     res <- try(limma_pairwise(...))
+  } else if (type == "ebseq") {
+    res <- try(ebseq_pairwise(...))
   } else if (type == "edger") {
     res <- try(edger_pairwise(...))
   } else if (type == "deseq") {

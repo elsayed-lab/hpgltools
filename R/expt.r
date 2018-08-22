@@ -2019,6 +2019,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
+  ## Get the library sizes and other raw plots before moving on...
+  metrics <- sm(graph_metrics(expt, qq=TRUE))
+  new_row <- new_row + nrow(pData(expt)) + 3
+  libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
+  xls_result <- write_xls(data=libsizes, wb=wb, start_row=new_row,
+                          rownames=FALSE, sheet=sheet, start_col=1,
+                          title="Library sizes.")
+
+  new_row <- new_row + nrow(libsizes) + 3
+  libsize_summary <- as.data.frame(metrics[["libsize_summary"]])
+  xls_result <- write_xls(data=libsize_summary, wb=wb, start_row=new_row,
+                          rownames=FALSE, sheet=sheet, start_col=1,
+                          title="Library size summary.")
+
   ## Write the raw read data and gene annotations
   message("Writing the raw reads.")
   sheet <- "raw_reads"
@@ -2037,7 +2051,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   if (class(newsheet) == "try-error") {
     warning("Failed to add the sheet: ", sheet)
   }
-  metrics <- sm(graph_metrics(expt, qq=TRUE))
+
   ## Start with library sizes.
   openxlsx::writeData(wb, sheet=sheet, x="Legend.", startRow=new_row, startCol=new_col)
   new_col <- new_col + plot_cols + 1
@@ -2046,7 +2060,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Non-zero genes.", startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   new_col <- 1
-  legend_plot <- metrics[["legend"]][["plot"]]
+  legend_plot <- metrics[["legend"]]
   try_result <- xlsx_plot_png(legend_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="01_legend", savedir=excel_basename, fancy_type="svg")
@@ -2055,6 +2069,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot_dim,
                               start_col=new_col, start_row=new_row,
                               plotname="02_libsize", savedir=excel_basename)
+
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
   nonzero_plot <- metrics[["nonzero"]]
@@ -2072,7 +2087,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Raw Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  density_plot <- metrics[["density"]][["plot"]]
+  density_plot <- metrics[["density"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
@@ -2256,7 +2271,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
                       startRow=new_row, startCol=new_col)
   new_col <- 1
   new_row <- new_row + 1
-  new_plot <- norm_metrics[["legend"]][["plot"]]
+  new_plot <- norm_metrics[["legend"]]
   try_result <- xlsx_plot_png(new_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row)
   new_col <- new_col + plot_cols + 1
@@ -2281,7 +2296,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   openxlsx::writeData(wb, sheet=sheet, x="Normalized Boxplot.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  ndensity_plot <- norm_metrics[["density"]][["plot"]]
+  ndensity_plot <- norm_metrics[["density"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,

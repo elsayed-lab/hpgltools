@@ -79,7 +79,7 @@ check_plot_scale <- function(data, scale=NULL) {
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
-                          qq=NULL, ma=NULL, ...) {
+                          qq=NULL, ma=NULL, gene_heat=FALSE, ...) {
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }
@@ -164,12 +164,19 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
   }
 
+  gene_heatmap <- NULL
+  if (isTRUE(gene_heat)) {
+    message("gene heatmap!")
+    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(expt, ...)))
+  }
+
   ret_data <- list(
     "boxplot" = boxplot,
     "corheat" = corheat[["plot"]],
     "density" = density[["plot"]],
     "density_table" = density[["table"]],
     "disheat" = disheat[["plot"]],
+    "gene_heatmap" = gene_heatmap,
     "legend" = legend[["plot"]],
     "legend_colors" = legend[["colors"]],
     "libsize" = libsize[["plot"]],
