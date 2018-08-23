@@ -709,6 +709,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
 #'   likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 #'   'precursors' is chosen, then the only likely choice for the moment is
 #'   'precursorintensity'.
+#' @param violin  Print the samples as violins rather than only box/whiskers?
 #' @param names  Names for the x-axis of the plot.
 #' @param title  Title the plot?
 #' @param scale  Put the data on a specific scale?

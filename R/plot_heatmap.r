@@ -97,7 +97,6 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         keysize <- arglist[["keysize"]]
     }
 
-    plot_env <- environment()
     data_class <- class(expt_data)[1]
     if (data_class == "expt") {
         expt_design <- pData(expt_data)
@@ -142,7 +141,6 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
         heatmap_colors <- gplots::redgreen(75)
         heatmap_data <- as.matrix(expt_data)
     }
-
     ## Set the batch colors depending on # of observed batches
     if (is.null(expt_design)) {
         row_colors <- rep("white", length(expt_colors))
@@ -159,6 +157,8 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
     }
 
     map <- NULL
+    na_idx <- is.na(heatmap_data)
+    heatmap_data[na_idx] <- 0
     if (type == "correlation") {
         map <- heatmap.3(heatmap_data, keysize=keysize, labRow=expt_names,
                          labCol=expt_names, ColSideColors=expt_colors,

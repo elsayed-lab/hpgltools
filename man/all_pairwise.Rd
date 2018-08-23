@@ -7,8 +7,9 @@
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
   model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL, test_pca = TRUE, annot_df = NULL, parallel = TRUE,
-  ...)
+  libsize = NULL, test_pca = TRUE, annot_df = NULL,
+  parallel = TRUE, do_basic = TRUE, do_deseq = TRUE,
+  do_ebseq = NULL, do_edger = TRUE, do_limma = TRUE, ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
@@ -40,6 +41,16 @@ pretty neat, lets say one has conditions A,B,C,D,E and wants to do (C/B)/A and (
 \item{annot_df}{Annotations to add to the result tables.}
 
 \item{parallel}{Use dopar to run limma, deseq, edger, and basic simultaneously.}
+
+\item{do_basic}{Perform a basic analysis?}
+
+\item{do_deseq}{Perform DESeq2 pairwise?}
+
+\item{do_ebseq}{Perform EBSeq (caveat, this is NULL as opposed to TRUE/FALSE so it can choose).}
+
+\item{do_edger}{Perform EdgeR?}
+
+\item{do_limma}{Perform limma?}
 
 \item{...}{Picks up extra arguments into arglist, currently only passed to write_limma().}
 }

@@ -16,6 +16,8 @@ plot_boxplot(data, colors = NULL, names = NULL, title = NULL,
 
 \item{title}{A title!}
 
+\item{violin}{Print this as a violin rather than a just box/whiskers?}
+
 \item{scale}{Whether to log scale the y-axis.}
 
 \item{...}{More parameters are more fun!}

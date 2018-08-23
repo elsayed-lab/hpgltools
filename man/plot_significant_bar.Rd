@@ -6,9 +6,9 @@
 These plots are quite difficult to describe.}
 \usage{
 plot_significant_bar(ups, downs, maximum = NULL, text = TRUE,
-  color_list = c("lightcyan", "lightskyblue", "dodgerblue", "plum1", "orchid",
-  "purple4"), color_names = c("a_up_inner", "b_up_middle", "c_up_outer",
-  "a_down_inner", "b_down_middle", "c_down_outer"))
+  color_list = c("lightcyan", "lightskyblue", "dodgerblue", "plum1",
+  "orchid", "purple4"), color_names = c("a_up_inner", "b_up_middle",
+  "c_up_outer", "a_down_inner", "b_down_middle", "c_down_outer"))
 }
 \arguments{
 \item{ups}{Set of up-regulated genes.}

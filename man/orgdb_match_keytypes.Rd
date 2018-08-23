@@ -4,7 +4,8 @@
 \alias{orgdb_match_keytypes}
 \title{Generate a set of joins suitable for the creation of an organismdbi package}
 \usage{
-orgdb_match_keytypes(first_name, second_name, starting = 1, exclude = NULL)
+orgdb_match_keytypes(first_name, second_name, starting = 1,
+  exclude = NULL)
 }
 \arguments{
 \item{first_name}{Name of the first package to search}

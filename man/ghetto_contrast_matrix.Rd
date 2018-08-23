@@ -2,10 +2,7 @@
 % Please edit documentation in R/helpers_misc.r
 \name{ghetto_contrast_matrix}
 \alias{ghetto_contrast_matrix}
-\title{I rather like makeContrasts() from limma.  I troubled me to have to manually
-create a contrast matrix when using MSstats.  It turns out it troubled me for
-good reason because I managed to reverse my damn terms and end up with the
-opposite contrasts of what I intended.  Ergo this function.}
+\title{Create a contrast matrix suitable for MSstats and similar tools.}
 \usage{
 ghetto_contrast_matrix(numerators, denominators)
 }
@@ -20,7 +17,13 @@ series of a/b comparisons.}
 Contrast matrix
 }
 \description{
-feed ghetto_contrast_matrix() a series of numerators and denominators names
+I rather like makeContrasts() from limma.  I troubled me to have to manually
+create a contrast matrix when using MSstats.  It turns out it troubled me for
+good reason because I managed to reverse the terms and end up with the
+opposite contrasts of what I intended.  Ergo this function.
+}
+\details{
+Feed ghetto_contrast_matrix() a series of numerators and denominators names
 after the conditions of interest in an experiment and it returns a contrast
-matrix in a format acceptable to MSstats (and other similar tools).
+matrix in a format acceptable to MSstats.
 }

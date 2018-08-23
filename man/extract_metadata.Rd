@@ -6,6 +6,14 @@
 \usage{
 extract_metadata(metadata, ...)
 }
+\arguments{
+\item{metadata}{file or df of metadata}
+
+\item{...}{Arguments to pass to the child functions.}
+}
+\value{
+Metadata dataframe hopefully cleaned up to not be obnoxious.
+}
 \description{
 Pull metadata from a table (xlsx/xls/csv/whatever)
 }

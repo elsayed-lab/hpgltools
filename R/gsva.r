@@ -46,10 +46,10 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
     message("Converting the rownames() of the expressionset to ENTREZID.")
     tt <- sm(library(orgdb, character.only=TRUE))
     old_ids <- rownames(exprs(eset))
-    new_ids <- sm(select(x=get0(orgdb),
-                        keys=old_ids,
-                        keytype=current_id,
-                        columns=c(required_id)))
+    new_ids <- sm(dplyr::select(x=get0(orgdb),
+                                keys=old_ids,
+                                keytype=current_id,
+                                columns=c(required_id)))
     new_idx <- complete.cases(new_ids)
     new_ids <- new_ids[new_idx, ]
     message("Before conversion, the expressionset has ", length(rownames(eset)),
@@ -71,7 +71,7 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
   fdata_df[["ids"]] <- ""
   for (i in 1:length(sig_data)) {
     fdata_df[i, "description"] <- description(sig_data[[i]])
-    fdata_df[i, "ids"] <- toString(geneIds(sig_data[[i]]))
+    fdata_df[i, "ids"] <- toString(GSEABase::geneIds(sig_data[[i]]))
   }
 
   fData(gsva_result) <- fdata_df
@@ -141,6 +141,7 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
 #'
 #' @param sig_data  GeneSetCollection from the broad msigdb.
 #' @param msig_xml  msig XML file downloaded from broad.
+#' @param gsva_result  Some data from GSVA to modify.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'   matching the sig_data GeneSets.
 #' @export

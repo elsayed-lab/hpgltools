@@ -12,23 +12,13 @@
 #' @param norm  Normalization method to use.
 #' @param ... Extra arguments currently unused.
 #' @export
-ebseq_pairwise <- function(input=NULL, conditions=NULL, patterns=NULL,
+ebseq_pairwise <- function(input=NULL, patterns=NULL,
                            ng_vector=NULL, rounds=10, target_fdr=0.05,
                            method="pairwise_subset", norm="median", ...) {
   arglist <- list(...)
-  if (method == "pairwise_subset") {
-    result <- ebseq_pairwise_subset(input, conditions=conditions,
-                                    ng_vector=ng_vector, rounds=rounds,
-                                    target_fdr=target_fdr, norm=norm,
-                                    ...)
-    return(result)
-  }
 
-  message("Starting EBSeq comparisons.")
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force=force)
-  ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
-  ## from my expt classes.
   design <- pData(input)
   conditions <- design[["condition"]]
   batches <- design[["batches"]]
@@ -37,72 +27,89 @@ ebseq_pairwise <- function(input=NULL, conditions=NULL, patterns=NULL,
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
 
-  multi <- FALSE
-  if (length(condition_levels) < 2) {
-    stop("You have fewer than 2 conditions.")
-  } else if (length(condition_levels) == 2) {
-    message("Invoking ebseq with 2-condition parameters.")
-    result <- ebseq_two(data, conditions,
-                        ng_vector=ng_vector, rounds=rounds,
-                        target_fdr=target_fdr, norm=norm)
-  } else if (length(condition_levels) > 5) {
-    if (is.null(patterns)) {
-      stop("Beyond 5 conditions generates too many patterns, please provide a pattern matrix, or 'all_same'.")
-      }
-    message("Invoking ebseq with parameters for preset patterns.")
-    result <- ebseq_many(data, conditions, patterns=patterns,
-                         ng_vector=ng_vector, rounds=rounds,
-                         target_fdr=target_fdr, norm=norm)
+  if (method == "pairwise_subset") {
+    result <- ebseq_pairwise_subset(input,
+                                    ng_vector=ng_vector, rounds=rounds,
+                                    target_fdr=target_fdr, norm=norm,
+                                    ...)
   } else {
-    message("Invoking ebseq with parameters suitable for a few conditions.")
-    result <- ebseq_few(data, conditions, patterns=patterns,
-                        ng_vector=ng_vector, rounds=rounds,
-                        target_fdr=target_fdr, norm=norm)
+    message("Starting single EBSeq invocation.")
+
+    multi <- FALSE
+    if (length(condition_levels) < 2) {
+      stop("You have fewer than 2 conditions.")
+    } else if (length(condition_levels) == 2) {
+      message("Invoking ebseq with 2-condition parameters.")
+      result <- ebseq_two(input,
+                          ng_vector=ng_vector, rounds=rounds,
+                          target_fdr=target_fdr, norm=norm)
+    } else if (length(condition_levels) > 5) {
+      if (is.null(patterns)) {
+        stop("Beyond 5 conditions generates too many patterns, please provide a pattern matrix, or 'all_same'.")
+      }
+      message("Invoking ebseq with parameters for preset patterns.")
+      result <- ebseq_many(data, conditions, patterns=patterns,
+                           ng_vector=ng_vector, rounds=rounds,
+                           target_fdr=target_fdr, norm=norm)
+    } else {
+      message("Invoking ebseq with parameters suitable for a few conditions.")
+      result <- ebseq_few(data, conditions, patterns=patterns,
+                          ng_vector=ng_vector, rounds=rounds,
+                          target_fdr=target_fdr, norm=norm)
+    }
   }
 
-  return(result)
+  retlist <- list(
+    "all_tables" = result,
+    "conditions" = conditions,
+    "conditions_table" = conditions_table,
+    "method" = "ebseq"
+  )
+  return(retlist)
 }
 
-
-ebseq_pairwise_subset <- function(input=NULL, conditions=NULL, patterns=NULL,
-                                  ng_vector=NULL, rounds=10, target_fdr=0.05,
+ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0.05,
                                   method="pairwise_subset", norm="median", ...) {
   message("Starting EBSeq pairwise subset.")
-  input <- sanitize_expt(input)
-  input_data <- choose_binom_dataset(input, force=force)
   ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
   ## from my expt classes.
   design <- pData(input)
   conditions <- design[["condition"]]
   batches <- design[["batches"]]
-  data <- as.matrix(input_data[["data"]])
+  data <- exprs(input)
   conditions_table <- table(conditions)
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
 
   lenminus <- length(condition_levels) - 1
   retlst <- list()
-  for (c in 1:lenminus) {
-    c_name <- condition_levels[c]
-    nextc <- c + 1
-    for (d in nextc:length(condition_levels)) {
-      d_name <- condition_levels[d]
-      contrast_name <- paste0(c_name, "_vs_", d_name)
-      message("Contrasting ", c_name, " and ", d_name, ".")
-      pair <- subset_expt(
+  for (a in 1:lenminus) {
+    a_name <- condition_levels[a]
+    nexta <- a + 1
+    for (b in nexta:length(condition_levels)) {
+      b_name <- condition_levels[b]
+      contrast_name <- paste0(b_name, "_vs_", a_name)
+      pair <- sm(subset_expt(
         expt=input,
-        subset=paste0("condition=='",c_name,"' | condition=='", d_name, "'"))
-      a_result <- ebseq_pairwise(pair, conditions=NULL,
-                                 ng_vector=ng_vector,
-                                 rounds=rounds, method="normal",
-                                 target_fdr=target_fdr, norm=norm)
+        subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      pair_data <- exprs(pair)
+      conditions <- pair[["conditions"]]
+      a_result <- ebseq_two(pair_data, conditions,
+                            numerator=a_name,
+                            denominator=b_name,
+                            ng_vector=ng_vector,
+                            rounds=rounds,
+                            target_fdr=target_fdr,
+                            norm=norm)
       retlst[[contrast_name]] <- a_result
     }
   }
   return(retlst)
 }
+ebseq_many <- function(data, conditions, patterns="all_same",
+                       ng_vector=ng_vector, rounds=rounds,
+                       target_fdr=target_fdr, norm=norm) {
 
-ebseq_many <- function(data, conditions, patterns="all_same") {
   if (patterns == "all_same") {
     patterns <- data.frame(row.names="Pattern1")
     for (i in conditions) {
@@ -110,20 +117,22 @@ ebseq_many <- function(data, conditions, patterns="all_same") {
     }
   }
   normalized <- ebseq_size_factors(data, norm)
+  ## Not yet implemented.
+  return(NULL)
 }
 
-ebseq_size_factors <- function(data, norm=NULL) {
+ebseq_size_factors <- function(data_mtrx, norm=NULL) {
   ## Set up a null normalization vector
-  normalized <- rep(x=1, times=ncol(data))
-  names(normalized) <- colnames(data)
+  normalized <- rep(x=1, times=ncol(data_mtrx))
+  names(normalized) <- colnames(data_mtrx)
   ## If the parameter passed matches an ebseq function, use it, if it doesn't,
   ## we still have the null.
   if (norm == "median") {
-    normalized <- EBSeq::MedianNorm(data)
+    normalized <- EBSeq::MedianNorm(data_mtrx, alternative=TRUE)
   } else if (norm == "quantile") {
-    normalized <- EBSeq::QuantileNorm(data)
+    normalized <- EBSeq::QuantileNorm(data_mtrx)
   } else if (norm == "rank") {
-    normalized <- EBSeq::RankNorm(data)
+    normalized <- EBSeq::RankNorm(data_mtrx)
   }
   return(normalized)
 }
@@ -177,7 +186,7 @@ ebseq_few <- function(data, conditions,
 
     table <- data.frame(row.names=rownames(fold_changes[["FCMat"]]))
     table[["ebseq_FC"]] <- fold_changes[["FCMat"]][, i]
-    table[["ebseq_logfc"]] <- fold_changes[["Log2FCMat"]][, i]
+    table[["logFC"]] <- fold_changes[["Log2FCMat"]][, i]
     table[["ebseq_postfc"]] <- fold_changes[["Log2PostFCMat"]][, i]
     table[["ebseq_mean"]] <- fold_changes[["CondMeans"]][, i]
     table[["pp_all_same"]] <- pp_df[["Pattern1"]]
@@ -186,47 +195,48 @@ ebseq_few <- function(data, conditions,
     table_lst[[contrast]] <- table
   }
 
-  return(table_lst)
+  retlst <- list(
+    "all_tables" = table_lst,
+    "conditions" = conditions,
+    "conditions_table" = conditions_table,
+    "method" = "ebseq")
+  return(retlst)
 }
 
-ebseq_two <- function(data, conditions,
+ebseq_two <- function(pair_data, conditions,
+                      numerator=2, denominator=1,
                       ng_vector=NULL, rounds=10,
                       target_fdr=0.05, norm="median") {
-  normalized <- ebseq_size_factors(data, norm=norm)
-  eb_output <- EBSeq::EBTest(
-                        Data=data, NgVector=NULL, Conditions=conditions,
-                        sizeFactors=normalized, maxround=rounds)
+  normalized <- ebseq_size_factors(pair_data, norm=norm)
+  message("Starting EBTest of ", numerator, " vs. ", denominator, ".")
+  eb_output <- sm(EBSeq::EBTest(
+                           Data=pair_data, NgVector=NULL, Conditions=conditions,
+                           sizeFactors=normalized, maxround=rounds))
   posteriors <- EBSeq::GetPP(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
   eb_result <- EBSeq::GetDEResults(eb_output, FDR=target_fdr)
   table <- data.frame(row.names=names(fold_changes[["PostFC"]]))
   table[["ebseq_FC"]] <- fold_changes[["RealFC"]]
-  table[["ebseq_logfc"]] <- log2(table[["ebseq_FC"]])
+  table[["logFC"]] <- log2(table[["ebseq_FC"]])
   table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
   table[["ebseq_mean"]] <- as.numeric(eb_output[["MeanList"]][[1]])
   table <- merge(table, as.data.frame(eb_result[["PPMat"]]),
                  by="row.names", all.x=TRUE)
   rownames(table) <- table[["Row.names"]]
   table <- table[, -1]
-  return(table)
-}
 
-#' Writes out the results of a ebseq search using write_de_table()
-#'
-#' Looking to provide a single interface for writing tables from ebseq and friends.
-#'
-#' @param data  Output from ebseq_pairwise()
-#' @param ...  Options for writing the xlsx file.
-#' @seealso \pkg{EBSeq} \link{write_xls}
-#' @examples
-#' \dontrun{
-#'  finished_comparison = ebseq_pairwise(expressionset)
-#'  data_list = write_ebseq(finished_comparison)
-#' }
-#' @export
-write_ebseq <- function(data, ...) {
-  result <- write_de_table(data, type="ebseq", ...)
-  return(result)
+  ## Finally, make sure the 'direction' matches my conception of numerator/denominator.
+  eb_direction <- fold_changes[["Direction"]]
+  eb_denominator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\1", x=eb_direction)
+  eb_numerator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\2", x=eb_direction)
+  ## message("EBD: ", eb_denominator, " EBN: ", eb_numerator, " D: ", denominator, " N: ", numerator)
+  if (! eb_numerator == numerator) {
+    ## message("Flipping the table FC and logFC.")
+    table[["ebseq_FC"]] <- 1 / table[["ebseq_FC"]]
+    table[["logFC"]] <- -1 * table[["logFC"]]
+    table[["ebseq_postfc"]] <- 1 / table[["ebseq_postfc"]]
+  }
+  return(table)
 }
 
 ## EOF

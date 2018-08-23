@@ -17,7 +17,23 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
 
 \item{p}{Or p-value.}
 
-\item{z}{Or z-score.}
+\item{padding_rows}{How much space to put between groups of data?}
+
+\item{include_l}{Include limma?}
+
+\item{include_d}{Include deseq?}
+
+\item{include_e}{Include edger?}
+
+\item{include_ld}{Include the set of limma shared with deseq?}
+
+\item{include_le}{Include the set of limma shared with edger?}
+
+\item{include_de}{Include the set of edger shared with deseq?}
+
+\item{include_led}{Include the full intersection?}
+
+\item{z}{Use a z-score filter?}
 
 \item{p_type}{Use normal or adjusted p-values.}
 

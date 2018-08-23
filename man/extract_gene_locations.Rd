@@ -4,7 +4,8 @@
 \alias{extract_gene_locations}
 \title{Clean up the gene location field from eupathdb derived gene location data.}
 \usage{
-extract_gene_locations(annot_df, location_column = "annot_gene_location_text")
+extract_gene_locations(annot_df,
+  location_column = "annot_gene_location_text")
 }
 \arguments{
 \item{annot_df}{Data frame resulting from load_orgdb_annotations()}

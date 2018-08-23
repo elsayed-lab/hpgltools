@@ -228,14 +228,16 @@ get_git_commit <- function(gitdir="~/hpgltools") {
   return(result)
 }
 
+#' Create a contrast matrix suitable for MSstats and similar tools.
+#'
 #' I rather like makeContrasts() from limma.  I troubled me to have to manually
 #' create a contrast matrix when using MSstats.  It turns out it troubled me for
-#' good reason because I managed to reverse my damn terms and end up with the
+#' good reason because I managed to reverse the terms and end up with the
 #' opposite contrasts of what I intended.  Ergo this function.
 #'
-#' feed ghetto_contrast_matrix() a series of numerators and denominators names
+#' Feed ghetto_contrast_matrix() a series of numerators and denominators names
 #' after the conditions of interest in an experiment and it returns a contrast
-#' matrix in a format acceptable to MSstats (and other similar tools).
+#' matrix in a format acceptable to MSstats.
 #'
 #' @param numerators  Character list of conditions which are the numerators of a
 #'   series of a/b comparisons.
@@ -596,9 +598,9 @@ rex <- function(display=":0") {
   home <- Sys.getenv("HOME")
   host <- Sys.info()[["nodename"]]
   if (is.null(display)) {
-    display <- read.table(paste0(home, "/.displays/", host, ".last"))[1, 1]
+    display <- read.table(file.path(home, ".displays", paste0(host, ".last")))[1, 1]
   }
-  auth <- paste0(home, "/.Xauthority")
+  auth <- paste0(file.path(home, ".Xauthority"))
   message("Setting display to: ", display)
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
@@ -686,7 +688,7 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
   return(dataframe)
 }
 
-#' Silence, m...
+#' Silence
 #'
 #' Some libraries/functions just won't shut up.  Ergo, silence, peasant!
 #' This is a simpler silence peasant.

@@ -4,7 +4,8 @@
 \alias{disjunct_pvalues}
 \title{Test for infected/control/beads -- a placebo effect?}
 \usage{
-disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast)
+disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts,
+  disj_contrast)
 }
 \arguments{
 \item{contrast_fit}{The result of lmFit.}

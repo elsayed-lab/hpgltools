@@ -15,6 +15,8 @@ make_eupath_orgdb(species = NULL, entry = NULL, dir = "eupathdb",
 
 \item{dir}{Where to put all the various temporary files.}
 
+\item{version}{Which version of the eupathdb to use for creating this package?}
+
 \item{kegg_abbreviation}{If known, provide the kegg abbreviation.}
 
 \item{reinstall}{Re-install an already existing orgdb?}

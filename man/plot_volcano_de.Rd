@@ -4,11 +4,12 @@
 \alias{plot_volcano_de}
 \title{Make a pretty Volcano plot!}
 \usage{
-plot_volcano_de(table, alpha = 0.6, color_by = "p", color_list = c(`FALSE`
-  = "darkred", `TRUE` = "darkblue"), fc_col = "logFC",
-  fc_name = "log2 fold change", gvis_filename = NULL,
-  line_color = "black", line_position = "bottom", logfc_cutoff = 1,
-  p_col = "adj.P.Val", p_name = "-log10 p-value", pval_cutoff = 0.05,
+plot_volcano_de(table, alpha = 0.6, color_by = "p",
+  color_list = c(`FALSE` = "darkred", `TRUE` = "darkblue"),
+  fc_col = "logFC", fc_name = "log2 fold change",
+  gvis_filename = NULL, line_color = "black",
+  line_position = "bottom", logfc_cutoff = 1, p_col = "adj.P.Val",
+  p_name = "-log10 p-value", pval_cutoff = 0.05,
   shapes_by_state = TRUE, size = 2, tooltip_data = NULL, ...)
 }
 \arguments{

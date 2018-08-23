@@ -5,7 +5,8 @@
 \title{Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
-  title_suffix = NULL, qq = NULL, ma = NULL, ...)
+  title_suffix = NULL, qq = NULL, ma = NULL, gene_heat = FALSE,
+  ...)
 }
 \arguments{
 \item{expt}{an expt to process}

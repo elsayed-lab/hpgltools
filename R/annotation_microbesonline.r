@@ -126,11 +126,11 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' At the very least, it does return a large number of them, which is a start.
 #'
 #' @param id Which species to query.
-#' @param name_type  The column to use as GID.
+#' @param id_column  This no longer uses MySQL, so which column from the html table to pull?
+#' @param data_column  Similar to above, there are lots of places from which one might
+#'   extract the data.
 #' @param name  Allowing for non-specific searches by species name.
-#' @return data frame of GO terms from pub.microbesonline.org
-#' @seealso \pkg{DBI}
-#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
+#' @return data frame of GO terms from www.microbesonline.org
 #' @examples
 #' \dontrun{
 #'  go_df <- get_loci_go(id="160490")
@@ -157,7 +157,6 @@ load_microbesonline_go <- function(id="160490", id_column="name", data_column="G
 #' At the very least, it does return a large number of them, which is a start.
 #'
 #' @param id Which species to query.
-#' @param name  Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from pub.microbesonline.org
 #' @seealso \pkg{DBI}
 #'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
@@ -166,14 +165,8 @@ load_microbesonline_go <- function(id="160490", id_column="name", data_column="G
 #'  go_df <- get_loci_go(id="160490")
 #' }
 #' @export
-load_microbesonline_kegg <- function(id="160490", name=NULL) {
+load_microbesonline_kegg <- function(id="160490") {
   chosen <- id
-  if (!is.null(name)) {
-    chosen <- get_microbesonline_ids(name=name)
-    message("Retrieved ", nrow(chosen), " IDs, choosing the first, which is for ",
-            chosen[1, 2], ".")
-    chosen <- chosen[1, 1]
-  }
 
   tt <- sm(requireNamespace("RMySQL"))
   db_driver <- DBI::dbDriver("MySQL")

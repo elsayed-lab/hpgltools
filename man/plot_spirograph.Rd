@@ -5,7 +5,8 @@
 \title{Make spirographs!}
 \usage{
 plot_spirograph(radius_a = 1, radius_b = -4, dist_bc = -2,
-  revolutions = 158, increments = 3160, center_a = list(x = 0, y = 0))
+  revolutions = 158, increments = 3160, center_a = list(x = 0, y =
+  0))
 }
 \arguments{
 \item{radius_a}{The radius of the primary circle.}

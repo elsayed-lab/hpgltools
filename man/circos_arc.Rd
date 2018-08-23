@@ -5,7 +5,8 @@
 \title{Write arcs between chromosomes in circos.}
 \usage{
 circos_arc(df, cfgout = "circos/conf/default.conf", first_col = "chr1",
-  second_col = "chr2", color = "blue", radius = 0.75, thickness = 3)
+  second_col = "chr2", color = "blue", radius = 0.75,
+  thickness = 3)
 }
 \arguments{
 \item{df}{Dataframe with starts/ends and the floating point information.}

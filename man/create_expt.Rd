@@ -5,10 +5,10 @@
 \title{Wrap bioconductor's expressionset to include some other extraneous
 information.}
 \usage{
-create_expt(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
-  sample_colors = NULL, title = NULL, notes = NULL,
-  include_type = "all", include_gff = NULL, file_column = "file",
-  savefile = "expt", low_files = FALSE, ...)
+create_expt(metadata = NULL, gene_info = NULL,
+  count_dataframe = NULL, sample_colors = NULL, title = NULL,
+  notes = NULL, include_type = "all", include_gff = NULL,
+  file_column = "file", savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
 \item{metadata}{Comma separated file (or excel) describing the samples with information like
@@ -52,12 +52,12 @@ a full pathname or local to the cwd of the project.
 }
 \examples{
 \dontrun{
- new_experiment <- create_expt("some_csv_file.csv", color_hash)
+ new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
  ## Remember that this depends on an existing data structure of gene annotations.
 }
 }
 \seealso{
 \pkg{Biobase}
  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
- \code{\link{read_counts_expt}} \code{\link[hash]{as.list.hash}}
+ \code{\link{read_counts_expt}}
 }

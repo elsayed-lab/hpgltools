@@ -18,6 +18,8 @@ plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
 
 \item{text}{Add the numeric values inside the top of the bars of the plot?}
 
+\item{order}{Explicitly set the order of samples in the plot?}
+
 \item{title}{Title for the plot.}
 
 \item{yscale}{Whether or not to log10 the y-axis.}

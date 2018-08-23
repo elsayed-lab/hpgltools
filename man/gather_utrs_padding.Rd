@@ -5,9 +5,10 @@
 \title{Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3' padded sequence.}
 \usage{
 gather_utrs_padding(bsgenome, annot_df, name_column = "gid",
-  chr_column = "chromosome", start_column = "start", end_column = "end",
-  strand_column = "strand", type_column = "annot_gene_type",
-  gene_type = "protein coding", padding = 120, ...)
+  chr_column = "chromosome", start_column = "start",
+  end_column = "end", strand_column = "strand",
+  type_column = "annot_gene_type", gene_type = "protein coding",
+  padding = 120, ...)
 }
 \arguments{
 \item{bsgenome}{BSgenome object containing the genome of interest.}
@@ -33,6 +34,8 @@ likely).}
 type.}
 
 \item{padding}{Return this number of nucleotides for each gene.}
+
+\item{...}{Arguments passed to child functions (I think none currently).}
 }
 \value{
 List of 2 elements, the 5' and 3' regions.

@@ -5,14 +5,16 @@
 \title{Create an organismDbi instance for an eupathdb organism.}
 \usage{
 make_eupath_organismdbi(species = "Leishmania major strain Friedlin",
-  entry = NULL, version = NULL, dir = "eupathdb", reinstall = FALSE,
-  metadata = NULL, kegg_abbreviation = NULL, exclude_join = "ENTREZID",
-  ...)
+  entry = NULL, version = NULL, dir = "eupathdb",
+  reinstall = FALSE, metadata = NULL, kegg_abbreviation = NULL,
+  exclude_join = "ENTREZID", ...)
 }
 \arguments{
 \item{species}{A species in the eupathDb metadata.}
 
 \item{entry}{A row from the eupathdb metadataframe.}
+
+\item{version}{Which version of the eupathdb to use for creating this package?}
 
 \item{dir}{Directory in which to build the packages.}
 

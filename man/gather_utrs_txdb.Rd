@@ -5,8 +5,29 @@
 \title{Get UTR sequences using information provided by TxDb and fiveUTRsByTranscript}
 \usage{
 gather_utrs_txdb(bsgenome, fivep_utr = NULL, threep_utr = NULL,
-  start_column = "start", end_column = "end", strand_column = "strand",
-  chr_column = "seqnames", name_column = "group_name", ...)
+  start_column = "start", end_column = "end",
+  strand_column = "strand", chr_column = "seqnames",
+  name_column = "group_name", ...)
+}
+\arguments{
+\item{bsgenome}{A BSGenome instance containing the encoded genome.}
+
+\item{fivep_utr}{Locations of the 5' UTRs.}
+
+\item{threep_utr}{Locations of the 3' UTRs.}
+
+\item{start_column}{What column in the annotation data contains the starts.}
+
+\item{end_column}{Column in the data with the end locations.}
+
+\item{chr_column}{Column in the df with the chromosome names.}
+
+\item{name_column}{Finally, where are the gene names?}
+
+\item{...}{Parameters passed to child functions.}
+}
+\value{
+UTRs!
 }
 \description{
 For species like Mus musculus, load_orgdb_annotations(Mus.musculus)

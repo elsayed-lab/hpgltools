@@ -753,6 +753,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
+#' @param basename Location to write the circos data (usually cwd).
 #' @param color Color of the plotted data.
 #' @param fill_color Guess!
 #' @param outer Floating point radius of the circle into which to place the data.
@@ -768,16 +769,43 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
   full_table <- merge(df, annot_df, by="row.names")
-  if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) |
-      is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
-    stop("This requires columns: start, end, rownames, and datum")
+  if (nrow(full_table) == 0) {
+    stop("Merging the annotations and data failed.")
   }
-  full_table <- full_table[, c("start", "stop", colname)]
+  start_colnames <- colnames(full_table)
+  new_colnames <- gsub(x=start_colnames, pattern="\\.x$", replacement="")
+  colnames(full_table) <- new_colnames
+
+  start_name <- "start"
+  stop_name <- "stop"
+  if (is.null(full_table[[stop_name]])) {
+    stop_name <- "end"
+  }
+
+  if (! start_name %in% colnames(full_table)) {
+    stop("This requires a column named start.")
+  }
+  if (! stop_name %in% colnames(full_table)) {
+    stop("This requires a column named ", stop_name, ".")
+  }
+  if (! colname %in% colnames(full_table)) {
+    stop("This requires a column named ", colname, ".")
+  }
+  if (is.null(rownames(full_table))) {
+    stop("This requires rownames.")
+  }
+
+  full_table <- full_table[, c(start_name, stop_name, colname)]
+  full_table[[start_name]] <- as.integer(full_table[[start_name]])
+  full_table[[stop_name]] <- as.integer(full_table[[stop_name]])
+  keep_idx <- !is.na(full_table[[start_name]])
+  full_table <- full_table[keep_idx, ]
+
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
   datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_hist.conf")
   full_table[["chr"]] <- chr
-  full_table <- full_table[, c("chr", "start", "stop", colname)]
+  full_table <- full_table[, c("chr", start_name, stop_name, colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
@@ -841,7 +869,7 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
 #' @return a kitten
 #' @export
-circos_make <- function(target="", output="circos/Makefile", circos="circos", verbose=FALSE) {
+circos_make <- function(target="", output="circos/Makefile", circos="circos") {
   circos_dir <- dirname(output)
   if (!file.exists(circos_dir)) {
     message("The circos directory does not exist, creating: ", circos_dir)

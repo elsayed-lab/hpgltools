@@ -277,6 +277,7 @@ extract_gene_locations <- function(annot_df, location_column="annot_gene_locatio
 #'
 #' @param species  Species to create.
 #' @param entry  Single eupathdb metadata entry.
+#' @param version Which version of the eupathdb to use for creating the BSGenome?
 #' @param dir  Working directory.
 #' @param reinstall  Rewrite an existing package directory.
 #' @param metadata  Eupathdb metadata dataframe.
@@ -415,6 +416,7 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
 #' With that in mind, this function should provide consistent, valid package names.
 #'
 #' @param species  Guess.
+#' @param Eupathdb version to query.
 #' @param metadata  Eupathdb metadata.
 #' @param ...  Further arguments to pass to download_eupath_metadata()
 #' @return  List of package names and some booleans to see if they have already been installed.
@@ -483,6 +485,7 @@ get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130", versi
 #'
 #' @param species  A species in the eupathDb metadata.
 #' @param entry  A row from the eupathdb metadataframe.
+#' @param version  Which version of the eupathdb to use for creating this package?
 #' @param dir  Directory in which to build the packages.
 #' @param reinstall  Overwrite existing data files?
 #' @param metadata  Use a pre-existing metadata table, or download a new one.
@@ -646,6 +649,7 @@ make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", 
 #' @param species  A specific species ID to query
 #' @param entry  If not provided, then species will get this, it contains all the information.
 #' @param dir  Where to put all the various temporary files.
+#' @param version  Which version of the eupathdb to use for creating this package?
 #' @param kegg_abbreviation  If known, provide the kegg abbreviation.
 #' @param reinstall  Re-install an already existing orgdb?
 #' @param metadata  Use an existing metadata table to get the entry?
@@ -873,6 +877,7 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb", version=
 #'
 #' @param species  guess
 #' @param entry  One dimensional dataframe with organism metadata.
+#' @param version  Which version of the eupathdb to use for creating this package?
 #' @param dir  Base directory for building the package.
 #' @param reinstall  Overwrite an existing installed package?
 #' @param metadata  dataframe of eupathdb metadata.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers_misc.r
 \name{sm}
 \alias{sm}
-\title{Silence, m...}
+\title{Silence}
 \usage{
 sm(..., wrap = TRUE)
 }

@@ -4,7 +4,8 @@
 \alias{take_from_ah}
 \title{Create an orgdb from an taxonID}
 \usage{
-take_from_ah(ahid = NULL, title = NULL, species = NULL, type = "OrgDb")
+take_from_ah(ahid = NULL, title = NULL, species = NULL,
+  type = "OrgDb")
 }
 \arguments{
 \item{ahid}{TaxonID from AnnotationHub}

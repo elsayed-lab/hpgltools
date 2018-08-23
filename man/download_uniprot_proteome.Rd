@@ -4,8 +4,8 @@
 \alias{download_uniprot_proteome}
 \title{Download the txt uniprot data for a given accession/species}
 \usage{
-download_uniprot_proteome(accession = NULL, species = NULL, all = FALSE,
-  first = FALSE)
+download_uniprot_proteome(accession = NULL, species = NULL,
+  all = FALSE, first = FALSE)
 }
 \arguments{
 \item{accession}{Which accession to grab?}

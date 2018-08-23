@@ -4,7 +4,8 @@
 \alias{plot_cleaved}
 \title{Plot the average mass and expected intensity of a set of sequences given an enzyme.}
 \usage{
-plot_cleaved(pep_sequences, enzyme = "trypsin", start = 600, end = 1500)
+plot_cleaved(pep_sequences, enzyme = "trypsin", start = 600,
+  end = 1500)
 }
 \arguments{
 \item{pep_sequences}{Set of protein sequences.}

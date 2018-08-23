@@ -26,6 +26,7 @@
 #' @param categories  How many categories should be plotted in bar/dot plots?
 #' @param excel  Print the results to an excel file?
 #' @param do_david  Attempt to use the DAVID database for a search?
+#' @param david_id  Which column to use for cross-referencing to DAVID?
 #' @param david_user  Default registered username to use.
 #' @return a list
 #' @seealso \pkg{clusterProfiler}
@@ -41,7 +42,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                    updown="up", permutations=100, min_groupsize=5,
                                    kegg_prefix=NULL, kegg_organism=NULL, do_gsea=TRUE,
                                    categories=12, excel=NULL, do_david=TRUE,
-                                   david_id="ENTREZ_GENE_ID", david_user="abelew@umd.edu") {
+                                   david_id="ENTREZ_GENE_ID", david_user="unknown@unknown.org") {
   tt <- sm(requireNamespace(package="clusterProfiler", quietly=TRUE))
   tt <- sm(requireNamespace(package="DOSE", quietly=TRUE))
   org <- NULL

@@ -5,11 +5,11 @@
 \title{Plot the rank order of the data in two tables against each other.}
 \usage{
 rank_order_scatter(first, second = NULL, first_type = "limma",
-  second_type = "limma", first_table = 1, alpha = 0.5, second_table = 2,
-  first_column = "logFC", second_column = "logFC",
-  first_p_col = "adj.P.Val", second_p_col = "adj.P.Val", p_limit = 0.05,
-  both_color = "red", first_color = "green", second_color = "blue",
-  no_color = "black")
+  second_type = "limma", first_table = 1, alpha = 0.5,
+  second_table = 2, first_column = "logFC", second_column = "logFC",
+  first_p_col = "adj.P.Val", second_p_col = "adj.P.Val",
+  p_limit = 0.05, both_color = "red", first_color = "green",
+  second_color = "blue", no_color = "black")
 }
 \arguments{
 \item{first}{First table of values.}
