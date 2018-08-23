@@ -27,7 +27,6 @@
 plot_libsize <- function(data, condition=NULL, colors=NULL,
                          names=NULL, text=TRUE, order=NULL,
                          title=NULL,  yscale=NULL, ...) {
-  hpgl_env <- environment()
   arglist <- list(...)
   if (is.null(text)) {
     text <- TRUE
@@ -45,13 +44,13 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
     condition <- design[["condition"]]
     colors <- data[["colors"]]
     names <- data[["names"]]
-    data <- exprs(data)
+    mtrx <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     design <- pData(data)
     condition <- design[["condition"]]
-    data <- exprs(data)
+    mtrx <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    mtrx <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
     stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
@@ -67,13 +66,13 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
     stop("Missing condition label vector.")
   }
 
-  values <- as.numeric(data)
+  values <- as.numeric(mtrx)
   integerp <- all.equal(values, as.integer(values))
 
   colors <- as.character(colors)
   sum <- NULL
-  libsize_df <- data.frame("id" = colnames(data),
-                           "sum" = colSums(data),
+  libsize_df <- data.frame("id" = colnames(mtrx),
+                           "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))
   summary_df <- data.table::setDT(libsize_df)[, list("min"=min(sum),
@@ -87,10 +86,10 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                                    names=names, text=text,
                                    order=order, title=title, integerp=integerp,
                                    yscale=yscale, ...)
-  ##libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
-  ##                                 names=names, text=text,
-  ##                                 order=order, title=title, integerp=integerp,
-  ##                                 yscale=yscale)
+  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+                                   names=names, text=text,
+                                   order=order, title=title, integerp=integerp,
+                                   yscale=yscale)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -194,7 +193,6 @@ plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
 #' @export
 plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
                           names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
-  hpgl_env <- environment()
   arglist <- list(...)
   table <- data
   if (class(data) == "expt") {
@@ -315,7 +313,7 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
       scale <- FALSE
     }
   }
-  if (scale == TRUE) {
+  if (isTRUE(scale)) {
     sample_plot <- sample_plot +
       ggplot2::scale_y_log10()
   }
