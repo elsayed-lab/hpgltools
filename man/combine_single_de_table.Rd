@@ -36,6 +36,8 @@ combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
 
 \item{include_edger}{Include tables from edger?}
 
+\item{include_ebseq}{Include tables from ebseq?}
+
 \item{include_limma}{Include tables from limma?}
 
 \item{include_basic}{Include the basic table?}

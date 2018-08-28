@@ -704,7 +704,7 @@ sm <- function(..., wrap=TRUE) {
       ret <- try(suppressWarnings(suppressMessages(...)), silent=TRUE)
       if (class(ret)[1] == "try-error") {
         if (grepl(pattern=" there is no package called", x=ret)) {
-          uninstalled <- trimws(gsub(pattern="^.* there is no package called ‘(.*)’.*$",
+          uninstalled <- trimws(gsub(pattern="^.* there is no package called '(.*)'.*$",
                                      replacement="\\1",
                                      x=ret, perl=TRUE))
           message("Going to attempt to install: ", uninstalled)

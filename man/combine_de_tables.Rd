@@ -40,6 +40,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{include_edger}{Include edger analyses in the table?}
 
+\item{include_ebseq}{Include ebseq analyses in the table?}
+
 \item{include_basic}{Include my stupid basic logFC tables?}
 
 \item{rownames}{Add rownames to the xlsx printed table?}

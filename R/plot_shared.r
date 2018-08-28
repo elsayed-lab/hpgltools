@@ -45,8 +45,9 @@ check_plot_scale <- function(data, scale=NULL) {
 #' @param cormethod   the correlation test for heatmaps.
 #' @param distmethod define the distance metric for heatmaps.
 #' @param title_suffix   text to add to the titles of the plots.
-#' @param qq   include qq plots
-#' @param ma   include pairwise ma plots
+#' @param qq   include qq plots?
+#' @param ma   include pairwise ma plots?
+#' @param gene_heat  Include a heatmap of the gene expression data?
 #' @param ... extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:
 #' \enumerate{
@@ -79,7 +80,7 @@ check_plot_scale <- function(data, scale=NULL) {
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
-                          qq=NULL, ma=NULL, gene_heat=FALSE, ...) {
+                          qq=FALSE, ma=FALSE, gene_heat=FALSE, ...) {
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }

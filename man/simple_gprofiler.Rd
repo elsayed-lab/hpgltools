@@ -15,6 +15,8 @@ simple_gprofiler(sig_genes, species = "hsapiens", convert = TRUE,
 
 \item{species}{Organism supported by gprofiler.}
 
+\item{convert}{Use gProfileR's conversion utility?}
+
 \item{first_col}{First place used to define the order of 'significant'.}
 
 \item{second_col}{If that fails, try a second column.}

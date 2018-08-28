@@ -10,11 +10,12 @@ get_eupath_pkgnames(species = "Coprinosis.cinerea.okayama7#130",
 \arguments{
 \item{species}{Guess.}
 
+\item{version}{Choose a specific version of the eupathdb, only really useful
+when downloading files.}
+
 \item{metadata}{Eupathdb metadata.}
 
 \item{...}{Further arguments to pass to download_eupath_metadata()}
-
-\item{Eupathdb}{version to query.}
 }
 \value{
 List of package names and some booleans to see if they have already been installed.

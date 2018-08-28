@@ -17,6 +17,7 @@
 #' @param include_limma  Include limma analyses in the table?
 #' @param include_deseq  Include deseq analyses in the table?
 #' @param include_edger  Include edger analyses in the table?
+#' @param include_ebseq  Include ebseq analyses in the table?
 #' @param include_basic  Include my stupid basic logFC tables?
 #' @param rownames  Add rownames to the xlsx printed table?
 #' @param add_plots  Add plots to the end of the sheets with expression values?
@@ -428,7 +429,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       found <- 0
       found_table <- NULL
       do_inverse <- FALSE
-      for (tab in table_names) {
+      for (t in 1:length(table_names)) {
+        tab <- table_names[t]
         ## message("Searching for either ", same_string, " or ", inverse_string, " among: ", toString(table_names))
         if (tab == same_string) {
           do_inverse <- FALSE
@@ -688,7 +690,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
     count <- 0
-    for (tab in names(combo)) {
+    for (t in 1:length(names(combo))) {
+      tab <- names(combo)[t]
       sheetname <- tab
       count <- count + 1
       ## I was getting some weird errors which magically disappeared when I did the following
@@ -830,7 +833,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       comp[["summary"]] <- all_pairwise_result[["comparison"]][["comp"]]
       comp[["plot"]] <- all_pairwise_result[["comparison"]][["heat"]]
       de_summaries <- as.data.frame(de_summaries)
-      rownames(de_summaries) <- final_table_names
+      ## A change I made messes this up, I should come back through and figure out why
+      ## I think it is because I am trying to make the rownames include whether the contrast was
+      ## as written or its inverse.
+      ##rownames(de_summaries) <- final_table_names
       xls_result <- write_xls(
         wb, data=de_summaries, sheet=sheetname, title="Summary of contrasts.")
       new_row <- xls_result[["end_row"]] + 2
@@ -960,6 +966,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param padj_type  Add this consistent p-adjustment.
 #' @param include_deseq  Include tables from deseq?
 #' @param include_edger  Include tables from edger?
+#' @param include_ebseq  Include tables from ebseq?
 #' @param include_limma  Include tables from limma?
 #' @param include_basic  Include the basic table?
 #' @param lfc_cutoff  Preferred logfoldchange cutoff.
@@ -1490,6 +1497,10 @@ combine_de_data_table <- function(lilfcdt, listatsdt, include_limma,
   return(comb)
 }
 
+combine_de_venn <- function() {
+
+}
+
 #' Extract the sets of genes which are significantly more abundant than the rest.
 #'
 #' Given the output of something_pairwise(), pull out the genes for each contrast
@@ -1666,7 +1677,6 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     title_append <- paste0(title_append, " top|bottom n=", n)
   }
 
-  table_count <- 0
   if (according_to[[1]] == "all") {
     according_to <- c("limma", "edger", "deseq", "basic")
   }
@@ -1740,41 +1750,22 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   }
 
   ret <- list()
-  summary_count <- 0
   sheet_count <- 0
-  for (according in according_to) {
-    summary_count <- summary_count + 1
+  for (summary_count in 1:length(according_to)) {
+    according <- according_to[summary_count]
     ret[[according]] <- list()
     ma_plots <- list()
     change_counts_up <- list()
     change_counts_down <- list()
-    for (table_name in table_names) {
+    for (table_count in 1:length(table_names)) {
+      table_name <- table_names[table_count]
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
-        single_ma <- NULL
-        if (according == "limma") {
-          single_ma <- extract_de_plots(
-            combined, type="limma", table=table_name, lfc=lfc,  pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "deseq") {
-          single_ma <- extract_de_plots(
-            combined, type="deseq", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "edger") {
-          single_ma <- extract_de_plots(
-            combined, type="edger", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "basic") {
-          single_ma <- extract_de_plots(
-            combined, type="basic", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else {
-          message("Do not know this according type.")
-        }
-        ma_plots[[table_name]] <- single_ma
+        single_ma <- extract_de_plots(
+          combined, type=according, table=table_name, lfc=lfc, pva_cutoff=p)
+        ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
       }
 
-      table_count <- table_count + 1
       factor <- length(according_to)
       message("Writing excel data for ", table_name, ": ",
               table_count, "/", num_tables * factor, ".")

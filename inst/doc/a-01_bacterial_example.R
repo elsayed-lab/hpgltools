@@ -149,13 +149,13 @@ mgas_df <- merge(x=mgas_gff_df, y=mgas_microbes_df, by="row.names")
 rownames(mgas_df) <- mgas_df[["Row.names"]]
 mgas_df <- mgas_df[, -1]
 colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", "type",
-                       "score", "phase", "ID", "Dbxref"       "Is_circular"  "gbkey"        "genome"       "mol_type"
-                       [16] "strain"       "Name"         "Note"         "gene"         "locus_tag"
-                       [21] "Parent"       "product"      "protein_id"   "transl_table" "gene_synonym"
-                       [26] "sysName.x"    "locusId"      "accession"    "GI"           "scaffoldId"
-                       [31] "start.y"      "stop"         "strand.y"     "sysName.y"    "name"
-                       [36] "desc"         "COG"          "COGFun"       "COGDesc"      "TIGRFam"
-                       [41] "TIGRRoles"    "GO"           "EC"           "ECDesc"
+                       "score", "phase", "ID", "Dbxref", "Is_circular", "gbkey", "genome",
+                       "mol_type", "strain", "Name", "Note", "gene", "locus_tag",
+                       "Parent", "product", "protein_id", "transl_table", "gene_synonym",
+                       "sysName_again", "locusId", "accession", "GI", "scaffoldId",
+                       "start_again", "stop", "strand_again", "sysName_again", "name",
+                       "desc", "COG", "COGFun", "COGDesc", "TIGRFam", "TIGRRoles",
+                       "GO", "EC", "ECDesc")
 
 ## First make a template configuration
 circos_test <- sm(circos_prefix())

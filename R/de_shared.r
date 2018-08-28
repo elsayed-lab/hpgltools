@@ -859,17 +859,24 @@ compare_de_results <- function(first, second, cor_method="pearson") {
   p_result <- list()
   adjp_result <- list()
   comparisons <- c("logfc", "p", "adjp")
-  methods <- c("limma", "deseq", "edger", "ebseq")
-  for (method in methods) {
+  methods <- c("limma", "deseq", "edger", "ebseq", "basic")
+  for (m in 1:length(methods)) {
+    method <- methods[m]
     result[[method]] <- list()
     tables <- names(first[["data"]])
-    for (table in tables) {
+    for (t in 1:length(tables)) {
+      table <- tables[t]
       result[[method]][[table]] <- list()
-      for (comparison in comparisons) {
+      for (c in 1:length(comparisons)) {
+        comparison <- comparisons[c]
         column_name <- paste0(method, "_", comparison)
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
-        names(f_column) <- rownames(first[["data"]][[table]])
         s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
+        if (length(f_column) == 0 | length(s_column) == 0) {
+          ## The column of data does not exist.
+          break
+        }
+        names(f_column) <- rownames(first[["data"]][[table]])
         names(s_column) <- rownames(second[["data"]][[table]])
         fs <- merge(f_column, s_column, by="row.names")
         comp <- cor(x=fs[["x"]], y=fs[["y"]], method=cor_method)
@@ -911,7 +918,6 @@ compare_de_results <- function(first, second, cor_method="pearson") {
 #' Invoked by all_pairwise().
 #'
 #' @param results  Data from do_pairwise()
-#' @param include_basic include the basic data?
 #' @param annot_df Include annotation data?
 #' @param ... More options!
 #' @return Heatmap showing how similar they are along with some
@@ -945,9 +951,13 @@ correlate_de_tables <- function(results, annot_df=NULL, ...) {
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
   }
 
+  ## Set up the group of methods to test.
+  test_methods <- c("limma", "edger", "deseq", "ebseq", "basic")
+  method_idx <- test_methods %in% names(retlst)
+  methods <- test_methods[method_idx]
+
   complst <- list()
   plotlst <- list()
-  methods <- c("limma", "edger", "deseq", "ebseq", "basic")
   comparison_df <- data.frame()
   lenminus <- length(methods) - 1
   for (c in 1:lenminus) {
@@ -956,12 +966,11 @@ correlate_de_tables <- function(results, annot_df=NULL, ...) {
     for (d in nextc:length(methods)) {
       d_name <- methods[d]
       method_comp_name <- paste0(c_name, "_vs_", d_name)
-      cc <- 0
       len <- length(names(retlst[["deseq"]]))
-      for (contr in names(retlst[["deseq"]])) {
+      for (l in 1:len) {
+        contr <- names(retlst[["deseq"]])[l]
         ## assume all three have the same names() -- note that limma has more than the other two though
-        cc <- cc + 1
-        message("Comparing analyses ", cc, "/", len, ": ", contr)
+        message("Comparing analyses ", l, "/", len, ": ", contr)
         num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
         num_name <- num_den_names[1]
         den_name <- num_den_names[2]

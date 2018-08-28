@@ -20,11 +20,14 @@ certain.}
 
 \item{target_fdr}{Definition of 'significant'}
 
+\item{method}{The default ebseq methodology is to create the set of all
+possible 'patterns' in the data; for data sets which are more than
+trivially complex, this is not tenable, so this defaults to subsetting the
+data into pairs of conditions.}
+
 \item{norm}{Normalization method to use.}
 
 \item{...}{Extra arguments currently unused.}
-
-\item{conditions}{Factor of conditions in the experiment.}
 }
 \description{
 Invoking EBSeq is confusing, this should help.

@@ -4,6 +4,7 @@
 #'
 #' @param sig_genes Guess!  The set of differentially expressed/interesting genes.
 #' @param species  Organism supported by gprofiler.
+#' @param convert  Use gProfileR's conversion utility?
 #' @param first_col  First place used to define the order of 'significant'.
 #' @param second_col  If that fails, try a second column.
 #' @param do_go  Perform GO search?

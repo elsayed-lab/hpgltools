@@ -3,12 +3,15 @@
 #' Invoking EBSeq is confusing, this should help.
 #'
 #' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions  Factor of conditions in the experiment.
 #' @param patterns  Set of expression patterns to query.
 #' @param ng_vector I think this is for isoform quantification, but am not yet
 #'   certain.
 #' @param rounds  Number of iterations for doing the multi-test
 #' @param target_fdr  Definition of 'significant'
+#' @param method  The default ebseq methodology is to create the set of all
+#'   possible 'patterns' in the data; for data sets which are more than
+#'   trivially complex, this is not tenable, so this defaults to subsetting the
+#'   data into pairs of conditions.
 #' @param norm  Normalization method to use.
 #' @param ... Extra arguments currently unused.
 #' @export
@@ -198,7 +201,6 @@ ebseq_few <- function(data, conditions,
   retlst <- list(
     "all_tables" = table_lst,
     "conditions" = conditions,
-    "conditions_table" = conditions_table,
     "method" = "ebseq")
   return(retlst)
 }

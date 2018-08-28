@@ -16,9 +16,11 @@ gather_utrs_txdb(bsgenome, fivep_utr = NULL, threep_utr = NULL,
 
 \item{threep_utr}{Locations of the 3' UTRs.}
 
-\item{start_column}{What column in the annotation data contains the starts.}
+\item{start_column}{What column in the annotation data contains the starts?}
 
 \item{end_column}{Column in the data with the end locations.}
+
+\item{strand_column}{What column in the annotation data contains the sequence strands?}
 
 \item{chr_column}{Column in the df with the chromosome names.}
 

@@ -12,8 +12,6 @@ correlate_de_tables(results, annot_df = NULL, ...)
 \item{annot_df}{Include annotation data?}
 
 \item{...}{More options!}
-
-\item{include_basic}{include the basic data?}
 }
 \value{
 Heatmap showing how similar they are along with some
