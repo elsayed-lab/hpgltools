@@ -193,12 +193,12 @@ pca_information <- function(expt_data, expt_design=NULL, expt_factors=c("conditi
           second_name <- paste("PC", second_pc, sep="")
           list_name <- paste(name, "_", second_name, sep="")
           ## Sometimes these plots fail because too many grid operations are happening.
-          tmp_plot <- try(print(plot_pcs(pca_data,
-                                         design=expt_design,
-                                         variances=pca_variance,
-                                         first=name,
-                                         second=second_name)))
-          pca_plots[[list_name]] <- tmp_plot[["plot"]]
+          tmp_plot <- try(plot_pcs(pca_data,
+                                   design=expt_design,
+                                   variances=pca_variance,
+                                   first=name,
+                                   second=second_name))
+          pca_plots[[list_name]] <- tmp_plot
         }
       }
     }
@@ -629,11 +629,12 @@ Going to run pcRes with the batch information.")
   pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
   ## These will provide metrics on the x/y axes showing the amount of variance on those
   ## components of our plot.
-  xl <- sprintf("PC1: %.2f%% variance", pca_variance[x_pc])
-  yl <- sprintf("PC2: %.2f%% variance", pca_variance[y_pc])
-  ## Create a data frame with all the material of interest in the actual PCA plot
   xpc_name <- paste0("PC", x_pc)
   ypc_name <- paste0("PC", y_pc)
+  xl <- sprintf("%s: %.2f%% variance", xpc_name, pca_variance[x_pc])
+  yl <- sprintf("%s: %.2f%% variance", ypc_name, pca_variance[y_pc])
+  ## Create a data frame with all the material of interest in the actual PCA plot
+
   pca_data <- data.frame(
     "sampleid" = as.character(design[["sampleid"]]),
     "condition" = design[[cond_column]],
@@ -787,10 +788,11 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
       ggplot2::scale_fill_manual(name="Condition",
                                  guide="legend",
                                  values=color_list) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
-                                  values=21:25)
+      ggplot2::scale_shape_manual(
+                 name="Batch",
+                 labels=levels(as.factor(pca_data[["batch"]])),
+                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                 values=21:25)
   } else if (is.null(size_column) & num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(size=plot_size,
@@ -824,10 +826,11 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
       ggplot2::scale_fill_manual(name="Condition",
                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
                                  values=color_list) +
-      ggplot2::scale_shape_manual(name="Batch",
-                                  labels=levels(as.factor(pca_data[["batch"]])),
-                                  guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
-                                  values=21:25) +
+      ggplot2::scale_shape_manual(
+                 name="Batch",
+                 labels=levels(as.factor(pca_data[["batch"]])),
+                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size, fill="grey")),
+                 values=21:25) +
       ggplot2::scale_size_manual(name=size_column,
                                  labels=levels(pca_data[[size_column]]),
                                  values=as.numeric(levels(pca_data[["size"]])))
@@ -853,8 +856,8 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   if (!is.null(variances)) {
     x_var_num <- as.numeric(gsub("PC", "", first))
     y_var_num <- as.numeric(gsub("PC", "", second))
-    x_label <- paste("PC", x_var_num, ": ", variances[[x_var_num]], "%  variance", sep="")
-    y_label <- paste("PC", y_var_num, ": ", variances[[y_var_num]], "%  variance", sep="")
+    x_label <- paste0("PC1", first, ": ", variances[[x_var_num]], "%  variance")
+    y_label <- paste0("PC2", second, ": ", variances[[y_var_num]], "%  variance")
     pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
   }
 

@@ -36,7 +36,8 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
   ## The expressionset must have the annotation field filled in for gsva to
   ## work.
   eset <- expt[["expressionset"]]
-  if (length(annotation(eset)) == 0) {
+  if (length(annotation(eset)) == 0 |
+      grep(pattern="Fill me in", x=annotation(eset))) {
     message("gsva requires the annotation field to be filled in.")
     annotation(eset) <- orgdb
   }
@@ -46,10 +47,10 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
     message("Converting the rownames() of the expressionset to ENTREZID.")
     tt <- sm(library(orgdb, character.only=TRUE))
     old_ids <- rownames(exprs(eset))
-    new_ids <- sm(dplyr::select(x=get0(orgdb),
-                                keys=old_ids,
-                                keytype=current_id,
-                                columns=c(required_id)))
+    new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                        keys=old_ids,
+                                        keytype=current_id,
+                                        columns=c(required_id)))
     new_idx <- complete.cases(new_ids)
     new_ids <- new_ids[new_idx, ]
     message("Before conversion, the expressionset has ", length(rownames(eset)),
@@ -98,7 +99,15 @@ simple_xcell <- function(expt) {
   data("xCell.data", package="xCell")
   xcell_result <- xCell::xCellAnalysis(xcell_input)
 
-  return(xcell_result)
+  jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
+                                              "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  ht <- heatmap.3(xcell_result, trace="none", col=jet_colors)
+  ht_plot <- grDevices::recordPlot()
+
+  retlist <- list(
+    "xcell_result" = xcell_result,
+    "heatmap" = ht_plt)
+  return(retlist)
 }
 
 #' Extract the GeneSets corresponding to the provided name(s).
