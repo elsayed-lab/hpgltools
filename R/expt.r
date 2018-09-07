@@ -418,7 +418,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## This should automagically check and fix rownames when they would otherwise not match after using tximport.
   if (!is.null(arglist[["tx_gene_map"]])) {
     tx_gene_map <- arglist[["tx_gene_map"]]
-    if (! rownames(gene_info) %in% tx_gene_map[[2]]) {
+    matched_rows <- sum(rownames(gene_info) %in% tx_gene_map[[2]])
+    if (matched_rows < 1) {
       message("Hey, your new gene map IDs are not the rownames of your gene information, changing them now.")
       if (names(tx_gene_map)[2] %in% colnames(gene_info)) {
         new_name <- names(tx_gene_map)[2]
@@ -1420,7 +1421,7 @@ read_metadata <- function(file, ...) {
 #' @param semantic_column  Column in the annotations to search.
 #' @return A presumably smaller expt.
 #' @export
-semantic_expt_filter <- function(input, invert=FALSE,
+semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
                                  semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                  semantic_column="description") {
   annots <- fData(input)
@@ -1431,24 +1432,34 @@ semantic_expt_filter <- function(input, invert=FALSE,
   }
 
   numbers_removed <- 0
-  for (string in semantic) {
-    pre_remove_size <- nrow(annots)
-    idx <- NULL
-    if (semantic_column == "rownames") {
-      idx <- grepl(pattern=string, x=rownames(annots))
-    } else {
-      idx <- grepl(pattern=string, x=annots[, semantic_column])
-    }
-    type <- "Removed"
-    if (isTRUE(invert)) {
-      type <- "Kept"
-      tmp_annots <- annots[idx, ]
-      new_annots <- rbind(new_annots, tmp_annots)
-    } else {
+  if (is.null(topn)) {
+    for (string in semantic) {
+      pre_remove_size <- nrow(annots)
+      idx <- NULL
+      if (semantic_column == "rownames") {
+        idx <- grepl(pattern=string, x=rownames(annots))
+      } else {
+        idx <- grepl(pattern=string, x=annots[, semantic_column])
+      }
       type <- "Removed"
-      idx <- !idx
-      new_annots <- new_annots[idx, ]
+      if (isTRUE(invert)) {
+        type <- "Kept"
+        tmp_annots <- annots[idx, ]
+        new_annots <- rbind(new_annots, tmp_annots)
+      } else {
+        type <- "Removed"
+        idx <- !idx
+        new_annots <- new_annots[idx, ]
+      }
     }
+  } else {
+    ## Instead of a string based sematic filter, take the topn most abundant
+    mtrx <- exprs(expressionset)
+    medians <- rowMedians(mtrx)
+    new_order <- order(medians, decreasing=TRUE)
+    reordered <- mtrx[new_order, ]
+    subset <- rownames(head(reordered, n=topn))
+    new_annots <- annots[subset, ]
   }
 
   expressionset <- input[["expressionset"]]
@@ -1772,7 +1783,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #'  all_expt = expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
-subset_expt <- function(expt, subset=NULL) {
+subset_expt <- function(expt, subset=NULL, coverage=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
@@ -1787,18 +1798,30 @@ subset_expt <- function(expt, subset=NULL) {
   }
 
   note_appended <- NULL
-  if (is.null(subset)) {
-    subset_design <- starting_metadata
+  subset_design <- NULL
+  if (is.null(coverage)) {
+    if (is.null(subset)) {
+      subset_design <- starting_metadata
+    } else {
+      r_expression <- paste("subset(starting_metadata,", subset, ")")
+      subset_design <- eval(parse(text=r_expression))
+      ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
+      note_appended <- paste0("Subsetted with ", subset, " on ", date(), ".\n")
+    }
+    if (nrow(subset_design) == 0) {
+      stop("When the subset was taken, the resulting design has 0 members, check your expression.")
+    }
+    subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
   } else {
-    r_expression <- paste("subset(starting_metadata,", subset, ")")
-    subset_design <- eval(parse(text=r_expression))
-    ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
-    note_appended <- paste0("Subsetted with ", subset, " on ", date(), ".\n")
+    ## If coverage is defined, then use it to subset based on the minimal desired coverage
+    ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
+    ## standard deviation or somesuch...
+    coverages <- colSums(exprs(expt))
+    subset_idx <- coverages >= coverage
+    subset_design <- starting_metadata[subset_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
   }
-  if (nrow(subset_design) == 0) {
-    stop("When the subset was taken, the resulting design has 0 members, check your expression.")
-  }
-  subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
+
   ## This is to get around stupidity with respect to needing all factors to be in a DESeqDataSet
   starting_ids <- rownames(starting_metadata)
   subset_ids <- rownames(subset_design)
