@@ -34,11 +34,6 @@ clean:
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata
 
-dep_push: deps snap
-	echo "Setting default commit message and pushing."
-	git commit -a -m 'packrat modification.'
-	git push
-
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
 	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
@@ -46,25 +41,12 @@ all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed 
 
 document: roxygen vignette reference
 
-git: snap
-	@echo "Snapshotted packrat and pushed to github."
-	git commit -a -m 'snapshotted packrat.' && git push
-
-inst: roxygen restore install test
-	@echo "Restored packrat, regenerated documentation, installed, and tested."
-
 install:
 	@echo "Performing R CMD INSTALL hpgltools globally."
-	@mv .Rprofile dotRprofile
 	R CMD INSTALL .
-	@mv dotRprofile .Rprofile
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"
-
-packrat_install:
-	echo "Installing all packrat packages globally."
-	R -e "library(hpgltools); install_packrat_globally()"
 
 prereq:
 	@echo "Checking a few essential prerequisites.(maybe not needed with packrat)"
@@ -82,17 +64,9 @@ reference:
 	rm -f inst/doc/reference.pdf
 	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview
 
-restore:
-	echo "Restoring packrat."
-	R -e "packrat::restore(restart=FALSE)" --args --bootstrap-packrat
-
 roxygen:
 	@echo "Generating documentation with devtools::document()"
 	R -e "suppressPackageStartupMessages(devtools::document())"
-
-snap:
-	echo "Snapshotting packrat."
-	R -e "packrat::snapshot(ignore.stale=TRUE, snapshot.source=FALSE, infer.dependencies=FALSE)"
 
 suggests:
 	@echo "Installing suggested packages."

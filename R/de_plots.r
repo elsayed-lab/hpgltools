@@ -79,6 +79,11 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     fc_col <- "logFC"  ## The most common
     p_col <- "p"
     all_tables <- pairwise[["all_tables"]]
+  } else if (table_source == "ebseq_pairwise") {
+    expr_col <- "ebseq_mean"
+    fc_col <- "logFC"
+    p_col <- "ebseq_adjp"
+    all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "combined") {
     if (type == "deseq") {
       expr_col <- "deseq_basemean"
@@ -88,6 +93,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       expr_col <- "limma_ave"
     } else if (type == "basic") {
       expr_col <- "basic_nummed"
+    } else if (type =="ebseq") {
+      expr_col <- "ebseq_mean"
     }
     fc_col <- paste0(type, "_logfc")
     p_col <- paste0(type, "_adjp")
@@ -168,6 +175,10 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     expr_col <- "log_basemean"
   }
 
+  ##ma_material <- plot_ma_de(
+  ##  table=the_table, expr_col=expr_col, fc_col=fc_col,
+  ##  p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
+  ##  invert=invert)
   ma_material <- plot_ma_de(
     table=the_table, expr_col=expr_col, fc_col=fc_col,
     p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
@@ -686,26 +697,31 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
     "limma" = list(),
     "edger" = list(),
     "deseq" = list(),
+    "ebseq" = list(),
     "basic" = list())
   sig_lists_down <- list(
     "limma" = list(),
     "edger" = list(),
     "deseq" = list(),
+    "ebseq" = list(),
     "basic" = list())
   plots <- list(
     "limma" = NULL,
     "edger" = NULL,
     "deseq" = NULL,
+    "ebseq" = NULL,
     "basic" = NULL)
   tables_up <- list(
     "limma" = NULL,
     "edger" = NULL,
     "deseq" = NULL,
+    "ebseq" = NULL,
     "basic" = NULL)
   tables_down <- list(
     "limma" = NULL,
     "edger" = NULL,
     "deseq" = NULL,
+    "ebseq" = NULL,
     "basic" = NULL)
   table_length <- 0
   fc_names <- c()
@@ -715,13 +731,18 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
 
   types <- according_to
   if (according_to[[1]] == "all") {
-    types <- c("limma", "edger", "deseq")
+    types <- c("limma", "edger", "deseq", "ebseq", "basic")
   }
   ##else if (according_to == c("limma", "edger", "deseq", "basic")) {
   ##  types <- c("limma", "edger", "deseq")
   ##}
 
   for (type in types) {
+    test_column <- paste0(type, "_logfc")
+    if (! test_column %in% colnames(combined[["data"]][[1]])) {
+      message("We do not have the ", test_column, " in the data, skipping ", type, ".")
+      next
+    }
     for (fc in lfc_cutoffs) {
       ## This is a bit weird and circuituous
       ## The most common caller of this function is in fact extract_significant_genes
@@ -750,22 +771,40 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
 
     up_all <- list("limma" = numeric(),
                    "deseq" = numeric(),
-                   "edger" = numeric())## The number of all genes FC > 0
+                   "edger" = numeric(),
+                   "ebseq" = numeric(),
+                   "basic" = numeric()
+                   ) ## The number of all genes FC > 0
     down_all <- list("limma" = numeric(),
                      "deseq" = numeric(),
-                     "edger" = numeric())## The number of all genes FC < 0
+                     "edger" = numeric(),
+                     "ebseq" = numeric(),
+                     "basic" = numeric()
+                     ) ## The number of all genes FC < 0
     up_mid <- list("limma" = numeric(),
                    "deseq" = numeric(),
-                   "edger" = numeric())## The number of genes 2<FC<4 (by default)
+                   "edger" = numeric(),
+                   "ebseq" = numeric(),
+                   "basic" = numeric()
+                   ) ## The number of genes 2<FC<4 (by default)
     down_mid <- list("limma" = numeric(),
                      "deseq" = numeric(),
-                     "edger" = numeric())## The number of genes -2>FC>-4
+                     "edger" = numeric(),
+                     "ebseq" = numeric(),
+                     "basic" = numeric()
+                     ) ## The number of genes -2>FC>-4
     up_max <- list("limma" = numeric(),
                    "deseq" = numeric(),
-                   "edger" = numeric())## The number of genes FC > 4
+                   "edger" = numeric(),
+                   "ebseq" = numeric(),
+                   "basic" = numeric()
+                   ) ## The number of genes FC > 4
     down_max <- list("limma" = numeric(),
                      "deseq" = numeric(),
-                     "edger" = numeric())  ## The number of genes FC < -4
+                     "edger" = numeric(),
+                     "ebseq" = numeric(),
+                     "basic" = numeric()
+                     ) ## The number of genes FC < -4
     ##  The bar graph looks like
     ## ######### #### #  <-- Total width is the number of all >1FC genes
     ##         ^    ^------- Total >0FC - the set between 4FC and 2FC
@@ -855,7 +894,13 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
     "deseq" = plots[["deseq"]],
     "edger_up_table" = tables_up[["edger"]],
     "edger_down_table"= tables_down[["edger"]],
-    "edger" = plots[["edger"]]
+    "edger" = plots[["edger"]],
+    "ebseq_up_table" = tables_up[["ebseq"]],
+    "ebseq_down_table"= tables_down[["ebseq"]],
+    "ebseq" = plots[["ebseq"]],
+    "basic_up_table" = tables_up[["basic"]],
+    "basic_down_table"= tables_down[["basic"]],
+    "basic" = plots[["basic"]]
   )
   return(retlist)
 }

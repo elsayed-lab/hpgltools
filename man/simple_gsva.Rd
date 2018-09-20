@@ -5,8 +5,8 @@
 \title{Provide some defaults and guidance when attempting to use gsva.}
 \usage{
 simple_gsva(expt, datasets = "c2BroadSets", data_pkg = "GSVAdata",
-  current_id = "ENSEMBL", required_id = "ENTREZID",
-  orgdb = "org.Hs.eg.db")
+  signatures = NULL, current_id = "ENSEMBL",
+  required_id = "ENTREZID", orgdb = "org.Hs.eg.db")
 }
 \arguments{
 \item{expt}{Expt object to be analyzed.}

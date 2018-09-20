@@ -260,13 +260,16 @@ test_that("Did compare_significant_contrasts provide some plots?", {
   expect_equal(class(testing[["down_venn_plot"]]), "recordedplot")
 })
 
+## Saving this so we can use it for ontology searches later.
+save(list=c("cb_sig", "test_condbatch"), file="test_065_significant.rda")
+
 ## do_pairwise()
 ## This is done by a bunch of other functions, I am not testing it.
 
 ## 16 get_abundant_genes()
 testing <- get_abundant_genes(test_sva)
 actual <- length(testing)
-expected <- length(testing)
+expected <- 10
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
 })
@@ -392,7 +395,7 @@ test_that("Did extract_significant_genes() get some stuff?", {
 ## 28 intersect_significant(),
 testing <- sm(intersect_significant(combined=test_condbatch, excel=NULL))
 test_that("Did intersect_significant() get some stuff?", {
-  expect_equal(length(testing), 90)
+  expect_equal(testing[["summary"]]["up", "all"], 165)
 })
 
 ## 29 write_de_table()

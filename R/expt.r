@@ -1228,7 +1228,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
   txout <- TRUE
   tx_gene_map <- NULL
   if (!is.null(arglist[["tx_gene_map"]])) {
-    message("Using the transcript<->gene mapping.")
+    message("Using the transcript to gene mapping.")
     txout <- FALSE
     tx_gene_map <- arglist[["tx_gene_map"]]
   }

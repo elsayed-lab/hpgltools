@@ -40,9 +40,6 @@ So I rewrapped its apply() calls and am now hoping to extend its logic
 a little to make it more sensitive and get rid of some of the spurious
 parameters or at least make them more transparent.
 }
-\details{
-Note that I did this two months ago and haven't touched it since...
-}
 \examples{
 \dontrun{
  ## Extract all the genes from my genome, pull a static region 120nt following the stop

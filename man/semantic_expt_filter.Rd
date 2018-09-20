@@ -4,8 +4,8 @@
 \alias{semantic_expt_filter}
 \title{Remove/keep specifically named genes from an expt.}
 \usage{
-semantic_expt_filter(input, invert = FALSE, semantic = c("mucin",
-  "sialidase", "RHS", "MASP", "DGF", "GP63"),
+semantic_expt_filter(input, invert = FALSE, topn = NULL,
+  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
   semantic_column = "description")
 }
 \arguments{

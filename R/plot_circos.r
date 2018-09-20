@@ -115,9 +115,105 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
   end_string <- "\n</ideogram>\n"
   cat(end_string, file=out, sep="")
   close(out)
-  message("Wrote karyotype to ", out)
+  message("Wrote karyotype to ", ideogram_outfile)
   message("This should match the karyotype= line in ", name, ".conf")
-  return(out)
+  return(ideogram_outfile)
+}
+
+#' Create the ticks for a circos plot.
+#'
+#' This function writes ticks for circos.
+#'
+#' @param name Name of the configuration file to which to add the ideogram.
+#' @param conf_dir Where does the configuration live?
+#' @return The file to which the ideogram configuration was written.
+#' @export
+circos_ticks <- function(name="default", conf_dir="circos/conf",
+                         tick_separation=2, min_label_distance=0, label_separation=5, label_offset=5,
+                         label_size=8, multiplier=0.001, main_color="black", main_thickness=3,
+                         main_size=20, first_size=10, first_spacing=1, first_color="black",
+                         first_show_label="no", first_label_size=12, second_size=15,
+                         second_spacing=5, second_color="black", second_show_label="yes",
+                         second_label_size=16, third_size=18, third_spacing=10, third_color="black",
+                         third_show_label="yes", third_label_size=16, fourth_spacing=100,
+                         fourth_color="black", fourth_show_label="yes", fourth_label_size=36) {
+  tick_outfile <- paste0(conf_dir, "/ticks_", name, ".conf")
+  out <- file(tick_outfile, open="w")
+  show_label <- "no"
+  tick_string <- sprintf("## The following plot stanza describes the ticks
+show_ticks = yes
+show_tick_labels = yes
+show_grid = no
+grid_start = dims(ideogram,radius_inner)-0.5r
+grid_end = dims(ideogram,radius_inner)
+<ticks>
+  skip_first_label = yes
+  skip_last_label = no
+  radius = dims(ideogram,radius_outer)
+  tick_separation = %sp
+  min_label_distance_to_edge = %sp
+  label_separation = %sp
+  label_offset = %sp
+  label_size = %sp
+  multiplier = %s
+  color = %s
+  thickness = %sp
+  size = %sp
+  <tick>
+    size = %sp
+    spacing = %su
+    color = %s
+    show_label = %s
+    label_size = %sp
+    format = %%.2f
+    grid = no
+    grid_color = lblue
+    grid_thickness = 1p
+  </tick>
+  <tick>
+    size = %sp
+    spacing = %su
+    color = %s
+    show_label = %s
+    label_size = %sp
+    format = %%s
+    grid = yes
+    grid_color = lgrey
+    grid_thickness = 1p
+  </tick>
+  <tick>
+    size = %sp
+    spacing = %su
+    color = %s
+    show_label = %s
+    label_size = %sp
+    format = %%s
+    grid = yes
+    grid_color = grey
+    grid_thickness = 1p
+  </tick>
+  <tick>
+    spacing = %su
+    color = %s
+    show_label = %s
+    suffix = \" kb\"
+    label_size = %sp
+    format = %%s
+    grid = yes
+    grid_color = dgrey
+    grid_thickness = 1p
+  </tick>
+</ticks>
+",
+tick_separation, min_label_distance, label_separation, label_offset, label_size, multiplier,
+main_color, main_thickness, main_size, first_size, first_spacing, first_color, first_show_label,
+first_label_size, second_size, second_spacing, second_color, second_show_label, second_label_size,
+third_size, third_spacing, third_color, third_show_label, third_label_size, fourth_spacing,
+fourth_color, fourth_show_label, fourth_label_size)
+  cat(tick_string, file=out, sep="")
+  close(out)
+  message("Wrote ticks to ", tick_outfile)
+  return(tick_outfile)
 }
 
 #' Write tiles of bacterial ontology groups using the categories from microbesonline.org.
@@ -659,27 +755,54 @@ circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @return Radius after adding the histogram and the spacing.
 #' @export
 circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
-                           chr="chr1", colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
+                           chr="chr1", basename="", colors=NULL,
+                           outer=0.9, width=0.08, spacing=0.02) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
-  full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
-  full_table <- full_table[, c("start", "stop", colname)]
-  if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) |
+  full_table <- merge(df, annot_df, by="row.names")
+  if (nrow(full_table) == 0) {
+    stop("Merging the annotations and data failed.")
+  }
+  start_colnames <- colnames(full_table)
+  new_colnames <- gsub(x=start_colnames, pattern="\\.x$", replacement="")
+  colnames(full_table) <- new_colnames
+
+  start_name <- "start"
+  stop_name <- "stop"
+  if (is.null(full_table[[stop_name]])) {
+    stop_name <- "end"
+  }
+
+  if (! start_name %in% colnames(full_table)) {
+    stop("This requires a column named start.")
+  }
+  if (! stop_name %in% colnames(full_table)) {
+    stop("This requires a column named ", stop_name, ".")
+  }
+  if (! colname %in% colnames(full_table)) {
+    stop("This requires a column named ", colname, ".")
+  }
+  if (is.null(rownames(full_table))) {
+    stop("This requires rownames.")
+  }
+
+  full_table <- full_table[, c(start_name, stop_name, colname)]
+  if (is.null(full_table[[start_name]]) | is.null(full_table[[stop_name]]) |
       is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
     stop("This requires columns: start, stop, rownames, and datum")
   }
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_heatmap.conf")
+  datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_heatmap.conf")
   full_table[["chr"]] <- chr
-  full_table <- full_table[, c("chr", "start", "stop", colname)]
+  full_table <- full_table[, c("chr", start_name, stop_name, colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", colname, "_heatmap.txt")
-  message("Writing data file: ", data_filename, " with the ", colname, " column.")
+  data_filename <- paste0(data_prefix, "_", basename, colname, "_heatmap.txt")
+  message("Writing data file: ", data_filename, " with the ", basename, colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
@@ -1045,24 +1168,24 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
   system(command=etc_cmd)
 
   ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]
-  ## for example, thus one could bring up
-  circos_ideogram(name=name, conf_dir=conf_dir, band_url=band_url)
+  ideogram_filename <- circos_ideogram(name=name, conf_dir=conf_dir, band_url=band_url)
+  tick_filename <- circos_ticks(name=name, conf_dir=conf_dir)
+  tick_file <- gsub(x=tick_filename, pattern="^circos/", replacement="")
 
   out <- file(cfgout, open="w+")
   prefix_string <- sprintf("## This is the prefix of a circos configuration file written by hpgltools.
 <colors>
- <<include etc/colors.conf>>
+ <<include colors.conf>>
 </colors>
 <fonts>
- <<include etc/fonts/fonts.conf>>
+ <<include fonts/fonts.conf>>
 </fonts>
 
 ## The ideograms are generated by circos_ideogram() in R.
 <<include %s>>
-
-<<include etc/ticks.conf>>
-<<include etc/housekeeping.conf>>
-
+## The ticks are generated by circos_ticks() in R.
+<<include %s>>
+<<include housekeeping.conf>>
 karyotype = %s
 
 <image>
@@ -1079,7 +1202,7 @@ chromosomes_display_default = yes
 </highlights>
 
 <plots>
-", ideogram_file, karyotype_file, radius)
+", ideogram_file, tick_file, karyotype_file, radius)
   cat(prefix_string, file=out, sep="")
   close(out)
   to_path <- paste0(name, ".conf")

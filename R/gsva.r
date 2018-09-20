@@ -1,3 +1,70 @@
+make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
+                                   color=TRUE, current_id="ENSEMBL", setname="elsayed_macrophage",
+                                   require_id="ENTREZID", ...) {
+  updown <- extract_significant_genes(pairwise, according_to=according_to, ...)[[according_to]]
+  ups <- updown[["ups"]]
+  downs <- updown[["downs"]]
+  ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
+  tt <- sm(library(orgdb, character.only=TRUE))
+
+  gsc <- list()
+  for (c in 1:length(ups)) {
+    name <- names(ups)[c]
+    up <- ups[[name]]
+    down <- downs[[name]]
+    up_ids <- rownames(up)
+    down_ids <- rownames(down)
+    if (current_id == required_id) {
+      up[[required_id]] <- rownames(up)
+      down[[required_id]] <- rownames(down)
+    } else {
+      message("Converting the rownames() of the expressionset to ENTREZID.")
+      up_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                         keys=up_ids,
+                                         keytype=current_id,
+                                         columns=c(required_id)))
+      up_idx <- complete.cases(up_ids)
+      up_ids <- up_ids[up_idx, ]
+      up <- merge(up, up_ids, by.x="row.names", by.y=current_id)
+      down_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                         keys=down_ids,
+                                         keytype=current_id,
+                                         columns=c(required_id)))
+      down_idx <- complete.cases(down_ids)
+      down_ids <- down_ids[down_idx, ]
+      down <- merge(down, down_ids, by.x="row.names", by.y=current_id)
+    }
+    up[["direction"]] <- "up"
+    up[["phenotype"]] <- phenotype_name
+    down[["direction"]] <- "down"
+    down[["phenotype"]] <- phenotype_name
+    both <- rbind(up, down)
+
+    all_colored = GSEABase::GeneColorSet(
+                              EntrezIdentifier(),
+                              setName=paste0(set_name, "_", name),
+                              geneIds=as.character(both[[required_id]]),
+                              phenotype=name,
+                              geneColor=as.factor(both[["direction"]]),
+                              phenotypeColor=as.factor(both[["phenotype"]]))
+    up_gsc <- GSEABase::GeneSet(
+                          EntrezIdentifier(),
+                          setName=paste0(set_name, "_", name),
+                          geneIds=as.character(up[[required_id]]))
+    down_gsc <- GSEABase::GeneSet(
+                            EntrezIdentifier(),
+                            setName=paste0(set_name, "_", name),
+                            geneIds=as.character(down[[required_id]]))
+
+  }
+
+  retlst <- list(
+    "colored" = all_colored,
+    "up" = up_gsc,
+    "down" = down_gsc)
+  return(retlst)
+}
+
 #' Provide some defaults and guidance when attempting to use gsva.
 #'
 #' gsva seems to hold a tremendous amount of potential.  Unfortunately, it is
@@ -15,22 +82,31 @@
 #' @param orgdb  What is the data source for the rownames()?
 #' @return  Something from GSVA::gsva()!
 #' @export
-simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
-                        current_id="ENSEMBL", required_id="ENTREZID",
-                        orgdb="org.Hs.eg.db") {
+simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
+                        current_id="ENSEMBL", required_id="ENTREZID", orgdb="org.Hs.eg.db") {
 
   ## Make sure some data is loaded.  Assume the c2BroadSets from GSVAdata.
   sig_data <- NULL
-  if (exists(datasets)) {
-    sig_data <- datasets
-    if (class(sig_data)[[1]] != "GeneSetCollection") {
-      stop("The data must be a GeneSetCollection.")
-    }
+  if (!is.null(signatures)) {
+    sig_data <- signatures
   } else {
-    tt <- sm(library(data_pkg, character.only=TRUE))
-    lst <- list("list"=datasets, "package"=data_pkg)
-    test <- do.call("data", as.list(datasets, lst))
-    sig_data <- get0(datasets)
+    if (exists(datasets)) {
+      sig_data <- datasets
+      if (class(sig_data)[[1]] == "character") {
+        tt <- sm(library(data_pkg, character.only=TRUE))
+        lst <- list("list"=datasets, "package"=data_pkg)
+        test <- do.call("data", as.list(datasets, lst))
+        sig_data <- get0(datasets)
+      }
+      if (class(sig_data)[[1]] != "GeneSetCollection") {
+        stop("The data must be a GeneSetCollection.")
+      }
+    } else {
+      tt <- sm(library(data_pkg, character.only=TRUE))
+      lst <- list("list"=datasets, "package"=data_pkg)
+      test <- do.call("data", as.list(datasets, lst))
+      sig_data <- get0(datasets)
+    }
   }
 
   ## The expressionset must have the annotation field filled in for gsva to
@@ -86,10 +162,22 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata",
   return(retlist)
 }
 
-simple_xcell <- function(expt) {
+simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...) {
+  arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
-  xcell_input <- sm(exprs(normalize_expt(expt, norm="quant", convert="cpm", transform="log2")))
+  expt_state <- expt[["state"]][["conversion"]]
+  xcell_input <- NULL
+  if (expt_state != "rpkm") {
+    message("xCell strongly perfers rpkm values, re-normalizing now.")
+    xcell_input <- normalize_expt(expt, convert="rpkm", ...)
+  } else {
+    xcell_input <- normalize_expt(expt, norm=arglist[["norm"]], convert=arglist[["convert"]],
+                                  filter=arglist[["filter"]], batch=arglist[["batch"]])
+  }
+  xcell_input <- exprs(xcell_input)
+  xcell_na <- is.na(xcell_input)
+  xcell_input[xcell_na] <- 0
   xcell_input <- merge(xcell_input, xref, by.x="row.names", by.y="ensembl_gene_id")
   rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique=TRUE)
   xcell_input[["Row.names"]] <- NULL
@@ -101,12 +189,19 @@ simple_xcell <- function(expt) {
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
-  ht <- heatmap.3(xcell_result, trace="none", col=jet_colors)
+  if (is.null(label_size)) {
+    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors, margins=c(col_margin, row_margin))
+  } else {
+    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors, margins=c(col_margin, row_margin),
+                    cexCol=label_size, cexRow=label_size)
+  }
+
   ht_plot <- grDevices::recordPlot()
 
   retlist <- list(
     "xcell_result" = xcell_result,
-    "heatmap" = ht_plt)
+    "signatures" = xCell.data[["signatures"]],
+    "heatmap" = ht_plot)
   return(retlist)
 }
 

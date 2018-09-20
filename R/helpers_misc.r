@@ -235,7 +235,7 @@ get_git_commit <- function(gitdir="~/hpgltools") {
 #' good reason because I managed to reverse the terms and end up with the
 #' opposite contrasts of what I intended.  Ergo this function.
 #'
-#' Feed ghetto_contrast_matrix() a series of numerators and denominators names
+#' Feed make_simplified_contrast_matrix() a series of numerators and denominators names
 #' after the conditions of interest in an experiment and it returns a contrast
 #' matrix in a format acceptable to MSstats.
 #'
@@ -245,7 +245,7 @@ get_git_commit <- function(gitdir="~/hpgltools") {
 #'   series of a/b comparisons.
 #' @return  Contrast matrix
 #' @export
-ghetto_contrast_matrix <- function(numerators, denominators) {
+make_simplified_contrast_matrix <- function(numerators, denominators) {
   if (length(numerators) != length(denominators)) {
     stop("Need a constant number of numerators and denominators.")
   }
@@ -275,8 +275,6 @@ ghetto_contrast_matrix <- function(numerators, denominators) {
 #' So I rewrapped its apply() calls and am now hoping to extend its logic
 #' a little to make it more sensitive and get rid of some of the spurious
 #' parameters or at least make them more transparent.
-#'
-#' Note that I did this two months ago and haven't touched it since...
 #'
 #' @param x DNA/RNA StringSet containing the UTR sequences of interest
 #' @param basal I dunno.

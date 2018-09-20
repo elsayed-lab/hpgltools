@@ -5,8 +5,8 @@
 \title{Write tiles of arbitrary heat-mappable data in circos.}
 \usage{
 circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
-  colname = "logFC", chr = "chr1", colors = NULL, outer = 0.9,
-  width = 0.08, spacing = 0)
+  colname = "logFC", chr = "chr1", basename = "", colors = NULL,
+  outer = 0.9, width = 0.08, spacing = 0.02)
 }
 \arguments{
 \item{df}{Dataframe with starts/ends and the floating point information.}
