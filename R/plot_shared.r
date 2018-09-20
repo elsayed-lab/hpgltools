@@ -72,9 +72,10 @@ ggplt <- function(gg, filename="ggplot.html",
   base <- basename(filename)
   dir <- dirname(filename)
   out <- plotly::ggplotly(gg, ...)
-  widget <- htmlwidgets::saveWidget(as_widget(out), base, selcontained=selfcontained,
-                                    libdir=libdir, background=background, title=title,
-                                    knitrOptions=knitrOptions)
+  widget <- htmlwidgets::saveWidget(
+                           htmlwidgets::as_widget(out), base, selcontained=selfcontained,
+                           libdir=libdir, background=background, title=title,
+                           knitrOptions=knitrOptions)
   if (dir != ".") {
     final <- file.path(dir, base)
     moved <- file.rename(base, final)

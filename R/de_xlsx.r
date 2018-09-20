@@ -1994,18 +1994,14 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 #'
 #' @param combined  A result from combine_de_tables().
 #' @param lfc  Define significant via fold-change.
-#' @param padding_rows How much space to put between groups of data?
-#' @param first  First method to include.
-#' @param second Second method to include.
-#' @param third  Third method to include, or null.
-#' @param fourth You get the idea, but at this point it will only include the full intersection.
-#' @param fifth  Ditto.
-#' @param sixth  Unlikely, but not completely impossible.
-#' @param z  Use a z-score filter?
 #' @param p  Or p-value.
+#' @param padding_rows How much space to put between groups of data?
+#' @param z Use a z-score filter?
 #' @param p_type  Use normal or adjusted p-values.
-#' @param extra_annot  Provide an extra set of annotation columns?
+#' @param selectors  List of methods to intersect.
+#' @param order Low-to-high or vice-versa for returning log-fc vales.
 #' @param excel  An optional excel workbook to which to write.
+#' @param ... Extra arguments for extract_significant_genes() and friends.
 #' @export
 intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
                                   z=NULL, p_type="adj", selectors=c("limma", "deseq", "edger"),

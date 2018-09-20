@@ -21,10 +21,67 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
 \item{name}{Name of the configuration file to which to add the ideogram.}
 
 \item{conf_dir}{Where does the configuration live?}
+
+\item{tick_separation}{Top-level separation between tick marks.}
+
+\item{min_label_distance}{distance to the edge of the plot for labels.}
+
+\item{label_offset}{The offset for the labels.}
+
+\item{label_size}{Top-level label size.}
+
+\item{multiplier}{When writing the position, by what factor to lower the numbers?}
+
+\item{main_color}{Color for top-level labels?}
+
+\item{main_thickness}{Top-level thickness of lines etc.}
+
+\item{main_size}{Top-level size of text.}
+
+\item{first_size}{Second level size of text.}
+
+\item{first_spacing}{Second level spacing of ticks.}
+
+\item{first_color}{Second-level text color.}
+
+\item{first_show_label}{Show a label for the second level ticks?}
+
+\item{first_label_size}{Text size for second level labels?}
+
+\item{second_size}{Size of ticks for the third level.}
+
+\item{second_spacing}{third-level spacing}
+
+\item{second_color}{Text color for the third level.}
+
+\item{second_show_label}{Give them a label?}
+
+\item{second_label_size}{And a size.}
+
+\item{third_size}{Now for the size of the almost-largest ticks}
+
+\item{third_spacing}{How far apart?}
+
+\item{third_color}{and their color}
+
+\item{third_show_label}{give a label?}
+
+\item{third_label_size}{and a size.}
+
+\item{fourth_spacing}{The largest ticks!}
+
+\item{fourth_color}{The largest color.}
+
+\item{fourth_show_label}{Provide a label?}
+
+\item{fourth_label_size}{They are big!}
+
+\item{label_separations}{radial distance between labels.}
 }
 \value{
 The file to which the ideogram configuration was written.
 }
 \description{
-This function writes ticks for circos.
+This function writes ticks for circos.  This has lots of options, the defaults are all taken
+from the circos example documentation for a bacterial genome.
 }

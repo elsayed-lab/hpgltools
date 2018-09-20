@@ -14,6 +14,11 @@
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
+#' @param conditions  Not currently used, but passed from all_pairwise()
+#' @param model_cond  Not currently used, but passed from all_pairwise()
+#' @param model_intercept Not currently used, but passed from all_pairwise()
+#' @param alt_model Not currently used, but passed from all_pairwise()
+#' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force as input non-normalized data?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
@@ -91,12 +96,9 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, model_cond=
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   message("Basic step 2/3: Performing ", total_contrasts, " comparisons.")
 
-  model_choice <- choose_model(input, conditions=conditions,
-                               batch=batches,
-                               model_batch=FALSE,
-                               model_cond=TRUE,
-                               model_intercept=FALSE,
-                               alt_model=NULL, ...)
+  model_choice <- choose_model(
+    input, conditions=conditions, batches=batches, model_batch=FALSE,
+    model_cond=TRUE, model_intercept=FALSE, alt_model=NULL, ...)
   model_data <- model_choice[["chosen_model"]]
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, ...)
   contrasts_performed <- c()

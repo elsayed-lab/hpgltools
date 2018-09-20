@@ -14,6 +14,8 @@ semantic_expt_filter(input, invert = FALSE, topn = NULL,
 \item{invert}{Keep only the things with the provided strings (TRUE), or
 remove them (FALSE).}
 
+\item{topn}{Take the topn most abundant genes rather than a text based heuristic.}
+
 \item{semantic}{Character list of strings to search for in the annotation
 data.}
 

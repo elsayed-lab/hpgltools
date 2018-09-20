@@ -19,6 +19,8 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 
 \item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
+\item{basename}{Make sure the written configuration files get different names with this.}
+
 \item{colors}{Colors of the heat map.}
 
 \item{outer}{Floating point radius of the circle into which to place the heatmap.}

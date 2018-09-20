@@ -204,8 +204,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id,
-                                           write_acquisitions=write_acquisitions))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
       if (class(file_result) != "try-error") {
         returns[[file]] <- file_result
       }
@@ -216,8 +215,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id,
-                                           write_acquisitions=write_acquisitions))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
       if (class(file_result) != "try-error") {
         res[[file]] <- file_result
       }

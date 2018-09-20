@@ -16,6 +16,8 @@ it does not exist, then data() will be called upon it.}
 
 \item{data_pkg}{What package contains the requisite dataset?}
 
+\item{signatures}{Provide an alternate set of signatures (GeneSetCollections)}
+
 \item{current_id}{Where did the IDs of the genes come from?}
 
 \item{required_id}{gsva (I assume) always requires ENTREZ IDs, but just in

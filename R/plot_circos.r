@@ -122,10 +122,39 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 
 #' Create the ticks for a circos plot.
 #'
-#' This function writes ticks for circos.
+#' This function writes ticks for circos.  This has lots of options, the defaults are all taken
+#' from the circos example documentation for a bacterial genome.
 #'
 #' @param name Name of the configuration file to which to add the ideogram.
 #' @param conf_dir Where does the configuration live?
+#' @param tick_separation Top-level separation between tick marks.
+#' @param min_label_distance distance to the edge of the plot for labels.
+#' @param label_separations radial distance between labels.
+#' @param label_offset  The offset for the labels.
+#' @param label_size  Top-level label size.
+#' @param multiplier  When writing the position, by what factor to lower the numbers?
+#' @param main_color  Color for top-level labels?
+#' @param main_thickness Top-level thickness of lines etc.
+#' @param main_size Top-level size of text.
+#' @param first_size Second level size of text.
+#' @param first_spacing Second level spacing of ticks.
+#' @param first_color Second-level text color.
+#' @param first_show_label  Show a label for the second level ticks?
+#' @param first_label_size Text size for second level labels?
+#' @param second_size  Size of ticks for the third level.
+#' @param second_spacing third-level spacing
+#' @param second_color  Text color for the third level.
+#' @param second_show_label  Give them a label?
+#' @param second_label_size  And a size.
+#' @param third_size  Now for the size of the almost-largest ticks
+#' @param third_spacing  How far apart?
+#' @param third_color  and their color
+#' @param third_show_label  give a label?
+#' @param third_label_size  and a size.
+#' @param fourth_spacing The largest ticks!
+#' @param fourth_color  The largest color.
+#' @param fourth_show_label  Provide a label?
+#' @param fourth_label_size  They are big!
 #' @return The file to which the ideogram configuration was written.
 #' @export
 circos_ticks <- function(name="default", conf_dir="circos/conf",
@@ -748,6 +777,7 @@ circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
+#' @param basename Make sure the written configuration files get different names with this.
 #' @param colors Colors of the heat map.
 #' @param outer Floating point radius of the circle into which to place the heatmap.
 #' @param width Width of each tile in the heatmap.

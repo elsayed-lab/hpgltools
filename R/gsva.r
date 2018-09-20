@@ -1,6 +1,6 @@
 make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
-                                   color=TRUE, current_id="ENSEMBL", setname="elsayed_macrophage",
-                                   require_id="ENTREZID", ...) {
+                                   color=TRUE, current_id="ENSEMBL", set_name="elsayed_macrophage",
+                                   phenotype_name="infection", required_id="ENTREZID", ...) {
   updown <- extract_significant_genes(pairwise, according_to=according_to, ...)[[according_to]]
   ups <- updown[["ups"]]
   downs <- updown[["downs"]]
@@ -76,6 +76,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param datasets  Name of the variable from which to acquire the gsva data, if
 #'   it does not exist, then data() will be called upon it.
 #' @param data_pkg  What package contains the requisite dataset?
+#' @param signatures Provide an alternate set of signatures (GeneSetCollections)
 #' @param current_id  Where did the IDs of the genes come from?
 #' @param required_id  gsva (I assume) always requires ENTREZ IDs, but just in
 #'   case this is a parameter.
@@ -183,6 +184,7 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xcell_input[["Row.names"]] <- NULL
   xcell_input[["hgnc_symbol"]] <- NULL
 
+  xCell.data <- NULL
   library(xCell)
   data("xCell.data", package="xCell")
   xcell_result <- xCell::xCellAnalysis(xcell_input)

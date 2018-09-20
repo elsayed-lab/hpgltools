@@ -21,21 +21,13 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
 
 \item{p_type}{Use normal or adjusted p-values.}
 
+\item{selectors}{List of methods to intersect.}
+
+\item{order}{Low-to-high or vice-versa for returning log-fc vales.}
+
 \item{excel}{An optional excel workbook to which to write.}
 
-\item{first}{First method to include.}
-
-\item{second}{Second method to include.}
-
-\item{third}{Third method to include, or null.}
-
-\item{fourth}{You get the idea, but at this point it will only include the full intersection.}
-
-\item{fifth}{Ditto.}
-
-\item{sixth}{Unlikely, but not completely impossible.}
-
-\item{extra_annot}{Provide an extra set of annotation columns?}
+\item{...}{Extra arguments for extract_significant_genes() and friends.}
 }
 \description{
 Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.

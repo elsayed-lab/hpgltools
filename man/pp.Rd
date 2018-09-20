@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_misc.r
 \name{pp}
 \alias{pp}
-\title{png() shortcut}
+\title{Plot a picture, with hopefully useful options for most(any) format.}
 \usage{
 pp(file, image = NULL, width = 9, height = 9, res = 180, ...)
 }
@@ -24,5 +24,5 @@ print it to file and screen.}
 a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
 }
 \description{
-I hate remembering my options for png()
+This calls svg/png/postscript/etc according to the filename provided.
 }

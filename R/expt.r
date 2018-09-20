@@ -1416,6 +1416,7 @@ read_metadata <- function(file, ...) {
 #' @param input  Expt to filter.
 #' @param invert  Keep only the things with the provided strings (TRUE), or
 #'   remove them (FALSE).
+#' @param topn Take the topn most abundant genes rather than a text based heuristic.
 #' @param semantic  Character list of strings to search for in the annotation
 #'   data.
 #' @param semantic_column  Column in the annotations to search.
@@ -1774,6 +1775,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #'
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
+#' @param coverage Request a minimum coverage/sample rather than text-based subset.
 #' @return metadata Expt class which contains the smaller set of data.
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
