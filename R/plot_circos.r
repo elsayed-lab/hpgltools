@@ -68,46 +68,51 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
 #' @param band_url Provide a url for making these imagemaps?
 #' @return The file to which the ideogram configuration was written.
 #' @export
-circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NULL) {
+circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NULL,
+                            fill="yes", stroke_color="black",
+                            thickness="20", stroke_thickness="2", fill_color="black", radius="0.85",
+                            label_size="36", band_stroke_thickness="2"
+                            ) {
   ideogram_outfile <- paste0(conf_dir, "/ideograms/", name, ".conf")
   out <- file(ideogram_outfile, open="w+")
   show_label <- "no"
   ideogram_string <- sprintf("## The following plot stanza describes the ideograms
 <ideogram>
  <spacing>
- default = 0u
- break = 0u
+  default = 0u
+  break = 0u
  </spacing>
  # thickness (px) of chromosome ideogram
- thickness = 20p
- stroke_thickness = 2
+ thickness = %sp
+ stroke_thickness = %s
  # ideogram border color
- stroke_color = black
- fill = yes
+ stroke_color = %s
+ fill = %s
  # the default chromosome color is set here and any value
  # defined in the karyotype file overrides it
- fill_color = black
+ fill_color = %s
  # fractional radius position of chromosome ideogram within image
- radius = 0.85r
+ radius = %sr
  show_label = %s
  label_font = condensedbold
  label_radius = dims(ideogram,radius) + 0.05r
- label_size = 36
+ label_size = %s
  # cytogenetic bands
- band_stroke_thickness = 2
+ band_stroke_thickness = %s
  # show_bands determines whether the outline of cytogenetic bands
  # will be seen
  show_bands = yes
  # in order to fill the bands with the color defined in the karyotype
  # file you must set fill_bands
  fill_bands = yes
-", show_label)
+", thickness, stroke_thickness, stroke_color, fill, fill_color, radius,
+show_label, label_size, band_stroke_thickness)
   cat(ideogram_string, file=out, sep="")
   ideogram_band <- ""
   if (!is.null(band_url)) {
     ideogram_band <- sprintf("
  band_url = %s
-# image_map_missing_parameter=removeparam
+ # image_map_missing_parameter=removeparam
  ideogram_url = %s
 ", band_url)
     cat(ideogram_band, file=out, sep="")
@@ -262,10 +267,43 @@ fourth_color, fourth_show_label, fourth_label_size)
 #' @param outer Floating point radius of the circle into which to place the plus-strand data.
 #' @param width Radial width of each tile.
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
+#' @param acol A color: RNA processing and modification.
+#' @param bcol B color: Chromatin structure and dynamics.
+#' @param ccol C color: Energy production conversion.
+#' @param dcol D color: Cell cycle control, mitosis and meiosis.
+#' @param ecol E color: Amino acid transport metabolism.
+#' @param fcol F color: Nucleotide transport and metabolism.
+#' @param gcol G color: Carbohydrate transport and metabolism.
+#' @param hcol H color: Coenzyme transport and metabolism.
+#' @param icol I color: Lipid transport and metabolism.
+#' @param jcol J color: Translation, ribosome structure and biogenesis.
+#' @param kcol K color: Transcription.
+#' @param lcol L color: Replication, recombination, and repair.
+#' @param mcol M color: Cell wall/membrane biogenesis.
+#' @param ncol N color: Cell motility
+#' @param ocol O color: Posttranslational modification, protein turnover, chaperones.
+#' @param pcol P color: Inorganic ion transport and metabolism.
+#' @param qcol Q color: Secondary metabolite biosynthesis, transport, and catabolism.
+#' @param rcol R color: General function prediction only.
+#' @param scol S color: Function unknown.
+#' @param tcol T color: Signal transduction mechanisms.
+#' @param ucol U color: Intracellular trafficking(sp?) and secretion.
+#' @param vcol V color: Defense mechanisms.
+#' @param wcol W color: Extracellular structures.
+#' @param xcol X color: Not in COG.
+#' @param ycol Y color: Nuclear structure.
+#' @param zcol Z color: Cytoskeleton.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
 circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr1",
-                              outer=1.0, width=0.08, spacing=0.0) {
+                              outer=1.0, width=0.08, spacing=0.0,
+                              acol="orange", bcol="reds-9-seq", ccol="yellow", dcol="vlpurple",
+                              ecol="vlgreen", fcol="dpblue", gcol="vlgreen", hcol="vlpblue",
+                              icol="vvdpgreen", jcol="dpred", kcol="orange", lcol="vvlorange",
+                              mcol="dpgreen", ncol="vvlpblue", ocol="vvlgreen", pcol="vvdpred",
+                              qcol="ylgn-3-seq", rcol="vlgrey", scol="grey", tcol="vlpurple",
+                              ucol="greens-3-seq", vcol="vlred", wcol="vvdppurple", xcol="black",
+                              ycol="lred", zcol="vlpblue") {
   end_col <- "end"
   if (!is.null(table[["stop"]])) {
     end_col <- "stop"
@@ -334,137 +372,144 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   <rules>
    <rule>
     condition = var(value) =~ \"^A\"
-    fill_color = orange
-    color = orange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^B\"
-    fill_color = reds-9-seq
-    color = reds-9-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^C\"
-    fill_color = yellow
-    color = yellow
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^D\"
-    fill_color = vlpurple
-    color = vlpurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^E\"
-    fill_color = vlgreen
-    color = vlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^F\"
-    fill_color = dpblue
-    color = dpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^G\"
-    fill_color = vlgreen
-    color = vlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^H\"
-    fill_color = vlpblue
-    color = vlpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^I\"
-    fill_color = vvdpgreen
-    color = vvdpgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^J\"
-    fill_color = dpred
-    color = dpred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^K\"
-    fill_color = orange
-    color = orange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^L\"
-    fill_color = vvlorange
-    color = vvlorange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^M\"
-    fill_color = dpgreen
-    color = dpgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^N\"
-    fill_color = vvlpblue
-    color = vvlpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^O\"
-    fill_color = vvlgreen
-    color = vvlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^P\"
-    fill_color = vvdpred
-    color = vvdpred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Q\"
-    fill_color = ylgn-3-seq
-    color = ylgn-3-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^R\"
-    fill_color = vlgrey
-    color = vlgrey
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^S\"
-    fill_color = grey
-    color = grey
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^T\"
-    fill_color = vlpurple
-    color = vlpurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^U\"
-    fill_color = greens-3-seq
-    color = greens-3-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^V\"
-    fill_color = vlred
-    color = vlred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^W\"
-    fill_color = vvdppurple
-    color = vvdppurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^X\"
-    fill_color = black
-    color = black
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Y\"
-    fill_color = lred
-    color = lred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Z\"
-    fill_color = vlpblue
-    color = vlpblue
+    fill_color = %s
+    color = %s
    </rule>
   </rules>
  </plot>
-", plus_cfg_filename, first_outer, first_inner)
+", plus_cfg_filename, first_outer, first_inner,
+acol, acol, bcol, bcol, ccol, ccol, dcol, dcol,
+ecol, ecol, fcol, fcol, gcol, gcol, hcol, hcol,
+icol, icol, jcol, jcol, kcol, kcol, lcol, lcol,
+mcol, mcol, ncol, ncol, ocol, ocol, pcol, pcol,
+qcol, qcol, rcol, rcol, scol, scol, tcol, tcol,
+ucol, ucol, vcol, vcol, wcol, wcol, xcol, xcol,
+ycol, ycol, zcol, zcol)
   cat(plus_cfg_string, file=plus_cfg_out, sep="")
   close(plus_cfg_out)
 
@@ -492,137 +537,144 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   <rules>
    <rule>
     condition = var(value) =~ \"^A\"
-    fill_color = orange
-    color = orange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^B\"
-    fill_color = reds-9-seq
-    color = reds-9-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^C\"
-    fill_color = yellow
-    color = yellow
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^D\"
-    fill_color = vlpurple
-    color = vlpurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^E\"
-    fill_color = vlgreen
-    color = vlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^F\"
-    fill_color = dpblue
-    color = dpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^G\"
-    fill_color = vlgreen
-    color = vlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^H\"
-    fill_color = vlpblue
-    color = vlpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^I\"
-    fill_color = vvdpgreen
-    color = vvdpgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^J\"
-    fill_color = dpred
-    color = dpred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^K\"
-    fill_color = orange
-    color = orange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^L\"
-    fill_color = vvlorange
-    color = vvlorange
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^M\"
-    fill_color = dpgreen
-    color = dpgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^N\"
-    fill_color = vvlpblue
-    color = vvlpblue
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^O\"
-    fill_color = vvlgreen
-    color = vvlgreen
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^P\"
-    fill_color = vvdpred
-    color = vvdpred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Q\"
-    fill_color = ylgn-3-seq
-    color = ylgn-3-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^R\"
-    fill_color = vlgrey
-    color = vlgrey
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^S\"
-    fill_color = grey
-    color = grey
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^T\"
-    fill_color = vlpurple
-    color = vlpurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^U\"
-    fill_color = greens-3-seq
-    color = greens-3-seq
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^V\"
-    fill_color = vlred
-    color = vlred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^W\"
-    fill_color = vvdppurple
-    color = vvdppurple
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^X\"
-    fill_color = black
-    color = black
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Y\"
-    fill_color = lred
-    color = lred
+    fill_color = %s
+    color = %s
    </rule>
    <rule>
     condition = var(value) =~ \"^Z\"
-    fill_color = vlpblue
-    color = vlpblue
+    fill_color = %s
+    color = %s
    </rule>
   </rules>
  </plot>
-", minus_cfg_filename, second_outer, second_inner)
+", minus_cfg_filename, second_outer, second_inner,
+acol, acol, bcol, bcol, ccol, ccol, dcol, dcol,
+ecol, ecol, fcol, fcol, gcol, gcol, hcol, hcol,
+icol, icol, jcol, jcol, kcol, kcol, lcol, lcol,
+mcol, mcol, ncol, ncol, ocol, ocol, pcol, pcol,
+qcol, qcol, rcol, rcol, scol, scol, tcol, tcol,
+ucol, ucol, vcol, vcol, wcol, wcol, xcol, xcol,
+ycol, ycol, zcol, zcol)
   cat(minus_cfg_string, file=minus_cfg_out, sep="")
   close(minus_cfg_out)
   message("Wrote the +/- config files.  Appending their inclusion to the master file.")
@@ -669,37 +721,66 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
-                        chr="chr1", colors=NULL, outer=0.9, width=0.08, spacing=0.0) {
+circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", colname="logFC",
+                        chr="chr1", basename="", colors=NULL,
+                        outer=0.9, width=0.08, spacing=0.0) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
-  full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
-  full_table <- full_table[, c("start", "stop", colname)]
-  if (is.null(full_table[["start"]]) | is.null(full_table[["stop"]]) |
-      is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
-    stop("This requires columns: start, end, rownames, and datum")
+  if (is.null(annot_df)) {
+    full_table <- df
+  } else {
+    full_table <- merge(df, annot_df, by.x="row.names", by.y="row.names")
   }
+
+  start_name <- "start"
+  stop_name <- "stop"
+  if (is.null(full_table[[stop_name]])) {
+    stop_name <- "end"
+  }
+
+  if (! start_name %in% colnames(full_table)) {
+    stop("This requires a column named start.")
+  }
+  if (! stop_name %in% colnames(full_table)) {
+    stop("This requires a column named ", stop_name, ".")
+  }
+  if (! colname %in% colnames(full_table)) {
+    stop("This requires a column named ", colname, ".")
+  }
+  if (is.null(rownames(full_table))) {
+    stop("This requires rownames.")
+  }
+  full_table <- full_table[, c(start_name, stop_name, colname)]
+  non_empty <- full_table[[colname]] != ""
+  full_table <- full_table[non_empty, ]
+  if (is.null(full_table[[start_name]]) | is.null(full_table[[stop_name]]) |
+      is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
+    stop("This requires columns: start, stop, rownames, and datum")
+  }
+
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
   datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_tile.conf")
   full_table[["chr"]] <- chr
-  full_table <- full_table[, c("chr", "start", "stop", colname)]
+  full_table <- full_table[, c("chr", start_name, stop_name, colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", colname, "_tile.txt")
+  data_filename <- paste0(data_prefix, "_", basename, colname, "_tile.txt")
   message("Writing data file: ", data_filename, " with the ", colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
   if (is.null(colors)) {
-    conditions <- levels(as.factor(df[[colname]]))
+    conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
     colors <- suppressWarnings(grDevices::colorRampPalette(
                                             RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
+  } else {
+    num_colors <- length(colors)
   }
 
   ## Now write the config stanza
@@ -785,8 +866,8 @@ circos_tile <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 #' @return Radius after adding the histogram and the spacing.
 #' @export
 circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", colname="logFC",
-                           chr="chr1", basename="", colors=NULL,
-                           outer=0.9, width=0.08, spacing=0.02) {
+                           chr="chr1", basename="", colors=NULL, color_choice="spectral-9-div",
+                           scale_log_base=1, outer=0.9, width=0.08, spacing=0.02) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
@@ -819,6 +900,10 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   }
 
   full_table <- full_table[, c(start_name, stop_name, colname)]
+  full_table[[start_name]] <- as.numeric(full_table[[start_name]])
+  na_drop <- ! is.na(full_table[[start_name]])
+  full_table <- full_table[na_drop, ]
+
   if (is.null(full_table[[start_name]]) | is.null(full_table[[stop_name]]) |
       is.null(rownames(full_table)) | is.null(full_table[[colname]])) {
     stop("This requires columns: start, stop, rownames, and datum")
@@ -842,9 +927,13 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
     colors <- suppressWarnings(grDevices::colorRampPalette(
                                             RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
+  } else {
+    num_colors <- length(conditions)
   }
 
   ## Now write the config stanza
+  minval <- min(full_table[[colname]])
+  maxval <- max(full_table[[colname]])
   inner <- outer - width
   data_cfg_out <- file(datum_cfg_file, open="w+")
   data_cfg_filename <- gsub("^circos/", "", datum_cfg_file)
@@ -855,23 +944,14 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   file = %s
 ##  pattern = hline,vline  # Also solid
   color_mapping = 0 ## also 1, 2
-  min = 0
-  max = 10
+  min = %s
+  max = %s
   stroke_thickness = 0
   r1 = %fr
   r0 = %fr
-##   color = conf(plots, color_alt)
-##  layers = 1
-##  layers_overflow = hide
-##  margin = 0.00u
-##  thickness = 90
-##  padding = 1
-##  orientation = out
-##  stroke_thickness = 0
-##  stroke_color = black
-##  color = black
-##  fill_color = black
- </plot>", data_relative_filename, outer, inner)
+  color = %s
+  scale_log_base = %s
+ </plot>", data_relative_filename, minval, maxval, outer, inner, color_choice, scale_log_base)
   cat(data_cfg_string, file=data_cfg_out, sep="")
   close(data_cfg_out)
 
@@ -1027,6 +1107,9 @@ circos_make <- function(target="", output="circos/Makefile", circos="circos") {
   if (!file.exists(circos_dir)) {
     message("The circos directory does not exist, creating: ", circos_dir)
     dir.create(circos_dir, recursive=TRUE)
+  }
+  if (!file.exists("circos/etc")) {
+    system("ln -s /etc/circos circos/etc")
   }
   out <- file(output, open="w+")
   makefile_string <- sprintf("

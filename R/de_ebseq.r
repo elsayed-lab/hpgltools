@@ -13,9 +13,17 @@
 #'   trivially complex, this is not tenable, so this defaults to subsetting the
 #'   data into pairs of conditions.
 #' @param norm  Normalization method to use.
+#' @param conditions  Not currently used, but passed from all_pairwise()
+#' @param batches  Not currently used, but passed from all_pairwise()
+#' @param model_cond  Not currently used, but passed from all_pairwise()
+#' @param model_intercept Not currently used, but passed from all_pairwise()
+#' @param alt_model Not currently used, but passed from all_pairwise()
+#' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param ... Extra arguments currently unused.
 #' @export
-ebseq_pairwise <- function(input=NULL, patterns=NULL,
+ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
+                           batches=NULL, model_cond=NULL, model_intercept=NULL,
+                           alt_model=NULL, model_batch=NULL,
                            ng_vector=NULL, rounds=10, target_fdr=0.05,
                            method="pairwise_subset", norm="median", ...) {
   arglist <- list(...)

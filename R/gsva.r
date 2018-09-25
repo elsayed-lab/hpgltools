@@ -1,19 +1,134 @@
+make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
+                              directions="up", category_name="infection",
+                              pheno_name=NULL, set_name="elsayed_macrophage",
+                              current_id="ENSEMBL", required_id="ENTREZID") {
+  first <- NULL
+  second <- NULL
+  if (current_id == required_id) {
+    first <- first_ids
+    second <- second_ids
+  } else {
+    message("Converting the rownames() of the expressionset to ENTREZID.")
+    first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                       keys=first_ids,
+                                       keytype=current_id,
+                                       columns=c(required_id)))
+    first_idx <- complete.cases(first_ids)
+    first_ids <- first_ids[first_idx, ]
+    first <- first_ids[[required_id]]
+    if (!is.null(second_ids)) {
+      second_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                             keys=second_ids,
+                                             keytype=current_id,
+                                             columns=c(required_id)))
+      second_idx <- complete.cases(second_ids)
+      second_ids <- second_ids[second_idx, ]
+      second <- second_ids[[required_id]]
+    } else {
+      second <- NULL
+    }
+  }
+
+  all_colored <- NULL
+  sec_gsc <- NULL
+  fst <- data.frame(row.names=unique(first))
+  fst[["direction"]] <- directions[1]
+  fst[["phenotype"]] <- pheno_name
+  fst_gsc <- GSEABase::GeneSet(
+                         EntrezIdentifier(),
+                         setName=paste0(set_name, "_", category_name, "_", directions[1]),
+                         geneIds=as.character(rownames(fst)))
+  ##setName(fst_gsc) <- paste0(set_name, "_", category_name, "_", directions[1])
+  if (!is.null(second)) {
+    if (is.null(pheno_name)) {
+      pheno_name <- "unknown"
+    }
+    sec[["direction"]] <- directions[2]
+    sec[["phenotype"]] <- pheno_name
+    both <- rbind(fst, sec)
+    sec_gsc <- GSEABase::GeneSet(
+                           EntrezIdentifier(),
+                           setName=paste0(set_name, "_", category_name, "_", directions[2]),
+                           geneIds=as.character(rownames(sec)))
+    all_colored = GSEABase::GeneColorSet(
+                              EntrezIdentifier(),
+                              setName=paste0(set_name, "_", category_name),
+                              geneIds=rownames(both),
+                              phenotype=pheno_name,
+                              geneColor=as.factor(both[["direction"]]),
+                              phenotypeColor=as.factor(both[["phenotype"]]))
+  }
+  retlst <- list(
+    "first" = fst_gsc,
+    "second" = sec_gsc,
+    "colored" = all_colored)
+  return(retlst)
+}
+
+#' Given a pairwise result, make a gene set collection.
+#'
+#' If I want to play with gsva and friends, then I need GeneSetCollections!
+#'
+#' @param pairwise  A pairwise result, or combined de result, or extracted genes.
+#' @param according_to  When getting significant genes, use this method.
+#' @param orgdb  Annotation dataset.
+#' @param color  Make a colorSet?
+#' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
+#' @param set_name  A name for the created gene set.
+#' @param phenotype_name  When making color sets, use this phenotype name.
+#' @param required_id  gsva uses entrezids by default.
+#' @param ...  Extra arguments for extract_significant_genes().
+#' @export
 make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
+                                   pair_names=c("ups", "downs"),
                                    color=TRUE, current_id="ENSEMBL", set_name="elsayed_macrophage",
                                    phenotype_name="infection", required_id="ENTREZID", ...) {
-  updown <- extract_significant_genes(pairwise, according_to=according_to, ...)[[according_to]]
-  ups <- updown[["ups"]]
-  downs <- updown[["downs"]]
+  ups <- list()
+  downs <- list()
+  if (class(pairwise)[1] == "data.frame") {
+    ups[[pair_names[1]]] <- pairwise
+  } else if (class(pairwise)[1] == "all_pairwise") {
+    message("Invoking combine_de_tables().")
+    combined <- sm(combine_de_tables(pairwise, ...))
+    message("Invoking extract_significant_genes().")
+    updown <- sm(extract_significant_genes(combined,
+                                           according_to=according_to, ...)[[according_to]])
+    ups[[pair_names[1]]] <- updown[["ups"]]
+    downs[[pair_names[2]]] <- updown[["downs"]]
+  } else if (class(pairwise)[1] == "combined_de") {
+    message("Invoking extract_significant_genes().")
+    updown <- sm(extract_significant_genes(pairwise,
+                                           according_to=according_to, ...)[[according_to]])
+    ups[[pair_names[1]]] <- updown[["ups"]]
+    downs[[pair_names[2]]] <- updown[["downs"]]
+  } else if (class(pairwise)[1] == "sig_genes") {
+    ups[[pair_names[1]]] <- updown[["ups"]]
+    downs[[pair_names[2]]] <- updown[["downs"]]
+  } else if (class(pairwise)[1] == "character") {
+    ## Then this is a list of gene IDs.
+    ups <- list()
+    ups[[pair_names[1]]] <- pairwise
+    downs <- list()
+  } else {
+    stop("I do not understand this type of input.")
+  }
+
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
   tt <- sm(library(orgdb, character.only=TRUE))
-
-  gsc <- list()
+  up_lst <- list()
+  down_lst <- list()
+  colored_lst <- list()
   for (c in 1:length(ups)) {
     name <- names(ups)[c]
     up <- ups[[name]]
     down <- downs[[name]]
-    up_ids <- rownames(up)
-    down_ids <- rownames(down)
+    if (class(up) == "character") {
+      up_ids <- up
+      down_ids <- down
+    } else if (class(up) == "data.frame") {
+      up_ids <- rownames(up)
+      down_ids <- rownames(down)
+    }
     if (current_id == required_id) {
       up[[required_id]] <- rownames(up)
       down[[required_id]] <- rownames(down)
@@ -26,13 +141,17 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
       up_idx <- complete.cases(up_ids)
       up_ids <- up_ids[up_idx, ]
       up <- merge(up, up_ids, by.x="row.names", by.y=current_id)
-      down_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                         keys=down_ids,
-                                         keytype=current_id,
-                                         columns=c(required_id)))
-      down_idx <- complete.cases(down_ids)
-      down_ids <- down_ids[down_idx, ]
-      down <- merge(down, down_ids, by.x="row.names", by.y=current_id)
+      if (!is.null(down_ids)) {
+        down_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                             keys=down_ids,
+                                             keytype=current_id,
+                                             columns=c(required_id)))
+        down_idx <- complete.cases(down_ids)
+        down_ids <- down_ids[down_idx, ]
+        down <- merge(down, down_ids, by.x="row.names", by.y=current_id)
+      } else {
+        down <- NULL
+      }
     }
     up[["direction"]] <- "up"
     up[["phenotype"]] <- phenotype_name
@@ -55,13 +174,15 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
                             EntrezIdentifier(),
                             setName=paste0(set_name, "_", name),
                             geneIds=as.character(down[[required_id]]))
-
-  }
+    colored_lst[[name]] <- all_colored
+    up_lst[[name]] <- up_gsc
+    down_lst[[name]] <- down_gsc
+  } ## End of the for loop.
 
   retlst <- list(
-    "colored" = all_colored,
-    "up" = up_gsc,
-    "down" = down_gsc)
+    "colored" = colored_lst,
+    "up" = up_lst,
+    "down" = down_lst)
   return(retlst)
 }
 
@@ -84,8 +205,15 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @return  Something from GSVA::gsva()!
 #' @export
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
-                        current_id="ENSEMBL", required_id="ENTREZID", orgdb="org.Hs.eg.db") {
-
+                        cores=0, current_id="ENSEMBL", required_id="ENTREZID",
+                        orgdb="org.Hs.eg.db", method="gsva", kcdf=NULL, ranking=FALSE) {
+  if (is.null(kcdf)) {
+    if (expt[["state"]][["transform"]] == "raw") {
+      kcdf <- "Poisson"
+    } else {
+      kcdf <- "Gaussian"
+    }
+  }
   ## Make sure some data is loaded.  Assume the c2BroadSets from GSVAdata.
   sig_data <- NULL
   if (!is.null(signatures)) {
@@ -143,7 +271,8 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE)
+  gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
+                            kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores)
   fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""

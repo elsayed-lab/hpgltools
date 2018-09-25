@@ -785,7 +785,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         ma_plt <- edger_ma_plots[[x]]
         vol_plt <- edger_vol_plots[[x]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
+          printme <- paste0("Edger expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                             make_equate(plt[["lm_model"]]))
           message(printme)
@@ -802,11 +802,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 20, plotname="edvol", savedir=excel_basename, start_row=51)
         }
         ## Text on 81, plots 82-112
-        plt <- deseq_plots[[count]]
-        ma_plt <- deseq_ma_plots[[count]]
-        vol_plt <- deseq_vol_plots[[count]]
+        plt <- deseq_plots[[x]]
+        ma_plt <- deseq_ma_plots[[x]]
+        vol_plt <- deseq_vol_plots[[x]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[count]], "; R^2: ",
+          printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                             make_equate(plt[["lm_model"]]))
           message(printme)
@@ -824,7 +824,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         }
       }
     }  ## End for loop iterating over every kept table.
-    count <- count + 1
 
     ## Now add some summary data and some plots comparing the tools.
     message("Writing summary information.")
@@ -948,6 +947,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (!is.null(arglist[["rda"]])) {
     saved <- save(list="ret", file=arglist[["rda"]])
   }
+  class(ret) <- c("combined_de", "list")
   return(ret)
 }
 
@@ -1284,6 +1284,7 @@ Defaulting to fdr.")
   ret <- list(
     "data" = comb,
     "summary" = summary_lst)
+  class(ret) <- c("combined_table", "list")
   return(ret)
 }
 
@@ -1628,7 +1629,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   table_names <- NULL
   all_tables <- NULL
   table_mappings <- NULL
-  if (class(combined) == "data.frame") {
+  if (class(combined)[1] == "data.frame") {
     ## Then this is just a data frame.
     all_tables[["all"]] <- combined
     table_names <- "all"
@@ -1985,6 +1986,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   }
 
+  class(ret) <- c("sig_genes", "list")
   return(ret)
 }
 
@@ -2176,6 +2178,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   }
 
+  class(lst) <- c("sig_intersect", "list")
   return(lst)
 }
 
@@ -2315,146 +2318,6 @@ write_de_table <- function(data, type="limma", ...) {
 
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   return(save_result)
-}
-
-#' Attempt to find the significant shared genes between edger/deseq/limma or a subset thereof.
-#'
-#' @param tables The result from extract_significant_genes() or similar.
-#' @param excel  An excel file to write.
-#' @param extra_annot  Extra annotations to add to the tables.
-#' @param ... Extra arguments for writing the file (currently unused).
-#' @return a list of shared genes by table name.
-#' @export
-write_intersect_significant <- function(tables, excel="excel/significant_shared.xlsx",
-                                        extra_annot=NULL, ...) {
-  arglist <- list(...)
-  annot_df <- data.frame()
-  if (!is.null(tables[["input"]])) {
-    input <- tables[["input"]]
-    if (!is.null(input[["input"]])) {
-      annot_df <- fData(input[["input"]])
-    } else {
-      annot_df <- fData(tables[["input"]])
-    }
-  }
-
-  if (!is.null(extra_annot)) {
-    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
-    rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop=FALSE]
-  }
-
-  if (!is.null(tables[["significant"]])) {
-    ## This came from combine_de_tables
-    tables <- tables[["significant"]]
-  }
-  num_tables <- length(tables[[1]][["ups"]])
-  methods <- c()
-
-  ## Figure out what to intersect.
-  if ("limma" %in% names(tables)) {
-    methods <- "limma"
-  }
-  if ("edger" %in% names(tables)) {
-    methods <- c(methods, "edger")
-  }
-  if ("deseq" %in% names(tables)) {
-    methods <- c(methods, "deseq")
-  }
-  wb <- NULL
-  if (class(excel) == "character") {
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-
-  retlist <- list()
-  for (t in 1:num_tables) {
-    table_name <- names(tables[[1]][["ups"]])[[t]]
-    up_intersect <- data.frame()
-    down_intersect <- data.frame()
-    if (length(methods) < 2) {
-      stop("There is nothing to intersect.")
-    } else if (length(methods) == 2) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-    } else if (length(methods) == 3) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      third_ups <- tables[[methods[3]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      third_downs <- tables[[methods[3]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      up_intersect <- rownames(third_ups) %in% rownames(up_intersect)
-      up_intersect <- third_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-      down_intersect <- rownames(third_downs) %in% rownames(down_intersect)
-      down_intersect <- third_downs[down_intersect, ]
-    } else {
-      stop("There are too many things to intersect, that is confusing!")
-    }
-    ## Now that we have collected the intersections for this set of tables, write them.
-    if (!is.null(wb)) {
-      message("Writing data for ", table_name)
-
-      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
-                                 replacement="",
-                                 x=colnames(annot_df))
-      up_intersect <- merge(annot_df, up_intersect, by="row.names", all.y=TRUE)
-      rownames(up_intersect) <- up_intersect[["Row.names"]]
-      up_intersect <- up_intersect[, -1, drop=FALSE]
-      colnames(up_intersect) <- make.names(tolower(colnames(up_intersect)), unique=TRUE)
-
-      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
-                                 replacement="",
-                                 x=colnames(annot_df))
-      down_intersect <- merge(annot_df, down_intersect, by="row.names", all.y=TRUE)
-      rownames(down_intersect) <- down_intersect[["Row.names"]]
-      down_intersect <- down_intersect[, -1, drop=FALSE]
-      colnames(down_intersect) <- make.names(tolower(colnames(down_intersect)), unique=TRUE)
-
-      up_xls_result <- write_xls(
-        wb,
-        data=up_intersect,
-        sheet=paste0("sharedup_", table_name),
-        title=paste0("Shared genes up between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-      down_xls_result <- write_xls(
-        wb,
-        data=down_intersect,
-        sheet=paste0("shareddown_", table_name),
-        title=paste0("Shared genes down between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-    }
-    retlist[[table_name]][["up_shared"]] <- up_intersect
-    retlist[[table_name]][["down_shared"]] <- down_intersect
-  } ## End examining each set of tables.
-
-  if (!is.null(wb)) {
-    message("Writing the file: ", excel)
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-  }
-  return(retlist)
 }
 
 ## EOF

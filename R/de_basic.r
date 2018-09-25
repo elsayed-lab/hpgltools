@@ -15,6 +15,7 @@
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
 #' @param conditions  Not currently used, but passed from all_pairwise()
+#' @param batches  Not currently used, but passed from all_pairwise()
 #' @param model_cond  Not currently used, but passed from all_pairwise()
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
@@ -28,7 +29,7 @@
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, model_cond=TRUE,
+basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NULL, model_cond=TRUE,
                            model_intercept=FALSE, alt_model=NULL, model_batch=FALSE,
                            force=FALSE, ...) {
   arglist <- list(...)

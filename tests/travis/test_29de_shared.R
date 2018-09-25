@@ -344,21 +344,21 @@ test_that("Do edger with combat and sva agree vis a vis logfc?", {
 })
 
 ## See if the intersection between limma, deseq, and edger is decent.
-test_intersect <- sm(intersect_significant(combined_sva, excel=NULL))
+test_intersect <- intersect_significant(combined_sva, excel=NULL)
 expected <- 82
-actual <- nrow(test_intersect[["up_treated_vs_untreated"]][["led"]])
+actual <- nrow(test_intersect[["ups"]][["treated_vs_untreated"]][["data"]][["all"]])
 test_that("Do we get the expected number of agreed upon significant genes between edger/deseq/limma?", {
     expect_equal(actual, expected)
 })
-actual <- nrow(test_intersect[["down_treated_vs_untreated"]][["led"]])
+actual <- nrow(test_intersect[["downs"]][["treated_vs_untreated"]][["data"]][["all"]])
 expected <- 88
 test_that("Ibid, but in the down direction?", {
     expect_equal(actual, expected)
 })
-actual <- sum(nrow(test_intersect[["up_treated_vs_untreated"]][["l"]]) +
-              nrow(test_intersect[["up_treated_vs_untreated"]][["e"]]) +
-              nrow(test_intersect[["up_treated_vs_untreated"]][["d"]]))
-expected <- 5
+actual <- sum(nrow(test_intersect[["downs"]][["treated_vs_untreated"]][["data"]][["limma"]]) +
+              nrow(test_intersect[["downs"]][["treated_vs_untreated"]][["data"]][["edger"]]) +
+              nrow(test_intersect[["downs"]][["treated_vs_untreated"]][["data"]][["deseq"]]))
+expected <- 11
 test_that("Are there very few genes observed without the others?", {
     expect_equal(actual, expected)
 })

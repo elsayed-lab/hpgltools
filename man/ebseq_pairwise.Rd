@@ -4,7 +4,9 @@
 \alias{ebseq_pairwise}
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions using EBSeq.}
 \usage{
-ebseq_pairwise(input = NULL, patterns = NULL, ng_vector = NULL,
+ebseq_pairwise(input = NULL, patterns = NULL, conditions = NULL,
+  batches = NULL, model_cond = NULL, model_intercept = NULL,
+  alt_model = NULL, model_batch = NULL, ng_vector = NULL,
   rounds = 10, target_fdr = 0.05, method = "pairwise_subset",
   norm = "median", ...)
 }
@@ -12,6 +14,18 @@ ebseq_pairwise(input = NULL, patterns = NULL, ng_vector = NULL,
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
 
 \item{patterns}{Set of expression patterns to query.}
+
+\item{conditions}{Not currently used, but passed from all_pairwise()}
+
+\item{batches}{Not currently used, but passed from all_pairwise()}
+
+\item{model_cond}{Not currently used, but passed from all_pairwise()}
+
+\item{model_intercept}{Not currently used, but passed from all_pairwise()}
+
+\item{alt_model}{Not currently used, but passed from all_pairwise()}
+
+\item{model_batch}{Not currently used, but passed from all_pairwise()}
 
 \item{ng_vector}{I think this is for isoform quantification, but am not yet
 certain.}

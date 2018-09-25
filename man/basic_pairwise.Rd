@@ -5,8 +5,8 @@
 \title{The simplest possible differential expression method.}
 \usage{
 basic_pairwise(input = NULL, design = NULL, conditions = NULL,
-  model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
-  model_batch = FALSE, force = FALSE, ...)
+  batches = NULL, model_cond = TRUE, model_intercept = FALSE,
+  alt_model = NULL, model_batch = FALSE, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Count table by sample.}
@@ -14,6 +14,8 @@ basic_pairwise(input = NULL, design = NULL, conditions = NULL,
 \item{design}{Data frame of samples and conditions.}
 
 \item{conditions}{Not currently used, but passed from all_pairwise()}
+
+\item{batches}{Not currently used, but passed from all_pairwise()}
 
 \item{model_cond}{Not currently used, but passed from all_pairwise()}
 

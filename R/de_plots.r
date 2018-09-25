@@ -39,10 +39,11 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   ## if it is in fact all_pairwise, then there should be a set of
   ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
   ## essentially convert the input by extracting the relevant type.
-  if (!is.null(pairwise[[type]])) {
+  if (class(pairwise)[1] == "all_pairwise") {
     table_source <- paste0(type, "_pairwise")
     pairwise <- pairwise[[type]]
-  } else if (!is.null(pairwise[["data"]])) {
+  } else if (class(pairwise)[1] == "combined_de" |
+             class(pairwise)[1] == "combined_table") {
     ## Then this came from combine_de...
     table_source <- "combined"
   } else if (!is.null(pairwise[["method"]])) {
@@ -138,18 +139,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       message("The possible tables are: ", toString(possible_tables))
       stop()
     }
-    fwdname <- paste0(table_parts[[1]], "_vs_", table_parts[[2]])
-    revname <- paste0(table_parts[[2]], "_vs_", table_parts[[1]])
-    final_fwd_table <- pairwise[["data"]][[fwdname]]
-    final_rev_table <- pairwise[["data"]][[revname]]
-    if (is.null(final_fwd_table) & is.null(final_rev_table)) {
-      stop("The table seems to be missing?")
-    } else if (is.null(final_fwd_table)) {
-      message("Trey you doofus, you reversed the name of the table.")
-      the_table <- all_tables[[final_rev_table]]
-    } else {
-      the_table <- all_tables[[final_fwd_table]]
-    }
+    the_table <- all_tables[[table]]
   } else if (length(wanted_table) == 2) {
     ## Perhaps one will ask for c(numerator, denominator)
     the_table <- paste0(wanted_table[[1]], "_vs_", wanted_table[[2]])

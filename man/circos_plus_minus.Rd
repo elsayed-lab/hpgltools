@@ -5,7 +5,16 @@
 \title{Write tiles of bacterial ontology groups using the categories from microbesonline.org.}
 \usage{
 circos_plus_minus(table, cfgout = "circos/conf/default.conf",
-  chr = "chr1", outer = 1, width = 0.08, spacing = 0)
+  chr = "chr1", outer = 1, width = 0.08, spacing = 0,
+  acol = "orange", bcol = "reds-9-seq", ccol = "yellow",
+  dcol = "vlpurple", ecol = "vlgreen", fcol = "dpblue",
+  gcol = "vlgreen", hcol = "vlpblue", icol = "vvdpgreen",
+  jcol = "dpred", kcol = "orange", lcol = "vvlorange",
+  mcol = "dpgreen", ncol = "vvlpblue", ocol = "vvlgreen",
+  pcol = "vvdpred", qcol = "ylgn-3-seq", rcol = "vlgrey",
+  scol = "grey", tcol = "vlpurple", ucol = "greens-3-seq",
+  vcol = "vlred", wcol = "vvdppurple", xcol = "black",
+  ycol = "lred", zcol = "vlpblue")
 }
 \arguments{
 \item{table}{Dataframe with starts/ends and categories.}
@@ -19,6 +28,58 @@ circos_plus_minus(table, cfgout = "circos/conf/default.conf",
 \item{width}{Radial width of each tile.}
 
 \item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
+
+\item{acol}{A color: RNA processing and modification.}
+
+\item{bcol}{B color: Chromatin structure and dynamics.}
+
+\item{ccol}{C color: Energy production conversion.}
+
+\item{dcol}{D color: Cell cycle control, mitosis and meiosis.}
+
+\item{ecol}{E color: Amino acid transport metabolism.}
+
+\item{fcol}{F color: Nucleotide transport and metabolism.}
+
+\item{gcol}{G color: Carbohydrate transport and metabolism.}
+
+\item{hcol}{H color: Coenzyme transport and metabolism.}
+
+\item{icol}{I color: Lipid transport and metabolism.}
+
+\item{jcol}{J color: Translation, ribosome structure and biogenesis.}
+
+\item{kcol}{K color: Transcription.}
+
+\item{lcol}{L color: Replication, recombination, and repair.}
+
+\item{mcol}{M color: Cell wall/membrane biogenesis.}
+
+\item{ncol}{N color: Cell motility}
+
+\item{ocol}{O color: Posttranslational modification, protein turnover, chaperones.}
+
+\item{pcol}{P color: Inorganic ion transport and metabolism.}
+
+\item{qcol}{Q color: Secondary metabolite biosynthesis, transport, and catabolism.}
+
+\item{rcol}{R color: General function prediction only.}
+
+\item{scol}{S color: Function unknown.}
+
+\item{tcol}{T color: Signal transduction mechanisms.}
+
+\item{ucol}{U color: Intracellular trafficking(sp?) and secretion.}
+
+\item{vcol}{V color: Defense mechanisms.}
+
+\item{wcol}{W color: Extracellular structures.}
+
+\item{xcol}{X color: Not in COG.}
+
+\item{ycol}{Y color: Nuclear structure.}
+
+\item{zcol}{Z color: Cytoskeleton.}
 }
 \value{
 Radius after adding the plus/minus information and the spacing between them.

@@ -335,6 +335,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
   }
+  class(ret) <- c("all_pairwise", "list")
   return(ret)
 }
 
@@ -1471,6 +1472,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL, unique=FALSE
       abundant_list[[coef]] <- head(coef_ordered, n=n)
     }
   }
+  class(abundant_list) <- c("abundant_genes", "list")
   return(abundant_list)
 }
 
