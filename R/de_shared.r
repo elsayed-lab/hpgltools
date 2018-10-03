@@ -933,7 +933,7 @@ compare_de_results <- function(first, second, cor_method="pearson") {
 #' }
 #' @export
 correlate_de_tables <- function(results, annot_df=NULL, ...) {
-  ## arglist <- list(...)
+  arglist <- list(...)
   ## Fill each column/row of these with the correlation between tools for one contrast performed
   retlst <- list()
   if (class(results[["limma"]]) == "list") {
@@ -992,6 +992,10 @@ correlate_de_tables <- function(results, annot_df=NULL, ...) {
           num_reversed <- num_reversed + 1
         }
         fs <- merge(fst, scd, by="row.names")
+        if (nrow(fs) == 0) {
+          warning("The merge of ", c_name, ", ", contr, " and ", d_name, ", ", contr, " failed.")
+          next
+        }
         fs <- fs[, c("logFC.x", "logFC.y")]
         colnames(fs) <- c(paste0(c_name, " logFC"), paste0(d_name, " logFC"))
         fs_cor <- stats::cor.test(x=fs[, 1], y=fs[, 2])[["estimate"]]

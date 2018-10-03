@@ -759,9 +759,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
-        plt <- limma_plots[[x]]
-        ma_plt <- limma_ma_plots[[x]]
-        vol_plt <- limma_vol_plots[[x]]
+        plt <- limma_plots[[sheetname]]
+        ma_plt <- limma_ma_plots[[sheetname]]
+        vol_plt <- limma_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("Limma expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -781,9 +781,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         }
         ## Text on row 50, plots from 51-81
         ##plt <- edger_plots[count][[1]] ##FIXME this is suspicious
-        plt <- edger_plots[[x]]
-        ma_plt <- edger_ma_plots[[x]]
-        vol_plt <- edger_vol_plots[[x]]
+        plt <- edger_plots[[sheetname]]
+        ma_plt <- edger_ma_plots[[sheetname]]
+        vol_plt <- edger_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("Edger expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -802,9 +802,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 20, plotname="edvol", savedir=excel_basename, start_row=51)
         }
         ## Text on 81, plots 82-112
-        plt <- deseq_plots[[x]]
-        ma_plt <- deseq_ma_plots[[x]]
-        vol_plt <- deseq_vol_plots[[x]]
+        plt <- deseq_plots[[sheetname]]
+        ma_plt <- deseq_ma_plots[[sheetname]]
+        vol_plt <- deseq_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
           printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
@@ -1017,7 +1017,9 @@ Defaulting to fdr.")
       lidf <- li[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(lidf)) {
-        stop("The limma table seems to be missing.")
+        warning("The limma table seems to be missing.")
+        lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
+                           "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
       }
     }
   }
@@ -1033,7 +1035,9 @@ Defaulting to fdr.")
       dedf <- de[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC and stat.")
       if (is.null(dedf)) {
-        stop("The deseq table seems to be missing.")
+        warning("The deseq table seems to be missing.")
+        dedf <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
+                           "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
       }
     }
   }
@@ -1049,7 +1053,9 @@ Defaulting to fdr.")
       eddf <- ed[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(eddf)) {
-        stop("The edger table seems to be missing.")
+        warning("The edger table seems to be missing.")
+        eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
+                           "edger_p" = 0, "edger_adjp" = 0)
       }
     }
   }
@@ -1065,7 +1071,9 @@ Defaulting to fdr.")
       ebdf <- eb[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(ebdf)) {
-        stop("The ebseq table seems to be missing.")
+        warning("The ebseq table seems to be missing.")
+        ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
+                           "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0, "ebseq_adjp" = 0)
       }
     }
   }
@@ -1081,7 +1089,9 @@ Defaulting to fdr.")
       badf <- ba[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(badf)) {
-        stop("The basic table seems to be missing.")
+        warning("The basic table seems to be missing.")
+        badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+                           "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
       }
     }
   }

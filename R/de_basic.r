@@ -99,9 +99,12 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NUL
 
   model_choice <- choose_model(
     input, conditions=conditions, batches=batches, model_batch=FALSE,
-    model_cond=TRUE, model_intercept=FALSE, alt_model=NULL, ...)
+    model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
+    ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, ...)
+  ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+                                 ...)
   contrasts_performed <- c()
   bar <- utils::txtProgressBar(style=3)
   for (c in 1:length(apc[["names"]])) {
@@ -112,6 +115,11 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NUL
     d_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
     utils::setTxtProgressBar(bar, pct_done)
     contrasts_performed <- append(name, contrasts_performed)
+    if (! c_name %in% colnames(median_table)) {
+      message("The contrast ", name, " is not in the results.")
+      message("If this is not an extra contrast, then this is an error.")
+      next
+    }
     division <- data.frame(
       median_table[, c_name] - median_table[, d_name])
     column_list <- append(column_list, name)

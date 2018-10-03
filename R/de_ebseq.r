@@ -109,6 +109,11 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     a_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
     b_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
     utils::setTxtProgressBar(bar, pct_done)
+    if (! a_name %in% input[["conditions"]]) {
+      message("The contrast ", a_name, " is not in the results.")
+      message("If this is not an extra contrast, then this is an error.")
+      next
+    }
     pair <- sm(subset_expt(
       expt=input,
       subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
@@ -246,7 +251,7 @@ ebseq_two <- function(pair_data, conditions,
   table <- table[, -1]
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
   ## properly adjust a set prior probabilities.
-  message("Copying the ppee values as an ajusted p-value until I figure out how to deal with them.")
+  message("Copying the ppee values as ajusted p-values until I figure out how to deal with them.")
   table[["ebseq_adjp"]] <- table[["PPEE"]]
 
   ## Finally, make sure the 'direction' matches my conception of numerator/denominator.

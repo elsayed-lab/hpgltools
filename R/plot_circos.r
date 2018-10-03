@@ -326,17 +326,28 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   minus_cfg_file <- cfgout
   plus_cfg_file <- gsub(".conf$", "_plus_go.conf", plus_cfg_file)
   minus_cfg_file <- gsub(".conf$", "_minus_go.conf", minus_cfg_file)
-  table <- table[, c("start", "stop", "strand", "COGFun")]
+  ## What I should do is spend some time thinking and reformat this to handle
+  ## and arbitrary number of arbitrary columns so that I have some flexibility later.
+  if (is.null(table[["id"]])) {
+    table <- table[, c("start", "stop", "strand", "COGFun")]
+  } else {
+    table <- table[, c("start", "stop", "strand", "COGFun", "id")]
+  }
   go_plus <- as.data.frame(table[table[["strand"]] == plus_string, ])
   go_minus <- as.data.frame(table[table[["strand"]] == minus_string, ])
   go_plus[["chr"]] <- chr
   go_minus[["chr"]] <- chr
-  ##    go_plus = go_plus[, c(5, 1, 2, 4)]
-  go_plus <- go_plus[, c("chr", "start", "stop", "COGFun")]
-  ##go_minus = go_minus[, c(5, 1, 2, 4)]
-  go_minus <- go_minus[, c("chr", "start", "stop", "COGFun")]
-  go_plus[["go"]] <- paste0("value=", go_plus[["COGFun"]], "0")
-  go_minus[["go"]] <- paste0("value=", go_minus[["COGFun"]], "0")
+  if (is.null(table[["id"]])) {
+    go_plus <- go_plus[, c("chr", "start", "stop", "COGFun")]
+    go_minus <- go_minus[, c("chr", "start", "stop", "COGFun")]
+    go_plus[["go"]] <- paste0("value=", go_plus[["COGFun"]], "0")
+    go_minus[["go"]] <- paste0("value=", go_minus[["COGFun"]], "0")
+  } else {
+    go_plus <- go_plus[, c("chr", "start", "stop", "COGFun", "id")]
+    go_minus <- go_minus[, c("chr", "start", "stop", "COGFun", "id")]
+    go_plus[["id"]] <- paste0("id=", go_plus[["id"]])
+    go_minus[["id"]] <- paste0("id=", go_minus[["id"]])
+  }
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
@@ -369,6 +380,7 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   color = green
   r1 = %sr
   r0 = %sr
+  url = script?type=label&value=[id]&color=[color]
   <rules>
    <rule>
     condition = var(value) =~ \"^A\"
@@ -534,6 +546,7 @@ ycol, ycol, zcol, zcol)
   color = green
   r1 = %sr
   r0 = %sr
+  url = script?type=label&value=[id]&color=[color]
   <rules>
    <rule>
     condition = var(value) =~ \"^A\"
@@ -899,7 +912,12 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
     stop("This requires rownames.")
   }
 
-  full_table <- full_table[, c(start_name, stop_name, colname)]
+  if (is.null(full_table[["id"]])) {
+    full_table <- full_table[, c(start_name, stop_name, colname)]
+  } else {
+    full_table <- full_table[, c(start_name, stop_name, colname, "id")]
+    full_table[["id"]] <- paste0("id=", full_table[["id"]])
+  }
   full_table[[start_name]] <- as.numeric(full_table[[start_name]])
   na_drop <- ! is.na(full_table[[start_name]])
   full_table <- full_table[na_drop, ]
@@ -912,7 +930,11 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
   datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_heatmap.conf")
   full_table[["chr"]] <- chr
-  full_table <- full_table[, c("chr", start_name, stop_name, colname)]
+  if (is.null(full_table[["id"]])) {
+    full_table <- full_table[, c("chr", start_name, stop_name, colname)]
+  } else {
+    full_table <- full_table[, c("chr", start_name, stop_name, colname, "id")]
+  }
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
@@ -951,6 +973,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   r0 = %fr
   color = %s
   scale_log_base = %s
+  url = script?type=label&value=[id]
  </plot>", data_relative_filename, minval, maxval, outer, inner, color_choice, scale_log_base)
   cat(data_cfg_string, file=data_cfg_out, sep="")
   close(data_cfg_out)
@@ -1116,6 +1139,9 @@ circos_make <- function(target="", output="circos/Makefile", circos="circos") {
 .PHONY:\tclean
 CIRCOS=\"%s\"
 
+clean:
+\trm -rf conf data *.conf *.png *.svg *.html
+
 %%.png:\t%%.conf
 \t$(CIRCOS) -conf $< -outputfile $*.png
 
@@ -1123,19 +1149,25 @@ CIRCOS=\"%s\"
 \t$(CIRCOS) -conf $< -outputfile $*.svg
 
 %%:\t%%.conf
-\t$(CIRCOS) -conf $< -outputfile $*.png && \t$(CIRCOS) -conf $< -outputfile $*.svg
+\t$(CIRCOS) -conf $< -outputfile $*.png
+\t$(CIRCOS) -conf $< -outputfile $*.svg
+\techo '<img src=\"$*.svg\" usemap=\"#$*\">' > map.html
+\tcat $*.html >> map.html
+\tmv map.html $*.html
+
 ", circos)
   cat(makefile_string, file=output, sep="")
   ## close(output)
 
   make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
-  make_target_svg <- gsub(pattern="\\.conf", replacement="", x=make_target)
-  make_target_svg <- paste0(make_target_svg, ".svg")
-  make_target_png <- gsub(pattern="\\.conf", replacement="", x=make_target)
-  make_target_png <- paste0(make_target_png, ".png")
-  make_command <- paste0("cd circos && make ", make_target_svg, " 2>>make.out 1>&2 && make ",
-                         make_target_png, " 2>>make.out 1>&2")
+  make_target <- gsub(pattern="\\.conf", replacement="", x=make_target)
+  make_target_svg <- paste0(make_target, ".svg")
+  make_target_png <- paste0(make_target, ".png")
+
+  make_command <- paste0("cd circos && touch Makefile && make ", make_target_svg, " 2>>make.out 1>&2 && make ",
+                         make_target, "")
   result <- system(make_command) ##, show.output.on.console=FALSE)
+
   return(result)
 }
 
@@ -1302,6 +1334,8 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
 karyotype = %s
 
 <image>
+ image_map_use = yes
+ image_map_missing_parameter = removeurl
  dir = .
  radius = %sp
  background = white

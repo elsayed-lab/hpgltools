@@ -3,18 +3,18 @@
 #' @param first_ids  The required IDs for a single set.
 #' @param second_ids  Potentially null optionally used for a second, presumably contrasting set.
 #' @param orgdb  Orgdb annotation, used to translate IDs to the required type.
+#' @param researcher_name  Prefix of the name for the generated set(s).
+#' @param study_name  Second element in the name of the generated set(s).
+#' @param category_name  Third element in the name of the generated set(s).
+#' @param phenotype_name  Optional phenotype data for the generated set(s).
 #' @param pair_names The suffix of the generated set(s).
-#' @param category_name  Primarily used for colored gene sets, but describes the
-#' category of data examined in this set.
-#' @param phenotype_name  Also used for colored gene sets.
-#' @param set_name  Primary identifier for the set.
 #' @param current_id  What type of ID is the data currently using?
 #' @param required_id  What type of ID should the use?
 #' @export
 make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
-                              pair_names="up", category_name="infection",
-                              phenotype_name=NULL, set_name="elsayed_macrophage",
-                              current_id="ENSEMBL", required_id="ENTREZID") {
+                              researcher_name="elsayed", study_name="macrophage",
+                              category_name="infection", phenotype_name=NULL,
+                              pair_names="up", current_id="ENSEMBL", required_id="ENTREZID") {
   first <- NULL
   second <- NULL
   if (current_id == required_id) {
@@ -22,6 +22,7 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     second <- second_ids
   } else {
     message("Converting the rownames() of the expressionset to ENTREZID.")
+    tt <- sm(try(do.call("library", as.list(orgdb)), silent=TRUE))
     first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
                                        keys=first_ids,
                                        keytype=current_id,
@@ -45,41 +46,48 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
   all_colored <- NULL
   sec_gsc <- NULL
   fst <- data.frame(row.names=unique(first))
-  fst[["direction"]] <- directions[1]
+  if (is.null(phenotype_name)) {
+    phenotype_name <- "unknown"
+  }
+  fst[["direction"]] <- pair_names[1]
   fst[["phenotype"]] <- phenotype_name
 
-  set_prefix <- paste0(set_name, "_", category_name)
-  fst_name <- paste0(set_prefix, "_", pair_names[1])
+  set_prefix <- paste0(researcher_name, "_", study_name, "_", category_name)
+  fst_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
   fst_gsc <- GSEABase::GeneSet(
-                         EntrezIdentifier(),
+                         GSEABase::EntrezIdentifier(),
                          setName=fst_name,
                          geneIds=as.character(rownames(fst)))
   ##setName(fst_gsc) <- paste0(set_name, "_", category_name, "_", directions[1])
   if (!is.null(second)) {
+    sec <- data.frame(row.names=unique(second))
     if (is.null(phenotype_name)) {
       phenotype_name <- "unknown"
     }
-    sec[["direction"]] <- directions[2]
+    sec[["direction"]] <- pair_names[2]
     sec[["phenotype"]] <- phenotype_name
     both <- rbind(fst, sec)
-    color_name <- paste0(set_prefix, "_", phenotype_name)
-    sec_name <- paste0(set_prefix, "_", pair_names[1])
+    color_name <- toupper(paste0(set_prefix, "_", phenotype_name))
+    sec_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
     sec_gsc <- GSEABase::GeneSet(
-                           EntrezIdentifier(),
+                           GSEABase::EntrezIdentifier(),
                            setName=sec_name,
                            geneIds=as.character(rownames(sec)))
     all_colored = GSEABase::GeneColorSet(
-                              EntrezIdentifier(),
+                              GSEABase::EntrezIdentifier(),
                               setName=color_name,
                               geneIds=rownames(both),
                               phenotype=phenotype_name,
                               geneColor=as.factor(both[["direction"]]),
                               phenotypeColor=as.factor(both[["phenotype"]]))
   }
-  retlst <- list(
-    "first" = fst_gsc,
-    "second" = sec_gsc,
-    "colored" = all_colored)
+  retlst <- list()
+  retlst[[fst_name]] <- fst_gsc
+  if (!is.na(pair_names[2])) {
+    ## Then there is a colored/down
+    retlst[[sec_name]] <- sec_gsc
+    retlst[["colored"]] <- all_colored
+  }
   return(retlst)
 }
 
@@ -210,27 +218,27 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     }
 
     set_prefix <- paste0(set_name, "_", category_name)
-    color_set_name <- paste0(set_prefix, "_", phenotype_name)
-    up_name <- paste0(set_prefix, "_", pair_names[1])
+    color_set_name <- toupper(paste0(set_prefix, "_", phenotype_name))
+    up_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
     colored_gsc <- GSEABase::GeneColorSet(
-                              EntrezIdentifier(),
-                              setName=color_set_name,
-                              geneIds=as.character(both[[required_id]]),
-                              phenotype=phenotype_name,
-                              geneColor=as.factor(both[["direction"]]),
-                              phenotypeColor=as.factor(both[["phenotype"]]))
+                               GSEABase::EntrezIdentifier(),
+                               setName=color_set_name,
+                               geneIds=as.character(both[[required_id]]),
+                               phenotype=phenotype_name,
+                               geneColor=as.factor(both[["direction"]]),
+                               phenotypeColor=as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
     up_gsc <- GSEABase::GeneSet(
-                          EntrezIdentifier(),
+                          GSEABase::EntrezIdentifier(),
                           setName=up_name,
                           geneIds=as.character(up[[required_id]]))
     up_lst[[name]] <- up_gsc
     down_gsc <- NULL
     down_lst[[name]] <- down_gsc
     if (!is.null(pair_names[2])) {
-      down_name <- paste0(set_prefix, "_", pair_names[2])
+      down_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
       down_gsc <- GSEABase::GeneSet(
-                              EntrezIdentifier(),
+                              GSEABase::EntrezIdentifier(),
                               setName=down_name,
                               geneIds=as.character(down[[required_id]]))
       down_lst[[name]] <- down_gsc
@@ -371,27 +379,27 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     }
 
     set_prefix <- paste0(set_name, "_", category_name)
-    color_set_name <- paste0(set_prefix, "_", phenotype_name)
-    up_name <- paste0(set_prefix, "_", pair_names[1])
+    color_set_name <- toupper(paste0(set_prefix, "_", phenotype_name))
+    up_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
     colored_gsc <- GSEABase::GeneColorSet(
-                              EntrezIdentifier(),
-                              setName=color_set_name,
-                              geneIds=as.character(both[[required_id]]),
-                              phenotype=phenotype_name,
-                              geneColor=as.factor(both[["direction"]]),
-                              phenotypeColor=as.factor(both[["phenotype"]]))
+                               GSEABase::EntrezIdentifier(),
+                               setName=color_set_name,
+                               geneIds=as.character(both[[required_id]]),
+                               phenotype=phenotype_name,
+                               geneColor=as.factor(both[["direction"]]),
+                               phenotypeColor=as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
     up_gsc <- GSEABase::GeneSet(
-                          EntrezIdentifier(),
+                          GSEABase::EntrezIdentifier(),
                           setName=up_name,
                           geneIds=as.character(up[[required_id]]))
     up_lst[[name]] <- up_gsc
     down_gsc <- NULL
     down_lst[[name]] <- down_gsc
     if (!is.null(pair_names[2])) {
-      down_name <- paste0(set_prefix, "_", pair_names[2])
+      down_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
       down_gsc <- GSEABase::GeneSet(
-                              EntrezIdentifier(),
+                              GSEABase::EntrezIdentifier(),
                               setName=down_name,
                               geneIds=as.character(down[[required_id]]))
       down_lst[[name]] <- down_gsc
@@ -627,6 +635,125 @@ get_msigdb_metadata <- function(sig_data, msig_xml="msigdb_v6.2.xml", gsva_resul
     retlist[["gsva_result"]] <- gsva_result
   }
   return(retlist)
+}
+
+convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_type="ENTREZID") {
+    message("Converting the rownames() of the expressionset to ", to_type, ".")
+    tt <- sm(library(orgdb, character.only=TRUE))
+    gsc_lst <- as.list(gsc)
+    bar <- utils::txtProgressBar(style=3)
+    for (g in 1:length(gsc)) {
+      pct_done <- g / length(gsc_lst)
+      setTxtProgressBar(bar, pct_done)
+      gs <- gsc[[g]]
+      old_ids <- GSEABase::geneIds(gs)
+      new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                          keys=old_ids,
+                                          keytype=from_type,
+                                          columns=c(to_type)))
+      new_ids <- new_ids[[to_type]]
+      GSEABase::geneIds(gs) <- unique(new_ids)
+      gsc_lst[[g]] <- gs
+    }
+    close(bar)
+    gsc <- GSEABase::GeneSetCollection(gsc_lst)
+    return(gsc)
+}
+
+gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL, sample=NULL,
+                             factor_column="condition", method="mean") {
+  values <- exprs(gsva_result[["expt"]])
+  design <- pData(gsva_result[["expt"]])
+  tests <- NULL
+  choice <- NULL
+  if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
+    message("Nothing was requested, examining the first column scores: ", colnames(values)[1], ".")
+    sample <- 1
+    tests <- as.numeric(values[, sample])
+    choice <- "column"
+  } else if (!is.null(factor)) {
+    message("Examining the ", method, " score for experimental factor: ",
+            factor, " from column: ", factor_column, ".")
+    sample_idx <- design[[factor_column]] == factor
+    values <- values[, sample_idx]
+    if (method == "mean") {
+      tests <- rowMeans(values)
+    } else {
+      tests <- Biobase::rowMedians(values)
+    }
+    choice <- "column"
+  } else if (!is.null(score)) {
+    message("Examining the score: ", score, " against the data.")
+    tests <- score
+    choice <- "value"
+  } else if (!is.null(category)) {
+    message("Examining row: ", category, " against the data.")
+    tests <- as.numeric(values[category, ])
+    choice <- "row"
+  } else {
+    tests <- as.numeric(values[, sample])
+    choice <- "column"
+  }
+
+  cheesy_likelihood <- function(test) {
+    gsva_mean <- mean(values)
+    gsva_sd <- sd(values)
+    num_values <- length(values)
+    pop_sd <- gsva_sd * sqrt((num_values - 1) / num_values)
+    z <- (test - gsva_mean) / pop_sd
+    likelihood <- 1 - pnorm(z)
+    return(likelihood)
+  }
+  results <- sapply(X=tests, FUN=cheesy_likelihood)
+  if (choice == "column") {
+    names(results) <- rownames(values)
+  } else if (choice == "row") {
+    names(results) <- colnames(values)
+  } else {
+    names(results) <- "value"
+  }
+  results_idx <- order(results, decreasing=FALSE)
+  results <- results[results_idx]
+  return(results)
+}
+
+intersect_signatures <- function(gsva_result, lst) {
+  sig_venn <- Vennerable::Venn(Sets=lst)
+  plot(sig_venn)
+  sig_plot <- grDevices::recordPlot()
+  sig_int <- sig_venn@IntersectionSets
+
+  annot <- fData(gsva_result[["expt"]])
+  sig_genes <- list()
+  ## Skip the non-existant set of 00, thus 2:length()
+  ## Top level loop iterates through the observed intersections/unions from Vennerable.
+  for (i in 2:length(sig_int)) {
+    name <- names(sig_int)[i]
+    sigs <- sig_int[[i]]
+    sig_annot <- annot[sigs, ]
+    gene_ids <- sig_annot[["ids"]]
+    internal_ret <- list()
+    ## This loop iterates through the set of observed gene IDs in each intersection
+    for (j in 1:length(gene_ids)) {
+      id_lst <- gene_ids[j]
+      ids <- strsplit(id_lst, ", ")[[1]]
+      ## Finally, we count how many times each id is observed in each signature
+      for (k in 1:length(ids)) {
+        element <- ids[k]
+        if (is.null(internal_ret[[element]])) {
+          internal_ret[[element]] <- 1
+        } else {
+          internal_ret[[element]] <- internal_ret[[element]] + 1
+        }
+      }
+    }
+    internal_ret <- internal_ret[order(as.numeric(internal_ret), decreasing=TRUE)]
+    ret <- as.numeric(internal_ret)
+    names(ret) <- names(internal_ret)
+    sig_genes[[name]] <- ret
+  }
+
+  return(sig_genes)
 }
 
 ## EOF

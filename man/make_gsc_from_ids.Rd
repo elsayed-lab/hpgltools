@@ -5,9 +5,10 @@
 \title{Create a gene set collection from a set of arbitrary IDs.}
 \usage{
 make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
-  pair_names = "up", category_name = "infection",
-  phenotype_name = NULL, set_name = "elsayed_macrophage",
-  current_id = "ENSEMBL", required_id = "ENTREZID")
+  researcher_name = "elsayed", study_name = "macrophage",
+  category_name = "infection", phenotype_name = NULL,
+  pair_names = "up", current_id = "ENSEMBL",
+  required_id = "ENTREZID")
 }
 \arguments{
 \item{first_ids}{The required IDs for a single set.}
@@ -16,14 +17,15 @@ make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
 
 \item{orgdb}{Orgdb annotation, used to translate IDs to the required type.}
 
+\item{researcher_name}{Prefix of the name for the generated set(s).}
+
+\item{study_name}{Second element in the name of the generated set(s).}
+
+\item{category_name}{Third element in the name of the generated set(s).}
+
+\item{phenotype_name}{Optional phenotype data for the generated set(s).}
+
 \item{pair_names}{The suffix of the generated set(s).}
-
-\item{category_name}{Primarily used for colored gene sets, but describes the
-category of data examined in this set.}
-
-\item{phenotype_name}{Also used for colored gene sets.}
-
-\item{set_name}{Primary identifier for the set.}
 
 \item{current_id}{What type of ID is the data currently using?}
 
