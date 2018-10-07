@@ -5,7 +5,7 @@
 \title{Make lots of graphs!}
 \usage{
 graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
-  title_suffix = NULL, qq = NULL, ma = NULL, gene_heat = FALSE,
+  title_suffix = NULL, qq = FALSE, ma = FALSE, gene_heat = FALSE,
   ...)
 }
 \arguments{
@@ -17,9 +17,11 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
 
 \item{title_suffix}{text to add to the titles of the plots.}
 
-\item{qq}{include qq plots}
+\item{qq}{include qq plots?}
 
-\item{ma}{include pairwise ma plots}
+\item{ma}{include pairwise ma plots?}
+
+\item{gene_heat}{Include a heatmap of the gene expression data?}
 
 \item{...}{extra parameters optionally fed to the various plots}
 }

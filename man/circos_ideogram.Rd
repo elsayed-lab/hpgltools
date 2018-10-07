@@ -5,7 +5,9 @@
 \title{Create the description of chromosome markings.}
 \usage{
 circos_ideogram(name = "default", conf_dir = "circos/conf",
-  band_url = NULL)
+  band_url = NULL, fill = "yes", stroke_color = "black",
+  thickness = "20", stroke_thickness = "2", fill_color = "black",
+  radius = "0.85", label_size = "36", band_stroke_thickness = "2")
 }
 \arguments{
 \item{name}{Name of the configuration file to which to add the ideogram.}

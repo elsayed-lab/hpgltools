@@ -5,8 +5,9 @@
 \title{Provide some defaults and guidance when attempting to use gsva.}
 \usage{
 simple_gsva(expt, datasets = "c2BroadSets", data_pkg = "GSVAdata",
-  current_id = "ENSEMBL", required_id = "ENTREZID",
-  orgdb = "org.Hs.eg.db")
+  signatures = NULL, cores = 0, current_id = "ENSEMBL",
+  required_id = "ENTREZID", orgdb = "org.Hs.eg.db", method = "gsva",
+  kcdf = NULL, ranking = FALSE)
 }
 \arguments{
 \item{expt}{Expt object to be analyzed.}
@@ -15,6 +16,8 @@ simple_gsva(expt, datasets = "c2BroadSets", data_pkg = "GSVAdata",
 it does not exist, then data() will be called upon it.}
 
 \item{data_pkg}{What package contains the requisite dataset?}
+
+\item{signatures}{Provide an alternate set of signatures (GeneSetCollections)}
 
 \item{current_id}{Where did the IDs of the genes come from?}
 

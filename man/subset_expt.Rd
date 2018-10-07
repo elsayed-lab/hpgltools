@@ -5,12 +5,14 @@
 \title{Extract a subset of samples following some rule(s) from an
 experiment class.}
 \usage{
-subset_expt(expt, subset = NULL)
+subset_expt(expt, subset = NULL, coverage = NULL)
 }
 \arguments{
 \item{expt}{Expt chosen to extract a subset of data.}
 
 \item{subset}{Valid R expression which defines a subset of the design to keep.}
+
+\item{coverage}{Request a minimum coverage/sample rather than text-based subset.}
 }
 \value{
 metadata Expt class which contains the smaller set of data.

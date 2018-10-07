@@ -128,7 +128,7 @@ plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 ```
 
-## And EdgeR
+## EdgeR
 
 ```{r simple_edger}
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
@@ -138,6 +138,13 @@ scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
 scatter_wt_mut$scatter
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
+```
+
+## EBSeq
+
+```{r simple_edger}
+ebseq_comparison <- sm(ebseq_pairwise(fun_data))
+head(ebseq_comparison$all_tables[[1]])
 ```
 
 ## My stupid basic comparison
@@ -156,7 +163,7 @@ plots_wt_mut$volcano$plot
 ## Combine them all
 
 ```{r simple_all}
-all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE))
+all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE, parallel=FALSE))
 all_combined <- sm(combine_de_tables(all_comparisons, excel=FALSE))
 head(all_combined$data[[1]])
 sig_genes <- sm(extract_significant_genes(all_combined, excel=FALSE))

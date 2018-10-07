@@ -401,7 +401,7 @@ Going to run pcRes with the batch information.")
     tsne_data[["batch"]] <- "undefined"
     tsne_data[["batch_int"]] <- 1
   } else {
-    tsne_data[["batch"]] <- design[[cond_column]]
+    tsne_data[["batch"]] <- design[[batch_column]]
     tsne_data[["batch_int"]] <- as.integer(as.factor(tsne_data[["batch"]]))
   }
   if (!is.null(plot_colors)) {

@@ -215,7 +215,7 @@ test_that("combine_de_tables() gave expected tables?", {
 })
 
 testing <- sm(compare_de_results(test_condbatch, test_cond))
-expected <- 405
+expected <- 540
 actual <- length(unlist(testing[["result"]]))
 test_that("compare_de_results provides some expected output?", {
   expect_equal(expected, actual)
@@ -228,10 +228,7 @@ test_that("compare_de_results provides some expected logfc comparisons?", {
 })
 
 ## 13 compare_led_tables()
-testing <- sm(compare_led_tables(limma=test_sva[["limma"]],
-                                 deseq=test_sva[["deseq"]],
-                                 edger=test_sva[["edger"]],
-                                 basic=test_sva[["basic"]]))
+testing <- sm(correlate_de_tables(test_sva))
 actual <- min(testing$comp)
 expected <- 0.65
 test_that("compare_led_tables provides some expected comparisons?", {
@@ -263,13 +260,16 @@ test_that("Did compare_significant_contrasts provide some plots?", {
   expect_equal(class(testing[["down_venn_plot"]]), "recordedplot")
 })
 
+## Saving this so we can use it for ontology searches later.
+save(list=c("cb_sig", "test_condbatch"), file="test_065_significant.rda")
+
 ## do_pairwise()
 ## This is done by a bunch of other functions, I am not testing it.
 
 ## 16 get_abundant_genes()
 testing <- get_abundant_genes(test_sva)
 actual <- length(testing)
-expected <- length(testing)
+expected <- 10
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
 })
@@ -395,7 +395,7 @@ test_that("Did extract_significant_genes() get some stuff?", {
 ## 28 intersect_significant(),
 testing <- sm(intersect_significant(combined=test_condbatch, excel=NULL))
 test_that("Did intersect_significant() get some stuff?", {
-  expect_equal(length(testing), 90)
+  expect_equal(testing[["summary"]]["up", "all"], 165)
 })
 
 ## 29 write_de_table()

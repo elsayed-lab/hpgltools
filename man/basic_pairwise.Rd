@@ -4,12 +4,26 @@
 \alias{basic_pairwise}
 \title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input = NULL, design = NULL, force = FALSE, ...)
+basic_pairwise(input = NULL, design = NULL, conditions = NULL,
+  batches = NULL, model_cond = TRUE, model_intercept = FALSE,
+  alt_model = NULL, model_batch = FALSE, force = FALSE, ...)
 }
 \arguments{
 \item{input}{Count table by sample.}
 
 \item{design}{Data frame of samples and conditions.}
+
+\item{conditions}{Not currently used, but passed from all_pairwise()}
+
+\item{batches}{Not currently used, but passed from all_pairwise()}
+
+\item{model_cond}{Not currently used, but passed from all_pairwise()}
+
+\item{model_intercept}{Not currently used, but passed from all_pairwise()}
+
+\item{alt_model}{Not currently used, but passed from all_pairwise()}
+
+\item{model_batch}{Not currently used, but passed from all_pairwise()}
 
 \item{force}{Force as input non-normalized data?}
 

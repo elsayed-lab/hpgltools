@@ -416,7 +416,8 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
 #' With that in mind, this function should provide consistent, valid package names.
 #'
 #' @param species  Guess.
-#' @param Eupathdb version to query.
+#' @param version  Choose a specific version of the eupathdb, only really useful
+#'   when downloading files.
 #' @param metadata  Eupathdb metadata.
 #' @param ...  Further arguments to pass to download_eupath_metadata()
 #' @return  List of package names and some booleans to see if they have already been installed.

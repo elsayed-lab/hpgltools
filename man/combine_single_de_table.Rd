@@ -5,7 +5,7 @@
 \title{Given a limma, edger, and deseq table, combine them into one.}
 \usage{
 combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
-  ba = NULL, table_name = "", annot_df = NULL, inverse = FALSE,
+  ba = NULL, table_name = "", annot_df = NULL, do_inverse = FALSE,
   adjp = TRUE, padj_type = "fdr", include_deseq = TRUE,
   include_edger = TRUE, include_ebseq = TRUE, include_limma = TRUE,
   include_basic = TRUE, lfc_cutoff = 1, p_cutoff = 0.05,
@@ -26,7 +26,7 @@ combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
 
 \item{annot_df}{Add some annotation information?}
 
-\item{inverse}{Invert the fold changes?}
+\item{do_inverse}{Invert the fold changes?}
 
 \item{adjp}{Use adjusted p-values?}
 
@@ -35,6 +35,8 @@ combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
 \item{include_deseq}{Include tables from deseq?}
 
 \item{include_edger}{Include tables from edger?}
+
+\item{include_ebseq}{Include tables from ebseq?}
 
 \item{include_limma}{Include tables from limma?}
 

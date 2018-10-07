@@ -17,6 +17,7 @@
 #' @param include_limma  Include limma analyses in the table?
 #' @param include_deseq  Include deseq analyses in the table?
 #' @param include_edger  Include edger analyses in the table?
+#' @param include_ebseq  Include ebseq analyses in the table?
 #' @param include_basic  Include my stupid basic logFC tables?
 #' @param rownames  Add rownames to the xlsx printed table?
 #' @param add_plots  Add plots to the end of the sheets with expression values?
@@ -177,7 +178,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     c("ebseq_postfc", "The post-probability fold change."),
     c("ebseq_mean", "Mean of the EBSeq values."),
     c("PPEE", "Post-probability that the numerator/denominator are equivalent."),
-    c("PPDE",  "Post-probability that the numerator/denominator are equivalent.")
+    c("PPDE",  "Post-probability that the numerator/denominator are different."),
+    c("ebseq_adjp",  "Attempt at FDR correction of the PPEE, currently null.")
   ),
   stringsAsFactors=FALSE)
   limma_legend <- data.frame(rbind(
@@ -428,7 +430,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       found <- 0
       found_table <- NULL
       do_inverse <- FALSE
-      for (tab in table_names) {
+      for (t in 1:length(table_names)) {
+        tab <- table_names[t]
         ## message("Searching for either ", same_string, " or ", inverse_string, " among: ", toString(table_names))
         if (tab == same_string) {
           do_inverse <- FALSE
@@ -452,7 +455,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       if (found > 0) {
         combined <- combine_single_de_table(
           li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-          table_name=found_table, inverse=do_inverse,
+          table_name=found_table, do_inverse=do_inverse,
           adjp=adjp, annot_df=annot_df, include_deseq=include_deseq,
           include_edger=include_edger, include_ebseq=include_ebseq,
           include_limma=include_limma, include_basic=include_basic,
@@ -529,8 +532,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       deseq_vol_plots[[name]] <- deseq_vol_plt
       final_table_names[[a]] <- combined[["summary"]][["table"]]
       de_summaries <- rbind(de_summaries, de_summary)
-      names(combo) <- name_list
-    }
+      ## names(combo) <- name_list  ## I think this is messing me up.
+    } ## Ending the for loop of elements in the keepers list.
 
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but instead just
@@ -687,30 +690,30 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   comp <- list()
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
-    count <- 0
-    for (tab in names(combo)) {
+    for (x in 1:length(names(combo))) {
+      tab <- names(combo)[x]
       sheetname <- tab
-      count <- count + 1
       ## I was getting some weird errors which magically disappeared when I did the following
       ## two lines.  This is obviously not how things are supposed to work.
-      ddd <- combo[[count]]
-      oddness <- summary(ddd)
+      written_table <- combo[[tab]]
+      oddness <- summary(written_table)
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
       ## Dump each table to the appropriate excel sheet
-      xls_result <- write_xls(data=ddd, wb=wb, sheet=sheetname,
+      xls_result <- write_xls(data=written_table, wb=wb, sheet=sheetname,
                               title=final_excel_title, rownames=rownames)
 
       ## The function write_xls has some logic in it to get around excel name limitations
       ## (30 characters), therefore set the sheetname to what was returned in case it had to
       ## change the sheet's name.
       sheetname <- xls_result[["sheet"]]
+      message("Maybe here: ", x, " with ", sheetname, ".")
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
         plot_column <- xls_result[["end_col"]] + 2
-        message("Adding venn plots for ", names(combo)[[count]], ".")
+        message("Adding venn plots for ", names(combo)[[x]], ".")
         ## Make some venn diagrams comparing deseq/limma/edger!
-        venn_list <- try(de_venn(ddd, lfc=0, adjp=adjp))
-        venn_sig_list <- try(de_venn(ddd, lfc=1, adjp=adjp))
+        venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
+        venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
 
         ## If they worked, add them to the excel sheets after the data,
         ## but make them smaller than other graphs.
@@ -752,15 +755,15 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 12, plotname="downvenn", savedir=excel_basename,
             start_row=2, doWeights=FALSE)
           venns[[tab]] <- venn_list
-        }
+        } ## End checking on venns
 
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
-        plt <- limma_plots[count][[1]]
-        ma_plt <- limma_ma_plots[count][[1]]
-        vol_plt <- limma_vol_plots[count][[1]]
+        plt <- limma_plots[[sheetname]]
+        ma_plt <- limma_ma_plots[[sheetname]]
+        vol_plt <- limma_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("Limma expression coefficients for ", names(combo)[[count]], "; R^2: ",
+          printme <- paste0("Limma expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
                             make_equate(plt[["lm_model"]]))
           message(printme)
@@ -777,11 +780,12 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 20, pltname="lmvol", savedir=excel_basename, start_row=19)
         }
         ## Text on row 50, plots from 51-81
-        plt <- edger_plots[count][[1]] ##FIXME this is suspicious
-        ma_plt <- edger_ma_plots[count][[1]]
-        vol_plt <- edger_vol_plots[count][[1]]
+        ##plt <- edger_plots[count][[1]] ##FIXME this is suspicious
+        plt <- edger_plots[[sheetname]]
+        ma_plt <- edger_ma_plots[[sheetname]]
+        vol_plt <- edger_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("Edger expression coefficients for ", names(combo)[[count]], "; R^2: ",
+          printme <- paste0("Edger expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                             make_equate(plt[["lm_model"]]))
           message(printme)
@@ -798,11 +802,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 20, plotname="edvol", savedir=excel_basename, start_row=51)
         }
         ## Text on 81, plots 82-112
-        plt <- deseq_plots[count][[1]]
-        ma_plt <- deseq_ma_plots[count][[1]]
-        vol_plt <- deseq_vol_plots[count][[1]]
+        plt <- deseq_plots[[sheetname]]
+        ma_plt <- deseq_ma_plots[[sheetname]]
+        vol_plt <- deseq_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[count]], "; R^2: ",
+          printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[x]], "; R^2: ",
                             signif(plt[["lm_rsq"]], digits=3), "; equation: ",
                             make_equate(plt[["lm_model"]]))
           message(printme)
@@ -820,17 +824,22 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         }
       }
     }  ## End for loop iterating over every kept table.
-    count <- count + 1
 
     ## Now add some summary data and some plots comparing the tools.
     message("Writing summary information.")
+    if (length(all_pairwise_result[["comparison"]]) == 0) {
+      compare_plots <- FALSE
+    }
     if (isTRUE(compare_plots)) {
       sheetname <- "pairwise_summary"
       ## Add a graph on the final sheet of how similar the result types were
       comp[["summary"]] <- all_pairwise_result[["comparison"]][["comp"]]
       comp[["plot"]] <- all_pairwise_result[["comparison"]][["heat"]]
       de_summaries <- as.data.frame(de_summaries)
-      rownames(de_summaries) <- final_table_names
+      ## A change I made messes this up, I should come back through and figure out why
+      ## I think it is because I am trying to make the rownames include whether the contrast was
+      ## as written or its inverse.
+      ##rownames(de_summaries) <- final_table_names
       xls_result <- write_xls(
         wb, data=de_summaries, sheet=sheetname, title="Summary of contrasts.")
       new_row <- xls_result[["end_row"]] + 2
@@ -892,7 +901,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         start_row=1, rownames=rownames)
     }
 
-
     message("Performing save of the workbook.")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     if (class(save_result) == "try-error") {
@@ -939,6 +947,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (!is.null(arglist[["rda"]])) {
     saved <- save(list="ret", file=arglist[["rda"]])
   }
+  class(ret) <- c("combined_de", "list")
   return(ret)
 }
 
@@ -955,11 +964,12 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #' @param ba  Basic output table.
 #' @param table_name  Name of the table to merge.
 #' @param annot_df  Add some annotation information?
-#' @param inverse  Invert the fold changes?
+#' @param do_inverse  Invert the fold changes?
 #' @param adjp  Use adjusted p-values?
 #' @param padj_type  Add this consistent p-adjustment.
 #' @param include_deseq  Include tables from deseq?
 #' @param include_edger  Include tables from edger?
+#' @param include_ebseq  Include tables from ebseq?
 #' @param include_limma  Include tables from limma?
 #' @param include_basic  Include the basic table?
 #' @param lfc_cutoff  Preferred logfoldchange cutoff.
@@ -970,7 +980,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 #'  genes were observed as up/down by output table.
 #' @seealso \pkg{data.table} \pkg{openxlsx}
 combine_single_de_table <- function(li=NULL, ed=NULL, eb=NULL, de=NULL, ba=NULL,
-                                    table_name="", annot_df=NULL, inverse=FALSE,
+                                    table_name="", annot_df=NULL, do_inverse=FALSE,
                                     adjp=TRUE, padj_type="fdr",
                                     include_deseq=TRUE, include_edger=TRUE, include_ebseq=TRUE,
                                     include_limma=TRUE, include_basic=TRUE,
@@ -993,7 +1003,7 @@ Defaulting to fdr.")
   eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
                      "edger_p" = 0, "edger_adjp" = 0)
   ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
-                     "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0)
+                     "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0, "ebseq_adjp" = 0)
   badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   ## Check that the limma result is valid.
@@ -1007,7 +1017,9 @@ Defaulting to fdr.")
       lidf <- li[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(lidf)) {
-        stop("The limma table seems to be missing.")
+        warning("The limma table seems to be missing.")
+        lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
+                           "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
       }
     }
   }
@@ -1023,7 +1035,9 @@ Defaulting to fdr.")
       dedf <- de[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC and stat.")
       if (is.null(dedf)) {
-        stop("The deseq table seems to be missing.")
+        warning("The deseq table seems to be missing.")
+        dedf <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
+                           "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
       }
     }
   }
@@ -1039,7 +1053,9 @@ Defaulting to fdr.")
       eddf <- ed[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(eddf)) {
-        stop("The edger table seems to be missing.")
+        warning("The edger table seems to be missing.")
+        eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
+                           "edger_p" = 0, "edger_adjp" = 0)
       }
     }
   }
@@ -1055,7 +1071,9 @@ Defaulting to fdr.")
       ebdf <- eb[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(ebdf)) {
-        stop("The ebseq table seems to be missing.")
+        warning("The ebseq table seems to be missing.")
+        ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
+                           "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0, "ebseq_adjp" = 0)
       }
     }
   }
@@ -1071,7 +1089,9 @@ Defaulting to fdr.")
       badf <- ba[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
       if (is.null(badf)) {
-        stop("The basic table seems to be missing.")
+        warning("The basic table seems to be missing.")
+        badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+                           "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
       }
     }
   }
@@ -1091,7 +1111,7 @@ Defaulting to fdr.")
   ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
 
   colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_postfc", "ebseq_mean",
-                      "ebseq_ppee", "ebseq_ppde")
+                      "ebseq_ppee", "ebseq_ppde", "ebseq_adjp")
 
   ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
                        "denominator_var", "logFC", "t", "p", "adjp")]
@@ -1128,7 +1148,7 @@ Defaulting to fdr.")
   keepers <- colnames(comb) != "rownames"
   comb <- comb[, keepers, drop=FALSE]
   comb[is.na(comb)] <- 0
-  if (isTRUE(inverse)) {
+  if (isTRUE(do_inverse)) {
     if (isTRUE(include_basic)) {
       comb[["basic_logfc"]] <- comb[["basic_logfc"]] * -1.0
     }
@@ -1225,7 +1245,7 @@ Defaulting to fdr.")
   up_fc <- lfc_cutoff
   down_fc <- -1.0 * lfc_cutoff
   summary_table_name <- table_name
-  if (isTRUE(inverse)) {
+  if (isTRUE(do_inverse)) {
     summary_table_name <- paste0(summary_table_name, "-inverted")
   }
   limma_p_column <- "limma_adjp"
@@ -1274,6 +1294,7 @@ Defaulting to fdr.")
   ret <- list(
     "data" = comb,
     "summary" = summary_lst)
+  class(ret) <- c("combined_table", "list")
   return(ret)
 }
 
@@ -1618,7 +1639,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   table_names <- NULL
   all_tables <- NULL
   table_mappings <- NULL
-  if (class(combined) == "data.frame") {
+  if (class(combined)[1] == "data.frame") {
     ## Then this is just a data frame.
     all_tables[["all"]] <- combined
     table_names <- "all"
@@ -1647,6 +1668,19 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     table_mappings <- table_names
   }
 
+  logfc_suffix <- "_logfc"
+  p_suffix <- "_p"
+  adjp_suffix <- "_adjp"
+  column_suffix <- TRUE
+  if (!is.null(arglist[["column_suffix"]])) {
+    column_suffix <- arglist[["column_suffix"]]
+  }
+  if (!isTRUE(column_suffix)) {
+    logfc_suffix <- ""
+    p_suffix <- ""
+    adjp_suffix <- ""
+  }
+
   trimmed_up <- list()
   trimmed_down <- list()
   up_titles <- list()
@@ -1666,9 +1700,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     title_append <- paste0(title_append, " top|bottom n=", n)
   }
 
-  table_count <- 0
   if (according_to[[1]] == "all") {
-    according_to <- c("limma", "edger", "deseq", "basic")
+    according_to <- c("limma", "edger", "deseq", "ebseq", "basic")
   }
 
   wb <- NULL
@@ -1705,6 +1738,14 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       c("edger_lr", "Undocumented, I am reasonably certain it is the T-statistic calculated by edgeR."),
       c("edger_p", "The observed p-value from edgeR."),
       c("edger_q", "The observed corrected p-value from edgeR."),
+      c("The next 7 columns", "Statistics generated by ebseq."),
+      c("ebseq_fc", "Fold-change reported by ebseq."),
+      c("ebseq_logfc", "Oddly, ebseq also reports a log2fc."),
+      c("ebseq_postfc", "Post-analysis fold change from ebseq."),
+      c("ebseq_mean", "Mean values in the ebseq analysis."),
+      c("ebseq_ppee", "Prior probability that the numerator and denominator distributions are the same."),
+      c("ebseq_ppde", "... that they are different (eg. 1-ppee)."),
+      c("ebseq_adjp", "Currently just a copy of ppee until I figure them out."),
       c("The next 8 columns", "Statistics generated by the basic analysis written by trey."),
       c("basic_nummed", "log2 median values of the numerator for this comparison (like edgeR's basemean)."),
       c("basic_denmed", "log2 median values of the denominator for this comparison."),
@@ -1740,50 +1781,45 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   }
 
   ret <- list()
-  summary_count <- 0
   sheet_count <- 0
-  for (according in according_to) {
-    summary_count <- summary_count + 1
+  for (summary_count in 1:length(according_to)) {
+    according <- according_to[summary_count]
+    test_column <- paste0(according, "_logfc")
+    if (! test_column %in% colnames(combined[["data"]][[1]])) {
+      message("Did not find the ", test_column, ", skipping ", according, ".")
+      message("Here are the columns: ", toString(colnames(combined[["data"]][[1]])))
+      next
+    }
     ret[[according]] <- list()
     ma_plots <- list()
     change_counts_up <- list()
     change_counts_down <- list()
-    for (table_name in table_names) {
+    for (table_count in 1:length(table_names)) {
+      table_name <- table_names[table_count]
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
-        single_ma <- NULL
-        if (according == "limma") {
-          single_ma <- extract_de_plots(
-            combined, type="limma", table=table_name, lfc=lfc,  pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "deseq") {
-          single_ma <- extract_de_plots(
-            combined, type="deseq", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "edger") {
-          single_ma <- extract_de_plots(
-            combined, type="edger", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else if (according == "basic") {
-          single_ma <- extract_de_plots(
-            combined, type="basic", table=table_name, lfc=lfc, pval_cutoff=p)
-          single_ma <- single_ma[["ma"]][["plot"]]
-        } else {
-          message("Do not know this according type.")
-        }
-        ma_plots[[table_name]] <- single_ma
+        single_ma <- extract_de_plots(
+          combined, type=according, table=table_name, lfc=lfc, pval_cutoff=p)
+        ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
       }
 
-      table_count <- table_count + 1
       factor <- length(according_to)
-      message("Writing excel data for ", table_name, ": ",
+      message("Writing excel data according to ", according, " for ", table_name, ": ",
               table_count, "/", num_tables * factor, ".")
 
       table <- all_tables[[table_name]]
-      fc_column <- paste0(according, "_logfc")
-      p_column <- paste0(according, "_adjp")
-      if (p_type != "adj") {
-        p_column <- paste0(according, "_p")
+      if (is.null(arglist[["fc_column"]])) {
+        fc_column <- paste0(according, logfc_suffix)
+      } else {
+        fc_column <- paste0(arglist[["fc_column"]])
+      }
+      if (is.null(arglist[["p_column"]])) {
+        p_column <- paste0(according, adjp_suffix)
+        if (p_type != "adj") {
+          p_column <- paste0(according, p_suffix)
+        }
+      } else {
+        p_column <- paste0(arglist[["p_column"]])
       }
 
       trimming <- get_sig_genes(
@@ -1878,6 +1914,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       return(summary_table)
     }
 
+    plot_row <- plot_row + 3
     ## I messed up something here.  The plots and tables
     ## at this point should start:
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
@@ -1923,7 +1960,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
                                x="Significant edger genes.")
       plot_row <- plot_row + 1
       try_result <- xlsx_plot_png(
-        sig_bar_plots[["edger"]], wb=wb, sheet="number_changed", plotname="sibar_edger",
+        sig_bar_plots[["edger"]], wb=wb, sheet="number_changed", plotname="sigbar_edger",
         savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
       summary_row <- plot_row
       summary_col <- plot_col + 11
@@ -1931,6 +1968,24 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
         sig_bar_plots[["ups"]][["edger"]], sig_bar_plots[["downs"]][["edger"]])
       edger_xls_summary <- write_xls(
         data=edger_summary, wb=wb, sheet="number_changed", rownames=TRUE,
+        start_row=summary_row, start_col=summary_col)
+      plot_row <- plot_row + 30
+    }
+
+    if ("ebseq" %in% according_to) {
+      xl_result <- openxlsx::writeData(
+                               wb, "number_changed", startRow=plot_row, startCol=plot_col,
+                               x="Significant ebseq genes.")
+      plot_row <- plot_row + 1
+      try_result <- xlsx_plot_png(
+        sig_bar_plots[["ebseq"]], wb=wb, sheet="number_changed", plotname="sigbar_ebseq",
+        savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
+      summary_row <- plot_row
+      summary_col <- plot_col + 11
+      ebseq_summary <- summarize_ups_downs(
+        sig_bar_plots[["ups"]][["ebseq"]], sig_bar_plots[["downs"]][["ebseq"]])
+      ebseq_xls_summary <- write_xls(
+        data=ebseq_summary, wb=wb, sheet="number_changed", rownames=TRUE,
         start_row=summary_row, start_col=summary_col)
     }
 
@@ -1941,6 +1996,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   }
 
+  class(ret) <- c("sig_genes", "list")
   return(ret)
 }
 
@@ -1950,51 +2006,55 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 #'
 #' @param combined  A result from combine_de_tables().
 #' @param lfc  Define significant via fold-change.
-#' @param padding_rows How much space to put between groups of data?
-#' @param include_l  Include limma?
-#' @param include_d  Include deseq?
-#' @param include_e  Include edger?
-#' @param include_ld  Include the set of limma shared with deseq?
-#' @param include_le  Include the set of limma shared with edger?
-#' @param include_de  Include the set of edger shared with deseq?
-#' @param include_led  Include the full intersection?
-#' @param z  Use a z-score filter?
 #' @param p  Or p-value.
+#' @param padding_rows How much space to put between groups of data?
+#' @param z Use a z-score filter?
 #' @param p_type  Use normal or adjusted p-values.
-#' @param extra_annot  Provide an extra set of annotation columns?
+#' @param selectors  List of methods to intersect.
+#' @param order Low-to-high or vice-versa for returning log-fc vales.
 #' @param excel  An optional excel workbook to which to write.
+#' @param ... Extra arguments for extract_significant_genes() and friends.
 #' @export
 intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
-                                  include_l=TRUE, include_d=TRUE, include_e=TRUE,
-                                  include_ld=TRUE, include_le=TRUE, include_de=TRUE,
-                                  include_led=TRUE, z=NULL, p_type="adj", extra_annot=NULL,
-                                  excel="excel/intersect_significant.xlsx") {
-  annot_df <- NULL
-  if (class(combined[["input"]]) == "expt") {
-    annot_df <- fData(combined[["input"]])
-  } else if (class(combined[["input"]][["input"]]) == "expt") {
-    annot_df <- fData(combined[["input"]][["input"]])
+                                  z=NULL, p_type="adj", selectors=c("limma", "deseq", "edger"),
+                                  order="inverse", excel="excel/intersect_significant.xlsx",
+                                  ...) {
+  ## Check the set of first->sixth and see that they exist in the combined table.
+  arglist <- list(...)
+  chosen_selectors <- c()
+  extract_selectors <- c()
+  alternate_selectors <- c()
+  ## Use the column names from the first table to make this decision.
+  possible_columns <- colnames(combined[["data"]][[1]])
+  for (c in 1:length(selectors)) {
+    rawname <- selectors[c]
+    conjugate <- paste0(rawname, "_logfc")
+    if (rawname %in% possible_columns) {
+      chosen_selectors <- c(chosen_selectors, rawname)
+      alternate_selectors <- c(alternate_selectors, rawname)
+    } else if (conjugate %in% possible_columns) {
+      chosen_selectors <- c(chosen_selectors, rawname)
+      extract_selectors <- c(extract_selectors, rawname)
+    } else if (arglist[["fc_column"]] %in% possible_columns &
+               arglist[["p_column"]] %in% possible_columns) {
+      chosen_selectors <- c(chosen_selectors, "alternate")
+      alternate_selectors <- c(alternate_selectors, "alternate")
+    } else {
+      message("Skipping ", rawname)
+    }
+  }
+  if (length(chosen_selectors) < 2) {
+    stop("This requires more selectors in order to create an intersection.")
   }
 
-  if (!is.null(extra_annot)) {
-    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
-    rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop=FALSE]
-  }
   sig_genes <- sm(extract_significant_genes(combined, lfc=lfc, p=p,
                                             z=z, p_type=p_type, excel=NULL))
-
-  up_result_list <- list()
-  down_result_list <- list()
-  for (table in names(sig_genes[["limma"]][["ups"]])) {
-    tabname <- paste0("up_", table)
-    up_result_list[[tabname]] <- make_intersect(sig_genes[["limma"]][["ups"]][[table]],
-                                                sig_genes[["deseq"]][["ups"]][[table]],
-                                                sig_genes[["edger"]][["ups"]][[table]])
-    tabname <- paste0("down_", table)
-    down_result_list[[tabname]] <- make_intersect(sig_genes[["limma"]][["downs"]][[table]],
-                                                  sig_genes[["deseq"]][["downs"]][[table]],
-                                                  sig_genes[["edger"]][["downs"]][[table]])
+  if (length(alternate_selectors) > 0) {
+    alt_genes <- extract_significant_genes(combined, according_to="alternate", lfc=lfc,
+                                           fc_column=arglist[["fc_column"]],
+                                           p_column=arglist[["p_column"]], ma=FALSE,
+                                           p=p, z=z, p_type=p_type, excel=NULL)
+    sig_genes[["alternate"]] <- alt_genes[["alternate"]]
   }
 
   xls_result <- NULL
@@ -2004,57 +2064,132 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     if (!file.exists(testdir)) {
       dir.create(testdir, recursive=TRUE)
     }
-    total <- length(names(up_result_list))
-    bar <- utils::txtProgressBar(style=3)
-    done <- 0
-    for (tab in names(up_result_list)) {
-      ## Get the tables back
-      done <- done + 1
-      pct_done <- done / total
-      setTxtProgressBar(bar, pct_done)
-      row_num <- 1
+  }
 
-      includes <- list(
-        "led" = include_led,
-        "ld" = include_ld,
-        "le" = include_le,
-        "de" = include_de,
-        "l" = include_l,
-        "d" = include_d,
-        "e" = include_e)
-      types <- c("led", "ld", "le", "de", "l", "d", "e")
-      for (t in types) {
-        if (isTRUE(includes[[t]])) {
-          if (nrow(up_result_list[[tab]][[t]]) > 0) {
-            xl_result <- write_xls(
-              data=up_result_list[[tab]][[t]], wb=wb, sheet=tab, start_row=row_num,
-              title=paste0("Genes deemed significant via logFC: ", lfc,
-                           ", p-value: ", p, " by ", t, "."))
-            row_num <- row_num + nrow(up_result_list[[tab]][[t]]) + padding_rows + 2
+  lst <- list("ups" = list(), "downs" = list())
+  set_names <- c()
+  venn_row <- 1
+  venn_col <- 1
+  for (table in names(sig_genes[["limma"]][["ups"]])) {
+    lst[["ups"]][[table]] <- list()
+    lst[["downs"]][[table]] <- list()
+    for (dir in c("ups", "downs")) {
+      for (i in 1:length(chosen_selectors)) {
+        name <- chosen_selectors[i]
+        lst[[dir]][[table]][[name]] <- rownames(sig_genes[[name]][[dir]][[table]])
+      }  ## End pulling the significants by selectors.
+      sets <- Vennerable::Venn(Sets=lst[[dir]][[table]])
+      intersections <- sets@IntersectionSets
+      plt <- Vennerable::plot(sets, doWeights=FALSE)
+      rec <- grDevices::recordPlot()
+      lst[[dir]][[table]][["sets"]] <- sets
+      lst[[dir]][[table]][["intersections"]] <- intersections
+      lst[[dir]][[table]][["plot"]] <- rec
+      print_order <- names(lst[[dir]][[table]][["intersections"]])
+      if (order == "inverse") {
+        print_order <- rev(print_order)
+      }
+      set_names <- list()
+      invert_names <- list()
+      inner_count <- 0
+      for (symbolic in print_order) {
+        inner_count <- inner_count + 1
+        symbols <- strsplit(as.character(symbolic), "")[[1]]
+        name <- c()
+        invert_name <- c()
+        for (s in 1:length(symbols)) {
+          symbol <- symbols[s]
+          if (symbol == 1) {
+            name <- c(name, chosen_selectors[s])
+          } else {
+            invert_name <- c(invert_name, chosen_selectors[s])
           }
         }
-      }
+        name <- toString(name)
+        invert_name <- toString(invert_name)
+        set_names[[inner_count]] <- name
+        invert_names[[inner_count]] <- invert_name
+      } ## End for symbolic in names(elements_per_set)
+      names(set_names) <- names(lst[[dir]][[table]][["intersections"]])
+      ##if (order == "inverse") {
+      ##  set_names[length(set_names)] <- "none"
+      ##} else {
+      set_names[1] <- "none"
+      ##}
+      names(invert_names) <- names(lst[[dir]][[table]][["intersections"]])
+      lst[[dir]][[table]][["set_names"]] <- set_names
+      lst[[dir]][[table]][["invert_names"]] <- invert_names
 
-      tab <- gsub(pattern="^up_", replacement="down_", x=tab)
-      row_num <- 1
-
-      for (t in types) {
-        if (isTRUE(includes[[t]])) {
-          if (nrow(down_result_list[[tab]][[t]]) > 0) {
-            xl_result <- write_xls(
-              data=down_result_list[[tab]][[t]], wb=wb, sheet=tab, start_row=row_num,
-              title=paste0("Genes deemed significant via logFC: ", lfc,
-                           ", p-value: ", p, " by ", t, "."))
-            row_num <- row_num + nrow(down_result_list[[tab]][[t]]) + padding_rows + 2
-          }
+      ## Skip 'none'
+      table_rows <- combined[["data"]][[table]]
+      xlsx_row <- 1
+      xlsx_table <- ""
+      lst[[dir]][[table]][["data"]] <- list()
+      for (s in 2:length(set_names)) {
+        sname <- set_names[s]
+        clean_sname <- sname
+        if (s == length(set_names)) {
+          clean_sname <- "all"
+        } else {
+          clean_sname <- gsub(pattern="\\, ", replacement="_", x=sname)
         }
-      }
-    } ## End iterating over every table.
+        lst[[dir]][[table]][["data"]][[clean_sname]] <- data.frame()
+        if (length(lst[[dir]][[table]][["intersections"]][[s]]) > 0) {
+          idx <- lst[[dir]][[table]][["intersections"]][[s]]
+          table_subset <- table_rows[idx, ]
+          lst[[dir]][[table]][["data"]][[clean_sname]] <- table_subset
+          if (dir == "ups") {
+            text_dir <- "up"
+          } else {
+            text_dir <- "down"
+          }
+          xlsx_table <- paste0(text_dir, "_", table)
+          xlsx_title <- paste0("Genes deemed ", text_dir, " significant via logFC: ", lfc,
+                               ", p-value: ", p, "; by ", sname, ".")
+          if (!is.null(excel)) {
+            xl_result <- write_xls(data=table_subset, wb=wb, sheet=xlsx_table,
+                                   start_row=xlsx_row, title=xlsx_title)
+            xlsx_row <- xlsx_row + nrow(table_subset) + padding_rows + 2
+          } ## End checking to write the excel file.
+        }
+      } ## End iterating over writing the set names.
+    } ## End ups vs. downs
+
+    up_plot <- lst[["ups"]][[table]][["plot"]]
+    down_plot <- lst[["downs"]][[table]][["plot"]]
+    venn_title <- paste0("Summary of intersections among ", toString(chosen_selectors),
+                         " for ", table, ".")
+    summary_df <- rbind(t(Vennerable::Weights(lst[["ups"]][[table]][["sets"]])),
+                        t(Vennerable::Weights(lst[["downs"]][[table]][["sets"]])))
+    rownames(summary_df) <- c("up", "down")
+    tmp_colnames <- rev(lst[["ups"]][[table]][["set_names"]])
+    tmp_colnames[length(tmp_colnames)] <- "all"
+    colnames(summary_df) <- tmp_colnames
+    summary_df <- summary_df[, -1]
+    lst[["summary"]] <- summary_df
+    if (!is.null(excel)) {
+      xl_result <- write_xls(wb=wb,
+                             data=summary_df,
+                             sheet="summary", title=venn_title,
+                             start_row=venn_row, start_col=venn_col)
+      venn_row <- venn_row + 4
+      try_result <- xlsx_plot_png(
+        up_plot, wb=wb, sheet="summary", width=6, height=6,
+        start_col=venn_col, start_row=venn_row)
+      venn_col <- venn_col + 12
+      try_result <- xlsx_plot_png(
+        down_plot, wb=wb, sheet="summary", width=6, height=6,
+        start_col=venn_col, start_row=venn_row)
+      venn_row <- venn_row + 26
+    }
+  }  ## End iterating over the tables
+
+  if (!is.null(excel)) {
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-    close(bar)
-  } ## End if isTRUE(excel)
-  return_list <- append(up_result_list, down_result_list)
-  return(return_list)
+  }
+
+  class(lst) <- c("sig_intersect", "list")
+  return(lst)
 }
 
 #' Reprint the output from extract_significant_genes().
@@ -2116,37 +2251,6 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
   } ## End for each name in ups
   return(xls_result)
-}
-
-make_intersect <- function(limma, deseq, edger) {
-  l_alone_idx <- (! (rownames(limma) %in% rownames(deseq))) &
-    (! (rownames(limma) %in% rownames(edger)))
-  l_alone <- limma[l_alone_idx, ]
-  d_alone_idx <- (! (rownames(deseq) %in% rownames(limma))) &
-    (! (rownames(deseq) %in% rownames(edger)))
-  d_alone <- deseq[d_alone_idx, ]
-  e_alone_idx <- (! (rownames(edger) %in% rownames(limma))) &
-    (! (rownames(edger) %in% rownames(edger)))
-  e_alone <- edger[e_alone_idx, ]
-
-  ld_idx <- (rownames(limma) %in% rownames(deseq)) & (! (rownames(limma) %in% rownames(edger)))
-  ld <- limma[ld_idx, ]
-  le_idx <- (rownames(limma) %in% rownames(edger)) & (! (rownames(limma) %in% rownames(deseq)))
-  le <- limma[le_idx, ]
-  de_idx <- (rownames(deseq) %in% rownames(edger)) & (! (rownames(deseq) %in% rownames(edger)))
-  de <- deseq[de_idx, ]
-  led_idx <- (rownames(limma) %in% rownames(deseq)) &
-    (rownames(limma) %in% rownames(edger))
-  led <- limma[led_idx, ]
-  retlist <- list(
-    "d" = d_alone,
-    "e" = e_alone,
-    "l" = l_alone,
-    "ld" = ld,
-    "le" = le,
-    "de" = de,
-    "led" = led)
-  return(retlist)
 }
 
 #' Writes out the results of a single pairwise comparison.
@@ -2224,146 +2328,6 @@ write_de_table <- function(data, type="limma", ...) {
 
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   return(save_result)
-}
-
-#' Attempt to find the significant shared genes between edger/deseq/limma or a subset thereof.
-#'
-#' @param tables The result from extract_significant_genes() or similar.
-#' @param excel  An excel file to write.
-#' @param extra_annot  Extra annotations to add to the tables.
-#' @param ... Extra arguments for writing the file (currently unused).
-#' @return a list of shared genes by table name.
-#' @export
-write_intersect_significant <- function(tables, excel="excel/significant_shared.xlsx",
-                                        extra_annot=NULL, ...) {
-  arglist <- list(...)
-  annot_df <- data.frame()
-  if (!is.null(tables[["input"]])) {
-    input <- tables[["input"]]
-    if (!is.null(input[["input"]])) {
-      annot_df <- fData(input[["input"]])
-    } else {
-      annot_df <- fData(tables[["input"]])
-    }
-  }
-
-  if (!is.null(extra_annot)) {
-    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
-    rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop=FALSE]
-  }
-
-  if (!is.null(tables[["significant"]])) {
-    ## This came from combine_de_tables
-    tables <- tables[["significant"]]
-  }
-  num_tables <- length(tables[[1]][["ups"]])
-  methods <- c()
-
-  ## Figure out what to intersect.
-  if ("limma" %in% names(tables)) {
-    methods <- "limma"
-  }
-  if ("edger" %in% names(tables)) {
-    methods <- c(methods, "edger")
-  }
-  if ("deseq" %in% names(tables)) {
-    methods <- c(methods, "deseq")
-  }
-  wb <- NULL
-  if (class(excel) == "character") {
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-
-  retlist <- list()
-  for (t in 1:num_tables) {
-    table_name <- names(tables[[1]][["ups"]])[[t]]
-    up_intersect <- data.frame()
-    down_intersect <- data.frame()
-    if (length(methods) < 2) {
-      stop("There is nothing to intersect.")
-    } else if (length(methods) == 2) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-    } else if (length(methods) == 3) {
-      first_ups <- tables[[methods[1]]][["ups"]][[t]]
-      number_found <- length(rownames(first_ups))
-      second_ups <- tables[[methods[2]]][["ups"]][[t]]
-      third_ups <- tables[[methods[3]]][["ups"]][[t]]
-      first_downs <- tables[[methods[1]]][["downs"]][[t]]
-      number_found <- length(rownames(first_downs))
-      second_downs <- tables[[methods[2]]][["downs"]][[t]]
-      third_downs <- tables[[methods[3]]][["downs"]][[t]]
-      up_intersect <- rownames(first_ups) %in% rownames(second_ups)
-      up_intersect <- first_ups[up_intersect, ]
-      up_intersect <- rownames(second_ups) %in% rownames(up_intersect)
-      up_intersect <- second_ups[up_intersect, ]
-      up_intersect <- rownames(third_ups) %in% rownames(up_intersect)
-      up_intersect <- third_ups[up_intersect, ]
-      down_intersect <- rownames(first_downs) %in% rownames(second_downs)
-      down_intersect <- first_downs[down_intersect, ]
-      down_intersect <- rownames(second_downs) %in% rownames(down_intersect)
-      down_intersect <- second_downs[down_intersect, ]
-      down_intersect <- rownames(third_downs) %in% rownames(down_intersect)
-      down_intersect <- third_downs[down_intersect, ]
-    } else {
-      stop("There are too many things to intersect, that is confusing!")
-    }
-    ## Now that we have collected the intersections for this set of tables, write them.
-    if (!is.null(wb)) {
-      message("Writing data for ", table_name)
-
-      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
-                                 replacement="",
-                                 x=colnames(annot_df))
-      up_intersect <- merge(annot_df, up_intersect, by="row.names", all.y=TRUE)
-      rownames(up_intersect) <- up_intersect[["Row.names"]]
-      up_intersect <- up_intersect[, -1, drop=FALSE]
-      colnames(up_intersect) <- make.names(tolower(colnames(up_intersect)), unique=TRUE)
-
-      colnames(annot_df) <- gsub(pattern="[[:punct:]]",
-                                 replacement="",
-                                 x=colnames(annot_df))
-      down_intersect <- merge(annot_df, down_intersect, by="row.names", all.y=TRUE)
-      rownames(down_intersect) <- down_intersect[["Row.names"]]
-      down_intersect <- down_intersect[, -1, drop=FALSE]
-      colnames(down_intersect) <- make.names(tolower(colnames(down_intersect)), unique=TRUE)
-
-      up_xls_result <- write_xls(
-        wb,
-        data=up_intersect,
-        sheet=paste0("sharedup_", table_name),
-        title=paste0("Shared genes up between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-      down_xls_result <- write_xls(
-        wb,
-        data=down_intersect,
-        sheet=paste0("shareddown_", table_name),
-        title=paste0("Shared genes down between: ", methods[1], " and ", methods[2],
-                     " for the contrast ", table_name, "."))
-    }
-    retlist[[table_name]][["up_shared"]] <- up_intersect
-    retlist[[table_name]][["down_shared"]] <- down_intersect
-  } ## End examining each set of tables.
-
-  if (!is.null(wb)) {
-    message("Writing the file: ", excel)
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
-  }
-  return(retlist)
 }
 
 ## EOF

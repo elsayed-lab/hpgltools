@@ -8,8 +8,24 @@
 ## where this is a danger, it is a likely good idea to cast it as a
 ## data frame.
 
-check_plot_scale <- function(data, scale=NULL) {
-  if (max(data) > 10000 & min(data) < 10) {
+#' Look at the range of the data for a plot and use it to suggest if a plot
+#' should be on log scale.
+#'
+#' There are a bunch of plots which often-but-not-always benefit from being
+#' displayed on a log scale rather than base 10.  This is a quick and dirty
+#' heuristic which suggests the appropriate scale.  If the data 'should' be on
+#' the log scale and it has 0s, then they are moved to 1 so that when logged
+#' they will return to 0.  Similarly, if there are negative numbers and the
+#' intended scale is log, then this will set values less than 0 to zero to avoid
+#' imaginary numbers.
+#'
+#' @param data  Data to plot.
+#' @param scale  If known, this will be used to define what (if any) values to
+#'   change.
+#' @param max_data  Define the upper limit for the heuristic.
+#' @param min_data  Define the lower limit for the heuristic.
+check_plot_scale <- function(data, scale=NULL, max_data=10000, min_data=10) {
+  if (max(data) > max_data & min(data) < min_data) {
     message("This data will benefit from being displayed on the log scale.")
     message("If this is not desired, set scale='raw'")
     scale <- "log"
@@ -34,6 +50,39 @@ check_plot_scale <- function(data, scale=NULL) {
   return(retlist)
 }
 
+#' Simplify plotly ggplot conversion so that there are no shenanigans.
+#'
+#' I am a fan of ggplotly, but its conversion to an html file is not perfect.
+#' This hopefully will get around the most likely/worst problems.
+#'
+#' @param gg Plot from ggplot2.
+#' @param filename  Output filename.
+#' @param selfcontained  htmlwidgets: Return the plot as a self-contained file
+#'   with images re-encoded base64.
+#' @param libdir htmlwidgets: Directory into which to put dependencies.
+#' @param background  htmlwidgets: String for the background of the image.
+#' @param title  htmlwidgets: Title of the page!
+#' @param knitrOptions  htmlwidgets: I am not a fan of camelCase, but
+#'   nonetheless, options from knitr for htmlwidgets.
+#' @param ... Any remaining elipsis options are passed to ggplotly.
+#' @return The final output filename
+ggplt <- function(gg, filename="ggplot.html",
+                  selfcontained=TRUE, libdir=NULL, background="white",
+                  title=class(gg)[[1]], knitrOptions=list(), ...) {
+  base <- basename(filename)
+  dir <- dirname(filename)
+  out <- plotly::ggplotly(gg, ...)
+  widget <- htmlwidgets::saveWidget(
+                           htmlwidgets::as_widget(out), base, selcontained=selfcontained,
+                           libdir=libdir, background=background, title=title,
+                           knitrOptions=knitrOptions)
+  if (dir != ".") {
+    final <- file.path(dir, base)
+    moved <- file.rename(base, final)
+  }
+  return(final)
+}
+
 #' Make lots of graphs!
 #'
 #' Plot out a set of metrics describing the state of an experiment
@@ -45,8 +94,9 @@ check_plot_scale <- function(data, scale=NULL) {
 #' @param cormethod   the correlation test for heatmaps.
 #' @param distmethod define the distance metric for heatmaps.
 #' @param title_suffix   text to add to the titles of the plots.
-#' @param qq   include qq plots
-#' @param ma   include pairwise ma plots
+#' @param qq   include qq plots?
+#' @param ma   include pairwise ma plots?
+#' @param gene_heat  Include a heatmap of the gene expression data?
 #' @param ... extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:
 #' \enumerate{
@@ -79,7 +129,7 @@ check_plot_scale <- function(data, scale=NULL) {
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
-                          qq=NULL, ma=NULL, gene_heat=FALSE, ...) {
+                          qq=FALSE, ma=FALSE, gene_heat=FALSE, ...) {
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }

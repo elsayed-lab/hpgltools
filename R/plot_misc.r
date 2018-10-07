@@ -1,8 +1,8 @@
 ## plot_misc.r:  Silly plots and plotting helpers.
 
-#' png() shortcut
+#' Plot a picture, with hopefully useful options for most(any) format.
 #'
-#' I hate remembering my options for png()
+#' This calls svg/png/postscript/etc according to the filename provided.
 #'
 #' @param file Filename to write
 #' @param image Optionally, add the image you wish to plot and this will both
@@ -54,8 +54,6 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
 
   return(image)
 }
-
-
 
 #' Make spirographs!
 #'

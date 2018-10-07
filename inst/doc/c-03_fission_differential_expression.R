@@ -73,6 +73,10 @@ scatter_wt_mut$scatter
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
+## ----simple_edger--------------------------------------------------------
+ebseq_comparison <- sm(ebseq_pairwise(fun_data))
+head(ebseq_comparison$all_tables[[1]])
+
 ## ----simple_basic--------------------------------------------------------
 basic_comparison <- sm(basic_pairwise(fun_data))
 summary(basic_comparison$all_tables$wt30_vs_wt120)
@@ -84,7 +88,7 @@ plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
 ## ----simple_all----------------------------------------------------------
-all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE))
+all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE, parallel=FALSE))
 all_combined <- sm(combine_de_tables(all_comparisons, excel=FALSE))
 head(all_combined$data[[1]])
 sig_genes <- sm(extract_significant_genes(all_combined, excel=FALSE))

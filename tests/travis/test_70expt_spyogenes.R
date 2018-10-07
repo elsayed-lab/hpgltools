@@ -45,7 +45,7 @@ test_that("Is the transformation state maintained?", {
 
 mgas_pairwise <- sm(all_pairwise(mgas_expt, parallel=FALSE))
 
-expected <- 0.85
+expected <- 0.64
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
 test_that("Do we get reasonably high similarities among the various DE tools?", {
   expect_gt(actual, expected)
@@ -80,58 +80,48 @@ test_that("Can I extract the chromosome sequence from a genbank file? (gene name
   expect_equal(expected, actual)
 })
 
-## I am dropping the rest since microbesonline added me to their deny list
-if (0) {
-  expected <- c("293653", "Streptococcus pyogenes MGAS5005")
-  actual <- sm(as.character(get_microbesonline_ids("pyogenes MGAS5005")))
-  test_that("Can I get data from microbesonline?", {
-    expect_equal(expected, actual)
-  })
+taxon <- "293653"
+mgas_df <- sm(load_microbesonline_annotations(taxon))
+mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
+rownames(mgas_df) <- make.names(mgas_df[["sysName"]], unique=TRUE)
 
-  taxon <- expected[[1]][[1]]
-  mgas_df <- sm(load_microbesonline_annotations(taxon))[[1]]
-  mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
-  rownames(mgas_df) <- make.names(mgas_df[["sysName"]], unique=TRUE)
+expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
+actual <- as.character(head(mgas_df[["name"]]))
+test_that("Did the mgas annotations download?", {
+  expect_equal(expected, actual)
+})
 
-  expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
-  actual <- as.character(head(mgas_df[["name"]]))
-  test_that("Did the mgas annotations download?", {
-    expect_equal(expected, actual)
-  })
+mgas_go <- sm(load_microbesonline_go(taxon))
+colnames(mgas_go) <- c("ID", "GO")
+mgas_go <- unique(mgas_go)
+expected <- c(4160, 2)
+actual <- dim(mgas_go)
+test_that("Do we get expected gene ontology information?", {
+  expect_equal(expected, actual)
+})
 
-  mgas_go <- sm(load_microbesonline_go(taxon))
-  mgas_go <- mgas_go[, c("name", "acc")]
-  mgas_go <- unique(mgas_go)
-  expected <- c(2806, 2)
-  actual <- dim(mgas_go)
-  test_that("Do we get expected gene ontology information?", {
-    expect_equal(expected, actual)
-  })
+mgas_df <- fData(mgas_expt)
+mgas_df <- mgas_df[, c("start", "end", "width", "strand", "gene")]
+colnames(mgas_df) <- c("start", "stop", "width", "strand", "COGFun")
+mgas_df[["start"]] <- as.numeric(mgas_df[["start"]])
+mgas_df[["start"]] <- as.numeric(mgas_df[["stop"]])
 
-  mgas_df <- fData(mgas_expt)
-  mgas_df <- mgas_df[, c("start", "end", "width", "strand", "gene")]
-  colnames(mgas_df) <- c("start", "stop", "width", "strand", "COGFun")
-  mgas_df[["start"]] <- as.numeric(mgas_df[["start"]])
-  mgas_df[["start"]] <- as.numeric(mgas_df[["stop"]])
-
+## There is no way circos will work on travis, lets be realistic.
+if (!identical(Sys.getenv("TRAVIS"), "true")) {
   ## Plot the coefficients of latelog glucose
   glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]
   wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wt_ll_cg_vs_mga1_ll_cg"]]
   relevant_widths <- merge(glucose_table, mgas_df, by="row.names", all.x=TRUE)
-
   ## Since genbankr died, get the gene lengths from microbesonline
   relevant_widths <- as.numeric(relevant_widths[["width"]])
 
-  ## There is no way circos will work on travis, lets be realistic.
-  if (!identical(Sys.getenv("TRAVIS"), "true")) {
-    circos_test <- sm(circos_prefix())
-    circos_plus <- sm(circos_plus_minus(mgas_df, cfgout=circos_test))
-    circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
-    circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
-    circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
-    circos_suffix(cfgout=circos_test)
-    circos_made <- sm(circos_make(target="mgas"))
-  }
+  circos_test <- sm(circos_prefix())
+  circos_plus <- sm(circos_plus_minus(mgas_df, cfgout=circos_test))
+  circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
+  circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
+  circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
+  circos_suffix(cfgout=circos_test)
+  circos_made <- sm(circos_make(target="mgas"))
 }
 
 end <- as.POSIXlt(Sys.time())

@@ -663,6 +663,7 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
                                           n=n,
                                           coef=comparison,
                                           sort.by="logFC")
+      names(data_tables)[c] <- comparison
     }
 
     ## Take a moment to prettily format the numbers in the tables

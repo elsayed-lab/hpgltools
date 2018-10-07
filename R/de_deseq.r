@@ -219,7 +219,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   ## deseq_run = DESeq2::nbinomLRT(deseq_disp)
   ## Set contrast= for each pairwise comparison here!
 
-  ## DESeq does not use contrasts in a way familiar to limma/edgeR
+  ## DESeq does not use contrasts in a way similar to limma/edgeR
   ## Therefore we will create all sets of c/d using these for loops.
   denominators <- list()
   numerators <- list()
@@ -245,15 +245,20 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   bar <- utils::txtProgressBar(style=3)
   for (c in 1:length(contrast_order)) {
-    contrast_name <- contrast_order[[c]]
+    contrast_string <- contrast_order[[c]]
     pct_done <- c / length(contrast_order)
     utils::setTxtProgressBar(bar, pct_done)
-    num_den_string <- strsplit(x=contrast_name, split="_vs_")[[1]]
+    num_den_string <- strsplit(x=contrast_string, split="_vs_")[[1]]
     num_name <- num_den_string[1]
     den_name <- num_den_string[2]
-    denominators[[contrast_name]] <- den_name
-    numerators[[contrast_name]] <- num_name
-    contrasts <- append(contrast_name, contrasts)
+    denominators[[contrast_string]] <- den_name
+    numerators[[contrast_string]] <- num_name
+    contrasts <- append(contrast_string, contrasts)
+    if (! paste0("condition", num_name) %in% DESeq2::resultsNames(deseq_run)) {
+      message("The contrast ", num_name, " is not in the results.")
+      message("If this is not an extra contrast, then this is an error.")
+      next
+    }
     result <- as.data.frame(DESeq2::results(deseq_run,
                                             contrast=c("condition", num_name, den_name),
                                             format="DataFrame"))
@@ -273,7 +278,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     if (!is.null(annot_df)) {
       result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
     }
-    result_list[[contrast_name]] <- result
+    result_list[[contrast_string]] <- result
   }
   close(bar)
   ## The logic here is a little tortuous.

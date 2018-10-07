@@ -204,7 +204,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
       if (class(file_result) != "try-error") {
         returns[[file]] <- file_result
       }
@@ -215,7 +215,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
       if (class(file_result) != "try-error") {
         res[[file]] <- file_result
       }
@@ -471,9 +471,9 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
 #'   does the iRT change this value?)
 #' delta_rt:  The difference between rt and assay_rt
 #' irt: (As described in the abstract of Claudia Escher's 2012 paper: "Here we
-#'   present iRT, an empirically derived dimensionless peptide‐specific value that
+#'   present iRT, an empirically derived dimensionless peptide-specific value that
 #'   allows for highly accurate RT prediction. The iRT of a peptide is a fixed
-#'   number relative to a standard set of reference iRT‐peptides that can be
+#'   number relative to a standard set of reference iRT-peptides that can be
 #'   transferred across laboratories and chromatographic systems.")
 #' assay_irt: The iRT observed in the actual chromatographic run.
 #' delta_irt: The difference.  I am seeing that all the delta iRTs are in the

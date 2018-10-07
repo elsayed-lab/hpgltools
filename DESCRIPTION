@@ -21,10 +21,11 @@ Suggests:
   Biobase, BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
   Category, cleaver, clusterProfiler, corpcor, corrplot,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW, dplyr,
-  EDASeq, edgeR,
+  EBSeq, EDASeq, edgeR,
   ffpe, fission,
-  genbankr, genefilter, GenomicFeatures, GenomicRanges, genoPlotR, ggdendro, ggrepel, goseq,
-  GO.db, googleVis, GOstats, graph, gtools, gplots, gProfileR, GSEABase,
+  genbankr, genefilter, GenomicFeatures, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
+  ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
+  GSEABase,
   Heatplus, Hmisc, Homo.sapiens, httr,
   inflection, IRanges, iterators,
   jsonlite,
@@ -39,6 +40,8 @@ Suggests:
   rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
+  UniProt.ws,
+  xCell,
   variancePartition, Vennerable, venneuler,
   XLConnect, xml2
 Imports:

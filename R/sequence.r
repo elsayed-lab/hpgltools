@@ -120,7 +120,8 @@ gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid", chr_colum
 #' @param bsgenome A BSGenome instance containing the encoded genome.
 #' @param fivep_utr  Locations of the 5' UTRs.
 #' @param threep_utr  Locations of the 3' UTRs.
-#' @param start_column  What column in the annotation data contains the starts.
+#' @param start_column  What column in the annotation data contains the starts?
+#' @param strand_column  What column in the annotation data contains the sequence strands?
 #' @param end_column  Column in the data with the end locations.
 #' @param chr_column  Column in the df with the chromosome names.
 #' @param name_column  Finally, where are the gene names?

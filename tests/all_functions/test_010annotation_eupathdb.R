@@ -9,8 +9,8 @@ context("010annotation_eupathdb.R\n")
 ##  Most of these are implicitly tested via make_eupath_organismdbi().
 
 testing <- sm(download_eupath_metadata())
-## Looks like 4 new species were added.
-expected <- c(311, 19)
+## Looks like 8 new species were added.
+expected <- c(319, 19)
 actual <- dim(testing)
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)

@@ -4,8 +4,8 @@
 \alias{semantic_expt_filter}
 \title{Remove/keep specifically named genes from an expt.}
 \usage{
-semantic_expt_filter(input, invert = FALSE, semantic = c("mucin",
-  "sialidase", "RHS", "MASP", "DGF", "GP63"),
+semantic_expt_filter(input, invert = FALSE, topn = NULL,
+  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
   semantic_column = "description")
 }
 \arguments{
@@ -13,6 +13,8 @@ semantic_expt_filter(input, invert = FALSE, semantic = c("mucin",
 
 \item{invert}{Keep only the things with the provided strings (TRUE), or
 remove them (FALSE).}
+
+\item{topn}{Take the topn most abundant genes rather than a text based heuristic.}
 
 \item{semantic}{Character list of strings to search for in the annotation
 data.}

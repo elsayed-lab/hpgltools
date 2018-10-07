@@ -5,10 +5,8 @@
 \title{Find the sets of intersecting significant genes}
 \usage{
 intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
-  include_l = TRUE, include_d = TRUE, include_e = TRUE,
-  include_ld = TRUE, include_le = TRUE, include_de = TRUE,
-  include_led = TRUE, z = NULL, p_type = "adj", extra_annot = NULL,
-  excel = "excel/intersect_significant.xlsx")
+  z = NULL, p_type = "adj", selectors = c("limma", "deseq", "edger"),
+  order = "inverse", excel = "excel/intersect_significant.xlsx", ...)
 }
 \arguments{
 \item{combined}{A result from combine_de_tables().}
@@ -19,27 +17,17 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
 
 \item{padding_rows}{How much space to put between groups of data?}
 
-\item{include_l}{Include limma?}
-
-\item{include_d}{Include deseq?}
-
-\item{include_e}{Include edger?}
-
-\item{include_ld}{Include the set of limma shared with deseq?}
-
-\item{include_le}{Include the set of limma shared with edger?}
-
-\item{include_de}{Include the set of edger shared with deseq?}
-
-\item{include_led}{Include the full intersection?}
-
 \item{z}{Use a z-score filter?}
 
 \item{p_type}{Use normal or adjusted p-values.}
 
-\item{extra_annot}{Provide an extra set of annotation columns?}
+\item{selectors}{List of methods to intersect.}
+
+\item{order}{Low-to-high or vice-versa for returning log-fc vales.}
 
 \item{excel}{An optional excel workbook to which to write.}
+
+\item{...}{Extra arguments for extract_significant_genes() and friends.}
 }
 \description{
 Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.

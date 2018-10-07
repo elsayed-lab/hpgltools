@@ -18,7 +18,8 @@ env:
     - R_MAX_NUM_DLLS=256
 
 install: 
-  - make restore
+  - make prereq
+  - make install
 
 script:
   - make test

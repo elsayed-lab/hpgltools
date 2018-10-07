@@ -14,6 +14,12 @@
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
+#' @param conditions  Not currently used, but passed from all_pairwise()
+#' @param batches  Not currently used, but passed from all_pairwise()
+#' @param model_cond  Not currently used, but passed from all_pairwise()
+#' @param model_intercept Not currently used, but passed from all_pairwise()
+#' @param alt_model Not currently used, but passed from all_pairwise()
+#' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force as input non-normalized data?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
@@ -23,7 +29,8 @@
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input=NULL, design=NULL,
+basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NULL, model_cond=TRUE,
+                           model_intercept=FALSE, alt_model=NULL, model_batch=FALSE,
                            force=FALSE, ...) {
   arglist <- list(...)
   if (!is.null(arglist[["input"]])) {
@@ -84,61 +91,68 @@ basic_pairwise <- function(input=NULL, design=NULL,
   comparisons <- data.frame()
   tvalues <- data.frame()
   pvalues <- data.frame()
-  lenminus <- num_conds - 1
   num_done <- 0
   column_list <- c()
   total_contrasts <- length(levels(as.factor(conditions)))
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   message("Basic step 2/3: Performing ", total_contrasts, " comparisons.")
-  num_comparisons <- sum(1:lenminus)
 
+  model_choice <- choose_model(
+    input, conditions=conditions, batches=batches, model_batch=FALSE,
+    model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
+    ...)
+  model_data <- model_choice[["chosen_model"]]
+  ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+                                 ...)
   contrasts_performed <- c()
   bar <- utils::txtProgressBar(style=3)
-  for (c in 1:lenminus) {
-    c_name <- types[c]
-    nextc <- c + 1
-    for (d in nextc:length(types)) {
-      num_done <- num_done + 1
-      pct_done <- num_done / num_comparisons
-      utils::setTxtProgressBar(bar, pct_done)
-      d_name <- types[d]
-      contrast <- paste0(d_name, "_vs_", c_name)
-      contrasts_performed <- append(contrast, contrasts_performed)
-      division <- data.frame(
-        median_table[, d] - median_table[, c])
-      comparison_name <- paste0(d_name, "_vs_", c_name)
-      column_list <- append(column_list, comparison_name)
-      colnames(division) <- comparison_name
-      ## Lets see if I can make a dirty p-value
-      xcols <- which(conditions == c_name)
-      ycols <- which(conditions == d_name)
-      xdata <- as.data.frame(data[, xcols])
-      ydata <- as.data.frame(data[, ycols])
+  for (c in 1:length(apc[["names"]])) {
+    num_done <- num_done + 1
+    pct_done <- c / length(apc[["names"]])
+    name  <- apc[["names"]][[c]]
+    c_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
+    d_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
+    utils::setTxtProgressBar(bar, pct_done)
+    contrasts_performed <- append(name, contrasts_performed)
+    if (! c_name %in% colnames(median_table)) {
+      message("The contrast ", name, " is not in the results.")
+      message("If this is not an extra contrast, then this is an error.")
+      next
+    }
+    division <- data.frame(
+      median_table[, c_name] - median_table[, d_name])
+    column_list <- append(column_list, name)
+    colnames(division) <- name
+    ## Lets see if I can make a dirty p-value
+    xcols <- which(conditions == c_name)
+    ycols <- which(conditions == d_name)
+    xdata <- as.data.frame(data[, xcols])
+    ydata <- as.data.frame(data[, ycols])
 
-      t_data <- vector("list", nrow(xdata))
-      p_data <- vector("list", nrow(xdata))
-      for (j in 1:nrow(xdata)) {
-        test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent=TRUE)
-        if (class(test_result) == "htest") {
-          t_data[[j]] <- test_result[[1]]
-          p_data[[j]] <- test_result[[3]]
-        } else {
-          t_data[[j]] <- 0
-          p_data[[j]] <- 1
-        }
-      } ## Done calculating cheapo p-values
-
-      if (num_done == 1) {
-        comparisons <- division
-        tvalues <- t_data
-        pvalues <- p_data
+    t_data <- vector("list", nrow(xdata))
+    p_data <- vector("list", nrow(xdata))
+    for (j in 1:nrow(xdata)) {
+      test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent=TRUE)
+      if (class(test_result) == "htest") {
+        t_data[[j]] <- test_result[[1]]
+        p_data[[j]] <- test_result[[3]]
       } else {
-        comparisons <- cbind(comparisons, division)
-        tvalues <- cbind(tvalues, t_data)
-        pvalues <- cbind(pvalues, p_data)
+        t_data[[j]] <- 0
+        p_data[[j]] <- 1
       }
-    } ## End for each d
-  }  ## End for each c
+    } ## Done calculating cheapo p-values
+
+    if (c == 1) {
+      comparisons <- division
+      tvalues <- t_data
+      pvalues <- p_data
+    } else {
+      comparisons <- cbind(comparisons, division)
+      tvalues <- cbind(tvalues, t_data)
+      pvalues <- cbind(pvalues, p_data)
+    }
+  } ## End for each contrast
   close(bar)
 
   ## Because of the way I made tvalues/pvalues into a list
