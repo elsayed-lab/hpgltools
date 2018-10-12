@@ -1,26 +1,22 @@
 hpgltools
 ---------
 
-Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)]
-(https://travis-ci.org/abelew/hpgltools),
-
-## Overview
+# Overview
 
 A bunch of R functions to make playing with high throughput data easier,
 developed for applications at the UMD
-[Host-Pathogen Genomics Laboratory (HPGL)](http://www.najibelsayed.org/research.aspx).
+[Host-Pathogen Genomics Laboratory (HPGL)](http://www.najibelsayed.org).
 
 Although the functionality in this packaged was developed primarily to answer
 questions related to host-pathogen genomics and transcriptomics, much of the
 functionality is general enough that it may be useful for many other kinds of
 analyses.
 
-## Installation
+# Installation
 
-This package contains a mix of bioconductor and cran packages.  This is annoying because
-install_github and friends will fail as a result.
-
-There are two ways around this problem:
+There are too many ways to install software in R.  The following are a few which
+I have performed for this package.  This contains a mix of bioconductor and cran
+packages, thus some methods may prove more difficult.
 
 * Using bioconductor, devtools, and remotes
 
@@ -35,23 +31,13 @@ remotes::install_github("abelew/hpgltools", dependencies=TRUE)
 
 * Otherwise, using make and bioconductor
 
-Download the package via 'git pull' or a zip or whatever, go
+Download the package via 'git pull' or from the github download link, go
 into the hpgltools/ directory and:
 
 ```bash
+make prereq
 make install
 ```
-
-One important caveat for newer versions of hpgltools: it now uses packrat to
-keep a database of the package versions which I used.  If one wishes to attempt
-installing my versions of these packages:
-
-```bash
-make packrat_install
-```
-
-A few packages appear to have fallen out of bioconductor/CRAN and so sometimes
-packrat installation has annoying errors.
 
 If you wish to run some tests and (re)build the documentation:
 
@@ -59,24 +45,44 @@ If you wish to run some tests and (re)build the documentation:
 make
 ```
 
-There are a bunch of other potential targets available in the Makefile which
-might be interesting. Simply running make rebuilds the documentation strings,
-runs check, build, create vignettes, and runs the tests.  make install does what
-it says on the tin.
-
-Instead, one may perform:
+The provided Makefile has other targets which might be useful:
 
 ```bash
-make prereq
-```
-
-or
-
-```bash
+## Invoke R CMD build
 make build
+## Invoke R CMD check
+make check
+## Cleanup this tree
+make clean
+## Clean after making vignettes
+make clean_vignette
+## Install dependencies
+make dep
+## Rerun roxygen, rebuild the vignettes, and the reference manual
+make document
+## Install this via R CMD INSTALL
+make install
+## Install _ALL_ of bioconductor!
+make install_bioconductor
+## Install prerequisite packages which are not explicitly dependencies, but are useful
+make prereq
+## push to github
+make push
+## remake the roxygen docs
+make roxygen
+## Remake the reference manual
+make reference
+## Install suggested packages
+make suggests
+## Run the test suite
+make test
+## Update R packages via bioconductor
+make update
+## Update bioconductor
+make update_bioc
+## Rebuild the vignettes
+make vignette
 ```
-
-to have it regenerate the vignettes and check for (new) problems.
 
 ## Exploring
 
@@ -89,6 +95,9 @@ browseVignettes("hpgltools")
 
 As of last count, there were a couple examples using the data(fission)
 set, pasilla, and a bacterial data set.
+
+Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)]
+(https://travis-ci.org/abelew/hpgltools),
 
 ## Functionality
 

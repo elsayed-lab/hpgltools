@@ -13,7 +13,7 @@ context("105helpers_misc.R:\n")
 ## cordist()
 
 ## get_git_commit()
-testing <- sm(get_git_commit())
+testing <- get_git_commit()
 expected <- "character"
 actual <- class(testing)
 test_that("get_git_commit() gave me a commit id?", {

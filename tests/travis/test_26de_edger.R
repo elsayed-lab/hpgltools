@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 ## The following library() seems to be required for glmQLFTest() to work.
-tt <- sm(library(edgeR))
+tt <- library(edgeR)
 context("26de_edger.R: Does hpgltools work with edgeR?\n")
 
 pasilla <- new.env()
@@ -44,7 +44,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform the edgeR analysis in hpgltools
-hpgl_edger <- sm(edger_pairwise(pasilla_expt, edger_method="long", edger_test="qlf"))
+hpgl_edger <- edger_pairwise(pasilla_expt, edger_method="long", edger_test="qlf")
 
 hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1
@@ -87,12 +87,12 @@ test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
     expect_equal(edger_fdr, hpgl_fdr, tolerance=0.0001)
 })
 
-edger_written <- sm(write_edger(hpgl_edger, excel="edger_test.xlsx"))
+edger_written <- write_edger(hpgl_edger, excel="edger_test.xlsx")
 test_that("Can we write the results of an edger pairwise analysis?", {
     expect_true(file.exists("edger_test.xlsx"))
 })
 
-hpgl_edger <- sm(edger_pairwise(pasilla_expt))
+hpgl_edger <- edger_pairwise(pasilla_expt)
 save(list=ls(), file="de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())

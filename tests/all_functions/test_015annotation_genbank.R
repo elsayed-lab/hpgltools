@@ -5,7 +5,7 @@ context("015annotation_genbank.R\n")
 
 ## load_genbank_annotations(), the others are called inside it.
 ## Something changed in genbankr, this now fails.
-testing <- sm(load_genbank_annotations(), wrap=TRUE)
+testing <- load_genbank_annotations()
 other_data <- summary(testing[["others"]])
 test_that("Do we get some granges?", {
   expect_equal("GRanges object with 79 ranges and 5 metadata columns", other_data)
@@ -26,9 +26,9 @@ genes_data <- summary(testing[["genes"]])
     expect_equal("GRanges object with 1857 ranges and 5 metadata columns", genes_data)
   })
 
-txdb_data <- sm(load_orgdb_annotations(testing[["txdb"]], keytype="TXID",
-                                       fields=c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
-                                                "GENEID", "TXID", "TXNAME")))
+txdb_data <- load_orgdb_annotations(testing[["txdb"]], keytype="TXID",
+                                    fields=c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
+                                             "GENEID", "TXID", "TXNAME"))
 txdb_transcripts <- as.data.frame(txdb_data[["transcripts"]])
 test_that("Do we get some transcript sequence names?", {
   expect_equal(as.character(head(txdb_transcripts[["seqnames"]])),

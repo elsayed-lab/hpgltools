@@ -5,7 +5,7 @@
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
 get_model_adjust(input, design = NULL, estimate_type = "sva",
-  surrogates = "be", expt_state = NULL, ...)
+  surrogates = "be", expt_state = NULL, confounders = NULL, ...)
 }
 \arguments{
 \item{input}{Expt or data frame to manipulate.}

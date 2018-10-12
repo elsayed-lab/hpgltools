@@ -755,6 +755,42 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
             start_col=plot_column + 12, plotname="downvenn", savedir=excel_basename,
             start_row=2, doWeights=FALSE)
           venns[[tab]] <- venn_list
+
+          siggene_lst <- try(plot_num_siggenes(written_table))
+          if (class(siggene_lst) != "try-error") {
+            xl_result <- openxlsx::writeData(
+                                     wb, sheetname, x="Significant genes by fc going up.",
+                                     startRow=1, startCol=plot_column + 16)
+            try_result <- xlsx_plot_png(
+              siggene_lst[["up"]], wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col=plot_column + 16, plotname="siggenesup", savedir=excel_basename,
+              start_row=2, doWeights=FALSE)
+
+            xl_result <- openxlsx::writeData(
+                                     wb, sheetname, x="Significant genes by fc going down.",
+                                     startRow=1, startCol=plot_column + 20)
+            try_result <- xlsx_plot_png(
+              siggene_lst[["down"]], wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col=plot_column + 20, plotname="siggenesup", savedir=excel_basename,
+              start_row=2, doWeights=FALSE)
+
+            xl_result <- openxlsx::writeData(
+                                     wb, sheetname, x="Significant genes by p going up.",
+                                     startRow=1, startCol=plot_column + 24)
+            try_result <- xlsx_plot_png(
+              siggene_lst[["pup"]], wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col=plot_column + 24, plotname="siggenespup", savedir=excel_basename,
+              start_row=2, doWeights=FALSE)
+
+            xl_result <- openxlsx::writeData(
+                                     wb, sheetname, x="Significant genes by p going down.",
+                                     startRow=1, startCol=plot_column + 28)
+            try_result <- xlsx_plot_png(
+              siggene_lst[["pdown"]], wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col=plot_column + 28, plotname="siggenespdown", savedir=excel_basename,
+              start_row=2, doWeights=FALSE)
+          }
+
         } ## End checking on venns
 
         ## Now add the coefficients, ma, and volcanoes below the venns.
@@ -1787,6 +1823,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     test_column <- paste0(according, "_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("Did not find the ", test_column, ", skipping ", according, ".")
+      according_to <- according_to[!according == according_to]
       message("Here are the columns: ", toString(colnames(combined[["data"]][[1]])))
       next
     }

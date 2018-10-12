@@ -5,7 +5,7 @@ context("135model_varpartition.R:\n")
 
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 
-pombe_varpart <- sm(varpart(expt=pombe_expt))
+pombe_varpart <- varpart(expt=pombe_expt)
 expected <- "(1 | condition) + (1 | batch)"
 actual <- as.character(pombe_varpart[["model_used"]])[2]
 test_that("Do we get the assumed model?", {

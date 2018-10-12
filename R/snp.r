@@ -1,7 +1,11 @@
 #' Gather snp information for an expt
 #'
-#' I have some initial code for working with snps, but it seems that it will be getting more use, so
-#' make it testable etc.
+#' This function attempts to gather a set of variant positions using an extant
+#' expressionset.  This therefore seeks to keep the sample metadata consistent
+#' with the original data.  In its current iteration, it therefore makes some
+#' potentially bad assumptions about the naming conventions for its input
+#' files.  It furthermore assumes inputs from the variant calling methods in
+#' cyoa.
 #'
 #' @param expt an expressionset from which to extract information.
 #' @param type  Use counts / samples or ratios?
@@ -385,6 +389,18 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
   return(data_by_chr)
 }
 
+#' Cross reference observed variants against the transcriptome annotation.
+#'
+#' This function should provide counts of how many variant positions were
+#' observed with respect to each chromosome and with respect to each annotated
+#' sequence (currently this is limited to CDS, but that is negotiable).
+#'
+#' @param expt  The original expressionset.  This provides the annotation data.
+#' @param snp_result  The result from get_snp_sets or count_expt_snps.
+#' @return List containing the set of intersections in the conditions contained
+#'   in snp_result, the summary of numbers of variants per chromosome, and
+#'   summary of numbers per gene.
+#' @export
 snps_vs_intersections <- function(expt, snp_result) {
   features <- fData(expt)
   features[["start"]] <- sm(as.numeric(features[["start"]]))
@@ -395,7 +411,8 @@ snps_vs_intersections <- function(expt, snp_result) {
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 
   set_names <- snp_result[["set_names"]]
-  summaries <- list()
+  chr_summaries <- list()
+  gene_summaries <- list()
   inters <- list()
   for (inter in names(snp_result[["intersections"]])) {
     inter_name <- set_names[[inter]]
@@ -414,17 +431,24 @@ snps_vs_intersections <- function(expt, snp_result) {
                                                type="within",
                                                ignore.strand=TRUE)
     inters[[inter_name]] <- inter_by_gene
-    summarized_by_gene <- data.table::as.data.table(inter_by_gene)
+    summarized_by_chr <- data.table::as.data.table(inter_by_gene)
     ## Faking out r cmd check with a couple empty variables which will be used by data.table
     seqnames <- count <- NULL
-    summarized_by_gene[, count := .N, by = list(seqnames)]
-    summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
-    summaries[[inter_name]] <- summarized_by_gene
+    summarized_by_chr[, count := .N, by = list(seqnames)]
+    summarized_by_chr <- unique(summarized_by_chr[, c("seqnames", "count"), with=FALSE])
+    chr_summaries[[inter_name]] <- summarized_by_chr
+
+    summarized_by_gene <- IRanges::countOverlaps(query=expt_granges, subject=inter_granges,
+                                                 type="any", ignore.strand=TRUE)
+    summarized_idx <- order(summarized_by_gene, decreasing=TRUE)
+    summarized_by_gene <- summarized_by_gene[summarized_idx]
+    gene_summaries[[inter_name]] <- summarized_by_gene
   }
 
   retlist <- list(
     "inters" = inters,
-    "summaries" = summaries)
+    "chr_summaries" = chr_summaries,
+    "gene_summaries" = gene_summaries)
   return(retlist)
 }
 
@@ -434,12 +458,12 @@ snps_vs_intersections <- function(expt, snp_result) {
 #' @param snp_result  The result from get_snp_sets()
 #' @return a fun list with some information by gene.
 #' @export
-snps_vs_genes <- function(expt, snp_result) {
+snps_vs_genes <- function(expt, snp_result, start_col="start", end_col="end") {
   features <- fData(expt)
-  features[["start"]] <- sm(as.numeric(features[["start"]]))
-  na_starts <- is.na(features[["start"]])
+  features[[start_col]] <- sm(as.numeric(features[[start_col]]))
+  na_starts <- is.na(features[[start_col]])
   features <- features[!na_starts, ]
-  features[["end"]] <- as.numeric(features[["end"]])
+  features[[end_col]] <- as.numeric(features[[end_col]])
 
   ## I don't quite want 5'/3' UTRs, I just want the coordinates starting with
   ## (either 1 or) the end of the last gene and ending with the beginning of the
@@ -452,7 +476,6 @@ snps_vs_genes <- function(expt, snp_result) {
   ## inter_features <- inter_features[inter_feature_order, ]
 
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
-
   snp_positions <- snp_result[["medians"]]
   snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$",
                                       replacement="\\1",
@@ -467,15 +490,42 @@ snps_vs_genes <- function(expt, snp_result) {
 
   ## Faking out r cmd check with a couple empty variables which will be used by data.table
   seqnames <- count <- NULL
-  snps_by_gene <- IRanges::subsetByOverlaps(snp_granges, expt_granges, type="within", ignore.strand=TRUE)
-  summarized_by_gene <- data.table::as.data.table(snps_by_gene)
-  summarized_by_gene[, count := .N, by = list(seqnames)]
-  summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
+  ## This is how one sets the metadata for a GRanges thing.
+  ## When doing mergeByOverlaps, countOverlaps, etc, this is useful.
+  ## mcols(object)$column_name <- some data column
+  S4Vectors::mcols(expt_granges)[, "gene_name"] <- names(expt_granges)
+
+  ## Lets add metadata columns for each column for the medians table
+  ## This will let us find the positions unique to a condition.
+  S4Vectors::mcols(snp_granges)[, "snp_name"] <- names(snp_granges)
+  snp_columns <- colnames(snp_result[["medians"]])
+  for (c in 1:length(snp_columns)) {
+    colname <- snp_columns[c]
+    S4Vectors::mcols(snp_granges)[, colname] <- snp_result[["medians"]][[colname]]
+  }
+
+  snps_by_chr <- IRanges::subsetByOverlaps(snp_granges, expt_granges,
+                                           type="within", ignore.strand=TRUE)
+  summarized_by_chr <- data.table::as.data.table(snps_by_chr)
+  summarized_by_chr[, count := .N, by = list(seqnames)]
+  ## I think I can replace this data table invocation with countOverlaps...
+  ## Ahh no, the following invocation merely counts which snps are found in name,
+  ## which is sort of the opposite of what I want.
+  ## test <- IRanges::countOverlaps(query=snp_granges, subject=expt_granges,
+  ##                               type="within", ignore.strand=TRUE)
+  summarized_by_chr <- unique(summarized_by_chr[, c("seqnames", "count"), with=FALSE])
+  merged_grange <- IRanges::mergeByOverlaps(query=snp_granges, subject=expt_granges)
+  summarized_by_gene <- IRanges::countOverlaps(query=expt_granges, subject=snp_granges,
+                                               type="any", ignore.strand=TRUE)
+  summarized_idx <- order(summarized_by_gene, decreasing=TRUE)
+  summarized_by_gene <- summarized_by_gene[summarized_idx]
   retlist <- list(
     "expt_granges" = expt_granges,
     "snp_granges" = snp_granges,
-    "snps_by_gene" = snps_by_gene,
-    "summary" = summarized_by_gene)
+    "snps_by_chr" = snps_by_chr,
+    "merged_by_gene" = merged_grange,
+    "summary_by_gene" = summarized_by_gene,
+    "summary" = summarized_by_chr)
   return(retlist)
 }
 

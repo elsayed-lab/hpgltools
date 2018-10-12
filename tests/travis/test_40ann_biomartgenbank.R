@@ -7,9 +7,9 @@ limma <- new.env()
 load("de_limma.rda", envir=limma)
 limma_result <- limma[["hpgl_limma"]]
 table <- limma_result[["all_tables"]][[1]]
-sig_genes <- sm(get_sig_genes(table, column="logFC")[["up_genes"]])
-dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
-dmel_go <- sm(load_biomart_go(species="dmelanogaster"))
+sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
+dmel_annotations <- load_biomart_annotations(species="dmelanogaster")
+dmel_go <- load_biomart_go(species="dmelanogaster")
 
 expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
 actual_lengths <- head(dmel_annotations[["annotation"]][["cds_length"]])
@@ -44,7 +44,7 @@ test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)
 })
 
-gbk2txdb_test <- sm(load_genbank_annotations(accession="AE009949"))
+gbk2txdb_test <- load_genbank_annotations(accession="AE009949")
 expected <- 1895017
 actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
 test_that("The genbank txdb S.pyogenes genome's size is correct?", {
@@ -64,7 +64,7 @@ test_that("I can extract the gene lengths of the first few S.pyogenes genes?", {
     expect_equal(expected, actual)
 })
 
-grabbed_accession <- sm(download_gbk())
+grabbed_accession <- download_gbk()
 actual <- grabbed_accession[["strings"]][[1]]
 expected <- "LOCUS       AE009949             1895017 bp    DNA     circular BCT 31-JAN-2014"
 test_that("I downloaded an accession using download_gbk()?", {

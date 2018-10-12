@@ -24,7 +24,7 @@
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
 get_model_adjust <- function(input, design=NULL, estimate_type="sva",
-                             surrogates="be", expt_state=NULL, ...) {
+                             surrogates="be", expt_state=NULL, confounders=NULL, ...) {
   arglist <- list(...)
   my_design <- NULL
   my_data <- NULL
@@ -107,7 +107,13 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   } else {
     if (class(surrogates) == "character") {
       ## num.sv assumes the log scale.
-      if (surrogates != "be" & surrogates != "leek") {
+      if (surrogates == "smartsva") {
+        lm_rslt <- lm(t(base10_mtrx) ~ condition, data=my_design)
+        sv_estimate_data <- t(resid(lm_rslt))
+        chosen_surrogates <- isva::EstDimRMT(sv_estimate_data, FALSE)[["dim"]] + 1
+      } else if (surrogates == "isva") {
+        chosen_surrogates <- isva::EstDimRMT(log2_mtrx)
+      } else if (surrogates != "be" & surrogates != "leek") {
         message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
       } else {
@@ -190,6 +196,10 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- supervised_sva
     },
     "fsva" = {
+      ## Ok, I have a question:
+      ## If we perform fsva using log2(data) and get back SVs on a scale of ~ -1
+      ## to 1, then why are these valid for changing and visualizing the base10
+      ## data.  That does not really make sense to me.
       message("Attempting fsva surrogate estimation with ",
               chosen_surrogates, " surrogates.")
       type_color <- "darkred"
@@ -200,6 +210,82 @@ the dataset, please try doing a filtering of the data and retry.")
                                method="exact")
       model_adjust <- as.matrix(fsva_result[["newsv"]])
       surrogate_result <- fsva_result
+    },
+    "isva" = {
+      message("Attempting isva surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
+      type_color <- "darkgreen"
+      condition_vector <- as.numeric(conditions)
+
+      confounder_lst <- list()
+      if (is.null(confounders)) {
+        confounder_lst[["batch"]] <- as.numeric(batches)
+      } else {
+        for (c in 1:length(confounders)) {
+          name <- confounders[c]
+          confounder_lst[[name]] <- as.numeric(my_design[[name]])
+        }
+      }
+
+      confounder_mtrx <- matrix(data=confounder_lst[[1]], ncol=1)
+      colnames(confounder_mtrx) <- names(confounder_lst)[1]
+      if (length(confounder_lst) > 1) {
+        for (i in 2:length(confounder_lst)) {
+          confounder_mtrx <- cbind(confounder_mtrx, confounder_lst[[i]])
+          names(confounder_mtrx)[i] <- names(confounder_lst)[i]
+        }
+      }
+
+      ##surrogate_estimate <- EstDimRMT(data.m);
+      message("Estmated number of significant components: ", chosen_surrogates, ".")
+      ## this makes sense since 1 component is associated with the
+      ## the phenotype of interest, while the other two are associated
+      ## with the confounders
+      ##ncp <- surrogate_estimate[["dim"]] - 1
+      ## Do ISVA
+      ## run with the confounders as given
+      surrogate_result <- isva::DoISVA(
+                                  log2_mtrx, condition_vector,
+                                  cf.m=NULL, factor.log=FALSE,
+                                  ncomp=chosen_surrogates, pvthCF=0.01,
+                                  th=0.05, icamethod="JADE")
+      model_adjust <- as.matrix(surrogate_result[["isv"]])
+      ## I think this is not what one should use in a model as the range seems to be
+      ## from 1-n where n is quite large.
+
+      ##summary(isva.o)
+
+      ##data(simdataISVA);
+      ##data.m <- simdataISVA$data;
+      ##pheno.v <- simdataISVA$pheno;
+      ## factors matrix (two potential confounding factors, e.g chip and cohort)
+      ##factors.m <- cbind(simdataISVA$factors[[1]],simdataISVA$factors[[2]]);
+      ##colnames(factors.m) <- c("CF1","CF2");
+      ## Estimate number of significant components of variation
+      ##rmt.o <- EstDimRMT(data.m);
+      ##print(paste("Number of significant components=",rmt.o$dim,sep=""));
+      ## this makes sense since 1 component is associated with the
+      ## the phenotype of interest, while the other two are associated
+      ## with the confounders
+      ##ncp <- rmt.o$dim-1 ;
+      ## Do ISVA
+      ## run with the confounders as given
+      ##isva.o <- DoISVA(data.m,pheno.v,factors.m,factor.log=rep(FALSE,2),
+      ##                 pvthCF=0.01,th=0.05,ncomp=ncp,icamethod="fastICA");
+
+      ## Evaluation (ISVs should correlate with confounders)
+      ## modeling of CFs
+      ##print(cor(isva.o$isv,factors.m));
+    },
+    "smartsva" = {
+      message("Attempting svaseq estimation with ",
+              chosen_surrogates, " surrogates.")
+      surrogate_result <- SmartSVA::smartsva.cpp(
+                                      base10_mtrx,
+                                      conditional_model,
+                                      null_model,
+                                      n.sv=chosen_surrogates)
+      model_adjust <- as.matrix(surrogate_result[["sv"]])
     },
     "svaseq" = {
       message("Attempting svaseq estimation with ",

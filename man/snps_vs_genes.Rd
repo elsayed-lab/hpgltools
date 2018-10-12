@@ -4,7 +4,7 @@
 \alias{snps_vs_genes}
 \title{Make a summary of the observed snps/gene}
 \usage{
-snps_vs_genes(expt, snp_result)
+snps_vs_genes(expt, snp_result, start_col = "start", end_col = "end")
 }
 \arguments{
 \item{expt}{The original expressionset}

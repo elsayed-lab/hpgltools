@@ -7,8 +7,8 @@ context("115model_pca.R:\n")
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 
 ## 01 pca_information()
-testing <- sm(pca_information(pombe_expt, plot_pcas=TRUE,
-                              expt_factors=c("strain", "minute", "replicate")))
+testing <- pca_information(pombe_expt, plot_pcas=TRUE,
+                           expt_factors=c("strain", "minute", "replicate"))
 expected <- c(94.150, 4.612, 0.791, 0.120, 0.108, 0.081)
 actual <- head(testing[["rsquared_table"]][["prop_var"]])
 test_that("pca_information() provides a rsquared table?", {
@@ -56,7 +56,7 @@ test_that("We get variances from pcRes?", {
 })
 
 ## 06 test_pca_methods()
-testing <- sm(test_pca_methods(pombe_expt))
+testing <- test_pca_methods(pombe_expt)
 expected <- c("svd", "ppca", "bpca", "svdi", "nipals", "tables", "plots")
 actual <- names(testing)
 test_that("We get some information from test_pca_methods?", {

@@ -459,15 +459,32 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
 #'  crazy_sigplots <- plot_num_siggenes(pairwise_result)
 #' }
 #' @export
-plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_logfc",
+plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq"),
                               bins=100, constant_p=0.05, constant_fc=0) {
-  fc_column <- "limma_logfc"
-  p_column <- "limma_adjp"
-  bins <- 100
+  min_fc <- -1
+  max_fc <- 1
+  lfc_columns <- c()
+  p_columns <- c()
+  kept_methods <- c()
+  for (m in methods) {
+    colname <- paste0(m, "_logfc")
+    if (!is.null(table[[colname]])) {
+      lfc_columns <- c(lfc_columns, colname)
+      pcol <- paste0(m, "_adjp")
+      kept_methods <- c(kept_methods, m)
+      p_columns <- c(p_columns, pcol)
+      test_fc <- min(table[[colname]])
+      if (test_fc < min_fc) {
+        min_fc <- test_fc
+      }
+      test_fc <- max(table[[colname]])
+      if (test_fc > max_fc) {
+        max_fc <- test_fc
+      }
+    }
+  }
   num_genes <- nrow(table)
-  min_fc <- min(table[[fc_column]])
   neutral_fc <- 0.0
-  max_fc <- max(table[[fc_column]])
   min_p <- 0.0
   max_p <- 1.0
   up_increments <- max_fc / bins
@@ -484,61 +501,102 @@ plot_num_siggenes <- function(table, p_column="limma_adjp", fc_column="limma_log
   current_p <- start_p
   up_nums <- data.frame()
   down_nums <- data.frame()
-  p_nums <- data.frame()
+  pup_nums <- data.frame()
+  pdown_nums <- data.frame()
   for (inc in 1:bins) {
     current_up_fc <- current_up_fc - up_increments
     current_down_fc <- current_down_fc - down_increments
     current_p <- current_p + p_increments
-    num_up <- sum(table[[fc_column]] >= current_up_fc & table[[p_column]] <= constant_p)
-    num_down <- sum(table[[fc_column]] <= current_down_fc & table[[p_column]] <= constant_p)
-    num_pup <- sum(table[[fc_column]] >= constant_up_fc & table[[p_column]] <= current_p)
-    num_pdown <- sum(table[[fc_column]] <= constant_down_fc & table[[p_column]] <= current_p)
-    up_nums <- rbind(up_nums, c(current_up_fc, num_up))
-    down_nums <- rbind(down_nums, c(current_down_fc, num_down))
-    p_nums <- rbind(p_nums, c(current_p, num_pup, num_pdown))
-  }
-  colnames(p_nums) <- c("p", "up", "down")
-  colnames(up_nums) <- c("fc", "num")
-  colnames(down_nums) <- c("fc", "num")
+    up_nums_row <- c()
+    down_nums_row <- c()
+    pup_nums_row <- c()
+    pdown_nums_row <- c()
+    for (c in 1:length(lfc_columns)) {
+      lfc_col <- lfc_columns[c]
+      p_col <- p_columns[c]
+      num_up <- sum(table[[lfc_col]] >= current_up_fc & table[[p_col]] <= constant_p)
+      num_down <- sum(table[[lfc_col]] <= current_down_fc & table[[p_col]] <= constant_p)
+      num_pup <- sum(table[[lfc_col]] >= constant_up_fc & table[[p_col]] <= current_p)
+      num_pdown <- sum(table[[lfc_col]] <= constant_down_fc & table[[p_col]] <= current_p)
+      up_nums_row <- c(up_nums_row, num_up)
+      down_nums_row <- c(down_nums_row, num_down)
+      pup_nums_row <- c(pup_nums_row, num_pup)
+      pdown_nums_row <- c(pdown_nums_row, num_pdown)
+    }
 
-  putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]),
-                                                   y=as.matrix(up_nums[[2]]), 0)
-  up_point_num <- putative_up_inflection[2,1]
-  up_label <- paste0("At lfc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
-                     ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
-  up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="num")) +
-    ggplot2::geom_point() + ggplot2::geom_line() +
-    ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
-    ggplot2::geom_vline(xintercept=up_nums[[1]][[up_point_num]]) +
+    up_nums <- rbind(up_nums, c(current_up_fc, up_nums_row))
+    down_nums <- rbind(down_nums, c(current_down_fc, down_nums_row))
+    pup_nums <- rbind(pup_nums, c(current_p, pup_nums_row))
+    pdown_nums <- rbind(pdown_nums, c(current_p, pdown_nums_row))
+  }
+  colnames(pup_nums) <- c("p", kept_methods)
+  pup_nums <- reshape2::melt(pup_nums, id.vars="p")
+  colnames(pup_nums) <- c("p", "method", "value")
+  colnames(pdown_nums) <- c("p", kept_methods)
+  pdown_nums <- reshape2::melt(pdown_nums, id.vars="p")
+  colnames(pdown_nums) <- c("p", "method", "value")
+  colnames(up_nums) <- c("fc", kept_methods)
+  up_nums <- reshape2::melt(up_nums, id.vars="fc")
+  colnames(up_nums) <- c("fc", "method", "value")
+  colnames(down_nums) <- c("fc", kept_methods)
+  down_nums <- reshape2::melt(down_nums, id.vars="fc")
+  colnames(down_nums) <- c("fc", "method", "value")
+
+  ##putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]),
+  ##                                                 y=as.matrix(up_nums[[2]]), 0)
+  ##up_point_num <- putative_up_inflection[2,1]
+  ##up_label <- paste0("At lfc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
+  ##                   ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
+  up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="value", color="method")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::scale_fill_brewer(palette="Set1") +
+    ggplot2::scale_color_brewer(palette="Set1") +
+    ##ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
+    ##ggplot2::geom_vline(xintercept=up_nums[[1]][[up_point_num]]) +
     ggplot2::geom_vline(xintercept=1.0, colour="red")
 
-  putative_down_inflection <- inflection::findiplist(x=as.matrix(down_nums[[1]]), y=as.matrix(down_nums[[2]]), 0)
-  down_point_num <- putative_down_inflection[1, 2]
-  down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="num")) +
-    ggplot2::geom_point() + ggplot2::geom_line() +
-    ggplot2::geom_hline(yintercept=down_nums[[2]][[down_point_num]]) +
-    ggplot2::geom_vline(xintercept=down_nums[[1]][[down_point_num]]) +
+  ##putative_down_inflection <- inflection::findiplist(x=as.matrix(down_nums[[1]]), y=as.matrix(down_nums[[2]]), 0)
+  ##down_point_num <- putative_down_inflection[1, 2]
+  down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="value", color="method")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::scale_fill_brewer(palette="Set1") +
+    ggplot2::scale_color_brewer(palette="Set1") +
+    ##ggplot2::geom_hline(yintercept=down_nums[[2]][[down_point_num]]) +
+    ##ggplot2::geom_vline(xintercept=down_nums[[1]][[down_point_num]]) +
     ggplot2::geom_vline(xintercept=-1.0, colour="red")
 
-  putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  pup_point_num <- putative_pup_inflection[2, 1]
-  putative_pdown_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  pdown_point_num <- putative_pdown_inflection[2, 1]
-  p_plot <- ggplot(data=p_nums) +
-    ggplot2::geom_point(aes_string(x="p", y="up"), colour="darkred") +
-    ggplot2::geom_point(aes_string(x="p", y="down"), colour="darkblue") +
-    ggplot2::geom_vline(xintercept=0.05, colour="red") +
-    ggplot2::geom_hline(yintercept=p_nums[[2]][[pup_point_num]], colour="darkred") +
-    ggplot2::geom_vline(xintercept=p_nums[[1]][[pup_point_num]], colour="black") +
-    ggplot2::geom_hline(yintercept=p_nums[[3]][[pdown_point_num]], colour="darkblue")
+  ##putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
+  ##pup_point_num <- putative_pup_inflection[2, 1]
+  ##putative_pdown_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
+  ##pdown_point_num <- putative_pdown_inflection[2, 1]
+  pup_plot <- ggplot(data=pup_nums, aes_string(x="p", y="value", color="method")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::scale_fill_brewer(palette="Set1") +
+    ggplot2::scale_color_brewer(palette="Set1") +
+    ggplot2::geom_vline(xintercept=0.05, colour="red")
+
+  pdown_plot <- ggplot(data=pdown_nums, aes_string(x="p", y="value", color="method")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_line() +
+    ggplot2::scale_fill_brewer(palette="Set1") +
+    ggplot2::scale_color_brewer(palette="Set1") +
+    ggplot2::geom_vline(xintercept=0.05, colour="red")
+    ##ggplot2::geom_hline(yintercept=p_nums[[2]][[pup_point_num]], colour="darkblue") +
+    ##ggplot2::geom_vline(xintercept=p_nums[[1]][[pup_point_num]], colour="black") +
+    ##ggplot2::geom_hline(yintercept=p_nums[[3]][[pdown_point_num]], colour="darkred")
 
   retlist <- list(
     "up" = up_plot,
     "down" = down_plot,
-    "p" = p_plot,
+    "pup" = pup_plot,
+    "pdown" = pdown_plot,
     "up_data" = up_nums,
     "down_data" = down_nums,
-    "p_data" = p_nums)
+    "pup_data" = pup_nums,
+    "pdown_data" = pdown_nums)
   return(retlist)
 }
 

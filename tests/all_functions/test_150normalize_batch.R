@@ -2,9 +2,9 @@ start <- as.POSIXlt(Sys.time())
 context("150normalize_batch.R:\n")
 ## 2017-12, exported functions in annotation_gff:
 
-pombe_expt <- sm(make_pombe_expt())
+pombe_expt <- make_pombe_expt()
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, batch="limma"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, batch="limma")
 test_counts <- exprs(testing)
 
 expected <- c(27.21933, 33.08824, 147.85699, 19.53751, 89.46974,
