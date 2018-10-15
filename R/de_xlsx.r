@@ -1932,6 +1932,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       ups <- ups[, -1]
       downs <- downs[, -1]
       ups[[1]] <- as.numeric(ups[[1]])
+
+
       ups[[2]] <- as.numeric(ups[[2]])
       ups[[3]] <- as.numeric(ups[[3]])
       ups[["up_sum"]] <- rowSums(ups)

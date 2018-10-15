@@ -1377,7 +1377,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #' Reads an experimental design in a few different formats in preparation for creating an expt.
 #'
 #' @param file Csv/xls file to read.
-#' @param ... Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.
+#' @param ... Arguments for arglist, used by sep, header and similar read_csv/read.table parameters.
 #' @return Df of metadata.
 #' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
 read_metadata <- function(file, ...) {
@@ -1390,8 +1390,8 @@ read_metadata <- function(file, ...) {
   }
 
   if (tools::file_ext(file) == "csv") {
-    definitions <- read.csv(file=file, comment.char="#",
-                            sep=arglist[["sep"]], header=arglist[["header"]])
+    definitions <- readr::read_csv(file=file, comment.char="#",
+                                   sep=arglist[["sep"]], header=arglist[["header"]])
   } else if (tools::file_ext(file) == "xlsx") {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)

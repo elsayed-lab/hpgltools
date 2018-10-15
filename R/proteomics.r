@@ -565,7 +565,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- try(read.csv(file, sep="\t"), silent=TRUE)
+    file_result <- try(readr::read_csv(file, sep="\t"), silent=TRUE)
     if (class(file_result) != "try-error") {
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%

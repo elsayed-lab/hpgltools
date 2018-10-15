@@ -25,7 +25,7 @@ load_microbesonline_annotations <- function(id="160490") {
   url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
   string <- RCurl::getURL(url)
   con <- textConnection(string)
-  data <- read.csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
+  data <- readr::read_csv(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
   return(data)
 }
 
@@ -139,7 +139,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 load_microbesonline_go <- function(id="160490", id_column="name", data_column="GO", name=NULL) {
   chosen <- id
   table <- download_microbesonline_files(id=id, type="tab")
-  table_df <- read.csv(file=table[["tab"]], header=TRUE, sep="\t")
+  table_df <- readr::read_csv(file=table[["tab"]], header=TRUE, sep="\t")
   go_df <- table_df[, c(id_column, data_column)] %>%
     tidyr::separate_rows(data_column, sep=",")
   keep_idx <- go_df[[data_column]] != ""
