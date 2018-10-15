@@ -11,8 +11,10 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
     message("Defaulting to the Mycobacterium tuberculosis H37Rv strain.")
     accession <- "UP000001584"
   } else if (is.null(accession)) {
-    request_url <- paste0("http://www.uniprot.org/proteomes/?query=", xml2::url_escape(species))
-    result <- xml2::read_html(request_url)
+    message("Querying uniprot for the accession matching: ", species, ".")
+    request_url <- paste0("https://www.uniprot.org/proteomes/?query=", xml2::url_escape(species))
+    tt <- curl::curl(request_url)
+    result <- xml2::read_html(tt)
     test <- rvest::html_nodes(result, "tr")
     test_text <- rvest::html_text(test)
     test_text <- test_text[3:length(test_text)] ## The first two elements are headers
@@ -47,7 +49,8 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
   request_url <- paste0("https://www.uniprot.org/uniprot/?query=proteome:",
                         accession, "&compress=yes&force=true&format=txt")
   destination <- paste0(accession, ".txt.gz")
-  file <- download.file(url=request_url, destfile=destination, method="curl", quiet=TRUE)
+  tt <- curl::curl_fetch_disk(url=request_url, path=destination)
+  ##file <- download.file(url=request_url, destfile=destination, method="curl", quiet=TRUE)
   retlist <- list(
     "filename" = destination,
     "accession" = accession)

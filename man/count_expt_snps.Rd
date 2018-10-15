@@ -20,6 +20,10 @@ count_expt_snps(expt, type = "counts",
 A new expt object
 }
 \description{
-I have some initial code for working with snps, but it seems that it will be getting more use, so
-make it testable etc.
+This function attempts to gather a set of variant positions using an extant
+expressionset.  This therefore seeks to keep the sample metadata consistent
+with the original data.  In its current iteration, it therefore makes some
+potentially bad assumptions about the naming conventions for its input
+files.  It furthermore assumes inputs from the variant calling methods in
+cyoa.
 }

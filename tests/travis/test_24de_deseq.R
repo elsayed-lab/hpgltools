@@ -17,18 +17,18 @@ colnames(metadata) <- c("condition", "batch")
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
                                              design=~ 0 + batch + condition)
-dataset <- sm(DESeq2::DESeqDataSet(se=summarized, design=~ 0 + batch + condition))
-deseq_sf <- sm(DESeq2::estimateSizeFactors(dataset))
-deseq_disp <- sm(DESeq2::estimateDispersions(deseq_sf))
-deseq_run <- sm(DESeq2::nbinomWaldTest(deseq_disp, betaPrior=FALSE))
+dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ 0 + batch + condition)
+deseq_sf <- DESeq2::estimateSizeFactors(dataset)
+deseq_disp <- DESeq2::estimateDispersions(deseq_sf)
+deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=FALSE)
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
                                               contrast=c("condition", "treated", "untreated"),
                                               format="DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- sm(deseq2_pairwise(input=pasilla_expt,
-                                 model_batch=TRUE,
-                                 deseq_excel="deseq_test.xlsx"))
+hpgl_deseq <- deseq2_pairwise(input=pasilla_expt,
+                              model_batch=TRUE,
+                              deseq_excel="deseq_test.xlsx")
 test_that("Can I write a deseq2 table?", {
     expect_true(file.exists("deseq_test.xlsx"))
 })

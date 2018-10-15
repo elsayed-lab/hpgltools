@@ -25,7 +25,8 @@ test_that("Does gprofiler return expected values? (mfpplot_data)", {
     expect_equal(expected, actual, tolerance=0.01)
 })
 
-expected <- c(0.000238, 0.001170, 0.005570, 0.028600)
+## 20181003: gprofiler updated their searches, they now return 2 more hits.
+expected <- c(0.00151, 0.00226, 0.00275, 0.01050, 0.01790, 0.01850)
 actual <- head(sort(gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]][["data"]][["pvalue"]]))
 test_that("Does gprofiler return expected values? (bppplot_data)", {
     expect_equal(expected, actual, tolerance=0.03)

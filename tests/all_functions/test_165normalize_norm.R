@@ -2,9 +2,9 @@ start <- as.POSIXlt(Sys.time())
 context("165normalize_norm.R:\n")
 ## 2017-12, exported functions in annotation_gff:
 
-pombe_expt <- sm(make_pombe_expt())
+pombe_expt <- make_pombe_expt()
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="quant"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="quant")
 test_counts <- exprs(testing)
 expected <- c(14.27778, 23.72222, 109.58333, 11.50000, 61.94444,
               129.55556, 32.97222, 72.55556, 107.02778, 13.47222)
@@ -13,7 +13,7 @@ test_that("Does quantile normalization return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="sf2"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="sf2")
 test_counts <- exprs(testing)
 expected <- c(14.54869, 23.40442, 98.04553, 12.01848, 57.56221,
               116.38953, 30.99504, 66.41794, 95.51532, 13.91614)
@@ -22,7 +22,7 @@ test_that("Does size-factor normalization (DESeq2) return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="sf"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="sf")
 test_counts <- exprs(testing)
 expected <- c(14.54869, 23.40442, 98.04553, 12.01848, 57.56221,
               116.38953, 30.99504, 66.41794, 95.51532, 13.91614)
@@ -31,7 +31,7 @@ test_that("Does size-factor normalization (DESeq) return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="vsd"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="vsd")
 test_counts <- exprs(testing)
 expected <- c(6.298605, 6.508338, 7.462539, 6.226385, 7.045104,
               7.613672, 6.654783, 7.149607, 7.440215, 6.281225)
@@ -40,7 +40,7 @@ test_that("Does vsd (DESeq2) return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="tmm"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="tmm")
 test_counts <- exprs(testing)
 expected <- c(19.13119, 38.70352, 143.26251, 22.09686, 111.67109,
               266.38818, 52.58351, 135.67889, 194.09264, 24.84304)
@@ -49,7 +49,7 @@ test_that("Does tmm (edgeR) return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="upperquartile"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="upperquartile")
 test_counts <- exprs(testing)
 expected <- c(19.48623, 39.83608, 147.20376, 22.19109, 110.93969,
               261.12401, 50.91756, 130.25786, 184.64788, 24.42234)
@@ -58,7 +58,7 @@ test_that("Does tmm (edgeR) return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, filter=TRUE, norm="rle"))
+testing <- normalize_expt(pombe_expt, filter=TRUE, norm="rle")
 test_counts <- exprs(testing)
 expected <- c(18.81332, 38.83165, 143.44134, 22.54498, 113.47495,
               270.35551, 51.77898, 137.22436, 196.26130, 24.53660)

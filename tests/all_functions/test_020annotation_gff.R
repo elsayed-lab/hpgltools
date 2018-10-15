@@ -10,14 +10,14 @@ pa_gff <- system.file("paeruginosa_pa14.gff", package="hpgltools")
 pa_fasta <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
 
 ## gff2irange()
-pa_irange <- sm(gff2irange(pa_gff))
+pa_irange <- gff2irange(pa_gff)
 test_that("Do we get suitable irange data?", {
   expect_equal("GRanges object with 11946 ranges and 11 metadata columns",
                summary(pa_irange))
 })
 
 ## load_gff_annotations()
-pa_annot <- sm(load_gff_annotations(pa_gff))
+pa_annot <- load_gff_annotations(pa_gff)
 test_that("Do we get some gff data for Pseudomonas?", {
   expect_equal(11946, nrow(pa_annot))
   expect_equal(16, ncol(pa_annot))

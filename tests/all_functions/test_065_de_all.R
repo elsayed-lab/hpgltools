@@ -49,7 +49,7 @@ test_that("Basic got some expected results (p)?", {
 })
 
 ## 02 write_basic()
-test <- sm(write_basic(testing, excel="test_basic_pairwise.xlsx"))
+test <- write_basic(testing, excel="test_basic_pairwise.xlsx")
 test_that("write_basic() did something?", {
   expect_true(file.exists("test_basic_pairwise.xlsx"))
 })
@@ -79,7 +79,7 @@ test_that("DESeq got some expected results (adjp)?", {
 })
 
 ## 04 write_deseq()
-test <- sm(write_deseq(testing, excel="test_deseq_pairwise.xlsx"))
+written_test <- write_deseq(testing, excel="test_deseq_pairwise.xlsx")
 test_that("write_deseq() did something?", {
   expect_true(file.exists("test_deseq_pairwise.xlsx"))
 })
@@ -106,7 +106,7 @@ test_that("edgeR got some expected results (adjp)?", {
 })
 
 ## 05 write_edger()
-test <- sm(write_edger(testing, excel="test_edger_pairwise.xlsx"))
+test <- write_edger(testing, excel="test_edger_pairwise.xlsx")
 test_that("write_edger() did something?", {
   expect_true(file.exists("test_edger_pairwise.xlsx"))
 })
@@ -116,7 +116,7 @@ test_that("write_edger() did something?", {
 ## hpgl_voom()
 
 ## 06 limma_pairwise()
-testing <- sm(limma_pairwise(pombe_subset))
+testing <- limma_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 45
 test_that("limma performed the expected number of contrasts?", {
@@ -137,7 +137,7 @@ test_that("limma got some expected results (adjp)?", {
 })
 
 ## 07 write_limma()
-test <- sm(write_limma(testing, excel="test_limma_pairwise.xlsx"))
+test <- write_limma(testing, excel="test_limma_pairwise.xlsx")
 test_that("write_limma() did something?", {
   expect_true(file.exists("test_limma_pairwise.xlsx"))
 })
@@ -145,24 +145,24 @@ test_that("write_limma() did something?", {
 ## 08 all_pairwise()
 ## Setting parallel to FALSE so that I can make changes and test them
 ## immediately without having to reinstall.
-test_condbatch <- sm(all_pairwise(pombe_subset))
+test_condbatch <- all_pairwise(pombe_subset)
 test_that("all_pairwise() provided results reasonably similar (batch in model)?", {
   expect_gt(min(test_condbatch[["comparison"]][["comp"]]), 0.75)
 })
 
-test_cond <- sm(all_pairwise(pombe_subset, model_batch=FALSE))
+test_cond <- all_pairwise(pombe_subset, model_batch=FALSE)
 test_that("all_pairwise() provided results reasonably similar (no batch in model)?", {
   expect_gt(min(test_cond[["comparison"]][["comp"]]), 0.75)
 })
 
-tmp <- sm(normalize_expt(pombe_subset, filter=TRUE))
-test_sva <- sm(all_pairwise(tmp, model_batch="svaseq"))
+tmp <- normalize_expt(pombe_subset, filter=TRUE)
+test_sva <- all_pairwise(tmp, model_batch="svaseq")
 test_that("all_pairwise() provided results reasonably similar? (svaseq in model)", {
   expect_gt(min(test_sva[["comparison"]][["comp"]]), 0.65)
 })
 
 ## 09 choose_model()
-cond_model <- sm(choose_model(pombe_subset, model_batch=FALSE))
+cond_model <- choose_model(pombe_subset, model_batch=FALSE)
 expected <- "~ 0 + condition"
 actual <- cond_model[["chosen_string"]]
 test_that("choose_model provides expected models?", {
@@ -187,7 +187,7 @@ test_that("choose_model provides a model which matches the design?", {
   expect_equal(model_df, test_df)
 })
 
-condbatch_model <- sm(choose_model(pombe_subset))
+condbatch_model <- choose_model(pombe_subset)
 expected <- "~ 0 + condition + batch"
 actual <- condbatch_model[["chosen_string"]]
 test_that("choose_model provides expected models?", {
@@ -195,7 +195,7 @@ test_that("choose_model provides expected models?", {
 })
 
 ## 10 choose_dataset()
-testing <- sm(choose_dataset(pombe_subset))
+testing <- choose_dataset(pombe_subset)
 expected <- c("libsize", "conditions", "batches", "data")
 actual <- names(testing)
 test_that("choose_dataset provides some expected output?", {
@@ -205,16 +205,16 @@ test_that("choose_dataset provides some expected output?", {
 ## 11 combine_de_tables()
 ## 12 compare_de_results()
 ## we did test_condbatch, test_cond, test_sva
-test_condbatch <- sm(combine_de_tables(test_condbatch))
+test_condbatch <- combine_de_tables(test_condbatch)
 test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_condbatch[["data"]]), 45)
 })
-test_cond <- sm(combine_de_tables(test_cond))
+test_cond <- combine_de_tables(test_cond)
 test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_cond[["data"]]), 45)
 })
 
-testing <- sm(compare_de_results(test_condbatch, test_cond))
+testing <- compare_de_results(test_condbatch, test_cond)
 expected <- 540
 actual <- length(unlist(testing[["result"]]))
 test_that("compare_de_results provides some expected output?", {
@@ -228,7 +228,7 @@ test_that("compare_de_results provides some expected logfc comparisons?", {
 })
 
 ## 13 compare_led_tables()
-testing <- sm(correlate_de_tables(test_sva))
+testing <- correlate_de_tables(test_sva)
 actual <- min(testing$comp)
 expected <- 0.65
 test_that("compare_led_tables provides some expected comparisons?", {
@@ -236,7 +236,7 @@ test_that("compare_led_tables provides some expected comparisons?", {
 })
 
 ## 14 compare_logfc_plots()
-testing <- sm(compare_logfc_plots(test_condbatch))
+testing <- compare_logfc_plots(test_condbatch)
 actual <- length(testing)
 expected <- 45
 test_that("Did compare_logfc_plots return something useful?", {
@@ -246,8 +246,8 @@ test_that("Did compare_logfc_plots return something useful?", {
 message("\nHuff huff, half way done.\n")
 
 ## 15 compare_significant_contrasts()
-cb_sig <- sm(extract_significant_genes(combined=test_condbatch, excel=NULL))
-testing <- sm(compare_significant_contrasts(cb_sig))
+cb_sig <- extract_significant_genes(combined=test_condbatch, excel=NULL)
+testing <- compare_significant_contrasts(cb_sig)
 expected <- c(70, 34)
 actual <- dim(testing[["shared_up"]])
 test_that("Did compare_significant_contrasts provide some sensible result?", {
@@ -261,7 +261,7 @@ test_that("Did compare_significant_contrasts provide some plots?", {
 })
 
 ## Saving this so we can use it for ontology searches later.
-save(list=c("cb_sig", "test_condbatch"), file="test_065_significant.rda")
+save(list=c("cb_sig"), file="test_065_significant.rda", compress=TRUE)
 
 ## do_pairwise()
 ## This is done by a bunch of other functions, I am not testing it.
@@ -291,7 +291,7 @@ test_that("Did get_pairwise_gene_abundances() get some stuff?", {
 })
 
 ## 18 get_sig_genes()
-testing <- sm(get_sig_genes(table=test_sva$deseq$all_tables[[1]]))
+testing <- get_sig_genes(table=test_sva$deseq$all_tables[[1]])
 expected <- c(109, 6)
 actual <- dim(testing[["up_genes"]])
 test_that("Did get_sig_genes() get some stuff?", {
@@ -306,9 +306,9 @@ test_that("Did get_sig_genes() get some stuff?", {
 })
 
 ## 19 make_pairwise_contrasts()
-pombe_model <- sm(choose_model(pombe_subset))
-testing <- sm(make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
-                                      conditions=pombe_subset$conditions))
+pombe_model <- choose_model(pombe_subset)
+testing <- make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
+                                   conditions=pombe_subset$conditions)
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 45
 test_that("Did make_pairwise_contrasts() get some stuff?", {
@@ -316,9 +316,9 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 })
 ## If we add back some experimental factors, we should get bigger
 ## models/contrast lists.
-pombe_model <- sm(choose_model(pombe_expt))
-testing <- sm(make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
-                                      conditions=pombe_expt$conditions))
+pombe_model <- choose_model(pombe_expt)
+testing <- make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
+                                   conditions=pombe_expt$conditions)
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 66
 test_that("Did make_pairwise_contrasts() get some stuff?", {
@@ -326,23 +326,23 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 })
 
 ## 20 semantic_copynumber_filter()
-testing <- sm(semantic_copynumber_filter(cb_sig[["limma"]],
-                                         semantic="RNA",
-                                         semantic_column="rownames"))
+testing <- semantic_copynumber_filter(cb_sig[["limma"]],
+                                      semantic="RNA",
+                                      semantic_column="rownames")
 table <- "wt120_vs_wt0"
 pre <- nrow(cb_sig[["limma"]][["ups"]][[table]])
 post1 <- nrow(testing[["ups"]][[table]])
 expect_lt(post1, pre)
-testing <- sm(semantic_copynumber_filter(cb_sig[["limma"]],
-                                         invert=FALSE,
-                                         semantic="RNA",
-                                         semantic_column="rownames"))
+testing <- semantic_copynumber_filter(cb_sig[["limma"]],
+                                      invert=FALSE,
+                                      semantic="RNA",
+                                      semantic_column="rownames")
 post2 <- nrow(testing[["ups"]][[table]])
 expect_lt(post2, pre)
 expect_equal(pre, (post1 + post2))
 
 ## 21 significant_barplots()
-testing <- sm(significant_barplots(combined=test_condbatch))
+testing <- significant_barplots(combined=test_condbatch)
 test_that("significant_barplots() gave some plots?", {
   expect_equal(class(testing[["deseq"]]), c("gg", "ggplot"))
   expect_equal(class(testing[["limma"]]), c("gg", "ggplot"))
@@ -357,7 +357,7 @@ test_that("extract_de_plots() gave some plots?", {
 })
 
 ## 23 extract_coefficient_scatter()
-testing <- sm(extract_coefficient_scatter(output=test_sva))
+testing <- extract_coefficient_scatter(output=test_sva)
 test_that("extract_de_plots() gave some plots?", {
   expect_equal(class(testing[["scatter"]]), c("gg", "ggplot"))
 })
@@ -378,13 +378,13 @@ test_that("plot_num_siggenes() gave some plots?", {
 })
 
 ## 26 extract_abundant_genes()
-testing <- sm(extract_abundant_genes(test_sva, excel=NULL))
+testing <- extract_abundant_genes(test_sva, excel=NULL)
 test_that("extract_abundant_genes() gave some stuff?", {
   expect_equal(200, length(testing[["abundances"]][["limma"]][[1]]))
 })
 
 ## 27 extract_significant_genes()
-testing <- sm(extract_significant_genes(combined=test_condbatch, excel=NULL))
+testing <- extract_significant_genes(combined=test_condbatch, excel=NULL)
 actual <- dim(testing$limma$ups[[1]])
 expected <- c(80, 34)
 test_that("Did extract_significant_genes() get some stuff?", {
@@ -393,13 +393,13 @@ test_that("Did extract_significant_genes() get some stuff?", {
 })
 
 ## 28 intersect_significant(),
-testing <- sm(intersect_significant(combined=test_condbatch, excel=NULL))
+testing <- intersect_significant(combined=test_condbatch, excel=NULL)
 test_that("Did intersect_significant() get some stuff?", {
   expect_equal(testing[["summary"]]["up", "all"], 165)
 })
 
 ## 29 write_de_table()
-testing <- sm(write_de_table(data=test_sva, type="deseq"))
+testing <- write_de_table(data=test_sva, type="deseq")
 test_that("Did write_de_table() write something?", {
   expect_equal(testing, 1)
 })

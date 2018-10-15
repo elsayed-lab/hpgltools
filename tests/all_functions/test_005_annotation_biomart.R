@@ -4,7 +4,7 @@ context("005annotation_biomart.R\n")
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 
 ## load_biomart_annotations()
-testing <- sm(load_biomart_annotations())
+testing <- load_biomart_annotations()
 gene_ids <- head(rownames(testing[["annotation"]]))
 data <- testing[["annotation"]]
 expected <- c(197995, 12)
@@ -14,7 +14,7 @@ test_that("Do we receive expected output from load_biomart_annotations()?", {
 })
 
 ## load_biomart_go()
-testing <- sm(load_biomart_go())
+testing <- load_biomart_go()
 data <- testing[["go"]]
 expected <- c(318558, 2)
 actual <- dim(data)

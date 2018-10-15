@@ -4,9 +4,9 @@ context("055annotation_uniprot.R:\n")
 ## load_uniprot_annotations() download_uniprot_proteome()
 
 ## download_uniprot_proteome()
-testing <- sm(download_uniprot_proteome(
+testing <- download_uniprot_proteome(
   species="Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)",
-  first=TRUE))
+  first=TRUE)
 expected <- "UP000001584.txt.gz"
 actual <- testing[["filename"]]
 test_that("Did we get the correct uniprot text file?", {
@@ -15,7 +15,7 @@ test_that("Did we get the correct uniprot text file?", {
 })
 
 ## load_uniprot_annotations()
-testing <- sm(load_uniprot_annotations(file=expected))
+testing <- load_uniprot_annotations(file=expected)
 expected <- c(3993, 41)
 actual <- dim(testing)
 test_that("Did we get the correct uniprot annotations?", {

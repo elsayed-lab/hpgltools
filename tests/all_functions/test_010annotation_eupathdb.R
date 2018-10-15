@@ -8,7 +8,7 @@ context("010annotation_eupathdb.R\n")
 ##  get_eupath_interpro_table(), get_eupath_ortholog_table() get_eupath_text()
 ##  Most of these are implicitly tested via make_eupath_organismdbi().
 
-testing <- sm(download_eupath_metadata())
+testing <- download_eupath_metadata()
 ## Looks like 8 new species were added.
 expected <- c(319, 19)
 actual <- dim(testing)

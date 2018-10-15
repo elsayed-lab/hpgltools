@@ -489,11 +489,8 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #'  pca_plot
 #' }
 #' @export
-plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
+plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL, method="fast_svd",
                      plot_title=NULL, plot_size=5, size_column=NULL, x_pc=1, y_pc=2, ...) {
-  ## I have been using hpgl_env for keeping aes() from getting contaminated.
-  ## I think that this is no longer needed because I have been smater(sic) about how
-  ## I invoke aes_string() and ggplot2()
   arglist <- list(...)
   plot_names <- arglist[["plot_names"]]
   ## Set default columns in the experimental design for condition and batch
@@ -511,10 +508,6 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
   }
-  ##label_size <- 4
-  ##if (!is.null(arglist[["label_size"]])) {
-  ##  label_size <<- arglist[["label_size"]]
-  ##}
 
   ## The following if() series is used to check the type of data provided and extract the available
   ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
@@ -597,11 +590,17 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_labels=NULL,
     label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
   }
 
+  ## It is my intention to make this part rather more modular
+  ## The function: invoke_pca_method() in theory should be able
+  ## to provide multiple dispatches for ica/pca/tsne and give all the requisite
+  ## data for the rest of this function to succeed.
+  ## If that ends up being totally true, this will need to be renamed to
+  ## plot_reduce() or something similar.
   svd_result <- corpcor::fast.svd(as.matrix(data) - rowMeans(as.matrix(data)))
   v_vector <- svd_result[["v"]]
   rownames(v_vector) <- colnames(data)
   svd_result[["v"]] <- v_vector
-  ##pca <- makeSVD(data)
+
   ## Pull out the batches and conditions used in this plot.
   ## Probably could have just used xxx[stuff, drop=TRUE]
   included_batches <- as.factor(as.character(design[[batch_column]]))
@@ -664,31 +663,12 @@ Going to run pcRes with the batch information.")
     design=design,
     plot_labels=plot_labels,
     plot_size=plot_size,
+    x_label=xl,
+    y_label=yl,
     size_column=size_column, ...)
   ##pca_plot <- plot_pcs(pca_data, first=xpc_name, second=ypc_name,
   ##                     design=design, plot_labels=plot_labels,
   ##                     plot_size=plot_size, size_column=size_column)
-
-  ## The following are some pretty-ifiers for the plot, they should be moved into plot_pcs
-  pca_plot <- pca_plot +
-    ggplot2::xlab(xl) +
-    ggplot2::ylab(yl) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   legend.key.size=grid::unit(0.5, "cm"))
-
-  ## If plot_title is NULL, print nothing, if it is TRUE
-  ## Then give some information about what happened to the data to make the plot.
-  if (isTRUE(plot_title)) {
-    data_title <- what_happened(expt=expt)
-    pca_plot <- pca_plot + ggplot2::ggtitle(data_title)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt=expt)
-    plot_title <- paste0(plot_title, "; ", data_title)
-    pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
-  } else {
-    ## Leave the title blank.
-  }
 
   ## Finally, return a list of the interesting bits of what happened.
   pca_return <- list(
@@ -724,6 +704,7 @@ Going to run pcRes with the batch information.")
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
+                     x_label=NULL, y_label=NULL,
                      plot_size=5, size_column=NULL, rug=TRUE, cis=c(0.95, 0.9), ...) {
   arglist <- list(...)
   batches <- pca_data[["batch"]]
@@ -742,6 +723,14 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   label_size <- 4
   if (!is.null(arglist[["label_size"]])) {
     label_size <<- arglist[["label_size"]]
+  }
+  ci_group <- "condition"
+  if (!is.null(arglist[["ci_group"]])) {
+    ci_group <- arglist[["ci_group"]]
+  }
+  ci_fill <- "condition"
+  if (!is.null(arglist[["ci_fill"]])) {
+    ci_fill <- arglist[["ci_fill"]]
   }
 
   pca_plot <- NULL
@@ -853,12 +842,21 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     stop("This should be an impossible state.")
   }
 
-  if (!is.null(variances)) {
+  if (!is.null(x_label)) {
+    pca_plot <- pca_plot +
+      ggplot::xlab(x_label)
+    if (!is.null(y_label)) {
+      pca_plot <- pca_plot +
+        ggplot::ylab(y_label)
+    }
+  } else if (!is.null(variances)) {
     x_var_num <- as.numeric(gsub("PC", "", first))
     y_var_num <- as.numeric(gsub("PC", "", second))
     x_label <- paste0("PC1", first, ": ", variances[[x_var_num]], "%  variance")
     y_label <- paste0("PC2", second, ": ", variances[[y_var_num]], "%  variance")
-    pca_plot <- pca_plot + ggplot2::xlab(x_label) + ggplot2::ylab(y_label)
+    pca_plot <- pca_plot +
+      ggplot2::xlab(x_label) +
+      ggplot2::ylab(y_label)
   }
 
   if (isTRUE(rug)) {
@@ -894,12 +892,377 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
       alpha <- alpha + 0.1
       pca_plot <- pca_plot +
         ggplot2::stat_ellipse(
-                   mapping=aes_string(group="condition", fill="condition"),
+                   mapping=aes_string(group=ci_group, fill=ci_fill),
                    geom="polygon", type="t", level=ci, alpha=alpha)
     }
   }
 
+  ## If plot_title is NULL, print nothing, if it is TRUE
+  ## Then give some information about what happened to the data to make the plot.
+  if (isTRUE(plot_title)) {
+    data_title <- what_happened(expt=expt)
+    pca_plot <- pca_plot + ggplot2::ggtitle(data_title)
+  } else if (!is.null(plot_title)) {
+    data_title <- what_happened(expt=expt)
+    plot_title <- paste0(plot_title, "; ", data_title)
+    pca_plot <- pca_plot + ggplot2::ggtitle(plot_title)
+  } else {
+    ## Leave the title blank.
+  }
+
+  ## Set default font sizes and colors
+  pca_plot <- pca_plot +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   legend.key.size=grid::unit(0.5, "cm"))
+
   return(pca_plot)
+}
+
+invoke_pca_method <- function(data, design=NULL, method="fast_svd",
+                              plot_colors=NULL, plot_labels=NULL,
+                              plot_title=NULL, plot_size=5, size_column=NULL,
+                              x_pc=1, y_pc=2, transpose=TRUE, center=FALSE,
+                              num_pc=NULL, ...) {
+  arglist <- list(...)
+  start <- make_pombe_expt()
+  data <- normalize_expt(start, transform="log2", convert="cpm", norm="quant",
+                         filter=TRUE)
+  plot_names <- arglist[["plot_names"]]
+  ## Set default columns in the experimental design for condition and batch
+  ## changing these may be used to query other experimental factors with pca.
+  cond_column <- "condition"
+  if (!is.null(arglist[["cond_column"]])) {
+    cond_column <- arglist[["cond_column"]]
+    message("Using ", cond_column, " as the condition column in the experimental design.")
+  }
+  batch_column <- "batch"
+  if (!is.null(arglist[["batch_column"]])) {
+    batch_column <- arglist[["batch_column"]]
+    message("Using ", batch_column, " as the batch column in the experimental design.")
+  }
+  if (!is.null(arglist[["base_size"]])) {
+    base_size <<- arglist[["base_size"]]
+  }
+
+  ## The following if() series is used to check the type of data provided and extract the available
+  ## metadata from it.  Since I commonly use my ExpressionSet wrapper (expt), most of the material is
+  ## specific to that.  However, the functions in this package should be smart enough to deal when
+  ## that is not true.
+  ## The primary things this particular function is seeking to acquire are: design, colors, counts.
+  ## The only thing it absolutely requires to function is counts, it will make up the rest if it cannot
+  ## find them.
+  data_class <- class(data)[1]
+  names <- NULL
+  mtrx <- NULL
+  if (data_class == "expt") {
+    design <- pData(data)
+    if (cond_column == "condition") {
+      plot_colors <- data[["colors"]]
+    } else {
+      plot_colors <- NULL
+    }
+    plot_names <- data[["samplenames"]]
+    mtrx <- exprs(data)
+  } else if (data_class == "ExpressionSet") {
+    mtrx <- exprs(data)
+    design <- pData(data)
+  } else if (data_class == "list") {
+    mtrx <- data[["count_table"]]
+    if (is.null(data)) {
+      stop("The list provided contains no count_table element.")
+    }
+  } else if (data_class == "matrix" | data_class == "data.frame") {
+    mtrx <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+  } else {
+    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  ## Small modification for reusing some of my very oldest experimental designs.
+  if (is.null(design[["sampleid"]])) {
+    design[["sampleid"]] <- rownames(design)
+  }
+
+  ## Check that the given design works with the data
+  ## Prune the design if necessary
+  ## Also take into account the fact that sometimes I change the case of hpgl<->HPGL
+  given_samples <- tolower(colnames(mtrx))
+  colnames(mtrx) <- given_samples
+  ## I hate uppercase characters, I ADMIT IT.
+  avail_samples <- tolower(rownames(design))
+  rownames(design) <- avail_samples
+  if (sum(given_samples %in% avail_samples) == length(given_samples)) {
+    design <- design[given_samples, ]
+  }
+
+  ## If nothing has given this some colors for the plot, make them up now.
+  if (is.null(plot_colors)) {
+    plot_colors <- as.numeric(as.factor(design[[cond_column]]))
+    plot_colors <- RColorBrewer::brewer.pal(12, "Dark2")[plot_colors]
+  }
+
+  ## Similarly, if there is no information which may be used as a design yet, make one up.
+  if (is.null(design)) {
+    message("No design was provided.  Making one with x conditions, 1 batch.")
+    design <- cbind(plot_names, 1)
+    design <- as.data.frame(design)
+    design[["condition"]] <- as.numeric(design[["plot_labels"]])
+    colnames(design) <- c("name", "batch", "condition")
+    design <- design[, c("name", "condition", "batch")]
+    plot_names <- design[["name"]]
+  }
+
+  ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
+  ## condition_batch; this handles that as eloquently as I am able.
+  label_list <- NULL
+  if (is.null(arglist[["label_list"]]) & is.null(plot_names)) {
+    label_list <- design[["sampleid"]]
+  } else if (is.null(arglist[["label_list"]])) {
+    label_list <- plot_names
+  } else if (arglist[["label_list"]] == "concat") {
+    label_list <- paste(design[[cond_column]], design[[batch_column]], sep="_")
+  } else {
+    label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
+  }
+
+  ## I want to be able to seamlessly switch between PCs on samples vs. rows.
+  if (isTRUE(transpose)) {
+    mtrx <- t(mtrx)
+  }
+
+  if (is.null(num_pc)) {
+    num_pc <- nrow(design)
+  }
+
+  ## pcaMethods provides its own tool to ensure the data is ready for PCA
+  ## I should investigate if this is good for other methodologies.
+  ready <- pcaMethods::prep(t(mtrx), scale=scale, center=center)
+
+  pca_result <- NULL
+  message("Performing svd.")
+  switchret <- switch(
+    method,
+    "fast_svd" = {
+      ## Remember that fast.svd handles the transposing for us
+      ## So in this peculiar way, TRUE==FALSE
+      svd_result <- corpcor::fast.svd(mtrx - rowMeans(mtrx))
+      pc_table <- svd_result[["v"]]
+      rownames(pc_table) <- rownames(design)
+      colnames(pc_table) <- paste0("PC", 1:ncol(pc_table))
+      x_name <- paste0("PC", x_pc)
+      y_name <- paste0("PC", y_pc)
+      ## By a similar token, get the percentage of variance accounted for in each PC
+      pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
+      ## These will provide metrics on the x/y axes showing the amount of variance on those
+      ## components of our plot.
+      x_label <- sprintf("%s: %.2f%% variance", x_name, pca_variance[x_pc])
+      y_label <- sprintf("%s: %.2f%% variance", y_name, pca_variance[y_pc])
+      ## Create a data frame with all the material of interest in the actual PCA plot
+    },
+    "tsne" = {
+      perplexity <- floor(ncol(mtrx) / 5)
+      if (!is.null(arglist[["perplexity"]])) {
+        perplexity <- arglist[["perplexity"]]
+      }
+
+      plotting_indexes <- 1:nrow(data)
+      if (is.null(arglist[["chosen_features"]])) {
+        variances <- matrixStats::rowVars(as.matrix(data))
+        if (!is.null(arglist[["number_features"]])) {
+          number_features <- min(number_features, nrow(data))
+        } else {
+          number_features <- nrow(data)
+        }
+        plotting_indexes <- order(variances, decreasing=TRUE)[1:number_features]
+      }
+
+      plotting_data <- data[plotting_indexes, ]
+      ## This I do understand and think is cool
+      ## Drop features with low variance
+      min_variance <- 0.001
+      if (!is.null(arglist[["min_variance"]])) {
+        min_variance <- arglist[["min_variance"]]
+      }
+      keepers <- (matrixStats::rowVars(as.matrix(plotting_data)) >= min_variance)
+      keepers[is.na(keepers)] <- FALSE ## Another nice idea
+      plotting_data <- plotting_data[keepers, ]
+
+      ## There is an interesting standardization idea in scater
+      ## But I think I would prefer to have flexibility here
+      ## exprs_to_plot <- t(scale(t(exprs_to_plot), scale = scale_features))
+      if (!is.null(seed)) {
+        set.seed(seed)
+      }
+
+      theta <- 0.3
+      if (!is.null(arglist[["theta"]])) {
+        theta <- arglist[["theta"]]
+      }
+      iterations <- 1000
+      if (!is.null(arglist[["iterations"]])) {
+        iterations <- arglist[["iterations"]]
+      }
+      pca <- TRUE
+      if (!is.null(arglist[["pca"]])) {
+        pca <- arglist[["pca"]]
+      }
+      components <- 2
+      if (!is.null(arglist[["components"]])) {
+        components <- arglist[["components"]]
+      }
+      tsne_result <- Rtsne::Rtsne(plotting_data,
+                                  check_duplicates=FALSE,
+                                  dims=components,
+                                  max_iter=iterations,
+                                  pca=pca,
+                                  theta=theta,
+                                  perplexity=perplexity)
+      pc_table <- as.data.frame(tsne_result[["Y"]])
+      ## Changing these assignments because of my new attempts to use GSVA
+      rownames(pc_table) <- rownames(design)
+      colnames(pc_table) <- paste0("PC", 1:ncol(pc_table))
+      ##pc_table <- pc_table[, 1:components]
+      pos_sing <- tsne_result[["costs"]]
+      x_name <- paste0("Factor", x_pc)
+      y_name <- paste0("Factor", y_pc)
+    },
+    "fast_ica" = {
+      alg_type <- "parallel"  ## alg.typ
+      if (!is.null(arglist[["alg_type"]])) {
+        alg_type <- arglist[["alg_type"]]
+      }
+      fun <- "logcosh"
+      if (!is.null(arglist[["fun"]])) {
+        fun <- arglist[["fun"]]
+      }
+      alpha <- 1.0
+      if (!is.null(arglist[["alpha"]])) {
+        alpha <- arglist[["alpha"]]
+      }
+      ica_method <- "C"
+      if (!is.null(arglist[["ica_method"]])) {
+        ica_method <- arglist[["ica_method"]]
+      }
+      row.norm <- FALSE
+      if (!is.null(arglist[["row.norm"]])) {
+        row.norm <- arglist[["row.norm"]]
+      }
+      maxit <- 200
+      if (!is.null(arglist[["maxit"]])) {
+        maxit <- arglist[["maxit"]]
+      }
+      tol <- 0.0001
+      if (!is.null(arglist[["tol"]])) {
+        tol <- arglist[["tol"]]
+      }
+      verbose <- FALSE
+      if (!is.null(arglist[["verbose"]])) {
+        verbose <- arglist[["verbose"]]
+      }
+      w.init <- NULL
+      if (!is.null(arglist[["w.init"]])) {
+        w.init <- arglist[["w.init"]]
+      }
+      ica_result <- fastICA::fastICA(
+                               ready,
+                               n.comp=num_pcs,
+                               alg.typ=alg_type,
+                               fun=fun,
+                               alpha=alpha,
+                               method=ica_method,
+                               row.norm=row.norm,
+                               maxit=maxit,
+                               tol=tol,
+                               verbose=verbose,
+                               w.init=w.init)
+      pc_table <- ica_result[["S"]]
+      rownames(pc_table) <- rownames(design)
+      colnames(pc_table) <- paste0("IC", 1:ncol(pc_table))
+      x_label <- paste0("IC", x_pc)
+      y_label <- paste0("IC", y_pc)
+    },
+    {
+      ## Handling the following:
+      ## svd, ppca, bpca, svdi, nipals, nlpca.
+      scale <- "none"
+      if (!is.null(arglist[["scale"]])) {
+        scale <- arglist[["scale"]]
+      }
+      center <- TRUE
+      if (!is.null(arglist[["center"]])) {
+        center <- arglist[["center"]]
+      }
+      completeObs <- TRUE
+      if (!is.null(arglist[["completeObs"]])) {
+        completeObs <- arglist[["completeObs"]]
+      }
+      subset <- NULL
+      if (!is.null(arglist[["subset"]])) {
+        subset <- arglist[["subset"]]
+      }
+      cv <- "none"
+      if (!is.null(arglist[["cv"]])) {
+        cv <- arglist[["cv"]]
+      }
+      pcam_result <- pcaMethods::pca(ready, method=method,
+                                     nPcs=num_pc,
+                                     scale=scale,
+                                     center=center,
+                                     completeObs=completeObs,
+                                     subset=subset,
+                                     cv=cv)
+
+      pc_table <- as.data.frame(pcam_result@scores)
+      pc_variance <- pcam_result@R2 * 100
+      x_name <- paste0("PC", x_pc)
+      y_name <- paste0("PC", y_pc)
+      x_label <- sprintf("%s: %.2f%% variance", x_name, pc_variance[x_pc])
+      y_label <- sprintf("%s: %.2f%% variance", y_name, pc_variance[y_pc])
+    }
+  )  ## End of the switch()
+  comp_data <- data.frame(
+    "sampleid" = as.character(design[["sampleid"]]),
+    "condition" = design[[cond_column]],
+    "batch" = design[[batch_column]],
+    "batch_int" = as.integer(as.factor(design[[batch_column]])),
+    "colors" = as.character(plot_colors),
+    "labels" = label_list,
+    stringsAsFactors=FALSE)
+
+  comp_data[[x_name]] <- pc_table[, x_pc]
+  comp_data[[y_name]] <- pc_table[, y_pc]
+
+  if (!is.null(size_column)) {
+    ## Adding a column with the same name as the size column from the experimental design
+    ## and making sure it is a factor.
+    comp_data[[size_column]] <- as.factor(design[, size_column])
+    ## Just forcing the size to be numeric non-zero.
+    comp_data[["size"]] <- as.factor(as.integer(design[[size_column]]) + 1)
+  }
+
+  if (isTRUE(plot_title)) {
+    plot_title <- what_happened(expt=expt)
+  } else if (!is.null(plot_title)) {
+    data_title <- what_happened(expt=expt)
+    plot_title <- paste0(plot_title, "; ", data_title)
+  } else {
+    ## Leave the title blank.
+  }
+
+  ## The plot_pcs() function gives a decent starting plot
+  comp_plot <- plot_pcs(
+    comp_data,
+    first=xpc_name,
+    second=ypc_name,
+    design=design,
+    plot_labels=plot_labels,
+    x_label=x_label,
+    y_label=y_label,
+    plot_title=plot_title,
+    plot_size=plot_size,
+    size_column=size_column,
+    ...)
+
 }
 
 #' The pcaMethods package has some interesting methods to test PCA methodologies.

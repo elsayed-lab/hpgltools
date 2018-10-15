@@ -719,18 +719,31 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
   return(results)
 }
 
-intersect_signatures <- function(gsva_result, lst) {
+intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
+                                 sig_weights=TRUE, gene_weights=TRUE) {
   sig_venn <- Vennerable::Venn(Sets=lst)
-  plot(sig_venn)
+  Vennerable::plot(sig_venn, doWeights=sig_weights)
   sig_plot <- grDevices::recordPlot()
   sig_int <- sig_venn@IntersectionSets
-
   annot <- fData(gsva_result[["expt"]])
   sig_genes <- list()
+  gene_venn_lst <- list()
+  venn_names <- list()
   ## Skip the non-existant set of 00, thus 2:length()
   ## Top level loop iterates through the observed intersections/unions from Vennerable.
   for (i in 2:length(sig_int)) {
     name <- names(sig_int)[i]
+    ## Make a human readable version of the venn names.
+    name_chars <- strsplit(x=name, split="")[[1]]
+    venn_name <- ""
+    for (c in 1:length(name_chars)) {
+      char <- name_chars[[c]]
+      if (char == "1") {
+        venn_name <- paste0(venn_name, "_", names(lst)[c])
+      }
+    }
+    venn_name <- gsub(pattern="^_", replacement="", x=venn_name)
+
     sigs <- sig_int[[i]]
     sig_annot <- annot[sigs, ]
     gene_ids <- sig_annot[["ids"]]
@@ -752,10 +765,24 @@ intersect_signatures <- function(gsva_result, lst) {
     internal_ret <- internal_ret[order(as.numeric(internal_ret), decreasing=TRUE)]
     ret <- as.numeric(internal_ret)
     names(ret) <- names(internal_ret)
-    sig_genes[[name]] <- ret
+    sig_genes[[venn_name]] <- ret
+    gene_venn_lst[[venn_name]] <- names(ret[ret >= freq_cutoff])
   }
 
-  return(sig_genes)
+  gene_venn <- Vennerable::Venn(Sets=gene_venn_lst)
+  Vennerable::plot(gene_venn, doWeights=gene_weights)
+  gene_venn_plot <- grDevices::recordPlot()
+  gene_int <- gene_venn@IntersectionSets
+
+  retlst <- list(
+    "signature_venn" = sig_venn,
+    "signature_intersection" = sig_int,
+    "signature_venn_plot" = sig_plot,
+    "signature_genes" = sig_genes,
+    "gene_venn" = gene_venn,
+    "gene_intersection" = gene_int,
+    "gene_venn_plot" = gene_venn_plot)
+  return(retlst)
 }
 
 ## EOF

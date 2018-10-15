@@ -3,10 +3,10 @@ context("155normalize_convert.R:\n")
 ## 2018-04, exported functions in normalize_convert:
 ## convert_counts(), divide_seq(), hpgl_rpkm()
 
-pombe_expt <- sm(make_pombe_expt())
+pombe_expt <- make_pombe_expt()
 
 ## I will mostly access these functions from normalize_expt, so first invoke them from there.
-testing <- sm(normalize_expt(pombe_expt, convert="cpm"))
+testing <- normalize_expt(pombe_expt, convert="cpm")
 test_counts <- exprs(testing)
 
 expected <- c(0.51068105, 1.46820803, 0.00000000, 0.06383513, 2.36189987,

@@ -7,7 +7,7 @@ context("045annotation_shared.R:\n")
 ## So we will use this as a chance to call two of the more troublesome annotation loaders:
 ## a orgdb and biomart.
 
-testing <- sm(load_annotations(type="biomart", species="mmusculus"))
+testing <- load_annotations(type="biomart", species="mmusculus")
 expected <- c(122968, 12)
 actual <- dim(testing[["annotation"]])
 test_that("Do we get some data from load_annotations()?", {
@@ -15,8 +15,8 @@ test_that("Do we get some data from load_annotations()?", {
 })
 
 tmp <- testing[["annotation"]]
-testing <- sm(get_genesizes(annotation=tmp, type_column="gene_biotype",
-                            gene_type="protein_coding"))
+testing <- get_genesizes(annotation=tmp, type_column="gene_biotype",
+                         gene_type="protein_coding")
 actual <- head(testing[["gene_size"]])
 expected <- c(1065, 525, 753, 1701, 543, 1038)
 test_that("Do we get consistent gene sizes?", {

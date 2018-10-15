@@ -79,19 +79,20 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## shared metadata
   ## I wish I were this confident with %>% and transmute, I always get confused by them
-  shared_metadata <- dat %>% dplyr::transmute(
-                                      "BiocVersion"=as.character(BiocInstaller::biocVersion()),
-                                      "Genome"=sub(".gff", "", basename(.data[["URLgff"]])),
-                                      "NumGenes"=.data[["genecount"]],
-                                      "NumOrthologs"=.data[["orthologcount"]],
-                                      "SourceType"="GFF",
-                                      "SourceUrl"=.data[["URLgff"]],
-                                      "SourceVersion"=db_version,
-                                      "Species"=.data[["organism"]],
-                                      "TaxonomyId"=.data[["ncbi_tax_id"]],
-                                      "Coordinate_1_based"=TRUE,
-                                      "DataProvider"=.data[["project_id"]],
-                                      "Maintainer"="Keith Hughitt <khughitt@umd.edu>")
+  shared_metadata <- dat %>%
+    dplyr::transmute(
+             "BiocVersion" = as.character(BiocInstaller::biocVersion()),
+             "Genome" = sub(".gff", "", basename(.data[["URLgff"]])),
+             "NumGenes"=.data[["genecount"]],
+             "NumOrthologs" = .data[["orthologcount"]],
+             "SourceType" = "GFF",
+             "SourceUrl" = .data[["URLgff"]],
+             "SourceVersion" = db_version,
+             "Species" = .data[["organism"]],
+             "TaxonomyId" = .data[["ncbi_tax_id"]],
+             "Coordinate_1_based" = TRUE,
+             "DataProvider" = .data[["project_id"]],
+             "Maintainer" = "Keith Hughitt <khughitt@umd.edu>")
 
   ## Add project-specific tags for each entry
   shared_metadata[["Tags"]] <- sapply(shared_metadata[["DataProvider"]],

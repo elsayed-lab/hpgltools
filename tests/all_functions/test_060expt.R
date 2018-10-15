@@ -9,7 +9,7 @@ context("060expt.R:\n")
 ## S4 methods: exprs(), fData(), pData(), notes()
 
 ## make_pombe_expt() invokes create_expt()
-pombe_expt <- sm(make_pombe_expt())
+pombe_expt <- make_pombe_expt()
 chosen_genes <- c("SPAC212.11", "SPAC212.09c", "SPNCRNA.70",
                   "SPAC212.12", "SPAC212.04c", "SPAC212.03",
                   "SPAC212.02", "SPAC212.01c", "SPAC977.03")
@@ -68,9 +68,9 @@ test_that("Do we get a reasonable number of resulting samples if we collapse by 
 })
 
 ## exclude_genes_expt()
-no_rrna <- sm(exclude_genes_expt(pombe_expt,
-                                 column="gene_biotype",
-                                 patterns=c("ncRNA", "pseudogene")))
+no_rrna <- exclude_genes_expt(pombe_expt,
+                              column="gene_biotype",
+                              patterns=c("ncRNA", "pseudogene"))
 expected <- 5778
 actual <- nrow(exprs(no_rrna))
 test_that("Does exclude_genes_expt remove stuff?", {
@@ -94,7 +94,7 @@ test_that("Do we get expected features greater than some cutoffs?", {
 })
 
 ## make_exampledata()
-testing <- sm(DESeq2::counts(make_exampledata()))
+testing <- DESeq2::counts(make_exampledata())
 actual <- dim(testing)
 expected <- c(1000, 5)
 test_that("Do we get some example data from make_exampledata()?", {
@@ -103,7 +103,7 @@ test_that("Do we get some example data from make_exampledata()?", {
 })
 
 ## median_by_factor()
-medians <- sm(median_by_factor(pombe_expt))
+medians <- median_by_factor(pombe_expt)
 actual <- medians[chosen_genes, 1]
 expected <- c(8, 31, 0, 0, 21, 0, 0, 2, 0)
 test_that("Do we get expected medians?", {
@@ -160,8 +160,8 @@ test_that("Can we subset an expt?", {
 })
 
 ## what_happened()
-testing <- sm(normalize_expt(pombe_expt, transform="log2", norm="quant",
-                             convert="cpm", filter=TRUE, batch="sva"))
+testing <- normalize_expt(pombe_expt, transform="log2", norm="quant",
+                          convert="cpm", filter=TRUE, batch="sva")
 actual <- what_happened(testing)
 expected <- "log2(sva(cpm(quant(hpgl(data)))))"
 test_that("Will an expt tell us what happened to it?", {
@@ -169,7 +169,7 @@ test_that("Will an expt tell us what happened to it?", {
 })
 
 ## write_expt()
-testing <- sm(write_expt(pombe_expt, excel="testing_write_expt.xlsx"))
+testing <- write_expt(pombe_expt, excel="testing_write_expt.xlsx")
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))
 })

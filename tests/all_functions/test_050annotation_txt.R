@@ -4,7 +4,7 @@ context("050annotation_txt.R:\n")
 ## load_trinotate_annotations() load_trinotate_go()
 
 tmp <- system.file("sb/trinotate_head.csv.xz", package="hpgltools")
-testing <- sm(load_trinotate_annotations(trinotate=tmp))
+testing <- load_trinotate_annotations(trinotate=tmp)
 expected <- c(49999, 33)
 actual <- dim(testing)
 test_that("Do we get expected trinotate data?", {
@@ -13,7 +13,7 @@ test_that("Do we get expected trinotate data?", {
 })
 
 ## FIXME: The creation of this go table is not quite right I think.
-testing <- sm(load_trinotate_go(trinotate=tmp))
+testing <- load_trinotate_go(trinotate=tmp)
 expecteed <- c(136152, 5)
 actual <- dim(testing[["go_data"]])
 test_that("Do we get expected trinotate GO data?", {

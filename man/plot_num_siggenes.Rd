@@ -4,22 +4,21 @@
 \alias{plot_num_siggenes}
 \title{Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.}
 \usage{
-plot_num_siggenes(table, p_column = "limma_adjp",
-  fc_column = "limma_logfc", bins = 100, constant_p = 0.05,
-  constant_fc = 0)
+plot_num_siggenes(table, methods = c("limma", "edger", "deseq", "ebseq"),
+  bins = 100, constant_p = 0.05, constant_fc = 0)
 }
 \arguments{
 \item{table}{DE table to examine.}
-
-\item{p_column}{Column in the DE table defining the changing p-value cutoff.}
-
-\item{fc_column}{Column in the DE table defining the changing +/- log fold change.}
 
 \item{bins}{Number of incremental changes in p-value/FC to examine.}
 
 \item{constant_p}{When plotting changing FC, where should the p-value be held?}
 
 \item{constant_fc}{When plotting changing p, where should the FC be held?}
+
+\item{p_column}{Column in the DE table defining the changing p-value cutoff.}
+
+\item{fc_column}{Column in the DE table defining the changing +/- log fold change.}
 }
 \value{
 Plots and dataframes describing the changing definition of 'significant.'

@@ -7,12 +7,12 @@ pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-norm_expt <- sm(normalize_expt(pasilla_expt, transform="log2",
-                               norm="quant", filter=TRUE,
-                               convert="cbcbcpm"))
+norm_expt <- normalize_expt(pasilla_expt, transform="log2",
+                            norm="quant", filter=TRUE,
+                            convert="cbcbcpm")
 
-hpgl_pasilla_basic <- sm(basic_pairwise(pasilla_expt))
-hpgl_norm_basic <- sm(basic_pairwise(norm_expt))
+hpgl_pasilla_basic <- basic_pairwise(pasilla_expt)
+hpgl_norm_basic <- basic_pairwise(norm_expt)
 
 expected <- hpgl_pasilla_basic[["all_tables"]][[1]][["logFC"]]
 actual <- hpgl_norm_basic[["all_tables"]][[1]][["logFC"]]
@@ -38,12 +38,12 @@ test_that("Do we get the values for treated and untreated samples?", {
     expect_equal(expected_logfc, actual_logfc, tolerance=0.001)
 })
 
-basic_written <- sm(write_basic(hpgl_norm_basic, excel="basic_test.xlsx"))
+basic_written <- write_basic(hpgl_norm_basic, excel="basic_test.xlsx")
 test_that("Is it possible to write the results of a basic analysis?", {
     expect_true(file.exists("basic_test.xlsx"))
 })
 
-hpgl_basic <- sm(basic_pairwise(pasilla_expt))
+hpgl_basic <- basic_pairwise(pasilla_expt)
 save(list=ls(), file="de_basic.rda")
 
 end <- as.POSIXlt(Sys.time())
