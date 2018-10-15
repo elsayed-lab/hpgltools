@@ -1,22 +1,23 @@
 #' Given a genbank accession, make a txDb object along with sequences, etc.
 #'
-#' Let us admit it, sometimes biomart is a pain.  It also does not have easily accessible data for
-#' microbes.  Genbank does!
+#' Let us admit it, sometimes biomart is a pain.  It also does not have easily
+#' accessible data for microbes.  Genbank does!
 #'
 #' Tested in test_40ann_biomartgenbank.R and test_70expt_spyogenes.R
-#' This just sets some defaults for the genbankr service in order to facilitate downloading
-#' genomes and such from genbank and dumping them into a local txdb instance.
+#' This primarily sets some defaults for the genbankr service in order to
+#' facilitate downloading genomes from genbank and dumping them into a local
+#' txdb instance.
 #'
 #' @param accession Accession to download and import
 #' @param reread  Re-read (download) the file from genbank
-#' @param savetxdb  Save a txdb package from this? FIXME THIS DOES NOT WORK.
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
 #'  \code{\link[genbankr]{import}}
 #' @examples
 #' \dontrun{
-#'  txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
+#'  txdb_result <- load_genbank_annotations(accession="AE009948", savetxdb=TRUE)
 #' }
+#' @author atb
 #' @export
 load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
   gbk <- NULL
@@ -25,13 +26,10 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
     gbk <- genbankr::import(input_file)
     ## The file exists, read it
   } else {
+    ## Note that different versions of genbankr require somewhat different
+    ## methods of querying here.
     gba <- genbankr::GBAccession(accession)
     gbk <- genbankr::readGenBank(gba, partial=TRUE, verbose=TRUE)
-    ## Something here is fubar, it falls down with:
-    ## Error in split.default(text, fldnames) :
-    ## group length is 0 but data length > 0
-    ## gbk <- genbankr::readGenBank(file=input_file, partial=TRUE, verbose=TRUE)
-    ## gbk <- parseGenBank(input_file, partial=TRUE, verbose=TRUE, ret.anno=TRUE, ret.seq=TRUE)
   }
   gbr <- genbankr::makeTxDbFromGenBank(gbk)
   seq <- Biostrings::getSeq(gbk)
@@ -40,14 +38,10 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
   exons <- GenomicFeatures::exons(gbk)
   ## intergenic <- genbankr:::intergenic(gbk)
   cds <- GenomicFeatures::cds(gbk)
-  if (isTRUE(savetxdb)) {
-    message("The genbankr txdb objects are incomplete.  This does not work.")
-  }
   ret <- list(
     "others" = others,
     "exons" = exons,
     "cds" = cds,
-  ##  "intergenic" = intergenic,
     "genes" = genes,
     "txdb" = gbr,
     "seq" = seq)
@@ -59,9 +53,14 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 #' Maybe this should get pulled into the previous function?
 #'
 #' Tested in test_40ann_biomartgenbank.R
-#' This function should provide a quick reminder of how to use the AnnotationDbi select function
-#' if it does nothing else.  It also (hopefully helpfully) returns a granges object containing
-#' the essential information one might want for printing out a gff or whatever.
+#' This function should provide a quick reminder of how to use the AnnotationDbi
+#' select function if it does nothing else.  It also (hopefully helpfully)
+#' returns a granges object containing the essential information one might want
+#' for printing out a gff or whatever.
+#'
+#' I should revisit this function and improve the generated ranges objects to
+#' have better metadata columns via the mcols() function.  For examples of some
+#' useful tasks one can do here, check out snp.r.
 #'
 #' @param gbr TxDb object to poke at.
 #' @return Granges data
@@ -72,16 +71,18 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 #'  annotations <- gbk_annotations("saureus_txdb")
 #' }
 #' @export
+#' @author atb
 gbk_annotations <- function(gbr) {
   ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
   genes <- AnnotationDbi::keys(gbr)
   ## keytypes <- AnnotationDbi::keytypes(gbr)
   ## columns <- AnnotationDbi::columns(gbr)
-  lengths <- sm(AnnotationDbi::select(gbr,
-                                      ## columns=columns,
-                                      columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
-                                                "CDSSTRAND", "CDSID", "TXNAME"),
-                                      keys=genes, keytype="GENEID"))
+  lengths <- sm(AnnotationDbi::select(
+                                 gbr,
+                                 ## columns=columns,
+                                 columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
+                                           "CDSSTRAND", "CDSID", "TXNAME"),
+                                 keys=genes, keytype="GENEID"))
   ## keys=genes, keytype=keytypes))
   lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
   granges <- GenomicFeatures::transcripts(gbr)
@@ -93,8 +94,8 @@ gbk_annotations <- function(gbr) {
 #' This takes and downloads genbank accessions.
 #'
 #' Tested in test_40ann_biomartgenbank.R
-#' In this function I stole the same functionality from the ape package and set a few defaults
-#' so that it hopefully fails less often.
+#' In this function I stole the same functionality from the ape package and set
+#' a few defaults so that it hopefully fails less often.
 #'
 #' @param accessions An accession -- actually a set of them.
 #' @param write  Write the files?  Otherwise return a list of the strings
@@ -104,6 +105,7 @@ gbk_annotations <- function(gbr) {
 #' \dontrun{
 #'  gbk_file <- download_gbk(accessions=c("AE009949","AE009948"))
 #' }
+#' @author The ape authors with some modifications by atb.
 #' @export
 download_gbk <- function(accessions="AE009949", write=TRUE) {
   num_acc <- length(accessions)

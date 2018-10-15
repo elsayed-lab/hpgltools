@@ -20,13 +20,17 @@
 #' @param gene_requests  Set of columns to query for description-ish annotations.
 #' @param length_requests  Set of columns to query for location-ish annotations.
 #' @param include_lengths  Also perform a search on structural elements in the genome?
-#' @return Df of some (by default) human annotations.
+#' @return List containing:   a data frame of the found annotations, a copy of
+#'   the mart instance to help with finding problems, the hostname queried, the
+#'   name of the mart queried, a vector of rows queried, vector of the available
+#'   attributes, and the ensembl dataset queried.
 #' @seealso \pkg{biomaRt}
 #'  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 #' @examples
 #' \dontrun{
 #'  tt = get_biomart_annotations()
 #' }
+#' @author atb
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                      host="dec2016.archive.ensembl.org", drop_haplotypes=TRUE,
@@ -201,13 +205,17 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
 #' @param secondtry The newer mart name.
 #' @param dl_rows  List of rows from the final biomart object to download.
 #' @param dl_rowsv2  A second list of potential rows.
-#' @return Df of geneIDs and GOIDs.
+#' @return List containing the following:  data frame of ontology data, a copy
+#'   of the biomart instance for further querying, the host queried, the biomart
+#'   queried, a vector providing the attributes queried, and the ensembl dataset
+#'   queried.
 #' @seealso \pkg{biomaRt}
 #'  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}} \code{\link[biomaRt]{getBM}}
 #' @examples
 #' \dontrun{
 #'  tt = get_biomart_ontologies()
 #' }
+#' @author atb
 #' @export
 load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                             host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
@@ -303,7 +311,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
     "mart" = ensembl,
     "host" = host,
     "mart_name" = used_mart,
-    "rows" = dl_rows,
+    "attributes" = dl_rows,
     "dataset" = chosen_dataset
   )
   return(biomart_go)
@@ -338,6 +346,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #'  ## Hopefully the defaults are sufficient to translate from human to mouse.
 #'  yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus', second_species='scerevisiae')
 #' }
+#' @author atb
 #' @export
 load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
                                    second_species="mmusculus",

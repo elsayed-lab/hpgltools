@@ -1,4 +1,4 @@
-#' Given some psi and tpm data, make a pretty plot!
+a#' Given some psi and tpm data, make a pretty plot!
 #'
 #' This should take either a dataframe or filename for the psi data from suppa,
 #' along with the same for the average log tpm data (acquired from suppa

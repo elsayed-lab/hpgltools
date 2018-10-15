@@ -12,10 +12,10 @@
 #'  annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
 #'  expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
 #' }
+#' @author atb
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
-  big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
-  split_data <- data.table::as.data.table(big_table)
+  split_table <- readr::read_csv(trinotate, sep="\t")
   .data <- NULL  ## Shut up, R CMD check
 
   split_data <- split_data %>%
@@ -162,9 +162,10 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
 #' \dontrun{
 #'  go_lst <- load_trinotate_go("trinotate.csv.xz")
 #' }
+#' @author atb
 #' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
-  big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
+  big_table <- readr::read_csv(trinotate, sep="\t", stringsAsFactors=FALSE)
   big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
 
   go_data <- big_table[, c("X.gene_id", "transcript_id", "gene_ontology_blast",

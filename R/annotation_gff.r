@@ -1,14 +1,18 @@
 #' Extract annotation information from a gff file into an irange object.
 #'
-#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
-#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
-#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
-#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
-#' valid from rtracklayer, so this does that for me, I have another function which returns the
-#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
-#' sometimes those functions fail in unpredictable ways.
+#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff
+#' files from various sources: yeastgenome.org, microbesonline, tritrypdb, ucsc,
+#' ncbi. To my eyes, they all look like reasonably good gff3 files, but some of
+#' them must be loaded with import.gff2, import.gff3, etc.  That is super
+#' annoying. Also, I pretty much always just do as.data.frame() when I get
+#' something valid from rtracklayer, so this does that for me, I have another
+#' function which returns the iranges etc.  This function wraps
+#' import.gff/import.gff3/import.gff2 calls in try() because sometimes those
+#' functions fail in unpredictable ways.
 #'
-#' This is essentially load_gff_annotations(), but returns data suitable for getSet()
+#' This is essentially load_gff_annotations(), but returns data suitable for
+#' getSet()  This is another place which should be revisited for improvements
+#' via mcols().  Check snp.r. for ideas.
 #'
 #' @param gff Gff filename.
 #' @param type Subset to extract.
@@ -22,6 +26,7 @@
 #'  cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
 #'  cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
 #' }
+#' @author atb
 #' @export
 gff2irange <- function(gff, type=NULL) {
   ret <- NULL
@@ -47,13 +52,15 @@ gff2irange <- function(gff, type=NULL) {
 
 #' Extract annotation information from a gff file into a df
 #'
-#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff files from various
-#' sources: yeastgenome.org, microbesonline, tritrypdb, ucsc, ncbi. To my eyes, they all look like
-#' reasonably good gff3 files, but some of them must be loaded with import.gff2, import.gff3, etc.
-#' That is super annoying. Also, I pretty much always just do as.data.frame() when I get something
-#' valid from rtracklayer, so this does that for me, I have another function which returns the
-#' iranges etc.  This function wraps import.gff/import.gff3/import.gff2 calls in try() because
-#' sometimes those functions fail in unpredictable ways.
+#' Try to make import.gff a little more robust; I acquire (hopefully) valid gff
+#' files from various sources: yeastgenome.org, microbesonline, tritrypdb, ucsc,
+#' ncbi. To my eyes, they all look like reasonably good gff3 files, but some of
+#' them must be loaded with import.gff2, import.gff3, etc. That is super
+#' annoying. Also, I pretty much always just do as.data.frame() when I get
+#' something valid from rtracklayer, so this does that for me, I have another
+#' function which returns the iranges etc.  This function wraps
+#' import.gff/import.gff3/import.gff2 calls in try() because sometimes those
+#' functions fail in unpredictable ways.
 #'
 #' @param gff Gff filename.
 #' @param type Subset the gff file for entries of a specific type.
@@ -69,6 +76,7 @@ gff2irange <- function(gff, type=NULL) {
 #' \dontrun{
 #'  funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
 #' }
+#' @author atb
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL, row.names=NULL) {
@@ -146,23 +154,29 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 
 #' Find how many times a given pattern occurs in every gene of a genome.
 #'
-#' There are times when knowing how many times a given string appears in a genome/CDS is helpful.
-#' This function provides that information and is primarily used by cp_seq_m().
+#' There are times when knowing how many times a given string appears in a
+#' genome/CDS is helpful. This function provides that information and is
+#' primarily used by cp_seq_m().
+#'
+#' This is once again a place where mcols() usage might improve the overall
+#' quality of life.
 #'
 #' @param fasta Genome sequence.
-#' @param gff Gff of annotation information from which to acquire CDS (if not provided it will just
-#'  query the entire genome).
-#' @param pattern What to search for? This was used for tnseq and TA is the mariner insertion point.
+#' @param gff Gff of annotation information from which to acquire CDS (if not
+#'   provided it will just query the entire genome).
+#' @param pattern What to search for? This was used for tnseq and TA is the
+#'   mariner insertion point.
 #' @param type Column to use in the gff file.
 #' @param key What type of entry of the gff file to key from?
 #' @return Data frame of gene names and number of times the pattern appears/gene.
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
-#'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}} \code{\link[Biostrings]{PDict}}
-#'  \code{\link[Biostrings]{vcountPDict}}
+#'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+#'  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
 #' @examples
 #' \dontrun{
-#'  num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+#'  num_pattern <- pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
+#' @author atb
 #' @export
 pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -200,11 +214,12 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 
 #' Gather some simple sequence attributes.
 #'
-#' This extends the logic of the pattern searching in pattern_count_genome() to search on some other
-#' attributes.
+#' This extends the logic of the pattern searching in pattern_count_genome() to
+#' search on some other attributes.
 #'
 #' @param fasta Genome encoded as a fasta file.
-#' @param gff Optional gff of annotations (if not provided it will just ask the whole genome).
+#' @param gff Optional gff of annotations (if not provided it will just ask the
+#'   whole genome).
 #' @param type Column of the gff file to use.
 #' @param key What type of entry of the gff file to key from?
 #' @return List of data frames containing gc/at/gt/ac contents.
@@ -214,6 +229,7 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #' \dontrun{
 #'  num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
+#' @author atb
 #' @export
 sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -268,6 +284,7 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
 #' \dontrun{
 #' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 #' }
+#' @author Keith Hughitt with some modifications by atb.
 #' @export
 sum_exon_widths <- function(data=NULL, gff=NULL, annotdf=NULL,
                             parent="Parent", child="row.names") {
