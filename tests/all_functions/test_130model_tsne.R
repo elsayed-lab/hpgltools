@@ -1,4 +1,6 @@
 start <- as.POSIXlt(Sys.time())
+library(testthat)
+library(hpgltools)
 context("130model_tsne.R:\n")
 ## 2018-03, exported functions in model_tsne:
 ## plot_tsne_genes(), plot_tsne(), tsne_res()

@@ -542,51 +542,37 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
   down_nums <- reshape2::melt(down_nums, id.vars="fc")
   colnames(down_nums) <- c("fc", "method", "value")
 
-  ##putative_up_inflection <- inflection::findiplist(x=as.matrix(up_nums[[1]]),
-  ##                                                 y=as.matrix(up_nums[[2]]), 0)
-  ##up_point_num <- putative_up_inflection[2,1]
-  ##up_label <- paste0("At lfc=", signif(up_nums[up_point_num, ][["fc"]], 4), " and p=", constant_p,
-  ##                   ", ", up_nums[up_point_num, ][["num"]], " genes are de.")
   up_plot <- ggplot(data=up_nums, aes_string(x="fc", y="value", color="method")) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette="Set1") +
     ggplot2::scale_color_brewer(palette="Set1") +
-    ##ggplot2::geom_hline(yintercept=up_nums[[2]][[up_point_num]]) +
-    ##ggplot2::geom_vline(xintercept=up_nums[[1]][[up_point_num]]) +
-    ggplot2::geom_vline(xintercept=1.0, colour="red")
+    ggplot2::geom_vline(xintercept=1.0, colour="red") +
+    ggplot2::theme_bw(base_size=base_size)
 
-  ##putative_down_inflection <- inflection::findiplist(x=as.matrix(down_nums[[1]]), y=as.matrix(down_nums[[2]]), 0)
-  ##down_point_num <- putative_down_inflection[1, 2]
   down_plot <- ggplot(data=down_nums, aes_string(x="fc", y="value", color="method")) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette="Set1") +
     ggplot2::scale_color_brewer(palette="Set1") +
-    ##ggplot2::geom_hline(yintercept=down_nums[[2]][[down_point_num]]) +
-    ##ggplot2::geom_vline(xintercept=down_nums[[1]][[down_point_num]]) +
-    ggplot2::geom_vline(xintercept=-1.0, colour="red")
+    ggplot2::geom_vline(xintercept=-1.0, colour="red") +
+    ggplot2::theme_bw(base_size=base_size)
 
-  ##putative_pup_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  ##pup_point_num <- putative_pup_inflection[2, 1]
-  ##putative_pdown_inflection <- inflection::findiplist(x=as.matrix(p_nums[[1]]), y=as.matrix(p_nums[[2]]), 1)
-  ##pdown_point_num <- putative_pdown_inflection[2, 1]
   pup_plot <- ggplot(data=pup_nums, aes_string(x="p", y="value", color="method")) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette="Set1") +
     ggplot2::scale_color_brewer(palette="Set1") +
-    ggplot2::geom_vline(xintercept=0.05, colour="red")
+    ggplot2::geom_vline(xintercept=0.05, colour="red") +
+    ggplot2::theme_bw(base_size=base_size)
 
   pdown_plot <- ggplot(data=pdown_nums, aes_string(x="p", y="value", color="method")) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette="Set1") +
     ggplot2::scale_color_brewer(palette="Set1") +
-    ggplot2::geom_vline(xintercept=0.05, colour="red")
-    ##ggplot2::geom_hline(yintercept=p_nums[[2]][[pup_point_num]], colour="darkblue") +
-    ##ggplot2::geom_vline(xintercept=p_nums[[1]][[pup_point_num]], colour="black") +
-    ##ggplot2::geom_hline(yintercept=p_nums[[3]][[pdown_point_num]], colour="darkred")
+    ggplot2::geom_vline(xintercept=0.05, colour="red") +
+    ggplot2::theme_bw(base_size=base_size)
 
   retlist <- list(
     "up" = up_plot,
@@ -907,9 +893,10 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
     up <- as.data.frame(up)
     colnames(up) <- c("comparisons", "a_up_inner", "b_up_middle", "c_up_outer")
     uplist[[type]] <- up
-    up <- reshape2::melt(up, id.var="comparisons")
+    up <- suppressWarnings(reshape2::melt(up, id.var="comparisons"))
     up[["comparisons"]] <- factor(up[["comparisons"]], levels=comparisons)
-    up[["variable"]] <- factor(up[["variable"]],  levels=c("a_up_inner", "b_up_middle", "c_up_outer"))
+    up[["variable"]] <- factor(up[["variable"]],
+                               levels=c("a_up_inner", "b_up_middle", "c_up_outer"))
     up[["value"]] <- as.numeric(up[["value"]])
     ## Repeat with the set of down materials
     down <- cbind(comparisons, down_all[[type]], down_mid[[type]], down_max[[type]])
@@ -917,7 +904,7 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
     colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
     downlist[[type]] <- down
     colnames(down) <- c("comparisons", "a_down_inner", "b_down_middle", "c_down_outer")
-    down <- reshape2::melt(down, id.var="comparisons")
+    down <- suppressWarnings(reshape2::melt(down, id.var="comparisons"))
     down[["comparisons"]] <- factor(down[["comparisons"]], levels=comparisons)
     ##        down[["variable"]] <- factor(down[["variable"]],
     ##        levels=c("a_down_inner","b_down_middle","c_down_outer"))
@@ -928,7 +915,8 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
     down[["value"]] <- as.numeric(down[["value"]]) * -1
     tables_up[[type]] <- up
     tables_down[[type]] <- down
-    plots[[type]] <- plot_significant_bar(up, down, maximum=maximum, ...)
+    plots[[type]] <- plot_significant_bar(up, down, maximum=maximum,
+                                          ...)
     ## plots[[type]] <- plot_significant_bar(up, down, maximum=maximum) #, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
   retlist <- list(

@@ -1,5 +1,8 @@
 start <- as.POSIXlt(Sys.time())
-context("010annotation_eupathdb.R\n")
+library(testthat)
+library(hpgltools)
+context("010annotation_eupathdb.R
+  1\n")
 ## 2018-02: Hey, there is a new eupathdb release!  Some stuff has changed!
 ## 2017-12, exported functions in annotation_eupathdb:
 ##  make_eupath_bsgenome(), make_eupath_organismdbi() download_eupath_metadata(),
@@ -10,8 +13,9 @@ context("010annotation_eupathdb.R\n")
 
 testing <- download_eupath_metadata()
 ## Looks like 8 new species were added.
-expected <- c(319, 19)
+expected <- c(318, 19)
 actual <- dim(testing)
+## 01
 test_that("Is the eupathdb metadata the expected size?", {
   expect_equal(expected, actual)
 })

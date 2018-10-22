@@ -178,11 +178,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 
   original_pvalues <- NULL
   ## Add in a little work to re-adjust the p-values in the situation where sva was used
-  ## For the moment, DO NOT DO THIS BECAUSE YOU ARE TOO STUPID
   ## Only perform this f adjustment if you modify the data without making
   ## limma/deseq/edger aware of the modified model.  Ergo, if we feed sv_model to this
   ## function, then by definition, we do not want to use this function.
-  ## Instead, the opposite is true
   modified_data <- FALSE  ## Thus we will use modified_data to note the data was modified by sva.
   if (is.null(sv_model) & isTRUE(modified_data)) {
     original_pvalues <- data.table::data.table(rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
@@ -301,16 +299,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     original_pvalues <- as.data.frame(original_pvalues)
   } ## End checking if we should f-test modify the p-values
 
-  result_comparison <- list()
-  if (class(results[["limma"]]) == "list" &
-      class(results[["deseq"]]) == "list" &
-      class(results[["ebseq"]]) == "list" &
-      class(results[["edger"]]) == "list" &
-      class(results[["basic"]]) == "list") {
-    result_comparison <- correlate_de_tables(results=results,
-                                             annot_df=annot_df,
-                                             ...)
-  }
+  result_comparison <- correlate_de_tables(results, annot_df=annot_df)
   ## The first few elements of this list are being passed through into the return
   ## So that if I use combine_tables() I can report in the resulting tables
   ## some information about what was performed.
@@ -854,13 +843,29 @@ both condition and batch? Using only a conditional model.")
 #'   comparison <- compare_de_results(first$combined, second$combined)
 #' }
 #' @export
-compare_de_results <- function(first, second, cor_method="pearson") {
+compare_de_results <- function(first, second, cor_method="pearson",
+                               try_methods=c("limma", "deseq", "edger", "ebseq", "basic")) {
+
   result <- list()
   logfc_result <- list()
   p_result <- list()
   adjp_result <- list()
   comparisons <- c("logfc", "p", "adjp")
-  methods <- c("limma", "deseq", "edger", "ebseq", "basic")
+  methods <- c()
+  for (m in 1:length(try_methods)) {
+    method <- try_methods[m]
+    message("Testing method: ", method, ".")
+    test_column <- paste0(method, "_logfc")
+    if (is.null(first[["data"]][[1]][[test_column]])) {
+      message("The first datum is missing method: ", method, ".")
+    } else if (is.null(second[["data"]][[1]][[test_column]])) {
+      message("The second datum is missing method: ", method, ".")
+    } else {
+      message("Adding method: ", method, " to the set.")
+      methods <- c(methods, method)
+    }
+  }
+
   for (m in 1:length(methods)) {
     method <- methods[m]
     result[[method]] <- list()
@@ -932,30 +937,30 @@ compare_de_results <- function(first, second, cor_method="pearson") {
 #'  fun = compare_led_tables(limma=l, deseq=d, edger=e)
 #' }
 #' @export
-correlate_de_tables <- function(results, annot_df=NULL, ...) {
-  arglist <- list(...)
+correlate_de_tables <- function(results, annot_df=NULL) {
   ## Fill each column/row of these with the correlation between tools for one contrast performed
   retlst <- list()
+  methods <- c()
   if (class(results[["limma"]]) == "list") {
     retlst[["limma"]] <- results[["limma"]][["all_tables"]]
+    methods <- c(methods, "limma")
   }
   if (class(results[["deseq"]]) == "list") {
     retlst[["deseq"]] <- results[["deseq"]][["all_tables"]]
+    methods <- c(methods, "deseq")
   }
   if (class(results[["edger"]]) == "list") {
     retlst[["edger"]] <- results[["edger"]][["all_tables"]]
+    methods <- c(methods, "edger")
   }
   if (class(results[["ebseq"]]) == "list") {
     retlst[["ebseq"]] <- results[["ebseq"]][["all_tables"]]
+    methods <- c(methods, "ebseq")
   }
   if (class(results[["basic"]]) == "list") {
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
+    methods <- c(methods, "basic")
   }
-
-  ## Set up the group of methods to test.
-  test_methods <- c("limma", "edger", "deseq", "ebseq", "basic")
-  method_idx <- test_methods %in% names(retlst)
-  methods <- test_methods[method_idx]
 
   complst <- list()
   plotlst <- list()
@@ -1110,196 +1115,49 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param contrasts  A list of contrasts to compare.
 #' @export
 compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
-                                          contrasts=c(1, 2, 3)) {
+                                          weights=FALSE, contrasts=c(1, 2, 3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
-  if (length(contrasts) == 2) {
-    first <- contrasts[[1]]
-    f_name <- contrast_names[[1]]
-    second <- contrasts[[2]]
-    s_name <- contrast_names[[2]]
-    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[first]])
-    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[second]])
-    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[first]])
-    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[second]])
-
-    first_solo_up_idx <- ! first_up_genes %in% second_up_genes
-    first_solo_up <- first_up_genes[first_solo_up_idx]
-    f_shared_s_idx <- first_up_genes %in% second_up_genes
-    f_shared_s_up <- first_up_genes[f_shared_s_idx]
-    second_solo_up_idx <- ! second_up_genes %in% first_up_genes
-    second_solo_up <- second_up_genes[second_solo_up_idx]
-
-    first_solo_down_idx <- ! first_down_genes %in% second_down_genes
-    first_solo_down <- first_down_genes[first_solo_down_idx]
-    f_shared_s_idx <- first_down_genes %in% second_down_genes
-    f_shared_s_down <- first_down_genes[f_shared_s_idx]
-    second_solo_down_idx <- ! second_down_genes %in% first_down_genes
-    second_solo_down <- second_down_genes[second_solo_down_idx]
-
-    first_solo_up_name <- paste0(f_name, "_solo_up")
-    second_solo_up_name <- paste0(s_name, "_solo_up")
-    first_solo_down_name <- paste0(f_name, "_solo_down")
-    second_solo_down_name <- paste0(s_name, "_solo_down")
-    shared_up_name <- paste0(f_name, "_", s_name, "_shared_up")
-    shared_down_name <- paste0(f_name, "_", s_name, "_shared_down")
-    retlist <- list(
-      "first_solo_up_name" = sig_tables[[compare_by]][["ups"]][[first]][first_solo_up, ],
-      "second_solo_up_name" = sig_tables[[compare_by]][["ups"]][[second]][second_solo_up, ],
-      "shared_up_name" = sig_tables[[compare_by]][["ups"]][[first]][f_shared_s_up, ],
-      "first_solo_down_name" = sig_tables[[compare_by]][["downs"]][[first]][first_solo_down, ],
-      "second_solo_down_name" = sig_tables[[compare_by]][["downs"]][[second]][second_solo_down, ],
-      "shared_down_name" = sig_tables[[compare_by]][["downs"]][[first]][f_shared_s_down, ])
-    retlist[["up_weights"]] <- c(0,
-                                 nrow(retlist[[first_solo_up_name]]),
-                                 nrow(retlist[[second_solo_up_name]]),
-                                 nrow(retlist[[shared_up_name]]))
-    retlist[["down_weights"]] <- c(0,
-                                   nrow(retlist[[first_solo_down_name]]),
-                                   nrow(retlist[[second_solo_down_name]]),
-                                   nrow(retlist[[shared_down_name]]))
-    retlist[["up_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
-                                             Weight = retlist[["up_weights"]])
-    retlist[["down_venn"]] <- Vennerable::Venn(SetNames = c("sh", "chr"),
-                                               Weight = retlist[["down_weights"]])
-    names(retlist) <- c(first_solo_up_name, second_solo_up_name, shared_up_name,
-                        first_solo_down_name, second_solo_down_name, shared_down_name,
-                        "up_weights", "down_weights", "up_venn", "down_venn")
-  } else if (length(contrasts) == 3) {
-    first <- contrasts[[1]]
-    f_name <- contrast_names[[first]]
-    second <- contrasts[[2]]
-    s_name <- contrast_names[[second]]
-    third <- contrasts[[3]]
-    t_name <- contrast_names[[third]]
-    first_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[f_name]])
-    second_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[s_name]])
-    third_up_genes <- rownames(sig_tables[[compare_by]][["ups"]][[t_name]])
-    first_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[f_name]])
-    second_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[s_name]])
-    third_down_genes <- rownames(sig_tables[[compare_by]][["downs"]][[t_name]])
-
-    first_solo_up_idx <- (! first_up_genes %in% second_up_genes) &
-      (! first_up_genes %in% third_up_genes)
-    first_solo_up <- first_up_genes[first_solo_up_idx]
-    first_solo_down_idx <- (! first_down_genes %in% second_down_genes) &
-      (! first_down_genes %in% third_down_genes)
-    first_solo_down <- first_down_genes[first_solo_down_idx]
-
-    second_solo_up_idx <- (! second_up_genes %in% first_up_genes) &
-      (! second_up_genes %in% third_up_genes)
-    second_solo_up <- second_up_genes[second_solo_up_idx]
-    second_solo_down_idx <- (! second_down_genes %in% first_down_genes) &
-      (! second_down_genes %in% third_down_genes)
-    second_solo_down <- second_down_genes[second_solo_down_idx]
-
-    third_solo_up_idx <- (! third_up_genes %in% first_up_genes) &
-      (! third_up_genes %in% second_up_genes)
-    third_solo_up <- third_up_genes[second_solo_up_idx]
-    third_solo_down_idx <- (! third_down_genes %in% first_down_genes) &
-      (! third_down_genes %in% second_down_genes)
-    third_solo_down <- third_down_genes[second_solo_down_idx]
-
-    fs_up_idx <- (first_up_genes %in% second_up_genes)
-    fs_up <- first_up_genes[fs_up_idx]
-    fs_up_idx <- ! fs_up %in% third_up_genes
-    fs_up <- first_up_genes[fs_up_idx]
-    fs_down_idx <- (first_down_genes %in% second_down_genes)
-    fs_down <- first_down_genes[fs_down_idx]
-    fs_down_idx <- ! fs_down %in% third_down_genes
-    fs_down <- first_down_genes[fs_down_idx]
-
-    st_up_idx <- (second_up_genes %in% third_up_genes)
-    st_up <- second_up_genes[st_up_idx]
-    st_up_idx <- ! st_up %in% first_up_genes
-    st_up <- second_up_genes[st_up_idx]
-    st_down_idx <- (second_down_genes %in% third_down_genes)
-    st_down <- second_down_genes[st_down_idx]
-    st_down_idx <- ! st_down %in% first_down_genes
-    st_down <- second_down_genes[st_down_idx]
-
-    ft_up_idx <- (first_up_genes %in% third_up_genes)
-    ft_up <- first_up_genes[ft_up_idx]
-    ft_up_idx <- ! ft_up %in% second_up_genes
-    ft_up <- first_up_genes[ft_up_idx]
-    ft_down_idx <- (first_down_genes %in% third_down_genes)
-    ft_down <- first_down_genes[ft_down_idx]
-    ft_down_idx <- ! ft_down %in% second_down_genes
-    ft_down <- first_down_genes[ft_down_idx]
-
-    shared_up_idx <- (first_up_genes %in% second_up_genes) &
-      (first_up_genes %in% third_up_genes)
-    shared_up <- first_up_genes[shared_up_idx]
-    shared_down_idx <- (first_down_genes %in% second_down_genes) &
-      (first_down_genes %in% third_down_genes)
-    shared_down <- first_down_genes[shared_down_idx]
-
-    first_solo_up_name <- paste0(f_name, "_solo_up")
-    second_solo_up_name <- paste0(s_name, "_solo_up")
-    third_solo_up_name <- paste0(t_name, "_solo_up")
-    fs_up_name <- paste0(f_name, "_", s_name, "_up")
-    st_up_name <- paste0(s_name, "_", t_name, "_up")
-    ft_up_name <- paste0(f_name, "_", t_name, "_up")
-    shared_up_name <- "shared_up"
-
-    first_solo_down_name <- paste0(f_name, "_solo_down")
-    second_solo_down_name <- paste0(s_name, "_solo_down")
-    third_solo_down_name <- paste0(t_name, "_solo_down")
-    fs_down_name <- paste0(f_name, "_", s_name, "_down")
-    st_down_name <- paste0(s_name, "_", t_name, "_down")
-    ft_down_name <- paste0(f_name, "_", t_name, "_down")
-    shared_down_name <- "shared_down"
-
-    up_weights <- c(0, length(first_solo_up),
-                    length(second_solo_up), length(third_solo_up),
-                    length(fs_up), length(st_up), length(ft_up), length(shared_up))
-    down_weights <- c(0, length(first_solo_down),
-                      length(second_solo_down), length(third_solo_down),
-                      length(fs_down), length(st_down), length(ft_down), length(shared_down))
-    up_venn <- Vennerable::Venn(SetNames=c(first_solo_up_name,
-                                           second_solo_up_name,
-                                           third_solo_up_name),
-                                Weight=up_weights)
-    up_venn_result <- Vennerable::plot(up_venn, doWeights=FALSE)
-    up_venn_plot <- recordPlot()
-    down_venn <- Vennerable::Venn(SetNames=c(first_solo_down_name,
-                                             second_solo_down_name,
-                                             third_solo_down_name),
-                                  Weight=down_weights)
-    down_venn_result <- Vennerable::plot(down_venn, doWeights=FALSE)
-    down_venn_plot <- recordPlot()
-
-    retlist <- list(
-      "first_solo_up_name" = sig_tables[[compare_by]][["ups"]][[first]][first_solo_up, ],
-      "second_solo_up_name" = sig_tables[[compare_by]][["ups"]][[second]][second_solo_up, ],
-      "third_solo_up_name" = sig_tables[[compare_by]][["ups"]][[third]][third_solo_up, ],
-      "fs_up_name" = sig_tables[[compare_by]][["ups"]][[first]][fs_up, ],
-      "st_up_name" = sig_tables[[compare_by]][["ups"]][[second]][st_up, ],
-      "ft_up_name" = sig_tables[[compare_by]][["ups"]][[third]][ft_up, ],
-      "shared_up_name" = sig_tables[[compare_by]][["ups"]][[first]][shared_up, ],
-      "first_solo_down_name" = sig_tables[[compare_by]][["downs"]][[first]][first_solo_down, ],
-      "second_solo_down_name" = sig_tables[[compare_by]][["downs"]][[second]][second_solo_down, ],
-      "third_solo_down_name" = sig_tables[[compare_by]][["downs"]][[third]][third_solo_down, ],
-      "fs_down_name" = sig_tables[[compare_by]][["downs"]][[first]][fs_down, ],
-      "st_down_name" = sig_tables[[compare_by]][["downs"]][[second]][st_down, ],
-      "ft_down_name" = sig_tables[[compare_by]][["downs"]][[third]][ft_down, ],
-      "shared_down_name" = sig_tables[[compare_by]][["downs"]][[first]][shared_down, ],
-      "up_weights" = up_weights,
-      "down_weights" = down_weights,
-      "up_venn" = up_venn_result,
-      "down_venn" = down_venn_result)
-    names(retlist) <- c(
-      first_solo_up_name, second_solo_up_name, third_solo_up_name,
-      fs_up_name, st_up_name, ft_up_name, shared_up_name,
-      first_solo_down_name, second_solo_down_name, third_solo_down_name,
-      fs_down_name, st_down_name, ft_down_name, shared_down_name,
-      "up_weights", "down_weights", "up_venn", "down_venn")
-    retlist[["up_venn_plot"]] <- up_venn_plot
-    retlist[["down_venn_plot"]] <- down_venn_plot
-  } else {
-    stop("Currently this handles only 2 or 3 contrasts.")
+  for (i in 1:length(contrasts)) {
+    contr <- contrasts[i]
+    if (is.numeric(contr)) {
+      contrasts[i] <- contrast_names[i]
+    } else if (!is.na(sm(as.numeric(contr)))) {
+      ## If one changes one number to character, then they all get recast, ergo this foolishness.
+      contrasts[i] <- contrast_names[i]
+    }
   }
-  return(retlist)
+  up_lst <- list()
+  down_lst <- list()
+  for (c in 1:length(contrasts)) {
+    contr <- contrasts[c]
+    up_lst[[contr]] <- rownames(sig_tables[[compare_by]][["ups"]][[contr]])
+    down_lst[[contr]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
+  }
+
+  up_venn <- Vennerable::Venn(Sets=up_lst)
+  up_intersect <- rename_vennerable_intersections(up_venn, up_lst)
+  down_venn <- Vennerable::Venn(Sets=down_lst)
+  down_intersect <- rename_vennerable_intersections(down_venn, down_lst)
+
+  up_tables <- get_vennerable_rows(sig_tables[[compare_by]][["ups"]], up_intersect)
+  down_tables <- get_vennerable_rows(sig_tables[[compare_by]][["downs"]], down_intersect)
+
+  up_plot <- Vennerable::plot(up_venn, doWeights=weights)
+  up_plot <- grDevices::recordPlot(up_plot)
+  down_plot <- Vennerable::plot(down_venn, doWeights=weights)
+  down_plot <- grDevices::recordPlot(down_plot)
+
+  retlst <- list(
+    "up_intersections" = up_intersect,
+    "down_intersections" = down_intersect,
+    "up_venn" = up_venn,
+    "down_venn" = down_venn,
+    "up_tables" = up_tables,
+    "down_tables" = down_tables,
+    "up_plot" = up_plot,
+    "down_plot" = down_plot)
+  return(retlst)
 }
 
 #' Test for infected/control/beads -- a placebo effect?

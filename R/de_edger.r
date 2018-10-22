@@ -92,7 +92,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   ## raw <- edgeR::DGEList(counts=data, group=conditions)
   ## norm <- edgeR::calcNormFactors(raw)
   norm <- import_edger(data, conditions, tximport=input[["tximport"]][["raw"]])
-  message("EdgeR step 1/9: importing and normalizing data.")
+  message("EdgeR step 1/9: Importing and normalizing data.")
   final_norm <- NULL
   if (edger_method == "short") {
     message("EdgeR steps 2 through 6/9: All in one!")

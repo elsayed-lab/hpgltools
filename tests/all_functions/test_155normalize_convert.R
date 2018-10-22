@@ -1,4 +1,6 @@
 start <- as.POSIXlt(Sys.time())
+library(testthat)
+library(hpgltools)
 context("155normalize_convert.R:\n")
 ## 2018-04, exported functions in normalize_convert:
 ## convert_counts(), divide_seq(), hpgl_rpkm()

@@ -4,10 +4,12 @@
 \alias{get_git_commit}
 \title{Get the current git commit for hpgltools}
 \usage{
-get_git_commit(gitdir = "~/hpgltools")
+get_git_commit(gitdir = "~/hpgltools", packrat = FALSE)
 }
 \arguments{
 \item{gitdir}{Directory containing the git repository.}
+
+\item{packrat}{Is this tree under packrat control?}
 }
 \description{
 One might reasonably ask about this function: "Why?"  I invoke this function

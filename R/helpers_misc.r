@@ -214,8 +214,9 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #' get the exact state of all the packages, too!
 #'
 #' @param gitdir  Directory containing the git repository.
+#' @param packrat  Is this tree under packrat control?
 #' @export
-get_git_commit <- function(gitdir="~/hpgltools") {
+get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
   cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
   commit_result <- system(cmdline, intern=TRUE)
   cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
@@ -224,7 +225,9 @@ get_git_commit <- function(gitdir="~/hpgltools") {
   message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
   message("> git reset ", commit_result)
-  message("R> packrat::restore()")
+  if (isTRUE(packrat)) {
+    message("R> packrat::restore()")
+  }
   return(result)
 }
 

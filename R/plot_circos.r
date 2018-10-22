@@ -1157,7 +1157,7 @@ clean:
 
 ", circos)
   cat(makefile_string, file=output, sep="")
-  ## close(output)
+  close(out)
 
   make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
   make_target <- gsub(pattern="\\.conf", replacement="", x=make_target)

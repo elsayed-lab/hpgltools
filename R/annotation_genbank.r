@@ -102,7 +102,7 @@ gbk_annotations <- function(gbr) {
 #' @seealso \pkg{ape}
 #' @examples
 #' \dontrun{
-#'  gbk_file <- download_gbk(accessions=c("AE009949","AE009948"))
+#'  gbk_file <- download_gbk(accessions="AE009949")
 #' }
 #' @export
 download_gbk <- function(accessions="AE009949", write=TRUE) {
@@ -117,11 +117,12 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
     if (i == nrequest) {
       b <- num_acc
     }
+    accession <- accessions[i]
 
     url <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
                   paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
-    dl_file <- paste0(accessions[1], ".gb")
+    dl_file <- paste0(accession, ".gb")
     data <- try(download.file(url=url, destfile=dl_file, method="wget", quiet=TRUE))
     scanned <- NULL
     if (class(data) != "try-error") {
@@ -131,7 +132,7 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
       downloaded <- c(downloaded, scanned)
       num_downloaded <- num_downloaded + 1
     }
-    strings[i] <- downloaded
+    strings[[accession]] <- downloaded
     if (isTRUE(write)) {
       file_connection <- file(paste0(accessions[a], ".gb"))
       writeLines(downloaded, file_connection)

@@ -4,8 +4,8 @@
 \alias{combine_de_tables}
 \title{Combine portions of deseq/limma/edger table output.}
 \usage{
-combine_de_tables(all_pairwise_result, extra_annot = NULL,
-  excel = NULL, sig_excel = NULL, abundant_excel = NULL,
+combine_de_tables(apr, extra_annot = NULL, excel = NULL,
+  sig_excel = NULL, abundant_excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all", excludes = NULL, adjp = TRUE,
   include_limma = TRUE, include_deseq = TRUE, include_edger = TRUE,
@@ -14,7 +14,7 @@ combine_de_tables(all_pairwise_result, extra_annot = NULL,
   compare_plots = TRUE, padj_type = "fdr", ...)
 }
 \arguments{
-\item{all_pairwise_result}{Output from all_pairwise().}
+\item{apr}{Output from all_pairwise().}
 
 \item{extra_annot}{Add some annotation information?}
 

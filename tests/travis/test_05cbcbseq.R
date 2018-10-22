@@ -118,7 +118,9 @@ hpgl_svd <- hpgl_pca_info[["pca"]]
 cbcb_res <- cbcbSEQ::pcRes(cbcb_svd[["v"]], cbcb_svd[["d"]],
                            design[["condition"]], design[["libType"]])
 hpgl_res <- hpgl_pca_info[["res"]]
+colnames(cbcb_svd[["v"]]) <- paste0("PC", 1:ncol(cbcb_svd[["v"]]))
 expected <- cbcb_svd[["v"]]
+
 actual <- hpgl_svd[["v"]]
 test_that("Do calls to svd return the same data v->?", {
     expect_equal(expected, actual)

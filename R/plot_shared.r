@@ -135,17 +135,6 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   }
   ## First gather the necessary data for the various plots.
   old_options <- options(scipen=10)
-  ##old_options <- options(device = function(...) {
-  ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
-  ##})
-  ## Make sure to close any open plotting devices, as that would be too confusing.
-  ##if (!is.null(dev.list())) {
-  ##  all_devices <- names(dev.list())
-  ##  for (dev in names(dev.list())) {
-  ##    off_please <- dev.off()
-  ##  }
-  ##  message("Closing the ", toString(all_devices), " plotting device(s) before printing plots.")
-  ##}
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"
   boxplot_title <- "Boxplot"
@@ -172,30 +161,45 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
     cv_title <- paste0(cv_title, ": ", title_suffix)
     topn_title <- paste0(topn_title, ": ", title_suffix)
   }
+
+  ## I am putting the ... arguments on a separate line so that I can check that
+  ## each of these functions is working properly in an interactive session.
   message("Graphing number of non-zero genes with respect to CPM by library.")
-  nonzero <- try(plot_nonzero(expt, title=nonzero_title, ...))
+  nonzero <- try(plot_nonzero(expt, title=nonzero_title,
+                              ...))
   message("Graphing library sizes.")
-  libsize <- try(plot_libsize(expt, title=libsize_title, ...))
+  libsize <- try(plot_libsize(expt, title=libsize_title,
+                              ...))
   message("Graphing a boxplot.")
-  boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
+  boxplot <- try(plot_boxplot(expt, title=boxplot_title,
+                              ...))
   message("Graphing a correlation heatmap.")
-  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title, ...))
+  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title,
+                              ...))
   message("Graphing a standard median correlation.")
-  smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
+  smc <- try(plot_sm(expt, method=cormethod, title=smc_title,
+                     ...))
   message("Graphing a distance heatmap.")
-  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title, ...))
+  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title,
+                              ...))
   message("Graphing a standard median distance.")
-  smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
+  smd <- try(plot_sm(expt, method=distmethod, title=smd_title,
+                     ...))
   message("Graphing a PCA plot.")
-  pca <- try(plot_pca(expt, title=pca_title, ...))
+  pca <- try(plot_pca(expt, title=pca_title,
+                      ...))
   message("Graphing a T-SNE plot.")
-  tsne <- try(plot_tsne(expt, title=tsne_title, ...))
+  tsne <- try(plot_tsne(expt, title=tsne_title,
+                        ...))
   message("Plotting a density plot.")
-  density <- try(plot_density(expt, title=dens_title, ...))
+  density <- try(plot_density(expt, title=dens_title,
+                              ...))
   message("Plotting a CV plot.")
-  cv <- try(plot_variance_coefficients(expt, title=dens_title, ...))
+  cv <- try(plot_variance_coefficients(expt, title=dens_title,
+                                       ...))
   message("Plotting the representation of the top-n genes.")
-  topn <- try(plot_topn(expt, title=topn_title, ...))
+  topn <- try(plot_topn(expt, title=topn_title,
+                        ...))
   message("Printing a color to condition legend.")
   legend <- try(plot_legend(pca[["plot"]]))
 

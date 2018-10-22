@@ -207,7 +207,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
   }
 
-  message("Plotting dispersions.")
   dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
   dispersion_plot <- NULL
   if (class(dispersions)[[1]] != "try-error") {

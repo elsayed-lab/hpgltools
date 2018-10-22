@@ -1,4 +1,6 @@
 start <- as.POSIXlt(Sys.time())
+library(testthat)
+library(hpgltools)
 context("145nmer.R:\n")
 ## 2017-12, exported functions in annotation_gff:
 

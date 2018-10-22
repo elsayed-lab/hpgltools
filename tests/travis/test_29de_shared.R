@@ -21,11 +21,11 @@ normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant",
 
 ## Interestingly, doParallel does not work when run from packrat.
 test_keepers <- list("treatment" = c("treated", "untreated"))
-hpgl_all <- all_pairwise(pasilla_expt, parallel=FALSE,
-                         keepers=test_keepers,
-                         combined_excel="excel_test.xlsx")
-combined_excel <- hpgl_all[["combined"]]
+hpgl_all <- sm(all_pairwise(pasilla_expt,
+                            keepers=test_keepers,
+                            combined_excel="excel_test.xlsx"))
 
+combined_excel <- hpgl_all[["combined"]]
 test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("excel_test.xlsx"))
 })
@@ -73,7 +73,7 @@ lb <- hpgl_all[["comparison"]][["comp"]][[4]]
 eb <- hpgl_all[["comparison"]][["comp"]][[5]]
 db <- hpgl_all[["comparison"]][["comp"]][[6]]
 test_that("Are the comparisons between DE tools sufficiently similar? (limma/edger)", {
-    expect_gt(le, 0.96)
+    expect_gt(le, 0.95)
 })
 test_that("Are the comparisons between DE tools sufficiently similar? (limma/deseq)", {
     expect_gt(ld, 0.95)
@@ -148,14 +148,15 @@ test_that("Are the basic significant downs expected?", {
     expect_equal(expected, actual)
 })
 
+## I significantly changed the format of this function's output.
 funkytown <- plot_num_siggenes(combined_table[["data"]][[1]])
-expected <- c(4.79556, 4.74712, 4.69868, 4.65024, 4.60180, 4.55336)
+expected <- c(11.02373, 10.91238, 10.80103, 10.68968, 10.57833, 10.46698)
 actual <- as.numeric(head(funkytown[["up_data"]][[1]]))
 test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected, actual, tolerance=0.02)
 })
 
-expected <- c(-3.22938, -3.19676, -3.16414, -3.13152, -3.09890, -3.06628)
+expected <- c(-7.581495, -7.504914, -7.428333, -7.351752, -7.275172, -7.198591)
 actual <- as.numeric(head(funkytown[["down_data"]][[1]]))
 test_that("Can we monitor changing significance (up_fc)?", {
     expect_equal(expected, actual, tolerance=0.02)

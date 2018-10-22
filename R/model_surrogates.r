@@ -456,7 +456,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
 
   if (isTRUE(filter_it) & expt[["state"]][["filter"]] == "raw") {
     message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
-    expt <- sm(normalize_expt(expt, filter=filter_type, ...))
+    expt <- sm(normalize_expt(expt, filter=filter_type,
+                              ...))
   }
   pca_plots <- list()
   pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
@@ -511,7 +512,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     "ruv_empirical" = ruv_empirical[["model_adjust"]])
   batch_names <- c("condition", "batch", "pca", "sva_sup", "sva_unsup",
                    "ruv_sup", "ruv_resid", "ruv_emp")
-  silly <- testthat::compare(batch_names, batch_names)  ## I want to try something silly
+
   if (!is.null(extra_factors)) {
     for (fact in extra_factors) {
       if (!is.null(design[, fact])) {
@@ -529,93 +530,95 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
                    "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
                    "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                    "+ batch_adjustments$ruv_emp")
-  adjust_names <- c("null", "batch", "pca", "sva_sup", "sva_unsup",
-                    "ruv_sup", "ruv_resid", "ruv_emp")
+  adjust_names <- gsub(pattern="^.*adjustments\\$(.*)$", replacement="\\1", x=adjustments)
   starter <- edgeR::DGEList(counts=exprs(expt))
   norm_start <- edgeR::calcNormFactors(starter)
-  catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
-  names(catplots) <- adjust_names
-  tstats <- list()
 
-  ## First do a null adjust
-  adjust <- ""
-  counter <- 1
-  num_adjust <- length(adjustments)
-  message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with null in the model.")
-  modified_formula <- as.formula(paste0("~ condition ", adjust))
-  limma_design <- model.matrix(modified_formula, data=design)
-  voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
-  limma_fit <- limma::lmFit(voom_result, limma_design)
-  modified_fit <- limma::eBayes(limma_fit)
-  tstats[["null"]] <- abs(modified_fit[["t"]][, 2])
-  ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
-  ## This needs to be redone to take into account how I organized the adjustments!!!
-  num_adjust <- length(adjustments)
+
+  ## Create a baseline to compare against.
+  null_formula <- as.formula("~ condition ")
+  null_limma_design <- model.matrix(null_formula, data=design)
+  null_voom_result <- limma::voom(norm_start, null_limma_design, plot=FALSE)
+  null_limma_fit <- limma::lmFit(null_voom_result, null_limma_design)
+  null_fit <- limma::eBayes(null_limma_fit)
+  null_tstat <- null_fit[["t"]]
+  null_catplot <- NULL
   if (isTRUE(do_catplots)) {
+    if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+      ## ffpe has some requirements which do not install all the time.
+      tt <- please_install("ffpe")
+    }
     if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-      catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
-                                          -rank(tstats[["null"]]),
-                                          maxrank=1000,
-                                          make.plot=TRUE)
+      null_catplot <- ffpe::CATplot(-rank(null_tstat), -rank(null_tstat),
+                                    maxrank=1000, make.plot=TRUE)
     } else {
-      message("ffpe is not in the list of installed packages, not doing catplots.")
-      catplots[["null"]] <- NULL
+      catplots[[adjust_name]] <- NULL
     }
   }
-  oldpar <- par(mar=c(5, 5, 5, 5))
-  for (adjust in adjustments) {
-    counter <- counter + 1
-    if (counter == 2 & !isTRUE(do_batch)) {
-      message("A friendly reminder that there is only 1 batch in the data.")
-      tstats[[adjust]] <- NULL
-      catplots[[adjust]] <- NULL
-      next
-    }
-    message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ",
-            adjust, " in the model.")
-    modified_formula <- as.formula(paste0("~ condition ", adjust))
-    limma_design <- model.matrix(modified_formula, data=design)
-    voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
-    limma_fit <- limma::lmFit(voom_result, limma_design)
-    modified_fit <- limma::eBayes(limma_fit)
-    tstats[[adjust]] <- abs(modified_fit[["t"]][, 2])
-    ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-    catplot_together <- NULL
-    if (isTRUE(do_catplots)) {
-      if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-        ## ffpe has some requirements which do not install all the time.
-        tt <- please_install("ffpe")
-      }
-      if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-        catplots[[adjust]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
-                                            -rank(tstats[["null"]]),
-                                            maxrank=1000,
-                                            make.plot=TRUE)
-      } else {
-        catplots[[adjust]] <- NULL
-      }
-      plot(catplots[["null"]], ylim=c(0, 1), col="black",
-           lwd=3, type="l", xlab="Rank",
-           ylab="Concordance between study and different methods.")
-      catplot_colors <- list(
-        "pca" = "darkblue",
-        "sva_sup" = "red",
-        "sva_unsup" = "blue",
-        "ruv_sup" = "green",
-        "ruv_resid" = "orange",
-        "ruv_emp" = "purple")
 
-      for (method in 1:length(catplots)) {
-        type <- names(catplots)[[method]]
-        line_type <- method %% 3  ## 1,2,3,1,2,3...
-        if (type == "null") {
-          next
+  catplots <- vector("list", length(adjustments))  ## add 1 for a null adjustment
+  names(catplots) <- adjust_names
+  tstats <- list()
+  oldpar <- par(mar=c(5, 5, 5, 5))
+  num_adjust <- length(adjust_names)
+  ## Now perform other adjustments
+  for (a in 1:num_adjust) {
+    adjust_name <- adjust_names[a]
+    adjust <- adjustments[a]
+    if (adjust_name == "batch" & !isTRUE(do_batch)) {
+      message("A friendly reminder that there is only 1 batch in the data.")
+      tstats[[adjust_name]] <- null_tstat
+      catplots[[adjust_name]] <- null_catplot
+    } else {
+      message(a, "/", num_adjust, ": Performing lmFit(data) etc. with ",
+              adjust_name, " in the model.")
+      modified_formula <- as.formula(paste0("~ condition ", adjust))
+      limma_design <- model.matrix(modified_formula, data=design)
+      voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
+      limma_fit <- limma::lmFit(voom_result, limma_design)
+      modified_fit <- limma::eBayes(limma_fit)
+      tstats[[adjust_name]] <- modified_fit[["t"]]
+      ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
+      catplot_together <- NULL
+      if (isTRUE(do_catplots)) {
+        if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+          ## ffpe has some requirements which do not install all the time.
+          tt <- please_install("ffpe")
         }
-        lines(catplots[[type]], col=catplot_colors[[type]], lwd=3, lty=line_type)
+        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+          catplots[[adjust_name]] <- ffpe::CATplot(
+                                             rank(tstats[[adjust_name]]), rank(null_tstat),
+                                             maxrank=1000, make.plot=TRUE)
+        } else {
+          catplots[[adjust_name]] <- NULL
+        }
       }
-      catplot_together <- grDevices::recordPlot()
-      newpar <- par(oldpar)
-    } ## End checking whether to do catplots
+    }
+  } ## End for a in 2:length(adjustments)
+
+  ## Final catplot plotting, if necessary.
+  if (isTRUE(do_catplots)) {
+    catplot_df <- as.data.frame(catplots[[1]][[2]])
+    for (c in 2:length(catplots)) {
+      cat <- catplots[[c]]
+      catplot_df <- cbind(catplot_df, cat[["concordance"]])
+    }
+    colnames(catplot_df) <- names(catplots)
+    catplot_df[["x"]] <- rownames(catplot_df)
+    gg_catplot <- reshape2::melt(data=catplot_df, id.vars="x")
+    colnames(gg_catplot) <- c("x", "adjust", "y")
+    gg_catplot[["x"]] <- as.numeric(gg_catplot[["x"]])
+    gg_catplot[["y"]] <- as.numeric(gg_catplot[["y"]])
+
+    cat_plot <- ggplot(data=gg_catplot, mapping=aes_string(x="x", y="y", color="adjust")) +
+      ggplot2::geom_point() +
+      ggplot2::geom_jitter() +
+      ggplot2::geom_line() +
+      ggplot2::xlab("Rank") +
+      ggplot2::ylab("Concordance") +
+      ggplot2::theme_bw()
+  } else {
+    cat_plot <- NULL
   }
 
   ret <- list(
@@ -629,7 +632,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     "correlations" = correlations,
     "plot" = ret_plot,
     "pca_plots" = pca_plots,
-    "catplots" = catplot_together)
+    "catplots" = cat_plot)
   return(ret)
 }
 

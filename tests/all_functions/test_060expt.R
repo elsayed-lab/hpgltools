@@ -1,5 +1,8 @@
 start <- as.POSIXlt(Sys.time())
-context("060expt.R:\n")
+library(testthat)
+library(hpgltools)
+context("060expt.R:
+  1234567890123456789012345678901234567890123456789012345678901234567\n")
 ## Functions exported in expt.r
 ## make_pombe_expt(), create_expt(), concatenate_runs(), exclude_genes_expt(),
 ## features_greater_than(), make_exampledata(), median_by_factor(),
@@ -18,6 +21,7 @@ chosen_genes <- c("SPAC212.11", "SPAC212.09c", "SPNCRNA.70",
 testing <- fData(pombe_expt)
 actual <- dim(testing)
 expected <- c(7039, 10)
+## 0102
 test_that("Do we get annotation data from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -25,6 +29,7 @@ test_that("Do we get annotation data from our expt?", {
 actual <- testing[chosen_genes, "start_position"]
 expected <- c("1", "7619", "11027", "15855", "21381",
               "23589", "27353", "28738", "33835")
+## 03
 test_that("Do we get annotation data from our expt?", {
   expect_equal(actual, expected)
 })
@@ -33,6 +38,7 @@ test_that("Do we get annotation data from our expt?", {
 testing <- pData(pombe_expt)
 actual <- dim(testing)
 expected <- c(36, 8)
+## 0405
 test_that("Do we get experimental metadata from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -42,6 +48,7 @@ test_that("Do we get experimental metadata from our expt?", {
 testing <- exprs(pombe_expt)
 actual <- dim(testing)
 expected <- c(7039, 36)
+## 0607
 test_that("Do we get expression from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -49,6 +56,7 @@ test_that("Do we get expression from our expt?", {
 ## Check that the number distribution is what we expect
 actual <- as.numeric(summary(testing[, 1]))
 expected <- c(0.000, 46.000, 306.000, 2225.509, 869.000, 4542884.000)
+## 13
 test_that("Do we get expression from our expt?", {
   expect_equal(actual[1], expected[1], tolerance=0.001)
   expect_equal(actual[2], expected[2], tolerance=0.001)
@@ -62,6 +70,7 @@ test_that("Do we get expression from our expt?", {
 test_expt <- concatenate_runs(expt=pombe_expt, column="minute")
 actual <- dim(pData(test_expt))
 expected <- c(6,8)
+## 1415
 test_that("Do we get a reasonable number of resulting samples if we collapse by time?", {
   expect_equal(actual[1], expected[1], tolerance=0.001)
   expect_equal(actual[2], expected[2], tolerance=0.001)
@@ -73,6 +82,7 @@ no_rrna <- exclude_genes_expt(pombe_expt,
                               patterns=c("ncRNA", "pseudogene"))
 expected <- 5778
 actual <- nrow(exprs(no_rrna))
+## 16
 test_that("Does exclude_genes_expt remove stuff?", {
   expect_equal(actual, expected)
 })
@@ -84,6 +94,7 @@ testing_100 <- features_greater_than(pombe_expt, cutoff=100, hard=FALSE)
 testing_1000 <- features_greater_than(pombe_expt, cutoff=1000, hard=FALSE)
 testing_10000 <- features_greater_than(pombe_expt, cutoff=10000, hard=FALSE)
 testing_100000 <- features_greater_than(pombe_expt, cutoff=100000, hard=FALSE)
+## 22
 test_that("Do we get expected features greater than some cutoffs?", {
   expect_equal(as.numeric(testing_1[["number"]][1]), 6457)
   expect_equal(as.numeric(testing_10[["number"]][1]), 5974)
@@ -97,6 +108,7 @@ test_that("Do we get expected features greater than some cutoffs?", {
 testing <- DESeq2::counts(make_exampledata())
 actual <- dim(testing)
 expected <- c(1000, 5)
+## 2324
 test_that("Do we get some example data from make_exampledata()?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -106,6 +118,7 @@ test_that("Do we get some example data from make_exampledata()?", {
 medians <- median_by_factor(pombe_expt)
 actual <- medians[chosen_genes, 1]
 expected <- c(8, 31, 0, 0, 21, 0, 0, 2, 0)
+## 25
 test_that("Do we get expected medians?", {
   expect_equal(expected, actual)
 })
@@ -114,6 +127,7 @@ test_that("Do we get expected medians?", {
 new_batches <- c(rep(x="a", times=12), rep(x="b", times=12), rep(x="c", times=12))
 testing <- set_expt_batches(pombe_expt, fact=new_batches)
 actual <- pData(testing)[["batch"]]
+## 26
 test_that("Did we change the batches?", {
   expect_equal(new_batches, actual)
 })
@@ -126,6 +140,7 @@ old_expected <- c("#1B9E77", "#666666", "#7D8F31", "#7E6EA2", "#8E7037", "#93752
 new_actual <- levels(as.factor(testing$colors))
 new_expected <- c("#5C86AB", "#666666", "#7FC97F", "#8B3B99", "#9E5F33", "#A7B7B5",
                   "#CC4233", "#CFB2BE", "#DAE49D", "#EB0A75", "#F7BE8D", "#FEE290")
+## 2728
 test_that("Did we get some old/new colors?", {
   expect_equal(old_actual, old_expected)
   expect_equal(new_actual, new_expected)
@@ -135,6 +150,7 @@ test_that("Did we get some old/new colors?", {
 testing <- set_expt_conditions(pombe_expt, fact="minute")
 expected <- levels(pombe_expt[["design"]][["minute"]])
 actual <- levels(testing[["design"]][["condition"]])
+## 29
 test_that("Did we get some new conditions?", {
   expect_equal(actual, expected)
 })
@@ -145,6 +161,7 @@ test_that("Did we get some new conditions?", {
 ## set_expt_samplenames()
 newnames <- paste0(sampleNames(pombe_expt), "test")
 testing <- set_expt_samplenames(pombe_expt, newnames=newnames)
+## 30
 test_that("Can we change the same names?", {
   expect_equal(newnames, sampleNames(testing))
 })
@@ -155,21 +172,24 @@ actual <- sampleNames(testing)
 expected <- c("GSM1368273", "GSM1368276", "GSM1368279", "GSM1368282",
               "GSM1368285", "GSM1368288", "GSM1368291", "GSM1368294",
               "GSM1368297", "GSM1368300", "GSM1368303", "GSM1368306")
+## 31
 test_that("Can we subset an expt?", {
   expect_equal(expected, actual)
 })
 
 ## what_happened()
-testing <- normalize_expt(pombe_expt, transform="log2", norm="quant",
+testing <- normalize_expt(pombe_expt, transform="log2", norm="tmm",
                           convert="cpm", filter=TRUE, batch="sva")
 actual <- what_happened(testing)
-expected <- "log2(sva(cpm(quant(hpgl(data)))))"
+expected <- "log2(sva(cpm(tmm(hpgl(data)))))"
+## 32
 test_that("Will an expt tell us what happened to it?", {
   expect_equal(expected, actual)
 })
 
 ## write_expt()
 testing <- write_expt(pombe_expt, excel="testing_write_expt.xlsx")
+## 33
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))
 })
@@ -194,6 +214,7 @@ test_that("Did write_expt() create pictures?", {
   expect_equal("data.frame", class(testing[["raw_pca_table"]])[[1]])
   expect_equal("gg", class(testing[["raw_tsne"]])[[1]])
   expect_equal("data.frame", class(testing[["raw_tsne_table"]])[[1]])
+  ## 50
   expect_equal("gg", class(testing[["raw_scaled_pca"]])[[1]])
   expect_equal("data.frame", class(testing[["raw_scaled_pca_table"]])[[1]])
   expect_equal("gg", class(testing[["raw_scaled_tsne"]])[[1]])

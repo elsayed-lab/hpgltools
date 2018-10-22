@@ -158,8 +158,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata, ...)
-  ## sample_definitions <- extract_metadata(metadata)
+  ## sample_definitions <- extract_metadata(metadata=metadata, ...)
+  sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
   ## This is a just in case measure to avoid conflicts.
   if (is.null(file_column)) {
@@ -252,7 +252,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
     count_data <- read_counts_expt(sample_ids, filenames, ...)
-    ## count_data <- read_counts_expt(sample_ids, filenames)
+    ## count_data <- read_counts_expt(sample_ids, filenames, countdir=countdir)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -347,7 +347,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames="rownames")
-  } else if (class(gene_info)[[1]] == "data.table") {
+  } else if (class(gene_info)[[1]] == "data.table" | class(gene_info)[[1]] == "tbl_df") {
     ## Try to make the data table usage consistent by rownames.
     ## Sometimes we take these from data which did "keep.rownames='some_column'"
     ## Sometimes we take these from data which set rownames(dt)
@@ -356,8 +356,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## as a fallback take the first column in the data.
     if (is.null(rownames(gene_info)) & is.null(gene_info[["rownames"]])) {
       gene_info[["rownames"]] <- make.names(rownames[[1]], unique=TRUE)
-    } else if (!is.null(rownames(gene_info))) {
-      gene_info[["rownames"]] <- rownames(gene_info)
+      message("Both rownames() and $rownames were null.")
     }
   } else {
     gene_info <- data.table::as.data.table(gene_info, keep.rownames="rownames")

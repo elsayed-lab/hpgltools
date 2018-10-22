@@ -167,7 +167,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   } else if (class(length_db)[[1]] == "data.frame") {
     metadf <- length_db
   } else {
-    stop("This requires either the name of a goseq supported species or an orgdb instance.")
+    stop("Extracting lengths requires the name of a goseq supported species or an orgdb instance.")
   }
 
   ## Sometimes the column with gene lengths is named 'width'
@@ -236,7 +236,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## "'unimplemented type 'list' in 'orderVector1'"
   merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])
   merged_ids_lengths <- merge(merged_ids_lengths, de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
-  merged_ids_lengths[["length"]] <- as.numeric(merged_ids_lengths[["length"]])
+  merged_ids_lengths[["length"]] <- suppressWarnings(as.numeric(merged_ids_lengths[["length"]]))
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
   ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
   ## must be the same length as the vector

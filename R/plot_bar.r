@@ -454,12 +454,6 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
   sigbar_plot <- ggplot() +
     ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
     ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-    ## ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
-    ##                                     "b_up_middle"="lightskyblue",
-    ##                                     "c_up_outer"="dodgerblue",
-    ##                                     "a_down_inner"="plum1",
-    ##                                     "b_down_middle"="orchid",
-    ##                                     "c_down_outer"="purple4")) +
     ggplot2::scale_fill_manual(values=color_list) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size=base_size) +

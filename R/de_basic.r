@@ -97,10 +97,10 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NUL
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   message("Basic step 2/3: Performing ", total_contrasts, " comparisons.")
 
-  model_choice <- choose_model(
+  model_choice <- sm(choose_model(
     input, conditions=conditions, batches=batches, model_batch=FALSE,
     model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
-    ...)
+    ...))
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,

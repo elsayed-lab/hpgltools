@@ -9,7 +9,7 @@ read_metadata(file, ...)
 \arguments{
 \item{file}{Csv/xls file to read.}
 
-\item{...}{Arguments for arglist, used by sep, header and similar read.csv/read.table parameters.}
+\item{...}{Arguments for arglist, used by sep, header and similar read_csv/read.table parameters.}
 }
 \value{
 Df of metadata.

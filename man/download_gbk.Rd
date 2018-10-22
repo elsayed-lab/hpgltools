@@ -24,7 +24,7 @@ so that it hopefully fails less often.
 }
 \examples{
 \dontrun{
- gbk_file <- download_gbk(accessions=c("AE009949","AE009948"))
+ gbk_file <- download_gbk(accessions="AE009949")
 }
 }
 \seealso{

@@ -3,7 +3,7 @@
 #' This hopefully makes it easy to compare the outputs from
 #' limma/DESeq2/EdgeR on a table-by-table basis.
 #'
-#' @param all_pairwise_result  Output from all_pairwise().
+#' @param apr  Output from all_pairwise().
 #' @param extra_annot  Add some annotation information?
 #' @param excel  Filename for the excel workbook, or null if not printed.
 #' @param sig_excel  Filename for writing significant tables.
@@ -36,7 +36,7 @@
 #'                             excludes=list("description" = c("sno","rRNA")))
 #' }
 #' @export
-combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
+combine_de_tables <- function(apr, extra_annot=NULL,
                               excel=NULL, sig_excel=NULL, abundant_excel=NULL,
                               excel_title="Table SXXX: Combined Differential Expression of YYY",
                               keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
@@ -47,11 +47,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   retlist <- NULL
 
   ## First pull out the data for each tool
-  limma <- all_pairwise_result[["limma"]]
-  deseq <- all_pairwise_result[["deseq"]]
-  edger <- all_pairwise_result[["edger"]]
-  ebseq <- all_pairwise_result[["ebseq"]]
-  basic <- all_pairwise_result[["basic"]]
+  limma <- apr[["limma"]]
+  deseq <- apr[["deseq"]]
+  edger <- apr[["edger"]]
+  ebseq <- apr[["ebseq"]]
+  basic <- apr[["basic"]]
 
   ## Prettily print the linear equation relating the genes for each contrast
   make_equate <- function(lm_model) {
@@ -123,9 +123,9 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   ## I want to print a string reminding the user what kind of model was used in the analysis.
   ## Do that here.  Noting that if 'batch' is actually from a surrogate variable, then we will
   ## not have TRUE/FALSE but instead a matrix.
-  reminder_model_cond <- all_pairwise_result[["model_cond"]]
-  reminder_model_batch <- all_pairwise_result[["model_batch"]]
-  reminder_extra <- all_pairwise_result[["extra_contrasts"]]
+  reminder_model_cond <- apr[["model_cond"]]
+  reminder_model_batch <- apr[["model_batch"]]
+  reminder_extra <- apr[["extra_contrasts"]]
   reminder_string <- NULL
   if (class(reminder_model_batch) == "matrix") {
     reminder_string <- "The contrasts were performed using surrogates from sva/ruv/etc."
@@ -328,23 +328,23 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (isTRUE(do_excel)) {
     message("Printing a pca plot before/after surrogates/batch estimation.")
     ## Add PCA before/after
-    chosen_estimate <- all_pairwise_result[["batch_type"]]
+    chosen_estimate <- apr[["batch_type"]]
     xl_result <- openxlsx::writeData(
                              wb, sheet="legend", x="PCA plot before surrogate estimation.",
                              startRow=1, startCol=10)
     try_result <- xlsx_plot_png(
-      all_pairwise_result[["pre_batch"]], wb=wb, sheet="legend", start_row=2,
+      apr[["pre_batch"]], wb=wb, sheet="legend", start_row=2,
       width=plot_dim, height=plot_dim, start_col=10, plotname="pre_pca", savedir=excel_basename)
     xl_result <- openxlsx::writeData(
                              wb, sheet="legend", startRow=36, startCol=10,
                              x=paste0("PCA plot after surrogate estimation with: ", chosen_estimate))
     try_result <- xlsx_plot_png(
-      all_pairwise_result[["post_batch"]], wb=wb, sheet="legend", start_row=37,
+      apr[["post_batch"]], wb=wb, sheet="legend", start_row=37,
       width=plot_dim, height=plot_dim, start_col=10, plotname="pre_pca", savedir=excel_basename)
   }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
-  annot_df <- fData(all_pairwise_result[["input"]])
+  annot_df <- fData(apr[["input"]])
   if (!is.null(extra_annot)) {
     annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
     rownames(annot_df) <- annot_df[["Row.names"]]
@@ -461,7 +461,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
           include_limma=include_limma, include_basic=include_basic,
           excludes=excludes, padj_type=padj_type)
         dat <- combined[["data"]]
-        de_summary <- combined[["summary"]]
+        de_summary <- as.data.frame(combined[["summary"]])
         ## And get a bunch of variables ready to receive the coefficient, ma, and volcano plots.
         limma_plt <- edger_plt <- ebseq_plt <- deseq_plt <- NULL
         limma_ma_plt <- edger_ma_plt <- ebseq_ma_plt <- deseq_ma_plt <- NULL
@@ -539,12 +539,11 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
     ## The logic here is the same as above without worrying about a_vs_b, but instead just
     ## iterating through every returned table, combining them, and printing them to the excel.
   } else if (class(keepers) == "character" & keepers == "all") {
-    a <- 0
     contrast_list <- table_names
     ret_keepers <- list()
-    for (tab in table_names) {
+    for (a in 1:length(table_names)) {
+      tab <- table_names[a]
       ret_keepers[[tab]] <- tab
-      a <- a + 1
       name_list[a] <- tab
       message("Working on table ", a, "/", names_length, ": ", tab)
       sheet_count <- sheet_count + 1
@@ -559,7 +558,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         include_edger=include_edger, include_ebseq=include_ebseq,
         include_limma=include_limma, excludes=excludes,
         padj_type=padj_type)
-      de_summaries <- rbind(de_summaries, combined[["summary"]])
+      de_summaries <- rbind(de_summaries, as.data.frame(combined[["summary"]]))
       combo[[tab]] <- combined[["data"]]
       limma_plots[[tab]] <- NULL
       limma_ma_plots[[tab]] <- NULL
@@ -606,7 +605,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
         }
       }
     } ## End for list
-  }
+  } ## End if looking at all contrasts
 
   ## Finally, the simplest case, just print a single table.  Otherwise the logic should
   ## be identical to the first case above.
@@ -706,7 +705,6 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       ## (30 characters), therefore set the sheetname to what was returned in case it had to
       ## change the sheet's name.
       sheetname <- xls_result[["sheet"]]
-      message("Maybe here: ", x, " with ", sheetname, ".")
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
         plot_column <- xls_result[["end_col"]] + 2
@@ -863,14 +861,14 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
 
     ## Now add some summary data and some plots comparing the tools.
     message("Writing summary information.")
-    if (length(all_pairwise_result[["comparison"]]) == 0) {
+    if (length(apr[["comparison"]]) == 0) {
       compare_plots <- FALSE
     }
     if (isTRUE(compare_plots)) {
       sheetname <- "pairwise_summary"
       ## Add a graph on the final sheet of how similar the result types were
-      comp[["summary"]] <- all_pairwise_result[["comparison"]][["comp"]]
-      comp[["plot"]] <- all_pairwise_result[["comparison"]][["heat"]]
+      comp[["summary"]] <- apr[["comparison"]][["comp"]]
+      comp[["plot"]] <- apr[["comparison"]][["heat"]]
       de_summaries <- as.data.frame(de_summaries)
       ## A change I made messes this up, I should come back through and figure out why
       ## I think it is because I am trying to make the rownames include whether the contrast was
@@ -929,10 +927,10 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
       } ## End checking if we could compare the logFC/P-values
     } ## End if compare_plots is TRUE
 
-    if (!is.null(all_pairwise_result[["original_pvalues"]])) {
+    if (!is.null(apr[["original_pvalues"]])) {
       message("Appending a data frame of the original pvalues before sva messed with them.")
       xls_result <- write_xls(
-        wb, data=all_pairwise_result[["original_pvalues"]], sheet="original_pvalues",
+        wb, data=apr[["original_pvalues"]], sheet="original_pvalues",
         title="Original pvalues for all contrasts before sva adjustment.",
         start_row=1, rownames=rownames)
     }
@@ -949,7 +947,7 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   if (is.null(retlist)) {
     ret <- list(
       "data" = combo,
-      "input" = all_pairwise_result,
+      "input" = apr,
       "limma_plots" = limma_plots,
       "edger_plots" = edger_plots,
       "deseq_plots" = deseq_plots,
@@ -976,8 +974,8 @@ combine_de_tables <- function(all_pairwise_result, extra_annot=NULL,
   }
   if (!is.null(abundant_excel)) {
     message("Invoking extract_abundant_genes().")
-    abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel, ...))
-    ## abundant <- try(extract_abundant_genes(all_pairwise_result, excel=abundant_excel))
+    abundant <- try(extract_abundant_genes(apr, excel=abundant_excel, ...))
+    ## abundant <- try(extract_abundant_genes(apr, excel=abundant_excel))
     ret[["abundant"]] <- abundant
   }
   if (!is.null(arglist[["rda"]])) {
@@ -1818,13 +1816,14 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 
   ret <- list()
   sheet_count <- 0
+  according_kept <- according_to
   for (summary_count in 1:length(according_to)) {
     according <- according_to[summary_count]
+    message("The count is: ", summary_count, " and the test is: ", according, ".")
     test_column <- paste0(according, "_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("Did not find the ", test_column, ", skipping ", according, ".")
-      according_to <- according_to[!according == according_to]
-      message("Here are the columns: ", toString(colnames(combined[["data"]][[1]])))
+      according_kept <- according_to[!according == according_to]
       next
     }
     ret[[according]] <- list()
@@ -1905,6 +1904,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       ## wb <- xlsx_ret[["workbook"]]
     } ## End of an if whether to print the data to excel
   } ## End list of according_to's
+  according_to <- according_kept
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
@@ -1932,8 +1932,6 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       ups <- ups[, -1]
       downs <- downs[, -1]
       ups[[1]] <- as.numeric(ups[[1]])
-
-
       ups[[2]] <- as.numeric(ups[[2]])
       ups[[3]] <- as.numeric(ups[[3]])
       ups[["up_sum"]] <- rowSums(ups)
@@ -1946,8 +1944,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       colnames(summary_table) <- c("up_from_0_to_2", "up_from_2_to_4", "up_gt_4",
                                    "down_from_0_to_2", "down_from_2_to_4", "down_gt_4",
                                    "sum_up", "sum_down")
-      summary_table[["up_gt_2"]] <- summary_table[["up_from_2_to_4"]] + summary_table[["up_gt_4"]]
-      summary_table[["down_gt_2"]] <- summary_table[["down_from_2_to_4"]] + summary_table[["down_gt_4"]]
+      summary_table[["up_gt_2"]] <- summary_table[["up_from_2_to_4"]] +
+        summary_table[["up_gt_4"]]
+      summary_table[["down_gt_2"]] <- summary_table[["down_from_2_to_4"]] +
+        summary_table[["down_gt_4"]]
       summary_table_idx <- rev(rownames(summary_table))
       summary_table <- summary_table[summary_table_idx, ]
       return(summary_table)
@@ -1957,77 +1957,26 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     ## I messed up something here.  The plots and tables
     ## at this point should start:
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
-    if ("limma" %in% according_to) {
-      xl_result <- openxlsx::writeData(
-                               wb, "number_changed", x="Significant limma genes.",
-                               startRow=plot_row, startCol=plot_col)
+    ##xls_result <- openxlsx::addWorksheet(wb, "number_changed")
+    for (according in according_to) {
+      sig_message <- paste0("Significant ", according, " genes.")
+      xls_result <- openxlsx::writeData(
+                                wb=wb, sheet="number_changed", x=sig_message,
+                                startRow=plot_row, startCol=plot_col)
       plot_row <- plot_row + 1
+      plotname <- paste0("sigbar_", according)
       try_result <- xlsx_plot_png(
-        sig_bar_plots[["limma"]], wb=wb, sheet="number_changed", plotname="sigbar_limma",
+        a_plot=sig_bar_plots[[according]], wb=wb, sheet="number_changed", plotname=plotname,
         savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
       summary_row <- plot_row
       summary_col <- plot_col + 11
-      limma_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][["limma"]],
-                                           sig_bar_plots[["downs"]][["limma"]])
-      limma_xls_summary <- write_xls(
-        data=limma_summary, wb=wb, sheet="number_changed", rownames=TRUE,
+      de_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][[according]],
+                                        sig_bar_plots[["downs"]][[according]])
+      xls_summary <- write_xls(
+        data=de_summary, wb=wb, sheet="number_changed", rownames=TRUE,
         start_row=summary_row, start_col=summary_col)
       plot_row <- plot_row + 30
-    }
-
-    if ("deseq" %in% according_to) {
-      xl_result <- openxlsx::writeData(
-                               wb, "number_changed", startRow=plot_row, startCol=plot_col,
-                               x="Significant deseq genes.")
-      plot_row <- plot_row + 1
-      try_result <- xlsx_plot_png(
-        sig_bar_plots[["deseq"]], wb=wb, sheet="number_changed", plotname="sigbar_deseq",
-        savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
-      summary_row <- plot_row
-      summary_col <- plot_col + 11
-      deseq_summary <- summarize_ups_downs(
-        sig_bar_plots[["ups"]][["deseq"]], sig_bar_plots[["downs"]][["deseq"]])
-      deseq_xls_summary <- write_xls(
-        data=deseq_summary, wb=wb, sheet="number_changed", rownames=TRUE,
-        start_row=summary_row, start_col=summary_col)
-      plot_row <- plot_row + 30
-    }
-
-    if ("edger" %in% according_to) {
-      xl_result <- openxlsx::writeData(
-                               wb, "number_changed", startRow=plot_row, startCol=plot_col,
-                               x="Significant edger genes.")
-      plot_row <- plot_row + 1
-      try_result <- xlsx_plot_png(
-        sig_bar_plots[["edger"]], wb=wb, sheet="number_changed", plotname="sigbar_edger",
-        savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
-      summary_row <- plot_row
-      summary_col <- plot_col + 11
-      edger_summary <- summarize_ups_downs(
-        sig_bar_plots[["ups"]][["edger"]], sig_bar_plots[["downs"]][["edger"]])
-      edger_xls_summary <- write_xls(
-        data=edger_summary, wb=wb, sheet="number_changed", rownames=TRUE,
-        start_row=summary_row, start_col=summary_col)
-      plot_row <- plot_row + 30
-    }
-
-    if ("ebseq" %in% according_to) {
-      xl_result <- openxlsx::writeData(
-                               wb, "number_changed", startRow=plot_row, startCol=plot_col,
-                               x="Significant ebseq genes.")
-      plot_row <- plot_row + 1
-      try_result <- xlsx_plot_png(
-        sig_bar_plots[["ebseq"]], wb=wb, sheet="number_changed", plotname="sigbar_ebseq",
-        savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
-      summary_row <- plot_row
-      summary_col <- plot_col + 11
-      ebseq_summary <- summarize_ups_downs(
-        sig_bar_plots[["ups"]][["ebseq"]], sig_bar_plots[["downs"]][["ebseq"]])
-      ebseq_xls_summary <- write_xls(
-        data=ebseq_summary, wb=wb, sheet="number_changed", rownames=TRUE,
-        start_row=summary_row, start_col=summary_col)
-    }
-
+    } ## End for loop writing out significance bar plots
   } ## End if we want significance bar plots
   ret[["sig_bar_plots"]] <- sig_bar_plots
 
