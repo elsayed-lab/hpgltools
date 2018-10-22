@@ -1,5 +1,7 @@
 #' Create a gene set collection from a set of arbitrary IDs.
 #'
+#' This function attempts to simplify the creation of a gsva compatible GeneSet.
+#'
 #' @param first_ids  The required IDs for a single set.
 #' @param second_ids  Potentially null optionally used for a second, presumably contrasting set.
 #' @param orgdb  Orgdb annotation, used to translate IDs to the required type.

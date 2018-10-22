@@ -1,7 +1,10 @@
 #' Skip the db and download all the text annotations for a given species.
 #'
-#' Like I said, the microbesonline mysqldb is rather more complex than I prefer.  This shortcuts
-#' that process and just grabs a tsv copy of everything and loads it into a dataframe.
+#' The microbesonline publicly available mysqldb is rather more complex than I
+#' prefer.  This skips that process and just grabs a tsv copy of everything and
+#' loads it into a dataframe.  I have not yet figured out how to so-easily query
+#' microbesonline for species IDs, thus one will have to manually query the
+#' database to find species of interest.
 #'
 #' Tested in test_70expt_spyogenes.R
 #' There is so much awesome information in microbesonline, but damn is it annoying to download.
@@ -15,6 +18,7 @@
 #' \dontrun{
 #'  annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
 #' }
+#' @author atb
 #' @export
 load_microbesonline_annotations <- function(id="160490") {
   prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id)
@@ -30,6 +34,17 @@ load_microbesonline_annotations <- function(id="160490") {
   return(data)
 }
 
+#' Download the various file formats from microbesoline.
+#'
+#' Microbesonline provides an interesting set of file formats to download.  Each
+#' format proves useful under one condition or another, ergo this defaults to
+#' iterating through them all and getting every file.
+#'
+#' @param id  Species ID to query.
+#' @param type  File type(s) to download, if left null it will grab the genbank,
+#'   tab, protein fasta, transcript fasta, and genome.
+#' @return  List describing the files downloaded and their locations.
+#' @author atb
 download_microbesonline_files <- function(id="160490", type=NULL) {
   retlist <- list()
   gbk <- FALSE
@@ -119,15 +134,17 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 
 #' Extract the set of GO categories by microbesonline locus
 #'
-#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
-#' to query.
+#' The microbesonline is such a fantastic resource, it is a bit of a shame that
+#' it is such a pain to query.
 #'
 #' Tested in test_42ann_microbes.R
-#' I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
-#' At the very least, it does return a large number of them, which is a start.
+#' I am not 100% certain that this is giving me the full correct set of gene
+#' ontology accessions. At the very least, it does return a large number of
+#' them, which is a start.
 #'
 #' @param id Which species to query.
-#' @param id_column  This no longer uses MySQL, so which column from the html table to pull?
+#' @param id_column  This no longer uses MySQL, so which column from the html
+#'   table to pull?
 #' @param data_column  Similar to above, there are lots of places from which one might
 #'   extract the data.
 #' @param name  Allowing for non-specific searches by species name.
@@ -136,6 +153,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' \dontrun{
 #'  go_df <- get_loci_go(id="160490")
 #' }
+#' @author atb
 #' @export
 load_microbesonline_go <- function(id="160490", id_column="name", data_column="GO", name=NULL) {
   chosen <- id
@@ -146,78 +164,6 @@ load_microbesonline_go <- function(id="160490", id_column="name", data_column="G
   keep_idx <- go_df[[data_column]] != ""
   go_df <- go_df[keep_idx, ]
   return(go_df)
-}
-
-#' Extract the set of KEGG categories by microbesonline locus
-#'
-#' The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
-#' to query.
-#'
-#' Tested in test_42ann_microbes.R
-#' I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
-#' At the very least, it does return a large number of them, which is a start.
-#'
-#' @param id Which species to query.
-#' @return data frame of GO terms from pub.microbesonline.org
-#' @seealso \pkg{DBI}
-#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
-#' @examples
-#' \dontrun{
-#'  go_df <- get_loci_go(id="160490")
-#' }
-#' @export
-load_microbesonline_kegg <- function(id="160490") {
-  chosen <- id
-
-  tt <- sm(requireNamespace("RMySQL"))
-  db_driver <- DBI::dbDriver("MySQL")
-  connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
-                               host="pub.microbesonline.org", dbname="genomics")
-
-  query <- paste0("SELECT * FROM KEGG2Taxonomy WHERE
-     taxonomyId = '", id, "'")
-
-  ## Adding suppressWarnings to stop stupidly unhelpful 'Unsigned INTEGER in col 1 imported as numeric'
-  result <- suppressWarnings(DBI::dbSendQuery(connection, query))
-  result_df <- DBI::fetch(result, n=-1)
-  result_df <- unique(result_df)
-  clear <- DBI::dbClearResult(result)
-  disconnect <- DBI::dbDisconnect(connection)
-  if (class(clear) == "try-error" | class(disconnect) == "try-error") {
-    warning("Did not disconnect cleanly.")
-  }
-  org <- result_df[1, 1] ## Grab the identifier
-  message("The abbreviation for ", id, " is ", org, ".")
-  genepaths <- load_kegg_annotations(abbreviation=org)
-  return(genepaths)
-}
-
-#' Get the description of a microbesonline genomics table
-#'
-#' This at least in theory is only used by get_microbesonline,  but if one needs a quick and dirty SQL query
-#' it might prove useful.
-#'
-#' @param table  Choose a table to query.
-#' @return Data frame describing the relevant table
-#' @seealso \pkg{DBI}
-#'  \code{\link[DBI]{dbSendQuery}} \code{\link[DBI]{fetch}}
-#' @examples
-#' \dontrun{
-#'  description <- mdesc_table(table="Locus2Go")
-#' }
-mdesc_table <- function(table="Locus2Go") {
-  db_driver <- DBI::dbDriver("MySQL")
-  connection <- DBI::dbConnect(db_driver, user="guest", password="guest",
-                               host="pub.microbesonline.org", dbname="genomics")
-  query <- paste0("DESCRIBE ", table)
-  result <- DBI::dbSendQuery(connection, query)
-  result_df <- DBI::fetch(result, n=-1)
-  clear <- DBI::dbClearResult(result)
-  disconnect <- DBI::dbDisconnect(connection)
-  if (class(clear) == "try-error" | class(disconnect) == "try-error") {
-    warning("Did not disconnect cleanly.")
-  }
-  return(result_df)
 }
 
 ## EOF

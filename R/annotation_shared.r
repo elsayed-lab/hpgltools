@@ -26,6 +26,7 @@
 #' ## 5 YAL068W-A   255
 #' ## 6 YAL068W-A     3
 #' }
+#' @author atb
 #' @export
 get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
                           type_column="type", key=NULL, length_names=NULL, ...) {
@@ -103,6 +104,7 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
 #'   provided, try to figure it out automagically.
 #' @param ...  Arguments passed to the other load_*_annotations().
 #' @return  Some annotations, hopefully.
+#' @author atb
 #' @export
 load_annotations <- function(type=NULL, ...) {
   annotations <- NULL
