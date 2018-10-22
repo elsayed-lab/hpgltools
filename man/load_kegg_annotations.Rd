@@ -15,8 +15,13 @@ load_kegg_annotations(species = "coli", abbreviation = NULL,
 \item{flatten}{Flatten nested tables?}
 }
 \value{
-dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.
+dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
+  and KEGG paths.
 }
 \description{
-Create a data frame of pathways to gene IDs from KEGGREST
+This seeks to take the peculiar format from KEGGREST for pathway<->genes and
+make it easier to deal with.
+}
+\author{
+atb
 }

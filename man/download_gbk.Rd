@@ -19,8 +19,8 @@ This takes and downloads genbank accessions.
 }
 \details{
 Tested in test_40ann_biomartgenbank.R
-In this function I stole the same functionality from the ape package and set a few defaults
-so that it hopefully fails less often.
+In this function I stole the same functionality from the ape package and set
+a few defaults so that it hopefully fails less often.
 }
 \examples{
 \dontrun{
@@ -29,4 +29,7 @@ so that it hopefully fails less often.
 }
 \seealso{
 \pkg{ape}
+}
+\author{
+The ape authors with some modifications by atb.
 }

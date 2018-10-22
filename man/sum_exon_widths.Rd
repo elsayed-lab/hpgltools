@@ -35,3 +35,6 @@ summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 \pkg{rtracklayer}
  \code{\link{load_gff_annotations}}
 }
+\author{
+Keith Hughitt with some modifications by atb.
+}

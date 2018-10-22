@@ -11,27 +11,29 @@ load_genbank_annotations(accession = "AE009949", reread = TRUE,
 \item{accession}{Accession to download and import}
 
 \item{reread}{Re-read (download) the file from genbank}
-
-\item{savetxdb}{Save a txdb package from this? FIXME THIS DOES NOT WORK.}
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
 }
 \description{
-Let us admit it, sometimes biomart is a pain.  It also does not have easily accessible data for
-microbes.  Genbank does!
+Let us admit it, sometimes biomart is a pain.  It also does not have easily
+accessible data for microbes.  Genbank does!
 }
 \details{
 Tested in test_40ann_biomartgenbank.R and test_70expt_spyogenes.R
-This just sets some defaults for the genbankr service in order to facilitate downloading
-genomes and such from genbank and dumping them into a local txdb instance.
+This primarily sets some defaults for the genbankr service in order to
+facilitate downloading genomes from genbank and dumping them into a local
+txdb instance.
 }
 \examples{
 \dontrun{
- txdb_result <- gbk2txdb(accession="AE009948", savetxdb=TRUE)
+ txdb_result <- load_genbank_annotations(accession="AE009948", savetxdb=TRUE)
 }
 }
 \seealso{
 \pkg{genbankr} \pkg{rentrez}
  \code{\link[genbankr]{import}}
+}
+\author{
+atb
 }

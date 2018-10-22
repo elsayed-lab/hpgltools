@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_orgdb.r
 \name{map_orgdb_ids}
 \alias{map_orgdb_ids}
-\title{Load organism annotation data (mouse/human).}
+\title{Map AnnotationDbi keys from one column to another.}
 \usage{
 map_orgdb_ids(orgdb, gene_ids = NULL, mapto = c("ensembl"),
   keytype = "geneid")
@@ -20,8 +20,10 @@ map_orgdb_ids(orgdb, gene_ids = NULL, mapto = c("ensembl"),
 a table of gene information
 }
 \description{
-Creates a dataframe gene and transcript information for a given set of gene
-ids using the OrganismDbi interface.
+Given a couple of keytypes, this provides a quick mapping across them.  I
+might have an alternate version of this hiding in the gsva code, which
+requires ENTREZIDs.  In the mean time, this creates a dataframe of the mapped
+columns for a given set of gene ids using the in a sqlite instance.
 }
 \examples{
 \dontrun{
@@ -31,4 +33,7 @@ ids using the OrganismDbi interface.
 \seealso{
 \pkg{AnnotationDbi}
  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
+}
+\author{
+Keith Hughitt with changes by atb.
 }

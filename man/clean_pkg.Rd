@@ -17,15 +17,20 @@ clean_pkg(path, removal = "-like", replace = "", sqlite = TRUE)
 \item{sqlite}{Also modify the sqlite database?}
 }
 \value{
-A new OrgDb/TxDb/OrganismDbi
+A hopefully cleaner OrgDb/TxDb/OrganismDbi sqlite package.
 }
 \description{
-OrganismDbi instances are pretty neat, they pull together OrgDb and TxDb.  With any luck, this
-function provides the ability to pull together all the data from the TriTrypDb, GO.db, and
-KEGGREST in order to accomplish these peculiar tasks.
+The primary problem this function seeks to solve is derived from the fact
+that some species names in the eupathdb contain characters which are not
+allowed in orgdb/txdb/organismdbi instances.  Thus this invokes a couple of
+regular expressions in an attempt to make sure these generated packages are
+actually installable.
 }
-\examples{
-\dontrun{
- crazytown <- make_organismdbi()  ## wait a loong time
+\details{
+One thing I should consider is to add some of this logic to my eupath queries
+rather than perform these clunky modifications to the already-generated
+packages.
 }
+\author{
+atb
 }

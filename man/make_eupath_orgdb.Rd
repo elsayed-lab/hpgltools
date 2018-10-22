@@ -26,10 +26,17 @@ make_eupath_orgdb(species = NULL, entry = NULL, dir = "eupathdb",
 \item{...}{Extra parameters when searching for metadata}
 }
 \value{
-Currently only the name of the installed package.  This should probably change.
+Currently only the name of the installed package.  This should
+  probably change.
 }
 \description{
-This now uses the new POST version of the eupathdb.  Theoretically it is better,
-I am not yet convinced, but the QUERY version of the eupathdb apparently will not
-be supported over time.
+This function has passed through multiple iterations as the preferred
+method(s) for accessing data in the eupathdb has changed.  It currently uses
+my empirically defined set of queries against the eupathdb webservices.  As a
+result, I have made some admittedly bizarre choices when creating the
+queries.  Check through eupath_webservices.r for some amusing examples of how
+I have gotten around the idiosyncrasies in the eupathdb.
+}
+\author{
+Keith Hughitt with significant modifications by atb.
 }

@@ -16,5 +16,11 @@ extract_gene_locations(annot_df,
 Somewhat nicer data frame.
 }
 \description{
-Clean up the gene location field from eupathdb derived gene location data.
+The eupathdb encodes its location data for genes in a somewhat peculiar
+format: chromosome:start..end(strand), but I would prefer to have these
+snippets of information as separate columns so that I can do things like
+trivially perform rpkm().
+}
+\author{
+atb
 }

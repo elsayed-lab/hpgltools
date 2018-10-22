@@ -23,3 +23,6 @@ from it.  Keep in mind that this data is primarily from Blast2GO.
  go_lst <- load_trinotate_go("trinotate.csv.xz")
 }
 }
+\author{
+atb
+}

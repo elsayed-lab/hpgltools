@@ -8,9 +8,9 @@ make_eupath_txdb(species = NULL, entry = NULL, dir = "eupathdb",
   version = NULL, reinstall = FALSE, metadata = NULL, ...)
 }
 \arguments{
-\item{species}{guess}
+\item{species}{Species name from the eupathdb metadata.}
 
-\item{entry}{One dimensional dataframe with organism metadata.}
+\item{entry}{One row from the organism metadata.}
 
 \item{dir}{Base directory for building the package.}
 
@@ -29,5 +29,5 @@ TxDb instance name.
 Generate TxDb for EuPathDB organism
 }
 \author{
-atb
+Keith Hughitt with significant modifications by atb.
 }

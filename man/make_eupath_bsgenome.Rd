@@ -31,3 +31,6 @@ Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packa
 seems to me that we ought to also be able to make a readable genome package.  I should
 probably use some of the logic from this to make the organismdbi generator smarter.
 }
+\author{
+atb
+}

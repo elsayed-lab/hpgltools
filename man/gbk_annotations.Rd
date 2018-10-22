@@ -17,9 +17,14 @@ Maybe this should get pulled into the previous function?
 }
 \details{
 Tested in test_40ann_biomartgenbank.R
-This function should provide a quick reminder of how to use the AnnotationDbi select function
-if it does nothing else.  It also (hopefully helpfully) returns a granges object containing
-the essential information one might want for printing out a gff or whatever.
+This function should provide a quick reminder of how to use the AnnotationDbi
+select function if it does nothing else.  It also (hopefully helpfully)
+returns a granges object containing the essential information one might want
+for printing out a gff or whatever.
+
+I should revisit this function and improve the generated ranges objects to
+have better metadata columns via the mcols() function.  For examples of some
+useful tasks one can do here, check out snp.r.
 }
 \examples{
 \dontrun{
@@ -29,4 +34,7 @@ the essential information one might want for printing out a gff or whatever.
 \seealso{
 \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
  \code{\link[AnnotationDbi]{select}}
+}
+\author{
+atb
 }

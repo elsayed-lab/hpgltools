@@ -32,5 +32,5 @@ make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
 \item{required_id}{What type of ID should the use?}
 }
 \description{
-Create a gene set collection from a set of arbitrary IDs.
+This function attempts to simplify the creation of a gsva compatible GeneSet.
 }

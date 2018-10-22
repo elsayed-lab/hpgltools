@@ -2,7 +2,8 @@
 % Please edit documentation in R/annotation_kegg.r
 \name{kegg_vector_to_df}
 \alias{kegg_vector_to_df}
-\title{Convert a potentially non-unique vector from kegg into a normalized data frame.}
+\title{Convert a potentially non-unique vector from kegg into a normalized data
+frame.}
 \usage{
 kegg_vector_to_df(vector, final_colname = "first", flatten = TRUE)
 }
@@ -17,5 +18,12 @@ kegg_vector_to_df(vector, final_colname = "first", flatten = TRUE)
 A normalized data frame of gene IDs to whatever.
 }
 \description{
-I am 100% certain there is a way to do this using apply/etc, but they confuse me.
+This function seeks to reformat data from KEGGREST into something which is
+rather easier to use.
+}
+\details{
+This could probably benefit from a tidyr-ish revisitation.
+}
+\author{
+atb
 }

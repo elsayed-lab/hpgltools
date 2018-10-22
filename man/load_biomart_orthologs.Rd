@@ -49,3 +49,6 @@ for a successful query.  I can say with confidence that it works well between mi
 \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
  \code{\link[biomaRt]{useMart}}
 }
+\author{
+atb
+}

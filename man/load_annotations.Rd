@@ -19,3 +19,6 @@ Some annotations, hopefully.
 We should be able to have an agnostic annotation loader which can take some
 standard arguments and figure out where to gather data on its own.
 }
+\author{
+atb
+}
