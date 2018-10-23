@@ -532,7 +532,7 @@ plot_qq_all_pairwise <- function(data) {
 #' are.  I suspect, but haven't tried yet, that the inflection point of the
 #' resulting curve is also a useful diagnostic in this question.
 #'
-#' @param data  Dataframe to perform pairwise qqplots with.
+#' @param data  Dataframe/matrix/whatever for performing topn-plot.
 #' @param title  A title for the plot.
 #' @param direct  Include sample labels with directlabel()?
 #' @param num  The N in top-n genes, if null, do them all.

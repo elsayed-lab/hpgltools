@@ -609,7 +609,7 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'   matching the sig_data GeneSets.
 #' @export
-get_msigdb_metadata <- function(sig_data, msig_xml="msigdb_v6.2.xml", gsva_result=NULL) {
+get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_result=NULL) {
   msig_result <- xml2::read_xml(msig_xml)
 
   db_data <- rvest::xml_nodes(msig_result, xpath="//MSIGDB")
@@ -643,6 +643,7 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
     message("Converting the rownames() of the expressionset to ", to_type, ".")
     tt <- sm(library(orgdb, character.only=TRUE))
     gsc_lst <- as.list(gsc)
+    new_gsc <- list()
     bar <- utils::txtProgressBar(style=3)
     for (g in 1:length(gsc)) {
       pct_done <- g / length(gsc_lst)
@@ -655,10 +656,11 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
                                           columns=c(to_type)))
       new_ids <- new_ids[[to_type]]
       GSEABase::geneIds(gs) <- unique(new_ids)
-      gsc_lst[[g]] <- gs
+      ## gsc_lst[[g]] <- gs
+      new_gsc[[g]] <- gs
     }
     close(bar)
-    gsc <- GSEABase::GeneSetCollection(gsc_lst)
+    gsc <- GSEABase::GeneSetCollection(new_gsc)
     return(gsc)
 }
 
