@@ -26,5 +26,5 @@ This function seeks to make generating pretty pvalue plots as shown by clusterpr
 }
 \seealso{
 \pkg{goseq} \pkg{ggplot2}
- \code{\link[goseq]{goseq}}
+\code{\link[goseq]{goseq}}
 }

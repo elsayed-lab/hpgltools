@@ -31,5 +31,5 @@ plot.  This handles those changes and returns the ggplot results.
 }
 \seealso{
 \pkg{goseq} \pkg{clusterProfiler}
- \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
+\code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
 }

@@ -27,5 +27,5 @@ to me is the most intuitive.  Take the ratio of counts/samples and make sure it 
 }
 \seealso{
 \pkg{genefilter}
- \code{\link[genefilter]{pOverA}}
+\code{\link[genefilter]{pOverA}}
 }

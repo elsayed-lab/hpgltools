@@ -13,8 +13,8 @@ snps_vs_intersections(expt, snp_result)
 }
 \value{
 List containing the set of intersections in the conditions contained
-  in snp_result, the summary of numbers of variants per chromosome, and
-  summary of numbers per gene.
+in snp_result, the summary of numbers of variants per chromosome, and
+summary of numbers per gene.
 }
 \description{
 This function should provide counts of how many variant positions were

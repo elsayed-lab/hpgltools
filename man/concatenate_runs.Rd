@@ -29,5 +29,5 @@ Untested as of 2016-12-01, but used in a couple of projects where sequencing run
 }
 \seealso{
 \pkg{Biobase}
- \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
+\code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 }

@@ -17,7 +17,7 @@ features_greater_than(data, cutoff = 1, hard = TRUE, inverse = FALSE)
 }
 \value{
 A list of two elements, the first comprised of the number of genes
-  greater than the cutoff, the second with the identities of said genes.
+greater than the cutoff, the second with the identities of said genes.
 }
 \description{
 Sometimes I am asked how many genes have >= x counts.  Well, here you go.

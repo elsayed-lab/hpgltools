@@ -41,11 +41,11 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 \value{
 a list containing the following (this is currently wrong)
 \enumerate{
- \item  pca = the result of fast.svd()
- \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
- \item  table = a table of the PCA plot data
- \item  res = a table of the PCA res data
- \item  variance = a table of the PCA plot variance
+\item  pca = the result of fast.svd()
+\item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+\item  table = a table of the PCA plot data
+\item  res = a table of the PCA res data
+\item  variance = a table of the PCA plot variance
 }
 }
 \description{
@@ -59,5 +59,5 @@ Make a ggplot PCA plot describing the samples' clustering.
 }
 \seealso{
 \pkg{directlabels}
- \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+\code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }

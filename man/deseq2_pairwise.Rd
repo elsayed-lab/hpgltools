@@ -36,12 +36,12 @@ deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
 }
 \value{
 List including the following information:
- run = the return from calling DESeq()
- denominators = list of denominators in the contrasts
- numerators = list of the numerators in the contrasts
- conditions = the list of conditions in the experiment
- coefficients = list of coefficients making the contrasts
- all_tables = list of DE tables
+run = the return from calling DESeq()
+denominators = list of denominators in the contrasts
+numerators = list of the numerators in the contrasts
+conditions = the list of conditions in the experiment
+coefficients = list of coefficients making the contrasts
+all_tables = list of DE tables
 }
 \description{
 Invoking DESeq2 is confusing, this should help.

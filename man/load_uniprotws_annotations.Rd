@@ -21,7 +21,7 @@ If not provided, this will attempt to choose useful ones.}
 }
 \value{
 Data frame from selecting the hopefully appropriate columns with
-  AnnotationDbi.
+AnnotationDbi.
 }
 \description{
 I keep thinking that this is in fact querying NCBI, but I think that is incorrect.

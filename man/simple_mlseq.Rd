@@ -19,7 +19,19 @@ simple_mlseq(expt, comparison = "condition", number_by_var = 100,
 \item{ceiling_factor}{Define how many columns(experimental samples) to take
 when sampling the expressionset for training vs. testing data.}
 
-\item{training_number}{}
+\item{training_number}{Iterations when training.}
+
+\item{training_repeats}{Also iterations when training... (in other words, I dunno).}
+
+\item{training_method}{which caret method to train?}
+
+\item{classify_method}{which caret method to classify the data?}
+
+\item{classify_preprocess}{Which mlseq method to preprocess/normalize the data?}
+
+\item{reference_factor}{What factor in the experimental metadata contains the reference?}
+
+\item{...}{Extra arguments}
 }
 \description{
 MLSeq provides interfaces to the various machine learning methodologies from

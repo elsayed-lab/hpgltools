@@ -25,5 +25,5 @@ wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get
 }
 \seealso{
 \pkg{edgeR}
- \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+\code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 }

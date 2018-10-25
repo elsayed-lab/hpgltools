@@ -27,12 +27,18 @@ make_gsc_from_abundant(pairwise, according_to = "deseq",
 
 \item{color}{Make a colorSet?}
 
-\item{current_id}{Usually we use ensembl IDs, but that does not _need_ to be the case.}
+\item{current_id}{Usually we use ensembl IDs, but that does not \emph{need} to be the case.}
 
 \item{required_id}{gsva uses entrezids by default.}
 
-\item{...}{Extra arguments for extract_significant_genes().}
+\item{...}{Extra arguments for extract_abundant_genes().}
+}
+\value{
+List containing 3 GSCs, one containing both the ups/downs called
+'colored', one of the ups, and one of the downs.
 }
 \description{
 If I want to play with gsva and friends, then I need GeneSetCollections!
+Much like make_gsc_from_significant(), this function extract the genes deemed
+'abundant' and generates gene sets accordingly.
 }

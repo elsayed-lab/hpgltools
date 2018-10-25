@@ -27,5 +27,5 @@ low-count filter per se.
 }
 \seealso{
 \pkg{genefilter}
- \code{\link[genefilter]{kOverA}}
+\code{\link[genefilter]{kOverA}}
 }

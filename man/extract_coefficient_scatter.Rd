@@ -51,5 +51,5 @@ By default, genes past 1.5 z scores from the mean are colored red/green.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link{plot_linear_scatter}}
+\code{\link{plot_linear_scatter}}
 }

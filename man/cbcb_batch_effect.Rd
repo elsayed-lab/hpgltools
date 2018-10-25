@@ -25,5 +25,5 @@ dirty batch removal tool
 }
 \seealso{
 \pkg{limma}
- \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+\code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
 }

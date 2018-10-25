@@ -7,13 +7,14 @@
 get_gsvadb_names(sig_data, requests = NULL)
 }
 \arguments{
-\item{sig_data}{The pile of GeneSets probably from GSVAdata.}
+\item{sig_data}{The pile of GeneSets, probably from GSVAdata.}
 
-\item{requests}{Character list of sources.}
+\item{requests}{Character list of sources to keep.}
 }
 \value{
 Whatever GeneSets remain.
 }
 \description{
-I dunno what I want to put here and I am getting tired.
+Many of the likely GSCs contain far more gene sets than one actually wants to
+deal with.  This will subset them according to a the desired 'requests'.
 }

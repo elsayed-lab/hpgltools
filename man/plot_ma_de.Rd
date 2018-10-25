@@ -38,9 +38,9 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
 }
 \value{
 ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
- type across all sample types on the x axis, and the log fold change between conditions on the
- y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
- googleVis graph if requested.
+type across all sample types on the x axis, and the log fold change between conditions on the
+y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+googleVis graph if requested.
 }
 \description{
 Because I can never remember, the following from wikipedia: "An MA plot is an application of a
@@ -57,8 +57,8 @@ which has been transformed onto the M (log ratios) and A (mean average) scale."
 }
 \seealso{
 \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
- \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
- \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
- \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
- \code{\link[limma]{contrasts.fit}}
+\code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+\code{\link[limma]{voom}} \code{\link{hpgl_voom}}
+\code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
+\code{\link[limma]{contrasts.fit}}
 }

@@ -40,11 +40,11 @@ de_vs_cb = (E-D)-(C-B),"}
 }
 \value{
 List including the following information:
- contrasts = The string representation of the contrasts performed.
- lrt = A list of the results from calling glmLRT(), one for each contrast.
- contrast_list = The list of each call to makeContrasts()
- I do this to avoid running into the limit on # of contrasts addressable by topTags()
- all_tables = a list of tables for the contrasts performed.
+contrasts = The string representation of the contrasts performed.
+lrt = A list of the results from calling glmLRT(), one for each contrast.
+contrast_list = The list of each call to makeContrasts()
+I do this to avoid running into the limit on # of contrasts addressable by topTags()
+all_tables = a list of tables for the contrasts performed.
 }
 \description{
 This function performs the set of possible pairwise comparisons using EdgeR.

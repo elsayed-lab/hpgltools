@@ -51,8 +51,8 @@ so I went with +/- 0.8 mostly arbitrarily as the default.}
 }
 \value{
 Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
-    log(fold change).  The cutoff values are delineated with lines and mark the boundaries
-    between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
+log(fold change).  The cutoff values are delineated with lines and mark the boundaries
+between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
 }
 \description{
 Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
@@ -72,7 +72,7 @@ and y-axis is related to a measure of the statistical significance of the signal
 }
 \seealso{
 \pkg{limma}
- \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
- \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
- \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
+\code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
+\code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
+\code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
 }

@@ -58,8 +58,8 @@ or pathological can pass it 'all'.
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
- \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
- \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
+\code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
+\code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 }
 \author{
 atb

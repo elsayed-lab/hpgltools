@@ -13,7 +13,8 @@ make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
 \arguments{
 \item{first_ids}{The required IDs for a single set.}
 
-\item{second_ids}{Potentially null optionally used for a second, presumably contrasting set.}
+\item{second_ids}{Potentially null optionally used for a second, presumably
+contrasting set.}
 
 \item{orgdb}{Orgdb annotation, used to translate IDs to the required type.}
 
@@ -31,6 +32,12 @@ make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
 
 \item{required_id}{What type of ID should the use?}
 }
+\value{
+Small list comprised of the created gene set collection(s).
+}
 \description{
-This function attempts to simplify the creation of a gsva compatible GeneSet.
+This function attempts to simplify the creation of a gsva compatible
+GeneSet.  Some important caveats when working with gsva, notably the gene IDs
+we use are not usually compatible with the gene IDs used by gsva, thus the
+primary logic in this function is intended to bridge these IDs.
 }

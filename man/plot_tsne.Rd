@@ -53,7 +53,7 @@ plot_tsne(data, design = NULL, plot_colors = NULL, seed = 1,
 \value{
 a list containing the following:
 \enumerate{
- \item  plot = a plot
+\item  plot = a plot
 }
 }
 \description{
@@ -67,5 +67,5 @@ Make a ggplot TSNE plot describing the samples' clustering.
 }
 \seealso{
 \pkg{directlabels}
- \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+\code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
 }

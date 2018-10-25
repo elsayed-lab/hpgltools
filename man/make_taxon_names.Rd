@@ -11,7 +11,7 @@ make_taxon_names(entry)
 }
 \value{
 A list of hopefully valid nomenclature names to be used elsewhere in
-  this family.
+this family.
 }
 \description{
 Spend some time making sure they are valid, too.  Thus we want to get rid of weird characters

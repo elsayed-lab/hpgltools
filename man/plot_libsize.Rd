@@ -41,6 +41,6 @@ and maintains one's favorite color scheme and tries to make it pretty!
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
- \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+\code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+\code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 }

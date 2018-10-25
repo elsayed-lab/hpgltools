@@ -41,5 +41,5 @@ With little work this can be made much more generic, and it probably should.
 }
 \seealso{
 \pkg{goseq} \pkg{clusterProfiler}
- \code{\link{simple_goseq}}
+\code{\link{simple_goseq}}
 }

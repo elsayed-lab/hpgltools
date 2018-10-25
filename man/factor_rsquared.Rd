@@ -23,5 +23,5 @@ value decomposition and factor.
 }
 \seealso{
 \pkg{corpcor}
- \code{\link[corpcor]{fast.svd}}
+\code{\link[corpcor]{fast.svd}}
 }

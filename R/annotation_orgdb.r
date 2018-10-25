@@ -342,7 +342,40 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
   return(gene_info)
 }
 
-#' Create an orgdb from an AnnotationHub taxonID.
+#' Iterate over keytypes looking for matches against a set of IDs.
+#'
+#' Sometimes, one does not know what the correct keytype is for a given set of
+#' IDs.  This will hopefully find them.
+#'
+#' @param ids Set of gene IDs to seek.
+#' @param orgdb  Orgdb instance to iterate through.
+#' @return Likely keytype which provides the desired IDs.
+#' @export
+guess_orgdb_keytype <- function(ids, orgdb) {
+  found_ids <- 0
+  current_type <- NULL
+  possible_keytypes <- AnnotationDbi::keytypes(orgdb)
+  for (k in 1:length(possible_keytypes)) {
+    type <- possible_keytypes[k]
+    possible_keys <- AnnotationDbi::keys(x=orgdb, keytype=type)
+    this_type_found <- sum(ids %in% possible_keys)
+    if (this_type_found == length(ids)) {
+      return(type)
+    } else if (this_type_found > found_ids) {
+      current_type <- type
+      found_ids <- this_type_found
+    }
+  }
+  if (found_ids == 0) {
+    message("Did not find your IDs using any keytype in the orgdb.")
+  } else {
+    message("The best choice was ", current_type, " which has ", found_ids,
+            " out of ", length(ids), " ids.")
+  }
+  return(current_type)
+}
+
+#' Get an orgdb from an AnnotationHub taxonID.
 #'
 #' Ideally, annotationhub will one day provide a one-stop shopping source for a
 #' tremendous wealth of curated annotation databases, sort of like a

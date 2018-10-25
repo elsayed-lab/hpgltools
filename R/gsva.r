@@ -1,9 +1,13 @@
 #' Create a gene set collection from a set of arbitrary IDs.
 #'
-#' This function attempts to simplify the creation of a gsva compatible GeneSet.
+#' This function attempts to simplify the creation of a gsva compatible
+#' GeneSet.  Some important caveats when working with gsva, notably the gene IDs
+#' we use are not usually compatible with the gene IDs used by gsva, thus the
+#' primary logic in this function is intended to bridge these IDs.
 #'
 #' @param first_ids  The required IDs for a single set.
-#' @param second_ids  Potentially null optionally used for a second, presumably contrasting set.
+#' @param second_ids  Potentially null optionally used for a second, presumably
+#'   contrasting set.
 #' @param orgdb  Orgdb annotation, used to translate IDs to the required type.
 #' @param researcher_name  Prefix of the name for the generated set(s).
 #' @param study_name  Second element in the name of the generated set(s).
@@ -12,6 +16,7 @@
 #' @param pair_names The suffix of the generated set(s).
 #' @param current_id  What type of ID is the data currently using?
 #' @param required_id  What type of ID should the use?
+#' @return Small list comprised of the created gene set collection(s).
 #' @export
 make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
                               researcher_name="elsayed", study_name="macrophage",
@@ -94,7 +99,10 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 
 #' Given a pairwise result, make a gene set collection.
 #'
-#' If I want to play with gsva and friends, then I need GeneSetCollections!
+#' If I want to play with gsva and friends, then I need GeneSetCollections!  To
+#' that end, this function uses extract_significant_genes() in order to gather
+#' sets of genes deemed 'significant'.  It then passes these sets to
+#' make_gsc_from_ids().
 #'
 #' @param pairwise  A pairwise result, or combined de result, or extracted genes.
 #' @param according_to  When getting significant genes, use this method.
@@ -107,6 +115,8 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 #' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
 #' @param required_id  gsva uses entrezids by default.
 #' @param ...  Extra arguments for extract_significant_genes().
+#' @return  List containing 3 GSCs, one containing both the ups/downs called
+#'   'colored', one of the ups, and one of the downs.
 #' @export
 make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
                                    pair_names=c("ups", "downs"), category_name="infection",
@@ -131,9 +141,6 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
       pairwise,
       according_to=according_to,
       ...)[[according_to]])
-    ##updown <- sm(extract_significant_genes(
-    ##  pairwise,
-    ##  according_to=according_to)[[according_to]])
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "sig_genes") {
@@ -258,6 +265,8 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' Given a pairwise result, make a gene set collection.
 #'
 #' If I want to play with gsva and friends, then I need GeneSetCollections!
+#' Much like make_gsc_from_significant(), this function extract the genes deemed
+#' 'abundant' and generates gene sets accordingly.
 #'
 #' @param pairwise  A pairwise result, or combined de result, or extracted genes.
 #' @param according_to  When getting significant genes, use this method.
@@ -269,7 +278,9 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param color  Make a colorSet?
 #' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
 #' @param required_id  gsva uses entrezids by default.
-#' @param ...  Extra arguments for extract_significant_genes().
+#' @param ...  Extra arguments for extract_abundant_genes().
+#' @return  List containing 3 GSCs, one containing both the ups/downs called
+#'   'colored', one of the ups, and one of the downs.
 #' @export
 make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
                                    pair_names=c("ups", "downs"), category_name="infection",
@@ -283,25 +294,16 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     message("Invoking combine_de_tables().")
     combined <- sm(combine_de_tables(pairwise, ...))
     message("Invoking extract_significant_genes().")
-    updown <- sm(extract_significant_genes(
-      combined,
-      according_to=according_to, ...)[[according_to]])
-    ups <- updown[["ups"]]
-    downs <- updown[["downs"]]
+    highs <- sm(extract_abundant_genes(
+      combined, according_to=according_to, ...)[[according_to]])
+    lows <- sm(extract_abundant_genes(
+      combined, according_to=according_to, least=TRUE, ...)[[according_to]])
   } else if (class(pairwise)[1] == "combined_de") {
     message("Invoking extract_significant_genes().")
-    updown <- sm(extract_significant_genes(
-      pairwise,
-      according_to=according_to,
-      ...)[[according_to]])
-    ##updown <- sm(extract_significant_genes(
-    ##  pairwise,
-    ##  according_to=according_to)[[according_to]])
-    ups <- updown[["ups"]]
-    downs <- updown[["downs"]]
-  } else if (class(pairwise)[1] == "sig_genes") {
-    ups <- updown[["ups"]]
-    downs <- updown[["downs"]]
+    highs <- sm(extract_abundant_genes(
+      pairwise, according_to=according_to, ...)[[according_to]])
+    lows <- sm(extract_abundant_genes(
+      pairwise, according_to=according_to, least=TRUE, ...)[[according_to]])
   } else if (class(pairwise)[1] == "character") {
     message("Invoking make_gsc_from_ids().")
     ret <- make_gsc_from_ids(pairwise, orgdb=orgdb,
@@ -315,77 +317,77 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
   tt <- sm(library(orgdb, character.only=TRUE))
-  up_lst <- list()
-  down_lst <- list()
+  high_lst <- list()
+  low_lst <- list()
   colored_lst <- list()
-  for (c in 1:length(ups)) {
-    name <- names(ups)[c]
-    up <- ups[[name]]
-    down <- downs[[name]]
-    if (class(up) == "character") {
-      up_ids <- up
-      down_ids <- down
+  for (c in 1:length(high_lst[["abundances"]])) {
+    name <- names(high_lst[["abundances"]])[c]
+    high <- high_lst[["abundances"]][[name]]
+    low <- low_lst[["abundances"]][[name]]
+    if (class(high) == "character") {
+      high_ids <- high
+      low_ids <- low
     } else if (class(up) == "data.frame") {
-      up_ids <- rownames(up)
-      down_ids <- rownames(down)
+      high_ids <- rownames(high)
+      low_ids <- rownames(low)
     }
     if (current_id == required_id) {
-      up[[required_id]] <- rownames(up)
-      down[[required_id]] <- rownames(down)
+      high[[required_id]] <- rownames(high)
+      low[[required_id]] <- rownames(low)
     } else {
       message("Converting the rownames() of the expressionset to ENTREZID.")
-      up_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                         keys=up_ids,
-                                         keytype=current_id,
-                                         columns=c(required_id)))
-      up_idx <- complete.cases(up_ids)
-      up_ids <- up_ids[up_idx, ]
-      up <- merge(up, up_ids, by.x="row.names", by.y=current_id)
-      if (!is.null(down_ids)) {
-        down_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                             keys=down_ids,
+      high_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                           keys=high_ids,
+                                           keytype=current_id,
+                                           columns=c(required_id)))
+      high_idx <- complete.cases(high_ids)
+      high_ids <- up_ids[high_idx, ]
+      high <- merge(high, high_ids, by.x="row.names", by.y=current_id)
+      if (!is.null(low_ids)) {
+        low_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                             keys=low_ids,
                                              keytype=current_id,
                                              columns=c(required_id)))
-        down_idx <- complete.cases(down_ids)
-        down_ids <- down_ids[down_idx, ]
-        down <- merge(down, down_ids, by.x="row.names", by.y=current_id)
+        low_idx <- complete.cases(low_ids)
+        low_ids <- low_ids[low_idx, ]
+        low <- merge(low, low_ids, by.x="row.names", by.y=current_id)
       } else {
-        down <- NULL
+        low <- NULL
       }
     }
-    up[["direction"]] <- pair_names[1]
-    up[["phenotype"]] <- phenotype_name
-    down[["direction"]] <- pair_names[2]
-    down[["phenotype"]] <- phenotype_name
+    high[["direction"]] <- pair_names[1]
+    high[["phenotype"]] <- phenotype_name
+    low[["direction"]] <- pair_names[2]
+    low[["phenotype"]] <- phenotype_name
 
-    both <- rbind(up, down)
-    shared_ids <- up[[required_id]] %in% down[[required_id]]
+    both <- rbind(high, low)
+    shared_ids <- high[[required_id]] %in% low[[required_id]]
     if (sum(shared_ids) > 0) {
-      warning("There are ", sum(shared_ids), " shared IDs in the up and down lists.")
-      shared_id <- up[shared_ids, ][[required_id]]
+      warning("There are ", sum(shared_ids), " shared IDs in the high and low lists.")
+      shared_id <- high[shared_ids, ][[required_id]]
       shared_rows <- both[[required_id]] == shared_id
       both <- both[!shared_rows, ]
     }
 
-    dup_elements <- duplicated(up[[required_id]])
-    if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the up data.")
-      up <- up[!dup_elements, ]
+    dhigh_elements <- dhighlicated(high[[required_id]])
+    if (sum(dhigh_elements) > 0) {
+      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the high data.")
+      high <- high[!dhigh_elements, ]
     }
-    dup_elements <- duplicated(down[[required_id]])
-    if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the down data.")
-      down <- down[!dup_elements, ]
+    dhigh_elements <- dhighlicated(low[[required_id]])
+    if (sum(dhigh_elements) > 0) {
+      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the low data.")
+      low <- low[!dhigh_elements, ]
     }
-    dup_elements <- duplicated(both[[required_id]])
-    if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the shared.")
-      both <- both[!dup_elements, ]
+    dhigh_elements <- dhighlicated(both[[required_id]])
+    if (sum(dhigh_elements) > 0) {
+      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the shared.")
+      both <- both[!dhigh_elements, ]
     }
 
     set_prefix <- glue("{set_name}_{category_name}")
-    color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
-    up_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
+    color_set_name <- tohighper(glue("{set_prefix}_{phenotype_name}"))
+    high_name <- tohighper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
                                setName=color_set_name,
@@ -394,27 +396,27 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
                                geneColor=as.factor(both[["direction"]]),
                                phenotypeColor=as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
-    up_gsc <- GSEABase::GeneSet(
+    high_gsc <- GSEABase::GeneSet(
                           GSEABase::EntrezIdentifier(),
-                          setName=up_name,
-                          geneIds=as.character(up[[required_id]]))
-    up_lst[[name]] <- up_gsc
-    down_gsc <- NULL
-    down_lst[[name]] <- down_gsc
+                          setName=high_name,
+                          geneIds=as.character(high[[required_id]]))
+    high_lst[[name]] <- high_gsc
+    low_gsc <- NULL
+    low_lst[[name]] <- low_gsc
     if (!is.null(pair_names[2])) {
-      down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
-      down_gsc <- GSEABase::GeneSet(
+      low_name <- tohighper(glue("{set_prefix}_{pair_names[2]}"))
+      low_gsc <- GSEABase::GeneSet(
                               GSEABase::EntrezIdentifier(),
-                              setName=down_name,
-                              geneIds=as.character(down[[required_id]]))
-      down_lst[[name]] <- down_gsc
+                              setName=low_name,
+                              geneIds=as.character(low[[required_id]]))
+      low_lst[[name]] <- low_gsc
     }
   } ## End of the for loop.
 
   retlst <- list(
     "colored" = colored_lst,
-    "up" = up_lst,
-    "down" = down_lst)
+    "high" = high_lst,
+    "low" = low_lst)
   return(retlst)
 }
 
@@ -438,7 +440,11 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param method  Which gsva method to use?
 #' @param kcdf  Options for the gsva methods.
 #' @param ranking  another gsva option.
-#' @return  Something from GSVA::gsva()!
+#' @return  List containing three elements: first a modified expressionset using
+#'   the result of gsva in place of the original expression data; second the
+#'   result from gsva, and third a data frame of the annotation data for the
+#'   gene sets in the expressionset.  This seems a bit redundant, perhaps I
+#'   should revisit it?
 #' @export
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
                         cores=0, current_id="ENSEMBL", required_id="ENTREZID",
@@ -528,6 +534,21 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
   return(retlist)
 }
 
+#' Invoke xCell and pretty-ify the result.
+#'
+#' I initially thought xCell might prove the best tool/method for exploring cell
+#' deconvolution.  I slowly figured out its limitations, but still think it
+#' seems pretty nifty for its use case.  Thus this function is intended to make
+#' invoking it easier/faster.
+#'
+#' @param expt  Expressionset to query.
+#' @param label_size  How large to make labels when printing the final heatmap.
+#' @param col_margin  Used by par() when printing the final heatmap.
+#' @param row_margin Ibid.
+#' @param ...  Extra arguments when normalizing the data for use with xCell.
+#' @return  Small list providing the output from xCell, the set of signatures,
+#'   and heatmap.
+#' @export
 simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
@@ -550,7 +571,7 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xcell_input[["hgnc_symbol"]] <- NULL
 
   xCell.data <- NULL
-  library(xCell)
+  tt <- requireNamespace(xCell)
   data("xCell.data", package="xCell")
   xcell_result <- xCell::xCellAnalysis(xcell_input)
 
@@ -574,10 +595,11 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
 
 #' Extract the GeneSets corresponding to the provided name(s).
 #'
-#' I dunno what I want to put here and I am getting tired.
+#' Many of the likely GSCs contain far more gene sets than one actually wants to
+#' deal with.  This will subset them according to a the desired 'requests'.
 #'
-#' @param sig_data  The pile of GeneSets probably from GSVAdata.
-#' @param requests  Character list of sources.
+#' @param sig_data  The pile of GeneSets, probably from GSVAdata.
+#' @param requests  Character list of sources to keep.
 #' @return  Whatever GeneSets remain.
 #' @export
 get_gsvadb_names <- function(sig_data, requests=NULL) {
@@ -646,7 +668,21 @@ get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_
   return(retlist)
 }
 
-convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_type="ENTREZID") {
+#' Use AnnotationDbi to translate geneIDs from type x to type y.
+#'
+#' This is intended to convert all the IDs in a geneSet from one ID type to
+#' another and giving back the geneSet with the new IDs.
+#'
+#' One caveat: this will collapse redundant IDs via unique().
+#'
+#' @param gsc geneSetCollection with IDs of a type one wishes to change.
+#' @param orgdb  Annotation object containing the various IDs.
+#' @param from_type  Name of the ID which your gsc is using.  This can probably
+#'   be automagically detected...
+#' @param to_type  Name of the ID you wish to use.
+#' @return Fresh gene set collection replete with new names.
+#' @export
+convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="ENTREZID") {
     message("Converting the rownames() of the expressionset to ", to_type, ".")
     tt <- sm(library(orgdb, character.only=TRUE))
     gsc_lst <- as.list(gsc)
@@ -662,6 +698,9 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
       }
       gs <- gsc[[g]]
       old_ids <- GSEABase::geneIds(gs)
+      if (is.null(from_type)) {
+        from_type <- guess_orgdb_keytype(old_ids, orgdb)
+      }
       new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
                                           keys=old_ids,
                                           keytype=from_type,
@@ -678,6 +717,24 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
     return(gsc)
 }
 
+#' Score the results from gsva().
+#'
+#' Yeah, this is a bit meta, but the scores from gsva seem a bit meaningless to
+#' me, so I decided to look at the distribution of observed scores in some of my
+#' data; I quickly realized that they follow a nicely normal distribution.
+#' Therefore, I thought to calculate some scores of gsva() using that
+#' information.
+#'
+#' The nicest thing in this, I think, is that it provides its scoring metric(s)
+#' according to a few different possibilities, including:
+#'   * the mean of samples found in an experimental factor
+#'   * All provided scores against the distribution of observed scores as
+#'     z-scores.
+#'   * A single score against all scores.
+#'   * Rows (gene sets) against the set of all gene sets.
+#' @return  The scores according to the provided category, factor, sample, or
+#' score(s).
+#' @export
 gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL, sample=NULL,
                              factor_column="condition", method="mean") {
   values <- exprs(gsva_result[["expt"]])
@@ -735,6 +792,19 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
   return(results)
 }
 
+#' Take a result from simple_gsva(), a list of gene IDs, and intersect them.
+#'
+#' Najib is curious about the relationship of genes in sets, the sets, and the
+#' genes that comprise those sets.  This is pushing gsva towards a oroborous-ish
+#' state.
+#'
+#' @param gsva_result  Result from simple_gsva().
+#' @param lst  List of genes of interest.
+#' @param freq_cutoff  Minimum number of observations to be counted.
+#' @param sig_weights  When making venn diagrams, weight them?
+#' @param gene_weights  When venning genes, weight them?
+#' @return  List containing some venns, lists, and such.
+#' @export
 intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
                                  sig_weights=TRUE, gene_weights=TRUE) {
   sig_venn <- Vennerable::Venn(Sets=lst)

@@ -24,7 +24,7 @@ exclude_genes_expt(expt, column = "txtype", method = "remove",
 A smaller expt
 }
 \description{
-Because I am too lazy to remember that expressionsets use matrix subsets for [gene,sample]
+Because I am too lazy to remember that expressionsets use matrix subsets for \link{gene,sample}
 }
 \seealso{
 \code{\link{create_expt}}

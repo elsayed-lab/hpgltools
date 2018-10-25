@@ -37,9 +37,9 @@ may use a lot of different ID types and still score some useful ontology data.
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
- \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
+\code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 }
 \author{
 I think Keith provided the initial implementation of this, but atb
-  messed with it pretty extensively.
+messed with it pretty extensively.
 }

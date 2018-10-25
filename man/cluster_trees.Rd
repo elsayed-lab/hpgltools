@@ -40,5 +40,5 @@ into the format expected by topGO and uses it to make those trees.
 }
 \seealso{
 \pkg{Ramigo}
- \code{\link[topGO]{showSigOfNodes}}
+\code{\link[topGO]{showSigOfNodes}}
 }

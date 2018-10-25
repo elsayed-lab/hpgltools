@@ -19,7 +19,7 @@ when downloading files.}
 }
 \value{
 List of package names and some booleans to see if they have already
-  been installed.
+been installed.
 }
 \description{
 This is a surprisingly difficult problem.  Many species names in the eupathdb

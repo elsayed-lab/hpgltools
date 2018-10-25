@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_orgdb.r
 \name{orgdb_from_ah}
 \alias{orgdb_from_ah}
-\title{Create an orgdb from an AnnotationHub taxonID.}
+\title{Get an orgdb from an AnnotationHub taxonID.}
 \usage{
 orgdb_from_ah(ahid = NULL, title = NULL, species = NULL,
   type = "OrgDb")

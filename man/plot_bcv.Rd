@@ -24,5 +24,5 @@ This was written primarily to understand what that function is doing in edgeR.
 }
 \seealso{
 \pkg{edgeR}
- \code{\link[edgeR]{plotBCV}}
+\code{\link[edgeR]{plotBCV}}
 }

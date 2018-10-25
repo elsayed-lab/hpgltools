@@ -27,5 +27,5 @@ samples.
 }
 \seealso{
 \pkg{affy}
- \code{\link[affy]{ma.plot}}
+\code{\link[affy]{ma.plot}}
 }

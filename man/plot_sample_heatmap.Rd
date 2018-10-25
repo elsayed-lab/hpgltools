@@ -32,5 +32,5 @@ or whatever it is, as the annotation dataframes in them are pretty awesome.
 }
 \seealso{
 \pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+\code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 }

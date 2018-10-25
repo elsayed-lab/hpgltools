@@ -31,7 +31,7 @@ This function makes that rather easier, or so I hope at least.
 }
 \seealso{
 \pkg{RCurl}
- \code{\link[RCurl]{getURL}}
+\code{\link[RCurl]{getURL}}
 }
 \author{
 atb

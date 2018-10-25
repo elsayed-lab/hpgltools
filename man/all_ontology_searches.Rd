@@ -56,7 +56,7 @@ shift of clusterprofiler and friends towards using them.}
 }
 \value{
 a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
- associated trees.
+associated trees.
 }
 \description{
 This takes a set of differential expression results, extracts a subset of up/down expressed

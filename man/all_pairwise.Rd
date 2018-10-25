@@ -75,6 +75,6 @@ It collects the results and does some simple comparisons among them.
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
- \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
- \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+\code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
+\code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 }

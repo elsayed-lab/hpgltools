@@ -58,6 +58,6 @@ a full pathname or local to the cwd of the project.
 }
 \seealso{
 \pkg{Biobase}
- \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
- \code{\link{read_counts_expt}}
+\code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
+\code{\link{read_counts_expt}}
 }

@@ -35,7 +35,11 @@ case this is a parameter.}
 \item{ranking}{another gsva option.}
 }
 \value{
-Something from GSVA::gsva()!
+List containing three elements: first a modified expressionset using
+the result of gsva in place of the original expression data; second the
+result from gsva, and third a data frame of the annotation data for the
+gene sets in the expressionset.  This seems a bit redundant, perhaps I
+should revisit it?
 }
 \description{
 gsva seems to hold a tremendous amount of potential.  Unfortunately, it is

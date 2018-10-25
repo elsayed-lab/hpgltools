@@ -7,7 +7,7 @@
 deparse_go_value(value)
 }
 \arguments{
-\item{value}{Result of try(as.character(somefunction(GOTERM[id])), silent=TRUE).
+\item{value}{Result of try(as.character(somefunction(GOTERM\link{id})), silent=TRUE).
 somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...}
 }
 \value{

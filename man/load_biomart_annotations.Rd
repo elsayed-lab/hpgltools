@@ -39,9 +39,9 @@ marts, you need to have a mart loaded.}
 }
 \value{
 List containing:   a data frame of the found annotations, a copy of
-  the mart instance to help with finding problems, the hostname queried, the
-  name of the mart queried, a vector of rows queried, vector of the available
-  attributes, and the ensembl dataset queried.
+the mart instance to help with finding problems, the hostname queried, the
+name of the mart queried, a vector of rows queried, vector of the available
+attributes, and the ensembl dataset queried.
 }
 \description{
 Biomart is an amazing resource of information, but using it is a bit annoying.  This function
@@ -60,7 +60,7 @@ appropriate marts, datasets, and columns to download.
 }
 \seealso{
 \pkg{biomaRt}
- \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+\code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 }
 \author{
 atb

@@ -19,7 +19,7 @@ plot_libsize_prepost(expt, low_limit = 2, filter = TRUE, ...)
 }
 \value{
 Bar plot showing the number of genes below the low_limit before and
-  after filtering the data.
+after filtering the data.
 }
 \description{
 Thanks to Sandra Correia for this!  This function attempts to represent the

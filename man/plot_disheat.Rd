@@ -39,6 +39,6 @@ them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \seealso{
 \pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
- \code{\link[grDevices]{recordPlot}}
+\code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
+\code{\link[grDevices]{recordPlot}}
 }

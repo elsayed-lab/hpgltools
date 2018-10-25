@@ -14,7 +14,7 @@ not yet seen two of these accursed files which had the same headers.}
 }
 \value{
 List containing the protein names, group data, protein dataframe,
-  and peptide dataframe.
+and peptide dataframe.
 }
 \description{
 The Thermo(TM) workflow has as its default a fascinatingly horrible excel

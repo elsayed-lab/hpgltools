@@ -25,5 +25,5 @@ different columns to sort from.
 }
 \seealso{
 \pkg{variancePartition}
- \code{\link[variancePartition]{plotPercentBars}}
+\code{\link[variancePartition]{plotPercentBars}}
 }

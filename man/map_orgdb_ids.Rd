@@ -32,7 +32,7 @@ columns for a given set of gene ids using the in a sqlite instance.
 }
 \seealso{
 \pkg{AnnotationDbi}
- \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
+\code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 }
 \author{
 Keith Hughitt with changes by atb.

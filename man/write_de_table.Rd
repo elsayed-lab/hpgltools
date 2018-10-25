@@ -16,13 +16,15 @@ of genes (n), the coefficient column (coef)}
 }
 \value{
 List of data frames comprising the toptable output for each coefficient, I also added a
- qvalue entry to these toptable() outputs.
+qvalue entry to these toptable() outputs.
 }
 \description{
 However, this will do a couple of things to make one's life easier:
-1.  Make a list of the output, one element for each comparison of the contrast matrix.
-2.  Write out the results() output for them in separate sheets in excel.
-3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+\enumerate{
+\item Make a list of the output, one element for each comparison of the contrast matrix.
+\item Write out the results() output for them in separate sheets in excel.
+\item Since I have been using qvalues a lot for other stuff, add a column for them.
+}
 }
 \details{
 Tested in test_24deseq.R

@@ -27,7 +27,7 @@ make_eupath_orgdb(species = NULL, entry = NULL, dir = "eupathdb",
 }
 \value{
 Currently only the name of the installed package.  This should
-  probably change.
+probably change.
 }
 \description{
 This function has passed through multiple iterations as the preferred

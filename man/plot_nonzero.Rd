@@ -37,5 +37,5 @@ Temanni <temanni at umd dot edu>.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
+\code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 }

@@ -36,10 +36,10 @@ simple_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 }
 \value{
 A list of some information for every KEGG pathway downloaded/examined.  This information includes:
- a. The filename of the final image for each pathway.
- b. The number of genes which were found in each pathway image.
- c. The number of genes in the 'up' category
- d. The number of genes in the 'down' category
+a. The filename of the final image for each pathway.
+b. The number of genes which were found in each pathway image.
+c. The number of genes in the 'up' category
+d. The number of genes in the 'down' category
 }
 \description{
 KEGGREST and pathview provide neat functions for coloring molecular pathways with arbitrary data.

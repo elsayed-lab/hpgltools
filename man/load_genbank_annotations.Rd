@@ -34,7 +34,7 @@ txdb instance.
 }
 \seealso{
 \pkg{genbankr} \pkg{rentrez}
- \code{\link[genbankr]{import}}
+\code{\link[genbankr]{import}}
 }
 \author{
 atb

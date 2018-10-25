@@ -11,8 +11,13 @@
 #' @param number_by_var  Take the top-n most variant genes. Use all genes if null.
 #' @param ceiling_factor  Define how many columns(experimental samples) to take
 #'   when sampling the expressionset for training vs. testing data.
-#' @param training_number
-#'
+#' @param training_number  Iterations when training.
+#' @param training_repeats  Also iterations when training... (in other words, I dunno).
+#' @param training_method  which caret method to train?
+#' @param classify_method  which caret method to classify the data?
+#' @param classify_preprocess  Which mlseq method to preprocess/normalize the data?
+#' @param reference_factor  What factor in the experimental metadata contains the reference?
+#' @param ...  Extra arguments
 simple_mlseq <- function(expt, comparison="condition", number_by_var=100,
                          ceiling_factor=1/3, training_number=2, training_repeats=10,
                          training_method="repeatedcv",

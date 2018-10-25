@@ -217,7 +217,7 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #' @param packrat  Is this tree under packrat control?
 #' @export
 get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
-  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
+  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{{print $2}}'")
   commit_result <- system(cmdline, intern=TRUE)
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
   date_result <- system(cmdline, intern=TRUE)

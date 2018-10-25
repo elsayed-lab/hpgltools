@@ -34,5 +34,5 @@ This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R
 }
 \seealso{
 \pkg{sva}
- \code{\link[sva]{ComBat}}
+\code{\link[sva]{ComBat}}
 }

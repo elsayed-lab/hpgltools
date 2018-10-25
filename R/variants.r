@@ -13,7 +13,8 @@
 #' @param tolower  Lowercase stuff like 'HPGL'?
 #' @return  A new expt object
 #' @export
-count_expt_snps <- function(expt, type="counts", input_dir="preprocessing/outputs", tolower=TRUE) {
+count_expt_snps <- function(expt, type="counts",
+                            input_dir="preprocessing/outputs", tolower=TRUE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -132,7 +133,8 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   returns <- list()
   i <- 1
   res <- list()
-  res <- foreach(i=1:num_levels, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("snp_by_chr")) %dopar% {
+  res <- foreach(i=1:num_levels, .packages=c("hpgltools", "doParallel"),
+                 .options.snow=pb_opts, .export=c("snp_by_chr")) %dopar% {
     chromosome_name <- levels(as.factor(chr))[i]
     returns[[chromosome_name]] <- snp_by_chr(medians,
                                              chromosome_name)

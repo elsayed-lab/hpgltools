@@ -21,14 +21,14 @@ a hit.}
 }
 \value{
 A funky list by chromosome containing:  'medians', the median number
-  of hits / position by sample type; 'possibilities', the;
- 'intersections', the groupings as detected by Vennerable;
- 'chr_data', the raw data; 'set_names', a character list of the actual names
- of the groupings; 'invert_names', the opposite of set_names which is to say
- the names of groups which do _not_ include samples x,y,z; 'density', a list
- of snp densities with respect to chromosomes.  Note that this last one is
- approximate as I just calculate with the largest chromosome position
- number, not the explicit number of nucleotides in the chromosome.
+of hits / position by sample type; 'possibilities', the;
+'intersections', the groupings as detected by Vennerable;
+'chr_data', the raw data; 'set_names', a character list of the actual names
+of the groupings; 'invert_names', the opposite of set_names which is to say
+the names of groups which do \emph{not} include samples x,y,z; 'density', a list
+of snp densities with respect to chromosomes.  Note that this last one is
+approximate as I just calculate with the largest chromosome position
+number, not the explicit number of nucleotides in the chromosome.
 }
 \description{
 I like this function.  It generates an exhaustive catalog of the snps by

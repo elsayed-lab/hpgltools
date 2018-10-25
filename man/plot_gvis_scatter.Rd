@@ -21,7 +21,7 @@ plot_gvis_scatter(df, tooltip_data = NULL,
 }
 \value{
 NULL, but along the way an html file is generated which contains a googleVis scatter
- plot.  See plot_scatter() for details.
+plot.  See plot_scatter() for details.
 }
 \description{
 Given an arbitrary scatter plot, we can make it pretty and javascript-tacular using this function.
@@ -34,5 +34,5 @@ Given an arbitrary scatter plot, we can make it pretty and javascript-tacular us
 }
 \seealso{
 \pkg{googleVis}
- \code{\link[googleVis]{gvisScatterChart}}
+\code{\link[googleVis]{gvisScatterChart}}
 }
