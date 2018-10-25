@@ -19,33 +19,33 @@ License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   Biobase, BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
-  Category, cleaver, clusterProfiler, corpcor, corrplot,
-  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW, dplyr,
+  caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
+  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW,
   EBSeq, EDASeq, edgeR,
-  ffpe, fission,
+  fastICA, ffpe, fission,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
   GSEABase,
-  Heatplus, Hmisc, Homo.sapiens, httr,
-  inflection, IRanges, iterators,
+  Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
+  inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph,
   lattice, limma, locfit,
-  matrixStats, motifRG, mygene,
+  matrixStats, MLSeq, motifRG, mygene,
   openxlsx, OrganismDbi,
-  packrat, pander, parallel, pasilla, pathview, pcaMethods, plyr, preprocessCore,
+  packrat, pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
-  S4Vectors, scales, seqLogo, statmod, stringi, stringr, survJamda, sva,
+  S4Vectors, scales, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
   UniProt.ws,
   xCell,
   variancePartition, Vennerable, venneuler,
   XLConnect, xml2
 Imports:
-  Biobase, data.table, foreach, ggplot2, knitr, magrittr, methods
+  Biobase, data.table, dplyr, foreach, ggplot2, glue, knitr, magrittr, methods, rlang
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
@@ -113,6 +113,6 @@ Collate:
     'plot_venn.r'
     'proteomics.r'
     'sequence.r'
-    'snp.r'
     'tnseq.r'
+    'variants.r'
     'xlsx.r'

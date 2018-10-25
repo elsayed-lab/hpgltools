@@ -42,7 +42,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
   } else if (class(orgdb) == "character") {
-    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
     eval(parse(text=org_pkgstring))
   }
   keytype <- toupper(keytype)
@@ -207,7 +207,7 @@ load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
   } else if (class(orgdb) == "character") {
-    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
     eval(parse(text=org_pkgstring))
   }
   tt <- sm(requireNamespace("GO.db"))

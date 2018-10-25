@@ -19,6 +19,8 @@ ruv_residuals, or pca.}
 
 \item{expt_state}{Current state of the expt object (to check for log2, cpm, etc)}
 
+\item{confounders}{Used by ISVA to search for confounded experimental factors.}
+
 \item{...}{Parameters fed to arglist.}
 }
 \value{

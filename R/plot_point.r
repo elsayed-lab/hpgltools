@@ -113,8 +113,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
     ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
@@ -236,8 +236,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
     ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
     ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
@@ -487,9 +487,9 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
       ## The following scale_shape_manual() sets the labels of the legend on the right side.
       ggplot2::scale_shape_manual(name="State", values=state_shapes,
                                   labels=c(
-                                    paste0("Up Sig.: ", num_upsig),
-                                    paste0("Down Sig.: ", num_downsig),
-                                    paste0("Insig.: ", num_insig)),
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
                                   guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
   } else {
     plt <- plt +
@@ -718,7 +718,7 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
       }
       firstname <- colnames(data)[c]
       secondname <- colnames(data)[d]
-      name <- paste0(firstname, "_", secondname)
+      name <- glue("{firstname}_{secondname}")
       if (isTRUE(log)) {
         first <- log2(first + 1.0)
         second <- log2(second + 1.0)
@@ -726,7 +726,7 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
       m <- first - second
       a <- (first + second) / 2
       affy::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
-      title(paste0("MA of ", firstname, " vs ", secondname))
+      title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
     }
   }
@@ -764,8 +764,8 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second",
                                            label="label"), environment=hpgl_env) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
     ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
     ggplot2::theme(legend.position="none",
                    axis.text=ggplot2::element_text(size=10, colour="black"))
@@ -905,10 +905,10 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     plt <- plt +
       ggplot2::scale_shape_manual(name="state", values=state_shapes,
                                   labels=c(
-                                    paste0("Down Sig.: ", num_downsig),
-                                    paste0("FC Insig.: ", num_fcinsig),
-                                    paste0("P Insig.: ", num_pinsig),
-                                    paste0("Up Sig.: ", num_upsig)),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("FC Insig.: {num_fcinsig}"),
+                                    glue("P Insig.: {num_pinsig}"),
+                                    glue("Up Sig.: {num_upsig}")),
                                   guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
       }
 

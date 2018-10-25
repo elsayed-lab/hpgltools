@@ -168,14 +168,20 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   lrt_list <- list()
   sc <- vector("list", length(apc[["names"]]))
   end <- length(apc[["names"]])
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (con in 1:length(apc[["names"]])) {
     name <- apc[["names"]][[con]]
-    pct_done <- con / length(apc[["names"]])
-    utils::setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- con / length(apc[["names"]])
+      utils::setTxtProgressBar(bar, pct_done)
+    }
     sc[[name]] <- gsub(pattern=",", replacement="", apc[["all_pairwise"]][[con]])
     tt <- parse(text=sc[[name]])
-    ctr_string <- paste0("tt = mymakeContrasts(", tt, ", levels=model_data)")
+    ## ctr_string <- paste0("tt = mymakeContrasts(", tt, ", levels=model_data)")
+    ctr_string <- glue("tt = mymakeContrasts({tt}, levels=model_data)")
     eval(parse(text=ctr_string))
     contrast_list[[name]] <- tt
     lrt_list[[name]] <- NULL
@@ -199,7 +205,9 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     res[["FDR"]] <- signif(x=as.numeric(res[["FDR"]]), digits=4)
     result_list[[name]] <- res
   } ## End for loop
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
 
   dispersions <- sm(try(edgeR::plotBCV(y=final_norm), silent=TRUE))
   dispersion_plot <- NULL

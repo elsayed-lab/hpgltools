@@ -35,7 +35,7 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
     ## some functions prefer matrix, so I am keeping this explicit
     count_table <- as.data.frame(data)
   } else {
-    stop(paste0("You provided a class of type: ", data_class, ".
+    stop(glue("You provided a class of type: {data_class}.
 This works with: expt, ExpressionSet, data.frame, and matrices.
 "))
   }
@@ -299,7 +299,7 @@ hpgl_qstats <- function(data, groups, refType="mean",
         SIGMA <- cbind(SIGMA, (matrixStats::rowMads(Q[, g == groups]))^2)
       }
     } else {
-      warning(paste0("There were 0 of type: ", g))
+      warning(glue("There were 0 of type: {g}"))
     }
   }
   colnames(QBETAS) <- uGroups

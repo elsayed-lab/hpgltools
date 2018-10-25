@@ -11,6 +11,8 @@ load_genbank_annotations(accession = "AE009949", reread = TRUE,
 \item{accession}{Accession to download and import}
 
 \item{reread}{Re-read (download) the file from genbank}
+
+\item{savetxdb}{Attempt saving a txdb object?}
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I haven't yet finalized.

@@ -6,9 +6,6 @@
 \alias{pData,}
 \alias{pData-methods}
 \title{Extend Biobase::pData to handle expt objects.}
-\usage{
-\S4method{pData}{expt}(object)
-}
 \arguments{
 \item{object}{The expt object from which to extract the expressionset.}
 }

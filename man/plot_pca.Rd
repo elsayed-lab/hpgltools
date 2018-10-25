@@ -20,6 +20,8 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 
 \item{plot_size}{size for the glyphs on the plot.}
 
+\item{plot_alpha}{Add an alpha channel to the dots?}
+
 \item{plot_labels}{add labels?  Also, what type?  FALSE, "default", or "fancy".}
 
 \item{size_column}{use an experimental factor to size the glyphs of the plot}
@@ -30,11 +32,11 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 
 \item{y_pc}{Component to put on the y axis.}
 
+\item{pc_type}{Reduce the data by samples or genes?}
+
 \item{num_pc}{How many components to calculate, default to the number of rows in the metadata.}
 
 \item{...}{Arguments passed through to the pca implementations and plotter.}
-
-\item{transpose}{Perform pca on samples or genes?}
 }
 \value{
 a list containing the following (this is currently wrong)

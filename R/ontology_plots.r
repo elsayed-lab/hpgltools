@@ -44,7 +44,7 @@ plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denomin
   }
 
   if (!is.null(numerator) & !is.null(denominator)) {
-    df[["score_string"]] <- paste0(df[[numerator]], " / ", df[[denominator]])
+    df[["score_string"]] <- glue("{df[[numerator]]} / {df[[denominator]]}")
   } else if (!is.null(numerator)) {
     df[["score_string"]] <- df[[numerator]]
   }
@@ -107,11 +107,11 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
       cc_go <- cc_go[cc_idx, ]
     } else {
       ## The following supports stuff like level='level > 3 & level < 6'
-      stmt <- paste0("subset(mf_go,  ", level, ")")
+      stmt <- glue("subset(mf_go, {level})")
       mf_go <- eval(parse(text = stmt))
-      stmt <- paste0("subset(bp_go,  ", level, ")")
+      stmt <- glue("subset(bp_go, {level})")
       bp_go <- eval(parse(text = stmt))
-      stmt <- paste0("subset(cc_go,  ", level, ")")
+      stmt <- glue("subset(cc_go, {level})")
       cc_go <- eval(parse(text = stmt))
     }
     keepers <- rbind(keepers, mf_go)
@@ -314,9 +314,9 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1, n=30, gro
                                                         simplify=FALSE), paste, collapse="\n"))
     }
     if (nrow(plotting) > 0) {
-      plot_name <- paste0(ont, "p_plot_", overunder)
+      plot_name <- glue("{ont}p_plot_{overunder}")
       plot_list[[plot_name]] <- plot_ontpval(plotting, ontology=ont)
-      subset_name <- paste0(ont, "_subset_", overunder)
+      subset_name <- glue("{ont}_subset_{overunder}")
       plot_list[[subset_name]] <- plotting
     }
   } ## End of the for loop.

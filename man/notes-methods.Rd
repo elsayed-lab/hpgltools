@@ -6,9 +6,6 @@
 \alias{notes,}
 \alias{notes-methods}
 \title{Extend Biobase::notes to handle expt objects.}
-\usage{
-\S4method{notes}{expt}(object)
-}
 \arguments{
 \item{object}{The expt object from which to extract the expressionset.}
 }

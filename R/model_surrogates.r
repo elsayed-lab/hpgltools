@@ -18,6 +18,7 @@
 #'  ruv_residuals, or pca.
 #' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
 #' @param expt_state  Current state of the expt object (to check for log2, cpm, etc)
+#' @param confounders  Used by ISVA to search for confounded experimental factors.
 #' @param ... Parameters fed to arglist.
 #' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
 #'  the known batch, surrogates, and batch/surrogate.
@@ -395,7 +396,7 @@ the dataset, please try doing a filtering of the data and retry.")
   ) ## End of the switch.
 
   rownames(model_adjust) <- sample_names
-  sv_names <- paste0("SV", 1:ncol(model_adjust))
+  sv_names <- glue("SV{1:ncol(model_adjust)}")
   colnames(model_adjust) <- sv_names
   new_counts <- counts_from_surrogates(base10_mtrx, model_adjust, design=my_design)
   plotbatch <- as.integer(batches)
@@ -572,7 +573,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     } else {
       message(a, "/", num_adjust, ": Performing lmFit(data) etc. with ",
               adjust_name, " in the model.")
-      modified_formula <- as.formula(paste0("~ condition ", adjust))
+      modified_formula <- as.formula(glue("~ condition {adjust}"))
       limma_design <- model.matrix(modified_formula, data=design)
       voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
       limma_fit <- limma::lmFit(voom_result, limma_design)

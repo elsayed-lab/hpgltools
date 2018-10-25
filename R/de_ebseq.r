@@ -100,11 +100,16 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
   model_data <- model_choice[["chosen_model"]]
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, ...)
   contrasts_performed <- c()
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   retlst <- list()
   for (c in 1:length(apc[["names"]])) {
-    pct_done <- c / length(apc[["names"]])
-    utils::setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(apc[["names"]])
+      utils::setTxtProgressBar(bar, pct_done)
+    }
     name  <- apc[["names"]][[c]]
     a_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
     b_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
@@ -116,7 +121,8 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     }
     pair <- sm(subset_expt(
       expt=input,
-      subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      ## subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      subset=glue("condition=='{b_name}' | condition=='{a_name}'")))
     pair_data <- exprs(pair)
     conditions <- pair[["conditions"]]
     a_result <- ebseq_two(pair_data, conditions,
@@ -128,7 +134,9 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
                           norm=norm)
     retlst[[name]] <- a_result
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   return(retlst)
 }
 

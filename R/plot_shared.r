@@ -148,18 +148,18 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   cv_title <- "Coefficient of variance plot"
   topn_title <- "Top-n representation"
   if (!is.null(title_suffix)) {
-    nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
-    libsize_title <- paste0(libsize_title, ": ", title_suffix)
-    boxplot_title <- paste0(boxplot_title, ": ", title_suffix)
-    corheat_title <- paste0(corheat_title, ": ", title_suffix)
-    smc_title <- paste0(smc_title, ": ", title_suffix)
-    disheat_title <- paste0(disheat_title, ": ", title_suffix)
-    smd_title <- paste0(smd_title, ": ", title_suffix)
-    pca_title <- paste0(pca_title, ": ", title_suffix)
-    tsne_title <- paste0(tsne_title, ": ", title_suffix)
-    dens_title <- paste0(dens_title, ": ", title_suffix)
-    cv_title <- paste0(cv_title, ": ", title_suffix)
-    topn_title <- paste0(topn_title, ": ", title_suffix)
+    nonzero_title <- glue("{nonzero_title}: {title_suffix}")
+    libsize_title <- glue("{libsize_title}: {title_suffix}")
+    boxplot_title <- glue("{boxplot_title}: {title_suffix}")
+    corheat_title <- glue("{corheat_title}: {title_suffix}")
+    smc_title <- glue("{smc_title}: {title_suffix}")
+    disheat_title <- glue("{disheat_title}: {title_suffix}")
+    smd_title <- glue("{smd_title}: {title_suffix}")
+    pca_title <- glue("{pca_title}: {title_suffix}")
+    tsne_title <- glue("{tsne_title}:  {title_suffix}")
+    dens_title <- glue("{dens_title}: {title_suffix}")
+    cv_title <- glue("{cv_title}: {title_suffix}")
+    topn_title <- glue("{topn_title}: {title_suffix}")
   }
 
   ## I am putting the ... arguments on a separate line so that I can check that

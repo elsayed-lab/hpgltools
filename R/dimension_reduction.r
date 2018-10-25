@@ -390,8 +390,8 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
     tmphigh <- head(tmphigh, n=n)
     tmplow <- tmplow[order(tmplow[, pc], decreasing=FALSE), ]
     tmplow <- head(tmplow, n=n)
-    high_column <- paste0(signif(tmphigh[, pc], 4), ":", rownames(tmphigh))
-    low_column <- paste0(signif(tmplow[, pc], 4), ":", rownames(tmplow))
+    high_column <- glue("{signif(tmphigh[, pc], 4)}:{rownames(tmphigh)}")
+    low_column <- glue("{signif(tmplow[, pc], 4)}:{rownames(tmplow)}")
     highest <- cbind(highest, high_column)
     lowest <- cbind(lowest, low_column)
   }
@@ -470,7 +470,10 @@ pcRes <- function(v, d, condition=NULL, batch=NULL){
 #' @param design   Experimental design with condition batch factors.
 #' @param plot_title   Title for the plot.
 #' @param plot_labels   Parameter for the labels on the plot.
+#' @param x_label  Label for the x-axis.
+#' @param y_label  Label for the y-axis.
 #' @param plot_size  Size of the dots on the plot
+#' @param plot_alpha  Add an alpha channel to the dots?
 #' @param size_column  Experimental factor to use for sizing the glyphs
 #' @param rug  Include the rugs on the sides of the plot?
 #' @param cis  What (if any) confidence intervals to include.
@@ -641,8 +644,8 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   } else if (!is.null(variances)) {
     x_var_num <- as.numeric(gsub("PC", "", first))
     y_var_num <- as.numeric(gsub("PC", "", second))
-    x_label <- paste0("PC1", first, ": ", variances[[x_var_num]], "%  variance")
-    y_label <- paste0("PC2", second, ": ", variances[[y_var_num]], "%  variance")
+    x_label <- glue("PC1{first}: {variances[[x_var_num]]}% variance")
+    y_label <- glue("PC2{second}: {variances[[y_var_num]]}% variance")
     pca_plot <- pca_plot +
       ggplot2::xlab(x_label) +
       ggplot2::ylab(y_label)
@@ -677,9 +680,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 
   ## Add a little check to only deal with the confidence-interval-able data.
   ci_keepers <- pca_data %>%
-    dplyr::group_by(!!rlang::sym(ci_group)) %>%
-    dplyr::summarise(count = n()) %>%
-    dplyr::filter(count > 3)
+    group_by(!!sym(ci_group)) %>%
+    summarise("count" = n()) %>%
+    filter("count" > 3)
   if (nrow(ci_keepers) < 1) {
     cis <- NULL
   }
@@ -712,12 +715,13 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @param plot_colors   a color scheme.
 #' @param plot_title   a title for the plot.
 #' @param plot_size   size for the glyphs on the plot.
+#' @param plot_alpha  Add an alpha channel to the dots?
 #' @param plot_labels   add labels?  Also, what type?  FALSE, "default", or "fancy".
 #' @param size_column use an experimental factor to size the glyphs of the plot
 #' @param pc_method  how to extract the components? (svd
 #' @param x_pc  Component to put on the x axis.
 #' @param y_pc  Component to put on the y axis.
-#' @param transpose  Perform pca on samples or genes?
+#' @param pc_type  Reduce the data by samples or genes?
 #' @param num_pc  How many components to calculate, default to the number of rows in the metadata.
 #' @param ...  Arguments passed through to the pca implementations and plotter.
 #' @return a list containing the following (this is currently wrong)
@@ -836,7 +840,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   } else if (arglist[["label_list"]] == "concat") {
     label_list <- paste(design[[cond_column]], design[[batch_column]], sep="_")
   } else {
-    label_list <- paste0(design[["sampleid"]], "_", design[[cond_column]])
+    label_list <- glue("{design[['sampleid']]}_{design[[cond_column]]}")
   }
 
   ## I want to be able to seamlessly switch between PCs on samples vs. rows.
@@ -864,11 +868,11 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       if (pc_type == "sample") {
         rownames(svd_result[["v"]]) <- rownames(design)
       }
-      colnames(svd_result[["v"]]) <- paste0("PC", 1:ncol(svd_result[["v"]]))
+      colnames(svd_result[["v"]]) <- glue("PC{1:ncol(svd_result[['v']])")
       pc_table <- svd_result[["v"]]
 
-      x_name <- paste0("PC", x_pc)
-      y_name <- paste0("PC", y_pc)
+      x_name <- glue("PC{x_pc}")
+      y_name <- glue("PC{y_pc}")
       ## By a similar token, get the percentage of variance accounted for in each PC
       pca_variance <- round((svd_result[["d"]] ^ 2) / sum(svd_result[["d"]] ^ 2) * 100, 2)
       ## These will provide metrics on the x/y axes showing the amount of variance on those
@@ -956,11 +960,11 @@ Going to run pcRes with the batch information.")
       pc_table <- as.data.frame(tsne_result[["Y"]])
       ## Changing these assignments because of my new attempts to use GSVA
       rownames(pc_table) <- rownames(design)
-      colnames(pc_table) <- paste0("PC", 1:ncol(pc_table))
+      colnames(pc_table) <- glue("PC{1:ncol(pc_table)}")
       ##pc_table <- pc_table[, 1:components]
       pos_sing <- tsne_result[["costs"]]
-      x_name <- paste0("Factor", x_pc)
-      y_name <- paste0("Factor", y_pc)
+      x_name <- glue("Factor{x_pc}")
+      y_name <- glue("Factor{y_pc}")
     },
     "fast_ica" = {
       ## Fill in the defaults from the ica package.
@@ -1001,14 +1005,14 @@ Going to run pcRes with the batch information.")
       if (!is.null(arglist[["w.init"]])) {
         w.init <- arglist[["w.init"]]
       }
-      ica_result <- fastICA::fastICA(mtrx, n.comp=num_pcs, alg.typ=alg_type, fun=fun,
+      ica_result <- fastICA::fastICA(mtrx, n.comp=num_pc, alg.typ=alg_type, fun=fun,
                                alpha=alpha, method=ica_method, row.norm=row.norm,
                                maxit=maxit, tol=tol, verbose=verbose, w.init=w.init)
       pc_table <- ica_result[["S"]]
       rownames(pc_table) <- rownames(design)
-      colnames(pc_table) <- paste0("IC", 1:ncol(pc_table))
-      x_label <- paste0("IC", x_pc)
-      y_label <- paste0("IC", y_pc)
+      colnames(pc_table) <- glue("IC{1:ncol(pc_table)}")
+      x_label <- glue("IC{x_pc}")
+      y_label <- glue("IC{y_pc}")
     },
     {
       if (pc_method == "bpca") {
@@ -1061,8 +1065,8 @@ Going to run pcRes with the batch information.")
 
       pc_table <- as.data.frame(pcam_result@scores)
       pc_variance <- pcam_result@R2 * 100
-      x_name <- paste0("PC", x_pc)
-      y_name <- paste0("PC", y_pc)
+      x_name <- glue("PC{x_pc}")
+      y_name <- glue("PC{y_pc}")
       x_label <- sprintf("%s: %.2f%% variance", x_name, pc_variance[x_pc])
       y_label <- sprintf("%s: %.2f%% variance", y_name, pc_variance[y_pc])
     }
@@ -1103,7 +1107,7 @@ Going to run pcRes with the batch information.")
     plot_title <- what_happened(expt=expt)
   } else if (!is.null(plot_title)) {
     data_title <- what_happened(expt=expt)
-    plot_title <- paste0(plot_title, "; ", data_title)
+    plot_title <- glue("{plot_title}; {data_title}")
   } else {
     ## Leave the title blank.
   }
@@ -1132,7 +1136,7 @@ Going to run pcRes with the batch information.")
     comp_plot <- comp_plot + ggplot2::ggtitle(data_title)
   } else if (!is.null(plot_title)) {
     data_title <- what_happened(expt=expt)
-    plot_title <- paste0(plot_title, "; ", data_title)
+    plot_title <- glue("{plot_title}; {data_title}")
     comp_plot <- comp_plot + ggplot2::ggtitle(plot_title)
   } else {
     ## Leave the title blank.

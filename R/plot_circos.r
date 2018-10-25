@@ -41,7 +41,7 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
     genome_length <- sum(as.data.frame(all_seq@ranges)[["width"]])
   }
 
-  outfile <- paste0(conf_dir, "/karyotypes/", name, ".conf")
+  outfile <- glue("{conf_dir}/karyotypes/{name}.conf")
   out <- file(outfile, open="w+")
   ## First write the summary line
   start_string <- sprintf("chr - %s %d 0 %d %s", chr_name, chr_num, genome_length, color)
@@ -66,6 +66,14 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
 #' @param name Name of the configuration file to which to add the ideogram.
 #' @param conf_dir Where does the configuration live?
 #' @param band_url Provide a url for making these imagemaps?
+#' @param fill  Fill in the strokes?
+#' @param stroke_color  What color?
+#' @param thickness  How thick to color the lines
+#' @param stroke_thickness  How much of them to fill in
+#' @param fill_color  What color to fill
+#' @param radius  Where on the circle to put them
+#' @param label_size  How large to make the labels in px.
+#' @param band_stroke_thickness  How big to make the strokes!
 #' @return The file to which the ideogram configuration was written.
 #' @export
 circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NULL,
@@ -73,7 +81,7 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
                             thickness="20", stroke_thickness="2", fill_color="black", radius="0.85",
                             label_size="36", band_stroke_thickness="2"
                             ) {
-  ideogram_outfile <- paste0(conf_dir, "/ideograms/", name, ".conf")
+  ideogram_outfile <- glue("{conf_dir}/ideograms/{name}.conf")
   out <- file(ideogram_outfile, open="w+")
   show_label <- "no"
   ideogram_string <- sprintf("## The following plot stanza describes the ideograms
@@ -134,7 +142,7 @@ show_label, label_size, band_stroke_thickness)
 #' @param conf_dir Where does the configuration live?
 #' @param tick_separation Top-level separation between tick marks.
 #' @param min_label_distance distance to the edge of the plot for labels.
-#' @param label_separations radial distance between labels.
+#' @param label_separation radial distance between labels.
 #' @param label_offset  The offset for the labels.
 #' @param label_size  Top-level label size.
 #' @param multiplier  When writing the position, by what factor to lower the numbers?
@@ -171,7 +179,7 @@ circos_ticks <- function(name="default", conf_dir="circos/conf",
                          second_label_size=16, third_size=18, third_spacing=10, third_color="black",
                          third_show_label="yes", third_label_size=16, fourth_spacing=100,
                          fourth_color="black", fourth_show_label="yes", fourth_label_size=36) {
-  tick_outfile <- paste0(conf_dir, "/ticks_", name, ".conf")
+  tick_outfile <- glue("{conf_dir}/ticks_{name}.conf")
   out <- file(tick_outfile, open="w")
   show_label <- "no"
   tick_string <- sprintf("## The following plot stanza describes the ticks
@@ -340,23 +348,23 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   if (is.null(table[["id"]])) {
     go_plus <- go_plus[, c("chr", "start", "stop", "COGFun")]
     go_minus <- go_minus[, c("chr", "start", "stop", "COGFun")]
-    go_plus[["go"]] <- paste0("value=", go_plus[["COGFun"]], "0")
-    go_minus[["go"]] <- paste0("value=", go_minus[["COGFun"]], "0")
+    go_plus[["go"]] <- glue("value={go_plus[['COGFun']]}0")
+    go_minus[["go"]] <- glue("value={go_minus[['COGFun']]}0")
   } else {
     go_plus <- go_plus[, c("chr", "start", "stop", "COGFun", "id")]
     go_minus <- go_minus[, c("chr", "start", "stop", "COGFun", "id")]
-    go_plus[["id"]] <- paste0("id=", go_plus[["id"]])
-    go_minus[["id"]] <- paste0("id=", go_minus[["id"]])
+    go_plus[["id"]] <- glue("id={go_plus[['id']]}")
+    go_minus[["id"]] <- glue("id={go_minus[['id']]}")
   }
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
 
-  plus_file <- paste0(data_prefix, "_plus_go.txt")
+  plus_file <- glue("{data_prefix}_plus_go.txt")
   message("Writing data file: ", plus_file, " with the + strand GO data.")
   write.table(go_plus, file=plus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
 
-  minus_file <- paste0(data_prefix, "_minus_go.txt")
+  minus_file <- glue("{data_prefix}_minus_go.txt")
   message("Writing data file: ", minus_file, " with the - strand GO data.")
   write.table(go_minus, file=minus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
 
@@ -727,7 +735,9 @@ ycol, ycol, zcol, zcol)
 #' @param annot_df Annotation data frame defining starts/stops.
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
-#' @param chr Name of the chromosome (This currently assumes a bacterial chromosome)
+#' @param chr Name of the chromosome (This currently assumes a bacterial
+#'   chromosome)
+#' @param basename  Used to make unique filenames for the data/conf files.
 #' @param colors Colors of the data.
 #' @param outer Floating point radius of the circle into which to place the categorical data.
 #' @param width Width of each tile.
@@ -775,13 +785,13 @@ circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", co
 
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_", colname, "_tile.conf")
+  datum_cfg_file <- glue("{datum_cfg_file}_{colname}_tile.conf")
   full_table[["chr"]] <- chr
   full_table <- full_table[, c("chr", start_name, stop_name, colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", basename, colname, "_tile.txt")
+  data_filename <- glue("{data_prefix}_{basename}{colname}_tile.txt")
   message("Writing data file: ", data_filename, " with the ", colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
@@ -821,13 +831,13 @@ circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", co
 ", data_relative_filename, outer, inner)
   cat(data_cfg_string, file=data_cfg_out, sep="")
   for (c in 1:num_colors) {
-    red_component <- paste0("0x", substr(colors[[c]], 2, 3))
-    green_component <- paste0("0x", substr(colors[[c]], 4, 5))
-    blue_component <- paste0("0x", substr(colors[[c]], 5, 6))
+    red_component <- glue("0x{substr(colors[[c]], 2, 3)}")
+    green_component <- glue("0x{substr(colors[[c]], 4, 5)}")
+    blue_component <- glue("0x{substr(colors[[c]], 5, 6)}")
     red_component <- strtoi(red_component)
     green_component <- strtoi(green_component)
     blue_component <- strtoi(blue_component)
-    color_string <- paste0(red_component, ",", blue_component, ",", green_component)
+    color_string <- glue("{red_component},{blue_component},{green_component}")
     new_string <- sprintf("   <rule>
     condition = var(value) =~ \"^%s\"
     fill_color = %s
@@ -873,6 +883,9 @@ circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", co
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
 #' @param basename Make sure the written configuration files get different names with this.
 #' @param colors Colors of the heat map.
+#' @param color_choice  Name of the heatmap to use, I forget how this interacts with color...
+#' @param scale_log_base  Defines how the range of colors will be ranged with
+#'   respect to the values in the data.
 #' @param outer Floating point radius of the circle into which to place the heatmap.
 #' @param width Width of each tile in the heatmap.
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
@@ -916,7 +929,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
     full_table <- full_table[, c(start_name, stop_name, colname)]
   } else {
     full_table <- full_table[, c(start_name, stop_name, colname, "id")]
-    full_table[["id"]] <- paste0("id=", full_table[["id"]])
+    full_table[["id"]] <- glue("id={full_table[['id']]}")
   }
   full_table[[start_name]] <- as.numeric(full_table[[start_name]])
   na_drop <- ! is.na(full_table[[start_name]])
@@ -928,7 +941,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   }
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_heatmap.conf")
+  datum_cfg_file <- glue("{datum_cfg_file}_{basename}{colname}_heatmap.conf")
   full_table[["chr"]] <- chr
   if (is.null(full_table[["id"]])) {
     full_table <- full_table[, c("chr", start_name, stop_name, colname)]
@@ -938,7 +951,7 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", basename, colname, "_heatmap.txt")
+  data_filename <- glue("{data_prefix}_{basename}{colname}_heatmap.txt")
   message("Writing data file: ", data_filename, " with the ", basename, colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
@@ -1059,13 +1072,13 @@ circos_hist <- function(df, annot_df, cfgout="circos/conf/default.conf", colname
 
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_", basename, colname, "_hist.conf")
+  datum_cfg_file <- glue("{datum_cfg_file}_{basename}{colname}_hist.conf")
   full_table[["chr"]] <- chr
   full_table <- full_table[, c("chr", start_name, stop_name, colname)]
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", basename, colname, "_hist.txt")
+  data_filename <- glue("{data_prefix}_{basename}{colname}_hist.txt")
   message("Writing data file: ", data_filename, " with the ", basename, colname, " column.")
   write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
 
@@ -1161,11 +1174,11 @@ clean:
 
   make_target <- gsub(pattern="circos/conf/", replacement="", x=target)
   make_target <- gsub(pattern="\\.conf", replacement="", x=make_target)
-  make_target_svg <- paste0(make_target, ".svg")
-  make_target_png <- paste0(make_target, ".png")
+  make_target_svg <- glue("{make_target}.svg")
+  make_target_png <- glue("{make_target}.png")
 
-  make_command <- paste0("cd circos && touch Makefile && make ", make_target_svg, " 2>>make.out 1>&2 && make ",
-                         make_target, "")
+  make_command <- glue("cd circos && touch Makefile && make {make_target_svg} \\
+2>>make.out 1>&2 && make {make_target}")
   result <- system(make_command) ##, show.output.on.console=FALSE)
 
   return(result)
@@ -1204,13 +1217,13 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col="chr1", 
   }
   datum_cfg_file <- cfgout
   datum_cfg_file <- gsub(".conf$", "", datum_cfg_file)
-  datum_cfg_file <- paste0(datum_cfg_file, "_arc.conf")
-  first_name <- paste0(first_col, "_name")
-  second_name <- paste0(second_col, "_name")
-  first_start_name <- paste0(first_col, "_start")
-  first_end_name <- paste0(first_col, "_end")
-  second_start_name <- paste0(second_col, "_start")
-  second_end_name <- paste0(second_col, "_end")
+  datum_cfg_file <- glue("{datum_cfg_file}_arc.conf")
+  first_name <- glue("{first_col}_name")
+  second_name <- glue("{second_col}_name")
+  first_start_name <- glue("{first_col}_start")
+  first_end_name <- glue("{first_col}_end")
+  second_start_name <- glue("{second_col}_start")
+  second_end_name <- glue("{second_col}_end")
   message("This function assumes an input table including columns: ", first_start_name,
                  ",", first_end_name, ",", second_start_name, ",", second_end_name, ",",
                  first_name, ",", second_name, ".")
@@ -1219,7 +1232,7 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col="chr1", 
   data_prefix <- cfgout
   data_prefix <- gsub("/conf/", "/data/", data_prefix)
   data_prefix <- gsub(".conf$", "", data_prefix)
-  data_filename <- paste0(data_prefix, "_", first_col, "_arc.txt")
+  data_filename <- glue("{data_prefix}_{first_col}_arc.txt")
   message("Writing data file: ", data_filename, " with the ", first_col, " column.")
   print_arc <- function(x) {
     cat(x[5], " chr5005 ", x[1], " ", x[2], "\n", x[5], " chr5448 ", x[3], " ", x[4], "\n\n",
@@ -1284,7 +1297,7 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col="chr1", 
 circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band_url=NULL) {
   message("This assumes you have a colors.conf in circos/colors/ and fonts.conf in circos/fonts/")
   message("It also assumes you have conf/ideogram.conf, conf/ticks.conf, and conf/housekeeping.conf")
-  cfgout <- paste0(conf_dir, "/", name, ".conf")
+  cfgout <- glue("{conf_dir}/{name}.conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
 
   data_dir <- gsub(pattern="conf", replacement="data", x=conf_dir)
@@ -1296,20 +1309,20 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
     message("The circos directory does not exist, creating: ", conf_dir)
     dir.create(conf_dir, recursive=TRUE)
   }
-  karyotype_dir <- paste0(conf_dir, "/karyotypes")
-  ideogram_dir <- paste0(conf_dir, "/ideograms")
+  karyotype_dir <- glue("{conf_dir}/karyotypes")
+  ideogram_dir <- glue("{conf_dir}/ideograms")
   if (!file.exists(karyotype_dir)) {
     message("The karyotype directory does not exist, creating: ", karyotype_dir)
     dir.create(karyotype_dir, recursive=TRUE)
   }
-  if (!file.exists(paste0(conf_dir, "/ideograms"))) {
+  if (!file.exists(glue("{conf_dir}/ideograms"))) {
     message("The ideogram directory does not exist, creating: ", ideogram_dir)
     dir.create(ideogram_dir, recursive=TRUE)
   }
   karyotype_file <- gsub("circos/conf", "conf/karyotypes", cfgout)
   ideogram_file <- gsub("circos/conf", "conf/ideograms", cfgout)
-  etc_file <- paste0(path.package("hpgltools"), "/circos/circos_etc.tar.xz")
-  etc_cmd <- paste0("tar -C ", dirname(conf_dir), " -xavf ", etc_file, " 2>/dev/null 1>&2")
+  etc_file <- glue("{path.package('hpgltools')}/circos/circos_etc.tar.xz")
+  etc_cmd <- glue("tar -C {dirname(conf_dir)} -xavf {etc_file} 2>/dev/null 1>&2")
   system(command=etc_cmd)
 
   ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]
@@ -1352,10 +1365,10 @@ chromosomes_display_default = yes
 ", ideogram_file, tick_file, karyotype_file, radius)
   cat(prefix_string, file=out, sep="")
   close(out)
-  to_path <- paste0(name, ".conf")
+  to_path <- glue("{name}.conf")
   if (!file.exists(to_path)) {
     wd <- getwd()
-    tmpwd <- paste0(wd, "/circos")
+    tmpwd <- glue("{wd}/circos")
     setwd(tmpwd)
     from <- gsub("circos/", "", cfgout)
     to <- "."

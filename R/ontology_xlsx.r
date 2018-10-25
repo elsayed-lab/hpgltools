@@ -5,7 +5,7 @@ gather_cp_genes <- function(table, mappings, new="ORF") {
 
   ## Taken from https://stackoverflow.com/questions/23420331/replacing-elements-in-a-list-of-lists
   a <- as.relistable(separate)
-  u <- paste0("X", unlist(a))
+  u <- glue("X{unlist(a)}")
   u <- mappings[u, new]
   mapped <- relist(u, a)
   return(mapped)
@@ -447,7 +447,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 
   table_list <- list()
   for (ont in c("BP", "MF", "CC")) {
-    subset_name <- paste0(tolower(ont), "_subset")
+    subset_name <- glue("{tolower(ont)}_subset")
     categories <- goseq_result[[subset_name]]
     ## Pull out the relevant portions of the goseq data
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
@@ -479,19 +479,19 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
     new_row <- 1
     message("Writing the ", ont, " data.")
     openxlsx::addWorksheet(wb, sheetName=ont)
-    openxlsx::writeData(wb, ont, paste0(ont, " Results from goseq."), startRow=new_row)
+    openxlsx::writeData(wb, ont, glue("{ont} Results from goseq."), startRow=new_row)
     openxlsx::addStyle(wb, ont, hs1, new_row, 1)
 
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, ont, x=categories, tableStyle=table_style, startRow=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-      plot_name <- paste0(tolower(ont), "p_plot_over")
+      plot_name <- glue("{tolower(ont)}p_plot_over")
       a_plot <- goseq_result[["pvalue_plots"]][[plot_name]]
       plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
                                 start_col=ncol(categories) + 2, start_row=new_row,
                                 plotname=plot_name, savedir=excel_basename, doWeights=FALSE)
-      tree_name <- paste0(ont, "_over")
+      tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
         plot_try <- xlsx_plot_png(trees[[tree_name]], wb=wb, sheet=ont, width=12, height=12,
                                   start_col=ncol(categories) + 2, start_row=80, res=210,
@@ -598,7 +598,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   table_list <- list()
   for (ont in c("BP", "MF", "CC")) {
-    subset_name <- paste0(tolower(ont), "_subset")
+    subset_name <- glue("{tolower(ont)}_subset")
     categories <- gostats_result[[subset_name]]
     ## Pull out the relevant portions of the gostats data
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
@@ -624,18 +624,18 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     new_row <- 1
     message("Writing the ", ont, " data.")
     openxlsx::addWorksheet(wb, sheetName=ont)
-    openxlsx::writeData(wb, ont, paste0(ont, " Results from gostats."), startRow=new_row)
+    openxlsx::writeData(wb, ont, glue("{ont} Results from gostats."), startRow=new_row)
     openxlsx::addStyle(wb, ont, hs1, new_row, 1)
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, ont, x=categories, tableStyle=table_style, startRow=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
-      plot_name <- paste0(tolower(ont), "p_plot_over")
+      plot_name <- glue("{tolower(ont)}p_plot_over")
       a_plot <- gostats_result[["pvalue_plots"]][[plot_name]]
       plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
                                 start_col=ncol(categories) + 2, start_row=new_row,
                                 plotname=plot_name, savedir=excel_basename, doWeights=FALSE)
-      tree_name <- paste0(ont, "_over")
+      tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
         plot_try <- xlsx_plot_png(trees[[tree_name]], wb=wb, sheet=ont, width=12, height=12,
                                   start_col=ncol(categories) + 2, start_row=80, res=210,
@@ -677,11 +677,11 @@ sig_ontologies <- function(significant_result,
   down_ret <- list()
   for (c in 1:length(name_lst)) {
     name <- name_lst[[c]]
-    up_name <- paste0(excel_prefix, "_up_", name, "_", search_by, "_", type, excel_suffix)
-    down_name <- paste0(excel_prefix, "_down_", name, "_", search_by, "_", type, excel_suffix)
+    up_name <- glue("{excel_prefix}_up_{name}_{search_by}_{type}{excel_suffix}")
+    down_name <- glue("{excel_prefix}_down_{name}_{search_by}_{type}{excel_suffix}")
     up_table <- up_lst[[c]]
     down_table <- down_lst[[c]]
-    chosen_column <- paste0(search_by, "_logfc")
+    chosen_column <- glue("{search_by}_logfc")
     switchret <- switch(
       type,
       "goseq" = {
@@ -795,7 +795,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     cc_order <- order(cc_data[[order_by]], decreasing=decreasing)
     cc_data <- cc_data[cc_order, ]
 
-    openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=bp_data,
@@ -813,7 +813,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     new_row <- 1
     sheet <- "GO_MF"
     openxlsx::addWorksheet(wb, sheetName=sheet)
-    openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=mf_data,
@@ -831,7 +831,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     new_row <- 1
     sheet <- "GO_CC"
     openxlsx::addWorksheet(wb, sheetName=sheet)
-    openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=cc_data,
@@ -862,7 +862,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     kegg_data <- gprofiler_result[["kegg"]]
     kegg_order <- order(kegg_data[[order_by]], decreasing=decreasing)
     kegg_data <- kegg_data[kegg_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=kegg_data,
@@ -894,7 +894,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     tf_data <- gprofiler_result[["tf"]]
     tf_order <- order(tf_data[[order_by]], decreasing=decreasing)
     tf_data <- tf_data[tf_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=tf_data,
@@ -925,7 +925,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     react_data <- gprofiler_result[["reactome"]]
     react_order <- order(react_data[[order_by]], decreasing=decreasing)
     react_data <- react_data[react_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=react_data,
@@ -956,7 +956,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     mi_data <- gprofiler_result[["mi"]]
     mi_order <- order(mi_data[[order_by]], decreasing=decreasing)
     mi_data <- mi_data[mi_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=mi_data,
@@ -987,7 +987,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     hp_data <- gprofiler_result[["hp"]]
     hp_order <- order(hp_data[[order_by]], decreasing=decreasing)
     hp_data <- hp_data[hp_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=hp_data,
@@ -1018,7 +1018,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL, excel="excel/gprofil
     corum_data <- gprofiler_result[["corum"]]
     corum_order <- order(corum_data[[order_by]], decreasing=decreasing)
     corum_data <- corum_data[corum_order, ]
-    openxlsx::writeData(wb, sheet, paste0("Results from ", sheet, "."), startRow=new_row)
+    openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
     openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
     new_row <- new_row + 1
     dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=corum_data,
@@ -1148,7 +1148,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
   ## Pull out the relevant portions of the topgo data
   ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
   for (ont in c("BP", "MF", "CC")) {
-    table_name <- paste0(tolower(ont), "_subset")
+    table_name <- glue("{tolower(ont)}_subset")
     categories <- table_list[[table_name]]
     categories <- categories[categories[[order_by]] <= pval, ]
     genes_per_category <- gather_ontology_genes(topgo_result, ontology=ont,
@@ -1179,13 +1179,13 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
     message("Writing the ", ont, " data.")
     new_row <- 1
     openxlsx::addWorksheet(wb, sheetName=ont)
-    openxlsx::writeData(wb, ont, paste0(ont, " Results from topgo."), startRow=new_row)
+    openxlsx::writeData(wb, ont, glue("{ont} Results from topgo."), startRow=new_row)
     openxlsx::addStyle(wb, ont, hs1, new_row, 1)
     new_row <- new_row + 1
     openxlsx::writeDataTable(wb, ont, x=categories,
                              tableStyle=table_style, startRow=new_row)
-    p_plot_name <- paste0(tolower(ont), "p_plot_over")
-    tree_plot_name <- paste0(ont, "_over")
+    p_plot_name <- glue("{tolower(ont)}p_plot_over")
+    tree_plot_name <- glue("{ont}_over")
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- topgo_result[["pvalue_plots"]][[p_plot_name]]
@@ -1268,15 +1268,15 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
   count <- 0
   for (name in names_list) {
     count <- count + 1
-    up_filename <- paste0(outfile, "_up-", name)
-    down_filename <- paste0(outfile, "_down-", name)
+    up_filename <- glue("{outfile}_up-{name}")
+    down_filename <- glue("{outfile}_down-{name}")
     if (isTRUE(dated)) {
       timestamp <- format(Sys.time(), "%Y%m%d%H")
-      up_filename <- paste0(up_filename, "-", timestamp, suffix)
-      down_filename <- paste0(down_filename, "-", timestamp, suffix)
+      up_filename <- glue("{up_filename}-{timestamp}{suffix}")
+      down_filename <- glue("{down_filename}-{timestamp}{suffix}")
     } else {
-      up_filename <- paste0(up_filename, suffix)
-      down_filename <- paste0(down_filename, suffix)
+      up_filename <- glue("{up_filename}{suffix}")
+      down_filename <- glue("{down_filename}{suffix}")
     }
 
     onts <- c("bp", "mf", "cc")
@@ -1285,7 +1285,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
     for (ont in onts) {
       ONT <- toupper(ont)
       ## The goseq columns are probably wrong because I dropped one, remember that.
-      varname <- paste0(ont, "_subset")
+      varname <- glue("{ont}_subset")
 
       if (!identical(list(), kept_ontology[["up_goseq"]])) {
         goseq_up <- kept_ontology[["up_goseq"]][[count]]
@@ -1304,13 +1304,13 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         goseq_down_ont <- goseq_down_ont[, c(7, 1, 6, 2, 4, 5, 8)]
         colnames(goseq_down_ont) <- c("Ontology", "Category", "Term", "Over p-value",
                                       "Num. DE", "Num. in cat.", "Q-value")
-        element_name <- paste0("goseq_", ont)
+        element_name <- glue("goseq_{ont}")
         up_stuff[[element_name]] <- goseq_up_ont
         down_stuff[[element_name]] <- goseq_down_ont
       }
 
       if (!identical(list(), kept_ontology[["up_cluster"]])) {
-        varname <- paste0(ont, "_all")
+        varname <- glue("{ont}_all")
         cluster_up <- kept_ontology[["up_cluster"]][[count]]
         cluster_up_ont <- as.data.frame(cluster_up[[varname]]@result)
         if (!is.null(n)) {
@@ -1335,13 +1335,13 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         colnames(cluster_down_ont) <- c("Ontology", "Category", "Term", "Over p-value",
                                         "Gene ratio", "BG ratio", "Adj. p-value", "Q-value",
                                         "Count", "Genes")
-        element_name <- paste0("cluster_", ont)
+        element_name <- glue("cluster_{ont}")
         up_stuff[[element_name]] <- cluster_up_ont
         down_stuff[[element_name]] <- cluster_down_ont
       }
 
       if (!identical(list(), kept_ontology[["up_topgo"]])) {
-        varname <- paste0(ont, "_interesting")
+        varname <- glue("{ont}_interesting")
         topgo_up <- kept_ontology[["up_topgo"]][[count]]
         topgo_up_ont <- topgo_up[["tables"]][[varname]]
         if (!is.null(n)) {
@@ -1360,13 +1360,13 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         colnames(topgo_down_ont) <- c("Ontology", "Category", "Term", "Fisher p-value",
                                       "Q-value", "KS score", "EL score", "Weight score",
                                       "Num. DE", "Num. in cat.", "Exp. in cat.")
-        element_name <- paste0("topgo_", ont)
+        element_name <- glue("topgo_{ont}")
         up_stuff[[element_name]] <- topgo_up_ont
         down_stuff[[element_name]] <- topgo_down_ont
       }
 
       if (!identical(list(), kept_ontology[["up_gostats"]])) {
-        varname <- paste0(ont, "_over_all")
+        varname <- glue("{ont}_over_all")
         gostats_up <- kept_ontology[["up_gostats"]][[count]]
         gostats_up_ont <- gostats_up[[varname]]
         if (!is.null(n)) {
@@ -1395,7 +1395,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         colnames(gostats_down_ont) <- c("Ontology", "Category", "Term", "Fisher p-value",
                                         "Num. DE", "Num. in cat.", "Odds ratio", "Exp. in cat.",
                                         "Q-value", "Link")
-        element_name <- paste0("gostats_", ont)
+        element_name <- glue("gostats_{ont}")
         up_stuff[[element_name]] <- gostats_up_ont
         down_stuff[[element_name]] <- gostats_down_ont
       }
@@ -1417,7 +1417,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         gprofiler_down_ont <- gprofiler_down_ont[, c(7, 1, 6, 2, 4, 5, 8)]
         colnames(gprofiler_down_ont) <- c("Ontology", "Category", "Term", "Over p-value",
                                           "Num. DE", "Num. in cat.", "Q-value")
-        element_name <- paste0("gprofiler_", ont)
+        element_name <- glue("gprofiler_{ont}")
         up_stuff[[element_name]] <- gprofiler_up_ont
         down_stuff[[element_name]] <- gprofiler_down_ont
       }
@@ -1435,7 +1435,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write goseq BP data
     if (!is.null(up_stuff[["goseq_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_bp"]],
@@ -1457,7 +1457,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write goseq MF data
     if (!is.null(up_stuff[["goseq_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_mf"]],
@@ -1478,7 +1478,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write goseq CC data
     if (!is.null(up_stuff[["goseq_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_cc"]],
@@ -1504,7 +1504,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write clusterprofiler BP data
     if (!is.null(up_stuff[["cluster_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_bp"]],
@@ -1525,7 +1525,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write clusterprofiler MF data
     if (!is.null(up_stuff[["cluster_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_mf"]],
@@ -1546,7 +1546,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write clusterprofiler CC data
     if (!is.null(up_stuff[["cluster_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_cc"]],
@@ -1572,7 +1572,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write topgo BP results
     if (!is.null(up_stuff[["topgo_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_bp"]],
@@ -1593,7 +1593,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write topgo MF results
     if (!is.null(up_stuff[["topgo_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_mf"]],
@@ -1614,7 +1614,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## and cc
     if (!is.null(up_stuff[["topgo_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_cc"]],
@@ -1640,7 +1640,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write gostats BP stuff
     if (!is.null(up_stuff[["gostats_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_bp"]],
@@ -1667,7 +1667,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
       message("The previous line was a warning about overwriting existing data because of a link.")
       new_row <- new_row + nrow(up_stuff[["gostats_bp"]]) + 2
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_mf"]],
@@ -1693,7 +1693,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
     if (!is.null(up_stuff[["gostats_cc"]])) {
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
       new_row <- new_row + nrow(up_stuff[["gostats_mf"]]) + 2
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_cc"]],
@@ -1722,7 +1722,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write gprofiler BP data
     if (!is.null(up_stuff[["gprofiler_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_bp"]],
@@ -1744,7 +1744,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write gprofiler MF data
     if (!is.null(up_stuff[["gprofiler_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_mf"]],
@@ -1765,7 +1765,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write gprofiler CC data
     if (!is.null(up_stuff[["gprofiler_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       cnew_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_cc"]],
@@ -1801,7 +1801,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Goseq down BP data
     if (!is.null(down_stuff[["goseq_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_bp"]],
@@ -1822,7 +1822,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Goseq down MF data
     if (!is.null(down_stuff[["goseq_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_mf"]],
@@ -1843,7 +1843,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Goseq down CC data
     if (!is.null(down_stuff[["goseq_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_cc"]],
@@ -1869,7 +1869,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
     ## cp down bp
     if (!is.null(down_stuff[["cluster_bp"]])) {
       openxlsx::addWorksheet(wb, sheetName=sheet)
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_bp"]],
@@ -1890,7 +1890,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## cp down mf
     if (!is.null(down_stuff[["cluster_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_mf"]],
@@ -1911,7 +1911,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## cp down cc
     if (!is.null(down_stuff[["cluster_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_cc"]],
@@ -1937,7 +1937,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## tp down bp
     if (!is.null(down_stuff[["topgo_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_bp"]],
@@ -1958,7 +1958,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## tp down mf
     if (!is.null(down_stuff[["topgo_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_mf"]],
@@ -1979,7 +1979,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## tp down cc
     if (!is.null(down_stuff[["topgo_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_cc"]],
@@ -2005,7 +2005,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## gs down bp
     if (!is.null(down_stuff[["gostats_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_bp"]],
@@ -2030,7 +2030,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## gs down mf
     if (!is.null(down_stuff[["gostats_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_mf"]],
@@ -2055,7 +2055,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## gs down cc
     if (!is.null(down_stuff[["gostats_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_cc"]],
@@ -2085,7 +2085,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## Write gprofiler BP data
     if (!is.null(down_stuff[["gprofiler_bp"]])) {
-      openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_bp"]],
@@ -2107,7 +2107,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write gprofiler MF data
     if (!is.null(down_stuff[["gprofiler_mf"]])) {
-      openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_mf"]],
@@ -2128,7 +2128,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
 
     ## write gprofiler CC data
     if (!is.null(down_stuff[["gprofiler_cc"]])) {
-      openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+      openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
       openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
       new_row <- new_row + 1
       openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_cc"]],
@@ -2190,9 +2190,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   filename <- NULL
   if (isTRUE(dated)) {
     timestamp <- format(Sys.time(), "%Y%m%d%H")
-    filename <- paste0(file, "-", timestamp, suffix)
+    filename <- glue("{file}-{timestamp}{suffix}")
   } else {
-    filename <- paste0(file, suffix)
+    filename <- glue("{file}{suffix}")
   }
 
   if (file.exists(filename)) {
@@ -2291,13 +2291,13 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   ## This stanza will be repeated so I am just incrementing the new_row
   new_row <- 1
   sheet <- "goseq"
-  openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_mf"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   new_row <- new_row + nrow(lst[["goseq_mf"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_cc"]],
@@ -2307,19 +2307,19 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   new_row <- 1
   sheet <- "clusterProfiler"
   openxlsx::addWorksheet(wb, sheetName=sheet)
-  openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_bp"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   new_row <- new_row + nrow(lst[["cluster_bp"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_mf"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   new_row <- new_row + nrow(lst[["cluster_mf"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_cc"]],
@@ -2329,19 +2329,19 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   new_row <- 1
   sheet <- "topgo"
   openxlsx::addWorksheet(wb, sheetName=sheet)
-  openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_bp"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   new_row <- new_row + nrow(lst[["topgo_bp"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_mf"]],
                            tableStyle="TableStyleMedium9", startRow=new_row)
   new_row <- new_row + nrow(lst[["topgo_mf"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_cc"]],
@@ -2351,7 +2351,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   new_row <- 1
   sheet <- "gostats"
   openxlsx::addWorksheet(wb, sheetName=sheet)
-  openxlsx::writeData(wb, sheet, paste0("BP Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("BP Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_bp"]],
@@ -2361,7 +2361,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   names(links) <- lst[["gostats_bp"]][["Category"]]
   openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
   new_row <- new_row + nrow(lst[["gostats_bp"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("MF Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_mf"]],
@@ -2371,7 +2371,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler, file="excel/
   names(links) <- lst[["gostats_mf"]][["Category"]]
   openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
   new_row <- new_row + nrow(lst[["gostats_mf"]]) + 2
-  openxlsx::writeData(wb, sheet, paste0("CC Results from ", sheet, "."), startRow=new_row)
+  openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_cc"]],

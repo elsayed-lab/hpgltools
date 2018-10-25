@@ -106,8 +106,8 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         unique_pct_mapped <- 0
         path <- paths[[count]]
         canonical_path <- path
-        if (!grepl(pattern=paste0("^", species), x=canonical_path)) {
-            canonical_path <- paste0(species, path)
+        if (!grepl(pattern=glue("^{species}"), x=canonical_path)) {
+            canonical_path <- glue("{species}{path}")
         }
         path_name <- try(KEGGREST::keggGet(canonical_path), silent=TRUE)
         if (class(path_name) == "try-error") {
@@ -125,12 +125,12 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
         limit_min <- -1.0 * max(limit_test)
         limit_max <- max(limit_test)
         limits <- c(limit_min, limit_max)
-        example_string <- gsub(pattern=paste0(species, ":"), replacement="",
+        example_string <- gsub(pattern=glue("{species}:"), replacement="",
                                x=toString(head(gene_examples)))
         if (isTRUE(verbose)) {
             if (count < 4) {
                 ## Test if we have overlaps
-                overlap_test <- paste0(species, ":", names(path_data))
+                overlap_test <- glue("{species}:", names(path_data))
                 num_overlap <- sum(gene_examples %in% overlap_test)
                 message("Here are some path gene examples: ", example_string)
                 message("Here are your genes: ", toString(head(names(path_data))))
@@ -190,7 +190,7 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
                                          key.pos="topright"))
         }
         if (class(pv) == "numeric") {
-            warning(paste0("There was a failure for: ", canonical_path, "."))
+            warning(glue("There was a failure for: {canonical_path}."))
             colored_genes <- NULL
             newfile <- NULL
             up <- NULL
@@ -310,7 +310,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
 
     result <- NULL
     species <- gsub(pattern=" ", replacement="_", x=as.character(species))
-    savefile <- paste0("kegg_", species, ".rda.xz")
+    savefile <- glue("kegg_{species}.rda.xz")
     kegg_data <- NULL
     if (file.exists(savefile)) {
         message("Reading from the savefile, delete ", savefile, " to regenerate.")
@@ -348,7 +348,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
             kegg_name <- gsub(" ", "_", kegg_name)
             ## RCurl is crap and fails sometimes for no apparent reason.
             kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
-            kegg_geneids <- gsub(pattern=paste0("^.*:"), replacement="", x=kegg_geneids)
+            kegg_geneids <- gsub(pattern="^.*:", replacement="", x=kegg_geneids)
             kegg_subst <- get_kegg_sub(abbreviation)
             tritryp_geneids <- kegg_geneids
             total_genes <- total_genes + length(kegg_geneids)
@@ -489,7 +489,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
     paths <- NULL
     if (class(pathways) == "character") {
         if (length(pathways) > 1) {
-            paths <- paste0("path:", organism, pathways)
+            paths <- glue("path:{organism}{pathways}")
         } else if (pathways == "all") {
             all_pathways <- unique(KEGGREST::keggLink("pathway", organism))
             paths <- all_pathways
@@ -575,7 +575,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
         ## Remove character(0
         a_row <- gsub(pattern="character\\(0", replacement="", x=a_row)
         ## Remove xxx: where xxx is the species abbreviation
-        a_row <- gsub(pattern=paste0(organism, ":"), replacement="", x=a_row)
+        a_row <- gsub(pattern=glue("{organism}:"), replacement="", x=a_row)
         ## Remove all commas
         a_row <- gsub(pattern="\\,", replacement="", x=a_row)
         ## Remove \n's
@@ -626,8 +626,8 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
     }
     pathway <- gsub(pattern=organism, replacement="", x=pathway)
     pathway <- gsub(pattern="path:", replacement="", x=pathway)
-    filename <- paste0(pathdir, "/", organism, pathway, ".xml")
-    pathwayid <- paste0(organism, pathway)
+    filename <- glue("{pathdir}/{organism}{pathway}.xml")
+    pathwayid <- glue("{organism}{pathway}")
     retrieved <- NULL
     if (file.exists(filename)) {
         message("The file already exists, loading from it.")
@@ -742,17 +742,12 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500", organism="dme", pat
 myretrieveKGML <- function(pathwayid, organism, destfile, method="wget",
                            hostname="http://www.kegg.jp", ...) {
     kgml <- mygetKGMLurl(pathwayid=pathwayid, organism=organism, hostname=hostname)
-    referer <- paste0(hostname, "/kegg-bin/show_pathway?org_name=", organism, "&mapno=",
-                      pathwayid, "&mapscale=&show_description=hide")
-    cmdline <- paste0("wget --header=",
-                      shQuote("Accept: text/html"),
-                      " --user-agent=",
-                      shQuote("Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0"),
-                      " --referer=",
-                      shQuote(referer),
-                      " ", shQuote(kgml),
-                      " -O ", shQuote(destfile),
-                      " 2>/dev/null 1>&2")
+    referer <- glue("{hostname}/kegg-bin/show_pathway?org_name={organism}&mapno=\\
+                     {pathwayid}&mapscale=&show_description=hide")
+    cmdline <- glue("wget --header={shQuote('Accept: text/html')} --user-agent=\\
+                      {shQuote('Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0')}\\
+                       --referer={shQuote(referer)} {shQuote(kgml)}\\
+                       -O {shQuote(destfile)} 2>/dev/null 1>&2")
     status <- system(cmdline)
     return(invisible(kgml))
 }
@@ -762,7 +757,7 @@ mygetKGMLurl <- function(pathwayid, organism="hsa", hostname="http://www.kegg.jp
     if (!is.null(arglist[["hostname"]])) {
         hostname <- arglist[["hostname"]]
     }
-    baseurl <- paste0(hostname, "/kegg-bin/download?entry=%s%s&format=kgml")
+    baseurl <- glue("{hostname}/kegg-bin/download?entry=%s%s&format=kgml")
     pathwayid <- gsub("path", "", pathwayid)
     pathwayid <- gsub(":", "", pathwayid)
     pco <- grepl("^[a-z][a-z][a-z]", pathwayid)

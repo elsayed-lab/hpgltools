@@ -45,12 +45,13 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
                                                        "cds_length", "chromosome_name",
                                                        "strand", "start_position", "end_position"),
                                      include_lengths=TRUE) {
-  savefile <- paste0(species, "_biomart_annotations.rda")
+  savefile <- glue("{species}_biomart_annotations.rda")
   biomart_annotations <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
-    load_string <- paste0("load('", savefile, "', envir=fresh)")
+    ## load_string <- paste0("load('", savefile, "', envir=fresh)")
+    load_string <- glue("load('{savefile}', envir=fresh)")
     eval(parse(text=load_string))
     biomart_annotations <- fresh[["biomart_annotations"]]
     retlist <- list(
@@ -84,9 +85,11 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   if (!is.null(trydataset)) {
     dataset <- trydataset
   } else {
-    dataset <- paste0(species, "_gene_ensembl")
+    ## dataset <- paste0(species, "_gene_ensembl")
+    dataset <- glue("{species}_gene_ensembl")
   }
-  second_dataset <- paste0(species, "_eg_gene")
+  ## second_dataset <- paste0(species, "_eg_gene")
+  second_dataset <- glue("{species}_eg_gene")
   ensembl <- try(biomaRt::useDataset(dataset, mart=mart), silent=TRUE)
   if (class(ensembl) == "try-error") {
     ensembl <- try(biomaRt::useDataset(second_dataset, mart=mart), silent=TRUE)
@@ -221,9 +224,11 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                             host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
                             secondtry="_gene", dl_rows=c("ensembl_gene_id", "go_accession"),
                             dl_rowsv2=c("ensembl_gene_id", "go_id")) {
-  secondtry <- paste0(species, secondtry)
+  ## secondtry <- paste0(species, secondtry)
+  secondtry <- glue("{species}{secondtry}")
 
-  savefile <- paste0(species, "_go_annotations.rda")
+  ## savefile <- paste0(species, "_go_annotations.rda")
+  savefile <- glue("{species}_go_annotations.rda")
   if (!identical(FALSE, do_save)) {
     if (class(do_save) == "character") {
       savefile <- do_save
@@ -234,7 +239,8 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
   if (file.exists(savefile) & overwrite == FALSE) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
-    load_string <- paste0("load('", savefile, "', envir=fresh)")
+    ## load_string <- paste0("load('", savefile, "', envir=fresh)")
+    load_string <- glue("load('{savefile}', envir=fresh)")
     eval(parse(text=load_string))
     biomart_go <- fresh[["biomart_go"]]
     retlist <- list(
@@ -265,13 +271,15 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
   }
 
   chosen_dataset <- NULL
-  dataset <- paste0(species, "_gene_ensembl")
+  ## dataset <- paste0(species, "_gene_ensembl")
+  dataset <- glue("{species}_gene_ensembl")
   ensembl <- try(biomaRt::useDataset(dataset, mart=mart), silent=TRUE)
   if (class(ensembl) == "try-error") {
     message("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
             dataset, ".")
     datasets <- biomaRt::listDatasets(mart=mart)
-    try_again <- paste0(species, "_eg_gene")
+    ## try_again <- paste0(species, "_eg_gene")
+    try_again <- glue("{species}_eg_gene")
     message("Trying instead to use the dataset: ", try_again)
     ensembl <- biomaRt::useDataset(try_again, mart=mart)
     if (class(ensembl)[[1]] == "Mart") {
@@ -365,7 +373,8 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
     message("Trying the first one.")
     first_mart <- biomaRt::useMart(biomart=first_marts[[1, 1]], host=host)
   }
-  first_dataset <- paste0(first_species, "_gene_ensembl")
+  ## first_dataset <- paste0(first_species, "_gene_ensembl")
+  first_dataset <- glue("{first_species}_gene_ensembl")
   first_ensembl <- try(biomaRt::useDataset(first_dataset, mart=first_mart), silent=TRUE)
   if (class(first_ensembl) == "try-error") {
     message("Unable to perform useDataset, perhaps the given dataset is incorrect: ",
@@ -387,7 +396,8 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
     message("Trying the first one.")
     second_mart <- biomaRt::useMart(biomart=second_marts[[1, 1]], host=host)
   }
-  second_dataset <- paste0(second_species, "_gene_ensembl")
+  ## second_dataset <- paste0(second_species, "_gene_ensembl")
+  second_dataset <- glue("{second_species}_gene_ensembl")
   second_ensembl <- try(biomaRt::useDataset(second_dataset, mart=second_mart), silent=TRUE)
   if (class(second_ensembl) == "try-error") {
     message("Unable to perform useDataset, perhaps the given dataset is incorrect: ",

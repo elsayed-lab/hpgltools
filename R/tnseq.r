@@ -121,7 +121,7 @@ tnseq_saturation <- function(data, column="Reads") {
 #' @seealso \pkg{ggplot2}
 #' @export
 plot_essentiality <- function(file) {
-  ess <- readr::read_csv(file=file, comment.char="#", sep="\t", header=FALSE)
+  ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
   colnames(ess) <- c("gene", "orf_hits", "orf_tas", "max_run",
                      "max_run_span", "posterior_zbar", "call")
   ess <- ess[with(ess, order("posterior_zbar")), ]

@@ -267,7 +267,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   }
 
   kegg_universe <- KEGGREST::keggConv(kegg_organism, "ncbi-geneid")
-  kegg_sig_names <- paste0("ncbi-geneid:", sig_gene_list)
+  kegg_sig_names <- glue("ncbi-geneid:{sig_gene_list}")
   kegg_sig_intersect <- kegg_sig_names %in% names(kegg_universe)
   message("Found ", sum(kegg_sig_intersect),
           " matches between the significant gene list and kegg universe.")
@@ -277,7 +277,8 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     small_universe <- kegg_universe[intersect(kegg_sig_names, names(kegg_universe))]
     kegg_sig_ids <- unique(as.character(small_universe))
     ##kegg_sig_ids <- unique(as.character(kegg_universe[kegg_sig_intersect]))
-    kegg_sig_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_sig_ids)
+    kegg_sig_ids <- gsub(pattern=glue("{kegg_organism}:"),
+                         replacement="", x=kegg_sig_ids)
 
     message("Performing KEGG analyses.")
     all_kegg <- clusterProfiler::enrichKEGG(kegg_sig_ids, organism=kegg_organism,
@@ -300,13 +301,13 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     kegg_genelist <- as.vector(de_table_merged[[fc_column]])
     names(kegg_genelist) <- de_table_merged[[lastcol]]
 
-    kegg_all_names <- paste0("ncbi-geneid:", names(kegg_genelist))
+    kegg_all_names <- glue("ncbi-geneid:{names(kegg_genelist)}")
     kegg_all_intersect <- kegg_all_names %in% names(kegg_universe)
     message("Found ", sum(kegg_all_intersect), " matches between the gene list and kegg universe.")
     all_names <- names(kegg_universe)
     large_universe <- kegg_universe[intersect(kegg_all_names, names(kegg_universe))]
     kegg_all_ids <- unique(as.character(large_universe))
-    kegg_all_ids <- gsub(pattern=paste0(kegg_organism, ":"), replacement="", x=kegg_all_ids)
+    kegg_all_ids <- gsub(pattern=glue("{kegg_organism}:"), replacement="", x=kegg_all_ids)
     names(kegg_genelist) <- kegg_all_ids
 
     internal <- FALSE

@@ -5,7 +5,7 @@
 \title{Create a metadata dataframe of msigdb data, this hopefully will be usable to
 fill the fData slot of a gsva returned expressionset.}
 \usage{
-get_msigdb_metadata(sig_data, msig_xml = "msigdb_v6.2.xml",
+get_msigdb_metadata(sig_data = NULL, msig_xml = "msigdb_v6.2.xml",
   gsva_result = NULL)
 }
 \arguments{

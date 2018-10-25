@@ -254,7 +254,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## limma should probably use this
   new_expt[["norm_result"]] <- normalized
   new_expt[["expressionset"]] <- current_exprs
-  current_notes <- paste0(new_expt[["notes"]], "Normalized with ", type, " at ", date(), ".\n")
+  current_notes <- glue("{new_expt[['notes']]} Normalized with {type} at {date()}.
+")
   new_expt[["notes"]] <- toString(current_notes)
   return(new_expt)
 }

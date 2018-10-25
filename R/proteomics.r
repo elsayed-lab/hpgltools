@@ -102,7 +102,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     message("Hopefully writing acquisition file to: ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
-    osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
+    osw_file <- file.path(acq_dir, glue("openswath_{acq_file}"))
     ## This is the file for openswathworkflow.
     message("Hopefully writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
@@ -195,11 +195,17 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     cores <- 4
     cl <- parallel::makeCluster(cores)
     doSNOW::registerDoSNOW(cl)
-    bar <- utils::txtProgressBar(max=num_files, style=3)
+    show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+    if (isTRUE(show_progress)) {
+      bar <- utils::txtProgressBar(max=num_files, style=3)
+    }
     progress <- function(n) {
       setTxtProgressBar(bar, n)
     }
-    pb_opts <- list(progress=progress)
+    pb_opts <- list()
+    if (isTRUE(show_progress)) {
+      pb_opts <- list("progress" = progress)
+    }
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
@@ -209,7 +215,9 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
         returns[[file]] <- file_result
       }
     }
-    close(bar)
+    if (isTRUE(show_progress)) {
+      close(bar)
+    }
     parallel::stopCluster(cl)
   } else {
     for (i in 1:num_files) {
@@ -335,7 +343,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
       rvest::html_attr(s)
   }
   query_data[["decoy"]] <- FALSE
-  decoy_regex <- paste0("^", decoy_string)
+  decoy_regex <- glue("^{decoy_string}")
   decoy_idx <- grepl(pattern=decoy_regex, x=query_data[["protein"]])
   query_data[decoy_idx, "decoy"] <- TRUE
   query_data[["matched_ion_ratio"]] <- as.numeric(query_data[["num_matched_ions"]]) /
@@ -355,10 +363,15 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
     rvest::html_node(xpath="modification_info")
 
   message("Filling in modification information, this is slow.")
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (i in 1:length(modification_test)) {
-    pct_done <- i / length(modification_test)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- i / length(modification_test)
+      setTxtProgressBar(bar, pct_done)
+    }
     test <- modification_test[[i]]
     if (!is.na(test)) {
       variables <- test %>%
@@ -375,21 +388,23 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
         rvest::html_attr("mass")
       variable_idx <- !is.na(variables)
       if (sum(variable_idx) > 0) {
-        variable_string <- toString(paste0("position: ", positions[variable_idx],
-                                           " mass: ", masses[variable_idx],
-                                           " mod: ", variables[variable_idx]))
+        variable_string <- toString(
+          glue("position: {positions[variable_idx]} mass: {masses[variable_idx]}\\
+                mod: {variables[variable_idx]}"))
         query_data[i, "variable_mods"] <- variable_string
       }
       static_idx <- !is.na(statics)
       if (sum(static_idx) > 0) {
-        static_string <- toString(paste0("position: ", positions[static_idx],
-                                         " mass: ", masses[static_idx],
-                                         " mod: ", statics[static_idx]))
+        static_string <- toString(
+          glue("position: {positions[static_idx]} mass: {masses[static_idx]}\\
+                mod: {statics[static_idx]}"))
         query_data[i, "static_mods"] <- static_string
       }
     }
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
 
   ## Extracting the search_score tags
   message("Extracting the search_score metadata.")
@@ -565,7 +580,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- try(readr::read_csv(file, sep="\t"), silent=TRUE)
+    file_result <- sm(try(readr::read_csv(file, sep="\t"), silent=TRUE))
     if (class(file_result) != "try-error") {
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%
@@ -1064,10 +1079,10 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
   }
 
   if (is.null(table[[xaxis]])) {
-    stop(paste0("The x-axis column: ", xaxis, " does not appear in the data."))
+    stop(glue("The x-axis column: {xaxis} does not appear in the data."))
   }
   if (is.null(table[[yaxis]])) {
-    stop(paste0("The y-axis column: ", yaxis, " does not appear in the data."))
+    stop(glue("The y-axis column: {yaxis} does not appear in the data."))
   }
 
   table <- as.data.frame(table)
@@ -1129,7 +1144,7 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
     }
   }
 
-  table[["text"]] <- paste0(table[["protein"]], ":", table[["peptide"]])
+  table[["text"]] <- glue("{table[['protein']]}:{table[['peptide']]}")
 
   a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis, text="text",
                                           color="color", size="size")) +
@@ -1167,12 +1182,17 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   message("Reading ", xlsx_file)
   result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
   group_data <- list()
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (r in 1:nrow(result)) {
+    if (isTRUE(show_progress)) {
+      pct_done <- r / nrow(result)
+      setTxtProgressBar(bar, pct_done)
+    }
     row <- as.data.frame(result[r, ])
     row[, is.na(row)] <- ""
-    pct_done <- r / nrow(result)
-    setTxtProgressBar(bar, pct_done)
     ## The following 3 stanzas handle the creation of the levels of our data structure
     ## The first defines the protein group
     if (row[, 1] == "Checked") {
@@ -1239,17 +1259,24 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
       next
     }
   } ## End iterating over ever row of this unholy stupid data structure.
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   message("Finished parsing, reorganizing the protein data.")
 
   protein_df <- data.frame()
   peptide_df <- data.frame()
   protein_names <- c()
   message("Starting to iterate over ", length(group_data),  " groups.")
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (g in 1:length(group_data)) {
-    pct_done <- g / length(group_data)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- g / length(group_data)
+      setTxtProgressBar(bar, pct_done)
+    }
     group <- as.character(names(group_data)[g])
     protein_group <- group_data[[group]][["data"]]
     protein_accessions <- names(protein_group)
@@ -1262,8 +1289,9 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
       peptide_df <- rbind(peptide_df, peptide_data)
     }
   } ## End of the for loop
-  close(bar)
-
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   current_colnames <- colnames(protein_df)
   current_colnames <- tolower(current_colnames)
   ## percent signs are stupid in columns.

@@ -15,7 +15,7 @@
 #' @author atb
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
-  split_data <- readr::read_tsv(trinotate)
+  split_data <- sm(readr::read_tsv(trinotate))
   .data <- NULL  ## Shut up, R CMD check
 
   split_data <- split_data %>%
@@ -165,7 +165,7 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
 #' @author atb
 #' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
-  big_table <- data.table::as.data.table(readr::read_tsv(trinotate))
+  big_table <- data.table::as.data.table(sm(readr::read_tsv(trinotate)))
   big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
 
   go_data <- big_table[, c("#gene_id", "transcript_id", "gene_ontology_blast",

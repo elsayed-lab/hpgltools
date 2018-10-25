@@ -11,13 +11,13 @@ backup_file <- function(backup_file, backups=4) {
       j <- i + 1
       i <- sprintf("%02d", i)
       j <- sprintf("%02d", j)
-      test <- paste0(backup_file, ".", i)
-      new <- paste0(backup_file, ".", j)
+      test <- glue("{backup_file}.{i}")
+      new <- glue("{backup_file}.{j}")
       if (file.exists(test)) {
         file.rename(test, new)
       }
     }
-    newfile <- paste0(backup_file, ".", i)
+    newfile <- glue("{backup_file}.{i}")
     message("Renaming ", backup_file, " to ", newfile, ".")
     file.copy(backup_file, newfile)
   } else {
@@ -51,7 +51,7 @@ bioc_all <- function(release="3.5",
                      mirror="bioconductor.statistik.tu-dortmund.de",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
-  dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
+  dl_url <- glue("https://{mirror}/{base}/{json}/{release}/tree.json")
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
   ## Sadly, biocLite() does not give different returns for a successfully/failed
@@ -84,7 +84,7 @@ bioc_all <- function(release="3.5",
       if (class(installedp) == "try-error") {
         fail <- append(fail, pkg)
       } else {
-        install_directory <- paste0(.libPaths()[1], "/", pkg)
+        install_directory <- glue("{.libPaths()[1]}/{pkg}")
         if (file.exists(install_directory)) {
           suc <- append(suc, pkg)
         } else {
@@ -103,7 +103,7 @@ bioc_all <- function(release="3.5",
         if (class(installedp) == "try-error") {
           fail <- append(fail, pkg)
         } else {
-          install_directory <- paste0(.libPaths()[1], "/", pkg)
+          install_directory <- glue("{.libPaths()[1]}/{pkg}")
           if (file.exists(install_directory)) {
             suc <- append(suc, pkg)
           } else {
@@ -217,11 +217,11 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #' @param packrat  Is this tree under packrat control?
 #' @export
 get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
-  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
+  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
   commit_result <- system(cmdline, intern=TRUE)
-  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
+  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
   date_result <- system(cmdline, intern=TRUE)
-  result <- paste0(date_result, ": ", commit_result)
+  result <- glue("{date_result}: {commit_result}")
   message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
   message("> git reset ", commit_result)
@@ -262,7 +262,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
   for (n in 1:length(numerators)) {
     num <- numerators[[n]]
     den <- denominators[[n]]
-    cont <- paste0(num, "_vs_", den)
+    cont <- glue("{num}_vs_{den}")
     contrasts[n, num] <- 1
     contrasts[n, den] <- -1
     rownames(contrasts)[n] <- cont
@@ -420,9 +420,8 @@ install_packrat_globally <- function() {
     if (is.na(pkg_ver)) {
       next
     }
-    packrat_package_path <- paste0(packrat_src, "/",
-                                   pkg_name, "/",
-                                   pkg_name, "_", pkg_ver, ".tar.gz")
+    packrat_package_path <- glue(
+      "{packrat_src}/{pkg_name}/{pkg_name}_{pkg_ver}.tar.gz")
     if (pkg_name %in% rownames(globally_installed)) {
       global_version <- globally_installed[pkg_name, "Version"]
       if (global_version == pkg_ver) {
@@ -430,14 +429,14 @@ install_packrat_globally <- function() {
       } else {
         message("Package: ", pkg_name, " is globally installed as version: ",
                 global_version, "; packrat has version ", pkg_ver, ".")
-        inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
+        inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
         if (class(inst) != "try-error") {
           newly_installed <- newly_installed + 1
         }
       }
     } else {
       message("Package: ", pkg_name, " is not installed.")
-      inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
+      inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
       if (class(inst) != "try-error") {
         newly_installed <- newly_installed + 1
       }
@@ -464,9 +463,9 @@ install_packrat_globally <- function() {
 #' }
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
-  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  savefile <- glue("{getwd()}/{directory}/{filename}")
   message("Loading the savefile: ", savefile)
-  load_string <- paste0("load('", savefile, "', envir=globalenv())")
+  load_string <- glue("load('{savefile}', envir=globalenv())")
   message("Command run: ", load_string)
   eval(parse(text=load_string))
 }
@@ -599,9 +598,9 @@ rex <- function(display=":0") {
   home <- Sys.getenv("HOME")
   host <- Sys.info()[["nodename"]]
   if (is.null(display)) {
-    display <- read.table(file.path(home, ".displays", paste0(host, ".last")))[1, 1]
+    display <- read.table(file.path(home, ".displays", glue("{host}.last")))[1, 1]
   }
-  auth <- paste0(file.path(home, ".Xauthority"))
+  auth <- file.path(home, ".Xauthority")
   message("Setting display to: ", display)
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
@@ -631,16 +630,16 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   if (!file.exists(directory)) {
     dir.create(directory)
   }
-  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  ##savefile <- glue("{getwd()}/{directory}/{filename}")
+  savefile <- file.path(getwd(), directory, filename)
   message("The savefile is: ", savefile)
   backup_file(savefile, backups=backups)
   ## The following save strings work:
-  save_string <- paste0(
-    "con <- pipe(paste0('pxz -T", cpus, " > ",
-    savefile,
-    "'), 'wb');\n",
-    "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
-    "close(con)")
+  save_string <- glue(
+    "con <- pipe(paste0('pxz -T{cpus} > {savefile}'), 'wb'); \\
+    save(list=ls(all.names=TRUE, envir=globalenv()),
+         envir=globalenv(), file=con, compress=FALSE); \\
+    close(con)")
   message("The save string is: ", save_string)
   eval(parse(text=save_string))
 }
@@ -746,7 +745,7 @@ ymxb_print <- function(model) {
   intercept <- round(coefficients(model)[1], 2)
   x_name <- names(coefficients(model)[-1])
   slope <- round(coefficients(model)[-1], 2)
-  ret <- paste0("y = ", slope, "*", x_name, " + ", intercept)
+  ret <- glue("y = {slope}*{x_name} + {intercept}")
   message(ret)
   return(ret)
 }

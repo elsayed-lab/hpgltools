@@ -74,14 +74,17 @@ NULL
 #'
 #' @docType package
 #' @name hpgltools
+#' @importFrom data.table data.table
+#' @importFrom dplyr filter group_by n summarise
 #' @importFrom ggplot2 aes aes_string ggplot
+#' @importFrom glue glue glue_data
+#' @importFrom grDevices recordPlot
+#' @importFrom rlang abort sym
 #' @import Biobase
 #' @import data.table
 #' @import foreach
-#' @import grDevices
 #' @import graphics
-#' @import knitr
-#' @import magrittr
+#' @import grDevices
 #' @import methods
 #' @import stats
 #' @import utils

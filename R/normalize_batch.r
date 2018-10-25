@@ -354,7 +354,7 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
   adjust_mtrx <- as.matrix(adjust)
   for (col in 1:ncol(adjust_mtrx)) {
     new_model <- cbind(new_model, adjust_mtrx[, col])
-    new_colname <- paste0("sv", col)
+    new_colname <- glue("sv{col}")
     new_colnames <- append(new_colnames, new_colname)
   }
   colnames(new_model) <- new_colnames
@@ -424,7 +424,7 @@ hpgl_combatMod <- function(dat, batch, mod, noScale=TRUE, prior.plots=FALSE, ...
   var.pooled <- NULL
   message("Standardizing data across genes\n")
   if (NAs) {
-    warning(paste0("Found ", sum(is.na(dat)), " missing data values."))
+    warning(glue("Found {sum(is.na(dat)} missing data values."))
     warning("The original combatMod uses an undefined variable Beta.NA here,
 I set it to 1 not knowing what its purpose is.")
     B.hat <- apply(dat, 1, Beta.NA)

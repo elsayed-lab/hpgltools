@@ -109,7 +109,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   p_dists <- list()
   for (o in c("BP", "MF", "CC")) {
     for (m in methods) {
-      name <- paste0(tolower(o), "_",  m)
+      name <- glue("{tolower(o)}_{m}")
       p_dists[[name]] <- try(plot_histogram(
         ontology_result[[o]][[m]][["test_result"]]@score,
         bins=20))
@@ -618,7 +618,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
     ##        print(class(nodeInfo))
     ##        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
     nodeInfo = gsub("(\\w.{18}).*(\\\\\\n)","\\1\\2", nodeInfo, perl=TRUE)
-    nodeInfo <- paste('\\\n', nodeInfo, sep = '')
+    nodeInfo <- glue("\\\n{nodeInfo}")
   }
   ##teststring = paste("test:", nodeInfo)
   ##print(teststring)
@@ -632,7 +632,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
                                                   nodeInfo[x], sep = ''))
                                    })
   } else {
-    nodeAttrs[["label"]] <- paste(node.names, nodeInfo, sep = '')
+    nodeAttrs[["label"]] <- glue("{node.names}{nodeInfo}")
     names(nodeAttrs[["label"]]) <- node.names
   }
 
@@ -724,9 +724,10 @@ hpgl_GroupDensity <- function(object, whichGO, ranks=TRUE, rm.one=FALSE) {
     xlab <- "Gene's rank"
   }
   group <- as.integer(names(allS) %in% groupMembers)
-  xx <- data.frame(score=allS, group = factor(group,
-                                              labels=paste(c("complementary", whichGO),
-                                                           "  (", table(group), ")", sep="")))
+  xx <- data.frame(
+    "score" = allS,
+    "group" = factor(
+      group, labels=paste0(c('complementary', whichGO), "  (", table(group), ")")))
   plot <- lattice::densityplot(~ score | group, data=xx, layout=c(1, 2), xlab=xlab)
   return(plot)
 }

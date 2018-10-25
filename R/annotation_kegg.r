@@ -29,8 +29,8 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
       for (c in 1:length(duplicated_vector)) {
         append_name <- names(duplicated_vector)[c]
         append_entry <- as.character(duplicated_vector[c])
-        unique_df[append_name, final_colname] <- paste0(unique_df[append_name, final_colname],
-                                                        ", ", append_entry)
+        unique_df[append_name, final_colname] <- glue(
+          "{unique_df[append_name, final_colname]}, {append_entry}")
       }
     }
     final_df <- unique_df
@@ -116,7 +116,7 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
   result[["ncbi_proteinid"]] <- gsub(pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
   result[["uniprotid"]] <- gsub(pattern="up:", replacement="", x=result[["uniprotid"]])
   result[["pathways"]] <- gsub(pattern="path:", replacement="", x=result[["pathways"]])
-  result[["kegg_geneid"]] <- paste0(chosen, ":", result[["GID"]])
+  result[["kegg_geneid"]] <- glue("{chosen}:{result[['GID']]}")
   ## Now we have a data frame of all genes <-> ncbi-ids, pathways
   result_nas <- is.na(result)
   result[result_nas] <- ""

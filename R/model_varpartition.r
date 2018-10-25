@@ -65,10 +65,10 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
   }
   model_string <- "~ "
   if (!is.null(predictor)) {
-    model_string <- paste0(model_string, predictor, " +")
+    model_string <- glue("{model_string}{predictor} +")
   }
   for (fact in factors) {
-    model_string <- paste0(model_string, " (1|", fact, ") +")
+    model_string <- glue("{model_string} (1|{fact}) +")
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
   message("Attempting mixed linear model with: ", model_string)
@@ -127,7 +127,7 @@ which are shared among multiple samples.")
     new_expt <- expt
     tmp_annot <- fData(new_expt)
     added_data <- my_sorted
-    colnames(added_data) <- paste0("variance_", colnames(added_data))
+    colnames(added_data) <- glue("variance_{colnames(added_data)}")
     tmp_annot <- merge(tmp_annot, added_data, by="row.names")
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
     tmp_annot <- tmp_annot[, -1]
@@ -155,9 +155,9 @@ which are shared among multiple samples.")
 varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
   cl <- parallel::makeCluster(cpus)
   doParallel::registerDoParallel(cl)
-  model_string <- paste0("~ ")
+  model_string <- "~ "
   for (fact in factors) {
-    model_string <- paste0(model_string, " (1|", fact, ") + ")
+    model_string <- glue("{model_string} (1|{fact}) + ")
   }
   model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
   my_model <- as.formula(model_string)

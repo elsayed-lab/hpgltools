@@ -12,7 +12,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                      dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
   arglist <- list(...)
-  savefile <- paste0(webservice, "_metadata-v", format(Sys.time(), "%Y%m"), ".rda")
+  savefile <- glue("{webservice}_metadata-v{format(Sys.time(), '%Y%m')}.rda")
 
   if (!file.exists(dir)) {
     dir.create(dir, recursive=TRUE)
@@ -49,21 +49,20 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   })
 
   ## construct API request URL
-  ##base_url <- paste0("https://", webservice, ".org/", webservice, "/webservices/")
-  base_url <- paste0("https://", webservice, ".org/", webservice, "/webservices/")
+  base_url <- glue("https://{webservice}.org/{webservice}/webservices/")
   query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
-  request_url <- paste0(base_url, query_string)
+  request_url <- glue("{base_url}{query_string}")
 
   ## retrieve organism metadata from EuPathDB
-  metadata_json <- paste0(dir, "/metadata.json")
+  metadata_json <- glue("{dir}/metadata.json")
   file <- try(download.file(url=request_url, destfile=metadata_json), silent=TRUE)
   if (class(file) == "try-error") {
     ## Try again without https?
-    base_url <- paste0("http://", webservice, ".org/", webservice, "/webservices/")
+    base_url <- glue("http://{webservice}.org/{webservice}/webservices/")
     query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
-    request_url <- paste0(base_url, query_string)
+    request_url <- glue("{base_url}{query_string}")
     ## retrieve organism metadata from EuPathDB
-    metadata_json <- paste0(dir, "/metadata.json")
+    metadata_json <- glue("{dir}/metadata.json")
     file <- download.file(url=request_url, destfile=metadata_json)
   }
 
@@ -343,27 +342,34 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
     information <- cbind(information, new_col)
   }
   colnames(information) <- column_names
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   ## Now fill in the data using the other side of my regular expression.
   for (c in 1:length(entries)) {
-    pct_done <- c / length(entries)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(entries)
+      setTxtProgressBar(bar, pct_done)
+    }
     stuff <- read.delim(textConnection(entries[c]), sep="\n", header=FALSE)
     material <- gsub(pattern="^(.+?)\\: (.+)?$", replacement="\\2", x=stuff[["V1"]])
     information[c, ] <- material
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   ## remove duplicated rows
   information <- information[!duplicated(information), ]
   ## In some cases we will want to prefix the columns with the table name...
   if (!is.null(table_name)) {
     for (c in 2:length(colnames(information))) {
       col_name <- colnames(information)[c]
-      prefix_string <- paste0(toupper(table_name), "_")
+      prefix_string <- glue("{toupper(table_name)}_")
       ## Use if() test this to avoid column names like 'GO_GO_ID'
-      foundp <- grepl(pattern=paste0("^", prefix_string), x=toupper(col_name))
+      foundp <- grepl(pattern=glue("^{prefix_string}"), x=toupper(col_name))
       if (!foundp) {
-        new_col <- paste0(toupper(table_name), "_", toupper(col_name))
+        new_col <- glue("{toupper(table_name)}_{toupper(col_name)}")
         colnames(information)[c] <- new_col
       }
     }
@@ -469,7 +475,7 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
   if (!is.null(table_name)) {
     for (c in 2:length(colnames(result))) {
       col_name <- colnames(result)[c]
-      new_col <- paste0(toupper(table_name), "_", toupper(col_name))
+      new_col <- glue("{toupper(table_name)}_{toupper(col_name)}")
       colnames(result)[c] <- new_col
     }
   }
@@ -506,7 +512,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
     species <- entry[["Species"]]
   }
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "_annotations.rda"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}_annotations.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -653,7 +659,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
   ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
   ## from Cristina
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "_go_table.rda"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}_go_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -728,7 +734,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "_ortholog_table.rda"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}_ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -786,7 +792,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "_interpro_table"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}_interpro_table"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -844,7 +850,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "_pathway_table.rda"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}_pathway_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -898,7 +904,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
                             parameters=parameters,
                             columns=field_list)
 
-  savefile <- file.path(dir, paste0(entry[["Genome"]], "ortholog_table.rda"))
+  savefile <- file.path(dir, glue("{entry[['Genome']]}ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -910,7 +916,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
 
   all_orthologs <- data.frame()
   message("Downloading orthologs, one gene at a time, and checkpointing for when it inevitably fubars.")
-  ortho_savefile <- paste0("ortho_checkpoint_", entry[["Genome"]], ".rda")
+  ortho_savefile <- glue("ortho_checkpoint_{entry[['Genome']]}.rda")
   savelist <- list(
     "number_finished" = 0,
     "all_orthologs" = all_orthologs)
@@ -923,10 +929,15 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
     save(savelist, file=ortho_savefile)
   }
   current_gene <- savelist[["number_finished"]] + 1
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (c in current_gene:length(result)) {
-    pct_done <- c / length(result)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(result)
+      setTxtProgressBar(bar, pct_done)
+    }
     id <- result[c]
     ## I keep getting weird timeouts, so I figure I will give the eupath webservers a moment.
     Sys.sleep(1.0)
@@ -938,8 +949,9 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
     savelist[["number_finished"]] <- c
     save(savelist, file=ortho_savefile)
   }
+  if (isTRUE(show_progress)) {
   close(bar)
-
+  }
   message("Saving annotations to ", savefile)
   save(all_orthologs, file=savefile)
   return(all_orthologs)
@@ -990,7 +1002,7 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   query_body <- list(
     ## 3 elements, answerSpec, formatting, format.
     "answerSpec" = list(
-      "questionName" = jsonlite::unbox(paste0("GeneQuestions.", question)),
+      "questionName" = jsonlite::unbox(glue("GeneQuestions.{question}")),
       "parameters" = parameters,
       "viewFilters" = list(),
       "filters" = list()

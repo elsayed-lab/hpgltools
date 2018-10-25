@@ -11,7 +11,7 @@
 #' @export
 genoplot_chromosome <- function(accession="AE009949", start=NULL, end=NULL, title="Genome plot") {
     tt <- download_gbk(accession)
-    segments <- try(genoPlotR::read_dna_seg_from_file(paste0(accession, ".gb")))
+    segments <- try(genoPlotR::read_dna_seg_from_file(glue("{accession}.gb")))
     if (is.null(start)) {
         start <- 1
     }

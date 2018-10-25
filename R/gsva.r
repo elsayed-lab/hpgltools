@@ -54,13 +54,13 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
   fst[["direction"]] <- pair_names[1]
   fst[["phenotype"]] <- phenotype_name
 
-  set_prefix <- paste0(researcher_name, "_", study_name, "_", category_name)
-  fst_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
+  set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
+  fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
+  sec_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
   fst_gsc <- GSEABase::GeneSet(
                          GSEABase::EntrezIdentifier(),
                          setName=fst_name,
                          geneIds=as.character(rownames(fst)))
-  ##setName(fst_gsc) <- paste0(set_name, "_", category_name, "_", directions[1])
   if (!is.null(second)) {
     sec <- data.frame(row.names=unique(second))
     if (is.null(phenotype_name)) {
@@ -69,8 +69,7 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     sec[["direction"]] <- pair_names[2]
     sec[["phenotype"]] <- phenotype_name
     both <- rbind(fst, sec)
-    color_name <- toupper(paste0(set_prefix, "_", phenotype_name))
-    sec_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
+    color_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
     sec_gsc <- GSEABase::GeneSet(
                            GSEABase::EntrezIdentifier(),
                            setName=sec_name,
@@ -100,10 +99,12 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 #' @param pairwise  A pairwise result, or combined de result, or extracted genes.
 #' @param according_to  When getting significant genes, use this method.
 #' @param orgdb  Annotation dataset.
+#' @param pair_names  Describe the contrasts of the GSC: up vs. down, high vs. low, etc.
+#' @param category_name  What category does the GSC describe?
+#' @param phenotype_name  When making color sets, use this phenotype name.
+#' @param set_name  A name for the created gene set.
 #' @param color  Make a colorSet?
 #' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
-#' @param set_name  A name for the created gene set.
-#' @param phenotype_name  When making color sets, use this phenotype name.
 #' @param required_id  gsva uses entrezids by default.
 #' @param ...  Extra arguments for extract_significant_genes().
 #' @export
@@ -142,8 +143,8 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     message("Invoking make_gsc_from_ids().")
     ret <- make_gsc_from_ids(pairwise, orgdb=orgdb,
                              pair_names=pair_names, category_name=category_name,
-                             phenotype_name=phenotype_name, set_name=set_name,
-                             current_id=current_id, required_id=required_id, ...)
+                             phenotype_name=phenotype_name, current_id=current_id,
+                             required_id=required_id, ...)
     return(ret)
   } else {
     stop("I do not understand this type of input.")
@@ -219,9 +220,9 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
       both <- both[!dup_elements, ]
     }
 
-    set_prefix <- paste0(set_name, "_", category_name)
-    color_set_name <- toupper(paste0(set_prefix, "_", phenotype_name))
-    up_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
+    set_prefix <- glue("{set_name}_{category_name}")
+    color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
+    up_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
                                setName=color_set_name,
@@ -238,7 +239,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     down_gsc <- NULL
     down_lst[[name]] <- down_gsc
     if (!is.null(pair_names[2])) {
-      down_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
+      down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       down_gsc <- GSEABase::GeneSet(
                               GSEABase::EntrezIdentifier(),
                               setName=down_name,
@@ -261,10 +262,12 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param pairwise  A pairwise result, or combined de result, or extracted genes.
 #' @param according_to  When getting significant genes, use this method.
 #' @param orgdb  Annotation dataset.
+#' @param pair_names  What set of names will be used: up vs. down, high vs. low, etc.
+#' @param category_name  What category does this GSC describe?
+#' @param phenotype_name  What phenotype does this GSC describe?
+#' @param set_name  A name for the created gene set.
 #' @param color  Make a colorSet?
 #' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
-#' @param set_name  A name for the created gene set.
-#' @param phenotype_name  When making color sets, use this phenotype name.
 #' @param required_id  gsva uses entrezids by default.
 #' @param ...  Extra arguments for extract_significant_genes().
 #' @export
@@ -380,9 +383,9 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
       both <- both[!dup_elements, ]
     }
 
-    set_prefix <- paste0(set_name, "_", category_name)
-    color_set_name <- toupper(paste0(set_prefix, "_", phenotype_name))
-    up_name <- toupper(paste0(set_prefix, "_", pair_names[1]))
+    set_prefix <- glue("{set_name}_{category_name}")
+    color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
+    up_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
                                setName=color_set_name,
@@ -399,7 +402,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     down_gsc <- NULL
     down_lst[[name]] <- down_gsc
     if (!is.null(pair_names[2])) {
-      down_name <- toupper(paste0(set_prefix, "_", pair_names[2]))
+      down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       down_gsc <- GSEABase::GeneSet(
                               GSEABase::EntrezIdentifier(),
                               setName=down_name,
@@ -427,10 +430,14 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #'   it does not exist, then data() will be called upon it.
 #' @param data_pkg  What package contains the requisite dataset?
 #' @param signatures Provide an alternate set of signatures (GeneSetCollections)
+#' @param cores  How many CPUs to use?
 #' @param current_id  Where did the IDs of the genes come from?
 #' @param required_id  gsva (I assume) always requires ENTREZ IDs, but just in
 #'   case this is a parameter.
 #' @param orgdb  What is the data source for the rownames()?
+#' @param method  Which gsva method to use?
+#' @param kcdf  Options for the gsva methods.
+#' @param ranking  another gsva option.
 #' @return  Something from GSVA::gsva()!
 #' @export
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
@@ -591,7 +598,7 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
 
   kept_idx <- rep(FALSE, length(names(sig_data)))
   for (kept in requests) {
-    keepers <- grepl(x=names(sig_data), pattern=paste0("^", kept))
+    keepers <- grepl(x=names(sig_data), pattern=glue("^{kept}"))
     kept_idx <- kept_idx | keepers
   }
 
@@ -644,10 +651,15 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
     tt <- sm(library(orgdb, character.only=TRUE))
     gsc_lst <- as.list(gsc)
     new_gsc <- list()
-    bar <- utils::txtProgressBar(style=3)
+    show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+    if (isTRUE(show_progress)) {
+      bar <- utils::txtProgressBar(style=3)
+    }
     for (g in 1:length(gsc)) {
-      pct_done <- g / length(gsc_lst)
-      setTxtProgressBar(bar, pct_done)
+      if (isTRUE(show_progress)) {
+        pct_done <- g / length(gsc_lst)
+        setTxtProgressBar(bar, pct_done)
+      }
       gs <- gsc[[g]]
       old_ids <- GSEABase::geneIds(gs)
       new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
@@ -659,7 +671,9 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type="SYMBOL", to_ty
       ## gsc_lst[[g]] <- gs
       new_gsc[[g]] <- gs
     }
-    close(bar)
+    if (isTRUE(show_progress)) {
+      close(bar)
+    }
     gsc <- GSEABase::GeneSetCollection(new_gsc)
     return(gsc)
 }
@@ -741,7 +755,7 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
     for (c in 1:length(name_chars)) {
       char <- name_chars[[c]]
       if (char == "1") {
-        venn_name <- paste0(venn_name, "_", names(lst)[c])
+        venn_name <- glue("{venn_name}_{names(lst)[c]}")
       }
     }
     venn_name <- gsub(pattern="^_", replacement="", x=venn_name)

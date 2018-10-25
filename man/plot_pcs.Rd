@@ -24,7 +24,13 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 
 \item{plot_labels}{Parameter for the labels on the plot.}
 
+\item{x_label}{Label for the x-axis.}
+
+\item{y_label}{Label for the y-axis.}
+
 \item{plot_size}{Size of the dots on the plot}
+
+\item{plot_alpha}{Add an alpha channel to the dots?}
 
 \item{size_column}{Experimental factor to use for sizing the glyphs}
 

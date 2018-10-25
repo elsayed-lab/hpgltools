@@ -30,7 +30,7 @@ load_microbesonline_annotations <- function(id="160490") {
   ##string <- RCurl::getURL(url)
   ##con <- textConnection(string)
   ##  data <- readr::read_table(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
-  data <- readr::read_tsv(url)
+  data <- sm(readr::read_tsv(url))
   return(data)
 }
 
@@ -80,14 +80,14 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
     }
   }
 
-  prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id)
+  prelude_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id}")
   result <- xml2::read_html(prelude_url)
   titles <- rvest::html_nodes(result, "title")
   species <- (titles %>% rvest::html_text())[1]
 
   if (isTRUE(gbk)) {
-    gbk_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=gbk")
-    gbk_file <- paste0(id, ".gbk")
+    gbk_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=gbk")
+    gbk_file <- glue("{id}.gbk")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", gbk_file, ".")
     gbk_downloaded <- download.file(gbk_url, gbk_file, quiet=TRUE)
@@ -95,8 +95,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(tab)) {
-    tab_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
-    tab_file <- paste0(id, ".tab")
+    tab_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
+    tab_file <- glue("{id}.tab")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tab_file, ".")
     tab_downloaded <- download.file(tab_url, tab_file, quiet=TRUE)
@@ -104,8 +104,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(prot)) {
-    prot_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=proteomes")
-    prot_file <- paste0(id, "_proteome.fasta")
+    prot_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
+    prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
     prot_downloaded <- download.file(prot_url, prot_file)
@@ -113,8 +113,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(tx)) {
-    tx_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=transcriptomes")
-    tx_file <- paste0(id, "_tx.fasta")
+    tx_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
+    tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
     tx_downloaded <- download.file(tx_url, tx_file)
@@ -122,8 +122,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(genome)) {
-    genome_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=genomes")
-    genome_file <- paste0(id, "_genome.fasta")
+    genome_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
+    genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")
     genome_downloaded <- download.file(genome_url, genome_file)
@@ -158,7 +158,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 load_microbesonline_go <- function(id="160490", id_column="name", data_column="GO", name=NULL) {
   chosen <- id
   table <- download_microbesonline_files(id=id, type="tab")
-  table_df <- readr::read_tsv(file=table[["tab"]])
+  table_df <- sm(readr::read_tsv(file=table[["tab"]]))
   go_df <- table_df[, c(id_column, data_column)] %>%
     tidyr::separate_rows(data_column, sep=",")
   keep_idx <- go_df[[data_column]] != ""

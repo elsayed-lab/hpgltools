@@ -48,12 +48,12 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, filename="html/gvis_ma_plot.html
     colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip",
                                  "Significant", "sig.tooltip")
     ma_json_ids <- rjson::toJSON(row.names(gvis_final_df))
-    ma_jscode <- paste("
- var IDs=", ma_json_ids, "
+    ma_jscode <- glue("
+ var IDs = {ma_json_ids};
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
- window.open('", base_url, "' + text, '_blank');
+ window.open('{base_url}' + text, '_blank');
 ")
     gvis_options <- list(pointSize=2, height=800, width=800,
                          tooltip="[{isHtml: true},{trigger:'selection'}]",
@@ -114,12 +114,12 @@ plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
     colnames(gvis_df) <- c("logFC", "nsig_p", "nsig.tooltip", "sig_p", "sig.tooltip")
     gvis_chartid <- gsub("\\.html$", "", basename(filename))
     vol_json_ids <- rjson::toJSON(row.names(gvis_df))
-    vol_jscode <- paste("
- var IDs=", vol_json_ids, "
+    vol_jscode <- glue("
+ var IDs = {vol_json_ids};
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
- window.open('", base_url, "' + text, '_blank');
+ window.open('{base_url}' + text, '_blank');
 ")
     gvis_options <- list(pointSize=2, height=800, width=800,
                          tooltip="[{isHtml: true},{trigger:'selection'}]",
@@ -161,11 +161,11 @@ plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter
     gvis_df <- gvis_df[-1]
     json_ids <- rjson::toJSON(row.names(gvis_df))
     gvis_chartid <- gsub("\\.html$", "", basename(filename))
-    scatter_jscode <- paste0(" var IDs=", json_ids, "
+    scatter_jscode <- glue(" var IDs={json_ids}
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
- window.open('", base_url, "' + text, '_blank');
+ window.open('{base_url}' + text, '_blank');
 ")
     if (is.null(trendline)) {
         gvis_options <- list(pointSize=2, height=800, width=800,

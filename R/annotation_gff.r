@@ -91,7 +91,8 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
                 "rtracklayer::import.gff(gff, format='gtf')",
                 "rtracklayer::import.gff(gff)")
   if (!is.null(try)) {
-    attempts <- c(paste0(try, "(gff)"), attempts)
+    ##  attempts <- c(paste0(try, "(gff)"), attempts)
+    attempts <- c(glue("{try}(gff)"), attempts)
   }
 
   annot <- NULL
@@ -99,7 +100,7 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
     annotations <- NULL
     message("Trying attempt: ", attempts[[att]])
     attempt <- attempts[[att]]
-    eval_string <- paste0("annotations <- try(", attempt, ", silent=TRUE)")
+    eval_string <- glue("annotations <- try({attempt}, silent=TRUE)")
     eval(parse(text=eval_string))
     if (class(annotations) == "try-error") {
       rm(annotations)

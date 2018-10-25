@@ -99,7 +99,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
         testing <- NULL
         ty <- possible_types[c]
         ## make a granges/iranges using the function in possible_types.
-        test_string <- paste0("testing <- ", ty, "(tmpdb)")
+        test_string <- glue("testing <- {ty}(tmpdb)")
         eval(parse(text=test_string))
         ## as.data.frame is not only base, but also biocgenerics!!!
         ## Make a dataframe out of the information above and find the most likely appropriate ID column
@@ -693,7 +693,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
         up_list <- changed_counts[["ups"]]
         down_list <- changed_counts[["downs"]]
     } else if (is.null(changed_counts[[according_to]])) {
-        warning(paste0("Could not find the table according to: ", according_to))
+        warning(glue("Could not find the table according to: {according_to}."))
         warning("Using the first available table, which might end badly.")
         up_list <- changed_counts[[1]][["ups"]]
         down_list <- changed_counts[[2]][["downs"]]
@@ -786,7 +786,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
 #' @seealso \pkg{clusterProfiler}
 #' @export
 golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
-    savefile <- paste0(ont, "_", savefile)
+    savefile <- glue("{ont}_{savefile}")
     golevels <- NULL
     if (file.exists(savefile)) {
         load(savefile)

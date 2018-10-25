@@ -12,6 +12,8 @@ compare_significant_contrasts(sig_tables, compare_by = "deseq",
 
 \item{compare_by}{Use which program for the comparisons?}
 
+\item{weights}{When printing venn diagrams, weight them?}
+
 \item{contrasts}{A list of contrasts to compare.}
 }
 \description{

@@ -60,10 +60,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     m <- signif(x=coefficients["first", 1], digits=3)
     ret <- NULL
     if (as.numeric(int) >= 0) {
-      ret <- paste0("y = ", m, "x + ", int)
+      ret <- glue("y = {m}x + {int}")
     } else {
       int <- int * -1
-      ret <- paste0("y = ", m, "x - ", int)
+      ret <- glue("y = {m}x - {int}")
     }
     return(ret)
   }
@@ -154,7 +154,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     c("deseq_lfcse", "The standard error observed given the log2 fold change."),
     c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
     c("deseq_p", "Resulting p-value."),
-    c(paste0("deseq_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
+    c(glue("deseq_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("deseq_q", "False-positive corrected p-value.")
   ),
   stringsAsFactors=FALSE)
@@ -167,7 +167,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
       "Similar to limma's ave and DESeq2's basemean, except only including the samples in the comparison."),
     c("edger_lr", "Undocumented, I am reasonably certain it is the T-statistic calculated by edgeR."),
     c("edger_p", "The observed p-value from edgeR."),
-    c(paste0("edger_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
+    c(glue("edger_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("edger_q", "The observed corrected p-value from edgeR.")
   ),
   stringsAsFactors=FALSE)
@@ -189,7 +189,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     c("limma_ave", "Average log2 expression observed by limma across all samples."),
     c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
     c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
-    c(paste0("limma_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
+    c(glue("limma_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("limma_b", "Use a Bayesian estimate to calculate log-odds significance instead of a student's test."),
     c("limma_q", "A q-value FDR adjustment of the p-value above.")
   ),
@@ -203,7 +203,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     c("basic_logfc", "The log2 fold change observed by the basic analysis."),
     c("basic_t", "T-statistic from basic."),
     c("basic_p", "Resulting p-value."),
-    c(paste0("basic_adjp_", padj_type), paste0("p-value adjusted with ", padj_type)),
+    c(glue("basic_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("basic_adjp", "BH correction of the p-value.")
   ),
   stringsAsFactors=FALSE)
@@ -337,7 +337,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
       width=plot_dim, height=plot_dim, start_col=10, plotname="pre_pca", savedir=excel_basename)
     xl_result <- openxlsx::writeData(
                              wb, sheet="legend", startRow=36, startCol=10,
-                             x=paste0("PCA plot after surrogate estimation with: ", chosen_estimate))
+                             x=glue("PCA plot after surrogate estimation with: {chosen_estimate}"))
     try_result <- xlsx_plot_png(
       apr[["post_batch"]], wb=wb, sheet="legend", start_row=37,
       width=plot_dim, height=plot_dim, start_col=10, plotname="pre_pca", savedir=excel_basename)
@@ -405,8 +405,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
       same_string <- numerator
       inverse_string <- numerator
       if (!is.na(denominator)) {
-        same_string <- paste0(numerator, "_vs_", denominator)
-        inverse_string <- paste0(denominator, "_vs_", numerator)
+        same_string <- glue("{numerator}_vs_{denominator}")
+        inverse_string <- glue("{denominator}_vs_{numerator}")
       }
       ## Blank out some elements for plots and such.
       dat <- NULL
@@ -797,9 +797,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         ma_plt <- limma_ma_plots[[sheetname]]
         vol_plt <- limma_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("Limma expression coefficients for ", names(combo)[[x]], "; R^2: ",
-                            signif(x=plt[["lm_rsq"]], digits=3), "; equation: ",
-                            make_equate(plt[["lm_model"]]))
+          printme <- glue("Limma expression coefficients for {names(combo)[[x]]}; R^2: \\
+                          {signif(x=plt[['lm_rsq']], digits=3)}; equation: \\
+                          {make_equate(plt[['lm_model']])}")
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme, startRow=18, startCol=plot_column)
@@ -819,9 +819,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         ma_plt <- edger_ma_plots[[sheetname]]
         vol_plt <- edger_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("Edger expression coefficients for ", names(combo)[[x]], "; R^2: ",
-                            signif(plt[["lm_rsq"]], digits=3), "; equation: ",
-                            make_equate(plt[["lm_model"]]))
+          printme <- glue("Edger expression coefficients for {names(combo)[[x]]}; R^2: \\
+                          {signif(plt[['lm_rsq']], digits=3)}; equation: \\
+                          {make_equate(plt[['lm_model']])}")
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme, startRow=50, startCol=plot_column)
@@ -840,9 +840,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         ma_plt <- deseq_ma_plots[[sheetname]]
         vol_plt <- deseq_vol_plots[[sheetname]]
         if (class(plt) != "try-error" & !is.null(plt)) {
-          printme <- paste0("DESeq2 expression coefficients for ", names(combo)[[x]], "; R^2: ",
-                            signif(plt[["lm_rsq"]], digits=3), "; equation: ",
-                            make_equate(plt[["lm_model"]]))
+          printme <- glue("DESeq2 expression coefficients for {names(combo)[[x]]}; R^2: \\
+                          {signif(plt[['lm_rsq']], digits=3)}; equation: \\
+                          {make_equate(plt[['lm_model']])}")
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme, startRow=81, startCol=plot_column)
@@ -901,8 +901,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           tmpcol <- 1
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, startRow=new_row - 2, startCol=tmpcol,
-                                   x=paste0("Comparing DE tools for the comparison of: ",
-                                            logfc_names[c]))
+                                   x=glue("Comparing DE tools for the \\
+                                          comparison of: {logfc_names[c]}"))
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, startRow=new_row - 1, startCol=tmpcol,
                                    x="Log2FC(Limma vs. EdgeR)")
@@ -1028,7 +1028,7 @@ Defaulting to fdr.")
   num_den_names <- strsplit(x=table_name, split="_vs_")[[1]]
   num_name <- num_den_names[[1]]
   den_name <- num_den_names[[2]]
-  inverse_name <- paste0(den_name, "_vs_", num_name)
+  inverse_name <- glue("{den_name}_vs_{num_name}")
 
   lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
                      "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
@@ -1203,17 +1203,17 @@ Defaulting to fdr.")
 
   ## Add one final p-adjustment to ensure a consistent and user defined value.
   if (!is.null(comb[["limma_p"]])) {
-    colname <- paste0("limma_adjp_", padj_type)
+    colname <- glue("limma_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
   }
   if (!is.null(comb[["deseq_p"]])) {
-    colname <- paste0("deseq_adjp_", padj_type)
+    colname <- glue("deseq_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["deseq_p"]], method=padj_type)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
   }
   if (!is.null(comb[["edger_p"]])) {
-    colname <- paste0("edger_adjp_", padj_type)
+    colname <- glue("edger_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["edger_p"]], method=padj_type)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
   }
@@ -1221,7 +1221,7 @@ Defaulting to fdr.")
     comb[["ebseq_ppde"]] <- format(x=comb[["ebseq_ppde"]], digits=4, scientific=TRUE)
   }
   if (!is.null(comb[["basic_p"]])) {
-    colname <- paste0("basic_adjp_", padj_type)
+    colname <- glue("basic_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
   }
@@ -1280,7 +1280,7 @@ Defaulting to fdr.")
   down_fc <- -1.0 * lfc_cutoff
   summary_table_name <- table_name
   if (isTRUE(do_inverse)) {
-    summary_table_name <- paste0(summary_table_name, "-inverted")
+    summary_table_name <- glue("{summary_table_name}-inverted")
   }
   limma_p_column <- "limma_adjp"
   deseq_p_column <- "deseq_adjp"
@@ -1600,7 +1600,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
   ## Now make the excel sheet for each method/coefficient
   for (according in names(abundant_lists)) {
     for (coef in names(abundant_lists[[according]])) {
-      sheetname <- paste0(according, "_", coef)
+      sheetname <- glue("{according}_{coef}")
       annotations <- fData(pairwise[["input"]])
       abundances <- abundant_lists[[according]][[coef]]
       kept_annotations <- names(abundances)
@@ -1614,7 +1614,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
         used_data <- as.data.frame(abundances)
       }
       if (class(excel) == "character") {
-        title <- paste0("Table SXXX: Abundant genes in ", coef, " according to ", according, ".")
+        title <- glue("Table SXXX: Abundant genes in {coef} according to {according}.")
         xls_result <- write_xls(data=used_data, wb=wb, sheet=sheetname, title=title)
       }
     }
@@ -1722,16 +1722,16 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   sig_list <- list()
   title_append <- ""
   if (!is.null(lfc)) {
-    title_append <- paste0(title_append, " |log2fc|>=", lfc)
+    title_append <- glue("{title_append} |log2fc| >= {lfc}")
   }
   if (!is.null(p)) {
-    title_append <- paste0(title_append, " p<=", p)
+    title_append <- glue("{title_append} p <= {p}")
   }
   if (!is.null(z)) {
-    title_append <- paste0(title_append, " |z|>=", z)
+    title_append <- glue("{title_append} |z| >= {z}")
   }
   if (!is.null(n)) {
-    title_append <- paste0(title_append, " top|bottom n=", n)
+    title_append <- glue("{title_append} top|bottom n = {n}")
   }
 
   if (according_to[[1]] == "all") {
@@ -1820,7 +1820,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
   for (summary_count in 1:length(according_to)) {
     according <- according_to[summary_count]
     message("The count is: ", summary_count, " and the test is: ", according, ".")
-    test_column <- paste0(according, "_logfc")
+    test_column <- glue("{according}_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("Did not find the ", test_column, ", skipping ", according, ".")
       according_kept <- according_to[!according == according_to]
@@ -1845,17 +1845,17 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
 
       table <- all_tables[[table_name]]
       if (is.null(arglist[["fc_column"]])) {
-        fc_column <- paste0(according, logfc_suffix)
+        fc_column <- glue("{according}{logfc_suffix}")
       } else {
-        fc_column <- paste0(arglist[["fc_column"]])
+        fc_column <- arglist[["fc_column"]]
       }
       if (is.null(arglist[["p_column"]])) {
-        p_column <- paste0(according, adjp_suffix)
+        p_column <- glue("{according}{adjp_suffix}")
         if (p_type != "adj") {
-          p_column <- paste0(according, p_suffix)
+          p_column <- glue("{according}{p_suffix}")
         }
       } else {
-        p_column <- paste0(arglist[["p_column"]])
+        p_column <- arglist[["p_column"]]
       }
 
       trimming <- get_sig_genes(
@@ -1864,11 +1864,11 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
       trimmed_down[[table_name]] <- trimming[["down_genes"]]
       change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-      up_title <- paste0("Table SXXX: Genes deemed significantly up in ",
-                         table_name, " with", title_append, " according to ", according)
+      up_title <- glue("Table SXXX: Genes deemed significantly up in \\
+                       {table_name} with {title_append} according to {according}.")
       up_titles[[table_name]] <- up_title
-      down_title <- paste0("Table SXXX: Genes deemed significantly down in ",
-                           table_name, " with", title_append, " according to ", according)
+      down_title <- glue("Table SXXX: Genes deemed significantly down in \\
+                         {table_name} with {title_append} according to {according}.")
       down_titles[[table_name]] <- down_title
     } ## End extracting significant genes for loop
 
@@ -1877,8 +1877,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     ## A quick and somewhat dirty way to coerce columns to a given type from lists etc.
     ## I am not sure I am a fan, but it certainly is concise.
     change_counts[] <- lapply(change_counts, as.numeric)
-    summary_title <- paste0("Counting the number of changed genes by contrast according to ",
-                            according, " with ", title_append)
+    summary_title <- glue("Counting the number of changed genes by contrast according to \\
+                          {according} with {title_append}.")
     ## xls_result <- write_xls(data=change_counts, sheet="number_changed", file=sig_table,
     ##                         title=summary_title,
     ##                         overwrite_file=TRUE, newsheet=TRUE)
@@ -1959,12 +1959,12 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0, p=0
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
     ##xls_result <- openxlsx::addWorksheet(wb, "number_changed")
     for (according in according_to) {
-      sig_message <- paste0("Significant ", according, " genes.")
+      sig_message <- glue("Significant {according} genes.")
       xls_result <- openxlsx::writeData(
                                 wb=wb, sheet="number_changed", x=sig_message,
                                 startRow=plot_row, startCol=plot_col)
       plot_row <- plot_row + 1
-      plotname <- paste0("sigbar_", according)
+      plotname <- glue("sigbar_{according}")
       try_result <- xlsx_plot_png(
         a_plot=sig_bar_plots[[according]], wb=wb, sheet="number_changed", plotname=plotname,
         savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
@@ -2016,7 +2016,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
   possible_columns <- colnames(combined[["data"]][[1]])
   for (c in 1:length(selectors)) {
     rawname <- selectors[c]
-    conjugate <- paste0(rawname, "_logfc")
+    conjugate <- glue("{rawname}_logfc")
     if (rawname %in% possible_columns) {
       chosen_selectors <- c(chosen_selectors, rawname)
       alternate_selectors <- c(alternate_selectors, rawname)
@@ -2131,9 +2131,9 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
           } else {
             text_dir <- "down"
           }
-          xlsx_table <- paste0(text_dir, "_", table)
-          xlsx_title <- paste0("Genes deemed ", text_dir, " significant via logFC: ", lfc,
-                               ", p-value: ", p, "; by ", sname, ".")
+          xlsx_table <- glue("{text_dir}_{table}")
+          xlsx_title <- glue("Genes deemed {text_dir} significant via logFC: {lfc}\\
+                             , p-value: {p}; by {sname}.")
           if (!is.null(excel)) {
             xl_result <- write_xls(data=table_subset, wb=wb, sheet=xlsx_table,
                                    start_row=xlsx_row, title=xlsx_title)
@@ -2145,8 +2145,8 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
 
     up_plot <- lst[["ups"]][[table]][["plot"]]
     down_plot <- lst[["downs"]][[table]][["plot"]]
-    venn_title <- paste0("Summary of intersections among ", toString(chosen_selectors),
-                         " for ", table, ".")
+    venn_title <- glue("Summary of intersections among {toString(chosen_selectors)}\\
+                       for {table}.")
     summary_df <- rbind(t(Vennerable::Weights(lst[["ups"]][[table]][["sets"]])),
                         t(Vennerable::Weights(lst[["downs"]][[table]][["sets"]])))
     rownames(summary_df) <- c("up", "down")
@@ -2216,8 +2216,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
                                   sheet="number_changed", title=summary_title)
   for (base_name in names(ups)) {
     table_count <- table_count + 1
-    up_name <- paste0("up_", table_count, according, "_", base_name)
-    down_name <- paste0("down_", table_count, according, "_", base_name)
+    up_name <- glue("up_{table_count}{according}_{base_name}")
+    down_name <- glue("down_{table_count}{according}_{base_name}")
     up_table <- ups[[table_count]]
     down_table <- downs[[table_count]]
     up_title <- up_titles[[table_count]]
@@ -2230,7 +2230,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
       ma_row <- 1
       ma_col <- xls_result[["end_col"]] + 1
       if (!is.null(ma_plots[[base_name]])) {
-        plot_name <- paste0("ma_", according, "_", base_name)
+        plot_name <- glue("ma_{according}_{base_name}")
         try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
                                     plotname=plot_name, savedir=excel_basename,
                                     start_row=ma_row, start_col=ma_col)
@@ -2311,7 +2311,8 @@ write_de_table <- function(data, type="limma", ...) {
     table <- data[["all_tables"]][[c]]
 
     written <- try(write_xls(
-      data=table, wb=wb, sheet=comparison, title=paste0(type, " results for: ", comparison, ".")))
+      data=table, wb=wb, sheet=comparison,
+      title=glue("{type} results for: {comparison}.")))
   }
 
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))

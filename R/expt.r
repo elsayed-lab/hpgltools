@@ -29,7 +29,8 @@ concatenate_runs <- function(expt, column="replicate") {
   batches <- list()
   samplenames <- list()
   for (rep in replicates) {
-    expression <- paste0(column, "=='", rep, "'")
+    ## expression <- paste0(column, "=='", rep, "'")
+    expression <- glue("{column} == '{rep}'")
     tmp_expt <- sm(subset_expt(expt, expression))
     tmp_data <- rowSums(exprs(tmp_expt))
     tmp_design <- pData(tmp_expt)[1, ]
@@ -111,10 +112,11 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## I really don't care that the name of the resturn is 'palette'; I already
   ## knew that by asking for it.
   if (is.null(title)) {
-    title <- paste0("This is an expt class.")
+    title <- "This is an expt class."
   }
   if (is.null(notes)) {
-    notes <- paste0("Created on ", date(), ".\n")
+    notes <- glue("Created on {date()}.
+")
   }
   ## An expressionset needs to have a Biobase::annotation() in order for GSEABase to work with it.
   ## Reading the documentation, these are primarily used for naming the type of microarray chip used.
@@ -196,11 +198,10 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## There are two main organization schemes I have used in the past, the following
     ## checks for both in case I forgot to put a file column in the metadata.
     ## Look for files organized by sample
-    test_filenames <- file.path("preprocessing", "count_tables",
-                                as.character(sample_definitions[[sample_column]]),
-                                paste0(file_prefix,
-                                       as.character(sample_definitions[[sample_column]]),
-                                       file_suffix))
+    test_filenames <- file.path(
+      "preprocessing", "count_tables",
+      as.character(sample_definitions[[sample_column]]),
+      glue("{file_prefix}{as.character(sample_definitions[[sample_column]])}{file_suffix}"))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -215,10 +216,11 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     }
     if (success == 0) {
       ## Did not find samples by id, try them by type
-      test_filenames <- file.path("preprocessing", "count_tables",
-                                  tolower(as.character(sample_definitions[["type"]])),
-                                  tolower(as.character(sample_definitions[["stage"]])),
-                                  paste0(sample_definitions[[sample_column]], file_suffix))
+      test_filenames <- file.path(
+        "preprocessing", "count_tables",
+        tolower(as.character(sample_definitions[["type"]])),
+        tolower(as.character(sample_definitions[["stage"]])),
+        glue("{sample_definitions[[sample_column]]}{file_suffix}"))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -637,7 +639,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   }
   pattern_string <- ""
   for (pat in patterns) {
-    pattern_string <- paste0(pattern_string, pat, "|")
+    pattern_string <- glue("{pattern_string}{pat}|")
   }
   silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
   idx <- rep(x=TRUE, times=nrow(annotations))
@@ -900,9 +902,9 @@ features_in_single_condition <- function(expt, cutoff=2) {
   shared_list <- list()
   neither_list <- list()
   for (cond in condition_set) {
-    extract_string <- paste0("condition == '", cond, "'")
+    extract_string <- glue("condition == '{cond}'")
     single_expt <- sm(subset_expt(expt=expt, subset=extract_string))
-    extract_string <- paste0("condition != '", cond, "'")
+    extract_string <- glue("condition != '{cond}'")
     others_expt <- sm(subset_expt(expt=expt, subset=extract_string))
     single_data <- exprs(single_expt)
     others_data <- exprs(others_expt)
@@ -1116,7 +1118,7 @@ make_pombe_expt <- function(annotation=TRUE) {
   ## some minor shenanigans to get around the oddities of loading from data()
   fission <- fission[["fission"]]
   meta <- as.data.frame(fission@colData)
-  meta[["condition"]] <- paste0(meta[["strain"]], ".", meta[["minute"]])
+  meta[["condition"]] <- glue("{meta[['strain']]}.{meta[['minute']]}")
   meta[["batch"]] <- meta[["replicate"]]
   meta[["sample.id"]] <- rownames(meta)
   fission_data <- fission@assays$data[["counts"]]
@@ -1389,8 +1391,8 @@ read_metadata <- function(file, ...) {
   }
 
   if (tools::file_ext(file) == "csv") {
-    definitions <- readr::read_csv(file=file, comment.char="#",
-                                   sep=arglist[["sep"]], header=arglist[["header"]])
+    definitions <- read.csv(file=file, comment.char="#",
+                            sep=arglist[["sep"]], header=arglist[["header"]])
   } else if (tools::file_ext(file) == "xlsx") {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
@@ -1608,7 +1610,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
         chosen_colors[[sampleid]] <- sample_color
         ## Set the condition for the changed samples to something unique.
         original_condition <- expt[["design"]][sampleid, "condition"]
-        changed_condition <- paste0(original_condition, snum)
+        changed_condition <- glue("{original_condition}{snum}")
         expt[["design"]][sampleid, "condition"] <- changed_condition
         tmp_pdata <- pData(expt)
         old_levels <- levels(tmp_pdata[["condition"]])
@@ -1747,8 +1749,9 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt <- expt
   oldnames <- rownames(new_expt[["design"]])
   newnames <- make.unique(newnames)
-  newnote <- paste0("Sample names changed from: ", toString(oldnames),
-                    " to: ", toString(newnames), " at: ", date(), ".\n")
+  newnote <- glue("Sample names changed from: {toString(oldnames)} \\
+                   to: {toString(newnames)} at: {date()}
+")
   ## Things to modify include: batches, conditions
   names(new_expt[["batches"]]) <- newnames
   names(new_expt[["colors"]]) <- newnames
@@ -1807,7 +1810,8 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text=r_expression))
       ## design = data.frame(sample=samples$sample, condition=samples$condition, batch=samples$batch)
-      note_appended <- paste0("Subsetted with ", subset, " on ", date(), ".\n")
+      note_appended <- glue("Subsetted with {subset} on {date()}.
+")
     }
     if (nrow(subset_design) == 0) {
       stop("When the subset was taken, the resulting design has 0 members, check your expression.")
@@ -1843,7 +1847,7 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
 
   notes <- expt[["notes"]]
   if (!is.null(note_appended)) {
-    notes <- paste0(notes, note_appended)
+    notes <- glue("{notes}{note_appended}")
   }
 
   for (col in 1:ncol(subset_design)) {
@@ -1944,39 +1948,39 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 
   what <- ""
   if (transform != "raw") {
-    what <- paste0(what, transform, "(")
+    what <- glue("{what}{transform}(")
   }
   if (batch != "raw") {
     if (isTRUE(batch)) {
-      what <- paste0(what, "batch-correct(")
+      what <- glue("{what}batch-correct(")
     } else {
-      what <- paste0(what, batch, "(")
+      what <- glue("{what}{batch}(")
     }
   }
   if (convert != "raw") {
-    what <- paste0(what, convert, "(")
+    what <- glue("{what}{convert}(")
   }
   if (norm != "raw") {
-    what <- paste0(what, norm, "(")
+    what <- glue("{what}{norm}(")
   }
   if (filter != "raw") {
-    what <- paste0(what, filter, "(")
+    what <- glue("{what}{filter}(")
   }
-  what <- paste0(what, "data")
+  what <- glue("{what}data")
   if (transform != "raw") {
-    what <- paste0(what, ")")
+    what <- glue("{what})")
   }
   if (batch != "raw") {
-    what <- paste0(what, ")")
+    what <- glue("{what})")
   }
   if (convert != "raw") {
-    what <- paste0(what, ")")
+    what <- glue("{what})")
   }
   if (norm != "raw") {
-    what <- paste0(what, ")")
+    what <- glue("{what})")
   }
   if (filter != "raw") {
-    what <- paste0(what, ")")
+    what <- glue("{what})")
   }
 
   return(what)
@@ -2024,13 +2028,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant", vio
   ## Write an introduction to this foolishness.
   message("Writing the legend.")
   sheet <- "legend"
-  norm_state <- paste0(transform, "(", convert, "(", norm, "(", batch, "(", filter, "(counts)))))")
+  norm_state <- glue("{transform}({convert}({norm}({batch}({filter}(counts)))))")
   legend <- data.frame(
     "sheet" = c("1.", "2.", "3.", "4.", "5.", "6."),
     "sheet_definition" = c("This sheet, including the experimental design.",
                            "The raw counts and annotation data on worksheet 'raw_data'.",
                            "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
-                           paste0("The counts normalized with: ", norm_state),
+                           glue("The counts normalized with: {norm_state}"),
                            "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
                            "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)
@@ -2541,6 +2545,8 @@ expt <- function(...) {
 #' @rdname exprs-methods
 #' @export exprs
 setOldClass("expt")
+setGeneric("exprs", function(object)
+  standardGeneric("exprs"))
 setMethod("exprs", signature="expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
@@ -2555,6 +2561,9 @@ setMethod("exprs", signature="expt",
 #' @docType methods
 #' @rdname fData-methods
 #' @export fData
+setOldClass("expt")
+setGeneric("fData", function(object)
+  standardGeneric("fData"))
 setMethod("fData", signature="expt",
           function(object) {
             Biobase::fData(object[["expressionset"]])
@@ -2569,6 +2578,9 @@ setMethod("fData", signature="expt",
 #' @docType methods
 #' @rdname pData-methods
 #' @export pData
+setOldClass("expt")
+setGeneric("pData", function(object)
+  standardGeneric("pData"))
 setMethod("pData", signature="expt",
           function(object) {
             Biobase::pData(object[["expressionset"]])
@@ -2583,24 +2595,30 @@ setMethod("pData", signature="expt",
 #' @docType methods
 #' @rdname sampleNames-methods
 #' @export sampleNames
+setOldClass("expt")
+setGeneric("sampleNames", function(object)
+  standardGeneric("sampleNames"))
 setMethod("sampleNames", signature="expt",
           function(object) {
             Biobase::sampleNames(object[["expressionset"]])
           })
 
-#' Extend Biobase::sampleNames<- to handle expt objects.
-#'
-#' @name sampleNames<-
-#' @aliases sampleNames<-, sampleNames<--methods
-#' @param object  The expt object from which to extract the expressionset.
-#' @importFrom Biobase sampleNames<-
-#' @docType methods
-#' @rdname sampleNamesto-methods
-#' @export sampleNames<-
-setMethod("sampleNames<-", signature="expt",
-          function(object) {
-            set_expt_samplenames(object)
-          })
+## #' Extend Biobase::sampleNames<- to handle expt objects.
+## #'
+## #' @name sampleNames<-
+## #' @aliases sampleNames<-, sampleNames<--methods
+## #' @param object  The expt object from which to extract the expressionset.
+## #' @importFrom Biobase sampleNames<-
+## #' @docType methods
+## #' @rdname sampleNamesto-methods
+## #' @export sampleNames<-
+## setOldClass("expt")
+## setGeneric("sampleNames<-", function(value)
+##   standardGeneric("sampleNames<-"))
+## setMethod("sampleNames<-", signature="expt",
+##           function(object) {
+##             set_expt_samplenames(object, value)
+##           })
 
 #' Extend Biobase::notes to handle expt objects.
 #'
@@ -2611,6 +2629,9 @@ setMethod("sampleNames<-", signature="expt",
 #' @docType methods
 #' @rdname notes-methods
 #' @export notes
+setOldClass("expt")
+setGeneric("notes", function(object)
+  standardGeneric("notes"))
 setMethod("notes", signature="expt",
           function(object) {
             Biobase::notes(object[["expressionset"]])

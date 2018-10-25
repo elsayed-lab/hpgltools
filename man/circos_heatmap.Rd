@@ -24,6 +24,11 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 
 \item{colors}{Colors of the heat map.}
 
+\item{color_choice}{Name of the heatmap to use, I forget how this interacts with color...}
+
+\item{scale_log_base}{Defines how the range of colors will be ranged with
+respect to the values in the data.}
+
 \item{outer}{Floating point radius of the circle into which to place the heatmap.}
 
 \item{width}{Width of each tile in the heatmap.}

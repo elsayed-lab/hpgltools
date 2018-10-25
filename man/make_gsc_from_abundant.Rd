@@ -17,7 +17,11 @@ make_gsc_from_abundant(pairwise, according_to = "deseq",
 
 \item{orgdb}{Annotation dataset.}
 
-\item{phenotype_name}{When making color sets, use this phenotype name.}
+\item{pair_names}{What set of names will be used: up vs. down, high vs. low, etc.}
+
+\item{category_name}{What category does this GSC describe?}
+
+\item{phenotype_name}{What phenotype does this GSC describe?}
 
 \item{set_name}{A name for the created gene set.}
 

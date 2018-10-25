@@ -17,6 +17,10 @@ make_gsc_from_pairwise(pairwise, according_to = "deseq",
 
 \item{orgdb}{Annotation dataset.}
 
+\item{pair_names}{Describe the contrasts of the GSC: up vs. down, high vs. low, etc.}
+
+\item{category_name}{What category does the GSC describe?}
+
 \item{phenotype_name}{When making color sets, use this phenotype name.}
 
 \item{set_name}{A name for the created gene set.}

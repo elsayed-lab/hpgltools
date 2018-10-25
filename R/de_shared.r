@@ -269,7 +269,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         tmpdt <- data.table::data.table(results[["limma"]][["all_tables"]][[name]][["P.Value"]])
         tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
         ## Change the column name of the new data to reflect that it is from limma.
-        colnames(tmpdt) <- c(paste0("limma_", name), "rownames")
+        colnames(tmpdt) <- c(glue("limma_{name}"), "rownames")
         original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
         ## Swap out the p-values and adjusted p-values.
         results[["limma"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
@@ -281,7 +281,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         reordered_adjp <- new_adjp[edger_table_order]
         tmpdt <- data.table::data.table(results[["edger"]][["all_tables"]][[name]][["PValue"]])
         tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
-        colnames(tmpdt) <- c(paste0("edger_", name), "rownames")
+        colnames(tmpdt) <- c(glue("edger_{name}"), "rownames")
         original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
         results[["edger"]][["all_tables"]][[name]][["PValue"]] <- reordered_pvalues
         results[["edger"]][["all_tables"]][[name]][["FDR"]] <- reordered_adjp
@@ -290,7 +290,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
         tmpdt <- data.table::data.table(results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
         tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
-        colnames(tmpdt) <- c(paste0("deseq_", name), "rownames")
+        colnames(tmpdt) <- c(glue("deseq_{name}"), "rownames")
         original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
         results[["deseq"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
         results[["deseq"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
@@ -721,17 +721,17 @@ both condition and batch? Using only a conditional model.")
     noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
                                        contrasts.arg=clist,
                                        data=design)
-    sv_names <- paste0("SV", 1:ncol(model_batch))
+    sv_names <- glue("SV{1:ncol(model_batch)}")
     noint_string <- cond_noint_string
     int_string <- cond_int_string
     sv_string <- ""
     for (sv in sv_names) {
-      sv_string <- paste0(sv_string, " + ", sv)
+      sv_string <- glue("{sv_string} + {sv}")
     }
-    noint_string <- paste0(noint_string, sv_string)
-    int_string <- paste0(int_string, sv_string)
+    noint_string <- glue("{noint_string}{sv_string}")
+    int_string <- glue("{int_string}{sv_string}")
     rownames(model_batch) <- rownames(int_model)
-    including <- paste0("condition", sv_string)
+    including <- glue("condition{sv_string}")
   } else if (class(model_batch) == "numeric" | class(model_batch) == "matrix") {
     message("Including batch estimates from sva/ruv/pca in the model.")
     int_model <- stats::model.matrix(~ condition + model_batch,
@@ -740,17 +740,17 @@ both condition and batch? Using only a conditional model.")
     noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
                                        contrasts.arg=clist,
                                        data=design)
-    sv_names <- paste0("SV", 1:ncol(model_batch))
+    sv_names <- glue("SV{1:ncol(model_batch)}")
     int_string <- cond_int_string
     noint_string <- cond_noint_string
     sv_string <- ""
     for (sv in sv_names) {
-      sv_string <- paste0(sv_string, " + ", sv)
+      sv_string <- glue("{sv_string} + {sv}")
     }
-    int_string <- paste0(int_string, sv_string)
-    noint_string <- paste0(noint_string, sv_string)
+    int_string <- glue("{int_string}{sv_string}")
+    noint_string <- glue("{noint_string}{sv_string}")
     rownames(model_batch) <- rownames(int_model)
-    including <- paste0("condition", sv_string)
+    including <- glue("condition{sv_string}")
   } else if (isTRUE(model_cond)) {
     int_model <- cond_int_model
     noint_model <- cond_noint_model
@@ -835,6 +835,7 @@ both condition and batch? Using only a conditional model.")
 #' @param first  One invocation of combine_de_tables to examine.
 #' @param second  A second invocation of combine_de_tables to examine.
 #' @param cor_method  Method to use for cor.test().
+#' @param try_methods  List of methods to attempt comparing.
 #' @return  A list of compared columns, tables, and methods.
 #' @examples
 #'  \dontrun{
@@ -855,7 +856,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
   for (m in 1:length(try_methods)) {
     method <- try_methods[m]
     message("Testing method: ", method, ".")
-    test_column <- paste0(method, "_logfc")
+    test_column <- glue("{method}_logfc")
     if (is.null(first[["data"]][[1]][[test_column]])) {
       message("The first datum is missing method: ", method, ".")
     } else if (is.null(second[["data"]][[1]][[test_column]])) {
@@ -875,7 +876,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
       result[[method]][[table]] <- list()
       for (c in 1:length(comparisons)) {
         comparison <- comparisons[c]
-        column_name <- paste0(method, "_", comparison)
+        column_name <- glue("{method}_{comparison}")
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
         if (length(f_column) == 0 | length(s_column) == 0) {
@@ -971,7 +972,7 @@ correlate_de_tables <- function(results, annot_df=NULL) {
     nextc <- c + 1
     for (d in nextc:length(methods)) {
       d_name <- methods[d]
-      method_comp_name <- paste0(c_name, "_vs_", d_name)
+      method_comp_name <- glue("{c_name}_vs_{d_name}")
       len <- length(names(retlst[["deseq"]]))
       for (l in 1:len) {
         contr <- names(retlst[["deseq"]])[l]
@@ -980,7 +981,7 @@ correlate_de_tables <- function(results, annot_df=NULL) {
         num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
         num_name <- num_den_names[1]
         den_name <- num_den_names[2]
-        rev_contr <- paste0(den_name, "_vs_", num_name)
+        rev_contr <- glue("{den_name}_vs_{num_name}")
         num_reversed <- 0
         fst <- retlst[[c_name]][[contr]]
         scd <- retlst[[d_name]][[contr]]
@@ -1002,11 +1003,11 @@ correlate_de_tables <- function(results, annot_df=NULL) {
           next
         }
         fs <- fs[, c("logFC.x", "logFC.y")]
-        colnames(fs) <- c(paste0(c_name, " logFC"), paste0(d_name, " logFC"))
+        colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
         fs_cor <- stats::cor.test(x=fs[, 1], y=fs[, 2])[["estimate"]]
         comparison_df[method_comp_name, contr] <- fs_cor
         fs_plt <- plot_scatter(fs) +
-          ggplot2::labs(title=paste0(contr, ": ", c_name, " vs. ", d_name, ".")) +
+          ggplot2::labs(title=glue("{contr}: {c_name} vs. {d_name}.")) +
           ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         complst[[method_comp_name]] <- fs_cor
         plotlst[[method_comp_name]] <- fs_plt
@@ -1066,12 +1067,18 @@ compare_logfc_plots <- function(combined_tables) {
   cl <- parallel::makeCluster(cores)
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(data)
-  bar <- utils::txtProgressBar(max=num_levels, style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(max=num_levels, style=3)
+  }
   count <- 1
   progress <- function(n) {
     setTxtProgressBar(bar, n)
   }
-  pb_opts <- list(progress=progress)
+  pb_opts <- list()
+  if (isTRUE(show_progress)) {
+    pb_opts <- list("progress" = progress)
+  }
   returns <- list()
   res <- list()
   res <- foreach(count=1:num_levels, .packages=c("hpgltools", "ggplot2", "doParallel"), .options.snow=pb_opts) %dopar% {
@@ -1095,7 +1102,9 @@ compare_logfc_plots <- function(combined_tables) {
       "lb" = lb, "db" = db, "eb" = eb)
     ## plots[[name]] <- compared
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   parallel::stopCluster(cl)
   retlist <- list()
   for (i in 1:length(res)) {
@@ -1112,6 +1121,7 @@ compare_logfc_plots <- function(combined_tables) {
 #'
 #' @param sig_tables  A set of significance tables to poke at.
 #' @param compare_by  Use which program for the comparisons?
+#' @param weights  When printing venn diagrams, weight them?
 #' @param contrasts  A list of contrasts to compare.
 #' @export
 compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
@@ -1406,9 +1416,9 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
   if (!is.null(excel)) {
     annotations <- fData(datum[["input"]])
     expressions <- retlist[["expression_values"]]
-    colnames(expressions) <- paste0("expr_", colnames(expressions))
+    colnames(expressions) <- glue("expr_{colnames(expressions)}")
     errors <- retlist[["error_values"]]
-    colnames(errors) <- paste0("err_", colnames(errors))
+    colnames(errors) <- glue("err_{colnames(errors)}")
     expression_table <- merge(annotations, expressions, by="row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
@@ -1635,7 +1645,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
                                                         "^(\\s*)(\\w+)=.*$", "$2")
     for (i in 1:length(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
-      extra_contrast <- paste0(extra_eval_strings[[i]], ", ")
+      extra_contrast <- glue("{extra_eval_strings[[i]]}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
       all_pairwise[new_name] <- extra_contrast
@@ -1643,14 +1653,14 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
     names(eval_strings) <- eval_names
   }
   ## Add them to makeContrasts()
-  contrast_string <- paste0("all_pairwise_contrasts = mymakeContrasts(")
+  contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
   for (f in 1:length(eval_strings)) {
     ## eval_name = names(eval_strings[f])
-    eval_string <- paste0(eval_strings[f])
-    contrast_string <- paste(contrast_string, eval_string, sep=" ")
+    eval_string <- eval_strings[f]
+    contrast_string <- glue("{contrast_string} {eval_string}")
   }
   ## The final element of makeContrasts() is the design from voom()
-  contrast_string <- paste0(contrast_string, " levels=model)")
+  contrast_string <- glue("{contrast_string}, levels=model)")
   eval(parse(text=contrast_string))
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
@@ -1783,8 +1793,8 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
     ## The set of significance tables will be 2x the number of contrasts
     ## Therefore, when we get to > 1x the number of contrasts, all the tables will be 'down'
     table_list <- c(input[["ups"]], input[["downs"]])
-    upnames <- paste0("up_", names(input[["ups"]]))
-    downnames <- paste0("down_", names(input[["downs"]]))
+    upnames <- glue("up_{names(input[['ups']])}")
+    downnames <- glue("down_{names(input[['downs']])}")
     names(table_list) <- c(upnames, downnames)
     up_to_down <- length(input[["ups"]])
   }
@@ -1798,10 +1808,10 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
     if (isTRUE(use_files)) {
       file <- ""
       if (table_type == "combined") {
-        file <- file.path("singletons", "gene_counts", paste0(table_name, ".fasta.out.count"))
+        file <- file.path("singletons", "gene_counts", glue("{table_name}.fasta.out.count"))
       } else {
         file <- file.path("singletons", "gene_counts",
-                          paste0("up_", table_name, ".fasta.out.count"))
+                          glue("up_{table_name}.fasta.out.count"))
       }
       tmpdf <- try(read.table(file), silent=TRUE)
       if (class(tmpdf) == "data.frame") {

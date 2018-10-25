@@ -10,6 +10,7 @@
 #'
 #' @param accession Accession to download and import
 #' @param reread  Re-read (download) the file from genbank
+#' @param savetxdb  Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
 #'  \code{\link[genbankr]{import}}
@@ -21,7 +22,7 @@
 #' @export
 load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
   gbk <- NULL
-  input_file <- paste0(accession, ".gb")
+  input_file <- glue("{accession}.gb")
   if (!isTRUE(reread) & file.exists(input_file)) {
     gbk <- genbankr::import(input_file)
     ## The file exists, read it
@@ -124,7 +125,7 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
     url <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
                   paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
-    dl_file <- paste0(accession, ".gb")
+    dl_file <- glue("{accession}.gb")
     data <- try(download.file(url=url, destfile=dl_file, method="wget", quiet=TRUE))
     scanned <- NULL
     if (class(data) != "try-error") {
@@ -136,7 +137,7 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
     }
     strings[[accession]] <- downloaded
     if (isTRUE(write)) {
-      file_connection <- file(paste0(accessions[a], ".gb"))
+      file_connection <- file(glue("{accessions[a]}.gb"))
       writeLines(downloaded, file_connection)
       close(file_connection)
     }

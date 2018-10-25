@@ -379,7 +379,7 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
   } else {
     gene_arrow <- grid::arrow(type="closed", ends="first")
   }
-  xlabel_string <- paste(name, ": ", my_start, " to ", my_end)
+  xlabel_string <- glue("{name}: {my_start} to {my_end}")
   my_plot <- ggplot(rpm_region, aes_string(x="position", y="log")) +
     ggplot2::xlab(xlabel_string) +
     ggplot2::ylab("Log2(RPM) reads") +

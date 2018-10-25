@@ -17,7 +17,10 @@ circos_tile(df, annot_df = NULL, cfgout = "circos/conf/default.conf",
 
 \item{colname}{Name of the column with the data of interest.}
 
-\item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome)}
+\item{chr}{Name of the chromosome (This currently assumes a bacterial
+chromosome)}
+
+\item{basename}{Used to make unique filenames for the data/conf files.}
 
 \item{colors}{Colors of the data.}
 

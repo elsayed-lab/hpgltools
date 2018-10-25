@@ -35,8 +35,8 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
     ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
                           stackdir="center", binpositions="all",
                           colour="black", fill=my_colors) +
-    ggplot2::xlab(paste0("Experimental factor: ", chosen_factor)) +
-    ggplot2::ylab(paste0("1st surrogate variable estimation")) +
+    ggplot2::xlab(glue("Experimental factor: {chosen_factor}")) +
+    ggplot2::ylab("1st surrogate variable estimation") +
     ##ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
     ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="samplenames"),
                        angle=45, size=3, vjust=2) +
@@ -226,8 +226,8 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
     ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
                           stackdir="center", binpositions="all",
                           colour="black", fill=my_colors) +
-    ggplot2::xlab(paste0("Experimental factor: ", exp_factor)) +
-    ggplot2::ylab(paste0("1st surrogate variable estimation")) +
+    ggplot2::xlab(glue("Experimental factor: {exp_factor}")) +
+    ggplot2::ylab("1st surrogate variable estimation") +
     ggplot2::geom_text(ggplot2::aes_string(x="factors", y="value", label="strains"), angle=45, size=3, vjust=2) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) +
@@ -377,7 +377,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", legend=FALSE,
       ggplot2::scale_x_continuous(labels=sm_df[["sample"]],
                                   breaks=1:nrow(sm_df),
                                   limits=c(1, nrow(sm_df))) +
-    ggplot2::ylab(paste0("Standard Median ", method)) +
+    ggplot2::ylab(glue("Standard Median {method}")) +
     ggplot2::xlab("Sample") +
     ggplot2::ggtitle(title) +
     ggplot2::theme_bw(base_size=base_size) +
@@ -396,7 +396,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", legend=FALSE,
                             colour="black",
                             dotsize=1,
                             aes_string(fill="as.factor(condition)")) +
-      ggplot2::ylab(paste0("Standard Median ", method)) +
+      ggplot2::ylab(glue("Standard Median {method}")) +
       ggplot2::xlab("Sample") +
       ggplot2::ggtitle(title) +
       ggplot2::theme_bw(base_size=base_size) +

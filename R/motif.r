@@ -22,7 +22,7 @@ simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
     } else if (ext == "fasta") {
         sequences <- Biostrings::readDNAStringSet(inputfile, "fasta")
     } else {
-        stop(paste0("Unable to interpret files of type: ", ext))
+        stop("Unable to interpret files of type: ", ext)
     }
 
     gadem_and_prints <- sm(rGADEM::GADEM(sequences, verbose=1, pValue=0.05, eValue=10, genome=genome))

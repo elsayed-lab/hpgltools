@@ -242,18 +242,23 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   contrasts <- c()
   total_contrasts <- length(condition_levels)
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (c in 1:length(contrast_order)) {
     contrast_string <- contrast_order[[c]]
-    pct_done <- c / length(contrast_order)
-    utils::setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(contrast_order)
+      utils::setTxtProgressBar(bar, pct_done)
+    }
     num_den_string <- strsplit(x=contrast_string, split="_vs_")[[1]]
     num_name <- num_den_string[1]
     den_name <- num_den_string[2]
     denominators[[contrast_string]] <- den_name
     numerators[[contrast_string]] <- num_name
     contrasts <- append(contrast_string, contrasts)
-    if (! paste0("condition", num_name) %in% DESeq2::resultsNames(deseq_run)) {
+    if (! glue("condition{num_name}") %in% DESeq2::resultsNames(deseq_run)) {
       message("The contrast ", num_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")
       next
@@ -279,7 +284,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     }
     result_list[[contrast_string]] <- result
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   ## The logic here is a little tortuous.
   ## Here are some sample column names from an arbitrary coef() call:
   ## "Intercept" "SV1" "SV2" "SV3" "condition_mtc_wtu_vs_mtc_mtu"
@@ -391,11 +398,11 @@ deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   }
   formula_string <- "as.formula(~ "
   for (count in 1:num_sv) {
-    colname <- paste0("SV", count)
+    colname <- glue("SV{count}")
     summarized[[colname]] <- svs[, count]
-    formula_string <- paste0(formula_string, " ", colname, " + ")
+    formula_string <- glue("{formula_string} {colname} + ")
   }
-  formula_string <- paste0(formula_string, "condition)")
+  formula_string <- glue("{formula_string}condition)")
   new_formula <- eval(parse(text=formula_string))
   new_summarized <- summarized
   DESeq2::design(new_summarized) <- new_formula

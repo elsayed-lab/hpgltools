@@ -366,9 +366,9 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
   ratio_df[["increment"]] <- as.vector(1:nrow(ratio_df))
 
   if (labels == "short") {
-    y_string <- paste(xlabel, " : ", ylabel, sep="")
+    y_string <- glue("{xlabel} : {ylabel}")
   } else {
-    y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
+    y_string <- glue("Ratio of sorted {xlabel}  and {ylabel}.")
   }
   ratio_plot <- ggplot2::ggplot(ratio_df,
                                 ggplot2::aes_string(x="increment", y="ratio")) +
@@ -425,8 +425,8 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     ggplot2::scale_x_continuous(limits=c(0, gg_max))
   if (isTRUE(labels)) {
     log_ratio_plot <- log_ratio_plot +
-      ggplot2::xlab(paste("log sorted ", xlabel)) +
-      ggplot2::ylab(paste("log sorted ", ylabel)) +
+      ggplot2::xlab(glue("log sorted {xlabel}")) +
+      ggplot2::ylab(glue("log sorted {ylabel}")) +
       ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {

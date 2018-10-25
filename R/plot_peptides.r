@@ -15,7 +15,7 @@ plot_cleaved <- function(pep_sequences, enzyme="trypsin", start=600, end=1500) {
   pep_sizes <- data.frame()
   plot(NA, xlim=c(start, end), ylim=c(0, 1),
        xlab="mass in Daltons", ylab="relative intensity",
-       main=paste0("Digested sequences with: ", enzyme))
+       main=glue("Digested sequences with: {enzyme}"))
   for (pep in 1:length(products)) {
     seq <- names(pep_sequences)[[pep]]
     prod <- products[[pep]]

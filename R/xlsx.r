@@ -206,13 +206,12 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   } else if (class(wb)[[1]] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
-  high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
+  high_quality <- file.path(savedir, glue("(plotname).(fancy_type)"))
   png_print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {
       dir.create(savedir, recursive=TRUE)
     }
-    high_quality <- paste0(savedir, "/", plotname, ".", fancy_type)
     fancy_ret <- NULL
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file=high_quality))
@@ -241,7 +240,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     }
     dev.off()
   }
-  png_name <- tempfile(pattern = "figureImage", fileext = paste0(".", file_type))
+  png_name <- tempfile(pattern = "figureImage", fileext = glue(".(file_type)"))
   png_ret <- try(png(filename=png_name,
                      width=width,
                      height=height,
