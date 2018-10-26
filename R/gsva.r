@@ -685,6 +685,7 @@ get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_
 convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="ENTREZID") {
     message("Converting the rownames() of the expressionset to ", to_type, ".")
     tt <- sm(library(orgdb, character.only=TRUE))
+    orgdb <- get0(orgdb)
     gsc_lst <- as.list(gsc)
     new_gsc <- list()
     show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
@@ -701,7 +702,7 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="
       if (is.null(from_type)) {
         from_type <- guess_orgdb_keytype(old_ids, orgdb)
       }
-      new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+      new_ids <- sm(AnnotationDbi::select(x=orgdb,
                                           keys=old_ids,
                                           keytype=from_type,
                                           columns=c(to_type)))

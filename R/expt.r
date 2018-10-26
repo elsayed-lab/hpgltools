@@ -160,8 +160,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  ## sample_definitions <- extract_metadata(metadata=metadata, ...)
-  sample_definitions <- extract_metadata(metadata)
+  sample_definitions <- extract_metadata(metadata=metadata, ...)
+  ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
   ## This is a just in case measure to avoid conflicts.
   if (is.null(file_column)) {
@@ -253,8 +253,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
-    count_data <- read_counts_expt(sample_ids, filenames, ...)
-    ## count_data <- read_counts_expt(sample_ids, filenames, countdir=countdir)
+    count_data <- read_counts_expt(sample_ids, filenames,
+                                   ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -346,10 +346,10 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
       annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
       gene_info <- data.table::as.data.table(annotation, keep.rownames="rownames")
     }
-  } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
+  } else if (class(gene_info)[[1]] == "list" && !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames="rownames")
-  } else if (class(gene_info)[[1]] == "data.table" | class(gene_info)[[1]] == "tbl_df") {
+  } else if (class(gene_info)[[1]] == "data.table" || class(gene_info)[[1]] == "tbl_df") {
     ## Try to make the data table usage consistent by rownames.
     ## Sometimes we take these from data which did "keep.rownames='some_column'"
     ## Sometimes we take these from data which set rownames(dt)
@@ -2537,6 +2537,13 @@ expt <- function(...) {
 
 #' Extend Biobase::exprs to handle expt ojects.
 #'
+#' As time passes, I find myself increasingly thinking that the extra stuff I
+#' added to Biobase's ExpressionSet class is erroneous and I should remove.
+#' However, there remains a few things in my expt class which I rather like;
+#' most notably my color assignments, the state/what_happened data, and the
+#' backup of the original data.  So until I eventually get fed up and decide to
+#' extend the expressionSet, I will continue using these.
+#'
 #' @name exprs
 #' @aliases exprs, exprs-methods
 #' @param object  The expt object from which to extract the expressionset.
@@ -2544,9 +2551,9 @@ expt <- function(...) {
 #' @docType methods
 #' @rdname exprs-methods
 #' @export exprs
-setOldClass("expt")
-setGeneric("exprs", function(object)
-  standardGeneric("exprs"))
+##setGeneric("exprs", function(object)
+##  standardGeneric("exprs"))
+expt_set <- setOldClass("expt")
 setMethod("exprs", signature="expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
@@ -2561,9 +2568,8 @@ setMethod("exprs", signature="expt",
 #' @docType methods
 #' @rdname fData-methods
 #' @export fData
-setOldClass("expt")
-setGeneric("fData", function(object)
-  standardGeneric("fData"))
+##setGeneric("fData", function(object)
+##  standardGeneric("fData"))
 setMethod("fData", signature="expt",
           function(object) {
             Biobase::fData(object[["expressionset"]])
@@ -2578,9 +2584,8 @@ setMethod("fData", signature="expt",
 #' @docType methods
 #' @rdname pData-methods
 #' @export pData
-setOldClass("expt")
-setGeneric("pData", function(object)
-  standardGeneric("pData"))
+##setGeneric("pData", function(object)
+##  standardGeneric("pData"))
 setMethod("pData", signature="expt",
           function(object) {
             Biobase::pData(object[["expressionset"]])
@@ -2595,9 +2600,8 @@ setMethod("pData", signature="expt",
 #' @docType methods
 #' @rdname sampleNames-methods
 #' @export sampleNames
-setOldClass("expt")
-setGeneric("sampleNames", function(object)
-  standardGeneric("sampleNames"))
+##setGeneric("sampleNames", function(object)
+##  standardGeneric("sampleNames"))
 setMethod("sampleNames", signature="expt",
           function(object) {
             Biobase::sampleNames(object[["expressionset"]])
@@ -2629,9 +2633,8 @@ setMethod("sampleNames", signature="expt",
 #' @docType methods
 #' @rdname notes-methods
 #' @export notes
-setOldClass("expt")
-setGeneric("notes", function(object)
-  standardGeneric("notes"))
+##setGeneric("notes", function(object)
+##  standardGeneric("notes"))
 setMethod("notes", signature="expt",
           function(object) {
             Biobase::notes(object[["expressionset"]])

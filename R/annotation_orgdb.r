@@ -359,6 +359,7 @@ guess_orgdb_keytype <- function(ids, orgdb) {
     type <- possible_keytypes[k]
     possible_keys <- AnnotationDbi::keys(x=orgdb, keytype=type)
     this_type_found <- sum(ids %in% possible_keys)
+    ## message("Keytype: ", type, " has ", this_type_found, " keys.")
     if (this_type_found == length(ids)) {
       return(type)
     } else if (this_type_found > found_ids) {
