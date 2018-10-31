@@ -112,8 +112,10 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
     result <- merge(result, path_df, by="GID", all=TRUE)
   }
 
-  result[["ncbi_geneid"]] <- gsub(pattern="ncbi-geneid:", replacement="", x=result[["ncbi_geneid"]])
-  result[["ncbi_proteinid"]] <- gsub(pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
+  result[["ncbi_geneid"]] <- gsub(
+    pattern="ncbi-geneid:", replacement="", x=result[["ncbi_geneid"]])
+  result[["ncbi_proteinid"]] <- gsub(
+    pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
   result[["uniprotid"]] <- gsub(pattern="up:", replacement="", x=result[["uniprotid"]])
   result[["pathways"]] <- gsub(pattern="path:", replacement="", x=result[["pathways"]])
   result[["kegg_geneid"]] <- glue("{chosen}:{result[['GID']]}")

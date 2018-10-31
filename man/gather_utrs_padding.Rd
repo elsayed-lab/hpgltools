@@ -2,7 +2,8 @@
 % Please edit documentation in R/sequence.r
 \name{gather_utrs_padding}
 \alias{gather_utrs_padding}
-\title{Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3' padded sequence.}
+\title{Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3'
+padded sequence.}
 \usage{
 gather_utrs_padding(bsgenome, annot_df, name_column = "gid",
   chr_column = "chromosome", start_column = "start",

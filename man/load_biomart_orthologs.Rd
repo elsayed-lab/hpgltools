@@ -27,22 +27,25 @@ to always send them all; the second is the subset corresponding to the
 actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 }
 \description{
-Biomart's function getLDS is incredibly powerful, but it makes me think very polite people are
-going to start knocking on my door, and it fails weirdly pretty much always. This function
-attempts to alleviate some of that frustration.
+Biomart's function getLDS is incredibly powerful, but it makes me think very
+polite people are going to start knocking on my door, and it fails weirdly
+pretty much always. This function attempts to alleviate some of that frustration.
 }
 \details{
 Tested in test_40ann_biomart.R
-As with my other biomart functions, this one grew out of frustrations when attempting to work
-with the incredibly unforgiving biomart service.  It does not attempt to guarantee a useful
-biomart connection, but will hopefully point out potentially correct marts and attributes to use
-for a successful query.  I can say with confidence that it works well between mice and humans.
+As with my other biomart functions, this one grew out of frustrations when
+attempting to work with the incredibly unforgiving biomart service.  It does
+not attempt to guarantee a useful biomart connection, but will hopefully
+point out potentially correct marts and attributes to use for a successful
+query.  I can say with confidence that it works well between mice and
+humans.
 }
 \examples{
 \dontrun{
  mouse_genes <- biomart_orthologs(some_ids)
  ## Hopefully the defaults are sufficient to translate from human to mouse.
- yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus', second_species='scerevisiae')
+ yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus',
+                                  second_species='scerevisiae')
 }
 }
 \seealso{

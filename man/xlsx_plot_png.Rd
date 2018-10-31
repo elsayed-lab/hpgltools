@@ -36,7 +36,8 @@ xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
 
 \item{units}{Units for the png plotter.}
 
-\item{...}{Extra arguments are passed to arglist (Primarily for vennerable plots which are odd)}
+\item{...}{Extra arguments are passed to arglist (Primarily for vennerable
+plots which are odd)}
 }
 \value{
 A list containing the result of the tryCatch{} used to invoke the plot prints.

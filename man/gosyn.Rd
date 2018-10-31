@@ -13,9 +13,9 @@ gosyn(go = "GO:0000001")
 Some text providing the synonyms for the given id(s).
 }
 \description{
-I think I will need to do similar parsing of the output for this function as per gosec()
-In some cases this also returns stuff like c("some text", "GO:someID")
-versus "some other text"  versus NULL versus NA.
+I think I will need to do similar parsing of the output for this function as
+per gosec() In some cases this also returns stuff like c("some text",
+"GO:someID") versus "some other text"  versus NULL versus NA.
 This function just goes a mapply(gosn, go).
 }
 \examples{

@@ -16,15 +16,18 @@ simple_clusterprofiler(sig_genes, de_table = NULL,
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}
 
-\item{de_table}{Dataframe of all genes in the analysis, primarily for gse analyses.}
+\item{de_table}{Dataframe of all genes in the analysis, primarily for gse
+analyses.}
 
 \item{orgdb}{Name of the orgDb used for gathering annotation data.}
 
 \item{orgdb_from}{Name of a key in the orgdb used to cross reference to entrez IDs.}
 
-\item{orgdb_to}{List of keys to grab from the orgdb for cross referencing ontologies.}
+\item{orgdb_to}{List of keys to grab from the orgdb for cross referencing
+ontologies.}
 
-\item{go_level}{How deep into the ontology tree should this dive for over expressed categories.}
+\item{go_level}{How deep into the ontology tree should this dive for over
+expressed categories.}
 
 \item{pcutoff}{P-value cutoff for 'significant' analyses.}
 
@@ -61,10 +64,11 @@ should be tried the second time around?}
 a list
 }
 \description{
-The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in
-terms of input in that it now explicitly expects to receive annotation data in terms of a orgdb
-object.  This is mostly advantageous, but will probably cause some changes in the other ontology
-functions in the near future.  This function is an initial pass at making something similar to my
+The new version of clusterProfiler has a bunch of new toys.  However, it is
+more stringent in terms of input in that it now explicitly expects to receive
+annotation data in terms of a orgdb object.  This is mostly advantageous, but
+will probably cause some changes in the other ontology functions in the near
+future.  This function is an initial pass at making something similar to my
 previous 'simple_clusterprofiler()' but using these new toys.
 }
 \examples{

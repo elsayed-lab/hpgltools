@@ -1,11 +1,12 @@
 #' Enhance the goseq table of gene ontology information.
 #'
-#' While goseq has some nice functionality, the table of outputs it provides is somewhat lacking.
-#' This attempts to increase that with some extra helpful data like ontology categories,
-#' definitions, etc.
+#' While goseq has some nice functionality, the table of outputs it provides is
+#' somewhat lacking. This attempts to increase that with some extra helpful data
+#' like ontology categories, definitions, etc.
 #'
-#' @param df Dataframe of ontology information.  This is intended to be the output from goseq
-#'  including information like numbers/category, GOids, etc.  It requires a column 'category'
+#' @param df Dataframe of ontology information.  This is intended to be the
+#'   output from goseq including information like numbers/category, GOids, etc.
+#'   It requires a column 'category'
 #'  which contains: GO:000001 and such.
 #' @param file Csv file to which to write the table.
 #' @return Ontology table with annotation information included.
@@ -54,9 +55,10 @@ goseq_table <- function(df, file=NULL) {
 
 #' Perform a simplified goseq analysis.
 #'
-#' goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
-#' that process a bit simpler as well as give some standard outputs which should be similar to those
-#' returned by clusterprofiler/topgo/gostats/gprofiler.
+#' goseq can be pretty difficult to get set up for non-supported organisms.
+#' This attempts to make that process a bit simpler as well as give some
+#' standard outputs which should be similar to those returned by
+#' clusterprofiler/topgo/gostats/gprofiler.
 #'
 #' @param sig_genes  Data frame of differentially expressed genes, containing IDs etc.
 #' @param go_db  Database of go to gene mappings (OrgDb/OrganismDb)
@@ -119,10 +121,11 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     gene_list <- names(sig_genes)
   } else if (class(sig_genes) == "data.frame") {
     if (is.null(rownames(sig_genes)) & is.null(sig_genes[["ID"]])) {
-      stop("This requires a set of gene IDs either from the rownames or a column named 'ID'.")
+      stop("This requires a set of gene IDs from the rownames or a column named 'ID'.")
     } else if (!is.null(sig_genes[["ID"]])) {
-      ## Use a column named 'ID' first because a bunch of annotation databases use ENTREZ
-      ## IDs which are just integers, which of course is not allowed by data frame row names.
+      ## Use a column named 'ID' first because a bunch of annotation databases
+      ## use ENTREZ IDs which are just integers, which of course is not allowed
+      ## by data frame row names.
       message("Using the ID column from your table rather than the row names.")
       gene_list <- sig_genes[["ID"]]
     } else if (!is.null(rownames(sig_genes))) {
@@ -158,8 +161,9 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   } else if (class(length_db)[[1]] == "AnnotationDbi") {
     stop("This currently requires an actual OrganismDb, not AnnotationDbi.")
   } else if (class(length_db)[[1]] == "OrgDb") {
-    stop("OrgDb objects contain links to other databases, but sadly are missing gene lengths.")
-  } else if (class(length_db)[[1]] == "OrganismDb" | class(length_db)[[1]] == "AnnotationDbi") {
+    stop("OrgDb objects contain links to other databases, but no gene lengths.")
+  } else if (class(length_db)[[1]] == "OrganismDb" |
+             class(length_db)[[1]] == "AnnotationDbi") {
     ##metadf <- extract_lengths(db=length_db, gene_list=gene_list)
     metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
   } else if (class(length_db)[[1]] == "TxDb") {
@@ -167,7 +171,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   } else if (class(length_db)[[1]] == "data.frame") {
     metadf <- length_db
   } else {
-    stop("Extracting lengths requires the name of a goseq supported species or an orgdb instance.")
+    stop("Extracting lengths requires the name of a supported species or orgdb instance.")
   }
 
   ## Sometimes the column with gene lengths is named 'width'
@@ -213,13 +217,14 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     message("Not sure what to do here.")
   }
 
-  ## entrez IDs are numeric.  This is a problem when doing the pwf function because it sets
-  ## the rownames to the IDs.  As a result, we need to call make.names() on them.
+  ## entrez IDs are numeric.  This is a problem when doing the pwf function
+  ## because it sets the rownames to the IDs.  As a result, we need to call
+  ## make.names() on them.
   godf[["ID"]] <- make.names(godf[["ID"]])
   metadf[["ID"]] <- make.names(metadf[["ID"]])
   de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])
-  ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is everything
-  ## I am supposed to need for goseq.
+  ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is
+  ## everything I am supposed to need for goseq.
 
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
@@ -229,39 +234,42 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   message("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
           " from the sig_genes in the length_db.")
 
-  ## So lets merge the de genes and gene lengths to ensure that they are consistent.
-  ## Then make the vectors expected by goseq
+  ## So lets merge the de genes and gene lengths to ensure that they are
+  ## consistent. Then make the vectors expected by goseq.
   merged_ids_lengths <- metadf
   ## The following line was done in order to avoid
   ## "'unimplemented type 'list' in 'orderVector1'"
   merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])
-  merged_ids_lengths <- merge(merged_ids_lengths, de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
-  merged_ids_lengths[["length"]] <- suppressWarnings(as.numeric(merged_ids_lengths[["length"]]))
+  merged_ids_lengths <- merge(merged_ids_lengths,
+                              de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
+  merged_ids_lengths[["length"]] <- suppressWarnings(
+    as.numeric(merged_ids_lengths[["length"]]))
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
   ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
   ## must be the same length as the vector
   de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
-  names(de_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
+  names(de_vector) <- make.names(as.character(
+    merged_ids_lengths[["ID"]]), unique=TRUE)
   length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
-  names(length_vector) <- make.names(as.character(merged_ids_lengths[["ID"]]), unique=TRUE)
+  names(length_vector) <- make.names(as.character(
+    merged_ids_lengths[["ID"]]), unique=TRUE)
 
   pwf_plot <- NULL
-  pwf <- goseq::nullp(DEgenes=de_vector, bias.data=length_vector, plot.fit=doplot)
+  pwf <- goseq::nullp(DEgenes=de_vector, bias.data=length_vector,
+                      plot.fit=doplot)
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
-  godata <- goseq::goseq(pwf, gene2cat=godf, use_genes_without_cat=TRUE, method=goseq_method)
-
+  godata <- goseq::goseq(pwf, gene2cat=godf, use_genes_without_cat=TRUE,
+                         method=goseq_method)
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins=50))
-  ## goseq_p_second <- sort(unique(table(goseq_p[["data"]])), decreasing=TRUE)[2]
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
-  ## Set the y scale to 2x the second highest number
-  ## (assuming always that the highest is a p-value of 1)
   goseq_y_limit <- goseq_p_nearzero * 2
   goseq_p <- goseq_p + ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
   message("simple_goseq(): Calculating q-values")
   qdata <- godata[["over_represented_pvalue"]]
-  qdata[qdata > 1] <- 1 ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.0000000000000001
+  ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.000000000001
+  qdata[qdata > 1] <- 1
   qvalues <- tryCatch({
     ttmp <- as.numeric(qdata)
     ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]

@@ -22,8 +22,8 @@ plot_scatter(df, tooltip_data = NULL, color = "black",
 Ggplot2 scatter plot.
 }
 \description{
-This function tries to supplement a normal scatterplot with some information describing the
-relationship between the columns of data plotted.
+This function tries to supplement a normal scatterplot with some information
+describing the relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{

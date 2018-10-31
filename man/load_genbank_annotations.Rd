@@ -15,7 +15,8 @@ load_genbank_annotations(accession = "AE009949", reread = TRUE,
 \item{savetxdb}{Attempt saving a txdb object?}
 }
 \value{
-List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
+List containing a txDb, sequences, and some other stuff which I
+haven't yet finalized.
 }
 \description{
 Let us admit it, sometimes biomart is a pain.  It also does not have easily

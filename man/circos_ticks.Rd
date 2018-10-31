@@ -82,6 +82,7 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
 The file to which the ideogram configuration was written.
 }
 \description{
-This function writes ticks for circos.  This has lots of options, the defaults are all taken
-from the circos example documentation for a bacterial genome.
+This function writes ticks for circos.  This has lots of options, the
+defaults are all taken from the circos example documentation for a bacterial
+genome.
 }

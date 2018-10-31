@@ -52,7 +52,7 @@ certain contrasts in specific orders and orientations.}
 
 \item{plot_dim}{Number of inches squared for the plot if added.}
 
-\item{compare_plots}{In an attempt to save memory when printing to excel, make it possible to}
+\item{compare_plots}{Add some plots comparing the results.}
 
 \item{padj_type}{Add a consistent p adjustment of this type.}
 
@@ -68,8 +68,10 @@ limma/DESeq2/EdgeR on a table-by-table basis.
 \examples{
 \dontrun{
  pretty = combine_de_tables(big_result, table='t12_vs_t0')
- pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")))
- pretty = combine_de_tables(big_result, table='t12_vs_t0', keepers=list("avsb" = c("a","b")),
+ pretty = combine_de_tables(big_result, table='t12_vs_t0',
+                            keepers=list("avsb" = c("a","b")))
+ pretty = combine_de_tables(big_result, table='t12_vs_t0',
+                            keepers=list("avsb" = c("a","b")),
                             excludes=list("description" = c("sno","rRNA")))
 }
 }

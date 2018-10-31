@@ -24,8 +24,8 @@ plot_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
 Ggplot histogram.
 }
 \description{
-A shortcut to make a ggplot2 histogram which makes an attempt to set reasonable bin widths and
-set the scale to log if that seems a good idea.
+A shortcut to make a ggplot2 histogram which makes an attempt to set
+reasonable bin widths and set the scale to log if that seems a good idea.
 }
 \examples{
 \dontrun{

@@ -113,14 +113,15 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   taxon_mask <- shared_metadata[["Species"]] %in% known_taxon_ids[["species"]]
   ind <- match(shared_metadata[taxon_mask, "Species"], known_taxon_ids[["species"]])
-  shared_metadata[taxon_mask, ][["TaxonomyId"]] <- as.character(known_taxon_ids[["taxonomy_id"]][ind])
+  shared_metadata[taxon_mask, ][["TaxonomyId"]] <- as.character(
+    known_taxon_ids[["taxonomy_id"]][ind])
 
   ## exclude remaining species which are missing taxonomy information from
   ## metadata; cannot construct GRanges/OrgDb instances for them since they are
   ## have no known taxonomy id, and are not in available.species()
   na_ind <- is.na(shared_metadata[["TaxonomyId"]])
   ## I think I will try to hack around this problem.
-  ##message(sprintf("- Excluding %d organisms for which no taxonomy id could be assigned (%d remaining)",
+  ##message(sprintf("- Excluding %d organisms with no taxonomy id (%d remaining)",
   ##                sum(na_ind), sum(!na_ind)))
   ##shared_metadata <- shared_metadata[!na_ind,]
 
@@ -132,7 +133,8 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   ##                      function(url) { httr::HEAD(url)[["status_code"]] == 200 })
   ## remove any organisms for which no GFF is available
   ## Once again, I will attempt a workaround, probably via bioconductor.
-  ## gff_exists <- sapply(shared_metadata$SourceUrl, function(url) { HEAD(url)$status_code == 200 })
+  ## gff_exists <- sapply(shared_metadata$SourceUrl,
+  ##                      function(url) { HEAD(url)$status_code == 200 })
   ##message(sprintf("- Excluding %d organisms for which no GFF file is available (%d remaining)",
   ##                sum(!gff_exists), sum(gff_exists)))
   ##shared_metadata <- shared_metadata[gff_exists,]
@@ -181,14 +183,17 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 #' The new eupath system provides 3 output types for downloading data.  This
 #' uses the raw one.
 #'
-#' For the life of me, I could not figure out how to query the big text tables as the
-#' tabular format.  Every query I sent came back telling me I gave it incorrect parameter
-#' despite the fact that I was copy/pasting the example given me by the eupathdb maintainers.
-#' So, I got mad and asked it for the raw format, and so this function was born.
+#' For the life of me, I could not figure out how to query the big text tables
+#' as the tabular format.  Every query I sent came back telling me I gave it
+#' incorrect parameter despite the fact that I was copy/pasting the example
+#' given me by the eupathdb maintainers. So, I got mad and asked it for the raw
+#' format, and so this function was born.
 #'
 #' @param entry  Annotation entry for a given species
-#' @param question  Which query to try?  Molecular weight is the easiest, as it was their example.
-#' @param table_name  Used to make sure all columns are unique by prefixing them with the table name.
+#' @param question  Which query to try?  Molecular weight is the easiest, as it
+#'   was their example.
+#' @param table_name  Used to make sure all columns are unique by prefixing them
+#'   with the table name.
 #' @param parameters  Query parameters when posting
 #' @param columns  Columns for which to ask.
 #' @param minutes  How long to wait until giving up and throwing an error.
@@ -260,19 +265,22 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   } else if (result[["status_code"]] == "400") {
     warning("Status 400 was returned, likely a bad formatConfig.")
     ## Interesting, querying a tritrypdb entry with the above query_body works fine,
-    ## but querying microsporidiadb.org with it fails with 'Could not configure reporter 'fullRecord' with passed formatConfig.
+    ## but querying microsporidiadb.org with it fails with 'Could not configure
+    ## reporter 'fullRecord' with passed formatConfig.
     ## I wonder what is different between them?
-    ## Weirdly, if I remove the format fields from the formatting list, then I get a nested response,
-    ## But this response requires a subset of the original columns and is in yet another format.
-    ##columns <- c("primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
-    ##             "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
-    ##             "gene_orthomcl_name", "gene_entrez_id", "transcript_length", "exon_count", "strand",
-    ##             "cds_length", "tm_count", "molecular_weight", "isoelectric_point", "signalp_scores",
-    ##             "signalp_peptide", "annotated_go_function", "annotated_go_process", "annotated_go_component",
-    ##             "annotated_go_id_function", "annotated_go_id_process", "annotated_go_id_component",
-    ##             "predicted_go_id_function", "predicted_go_id_process", "predicted_go_id_component",
-    ##             "ec_numbers", "ec_numbers_derived", "five_prime_utr_length", "three_prime_utr_length",
-    ##             "location_text", "gene_previous_ids", "protein_sequence", "cds")
+    ## Weirdly, if I remove the format fields from the formatting list, then I
+    ## get a nested response, but this response requires a subset of the
+    ## original columns and is in yet another format.
+    ##columns <- c(
+    ## "primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
+    ## "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
+    ## "gene_orthomcl_name", "gene_entrez_id", "transcript_length", "exon_count", "strand",
+    ## "cds_length", "tm_count", "molecular_weight", "isoelectric_point", "signalp_scores",
+    ## "signalp_peptide", "annotated_go_function", "annotated_go_process", "annotated_go_component",
+    ## "annotated_go_id_function", "annotated_go_id_process", "annotated_go_id_component",
+    ## "predicted_go_id_function", "predicted_go_id_process", "predicted_go_id_component",
+    ## "ec_numbers", "ec_numbers_derived", "five_prime_utr_length", "three_prime_utr_length",
+    ## "location_text", "gene_previous_ids", "protein_sequence", "cds")
     ##answerlist <- list(
     ##"questionName" = jsonlite::unbox(question),
     ##"parameters" = parameters,
@@ -305,36 +313,38 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
     warning("A minimal amount of content was returned.")
   }
 
-  ## Get the content, this will take a while, as the result from eupathdb might be > 50 Mb of stuff.
+  ## Get the content, this will take a while, as the result from eupathdb might
+  ## be > 50 Mb of stuff.
   cont <- httr::content(result)
-  ## Sadly, most of that stuff is completely unwanted.  This is because we are using the
-  ## 'fullRecord' format, as it is the only format I have been able to get to work so far.
-  ## This format is newline separated fields with entries separated by 4 returns with dashes...
-  ## Ergo the following line, which separates the entries by the dashes/returns into individual
-  ## strings with the newlines remaining inside them.  So we will need to use some regular
+  ## Sadly, most of that stuff is completely unwanted.  This is because we are
+  ## using the 'fullRecord' format, as it is the only format I have been able to
+  ## get to work so far. This format is newline separated fields with entries
+  ## separated by 4 returns with dashes... Ergo the following line, which
+  ## separates the entries by the dashes/returns into individual strings with
+  ## the newlines remaining inside them.  So we will need to use some regular
   ## expressions in order to extract the column names and data.
-  entries <- strsplit(x=cont, split="\n\n------------------------------------------------------------\n\n")[[1]]
+  entries <- strsplit(
+    x=cont, split="\n\n------------------------------------------------------------\n\n")[[1]]
   ## We will read the first entry in order to extract the column names.
   stuff <- read.delim(textConnection(entries[1]), sep="\n", header=FALSE)
   ## My regular expression pattern needs to by greedy in the correct places
   ## because for reasons passing all understanding, some fields have colons inside them...
   mypattern <- "^(.+?)\\: (.+)?$"
-  ## If I am going to make column names, I need first to get the first part of stuff: otherstuff
+  ## If I am going to make column names, I need first to get the first part of
+  ## stuff: otherstuff
   stupid_column_names <- gsub(pattern=mypattern, replacement="\\1", x=stuff[["V1"]], perl=TRUE)
   column_names <- columns
   ## Then get rid of any punctuation, as there is a column '# TM domains' -- that is bad.
   ##
   ## column_names <- gsub(pattern="[[:punct:]]", replacement="", x=column_names)
   ##
-  ## Get rid of any extraneous spaces from removing punctuation, but since I cannot be certain
-  ## that there is no punctuation in the middle of words, just look at the beginning of the strings.
+  ## Get rid of any extraneous spaces from removing punctuation, but since I
+  ## cannot be certain that there is no punctuation in the middle of words, just
+  ## look at the beginning of the strings.
   ##
   ## column_names <- gsub(pattern="^ +", replacement="", x=column_names)
-  ##
   ## Finally, I do not accept column names with spaces.
-  ##
   ## column_names <- gsub(pattern=" ", replacement="_", x=column_names)
-  ##
   column_names[1] <- "GID"
   information <- data.frame(row.names=1:length(entries))
   for (col in column_names) {
@@ -385,8 +395,10 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
 #' @param query_body String of additional query arguments
 #' @param species Species name if missing an entry
 #' @param entry The single metadatum containing the base url of the provider, species, etc.
-#' @param metadata  If no entry is provided, then it may be retrieved given a species and this.
-#' @param table_name  The name of the table to extract, this is provided to make for prettier labeling.
+#' @param metadata  If no entry is provided, then it may be retrieved given a
+#'   species and this.
+#' @param table_name  The name of the table to extract, this is provided to make
+#'   for prettier labeling.
 #' @param minutes  A timeout when querying the eupathdb.
 #' @param ...  Extra arguments for stuff like download_metadtata()
 #' @return list containing response from API request.
@@ -496,7 +508,8 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
 #' @param species  guess.
 #' @param entry  The full annotation entry.
 #' @param metadata  A metadata table from which to get some annotation data.
-#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of
+#'   transient error.
 #' @param ...  Used for downloading metadata.
 #' @return  A big honking table.
 post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
@@ -525,9 +538,9 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   ## query body as a structured list
   ## This list was generated by going to:
   ## view-source:http://tritrypdb.org/webservices/GeneQuestions/GenesByMolecularWeight.wadl
-  ## scrolling down to the 'o-fields' section, and writing down the most likely useful column names.
-  ## These are written one per line in an attempt to make looking for new/changed columns from one
-  ## eupathdb release to the next easier.
+  ## scrolling down to the 'o-fields' section, and writing down the most likely
+  ## useful column names. These are written one per line in an attempt to make
+  ## looking for new/changed columns from one eupathdb release to the next easier.
   field_list <- list(
     "primary_key" = "Gene ID",
     "transcript_link" = "Transcript ID",
@@ -640,7 +653,8 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
 #' @param species  guess.
 #' @param entry  The full annotation entry.
 #' @param metadata  A metadata table from which to get some annotation data.
-#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of
+#'   transient error.
 #' @param ... Extra options when downloading metadata.
 #' @return  A big honking table.
 post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
@@ -697,7 +711,8 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
 #' @param species  guess.
 #' @param entry  The full annotation entry.
 #' @param metadata  A metadata table from which to get some annotation data.
-#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of
+#'   transient error.
 #' @param ... Extra options for downloading metadata.
 #' @return  A big honking table.
 post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
@@ -744,7 +759,8 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
     return(result)
   }
 
-  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="orthologs")
+  result <- post_eupath_table(query_body, species=species,
+                              entry=entry, table_name="orthologs")
 
   message("Saving annotations to ", savefile)
   save(result, file=savefile)
@@ -756,11 +772,13 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
 #' @param species  guess.
 #' @param entry  The full annotation entry.
 #' @param metadata  A metadata table from which to get some annotation data.
-#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of
+#'   transient error.
 #' @param ... Extra options when downloading metadata.
 #' @return  A big honking table.
-post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin", entry=NULL,
-                                       metadata=NULL, dir="eupathdb", ...) {
+post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin",
+                                       entry=NULL, metadata=NULL, dir="eupathdb",
+                                       ...) {
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
@@ -803,7 +821,8 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
   }
 
 
-  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="interpro")
+  result <- post_eupath_table(query_body, species=species,
+                              entry=entry, table_name="interpro")
 
   message("Saving annotations to ", savefile)
   save(result, file=savefile)
@@ -815,7 +834,8 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
 #' @param species  guess.
 #' @param entry  The full annotation entry.
 #' @param metadata  A metadata table from which to get some annotation data.
-#' @param dir  FIXME: I want to write some intermediate data to dir in case of transient error.
+#' @param dir  FIXME: I want to write some intermediate data to dir in case of
+#'   transient error.
 #' @param ... Extra options when downloading metadata
 #' @return  A big honking table.
 post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
@@ -860,7 +880,8 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
     return(result)
   }
 
-  result <- post_eupath_table(query_body, species=species, entry=entry, table_name="pathway")
+  result <- post_eupath_table(query_body, species=species,
+                              entry=entry, table_name="pathway")
 
   message("Saving annotations to ", savefile)
   save(result, file=savefile)
@@ -915,7 +936,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
   }
 
   all_orthologs <- data.frame()
-  message("Downloading orthologs, one gene at a time, and checkpointing for when it inevitably fubars.")
+  message("Downloading orthologs one gene at a time. Checkpointing if it fails.")
   ortho_savefile <- glue("ortho_checkpoint_{entry[['Genome']]}.rda")
   savelist <- list(
     "number_finished" = 0,
@@ -939,7 +960,8 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
       setTxtProgressBar(bar, pct_done)
     }
     id <- result[c]
-    ## I keep getting weird timeouts, so I figure I will give the eupath webservers a moment.
+    ## I keep getting weird timeouts, so I figure I will give the eupath
+    ## webservers a moment.
     Sys.sleep(1.0)
     orthos <- sm(get_orthologs_one_gene(species=species, gene=id, entry=entry))
     all_orthologs <- rbind(all_orthologs, orthos)
@@ -986,7 +1008,8 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
 
   question <- "GenesOrthologousToAGivenGene"
   ## I am not sure what I was doing with the following 5 lines of code.
-  ## It looks like I was intending to gather the set of required parameters programmatically.
+  ## It looks like I was intending to gather the set of required parameters
+  ## programmatically.
   ## However I did not finish the logic.
   params_uri <- sprintf("http://%s.org/%s/webservices/GeneQuestions/%s.wadl",
                         provider, uri_prefix, question)
@@ -1034,15 +1057,18 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   }
 
   cont <- httr::content(result)
-  entries <- strsplit(x=cont, split="\n\n------------------------------------------------------------\n\n")[[1]]
+  entries <- strsplit(
+    x=cont, split="\n\n------------------------------------------------------------\n\n")[[1]]
   stuff <- read.delim(textConnection(entries[1]), sep="\n", header=FALSE)
   mypattern <- "^(.+?)\\: (.+)?$"
-  ## If I am going to make column names, I need first to get the first part of stuff: otherstuff
+  ## If I am going to make column names, I need first to get the first part of
+  ## stuff: otherstuff
   column_names <- gsub(pattern=mypattern, replacement="\\1", x=stuff[["V1"]], perl=TRUE)
   ## Then get rid of any punctuation, as there is a column '# TM domains' -- that is bad.
   column_names <- gsub(pattern="[[:punct:]]", replacement="", x=column_names)
-  ## Get rid of any extraneous spaces from removing punctuation, but since I cannot be certain
-  ## that there is no punctuation in the middle of words, just look at the beginning of the strings.
+  ## Get rid of any extraneous spaces from removing punctuation, but since I
+  ## cannot be certain that there is no punctuation in the middle of words, just
+  ## look at the beginning of the strings.
   column_names <- gsub(pattern="^ +", replacement="", x=column_names)
   ## Finally, I do not accept column names with spaces.
   column_names <- gsub(pattern=" ", replacement="_", x=column_names)
@@ -1066,7 +1092,8 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   ## The dplyr way of moving a column to the front.
   ## information <- information %>% dplyr::select(GID, everything())
   ## The base way of moving a column to the front
-  new_order <- c(which(colnames(information) == "GID"), which(colnames(information) != "GID"))
+  new_order <- c(
+    which(colnames(information) == "GID"), which(colnames(information) != "GID"))
   information <- information[, new_order]
   colnames(information) <- toupper(colnames(information))
 

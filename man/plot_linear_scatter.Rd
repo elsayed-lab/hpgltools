@@ -2,8 +2,8 @@
 % Please edit documentation in R/plot_point.r
 \name{plot_linear_scatter}
 \alias{plot_linear_scatter}
-\title{Make a scatter plot between two groups with a linear model superimposed and some supporting
-statistics.}
+\title{Make a scatter plot between two groups with a linear model superimposed and
+some supporting statistics.}
 \usage{
 plot_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
   cormethod = "pearson", size = 2, loess = FALSE, identity = FALSE,
@@ -26,8 +26,8 @@ plot_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
 
 \item{identity}{Add the identity line?}
 
-\item{gvis_trendline}{Add a trendline to the gvis plot?  There are a couple possible types, I
-think linear is the most common.}
+\item{gvis_trendline}{Add a trendline to the gvis plot?  There are a couple
+possible types, I think linear is the most common.}
 
 \item{z_lines}{Include lines defining the z-score boundaries.}
 
@@ -48,19 +48,21 @@ think linear is the most common.}
 \item{...}{Extra args likely used for choosing significant genes.}
 }
 \value{
-List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
-eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
-data, so it calculates the correlation between them.  It then calculates and plots a robust
-linear model of the data using an 'SMDM' estimator (which I don't remember how to describe,
-just that the document I was reading said it is good).  The median/mad of each axis is
-calculated and plotted as well.  The distance from the linear model is finally used to color
-the dots on the plot.  Histograms of each axis are plotted separately and then together under
-a single cdf to allow tests of distribution similarity.  This will make a fun clicky
-googleVis graph if requested.
+List including a ggplot2 scatter plot and some histograms.  This plot
+provides a "bird's eye" view of two data sets.  This plot assumes a
+(potential) linear correlation between the data, so it calculates the
+correlation between them.  It then calculates and plots a robust linear
+model of the data using an 'SMDM' estimator (which I don't remember how to
+describe, just that the document I was reading said it is good).  The
+median/mad of each axis is calculated and plotted as well.  The distance
+from the linear model is finally used to color the dots on the plot.
+Histograms of each axis are plotted separately and then together under a
+single cdf to allow tests of distribution similarity.  This will make a fun
+clicky googleVis graph if requested.
 }
 \description{
-Make a scatter plot between two groups with a linear model superimposed and some supporting
-statistics.
+Make a scatter plot between two groups with a linear model superimposed and
+some supporting statistics.
 }
 \examples{
 \dontrun{

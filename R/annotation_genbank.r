@@ -11,7 +11,8 @@
 #' @param accession Accession to download and import
 #' @param reread  Re-read (download) the file from genbank
 #' @param savetxdb  Attempt saving a txdb object?
-#' @return List containing a txDb, sequences, and some other stuff which I haven't yet finalized.
+#' @return List containing a txDb, sequences, and some other stuff which I
+#'   haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
 #'  \code{\link[genbankr]{import}}
 #' @examples
@@ -100,7 +101,8 @@ gbk_annotations <- function(gbr) {
 #'
 #' @param accessions An accession -- actually a set of them.
 #' @param write  Write the files?  Otherwise return a list of the strings
-#' @return A list containing the number of files downloaded and the character strings acquired.
+#' @return A list containing the number of files downloaded and the character
+#'   strings acquired.
 #' @seealso \pkg{ape}
 #' @examples
 #' \dontrun{
@@ -122,8 +124,9 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
     }
     accession <- accessions[i]
 
-    url <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
-                  paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
+    url <- paste0(
+      "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
+      paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
     dl_file <- glue("{accession}.gb")
     data <- try(download.file(url=url, destfile=dl_file, method="wget", quiet=TRUE))

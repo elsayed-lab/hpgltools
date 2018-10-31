@@ -2,7 +2,7 @@
 % Please edit documentation in R/dimension_reduction.r
 \name{plot_pcs}
 \alias{plot_pcs}
-\title{A quick and dirty PCA plotter of arbitrary components against one another.}
+\title{Plot principle components and make them pretty.}
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   design = NULL, plot_title = TRUE, plot_labels = NULL,
@@ -10,7 +10,8 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   size_column = NULL, rug = TRUE, cis = c(0.95, 0.9), ...)
 }
 \arguments{
-\item{pca_data}{Dataframe of principle components PC1 .. PCN with any other arbitrary information.}
+\item{pca_data}{Dataframe of principle components PC1 .. PCN with any other
+arbitrary information.}
 
 \item{first}{Principle component PCx to put on the x axis.}
 
@@ -44,7 +45,11 @@ plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
 gplot2 PCA plot
 }
 \description{
-A quick and dirty PCA plotter of arbitrary components against one another.
+All the various dimension reduction methods share some of their end-results
+in common. Most notably a table of putative components which may be plotted
+against one another so that one may stare at the screen and look for
+clustering among the samples/genes/whatever.  This function attempts to make
+that process as simple and pretty as possible.
 }
 \examples{
 \dontrun{

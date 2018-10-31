@@ -1,10 +1,12 @@
-#' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal
+#' A function suggested by Hector Corrada Bravo and Kwame Okrah for batch
+#' removal.
 #'
 #' During a lab meeting, the following function was suggested as a quick and
 #' dirty batch removal tool
 #'
 #' @param normalized_counts Data frame of log2cpm counts.
-#' @param model Balanced experimental model containing condition and batch factors.
+#' @param model Balanced experimental model containing condition and batch
+#'   factors.
 #' @return Dataframe of residuals after subtracting batch from the model.
 #' @seealso \pkg{limma}
 #'  \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
@@ -27,36 +29,42 @@ cbcb_batch_effect <- function(normalized_counts, model) {
 
 #' Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.
 #'
-#' I found this note which is the clearest explanation of what happens with batch effect data:
+#' I found this note which is the clearest explanation of what happens with
+#' batch effect data:
 #' https://support.bioconductor.org/p/76099/
-#' Just to be clear, there's an important difference between removing a batch effect and modelling a
-#' batch effect. Including the batch in your design formula will model the batch effect in the
-#' regression step, which means that the raw data are not modified (so the batch effect is not
-#' removed), but instead the regression will estimate the size of the batch effect and subtract it
-#' out when performing all other tests. In addition, the model's residual degrees of freedom will
-#' be reduced appropriately to reflect the fact that some degrees of freedom were "spent"
-#' modelling the batch effects. This is the preferred approach for any method that is capable of
-#' using it (this includes DESeq2). You would only remove the batch effect (e.g. using limma's
-#' removeBatchEffect function) if you were going to do some kind of downstream analysis that can't
-#' model the batch effects, such as training a classifier.
-#' I don't have experience with ComBat, but I would expect that you run it on log-transformed CPM
-#' values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
-#' two methods together.
+#' Just to be clear, there's an important difference between removing a batch
+#' effect and modelling a batch effect. Including the batch in your design
+#' formula will model the batch effect in the regression step, which means that
+#' the raw data are not modified (so the batch effect is not removed), but
+#' instead the regression will estimate the size of the batch effect and
+#' subtract it out when performing all other tests. In addition, the model's
+#' residual degrees of freedom will be reduced appropriately to reflect the fact
+#' that some degrees of freedom were "spent" modelling the batch effects. This
+#' is the preferred approach for any method that is capable of using it (this
+#' includes DESeq2). You would only remove the batch effect (e.g. using limma's
+#' removeBatchEffect function) if you were going to do some kind of downstream
+#' analysis that can't model the batch effects, such as training a classifier.
+#' I don't have experience with ComBat, but I would expect that you run it on
+#' log-transformed CPM values, while DESeq2 expects raw counts as input. I
+#' couldn't tell you how to properly use the two methods together.
 #'
 #' @param count_table  Matrix of (pseudo)counts.
 #' @param design  Model matrix defining the experimental conditions/batches/etc.
 #' @param batch  String describing the method to try to remove the batch effect
 #'  (or FALSE to leave it alone, TRUE uses limma).
-#' @param expt_state  Current state of the expt in an attempt to avoid double-normalization.
-#' @param batch1  Column in the design table describing the presumed covariant to remove.
-#' @param batch2  Column in the design table describing the second covariant to remove
-#'  (only used by limma at the moment).
-#' @param noscale  Used for combatmod, when true it removes the scaling parameter
-#'  from the invocation of the modified combat.
+#' @param expt_state  Current state of the expt in an attempt to avoid
+#'   double-normalization.
+#' @param batch1  Column in the design table describing the presumed covariant
+#'   to remove.
+#' @param batch2  Column in the design table describing the second covariant to
+#'   remove (only used by limma at the moment).
+#' @param noscale  Used for combatmod, when true it removes the scaling
+#'   parameter from the invocation of the modified combat.
 #' @param ...  More options for you!
-#' @return The 'batch corrected' count table and new library size.  Please remember that the
-#'  library size which comes out of this may not be what you want for voom/limma and would
-#'  therefore lead to spurious differential expression values.
+#' @return The 'batch corrected' count table and new library size.  Please
+#'   remember that the library size which comes out of this may not be what you
+#'   want for voom/limma and would therefore lead to spurious differential
+#'   expression values.
 #' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
 #' @examples
 #' \dontrun{
@@ -105,7 +113,8 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
   }
 
   ## Lets use expt_state to make sure we know if the data is already log2/cpm/whatever.
-  ## We want to use this to back-convert or reconvert data to the appropriate scale on return.
+  ## We want to use this to back-convert or reconvert data to the appropriate
+  ## scale on return.
   if (is.null(expt_state)) {
     expt_state <- list(
       "filter" = "raw",
@@ -114,15 +123,16 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
       "batch" = "raw",
       "transform" = "raw")
   }
-  ## Use current_state to keep track of changes made on scale/etc during batch correction
-  ## This is pointed directly at limmaresid for the moment, which converts to log2
+  ## Use current_state to keep track of changes made on scale/etc during batch
+  ## correction. This is pointed directly at limmaresid for the moment, which
+  ## converts to log2.
   current_state <- expt_state
   ## These droplevels calls are required to avoid errors like 'confounded by batch'
   batches <- droplevels(as.factor(design[[batch1]]))
   conditions <- droplevels(as.factor(design[["condition"]]))
 
-  message("Note to self:  If you get an error like 'x contains missing values'; I think this
- means that the data has too many 0's and needs to have a better low-count filter applied.")
+  message("Note to self:  If you get an error like 'x contains missing values' ",
+          "The data has too many 0's and needs a better low-count filter applied.")
 
   num_low <- sum(count_table < 1 & count_table > 0)
   if (is.null(num_low)) {
@@ -145,7 +155,8 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
   if (!is.null(surrogate_method)) {
-    num_surrogates <- sm(sva::num.sv(count_mtrx, conditional_model, method=surrogate_method))
+    num_surrogates <- sm(sva::num.sv(count_mtrx, conditional_model,
+                                     method=surrogate_method))
   }
   if (num_surrogates < 1) {
     message("0 surrogates were detected by the ", surrogate_method, " method.")
@@ -182,7 +193,8 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
     },
     "limmaresid" = {
       ## ok a caveat:  voom really does require input on the base 10 scale and returns
-      ## log2 scale data.  Therefore we need to make sure that the input is provided appropriately.
+      ## log2 scale data.  Therefore we need to make sure that the input is
+      ## provided appropriately.
       message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
       batch_model <- model.matrix(~batches)
       if (expt_state[["transform"]] == "log2") {
@@ -201,10 +213,11 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
       ## count_table <- residuals(batch_fit, batch_voom[["E"]])
       ## This is still fubar!
       count_table <- limma::residuals.MArrayLM(batch_fit, batch_voom)
-      ## Make sure to change this soon to take into account whether we are working on the log
-      ## or non-log scale. Perhaps switch out the call from limma::voom to my own voom -- though
-      ## I think I would prefer to use their copy and have a check that way if they change
-      ## something important I will pick up on it.
+      ## Make sure to change this soon to take into account whether we are
+      ## working on the log or non-log scale. Perhaps switch out the call from
+      ## limma::voom to my own voom -- though I think I would prefer to use
+      ## their copy and have a check that way if they change something important
+      ## I will pick up on it.
     },
     "combatmod" = {
       ## normalized_data = hpgl_combatMod(dat=data.frame(counts), batch=batches,
@@ -226,37 +239,44 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
                                   method="exact"))
       count_table <- fsva_result[["db"]]
     },
-    "combat" = ,  ## This peculiar syntax should match combat and combat_noscale to the same result.
+    "combat" = ,  ## This peculiar syntax should match combat and combat_noscale
+                  ## to the same result.
     "combat_noscale" = {
-      message("batch_counts: Using sva::combat with a prior for batch correction and no scaling.")
+      message("batch_counts: Using combat with a prior and no scaling.")
       count_table <- sm(sva::ComBat(count_table, batches, mod=NULL,
-                                    par.prior=TRUE, prior.plots=prior.plots, mean.only=TRUE))
+                                    par.prior=TRUE, prior.plots=prior.plots,
+                                    mean.only=TRUE))
     },
     "combat_noprior" = {
-      message("batch_counts: Using sva::combat without a prior for batch correction and no scaling.")
+      message("batch_counts: Using combat without a prior and no scaling.")
       message("This takes a long time!")
       count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                    par.prior=FALSE, prior.plots=prior.plots, mean.only=TRUE))
+                                    par.prior=FALSE, prior.plots=prior.plots,
+                                    mean.only=TRUE))
     },
     "combat_scale" = {
-      message("batch_counts: Using sva::combat with a prior for batch correction and with scaling.")
+      message("batch_counts: Using combat with a prior and with scaling.")
       count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                    par.prior=TRUE, prior.plots=prior.plots, mean.only=FALSE))
+                                    par.prior=TRUE, prior.plots=prior.plots,
+                                    mean.only=FALSE))
     },
     "combat_noprior_scale" = {
-      message("batch_counts: Using sva::combat without a prior for batch correction and with scaling.")
+      message("batch_counts: Using combat without a prior and with scaling.")
       count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
-                                    par.prior=FALSE, prior.plots=prior.plots, mean.only=FALSE))
+                                    par.prior=FALSE, prior.plots=prior.plots,
+                                    mean.only=FALSE))
     },
     "svaseq" = {
       message("batch_counts: Using sva::svaseq for batch correction.")
       message("Note to self:  If you feed svaseq a data frame you will get an error like:")
       message("data %*% (Id - mod %*% blah blah requires numeric/complex arguments.")
-      svaseq_result <- sm(sva::svaseq(count_mtrx, conditional_model, null_model, n.sv=num_surrogates))
-      count_table <- counts_from_surrogates(count_mtrx, svaseq_result[["sv"]], design=design)
+      svaseq_result <- sm(sva::svaseq(count_mtrx, conditional_model,
+                                      null_model, n.sv=num_surrogates))
+      count_table <- counts_from_surrogates(count_mtrx, svaseq_result[["sv"]],
+                                            design=design)
     },
     "varpart" = {
-      message("Taking residuals from a linear mixed model as suggested by the variancePartition package.")
+      message("Taking residuals from a linear mixed model as suggested by variancePartition.")
       cl <- parallel::makeCluster(cpus)
       doParallel::registerDoParallel(cl)
       batch_model <- as.formula("~ (1|batch)")
@@ -286,7 +306,8 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
       ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
       bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
       ruv_controls <- ranked <= bottom_third  ## what is going on here?!
-      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
+      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
+      ## fail with 400 hard-set
       ruv_result <- RUVSeq::RUVg(count_mtrx, ruv_controls, k=num_surrogates)
       count_table <- ruv_result[["normalizedCounts"]]
     },
@@ -306,8 +327,10 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
     num_low <- 0
   }
   if (num_low > 0) {
-    message("The number of elements which are < 0 after batch correction is: ", num_low)
-    message("The variable low_to_zero sets whether to change <0 values to 0 and is: ", low_to_zero)
+    message("The number of elements which are < 0 after batch correction is: ",
+            num_low)
+    message("The variable low_to_zero sets whether to change <0 values to 0 and is: ",
+            low_to_zero)
     if (isTRUE(low_to_zero)) {
       count_table[count_table < 0] <- 0
     }
@@ -319,8 +342,9 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
 
 #' A single place to extract count tables from a set of surrogate variables.
 #'
-#' Given an initial set of counts and a series of surrogates, what would the resulting count table
-#' look like? Hopefully this function answers that question.
+#' Given an initial set of counts and a series of surrogates, what would the
+#' resulting count table look like? Hopefully this function answers that
+#' question.
 #'
 #' @param data  Original count table, may be an expt/expressionset or df/matrix.
 #' @param adjust  Surrogates with which to adjust the data.
@@ -380,12 +404,14 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
 #' A modified version of comBatMod.
 #'
 #' This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
-#' This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
+#' This was mostly copy/pasted from
+#' https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 #'
 #' @param dat Df to modify.
 #' @param batch Factor of batches.
 #' @param mod Factor of conditions.
-#' @param noScale The normal 'scale' option squishes the data too much, so this defaults to TRUE.
+#' @param noScale The normal 'scale' option squishes the data too much, so this
+#'   defaults to TRUE.
 #' @param prior.plots Print out prior plots?
 #' @param ... Extra options are passed to arglist
 #' @return Df of batch corrected data
@@ -481,7 +507,8 @@ I set it to 1 not knowing what its purpose is.")
     if (NAs) {
       gamma.hat <- apply(s.data, 1, Beta.NA, batch.design)
     } else {
-      gamma.hat <- solve(t(batch.design) %*% batch.design) %*% t(batch.design) %*% t(as.matrix(s.data))
+      gamma.hat <- solve(t(batch.design) %*% batch.design) %*%
+        t(batch.design) %*% t(as.matrix(s.data))
     }
     delta.hat <- NULL
     for (i in batches) {
@@ -506,7 +533,9 @@ I set it to 1 not knowing what its purpose is.")
       if (class(tmp1)[1] != "try-error") {
         lines(tmp1, col = 2)
       }
-      try(stats::qqplot(delta.hat[1, ], invgam, xlab="Sample Quantiles", ylab="Theoretical Quantiles"))
+      try(stats::qqplot(delta.hat[1, ], invgam,
+                        xlab="Sample Quantiles",
+                        ylab="Theoretical Quantiles"))
       lines(c(0, max(invgam)), c(0, max(invgam)), col=2)
       title("Q-Q Plot")
       newpar <- par(oldpar)
@@ -524,7 +553,8 @@ I set it to 1 not knowing what its purpose is.")
     } else {
       message("Finding nonparametric adjustments.")
       for (i in 1:n.batch) {
-        temp <- sva:::int.eprior(as.matrix(s.data[, batches[[i]]]), gamma.hat[i, ], delta.hat[i, ])
+        temp <- sva:::int.eprior(as.matrix(s.data[, batches[[i]]]),
+                                 gamma.hat[i, ], delta.hat[i, ])
         gamma.star <- rbind(gamma.star, temp[1, ])
         delta.star <- rbind(delta.star, temp[2, ])
       }

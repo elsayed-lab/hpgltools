@@ -3,12 +3,23 @@
 \docType{methods}
 \name{exprs}
 \alias{exprs}
+\alias{expt_set}
 \alias{exprs,}
 \alias{exprs-methods}
 \title{Extend Biobase::exprs to handle expt ojects.}
+\format{An object of class \code{NULL} of length 0.}
+\usage{
+expt_set
+}
 \arguments{
-\item{object}{The expt object from which to extract the expressionset.}
+\item{expt}{The expt object from which to extract the expressionset.}
 }
 \description{
-Extend Biobase::exprs to handle expt ojects.
+As time passes, I find myself increasingly thinking that the extra stuff I
+added to Biobase's ExpressionSet class is erroneous and I should remove.
+However, there remains a few things in my expt class which I rather like;
+most notably my color assignments, the state/what_happened data, and the
+backup of the original data.  So until I eventually get fed up and decide to
+extend the expressionSet, I will continue using these.
 }
+\keyword{datasets}

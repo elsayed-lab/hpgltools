@@ -6,22 +6,24 @@
 #'
 #' This applies the methodologies very nicely explained by Jeff Leek at
 #' https://github.com/jtleek/svaseq/blob/master/recount.Rmd
-#' and attempts to use them to acquire estimates which may be applied to an experimental model
-#' by either EdgeR, DESeq2, or limma.  In addition, it modifies the count tables using these
-#' estimates so that one may play with the modified counts and view the changes (with PCA or heatmaps
-#' or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
-#' In other words, this is entirely derivative of someone much smarter than me.
+#' and attempts to use them to acquire estimates which may be applied to an
+#' experimental model by either EdgeR, DESeq2, or limma.  In addition, it
+#' modifies the count tables using these estimates so that one may play with the
+#' modified counts and view the changes (with PCA or heatmaps or whatever).
+#' Finally, it prints a couple of the plots shown by Leek in his document. In
+#' other words, this is entirely derivative of someone much smarter than me.
 #'
 #' @param input  Expt or data frame to manipulate.
 #' @param design  If the data is not an expt, provide experimental design here.
-#' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'  ruv_residuals, or pca.
-#' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
+#' @param estimate_type  One of: sva_supervised, sva_unsupervised,
+#'   ruv_empirical, ruv_supervised, ruv_residuals, or pca.
+#' @param surrogates  Choose a method for getting the number of surrogates, be
+#'   or leek, or a number.
 #' @param expt_state  Current state of the expt object (to check for log2, cpm, etc)
 #' @param confounders  Used by ISVA to search for confounded experimental factors.
 #' @param ... Parameters fed to arglist.
-#' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
-#'  the known batch, surrogates, and batch/surrogate.
+#' @return List including the adjustments for a model matrix, a modified count
+#'   table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
 get_model_adjust <- function(input, design=NULL, estimate_type="sva",
@@ -56,9 +58,11 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
     if (transform_state == "raw") {
-      ## I think this was the cause of some problems.  The order of operations performed here
-      ## was imperfect and could potentially lead to multiple different matrix sizes.
-      base10_data <- sm(normalize_expt(input, convert=convert, filter=filter, thresh=1))
+      ## I think this was the cause of some problems.  The order of operations
+      ## performed here was imperfect and could potentially lead to multiple
+      ## different matrix sizes.
+      base10_data <- sm(normalize_expt(input, convert=convert,
+                                       filter=filter, thresh=1))
       base10_mtrx <- exprs(base10_data)
       log_data <- sm(normalize_expt(base10_data, transform="log2"))
       log2_mtrx <- exprs(log_data)
@@ -84,7 +88,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
     if (transform_state == "raw") {
-      log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2", filter=filter, thresh=1))
+      log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2",
+                               filter=filter, thresh=1))
       log2_mtrx <- as.matrix(log_data[["count_table"]])
       ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
       ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
@@ -104,7 +109,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   null_model <- conditional_model[, 1]
   chosen_surrogates <- 1
   if (is.null(surrogates)) {
-    message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
+    message("No estimate nor method to find surrogates was provided. ",
+            "Assuming you want 1 surrogate variable.")
   } else {
     if (class(surrogates) == "character") {
       ## num.sv assumes the log scale.
@@ -150,10 +156,12 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
                                                           type=control_type)))
   }
   if (class(control_likelihoods) == "try-error") {
-    message("The most likely error in sva::empirical.controls() is a call to density in irwsva.build.
-Setting control_likelihoods to zero and using unsupervised sva.")
-    warning("It is highly likely that the underlying reason for this error is too many 0's in
-the dataset, please try doing a filtering of the data and retry.")
+    message("The most likely error in sva::empirical.controls() ",
+            "is a call to density in irwsva.build. ",
+            "Setting control_likelihoods to zero and using unsupervised sva.")
+    warning("It is highly likely that the underlying reason for this ",
+            "error is too many 0's in the dataset, ",
+            "please try doing a filtering of the data and retry.")
     control_likelihoods <- 0
   }
   if (sum(control_likelihoods) == 0) {
@@ -376,7 +384,8 @@ the dataset, please try doing a filtering of the data and retry.")
       ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
       bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
       ruv_controls <- ranked <= bottom_third  ## what is going on here?!
-      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
+      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
+      ## fail with 400 hard-set
       ruv_result <- RUVSeq::RUVg(round(base10_mtrx), ruv_controls, k=chosen_surrogates)
       surrogate_result <- ruv_result
       model_adjust <- as.matrix(ruv_result[["W"]])
@@ -433,19 +442,21 @@ the dataset, please try doing a filtering of the data and retry.")
 #' performed and returns the whole pile of information as a list.
 #'
 #' @param expt Experiment containing a design and other information.
-#' @param extra_factors Character list of extra factors which may be included in the final plot of
-#'  the data.
+#' @param extra_factors Character list of extra factors which may be included in
+#'   the final plot of the data.
 #' @param filter_it  Most of the time these surrogate methods get mad if there
 #'   are 0s in the data.  Filter it?
 #' @param filter_type  Type of filter to use when filtering the input data.
-#' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
+#' @param do_catplots Include the catplots?  They don't make a lot of sense yet,
+#'   so probably no.
 #' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a
 #'   number.
 #' @param ...  Extra arguments when filtering.
 #' @return List of the results.
 #' @seealso \code{\link{get_model_adjust}}
 #' @export
-compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE, filter_type=TRUE,
+compare_surrogate_estimates <- function(expt, extra_factors=NULL,
+                                        filter_it=TRUE, filter_type=TRUE,
                                         do_catplots=FALSE, surrogates="be", ...) {
   arglist <- list(...)
   design <- pData(expt)
@@ -456,39 +467,46 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   }
 
   if (isTRUE(filter_it) & expt[["state"]][["filter"]] == "raw") {
-    message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
+    message("The expt has not been filtered, ",
+            "set filter_type/filter_it if you want other options.")
     expt <- sm(normalize_expt(expt, filter=filter_type,
                               ...))
   }
   pca_plots <- list()
   pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
 
-  pca_adjust <- get_model_adjust(expt, estimate_type="pca", surrogates=surrogates)
+  pca_adjust <- get_model_adjust(expt, estimate_type="pca",
+                                 surrogates=surrogates)
   pca_plots[["pca"]] <- plot_pca(pca_adjust[["new_counts"]],
                                  design=design,
                                  plot_colors=expt[["colors"]])[["plot"]]
 
-  sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised", surrogates=surrogates)
+  sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised",
+                                     surrogates=surrogates)
   pca_plots[["svasup"]] <- plot_pca(sva_supervised[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
 
-  sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised", surrogates=surrogates)
+  sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised",
+                                       surrogates=surrogates)
   pca_plots[["svaunsup"]] <- plot_pca(sva_unsupervised[["new_counts"]],
                                       design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised", surrogates=surrogates)
+  ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised",
+                                     surrogates=surrogates)
   pca_plots[["ruvsup"]] <- plot_pca(ruv_supervised[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals", surrogates=surrogates)
+  ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals",
+                                    surrogates=surrogates)
   pca_plots[["ruvresid"]] <- plot_pca(ruv_residuals[["new_counts"]],
                                       design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical", surrogates=surrogates)
+  ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical",
+                                    surrogates=surrogates)
   pca_plots[["ruvemp"]] <- plot_pca(ruv_empirical[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
@@ -531,7 +549,8 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
                    "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
                    "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                    "+ batch_adjustments$ruv_emp")
-  adjust_names <- gsub(pattern="^.*adjustments\\$(.*)$", replacement="\\1", x=adjustments)
+  adjust_names <- gsub(
+    pattern="^.*adjustments\\$(.*)$", replacement="\\1", x=adjustments)
   starter <- edgeR::DGEList(counts=exprs(expt))
   norm_start <- edgeR::calcNormFactors(starter)
 

@@ -28,22 +28,25 @@ choose_model(input, conditions = NULL, batches = NULL,
 
 \item{intercept}{Choose an intercept for the model as opposed to 0.}
 
-\item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't matter but I wanted
-to test.}
+\item{reverse}{Reverse condition/batch in the model?  This shouldn't/doesn't
+matter but I wanted to test.}
 
 \item{contr}{List of contrasts.arg possibilities.}
 
-\item{surrogates}{Number of or method used to choose the number of surrogate variables.}
+\item{surrogates}{Number of or method used to choose the number of surrogate
+variables.}
 
 \item{...}{Further options are passed to arglist.}
 }
 \value{
-List including a model matrix and strings describing cell-means and intercept models.
+List including a model matrix and strings describing cell-means and
+intercept models.
 }
 \description{
-The _pairwise family of functions all demand an experimental model.  This tries to choose a
-consistent and useful model for all for them.  This does not try to do multi-factor, interacting,
-nor dependent variable models, if you want those do them yourself and pass them off as alt_model.
+The _pairwise family of functions all demand an experimental model.  This
+tries to choose a consistent and useful model for all for them.  This does
+not try to do multi-factor, interacting, nor dependent variable models, if
+you want those do them yourself and pass them off as alt_model.
 }
 \details{
 Invoked by the _pairwise() functions.

@@ -4,21 +4,23 @@
 \alias{plot_boxplot}
 \title{Make a ggplot boxplot of a set of samples.}
 \usage{
-plot_boxplot(data, colors = NULL, names = NULL, title = NULL,
-  violin = FALSE, scale = NULL, ...)
+plot_boxplot(data, colors = NULL, title = NULL, violin = FALSE,
+  scale = NULL, expt_names = NULL, label_chars = 10, ...)
 }
 \arguments{
 \item{data}{Expt or data frame set of samples.}
 
 \item{colors}{Color scheme, if not provided will make its own.}
 
-\item{names}{Another version of the sample names for printing.}
-
 \item{title}{A title!}
 
 \item{violin}{Print this as a violin rather than a just box/whiskers?}
 
 \item{scale}{Whether to log scale the y-axis.}
+
+\item{expt_names}{Another version of the sample names for printing.}
+
+\item{label_chars}{Maximum number of characters for abbreviating sample names.}
 
 \item{...}{More parameters are more fun!}
 }
@@ -33,9 +35,10 @@ the non-outliers), and single dots for each gene which is outside
 that range.  A single dot is transparent.
 }
 \description{
-Boxplots and density plots provide complementary views of data distributions.  The general idea
-is that if the box for one sample is significantly shifted from the others, then it is likely an
-outlier in the same way a density plot shifted is an outlier.
+Boxplots and density plots provide complementary views of data distributions.
+The general idea is that if the box for one sample is significantly shifted
+from the others, then it is likely an outlier in the same way a density plot
+shifted is an outlier.
 }
 \examples{
 \dontrun{

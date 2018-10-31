@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_plots.r
 \name{plot_num_siggenes}
 \alias{plot_num_siggenes}
-\title{Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.}
+\title{Given a DE table with fold changes and p-values, show how 'significant'
+changes with changing cutoffs.}
 \usage{
 plot_num_siggenes(table, methods = c("limma", "edger", "deseq", "ebseq"),
   bins = 100, constant_p = 0.05, constant_fc = 0)
@@ -22,10 +23,10 @@ plot_num_siggenes(table, methods = c("limma", "edger", "deseq", "ebseq"),
 Plots and dataframes describing the changing definition of 'significant.'
 }
 \description{
-Sometimes one might want to know how many genes are deemed significant while shifting the bars
-which define significant.  This provides that metrics as a set of tables of numbers of
-significant up/down genes when p-value is held constant, as well as number when fold-change is
-held constant.
+Sometimes one might want to know how many genes are deemed significant while
+shifting the bars which define significant.  This provides that metrics as a
+set of tables of numbers of significant up/down genes when p-value is held
+constant, as well as number when fold-change is held constant.
 }
 \examples{
 \dontrun{

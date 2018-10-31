@@ -40,8 +40,8 @@ gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
 plots! Trees! oh my!
 }
 \description{
-This shoehorns gostats data into a format acceptable by topgo and uses it to print pretty
-ontology trees showing the over represented ontologies.
+This shoehorns gostats data into a format acceptable by topgo and uses it to
+print pretty ontology trees showing the over represented ontologies.
 }
 \seealso{
 \pkg{topGO} \pkg{gostats}

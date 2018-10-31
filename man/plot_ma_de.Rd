@@ -37,15 +37,17 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
 \item{...}{More options for you}
 }
 \value{
-ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
-type across all sample types on the x axis, and the log fold change between conditions on the
-y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
+ggplot2 MA scatter plot.  This is defined as the rowmeans of the
+normalized counts by type across all sample types on the x axis, and the
+log fold change between conditions on the y-axis. Dots are colored
+depending on if they are 'significant.'  This will make a fun clicky
 googleVis graph if requested.
 }
 \description{
-Because I can never remember, the following from wikipedia: "An MA plot is an application of a
-Bland-Altman plot for visual representation of two channel DNA microarray gene expression data
-which has been transformed onto the M (log ratios) and A (mean average) scale."
+Because I can never remember, the following from wikipedia: "An MA plot is an
+application of a Bland-Altman plot for visual representation of two channel
+DNA microarray gene expression data which has been transformed onto the M
+(log ratios) and A (mean average) scale."
 }
 \examples{
  \dontrun{

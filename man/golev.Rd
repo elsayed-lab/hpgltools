@@ -13,8 +13,8 @@ golev(go)
 Set of numbers corresponding to approximate tree positions of the GO ids.
 }
 \description{
-Sometimes it is useful to know how far up/down the ontology tree a given id resides.  This
-attmepts to answer that question.
+Sometimes it is useful to know how far up/down the ontology tree a given id
+resides.  This attmepts to answer that question.
 }
 \examples{
 \dontrun{

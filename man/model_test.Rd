@@ -19,9 +19,9 @@ model_test(design, goal = "condition", factors = NULL, ...)
 List of booleans telling if the factors + goal will work.
 }
 \description{
-Have you ever wanted to set up a differential expression analysis and after minutes of the
-computer churning away it errors out with some weird error about rank?  Then this is the function
-for you!
+Have you ever wanted to set up a differential expression analysis and after
+minutes of the computer churning away it errors out with some weird error
+about rank?  Then this is the function for you!
 }
 \seealso{
 \code{\link{model.matrix}} \code{\link{qr}}

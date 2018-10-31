@@ -1,16 +1,17 @@
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes
-#' nothing into account.  It _only_ takes the conditions, a mean value/variance among
-#' them, divides by condition, and returns the result.  No fancy nomalizations, no
-#' statistical models, no nothing.  It should be the very worst method possible.
-#' But, it should also provide a baseline to compare the other tools against, they should
-#' all do better than this, always.
+#' nothing into account.  It _only_ takes the conditions, a mean value/variance
+#' among them, divides by condition, and returns the result.  No fancy
+#' nomalizations, no statistical models, no nothing.  It should be the very
+#' worst method possible. But, it should also provide a baseline to compare the
+#' other tools against, they should all do better than this, always.
 #'
 #' Tested in test_27de_basic.R
-#' This function was written after the corresponding functions in de_deseq.R, de_edger.R,
-#' and de_limma.R.  Like those, it performs the full set of pairwise comparisons and returns
-#' a list of the results.  As mentioned above, unlike those, it is purposefully stupid.
+#' This function was written after the corresponding functions in de_deseq.R,
+#' de_edger.R, and de_limma.R.  Like those, it performs the full set of pairwise
+#' comparisons and returns a list of the results.  As mentioned above, unlike
+#' those, it is purposefully stupid.
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
@@ -29,9 +30,9 @@
 #' stupid_de <- basic_pairwise(expt)
 #' }
 #' @export
-basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NULL, model_cond=TRUE,
-                           model_intercept=FALSE, alt_model=NULL, model_batch=FALSE,
-                           force=FALSE, ...) {
+basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
+                           batches=NULL, model_cond=TRUE, model_intercept=FALSE,
+                           alt_model=NULL, model_batch=FALSE, force=FALSE, ...) {
   arglist <- list(...)
   if (!is.null(arglist[["input"]])) {
     input <- arglist[["input"]]
@@ -203,10 +204,14 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL, batches=NUL
       "logFC" = fc_column)
     fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
 
-    fc_table[["numerator_median"]] <- signif(x=fc_table[["numerator_median"]], digits=4)
-    fc_table[["denominator_median"]] <- signif(x=fc_table[["denominator_median"]], digits=4)
-    fc_table[["numerator_var"]] <- format(x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
-    fc_table[["denominator_var"]] <- format(x=fc_table[["denominator_var"]], digits=4, scientific=TRUE)
+    fc_table[["numerator_median"]] <- signif(
+      x=fc_table[["numerator_median"]], digits=4)
+    fc_table[["denominator_median"]] <- signif(
+      x=fc_table[["denominator_median"]], digits=4)
+    fc_table[["numerator_var"]] <- format(
+      x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
+    fc_table[["denominator_var"]] <- format(
+      x=fc_table[["denominator_var"]], digits=4, scientific=TRUE)
     fc_table[["t"]] <- signif(x=fc_table[["t"]], digits=4)
     fc_table[["p"]] <- format(x=fc_table[["p"]], digits=4, scientific=TRUE)
     fc_table[["adjp"]] <- format(x=fc_table[["adjp"]], digits=4, scientific=TRUE)

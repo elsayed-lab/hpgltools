@@ -1,11 +1,11 @@
 #' Make a plot and some simple numbers about tnseq saturation
 #'
 #' This function takes as input a tab separated file from essentiality_tas.pl
-#' This is a perl script written to read a bam alignment of tnseq reads against a genome
-#' and count how many hits were observed on every TA in the given genome.
-#' It furthermore has some logic to tell the difference between reads which were
-#' observed on the forward vs. reverse strand as well as reads which appear to be on both strands
-#' (eg. they start and end with 'TA').
+#' This is a perl script written to read a bam alignment of tnseq reads against
+#' a genome and count how many hits were observed on every TA in the given
+#' genome. It furthermore has some logic to tell the difference between reads
+#' which were observed on the forward vs. reverse strand as well as reads which
+#' appear to be on both strands (eg. they start and end with 'TA').
 #'
 #' @param data  data to plot
 #' @param column which column to use for plotting
@@ -127,8 +127,10 @@ plot_essentiality <- function(file) {
   ess <- ess[with(ess, order("posterior_zbar")), ]
   ##ess <- subset(ess, posterior_zbar > -1)
   ess <- ess[ess[["posterior_zbar"]] >= -1, ]
-  ess <- transform(ess, rank=ave("posterior_zbar", FUN=function(x) order(x, decreasing=FALSE)))
-  zbar_plot <- ggplot2::ggplot(data=ess, ggplot2::aes_string(x="rank", y="posterior_zbar")) +
+  ess <- transform(ess, rank=ave("posterior_zbar",
+                                 FUN=function(x) order(x, decreasing=FALSE)))
+  zbar_plot <- ggplot2::ggplot(data=ess,
+                               ggplot2::aes_string(x="rank", y="posterior_zbar")) +
     ggplot2::geom_point(stat="identity", size=2) +
     ## What the crab apples are these static numbers (I think to define calling boundaries)
     ggplot2::geom_hline(color="grey", yintercept=0.0371) +

@@ -14,7 +14,8 @@ hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE,
 
 \item{mod}{Factor of conditions.}
 
-\item{noScale}{The normal 'scale' option squishes the data too much, so this defaults to TRUE.}
+\item{noScale}{The normal 'scale' option squishes the data too much, so this
+defaults to TRUE.}
 
 \item{prior.plots}{Print out prior plots?}
 
@@ -25,7 +26,8 @@ Df of batch corrected data
 }
 \description{
 This is a hack of Kwame Okrah's combatMod to make it not fail on corner-cases.
-This was mostly copy/pasted from https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
+This was mostly copy/pasted from
+https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 }
 \examples{
 \dontrun{

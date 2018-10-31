@@ -4,8 +4,9 @@
 \alias{plot_sample_heatmap}
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
-plot_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
-  title = NULL, Rowv = TRUE, ...)
+plot_sample_heatmap(data, colors = NULL, design = NULL,
+  expt_names = NULL, title = NULL, Rowv = TRUE, label_chars = 10,
+  ...)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}
@@ -14,11 +15,13 @@ plot_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
 
 \item{design}{Design matrix describing the experiment (gotten for free if an expt).}
 
-\item{names}{Alternate samples names.}
+\item{expt_names}{Alternate samples names.}
 
 \item{title}{Title of the plot!}
 
 \item{Rowv}{Reorder the rows by expression?}
+
+\item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
 \item{...}{More parameters for a good time!}
 }
@@ -26,9 +29,10 @@ plot_sample_heatmap(data, colors = NULL, design = NULL, names = NULL,
 a recordPlot() heatmap describing the samples.
 }
 \description{
-Sometimes you just want to see how the genes of an experiment are related to each other.  This
-can handle that.  These heatmap functions should probably be replaced with neatmaps or heatplus
-or whatever it is, as the annotation dataframes in them are pretty awesome.
+Sometimes you just want to see how the genes of an experiment are related to
+each other.  This can handle that.  These heatmap functions should probably
+be replaced with neatmaps or heatplus or whatever it is, as the annotation
+dataframes in them are pretty awesome.
 }
 \seealso{
 \pkg{RColorBrewer}

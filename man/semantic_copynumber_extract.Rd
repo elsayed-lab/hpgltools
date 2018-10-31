@@ -13,5 +13,6 @@ semantic_copynumber_extract(...)
 The function semantic_copynumber_filter() is the inverse of this.
 }
 \details{
-Currently untested, used for Trypanosome analyses primarily, thus the default strings.
+Currently untested, used for Trypanosome analyses primarily, thus the default
+strings.
 }

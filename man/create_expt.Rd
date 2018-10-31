@@ -11,32 +11,35 @@ create_expt(metadata = NULL, gene_info = NULL,
   file_column = "file", savefile = "expt", low_files = FALSE, ...)
 }
 \arguments{
-\item{metadata}{Comma separated file (or excel) describing the samples with information like
-condition, batch, count_filename, etc.}
+\item{metadata}{Comma separated file (or excel) describing the samples with
+information like condition, batch, count_filename, etc.}
 
-\item{gene_info}{Annotation information describing the rows of the data set, this often comes
-from a call to import.gff() or biomart or organismdbi.}
+\item{gene_info}{Annotation information describing the rows of the data set,
+this often comes from a call to import.gff() or biomart or organismdbi.}
 
-\item{count_dataframe}{If one does not wish to read the count tables from the filesystem, they
-may instead be fed as a data frame here.}
+\item{count_dataframe}{If one does not wish to read the count tables from the
+filesystem, they may instead be fed as a data frame here.}
 
-\item{sample_colors}{List of colors by condition, if not provided it will generate its own colors
-using colorBrewer.}
+\item{sample_colors}{List of colors by condition, if not provided it will
+generate its own colors using colorBrewer.}
 
 \item{title}{Provide a title for the expt?}
 
 \item{notes}{Additional notes?}
 
-\item{include_type}{I have usually assumed that all gff annotations should be used, but that is
-not always true, this allows one to limit to a specific annotation type.}
+\item{include_type}{I have usually assumed that all gff annotations should be
+used, but that is not always true, this allows one to limit to a specific
+annotation type.}
 
 \item{include_gff}{Gff file to help in sorting which features to keep.}
 
 \item{file_column}{Column to use in a gene information dataframe for}
 
-\item{savefile}{Rdata filename prefix for saving the data of the resulting expt.}
+\item{savefile}{Rdata filename prefix for saving the data of the resulting
+expt.}
 
-\item{low_files}{Explicitly lowercase the filenames when searching the filesystem?}
+\item{low_files}{Explicitly lowercase the filenames when searching the
+filesystem?}
 
 \item{...}{More parameters are fun!}
 }
@@ -58,6 +61,6 @@ a full pathname or local to the cwd of the project.
 }
 \seealso{
 \pkg{Biobase}
-\code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{exprs}}
-\code{\link{read_counts_expt}}
+\code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
+\code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 }

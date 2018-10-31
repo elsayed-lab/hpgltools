@@ -14,10 +14,12 @@ get_pairwise_gene_abundances(datum, type = "limma", excel = NULL)
 \item{excel}{Print this to an excel file?}
 }
 \value{
-A list containing the expression values and some metrics of variance/error.
+A list containing the expression values and some metrics of
+variance/error.
 }
 \description{
-Instead of pulling to top/bottom abundant genes, get all abundances and variances or stderr.
+Instead of pulling to top/bottom abundant genes, get all abundances and
+variances or stderr.
 }
 \examples{
  \dontrun{

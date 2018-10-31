@@ -6,7 +6,7 @@
 with respect to an experimental factor.}
 \usage{
 plot_variance_coefficients(data, x_axis = "condition", colors = NULL,
-  sample_names = NULL, title = NULL, ...)
+  title = NULL, ...)
 }
 \arguments{
 \item{data}{Expressionset/epxt to poke at.}
@@ -15,8 +15,6 @@ plot_variance_coefficients(data, x_axis = "condition", colors = NULL,
 and calculate the dispersion metrics.}
 
 \item{colors}{Set of colors to use when making the violins}
-
-\item{sample_names}{A vector of names for the samples.}
 
 \item{title}{Optional title to include with the plot.}
 

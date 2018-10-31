@@ -8,6 +8,22 @@ gsva_likelihoods(gsva_result, score = NULL, category = NULL,
   factor = NULL, sample = NULL, factor_column = "condition",
   method = "mean")
 }
+\arguments{
+\item{gsva_result}{Input result from simple_gsva()}
+
+\item{score}{What type of scoring to perform, against a value, column, row?}
+
+\item{category}{What category to use as baseline?}
+
+\item{factor}{Which experimental factor to compare against?}
+
+\item{sample}{Which sample to compare against?}
+
+\item{factor_column}{When comparing against an experimental factor, which design
+column to use to find it?}
+
+\item{method}{mean or median when when bringing together values?}
+}
 \value{
 The scores according to the provided category, factor, sample, or
 score(s).

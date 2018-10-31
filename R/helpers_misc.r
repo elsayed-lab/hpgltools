@@ -151,8 +151,9 @@ bioc_all <- function(release="3.5",
 clear_session <- function(keepers=NULL, depth=10) {
   ## Partially taken from:
   ## https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
-  basic_packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils",
-                      "package:datasets", "package:methods", "package:base")
+  basic_packages <- c("package:stats", "package:graphics", "package:grDevices",
+                      "package:utils", "package:datasets", "package:methods",
+                      "package:base")
   package_list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
   package_list <- setdiff(package_list, basic_packages)
   result <- R.utils::gcDLLs()
@@ -295,9 +296,10 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #' \dontrun{
 #'  ## Extract all the genes from my genome, pull a static region 120nt following the stop
 #'  ## and test them for potential ARE sequences.
-#'  ## FIXME: There may be an error in this example, another version I have handles the +/- strand
-#'  ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
-#'  ## the genome, which would be unfortunate -- but the logic for testing remains the same.
+#'  ## FIXME: There may be an error in this example, another version I have
+#'  ## handles the +/- strand genes separately, I need to return to this and check
+#'  ## if it is providing the 5' UTR for 1/2 the genome, which would be
+#'  ## unfortunate -- but the logic for testing remains the same.
 #'  are_candidates <- hpgl_arescore(genome)
 #'  utr_genes <- subset(lmajor_annotations, type == 'gene')
 #'  threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
@@ -305,7 +307,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #'                                   strand=Rle(utr_genes[,5]),
 #'                                   name=Rle(utr_genes[,10]))
 #'  threep_seqstrings <- Biostrings::getSeq(lm, threep)
-#'  are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+#'  are_test <- hpgltools::hpgl_arescore(x=threep_seqstrings)
 #'  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 #' }
 #' @export
@@ -314,7 +316,8 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                            aub.p.to.end=0.55) {
   ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
   ## However, the repository I want for it is 'seqtools'
-  ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
+  ## Ergo my stupid require.auto() will be confused by definition because it
+  ## assumes equivalent names
   ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
   ##    library('SeqTools')
   ##} else {
@@ -449,9 +452,9 @@ install_packrat_globally <- function() {
 
 #' Load a backup rdata file
 #'
-#' I often use R over a sshfs connection, sometimes with significant latency, and I want to be able
-#' to save/load my R sessions relatively quickly. Thus this function uses my backup directory to
-#' load its R environment.
+#' I often use R over a sshfs connection, sometimes with significant latency,
+#' and I want to be able to save/load my R sessions relatively quickly. Thus
+#' this function uses my backup directory to load its R environment.
 #'
 #' @param directory Directory containing the RData.rda.xz file.
 #' @param filename  Filename to which to save.

@@ -121,7 +121,8 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
                                    pair_names=c("ups", "downs"), category_name="infection",
                                    phenotype_name="parasite", set_name="elsayed_macrophage",
-                                   color=TRUE, current_id="ENSEMBL", required_id="ENTREZID", ...) {
+                                   color=TRUE, current_id="ENSEMBL", required_id="ENTREZID",
+                                   ...) {
   ups <- list()
   downs <- list()
   if (class(pairwise)[1] == "data.frame") {
@@ -213,17 +214,20 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 
     dup_elements <- duplicated(up[[required_id]])
     if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the up data.")
+      warning("There are ", sum(dup_elements),
+              " non-unique elements in the IDs of the up data.")
       up <- up[!dup_elements, ]
     }
     dup_elements <- duplicated(down[[required_id]])
     if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the down data.")
+      warning("There are ", sum(dup_elements),
+              " non-unique elements in the IDs of the down data.")
       down <- down[!dup_elements, ]
     }
     dup_elements <- duplicated(both[[required_id]])
     if (sum(dup_elements) > 0) {
-      warning("There are ", sum(dup_elements), " non-unique elements in the IDs of the shared.")
+      warning("There are ", sum(dup_elements),
+              " non-unique elements in the IDs of the shared.")
       both <- both[!dup_elements, ]
     }
 
@@ -271,25 +275,26 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param pairwise  A pairwise result, or combined de result, or extracted genes.
 #' @param according_to  When getting significant genes, use this method.
 #' @param orgdb  Annotation dataset.
-#' @param pair_names  What set of names will be used: up vs. down, high vs. low, etc.
-#' @param category_name  What category does this GSC describe?
-#' @param phenotype_name  What phenotype does this GSC describe?
-#' @param set_name  A name for the created gene set.
-#' @param color  Make a colorSet?
-#' @param current_id  Usually we use ensembl IDs, but that does not _need_ to be the case.
-#' @param required_id  gsva uses entrezids by default.
+#' @param researcher_name  Prefix of the name for the generated set(s).
+#' @param study_name  Second element in the name of the generated set(s).
+#' @param category_name  Third element in the name of the generated set(s).
+#' @param phenotype_name  Optional phenotype data for the generated set(s).
+#' @param pair_names The suffix of the generated set(s).
+#' @param current_id  What type of ID is the data currently using?
+#' @param required_id  What type of ID should the use?
 #' @param ...  Extra arguments for extract_abundant_genes().
-#' @return  List containing 3 GSCs, one containing both the ups/downs called
-#'   'colored', one of the ups, and one of the downs.
+#' @return  List containing 3 GSCs, one containing both the highs/lows called
+#'   'colored', one of the highs, and one of the lows.
 #' @export
 make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
-                                   pair_names=c("ups", "downs"), category_name="infection",
-                                   phenotype_name="parasite", set_name="elsayed_macrophage",
-                                   color=TRUE, current_id="ENSEMBL", required_id="ENTREZID", ...) {
-  ups <- list()
-  downs <- list()
+                                   researcher_name="elsayed", study_name="macrophage",
+                                   category_name="infection", phenotype_name=NULL,
+                                   pair_names="high", current_id="ENSEMBL",
+                                   required_id="ENTREZID", ...) {
+  highs <- list()
+  lows <- list()
   if (class(pairwise)[1] == "data.frame") {
-    ups <- pairwise
+    highs <- pairwise
   } else if (class(pairwise)[1] == "all_pairwise") {
     message("Invoking combine_de_tables().")
     combined <- sm(combine_de_tables(pairwise, ...))
@@ -308,7 +313,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     message("Invoking make_gsc_from_ids().")
     ret <- make_gsc_from_ids(pairwise, orgdb=orgdb,
                              pair_names=pair_names, category_name=category_name,
-                             phenotype_name=phenotype_name, set_name=set_name,
+                             phenotype_name=phenotype_name,
                              current_id=current_id, required_id=required_id, ...)
     return(ret)
   } else {
@@ -327,7 +332,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     if (class(high) == "character") {
       high_ids <- high
       low_ids <- low
-    } else if (class(up) == "data.frame") {
+    } else if (class(high) == "data.frame") {
       high_ids <- rownames(high)
       low_ids <- rownames(low)
     }
@@ -369,25 +374,28 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
       both <- both[!shared_rows, ]
     }
 
-    dhigh_elements <- dhighlicated(high[[required_id]])
-    if (sum(dhigh_elements) > 0) {
-      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the high data.")
-      high <- high[!dhigh_elements, ]
+    duplicated_elements <- duplicated(high[[required_id]])
+    if (sum(duplicated_elements) > 0) {
+      warning("There are ", sum(duplicated_elements),
+              " non-unique elements in the IDs of the high data.")
+      high <- high[!duplicated_elements, ]
     }
-    dhigh_elements <- dhighlicated(low[[required_id]])
-    if (sum(dhigh_elements) > 0) {
-      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the low data.")
-      low <- low[!dhigh_elements, ]
+    duplicated_elements <- duplicated(low[[required_id]])
+    if (sum(duplicated_elements) > 0) {
+      warning("There are ", sum(duplicated_elements),
+              " non-unique elements in the IDs of the low data.")
+      low <- low[!duplicated_elements, ]
     }
-    dhigh_elements <- dhighlicated(both[[required_id]])
-    if (sum(dhigh_elements) > 0) {
-      warning("There are ", sum(dhigh_elements), " non-unique elements in the IDs of the shared.")
-      both <- both[!dhigh_elements, ]
+    duplicated_elements <- duplicated(both[[required_id]])
+    if (sum(duplicated_elements) > 0) {
+      warning("There are ", sum(duplicated_elements),
+              " non-unique elements in the IDs of the shared.")
+      both <- both[!duplicated_elements, ]
     }
 
     set_prefix <- glue("{set_name}_{category_name}")
-    color_set_name <- tohighper(glue("{set_prefix}_{phenotype_name}"))
-    high_name <- tohighper(glue("{set_prefix}_{pair_names[1]}"))
+    color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
+    high_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
                                setName=color_set_name,
@@ -404,7 +412,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     low_gsc <- NULL
     low_lst[[name]] <- low_gsc
     if (!is.null(pair_names[2])) {
-      low_name <- tohighper(glue("{set_prefix}_{pair_names[2]}"))
+      low_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       low_gsc <- GSEABase::GeneSet(
                               GSEABase::EntrezIdentifier(),
                               setName=low_name,
@@ -571,16 +579,18 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xcell_input[["hgnc_symbol"]] <- NULL
 
   xCell.data <- NULL
-  tt <- requireNamespace(xCell)
+  tt <- requireNamespace("xCell")
   data("xCell.data", package="xCell")
   xcell_result <- xCell::xCellAnalysis(xcell_input)
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
   if (is.null(label_size)) {
-    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors, margins=c(col_margin, row_margin))
+    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors,
+                    margins=c(col_margin, row_margin))
   } else {
-    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors, margins=c(col_margin, row_margin),
+    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors,
+                    margins=c(col_margin, row_margin),
                     cexCol=label_size, cexRow=label_size)
   }
 
@@ -733,6 +743,15 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="
 #'     z-scores.
 #'   * A single score against all scores.
 #'   * Rows (gene sets) against the set of all gene sets.
+#'
+#' @param gsva_result  Input result from simple_gsva()
+#' @param score  What type of scoring to perform, against a value, column, row?
+#' @param category  What category to use as baseline?
+#' @param factor  Which experimental factor to compare against?
+#' @param sample  Which sample to compare against?
+#' @param factor_column  When comparing against an experimental factor, which design
+#'        column to use to find it?
+#' @param method  mean or median when when bringing together values?
 #' @return  The scores according to the provided category, factor, sample, or
 #' score(s).
 #' @export
@@ -743,7 +762,8 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
   tests <- NULL
   choice <- NULL
   if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
-    message("Nothing was requested, examining the first column scores: ", colnames(values)[1], ".")
+    message("Nothing was requested, examining the first column scores: ",
+            colnames(values)[1], ".")
     sample <- 1
     tests <- as.numeric(values[, sample])
     choice <- "column"

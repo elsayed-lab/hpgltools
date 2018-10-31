@@ -10,7 +10,8 @@ extract_lengths(db = NULL, gene_list = NULL,
   "GenomicFeatures::transcripts"), ...)
 }
 \arguments{
-\item{db}{Object containing data, if it is a string then a filename is assumed to a gff file.}
+\item{db}{Object containing data, if it is a string then a filename is
+assumed to a gff file.}
 
 \item{gene_list}{Set of genes to query.}
 
@@ -26,8 +27,9 @@ extract_lengths(db = NULL, gene_list = NULL,
 Dataframe containing 2 columns: ID, length
 }
 \description{
-Primarily goseq, but also other tools on occasion require a set of gene IDs and lengths.
-This function is resposible for pulling that data from either a gff, or TxDb/OrganismDbi.
+Primarily goseq, but also other tools on occasion require a set of gene IDs
+and lengths. This function is resposible for pulling that data from either a
+gff, or TxDb/OrganismDbi.
 }
 \seealso{
 \pkg{GenomicFeatures}

@@ -9,18 +9,20 @@ pca_information(expt_data, expt_design = NULL,
   plot_pcas = FALSE, ...)
 }
 \arguments{
-\item{expt_data}{the data to analyze (usually exprs(somedataset)).}
+\item{expt_data}{Data to analyze (usually exprs(somedataset)).}
 
-\item{expt_design}{a dataframe describing the experimental design, containing columns with
-useful information like the conditions, batches, number of cells, whatever...}
+\item{expt_design}{Dataframe describing the experimental design, containing
+columns with useful information like the conditions, batches, number of
+cells, whatever...}
 
-\item{expt_factors}{a character list of experimental conditions to query
-for R^2 against the fast.svd of the data.}
+\item{expt_factors}{Character list of experimental conditions to query for
+R^2 against the fast.svd of the data.}
 
-\item{num_components}{a number of principle components to compare the design factors against.
-If left null, it will query the same number of components as factors asked for.}
+\item{num_components}{Number of principle components to compare the design
+factors against. If left null, it will query the same number of components
+as factors asked for.}
 
-\item{plot_pcas}{plot the set of PCA plots for every pair of PCs queried.}
+\item{plot_pcas}{Plot the set of PCA plots for every pair of PCs queried.}
 
 \item{...}{Extra arguments for the pca plotter}
 }

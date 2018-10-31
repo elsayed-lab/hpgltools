@@ -2,8 +2,8 @@
 % Please edit documentation in R/de_shared.r
 \name{get_abundant_genes}
 \alias{get_abundant_genes}
-\title{Find the set of most/least abundant genes according to limma and friends following a
-differential expression analysis.}
+\title{Find the set of most/least abundant genes according to limma and friends
+following a differential expression analysis.}
 \usage{
 get_abundant_genes(datum, type = "limma", n = NULL, z = NULL,
   unique = FALSE, least = FALSE)
@@ -25,9 +25,9 @@ get_abundant_genes(datum, type = "limma", n = NULL, z = NULL,
 List of data frames containing the genes of interest.
 }
 \description{
-Given a data set provided by limma, deseq, edger, etc; one might want to know what are the
-most and least abundant genes, much like get_sig_genes() does to find the most significantly
-different genes for each contrast.
+Given a data set provided by limma, deseq, edger, etc; one might want to know
+what are the most and least abundant genes, much like get_sig_genes() does to
+find the most significantly different genes for each contrast.
 }
 \examples{
  \dontrun{

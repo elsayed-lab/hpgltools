@@ -2,7 +2,8 @@
 % Please edit documentation in R/dimension_reduction.r
 \name{pcRes}
 \alias{pcRes}
-\title{Compute variance of each principal component and how they correlate with batch and cond}
+\title{Compute variance of each principal component and how they correlate with
+batch and condition.}
 \usage{
 pcRes(v, d, condition = NULL, batch = NULL)
 }

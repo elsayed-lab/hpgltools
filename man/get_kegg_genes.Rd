@@ -20,10 +20,10 @@ get_kegg_genes(pathway = "all", abbreviation = NULL,
 Dataframe of the various kegg data for each pathway, 1 row/gene.
 }
 \description{
-This uses KEGGREST to extract the mappings for all genes for a species and pathway or 'all'.
-Because downloading them takes a while, it will save the results to kegg_species.rda.  When run
-interactively, it will give some information regarding the number of genes observed in each
-pathway.
+This uses KEGGREST to extract the mappings for all genes for a species and
+pathway or 'all'. Because downloading them takes a while, it will save the
+results to kegg_species.rda.  When run interactively, it will give some
+information regarding the number of genes observed in each pathway.
 }
 \examples{
 \dontrun{

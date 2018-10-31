@@ -1,17 +1,21 @@
 #' Perform the array of analyses in the 2016-04 version of clusterProfiler
 #'
-#' The new version of clusterProfiler has a bunch of new toys.  However, it is more stringent in
-#' terms of input in that it now explicitly expects to receive annotation data in terms of a orgdb
-#' object.  This is mostly advantageous, but will probably cause some changes in the other ontology
-#' functions in the near future.  This function is an initial pass at making something similar to my
+#' The new version of clusterProfiler has a bunch of new toys.  However, it is
+#' more stringent in terms of input in that it now explicitly expects to receive
+#' annotation data in terms of a orgdb object.  This is mostly advantageous, but
+#' will probably cause some changes in the other ontology functions in the near
+#' future.  This function is an initial pass at making something similar to my
 #' previous 'simple_clusterprofiler()' but using these new toys.
 #'
 #' @param sig_genes  Dataframe of genes deemed 'significant.'
-#' @param de_table  Dataframe of all genes in the analysis, primarily for gse analyses.
+#' @param de_table  Dataframe of all genes in the analysis, primarily for gse
+#'   analyses.
 #' @param orgdb  Name of the orgDb used for gathering annotation data.
 #' @param orgdb_from  Name of a key in the orgdb used to cross reference to entrez IDs.
-#' @param orgdb_to  List of keys to grab from the orgdb for cross referencing ontologies.
-#' @param go_level  How deep into the ontology tree should this dive for over expressed categories.
+#' @param orgdb_to  List of keys to grab from the orgdb for cross referencing
+#'   ontologies.
+#' @param go_level  How deep into the ontology tree should this dive for over
+#'   expressed categories.
 #' @param pcutoff  P-value cutoff for 'significant' analyses.
 #' @param qcutoff  Q-value cutoff for 'significant' analyses.
 #' @param fc_column  When extracting vectors of all genes, what column should be used?
@@ -37,12 +41,14 @@
 #' @export
 simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db",
                                    orgdb_from=NULL, orgdb_to="ENTREZID",
-                                   go_level=3, pcutoff=0.05, qcutoff=0.1, fc_column="logFC",
+                                   go_level=3, pcutoff=0.05,
+                                   qcutoff=0.1, fc_column="logFC",
                                    second_fc_column="limma_logfc",
                                    updown="up", permutations=100, min_groupsize=5,
                                    kegg_prefix=NULL, kegg_organism=NULL, do_gsea=TRUE,
                                    categories=12, excel=NULL, do_david=FALSE,
-                                   david_id="ENTREZ_GENE_ID", david_user="unknown@unknown.org") {
+                                   david_id="ENTREZ_GENE_ID",
+                                   david_user="unknown@unknown.org") {
   tt <- sm(requireNamespace(package="clusterProfiler", quietly=TRUE))
   tt <- sm(requireNamespace(package="DOSE", quietly=TRUE))
   org <- NULL
@@ -113,7 +119,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   }
 
   if (is.null(sig_genes[[fc_column]]) & is.null(sig_genes[[second_fc_column]])) {
-    stop("The fold change column appears to provide no genes, try another column in the data set.")
+    stop("The fold change column provided no genes, try another column in the data set.")
   } else if (is.null(sig_genes[[fc_column]])) {
     fc_column <- second_fc_column
   }
@@ -211,12 +217,15 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     ## Add the entrezIDs to the end
     de_table_merged <- merge(de_table, de_table_namedf, by.x="row.names", by.y=1)
     if (updown == "up") {
-      de_table_merged <- de_table_merged[ order(de_table_merged[[gsea_fc_column]], decreasing=TRUE), ]
+      new_order <- order(de_table_merged[[gsea_fc_column]], decreasing=TRUE)
+      de_table_merged <- de_table_merged[new_order, ]
     } else {
-      de_table_merged <- de_table_merged[ order(de_table_merged[[gsea_fc_column]], decreasing=FALSE), ]
+      new_order <- order(de_table_merged[[gsea_fc_column]], decreasing=FALSE)
+      de_table_merged <- de_table_merged[new_order, ]
     }
 
-    ## Hmm this is odd, in the previous calls, I used orgdb_to, but in this set I am using orgdb_from...
+    ## Hmm this is odd, in the previous calls, I used orgdb_to, but in this set
+    ## I am using orgdb_from...
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(de_table_merged[[gsea_fc_column]])
     names(genelist) <- de_table_merged[["Row.names"]]
@@ -303,7 +312,8 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
 
     kegg_all_names <- glue("ncbi-geneid:{names(kegg_genelist)}")
     kegg_all_intersect <- kegg_all_names %in% names(kegg_universe)
-    message("Found ", sum(kegg_all_intersect), " matches between the gene list and kegg universe.")
+    message("Found ", sum(kegg_all_intersect),
+            " matches between the gene list and kegg universe.")
     all_names <- names(kegg_universe)
     large_universe <- kegg_universe[intersect(kegg_all_names, names(kegg_universe))]
     kegg_all_ids <- unique(as.character(large_universe))
@@ -311,12 +321,14 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     names(kegg_genelist) <- kegg_all_ids
 
     internal <- FALSE
-    gse_all_kegg <- sm(clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
-                                                nPerm=permutations, minGSSize=min_groupsize,
-                                                pvalueCutoff=1.0, use_internal_data=internal))
-    gse_sig_kegg <- sm(clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
-                                                nPerm=permutations, minGSSize=min_groupsize,
-                                                pvalueCutoff=pcutoff, use_internal_data=internal))
+    gse_all_kegg <- sm(
+      clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                               nPerm=permutations, minGSSize=min_groupsize,
+                               pvalueCutoff=1.0, use_internal_data=internal))
+    gse_sig_kegg <- sm(
+      clusterProfiler::gseKEGG(geneList=kegg_genelist, organism=kegg_organism,
+                               nPerm=permutations, minGSSize=min_groupsize,
+                               pvalueCutoff=pcutoff, use_internal_data=internal))
   }
 
   kegg_data <- list(
@@ -330,10 +342,11 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   tt <- sm(please_install("RDAVIDWebService"))
   if (isTRUE(do_david)) {
     message("Attempting DAVID search.")
-    david_search <- try(clusterProfiler::enrichDAVID(gene=sig_gene_list,
-                                                     minGSSize=min_groupsize,
-                                                     idType=david_id,
-                                                     david.user=david_user), silent=TRUE)
+    david_search <- try(clusterProfiler::enrichDAVID(
+                                           gene=sig_gene_list,
+                                           minGSSize=min_groupsize,
+                                           idType=david_id,
+                                           david.user=david_user), silent=TRUE)
     if (class(david_search)[[1]] == "try-error") {
       david_data <- NULL
     } else {
@@ -349,11 +362,14 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   map_sig_bp <- try(clusterProfiler::emapplot(ego_sig_bp), silent=TRUE)
   map_sig_cc <- try(clusterProfiler::emapplot(ego_sig_cc), silent=TRUE)
   net_sig_mf <- try(
-    clusterProfiler::cnetplot(ego_sig_mf, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+    clusterProfiler::cnetplot(ego_sig_mf, categorySize="pvalue",
+                              foldChange=genelist), silent=TRUE)
   net_sig_bp <- try(
-    clusterProfiler::cnetplot(ego_sig_bp, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+    clusterProfiler::cnetplot(ego_sig_bp, categorySize="pvalue",
+                              foldChange=genelist), silent=TRUE)
   net_sig_cc <- try(
-    clusterProfiler::cnetplot(ego_sig_cc, categorySize="pvalue", foldChange=genelist), silent=TRUE)
+    clusterProfiler::cnetplot(ego_sig_cc, categorySize="pvalue",
+                              foldChange=genelist), silent=TRUE)
 
   tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
   tree_mf <- sm(try(clusterProfiler::plotGOgraph(ego_sig_mf), silent=TRUE))
@@ -372,39 +388,48 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   pvalue_plotlist <- list(
     ## I want to split the following list, but I am not sure which belong here.
   )
-  ggo_mf_bar <- try(barplot(ggo_mf, drop=TRUE, showCategory=categories), silent=TRUE)
+  ggo_mf_bar <- try(barplot(ggo_mf, drop=TRUE,
+                            showCategory=categories), silent=TRUE)
   if (class(ggo_mf_bar)[[1]] == "try-error") {
     ggo_mf_bar <- NULL
   }
-  ggo_bp_bar <- try(barplot(ggo_bp, drop=TRUE, showCategory=categories), silent=TRUE)
+  ggo_bp_bar <- try(barplot(ggo_bp, drop=TRUE,
+                            showCategory=categories), silent=TRUE)
   if (class(ggo_bp_bar)[[1]] == "try-error") {
     ggo_bp_bar <- NULL
   }
-  ggo_cc_bar <- try(barplot(ggo_cc, drop=TRUE, showCategory=categories), silent=TRUE)
+  ggo_cc_bar <- try(barplot(ggo_cc, drop=TRUE,
+                            showCategory=categories), silent=TRUE)
   if (class(ggo_cc_bar)[[1]] == "try-error") {
     ggo_cc_bar <- NULL
   }
-  ego_all_mf_bar <- try(barplot(ego_all_mf, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_all_mf_bar <- try(barplot(ego_all_mf,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_all_mf)[[1]] == "try-error") {
     ego_all_mf <- NULL
   }
-  ego_all_bp_bar <- try(barplot(ego_all_bp, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_all_bp_bar <- try(barplot(ego_all_bp,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_all_bp)[[1]] == "try-error") {
     ego_all_bp <- NULL
   }
-  ego_all_cc_bar <- try(barplot(ego_all_cc, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_all_cc_bar <- try(barplot(ego_all_cc,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_all_cc)[[1]] == "try-error") {
     ego_all_cc <- NULL
   }
-  ego_sig_mf_bar <- try(barplot(ego_sig_mf, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_sig_mf_bar <- try(barplot(ego_sig_mf,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_sig_mf)[[1]] == "try-error") {
     ego_sig_mf <- NULL
   }
-  ego_sig_bp_bar <- try(barplot(ego_sig_bp, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_sig_bp_bar <- try(barplot(ego_sig_bp,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_sig_bp)[[1]] == "try-error") {
     ego_sig_bp <- NULL
   }
-  ego_sig_cc_bar <- try(barplot(ego_sig_cc, showCategory=categories, drop=TRUE), silent=TRUE)
+  ego_sig_cc_bar <- try(barplot(ego_sig_cc,
+                                showCategory=categories, drop=TRUE), silent=TRUE)
   if (class(ego_sig_cc)[[1]] == "try-error") {
     ego_sig_cc <- NULL
   }
@@ -482,7 +507,8 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
 
 #' Set up appropriate option sets for clusterProfiler
 #'
-#' This hard-sets some defaults for orgdb/kegg databases when using clusterProfiler.
+#' This hard-sets some defaults for orgdb/kegg databases when using
+#' clusterProfiler.
 #'
 #' @param species  Currently it only works for humans and fruit flies.
 cp_options <- function(species) {
@@ -508,12 +534,14 @@ cp_options <- function(species) {
 
 #' Generic enrichment using clusterProfiler.
 #'
-#' culsterProfiler::enricher provides a quick and easy enrichment analysis given a set of
-#' siginficant' genes and a data frame which connects each gene to a category.
+#' culsterProfiler::enricher provides a quick and easy enrichment analysis given
+#' a set of siginficant' genes and a data frame which connects each gene to a
+#' category.
 #'
 #' @param sig_genes Set of 'significant' genes as a table.
 #' @param de_table All genes from the original analysis.
-#' @param go_db Dataframe of GO->ID matching the gene names of sig_genes to GO categories.
+#' @param go_db Dataframe of GO->ID matching the gene names of sig_genes to GO
+#'   categories.
 #' @return Table of 'enriched' categories.
 simple_cp_enricher <- function(sig_genes, de_table, go_db=NULL) {
   all_genenames <- rownames(de_table)

@@ -9,7 +9,8 @@ hpgl_voom(dataframe, model = NULL, libsize = NULL,
   logged = FALSE, converted = FALSE, ...)
 }
 \arguments{
-\item{dataframe}{Dataframe of sample counts which have been normalized and log transformed.}
+\item{dataframe}{Dataframe of sample counts which have been normalized and
+log transformed.}
 
 \item{model}{Experimental model defining batches/conditions/etc.}
 
@@ -36,12 +37,14 @@ lib.size = The size in pseudocounts of the library
 plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
 }
 \description{
-Estimate mean-variance relationship between samples and generate 'observational-level weights' in
-preparation for linear modeling RNAseq data.  This particular implementation was primarily
-scabbed from cbcbSEQ, but changes the mean-variance plot slightly and attempts to handle corner
-cases where the sample design is confounded by setting the coefficient to 1 for those samples
-rather than throwing an unhelpful error.  Also, the Elist output gets a 'plot' slot which
-contains the plot rather than just printing it.
+Estimate mean-variance relationship between samples and generate
+'observational-level weights' in preparation for linear modeling RNAseq data.
+This particular implementation was primarily scabbed from cbcbSEQ, but
+changes the mean-variance plot slightly and attempts to handle corner cases
+where the sample design is confounded by setting the coefficient to 1 for
+those samples rather than throwing an unhelpful error.  Also, the Elist
+output gets a 'plot' slot which contains the plot rather than just printing
+it.
 }
 \examples{
 \dontrun{

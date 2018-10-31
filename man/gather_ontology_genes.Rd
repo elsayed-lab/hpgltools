@@ -16,7 +16,8 @@ gather_ontology_genes(result, ontology = NULL,
 
 \item{column}{Which column to use for extracting ontologies?}
 
-\item{pval}{Maximum accepted pvalue to include in the list of categories to cross reference.}
+\item{pval}{Maximum accepted pvalue to include in the list of categories to
+cross reference.}
 
 \item{include_all}{Include all genes in the ontology search?}
 

@@ -24,9 +24,9 @@ pct_kegg_diff(all_ids, sig_ids, pathway = "00500", organism = "dme",
 Percent genes/pathway deemed significant.
 }
 \description{
-KEGGgraph provides some interesting functionality for mapping KEGGids and examining the
-pieces. This attempts to use that in order to evaluate how many 'significant' genes are in a
-given pathway.
+KEGGgraph provides some interesting functionality for mapping KEGGids and
+examining the pieces. This attempts to use that in order to evaluate how many
+'significant' genes are in a given pathway.
 }
 \seealso{
 \pkg{KEGGgraph} \pkg{KEGGREST}

@@ -13,8 +13,8 @@
 #' @param start_row  First row of the sheet to write. Useful if writing multiple tables.
 #' @param start_col  First column to write.
 #' @param ...  Set of extra arguments given to openxlsx.
-#' @return List containing the sheet and workbook written as well as the bottom-right coordinates of
-#'  the last row/column written to the worksheet.
+#' @return List containing the sheet and workbook written as well as the
+#'   bottom-right coordinates of the last row/column written to the worksheet.
 #' @seealso \pkg{openxlsx}
 #' @examples
 #'  \dontrun{
@@ -92,8 +92,9 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   for (col in colnames(data)) {
     test_column <- test_column + 1
     colnames(data)[test_column] <- paste0(colnames(data)[test_column], "_", test_column)
-    ## Originally, this was a single test condition, but I fear I need to do separate tasks for each data type.
-    ## If that proves to be the case, I am ready, but until then it remains a series of as.character() castings.
+    ## Originally, this was a single test condition, but I fear I need to do
+    ## separate tasks for each data type. If that proves to be the case, I am
+    ## ready, but until then it remains a series of as.character() castings.
     if (class(data[, test_column]) == "list") {
       ## The above did not work, trying what I found in:
       ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
@@ -177,7 +178,8 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
 #' @param start_col  Column on which to place the plot in the sheet.
 #' @param file_type  Currently this only does pngs, but perhaps I will parameterize this.
 #' @param units  Units for the png plotter.
-#' @param ...  Extra arguments are passed to arglist (Primarily for vennerable plots which are odd)
+#' @param ...  Extra arguments are passed to arglist (Primarily for vennerable
+#'   plots which are odd)
 #' @return  A list containing the result of the tryCatch{} used to invoke the plot prints.
 #' @seealso \pkg{openxlsx}
 #' @examples

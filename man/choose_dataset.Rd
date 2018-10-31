@@ -9,7 +9,8 @@ choose_dataset(input, choose_for = "limma", force = FALSE, ...)
 \arguments{
 \item{input}{Expt input.}
 
-\item{choose_for}{One of limma, deseq, edger, or basic.  Defines the requested data state.}
+\item{choose_for}{One of limma, deseq, edger, or basic.  Defines the
+requested data state.}
 
 \item{force}{Force non-standard data?}
 

@@ -185,9 +185,10 @@ simple_mlseq <- function(expt, comparison="condition", number_by_var=100,
   ctrl_voomDLDA <- MLSeq::voomControl(method = "repeatedcv", number=training_number, repeats=1,
                                       tuneLength=tune_length)
   ## Support vector machines with radial basis function kernel
-  fit_svm <- MLSeq::classify(data=training_data, method="svmRadial",
-                             preProcessing="deseq-vst", ref=reference_factor, tuneLength=tune_length,
-                             control=ctrl_svm)
+  fit_svm <- MLSeq::classify(
+                      data=training_data, method="svmRadial",
+                      preProcessing="deseq-vst", ref=reference_factor, tuneLength=tune_length,
+                      control=ctrl_svm)
   ## Poisson linear discriminant analysis
   fit_plda <- MLSeq::classify(data=training_data, method="PLDA", normalize="deseq",
                               ref=reference_factor, control=ctrl_plda)
@@ -205,18 +206,28 @@ simple_mlseq <- function(expt, comparison="condition", number_by_var=100,
   ## caret::confusionMatrix(tbl, positive=reference_factor)
 
   ## Define control lists.
-  ctrl_continuous <- caret::trainControl(method="repeatedcv", number=training_number, repeats=training_repeats)
-  ctrl_discrete <- MLSeq::discreteControl(method="repeatedcv", number=training_number, repeats=training_repeats,
-                                   tuneLength=tune_length)
-  ctrl_voom <- MLSeq::voomControl(method="repeatedcv", number=training_number, repeats=training_repeats,
-                                  tuneLength=tune_length)
+  ctrl_continuous <- caret::trainControl(
+                              method="repeatedcv", number=training_number,
+                              repeats=training_repeats)
+  ctrl_discrete <- MLSeq::discreteControl(
+                            method="repeatedcv", number=training_number,
+                            repeats=training_repeats,
+                            tuneLength=tune_length)
+  ctrl_voom <- MLSeq::voomControl(
+                        method="repeatedcv", number=training_number,
+                        repeats=training_repeats,
+                        tuneLength=tune_length)
   ## 1. aContinuous classifiers, SVM and NSC
-  fit_svm <- MLSeq::classify(data=training_data, method="svmRadial",
-                             preProcessing="deseq-vst", ref=reference_factor, tuneLength=tune_length,
-                             control=ctrl_continuous)
-  fit_NSC <- MLSeq::classify(data=training_data, method="pam",
-                             preProcessing="deseq-vst", ref=reference_factor, tuneLength=tune_length,
-                             control=ctrl_continuous)
+  fit_svm <- MLSeq::classify(
+                      data=training_data, method="svmRadial",
+                      preProcessing="deseq-vst", ref=reference_factor,
+                      tuneLength=tune_length,
+                      control=ctrl_continuous)
+  fit_NSC <- MLSeq::classify(
+                      data=training_data, method="pam",
+                      preProcessing="deseq-vst", ref=reference_factor,
+                      tuneLength=tune_length,
+                      control=ctrl_continuous)
   ## 2. Discrete classifiers
   fit_plda <- MLSeq::classify(data=training_data, method="PLDA", normalize="deseq",
                               ref=reference_factor, control=ctrl_discrete)

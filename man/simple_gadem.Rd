@@ -14,9 +14,10 @@ simple_gadem(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19", ...)
 \item{...}{Parameters for plotting the gadem result.}
 }
 \value{
-A list containing slots for plots, the stdout output from gadem, the gadem result, set of
-occurences of motif, and the returned set of motifs.
+A list containing slots for plots, the stdout output from gadem, the
+gadem result, set of occurences of motif, and the returned set of motifs.
 }
 \description{
-This should provide a set of rGADEM results given an input file of sequences and a genome.
+This should provide a set of rGADEM results given an input file of sequences
+and a genome.
 }

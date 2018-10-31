@@ -111,13 +111,17 @@ ggplt <- function(gg, filename="ggplot.html",
 #'   \item pcatable = a table describing the relative contribution of condition/batch of the raw data
 #'   \item pcares =  a table describing the relative contribution of condition/batch of the raw data
 #'   \item pcavar = a table describing the variance of the raw data
-#'   \item qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-#'   \item density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+#'   \item qq = a recordPlotted() view comparing the quantile/quantiles between
+#'      the mean of all data and every raw sample
+#'   \item density = a ggplot2 view of the density of each raw sample (this is
+#'      complementary but more fun than a boxplot)
 #' }
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#'  \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}} \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
-#'  \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}} \code{\link{plot_disheat}}
-#'  \code{\link{plot_pca}} \code{\link{plot_qq_all}} \code{\link{plot_pairwise_ma}}
+#'   \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
+#'   \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
+#'   \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
+#'   \code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
+#'   \code{\link{plot_pairwise_ma}}
 #' @examples
 #' \dontrun{
 #'  toomany_plots <- graph_metrics(expt)
@@ -128,8 +132,10 @@ ggplt <- function(gg, filename="ggplot.html",
 #'  ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
 #' @export
-graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
-                          qq=FALSE, ma=FALSE, gene_heat=FALSE, ...) {
+graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
+                          title_suffix=NULL, qq=FALSE, ma=FALSE, gene_heat=FALSE,
+                          ...) {
+  arglist <- list(...)
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }
@@ -201,13 +207,13 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   topn <- try(plot_topn(expt, title=topn_title,
                         ...))
   message("Printing a color to condition legend.")
-  legend <- try(plot_legend(pca[["plot"]]))
+  legend <- try(plot_legend(expt))
 
   qq_logs <- NULL
   qq_ratios <- NULL
   if (isTRUE(qq)) {
     message("QQ plotting!")
-    qq_plots <- try(suppressWarnings(plot_qq_all(expt)))
+    qq_plots <- try(suppressWarnings(plot_qq_all(expt, ...)))
     qq_logs <- qq_plots[["logs"]]
     qq_ratios <- qq_plots[["ratios"]]
   }
@@ -215,7 +221,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ma_plots <- NULL
   if (isTRUE(ma)) {
     message("Many MA plots!")
-    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
+    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt, ...)))
   }
 
   gene_heatmap <- NULL
@@ -319,7 +325,8 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   } else {
     ## Set up the page
     grid::grid.newpage()
-    grid::pushViewport(grid::viewport(layout=grid::grid.layout(nrow(layout), ncol(layout))))
+    grid::pushViewport(grid::viewport(
+                               layout=grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
     for (i in 1:numPlots) {
       ## Get the i,j matrix positions of the regions that contain this subplot

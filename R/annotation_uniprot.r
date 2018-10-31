@@ -18,7 +18,8 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
     result <- xml2::read_html(request)
     result_html <- rvest::html_nodes(result, "tr")
     accessions_text <- rvest::html_attr(result_html, "id")
-    accessions_text <- accessions_text[3:length(accessions_text)] ## The first two elements are headers
+    ## The first two elements are headers
+    accessions_text <- accessions_text[3:length(accessions_text)]
     accessions <- gsub(x=accessions_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\1")
     species_text <- rvest::html_nodes(result, "td") %>%
       rvest::html_nodes("span") %>%
@@ -88,12 +89,13 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
   ## Vectors for those elements which will only have 1 answer
   many_ids <- list()
   id_types <- c(
-    "primary_id", "amino_acids", "primary_accessions", "amino_acids", "recnames", "loci", "orfnames",
-    "shortnames", "synonyms", "uniprot_accessions", "embl", "pir", "refseq",
-    "proteinmodelportals", "smr", "string", "pax", "pride", "ensbact", "geneid", "kegg",
-    "tuberculist", "eggnog", "ko", "oma", "phylome", "unipathway", "proteome", "go", "cdd",
-    "gene3d", "hamap", "interpro", "panther", "pirsf", "prints", "pfam", "supfam", "tigrfam",
-    "prosite", "mw", "aa_sequence"
+    "primary_id", "amino_acids", "primary_accessions", "amino_acids",
+    "recnames", "loci", "orfnames", "shortnames", "synonyms",
+    "uniprot_accessions", "embl", "pir", "refseq", "proteinmodelportals", "smr",
+    "string", "pax", "pride", "ensbact", "geneid", "kegg", "tuberculist",
+    "eggnog", "ko", "oma", "phylome", "unipathway", "proteome", "go", "cdd",
+    "gene3d", "hamap", "interpro", "panther", "pirsf", "prints", "pfam",
+    "supfam", "tigrfam", "prosite", "mw", "aa_sequence"
   )
   reading_sequence <- FALSE
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
@@ -135,17 +137,18 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
       next
     }
     ## Get the record names if available
-    ## Example: DE   RecName: Full=Putative 3-methyladenine DNA glycosylase {ECO:0000255|HAMAP-Rule:MF_00527};
+    ## Example:
+    ## DE RecName: Full=Putative 3-methyl DNA glycosylase {ECO:0000255|HAMAP-Rule:MF_00527};
     ##          DE            EC=3.2.2.- {ECO:0000255|HAMAP-Rule:MF_00527};
     if (grepl(pattern="DE\\s+RecName:", x=line)) {
       tmp_ids <- gsub(pattern="^.*Full=(.*?);.*$", replacement="\\1", x=line)
       many_ids[["recnames"]][gene_num] <- tmp_ids
       next
     }
-    ## The GN field has a few interesting pieces of information and I think makes the primary link
-    ## between uniprot and the IDs available at genbank, ensembl, microbesonline, etc.
-    ## We may find one or more of the above fields in the GN, so I should take into account
-    ## the various possible iterations.
+    ## The GN field has a few interesting pieces of information and I think
+    ## makes the primary link between uniprot and the IDs available at genbank,
+    ## ensembl, microbesonline, etc. We may find one or more of the above fields
+    ## in the GN, so I should take into account the various possible iterations.
     ## Example: GN   Name=pgl; Synonyms=devB; OrderedLocusNames=Rv1445c;
     ##          GN   ORFNames=MTCY493.09;
     if (grepl(pattern="^GN\\s+", x=line)) {
@@ -155,7 +158,8 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
         ## i=565 is first interesting one.
         tmp_ids <- gsub(pattern=pat, replacement="\\1", x=line)
         tmp_ids <- gsub(pattern="^(.*?),.*", replacement="\\1", x=tmp_ids)
-        many_ids[["loci"]][gene_num] <- gsub(pattern="^(.*?) \\{.*", replacement="\\1", x=tmp_ids)
+        many_ids[["loci"]][gene_num] <- gsub(
+          pattern="^(.*?) \\{.*", replacement="\\1", x=tmp_ids)
       }
       pat <- "^GN\\s+.*ORFNames=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
@@ -164,7 +168,8 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
       pat <- "^GN\\s+.*Name=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
         tmp_ids <- gsub(pattern=pat, replacement="\\1", x=line)
-        many_ids[["shortnames"]][gene_num] <- gsub(pattern="^(.*?) .*", replacement="\\1", x=tmp_ids)
+        many_ids[["shortnames"]][gene_num] <- gsub(
+          pattern="^(.*?) .*", replacement="\\1", x=tmp_ids)
       }
       pat <- "^GN\\s+.*Synonyms=(.*?);.*$"
       if (grepl(pattern=pat, x=line)) {
@@ -352,7 +357,8 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
       if (many_ids[["interpro"]][gene_num] == "") {
         many_ids[["interpro"]][gene_num] <- tmp_ids
       } else {
-        many_ids[["interpro"]][gene_num] <- toString(c(many_ids[["interpro"]][gene_num], tmp_ids))
+        many_ids[["interpro"]][gene_num] <- toString(
+          c(many_ids[["interpro"]][gene_num], tmp_ids))
       }
       next
     }
@@ -400,7 +406,8 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
     }
     if (grepl(pattern="^SQ\\s+SEQUENCE", x=line)) {
       reading_sequence <- TRUE
-      tmp_ids <- gsub(pattern="^SQ\\s+SEQUENCE.*AA;\\s+(\\d+)\\s+MW.*$", replacement="\\1", x=line)
+      tmp_ids <- gsub(
+        pattern="^SQ\\s+SEQUENCE.*AA;\\s+(\\d+)\\s+MW.*$", replacement="\\1", x=line)
       many_ids[["mw"]][gene_num] <- tmp_ids
     }
     if (isTRUE(reading_sequence)) {
@@ -453,7 +460,7 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
       message("Unable to find an id corresponding to the provided species.")
       return(data.frame())
     } else if (nrow(result_df) > 1) {
-      message("More than 1 species was returned, they follow; the first was chosen arbitrarily.")
+      message("More than 1 species was returned, the first was chosen arbitrarily.")
       print(result_df)
       id <- result_df[1, 1]
     } else {
@@ -463,9 +470,10 @@ load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculo
   }
 
   downloaded_data <- UniProt.ws::UniProt.ws(as.numeric(id))
-  ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL GENOMES,
-  ## ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
-  ## I wonder if the * at the end of GI_NUMBER is telling me that this is the real primary key?
+  ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL
+  ## GENOMES, ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
+  ## I wonder if the * at the end of GI_NUMBER is telling me that this is the
+  ## real primary key?
   possible_keys <- AnnotationDbi::keys(x=downloaded_data, keytype=keytype)
   possible_columns <- AnnotationDbi::columns(x=downloaded_data)
   if (is.null(chosen_columns)) {

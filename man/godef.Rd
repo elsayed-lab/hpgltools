@@ -7,7 +7,8 @@
 godef(go = "GO:0032432")
 }
 \arguments{
-\item{go}{GO ID, this may be a character or list (assuming the elements are goids).}
+\item{go}{GO ID, this may be a character or list (assuming the elements are
+goids).}
 }
 \value{
 Some text providing the long definition of each provided GO id.
@@ -19,7 +20,7 @@ Sometimes it is nice to be able to read the full definition of some GO terms.
 \dontrun{
  godef("GO:0032432")
  ## > GO:0032432
- ## > "An assembly of actin filaments that are on the same axis but may be oriented with the
+ ## > "An assembly of actin filaments that are on the same axis but may be
  ## > same or opposite polarities and may be packed with different levels of tightness."
 }
 }

@@ -17,8 +17,9 @@ counts_from_surrogates(data, adjust, design = NULL)
 A data frame of adjusted counts.
 }
 \description{
-Given an initial set of counts and a series of surrogates, what would the resulting count table
-look like? Hopefully this function answers that question.
+Given an initial set of counts and a series of surrogates, what would the
+resulting count table look like? Hopefully this function answers that
+question.
 }
 \seealso{
 \pkg{Biobase}

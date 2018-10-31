@@ -1,8 +1,8 @@
 #' Make sure a given experimental factor and design will play together.
 #'
-#' Have you ever wanted to set up a differential expression analysis and after minutes of the
-#' computer churning away it errors out with some weird error about rank?  Then this is the function
-#' for you!
+#' Have you ever wanted to set up a differential expression analysis and after
+#' minutes of the computer churning away it errors out with some weird error
+#' about rank?  Then this is the function for you!
 #'
 #' @param design Dataframe describing the design of the experiment.
 #' @param goal Experimental factor you actually want to learn about.

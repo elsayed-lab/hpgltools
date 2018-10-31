@@ -15,39 +15,45 @@ batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
 \item{batch}{String describing the method to try to remove the batch effect
 (or FALSE to leave it alone, TRUE uses limma).}
 
-\item{batch1}{Column in the design table describing the presumed covariant to remove.}
+\item{batch1}{Column in the design table describing the presumed covariant
+to remove.}
 
-\item{expt_state}{Current state of the expt in an attempt to avoid double-normalization.}
+\item{expt_state}{Current state of the expt in an attempt to avoid
+double-normalization.}
 
-\item{batch2}{Column in the design table describing the second covariant to remove
-(only used by limma at the moment).}
+\item{batch2}{Column in the design table describing the second covariant to
+remove (only used by limma at the moment).}
 
-\item{noscale}{Used for combatmod, when true it removes the scaling parameter
-from the invocation of the modified combat.}
+\item{noscale}{Used for combatmod, when true it removes the scaling
+parameter from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
 }
 \value{
-The 'batch corrected' count table and new library size.  Please remember that the
-library size which comes out of this may not be what you want for voom/limma and would
-therefore lead to spurious differential expression values.
+The 'batch corrected' count table and new library size.  Please
+remember that the library size which comes out of this may not be what you
+want for voom/limma and would therefore lead to spurious differential
+expression values.
 }
 \description{
-I found this note which is the clearest explanation of what happens with batch effect data:
+I found this note which is the clearest explanation of what happens with
+batch effect data:
 https://support.bioconductor.org/p/76099/
-Just to be clear, there's an important difference between removing a batch effect and modelling a
-batch effect. Including the batch in your design formula will model the batch effect in the
-regression step, which means that the raw data are not modified (so the batch effect is not
-removed), but instead the regression will estimate the size of the batch effect and subtract it
-out when performing all other tests. In addition, the model's residual degrees of freedom will
-be reduced appropriately to reflect the fact that some degrees of freedom were "spent"
-modelling the batch effects. This is the preferred approach for any method that is capable of
-using it (this includes DESeq2). You would only remove the batch effect (e.g. using limma's
-removeBatchEffect function) if you were going to do some kind of downstream analysis that can't
-model the batch effects, such as training a classifier.
-I don't have experience with ComBat, but I would expect that you run it on log-transformed CPM
-values, while DESeq2 expects raw counts as input. I couldn't tell you how to properly use the
-two methods together.
+Just to be clear, there's an important difference between removing a batch
+effect and modelling a batch effect. Including the batch in your design
+formula will model the batch effect in the regression step, which means that
+the raw data are not modified (so the batch effect is not removed), but
+instead the regression will estimate the size of the batch effect and
+subtract it out when performing all other tests. In addition, the model's
+residual degrees of freedom will be reduced appropriately to reflect the fact
+that some degrees of freedom were "spent" modelling the batch effects. This
+is the preferred approach for any method that is capable of using it (this
+includes DESeq2). You would only remove the batch effect (e.g. using limma's
+removeBatchEffect function) if you were going to do some kind of downstream
+analysis that can't model the batch effects, such as training a classifier.
+I don't have experience with ComBat, but I would expect that you run it on
+log-transformed CPM values, while DESeq2 expects raw counts as input. I
+couldn't tell you how to properly use the two methods together.
 }
 \examples{
 \dontrun{

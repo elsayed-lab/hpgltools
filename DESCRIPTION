@@ -52,7 +52,7 @@ biocViews: DifferentialExpression
 Roxygen: list(markdown=TRUE)
 RoxygenNote: 6.1.0
 Collate:
-    'aa_hpgltools.r'
+    '01_hpgltools.r'
     'alt_splicing.r'
     'annotation_biomart.r'
     'annotation_eupathdb.r'
@@ -80,7 +80,6 @@ Collate:
     'mlseq.r'
     'model_surrogates.r'
     'model_testing.r'
-    'model_tsne.r'
     'model_varpartition.r'
     'motif.r'
     'nmer.r'

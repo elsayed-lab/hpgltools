@@ -1,16 +1,18 @@
 #' Perform a cpm/rpkm/whatever transformation of a count table.
 #'
-#' I should probably tell it to also handle a simple df/vector/list of gene lengths, but I
-#' haven't. cp_seq_m is a cpm conversion of the data followed by a rp-ish conversion which
-#' normalizes by the number of the given oligo.  By default this oligo is 'TA' because it was used
-#' for tnseq which should be normalized by the number of possible transposition sites by mariner.
-#' It could, however, be used to normalize by the number of methionines, for example -- if one
-#' wanted to do such a thing.
+#' I should probably tell it to also handle a simple df/vector/list of gene
+#' lengths, but I  haven't. cp_seq_m is a cpm conversion of the data followed by
+#' a rp-ish conversion which normalizes by the number of the given oligo.  By
+#' default this oligo is 'TA' because it was used for tnseq which should be
+#' normalized by the number of possible transposition sites by mariner. It
+#' could, however, be used to normalize by the number of methionines, for
+#' example -- if one wanted to do such a thing.
 #'
 #' @param data Matrix of count data.
 #' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
-#' @param ... Options I might pass from other functions are dropped into arglist, used by rpkm (gene
-#'  lengths) and divide_seq (genome, pattern to match, and annotation type).
+#' @param ... Options I might pass from other functions are dropped into
+#'   arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
+#'   match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase}
 #'  \code{\link[edgeR]{cpm}}
@@ -216,7 +218,8 @@ divide_seq <- function(counts, ...) {
   annotation_seqnames <- sort(levels(as.factor(annotation_df[["chromosome"]])))
   hits <- sum(annotation_seqnames %in% genome_seqnames)
   if (hits == 0) {
-    ## These are mislabeled (it seems the most common error is a chromosome names 'chr4' vs. '4'
+    ## These are mislabeled (it seems the most common error is chromosome
+    ## names 'chr4' vs. '4'
     new_levels <- c(GenomeInfoDb::seqlevels(annotation_gr),
                     glue("chr{unique(GenomicRanges::seqnames(annotation_gr))}"))
     GenomeInfoDb::seqlevels(annotation_gr) <- new_levels
@@ -242,7 +245,6 @@ divide_seq <- function(counts, ...) {
   merged_tas <- merged_tas[, -1]
   merged_tas <- merged_tas[, -which(colnames(merged_tas) %in% c("name"))]
   merged_tas <- merged_tas / merged_tas[["pattern"]]
-  ##merged_tas <- subset(merged_tas, select=-c("name"))  ## Two different ways of removing columns...
   merged_tas <- merged_tas[, !(colnames(merged_tas) %in% c("pattern"))]  ## Here is another!
   return(merged_tas)
 }
@@ -273,8 +275,9 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 
 #' Reads/(kilobase(gene) * million reads)
 #'
-#' Express a data frame of counts as reads per kilobase(gene) per million(library). This function
-#' wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
+#' Express a data frame of counts as reads per kilobase(gene) per
+#' million(library). This function wraps EdgeR's rpkm in an attempt to make sure
+#' that the required gene lengths get sent along.
 #'
 #' @param count_table Data frame of counts, alternately an edgeR DGEList.
 #' @param ... extra options including annotations for defining gene lengths.
@@ -293,16 +296,18 @@ hpgl_rpkm <- function(count_table, ...) {
   if (class(count_table) == "edgeR") {
     count_table <- count_table[["counts"]]
   }
-  count_table_in <- as.data.frame(count_table[rownames(count_table) %in% rownames(annotations), ],
-                         stringsAsFactors=FALSE)
+  count_table_in <- as.data.frame(
+    count_table[rownames(count_table) %in% rownames(annotations), ],
+    stringsAsFactors=FALSE)
   if (dim(count_table_in)[1] == 0) {
     message("When the annotations and count_table were checked against each other
   the result was null.  Perhaps your annotation or count_table's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
     rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
-    count_table_in <- as.data.frame(count_table[rownames(count_table) %in% rownames(annotations), ],
-                           stringsAsFactors=FALSE)
+    count_table_in <- as.data.frame(
+      count_table[rownames(count_table) %in% rownames(annotations), ],
+      stringsAsFactors=FALSE)
     if (dim(count_table_in)[1] == 0) {
       stop("The ID column failed too.")
     }
@@ -312,9 +317,12 @@ hpgl_rpkm <- function(count_table, ...) {
   merged_annotations <- merge(count_table_in, annotations, by="row.names", all.x=TRUE)
   rownames(merged_annotations) <- merged_annotations[, "Row.names"]
   merged_annotations <- merged_annotations[-1]
-  merged_annotations <- merged_annotations[order(merged_annotations[["temporary_id_number"]]), ]
-  merged_counts <- merged_annotations[, colnames(merged_annotations) %in% colnames(count_table)]
-  merged_annot <- merged_annotations[, colnames(merged_annotations) %in% colnames(annotations)]
+  new_order <- order(merged_annotations[["temporary_id_number"]])
+  merged_annotations <- merged_annotations[new_order, ]
+  kept_stuff <- colnames(merged_annotations) %in% colnames(count_table)
+  merged_counts <- merged_annotations[, kept_stuff]
+  kept_stuff <- colnames(merged_annotations) %in% colnames(annotations)
+  merged_annot <- merged_annotations[, kept_stuff]
 
   ##rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...

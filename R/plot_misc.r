@@ -57,8 +57,10 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
 
 #' Make spirographs!
 #'
-#' Taken (with modifications) from: http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
-#' A positive value for 'B' will result in a epitrochoid, while a negative value will result in a hypotrochoid.
+#' Taken (with modifications) from:
+#' http://menugget.blogspot.com/2012/12/spirograph-with-r.html#more
+#' A positive value for 'B' will result in a epitrochoid, while a negative value
+#' will result in a hypotrochoid.
 #'
 #' @param radius_a   The radius of the primary circle.
 #' @param radius_b   The radius of the circle travelling around a.
@@ -94,12 +96,18 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
     ggplot2::geom_point(ggplot2::aes_string(colour="counter"), size=0.5) +
     ggplot2::theme_bw() +
     ggplot2::scale_colour_gradientn(colours=grDevices::rainbow(4)) +
-    ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
-                   legend.position="none", panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
+    ggplot2::theme(axis.line=ggplot2::element_blank(),
+                   axis.text.x=ggplot2::element_blank(),
+                   axis.text.y=ggplot2::element_blank(),
+                   axis.ticks=ggplot2::element_blank(),
+                   axis.title.x=ggplot2::element_blank(),
+                   axis.title.y=ggplot2::element_blank(),
+                   legend.position="none",
+                   panel.background=ggplot2::element_blank(),
+                   panel.border=ggplot2::element_blank(),
+                   panel.grid.major=ggplot2::element_blank(),
+                   panel.grid.minor=ggplot2::element_blank(),
+                   plot.background=ggplot2::element_blank())
   return(spiro)
 }
 
@@ -112,15 +120,18 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
-plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1, revolutions=7, increments=6480) {
+plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
+                              revolutions=7, increments=6480) {
   points <- seq(0, revolutions * increments)
   radians <- points / (2 * pi)
   getx <- function(t) {
-    x <- ((radius_a - radius_b) * cos(t)) + (dist_b * cos((t * ((radius_a - radius_b) / radius_b))))
+    x <- ((radius_a - radius_b) * cos(t)) +
+      (dist_b * cos((t * ((radius_a - radius_b) / radius_b))))
     return(x)
   }
   gety <- function(t) {
-    y <- ((radius_a - radius_b) * sin(t)) + (dist_b * sin((t * ((radius_a - radius_b) / radius_b))))
+    y <- ((radius_a - radius_b) * sin(t)) +
+      (dist_b * sin((t * ((radius_a - radius_b) / radius_b))))
     return(y)
   }
   x_points <- as.numeric(lapply(radians, getx))
@@ -132,12 +143,18 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1, revolutions=7, i
   message("The spirograph will have ", petals, " petals.")
   image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
     ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
-    ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
-                   legend.position="none", panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
+    ggplot2::theme(axis.line=ggplot2::element_blank(),
+                   axis.text.x=ggplot2::element_blank(),
+                   axis.text.y=ggplot2::element_blank(),
+                   axis.ticks=ggplot2::element_blank(),
+                   axis.title.x=ggplot2::element_blank(),
+                   axis.title.y=ggplot2::element_blank(),
+                   legend.position="none",
+                   panel.background=ggplot2::element_blank(),
+                   panel.border=ggplot2::element_blank(),
+                   panel.grid.major=ggplot2::element_blank(),
+                   panel.grid.minor=ggplot2::element_blank(),
+                   plot.background=ggplot2::element_blank())
   return(image)
 }
 
@@ -150,15 +167,18 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1, revolutions=7, i
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
-plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, increments=6480) {
+plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
+                             revolutions=7, increments=6480) {
   points <- seq(0, revolutions * increments)
   radians <- points / (2 * pi)
   getx <- function(t) {
-    x <- ((radius_a + radius_b) * cos(t)) - (dist_b * cos((t * ((radius_a + radius_b) / radius_b))))
+    x <- ((radius_a + radius_b) * cos(t)) -
+      (dist_b * cos((t * ((radius_a + radius_b) / radius_b))))
     return(x)
   }
   gety <- function(t) {
-    y <- ((radius_a + radius_b) * sin(t)) - (dist_b * sin((t * ((radius_a + radius_b) / radius_b))))
+    y <- ((radius_a + radius_b) * sin(t)) -
+      (dist_b * sin((t * ((radius_a + radius_b) / radius_b))))
     return(y)
   }
   x_points <- as.numeric(lapply(radians, getx))
@@ -168,12 +188,18 @@ plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6, revolutions=7, in
   positions <- as.data.frame(positions)
   image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
     ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
-    ggplot2::theme(axis.line=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(), axis.title.y=ggplot2::element_blank(),
-                   legend.position="none", panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(), panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(), plot.background=ggplot2::element_blank())
+    ggplot2::theme(axis.line=ggplot2::element_blank(),
+                   axis.text.x=ggplot2::element_blank(),
+                   axis.text.y=ggplot2::element_blank(),
+                   axis.ticks=ggplot2::element_blank(),
+                   axis.title.x=ggplot2::element_blank(),
+                   axis.title.y=ggplot2::element_blank(),
+                   legend.position="none",
+                   panel.background=ggplot2::element_blank(),
+                   panel.border=ggplot2::element_blank(),
+                   panel.grid.major=ggplot2::element_blank(),
+                   panel.grid.minor=ggplot2::element_blank(),
+                   plot.background=ggplot2::element_blank())
   return(image)
 }
 

@@ -14,11 +14,12 @@ somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...}
 something more sane (hopefully).
 }
 \description{
-The output from the GOTERM/GO.db functions is inconsistent, to put it nicely.
-This attempts to extract from that heterogeneous datatype something easily readable.
-Example:  Synonym() might return any of the following:
-NA, NULL, "NA", "NULL", c("NA",NA,"GO:00001"), "GO:00002", c("Some text",NA, NULL, "GO:00003")
-This function will boil that down to 'not found', '', 'GO:00004', or "GO:0001,  some text, GO:00004"
+The output from the GOTERM/GO.db functions is inconsistent, to put it
+nicely. This attempts to extract from that heterogeneous datatype something
+easily readable. Example:  Synonym() might return any of the following:
+NA, NULL, "NA", "NULL", c("NA",NA,"GO:00001"), "GO:00002", c("Some text",NA,
+NULL, "GO:00003") This function will boil that down to 'not found', '',
+'GO:00004', or "GO:0001,  some text, GO:00004"
 }
 \examples{
 \dontrun{

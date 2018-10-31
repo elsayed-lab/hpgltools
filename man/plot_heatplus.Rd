@@ -36,5 +36,6 @@ plot_heatplus(expt, type = "correlation", method = "pearson",
 List containing the returned heatmap along with some parameters used to create it.
 }
 \description{
-Heatplus is an interesting tool, I have a few examples of using it and intend to include them here.
+Heatplus is an interesting tool, I have a few examples of using it and intend
+to include them here.
 }

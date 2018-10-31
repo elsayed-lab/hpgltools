@@ -11,7 +11,8 @@ choose_limma_dataset(input, force = FALSE, which_voom = "limma", ...)
 
 \item{force}{Ingore warnings and use the provided data asis.}
 
-\item{which_voom}{Choose between limma'svoom, voomWithQualityWeights, or the hpgl equivalents.}
+\item{which_voom}{Choose between limma'svoom, voomWithQualityWeights, or the
+hpgl equivalents.}
 
 \item{...}{Extra arguments passed to arglist.}
 }
@@ -19,7 +20,8 @@ choose_limma_dataset(input, force = FALSE, which_voom = "limma", ...)
 dataset suitable for limma analysis
 }
 \description{
-Take an expt and poke at it to ensure that it will not result in troubled limma results.
+Take an expt and poke at it to ensure that it will not result in troubled
+limma results.
 }
 \seealso{
 \pkg{limma}

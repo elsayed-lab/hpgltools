@@ -6,8 +6,11 @@
 \alias{sampleNames,}
 \alias{sampleNames-methods}
 \title{Extend Biobase::sampleNames to handle expt objects.}
+\usage{
+\S4method{sampleNames}{expt}(object)
+}
 \arguments{
-\item{object}{The expt object from which to extract the expressionset.}
+\item{expt}{The expt object from which to extract the expressionset.}
 }
 \description{
 Extend Biobase::sampleNames to handle expt objects.

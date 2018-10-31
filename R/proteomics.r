@@ -7,7 +7,8 @@
 #'
 #' @param file  Filename to read.
 #' @param id  An id to give the result.
-#' @param write_acquisitions  If a filename is provided, write a tab separated table of windows.
+#' @param write_acquisitions  If a filename is provided, write a tab separated
+#'   table of windows.
 #' @return List containing a table of scan and precursor data.
 #' @export
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
@@ -138,13 +139,13 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
-  ## Add a little of the code from create_expt to include some design information in the returned
-  ## data structure.
+  ## Add a little of the code from create_expt to include some design
+  ## information in the returned data structure.
 
-  ## Since I am using this code now in two places, if I can use it without changes, I will
-  ## split it into its own function so make changes in one place happen in both
-  ## but until I can ensure to myself that it is functional in both contexts I will not.
-  ## Palette for colors when auto-chosen
+  ## Since I am using this code now in two places, if I can use it without
+  ## changes, I will split it into its own function so make changes in one place
+  ## happen in both but until I can ensure to myself that it is functional in
+  ## both contexts I will not. Palette for colors when auto-chosen
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["palette"]])) {
     chosen_palette <- arglist[["palette"]]
@@ -320,7 +321,8 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   spectrum_queries <- rvest::xml_nodes(input, "spectrum_query")
   spectra <- spectrum_queries %>% rvest::html_attr("spectrum")
   query_data <- data.frame(row.names=spectra)
-  ## The interesting material at the beginning of a spectrum, these are in the <spectrum query> tag.
+  ## The interesting material at the beginning of a spectrum, these are in the
+  ## <spectrum query> tag.
 
   message("Extracting the spectrum_query metadata.")
   toplevel_interesting <- c("start_scan", "end_scan", "precursor_neutral_mass",
@@ -335,9 +337,11 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   search_hits <- search_results %>%
     rvest::html_node(xpath="search_hit")
   ## The set of fields which look interesting to me in the search_hit data.
-  search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa", "protein", "num_tot_proteins",
-                     "num_matched_ions", "tot_num_ions", "calc_neutral_pep_mass", "massdiff",
-                     "num_tol_term", "num_missed_cleavages", "num_matched_peptides")
+  search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa",
+                     "protein", "num_tot_proteins",
+                     "num_matched_ions", "tot_num_ions",
+                     "calc_neutral_pep_mass", "massdiff", "num_tol_term",
+                     "num_missed_cleavages", "num_matched_peptides")
   for (s in search_fields) {
     query_data[[s]] <- search_hits %>%
       rvest::html_attr(s)
@@ -438,8 +442,9 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
 
   numeric_columns <- c("start_scan", "end_scan", "precursor_neutral_mass", "index",
                        "retention_time_sec", "calc_neutral_pep_mass", "massdiff",
-                       "num_matched_peptides", "xcorr", "deltacn", "deltacnstar", "spscore",
-                       "expect", "prophet_probability", "fval", "massd", "RT", "RT_score")
+                       "num_matched_peptides", "xcorr", "deltacn",
+                       "deltacnstar", "spscore", "expect",
+                       "prophet_probability", "fval", "massd", "RT", "RT_score")
   factor_columns <- c("assumed_charge", "num_tot_proteins", "num_matched_ions", "num_tol_term",
                       "num_missed_cleavages", "sprank", "ntt", "nmc", "isomassd")
   for (n in numeric_columns) {
@@ -528,8 +533,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
                                    savefile=NULL, ...) {
   arglist <- list(...)
 
-  ## Add a little of the code from create_expt to include some design information in the returned
-  ## data structure.
+  ## Add a little of the code from create_expt to include some design
+  ## information in the returned data structure.
 
   ## Since I am using this code now in two places, if I can use it without changes, I will
   ## split it into its own function so make changes in one place happen in both
@@ -1074,8 +1079,9 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
   if (num_colors == 2) {
     color_list <- c("darkred", "darkblue")
   } else {
-    color_list <- sm(grDevices::colorRampPalette(
-                                  RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+    color_list <- sm(
+      grDevices::colorRampPalette(
+                   RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
   }
 
   if (is.null(table[[xaxis]])) {
@@ -1295,30 +1301,42 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   current_colnames <- colnames(protein_df)
   current_colnames <- tolower(current_colnames)
   ## percent signs are stupid in columns.
-  current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="%", replacement="pct", x=current_colnames)
   ## as are spaces.
-  current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
+  current_colnames <- gsub(
+    pattern=" ", replacement="_", x=current_colnames)
   ## A bunch of columns have redundant adjectives.
-  current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_confidence", replacement="", x=current_colnames)
   ## Extra text in a column name is useless
-  current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
   ## Get rid of a bunch of doofusy punctuation.
-  current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
   ## At this point we should not have any leading underscores.
-  current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="^_", replacement="", x=current_colnames)
   ## Now should we have any double underscores.
-  current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
-  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
-  current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
-  current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
-  current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="__", replacement="_", x=current_colnames)
+  ## Finally, because of the previous removals, there might be some duplicated
+  ## terms left behind.
+  current_colnames <- gsub(
+    pattern="_ht", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
   colnames(protein_df) <- current_colnames
 
   ## Now make sure the columns which should be numeric, are numeric.
   numeric_cols <- c(
-    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot", "expt_qvalue_sequest",
-    "coverage_pct", "unique_peptides", "aas", "mw_kda", "calc_pi", "score_mascot",
-    "score_sequest", "peptides_mascot", "peptides_sequest")
+    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot",
+    "expt_qvalue_sequest", "coverage_pct", "unique_peptides", "aas", "mw_kda",
+    "calc_pi", "score_mascot", "score_sequest", "peptides_mascot",
+    "peptides_sequest")
   for (col in numeric_cols) {
     if (!is.null(protein_df[[col]])) {
       protein_df[[col]] <- as.numeric(protein_df[[col]])

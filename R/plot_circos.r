@@ -8,14 +8,16 @@
 
 #' Create the description of (a)chromosome(s) for circos.
 #'
-#' This function tries to save me from having to get the lengths of arcs for bacterial chromosomes
-#' manually correct, and writes them as a circos compatible karyotype file.
-#' The outfile parameter was chosen to match the configuration directive
-#' outlined in circos_prefix(), however that will need to be changed in order for this to work
-#' in variable conditions.  Next time I make one of these graphs I will do that I suspect.
-#' In addition, this currently only understands how to write bacterial chromosomes, that will
-#' likely be fixed when I am asked to write out a L.major karyotype.
-#' These defaults were chosen because I have a chromosome of this length that is correct.
+#' This function tries to save me from having to get the lengths of arcs for
+#' bacterial chromosomes manually correct, and writes them as a circos
+#' compatible karyotype file. The outfile parameter was chosen to match the
+#' configuration directive outlined in circos_prefix(), however that will need
+#' to be changed in order for this to work in variable conditions.  Next time I
+#' make one of these graphs I will do that I suspect. In addition, this
+#' currently only understands how to write bacterial chromosomes, that will
+#' likely be fixed when I am asked to write out a L.major karyotype. These
+#' defaults were chosen because I have a chromosome of this length that is
+#' correct.
 #'
 #' @param name Name of the chromosome (This currently assumes a bacterial chromosome).
 #' @param conf_dir Where to put the circos configuration file(s).
@@ -32,7 +34,7 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
                              chr_num=1, fasta=NULL) {
   genome_length <- 0
   if (is.null(length) & is.null(fasta)) {
-    stop("circos_karyotype() requires a chromosome length or fasta file to gather sequence data from.")
+    stop("circos_karyotype() requires chromosome length or fasta file.")
   } else if (!is.null(length)) {
     genome_length <- length
   } else {
@@ -50,7 +52,8 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
     current <- segment - 1
     begin <- floor(current * (genome_length / segments))
     end <- floor(segment * (genome_length / segments))
-    string <- sprintf("band %s %d.1 %d.1 %d %d %s", chr_name, chr_num, chr_num, begin, end, color)
+    string <- sprintf("band %s %d.1 %d.1 %d %d %s", chr_name, chr_num,
+                      chr_num, begin, end, color)
     cat(string, file=out, sep="\n")
   }
   close(out)
@@ -78,7 +81,8 @@ circos_karyotype <- function(name="default", conf_dir="circos/conf", length=NULL
 #' @export
 circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NULL,
                             fill="yes", stroke_color="black",
-                            thickness="20", stroke_thickness="2", fill_color="black", radius="0.85",
+                            thickness="20", stroke_thickness="2",
+                            fill_color="black", radius="0.85",
                             label_size="36", band_stroke_thickness="2"
                             ) {
   ideogram_outfile <- glue("{conf_dir}/ideograms/{name}.conf")
@@ -135,8 +139,9 @@ show_label, label_size, band_stroke_thickness)
 
 #' Create the ticks for a circos plot.
 #'
-#' This function writes ticks for circos.  This has lots of options, the defaults are all taken
-#' from the circos example documentation for a bacterial genome.
+#' This function writes ticks for circos.  This has lots of options, the
+#' defaults are all taken from the circos example documentation for a bacterial
+#' genome.
 #'
 #' @param name Name of the configuration file to which to add the ideogram.
 #' @param conf_dir Where does the configuration live?
@@ -171,14 +176,18 @@ show_label, label_size, band_stroke_thickness)
 #' @return The file to which the ideogram configuration was written.
 #' @export
 circos_ticks <- function(name="default", conf_dir="circos/conf",
-                         tick_separation=2, min_label_distance=0, label_separation=5, label_offset=5,
-                         label_size=8, multiplier=0.001, main_color="black", main_thickness=3,
-                         main_size=20, first_size=10, first_spacing=1, first_color="black",
+                         tick_separation=2, min_label_distance=0,
+                         label_separation=5, label_offset=5,
+                         label_size=8, multiplier=0.001, main_color="black",
+                         main_thickness=3, main_size=20, first_size=10,
+                         first_spacing=1, first_color="black",
                          first_show_label="no", first_label_size=12, second_size=15,
-                         second_spacing=5, second_color="black", second_show_label="yes",
-                         second_label_size=16, third_size=18, third_spacing=10, third_color="black",
+                         second_spacing=5, second_color="black",
+                         second_show_label="yes", second_label_size=16,
+                         third_size=18, third_spacing=10, third_color="black",
                          third_show_label="yes", third_label_size=16, fourth_spacing=100,
-                         fourth_color="black", fourth_show_label="yes", fourth_label_size=36) {
+                         fourth_color="black", fourth_show_label="yes",
+                         fourth_label_size=36) {
   tick_outfile <- glue("{conf_dir}/ticks_{name}.conf")
   out <- file(tick_outfile, open="w")
   show_label <- "no"
@@ -247,18 +256,20 @@ grid_end = dims(ideogram,radius_inner)
   </tick>
 </ticks>
 ",
-tick_separation, min_label_distance, label_separation, label_offset, label_size, multiplier,
-main_color, main_thickness, main_size, first_size, first_spacing, first_color, first_show_label,
-first_label_size, second_size, second_spacing, second_color, second_show_label, second_label_size,
-third_size, third_spacing, third_color, third_show_label, third_label_size, fourth_spacing,
-fourth_color, fourth_show_label, fourth_label_size)
+tick_separation, min_label_distance, label_separation, label_offset, label_size,
+multiplier, main_color, main_thickness, main_size, first_size, first_spacing,
+first_color, first_show_label, first_label_size, second_size, second_spacing,
+second_color, second_show_label, second_label_size, third_size, third_spacing,
+third_color, third_show_label, third_label_size, fourth_spacing, fourth_color,
+fourth_show_label, fourth_label_size)
   cat(tick_string, file=out, sep="")
   close(out)
   message("Wrote ticks to ", tick_outfile)
   return(tick_outfile)
 }
 
-#' Write tiles of bacterial ontology groups using the categories from microbesonline.org.
+#' Write tiles of bacterial ontology groups using the categories from
+#' microbesonline.org.
 #'
 #' This function tries to save me from writing out ontology
 #' definitions and likely making mistakes.  It uses the start/ends
@@ -272,7 +283,8 @@ fourth_color, fourth_show_label, fourth_label_size)
 #' @param table Dataframe with starts/ends and categories.
 #' @param cfgout Master configuration file to write.
 #' @param chr Name of the chromosome.
-#' @param outer Floating point radius of the circle into which to place the plus-strand data.
+#' @param outer Floating point radius of the circle into which to place the
+#'   plus-strand data.
 #' @param width Radial width of each tile.
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @param acol A color: RNA processing and modification.
@@ -305,12 +317,14 @@ fourth_color, fourth_show_label, fourth_label_size)
 #' @export
 circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr1",
                               outer=1.0, width=0.08, spacing=0.0,
-                              acol="orange", bcol="reds-9-seq", ccol="yellow", dcol="vlpurple",
-                              ecol="vlgreen", fcol="dpblue", gcol="vlgreen", hcol="vlpblue",
-                              icol="vvdpgreen", jcol="dpred", kcol="orange", lcol="vvlorange",
-                              mcol="dpgreen", ncol="vvlpblue", ocol="vvlgreen", pcol="vvdpred",
-                              qcol="ylgn-3-seq", rcol="vlgrey", scol="grey", tcol="vlpurple",
-                              ucol="greens-3-seq", vcol="vlred", wcol="vvdppurple", xcol="black",
+                              acol="orange", bcol="reds-9-seq", ccol="yellow",
+                              dcol="vlpurple", ecol="vlgreen", fcol="dpblue",
+                              gcol="vlgreen", hcol="vlpblue", icol="vvdpgreen",
+                              jcol="dpred", kcol="orange", lcol="vvlorange",
+                              mcol="dpgreen", ncol="vvlpblue", ocol="vvlgreen",
+                              pcol="vvdpred", qcol="ylgn-3-seq", rcol="vlgrey",
+                              scol="grey", tcol="vlpurple", ucol="greens-3-seq",
+                              vcol="vlred", wcol="vvdppurple", xcol="black",
                               ycol="lred", zcol="vlpblue") {
   end_col <- "end"
   if (!is.null(table[["stop"]])) {
@@ -328,7 +342,7 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
   }
   if (is.null(table[["start"]]) | is.null(table[[end_col]]) |
       is.null(table[["strand"]]) | is.null(table[["COGFun"]])) {
-    stop("This function assumes an input table including the columns: 'start', 'stop', 'strand', and 'COGFun'")
+    stop("This function assumes columns: 'start', 'stop', 'strand', and 'COGFun'")
   }
   plus_cfg_file <- cfgout
   minus_cfg_file <- cfgout
@@ -362,17 +376,20 @@ circos_plus_minus <- function(table, cfgout="circos/conf/default.conf", chr="chr
 
   plus_file <- glue("{data_prefix}_plus_go.txt")
   message("Writing data file: ", plus_file, " with the + strand GO data.")
-  write.table(go_plus, file=plus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
+  write.table(go_plus, file=plus_file, quote=FALSE,
+              row.names=FALSE, col.names=FALSE, na="no_go")
 
   minus_file <- glue("{data_prefix}_minus_go.txt")
   message("Writing data file: ", minus_file, " with the - strand GO data.")
-  write.table(go_minus, file=minus_file, quote=FALSE, row.names=FALSE, col.names=FALSE, na="no_go")
+  write.table(go_minus, file=minus_file, quote=FALSE,
+              row.names=FALSE, col.names=FALSE, na="no_go")
 
   first_outer <- outer
   first_inner <- first_outer - width
   plus_cfg_out <- file(plus_cfg_file, open="w+")
   plus_cfg_filename <- gsub("^circos/", "", plus_file)
-  plus_cfg_string <- sprintf("## The following plot stanza describes the broad ontological categories
+  plus_cfg_string <- sprintf(
+    "## The following plot stanza describes the broad ontological categories
 ## Of genes on the plus strand.
  <plot>
   type = tile
@@ -538,7 +555,8 @@ ycol, ycol, zcol, zcol)
   second_inner <- second_outer - width
   minus_cfg_out <- file(minus_cfg_file, open="w+")
   minus_cfg_filename <- gsub("^circos/", "", minus_file)
-  minus_cfg_string <- sprintf("## The following plot stanza describes the broad ontological categories
+  minus_cfg_string <- sprintf(
+    "## The following plot stanza describes the broad ontological categories
 ## Of genes on the minus strand.
  <plot>
   type = tile
@@ -711,11 +729,13 @@ ycol, ycol, zcol, zcol)
 ## The minus strand ring extends from %sr to %sr
 <<include %s>>
 
-", first_outer, first_inner, plus_cfg_include, second_outer, second_inner, minus_cfg_include)
+", first_outer, first_inner, plus_cfg_include, second_outer, second_inner,
+  minus_cfg_include)
   cat(master_cfg_string, file=master_cfg_out, sep="")
   close(master_cfg_out)
 
-  message("Returning the inner width: ", second_inner, ".  Use it as the outer for the next ring.")
+  message("Returning the inner width: ", second_inner,
+          ".  Use it as the outer for the next ring.")
   new_outer <- second_inner - spacing
   return(new_outer)
 }
@@ -739,13 +759,15 @@ ycol, ycol, zcol, zcol)
 #'   chromosome)
 #' @param basename  Used to make unique filenames for the data/conf files.
 #' @param colors Colors of the data.
-#' @param outer Floating point radius of the circle into which to place the categorical data.
+#' @param outer Floating point radius of the circle into which to place the
+#'   categorical data.
 #' @param width Width of each tile.
-#' @param spacing Radial distance between outer, inner, and inner to whatever follows.
+#' @param spacing Radial distance between outer, inner, and inner to whatever
+#'   follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", colname="logFC",
-                        chr="chr1", basename="", colors=NULL,
+circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf",
+                        colname="logFC", chr="chr1", basename="", colors=NULL,
                         outer=0.9, width=0.08, spacing=0.0) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
@@ -793,14 +815,15 @@ circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf", co
   data_prefix <- gsub(".conf$", "", data_prefix)
   data_filename <- glue("{data_prefix}_{basename}{colname}_tile.txt")
   message("Writing data file: ", data_filename, " with the ", colname, " column.")
-  write.table(full_table, file=data_filename, quote=FALSE, row.names=FALSE, col.names=FALSE)
+  write.table(full_table, file=data_filename, quote=FALSE,
+              row.names=FALSE, col.names=FALSE)
 
   num_colors <- 1
   if (is.null(colors)) {
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
-    colors <- suppressWarnings(grDevices::colorRampPalette(
-                                            RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+    colors <- sm(grDevices::colorRampPalette(
+                              RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(colors)
@@ -959,8 +982,8 @@ circos_heatmap <- function(df, annot_df, cfgout="circos/conf/default.conf", coln
   if (is.null(colors)) {
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
-    colors <- suppressWarnings(grDevices::colorRampPalette(
-                                            RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+    colors <- sm(grDevices::colorRampPalette(
+                              RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(conditions)
@@ -1295,8 +1318,10 @@ circos_arc <- function(df, cfgout="circos/conf/default.conf", first_col="chr1", 
 #' @return The master configuration file name.
 #' @export
 circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band_url=NULL) {
-  message("This assumes you have a colors.conf in circos/colors/ and fonts.conf in circos/fonts/")
-  message("It also assumes you have conf/ideogram.conf, conf/ticks.conf, and conf/housekeeping.conf")
+  message("This assumes you have a colors.conf in circos/colors/ ",
+          "and fonts.conf in circos/fonts/")
+  message("It also assumes you have conf/ideogram.conf, conf/ticks.conf, ",
+          "and conf/housekeeping.conf")
   cfgout <- glue("{conf_dir}/{name}.conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
 
@@ -1325,13 +1350,15 @@ circos_prefix <- function(name="mgas", conf_dir="circos/conf", radius=1800, band
   etc_cmd <- glue("tar -C {dirname(conf_dir)} -xavf {etc_file} 2>/dev/null 1>&2")
   system(command=etc_cmd)
 
-  ## If you want clickable ideograms, add band_url='script?start=[start]&end=[end]&label=[label]
+  ## If you want clickable ideograms, add
+  ## band_url='script?start=[start]&end=[end]&label=[label]
   ideogram_filename <- circos_ideogram(name=name, conf_dir=conf_dir, band_url=band_url)
   tick_filename <- circos_ticks(name=name, conf_dir=conf_dir)
   tick_file <- gsub(x=tick_filename, pattern="^circos/", replacement="")
 
   out <- file(cfgout, open="w+")
-  prefix_string <- sprintf("## This is the prefix of a circos configuration file written by hpgltools.
+  prefix_string <- sprintf(
+    "## This is the prefix of a circos configuration file written by hpgltools.
 <colors>
  <<include colors.conf>>
 </colors>

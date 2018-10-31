@@ -11,14 +11,17 @@ extract_abundant_genes(pairwise, according_to = "all", n = 200,
 \arguments{
 \item{pairwise}{Output from _pairwise()().}
 
-\item{according_to}{What tool(s) define 'most?'  One may use deseq, edger, limma, basic, all.}
+\item{according_to}{What tool(s) define 'most?'  One may use deseq, edger,
+limma, basic, all.}
 
 \item{n}{How many genes to pull?}
 
-\item{z}{Instead take the distribution of abundances and pull those past the given z score.}
+\item{z}{Instead take the distribution of abundances and pull those past the
+given z score.}
 
-\item{unique}{One might want the subset of unique genes in the top-n which are unique in the set
-of available conditions.  This will attempt to provide that.}
+\item{unique}{One might want the subset of unique genes in the top-n which
+are unique in the set of available conditions.  This will attempt to
+provide that.}
 
 \item{least}{Instead of the most abundant, do the least.}
 

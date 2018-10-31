@@ -11,25 +11,26 @@ write_de_table(data, type = "limma", ...)
 
 \item{type}{Which DE tool to write.}
 
-\item{...}{Parameters passed downstream, dumped into arglist and passed, notably the number
-of genes (n), the coefficient column (coef)}
+\item{...}{Parameters passed downstream, dumped into arglist and passed,
+notably the number of genes (n), the coefficient column (coef)}
 }
 \value{
-List of data frames comprising the toptable output for each coefficient, I also added a
-qvalue entry to these toptable() outputs.
+List of data frames comprising the toptable output for each
+coefficient, I also added a qvalue entry to these toptable() outputs.
 }
 \description{
 However, this will do a couple of things to make one's life easier:
 \enumerate{
-\item Make a list of the output, one element for each comparison of the contrast matrix.
+\item Make a list of the output, one element for each comparison of the
+contrast matrix.
 \item Write out the results() output for them in separate sheets in excel.
-\item Since I have been using qvalues a lot for other stuff, add a column for them.
+\item Since I have been using qvalues a lot for other stuff, add a column.
 }
 }
 \details{
 Tested in test_24deseq.R
-Rewritten in 2016-12 looking to simplify combine_de_tables().  That function is far too big,
-This should become a template for that.
+Rewritten in 2016-12 looking to simplify combine_de_tables().  That function
+is far too big, this should become a template for that.
 }
 \examples{
 \dontrun{

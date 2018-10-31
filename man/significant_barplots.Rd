@@ -2,8 +2,8 @@
 % Please edit documentation in R/de_plots.r
 \name{significant_barplots}
 \alias{significant_barplots}
-\title{Given the set of significant genes from combine_de_tables(), provide a view of how many are
-significant up/down.}
+\title{Given the set of significant genes from combine_de_tables(), provide a view
+of how many are significant up/down.}
 \usage{
 significant_barplots(combined, lfc_cutoffs = c(0, 1, 2),
   invert = FALSE, p = 0.05, z = NULL, p_type = "adj",
@@ -12,8 +12,8 @@ significant_barplots(combined, lfc_cutoffs = c(0, 1, 2),
 \arguments{
 \item{combined}{Result from combine_de_tables and/or extract_significant_genes().}
 
-\item{lfc_cutoffs}{Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
-followed by 2 fold and 4 fold cutoffs.}
+\item{lfc_cutoffs}{Choose 3 fold changes to define the queries.  0, 1, 2
+mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.}
 
 \item{invert}{Reverse the order of contrasts for readability?}
 
@@ -32,16 +32,18 @@ followed by 2 fold and 4 fold cutoffs.}
 \item{...}{More arguments are passed to arglist.}
 }
 \value{
-list containing the significance bar plots and some information to hopefully help interpret them.
+list containing the significance bar plots and some information to
+hopefully help interpret them.
 }
 \description{
-These plots are pretty annoying, and I am certain that this function is not well written, but it
-provides a series of bar plots which show the number of genes/contrast which are up and down
-given a set of fold changes and p-value.
+These plots are pretty annoying, and I am certain that this function is not
+well written, but it provides a series of bar plots which show the number of
+genes/contrast which are up and down given a set of fold changes and
+p-value.
 }
 \examples{
 \dontrun{
- ## Damn I wish I were smrt enough to make this elegant and easily comprehendable, but I cannot.
+ ## Damn I wish I were smrt enough to make this elegant, but I cannot.
  barplots <- significant_barplots(combined_result)
 }
 }

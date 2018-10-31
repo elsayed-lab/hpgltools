@@ -17,8 +17,8 @@ genefilter_cv_counts(count_table, cv_min = 0.01, cv_max = 1000)
 Dataframe of counts without the high/low variance genes.
 }
 \description{
-This function from genefilter removes genes surpassing a variance cutoff.  It is not therefore a
-low-count filter per se.
+This function from genefilter removes genes surpassing a variance cutoff.  It
+is not therefore a low-count filter per se.
 }
 \examples{
 \dontrun{

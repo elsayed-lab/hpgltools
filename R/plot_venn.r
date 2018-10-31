@@ -12,7 +12,8 @@
 #' @return Two element list containing the venneuler data and the plot.
 #' @seealso \pkg{venneuler}
 #' @export
-plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
+plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
+                          fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones
     venn_intersect_label <- ""
     do_doubles <- FALSE
@@ -68,11 +69,12 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
     all_centers <- all_venn[["centers"]]
 
     ## To get a number placed at the edge of each region, I must
-    ## find where on the unit circle the lm_center is with respect to the actual center in radians
-    ## If that number is calculated as deg_lm,
-    ## then I can take the ~0.9 * lm_diameter * sin(deg_lm) and 0.9 * lm_diameter * cos(deg_lm) and add it to center_lm
-    ## to get reasonable coordinates for putting the lm-only number
-    ## once I have these coordinates for each lm/tc/tb, I can average them to get lm/tc and lm/tb
+    ## find where on the unit circle the lm_center is with respect to the actual
+    ## center in radians. If that number is calculated as deg_lm,
+    ## then I can take the ~0.9 * lm_diameter * sin(deg_lm) and 0.9 *
+    ## lm_diameter * cos(deg_lm) and add it to center_lm to get reasonable
+    ## coordinates for putting the lm-only number once I have these coordinates
+    ## for each lm/tc/tb, I can average them to get lm/tc and lm/tb
     get_single_edge <- function(name) {
         message("hmm")
     }
@@ -100,7 +102,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
         single_y_edge <- all_centers[single_name, "y"] + single_y_add
         edges_x[[single_name]] <- single_x_edge
         edges_y[[single_name]] <- single_y_edge
-        text(single_x_edge, single_y_edge, glue("{single_name}:{as.character(single_value)}"))
+        text(single_x_edge, single_y_edge,
+             glue("{single_name}:{as.character(single_value)}"))
     }
 
     if (isTRUE(do_doubles)) {
@@ -147,7 +150,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, glue("{triple_name}:{as.character(triple_value)}"))
+            text(middle_x_edge, middle_y_edge,
+                 glue("{triple_name}:{as.character(triple_value)}"))
         }
     }
 
@@ -171,7 +175,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, glue("{quad_name}:{as.character(triple_value)}"))
+            text(middle_x_edge, middle_y_edge,
+                 glue("{quad_name}:{as.character(triple_value)}"))
         }
     }
     retlist <- list(

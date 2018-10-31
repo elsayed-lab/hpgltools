@@ -30,5 +30,6 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
 \item{...}{Extra arguments for extract_significant_genes() and friends.}
 }
 \description{
-Use extract_significant_genes() to find the points of agreement between limma/deseq/edger.
+Use extract_significant_genes() to find the points of agreement between
+limma/deseq/edger.
 }

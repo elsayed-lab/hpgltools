@@ -1,7 +1,8 @@
-#' Plot the average mass and expected intensity of a set of sequences given an enzyme.
+#' Plot the average mass and expected intensity of a set of sequences given an
+#' enzyme.
 #'
-#' This uses the cleaver package to generate a plot of expected intensities vs. weight
-#' for a list of protein sequences.
+#' This uses the cleaver package to generate a plot of expected intensities
+#' vs. weight for a list of protein sequences.
 #'
 #' @param pep_sequences  Set of protein sequences.
 #' @param enzyme  One of the allowed enzymes for cleaver.

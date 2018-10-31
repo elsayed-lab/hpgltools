@@ -17,8 +17,8 @@ extract_go(db, metadf = NULL, keytype = "ENTREZID")
 Dataframe of 2 columns: geneID and goID.
 }
 \description{
-Like extract_lengths above, this is primarily intended to read gene ID and GO ID mappings from a
-OrgDb/OrganismDbi object.
+Like extract_lengths above, this is primarily intended to read gene ID and GO
+ID mappings from a OrgDb/OrganismDbi object.
 }
 \seealso{
 \pkg{AnnotationDbi}

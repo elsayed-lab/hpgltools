@@ -11,12 +11,14 @@ simple_cp_enricher(sig_genes, de_table, go_db = NULL)
 
 \item{de_table}{All genes from the original analysis.}
 
-\item{go_db}{Dataframe of GO->ID matching the gene names of sig_genes to GO categories.}
+\item{go_db}{Dataframe of GO->ID matching the gene names of sig_genes to GO
+categories.}
 }
 \value{
 Table of 'enriched' categories.
 }
 \description{
-culsterProfiler::enricher provides a quick and easy enrichment analysis given a set of
-siginficant' genes and a data frame which connects each gene to a category.
+culsterProfiler::enricher provides a quick and easy enrichment analysis given
+a set of siginficant' genes and a data frame which connects each gene to a
+category.
 }

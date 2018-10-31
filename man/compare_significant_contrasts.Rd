@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_shared.r
 \name{compare_significant_contrasts}
 \alias{compare_significant_contrasts}
-\title{Implement a cleaner version of 'subset_significants' from analyses with Maria Adelaida.}
+\title{Implement a cleaner version of 'subset_significants' from analyses with Maria
+Adelaida.}
 \usage{
 compare_significant_contrasts(sig_tables, compare_by = "deseq",
   weights = FALSE, contrasts = c(1, 2, 3))

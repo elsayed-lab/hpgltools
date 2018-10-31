@@ -1,9 +1,9 @@
-#' Simplification function for gostats, in the same vein as those written for clusterProfiler,
-#' goseq, and topGO.
+#' Simplification function for gostats, in the same vein as those written for
+#' clusterProfiler, goseq, and topGO.
 #'
-#' GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be
-#' integers. As a result, I am going to have this function take a gff file in order to get the go
-#' ids and gene ids on the same page.
+#' GOstats has a couple interesting peculiarities:  Chief among them: the gene
+#' IDs must be integers. As a result, I am going to have this function take a
+#' gff file in order to get the go ids and gene ids on the same page.
 #'
 #' @param sig_genes  Input list of differentially expressed genes.
 #' @param gff  Annotation information for this genome.
@@ -30,9 +30,9 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
                            second_merge_try="locus_tag", species="fun", pcutoff=0.1,
                            conditional=FALSE, categorysize=NULL, gff_id="ID",
                            gff_type="cds", excel=NULL, ...) {
-  ## The import(gff) is being used for this primarily because it uses integers for the rownames
-  ## and because it (should) contain every gene in the 'universe' used by GOstats, as much it
-  ## ought to be pretty much perfect.
+  ## The import(gff) is being used for this primarily because it uses integers
+  ## for the rownames and because it (should) contain every gene in the
+  ## 'universe' used by GOstats, as much it ought to be pretty much perfect.
   arglist <- list(...)
   if (is.null(gff_df) & is.null(gff)) {
     stop("This requires a gff or gff database of gene IDs.")
@@ -46,14 +46,14 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
   colnames(annotation) <- gsub(pattern="length", replacement="width", x=colnames(annotation))
 
   ## This is similar to logic in ontology_goseq and is similarly problematic.
-  ## Some gff files I use have all the annotation data in the type called 'gene', others
-  ## use 'CDS', others use 'exon'. I need a robust method of finding the correct feature type
-  ## to call upon.
+  ## Some gff files I use have all the annotation data in the type called
+  ## 'gene', others use 'CDS', others use 'exon'. I need a robust method of
+  ## finding the correct feature type to call upon.
 
   ## I think there might be a weird environment collision occuring which is causing
-  ## some gostats functionality to fail when functions are called using Category:: explicitly.
-  ## Therefore I am loading these environments here and calling the functions without ::
-  ## For a further discussion of what is happening:
+  ## some gostats functionality to fail when functions are called using
+  ## Category:: explicitly. Therefore I am loading these environments here and
+  ## calling the functions without :: For a further discussion of what is happening:
   ## https://stat.ethz.ch/pipermail/bioconductor/2009-November/030348.html
   try(detach("package:GOstats", unload=TRUE), silent=TRUE)
   try(detach("package:Category", unload=TRUE), silent=TRUE)
@@ -93,10 +93,11 @@ perhaps change gff_type to make the merge work.")
   }
   ## This section is a little odd
   ## The goal is to collect a consistent set of numeric gene IDs
-  ## In addition, one must cross reference those IDs consistently with the universe of all genes.
-  ## Thus in a few linues I will be doing a merge of all genes against the sig_genes and
-  ## another merge of the gene<->go mappings, finally extracting the portions of the resulting
-  ## dataframe into a format suitable for casting as a GOFrame/GOAllFrame.
+  ## In addition, one must cross reference those IDs consistently with the
+  ## universe of all genes. Thus in a few linues I will be doing a merge of all
+  ## genes against the sig_genes and another merge of the gene<->go mappings,
+  ## finally extracting the portions of the resulting dataframe into a format
+  ## suitable for casting as a GOFrame/GOAllFrame.
   colnames(universe) <- c("geneid", "width")
   universe[["id"]] <- rownames(universe)
   universe <- universe[complete.cases(universe), ]
@@ -130,11 +131,11 @@ perhaps change gff_type to make the merge work.")
                                      setType=GSEABase::GOCollection())
   ## 20180528: I am getting some odd errors when performing these tests:
   ## 'argument "go_id" is missing, with no default.
-  ## This is doubly strange, as if I rerun the failing function with no change, it passes
-  ## without error/warning.  Thus I am thinking to wrap these in silent try() blocks to stop
-  ## these peculiar shenanigans.  hmm it appears to also be when I call summary().
-  ## This suggests to me that it might be a bigger problem than I realized.
-  ## The answer appears to be here:
+  ## This is doubly strange, as if I rerun the failing function with no change,
+  ## it passes without error/warning.  Thus I am thinking to wrap these in
+  ## silent try() blocks to stop these peculiar shenanigans.  hmm it appears to
+  ## also be when I call summary(). This suggests to me that it might be a
+  ## bigger problem than I realized. The answer appears to be here:
   ## https://support.bioconductor.org/p/108656/
   mf_over <- bp_over <- cc_over <- NULL
   mf_under <- bp_under <- cc_under <- NULL
@@ -320,12 +321,18 @@ perhaps change gff_type to make the merge work.")
     bp_under_sig <- NULL
   }
 
-  gostats_p_mf_over <- try(plot_histogram(mf_over_table[["Pvalue"]], bins=20), silent=TRUE)
-  gostats_p_mf_under <- try(plot_histogram(mf_under_table[["Pvalue"]], bins=20), silent=TRUE)
-  gostats_p_bp_over <- try(plot_histogram(bp_over_table[["Pvalue"]], bins=20), silent=TRUE)
-  gostats_p_bp_under <- try(plot_histogram(bp_under_table[["Pvalue"]], bins=20), silent=TRUE)
-  gostats_p_cc_over <- try(plot_histogram(cc_over_table[["Pvalue"]], bins=20), silent=TRUE)
-  gostats_p_cc_under <- try(plot_histogram(cc_under_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_mf_over <- try(plot_histogram(
+    mf_over_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_mf_under <- try(plot_histogram(
+    mf_under_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_bp_over <- try(plot_histogram(
+    bp_over_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_bp_under <- try(plot_histogram(
+    bp_under_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_cc_over <- try(plot_histogram(
+    cc_over_table[["Pvalue"]], bins=20), silent=TRUE)
+  gostats_p_cc_under <- try(plot_histogram(
+    cc_under_table[["Pvalue"]], bins=20), silent=TRUE)
 
   tables <- list(
     "mf_over_all" = mf_over_table,

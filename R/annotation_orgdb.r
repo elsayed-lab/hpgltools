@@ -32,9 +32,10 @@
 #' }
 #' @author atb
 #' @export
-load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, keytype="ensembl",
-                                   strand_column="cdsstrand", start_column="cdsstart",
-                                   end_column="cdsend",  chromosome_column="cdschrom",
+load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
+                                   keytype="ensembl", strand_column="cdsstrand",
+                                   start_column="cdsstart", end_column="cdsend",
+                                   chromosome_column="cdschrom",
                                    type_column="gene_type", name_column="cdsname",
                                    fields=NULL, sum_exon_widths=FALSE) {
   if (is.null(orgdb)) {
@@ -129,8 +130,10 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
                                     keytype=keytype,
                                     columns=chosen_fields))
   if (class(gene_info) == "try-error") {
-    message("Select statement failed, this is most commonly because there is not a provided join between the transcript table and others.")
-    message("Thus it says some stupid crap about 'please add gtc to the interpolator' which I think references select-method.R in GenomicFeatures.")
+    message("Select statement failed, this is commonly because there is no join",
+            " between the transcript table and others.")
+    message("Thus it says some stupid crap about 'please add gtc to the interpolator'",
+            " which I think references select-method.R in GenomicFeatures.")
     message("So, try replacing columns with stuff like 'tx*' with 'cds*'?")
     stop()
   }

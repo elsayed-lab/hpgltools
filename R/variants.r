@@ -164,7 +164,8 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   for (chr in names(data_by_chr)) {
     snps <- rownames(data_by_chr[[chr]][["medians"]])
     num_snps <- length(snps)
-    last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$", replacement="\\1", x=snps)))
+    last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+                                         replacement="\\1", x=snps)))
     snp_density <- num_snps / as.numeric(last_position)
     density_by_chr[[chr]] <- snp_density
     for (inter in names(data_by_chr[[chr]][["intersections"]])) {
@@ -269,7 +270,8 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   }
 
   ## Now I have a data table of rownames and percentages
-  ## Next I need to cross reference these against the coverage by position, ergo I must split out the rownames
+  ## Next I need to cross reference these against the coverage by position, ergo
+  ## I must split out the rownames
   pileup_info <- Rsamtools::PileupFiles(bam_filenames)
   ## Taken directly from the Rsamtools manual
   queries <- glue("{snp_counts[['species']]}_{snp_counts[['chromosome']]}:\\
@@ -315,8 +317,9 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   ##  seqnames (chromosome), pos (position(s)), info (coverage by file)
   ## The piece of information we want to put into snp_dt is therefore:
   ## coverage_list <- result[[snp_dt_row]][[info]][2, ]
-  ## coverage_list is in turn a character list named by filename (which begins with the sample ID)
-  ## We will therefore extract the hpglID from it and the coverage for every sample
+  ## coverage_list is in turn a character list named by filename (which begins
+  ## with the sample ID) We will therefore extract the hpglID from it and the
+  ## coverage for every sample.
 
   ## I am not sure if the following line is correct, but I think it is -- either
   ## way, snp_dt is missing without it.  Somewhere along the way I forgot to
@@ -336,7 +339,7 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   ## unused_var <- try(lapply(coverage_result, snp_extract_coverage))
   unused_var <- try(parallel::mclapply(coverage_result, snp_extract_coverage))
   if (class(unused_var) == "try-error") {
-    message("There was an error when creating the data table of coverage, hopefully the data is salvageable.")
+    message("There was an error when creating the data table of coverage.")
   }
   new_dt <- as.data.table(new_dt)
   new_dt[["rownames"]] <- snp_dt[["rownames"]]
@@ -422,7 +425,8 @@ snps_vs_intersections <- function(expt, snp_result) {
   na_starts <- is.na(features[["start"]])
   features <- features[!na_starts, ]
   features[["end"]] <- as.numeric(features[["end"]])
-  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$", replacement="\\1", x=features[["seqnames"]])
+  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$",
+                                 replacement="\\1", x=features[["seqnames"]])
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 
   set_names <- snp_result[["set_names"]]

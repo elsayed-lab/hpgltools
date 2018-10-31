@@ -10,7 +10,8 @@ edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
   force = FALSE, edger_method = "long", ...)
 }
 \arguments{
-\item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing data, normalization
+state, etc.}
 
 \item{conditions}{Factor of conditions in the experiment.}
 
@@ -18,15 +19,16 @@ edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_cond}{Include condition in the experimental model?}
 
-\item{model_batch}{Include batch in the model?  In most cases this is a good thing(tm).}
+\item{model_batch}{Include batch in the model?  In most cases this is a good
+thing(tm).}
 
 \item{model_intercept}{Use an intercept containing model?}
 
 \item{alt_model}{Alternate experimental model to use?}
 
-\item{extra_contrasts}{Add some extra contrasts to add to the list of pairwise contrasts.
-This can be pretty neat, lets say one has conditions A,B,C,D,E
-and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+\item{extra_contrasts}{Add some extra contrasts to add to the list of
+pairwise contrasts. This can be pretty neat, lets say one has conditions
+A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
@@ -34,7 +36,8 @@ de_vs_cb = (E-D)-(C-B),"}
 
 \item{force}{Force edgeR to accept inputs which it should not have to deal with.}
 
-\item{edger_method}{I found a couple/few ways of doing edger in the manual, choose with this.}
+\item{edger_method}{I found a couple/few ways of doing edger in the manual,
+choose with this.}
 
 \item{...}{The elipsis parameter is fed to write_edger() at the end.}
 }
@@ -51,17 +54,19 @@ This function performs the set of possible pairwise comparisons using EdgeR.
 }
 \details{
 Tested in test_26de_edger.R
-Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
-provided data set.  The details are of course slightly different when using EdgeR.  Thus, this
-uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
-for EdgeR (if one normalized the data, it will attempt to revert to raw counts, for example).
-It continues on to extract the conditions and batches in the data, choose an appropriate
-experimental model, and run the EdgeR analyses as described in the manual.  It defaults to using
-an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
-use sva to estimate the surrogates, and append them to the experimental design.  The edger_method
-parameter may be used to apply different EdgeR code paths as outlined in the manual.  If you
-want to play with non-standard data, the force argument will round the data and shoe-horn it into
-EdgeR.
+Like the other _pairwise() functions, this attempts to perform all pairwise
+contrasts in the provided data set.  The details are of course slightly
+different when using EdgeR.  Thus, this uses the function
+choose_binom_dataset() to try to ensure that the incoming data is appropriate
+for EdgeR (if one normalized the data, it will attempt to revert to raw
+counts, for example). It continues on to extract the conditions and batches
+in the data, choose an appropriate experimental model, and run the EdgeR
+analyses as described in the manual.  It defaults to using an experimental
+batch factor, but will accept a string like 'sva' instead, in which case it
+will use sva to estimate the surrogates, and append them to the experimental
+design.  The edger_method parameter may be used to apply different EdgeR code
+paths as outlined in the manual.  If you want to play with non-standard data,
+the force argument will round the data and shoe-horn it into EdgeR.
 }
 \examples{
 \dontrun{

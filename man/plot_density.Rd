@@ -4,16 +4,16 @@
 \alias{plot_density}
 \title{Create a density plot, showing the distribution of each column of data.}
 \usage{
-plot_density(data, colors = NULL, sample_names = NULL,
+plot_density(data, colors = NULL, expt_names = NULL,
   position = "identity", direct = TRUE, fill = NULL, title = NULL,
-  scale = NULL, colors_by = "condition", ...)
+  scale = NULL, colors_by = "condition", label_chars = 10, ...)
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}
 
 \item{colors}{Color scheme to use.}
 
-\item{sample_names}{Names of the samples.}
+\item{expt_names}{Names of the samples.}
 
 \item{position}{How to place the lines, either let them overlap (identity), or stack them.}
 
@@ -33,8 +33,9 @@ plot_density(data, colors = NULL, sample_names = NULL,
 ggplot2 density plot!
 }
 \description{
-Density plots and boxplots are cousins and provide very similar views of data distributions.
-Some people like one, some the other.  I think they are both colorful and fun!
+Density plots and boxplots are cousins and provide very similar views of data
+distributions. Some people like one, some the other.  I think they are both
+colorful and fun!
 }
 \examples{
 \dontrun{

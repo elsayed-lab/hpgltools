@@ -10,8 +10,8 @@ extract_siggenes(...)
 \item{...}{The parameters for extract_significant_genes()}
 }
 \value{
-It should return a reminder for me to remember my function names or change them to
-something not stupid.
+It should return a reminder for me to remember my function names or
+change them to something not stupid.
 }
 \description{
 Alias for extract_significant_genes because I am dumb.

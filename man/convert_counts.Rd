@@ -11,19 +11,21 @@ convert_counts(data, convert = "raw", ...)
 
 \item{convert}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
 
-\item{...}{Options I might pass from other functions are dropped into arglist, used by rpkm (gene
-lengths) and divide_seq (genome, pattern to match, and annotation type).}
+\item{...}{Options I might pass from other functions are dropped into
+arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
+match, and annotation type).}
 }
 \value{
 Dataframe of cpm/rpkm/whatever(counts)
 }
 \description{
-I should probably tell it to also handle a simple df/vector/list of gene lengths, but I
-haven't. cp_seq_m is a cpm conversion of the data followed by a rp-ish conversion which
-normalizes by the number of the given oligo.  By default this oligo is 'TA' because it was used
-for tnseq which should be normalized by the number of possible transposition sites by mariner.
-It could, however, be used to normalize by the number of methionines, for example -- if one
-wanted to do such a thing.
+I should probably tell it to also handle a simple df/vector/list of gene
+lengths, but I  haven't. cp_seq_m is a cpm conversion of the data followed by
+a rp-ish conversion which normalizes by the number of the given oligo.  By
+default this oligo is 'TA' because it was used for tnseq which should be
+normalized by the number of possible transposition sites by mariner. It
+could, however, be used to normalize by the number of methionines, for
+example -- if one wanted to do such a thing.
 }
 \examples{
 \dontrun{

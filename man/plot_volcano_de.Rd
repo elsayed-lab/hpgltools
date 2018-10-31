@@ -32,8 +32,9 @@ adjusted p-value.}
 
 \item{line_position}{Put the significance lines above or below the dots?}
 
-\item{logfc_cutoff}{Cutoff defining the minimum/maximum fold change for interesting.  This is log,
-so I went with +/- 0.8 mostly arbitrarily as the default.}
+\item{logfc_cutoff}{Cutoff defining the minimum/maximum fold change for
+interesting.  This is log, so I went with +/- 0.8 mostly arbitrarily as the
+default.}
 
 \item{p_col}{Which column contains the p-value data?}
 
@@ -50,17 +51,20 @@ so I went with +/- 0.8 mostly arbitrarily as the default.}
 \item{...}{I love parameters!}
 }
 \value{
-Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
-log(fold change).  The cutoff values are delineated with lines and mark the boundaries
-between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
+Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
+with respect to log(fold change).  The cutoff values are delineated with
+lines and mark the boundaries between 'significant' and not.  This will
+make a fun clicky googleVis graph if requested.
 }
 \description{
-Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
-differentially expressed genes.  In the case of a volcano plot, it places the -log10 of the
-p-value estimate on the y-axis and the fold-change between conditions on the x-axis.  Here is a
-neat snippet from wikipedia: "The concept of volcano plot can be generalized to other
-applications, where the x-axis is related to a measure of the strength of a statistical signal,
-and y-axis is related to a measure of the statistical significance of the signal."
+Volcano plots and MA plots provide quick an easy methods to view the set of
+(in)significantly differentially expressed genes.  In the case of a volcano
+plot, it places the -log10 of the p-value estimate on the y-axis and the
+fold-change between conditions on the x-axis.  Here is a neat snippet from
+wikipedia: "The concept of volcano plot can be generalized to other
+applications, where the x-axis is related to a measure of the strength of a
+statistical signal, and y-axis is related to a measure of the statistical
+significance of the signal."
 }
 \examples{
 \dontrun{

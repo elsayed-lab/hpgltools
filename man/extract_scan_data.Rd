@@ -11,7 +11,8 @@ extract_scan_data(file, id = NULL, write_acquisitions = TRUE)
 
 \item{id}{An id to give the result.}
 
-\item{write_acquisitions}{If a filename is provided, write a tab separated table of windows.}
+\item{write_acquisitions}{If a filename is provided, write a tab separated
+table of windows.}
 }
 \value{
 List containing a table of scan and precursor data.

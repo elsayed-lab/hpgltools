@@ -2,7 +2,8 @@
 #'
 #' Yay pretty colors and shapes!
 #'
-#' @param pairwise  The result from all_pairwise(), which should be changed to handle other invocations too.
+#' @param pairwise  The result from all_pairwise(), which should be changed to
+#'   handle other invocations too.
 #' @param type  Type of table to use: deseq, edger, limma, basic.
 #' @param table  Result from edger to use, left alone it chooses the first.
 #' @param logfc  What logFC to use for the MA plot horizontal lines.
@@ -61,7 +62,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   p_col <- NULL
   all_tables <- NULL
   if (table_source == "deseq_pairwise") {
-    expr_col <- "baseMean"  ## This column will need to be changed from base 10 to log scale.
+    ## This column will need to be changed from base 10 to log scale.
+    expr_col <- "baseMean"
     fc_col <- "logFC"  ## The most common
     p_col <- "adj.P.Val"
     all_tables <- pairwise[["all_tables"]]
@@ -186,18 +188,24 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 
 #' Perform a coefficient scatter plot of a limma/deseq/edger/basic table.
 #'
-#' Plot the gene abundances for two coefficients in a differential expression comparison.
-#' By default, genes past 1.5 z scores from the mean are colored red/green.
+#' Plot the gene abundances for two coefficients in a differential expression
+#' comparison. By default, genes past 1.5 z scores from the mean are colored
+#' red/green.
 #'
-#' @param output  Result from the de_ family of functions, all_pairwise, or combine_de_tables().
+#' @param output  Result from the de_ family of functions, all_pairwise, or
+#'   combine_de_tables().
 #' @param toptable  Chosen table to query for abundances.
 #' @param type  Query limma, deseq, edger, or basic outputs.
 #' @param x  The x-axis column to use, either a number of name.
 #' @param y  The y-axis column to use.
-#' @param z  Define the range of genes to color (FIXME: extend this to p-value and fold-change).
-#' @param p  Set a p-value cutoff for coloring the scatter plot (currently not supported).
-#' @param lfc  Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)
-#' @param n  Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).
+#' @param z  Define the range of genes to color (FIXME: extend this to p-value
+#'   and fold-change).
+#' @param p  Set a p-value cutoff for coloring the scatter plot (currently not
+#'   supported).
+#' @param lfc  Set a fold-change cutoff for coloring points in the scatter plot
+#'   (currently not supported.)
+#' @param n  Set a top-n fold-change for coloring the points in the scatter plot
+#'   (this should work, actually).
 #' @param loess  Add a loess estimation (This is slow.)
 #' @param alpha  How see-through to make the dots.
 #' @param color_low  Color for the genes less than the mean.
@@ -208,7 +216,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
-#'  scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")
+#'  scatter_plot <- extract_coefficient_scatter(pairwise_output,
+#'                                              type="deseq", x="uninfected", y="infected")
 #' }
 #' @export
 extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1, y=2, z=1.5,
@@ -281,19 +290,6 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     coefficient_df <- coefficients[, c(x, y)]
   } else if (type == "deseq") {
     coefficient_df <- coefficients[, c(xname, yname)]
-    ##first_df <- output[["coefficients"]][[xname]]
-    ##first_df[["delta"]] <- log2(as.numeric(first_df[["baseMean"]])) + first_df[["log2FoldChange"]]
-    ##second_df <- output[["coefficients"]][[yname]]
-    ##second_df[["delta"]] <- log2(as.numeric(second_df[["baseMean"]])) + second_df[["log2FoldChange"]]
-    ##first_col <- first_df[, c("baseMean", "log2FoldChange", "delta")]
-    ##colnames(first_col) <- c("mean.1", "lfc.1", xname)
-    ##second_col <- second_df[, c("baseMean", "log2FoldChange", "delta")]
-    ##colnames(second_col) <- c("mean.2", "fc.2", yname)
-    ##coefficient_df <- merge(first_col, second_col, by="row.names")
-    ##rownames(coefficient_df) <- coefficient_df[["Row.names"]]
-    ##coefficient_df <- coefficient_df[-1]
-    ##coefficient_df <- coefficient_df[, c(xname, yname)]
-    ##coefficient_df[is.na(coefficient_df)] <- 0
   } else if (type == "basic") {
     coefficient_df <- output[["medians"]]
     coefficient_df <- coefficient_df[, c(xname, yname)]
@@ -315,12 +311,11 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 
 #' Create venn diagrams describing how well deseq/limma/edger agree.
 #'
-#' The sets of genes provided by limma and friends would ideally always agree,  but they do not.
-#' Use this to see out how much the (dis)agree.
+#' The sets of genes provided by limma and friends would ideally always agree,
+#' but they do not. Use this to see out how much the (dis)agree.
 #'
 #' @param table Which table to query?
 #' @param adjp  Use adjusted p-values
-#' @param euler  Perform a euler plot
 #' @param p  p-value cutoff, I forget what for right now.
 #' @param lfc  What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
@@ -331,14 +326,14 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #'  bunchovenns <- de_venn(pairwise_result)
 #' }
 #' @export
-de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
+de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
   arglist <- list(...)
   if (!is.null(table[["data"]])) {
     ## Then this is the result of combine_de
     retlist <- list()
     for (i in 1:length(names(table[["data"]]))) {
       a_table <- table[["data"]][[i]]
-      retlist[[i]] <- de_venn(a_table, adjp=adjp, euler=euler, p=p, lfc=lfc, arglist)
+      retlist[[i]] <- de_venn(a_table, adjp=adjp, p=p, lfc=lfc, arglist)
     }
     return(retlist)
   }
@@ -367,9 +362,12 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
     edger_p <- "edger_adjp"
   }
 
-  limma_sig <- sm(get_sig_genes(table, lfc=lfc, column="limma_logfc", p_column=limma_p, p=p))
-  edger_sig <- sm(get_sig_genes(table, lfc=lfc, column="edger_logfc", p_column=edger_p, p=p))
-  deseq_sig <- sm(get_sig_genes(table, lfc=lfc, column="deseq_logfc", p_column=deseq_p, p=p))
+  limma_sig <- sm(get_sig_genes(table, lfc=lfc,
+                                column="limma_logfc", p_column=limma_p, p=p))
+  edger_sig <- sm(get_sig_genes(table, lfc=lfc,
+                                column="edger_logfc", p_column=edger_p, p=p))
+  deseq_sig <- sm(get_sig_genes(table, lfc=lfc,
+                                column="deseq_logfc", p_column=deseq_p, p=p))
   comp_up <- combine_tables(deseq_sig[["up_genes"]],
                             edger_sig[["up_genes"]],
                             limma_sig[["up_genes"]])
@@ -377,56 +375,20 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
                               edger_sig[["down_genes"]],
                               limma_sig[["down_genes"]])
 
-  up_d <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-  up_e <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-  up_l <- sum(is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-  up_de <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & is.na(comp_up[["limma"]]))
-  up_dl <- sum(!is.na(comp_up[["deseq"]]) & is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-  up_el <- sum(is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
-  up_del <- sum(!is.na(comp_up[["deseq"]]) & !is.na(comp_up[["edger"]]) & !is.na(comp_up[["limma"]]))
+  up_venn_lst <- list(
+    "deseq" = comp_up[["deseq"]],
+    "edger" = comp_up[["edger"]],
+    "limma" = comp_up[["limma"]])
+  down_venn_lst <- list(
+    "deseq" = comp_down[["deseq"]],
+    "edger" = comp_down[["edger"]],
+    "limma" = comp_down[["limma"]])
 
-  down_d <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-  down_e <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-  down_l <- sum(is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-  down_de <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & is.na(comp_down[["limma"]]))
-  down_dl <- sum(!is.na(comp_down[["deseq"]]) & is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-  down_el <- sum(is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-  down_del <- sum(!is.na(comp_down[["deseq"]]) & !is.na(comp_down[["edger"]]) & !is.na(comp_down[["limma"]]))
-
-  up_ones <- c("d" = up_d, "e" = up_e, "l" = up_l)
-  up_twos <- c("d&e" = up_de, "d&l" = up_dl, "e&l" = up_el)
-  up_threes <- c("d&e&l" = up_del)
-  up_fun <- up_venneuler <- up_venn_data <- NULL
-  if (isTRUE(euler)) {
-    tt <- sm(please_install("venneuler"))
-    up_fun <- plot_fun_venn(ones=up_ones, twos=up_twos, threes=up_threes)
-    up_venneuler <- up_fun[["plot"]]
-    up_venn_data <- up_fun[["data"]]
-  }
-  tt <- sm(please_install("js229/Vennerable"))
-  up_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                              Weight = c(0, up_d, up_e, up_de,
-                                         up_l, up_dl, up_el,
-                                         up_del))
+  up_venn <- Vennerable::Venn(Sets=up_venn_lst)
+  down_venn <- Vennerable::Venn(Sets=down_venn_lst)
   up_res <- Vennerable::plot(up_venn, doWeights=FALSE)
-  ## up_res <- plot(up_venn, doWeights=FALSE)
   up_venn_noweight <- grDevices::recordPlot()
-
-  down_ones <- c("d" = down_d, "e" = down_e, "l" = down_l)
-  down_twos <- c("d&e" = down_de, "d&l" = down_dl, "e&l" = down_el)
-  down_threes <- c("d&e&l" = down_del)
-  down_fun <- down_venneuler <- down_venn_data <- NULL
-  if (isTRUE(euler)) {
-    down_fun <- plot_fun_venn(ones=down_ones, twos=down_twos, threes=down_threes)
-    down_venneuler <- down_fun[["plot"]]
-    down_venn_data <- down_fun[["data"]]
-  }
-  down_venn <- Vennerable::Venn(SetNames = c("d", "e", "l"),
-                                Weight = c(0, down_d, down_e, down_de,
-                                           down_l, down_dl, down_el,
-                                           down_del))
   down_res <- Vennerable::plot(down_venn, doWeights=FALSE)
-  ## down_res <- plot(down_venn, doWeights=FALSE)
   down_venn_noweight <- grDevices::recordPlot()
 
   retlist <- list(
@@ -439,12 +401,13 @@ de_venn <- function(table, adjp=FALSE, euler=FALSE, p=0.05, lfc=0, ...) {
   return(retlist)
 }
 
-#' Given a DE table with fold changes and p-values, show how 'significant' changes with changing cutoffs.
+#' Given a DE table with fold changes and p-values, show how 'significant'
+#' changes with changing cutoffs.
 #'
-#' Sometimes one might want to know how many genes are deemed significant while shifting the bars
-#' which define significant.  This provides that metrics as a set of tables of numbers of
-#' significant up/down genes when p-value is held constant, as well as number when fold-change is
-#' held constant.
+#' Sometimes one might want to know how many genes are deemed significant while
+#' shifting the bars which define significant.  This provides that metrics as a
+#' set of tables of numbers of significant up/down genes when p-value is held
+#' constant, as well as number when fold-change is held constant.
 #'
 #' @param table DE table to examine.
 #' @param methods  List of methods to use when plotting.
@@ -663,8 +626,10 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged[p2_idx, "state"] <- "second"
   merged[["state"]] <- as.factor(merged[["state"]])
 
-  first_table_colname <- glue("Table: {first_table}, Type: {first_type}, column: {first_column}")
-  second_table_colname <- glue("Table: {second_table}, Type: {second_type}, column: {second_column}")
+  first_table_colname <- glue(
+    "Table: {first_table}, Type: {first_type}, column: {first_column}")
+  second_table_colname <- glue(
+    "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data=merged,
                 aes_string(color="state", fill="state",
@@ -694,16 +659,17 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   return(retlist)
 }
 
-#' Given the set of significant genes from combine_de_tables(), provide a view of how many are
-#' significant up/down.
+#' Given the set of significant genes from combine_de_tables(), provide a view
+#' of how many are significant up/down.
 #'
-#' These plots are pretty annoying, and I am certain that this function is not well written, but it
-#' provides a series of bar plots which show the number of genes/contrast which are up and down
-#' given a set of fold changes and p-value.
+#' These plots are pretty annoying, and I am certain that this function is not
+#' well written, but it provides a series of bar plots which show the number of
+#' genes/contrast which are up and down given a set of fold changes and
+#' p-value.
 #'
 #' @param combined  Result from combine_de_tables and/or extract_significant_genes().
-#' @param lfc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2 mean greater/less than 0
-#'     followed by 2 fold and 4 fold cutoffs.
+#' @param lfc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2
+#'   mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.
 #' @param invert  Reverse the order of contrasts for readability?
 #' @param p  Chosen p-value cutoff.
 #' @param z  Choose instead a z-score cutoff.
@@ -712,11 +678,12 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #' @param order  Choose a specific order for the plots.
 #' @param maximum  Set a specific limit on the number of genes on the x-axis.
 #' @param ...  More arguments are passed to arglist.
-#' @return list containing the significance bar plots and some information to hopefully help interpret them.
+#' @return list containing the significance bar plots and some information to
+#'   hopefully help interpret them.
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
-#'  ## Damn I wish I were smrt enough to make this elegant and easily comprehendable, but I cannot.
+#'  ## Damn I wish I were smrt enough to make this elegant, but I cannot.
 #'  barplots <- significant_barplots(combined_result)
 #' }
 #' @export

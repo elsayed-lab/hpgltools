@@ -9,10 +9,12 @@ normalize_counts(data, design = NULL, norm = "raw", ...)
 \arguments{
 \item{data}{Matrix of count data.}
 
-\item{design}{Dataframe describing the experimental design. (conditions/batches/etc)}
+\item{design}{Dataframe describing the experimental
+design. (conditions/batches/etc)}
 
-\item{norm}{Normalization to perform: 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep
-wishy-washing on whether design is a required argument.}
+\item{norm}{Normalization to perform:
+'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
+whether design is a required argument.}
 
 \item{...}{More arguments might be necessary.}
 }
@@ -20,7 +22,8 @@ wishy-washing on whether design is a required argument.}
 Dataframe of normalized(counts)
 }
 \description{
-This provides shortcut interfaces for normalization functions from deseq2/edger and friends.
+This provides shortcut interfaces for normalization functions from
+deseq2/edger and friends.
 }
 \examples{
 \dontrun{

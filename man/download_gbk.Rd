@@ -12,7 +12,8 @@ download_gbk(accessions = "AE009949", write = TRUE)
 \item{write}{Write the files?  Otherwise return a list of the strings}
 }
 \value{
-A list containing the number of files downloaded and the character strings acquired.
+A list containing the number of files downloaded and the character
+strings acquired.
 }
 \description{
 This takes and downloads genbank accessions.

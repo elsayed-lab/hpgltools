@@ -19,8 +19,8 @@ set_expt_batches(expt, fact, ids = NULL, ...)
 The original expt with some new metadata.
 }
 \description{
-When exploring differential analyses, it might be useful to play with the conditions/batches of
-the experiment.  Use this to make that easier.
+When exploring differential analyses, it might be useful to play with the
+conditions/batches of the experiment.  Use this to make that easier.
 }
 \examples{
 \dontrun{

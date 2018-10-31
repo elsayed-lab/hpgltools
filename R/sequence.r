@@ -1,4 +1,5 @@
-gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservice="tritrypdb", ...) {
+gather_eupath_utrs_padding <- function(species_name="Leishmania major",
+                                       webservice="tritrypdb", ...) {
   metadata <- sm(download_eupath_metadata(webservice=webservice))
   pkg_names <- get_eupath_pkgnames(species=species_name, metadata=metadata)
   bsgenome_name <- pkg_names[["bsgenome"]]
@@ -27,7 +28,8 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservi
   return(result)
 }
 
-#' Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3' padded sequence.
+#' Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3'
+#' padded sequence.
 #'
 #' For some species, we do not have a fully realized set of UTR boundaries, so
 #' it can be useful to query some arbitrary and consistent amount of sequence
@@ -49,10 +51,11 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", webservi
 #' @param padding  Return this number of nucleotides for each gene.
 #' @param ... Arguments passed to child functions (I think none currently).
 #' @return List of 2 elements, the 5' and 3' regions.
-gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid", chr_column="chromosome",
-                                start_column="start", end_column="end", strand_column="strand",
-                                type_column="annot_gene_type", gene_type="protein coding",
-                                padding=120, ...) {
+gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid",
+                                chr_column="chromosome", start_column="start",
+                                end_column="end", strand_column="strand",
+                                type_column="annot_gene_type",
+                                gene_type="protein coding", padding=120, ...) {
 
   if (!is.null(type_column)) {
     ## Pull the entries which are of the desired type.
@@ -65,14 +68,16 @@ gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid", chr_colum
   ## this does not yet take into account the strand information.
   smaller <- GenomicRanges::GRanges(
                               seqnames=S4Vectors::Rle(annot_df[[chr_column]]),
-                              ranges=IRanges::IRanges(start=annot_df[[start_column]] - padding,
-                                                      end=annot_df[[end_column]] + 2),
+                              ranges=IRanges::IRanges(
+                                                start=annot_df[[start_column]] - padding,
+                                                end=annot_df[[end_column]] + 2),
                               strand=S4Vectors::Rle(annot_df[[strand_column]]),
                               name=S4Vectors::Rle(annot_df[[name_column]]))
   larger <- GenomicRanges::GRanges(
                              seqnames=S4Vectors::Rle(annot_df[[chr_column]]),
-                             ranges=IRanges::IRanges(start=annot_df[[start_column]],
-                                                     end=annot_df[[end_column]] + padding),
+                             ranges=IRanges::IRanges(
+                                               start=annot_df[[start_column]],
+                                               end=annot_df[[end_column]] + padding),
                              strand=S4Vectors::Rle(annot_df[[strand_column]]),
                              name=S4Vectors::Rle(annot_df[[name_column]]))
   smaller_seqstrings <- BSgenome::getSeq(bsgenome, smaller)
@@ -140,14 +145,16 @@ gather_utrs_txdb <- function(bsgenome, fivep_utr=NULL, threep_utr=NULL,
   ## this does not yet take into account the strand information.
   fivep_ranges <- GenomicRanges::GRanges(
                                    seqnames=S4Vectors::Rle(fivep_df[[chr_column]]),
-                                   ranges=IRanges::IRanges(start=fivep_df[[start_column]],
-                                                           end=fivep_df[[end_column]] + 2),
+                                   ranges=IRanges::IRanges(
+                                                     start=fivep_df[[start_column]],
+                                                     end=fivep_df[[end_column]] + 2),
                                    strand=S4Vectors::Rle(fivep_df[[strand_column]]),
                                    name=S4Vectors::Rle(fivep_df[[name_column]]))
   threep_ranges <- GenomicRanges::GRanges(
                                    seqnames=S4Vectors::Rle(threep_df[[chr_column]]),
-                                   ranges=IRanges::IRanges(start=threep_df[[start_column]],
-                                                           end=threep_df[[end_column]] + 2),
+                                   ranges=IRanges::IRanges(
+                                                     start=threep_df[[start_column]],
+                                                     end=threep_df[[end_column]] + 2),
                                    strand=S4Vectors::Rle(threep_df[[strand_column]]),
                                    name=S4Vectors::Rle(threep_df[[name_column]]))
   fivep_seqstrings <- BSgenome::getSeq(bsgenome, fivep_ranges)

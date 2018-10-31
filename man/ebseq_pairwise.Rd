@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_ebseq.r
 \name{ebseq_pairwise}
 \alias{ebseq_pairwise}
-\title{Set up model matrices contrasts and do pairwise comparisons of all conditions using EBSeq.}
+\title{Set up model matrices contrasts and do pairwise comparisons of all conditions
+using EBSeq.}
 \usage{
 ebseq_pairwise(input = NULL, patterns = NULL, conditions = NULL,
   batches = NULL, model_cond = NULL, model_intercept = NULL,
@@ -11,7 +12,8 @@ ebseq_pairwise(input = NULL, patterns = NULL, conditions = NULL,
   norm = "median", ...)
 }
 \arguments{
-\item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing data, normalization
+state, etc.}
 
 \item{patterns}{Set of expression patterns to query.}
 

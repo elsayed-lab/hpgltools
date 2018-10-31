@@ -7,8 +7,9 @@
 #' database to find species of interest.
 #'
 #' Tested in test_70expt_spyogenes.R
-#' There is so much awesome information in microbesonline, but damn is it annoying to download.
-#' This function makes that rather easier, or so I hope at least.
+#' There is so much awesome information in microbesonline, but damn is it
+#' annoying to download. This function makes that rather easier, or so I hope at
+#' least.
 #'
 #' @param id Microbesonline ID to query.
 #' @return Dataframe containing the annotation information.
@@ -27,9 +28,6 @@ load_microbesonline_annotations <- function(id="160490") {
   species <- (titles %>% rvest::html_text())[1]
   message("The species being downloaded is: ", species)
   url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
-  ##string <- RCurl::getURL(url)
-  ##con <- textConnection(string)
-  ##  data <- readr::read_table(con, sep="\t", header=TRUE, row.names=NULL, stringsAsFactors=FALSE)
   data <- sm(readr::read_tsv(url))
   return(data)
 }
@@ -104,7 +102,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(prot)) {
-    prot_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
+    prot_url <- glue(
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
     prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
@@ -113,7 +112,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(tx)) {
-    tx_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
+    tx_url <- glue(
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
     tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
@@ -122,7 +122,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
 
   if (isTRUE(genome)) {
-    genome_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
+    genome_url <- glue(
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
     genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")

@@ -21,8 +21,9 @@ a scatterplot if it is a range, a dotplot if a factor.}
 Plot of batch vs surrogate variables as per Leek's work.
 }
 \description{
-This should make a quick df of the factors and surrogates and plot them.  Maybe it should be
-folded into plot_svfactor?  Hmm, I think first I will write this and see if it is better.
+This should make a quick df of the factors and surrogates and plot them.
+Maybe it should be folded into plot_svfactor?  Hmm, I think first I will
+write this and see if it is better.
 }
 \examples{
 \dontrun{

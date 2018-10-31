@@ -32,11 +32,11 @@ A plot and some numbers:
 }
 \description{
 This function takes as input a tab separated file from essentiality_tas.pl
-This is a perl script written to read a bam alignment of tnseq reads against a genome
-and count how many hits were observed on every TA in the given genome.
-It furthermore has some logic to tell the difference between reads which were
-observed on the forward vs. reverse strand as well as reads which appear to be on both strands
-(eg. they start and end with 'TA').
+This is a perl script written to read a bam alignment of tnseq reads against
+a genome and count how many hits were observed on every TA in the given
+genome. It furthermore has some logic to tell the difference between reads
+which were observed on the forward vs. reverse strand as well as reads which
+appear to be on both strands (eg. they start and end with 'TA').
 }
 \examples{
  \dontrun{

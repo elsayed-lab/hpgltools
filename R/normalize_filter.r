@@ -1,7 +1,8 @@
 #' Call various count filters.
 #'
-#' This calls the various filtering functions in genefilter along with suggestions made in our lab
-#' meetings; defaulting to the threshold based filter suggested by Hector.
+#' This calls the various filtering functions in genefilter along with
+#' suggestions made in our lab meetings; defaulting to the threshold based
+#' filter suggested by Hector.
 #'
 #' @param count_table Some counts to filter.
 #' @param filter Filtering method to apply (cbcb, pofa, kofa, cv right now).
@@ -173,11 +174,13 @@ simple_filter_counts <- function(count_table, threshold=2) {
 
 #' Filter low-count genes from a data set using genefilter's pOverA().
 #'
-#' I keep thinking this function is pofa... oh well.  Of the various tools in genefilter, this one
-#' to me is the most intuitive.  Take the ratio of counts/samples and make sure it is >= a score.
+#' I keep thinking this function is pofa... oh well.  Of the various tools in
+#' genefilter, this one to me is the most intuitive.  Take the ratio of
+#' counts/samples and make sure it is >= a score.
 #'
 #' @param count_table Input data frame of counts by sample.
-#' @param p Minimum proportion of each gene's counts/sample to be greater than a minimum(A).
+#' @param p Minimum proportion of each gene's counts/sample to be greater than a
+#'   minimum(A).
 #' @param A Minimum number of counts in the above proportion.
 #' @return Dataframe of counts without the low-count genes.
 #' @seealso \pkg{genefilter}
@@ -188,8 +191,8 @@ simple_filter_counts <- function(count_table, threshold=2) {
 #' }
 #' @export
 genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
-  ## genefilter has functions to work with expressionsets directly, but I think I will work merely
-  ## with tables in this.
+  ## genefilter has functions to work with expressionsets directly, but I think
+  ## I will work merely with tables in this.
   num_before <- nrow(count_table)
 
   if (class(count_table) == "ExpressionSet") {
@@ -210,8 +213,8 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 
 #' Filter genes from a dataset outside a range of variance.
 #'
-#' This function from genefilter removes genes surpassing a variance cutoff.  It is not therefore a
-#' low-count filter per se.
+#' This function from genefilter removes genes surpassing a variance cutoff.  It
+#' is not therefore a low-count filter per se.
 #'
 #' @param count_table Input data frame of counts by sample.
 #' @param cv_min Minimum coefficient of variance.
@@ -225,8 +228,8 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 #' }
 #' @export
 genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
-  ## genefilter has functions to work with expressionsets directly, but I think I will work merely
-  ## with tables in this.
+  ## genefilter has functions to work with expressionsets directly, but I think
+  ## I will work merely with tables in this.
   num_before <- nrow(count_table)
 
   if (class(count_table) == "ExpressionSet") {
@@ -260,8 +263,8 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
 #' }
 #' @export
 genefilter_kofa_counts <- function(count_table, k=1, A=1) {
-  ## genefilter has functions to work with expressionsets directly, but I think I will work merely
-  ## with tables in this.
+  ## genefilter has functions to work with expressionsets directly, but I think
+  ## I will work merely with tables in this.
   num_before <- nrow(count_table)
 
   if (class(count_table) == "ExpressionSet") {

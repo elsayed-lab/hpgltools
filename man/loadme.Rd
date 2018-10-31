@@ -15,9 +15,9 @@ loadme(directory = "savefiles", filename = "Rdata.rda.xz")
 a bigger global environment
 }
 \description{
-I often use R over a sshfs connection, sometimes with significant latency, and I want to be able
-to save/load my R sessions relatively quickly. Thus this function uses my backup directory to
-load its R environment.
+I often use R over a sshfs connection, sometimes with significant latency,
+and I want to be able to save/load my R sessions relatively quickly. Thus
+this function uses my backup directory to load its R environment.
 }
 \examples{
 \dontrun{

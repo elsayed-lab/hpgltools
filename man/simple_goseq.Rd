@@ -52,9 +52,10 @@ cc_subset,
 and ccp_plot
 }
 \description{
-goseq can be pretty difficult to get set up for non-supported organisms.  This attempts to make
-that process a bit simpler as well as give some standard outputs which should be similar to those
-returned by clusterprofiler/topgo/gostats/gprofiler.
+goseq can be pretty difficult to get set up for non-supported organisms.
+This attempts to make that process a bit simpler as well as give some
+standard outputs which should be similar to those returned by
+clusterprofiler/topgo/gostats/gprofiler.
 }
 \examples{
 \dontrun{

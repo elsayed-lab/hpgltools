@@ -62,7 +62,8 @@ default_norm <- function(expt, ...) {
 #' @param cv_min Used by genefilter's cv().
 #' @param cv_max Also used by genefilter's cv().
 #' @param ... more options
-#' @return Expt object with normalized data and the original data saved as 'original_expressionset'
+#' @return Expt object with normalized data and the original data saved as
+#'   'original_expressionset'
 #' @seealso \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
@@ -204,10 +205,12 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## While this is annoying, I suppose it is smart.
   unfiltered_genes <- rownames(exprs(current_exprs)) %in% rownames(final_data)
   current_exprs <- current_exprs[unfiltered_genes, ]
-  ## This next line was added in response to an annoying occurance when combining technical replicates
-  ## of a data set for which the samples started with numbers ('2018_0315' for example).  In that instance, my
-  ## concatenate_runs() does not properly check to ensure that the column names do not change.
-  ## I should therefore change that, but for the moment I will add a check here.
+  ## This next line was added in response to an annoying occurance when
+  ## combining technical replicates of a data set for which the samples started
+  ## with numbers ('2018_0315' for example).  In that instance, my
+  ## concatenate_runs() does not properly check to ensure that the column names
+  ## do not change. I should therefore change that, but for the moment I will
+  ## add a check here.
   colnames(final_data) <- sampleNames(current_exprs)
   exprs(current_exprs) <- final_data
 
@@ -245,9 +248,11 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## a log2(cpm()) The problem with this is that, if one does a normalize() then
   ## another normalize() then the assumptions used  may get violated.
   if (!is.null(normalized[["intermediate_counts"]][["normalization"]][["libsize"]])) {
-    new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["normalization"]][["libsize"]]
+    new_expt[["best_libsize"]] <-
+      normalized[["intermediate_counts"]][["normalization"]][["libsize"]]
   } else if (!is.null(normalized[["intermediate_counts"]][["filter"]][["libsize"]])) {
-    new_expt[["best_libsize"]] <- normalized[["intermediate_counts"]][["filter"]][["libsize"]]
+    new_expt[["best_libsize"]] <-
+      normalized[["intermediate_counts"]][["filter"]][["libsize"]]
   } else {
     new_expt[["best_libsize"]] <- NULL
   }
@@ -326,7 +331,9 @@ hpgl_norm <- function(data, ...) {
     if (!is.null(arglist[["expt_state"]])) {
       expt_state <- arglist[["expt_state"]]
     }
-  } else if (data_class == "matrix" | data_class == "data.frame" | data_class == "data.table") {
+  } else if (data_class == "matrix" ||
+             data_class == "data.frame" ||
+             data_class == "data.table") {
     counts <- as.data.frame(data)  ## some functions prefer matrix, so I am
     ## keeping this explicit for the moment. In the case of data.tables, even if
     ## you set the rownames, the first column might still be rowname characters
@@ -340,7 +347,7 @@ hpgl_norm <- function(data, ...) {
       expt_state <- arglist[["expt_state"]]
     }
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This only understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
   count_table <- as.matrix(counts)
   expt_design <- design
@@ -432,8 +439,8 @@ hpgl_norm <- function(data, ...) {
   } else {
     message("Step 2: normalizing the data with ", arglist[["norm"]], ".")
     if (is.null(expt_design)) {
-      message("The experimental design is null.  Some normalizations will therefore fail.")
-      message("If you receive an error about an object with no dimensions, that is likely why.")
+      message("The experimental design is null.  Some normalizations will fail.")
+      message("If you get an error about 'no dimensions', that is likely why.")
     }
     normalized_counts <- normalize_counts(data=count_table, ...)
     ## normalized_counts <- normalize_counts(data=count_table, design=design, norm=norm)

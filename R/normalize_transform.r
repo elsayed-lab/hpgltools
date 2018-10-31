@@ -1,13 +1,14 @@
 #' Perform a simple transformation of a count table (log2)
 #'
-#' the add argument is only important if the data was previously cpm'd because that does a +1, thus
-#' this will avoid a double+1 on the data.
+#' the add argument is only important if the data was previously cpm'd because
+#' that does a +1, thus this will avoid a double+1 on the data.
 #'
 #' @param count_table  A matrix of count data
 #' @param design  Sometimes the experimental design is also required.
 #' @param transform   A type of transformation to perform: log2/log10/log.
 #' @param base   Other log scales?
-#' @param ...  Options I might pass from other functions are dropped into arglist.
+#' @param ...  Options I might pass from other functions are dropped into
+#'   arglist.
 #' @return dataframe of transformed counts.
 #' @seealso \pkg{limma}
 #' @examples
@@ -62,7 +63,8 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
     }
   ) ## Ending the switch statement
 
-  ## If we are performing a transformation, then the minimum value I want is 1 before performing the logn
+  ## If we are performing a transformation, then the minimum value I want is 1
+  ## before performing the logn
   less_zero <- sum(count_table < 0)
   if (less_zero > 0) {
     message("transform_counts: Found ", less_zero, " values less than 0.")
@@ -70,7 +72,8 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
 
   num_zero <- sum(count_table == 0)
   if (num_zero > 0) {
-    message("transform_counts: Found ", num_zero, " values equal to 0, adding 1 to the matrix.")
+    message("transform_counts: Found ", num_zero,
+            " values equal to 0, adding 1 to the matrix.")
     count_table <- count_table + 1
   }
 

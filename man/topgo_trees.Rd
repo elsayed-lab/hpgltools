@@ -50,7 +50,8 @@ topgo_trees(tg, score_limit = 0.01, sigforall = TRUE,
 Big list including the various outputs from topgo.
 }
 \description{
-The tree printing functionality of topGO is pretty cool, but difficult to get set correctly.
+The tree printing functionality of topGO is pretty cool, but difficult to get
+set correctly.
 }
 \seealso{
 \pkg{topGO}

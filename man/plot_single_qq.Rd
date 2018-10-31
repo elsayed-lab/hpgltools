@@ -19,8 +19,8 @@ plot_single_qq(data, x = 1, y = 2, labels = TRUE)
 a list of the logs, ratios, and mean between the plots as ggplots.
 }
 \description{
-Given two columns of data, how well do the distributions match one another?  The answer to that
-question may be visualized through a qq plot!
+Given two columns of data, how well do the distributions match one another?
+The answer to that question may be visualized through a qq plot!
 }
 \seealso{
 \pkg{Biobase}

@@ -2,7 +2,8 @@
 #'
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 #'
-#' @param sig_genes Guess!  The set of differentially expressed/interesting genes.
+#' @param sig_genes Guess!  The set of differentially expressed/interesting
+#'   genes.
 #' @param species  Organism supported by gprofiler.
 #' @param convert  Use gProfileR's conversion utility?
 #' @param first_col  First place used to define the order of 'significant'.
@@ -16,8 +17,9 @@
 #' @param do_hp  Do the hp search?
 #' @param significant  Only return the statistically significant hits?
 #' @param pseudo_gsea  Is the data in a ranked order by significance?
-#' @param id_col  Which column in the table should be used for gene ID crossreferencing?  gProfiler
-#'  uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!
+#' @param id_col  Which column in the table should be used for gene ID
+#'   crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
+#'   entrez or whatever, translate it!
 #' @param excel  Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso \pkg{gProfiler}
@@ -32,8 +34,9 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
   ## Assume for the moment a limma-ish data frame
-  ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap / #term) * (total genes / #query)
-  ## However, the total number is a constant, so we can likely get the same information from the overlap.size
+  ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap /
+  ## #term) * (total genes / #query) However, the total number is a constant, so
+  ## we can likely get the same information from the overlap.size
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -71,7 +74,8 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
   for (type in names(do_lst)) {
     message(sprintf(message_string, type, length(gene_ids), species))
     Sys.sleep(5)
-    ## To avoid the error: "'names' attribute [14] must be the same length as the vector [1]"
+    ## To avoid the error: "'names' attribute [14] must be the same length as
+    ## the vector [1]"
     gene_ids <- as.vector(gene_ids)
     a_result <- try(gProfileR::gprofiler(
                                  query=gene_ids,

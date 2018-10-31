@@ -24,11 +24,13 @@ chromosome)}
 
 \item{colors}{Colors of the data.}
 
-\item{outer}{Floating point radius of the circle into which to place the categorical data.}
+\item{outer}{Floating point radius of the circle into which to place the
+categorical data.}
 
 \item{width}{Width of each tile.}
 
-\item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
+\item{spacing}{Radial distance between outer, inner, and inner to whatever
+follows.}
 }
 \value{
 Radius after adding the histogram and the spacing.

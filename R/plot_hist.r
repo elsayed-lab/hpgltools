@@ -2,8 +2,8 @@
 
 #' Make a pretty histogram of something.
 #'
-#' A shortcut to make a ggplot2 histogram which makes an attempt to set reasonable bin widths and
-#' set the scale to log if that seems a good idea.
+#' A shortcut to make a ggplot2 histogram which makes an attempt to set
+#' reasonable bin widths and set the scale to log if that seems a good idea.
 #'
 #' @param df Dataframe of lots of pretty numbers.
 #' @param binwidth Width of the bins for the histogram.
@@ -37,7 +37,8 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     binwidth <- (maxval - minval) / bins
   }
   a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin", binwidth=binwidth,
+    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin",
+                            binwidth=binwidth,
                             colour=color, fill=fillcolor, position="identity") +
     ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
     ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"),
@@ -56,8 +57,8 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
 
 #' Make a pretty histogram of multiple datasets.
 #'
-#' If there are multiple data sets, it might be useful to plot them on a histogram together and look
-#' at the t.test results between distributions.
+#' If there are multiple data sets, it might be useful to plot them on a
+#' histogram together and look at the t.test results between distributions.
 #'
 #' @param data Dataframe of lots of pretty numbers, this also accepts lists.
 #' @param log Plot the data on the log scale?
@@ -93,7 +94,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   play_all[["cond"]] <- as.factor(play_all[["cond"]])
   play_cdf <- plyr::ddply(play_all, "cond",
                           plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
-  uncor_t <- stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]], p.adjust="none")
+  uncor_t <- stats::pairwise.t.test(play_all[["expression"]],
+                                    play_all[["cond"]], p.adjust="none")
   bon_t <- try(stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]],
                                       p.adjust="bon", na.rm=TRUE))
   if (is.null(bins) & is.null(binwidth)) {
@@ -108,7 +110,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   } else {
     message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
   }
-  hpgl_multi <- ggplot2::ggplot(play_all, ggplot2::aes_string(x="expression", fill="cond")) +
+  hpgl_multi <- ggplot2::ggplot(play_all,
+                                ggplot2::aes_string(x="expression", fill="cond")) +
     ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
                             binwidth=binwidth, alpha=0.4, position="identity") +
     ggplot2::xlab("Expression") +

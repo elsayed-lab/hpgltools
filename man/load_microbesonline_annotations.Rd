@@ -21,8 +21,9 @@ database to find species of interest.
 }
 \details{
 Tested in test_70expt_spyogenes.R
-There is so much awesome information in microbesonline, but damn is it annoying to download.
-This function makes that rather easier, or so I hope at least.
+There is so much awesome information in microbesonline, but damn is it
+annoying to download. This function makes that rather easier, or so I hope at
+least.
 }
 \examples{
 \dontrun{

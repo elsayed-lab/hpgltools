@@ -16,14 +16,15 @@ transform_counts(count_table, design = NULL, transform = "raw",
 
 \item{base}{Other log scales?}
 
-\item{...}{Options I might pass from other functions are dropped into arglist.}
+\item{...}{Options I might pass from other functions are dropped into
+arglist.}
 }
 \value{
 dataframe of transformed counts.
 }
 \description{
-the add argument is only important if the data was previously cpm'd because that does a +1, thus
-this will avoid a double+1 on the data.
+the add argument is only important if the data was previously cpm'd because
+that does a +1, thus this will avoid a double+1 on the data.
 }
 \examples{
 \dontrun{
