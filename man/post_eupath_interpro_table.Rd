@@ -14,7 +14,8 @@ post_eupath_interpro_table(species = "Leishmania major strain Friedlin",
 
 \item{metadata}{A metadata table from which to get some annotation data.}
 
-\item{dir}{FIXME: I want to write some intermediate data to dir in case of transient error.}
+\item{dir}{FIXME: I want to write some intermediate data to dir in case of
+transient error.}
 
 \item{...}{Extra options when downloading metadata.}
 }

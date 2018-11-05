@@ -7,7 +7,8 @@
 #'
 #' @param file  Filename to read.
 #' @param id  An id to give the result.
-#' @param write_acquisitions  If a filename is provided, write a tab separated table of windows.
+#' @param write_acquisitions  If a filename is provided, write a tab separated
+#'   table of windows.
 #' @return List containing a table of scan and precursor data.
 #' @export
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
@@ -102,7 +103,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     message("Hopefully writing acquisition file to: ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
-    osw_file <- file.path(acq_dir, paste0("openswath_", acq_file))
+    osw_file <- file.path(acq_dir, glue("openswath_{acq_file}"))
     ## This is the file for openswathworkflow.
     message("Hopefully writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
@@ -138,13 +139,13 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
-  ## Add a little of the code from create_expt to include some design information in the returned
-  ## data structure.
+  ## Add a little of the code from create_expt to include some design
+  ## information in the returned data structure.
 
-  ## Since I am using this code now in two places, if I can use it without changes, I will
-  ## split it into its own function so make changes in one place happen in both
-  ## but until I can ensure to myself that it is functional in both contexts I will not.
-  ## Palette for colors when auto-chosen
+  ## Since I am using this code now in two places, if I can use it without
+  ## changes, I will split it into its own function so make changes in one place
+  ## happen in both but until I can ensure to myself that it is functional in
+  ## both contexts I will not. Palette for colors when auto-chosen
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["palette"]])) {
     chosen_palette <- arglist[["palette"]]
@@ -195,11 +196,17 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     cores <- 4
     cl <- parallel::makeCluster(cores)
     doSNOW::registerDoSNOW(cl)
-    bar <- utils::txtProgressBar(max=num_files, style=3)
+    show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+    if (isTRUE(show_progress)) {
+      bar <- utils::txtProgressBar(max=num_files, style=3)
+    }
     progress <- function(n) {
       setTxtProgressBar(bar, n)
     }
-    pb_opts <- list(progress=progress)
+    pb_opts <- list()
+    if (isTRUE(show_progress)) {
+      pb_opts <- list("progress" = progress)
+    }
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
@@ -209,7 +216,9 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
         returns[[file]] <- file_result
       }
     }
-    close(bar)
+    if (isTRUE(show_progress)) {
+      close(bar)
+    }
     parallel::stopCluster(cl)
   } else {
     for (i in 1:num_files) {
@@ -312,7 +321,8 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   spectrum_queries <- rvest::xml_nodes(input, "spectrum_query")
   spectra <- spectrum_queries %>% rvest::html_attr("spectrum")
   query_data <- data.frame(row.names=spectra)
-  ## The interesting material at the beginning of a spectrum, these are in the <spectrum query> tag.
+  ## The interesting material at the beginning of a spectrum, these are in the
+  ## <spectrum query> tag.
 
   message("Extracting the spectrum_query metadata.")
   toplevel_interesting <- c("start_scan", "end_scan", "precursor_neutral_mass",
@@ -327,15 +337,17 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   search_hits <- search_results %>%
     rvest::html_node(xpath="search_hit")
   ## The set of fields which look interesting to me in the search_hit data.
-  search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa", "protein", "num_tot_proteins",
-                     "num_matched_ions", "tot_num_ions", "calc_neutral_pep_mass", "massdiff",
-                     "num_tol_term", "num_missed_cleavages", "num_matched_peptides")
+  search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa",
+                     "protein", "num_tot_proteins",
+                     "num_matched_ions", "tot_num_ions",
+                     "calc_neutral_pep_mass", "massdiff", "num_tol_term",
+                     "num_missed_cleavages", "num_matched_peptides")
   for (s in search_fields) {
     query_data[[s]] <- search_hits %>%
       rvest::html_attr(s)
   }
   query_data[["decoy"]] <- FALSE
-  decoy_regex <- paste0("^", decoy_string)
+  decoy_regex <- glue("^{decoy_string}")
   decoy_idx <- grepl(pattern=decoy_regex, x=query_data[["protein"]])
   query_data[decoy_idx, "decoy"] <- TRUE
   query_data[["matched_ion_ratio"]] <- as.numeric(query_data[["num_matched_ions"]]) /
@@ -355,10 +367,15 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
     rvest::html_node(xpath="modification_info")
 
   message("Filling in modification information, this is slow.")
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (i in 1:length(modification_test)) {
-    pct_done <- i / length(modification_test)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- i / length(modification_test)
+      setTxtProgressBar(bar, pct_done)
+    }
     test <- modification_test[[i]]
     if (!is.na(test)) {
       variables <- test %>%
@@ -375,21 +392,23 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
         rvest::html_attr("mass")
       variable_idx <- !is.na(variables)
       if (sum(variable_idx) > 0) {
-        variable_string <- toString(paste0("position: ", positions[variable_idx],
-                                           " mass: ", masses[variable_idx],
-                                           " mod: ", variables[variable_idx]))
+        variable_string <- toString(
+          glue("position: {positions[variable_idx]} mass: {masses[variable_idx]}\\
+                mod: {variables[variable_idx]}"))
         query_data[i, "variable_mods"] <- variable_string
       }
       static_idx <- !is.na(statics)
       if (sum(static_idx) > 0) {
-        static_string <- toString(paste0("position: ", positions[static_idx],
-                                         " mass: ", masses[static_idx],
-                                         " mod: ", statics[static_idx]))
+        static_string <- toString(
+          glue("position: {positions[static_idx]} mass: {masses[static_idx]}\\
+                mod: {statics[static_idx]}"))
         query_data[i, "static_mods"] <- static_string
       }
     }
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
 
   ## Extracting the search_score tags
   message("Extracting the search_score metadata.")
@@ -423,8 +442,9 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
 
   numeric_columns <- c("start_scan", "end_scan", "precursor_neutral_mass", "index",
                        "retention_time_sec", "calc_neutral_pep_mass", "massdiff",
-                       "num_matched_peptides", "xcorr", "deltacn", "deltacnstar", "spscore",
-                       "expect", "prophet_probability", "fval", "massd", "RT", "RT_score")
+                       "num_matched_peptides", "xcorr", "deltacn",
+                       "deltacnstar", "spscore", "expect",
+                       "prophet_probability", "fval", "massd", "RT", "RT_score")
   factor_columns <- c("assumed_charge", "num_tot_proteins", "num_matched_ions", "num_tol_term",
                       "num_missed_cleavages", "sprank", "ntt", "nmc", "isomassd")
   for (n in numeric_columns) {
@@ -513,8 +533,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
                                    savefile=NULL, ...) {
   arglist <- list(...)
 
-  ## Add a little of the code from create_expt to include some design information in the returned
-  ## data structure.
+  ## Add a little of the code from create_expt to include some design
+  ## information in the returned data structure.
 
   ## Since I am using this code now in two places, if I can use it without changes, I will
   ## split it into its own function so make changes in one place happen in both
@@ -565,7 +585,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- try(read.csv(file, sep="\t"), silent=TRUE)
+    file_result <- sm(try(readr::read_csv(file, sep="\t"), silent=TRUE))
     if (class(file_result) != "try-error") {
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%
@@ -1059,15 +1079,16 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
   if (num_colors == 2) {
     color_list <- c("darkred", "darkblue")
   } else {
-    color_list <- sm(grDevices::colorRampPalette(
-                                  RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+    color_list <- sm(
+      grDevices::colorRampPalette(
+                   RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
   }
 
   if (is.null(table[[xaxis]])) {
-    stop(paste0("The x-axis column: ", xaxis, " does not appear in the data."))
+    stop(glue("The x-axis column: {xaxis} does not appear in the data."))
   }
   if (is.null(table[[yaxis]])) {
-    stop(paste0("The y-axis column: ", yaxis, " does not appear in the data."))
+    stop(glue("The y-axis column: {yaxis} does not appear in the data."))
   }
 
   table <- as.data.frame(table)
@@ -1129,7 +1150,7 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
     }
   }
 
-  table[["text"]] <- paste0(table[["protein"]], ":", table[["peptide"]])
+  table[["text"]] <- glue("{table[['protein']]}:{table[['peptide']]}")
 
   a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis, text="text",
                                           color="color", size="size")) +
@@ -1167,12 +1188,17 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   message("Reading ", xlsx_file)
   result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
   group_data <- list()
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (r in 1:nrow(result)) {
+    if (isTRUE(show_progress)) {
+      pct_done <- r / nrow(result)
+      setTxtProgressBar(bar, pct_done)
+    }
     row <- as.data.frame(result[r, ])
     row[, is.na(row)] <- ""
-    pct_done <- r / nrow(result)
-    setTxtProgressBar(bar, pct_done)
     ## The following 3 stanzas handle the creation of the levels of our data structure
     ## The first defines the protein group
     if (row[, 1] == "Checked") {
@@ -1239,17 +1265,24 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
       next
     }
   } ## End iterating over ever row of this unholy stupid data structure.
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   message("Finished parsing, reorganizing the protein data.")
 
   protein_df <- data.frame()
   peptide_df <- data.frame()
   protein_names <- c()
   message("Starting to iterate over ", length(group_data),  " groups.")
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (g in 1:length(group_data)) {
-    pct_done <- g / length(group_data)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- g / length(group_data)
+      setTxtProgressBar(bar, pct_done)
+    }
     group <- as.character(names(group_data)[g])
     protein_group <- group_data[[group]][["data"]]
     protein_accessions <- names(protein_group)
@@ -1262,35 +1295,48 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
       peptide_df <- rbind(peptide_df, peptide_data)
     }
   } ## End of the for loop
-  close(bar)
-
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   current_colnames <- colnames(protein_df)
   current_colnames <- tolower(current_colnames)
   ## percent signs are stupid in columns.
-  current_colnames <- gsub(pattern="%", replacement="pct", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="%", replacement="pct", x=current_colnames)
   ## as are spaces.
-  current_colnames <- gsub(pattern=" ", replacement="_", x=current_colnames)
+  current_colnames <- gsub(
+    pattern=" ", replacement="_", x=current_colnames)
   ## A bunch of columns have redundant adjectives.
-  current_colnames <- gsub(pattern="_confidence", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_confidence", replacement="", x=current_colnames)
   ## Extra text in a column name is useless
-  current_colnames <- gsub(pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
   ## Get rid of a bunch of doofusy punctuation.
-  current_colnames <- gsub(pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
   ## At this point we should not have any leading underscores.
-  current_colnames <- gsub(pattern="^_", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="^_", replacement="", x=current_colnames)
   ## Now should we have any double underscores.
-  current_colnames <- gsub(pattern="__", replacement="_", x=current_colnames)
-  ## Finally, because of the previous removals, there might be some duplicated terms left behind.
-  current_colnames <- gsub(pattern="_ht", replacement="", x=current_colnames)
-  current_colnames <- gsub(pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
-  current_colnames <- gsub(pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="__", replacement="_", x=current_colnames)
+  ## Finally, because of the previous removals, there might be some duplicated
+  ## terms left behind.
+  current_colnames <- gsub(
+    pattern="_ht", replacement="", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
+  current_colnames <- gsub(
+    pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
   colnames(protein_df) <- current_colnames
 
   ## Now make sure the columns which should be numeric, are numeric.
   numeric_cols <- c(
-    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot", "expt_qvalue_sequest",
-    "coverage_pct", "unique_peptides", "aas", "mw_kda", "calc_pi", "score_mascot",
-    "score_sequest", "peptides_mascot", "peptides_sequest")
+    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot",
+    "expt_qvalue_sequest", "coverage_pct", "unique_peptides", "aas", "mw_kda",
+    "calc_pi", "score_mascot", "score_sequest", "peptides_mascot",
+    "peptides_sequest")
   for (col in numeric_cols) {
     if (!is.null(protein_df[[col]])) {
       protein_df[[col]] <- as.numeric(protein_df[[col]])

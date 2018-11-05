@@ -22,9 +22,10 @@ plot_bcv <- function(data) {
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
+    ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function only understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
   data <- edgeR::DGEList(counts=data)
   edisp <- edgeR::estimateDisp(data)
@@ -48,12 +49,10 @@ plot_bcv <- function(data) {
     ggplot2::geom_point() +
     ggplot2::xlab("Average log(CPM)") +
     ggplot2::ylab("Dispersion of Biological Variance") +
-    ##ggplot2::stat_density2d(geom="tile", aes(fill=..density..^0.25), contour=FALSE, show_guide=FALSE) +
-    ## ..density.. leads to no visible binding for global variable, but I don't fully understand that notation
-    ## I remember looking at it a while ago and being confused
     ggplot2::stat_density2d(geom="tile", aes_string(fill="..density..^0.25"),
                             contour=FALSE, show.legend=FALSE) +
-    ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
+    ggplot2::scale_fill_gradientn(
+               colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method="loess") +
     ggplot2::stat_function(fun=f, colour="red") +
     ggplot2::theme_bw(base_size=base_size) +
@@ -63,8 +62,8 @@ plot_bcv <- function(data) {
   return(ret)
 }
 
-#' Make a scatter plot between two sets of numbers with a cheesy distance metric and some statistics
-#' of the two sets.
+#' Make a scatter plot between two sets of numbers with a cheesy distance metric
+#' and some statistics of the two sets.
 #'
 #' The distance metric should be codified and made more intelligent.
 #' Currently it creates a dataframe of distances which are absolute
@@ -113,15 +112,22 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
-    ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-    ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-    ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-    ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-    ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
+    ggplot2::geom_vline(
+               color="grey", xintercept=(first_median - first_mad), size=line_size) +
+    ggplot2::geom_vline(
+               color="grey", xintercept=(first_median + first_mad), size=line_size) +
+    ggplot2::geom_vline(
+               color="darkgrey", xintercept=first_median, size=line_size) +
+    ggplot2::geom_hline(
+               color="grey", yintercept=(second_median - second_mad), size=line_size) +
+    ggplot2::geom_hline(
+               color="grey", yintercept=(second_median + second_mad), size=line_size) +
     ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-    ggplot2::geom_point(colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]), alpha=0.6, size=size) +
+    ggplot2::geom_point(
+               colour=grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]),
+               alpha=0.6, size=size) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(legend.position="none",
                    axis.text=ggplot2::element_text(size=base_size, colour="black"))
@@ -131,8 +137,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
   return(first_vs_second)
 }
 
-#' Make a scatter plot between two groups with a linear model superimposed and some supporting
-#' statistics.
+#' Make a scatter plot between two groups with a linear model superimposed and
+#' some supporting statistics.
 #'
 #' @param df Dataframe likely containing two columns.
 #' @param tooltip_data Df of tooltip information for gvis graphs.
@@ -141,8 +147,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param size Size of the dots on the plot.
 #' @param identity Add the identity line?
 #' @param loess Add a loess estimation?
-#' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple possible types, I
-#'     think linear is the most common.
+#' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple
+#'   possible types, I think linear is the most common.
 #' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.
@@ -152,15 +158,17 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param color_low Chosen color for points significantly below the mean.
 #' @param alpha  Choose an alpha channel to define how see-through the dots are.
 #' @param ... Extra args likely used for choosing significant genes.
-#' @return List including a ggplot2 scatter plot and some histograms.  This plot provides a "bird's
-#'     eye" view of two data sets.  This plot assumes a (potential) linear correlation between the
-#'     data, so it calculates the correlation between them.  It then calculates and plots a robust
-#'     linear model of the data using an 'SMDM' estimator (which I don't remember how to describe,
-#'     just that the document I was reading said it is good).  The median/mad of each axis is
-#'     calculated and plotted as well.  The distance from the linear model is finally used to color
-#'     the dots on the plot.  Histograms of each axis are plotted separately and then together under
-#'     a single cdf to allow tests of distribution similarity.  This will make a fun clicky
-#'     googleVis graph if requested.
+#' @return List including a ggplot2 scatter plot and some histograms.  This plot
+#'   provides a "bird's eye" view of two data sets.  This plot assumes a
+#'   (potential) linear correlation between the data, so it calculates the
+#'   correlation between them.  It then calculates and plots a robust linear
+#'   model of the data using an 'SMDM' estimator (which I don't remember how to
+#'   describe, just that the document I was reading said it is good).  The
+#'   median/mad of each axis is calculated and plotted as well.  The distance
+#'   from the linear model is finally used to color the dots on the plot.
+#'   Histograms of each axis are plotted separately and then together under a
+#'   single cdf to allow tests of distribution similarity.  This will make a fun
+#'   clicky googleVis graph if requested.
 #' @seealso \pkg{robust} \pkg{stats} \pkg{ggplot2}
 #'  \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
 #' @examples
@@ -169,9 +177,11 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #'                      gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, cormethod="pearson",
-                                size=2, loess=FALSE, identity=FALSE, gvis_trendline=NULL, z_lines=FALSE,
-                                first=NULL, second=NULL, base_url=NULL, pretty_colors=TRUE,
+plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
+                                cormethod="pearson", size=2, loess=FALSE,
+                                identity=FALSE, gvis_trendline=NULL,
+                                z_lines=FALSE, first=NULL, second=NULL,
+                                base_url=NULL, pretty_colors=TRUE,
                                 color_high=NULL, color_low=NULL, alpha=0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
@@ -193,7 +203,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   colnames(df) <- c("first", "second")
-  model_test <- try(robustbase::lmrob(formula=second ~ first, data=df, method="SMDM"), silent=TRUE)
+  model_test <- try(robustbase::lmrob(formula=second ~ first,
+                                      data=df, method="SMDM"), silent=TRUE)
   linear_model <- NULL
   linear_model_summary <- NULL
   linear_model_rsq <- NULL
@@ -236,20 +247,29 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
-    ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-    ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-    ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-    ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
-    ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-    ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-    ggplot2::geom_abline(colour="grey", slope=linear_model_slope, intercept=linear_model_intercept, size=line_size)
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
+    ggplot2::geom_vline(
+               color="grey", xintercept=(first_median - first_mad), size=line_size) +
+    ggplot2::geom_vline(
+               color="grey", xintercept=(first_median + first_mad), size=line_size) +
+    ggplot2::geom_hline(
+               color="grey", yintercept=(second_median - second_mad), size=line_size) +
+    ggplot2::geom_hline(
+               color="grey", yintercept=(second_median + second_mad), size=line_size) +
+    ggplot2::geom_hline(
+               color="darkgrey", yintercept=second_median, size=line_size) +
+    ggplot2::geom_vline(
+               color="darkgrey", xintercept=first_median, size=line_size) +
+    ggplot2::geom_abline(
+               colour="grey", slope=linear_model_slope,
+               intercept=linear_model_intercept, size=line_size)
   ## The axes and guide-lines are set up, now add the points
 
   low_df <- high_df <- NULL
   if (!is.null(color_low) | !is.null(color_high)) {
-    ## If you want to color the above or below identity line points, then you will need subsets to define them
+    ## If you want to color the above or below identity line points, then you
+    ## will need subsets to define them
     tmpdf <- df
     tmpdf[["ratio"]] <- tmpdf[, 2] - tmpdf[, 1]
     subset_points <- sm(get_sig_genes(tmpdf, column="ratio", ...))
@@ -278,10 +298,12 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
   ## Add a color to the dots which are lower than the identity line by some amount
   if (!is.null(color_low)) {
-    first_vs_second <- first_vs_second + ggplot2::geom_point(data=low_df, colour=color_low)
+    first_vs_second <- first_vs_second +
+      ggplot2::geom_point(data=low_df, colour=color_low)
   }
   if (!is.null(color_high)) {
-    first_vs_second <- first_vs_second + ggplot2::geom_point(data=high_df, colour=color_high)
+    first_vs_second <- first_vs_second +
+      ggplot2::geom_point(data=high_df, colour=color_high)
   }
 
   if (isTRUE(pretty_colors)) {
@@ -344,9 +366,10 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 
 #' Make a pretty MA plot from one of limma, deseq, edger, or basic.
 #'
-#' Because I can never remember, the following from wikipedia: "An MA plot is an application of a
-#' Bland-Altman plot for visual representation of two channel DNA microarray gene expression data
-#' which has been transformed onto the M (log ratios) and A (mean average) scale."
+#' Because I can never remember, the following from wikipedia: "An MA plot is an
+#' application of a Bland-Altman plot for visual representation of two channel
+#' DNA microarray gene expression data which has been transformed onto the M
+#' (log ratios) and A (mean average) scale."
 #'
 #' @param table  Df of linear-modelling, normalized counts by sample-type,
 #' @param expr_col  Column showing the average expression across genes.
@@ -361,10 +384,11 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, corme
 #' @param gvis_filename  Filename to write a fancy html graph.
 #' @param invert  Invert the ma plot?
 #' @param ...  More options for you
-#' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the normalized counts by
-#'  type across all sample types on the x axis, and the log fold change between conditions on the
-#'  y-axis. Dots are colored depending on if they are 'significant.'  This will make a fun clicky
-#'  googleVis graph if requested.
+#' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the
+#'   normalized counts by type across all sample types on the x axis, and the
+#'   log fold change between conditions on the y-axis. Dots are colored
+#'   depending on if they are 'significant.'  This will make a fun clicky
+#'   googleVis graph if requested.
 #' @seealso \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
 #'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
 #'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
@@ -407,10 +431,12 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   }
 
   ## The data frame used for these MA plots needs to include a few aspects of the state
-  ## Including: average expression (the y axis), log-fold change, p-value, a boolean of the p-value state, and
-  ## a factor of the state which will be counted and provide some information on the side of the plot.
-  ## One might note that I am pre-filling in this data frame with 4 blank entries.
-  ## This is to make absolutely certain that ggplot will not re-order my damn categories.
+  ## Including: average expression (the y axis), log-fold change, p-value, a
+  ## boolean of the p-value state, and a factor of the state which will be
+  ## counted and provide some information on the side of the plot. One might
+  ## note that I am pre-filling in this data frame with 4 blank entries. This is
+  ## to make absolutely certain that ggplot will not re-order my damn
+  ## categories.
   df <- data.frame(
     "avg" = c(0, 0, 0),
     "logfc" = c(0, 0, 0),
@@ -445,9 +471,11 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific=FALSE))
   newdf[["pcut"]] <- newdf[["pval"]] <= pval_cutoff
   newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "c_insig",
-                      ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] >= logfc_cutoff, "a_upsig",
-                      ifelse(newdf[["pval"]] <= pval_cutoff & newdf[["logfc"]] <= (-1.0 * logfc_cutoff), "b_downsig",
-                             "c_insig")))
+                      ifelse(newdf[["pval"]] <= pval_cutoff &
+                             newdf[["logfc"]] >= logfc_cutoff, "a_upsig",
+                      ifelse(newdf[["pval"]] <= pval_cutoff &
+                             newdf[["logfc"]] <= (-1.0 * logfc_cutoff),
+                             "b_downsig", "c_insig")))
   newdf[["state"]] <- as.factor(newdf[["state"]])
   df <- rbind(df, newdf)
   rm(newdf)
@@ -480,17 +508,19 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                            fill="as.factor(pcut)",
                            colour="as.factor(pcut)",
                            shape="as.factor(state)")) +
-    ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff), color="red", size=(size / 3)) +
+    ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff),
+                        color="red", size=(size / 3)) +
     ggplot2::geom_point(stat="identity", size=size, alpha=alpha)
   if (isTRUE(label_numbers)) {
     plt <- plt +
       ## The following scale_shape_manual() sets the labels of the legend on the right side.
       ggplot2::scale_shape_manual(name="State", values=state_shapes,
                                   labels=c(
-                                    paste0("Up Sig.: ", num_upsig),
-                                    paste0("Down Sig.: ", num_downsig),
-                                    paste0("Insig.: ", num_insig)),
-                                  guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
+                                  guide=ggplot2::guide_legend(override.aes=aes(size=3,
+                                                                               fill="grey")))
   } else {
     plt <- plt +
       ggplot2::scale_shape_manual(name="State", values=state_shapes,
@@ -500,13 +530,13 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   plt <- plt +
     ## Set the colors of the significant/insignificant points.
     ggplot2::scale_fill_manual(name="as.factor(pcut)",
-                               values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
+                               values=c("FALSE"=insig_color, "TRUE"=sig_color),
+                               guide=FALSE) +
     ggplot2::scale_color_manual(name="as.factor(pcut)",
-                                values=c("FALSE"=insig_color, "TRUE"=sig_color), guide=FALSE) +
-    ## ggplot2::guides(shape=ggplot2::guide_legend(override.aes=list(size=3))) +
+                                values=c("FALSE"=insig_color, "TRUE"=sig_color),
+                                guide=FALSE) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black")) +
-    ##             axis.text.x=ggplot2::element_text(angle=-90)) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
 
@@ -520,7 +550,8 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
     plt <- recolor_points(plt, df, family, color=family_color)
   }
 
-  ## Return the plot, some numbers, and the data frame used to make the plot so that I may check my work.
+  ## Return the plot, some numbers, and the data frame used to make the plot so
+  ## that I may check my work.
   retlist <- list(
     "num_upsig" = num_upsig,
     "num_downsig" = num_downsig,
@@ -530,9 +561,11 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   return(retlist)
 }
 
-#' Quick point-recolorizer given an existing plot, df, list of rownames to recolor, and a color
+#' Quick point-recolorizer given an existing plot, df, list of rownames to
+#' recolor, and a color.
 #'
-#' This function should make it easy to color a family of genes in any of the point plots.
+#' This function should make it easy to color a family of genes in any of the
+#' point plots.
 #'
 #' @param plot  Geom_point based plot
 #' @param df  Data frame used to create the plot
@@ -549,24 +582,30 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 
   point_index <- rownames(df) %in% ids
   newdf <- df[point_index, ]
-  newplot <- plot + ggplot2::geom_point(data=newdf,  colour=color, fill=color, alpha=alpha)
+  newplot <- plot +
+    ggplot2::geom_point(data=newdf,  colour=color, fill=color, alpha=alpha)
   return(newplot)
 }
 
 #' Make a ggplot graph of the number of non-zero genes by sample.
 #'
-#' This puts the number of genes with > 0 hits on the y-axis and CPM on the x-axis. Made by Ramzi
-#' Temanni <temanni at umd dot edu>.
+#' This puts the number of genes with > 0 hits on the y-axis and CPM on the
+#' x-axis. Made by Ramzi Temanni <temanni at umd dot edu>.
 #'
 #' @param data Expt, expressionset, or dataframe.
 #' @param design Eesign matrix.
 #' @param colors Color scheme.
-#' @param plot_labels How do you want to label the graph? 'fancy' will use directlabels() to try to match
-#'     the labels with the positions without overlapping anything else will just stick them on a 45'
-#'     offset next to the graphed point.
+#' @param plot_labels How do you want to label the graph? 'fancy' will use
+#'   directlabels() to try to match the labels with the positions without
+#'   overlapping anything else will just stick them on a 45' offset next to the
+#'   graphed point.
+#' @param expt_names  Column or character list of preferred sample names.
+#' @param label_chars  How many characters for sample names before abbreviation.
+#' @param plot_legend  Print a legend for this plot?
 #' @param title Add a title?
 #' @param ... rawr!
-#' @return a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.
+#' @return a ggplot2 plot of the number of non-zero genes with respect to each
+#'   library's CPM.
 #' @seealso \pkg{ggplot2}
 #'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 #' @examples
@@ -575,7 +614,9 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #'  nonzero_plot  ## ooo pretty
 #' }
 #' @export
-plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title=NULL, ...) {
+plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL,
+                         expt_names=NULL, label_chars=10, plot_legend=FALSE,
+                         title=NULL, ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   names <- NULL
@@ -591,12 +632,23 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   shapes <- as.integer(as.factor(design[["batch"]]))
   condition <- design[["condition"]]
   batch <- design[["batch"]]
+
+  if (!is.null(expt_names) && class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      colnames(data) <- make.names(design[[expt_names]], unique=TRUE)
+    } else {
+      colnames(data) <- expt_names
+    }
+  }
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
+  }
   nz_df <- data.frame(
     "id" = colnames(data),
     "nonzero_genes" = colSums(data >= 1),
@@ -658,6 +710,10 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title
   non_zero_plot <- non_zero_plot +
     ggplot2::theme(axis.ticks=ggplot2::element_blank(),
                    axis.text=ggplot2::element_text(size=base_size, colour="black"))
+  if (isFALSE(plot_legend)) {
+    non_zero_plot <- non_zero_plot +
+      ggplot2::theme(legend.position="none")
+  }
 
   retlist <- list(
     "plot" = non_zero_plot,
@@ -667,8 +723,8 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL, title
 
 #' Plot all pairwise MA plots in an experiment.
 #'
-#' Use affy's ma.plot() on every pair of columns in a data set to help diagnose problematic
-#' samples.
+#' Use affy's ma.plot() on every pair of columns in a data set to help diagnose
+#' problematic samples.
 #'
 #' @param data Expt expressionset or data frame.
 #' @param log Is the data in log format?
@@ -693,7 +749,7 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
   plot_list <- list()
   for (c in 1:(length(colnames(data)) - 1)) {
@@ -718,15 +774,16 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
       }
       firstname <- colnames(data)[c]
       secondname <- colnames(data)[d]
-      name <- paste0(firstname, "_", secondname)
+      name <- glue("{firstname}_{secondname}")
       if (isTRUE(log)) {
         first <- log2(first + 1.0)
         second <- log2(second + 1.0)
       }
       m <- first - second
       a <- (first + second) / 2
-      affy::ma.plot(A=a, M=m, plot.method="smoothScatter", show.statistics=TRUE, add.loess=TRUE)
-      title(paste0("MA of ", firstname, " vs ", secondname))
+      affy::ma.plot(A=a, M=m, plot.method="smoothScatter",
+                    show.statistics=TRUE, add.loess=TRUE)
+      title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
     }
   }
@@ -735,8 +792,8 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 
 #' Make a pretty scatter plot between two sets of numbers.
 #'
-#' This function tries to supplement a normal scatterplot with some information describing the
-#' relationship between the columns of data plotted.
+#' This function tries to supplement a normal scatterplot with some information
+#' describing the relationship between the columns of data plotted.
 #'
 #' @param df Dataframe likely containing two columns.
 #' @param gvis_filename Filename to write a fancy html graph.
@@ -753,8 +810,8 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #'               gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NULL, size=2) {
-  hpgl_env <- environment()
+plot_scatter <- function(df, tooltip_data=NULL, color="black",
+                         gvis_filename=NULL, size=2) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -763,9 +820,9 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
   colnames(df) <- c("first", "second")
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second",
-                                           label="label"), environment=hpgl_env) +
-    ggplot2::xlab(paste("Expression of", df_x_axis)) +
-    ggplot2::ylab(paste("Expression of", df_y_axis)) +
+                                           label="label")) +
+    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
+    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
     ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
     ggplot2::theme(legend.position="none",
                    axis.text=ggplot2::element_text(size=10, colour="black"))
@@ -777,12 +834,14 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 
 #' Make a pretty Volcano plot!
 #'
-#' Volcano plots and MA plots provide quick an easy methods to view the set of (in)significantly
-#' differentially expressed genes.  In the case of a volcano plot, it places the -log10 of the
-#' p-value estimate on the y-axis and the fold-change between conditions on the x-axis.  Here is a
-#' neat snippet from wikipedia: "The concept of volcano plot can be generalized to other
-#' applications, where the x-axis is related to a measure of the strength of a statistical signal,
-#' and y-axis is related to a measure of the statistical significance of the signal."
+#' Volcano plots and MA plots provide quick an easy methods to view the set of
+#' (in)significantly differentially expressed genes.  In the case of a volcano
+#' plot, it places the -log10 of the p-value estimate on the y-axis and the
+#' fold-change between conditions on the x-axis.  Here is a neat snippet from
+#' wikipedia: "The concept of volcano plot can be generalized to other
+#' applications, where the x-axis is related to a measure of the strength of a
+#' statistical signal, and y-axis is related to a measure of the statistical
+#' significance of the signal."
 #'
 #' @param table  Dataframe from limma's toptable which includes log(fold change) and an
 #'     adjusted p-value.
@@ -794,8 +853,9 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @param gvis_filename  Filename to write a fancy html graph.
 #' @param line_color  What color for the significance lines?
 #' @param line_position  Put the significance lines above or below the dots?
-#' @param logfc_cutoff  Cutoff defining the minimum/maximum fold change for interesting.  This is log,
-#'    so I went with +/- 0.8 mostly arbitrarily as the default.
+#' @param logfc_cutoff  Cutoff defining the minimum/maximum fold change for
+#'   interesting.  This is log, so I went with +/- 0.8 mostly arbitrarily as the
+#'   default.
 #' @param p_col  Which column contains the p-value data?
 #' @param p_name  Name of the p-value to put on the plot.
 #' @param pval_cutoff  Cutoff defining significant from not.
@@ -803,9 +863,10 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black", gvis_filename=NUL
 #' @param size  How big are the dots?
 #' @param tooltip_data  Df of tooltip information for gvis.
 #' @param ...  I love parameters!
-#' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value) with respect to
-#'     log(fold change).  The cutoff values are delineated with lines and mark the boundaries
-#'     between 'significant' and not.  This will make a fun clicky googleVis graph if requested.
+#' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
+#'   with respect to log(fold change).  The cutoff values are delineated with
+#'   lines and mark the boundaries between 'significant' and not.  This will
+#'   make a fun clicky googleVis graph if requested.
 #' @seealso \pkg{limma}
 #'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
 #'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
@@ -829,7 +890,8 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
 
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors=TRUE)
-  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))  ## This might have been converted to a string
+  ## This might have been converted to a string
+  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
   df[["pcut"]] <- df[["yaxis"]] <= pval_cutoff
   df[["state"]] <- ifelse(table[[p_col]] > pval_cutoff, "pinsig",
                    ifelse(table[[p_col]] <= pval_cutoff &
@@ -851,11 +913,13 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
   if (color_by != "p") {
     color_column <- "state"
     color_column_number <- 4
-    default_color_list <- c("downsig"="blue", "fcinsig"="darkgrey", "pinsig"="darkgrey", "upsig"="red")
+    default_color_list <- c("downsig"="blue", "fcinsig"="darkgrey",
+                            "pinsig"="darkgrey", "upsig"="red")
   }
   ## Now make sure that the color column has the correct number of elements.
   if (length(color_list) != color_column_number) {
-    message("The color list must have ", color_column_number, ", setting it to the default.")
+    message("The color list must have ", color_column_number,
+            ", setting it to the default.")
     color_list <- default_color_list
   }
 
@@ -868,19 +932,12 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
   plt <- NULL
   if (isTRUE(shapes_by_state)) {
     plt <- ggplot(data=df,
-                  aes_string(x="xaxis",
-                             y="logyaxis",
-                             label="label",
-                             fill=color_column,
-                             colour=color_column,
-                             shape="state"))
+                  aes_string(x="xaxis", y="logyaxis", label="label",
+                             fill=color_column, colour=color_column, shape="state"))
   } else {
     plt <- ggplot(data=df,
-                  aes_string(x="xaxis",
-                             y="logyaxis",
-                             label="label",
-                             fill=color_column,
-                             colour=color_column))
+                  aes_string(x="xaxis", y="logyaxis", label="label",
+                             fill=color_column, colour=color_column))
   }
 
   ## Now define when to put lines vs. points
@@ -903,22 +960,21 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
   ## If shapes are being set by state,  add that to the legend now.
   if (isTRUE(shapes_by_state)) {
     plt <- plt +
-      ggplot2::scale_shape_manual(name="state", values=state_shapes,
-                                  labels=c(
-                                    paste0("Down Sig.: ", num_downsig),
-                                    paste0("FC Insig.: ", num_fcinsig),
-                                    paste0("P Insig.: ", num_pinsig),
-                                    paste0("Up Sig.: ", num_upsig)),
-                                  guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
+      ggplot2::scale_shape_manual(
+                 name="state", values=state_shapes,
+                 labels=c(
+                   glue("Down Sig.: {num_downsig}"),
+                   glue("FC Insig.: {num_fcinsig}"),
+                   glue("P Insig.: {num_pinsig}"),
+                   glue("Up Sig.: {num_upsig}")),
+                 guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
       }
 
   ## Now set the colors and axis labels
   plt <- plt +
-    ggplot2::scale_fill_manual(name=color_column,
-                               values=color_list,
+    ggplot2::scale_fill_manual(name=color_column, values=color_list,
                                guide=FALSE) +
-    ggplot2::scale_color_manual(name=color_column,
-                                values=color_list,
+    ggplot2::scale_color_manual(name=color_column, values=color_list,
                                 guide=FALSE) +
     ggplot2::xlab(label=fc_name) +
     ggplot2::ylab(label=p_name) +
@@ -929,11 +985,10 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
 
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {
-    gvis_result <- plot_gvis_volcano(
-      table, fc_col=fc_col,
-      p_col=p_col, logfc_cutoff=logfc_cutoff,
-      fc_cutoff=logfc_cutoff, pval_cutoff=pval_cutoff,
-      tooltip_data=tooltip_data, filename=gvis_filename)
+    gvis_result <- plot_gvis_volcano(table, fc_col=fc_col, p_col=p_col,
+                                     logfc_cutoff=logfc_cutoff, fc_cutoff=logfc_cutoff,
+                                     pval_cutoff=pval_cutoff, tooltip_data=tooltip_data,
+                                     filename=gvis_filename)
   }
   retlist <- list("plot" = plt,
                   "df" = df,

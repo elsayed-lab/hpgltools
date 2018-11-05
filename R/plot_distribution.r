@@ -3,16 +3,18 @@
 
 #' Make a ggplot boxplot of a set of samples.
 #'
-#' Boxplots and density plots provide complementary views of data distributions.  The general idea
-#' is that if the box for one sample is significantly shifted from the others, then it is likely an
-#' outlier in the same way a density plot shifted is an outlier.
+#' Boxplots and density plots provide complementary views of data distributions.
+#' The general idea is that if the box for one sample is significantly shifted
+#' from the others, then it is likely an outlier in the same way a density plot
+#' shifted is an outlier.
 #'
 #' @param data Expt or data frame set of samples.
 #' @param colors Color scheme, if not provided will make its own.
-#' @param names Another version of the sample names for printing.
-#' @param scale Whether to log scale the y-axis.
 #' @param title A title!
 #' @param violin  Print this as a violin rather than a just box/whiskers?
+#' @param scale Whether to log scale the y-axis.
+#' @param expt_names Another version of the sample names for printing.
+#' @param label_chars  Maximum number of characters for abbreviating sample names.
 #' @param ... More parameters are more fun!
 #' @return Ggplot2 boxplot of the samples.  Each boxplot
 #' contains the following information: a centered line describing the
@@ -30,22 +32,23 @@
 #'  a_boxplot  ## ooo pretty boxplot look at the lines
 #' }
 #' @export
-plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL,
-                         violin=FALSE, scale=NULL, ...) {
+plot_boxplot <- function(data, colors=NULL, title=NULL,
+                         violin=FALSE, scale=NULL, expt_names=NULL, label_chars=10,
+                         ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
-    names <- data[["names"]]
     data <- as.data.frame(exprs(data))
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   ## I am now using this check of the data in a few places, so I function'd it.
@@ -57,14 +60,28 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL,
     colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(dim(data)[2])
   }
   data_matrix <- as.matrix(data)
-  data[data < 0] <- 0 ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
+  ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
+  data[data < 0] <- 0
+
+  if (!is.null(expt_names) && class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      colnames(data) <- make.names(design[[expt_names]], unique=TRUE)
+    } else {
+      colnames(data) <- expt_names
+    }
+  }
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
+  }
 
   data[["id"]] <- rownames(data)
   dataframe <- reshape2::melt(data, id=c("id"))
   colnames(dataframe) <- c("gene", "variable", "value")
+
   ## The use of data= and aes() leads to no visible binding for global variable warnings
   ## I am not sure what to do about them in this context.
-  boxplot <- ggplot2::ggplot(data=dataframe, aes_string(x="variable", y="value"))
+  boxplot <- ggplot2::ggplot(data=dataframe, aes_string(x="variable", y="value")) +
+    ggplot2::scale_x_discrete(labels=colnames(data))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
       ggplot2::geom_violin(aes_string(fill="variable"), width=1, scale="area",
@@ -89,28 +106,30 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL,
   if (!is.null(title)) {
     boxplot <- boxplot + ggplot2::ggtitle(title)
   }
-  if (!is.null(names)) {
-    boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
-  }
 
   if (scale == "log") {
-    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+    boxplot <- boxplot +
+      ggplot2::scale_y_continuous(labels=scales::scientific,
+                                  trans=scales::log2_trans())
   } else if (scale == "logdim") {
-    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+    boxplot <- boxplot +
+      ggplot2::coord_trans(y="log2", labels=scales::scientific)
   } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
+    boxplot <- boxplot +
+      ggplot2::scale_y_log10(labels=scales::scientific)
   }
   return(boxplot)
 }
 
 #' Create a density plot, showing the distribution of each column of data.
 #'
-#' Density plots and boxplots are cousins and provide very similar views of data distributions.
-#' Some people like one, some the other.  I think they are both colorful and fun!
+#' Density plots and boxplots are cousins and provide very similar views of data
+#' distributions. Some people like one, some the other.  I think they are both
+#' colorful and fun!
 #'
 #' @param data Expt, expressionset, or data frame.
 #' @param colors Color scheme to use.
-#' @param sample_names Names of the samples.
+#' @param expt_names Names of the samples.
 #' @param position How to place the lines, either let them overlap (identity), or stack them.
 #' @param direct Use direct.labels for labeling the plot?
 #' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
@@ -126,23 +145,24 @@ plot_boxplot <- function(data, colors=NULL, names=NULL, title=NULL,
 #'  funkytown <- plot_density(data)
 #' }
 #' @export
-plot_density <- function(data, colors=NULL, sample_names=NULL, position="identity", direct=TRUE,
-                         fill=NULL, title=NULL, scale=NULL, colors_by="condition", ...) {
+plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity", direct=TRUE,
+                         fill=NULL, title=NULL, scale=NULL, colors_by="condition",
+                         label_chars=10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
   design <- NULL
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
-    names <- data[["names"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.matrix(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (is.null(scale)) {
@@ -167,9 +187,18 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
     }
   }
 
-  if (!is.null(sample_names)) {
-    colnames(data) <- make.names(sample_names, unique=TRUE)
+  if (!is.null(expt_names)) {
+    if (class(expt_names) == "character" && length(expt_names) == 1) {
+    ## Then this refers to an experimental metadata column.
+      colnames(data) <- design[[expt_names]]
+    } else {
+      colnames(data) <- expt_names
+    }
   }
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
+  }
+
   ## If the columns lose the connectivity between the sample and values, then
   ## the ggplot below will fail with env missing.
   melted <- data.table::as.data.table(reshape2::melt(data))
@@ -201,11 +230,15 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
   }
 
   if (scale == "log") {
-    densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans())
+    densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans(),
+                                                             labels=scales::scientific)
   } else if (scale == "logdim") {
-    densityplot <- densityplot + ggplot2::coord_trans(x="log2")
+    densityplot <- densityplot +
+      ggplot2::coord_trans(x="log2") +
+      ggplot2::scale_x_continuous(labels=scales::scientific)
   } else if (isTRUE(scale)) {
-    densityplot <- densityplot + ggplot2::scale_x_log10()
+    densityplot <- densityplot +
+      ggplot2::scale_x_log10(labels=scales::scientific)
   }
 
   if (!is.null(colors_by)) {
@@ -261,8 +294,9 @@ plot_density <- function(data, colors=NULL, sample_names=NULL, position="identit
 
 #' Quantile/quantile comparison of the mean of all samples vs. each sample.
 #'
-#' This allows one to visualize all individual data columns against the mean of all columns of data
-#' in order to see if any one is significantly different than the cloud.
+#' This allows one to visualize all individual data columns against the mean of
+#' all columns of data in order to see if any one is significantly different
+#' than the cloud.
 #'
 #' @param data Expressionset, expt, or dataframe of samples.
 #' @param labels What kind of labels to print?
@@ -277,21 +311,17 @@ plot_qq_all <- function(data, labels="short") {
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
-    names <- data[["names"]]
     data <- as.data.frame(exprs(data))
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   sample_data <- data[, c(1, 2)]
-  ## This is bizarre, performing this operation with transform fails when called from a function
-  ## but works fine when called interactively, wtf indeed?
-  ##    sample_data = transform(sample_data, mean=rowMeans(plot_df))
   means <- rowMeans(data)
   sample_data[["mean"]] <- means
   logs <- list()
@@ -324,8 +354,8 @@ plot_qq_all <- function(data, labels="short") {
 
 #' Perform a qqplot between two columns of a matrix.
 #'
-#' Given two columns of data, how well do the distributions match one another?  The answer to that
-#' question may be visualized through a qq plot!
+#' Given two columns of data, how well do the distributions match one another?
+#' The answer to that question may be visualized through a qq plot!
 #'
 #' @param data Data frame/expt/expressionset.
 #' @param x First column to compare.
@@ -345,9 +375,9 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   xlabel <- colnames(data)[x]
@@ -366,9 +396,9 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
   ratio_df[["increment"]] <- as.vector(1:nrow(ratio_df))
 
   if (labels == "short") {
-    y_string <- paste(xlabel, " : ", ylabel, sep="")
+    y_string <- glue("{xlabel} : {ylabel}")
   } else {
-    y_string <- paste("Ratio of sorted ", xlabel, " and ", ylabel, ".", sep="")
+    y_string <- glue("Ratio of sorted {xlabel}  and {ylabel}.")
   }
   ratio_plot <- ggplot2::ggplot(ratio_df,
                                 ggplot2::aes_string(x="increment", y="ratio")) +
@@ -425,8 +455,8 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     ggplot2::scale_x_continuous(limits=c(0, gg_max))
   if (isTRUE(labels)) {
     log_ratio_plot <- log_ratio_plot +
-      ggplot2::xlab(paste("log sorted ", xlabel)) +
-      ggplot2::ylab(paste("log sorted ", ylabel)) +
+      ggplot2::xlab(glue("log sorted {xlabel}")) +
+      ggplot2::ylab(glue("log sorted {ylabel}")) +
       ggplot2::theme_bw(base_size=base_size) +
       ggplot2::theme(legend.position="none")
   } else if (labels == "short") {
@@ -468,59 +498,6 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
   return(qq_plots)
 }
 
-#' Perform qq plots of every column against every other column of a dataset.
-#'
-#' This function is stupid, don't use it.  It makes more sense to just use plot_qq, however I am not
-#' quite read to delete this function yet.
-#'
-#' @param data Dataframe to perform pairwise qqplots with.
-#' @return List containing the recordPlot() output of the ratios, logs, and means among samples.
-#' @seealso \pkg{Biobase}
-#' @export
-plot_qq_all_pairwise <- function(data) {
-  data_class <- class(data)[1]
-  names <- NULL
-  if (data_class == "expt") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    names <- data[["names"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-    design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
-  } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-  }
-
-  logs <- list()
-  ratios <- list()
-  rows <- length(colnames(data))
-  means <- matrix(nrow=rows, ncol=rows)
-  count <- 1
-  for (i in 1:rows) {
-    for (j in 1:rows) {
-      ith <- colnames(data)[i]
-      jth <- colnames(data)[j]
-      message("Making plot of ", ith, "(", i, ") vs. ", jth, "(", j, ") as element: ", count, ".")
-      tmp <- plot_single_qq(data, x=i, y=j, labels=names)
-      logs[[count]] <- tmp[["log"]]
-      ratios[[count]] <- tmp[["ratio"]]
-      means[i, j] <- tmp[["summary"]][["Mean"]]
-      count <- count + 1
-    }
-  }
-  plot_multiplot(logs)
-  log_plots <- grDevices::recordPlot()
-  plot_multiplot(ratios)
-  ratio_plots <- grDevices::recordPlot()
-  heatmap.3(means, trace="none")
-  means_heatmap <- grDevices::recordPlot()
-  plots <- list(logs=log_plots, ratios=ratio_plots, means=means_heatmap)
-  return(plots)
-}
-
 #' Plot the representation of the top-n genes in the total counts / sample.
 #'
 #' One question we might ask is: how much do the most abundant genes in a
@@ -532,33 +509,35 @@ plot_qq_all_pairwise <- function(data) {
 #' are.  I suspect, but haven't tried yet, that the inflection point of the
 #' resulting curve is also a useful diagnostic in this question.
 #'
-#' @param data  Dataframe to perform pairwise qqplots with.
-#' @param title  A title for the plot.
-#' @param direct  Include sample labels with directlabel()?
-#' @param num  The N in top-n genes, if null, do them all.
-#' @param ...  Extra arguments, currently unused.
+#' @param data Dataframe/matrix/whatever for performing topn-plot.
+#' @param title A title for the plot.
+#' @param num The N in top-n genes, if null, do them all.
+#' @param expt_names Column or character list of sample names.
+#' @param plot_labels Method for labelling the lines.
+#' @param label_chars Maximum number of characters before abbreviating samples.
+#' @param plot_legend Add a legend to the plot?
+#' @param ... Extra arguments, currently unused.
 #' @return List containing the ggplot2
 #' @export
-plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
+plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
+                      plot_labels="direct", label_chars=10, plot_legend=FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
-    names <- data[["names"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.matrix(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   columns <- colSums(data)
   testing <- data / columns
-
   newdf <- data.frame(row.names=1:nrow(testing))
   for (col in colnames(testing)) {
     ranked <- order(testing[, col], decreasing=TRUE)
@@ -583,6 +562,18 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
     smoother <- arglist[["smoother"]]
   }
 
+  if (!is.null(expt_names) && class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      colnames(newdf) <- make.names(design[[expt_names]], unique=TRUE)
+    } else {
+      colnames(newdf) <- expt_names
+    }
+    colnames(newdf)[ncol(newdf)] <- "rank"
+  }
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    colnames(newdf) <- abbreviate(colnames(newdf), minlength=label_chars)
+  }
+
   tmpdf <- reshape2::melt(newdf, id.vars="rank")
   colnames(tmpdf) <- c("rank", "sample", "pct")
   tmpdf[["rank"]] <- as.numeric(tmpdf[["rank"]])
@@ -594,11 +585,17 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
     ggplot2::theme_bw(base_size=base_size)
 
   if (!is.null(title)) {
-    topn_plot <- topn_plot + ggplot2::ggtitle(title)
+    topn_plot <- topn_plot +
+      ggplot2::ggtitle(title)
   }
 
-  if (isTRUE(direct)) {
-    topn_plot <- topn_plot + directlabels::geom_dl(aes_string(label="sample"), method="smart.grid")
+  if (plot_labels == "direct") {
+    topn_plot <- topn_plot +
+      directlabels::geom_dl(aes_string(label="sample"), method="smart.grid")
+  }
+  if (isFALSE(plot_legend)) {
+    topn_plot <- topn_plot +
+      ggplot2::theme(legend.position="none")
   }
 
   retlist <- list(
@@ -620,27 +617,30 @@ plot_topn <- function(data, title=NULL, direct=TRUE, num=100, ...) {
 #' @param x_axis  Factor in the experimental design we may use to group the data
 #'   and calculate the dispersion metrics.
 #' @param colors  Set of colors to use when making the violins
-#' @param sample_names  A vector of names for the samples.
 #' @param title Optional title to include with the plot.
 #' @param ...  Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
 plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
-                                       sample_names=NULL, title=NULL, ...) {
+                                       title=NULL, ...) {
   arglist <- list(...)
+  plot_legend <- FALSE
+  if (!is.null(arglist[["plot_legend"]])) {
+    plot_legend <- arglist[["plot_legend"]]
+  }
+
   data_class <- class(data)
   if (data_class == "expt") {
     design <- pData(data)
     colors <- data[["colors"]]
-    names <- data[["names"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.matrix(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.matrix(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   melted <- data.table::as.data.table(reshape2::melt(data))
@@ -668,7 +668,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
 
   ## The various forms of evaluation in the hadleyverse is getting ridiculous.
   .data <- NULL
-  message("Naively calculating coefficient of variation and quartile dispersion with respect to ",
+  message("Naively calculating coefficient of variation/dispersion with respect to ",
           x_axis, ".")
   cv_data <- melted %>%
     dplyr::group_by(.data[["gene"]], .data[[x_axis]]) %>%
@@ -683,12 +683,13 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   cv_data[na_idx, "cv"] <- 0
   na_idx <- is.na(cv_data[["disp"]])
   cv_data[na_idx, "disp"] <- 0
-  ## The metrics of dispersion taken so far are not really appropriate for RNASeq distributed data.
-  ## Ideally, I would like to subset the expressionset according to the x_axis factor
-  ## and perform a DESeq2/edgeR dispersion estimate for the remaining pile of data, then
-  ## add the results to cv_data.
-  ## The following piece of code is a simple way to get the normal, pooled dispersion information.
-  ## In theory I should be able to refactor this to do what I want.
+  ## The metrics of dispersion taken so far are not really appropriate for
+  ## RNASeq distributed data. Ideally, I would like to subset the expressionset
+  ## according to the x_axis factor and perform a DESeq2/edgeR dispersion
+  ## estimate for the remaining pile of data, then add the results to cv_data.
+  ## The following piece of code is a simple way to get the normal, pooled
+  ## dispersion information. In theory I should be able to refactor this to do
+  ## what I want.
   ## message("Using edgeR to calculate dispersions with respect to: ", x_axis)
   ## test <- import_edger(data, design[[x_axis]])
   ## disp_model <- model.matrix(object=as.formula(paste0("~", x_axis)), data=design)
@@ -717,9 +718,10 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
 
   ## Add the number of samples of each type to the top of the plot with this.
   sample_numbers <- list()
-  for (l in levels(as.factor(cv_data[["x_axis"]]))) {
+  for (l in levels(as.factor(cv_data[[x_axis]]))) {
     sample_numbers[[l]] <- sum(design[[x_axis]] == l)
   }
+  cv_data[["x_axis"]] <- cv_data[[x_axis]]
   y_labels <- list(
     "bcv" = "Biological coefficient of variation",
     "cv" = "Coefficient of variation",
@@ -740,10 +742,12 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
       ggplot2::ylab(as.character(y_labels[type])) +
       ggplot2::xlab("")
     if (!is.null(title)) {
-      retlst[[type]] <- retlst[[type]] + ggplot2::ggtitle(title)
+      retlst[[type]] <- retlst[[type]] +
+        ggplot2::ggtitle(title)
     }
-    if (!is.null(sample_names)) {
-      retlst[[type]] <- retlst[[type]] + ggplot2::scale_x_discrete(labels=sample_names)
+    if (isFALSE(plot_legend)) {
+      retlst[[type]] <- retlst[[type]] +
+        ggplot2::theme(legend.position="none")
     }
   }
   retlst[["data"]] <- cv_data

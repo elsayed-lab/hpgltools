@@ -12,13 +12,13 @@ get_kegg_orgn(species = "Leishmania", short = TRUE)
 \item{short}{Only pull the orgid?}
 }
 \value{
-Data frame of possible KEGG identifier codes, genome ID numbers, species, and
- phylogenetic classifications.
+Data frame of possible KEGG identifier codes, genome ID numbers,
+species, and phylogenetic classifications.
 }
 \description{
-KEGG identifiers do not always make sense.  For example, how am I supposed to remember that
-Leishmania major is lmj?  This takes in a human readable string and finds the KEGG identifiers
-that match it.
+KEGG identifiers do not always make sense.  For example, how am I supposed to
+remember that Leishmania major is lmj?  This takes in a human readable string
+and finds the KEGG identifiers that match it.
 }
 \examples{
 \dontrun{

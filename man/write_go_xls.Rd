@@ -31,9 +31,10 @@ write_go_xls(goseq, cluster, topgo, gostats, gprofiler,
 the list of ontology information
 }
 \description{
-Combine the results from goseq, cluster profiler, topgo, and gostats and drop them into excel
-Hopefully with a relatively consistent look.
+Combine the results from goseq, cluster profiler, topgo, and gostats and drop
+them into excel. Hopefully with a relatively consistent look.
 }
 \seealso{
-\pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats} \pkg{topGO} \pkg{gProfiler}
+\pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats}
+\pkg{topGO} \pkg{gProfiler}
 }

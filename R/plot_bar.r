@@ -2,17 +2,19 @@
 
 #' Make a ggplot graph of library sizes.
 #'
-#' It is often useful to have a quick view of which samples have more/fewer reads.  This does that
-#' and maintains one's favorite color scheme and tries to make it pretty!
+#' It is often useful to have a quick view of which samples have more/fewer
+#' reads.  This does that and maintains one's favorite color scheme and tries to
+#' make it pretty!
 #'
 #' @param data Expt, dataframe, or expressionset of samples.
 #' @param condition vector of sample condition names.
 #' @param colors Color scheme if the data is not an expt.
-#' @param names Alternate names for the x-axis.
 #' @param text Add the numeric values inside the top of the bars of the plot?
 #' @param order  Explicitly set the order of samples in the plot?
 #' @param title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
+#' @param expt_names  Design column or manually selected names for printing sample names.
+#' @param label_chars Maximum number of characters before abbreviating sample names.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
 #' @seealso \pkg{ggplot2}
@@ -25,8 +27,9 @@
 #' }
 #' @export
 plot_libsize <- function(data, condition=NULL, colors=NULL,
-                         names=NULL, text=TRUE, order=NULL,
-                         title=NULL,  yscale=NULL, ...) {
+                         text=TRUE, order=NULL, title=NULL,  yscale=NULL,
+                         expt_names=NULL, label_chars=10,
+                         ...) {
   arglist <- list(...)
   if (is.null(text)) {
     text <- TRUE
@@ -43,22 +46,22 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
     design <- pData(data)
     condition <- design[["condition"]]
     colors <- data[["colors"]]
-    names <- data[["names"]]
     mtrx <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     design <- pData(data)
     condition <- design[["condition"]]
     mtrx <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    mtrx <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    ## some functions prefer matrix, so I am keeping this explicit for the moment
+    mtrx <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(
-                           RColorBrewer::brewer.pal(ncol(data),
-                                                    chosen_palette))(ncol(data))
+                           RColorBrewer::brewer.pal(ncol(mtrx),
+                                                    chosen_palette))(ncol(mtrx))
   }
 
   ## Get conditions
@@ -71,6 +74,18 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
 
   colors <- as.character(colors)
   sum <- NULL
+
+  if (!is.null(expt_names) && class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      colnames(mtrx) <- make.names(design[[expt_names]], unique=TRUE)
+    } else {
+      colnames(mtrx) <- expt_names
+    }
+  }
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    colnames(mtrx) <- abbreviate(colnames(mtrx), minlength=label_chars)
+  }
+
   libsize_df <- data.frame("id" = colnames(mtrx),
                            "sum" = colSums(mtrx),
                            "condition" = condition,
@@ -83,13 +98,11 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                                                      "max"=max(sum)),
                                               by="condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
-                                   names=names, text=text,
-                                   order=order, title=title, integerp=integerp,
+                                   text=text, order=order, title=title, integerp=integerp,
                                    yscale=yscale, ...)
-  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
-                                   names=names, text=text,
-                                   order=order, title=title, integerp=integerp,
-                                   yscale=yscale)
+  ##libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
+  ##                                 text=text, order=order, title=title, integerp=integerp,
+  ##                                 yscale=yscale)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -147,7 +160,8 @@ plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
                    legend.position="none")
 
   low_columns <- ggplot(all_tab, aes_string(x="id", y="low")) +
-    ggplot2::geom_col(position="identity", color="black", aes_string(alpha="alpha", fill="colors")) +
+    ggplot2::geom_col(position="identity", color="black",
+                      aes_string(alpha="alpha", fill="colors")) +
     ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="black", hjust=1.2,
                        aes_string(
@@ -215,9 +229,9 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
   } else if (data_class == "matrix" | data_class == "data.frame") {
-    data <- as.data.frame(data)  ## some functions prefer matrix, so I am keeping this explicit for the moment
+    data <- as.data.frame(data)
   } else {
-    stop("This function currently only understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (is.null(colors)) {
@@ -225,14 +239,10 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
                            RColorBrewer::brewer.pal(ncol(data),
                                                     chosen_palette))(ncol(data))
   }
-
-                                        # Get conditions
   if (is.null(condition)) {
     stop("Missing condition label vector.")
   }
-
   colors <- as.character(colors)
-
   kept_df <- data.frame("id" = colnames(data),
                         "sum" = table[row, ],
                         "condition" = condition,
@@ -243,7 +253,7 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
 }
 
 plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
-                             integerp=FALSE, order=NULL, names=NULL,
+                             integerp=FALSE, order=NULL,
                              text=TRUE, title=NULL, yscale=NULL, ...) {
   arglist <- list(...)
 
@@ -282,29 +292,28 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
                       aes_string(x="order")) +
     ggplot2::xlab("Sample ID") +
     ggplot2::ylab(y_label) +
-    ## theme_bw() sets a bunch of reasonable defaults.
     ggplot2::theme_bw(base_size=base_size) +
-    ## angle=90 puts the text vertically, vjust=0.5 centers the labels below the tick mark.
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) ##, hjust=1.5, vjust=0.5))
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5))
 
   if (isTRUE(text)) {
     if (!isTRUE(integerp)) {
       sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
     }
-    ## newlabels <- prettyNum(as.character(libsize_df[["sum"]]), big.mark=",")
     sample_plot <- sample_plot +
-      ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
-                         ## ggplot2::aes_string(parse=FALSE,
-                         ggplot2::aes_string(x="order",
-                                             label='prettyNum(as.character(sample_df$sum), big.mark=",")'))
+      ggplot2::geom_text(
+                 parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                 ggplot2::aes_string(
+                            x="order",
+                            label='prettyNum(as.character(sample_df$sum), big.mark=",")'))
   }
 
   if (!is.null(title)) {
     sample_plot <- sample_plot + ggplot2::ggtitle(title)
   }
   if (is.null(yscale)) {
-    scale_difference <- max(as.numeric(sample_df[["sum"]])) / min(as.numeric(sample_df[["sum"]]))
+    scale_difference <- max(as.numeric(sample_df[["sum"]])) /
+      min(as.numeric(sample_df[["sum"]]))
     if (scale_difference > 10.0) {
       message("The scale difference between the smallest and largest
 libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
@@ -315,11 +324,10 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
   }
   if (isTRUE(scale)) {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_log10()
-  }
-  if (!is.null(names)) {
+      ggplot2::scale_y_log10(labels=scales::scientific)
+  } else {
     sample_plot <- sample_plot +
-      ggplot2::scale_x_discrete(labels=names)
+      ggplot2::scale_y_continuous(labels=scales::scientific)
   }
   return(sample_plot)
 }
@@ -349,8 +357,6 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
   plotted_end <- end + padding
   my_start <- start
   my_end <- end
-  ## These are good chances to use %>% I guess
-  ## rpm_region = subset(input, chromosome==mychr & position >= plotted_start & position <= plotted_end)
   region_idx <- input[["chromosome"]] == mychr &
     input[["position"]] >= plotted_start &
     input[["position"]] <= plotted_end
@@ -379,14 +385,15 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
   } else {
     gene_arrow <- grid::arrow(type="closed", ends="first")
   }
-  xlabel_string <- paste(name, ": ", my_start, " to ", my_end)
+  xlabel_string <- glue("{name}: {my_start} to {my_end}")
   my_plot <- ggplot(rpm_region, aes_string(x="position", y="log")) +
     ggplot2::xlab(xlabel_string) +
     ggplot2::ylab("Log2(RPM) reads") +
     ggplot2::geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
     ggplot2::geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
     ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
-    ggplot2::geom_segment(data=rpm_region, mapping=stupid, arrow=gene_arrow, size=2, color="blue") +
+    ggplot2::geom_segment(data=rpm_region, mapping=stupid,
+                          arrow=gene_arrow, size=2, color="blue") +
     ggplot2::theme_bw(base_size=base_size)
 
   return(my_plot)
@@ -438,8 +445,10 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
   comp_names <- ups[ups[["variable"]] == "a_up_inner", ][["comparisons"]]
   for (comp in 1:length(comp_names)) {
     comp_name <- comp_names[[comp]]
-    up_sums[[comp_name]] <- sum(as.numeric(ups[ups[["comparisons"]] == comp_name, ][["value"]]))
-    down_sums[[comp_name]] <- sum(as.numeric(downs[downs[["comparisons"]] == comp_name, ][["value"]])) * -1.0
+    idx <- ups[["comparisons"]] == comp_name
+    up_sums[[comp_name]] <- sum(as.numeric(ups[idx, ][["value"]]))
+    idx <- downs[["comparisons"]] == comp_name
+    down_sums[[comp_name]] <- sum(as.numeric(downs[idx, ][["value"]])) * -1.0
   }
 
   if (is.null(maximum)) {
@@ -447,19 +456,14 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
   }
 
   ## Try to ensure that ggplot orders my colors and bars in the specific order I want.
-  ## holy ass crackers this is annoying and difficult to get correct,  as the ordering is (to my eyes) arbitrary.
+  ## holy ass crackers this is annoying and difficult to get correct,  as the
+  ## ordering is (to my eyes) arbitrary.
   names(color_list) <- color_names
   levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
   levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
   sigbar_plot <- ggplot() +
     ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
     ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-    ## ggplot2::scale_fill_manual(values=c("a_up_inner"="lightcyan",
-    ##                                     "b_up_middle"="lightskyblue",
-    ##                                     "c_up_outer"="dodgerblue",
-    ##                                     "a_down_inner"="plum1",
-    ##                                     "b_down_middle"="orchid",
-    ##                                     "c_down_outer"="purple4")) +
     ggplot2::scale_fill_manual(values=color_list) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size=base_size) +

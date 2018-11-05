@@ -15,9 +15,10 @@ median_by_factor(data, fact = "condition")
 Data frame of the medians.
 }
 \description{
-This assumes of course that (like expressionsets) there are separate columns for each replicate
-of the conditions.  This will just iterate through the levels of a factor describing the columns,
-extract them, calculate the median, and add that as a new column in a separate data frame.
+This assumes of course that (like expressionsets) there are separate columns
+for each replicate of the conditions.  This will just iterate through the
+levels of a factor describing the columns, extract them, calculate the
+median, and add that as a new column in a separate data frame.
 }
 \details{
 Used in write_expt() as well as a few random collaborations.

@@ -47,8 +47,8 @@ This copies the logic employed in hpgl_voom().  I suspect one should not use it.
 }
 \examples{
 \dontrun{
-## No seriously, dont run this, I think it is wiser to use the functions provided by limma.
-## But this provides a place to test stuff out.
+## No seriously, dont run this, I think it is wiser to use the functions
+## provided by limma. But this provides a place to test stuff out.
  voom_result <- hpgl_voomweighted(dataset, model)
 }
 }

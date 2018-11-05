@@ -14,7 +14,8 @@ post_eupath_ortholog_table(species = "Leishmania major", entry = NULL,
 
 \item{metadata}{A metadata table from which to get some annotation data.}
 
-\item{dir}{FIXME: I want to write some intermediate data to dir in case of transient error.}
+\item{dir}{FIXME: I want to write some intermediate data to dir in case of
+transient error.}
 
 \item{...}{Extra options for downloading metadata.}
 }

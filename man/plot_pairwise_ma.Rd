@@ -17,8 +17,8 @@ plot_pairwise_ma(data, log = NULL, ...)
 List of affy::maplots
 }
 \description{
-Use affy's ma.plot() on every pair of columns in a data set to help diagnose problematic
-samples.
+Use affy's ma.plot() on every pair of columns in a data set to help diagnose
+problematic samples.
 }
 \examples{
 \dontrun{
@@ -27,5 +27,5 @@ samples.
 }
 \seealso{
 \pkg{affy}
- \code{\link[affy]{ma.plot}}
+\code{\link[affy]{ma.plot}}
 }

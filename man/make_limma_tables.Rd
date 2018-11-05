@@ -16,19 +16,22 @@ make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
 \item{coef}{Which coefficients/contrasts to report, NULL says do them all.}
 
-\item{annot_df}{Optional data frame including annotation information to include with the tables.}
+\item{annot_df}{Optional data frame including annotation information to
+include with the tables.}
 
 \item{intercept}{Intercept model?}
 }
 \value{
-List of data frames comprising the toptable output for each coefficient, I also added a
- qvalue entry to these toptable() outputs.
+List of data frames comprising the toptable output for each
+coefficient, I also added a qvalue entry to these toptable() outputs.
 }
 \description{
 However, this will do a couple of things to make one's life easier:
-1.  Make a list of the output, one element for each comparison of the contrast matrix
-2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
-3.  Since I have been using qvalues a lot for other stuff, add a column for them.
+\enumerate{
+\item Make a list of the output, one element for each comparison of the contrast matrix
+\item Write out the toptable() output in separate .csv files and/or sheets in excel
+\item Since I have been using qvalues a lot for other stuff, add a column for them.
+}
 }
 \examples{
 \dontrun{
@@ -38,5 +41,5 @@ However, this will do a couple of things to make one's life easier:
 }
 \seealso{
 \pkg{limma} \pkg{qvalue}
- \code{\link{write_xls}} \code{\link[limma]{topTable}}
+\code{\link{write_xls}} \code{\link[limma]{topTable}}
 }

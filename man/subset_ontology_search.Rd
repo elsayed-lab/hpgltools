@@ -23,7 +23,8 @@ subset_ontology_search(changed_counts, doplot = TRUE, do_goseq = TRUE,
 
 \item{do_gprofiler}{Do a gprofiler search?}
 
-\item{according_to}{If results from multiple DE tools were passed, which one defines 'significant'?}
+\item{according_to}{If results from multiple DE tools were passed, which one
+defines 'significant'?}
 
 \item{...}{Extra arguments!}
 }
@@ -31,9 +32,10 @@ subset_ontology_search(changed_counts, doplot = TRUE, do_goseq = TRUE,
 List of ontology search results, up and down for each contrast.
 }
 \description{
-In the same way all_pairwise() attempts to simplify using multiple DE tools, this function seeks
-to make it easier to extract subsets of differentially expressed data and pass them to goseq,
-clusterProfiler, topGO, GOstats, and gProfiler.
+In the same way all_pairwise() attempts to simplify using multiple DE tools,
+this function seeks to make it easier to extract subsets of differentially
+expressed data and pass them to goseq, clusterProfiler, topGO, GOstats, and
+gProfiler.
 }
 \seealso{
 \pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler}

@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_shared.r
 \name{choose_binom_dataset}
 \alias{choose_binom_dataset}
-\title{A sanity check that a given set of data is suitable for analysis by edgeR or DESeq2.}
+\title{A sanity check that a given set of data is suitable for methods which assume
+a negative binomial distribution of input.}
 \usage{
 choose_binom_dataset(input, force = FALSE, ...)
 }
@@ -17,7 +18,8 @@ choose_binom_dataset(input, force = FALSE, ...)
 dataset suitable for limma analysis
 }
 \description{
-Take an expt and poke at it to ensure that it will not result in troubled results.
+Take an expt and poke at it to ensure that it will not result in troubled
+results.
 }
 \details{
 Invoked by deseq_pairwise() and edger_pairwise().

@@ -29,12 +29,14 @@ circos_karyotype(name = "default", conf_dir = "circos/conf",
 The output filename.
 }
 \description{
-This function tries to save me from having to get the lengths of arcs for bacterial chromosomes
-manually correct, and writes them as a circos compatible karyotype file.
-The outfile parameter was chosen to match the configuration directive
-outlined in circos_prefix(), however that will need to be changed in order for this to work
-in variable conditions.  Next time I make one of these graphs I will do that I suspect.
-In addition, this currently only understands how to write bacterial chromosomes, that will
-likely be fixed when I am asked to write out a L.major karyotype.
-These defaults were chosen because I have a chromosome of this length that is correct.
+This function tries to save me from having to get the lengths of arcs for
+bacterial chromosomes manually correct, and writes them as a circos
+compatible karyotype file. The outfile parameter was chosen to match the
+configuration directive outlined in circos_prefix(), however that will need
+to be changed in order for this to work in variable conditions.  Next time I
+make one of these graphs I will do that I suspect. In addition, this
+currently only understands how to write bacterial chromosomes, that will
+likely be fixed when I am asked to write out a L.major karyotype. These
+defaults were chosen because I have a chromosome of this length that is
+correct.
 }

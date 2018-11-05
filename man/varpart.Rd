@@ -11,15 +11,18 @@ varpart(expt, predictor = NULL, factors = c("condition", "batch"),
 \arguments{
 \item{expt}{Some data}
 
-\item{predictor}{Non-categorical predictor factor with which to begin the model.}
+\item{predictor}{Non-categorical predictor factor with which to begin the
+model.}
 
 \item{factors}{Character list of columns in the experiment design to query}
 
-\item{chosen_factor}{When checking for sane 'batches', what column to extract from the design?}
+\item{chosen_factor}{When checking for sane 'batches', what column to
+extract from the design?}
 
 \item{do_fit}{Perform a fitting using variancePartition?}
 
-\item{cor_gene}{Provide a set of genes to look at the correlations, defaults to the first gene.}
+\item{cor_gene}{Provide a set of genes to look at the correlations, defaults
+to the first gene.}
 
 \item{cpus}{Number cpus to use}
 

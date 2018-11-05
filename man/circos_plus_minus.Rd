@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot_circos.r
 \name{circos_plus_minus}
 \alias{circos_plus_minus}
-\title{Write tiles of bacterial ontology groups using the categories from microbesonline.org.}
+\title{Write tiles of bacterial ontology groups using the categories from
+microbesonline.org.}
 \usage{
 circos_plus_minus(table, cfgout = "circos/conf/default.conf",
   chr = "chr1", outer = 1, width = 0.08, spacing = 0,
@@ -23,7 +24,8 @@ circos_plus_minus(table, cfgout = "circos/conf/default.conf",
 
 \item{chr}{Name of the chromosome.}
 
-\item{outer}{Floating point radius of the circle into which to place the plus-strand data.}
+\item{outer}{Floating point radius of the circle into which to place the
+plus-strand data.}
 
 \item{width}{Radial width of each tile.}
 

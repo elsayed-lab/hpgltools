@@ -10,7 +10,8 @@ load_microbesonline_go(id = "160490", id_column = "name",
 \arguments{
 \item{id}{Which species to query.}
 
-\item{id_column}{This no longer uses MySQL, so which column from the html table to pull?}
+\item{id_column}{This no longer uses MySQL, so which column from the html
+table to pull?}
 
 \item{data_column}{Similar to above, there are lots of places from which one might
 extract the data.}
@@ -21,16 +22,20 @@ extract the data.}
 data frame of GO terms from www.microbesonline.org
 }
 \description{
-The microbesonline is such a fantastic resource, it is a bit of a shame that it is such a pain
-to query.
+The microbesonline is such a fantastic resource, it is a bit of a shame that
+it is such a pain to query.
 }
 \details{
 Tested in test_42ann_microbes.R
-I am not 100% certain that this is giving me the full correct set of gene ontology accessions.
-At the very least, it does return a large number of them, which is a start.
+I am not 100% certain that this is giving me the full correct set of gene
+ontology accessions. At the very least, it does return a large number of
+them, which is a start.
 }
 \examples{
 \dontrun{
  go_df <- get_loci_go(id="160490")
 }
+}
+\author{
+atb
 }

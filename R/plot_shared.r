@@ -111,13 +111,17 @@ ggplt <- function(gg, filename="ggplot.html",
 #'   \item pcatable = a table describing the relative contribution of condition/batch of the raw data
 #'   \item pcares =  a table describing the relative contribution of condition/batch of the raw data
 #'   \item pcavar = a table describing the variance of the raw data
-#'   \item qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-#'   \item density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+#'   \item qq = a recordPlotted() view comparing the quantile/quantiles between
+#'      the mean of all data and every raw sample
+#'   \item density = a ggplot2 view of the density of each raw sample (this is
+#'      complementary but more fun than a boxplot)
 #' }
 #' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#'  \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}} \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
-#'  \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}} \code{\link{plot_disheat}}
-#'  \code{\link{plot_pca}} \code{\link{plot_qq_all}} \code{\link{plot_pairwise_ma}}
+#'   \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
+#'   \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
+#'   \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
+#'   \code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
+#'   \code{\link{plot_pairwise_ma}}
 #' @examples
 #' \dontrun{
 #'  toomany_plots <- graph_metrics(expt)
@@ -128,24 +132,15 @@ ggplt <- function(gg, filename="ggplot.html",
 #'  ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
 #' @export
-graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", title_suffix=NULL,
-                          qq=FALSE, ma=FALSE, gene_heat=FALSE, ...) {
+graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
+                          title_suffix=NULL, qq=FALSE, ma=FALSE, gene_heat=FALSE,
+                          ...) {
+  arglist <- list(...)
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }
   ## First gather the necessary data for the various plots.
   old_options <- options(scipen=10)
-  ##old_options <- options(device = function(...) {
-  ##    .Call("R_GD_nullDevice", PACKAGE = "grDevices")
-  ##})
-  ## Make sure to close any open plotting devices, as that would be too confusing.
-  ##if (!is.null(dev.list())) {
-  ##  all_devices <- names(dev.list())
-  ##  for (dev in names(dev.list())) {
-  ##    off_please <- dev.off()
-  ##  }
-  ##  message("Closing the ", toString(all_devices), " plotting device(s) before printing plots.")
-  ##}
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"
   boxplot_title <- "Boxplot"
@@ -159,51 +154,66 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   cv_title <- "Coefficient of variance plot"
   topn_title <- "Top-n representation"
   if (!is.null(title_suffix)) {
-    nonzero_title <- paste0(nonzero_title, ": ", title_suffix)
-    libsize_title <- paste0(libsize_title, ": ", title_suffix)
-    boxplot_title <- paste0(boxplot_title, ": ", title_suffix)
-    corheat_title <- paste0(corheat_title, ": ", title_suffix)
-    smc_title <- paste0(smc_title, ": ", title_suffix)
-    disheat_title <- paste0(disheat_title, ": ", title_suffix)
-    smd_title <- paste0(smd_title, ": ", title_suffix)
-    pca_title <- paste0(pca_title, ": ", title_suffix)
-    tsne_title <- paste0(tsne_title, ": ", title_suffix)
-    dens_title <- paste0(dens_title, ": ", title_suffix)
-    cv_title <- paste0(cv_title, ": ", title_suffix)
-    topn_title <- paste0(topn_title, ": ", title_suffix)
+    nonzero_title <- glue("{nonzero_title}: {title_suffix}")
+    libsize_title <- glue("{libsize_title}: {title_suffix}")
+    boxplot_title <- glue("{boxplot_title}: {title_suffix}")
+    corheat_title <- glue("{corheat_title}: {title_suffix}")
+    smc_title <- glue("{smc_title}: {title_suffix}")
+    disheat_title <- glue("{disheat_title}: {title_suffix}")
+    smd_title <- glue("{smd_title}: {title_suffix}")
+    pca_title <- glue("{pca_title}: {title_suffix}")
+    tsne_title <- glue("{tsne_title}:  {title_suffix}")
+    dens_title <- glue("{dens_title}: {title_suffix}")
+    cv_title <- glue("{cv_title}: {title_suffix}")
+    topn_title <- glue("{topn_title}: {title_suffix}")
   }
+
+  ## I am putting the ... arguments on a separate line so that I can check that
+  ## each of these functions is working properly in an interactive session.
   message("Graphing number of non-zero genes with respect to CPM by library.")
-  nonzero <- try(plot_nonzero(expt, title=nonzero_title, ...))
+  nonzero <- try(plot_nonzero(expt, title=nonzero_title,
+                              ...))
   message("Graphing library sizes.")
-  libsize <- try(plot_libsize(expt, title=libsize_title, ...))
+  libsize <- try(plot_libsize(expt, title=libsize_title,
+                              ...))
   message("Graphing a boxplot.")
-  boxplot <- try(plot_boxplot(expt, title=boxplot_title, ...))
+  boxplot <- try(plot_boxplot(expt, title=boxplot_title,
+                              ...))
   message("Graphing a correlation heatmap.")
-  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title, ...))
+  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title,
+                              ...))
   message("Graphing a standard median correlation.")
-  smc <- try(plot_sm(expt, method=cormethod, title=smc_title, ...))
+  smc <- try(plot_sm(expt, method=cormethod, title=smc_title,
+                     ...))
   message("Graphing a distance heatmap.")
-  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title, ...))
+  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title,
+                              ...))
   message("Graphing a standard median distance.")
-  smd <- try(plot_sm(expt, method=distmethod, title=smd_title, ...))
+  smd <- try(plot_sm(expt, method=distmethod, title=smd_title,
+                     ...))
   message("Graphing a PCA plot.")
-  pca <- try(plot_pca(expt, title=pca_title, ...))
+  pca <- try(plot_pca(expt, title=pca_title,
+                      ...))
   message("Graphing a T-SNE plot.")
-  tsne <- try(plot_tsne(expt, title=tsne_title, ...))
+  tsne <- try(plot_tsne(expt, title=tsne_title,
+                        ...))
   message("Plotting a density plot.")
-  density <- try(plot_density(expt, title=dens_title, ...))
+  density <- try(plot_density(expt, title=dens_title,
+                              ...))
   message("Plotting a CV plot.")
-  cv <- try(plot_variance_coefficients(expt, title=dens_title, ...))
+  cv <- try(plot_variance_coefficients(expt, title=dens_title,
+                                       ...))
   message("Plotting the representation of the top-n genes.")
-  topn <- try(plot_topn(expt, title=topn_title, ...))
+  topn <- try(plot_topn(expt, title=topn_title,
+                        ...))
   message("Printing a color to condition legend.")
-  legend <- try(plot_legend(pca[["plot"]]))
+  legend <- try(plot_legend(expt))
 
   qq_logs <- NULL
   qq_ratios <- NULL
   if (isTRUE(qq)) {
     message("QQ plotting!")
-    qq_plots <- try(suppressWarnings(plot_qq_all(expt)))
+    qq_plots <- try(suppressWarnings(plot_qq_all(expt, ...)))
     qq_logs <- qq_plots[["logs"]]
     qq_ratios <- qq_plots[["ratios"]]
   }
@@ -211,7 +221,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean", tit
   ma_plots <- NULL
   if (isTRUE(ma)) {
     message("Many MA plots!")
-    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt)))
+    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt, ...)))
   }
 
   gene_heatmap <- NULL
@@ -315,7 +325,8 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
   } else {
     ## Set up the page
     grid::grid.newpage()
-    grid::pushViewport(grid::viewport(layout=grid::grid.layout(nrow(layout), ncol(layout))))
+    grid::pushViewport(grid::viewport(
+                               layout=grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
     for (i in 1:numPlots) {
       ## Get the i,j matrix positions of the regions that contain this subplot

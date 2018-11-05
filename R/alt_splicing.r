@@ -119,7 +119,8 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
   plotting_data[adjpsig_idx, "adjpsig"] <- TRUE
 
   ## A quick volcano plot, which should be made prettier soon.
-  sig_splicing_volplot <- ggplot(plotting_data, aes_string(x="dpsi", y="log10pval", color="psig")) +
+  sig_splicing_volplot <- ggplot(plotting_data,
+                                 aes_string(x="dpsi", y="log10pval", color="psig")) +
     ggplot2::geom_point() +
     ggplot2::geom_vline(xintercept=c(-0.5, 0.5), size=1) +
     ggplot2::geom_hline(yintercept=1.3, size=1)
@@ -150,12 +151,12 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
     ggplot2::geom_point(alpha=alpha) +
     ggplot2::scale_shape_manual(values=21) +
     ggplot2::scale_fill_manual(name="Category",
-                               guide="legend",
-                               breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                               guide="legend", ## keep my preferred order.
+                               breaks=levels(plotting_data[["category"]]),
                                values=color_values) +
     ggplot2::scale_color_manual(name="Category",
-                                values=color_values,
-                                breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                                values=color_values, ## keep my preferred order.
+                                breaks=levels(plotting_data[["category"]]),
                                 guide=ggplot2::guide_legend(override.aes=list(size=5))) +
     ggrepel::geom_text_repel(data=label_subset,
                              show.legend=FALSE,
@@ -406,7 +407,8 @@ plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
   plotting_data[adjpsig_idx, "adjpsig"] <- TRUE
 
   ## A quick volcano plot, which should be made prettier soon.
-  sig_splicing_volplot <- ggplot(plotting_data, aes_string(x="dpsi", y="log10pval", color="psig")) +
+  sig_splicing_volplot <- ggplot(plotting_data,
+                                 aes_string(x="dpsi", y="log10pval", color="psig")) +
     ggplot2::geom_point() +
     ggplot2::geom_vline(xintercept=c(-0.5, 0.5), size=1) +
     ggplot2::geom_hline(yintercept=1.3, size=1)
@@ -440,12 +442,12 @@ plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
     ggplot2::geom_point(alpha=alpha) +
     ggplot2::scale_shape_manual(values=21) +
     ggplot2::scale_fill_manual(name="Category",
-                               guide="legend",
-                               breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                               guide="legend", ## keep my preferred order.
+                               breaks=levels(plotting_data[["category"]]),
                                values=color_values) +
     ggplot2::scale_color_manual(name="Category",
-                                values=color_values,
-                                breaks=levels(plotting_data[["category"]]), ## keep my preferred order.
+                                values=color_values, ## keep my preferred order.
+                                breaks=levels(plotting_data[["category"]]),
                                 guide=ggplot2::guide_legend(override.aes=list(size=5))) +
     ggrepel::geom_text_repel(data=label_subset,
                              show.legend=FALSE,

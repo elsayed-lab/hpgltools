@@ -20,8 +20,8 @@ set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2",
 expt Send back the expt with some new metadata
 }
 \description{
-When exploring differential analyses, it might be useful to play with the conditions/batches of
-the experiment.  Use this to make that easier.
+When exploring differential analyses, it might be useful to play with the
+conditions/batches of the experiment.  Use this to make that easier.
 }
 \examples{
 \dontrun{

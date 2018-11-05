@@ -22,8 +22,8 @@ plot_scatter(df, tooltip_data = NULL, color = "black",
 Ggplot2 scatter plot.
 }
 \description{
-This function tries to supplement a normal scatterplot with some information describing the
-relationship between the columns of data plotted.
+This function tries to supplement a normal scatterplot with some information
+describing the relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{
@@ -33,6 +33,6 @@ relationship between the columns of data plotted.
 }
 \seealso{
 \pkg{ggplot2} \pkg{googleVis}
- \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
- \code{\link{plot_linear_scatter}}
+\code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+\code{\link{plot_linear_scatter}}
 }

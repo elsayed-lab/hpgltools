@@ -9,7 +9,8 @@ sequence_attributes(fasta, gff = NULL, type = "gene", key = NULL)
 \arguments{
 \item{fasta}{Genome encoded as a fasta file.}
 
-\item{gff}{Optional gff of annotations (if not provided it will just ask the whole genome).}
+\item{gff}{Optional gff of annotations (if not provided it will just ask the
+whole genome).}
 
 \item{type}{Column of the gff file to use.}
 
@@ -19,8 +20,8 @@ sequence_attributes(fasta, gff = NULL, type = "gene", key = NULL)
 List of data frames containing gc/at/gt/ac contents.
 }
 \description{
-This extends the logic of the pattern searching in pattern_count_genome() to search on some other
-attributes.
+This extends the logic of the pattern searching in pattern_count_genome() to
+search on some other attributes.
 }
 \examples{
 \dontrun{
@@ -29,5 +30,8 @@ attributes.
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools}
- \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+\code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+}
+\author{
+atb
 }

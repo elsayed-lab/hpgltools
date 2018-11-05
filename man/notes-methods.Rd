@@ -10,7 +10,7 @@
 \S4method{notes}{expt}(object)
 }
 \arguments{
-\item{object}{The expt object from which to extract the expressionset.}
+\item{expt}{The expt object from which to extract the expressionset.}
 }
 \description{
 Extend Biobase::notes to handle expt objects.

@@ -15,6 +15,22 @@ circos_ideogram(name = "default", conf_dir = "circos/conf",
 \item{conf_dir}{Where does the configuration live?}
 
 \item{band_url}{Provide a url for making these imagemaps?}
+
+\item{fill}{Fill in the strokes?}
+
+\item{stroke_color}{What color?}
+
+\item{thickness}{How thick to color the lines}
+
+\item{stroke_thickness}{How much of them to fill in}
+
+\item{fill_color}{What color to fill}
+
+\item{radius}{Where on the circle to put them}
+
+\item{label_size}{How large to make the labels in px.}
+
+\item{band_stroke_thickness}{How big to make the strokes!}
 }
 \value{
 The file to which the ideogram configuration was written.

@@ -28,6 +28,7 @@ vignette: >
 ```{r options, include=FALSE}
 ## These are the options I tend to favor
 library("hpgltools")
+devtools::load_all("~/hpgltools")
 knitr::opts_knit$set(progress=TRUE,
                      verbose=TRUE,
                      width=90,
@@ -134,7 +135,8 @@ again.
 ```{r pca}
 ## Something in this is causing a build loop on travis...
 ## Unsurprisingly, the raw data doesn't cluster well at all...
-fis_rawpca <- plot_pca(fission_expt, expt_labels=fission_expt$condition, cis=NULL)
+##fis_rawpca <- plot_pca(fission_expt, expt_names=fission_expt$condition, cis=NULL)
+fis_rawpca <- plot_pca(fission_expt)
 fis_rawpca$plot
 ## So, normalize the data
 norm_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", convert="cpm"))
@@ -143,6 +145,14 @@ fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca",
 fis_normpca$plot
 
 summary(fis_normpca)
+```
+
+## Try something for Najib
+
+```{r test_3d}
+testing <- plot_pca(fission_expt, num_pc=3)
+silly <- make_3d_pca(testing)
+silly$plot
 ```
 
 In the final line of the preceeding block, I printed a summary of the return from plot_pca().
@@ -182,7 +192,7 @@ fis_info$anova_p
 ## Try again with batch removed data
 batchnorm_expt <- sm(normalize_expt(fission_expt, batch="limma", norm="quant",
                                     transform="log2", convert="cpm"))
-fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca", cis=NULL)
+fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title="limma corrected pca")
 fis_batchnormpca$plot
 test_pca <- pca_information(batchnorm_expt,
                             expt_factors=c("condition","batch","strain","minute"),
@@ -242,7 +252,8 @@ fission_dis$plot
 
 # variancePartition
 
-A new toy I have been introduced to is variancePartition, let us try that with this data.
+variancePartition may be used to seek out which experimental factors correlate with
+the most variance in the data.
 
 ```{r variancePartition}
 test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
@@ -256,8 +267,6 @@ test_varpart$partition_plot
 ```
 
 YAY!
-
-[index.html](index.html)
 
 ```{r sysinfo, results='asis'}
 pander::pander(sessionInfo())

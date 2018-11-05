@@ -30,18 +30,18 @@ text.  If left null, then it will pull all species.}
 }
 \value{
 A big table of orthoMCL families, the columns are:
- \enumerate{
-  \item  GID: The gene ID
-  \item  ORTHOLOG_ID: The gene ID of the associated ortholog.
-  \item  ORTHOLOG_SPECIES: The species of the associated ortholog.
-  \item  ORTHOLOG_URL: The OrthoMCL group ID's URL.
-  \item  ORTHOLOG_COUNT: The number of all genes from all species represented in
-  this group.
-  \item  ORTHOLOG_GROUP: The family ID
-  \item  QUERIES_IN_GROUP: How many of the query species are represented in this
-  group?
-  \item  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
- }
+\enumerate{
+\item  GID: The gene ID
+\item  ORTHOLOG_ID: The gene ID of the associated ortholog.
+\item  ORTHOLOG_SPECIES: The species of the associated ortholog.
+\item  ORTHOLOG_URL: The OrthoMCL group ID's URL.
+\item  ORTHOLOG_COUNT: The number of all genes from all species represented in
+this group.
+\item  ORTHOLOG_GROUP: The family ID
+\item  QUERIES_IN_GROUP: How many of the query species are represented in this
+group?
+\item  GROUP_REPRESENTATION: ORTHOLOG_COUNT / the number of possible species.
+}
 }
 \description{
 The eupathdb provides such a tremendous wealth of information.  For me
@@ -56,4 +56,12 @@ This function attempts to address that for the case of two eupath species
 from the same domain. (tritrypdb/fungidb/etc.)  It does however assume that
 the sqlite package has been installed locally, if not it suggests you run the
 make_organismdbi function in order to do that.
+}
+\details{
+One other important caveat: this function assumes queries in the format
+'table_column' where in this particular instance, the table is further
+assumed to be the ortholog table.
+}
+\author{
+atb
 }

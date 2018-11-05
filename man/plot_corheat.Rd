@@ -6,7 +6,7 @@
 \usage{
 plot_corheat(expt_data, expt_colors = NULL, expt_design = NULL,
   method = "pearson", expt_names = NULL, batch_row = "batch",
-  title = NULL, ...)
+  title = NULL, label_chars = 10, ...)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}
@@ -23,14 +23,18 @@ plot_corheat(expt_data, expt_colors = NULL, expt_design = NULL,
 
 \item{title}{Title for the plot.}
 
+\item{label_chars}{Limit on the number of label characters.}
+
 \item{...}{More options are wonderful!}
 }
 \value{
-Gplots heatmap describing describing how the samples are clustering vis a vis pairwise correlation.
+Gplots heatmap describing describing how the samples are clustering
+vis a vis pairwise correlation.
 }
 \description{
-Given a set of count tables and design, this will calculate the pairwise correlations and plot
-them as a heatmap.  It attempts to standardize the inputs and eventual output.
+Given a set of count tables and design, this will calculate the pairwise
+correlations and plot them as a heatmap.  It attempts to standardize the
+inputs and eventual output.
 }
 \examples{
 \dontrun{
@@ -39,5 +43,6 @@ them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \seealso{
 \pkg{grDevice}
- \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+\code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
+\code{\link[grDevices]{recordPlot}}
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_limma.r
 \name{limma_pairwise}
 \alias{limma_pairwise}
-\title{Set up a model matrix and set of contrasts for pairwise comparisons using voom/limma.}
+\title{Set up a model matrix and set of contrasts for pairwise comparisons using
+voom/limma.}
 \usage{
 limma_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
@@ -10,7 +11,8 @@ limma_pairwise(input = NULL, conditions = NULL, batches = NULL,
   libsize = NULL, force = FALSE, ...)
 }
 \arguments{
-\item{input}{Dataframe/vector or expt class containing count tables, normalization state, etc.}
+\item{input}{Dataframe/vector or expt class containing count tables,
+normalization state, etc.}
 
 \item{conditions}{Factor of conditions in the experiment.}
 
@@ -20,8 +22,9 @@ limma_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{model_batch}{Include batch in the model? This is hopefully TRUE.}
 
-\item{model_intercept}{Perform a cell-means or intercept model? A little more difficult for me to
-understand.  I have tested and get the same answer either way.}
+\item{model_intercept}{Perform a cell-means or intercept model? A little more
+difficult for me to understand.  I have tested and get the same answer
+either way.}
 
 \item{alt_model}{Separate model matrix instead of the normal condition/batch.}
 
@@ -33,8 +36,8 @@ de_vs_cb = (E-D)-(C-B),"}
 
 \item{annot_df}{Data frame for annotations.}
 
-\item{libsize}{I've recently figured out that libsize is far more important than I previously
-realized.  Play with it here.}
+\item{libsize}{I've recently figured out that libsize is far more important
+than I previously realized.  Play with it here.}
 
 \item{force}{Force data which may not be appropriate for limma into it?}
 
@@ -42,20 +45,21 @@ realized.  Play with it here.}
 }
 \value{
 List including the following information:
- macb = the mashing together of condition/batch so you can look at it
- macb_model = The result of calling model.matrix(~0 + macb)
- macb_fit =  The result of calling lmFit(data, macb_model)
- voom_result = The result from voom()
- voom_design = The design from voom (redundant from voom_result, but convenient)
- macb_table = A table of the number of times each condition/batch pairing happens
- cond_table = A table of the number of times each condition appears (the denominator for the identities)
- batch_table = How many times each batch appears
- identities = The list of strings defining each condition by itself
- all_pairwise = The list of strings defining all the pairwise contrasts
- contrast_string = The string making up the makeContrasts() call
- pairwise_fits = The result from calling contrasts.fit()
- pairwise_comparisons = The result from eBayes()
- limma_result = The result from calling write_limma()
+macb = the mashing together of condition/batch so you can look at it
+macb_model = The result of calling model.matrix(~0 + macb)
+macb_fit =  The result of calling lmFit(data, macb_model)
+voom_result = The result from voom()
+voom_design = The design from voom (redundant from voom_result, but convenient)
+macb_table = A table of the number of times each condition/batch pairing happens
+cond_table = A table of the number of times each condition appears (the
+denominator for the identities)
+batch_table = How many times each batch appears
+identities = The list of strings defining each condition by itself
+all_pairwise = The list of strings defining all the pairwise contrasts
+contrast_string = The string making up the makeContrasts() call
+pairwise_fits = The result from calling contrasts.fit()
+pairwise_comparisons = The result from eBayes()
+limma_result = The result from calling write_limma()
 }
 \description{
 Creates the set of all possible contrasts and performs them using voom/limma.
@@ -67,5 +71,5 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 \seealso{
 \pkg{limma} \pkg{Biobase}
- \code{\link{write_limma}}
+\code{\link{write_limma}}
 }

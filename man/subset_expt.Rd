@@ -18,8 +18,8 @@ subset_expt(expt, subset = NULL, coverage = NULL)
 metadata Expt class which contains the smaller set of data.
 }
 \description{
-Sometimes an experiment has too many parts to work with conveniently, this operation allows one
-to break it into smaller pieces.
+Sometimes an experiment has too many parts to work with conveniently, this
+operation allows one to break it into smaller pieces.
 }
 \examples{
 \dontrun{
@@ -29,5 +29,5 @@ to break it into smaller pieces.
 }
 \seealso{
 \pkg{Biobase}
- \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
+\code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 }

@@ -20,8 +20,8 @@ provided, then bins is set to 500, if both are provided, then bins wins.}
 List of the ggplot histogram and some statistics describing the distributions.
 }
 \description{
-If there are multiple data sets, it might be useful to plot them on a histogram together and look
-at the t.test results between distributions.
+If there are multiple data sets, it might be useful to plot them on a
+histogram together and look at the t.test results between distributions.
 }
 \examples{
 \dontrun{
@@ -30,5 +30,5 @@ at the t.test results between distributions.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
+\code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
 }

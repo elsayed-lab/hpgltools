@@ -24,7 +24,8 @@ topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
 prettier tables
 }
 \description{
-The topgo function GenTable is neat, but it needs some simplification to not be obnoxious.
+The topgo function GenTable is neat, but it needs some simplification to not
+be obnoxious.
 }
 \seealso{
 \pkg{topGO}

@@ -28,19 +28,21 @@ graph_metrics(expt, cormethod = "pearson", distmethod = "euclidean",
 \value{
 a loooong list of plots including the following:
 \enumerate{
-  \item nonzero = a ggplot2 plot of the non-zero genes vs library size
-  \item libsize = a ggplot2 bar plot of the library sizes
-  \item boxplot = a ggplot2 boxplot of the raw data
-  \item corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
-  \item smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
-  \item disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
-  \item smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
-  \item pcaplot = a recordPlot()ed PCA plot of the raw samples
-  \item pcatable = a table describing the relative contribution of condition/batch of the raw data
-  \item pcares =  a table describing the relative contribution of condition/batch of the raw data
-  \item pcavar = a table describing the variance of the raw data
-  \item qq = a recordPlotted() view comparing the quantile/quantiles between the mean of all data and every raw sample
-  \item density = a ggplot2 view of the density of each raw sample (this is complementary but more fun than a boxplot)
+\item nonzero = a ggplot2 plot of the non-zero genes vs library size
+\item libsize = a ggplot2 bar plot of the library sizes
+\item boxplot = a ggplot2 boxplot of the raw data
+\item corheat = a recordPlot()ed pairwise correlation heatmap of the raw data
+\item smc = a recordPlot()ed view of the standard median pairwise correlation of the raw data
+\item disheat = a recordPlot()ed pairwise euclidean distance heatmap of the raw data
+\item smd = a recordPlot()ed view of the standard median pairwise distance of the raw data
+\item pcaplot = a recordPlot()ed PCA plot of the raw samples
+\item pcatable = a table describing the relative contribution of condition/batch of the raw data
+\item pcares =  a table describing the relative contribution of condition/batch of the raw data
+\item pcavar = a table describing the variance of the raw data
+\item qq = a recordPlotted() view comparing the quantile/quantiles between
+the mean of all data and every raw sample
+\item density = a ggplot2 view of the density of each raw sample (this is
+complementary but more fun than a boxplot)
 }
 }
 \description{
@@ -61,7 +63,9 @@ qq plots.
 }
 \seealso{
 \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
- \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}} \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
- \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}} \code{\link{plot_disheat}}
- \code{\link{plot_pca}} \code{\link{plot_qq_all}} \code{\link{plot_pairwise_ma}}
+\code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
+\code{\link{plot_nonzero}} \code{\link{plot_libsize}}
+\code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
+\code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
+\code{\link{plot_pairwise_ma}}
 }

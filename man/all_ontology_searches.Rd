@@ -21,7 +21,8 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL,
 
 \item{n}{Number of genes at the top/bottom of the fold-changes to define 'significant.'}
 
-\item{z}{Number of standard deviations from the mean fold-change used to define 'significant.'}
+\item{z}{Number of standard deviations from the mean fold-change used to
+define 'significant.'}
 
 \item{lfc}{Log fold-change used to define 'significant'.}
 
@@ -31,12 +32,14 @@ all_ontology_searches(de_out, gene_lengths = NULL, goids = NULL,
 
 \item{species}{Supported organism used by the tools.}
 
-\item{orgdb}{Provide an organismDbi/Orgdb to hold the various annotation data, in response to the
-shift of clusterprofiler and friends towards using them.}
+\item{orgdb}{Provide an organismDbi/Orgdb to hold the various annotation
+data, in response to the shift of clusterprofiler and friends towards using them.}
 
-\item{goid_map}{Mapping file used by topGO, if it does not exist then goids_df creates it.}
+\item{goid_map}{Mapping file used by topGO, if it does not exist then
+goids_df creates it.}
 
-\item{gff_file}{gff file containing the annotations used by gff2genetable from clusterprofiler.}
+\item{gff_file}{gff file containing the annotations used by gff2genetable
+from clusterprofiler.}
 
 \item{gff_type}{Column to use from the gff file for the universe of genes.}
 
@@ -55,15 +58,16 @@ shift of clusterprofiler and friends towards using them.}
 \item{...}{Arguments to pass through in arglist.}
 }
 \value{
-a list of up/down ontology results from goseq/clusterprofiler/topgo/gostats, and
- associated trees.
+a list of up/down ontology results from
+goseq/clusterprofiler/topgo/gostats, and associated trees.
 }
 \description{
-This takes a set of differential expression results, extracts a subset of up/down expressed
-genes; passes them to goseq, clusterProfiler, topGO, GOstats, and gProfiler; collects the
-outputs; and returns them in a (hopefully) consistent fashion.  It attempts to handle the
-differing required annotation/GOid inputs required for each tool and/or provide supported species
-in ways which the various tools expect.
+This takes a set of differential expression results, extracts a subset of
+up/down expressed genes; passes them to goseq, clusterProfiler, topGO,
+GOstats, and gProfiler; collects the outputs; and returns them in a
+(hopefully) consistent fashion.  It attempts to handle the differing required
+annotation/GOid inputs required for each tool and/or provide supported
+species in ways which the various tools expect.
 }
 \examples{
 \dontrun{
@@ -74,5 +78,6 @@ in ways which the various tools expect.
 }
 }
 \seealso{
-\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler} \pkg{GO.db}
+\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats}
+\pkg{gProfiler} \pkg{GO.db}
 }

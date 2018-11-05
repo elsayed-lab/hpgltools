@@ -5,10 +5,10 @@
 \title{Given a pairwise result, make a gene set collection.}
 \usage{
 make_gsc_from_abundant(pairwise, according_to = "deseq",
-  orgdb = "org.Hs.eg.db", pair_names = c("ups", "downs"),
-  category_name = "infection", phenotype_name = "parasite",
-  set_name = "elsayed_macrophage", color = TRUE,
-  current_id = "ENSEMBL", required_id = "ENTREZID", ...)
+  orgdb = "org.Hs.eg.db", researcher_name = "elsayed",
+  study_name = "macrophage", category_name = "infection",
+  phenotype_name = NULL, pair_names = "high", current_id = "ENSEMBL",
+  required_id = "ENTREZID", ...)
 }
 \arguments{
 \item{pairwise}{A pairwise result, or combined de result, or extracted genes.}
@@ -17,18 +17,28 @@ make_gsc_from_abundant(pairwise, according_to = "deseq",
 
 \item{orgdb}{Annotation dataset.}
 
-\item{phenotype_name}{When making color sets, use this phenotype name.}
+\item{researcher_name}{Prefix of the name for the generated set(s).}
 
-\item{set_name}{A name for the created gene set.}
+\item{study_name}{Second element in the name of the generated set(s).}
 
-\item{color}{Make a colorSet?}
+\item{category_name}{Third element in the name of the generated set(s).}
 
-\item{current_id}{Usually we use ensembl IDs, but that does not _need_ to be the case.}
+\item{phenotype_name}{Optional phenotype data for the generated set(s).}
 
-\item{required_id}{gsva uses entrezids by default.}
+\item{pair_names}{The suffix of the generated set(s).}
 
-\item{...}{Extra arguments for extract_significant_genes().}
+\item{current_id}{What type of ID is the data currently using?}
+
+\item{required_id}{What type of ID should the use?}
+
+\item{...}{Extra arguments for extract_abundant_genes().}
+}
+\value{
+List containing 3 GSCs, one containing both the highs/lows called
+'colored', one of the highs, and one of the lows.
 }
 \description{
 If I want to play with gsva and friends, then I need GeneSetCollections!
+Much like make_gsc_from_significant(), this function extract the genes deemed
+'abundant' and generates gene sets accordingly.
 }

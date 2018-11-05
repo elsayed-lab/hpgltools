@@ -22,9 +22,10 @@ plot_ontpval(df, ontology = "MF", fontsize = 14, numerator = NULL,
 Ggplot2 plot of pvalues vs. ontology.
 }
 \description{
-This function seeks to make generating pretty pvalue plots as shown by clusterprofiler easier.
+This function seeks to make generating pretty pvalue plots as shown by
+clusterprofiler easier.
 }
 \seealso{
 \pkg{goseq} \pkg{ggplot2}
- \code{\link[goseq]{goseq}}
+\code{\link[goseq]{goseq}}
 }

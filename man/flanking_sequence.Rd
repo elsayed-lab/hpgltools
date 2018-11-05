@@ -16,11 +16,13 @@ flanking_sequence(bsgenome, annotation, distance = 200, type = "gene",
 
 \item{type}{What type of annotation is desired?}
 
-\item{prefix}{Provide a prefix to the names to distinguish them from the existing annotations.}
+\item{prefix}{Provide a prefix to the names to distinguish them from the
+existing annotations.}
 }
 \value{
 A list of sequences before and after each sequence.
 }
 \description{
-Given a set of annotations and genome, one might want to get the set of adjacent sequences.
+Given a set of annotations and genome, one might want to get the set of
+adjacent sequences.
 }

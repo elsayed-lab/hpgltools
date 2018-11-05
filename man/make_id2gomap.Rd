@@ -18,8 +18,9 @@ make_id2gomap(goid_map = "reference/go/id2go.map", go_db = NULL,
 Summary of the new goid table.
 }
 \description{
-When using a non-supported organism, one must write out mappings in the format expected by
-topgo.  This handles that process and gives a summary of the new table.
+When using a non-supported organism, one must write out mappings in the
+format expected by topgo.  This handles that process and gives a summary of
+the new table.
 }
 \seealso{
 \pkg{topGO}

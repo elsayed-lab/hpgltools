@@ -1,10 +1,11 @@
-#' Load organism annotation data.
+#' Load organism annotation data from an orgdb sqlite package.
 #'
 #' Creates a dataframe gene and transcript information for a given set of gene
-#' ids using the OrganismDbi interface.
+#' ids using the AnnotationDbi interface.
 #'
 #' Tested in test_45ann_organdb.R
-#' This defaults to a few fields which I have found most useful, but the brave can pass it 'all'.
+#' This defaults to a few fields which I have found most useful, but the brave
+#' or pathological can pass it 'all'.
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids  Search for a specific set of genes?
@@ -29,10 +30,12 @@
 #' \dontrun{
 #'  one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
 #' }
+#' @author atb
 #' @export
-load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, keytype="ensembl",
-                                   strand_column="cdsstrand", start_column="cdsstart",
-                                   end_column="cdsend",  chromosome_column="cdschrom",
+load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
+                                   keytype="ensembl", strand_column="cdsstrand",
+                                   start_column="cdsstart", end_column="cdsend",
+                                   chromosome_column="cdschrom",
                                    type_column="gene_type", name_column="cdsname",
                                    fields=NULL, sum_exon_widths=FALSE) {
   if (is.null(orgdb)) {
@@ -40,7 +43,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
   } else if (class(orgdb) == "character") {
-    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
     eval(parse(text=org_pkgstring))
   }
   keytype <- toupper(keytype)
@@ -127,8 +130,10 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
                                     keytype=keytype,
                                     columns=chosen_fields))
   if (class(gene_info) == "try-error") {
-    message("Select statement failed, this is most commonly because there is not a provided join between the transcript table and others.")
-    message("Thus it says some stupid crap about 'please add gtc to the interpolator' which I think references select-method.R in GenomicFeatures.")
+    message("Select statement failed, this is commonly because there is no join",
+            " between the transcript table and others.")
+    message("Thus it says some stupid crap about 'please add gtc to the interpolator'",
+            " which I think references select-method.R in GenomicFeatures.")
     message("So, try replacing columns with stuff like 'tx*' with 'cds*'?")
     stop()
   }
@@ -175,13 +180,14 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
 
 #' Retrieve GO terms associated with a set of genes.
 #'
-#' AnnotationDbi provides a reasonably complete set of GO mappings between gene ID and
-#' ontologies.  This will extract that table for a given set of gene IDs.
+#' AnnotationDbi provides a reasonably complete set of GO mappings between gene
+#' ID and ontologies.  This will extract that table for a given set of gene
+#' IDs.
 #'
 #' Tested in test_45ann_organdb.R
-#' This is a nice way to extract GO data primarily because the Orgdb data sets are extremely fast
-#' and flexible, thus by changing the keytype argument, one may use a lot of different ID types
-#' and still score some useful ontology data.
+#' This is a nice way to extract GO data primarily because the Orgdb data sets
+#' are extremely fast and flexible, thus by changing the keytype argument, one
+#' may use a lot of different ID types and still score some useful ontology data.
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
@@ -194,6 +200,8 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE, 
 #' \dontrun{
 #'  go_terms <- load_go_terms(org, c("a","b"))
 #' }
+#' @author I think Keith provided the initial implementation of this, but atb
+#'   messed with it pretty extensively.
 #' @export
 load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
                           columns=c("go", "goall", "goid")) {
@@ -202,7 +210,7 @@ load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
   } else if (class(orgdb) == "character") {
-    org_pkgstring <- paste0("library(", orgdb, "); orgdb <- ", orgdb)
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
     eval(parse(text=org_pkgstring))
   }
   tt <- sm(requireNamespace("GO.db"))
@@ -265,7 +273,6 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
 
   ## Remove redundant annotations which differ only in source/evidence
   ## and rename ONTOLOGYALL column
-  ##unique(go_terms %>% rename(ONTOLOGY=ONTOLOGYALL) %>% na.omit())
   go_terms <- unique(dplyr::tbl_df(go_terms) %>% na.omit())
   return(go_terms)
 }
@@ -280,10 +287,12 @@ load_parasite_annotations <- function(...) {
   load_orgdb_annotations(...)
 }
 
-#' Load organism annotation data (mouse/human).
+#' Map AnnotationDbi keys from one column to another.
 #'
-#' Creates a dataframe gene and transcript information for a given set of gene
-#' ids using the OrganismDbi interface.
+#' Given a couple of keytypes, this provides a quick mapping across them.  I
+#' might have an alternate version of this hiding in the gsva code, which
+#' requires ENTREZIDs.  In the mean time, this creates a dataframe of the mapped
+#' columns for a given set of gene ids using the in a sqlite instance.
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
@@ -296,6 +305,7 @@ load_parasite_annotations <- function(...) {
 #' \dontrun{
 #'  host <- map_orgdb_ids(org, c("a","b"))
 #' }
+#' @author Keith Hughitt with changes by atb.
 #' @export
 map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="geneid") {
   mapto <- toupper(mapto)
@@ -335,68 +345,46 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
   return(gene_info)
 }
 
-#' Generate a set of joins suitable for the creation of an organismdbi package
+#' Iterate over keytypes looking for matches against a set of IDs.
 #'
-#' The graph data required in an organismdbi is pretty specific, this function creates it!
-#' It does so by iterating through all keytype pairs between the two packages and looking for
-#' matching keys, whichever keys have the most matches win.  It is therefore rather slow.
+#' Sometimes, one does not know what the correct keytype is for a given set of
+#' IDs.  This will hopefully find them.
 #'
-#' @param first_name  Name of the first package to search
-#' @param second_name  Name of the second package to search
-#' @param starting  What number join to start from
-#' @param exclude  Name(s) to exclude when attempting to match columns across databases.
-#' @return  A list named join# where the number is the nth join discovered and the elements
-#'   are non-zero matches between the sqlite packages described by first_name and second_name.
-orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NULL) {
-  tt <- sm(requireNamespace(first_name))
-  tt <- sm(try(attachNamespace(first_name), silent=TRUE))
-  tt <- sm(requireNamespace(second_name))
-  tt <- sm(try(attachNamespace(second_name), silent=TRUE))
-  org_pkg <- NULL
-  tx_pkg <- NULL
-  org_pkgstring <- paste0("org_pkg <- ", first_name)
-  eval(parse(text=org_pkgstring))
-  tx_pkgstring <- paste0("tx_pkg <- ", second_name)
-  eval(parse(text=tx_pkgstring))
-  org_keytypes <- AnnotationDbi::keytypes(org_pkg)
-  if (!is.null(exclude)) {
-    keepers <- ! org_keytypes %in% exclude
-    org_keytypes <- org_keytypes[keepers]
-  }
-  tx_keytypes <- AnnotationDbi::keytypes(tx_pkg)
-  if (!is.null(exclude)) {
-    keepers <- ! tx_keytypes %in% exclude
-    tx_keys <- tx_keytypes[keepers]
-  }
-
-  key_matches <- list()
-  join_number <- starting
-  for (orgk in org_keytypes) {
-    org_keys <- AnnotationDbi::keys(x=org_pkg, keytype=orgk)
-    max_matched <- 0
-    matching_keys <- NULL
-    for (txk in tx_keytypes) {
-      tx_keys <- AnnotationDbi::keys(x=tx_pkg, keytype=txk)
-      matches <- sum(org_keys %in% tx_keys)
-      if (matches > max_matched) {
-        max_matched <- matches
-        matching_keys <- c(orgdb=orgk, txdb=txk)
-        names(matching_keys) <- c(first_name, second_name)
-      }
-    }
-    if (max_matched > 0) {
-      element_name <- paste0("join", join_number)
-      join_number <- join_number + 1
-      key_matches[[element_name]] <- matching_keys
+#' @param ids Set of gene IDs to seek.
+#' @param orgdb  Orgdb instance to iterate through.
+#' @return Likely keytype which provides the desired IDs.
+#' @export
+guess_orgdb_keytype <- function(ids, orgdb) {
+  found_ids <- 0
+  current_type <- NULL
+  possible_keytypes <- AnnotationDbi::keytypes(orgdb)
+  for (k in 1:length(possible_keytypes)) {
+    type <- possible_keytypes[k]
+    possible_keys <- AnnotationDbi::keys(x=orgdb, keytype=type)
+    this_type_found <- sum(ids %in% possible_keys)
+    ## message("Keytype: ", type, " has ", this_type_found, " keys.")
+    if (this_type_found == length(ids)) {
+      return(type)
+    } else if (this_type_found > found_ids) {
+      current_type <- type
+      found_ids <- this_type_found
     }
   }
-  return(key_matches)
+  if (found_ids == 0) {
+    message("Did not find your IDs using any keytype in the orgdb.")
+  } else {
+    message("The best choice was ", current_type, " which has ", found_ids,
+            " out of ", length(ids), " ids.")
+  }
+  return(current_type)
 }
 
-#' Create an orgdb from an taxonID
+#' Get an orgdb from an AnnotationHub taxonID.
 #'
-#' This function is a bit more fragile than I would like.  I am not completely sold
-#' on AnnotationHub yet.
+#' Ideally, annotationhub will one day provide a one-stop shopping source for a
+#' tremendous wealth of curated annotation databases, sort of like a
+#' non-obnoxious biomart.  But for the moment, this function is more
+#' fragile than I would like.
 #'
 #' @param ahid  TaxonID from AnnotationHub
 #' @param title  Title for the annotation hub instance
@@ -408,8 +396,9 @@ orgdb_match_keytypes <- function(first_name, second_name, starting=1, exclude=NU
 #' \dontrun{
 #'  orgdbi <- mytaxIdToOrgDb(taxid)
 #' }
+#' @author atb
 #' @export
-take_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
+orgdb_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
   ## Other available types:
   tt <- sm(loadNamespace("AnnotationHub"))
   ah <- sm(AnnotationHub::AnnotationHub())

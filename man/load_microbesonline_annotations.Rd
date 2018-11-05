@@ -13,13 +13,17 @@ load_microbesonline_annotations(id = "160490")
 Dataframe containing the annotation information.
 }
 \description{
-Like I said, the microbesonline mysqldb is rather more complex than I prefer.  This shortcuts
-that process and just grabs a tsv copy of everything and loads it into a dataframe.
+The microbesonline publicly available mysqldb is rather more complex than I
+prefer.  This skips that process and just grabs a tsv copy of everything and
+loads it into a dataframe.  I have not yet figured out how to so-easily query
+microbesonline for species IDs, thus one will have to manually query the
+database to find species of interest.
 }
 \details{
 Tested in test_70expt_spyogenes.R
-There is so much awesome information in microbesonline, but damn is it annoying to download.
-This function makes that rather easier, or so I hope at least.
+There is so much awesome information in microbesonline, but damn is it
+annoying to download. This function makes that rather easier, or so I hope at
+least.
 }
 \examples{
 \dontrun{
@@ -28,5 +32,8 @@ This function makes that rather easier, or so I hope at least.
 }
 \seealso{
 \pkg{RCurl}
- \code{\link[RCurl]{getURL}}
+\code{\link[RCurl]{getURL}}
+}
+\author{
+atb
 }

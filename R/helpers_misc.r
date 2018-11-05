@@ -11,13 +11,13 @@ backup_file <- function(backup_file, backups=4) {
       j <- i + 1
       i <- sprintf("%02d", i)
       j <- sprintf("%02d", j)
-      test <- paste0(backup_file, ".", i)
-      new <- paste0(backup_file, ".", j)
+      test <- glue("{backup_file}.{i}")
+      new <- glue("{backup_file}.{j}")
       if (file.exists(test)) {
         file.rename(test, new)
       }
     }
-    newfile <- paste0(backup_file, ".", i)
+    newfile <- glue("{backup_file}.{i}")
     message("Renaming ", backup_file, " to ", newfile, ".")
     file.copy(backup_file, newfile)
   } else {
@@ -51,7 +51,7 @@ bioc_all <- function(release="3.5",
                      mirror="bioconductor.statistik.tu-dortmund.de",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
-  dl_url <- paste0("https://", mirror, "/", base, "/json/", release, "/tree.json")
+  dl_url <- glue("https://{mirror}/{base}/{json}/{release}/tree.json")
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
   ## Sadly, biocLite() does not give different returns for a successfully/failed
@@ -84,7 +84,7 @@ bioc_all <- function(release="3.5",
       if (class(installedp) == "try-error") {
         fail <- append(fail, pkg)
       } else {
-        install_directory <- paste0(.libPaths()[1], "/", pkg)
+        install_directory <- glue("{.libPaths()[1]}/{pkg}")
         if (file.exists(install_directory)) {
           suc <- append(suc, pkg)
         } else {
@@ -103,7 +103,7 @@ bioc_all <- function(release="3.5",
         if (class(installedp) == "try-error") {
           fail <- append(fail, pkg)
         } else {
-          install_directory <- paste0(.libPaths()[1], "/", pkg)
+          install_directory <- glue("{.libPaths()[1]}/{pkg}")
           if (file.exists(install_directory)) {
             suc <- append(suc, pkg)
           } else {
@@ -151,8 +151,9 @@ bioc_all <- function(release="3.5",
 clear_session <- function(keepers=NULL, depth=10) {
   ## Partially taken from:
   ## https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
-  basic_packages <- c("package:stats", "package:graphics", "package:grDevices", "package:utils",
-                      "package:datasets", "package:methods", "package:base")
+  basic_packages <- c("package:stats", "package:graphics", "package:grDevices",
+                      "package:utils", "package:datasets", "package:methods",
+                      "package:base")
   package_list <- search()[ifelse(unlist(gregexpr("package:", search()))==1, TRUE, FALSE)]
   package_list <- setdiff(package_list, basic_packages)
   result <- R.utils::gcDLLs()
@@ -214,17 +215,20 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #' get the exact state of all the packages, too!
 #'
 #' @param gitdir  Directory containing the git repository.
+#' @param packrat  Is this tree under packrat control?
 #' @export
-get_git_commit <- function(gitdir="~/hpgltools") {
-  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'commit' | awk '{print $2}'")
+get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
+  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{{print $2}}'")
   commit_result <- system(cmdline, intern=TRUE)
-  cmdline <- paste0("cd ", gitdir, " && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
+  cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
   date_result <- system(cmdline, intern=TRUE)
-  result <- paste0(date_result, ": ", commit_result)
+  result <- glue("{date_result}: {commit_result}")
   message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
   message("> git reset ", commit_result)
-  message("R> packrat::restore()")
+  if (isTRUE(packrat)) {
+    message("R> packrat::restore()")
+  }
   return(result)
 }
 
@@ -259,7 +263,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
   for (n in 1:length(numerators)) {
     num <- numerators[[n]]
     den <- denominators[[n]]
-    cont <- paste0(num, "_vs_", den)
+    cont <- glue("{num}_vs_{den}")
     contrasts[n, num] <- 1
     contrasts[n, den] <- -1
     rownames(contrasts)[n] <- cont
@@ -292,9 +296,10 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #' \dontrun{
 #'  ## Extract all the genes from my genome, pull a static region 120nt following the stop
 #'  ## and test them for potential ARE sequences.
-#'  ## FIXME: There may be an error in this example, another version I have handles the +/- strand
-#'  ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
-#'  ## the genome, which would be unfortunate -- but the logic for testing remains the same.
+#'  ## FIXME: There may be an error in this example, another version I have
+#'  ## handles the +/- strand genes separately, I need to return to this and check
+#'  ## if it is providing the 5' UTR for 1/2 the genome, which would be
+#'  ## unfortunate -- but the logic for testing remains the same.
 #'  are_candidates <- hpgl_arescore(genome)
 #'  utr_genes <- subset(lmajor_annotations, type == 'gene')
 #'  threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
@@ -302,7 +307,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #'                                   strand=Rle(utr_genes[,5]),
 #'                                   name=Rle(utr_genes[,10]))
 #'  threep_seqstrings <- Biostrings::getSeq(lm, threep)
-#'  are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+#'  are_test <- hpgltools::hpgl_arescore(x=threep_seqstrings)
 #'  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 #' }
 #' @export
@@ -311,7 +316,8 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                            aub.p.to.end=0.55) {
   ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
   ## However, the repository I want for it is 'seqtools'
-  ## Ergo my stupid require.auto() will be confused by definition because it assumes equivalent names
+  ## Ergo my stupid require.auto() will be confused by definition because it
+  ## assumes equivalent names
   ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
   ##    library('SeqTools')
   ##} else {
@@ -417,9 +423,8 @@ install_packrat_globally <- function() {
     if (is.na(pkg_ver)) {
       next
     }
-    packrat_package_path <- paste0(packrat_src, "/",
-                                   pkg_name, "/",
-                                   pkg_name, "_", pkg_ver, ".tar.gz")
+    packrat_package_path <- glue(
+      "{packrat_src}/{pkg_name}/{pkg_name}_{pkg_ver}.tar.gz")
     if (pkg_name %in% rownames(globally_installed)) {
       global_version <- globally_installed[pkg_name, "Version"]
       if (global_version == pkg_ver) {
@@ -427,14 +432,14 @@ install_packrat_globally <- function() {
       } else {
         message("Package: ", pkg_name, " is globally installed as version: ",
                 global_version, "; packrat has version ", pkg_ver, ".")
-        inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
+        inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
         if (class(inst) != "try-error") {
           newly_installed <- newly_installed + 1
         }
       }
     } else {
       message("Package: ", pkg_name, " is not installed.")
-      inst <- try(devtools::install_url(paste0("file://", packrat_package_path)))
+      inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
       if (class(inst) != "try-error") {
         newly_installed <- newly_installed + 1
       }
@@ -447,9 +452,9 @@ install_packrat_globally <- function() {
 
 #' Load a backup rdata file
 #'
-#' I often use R over a sshfs connection, sometimes with significant latency, and I want to be able
-#' to save/load my R sessions relatively quickly. Thus this function uses my backup directory to
-#' load its R environment.
+#' I often use R over a sshfs connection, sometimes with significant latency,
+#' and I want to be able to save/load my R sessions relatively quickly. Thus
+#' this function uses my backup directory to load its R environment.
 #'
 #' @param directory Directory containing the RData.rda.xz file.
 #' @param filename  Filename to which to save.
@@ -461,9 +466,9 @@ install_packrat_globally <- function() {
 #' }
 #' @export
 loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
-  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  savefile <- glue("{getwd()}/{directory}/{filename}")
   message("Loading the savefile: ", savefile)
-  load_string <- paste0("load('", savefile, "', envir=globalenv())")
+  load_string <- glue("load('{savefile}', envir=globalenv())")
   message("Command run: ", load_string)
   eval(parse(text=load_string))
 }
@@ -596,9 +601,9 @@ rex <- function(display=":0") {
   home <- Sys.getenv("HOME")
   host <- Sys.info()[["nodename"]]
   if (is.null(display)) {
-    display <- read.table(file.path(home, ".displays", paste0(host, ".last")))[1, 1]
+    display <- read.table(file.path(home, ".displays", glue("{host}.last")))[1, 1]
   }
-  auth <- paste0(file.path(home, ".Xauthority"))
+  auth <- file.path(home, ".Xauthority")
   message("Setting display to: ", display)
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
@@ -628,16 +633,16 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   if (!file.exists(directory)) {
     dir.create(directory)
   }
-  savefile <- paste0(getwd(), "/", directory, "/", filename)
+  ##savefile <- glue("{getwd()}/{directory}/{filename}")
+  savefile <- file.path(getwd(), directory, filename)
   message("The savefile is: ", savefile)
   backup_file(savefile, backups=backups)
   ## The following save strings work:
-  save_string <- paste0(
-    "con <- pipe(paste0('pxz -T", cpus, " > ",
-    savefile,
-    "'), 'wb');\n",
-    "save(list=ls(all.names=TRUE, envir=globalenv()), envir=globalenv(), file=con, compress=FALSE);\n",
-    "close(con)")
+  save_string <- glue(
+    "con <- pipe(paste0('pxz -T{cpus} > {savefile}'), 'wb'); \\
+    save(list=ls(all.names=TRUE, envir=globalenv()),
+         envir=globalenv(), file=con, compress=FALSE); \\
+    close(con)")
   message("The save string is: ", save_string)
   eval(parse(text=save_string))
 }
@@ -743,7 +748,7 @@ ymxb_print <- function(model) {
   intercept <- round(coefficients(model)[1], 2)
   x_name <- names(coefficients(model)[-1])
   slope <- round(coefficients(model)[-1], 2)
-  ret <- paste0("y = ", slope, "*", x_name, " + ", intercept)
+  ret <- glue("y = {slope}*{x_name} + {intercept}")
   message(ret)
   return(ret)
 }

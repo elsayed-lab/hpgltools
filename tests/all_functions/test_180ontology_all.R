@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("180ontology_clusterprofiler.R:\n")
+context("180gene_ontology_enrichment.R:\n")
 ## 2017-12, exported functions in ontology_cluster_profiler: simple_clusterprofiler
 
 ## hmm I think I should split that up into separate functions for the various things it can do.
@@ -14,13 +14,18 @@ ups <- cb_sig[["limma"]][["ups"]][[1]]
 all <- cb_sig[["limma"]][["ma_plots"]][[1]][["data"]]
 
 ## Gather the pombe annotation data.
-tmp <- sm(library(AnnotationHub))
-ah <- sm(AnnotationHub())
-orgdbs <- sm(query(ah, "OrgDb"))
-sc_orgdb <- sm(query(ah, c("OrgDB", "Saccharomyces"))) ##   AH49589 | org.Sc.sgd.db.sqlite
+tmp <- library(AnnotationHub)
+ah <- AnnotationHub()
+orgdbs <- query(ah, "OrgDb")
+sc_orgdb <- query(ah, c("OrgDB", "Saccharomyces"))
+## AH49589 | org.Sc.sgd.db.sqlite
 pombe <- sc_orgdb[[3]]
 
-cp_test <- sm(simple_clusterprofiler(ups, de_table=all, orgdb=pombe))
+pombe_expt <- make_pombe_expt()
+pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
+colnames(pombe_lengths) <- c("ID", "length")
+
+cp_test <- simple_clusterprofiler(ups, de_table=all, orgdb=pombe)
 test_that("Did clusterprofiler provide the expected number of entries?", {
   actual <- nrow(cp_test[["group_go"]][["MF"]])
   expected <- 155
@@ -65,6 +70,15 @@ test_that("Do we get some plots?", {
   expect_equal(expected, actual)
 })
 
+pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
+go_test <- simple_goseq(ups, go_db=pombe_go, length_db=pombe_lengths)
+
+actual <- dim(go_test[["bp_interesting"]])
+expected <- c(3, 6)
+test_that("Does goseq provide a few biological processes?", {
+  expect_equal(actual[1], expected[1])
+  expect_equal(actual[2], expected[2])
+})
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

@@ -8,7 +8,8 @@ extract_de_plots(pairwise, type = "edger", table = NULL, logfc = 1,
   pval_cutoff = 0.05, invert = FALSE, ...)
 }
 \arguments{
-\item{pairwise}{The result from all_pairwise(), which should be changed to handle other invocations too.}
+\item{pairwise}{The result from all_pairwise(), which should be changed to
+handle other invocations too.}
 
 \item{type}{Type of table to use: deseq, edger, limma, basic.}
 

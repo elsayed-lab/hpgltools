@@ -36,7 +36,8 @@ write_cp_data(cp_result, excel = "excel/clusterprofiler.xlsx",
 The result from openxlsx in a prettyified xlsx file.
 }
 \description{
-It is my intention to make a function like this for each ontology tool in my repetoire
+It is my intention to make a function like this for each ontology tool in my
+repetoire
 }
 \seealso{
 \pkg{openxlsx} \pkg{goseq}

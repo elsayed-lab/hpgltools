@@ -10,10 +10,11 @@ pattern_count_genome(fasta, gff = NULL, pattern = "TA",
 \arguments{
 \item{fasta}{Genome sequence.}
 
-\item{gff}{Gff of annotation information from which to acquire CDS (if not provided it will just
-query the entire genome).}
+\item{gff}{Gff of annotation information from which to acquire CDS (if not
+provided it will just query the entire genome).}
 
-\item{pattern}{What to search for? This was used for tnseq and TA is the mariner insertion point.}
+\item{pattern}{What to search for? This was used for tnseq and TA is the
+mariner insertion point.}
 
 \item{type}{Column to use in the gff file.}
 
@@ -23,16 +24,24 @@ query the entire genome).}
 Data frame of gene names and number of times the pattern appears/gene.
 }
 \description{
-There are times when knowing how many times a given string appears in a genome/CDS is helpful.
-This function provides that information and is primarily used by cp_seq_m().
+There are times when knowing how many times a given string appears in a
+genome/CDS is helpful. This function provides that information and is
+primarily used by cp_seq_m().
+}
+\details{
+This is once again a place where mcols() usage might improve the overall
+quality of life.
 }
 \examples{
 \dontrun{
- num_pattern = pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
+ num_pattern <- pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 }
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
- \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}} \code{\link[Biostrings]{PDict}}
- \code{\link[Biostrings]{vcountPDict}}
+\code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+\code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
+}
+\author{
+atb
 }

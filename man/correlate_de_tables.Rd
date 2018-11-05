@@ -4,7 +4,7 @@
 \alias{correlate_de_tables}
 \title{See how similar are results from limma/deseq/edger/ebseq.}
 \usage{
-correlate_de_tables(results, annot_df = NULL, ...)
+correlate_de_tables(results, annot_df = NULL)
 }
 \arguments{
 \item{results}{Data from do_pairwise()}
@@ -15,7 +15,7 @@ correlate_de_tables(results, annot_df = NULL, ...)
 }
 \value{
 Heatmap showing how similar they are along with some
- correlations betwee the three players.
+correlations betwee the three players.
 }
 \description{
 limma, DEseq2, and EdgeR all make somewhat different assumptions.
@@ -35,5 +35,6 @@ Invoked by all_pairwise().
 }
 }
 \seealso{
-\code{\link{limma_pairwise}} \code{\link{edger_pairwise}} \code{\link{deseq2_pairwise}}
+\code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
+\code{\link{deseq2_pairwise}}
 }

@@ -4,16 +4,23 @@
 \alias{plot_topn}
 \title{Plot the representation of the top-n genes in the total counts / sample.}
 \usage{
-plot_topn(data, title = NULL, direct = TRUE, num = 100, ...)
+plot_topn(data, title = NULL, num = 100, expt_names = NULL,
+  plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...)
 }
 \arguments{
-\item{data}{Dataframe to perform pairwise qqplots with.}
+\item{data}{Dataframe/matrix/whatever for performing topn-plot.}
 
 \item{title}{A title for the plot.}
 
-\item{direct}{Include sample labels with directlabel()?}
-
 \item{num}{The N in top-n genes, if null, do them all.}
+
+\item{expt_names}{Column or character list of sample names.}
+
+\item{plot_labels}{Method for labelling the lines.}
+
+\item{label_chars}{Maximum number of characters before abbreviating samples.}
+
+\item{plot_legend}{Add a legend to the plot?}
 
 \item{...}{Extra arguments, currently unused.}
 }

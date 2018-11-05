@@ -32,8 +32,9 @@ filter_counts(count_table, filter = "hpgl", p = 0.01, A = 1, k = 1,
 Data frame of filtered counts.
 }
 \description{
-This calls the various filtering functions in genefilter along with suggestions made in our lab
-meetings; defaulting to the threshold based filter suggested by Hector.
+This calls the various filtering functions in genefilter along with
+suggestions made in our lab meetings; defaulting to the threshold based
+filter suggested by Hector.
 }
 \examples{
 \dontrun{

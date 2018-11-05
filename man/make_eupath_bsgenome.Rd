@@ -27,7 +27,11 @@ make_eupath_bsgenome(species = "Leishmania major strain Friedlin",
 List of package names generated (only 1).
 }
 \description{
-Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi packages, it
-seems to me that we ought to also be able to make a readable genome package.  I should
-probably use some of the logic from this to make the organismdbi generator smarter.
+Since we go to the trouble to try and generate nice orgdb/txdb/organismdbi
+packages, it seems to me that we ought to also be able to make a readable
+genome package.  I should probably use some of the logic from this to make
+the organismdbi generator smarter.
+}
+\author{
+atb
 }

@@ -4,8 +4,9 @@
 \alias{plot_sm}
 \title{Make an R plot of the standard median correlation or distance among samples.}
 \usage{
-plot_sm(data, colors = NULL, method = "pearson", legend = FALSE,
-  names = NULL, title = NULL, dot_size = 5, ...)
+plot_sm(data, colors = NULL, method = "pearson", plot_legend = FALSE,
+  expt_names = NULL, label_chars = 10, title = NULL, dot_size = 5,
+  ...)
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}
@@ -14,9 +15,11 @@ plot_sm(data, colors = NULL, method = "pearson", legend = FALSE,
 
 \item{method}{Correlation or distance method to use.}
 
-\item{legend}{Include a legend on the side?}
+\item{plot_legend}{Include a legend on the side?}
 
-\item{names}{Use pretty names for the samples?}
+\item{expt_names}{Use pretty names for the samples?}
+
+\item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
 \item{title}{Title for the graph.}
 
@@ -26,20 +29,20 @@ plot_sm(data, colors = NULL, method = "pearson", legend = FALSE,
 }
 \value{
 ggplot of the standard median something
- among the samples.  This will also write to an
- open device.  The resulting plot measures the median correlation of
- each sample among its peers.  It notes 1.5* the interquartile range
- among the samples and makes a horizontal line at that correlation
- coefficient.  Any sample which falls below this line is considered
- for removal because it is much less similar to all of its peers.
+among the samples.  This will also write to an
+open device.  The resulting plot measures the median correlation of
+each sample among its peers.  It notes 1.5* the interquartile range
+among the samples and makes a horizontal line at that correlation
+coefficient.  Any sample which falls below this line is considered
+for removal because it is much less similar to all of its peers.
 }
 \description{
 This was written by a mix of Kwame Okrah <kokrah at gmail dot com>, Laura
 Dillon <dillonl at umd dot edu>, and Hector Corrada Bravo <hcorrada at umd dot edu>
 I reimplemented it using ggplot2 and tried to make it a little more flexible.
-The general idea is to take the pairwise correlations/distances of the samples, then take the
-medians, and plot them.  This version of the plot is no longer actually a
-dotplot, but a point plot, but who is counting?
+The general idea is to take the pairwise correlations/distances of the
+samples, then take the medians, and plot them.  This version of the plot is
+no longer actually a dotplot, but a point plot, but who is counting?
 }
 \examples{
 \dontrun{
@@ -48,6 +51,6 @@ dotplot, but a point plot, but who is counting?
 }
 \seealso{
 \pkg{matrixStats} \pkg{grDevices}
- \code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
- \code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
+\code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
+\code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
 }

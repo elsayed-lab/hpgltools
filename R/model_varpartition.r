@@ -1,7 +1,7 @@
 #' A shortcut for replotting the percent plots from variancePartition.
 #'
-#' In case I wish to look at different numbers of genes from variancePartition and/or
-#' different columns to sort from.
+#' In case I wish to look at different numbers of genes from variancePartition
+#' and/or different columns to sort from.
 #'
 #' @param varpart_output  List returned by varpart()
 #' @param n  How many genes to plot.
@@ -17,8 +17,9 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
     if (column %in% colnames(sorted)) {
       sorted <- sorted[order(sorted[[column]], decreasing=decreasing), ]
     } else {
-      message("The column ", column, "is not in the sorted data frame returned by varpart().")
-      message("Leaving the data frame alone.")
+      message("The column ", column,
+              "is not in the sorted data frame returned by varpart(). ",
+              "Leaving the data frame alone.")
     }
   }
   new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
@@ -32,11 +33,14 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' Tested in 19varpart.R.
 #'
 #' @param expt  Some data
-#' @param predictor  Non-categorical predictor factor with which to begin the model.
+#' @param predictor  Non-categorical predictor factor with which to begin the
+#'   model.
 #' @param factors  Character list of columns in the experiment design to query
-#' @param chosen_factor  When checking for sane 'batches', what column to extract from the design?
+#' @param chosen_factor  When checking for sane 'batches', what column to
+#'   extract from the design?
 #' @param do_fit  Perform a fitting using variancePartition?
-#' @param cor_gene  Provide a set of genes to look at the correlations, defaults to the first gene.
+#' @param cor_gene  Provide a set of genes to look at the correlations, defaults
+#'   to the first gene.
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
@@ -50,8 +54,8 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                     modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
-  ## One is not supposed to use library() in packages, but it needs to do all sorts of foolish
-  ## attaching.
+  ## One is not supposed to use library() in packages, but it needs to do all
+  ## sorts of foolish attaching.
   tt <- sm(library("variancePartition"))
   if (isTRUE(parallel)) {
     cl <- parallel::makeCluster(cpus)
@@ -65,10 +69,10 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
   }
   model_string <- "~ "
   if (!is.null(predictor)) {
-    model_string <- paste0(model_string, predictor, " +")
+    model_string <- glue("{model_string}{predictor} +")
   }
   for (fact in factors) {
-    model_string <- paste0(model_string, " (1|", fact, ") +")
+    model_string <- glue("{model_string} (1|{fact}) +")
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
   message("Attempting mixed linear model with: ", model_string)
@@ -102,9 +106,9 @@ which are shared among multiple samples.")
   partition_plot <- variancePartition::plotVarPart(my_sorted)
 
   if (isTRUE(do_fit)) {
-    message("variancePartition provides time/memory estimates for this operation.  They are lies.")
     ## Try fitting with lmer4
-    fitting <- variancePartition::fitVarPartModel(exprObj=data, formula=my_model, data=design)
+    fitting <- variancePartition::fitVarPartModel(exprObj=data,
+                                                  formula=my_model, data=design)
     idx <- order(design[["condition"]], design[["batch"]])
     first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
     test_strat <- data.frame(Expression=data[3, ],
@@ -127,7 +131,7 @@ which are shared among multiple samples.")
     new_expt <- expt
     tmp_annot <- fData(new_expt)
     added_data <- my_sorted
-    colnames(added_data) <- paste0("variance_", colnames(added_data))
+    colnames(added_data) <- glue("variance_{colnames(added_data)}")
     tmp_annot <- merge(tmp_annot, added_data, by="row.names")
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
     tmp_annot <- tmp_annot[, -1]
@@ -145,19 +149,21 @@ which are shared among multiple samples.")
 
 #' Attempt to use variancePartition's fitVarPartModel() function.
 #'
-#' Note the word 'attempt'.  This function is so ungodly slow that it probably will never be used.
+#' Note the word 'attempt'.  This function is so ungodly slow that it probably
+#' will never be used.
 #'
 #' @param expt  Input expressionset.
 #' @param factors  Set of factors to query
 #' @param cpus  Number of cpus to use in doParallel.
-#' @return  Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
+#' @return  Summaries of the new model,  in theory this would be a nicely
+#'   batch-corrected data set.
 #' @seealso \pkg{variancePartition}
 varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
   cl <- parallel::makeCluster(cpus)
   doParallel::registerDoParallel(cl)
-  model_string <- paste0("~ ")
+  model_string <- "~ "
   for (fact in factors) {
-    model_string <- paste0(model_string, " (1|", fact, ") + ")
+    model_string <- glue("{model_string} (1|{fact}) + ")
   }
   model_string <- gsub(pattern="\\+ $", replacement="", x=model_string)
   my_model <- as.formula(model_string)

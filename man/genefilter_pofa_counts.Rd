@@ -9,7 +9,8 @@ genefilter_pofa_counts(count_table, p = 0.01, A = 100)
 \arguments{
 \item{count_table}{Input data frame of counts by sample.}
 
-\item{p}{Minimum proportion of each gene's counts/sample to be greater than a minimum(A).}
+\item{p}{Minimum proportion of each gene's counts/sample to be greater than a
+minimum(A).}
 
 \item{A}{Minimum number of counts in the above proportion.}
 }
@@ -17,8 +18,9 @@ genefilter_pofa_counts(count_table, p = 0.01, A = 100)
 Dataframe of counts without the low-count genes.
 }
 \description{
-I keep thinking this function is pofa... oh well.  Of the various tools in genefilter, this one
-to me is the most intuitive.  Take the ratio of counts/samples and make sure it is >= a score.
+I keep thinking this function is pofa... oh well.  Of the various tools in
+genefilter, this one to me is the most intuitive.  Take the ratio of
+counts/samples and make sure it is >= a score.
 }
 \examples{
 \dontrun{
@@ -27,5 +29,5 @@ to me is the most intuitive.  Take the ratio of counts/samples and make sure it 
 }
 \seealso{
 \pkg{genefilter}
- \code{\link[genefilter]{pOverA}}
+\code{\link[genefilter]{pOverA}}
 }

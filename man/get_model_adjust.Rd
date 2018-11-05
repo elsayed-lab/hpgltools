@@ -5,34 +5,38 @@
 \title{Extract some surrogate estimations from a raw data set using sva, ruv, and/or pca.}
 \usage{
 get_model_adjust(input, design = NULL, estimate_type = "sva",
-  surrogates = "be", expt_state = NULL, ...)
+  surrogates = "be", expt_state = NULL, confounders = NULL, ...)
 }
 \arguments{
 \item{input}{Expt or data frame to manipulate.}
 
 \item{design}{If the data is not an expt, provide experimental design here.}
 
-\item{estimate_type}{One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-ruv_residuals, or pca.}
+\item{estimate_type}{One of: sva_supervised, sva_unsupervised,
+ruv_empirical, ruv_supervised, ruv_residuals, or pca.}
 
-\item{surrogates}{Choose a method for getting the number of surrogates, be or leek, or a number.}
+\item{surrogates}{Choose a method for getting the number of surrogates, be
+or leek, or a number.}
 
 \item{expt_state}{Current state of the expt object (to check for log2, cpm, etc)}
+
+\item{confounders}{Used by ISVA to search for confounded experimental factors.}
 
 \item{...}{Parameters fed to arglist.}
 }
 \value{
-List including the adjustments for a model matrix, a modified count table, and 3 plots of
- the known batch, surrogates, and batch/surrogate.
+List including the adjustments for a model matrix, a modified count
+table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 }
 \description{
 This applies the methodologies very nicely explained by Jeff Leek at
 https://github.com/jtleek/svaseq/blob/master/recount.Rmd
-and attempts to use them to acquire estimates which may be applied to an experimental model
-by either EdgeR, DESeq2, or limma.  In addition, it modifies the count tables using these
-estimates so that one may play with the modified counts and view the changes (with PCA or heatmaps
-or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
-In other words, this is entirely derivative of someone much smarter than me.
+and attempts to use them to acquire estimates which may be applied to an
+experimental model by either EdgeR, DESeq2, or limma.  In addition, it
+modifies the count tables using these estimates so that one may play with the
+modified counts and view the changes (with PCA or heatmaps or whatever).
+Finally, it prints a couple of the plots shown by Leek in his document. In
+other words, this is entirely derivative of someone much smarter than me.
 }
 \seealso{
 \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}

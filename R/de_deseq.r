@@ -16,17 +16,19 @@ deseq_pairwise <- function(...) {
 #' Invoking DESeq2 is confusing, this should help.
 #'
 #' Tested in test_24de_deseq.R
-#' Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
-#' provided data set.  The details are of course slightly different when using DESeq2.  Thus, this
-#' uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
-#' for DESeq2 (if one normalized the data, it will attempt to revert to raw counts, for example).
-#' It continues on to extract the conditions and batches in the data, choose an appropriate
-#' experimental model, and run the DESeq analyses as described in the manual.  It defaults to using
-#' an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
-#' use sva to estimate the surrogates, and append them to the experimental design.  The deseq_method
-#' parameter may be used to apply different DESeq2 code paths as outlined in the manual.  If you
-#' want to play with non-standard data, the force argument will round the data and shoe-horn it into
-#' DESeq2.
+#' Like the other _pairwise() functions, this attempts to perform all pairwise
+#' contrasts in the provided data set.  The details are of course slightly
+#' different when using DESeq2.  Thus, this uses the function
+#' choose_binom_dataset() to try to ensure that the incoming data is appropriate
+#' for DESeq2 (if one normalized the data, it will attempt to revert to raw
+#' counts, for example). It continues on to extract the conditions and batches
+#' in the data, choose an appropriate experimental model, and run the DESeq
+#' analyses as described in the manual.  It defaults to using an experimental
+#' batch factor, but will accept a string like 'sva' instead, in which case it
+#' will use sva to estimate the surrogates, and append them to the experimental
+#' design.  The deseq_method parameter may be used to apply different DESeq2
+#' code paths as outlined in the manual.  If you want to play with non-standard
+#' data, the force argument will round the data and shoe-horn it into DESeq2.
 #'
 #' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
 #' @param conditions  Factor of conditions in the experiment.
@@ -38,7 +40,8 @@ deseq_pairwise <- function(...) {
 #' @param extra_contrasts  Provide extra contrasts here.
 #' @param annot_df  Include some annotation information in the results?
 #' @param force  Force deseq to accept data which likely violates its assumptions.
-#' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.
+#' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make
+#'   2 of them available here.
 #' @param ...  Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()
@@ -68,8 +71,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   message("Starting DESeq2 pairwise comparisons.")
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force=force)
-  ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
-  ## from my expt classes.
+  ## Now that I understand pData a bit more, I should probably remove the
+  ## conditions/batches slots from my expt classes.
   design <- pData(input)
   conditions <- input_data[["conditions"]]
   batches <- input_data[["batches"]]
@@ -89,10 +92,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   ## choose_model() returns a few models, including intercept and non-intercept versions
   ## of the same things.  However, if model_batch is passed as something like 'sva', then
   ## it will gather surrogate estimates from sva and friends and return those estimates.
-  model_choice <- choose_model(input, conditions, batches,
-                               model_batch=model_batch,
-                               model_cond=model_cond,
-                               model_intercept=model_intercept,
+  model_choice <- choose_model(input, conditions, batches, model_batch=model_batch,
+                               model_cond=model_cond, model_intercept=model_intercept,
                                alt_model=alt_model,
                                ...)
   ## model_choice <- choose_model(input, conditions, batches,
@@ -135,7 +136,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch) == "matrix") {
-    message("DESeq2 step 1/5: Including a matrix of batch estimates from sva/ruv/pca in the deseq model.")
+    message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
     ##model_string <- "~ condition"
     ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
@@ -143,12 +144,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     summarized <- import_deseq(data, column_data,
                                sv_model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
-    ## I think the following lines are no longer needed now that I properly add the SVs to the model.
-    ##passed <- FALSE
-    ##num_sv <- ncol(model_batch)
-    ##new_dataset <- deseq_try_sv(dataset, summarized, model_batch)
-    ##dataset <- new_dataset
-    ##rm(new_dataset)
   } else {
     message("DESeq2 step 1/5: Including only condition in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
@@ -163,7 +158,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   chosen_beta <- model_intercept
   if (deseq_method == "short") {
     message("DESeq steps 2-4 in one shot.")
-    deseq_run <- try(DESeq2::DESeq(dataset, fitType=fittype, betaPrior=chosen_beta), silent=TRUE)
+    deseq_run <- try(DESeq2::DESeq(dataset, fitType=fittype,
+                                   betaPrior=chosen_beta), silent=TRUE)
     if (class(deseq_run) == "try-error") {
       message("A fitType of 'parametric' failed for this data, trying 'mean'.")
       deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
@@ -191,7 +187,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"), silent=TRUE)
       if (class(deseq_disp) == "try-error") {
         warning("Both 'parametric' and 'mean' failed.  Trying 'local'.")
-        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="local"), silent=TRUE)
+        deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf,
+                                                      fitType="local"), silent=TRUE)
         if (class(deseq_disp) == "try-error") {
           warning("All fitting types failed.  This will end badly.")
         } else {
@@ -207,7 +204,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
   }
 
-  message("Plotting dispersions.")
   dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
   dispersion_plot <- NULL
   if (class(dispersions)[[1]] != "try-error") {
@@ -243,18 +239,23 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   contrasts <- c()
   total_contrasts <- length(condition_levels)
   total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (c in 1:length(contrast_order)) {
     contrast_string <- contrast_order[[c]]
-    pct_done <- c / length(contrast_order)
-    utils::setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(contrast_order)
+      utils::setTxtProgressBar(bar, pct_done)
+    }
     num_den_string <- strsplit(x=contrast_string, split="_vs_")[[1]]
     num_name <- num_den_string[1]
     den_name <- num_den_string[2]
     denominators[[contrast_string]] <- den_name
     numerators[[contrast_string]] <- num_name
     contrasts <- append(contrast_string, contrasts)
-    if (! paste0("condition", num_name) %in% DESeq2::resultsNames(deseq_run)) {
+    if (! glue("condition{num_name}") %in% DESeq2::resultsNames(deseq_run)) {
       message("The contrast ", num_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")
       next
@@ -280,7 +281,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     }
     result_list[[contrast_string]] <- result
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   ## The logic here is a little tortuous.
   ## Here are some sample column names from an arbitrary coef() call:
   ## "Intercept" "SV1" "SV2" "SV3" "condition_mtc_wtu_vs_mtc_mtu"
@@ -291,13 +294,16 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   ## appropriately rename the columns.
   coefficient_df <- coef(deseq_run)
   ## Here I will just simplify the column names.
-  colnames(coefficient_df) <- gsub(pattern="^condition", replacement="", x=colnames(coefficient_df))
-  colnames(coefficient_df) <- gsub(pattern="^batch", replacement="", x=colnames(coefficient_df))
-  colnames(coefficient_df) <- gsub(pattern="^_", replacement="", x=colnames(coefficient_df))
+  colnames(coefficient_df) <- gsub(
+    pattern="^condition", replacement="", x=colnames(coefficient_df))
+  colnames(coefficient_df) <- gsub(
+    pattern="^batch", replacement="", x=colnames(coefficient_df))
+  colnames(coefficient_df) <- gsub(
+    pattern="^_", replacement="", x=colnames(coefficient_df))
   remaining_list <- colnames(coefficient_df)
 
-  ## Create a list of all the likely column names, depending on how deseq was called this might be
-  ## numerator_vs_denominator or numerator denominator.
+  ## Create a list of all the likely column names, depending on how deseq was
+  ## called this might be numerator_vs_denominator or numerator denominator.
   ## So, I just make a list of them all.
   num_den <- unique(c(names(numerators), names(denominators)))
   ## AFAICT, the intercept is the second half of the contrasts listed.
@@ -332,8 +338,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     } else {
       ## In this case, we just want the name of the condition which is not in the set
       ## of columns of the coefficient df.
-      ## This is a bit more verbose that strictly it needs to be, but I hope it is clearer therefore.
-      ## 1st, if a numerator/denominator is missing, then it is the intercept name.
+      ## This is a bit more verbose that strictly it needs to be, but I hope it
+      ## is clearer therefore. 1st, if a numerator/denominator is missing, then
+      ## it is the intercept name.
       columns <- colnames(coefficient_df)
       missing_name_idx <- ! num_den %in% columns
       missing_name <- num_den[missing_name_idx]
@@ -342,8 +349,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       ## I think that was wrong, it should be this:
       containing_names_idx <- colnames(coefficient_df) %in% num_den
       containing_names <- columns[containing_names_idx]
-      ## If the are not in the numerator+denominator list, then they must be the SVs (except the
-      ## first column of course, that is the intercept.
+      ## If the are not in the numerator+denominator list, then they must be the
+      ## SVs (except the first column of course, that is the intercept.
       extra_names_idx <- ! columns %in% num_den
       extra_names <- columns[extra_names_idx]
       for (count in 1:ncol(coefficient_df)) {
@@ -392,11 +399,11 @@ deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   }
   formula_string <- "as.formula(~ "
   for (count in 1:num_sv) {
-    colname <- paste0("SV", count)
+    colname <- glue("SV{count}")
     summarized[[colname]] <- svs[, count]
-    formula_string <- paste0(formula_string, " ", colname, " + ")
+    formula_string <- glue("{formula_string} {colname} + ")
   }
-  formula_string <- paste0(formula_string, "condition)")
+  formula_string <- glue("{formula_string}condition)")
   new_formula <- eval(parse(text=formula_string))
   new_summarized <- summarized
   DESeq2::design(new_summarized) <- new_formula
@@ -448,8 +455,8 @@ import_deseq <- function(data, column_data, model_string,
                                                      colData=column_data,
                                                      design=as.formula(model_string))
   } else {
-    ## This may be insufficient, it may require the full tximport result, while this may just be
-    ## that result$counts, so be aware!!
+    ## This may be insufficient, it may require the full tximport result, while
+    ## this may just be that result$counts, so be aware!!
 
     ## First make sure that if we subsetted the data, that is maintained from
     ## the data to the tximportted data

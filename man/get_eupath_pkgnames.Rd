@@ -8,7 +8,7 @@ get_eupath_pkgnames(species = "Coprinosis.cinerea.okayama7#130",
   version = NULL, metadata = NULL, ...)
 }
 \arguments{
-\item{species}{Guess.}
+\item{species}{Species names taken from a metadata instance from a eupath project.}
 
 \item{version}{Choose a specific version of the eupathdb, only really useful
 when downloading files.}
@@ -18,13 +18,23 @@ when downloading files.}
 \item{...}{Further arguments to pass to download_eupath_metadata()}
 }
 \value{
-List of package names and some booleans to see if they have already been installed.
+List of package names and some booleans to see if they have already
+been installed.
 }
 \description{
-In my test directory, I have a little for loop which randomly chooses a couple
-of eupathdb species for which to try and generate genome/annotation packages.
-I am on my 4th or 5th iteration of passing that loop and in all of them
-I have found some new and exciting exception to how a strain should be named.
-The default argument for this function shows the funniest one so far.
-With that in mind, this function should provide consistent, valid package names.
+This is a surprisingly difficult problem.  Many species names in the eupathdb
+have odd characters in the species suffix which defines the strain ID.  Many
+of these peculiarities result in packages which are non-viable for
+installation.  Thus this function attempts to filter them out and result in
+consistent, valid package names.  They are not exactly the same in format as
+other orgdb/txdb/etc packages, as I include in them a field for the eupathdb
+version used; but otherwise they should be familiar to any user of the sqlite
+based organism packages.
+}
+\details{
+The default argument for this function shows the funniest one I have found so
+far thanks to the hash character in the strain definition.
+}
+\author{
+atb
 }

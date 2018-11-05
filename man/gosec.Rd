@@ -7,14 +7,15 @@
 gosec(go = "GO:0032432")
 }
 \arguments{
-\item{go}{GO ID, this may be a character or list(assuming the elements, not names, are goids).}
+\item{go}{GO ID, this may be a character or list(assuming the elements, not
+names, are goids).}
 }
 \value{
 Some text comprising the secondary GO id(s).
 }
 \description{
-Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this function
-has to have a whole bunch of logic to handle the various outputs.
+Unfortunately, GOTERM's returns for secondary IDs are not consistent, so this
+function has to have a whole bunch of logic to handle the various outputs.
 }
 \examples{
 \dontrun{

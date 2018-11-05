@@ -20,13 +20,13 @@ compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL,
 a summary of the similarities of ontology searches
 }
 \description{
-Combine the results from goseq, cluster profiler, topgo, and gostats; poke at them
-with a stick and see what happens.
-The general idea is to pull the p-value data from each tool and contrast that to the
-set of all possibile ontologies.  This allows one to do a correlation coefficient
-between them.  In addition, take the 1-pvalue for each ontology for each tool.
-Thus for strong p-values the score will be near 1 and so we can sum the scores
-for all the tools.  Since topgo has 4 tools, the total possible is 7 if everything
+Combine the results from goseq, cluster profiler, topgo, and gostats; poke at
+them with a stick and see what happens. The general idea is to pull the
+p-value data from each tool and contrast that to the set of all possibile
+ontologies.  This allows one to do a correlation coefficient between them.
+In addition, take the 1-pvalue for each ontology for each tool. Thus for
+strong p-values the score will be near 1 and so we can sum the scores for all
+the tools.  Since topgo has 4 tools, the total possible is 7 if everything
 has a p-value equal to 0.
 }
 \seealso{

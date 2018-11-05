@@ -1,8 +1,10 @@
-#' Set up model matrices contrasts and do pairwise comparisons of all conditions using EBSeq.
+#' Set up model matrices contrasts and do pairwise comparisons of all conditions
+#' using EBSeq.
 #'
 #' Invoking EBSeq is confusing, this should help.
 #'
-#' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param input  Dataframe/vector or expt class containing data, normalization
+#'   state, etc.
 #' @param patterns  Set of expression patterns to query.
 #' @param ng_vector I think this is for isoform quantification, but am not yet
 #'   certain.
@@ -56,7 +58,8 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
                           target_fdr=target_fdr, norm=norm)
     } else if (length(condition_levels) > 5) {
       if (is.null(patterns)) {
-        stop("Beyond 5 conditions generates too many patterns, please provide a pattern matrix, or 'all_same'.")
+        stop("Beyond 5 conditions generates too many patterns, ",
+             "please provide a pattern matrix, or 'all_same'.")
       }
       message("Invoking ebseq with parameters for preset patterns.")
       result <- ebseq_many(data, conditions, patterns=patterns,
@@ -84,8 +87,8 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
                                   model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
                                   conditions=NULL, norm="median", ...) {
   message("Starting EBSeq pairwise subset.")
-  ## Now that I understand pData a bit more, I should probably remove the conditions/batches slots
-  ## from my expt classes.
+  ## Now that I understand pData a bit more, I should probably remove the
+  ## conditions/batches slots from my expt classes.
   design <- pData(input)
   conditions <- design[["condition"]]
   batches <- design[["batches"]]
@@ -100,11 +103,16 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
   model_data <- model_choice[["chosen_model"]]
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, ...)
   contrasts_performed <- c()
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   retlst <- list()
   for (c in 1:length(apc[["names"]])) {
-    pct_done <- c / length(apc[["names"]])
-    utils::setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- c / length(apc[["names"]])
+      utils::setTxtProgressBar(bar, pct_done)
+    }
     name  <- apc[["names"]][[c]]
     a_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
     b_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
@@ -116,19 +124,18 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     }
     pair <- sm(subset_expt(
       expt=input,
-      subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      ## subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      subset=glue("condition=='{b_name}' | condition=='{a_name}'")))
     pair_data <- exprs(pair)
     conditions <- pair[["conditions"]]
-    a_result <- ebseq_two(pair_data, conditions,
-                          numerator=b_name,
-                          denominator=a_name,
-                          ng_vector=ng_vector,
-                          rounds=rounds,
-                          target_fdr=target_fdr,
+    a_result <- ebseq_two(pair_data, conditions, numerator=b_name, denominator=a_name,
+                          ng_vector=ng_vector, rounds=rounds, target_fdr=target_fdr,
                           norm=norm)
     retlst[[name]] <- a_result
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   return(retlst)
 }
 
@@ -251,14 +258,13 @@ ebseq_two <- function(pair_data, conditions,
   table <- table[, -1]
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
   ## properly adjust a set prior probabilities.
-  message("Copying the ppee values as ajusted p-values until I figure out how to deal with them.")
+  message("Copying ppee values as ajusted p-values until I figure out how to deal with them.")
   table[["ebseq_adjp"]] <- table[["PPEE"]]
 
   ## Finally, make sure the 'direction' matches my conception of numerator/denominator.
   eb_direction <- fold_changes[["Direction"]]
   eb_numerator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\1", x=eb_direction)
   eb_denominator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\2", x=eb_direction)
-  ## message("EBD: ", eb_denominator, " EBN: ", eb_numerator, " D: ", denominator, " N: ", numerator)
   if (! eb_numerator == denominator) {
     ## message("Flipping the table FC and logFC.")
     table[["ebseq_FC"]] <- 1 / table[["ebseq_FC"]]

@@ -2,14 +2,16 @@
 % Please edit documentation in R/normalize_batch.r
 \name{cbcb_batch_effect}
 \alias{cbcb_batch_effect}
-\title{A function suggested by Hector Corrada Bravo and Kwame Okrah for batch removal}
+\title{A function suggested by Hector Corrada Bravo and Kwame Okrah for batch
+removal.}
 \usage{
 cbcb_batch_effect(normalized_counts, model)
 }
 \arguments{
 \item{normalized_counts}{Data frame of log2cpm counts.}
 
-\item{model}{Balanced experimental model containing condition and batch factors.}
+\item{model}{Balanced experimental model containing condition and batch
+factors.}
 }
 \value{
 Dataframe of residuals after subtracting batch from the model.
@@ -25,5 +27,5 @@ dirty batch removal tool
 }
 \seealso{
 \pkg{limma}
- \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+\code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
 }

@@ -42,6 +42,6 @@ This function will make it possible to see what is left.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
- \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+\code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+\code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 }

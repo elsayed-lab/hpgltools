@@ -23,12 +23,13 @@ pct_all_kegg(all_ids, sig_ids, organism = "dme", pathways = "all",
 \item{...}{Options I might pass from other functions are dropped into arglist.}
 }
 \value{
-Dataframe including the filenames, percentages, nodes included, and differential nodes.
+Dataframe including the filenames, percentages, nodes included, and
+differential nodes.
 }
 \description{
-KEGGgraph provides some interesting functionality for mapping KEGGids and examining the
-pieces. This attempts to use that in order to evaluate how many 'significant' genes are in a
-given pathway.
+KEGGgraph provides some interesting functionality for mapping KEGGids and
+examining the pieces. This attempts to use that in order to evaluate how many
+'significant' genes are in a given pathway.
 }
 \seealso{
 \pkg{KEGGgraph} \pkg{KEGGREST}

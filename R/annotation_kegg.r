@@ -1,11 +1,16 @@
-#' Convert a potentially non-unique vector from kegg into a normalized data frame.
+#' Convert a potentially non-unique vector from kegg into a normalized data
+#' frame.
 #'
-#' I am 100% certain there is a way to do this using apply/etc, but they confuse me.
+#' This function seeks to reformat data from KEGGREST into something which is
+#' rather easier to use.
+#'
+#' This could probably benefit from a tidyr-ish revisitation.
 #'
 #' @param vector  Information from KEGGREST
 #' @param final_colname  Column name for the new information
 #' @param flatten Flatten nested data?
 #' @return  A normalized data frame of gene IDs to whatever.
+#' @author atb
 kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
   final_df <- data.frame(stringsAsFactors=FALSE)
   if (isTRUE(flatten)) {
@@ -24,8 +29,8 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
       for (c in 1:length(duplicated_vector)) {
         append_name <- names(duplicated_vector)[c]
         append_entry <- as.character(duplicated_vector[c])
-        unique_df[append_name, final_colname] <- paste0(unique_df[append_name, final_colname],
-                                                        ", ", append_entry)
+        unique_df[append_name, final_colname] <- glue(
+          "{unique_df[append_name, final_colname]}, {append_entry}")
       }
     }
     final_df <- unique_df
@@ -45,10 +50,15 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
 
 #' Create a data frame of pathways to gene IDs from KEGGREST
 #'
+#' This seeks to take the peculiar format from KEGGREST for pathway<->genes and
+#' make it easier to deal with.
+#'
 #' @param species  String to use to query KEGG abbreviation.
 #' @param abbreviation  If you already know the abbreviation, use it.
 #' @param flatten  Flatten nested tables?
-#' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs and KEGG paths.
+#' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
+#'   and KEGG paths.
+#' @author atb
 #' @export
 load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
@@ -102,11 +112,13 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
     result <- merge(result, path_df, by="GID", all=TRUE)
   }
 
-  result[["ncbi_geneid"]] <- gsub(pattern="ncbi-geneid:", replacement="", x=result[["ncbi_geneid"]])
-  result[["ncbi_proteinid"]] <- gsub(pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
+  result[["ncbi_geneid"]] <- gsub(
+    pattern="ncbi-geneid:", replacement="", x=result[["ncbi_geneid"]])
+  result[["ncbi_proteinid"]] <- gsub(
+    pattern="ncbi-proteinid:", replacement="", x=result[["ncbi_proteinid"]])
   result[["uniprotid"]] <- gsub(pattern="up:", replacement="", x=result[["uniprotid"]])
   result[["pathways"]] <- gsub(pattern="path:", replacement="", x=result[["pathways"]])
-  result[["kegg_geneid"]] <- paste0(chosen, ":", result[["GID"]])
+  result[["kegg_geneid"]] <- glue("{chosen}:{result[['GID']]}")
   ## Now we have a data frame of all genes <-> ncbi-ids, pathways
   result_nas <- is.na(result)
   result[result_nas] <- ""

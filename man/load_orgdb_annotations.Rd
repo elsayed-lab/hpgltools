@@ -2,7 +2,7 @@
 % Please edit documentation in R/annotation_orgdb.r
 \name{load_orgdb_annotations}
 \alias{load_orgdb_annotations}
-\title{Load organism annotation data.}
+\title{Load organism annotation data from an orgdb sqlite package.}
 \usage{
 load_orgdb_annotations(orgdb = NULL, gene_ids = NULL,
   include_go = FALSE, keytype = "ensembl",
@@ -44,11 +44,12 @@ Table of geneids, chromosomes, descriptions, strands, types, and lengths.
 }
 \description{
 Creates a dataframe gene and transcript information for a given set of gene
-ids using the OrganismDbi interface.
+ids using the AnnotationDbi interface.
 }
 \details{
 Tested in test_45ann_organdb.R
-This defaults to a few fields which I have found most useful, but the brave can pass it 'all'.
+This defaults to a few fields which I have found most useful, but the brave
+or pathological can pass it 'all'.
 }
 \examples{
 \dontrun{
@@ -57,6 +58,9 @@ This defaults to a few fields which I have found most useful, but the brave can 
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
- \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
- \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
+\code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
+\code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
+}
+\author{
+atb
 }

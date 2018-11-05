@@ -12,21 +12,25 @@ download_gbk(accessions = "AE009949", write = TRUE)
 \item{write}{Write the files?  Otherwise return a list of the strings}
 }
 \value{
-A list containing the number of files downloaded and the character strings acquired.
+A list containing the number of files downloaded and the character
+strings acquired.
 }
 \description{
 This takes and downloads genbank accessions.
 }
 \details{
 Tested in test_40ann_biomartgenbank.R
-In this function I stole the same functionality from the ape package and set a few defaults
-so that it hopefully fails less often.
+In this function I stole the same functionality from the ape package and set
+a few defaults so that it hopefully fails less often.
 }
 \examples{
 \dontrun{
- gbk_file <- download_gbk(accessions=c("AE009949","AE009948"))
+ gbk_file <- download_gbk(accessions="AE009949")
 }
 }
 \seealso{
 \pkg{ape}
+}
+\author{
+The ape authors with some modifications by atb.
 }

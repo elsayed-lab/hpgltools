@@ -1,7 +1,11 @@
 #' Gather snp information for an expt
 #'
-#' I have some initial code for working with snps, but it seems that it will be getting more use, so
-#' make it testable etc.
+#' This function attempts to gather a set of variant positions using an extant
+#' expressionset.  This therefore seeks to keep the sample metadata consistent
+#' with the original data.  In its current iteration, it therefore makes some
+#' potentially bad assumptions about the naming conventions for its input
+#' files.  It furthermore assumes inputs from the variant calling methods in
+#' cyoa.
 #'
 #' @param expt an expressionset from which to extract information.
 #' @param type  Use counts / samples or ratios?
@@ -9,7 +13,8 @@
 #' @param tolower  Lowercase stuff like 'HPGL'?
 #' @return  A new expt object
 #' @export
-count_expt_snps <- function(expt, type="counts", input_dir="preprocessing/outputs", tolower=TRUE) {
+count_expt_snps <- function(expt, type="counts",
+                            input_dir="preprocessing/outputs", tolower=TRUE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -94,7 +99,7 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   if (is.null(snp_expt[["design"]][[factor]])) {
     stop("The factor does not exist in the expt.")
   }
-  if (isTRUE(do_save) &  file.exists(paste0(savefile, "_", factor, ".rda"))) {
+  if (isTRUE(do_save) &  file.exists(glue("{savefile}_{factor}.rda"))) {
     retlist <- new.env()
     loaded <- load(savefile, envir=retlist)
     retlist <- retlist[["retlist"]]
@@ -115,20 +120,28 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   cl <- parallel::makeCluster(cores)
   doSNOW::registerDoSNOW(cl)
   num_levels <- length(levels(as.factor(chr)))
-  bar <- utils::txtProgressBar(max=num_levels, style=3)
-  progress <- function(n) {
-    setTxtProgressBar(bar, n)
+
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  pb_opts <- list()
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(max=num_levels, style=3)
+    progress <- function(n) {
+      setTxtProgressBar(bar, n)
+    }
+    pb_opts[["progress"]] <- progress
   }
-  pb_opts <- list(progress=progress)
   returns <- list()
   i <- 1
   res <- list()
-  res <- foreach(i=1:num_levels, .packages=c("hpgltools", "doParallel"), .options.snow=pb_opts, .export=c("snp_by_chr")) %dopar% {
+  res <- foreach(i=1:num_levels, .packages=c("hpgltools", "doParallel"),
+                 .options.snow=pb_opts, .export=c("snp_by_chr")) %dopar% {
     chromosome_name <- levels(as.factor(chr))[i]
     returns[[chromosome_name]] <- snp_by_chr(medians,
                                              chromosome_name)
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   parallel::stopCluster(cl)
 
   ## Unpack the res data structure (which probably can be simplified)
@@ -151,7 +164,8 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   for (chr in names(data_by_chr)) {
     snps <- rownames(data_by_chr[[chr]][["medians"]])
     num_snps <- length(snps)
-    last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$", replacement="\\1", x=snps)))
+    last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+                                         replacement="\\1", x=snps)))
     snp_density <- num_snps / as.numeric(last_position)
     density_by_chr[[chr]] <- snp_density
     for (inter in names(data_by_chr[[chr]][["intersections"]])) {
@@ -192,26 +206,33 @@ read_snp_columns <- function(samples,
                              file_suffix="_parsed_ratio.txt") {
   sample <- samples[1]
   filename_prefix <- file.path(input_dir, sample)
-  count_filename <- paste0(filename_prefix, file_suffix)
+  count_filename <- glue("{filename_prefix}{file_suffix}")
   column <- read.table(count_filename)
   snp_columns <- data.table::as.data.table(column)
   rownames(snp_columns) <- snp_columns[["V1"]]
   colnames(snp_columns) <- c("rownames", sample)
 
-  bar <- utils::txtProgressBar(style=3)
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (sample_num in 2:length(samples)) {
-    pct_done <- sample_num / length(samples)
-    setTxtProgressBar(bar, pct_done)
+    if (isTRUE(show_progress)) {
+      pct_done <- sample_num / length(samples)
+      setTxtProgressBar(bar, pct_done)
+    }
     sample <- samples[sample_num]
     filename_prefix <- file.path(input_dir, samples[sample_num])
-    count_filename <- paste0(filename_prefix, file_suffix)
+    count_filename <- glue("{filename_prefix}{file_suffix}")
     column <- read.table(count_filename)
     snp_column <- data.table::as.data.table(column)
     rownames(snp_column) <- snp_column[["V1"]]
     colnames(snp_column) <- c("rownames", sample)
     snp_columns <- merge(snp_columns, snp_column, by="rownames", all=TRUE)
   }
-  close(bar)
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
   na_positions <- is.na(snp_columns)
   snp_columns[na_positions] <- 0
   return(snp_columns)
@@ -244,18 +265,18 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   for (sample_num in 1:length(samples)) {
     bam_filenames[sample_num] <- paste0(file.path(input_dir, sample), bam_suffix)
     if (!file.exists(bam_filenames[sample_num])) {
-      warning(paste0("The bam filename does not exist: ", bam_filenames[sample_num]))
+      warning(glue("The bam filename does not exist: {bam_filenames[sample_num]}"))
     }
   }
 
   ## Now I have a data table of rownames and percentages
-  ## Next I need to cross reference these against the coverage by position, ergo I must split out the rownames
+  ## Next I need to cross reference these against the coverage by position, ergo
+  ## I must split out the rownames
   pileup_info <- Rsamtools::PileupFiles(bam_filenames)
   ## Taken directly from the Rsamtools manual
-  queries <- paste0(snp_counts[["species"]], "_",
-                    snp_counts[["chromosome"]], ":",
-                    as.numeric(snp_counts[["position"]]) - 1, "-",
-                    as.numeric(snp_counts[["position"]]) + 1)
+  queries <- glue("{snp_counts[['species']]}_{snp_counts[['chromosome']]}:\\
+                  {as.numeric(snp_counts[['position']]) - 1}-\\
+                  {as.numeric(snp_counts[['position']]) + 1}")
   which <- GenomicRanges::GRanges(queries)
   which_list <- split(which, GenomicRanges::seqnames(which))
   returns <- list()
@@ -296,8 +317,9 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   ##  seqnames (chromosome), pos (position(s)), info (coverage by file)
   ## The piece of information we want to put into snp_dt is therefore:
   ## coverage_list <- result[[snp_dt_row]][[info]][2, ]
-  ## coverage_list is in turn a character list named by filename (which begins with the sample ID)
-  ## We will therefore extract the hpglID from it and the coverage for every sample
+  ## coverage_list is in turn a character list named by filename (which begins
+  ## with the sample ID) We will therefore extract the hpglID from it and the
+  ## coverage for every sample.
 
   ## I am not sure if the following line is correct, but I think it is -- either
   ## way, snp_dt is missing without it.  Somewhere along the way I forgot to
@@ -317,7 +339,7 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   ## unused_var <- try(lapply(coverage_result, snp_extract_coverage))
   unused_var <- try(parallel::mclapply(coverage_result, snp_extract_coverage))
   if (class(unused_var) == "try-error") {
-    message("There was an error when creating the data table of coverage, hopefully the data is salvageable.")
+    message("There was an error when creating the data table of coverage.")
   }
   new_dt <- as.data.table(new_dt)
   new_dt[["rownames"]] <- snp_dt[["rownames"]]
@@ -385,17 +407,31 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
   return(data_by_chr)
 }
 
+#' Cross reference observed variants against the transcriptome annotation.
+#'
+#' This function should provide counts of how many variant positions were
+#' observed with respect to each chromosome and with respect to each annotated
+#' sequence (currently this is limited to CDS, but that is negotiable).
+#'
+#' @param expt  The original expressionset.  This provides the annotation data.
+#' @param snp_result  The result from get_snp_sets or count_expt_snps.
+#' @return List containing the set of intersections in the conditions contained
+#'   in snp_result, the summary of numbers of variants per chromosome, and
+#'   summary of numbers per gene.
+#' @export
 snps_vs_intersections <- function(expt, snp_result) {
   features <- fData(expt)
   features[["start"]] <- sm(as.numeric(features[["start"]]))
   na_starts <- is.na(features[["start"]])
   features <- features[!na_starts, ]
   features[["end"]] <- as.numeric(features[["end"]])
-  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$", replacement="\\1", x=features[["seqnames"]])
+  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$",
+                                 replacement="\\1", x=features[["seqnames"]])
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 
   set_names <- snp_result[["set_names"]]
-  summaries <- list()
+  chr_summaries <- list()
+  gene_summaries <- list()
   inters <- list()
   for (inter in names(snp_result[["intersections"]])) {
     inter_name <- set_names[[inter]]
@@ -414,17 +450,25 @@ snps_vs_intersections <- function(expt, snp_result) {
                                                type="within",
                                                ignore.strand=TRUE)
     inters[[inter_name]] <- inter_by_gene
-    summarized_by_gene <- data.table::as.data.table(inter_by_gene)
+    summarized_by_chr <- data.table::as.data.table(inter_by_gene)
     ## Faking out r cmd check with a couple empty variables which will be used by data.table
     seqnames <- count <- NULL
-    summarized_by_gene[, count := .N, by = list(seqnames)]
-    summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
-    summaries[[inter_name]] <- summarized_by_gene
+    .N <- NULL  ## .N is a read-only symbol in data.table
+    summarized_by_chr[, count := .N, by = list(seqnames)]
+    summarized_by_chr <- unique(summarized_by_chr[, c("seqnames", "count"), with=FALSE])
+    chr_summaries[[inter_name]] <- summarized_by_chr
+
+    summarized_by_gene <- IRanges::countOverlaps(query=expt_granges, subject=inter_granges,
+                                                 type="any", ignore.strand=TRUE)
+    summarized_idx <- order(summarized_by_gene, decreasing=TRUE)
+    summarized_by_gene <- summarized_by_gene[summarized_idx]
+    gene_summaries[[inter_name]] <- summarized_by_gene
   }
 
   retlist <- list(
     "inters" = inters,
-    "summaries" = summaries)
+    "chr_summaries" = chr_summaries,
+    "gene_summaries" = gene_summaries)
   return(retlist)
 }
 
@@ -432,14 +476,16 @@ snps_vs_intersections <- function(expt, snp_result) {
 #'
 #' @param expt  The original expressionset
 #' @param snp_result  The result from get_snp_sets()
+#' @param start_col  Which column provides the start of each gene?
+#' @param end_col  and the end column of each gene?
 #' @return a fun list with some information by gene.
 #' @export
-snps_vs_genes <- function(expt, snp_result) {
+snps_vs_genes <- function(expt, snp_result, start_col="start", end_col="end") {
   features <- fData(expt)
-  features[["start"]] <- sm(as.numeric(features[["start"]]))
-  na_starts <- is.na(features[["start"]])
+  features[[start_col]] <- sm(as.numeric(features[[start_col]]))
+  na_starts <- is.na(features[[start_col]])
   features <- features[!na_starts, ]
-  features[["end"]] <- as.numeric(features[["end"]])
+  features[[end_col]] <- as.numeric(features[[end_col]])
 
   ## I don't quite want 5'/3' UTRs, I just want the coordinates starting with
   ## (either 1 or) the end of the last gene and ending with the beginning of the
@@ -452,7 +498,6 @@ snps_vs_genes <- function(expt, snp_result) {
   ## inter_features <- inter_features[inter_feature_order, ]
 
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
-
   snp_positions <- snp_result[["medians"]]
   snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$",
                                       replacement="\\1",
@@ -467,15 +512,43 @@ snps_vs_genes <- function(expt, snp_result) {
 
   ## Faking out r cmd check with a couple empty variables which will be used by data.table
   seqnames <- count <- NULL
-  snps_by_gene <- IRanges::subsetByOverlaps(snp_granges, expt_granges, type="within", ignore.strand=TRUE)
-  summarized_by_gene <- data.table::as.data.table(snps_by_gene)
-  summarized_by_gene[, count := .N, by = list(seqnames)]
-  summarized_by_gene <- unique(summarized_by_gene[, c("seqnames", "count"), with=FALSE])
+  ## This is how one sets the metadata for a GRanges thing.
+  ## When doing mergeByOverlaps, countOverlaps, etc, this is useful.
+  ## mcols(object)$column_name <- some data column
+  S4Vectors::mcols(expt_granges)[, "gene_name"] <- names(expt_granges)
+
+  ## Lets add metadata columns for each column for the medians table
+  ## This will let us find the positions unique to a condition.
+  S4Vectors::mcols(snp_granges)[, "snp_name"] <- names(snp_granges)
+  snp_columns <- colnames(snp_result[["medians"]])
+  for (c in 1:length(snp_columns)) {
+    colname <- snp_columns[c]
+    S4Vectors::mcols(snp_granges)[, colname] <- snp_result[["medians"]][[colname]]
+  }
+
+  snps_by_chr <- IRanges::subsetByOverlaps(snp_granges, expt_granges,
+                                           type="within", ignore.strand=TRUE)
+  summarized_by_chr <- data.table::as.data.table(snps_by_chr)
+  .N <- NULL  ## .N is a read-only symbol in data.table
+  summarized_by_chr[, count := .N, by = list(seqnames)]
+  ## I think I can replace this data table invocation with countOverlaps...
+  ## Ahh no, the following invocation merely counts which snps are found in name,
+  ## which is sort of the opposite of what I want.
+  ## test <- IRanges::countOverlaps(query=snp_granges, subject=expt_granges,
+  ##                               type="within", ignore.strand=TRUE)
+  summarized_by_chr <- unique(summarized_by_chr[, c("seqnames", "count"), with=FALSE])
+  merged_grange <- IRanges::mergeByOverlaps(query=snp_granges, subject=expt_granges)
+  summarized_by_gene <- IRanges::countOverlaps(query=expt_granges, subject=snp_granges,
+                                               type="any", ignore.strand=TRUE)
+  summarized_idx <- order(summarized_by_gene, decreasing=TRUE)
+  summarized_by_gene <- summarized_by_gene[summarized_idx]
   retlist <- list(
     "expt_granges" = expt_granges,
     "snp_granges" = snp_granges,
-    "snps_by_gene" = snps_by_gene,
-    "summary" = summarized_by_gene)
+    "snps_by_chr" = snps_by_chr,
+    "merged_by_gene" = merged_grange,
+    "summary_by_gene" = summarized_by_gene,
+    "summary" = summarized_by_chr)
   return(retlist)
 }
 

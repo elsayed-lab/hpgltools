@@ -45,5 +45,8 @@ whatever annotation data source is provided.
 }
 \seealso{
 \pkg{rtracklayer}
- \code{\link{load_gff_annotations}}
+\code{\link{load_gff_annotations}}
+}
+\author{
+atb
 }

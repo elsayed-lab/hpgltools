@@ -13,13 +13,14 @@ plot_qq_all(data, labels = "short")
 }
 \value{
 List containing:
- logs = a recordPlot() of the pairwise log qq plots.
- ratios = a recordPlot() of the pairwise ratio qq plots.
- means = a table of the median values of all the summaries of the qq plots.
+logs = a recordPlot() of the pairwise log qq plots.
+ratios = a recordPlot() of the pairwise ratio qq plots.
+means = a table of the median values of all the summaries of the qq plots.
 }
 \description{
-This allows one to visualize all individual data columns against the mean of all columns of data
-in order to see if any one is significantly different than the cloud.
+This allows one to visualize all individual data columns against the mean of
+all columns of data in order to see if any one is significantly different
+than the cloud.
 }
 \seealso{
 \pkg{Biobase}

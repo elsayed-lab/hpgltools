@@ -12,7 +12,8 @@ simple_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 \arguments{
 \item{path_data}{Some differentially expressed genes.}
 
-\item{indir}{Directory into which the unmodified kegg images will be downloaded (or already exist).}
+\item{indir}{Directory into which the unmodified kegg images will be
+downloaded (or already exist).}
 
 \item{outdir}{Directory which will contain the colored images.}
 
@@ -20,9 +21,11 @@ simple_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 
 \item{species}{Kegg identifier for the species of interest.}
 
-\item{from_list}{Regex to help in renaming KEGG categories/gene names from one format to another.}
+\item{from_list}{Regex to help in renaming KEGG categories/gene names from
+one format to another.}
 
-\item{to_list}{Regex to help in renaming KEGG categories/gene names from one format to another.}
+\item{to_list}{Regex to help in renaming KEGG categories/gene names from one
+format to another.}
 
 \item{suffix}{Add a suffix to the completed, colored files.}
 
@@ -30,20 +33,23 @@ simple_pathview(path_data, indir = "pathview_in", outdir = "pathview",
 
 \item{fc_column}{What is the name of the fold-change column to extract?}
 
-\item{format}{Format of the resulting images, I think only png really works well.}
+\item{format}{Format of the resulting images, I think only png really works
+well.}
 
 \item{verbose}{When on, this function is quite chatty.}
 }
 \value{
-A list of some information for every KEGG pathway downloaded/examined.  This information includes:
- a. The filename of the final image for each pathway.
- b. The number of genes which were found in each pathway image.
- c. The number of genes in the 'up' category
- d. The number of genes in the 'down' category
+A list of some information for every KEGG pathway
+downloaded/examined.  This information includes:
+a. The filename of the final image for each pathway.
+b. The number of genes which were found in each pathway image.
+c. The number of genes in the 'up' category
+d. The number of genes in the 'down' category
 }
 \description{
-KEGGREST and pathview provide neat functions for coloring molecular pathways with arbitrary data.
-Unfortunately they are somewhat evil to use.  This attempts to alleviate that.
+KEGGREST and pathview provide neat functions for coloring molecular pathways
+with arbitrary data. Unfortunately they are somewhat evil to use.  This
+attempts to alleviate that.
 }
 \examples{
 \dontrun{

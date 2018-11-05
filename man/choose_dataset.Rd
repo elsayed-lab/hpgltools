@@ -9,7 +9,8 @@ choose_dataset(input, choose_for = "limma", force = FALSE, ...)
 \arguments{
 \item{input}{Expt input.}
 
-\item{choose_for}{One of limma, deseq, edger, or basic.  Defines the requested data state.}
+\item{choose_for}{One of limma, deseq, edger, or basic.  Defines the
+requested data state.}
 
 \item{force}{Force non-standard data?}
 
@@ -36,5 +37,5 @@ Invoked by _pairwise().
 }
 \seealso{
 \code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
- \code{\link{choose_basic_dataset}}
+\code{\link{choose_basic_dataset}}
 }

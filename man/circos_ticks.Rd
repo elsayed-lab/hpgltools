@@ -26,6 +26,8 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
 
 \item{min_label_distance}{distance to the edge of the plot for labels.}
 
+\item{label_separation}{radial distance between labels.}
+
 \item{label_offset}{The offset for the labels.}
 
 \item{label_size}{Top-level label size.}
@@ -75,13 +77,12 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
 \item{fourth_show_label}{Provide a label?}
 
 \item{fourth_label_size}{They are big!}
-
-\item{label_separations}{radial distance between labels.}
 }
 \value{
 The file to which the ideogram configuration was written.
 }
 \description{
-This function writes ticks for circos.  This has lots of options, the defaults are all taken
-from the circos example documentation for a bacterial genome.
+This function writes ticks for circos.  This has lots of options, the
+defaults are all taken from the circos example documentation for a bacterial
+genome.
 }

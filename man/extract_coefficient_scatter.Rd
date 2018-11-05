@@ -10,7 +10,8 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
   z_lines = FALSE, color_high = "#7B9F35", ...)
 }
 \arguments{
-\item{output}{Result from the de_ family of functions, all_pairwise, or combine_de_tables().}
+\item{output}{Result from the de_ family of functions, all_pairwise, or
+combine_de_tables().}
 
 \item{toptable}{Chosen table to query for abundances.}
 
@@ -20,13 +21,17 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 
 \item{y}{The y-axis column to use.}
 
-\item{z}{Define the range of genes to color (FIXME: extend this to p-value and fold-change).}
+\item{z}{Define the range of genes to color (FIXME: extend this to p-value
+and fold-change).}
 
-\item{p}{Set a p-value cutoff for coloring the scatter plot (currently not supported).}
+\item{p}{Set a p-value cutoff for coloring the scatter plot (currently not
+supported).}
 
-\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot (currently not supported.)}
+\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot
+(currently not supported.)}
 
-\item{n}{Set a top-n fold-change for coloring the points in the scatter plot (this should work, actually).}
+\item{n}{Set a top-n fold-change for coloring the points in the scatter plot
+(this should work, actually).}
 
 \item{loess}{Add a loess estimation (This is slow.)}
 
@@ -41,15 +46,17 @@ extract_coefficient_scatter(output, toptable = NULL, type = "limma",
 \item{...}{More arguments are passed to arglist.}
 }
 \description{
-Plot the gene abundances for two coefficients in a differential expression comparison.
-By default, genes past 1.5 z scores from the mean are colored red/green.
+Plot the gene abundances for two coefficients in a differential expression
+comparison. By default, genes past 1.5 z scores from the mean are colored
+red/green.
 }
 \examples{
 \dontrun{
- scatter_plot <- extract_coefficient_scatter(pairwise_output, type="deseq", x="uninfected", y="infected")
+ scatter_plot <- extract_coefficient_scatter(pairwise_output,
+                                             type="deseq", x="uninfected", y="infected")
 }
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link{plot_linear_scatter}}
+\code{\link{plot_linear_scatter}}
 }

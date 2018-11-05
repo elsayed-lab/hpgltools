@@ -12,7 +12,8 @@
 #' @return Two element list containing the venneuler data and the plot.
 #' @seealso \pkg{venneuler}
 #' @export
-plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), factor=0.9) {
+plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
+                          fours=c(), fives=c(), factor=0.9) {
     venn_sets <- ones
     venn_intersect_label <- ""
     do_doubles <- FALSE
@@ -64,15 +65,16 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
     center_x <- mean(all_venn[["centers"]][, 1])
     center_y <- mean(all_venn[["centers"]][, 2])
 
-    text(center_x, center_y, paste0("all:", venn_intersect_label))
+    text(center_x, center_y, glue("all:{venn_intersect_label}"))
     all_centers <- all_venn[["centers"]]
 
     ## To get a number placed at the edge of each region, I must
-    ## find where on the unit circle the lm_center is with respect to the actual center in radians
-    ## If that number is calculated as deg_lm,
-    ## then I can take the ~0.9 * lm_diameter * sin(deg_lm) and 0.9 * lm_diameter * cos(deg_lm) and add it to center_lm
-    ## to get reasonable coordinates for putting the lm-only number
-    ## once I have these coordinates for each lm/tc/tb, I can average them to get lm/tc and lm/tb
+    ## find where on the unit circle the lm_center is with respect to the actual
+    ## center in radians. If that number is calculated as deg_lm,
+    ## then I can take the ~0.9 * lm_diameter * sin(deg_lm) and 0.9 *
+    ## lm_diameter * cos(deg_lm) and add it to center_lm to get reasonable
+    ## coordinates for putting the lm-only number once I have these coordinates
+    ## for each lm/tc/tb, I can average them to get lm/tc and lm/tb
     get_single_edge <- function(name) {
         message("hmm")
     }
@@ -100,7 +102,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
         single_y_edge <- all_centers[single_name, "y"] + single_y_add
         edges_x[[single_name]] <- single_x_edge
         edges_y[[single_name]] <- single_y_edge
-        text(single_x_edge, single_y_edge, paste0(single_name, ":", as.character(single_value)))
+        text(single_x_edge, single_y_edge,
+             glue("{single_name}:{as.character(single_value)}"))
     }
 
     if (isTRUE(do_doubles)) {
@@ -122,7 +125,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, paste0(double_name, ":", as.character(double_value)))
+            text(middle_x_edge, middle_y_edge,
+                 glue("{double_name}:{as.character(double_value)}"))
         }
     }
 
@@ -146,7 +150,8 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, paste0(triple_name, ":", as.character(triple_value)))
+            text(middle_x_edge, middle_y_edge,
+                 glue("{triple_name}:{as.character(triple_value)}"))
         }
     }
 
@@ -170,11 +175,51 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(), fours=c(), fives=c(), 
             middle_y_add <- factor * middle_radius * sin(middle_angle)
             middle_x_edge <- center_x + middle_x_add
             middle_y_edge <- center_y + middle_y_add
-            text(middle_x_edge, middle_y_edge, paste0(quad_name, ":", as.character(triple_value)))
+            text(middle_x_edge, middle_y_edge,
+                 glue("{quad_name}:{as.character(triple_value)}"))
         }
     }
     retlist <- list(
         "venn_data" = all_venn,
         "plot" = grDevices::recordPlot())
     return(retlist)
+}
+
+rename_vennerable_intersections <- function(venn, lst) {
+  intersects <- venn@IntersectionSets
+  list_names <- names(lst)
+  for (i in 2:(length(intersects)-1)) {
+    characters <- names(intersects)[i]
+    characters <- strsplit(x=characters, split="")[[1]]
+    new_name <- ""
+    for (c in 1:length(characters)) {
+      char <- characters[c]
+      if (char == "1") {
+        list_name <- list_names[c]
+        new_name <- glue("{new_name}{list_name}, ")
+      }
+    }
+    new_name <- gsub(pattern=", $", replacement="", x=new_name)
+    names(intersects)[i] <- new_name
+  } ## Iterating through every intersection
+  names(intersects)[1] <- "none"
+  names(intersects)[length(intersects)] <- "all"
+  return(intersects)
+}
+
+get_vennerable_rows <- function(tables, intersections) {
+  ## Skip the 'none' table.
+  int_tables <- intersections
+  table_names <- names(tables)
+  int_names <- names(intersections)
+  ## Skip 'none'
+  for (t in 2:length(intersections)) {
+    int_name <- int_names[t]
+    chosen_table_name <- strsplit(x=int_name, split=", ")[[1]][1]
+    chosen_table <- tables[[chosen_table_name]]
+    chosen_rows <- intersections[[t]]
+    rows <- chosen_table[chosen_rows, ]
+    int_tables[[t]] <- rows
+  }
+  return(int_tables)
 }

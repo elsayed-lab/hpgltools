@@ -24,11 +24,11 @@ clean:
 	rm -rf R/.Rhistory vignettes/.Rhistory R/eupathdb R/*.rda R/*.Rdata
 	for testdir in travis all_functions slow_tests; do \
 	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test tests/$${testdir}/preprocessing tests/$${testdir}/test_gprofiler \
-	    tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview tests/$${testdir}/UP000* tests/$${testdir}/topgo \
+	    tests/$${testdir}/saved_plots tests/$${testdir}/excel_test_sig tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview tests/$${testdir}/UP000* tests/$${testdir}/topgo \
 	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb tests/$${testdir}/BSgenome* tests/$${testdir}/testing_write_expt ;\
 	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
 	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \
-	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json ;\
+	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json tests/$${testdir}/*.tab ;\
 	done
 
 clean_vignette:
@@ -49,7 +49,7 @@ install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"
 
 prereq:
-	@echo "Checking a few essential prerequisites.(maybe not needed with packrat)"
+	@echo "Checking a few prerequisites."
 	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } } \
@@ -79,7 +79,7 @@ d = description\$$new(); suggests = d\$$get('Suggests');\
  for (pkg in suggests[[1]]) { if (! pkg %in% installed.packages()) { biocLite(pkg); } else { message(paste0(pkg, ' is already installed.')) } };"
 
 test: roxygen
-	@echo "Installing hpgltools in the local packrat tree."
+	@echo "Installing hpgltools."
 	R CMD INSTALL .
 	@echo "Running run_tests.R"
 	tests/testthat.R

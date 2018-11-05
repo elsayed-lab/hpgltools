@@ -6,14 +6,15 @@
 \usage{
 plot_heatmap(expt_data, expt_colors = NULL, expt_design = NULL,
   method = "pearson", expt_names = NULL, type = "correlation",
-  batch_row = "batch", title = NULL, ...)
+  batch_row = "batch", title = NULL, label_chars = 10, ...)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}
 
 \item{expt_colors}{Color scheme for the samples.}
 
-\item{expt_design}{Design matrix describing the experiment vis a vis conditions and batches.}
+\item{expt_design}{Design matrix describing the experiment vis a vis
+conditions and batches.}
 
 \item{method}{Distance or correlation metric to use.}
 
@@ -25,16 +26,19 @@ plot_heatmap(expt_data, expt_colors = NULL, expt_design = NULL,
 
 \item{title}{Title for the plot.}
 
+\item{label_chars}{Limit on the number of label characters.}
+
 \item{...}{I like elipses!}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-This does what is says on the tin.  Sets the colors for correlation or distance heatmaps, handles
-the calculation of the relevant metrics, and plots the heatmap.
+This does what is says on the tin.  Sets the colors for correlation or
+distance heatmaps, handles the calculation of the relevant metrics, and plots
+the heatmap.
 }
 \seealso{
 \pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+\code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 }

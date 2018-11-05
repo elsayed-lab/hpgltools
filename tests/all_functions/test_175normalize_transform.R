@@ -1,11 +1,13 @@
 start <- as.POSIXlt(Sys.time())
+library(testthat)
+library(hpgltools)
 context("175normalize_transform.R:\n")
 ## 2017-12, exported functions in normalize_transform:
 ## transform_counts(), this function has switches for: rounding, voom, weighted voom, log2, log10
 
-pombe_expt <- sm(make_pombe_expt())
+pombe_expt <- make_pombe_expt()
 
-testing <- sm(normalize_expt(pombe_expt, transform="log2"))
+testing <- normalize_expt(pombe_expt, transform="log2")
 test_counts <- exprs(testing)
 expected <- c(3.169925, 4.584963, 0.000000, 1.000000, 5.247928,
               0.000000, 0.000000, 1.584963, 0.000000, 0.000000)
@@ -14,7 +16,7 @@ test_that("Does log2 transformation return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, transform="log10"))
+testing <- normalize_expt(pombe_expt, transform="log10")
 test_counts <- exprs(testing)
 expected <- c(0.9542425, 1.3802112, 0.0000000, 0.3010300, 1.5797836,
               0.0000000, 0.0000000, 0.4771213, 0.0000000, 0.0000000)
@@ -23,7 +25,7 @@ test_that("Does log10 transformation return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, transform="log"))
+testing <- normalize_expt(pombe_expt, transform="log")
 test_counts <- exprs(testing)
 expected <- c(2.1972246, 3.1780538, 0.0000000, 0.6931472, 3.6375862,
               0.0000000, 0.0000000, 1.0986123, 0.0000000, 0.0000000)
@@ -32,7 +34,7 @@ test_that("Does loge transformation return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, transform="voom"))
+testing <- normalize_expt(pombe_expt, transform="voom")
 test_counts <- exprs(testing)
 expected <- c(-0.8820428, 0.5850832, -4.9695057, -3.3845431, 1.2593130,
               -4.9695057, -4.9695057, -2.6475776, -4.9695057, -4.9695057)
@@ -41,7 +43,7 @@ test_that("Does voom transformation return expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <- sm(normalize_expt(pombe_expt, transform="voomweight"))
+testing <- normalize_expt(pombe_expt, transform="voomweight")
 test_counts <- exprs(testing)
 expected <- c(-0.8820428, 0.5850832, -4.9695057, -3.3845431, 1.2593130,
               -4.9695057, -4.9695057, -2.6475776, -4.9695057, -4.9695057)

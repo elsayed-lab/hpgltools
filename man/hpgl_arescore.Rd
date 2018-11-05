@@ -44,9 +44,10 @@ parameters or at least make them more transparent.
 \dontrun{
  ## Extract all the genes from my genome, pull a static region 120nt following the stop
  ## and test them for potential ARE sequences.
- ## FIXME: There may be an error in this example, another version I have handles the +/- strand
- ## genes separately, I need to return to this and check if it is providing the 5' UTR for 1/2
- ## the genome, which would be unfortunate -- but the logic for testing remains the same.
+ ## FIXME: There may be an error in this example, another version I have
+ ## handles the +/- strand genes separately, I need to return to this and check
+ ## if it is providing the 5' UTR for 1/2 the genome, which would be
+ ## unfortunate -- but the logic for testing remains the same.
  are_candidates <- hpgl_arescore(genome)
  utr_genes <- subset(lmajor_annotations, type == 'gene')
  threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
@@ -54,7 +55,7 @@ parameters or at least make them more transparent.
                                   strand=Rle(utr_genes[,5]),
                                   name=Rle(utr_genes[,10]))
  threep_seqstrings <- Biostrings::getSeq(lm, threep)
- are_test <- hpgltools:::hpgl_arescore(x=threep_seqstrings)
+ are_test <- hpgltools::hpgl_arescore(x=threep_seqstrings)
  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 }
 }

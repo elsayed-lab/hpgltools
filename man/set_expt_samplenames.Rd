@@ -15,7 +15,8 @@ set_expt_samplenames(expt, newnames)
 expt Send back the expt with some new metadata
 }
 \description{
-Sometimes one does not like the hpgl identifiers, so provide a way to change them on-the-fly.
+Sometimes one does not like the hpgl identifiers, so provide a way to change
+them on-the-fly.
 }
 \examples{
 \dontrun{

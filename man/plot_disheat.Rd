@@ -2,11 +2,11 @@
 % Please edit documentation in R/plot_heatmap.r
 \name{plot_disheat}
 \alias{plot_disheat}
-\title{Make a heatmap.3 description of the distances (euclidean by default) between samples.}
+\title{Make a heatmap.3 of the distances (euclidean by default) between samples.}
 \usage{
 plot_disheat(expt_data, expt_colors = NULL, expt_design = NULL,
   method = "euclidean", expt_names = NULL, batch_row = "batch",
-  title = NULL, ...)
+  title = NULL, label_chars = 10, ...)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}
@@ -23,14 +23,17 @@ plot_disheat(expt_data, expt_colors = NULL, expt_design = NULL,
 
 \item{title}{Title for the plot.}
 
+\item{label_chars}{Limit on the number of label characters.}
+
 \item{...}{More parameters!}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.
 }
 \description{
-Given a set of count tables and design, this will calculate the pairwise distances and plot
-them as a heatmap.  It attempts to standardize the inputs and eventual output.
+Given a set of count tables and design, this will calculate the pairwise
+distances and plot them as a heatmap.  It attempts to standardize the inputs
+and eventual output.
 }
 \examples{
 \dontrun{
@@ -39,6 +42,6 @@ them as a heatmap.  It attempts to standardize the inputs and eventual output.
 }
 \seealso{
 \pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
- \code{\link[grDevices]{recordPlot}}
+\code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
+\code{\link[grDevices]{recordPlot}}
 }

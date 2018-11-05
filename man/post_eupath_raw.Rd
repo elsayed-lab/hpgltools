@@ -12,9 +12,11 @@ post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
 \arguments{
 \item{entry}{Annotation entry for a given species}
 
-\item{question}{Which query to try?  Molecular weight is the easiest, as it was their example.}
+\item{question}{Which query to try?  Molecular weight is the easiest, as it
+was their example.}
 
-\item{table_name}{Used to make sure all columns are unique by prefixing them with the table name.}
+\item{table_name}{Used to make sure all columns are unique by prefixing them
+with the table name.}
 
 \item{parameters}{Query parameters when posting}
 
@@ -26,8 +28,9 @@ post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
 A hopefully huge table of eupath data.
 }
 \description{
-For the life of me, I could not figure out how to query the big text tables as the
-tabular format.  Every query I sent came back telling me I gave it incorrect parameter
-despite the fact that I was copy/pasting the example given me by the eupathdb maintainers.
-So, I got mad and asked it for the raw format, and so this function was born.
+For the life of me, I could not figure out how to query the big text tables
+as the tabular format.  Every query I sent came back telling me I gave it
+incorrect parameter despite the fact that I was copy/pasting the example
+given me by the eupathdb maintainers. So, I got mad and asked it for the raw
+format, and so this function was born.
 }

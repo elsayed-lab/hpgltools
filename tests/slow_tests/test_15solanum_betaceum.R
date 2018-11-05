@@ -6,7 +6,7 @@ context("15solanum_betaceum.R: Test some Pseudomonas data.\n")
 sb_annot <- load_trinotate_annotations(
   trinotate=system.file("sb/trinotate_head.csv.xz", package="hpgltools"))
 
-expected <- c(49999, 33)
+expected <- c(49999, 34)
 actual <- dim(sb_annot)
 test_that("Do we get the expected trinotate annotation data?", {
   expect_equal(expected, actual)
@@ -22,8 +22,8 @@ untarred <- utils::untar(tarfile=system.file("sb/preprocessing.tar.xz", package=
 ## Given that as input, we think we can hunt down some meaningful genes.
 ## Let us see if that is true.
 
-sb_expt <- sm(create_expt(metadata="preprocessing/kept_samples.xlsx", gene_info=sb_annot))
-sb_count <- sm(normalize_expt(sb_expt, filter=TRUE, thresh=4))
-sb_plots <- sm(graph_metrics(sb_count))
-sb_norm <- sm(normalize_expt(sb_count, norm="quant", convert="cpm", transform="log2"))
-sb_nplots <- sm(graph_metrics(sb_norm))
+sb_expt <- create_expt(metadata="preprocessing/kept_samples.xlsx", gene_info=sb_annot)
+sb_count <- normalize_expt(sb_expt, filter=TRUE, thresh=4)
+sb_plots <- graph_metrics(sb_count)
+sb_norm <- normalize_expt(sb_count, norm="quant", convert="cpm", transform="log2")
+sb_nplots <- graph_metrics(sb_norm)

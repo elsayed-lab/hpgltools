@@ -4,15 +4,18 @@
 \alias{get_git_commit}
 \title{Get the current git commit for hpgltools}
 \usage{
-get_git_commit(gitdir = "~/hpgltools")
+get_git_commit(gitdir = "~/hpgltools", packrat = FALSE)
 }
 \arguments{
 \item{gitdir}{Directory containing the git repository.}
+
+\item{packrat}{Is this tree under packrat control?}
 }
 \description{
 One might reasonably ask about this function: "Why?"  I invoke this function
 at the end of my various knitr documents so that if necessary I can do a
-> git reset <commit id> and get back to the exact state of my code.  As a
+
+git reset <commit id> and get back to the exact state of my code.  As a
 bonus, since I have this under packrat I can furthermore use packrat reset to
 get the exact state of all the packages, too!
 }

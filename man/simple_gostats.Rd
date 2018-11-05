@@ -2,8 +2,8 @@
 % Please edit documentation in R/ontology_gostats.r
 \name{simple_gostats}
 \alias{simple_gostats}
-\title{Simplification function for gostats, in the same vein as those written for clusterProfiler,
-goseq, and topGO.}
+\title{Simplification function for gostats, in the same vein as those written for
+clusterProfiler, goseq, and topGO.}
 \usage{
 simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
   universe_merge = "id", second_merge_try = "locus_tag",
@@ -44,9 +44,9 @@ simple_gostats(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL,
 List of returns from GSEABase, Category, etc.
 }
 \description{
-GOstats has a couple interesting peculiarities:  Chief among them: the gene IDs must be
-integers. As a result, I am going to have this function take a gff file in order to get the go
-ids and gene ids on the same page.
+GOstats has a couple interesting peculiarities:  Chief among them: the gene
+IDs must be integers. As a result, I am going to have this function take a
+gff file in order to get the go ids and gene ids on the same page.
 }
 \examples{
 \dontrun{

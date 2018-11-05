@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot_point.r
 \name{recolor_points}
 \alias{recolor_points}
-\title{Quick point-recolorizer given an existing plot, df, list of rownames to recolor, and a color}
+\title{Quick point-recolorizer given an existing plot, df, list of rownames to
+recolor, and a color.}
 \usage{
 recolor_points(plot, df, ids, color = "red", ...)
 }
@@ -21,5 +22,6 @@ recolor_points(plot, df, ids, color = "red", ...)
 prettier plot.
 }
 \description{
-This function should make it easy to color a family of genes in any of the point plots.
+This function should make it easy to color a family of genes in any of the
+point plots.
 }

@@ -14,10 +14,12 @@ varpart_summaries(expt, factors = c("condition", "batch"), cpus = 6)
 \item{cpus}{Number of cpus to use in doParallel.}
 }
 \value{
-Summaries of the new model,  in theory this would be a nicely batch-corrected data set.
+Summaries of the new model,  in theory this would be a nicely
+batch-corrected data set.
 }
 \description{
-Note the word 'attempt'.  This function is so ungodly slow that it probably will never be used.
+Note the word 'attempt'.  This function is so ungodly slow that it probably
+will never be used.
 }
 \seealso{
 \pkg{variancePartition}

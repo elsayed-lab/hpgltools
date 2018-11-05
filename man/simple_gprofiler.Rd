@@ -11,7 +11,8 @@ simple_gprofiler(sig_genes, species = "hsapiens", convert = TRUE,
   pseudo_gsea = TRUE, id_col = "row.names", excel = NULL)
 }
 \arguments{
-\item{sig_genes}{Guess!  The set of differentially expressed/interesting genes.}
+\item{sig_genes}{Guess!  The set of differentially expressed/interesting
+genes.}
 
 \item{species}{Organism supported by gprofiler.}
 
@@ -39,8 +40,9 @@ simple_gprofiler(sig_genes, species = "hsapiens", convert = TRUE,
 
 \item{pseudo_gsea}{Is the data in a ranked order by significance?}
 
-\item{id_col}{Which column in the table should be used for gene ID crossreferencing?  gProfiler
-uses Ensembl ids.  So if you have a table of entrez or whatever, translate it!}
+\item{id_col}{Which column in the table should be used for gene ID
+crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
+entrez or whatever, translate it!}
 
 \item{excel}{Print the results to an excel file?}
 }

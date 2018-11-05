@@ -5,6 +5,7 @@
 \title{Make a ggplot graph of the number of non-zero genes by sample.}
 \usage{
 plot_nonzero(data, design = NULL, colors = NULL, plot_labels = NULL,
+  expt_names = NULL, label_chars = 10, plot_legend = FALSE,
   title = NULL, ...)
 }
 \arguments{
@@ -14,20 +15,28 @@ plot_nonzero(data, design = NULL, colors = NULL, plot_labels = NULL,
 
 \item{colors}{Color scheme.}
 
-\item{plot_labels}{How do you want to label the graph? 'fancy' will use directlabels() to try to match
-the labels with the positions without overlapping anything else will just stick them on a 45'
-offset next to the graphed point.}
+\item{plot_labels}{How do you want to label the graph? 'fancy' will use
+directlabels() to try to match the labels with the positions without
+overlapping anything else will just stick them on a 45' offset next to the
+graphed point.}
+
+\item{expt_names}{Column or character list of preferred sample names.}
+
+\item{label_chars}{How many characters for sample names before abbreviation.}
+
+\item{plot_legend}{Print a legend for this plot?}
 
 \item{title}{Add a title?}
 
 \item{...}{rawr!}
 }
 \value{
-a ggplot2 plot of the number of non-zero genes with respect to each library's CPM.
+a ggplot2 plot of the number of non-zero genes with respect to each
+library's CPM.
 }
 \description{
-This puts the number of genes with > 0 hits on the y-axis and CPM on the x-axis. Made by Ramzi
-Temanni <temanni at umd dot edu>.
+This puts the number of genes with > 0 hits on the y-axis and CPM on the
+x-axis. Made by Ramzi Temanni <temanni at umd dot edu>.
 }
 \examples{
 \dontrun{
@@ -37,5 +46,5 @@ Temanni <temanni at umd dot edu>.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
+\code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 }

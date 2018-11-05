@@ -19,15 +19,27 @@ it does not exist, then data() will be called upon it.}
 
 \item{signatures}{Provide an alternate set of signatures (GeneSetCollections)}
 
+\item{cores}{How many CPUs to use?}
+
 \item{current_id}{Where did the IDs of the genes come from?}
 
 \item{required_id}{gsva (I assume) always requires ENTREZ IDs, but just in
 case this is a parameter.}
 
 \item{orgdb}{What is the data source for the rownames()?}
+
+\item{method}{Which gsva method to use?}
+
+\item{kcdf}{Options for the gsva methods.}
+
+\item{ranking}{another gsva option.}
 }
 \value{
-Something from GSVA::gsva()!
+List containing three elements: first a modified expressionset using
+the result of gsva in place of the original expression data; second the
+result from gsva, and third a data frame of the annotation data for the
+gene sets in the expressionset.  This seems a bit redundant, perhaps I
+should revisit it?
 }
 \description{
 gsva seems to hold a tremendous amount of potential.  Unfortunately, it is

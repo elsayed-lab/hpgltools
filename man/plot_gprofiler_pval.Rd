@@ -26,8 +26,9 @@ plot_gprofiler_pval(gp_result, wrapped_width = 30, cutoff = 0.1,
 List of MF/BP/CC pvalue plots.
 }
 \description{
-The p-value plots from clusterProfiler are pretty, this sets the gprofiler data into a format
-suitable for plotting in that fashion and returns the resulting plots of significant ontologies.
+The p-value plots from clusterProfiler are pretty, this sets the gprofiler
+data into a format suitable for plotting in that fashion and returns the
+resulting plots of significant ontologies.
 }
 \seealso{
 \pkg{topgo} \pkg{clusterProfiler}

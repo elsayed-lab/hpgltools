@@ -4,8 +4,9 @@
 \alias{plot_libsize}
 \title{Make a ggplot graph of library sizes.}
 \usage{
-plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
-  text = TRUE, order = NULL, title = NULL, yscale = NULL, ...)
+plot_libsize(data, condition = NULL, colors = NULL, text = TRUE,
+  order = NULL, title = NULL, yscale = NULL, expt_names = NULL,
+  label_chars = 10, ...)
 }
 \arguments{
 \item{data}{Expt, dataframe, or expressionset of samples.}
@@ -13,8 +14,6 @@ plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
 \item{condition}{vector of sample condition names.}
 
 \item{colors}{Color scheme if the data is not an expt.}
-
-\item{names}{Alternate names for the x-axis.}
 
 \item{text}{Add the numeric values inside the top of the bars of the plot?}
 
@@ -24,14 +23,19 @@ plot_libsize(data, condition = NULL, colors = NULL, names = NULL,
 
 \item{yscale}{Whether or not to log10 the y-axis.}
 
+\item{expt_names}{Design column or manually selected names for printing sample names.}
+
+\item{label_chars}{Maximum number of characters before abbreviating sample names.}
+
 \item{...}{More parameters for your good time!}
 }
 \value{
 a ggplot2 bar plot of every sample's size
 }
 \description{
-It is often useful to have a quick view of which samples have more/fewer reads.  This does that
-and maintains one's favorite color scheme and tries to make it pretty!
+It is often useful to have a quick view of which samples have more/fewer
+reads.  This does that and maintains one's favorite color scheme and tries to
+make it pretty!
 }
 \examples{
 \dontrun{
@@ -41,6 +45,6 @@ and maintains one's favorite color scheme and tries to make it pretty!
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
- \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+\code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
+\code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 }

@@ -26,10 +26,11 @@ plot_goseq_pval(goterms, wrapped_width = 30, cutoff = 0.1, n = 30,
 Plots!
 }
 \description{
-With minor changes, it is possible to push the goseq results into a clusterProfiler-ish pvalue
-plot.  This handles those changes and returns the ggplot results.
+With minor changes, it is possible to push the goseq results into a
+clusterProfiler-ish pvalue plot.  This handles those changes and returns the
+ggplot results.
 }
 \seealso{
 \pkg{goseq} \pkg{clusterProfiler}
- \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
+\code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
 }

@@ -11,7 +11,7 @@ load_trinotate_go(trinotate = "reference/trinotate.csv")
 }
 \value{
 List of the extracted GO data, a table of it, length data, and the
-  resulting length table.
+resulting length table.
 }
 \description{
 Trinotate performs some neat sequence searches in order to seek out likely
@@ -22,4 +22,7 @@ from it.  Keep in mind that this data is primarily from Blast2GO.
 \dontrun{
  go_lst <- load_trinotate_go("trinotate.csv.xz")
 }
+}
+\author{
+atb
 }

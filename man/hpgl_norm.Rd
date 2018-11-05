@@ -13,7 +13,7 @@ hpgl_norm(data, ...)
 }
 \value{
 edgeR's DGEList expression of a count table.  This seems to
- me to be the easiest to deal with.
+me to be the easiest to deal with.
 }
 \description{
 There are many possible options to this function.  Refer to normalize_expt()
@@ -30,8 +30,8 @@ for a more complete list.
 }
 \seealso{
 \pkg{edgeR} \pkg{DESeq2}
- \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
- \code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
- \code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
- \code{\link[edgeR]{calcNormFactors}}
+\code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+\code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
+\code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
+\code{\link[edgeR]{calcNormFactors}}
 }

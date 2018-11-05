@@ -36,8 +36,11 @@ perhaps this should be removed or resurrected.}
 The result of attempting to install the organismDbi package.
 }
 \description{
-Create an organismDbi instance for an eupathdb organism.
+The primary goal of an organismdbi instance is to provide a series of links
+between an orgdb, txdb, and other relevant annotation packages
+(reactome/go/etc).  In its current iteration, this function brings together a
+couple columns from the orgdb, txdb, GO.db, and reactome.db.
 }
 \author{
-Keith Hughitt
+Keith Hughitt, modified by atb.
 }

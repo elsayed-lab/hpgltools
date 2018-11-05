@@ -20,8 +20,8 @@
 #' @seealso \pkg{limma}
 #' @examples
 #' \dontrun{
-#' ## No seriously, dont run this, I think it is wiser to use the functions provided by limma.
-#' ## But this provides a place to test stuff out.
+#' ## No seriously, dont run this, I think it is wiser to use the functions
+#' ## provided by limma. But this provides a place to test stuff out.
 #'  voom_result <- hpgl_voomweighted(dataset, model)
 #' }
 #' @export
@@ -68,14 +68,17 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 
 #' A slight modification of limma's voom().
 #'
-#' Estimate mean-variance relationship between samples and generate 'observational-level weights' in
-#' preparation for linear modeling RNAseq data.  This particular implementation was primarily
-#' scabbed from cbcbSEQ, but changes the mean-variance plot slightly and attempts to handle corner
-#' cases where the sample design is confounded by setting the coefficient to 1 for those samples
-#' rather than throwing an unhelpful error.  Also, the Elist output gets a 'plot' slot which
-#' contains the plot rather than just printing it.
+#' Estimate mean-variance relationship between samples and generate
+#' 'observational-level weights' in preparation for linear modeling RNAseq data.
+#' This particular implementation was primarily scabbed from cbcbSEQ, but
+#' changes the mean-variance plot slightly and attempts to handle corner cases
+#' where the sample design is confounded by setting the coefficient to 1 for
+#' those samples rather than throwing an unhelpful error.  Also, the Elist
+#' output gets a 'plot' slot which contains the plot rather than just printing
+#' it.
 #'
-#' @param dataframe  Dataframe of sample counts which have been normalized and log transformed.
+#' @param dataframe  Dataframe of sample counts which have been normalized and
+#'   log transformed.
 #' @param model  Experimental model defining batches/conditions/etc.
 #' @param libsize  Size of the libraries (usually provided by edgeR).
 #' @param normalize.method  Normalization method used in voom().
@@ -159,7 +162,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
   } else {
     if (max(dataframe) < 200) {
       warning("This data says it was not logged, but the maximum counts seem small.")
-      warning("If it really was log2 transformed, then we are about to double-log it and that would be very bad.")
+      warning("If it really was log2 transformed, ",
+              "then we are about to double-log it and that would be very bad.")
     }
     message("The voom input was not log2, transforming now.")
     dataframe <- log2(dataframe)
@@ -196,7 +200,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
     ggplot2::ylab("Square root of the standard deviation.") +
     ggplot2::stat_density2d(geom="tile", ggplot2::aes_string(fill="..density..^0.25"),
                             contour=FALSE, show.legend=FALSE) +
-    ggplot2::scale_fill_gradientn(colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
+    ggplot2::scale_fill_gradientn(
+               colours=grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method="loess") +
     ggplot2::stat_function(fun=f, colour="red") +
     ggplot2::theme(legend.position="none")
@@ -233,17 +238,20 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
   new("EList", out)
 }
 
-#' Set up a model matrix and set of contrasts for pairwise comparisons using voom/limma.
+#' Set up a model matrix and set of contrasts for pairwise comparisons using
+#' voom/limma.
 #'
 #' Creates the set of all possible contrasts and performs them using voom/limma.
 #'
-#' @param input Dataframe/vector or expt class containing count tables, normalization state, etc.
+#' @param input Dataframe/vector or expt class containing count tables,
+#'   normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the model?
 #' @param model_batch Include batch in the model? This is hopefully TRUE.
-#' @param model_intercept Perform a cell-means or intercept model? A little more difficult for me to
-#'  understand.  I have tested and get the same answer either way.
+#' @param model_intercept Perform a cell-means or intercept model? A little more
+#'   difficult for me to understand.  I have tested and get the same answer
+#'   either way.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
@@ -251,8 +259,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
-#' @param libsize I've recently figured out that libsize is far more important than I previously
-#'  realized.  Play with it here.
+#' @param libsize I've recently figured out that libsize is far more important
+#'   than I previously realized.  Play with it here.
 #' @param force  Force data which may not be appropriate for limma into it?
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
@@ -262,7 +270,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #'  voom_result = The result from voom()
 #'  voom_design = The design from voom (redundant from voom_result, but convenient)
 #'  macb_table = A table of the number of times each condition/batch pairing happens
-#'  cond_table = A table of the number of times each condition appears (the denominator for the identities)
+#'  cond_table = A table of the number of times each condition appears (the
+#'   denominator for the identities)
 #'  batch_table = How many times each batch appears
 #'  identities = The list of strings defining each condition by itself
 #'  all_pairwise = The list of strings defining all the pairwise contrasts
@@ -341,7 +350,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     } else if (!is.null(input[["libsize"]])) {
       message("Using the libsize from expt$libsize.")
       libsize <- input[["libsize"]]
-    } else if (!is.null(input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+    } else if (!is.null(
+               input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
       libsize <- colSums(data)
     } else {
       message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
@@ -427,7 +437,8 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
       logged=loggedp, converted=convertedp)
     voom_plot <- fun_voom[["plot"]]
   } else if (which_voom == "limma_weighted") {
-    message("Limma step 2/6: running limma::voomWithQualityWeights(), switch with the argument 'which_voom'.")
+    message("Limma step 2/6: running limma::voomWithQualityWeights(), ",
+            "switch with the argument 'which_voom'.")
     fun_voom <- try(limma::voomWithQualityWeights(
                              counts=data, design=chosen_model, lib.size=libsize,
                              normalize.method=voom_norm, plot=TRUE, span=0.5,
@@ -578,17 +589,18 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #'
 #' However, this will do a couple of things to make one's life easier:
 #' 1.  Make a list of the output, one element for each comparison of the contrast matrix
-#' 2.  Write out the toptable() output for them in separate .csv files and/or sheets in excel
+#' 2.  Write out the toptable() output in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
 #' @param fit  Result from lmFit()/eBayes()
 #' @param adjust  Pvalue adjustment chosen.
 #' @param n  Number of entries to report, 0 says do them all.
 #' @param coef  Which coefficients/contrasts to report, NULL says do them all.
-#' @param annot_df  Optional data frame including annotation information to include with the tables.
+#' @param annot_df  Optional data frame including annotation information to
+#'   include with the tables.
 #' @param intercept  Intercept model?
-#' @return List of data frames comprising the toptable output for each coefficient, I also added a
-#'  qvalue entry to these toptable() outputs.
+#' @return List of data frames comprising the toptable output for each
+#'   coefficient, I also added a qvalue entry to these toptable() outputs.
 #' @seealso \pkg{limma} \pkg{qvalue}
 #'  \code{\link{write_xls}} \code{\link[limma]{topTable}}
 #' @examples
@@ -618,23 +630,13 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
   return_data <- list()
   end <- length(coef)
   data_tables <- list()
-  ##all_tables <- try(limma::topTable(all_pairwise_comparisons,
-  ##                                  number=nrow(all_pairwise_comparisons)))
-  ##classified <- limma::classifyTestsP(all_pairwise_comparisons, method="BH")
-  ##classified <- limma::decideTests(all_pairwise_comparisons, method="global")
-  ##print(summary(classified))
-  ##a <- limma::vennCounts(classified)
-  ##b <- limma::vennDiagram(a)
   if (isTRUE(intercept)) {
 
     ## If we do have an intercept model, then we get the data
     ## in a slightly different fashion.
     for (c in 1:ncol(fit[["coefficients"]])) {
-      data_table <-  limma::topTable(fit,
-                                     adjust.method=adjust,
-                                     n=n,
-                                     coef=c,
-                                     sort.by="logFC")
+      data_table <-  limma::topTable(fit, adjust.method=adjust,
+                                     n=n, coef=c, sort.by="logFC")
 
       for (column in 1:ncol(data_table)) {
         data_table[[column]] <- signif(x=as.numeric(data_table[[column]]), digits=4)
@@ -658,11 +660,8 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
       comparison <- coef[c]
       message("Limma step 6/6: ", c, "/", end, ": Creating table: ",
               comparison, ".  Adjust=", adjust)
-      data_tables[[c]] <- limma::topTable(fit,
-                                          adjust.method=adjust,
-                                          n=n,
-                                          coef=comparison,
-                                          sort.by="logFC")
+      data_tables[[c]] <- limma::topTable(fit, adjust.method=adjust,
+                                          n=n, coef=comparison, sort.by="logFC")
       names(data_tables)[c] <- comparison
     }
 

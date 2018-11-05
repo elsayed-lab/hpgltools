@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot_peptides.r
 \name{plot_cleaved}
 \alias{plot_cleaved}
-\title{Plot the average mass and expected intensity of a set of sequences given an enzyme.}
+\title{Plot the average mass and expected intensity of a set of sequences given an
+enzyme.}
 \usage{
 plot_cleaved(pep_sequences, enzyme = "trypsin", start = 600,
   end = 1500)
@@ -20,6 +21,6 @@ plot_cleaved(pep_sequences, enzyme = "trypsin", start = 600,
 List containing the distribution of weights and the associated plot.
 }
 \description{
-This uses the cleaver package to generate a plot of expected intensities vs. weight
-for a list of protein sequences.
+This uses the cleaver package to generate a plot of expected intensities
+vs. weight for a list of protein sequences.
 }

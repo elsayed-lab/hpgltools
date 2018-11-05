@@ -8,16 +8,25 @@ check_eupath_species(species = "Leishmania major strain Friedlin",
   metadata = NULL, ...)
 }
 \arguments{
-\item{species}{Guess}
+\item{species}{String containing some reasonably unique text in the desired
+species name.}
 
-\item{metadata}{Eupathdb metadata.}
+\item{metadata}{The Eupathdb metadata dataframe/table to query.}
 
-\item{...}{Extra arguments passed to download_eupath_metadata()}
+\item{...}{This function does not assume that the metadata has already been
+downloaded, if it indeed has not, then it will invoke
+download_eupath_metadata(), extra arguments for it go here.}
 }
 \value{
-A single entry from the eupathdb metadata.
+A single row from the eupathdb metadata.
 }
 \description{
-If the specific species is not found, look for a reasonably approximation.
-stop() if nothing is found.
+When querying the eupathdb, it can be difficult to hit the desired species.
+This is confounded by the fact that there are very similar named species
+across different EupathDB projects.  Thus function seeks to make it a bit
+easier to find the actual dataset desired.  If the specific species is not
+found, look for a reasonably approximation. stop() if nothing is found.
+}
+\author{
+atb
 }

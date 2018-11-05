@@ -1,11 +1,14 @@
 #' Perform a simple normalization of a count table.
 #'
-#' This provides shortcut interfaces for normalization functions from deseq2/edger and friends.
+#' This provides shortcut interfaces for normalization functions from
+#' deseq2/edger and friends.
 #'
 #' @param data Matrix of count data.
-#' @param design Dataframe describing the experimental design. (conditions/batches/etc)
-#' @param norm Normalization to perform: 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep
-#'  wishy-washing on whether design is a required argument.
+#' @param design Dataframe describing the experimental
+#'   design. (conditions/batches/etc)
+#' @param norm Normalization to perform:
+#'   'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
+#'   whether design is a required argument.
 #' @param ... More arguments might be necessary.
 #' @return Dataframe of normalized(counts)
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
@@ -35,7 +38,7 @@ normalize_counts <- function(data, design=NULL, norm="raw", ...) {
     ## some functions prefer matrix, so I am keeping this explicit
     count_table <- as.data.frame(data)
   } else {
-    stop(paste0("You provided a class of type: ", data_class, ".
+    stop(glue("You provided a class of type: {data_class}.
 This works with: expt, ExpressionSet, data.frame, and matrices.
 "))
   }
@@ -77,7 +80,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       }
       tt <- sm(requireNamespace("locfit"))
       tt <- sm(requireNamespace("DESeq2"))
-      cds <- DESeq2::DESeqDataSetFromMatrix(countData=count_table, colData=design, design=~condition)
+      cds <- DESeq2::DESeqDataSetFromMatrix(
+                       countData=count_table, colData=design, design=~condition)
       cds <- DESeq2::estimateSizeFactors(cds)
       cds <- DESeq2::estimateDispersions(cds, fitType=fit_type)
       count_table <- DESeq2::getVarianceStabilizedData(cds)
@@ -87,7 +91,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       ## Quantile normalization (Bolstad et al., 2003)
       count_rownames <- rownames(count_table)
       count_colnames <- colnames(count_table)
-      count_table <- preprocessCore::normalize.quantiles(as.matrix(count_table), copy=TRUE)
+      count_table <- preprocessCore::normalize.quantiles(
+                                       as.matrix(count_table), copy=TRUE)
       rownames(count_table) <- count_rownames
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"
@@ -96,15 +101,12 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       ## Quantile normalization (Bolstad et al., 2003)
       count_rownames <- rownames(count_table)
       count_colnames <- colnames(count_table)
-      count_table <- preprocessCore::normalize.quantiles(as.matrix(count_table), copy=TRUE)
+      count_table <- preprocessCore::normalize.quantiles(
+                                       as.matrix(count_table), copy=TRUE)
       rownames(count_table) <- count_rownames
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"
     },
-    ##"qsmooth" = {
-    ##  count_table <- qsmooth::qsmooth(count_table, groups=design[["condition"]], plot=TRUE)
-    ##  norm_performed <- "qsmooth"
-    ##},
     "qshrink" = {
       count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
                                   plot=TRUE)
@@ -158,7 +160,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
     }
   ) ## End of the switch statement.
   norm_libsize <- colSums(count_table)
-  norm_counts <- list(count_table=count_table, libsize=norm_libsize, norm_performed=norm_performed)
+  norm_counts <- list(count_table=count_table, libsize=norm_libsize,
+                      norm_performed=norm_performed)
   return(norm_counts)
 }
 
@@ -238,13 +241,9 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
       sel <- sample(1:lq, 10000)
       plot(u[sel], w[sel], pch=".", main="Quantile reference weights",
            xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
-      ## plot(u[sel], w[sel], pch=".", main="Quantile reference weights",
-      ##      xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1))
     } else {
       plot(u, w, pch=".", main="Quantile reference weights",
            xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
-      ## plot(u, w, pch=".", main="Quantile reference weights",
-      ##      xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1))
     }
     abline(h=0.5, v=0.5, col="red", lty=2)
     newpar <- par(oldpar)
@@ -299,7 +298,7 @@ hpgl_qstats <- function(data, groups, refType="mean",
         SIGMA <- cbind(SIGMA, (matrixStats::rowMads(Q[, g == groups]))^2)
       }
     } else {
-      warning(paste0("There were 0 of type: ", g))
+      warning(glue("There were 0 of type: {g}"))
     }
   }
   colnames(QBETAS) <- uGroups

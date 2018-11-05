@@ -8,27 +8,30 @@ plot_gvis_ma(df, tooltip_data = NULL,
   filename = "html/gvis_ma_plot.html", base_url = "", ...)
 }
 \arguments{
-\item{df}{Data frame of counts which have been normalized counts by sample-type, which is to say the
-output from voom/voomMod/hpgl_voom().}
+\item{df}{Data frame of counts which have been normalized counts by
+sample-type, which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{tooltip_data}{Df of tooltip information (gene names, etc).}
 
 \item{filename}{Filename to write a fancy html graph.}
 
-\item{base_url}{String with a basename used for generating URLs for clicking dots on the graph.}
+\item{base_url}{String with a basename used for generating URLs for clicking
+dots on the graph.}
 
 \item{...}{more options are more options!}
 }
 \value{
-NULL, but along the way an html file is generated which contains a googleVis MA plot.
- See plot_de_ma() for details.
+NULL, but along the way an html file is generated which contains a
+googleVis MA plot. See plot_de_ma() for details.
 }
 \description{
-A fun snippet from wikipedia: "In many microarray gene expression experiments, an underlying
-assumption is that most of the genes would not see any change in their expression therefore the
-majority of the points on the y-axis (M) would be located at 0, since Log(1) is 0. If this is not
-the case, then a normalization method such as LOESS should be applied to the data before
-statistical analysis. If the median line is not straight, the data should be normalized.
+A fun snippet from wikipedia: "In many microarray gene expression
+experiments, an underlying assumption is that most of the genes would not see
+any change in their expression therefore the majority of the points on the
+y-axis (M) would be located at 0, since Log(1) is 0. If this is not the case,
+then a normalization method such as LOESS should be applied to the data
+before statistical analysis. If the median line is not straight, the data
+should be normalized.
 }
 \examples{
 \dontrun{
@@ -38,5 +41,5 @@ statistical analysis. If the median line is not straight, the data should be nor
 }
 \seealso{
 \pkg{googleVis}
- \code{\link{plot_ma_de}}
+\code{\link{plot_ma_de}}
 }

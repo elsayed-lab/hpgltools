@@ -6,25 +6,28 @@
 #'
 #' This applies the methodologies very nicely explained by Jeff Leek at
 #' https://github.com/jtleek/svaseq/blob/master/recount.Rmd
-#' and attempts to use them to acquire estimates which may be applied to an experimental model
-#' by either EdgeR, DESeq2, or limma.  In addition, it modifies the count tables using these
-#' estimates so that one may play with the modified counts and view the changes (with PCA or heatmaps
-#' or whatever).  Finally, it prints a couple of the plots shown by Leek in his document.
-#' In other words, this is entirely derivative of someone much smarter than me.
+#' and attempts to use them to acquire estimates which may be applied to an
+#' experimental model by either EdgeR, DESeq2, or limma.  In addition, it
+#' modifies the count tables using these estimates so that one may play with the
+#' modified counts and view the changes (with PCA or heatmaps or whatever).
+#' Finally, it prints a couple of the plots shown by Leek in his document. In
+#' other words, this is entirely derivative of someone much smarter than me.
 #'
 #' @param input  Expt or data frame to manipulate.
 #' @param design  If the data is not an expt, provide experimental design here.
-#' @param estimate_type  One of: sva_supervised, sva_unsupervised, ruv_empirical, ruv_supervised,
-#'  ruv_residuals, or pca.
-#' @param surrogates  Choose a method for getting the number of surrogates, be or leek, or a number.
+#' @param estimate_type  One of: sva_supervised, sva_unsupervised,
+#'   ruv_empirical, ruv_supervised, ruv_residuals, or pca.
+#' @param surrogates  Choose a method for getting the number of surrogates, be
+#'   or leek, or a number.
 #' @param expt_state  Current state of the expt object (to check for log2, cpm, etc)
+#' @param confounders  Used by ISVA to search for confounded experimental factors.
 #' @param ... Parameters fed to arglist.
-#' @return List including the adjustments for a model matrix, a modified count table, and 3 plots of
-#'  the known batch, surrogates, and batch/surrogate.
+#' @return List including the adjustments for a model matrix, a modified count
+#'   table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 #' @seealso \pkg{Biobase} \pkg{sva} \pkg{EDASeq} \pkg{RUVseq} \pkg{edgeR}
 #' @export
 get_model_adjust <- function(input, design=NULL, estimate_type="sva",
-                             surrogates="be", expt_state=NULL, ...) {
+                             surrogates="be", expt_state=NULL, confounders=NULL, ...) {
   arglist <- list(...)
   my_design <- NULL
   my_data <- NULL
@@ -55,9 +58,11 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
     if (transform_state == "raw") {
-      ## I think this was the cause of some problems.  The order of operations performed here
-      ## was imperfect and could potentially lead to multiple different matrix sizes.
-      base10_data <- sm(normalize_expt(input, convert=convert, filter=filter, thresh=1))
+      ## I think this was the cause of some problems.  The order of operations
+      ## performed here was imperfect and could potentially lead to multiple
+      ## different matrix sizes.
+      base10_data <- sm(normalize_expt(input, convert=convert,
+                                       filter=filter, thresh=1))
       base10_mtrx <- exprs(base10_data)
       log_data <- sm(normalize_expt(base10_data, transform="log2"))
       log2_mtrx <- exprs(log_data)
@@ -83,7 +88,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
     if (transform_state == "raw") {
-      log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2", filter=filter, thresh=1))
+      log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2",
+                               filter=filter, thresh=1))
       log2_mtrx <- as.matrix(log_data[["count_table"]])
       ## base10_data <- sm(hpgl_norm(data, convert="cpm", filter=filter, thresh=1))
       ## base10_mtrx <- as.matrix(base10_data[["count_table"]])
@@ -103,11 +109,18 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   null_model <- conditional_model[, 1]
   chosen_surrogates <- 1
   if (is.null(surrogates)) {
-    message("No estimate nor method to find surrogates was provided. Assuming you want 1 surrogate variable.")
+    message("No estimate nor method to find surrogates was provided. ",
+            "Assuming you want 1 surrogate variable.")
   } else {
     if (class(surrogates) == "character") {
       ## num.sv assumes the log scale.
-      if (surrogates != "be" & surrogates != "leek") {
+      if (surrogates == "smartsva") {
+        lm_rslt <- lm(t(base10_mtrx) ~ condition, data=my_design)
+        sv_estimate_data <- t(resid(lm_rslt))
+        chosen_surrogates <- isva::EstDimRMT(sv_estimate_data, FALSE)[["dim"]] + 1
+      } else if (surrogates == "isva") {
+        chosen_surrogates <- isva::EstDimRMT(log2_mtrx)
+      } else if (surrogates != "be" & surrogates != "leek") {
         message("A string was provided, but it was neither 'be' nor 'leek', assuming 'be'.")
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
       } else {
@@ -143,10 +156,12 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
                                                           type=control_type)))
   }
   if (class(control_likelihoods) == "try-error") {
-    message("The most likely error in sva::empirical.controls() is a call to density in irwsva.build.
-Setting control_likelihoods to zero and using unsupervised sva.")
-    warning("It is highly likely that the underlying reason for this error is too many 0's in
-the dataset, please try doing a filtering of the data and retry.")
+    message("The most likely error in sva::empirical.controls() ",
+            "is a call to density in irwsva.build. ",
+            "Setting control_likelihoods to zero and using unsupervised sva.")
+    warning("It is highly likely that the underlying reason for this ",
+            "error is too many 0's in the dataset, ",
+            "please try doing a filtering of the data and retry.")
     control_likelihoods <- 0
   }
   if (sum(control_likelihoods) == 0) {
@@ -190,6 +205,10 @@ the dataset, please try doing a filtering of the data and retry.")
       surrogate_result <- supervised_sva
     },
     "fsva" = {
+      ## Ok, I have a question:
+      ## If we perform fsva using log2(data) and get back SVs on a scale of ~ -1
+      ## to 1, then why are these valid for changing and visualizing the base10
+      ## data.  That does not really make sense to me.
       message("Attempting fsva surrogate estimation with ",
               chosen_surrogates, " surrogates.")
       type_color <- "darkred"
@@ -200,6 +219,82 @@ the dataset, please try doing a filtering of the data and retry.")
                                method="exact")
       model_adjust <- as.matrix(fsva_result[["newsv"]])
       surrogate_result <- fsva_result
+    },
+    "isva" = {
+      message("Attempting isva surrogate estimation with ",
+              chosen_surrogates, " surrogates.")
+      type_color <- "darkgreen"
+      condition_vector <- as.numeric(conditions)
+
+      confounder_lst <- list()
+      if (is.null(confounders)) {
+        confounder_lst[["batch"]] <- as.numeric(batches)
+      } else {
+        for (c in 1:length(confounders)) {
+          name <- confounders[c]
+          confounder_lst[[name]] <- as.numeric(my_design[[name]])
+        }
+      }
+
+      confounder_mtrx <- matrix(data=confounder_lst[[1]], ncol=1)
+      colnames(confounder_mtrx) <- names(confounder_lst)[1]
+      if (length(confounder_lst) > 1) {
+        for (i in 2:length(confounder_lst)) {
+          confounder_mtrx <- cbind(confounder_mtrx, confounder_lst[[i]])
+          names(confounder_mtrx)[i] <- names(confounder_lst)[i]
+        }
+      }
+
+      ##surrogate_estimate <- EstDimRMT(data.m);
+      message("Estmated number of significant components: ", chosen_surrogates, ".")
+      ## this makes sense since 1 component is associated with the
+      ## the phenotype of interest, while the other two are associated
+      ## with the confounders
+      ##ncp <- surrogate_estimate[["dim"]] - 1
+      ## Do ISVA
+      ## run with the confounders as given
+      surrogate_result <- isva::DoISVA(
+                                  log2_mtrx, condition_vector,
+                                  cf.m=NULL, factor.log=FALSE,
+                                  ncomp=chosen_surrogates, pvthCF=0.01,
+                                  th=0.05, icamethod="JADE")
+      model_adjust <- as.matrix(surrogate_result[["isv"]])
+      ## I think this is not what one should use in a model as the range seems to be
+      ## from 1-n where n is quite large.
+
+      ##summary(isva.o)
+
+      ##data(simdataISVA);
+      ##data.m <- simdataISVA$data;
+      ##pheno.v <- simdataISVA$pheno;
+      ## factors matrix (two potential confounding factors, e.g chip and cohort)
+      ##factors.m <- cbind(simdataISVA$factors[[1]],simdataISVA$factors[[2]]);
+      ##colnames(factors.m) <- c("CF1","CF2");
+      ## Estimate number of significant components of variation
+      ##rmt.o <- EstDimRMT(data.m);
+      ##print(paste("Number of significant components=",rmt.o$dim,sep=""));
+      ## this makes sense since 1 component is associated with the
+      ## the phenotype of interest, while the other two are associated
+      ## with the confounders
+      ##ncp <- rmt.o$dim-1 ;
+      ## Do ISVA
+      ## run with the confounders as given
+      ##isva.o <- DoISVA(data.m,pheno.v,factors.m,factor.log=rep(FALSE,2),
+      ##                 pvthCF=0.01,th=0.05,ncomp=ncp,icamethod="fastICA");
+
+      ## Evaluation (ISVs should correlate with confounders)
+      ## modeling of CFs
+      ##print(cor(isva.o$isv,factors.m));
+    },
+    "smartsva" = {
+      message("Attempting svaseq estimation with ",
+              chosen_surrogates, " surrogates.")
+      surrogate_result <- SmartSVA::smartsva.cpp(
+                                      base10_mtrx,
+                                      conditional_model,
+                                      null_model,
+                                      n.sv=chosen_surrogates)
+      model_adjust <- as.matrix(surrogate_result[["sv"]])
     },
     "svaseq" = {
       message("Attempting svaseq estimation with ",
@@ -289,7 +384,8 @@ the dataset, please try doing a filtering of the data and retry.")
       ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
       bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
       ruv_controls <- ranked <= bottom_third  ## what is going on here?!
-      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets fail with 400 hard-set
+      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
+      ## fail with 400 hard-set
       ruv_result <- RUVSeq::RUVg(round(base10_mtrx), ruv_controls, k=chosen_surrogates)
       surrogate_result <- ruv_result
       model_adjust <- as.matrix(ruv_result[["W"]])
@@ -309,7 +405,7 @@ the dataset, please try doing a filtering of the data and retry.")
   ) ## End of the switch.
 
   rownames(model_adjust) <- sample_names
-  sv_names <- paste0("SV", 1:ncol(model_adjust))
+  sv_names <- glue("SV{1:ncol(model_adjust)}")
   colnames(model_adjust) <- sv_names
   new_counts <- counts_from_surrogates(base10_mtrx, model_adjust, design=my_design)
   plotbatch <- as.integer(batches)
@@ -346,19 +442,21 @@ the dataset, please try doing a filtering of the data and retry.")
 #' performed and returns the whole pile of information as a list.
 #'
 #' @param expt Experiment containing a design and other information.
-#' @param extra_factors Character list of extra factors which may be included in the final plot of
-#'  the data.
+#' @param extra_factors Character list of extra factors which may be included in
+#'   the final plot of the data.
 #' @param filter_it  Most of the time these surrogate methods get mad if there
 #'   are 0s in the data.  Filter it?
 #' @param filter_type  Type of filter to use when filtering the input data.
-#' @param do_catplots Include the catplots?  They don't make a lot of sense yet, so probably no.
+#' @param do_catplots Include the catplots?  They don't make a lot of sense yet,
+#'   so probably no.
 #' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a
 #'   number.
 #' @param ...  Extra arguments when filtering.
 #' @return List of the results.
 #' @seealso \code{\link{get_model_adjust}}
 #' @export
-compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE, filter_type=TRUE,
+compare_surrogate_estimates <- function(expt, extra_factors=NULL,
+                                        filter_it=TRUE, filter_type=TRUE,
                                         do_catplots=FALSE, surrogates="be", ...) {
   arglist <- list(...)
   design <- pData(expt)
@@ -369,38 +467,46 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
   }
 
   if (isTRUE(filter_it) & expt[["state"]][["filter"]] == "raw") {
-    message("The expt has not been filtered, set filter_type/filter_it if you want other options.")
-    expt <- sm(normalize_expt(expt, filter=filter_type, ...))
+    message("The expt has not been filtered, ",
+            "set filter_type/filter_it if you want other options.")
+    expt <- sm(normalize_expt(expt, filter=filter_type,
+                              ...))
   }
   pca_plots <- list()
   pca_plots[["null"]] <- plot_pca(expt)[["plot"]]
 
-  pca_adjust <- get_model_adjust(expt, estimate_type="pca", surrogates=surrogates)
+  pca_adjust <- get_model_adjust(expt, estimate_type="pca",
+                                 surrogates=surrogates)
   pca_plots[["pca"]] <- plot_pca(pca_adjust[["new_counts"]],
                                  design=design,
                                  plot_colors=expt[["colors"]])[["plot"]]
 
-  sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised", surrogates=surrogates)
+  sva_supervised <- get_model_adjust(expt, estimate_type="sva_supervised",
+                                     surrogates=surrogates)
   pca_plots[["svasup"]] <- plot_pca(sva_supervised[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
 
-  sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised", surrogates=surrogates)
+  sva_unsupervised <- get_model_adjust(expt, estimate_type="sva_unsupervised",
+                                       surrogates=surrogates)
   pca_plots[["svaunsup"]] <- plot_pca(sva_unsupervised[["new_counts"]],
                                       design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised", surrogates=surrogates)
+  ruv_supervised <- get_model_adjust(expt, estimate_type="ruv_supervised",
+                                     surrogates=surrogates)
   pca_plots[["ruvsup"]] <- plot_pca(ruv_supervised[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals", surrogates=surrogates)
+  ruv_residuals <- get_model_adjust(expt, estimate_type="ruv_residuals",
+                                    surrogates=surrogates)
   pca_plots[["ruvresid"]] <- plot_pca(ruv_residuals[["new_counts"]],
                                       design=design,
                                       plot_colors=expt[["colors"]])[["plot"]]
 
-  ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical", surrogates=surrogates)
+  ruv_empirical <- get_model_adjust(expt, estimate_type="ruv_empirical",
+                                    surrogates=surrogates)
   pca_plots[["ruvemp"]] <- plot_pca(ruv_empirical[["new_counts"]],
                                     design=design,
                                     plot_colors=expt[["colors"]])[["plot"]]
@@ -425,7 +531,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     "ruv_empirical" = ruv_empirical[["model_adjust"]])
   batch_names <- c("condition", "batch", "pca", "sva_sup", "sva_unsup",
                    "ruv_sup", "ruv_resid", "ruv_emp")
-  silly <- testthat::compare(batch_names, batch_names)  ## I want to try something silly
+
   if (!is.null(extra_factors)) {
     for (fact in extra_factors) {
       if (!is.null(design[, fact])) {
@@ -443,93 +549,96 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
                    "+ batch_adjustments$sva_sup", "+ batch_adjustments$sva_unsup",
                    "+ batch_adjustments$ruv_sup", "+ batch_adjustments$ruv_resid",
                    "+ batch_adjustments$ruv_emp")
-  adjust_names <- c("null", "batch", "pca", "sva_sup", "sva_unsup",
-                    "ruv_sup", "ruv_resid", "ruv_emp")
+  adjust_names <- gsub(
+    pattern="^.*adjustments\\$(.*)$", replacement="\\1", x=adjustments)
   starter <- edgeR::DGEList(counts=exprs(expt))
   norm_start <- edgeR::calcNormFactors(starter)
-  catplots <- vector("list", length(adjustments) + 1)  ## add 1 for a null adjustment
-  names(catplots) <- adjust_names
-  tstats <- list()
 
-  ## First do a null adjust
-  adjust <- ""
-  counter <- 1
-  num_adjust <- length(adjustments)
-  message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with null in the model.")
-  modified_formula <- as.formula(paste0("~ condition ", adjust))
-  limma_design <- model.matrix(modified_formula, data=design)
-  voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
-  limma_fit <- limma::lmFit(voom_result, limma_design)
-  modified_fit <- limma::eBayes(limma_fit)
-  tstats[["null"]] <- abs(modified_fit[["t"]][, 2])
-  ##names(tstats[["null"]]) <- as.character(1:dim(data)[1])
-  ## This needs to be redone to take into account how I organized the adjustments!!!
-  num_adjust <- length(adjustments)
+
+  ## Create a baseline to compare against.
+  null_formula <- as.formula("~ condition ")
+  null_limma_design <- model.matrix(null_formula, data=design)
+  null_voom_result <- limma::voom(norm_start, null_limma_design, plot=FALSE)
+  null_limma_fit <- limma::lmFit(null_voom_result, null_limma_design)
+  null_fit <- limma::eBayes(null_limma_fit)
+  null_tstat <- null_fit[["t"]]
+  null_catplot <- NULL
   if (isTRUE(do_catplots)) {
+    if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+      ## ffpe has some requirements which do not install all the time.
+      tt <- please_install("ffpe")
+    }
     if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-      catplots[["null"]] <- ffpe::CATplot(-rank(tstats[["null"]]),
-                                          -rank(tstats[["null"]]),
-                                          maxrank=1000,
-                                          make.plot=TRUE)
+      null_catplot <- ffpe::CATplot(-rank(null_tstat), -rank(null_tstat),
+                                    maxrank=1000, make.plot=TRUE)
     } else {
-      message("ffpe is not in the list of installed packages, not doing catplots.")
-      catplots[["null"]] <- NULL
+      catplots[[adjust_name]] <- NULL
     }
   }
-  oldpar <- par(mar=c(5, 5, 5, 5))
-  for (adjust in adjustments) {
-    counter <- counter + 1
-    if (counter == 2 & !isTRUE(do_batch)) {
-      message("A friendly reminder that there is only 1 batch in the data.")
-      tstats[[adjust]] <- NULL
-      catplots[[adjust]] <- NULL
-      next
-    }
-    message(counter, "/", num_adjust + 1, ": Performing lmFit(data) etc. with ",
-            adjust, " in the model.")
-    modified_formula <- as.formula(paste0("~ condition ", adjust))
-    limma_design <- model.matrix(modified_formula, data=design)
-    voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
-    limma_fit <- limma::lmFit(voom_result, limma_design)
-    modified_fit <- limma::eBayes(limma_fit)
-    tstats[[adjust]] <- abs(modified_fit[["t"]][, 2])
-    ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
-    catplot_together <- NULL
-    if (isTRUE(do_catplots)) {
-      if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-        ## ffpe has some requirements which do not install all the time.
-        tt <- please_install("ffpe")
-      }
-      if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
-        catplots[[adjust]] <- ffpe::CATplot(-rank(tstats[[adjust]]),
-                                            -rank(tstats[["null"]]),
-                                            maxrank=1000,
-                                            make.plot=TRUE)
-      } else {
-        catplots[[adjust]] <- NULL
-      }
-      plot(catplots[["null"]], ylim=c(0, 1), col="black",
-           lwd=3, type="l", xlab="Rank",
-           ylab="Concordance between study and different methods.")
-      catplot_colors <- list(
-        "pca" = "darkblue",
-        "sva_sup" = "red",
-        "sva_unsup" = "blue",
-        "ruv_sup" = "green",
-        "ruv_resid" = "orange",
-        "ruv_emp" = "purple")
 
-      for (method in 1:length(catplots)) {
-        type <- names(catplots)[[method]]
-        line_type <- method %% 3  ## 1,2,3,1,2,3...
-        if (type == "null") {
-          next
+  catplots <- vector("list", length(adjustments))  ## add 1 for a null adjustment
+  names(catplots) <- adjust_names
+  tstats <- list()
+  oldpar <- par(mar=c(5, 5, 5, 5))
+  num_adjust <- length(adjust_names)
+  ## Now perform other adjustments
+  for (a in 1:num_adjust) {
+    adjust_name <- adjust_names[a]
+    adjust <- adjustments[a]
+    if (adjust_name == "batch" & !isTRUE(do_batch)) {
+      message("A friendly reminder that there is only 1 batch in the data.")
+      tstats[[adjust_name]] <- null_tstat
+      catplots[[adjust_name]] <- null_catplot
+    } else {
+      message(a, "/", num_adjust, ": Performing lmFit(data) etc. with ",
+              adjust_name, " in the model.")
+      modified_formula <- as.formula(glue("~ condition {adjust}"))
+      limma_design <- model.matrix(modified_formula, data=design)
+      voom_result <- limma::voom(norm_start, limma_design, plot=FALSE)
+      limma_fit <- limma::lmFit(voom_result, limma_design)
+      modified_fit <- limma::eBayes(limma_fit)
+      tstats[[adjust_name]] <- modified_fit[["t"]]
+      ##names(tstats[[counter]]) <- as.character(1:dim(data)[1])
+      catplot_together <- NULL
+      if (isTRUE(do_catplots)) {
+        if (!isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+          ## ffpe has some requirements which do not install all the time.
+          tt <- please_install("ffpe")
         }
-        lines(catplots[[type]], col=catplot_colors[[type]], lwd=3, lty=line_type)
+        if (isTRUE("ffpe" %in% .packages(all.available=TRUE))) {
+          catplots[[adjust_name]] <- ffpe::CATplot(
+                                             rank(tstats[[adjust_name]]), rank(null_tstat),
+                                             maxrank=1000, make.plot=TRUE)
+        } else {
+          catplots[[adjust_name]] <- NULL
+        }
       }
-      catplot_together <- grDevices::recordPlot()
-      newpar <- par(oldpar)
-    } ## End checking whether to do catplots
+    }
+  } ## End for a in 2:length(adjustments)
+
+  ## Final catplot plotting, if necessary.
+  if (isTRUE(do_catplots)) {
+    catplot_df <- as.data.frame(catplots[[1]][[2]])
+    for (c in 2:length(catplots)) {
+      cat <- catplots[[c]]
+      catplot_df <- cbind(catplot_df, cat[["concordance"]])
+    }
+    colnames(catplot_df) <- names(catplots)
+    catplot_df[["x"]] <- rownames(catplot_df)
+    gg_catplot <- reshape2::melt(data=catplot_df, id.vars="x")
+    colnames(gg_catplot) <- c("x", "adjust", "y")
+    gg_catplot[["x"]] <- as.numeric(gg_catplot[["x"]])
+    gg_catplot[["y"]] <- as.numeric(gg_catplot[["y"]])
+
+    cat_plot <- ggplot(data=gg_catplot, mapping=aes_string(x="x", y="y", color="adjust")) +
+      ggplot2::geom_point() +
+      ggplot2::geom_jitter() +
+      ggplot2::geom_line() +
+      ggplot2::xlab("Rank") +
+      ggplot2::ylab("Concordance") +
+      ggplot2::theme_bw()
+  } else {
+    cat_plot <- NULL
   }
 
   ret <- list(
@@ -543,7 +652,7 @@ compare_surrogate_estimates <- function(expt, extra_factors=NULL, filter_it=TRUE
     "correlations" = correlations,
     "plot" = ret_plot,
     "pca_plots" = pca_plots,
-    "catplots" = catplot_together)
+    "catplots" = cat_plot)
   return(ret)
 }
 

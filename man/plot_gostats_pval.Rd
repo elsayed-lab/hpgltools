@@ -22,13 +22,14 @@ plot_gostats_pval(gs_result, wrapped_width = 20, cutoff = 0.1,
 Plots!
 }
 \description{
-clusterprofiler provides beautiful plots describing significantly overrepresented categories.
-This function attempts to expand the repetoire of data available to them to include data from gostats.
-The pval_plot function upon which this is based now has a bunch of new helpers now
-that I understand how the ontology trees work better, this should take advantage of that, but
+clusterprofiler provides beautiful plots describing significantly
+overrepresented categories. This function attempts to expand the repetoire of
+data available to them to include data from gostats. The pval_plot function
+upon which this is based now has a bunch of new helpers now that I understand
+how the ontology trees work better, this should take advantage of that, but
 currently does not.
 }
 \seealso{
 \pkg{clusterProfiler}
- \code{\link{plot_ontpval}}
+\code{\link{plot_ontpval}}
 }

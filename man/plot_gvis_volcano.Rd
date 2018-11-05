@@ -19,20 +19,23 @@ plot_gvis_volcano(toptable_data, fc_cutoff = 0.8, p_cutoff = 0.05,
 
 \item{filename}{Filename to write a fancy html graph.}
 
-\item{base_url}{String with a basename used for generating URLs for clicking dots on the graph.}
+\item{base_url}{String with a basename used for generating URLs for clicking
+dots on the graph.}
 
 \item{...}{more options}
 }
 \value{
-NULL, but along the way an html file is generated which contains a googleVis volcano
- plot.
+NULL, but along the way an html file is generated which contains a
+googleVis volcano plot.
 }
 \description{
-Volcano plots provide some visual clues regarding the success of a given contrast.  For our data,
-it has the -log10(pvalue) on the y-axis and fold-change on the x.  Here is a neat snippet from
-wikipedia describing them generally: "The concept of volcano plot can be generalized to other
-applications, where the x-axis is related to a measure of the strength of a statistical signal,
-and y-axis is related to a measure of the statistical significance of the signal."
+Volcano plots provide some visual clues regarding the success of a given
+contrast.  For our data, it has the -log10(pvalue) on the y-axis and
+fold-change on the x.  Here is a neat snippet from wikipedia describing them
+generally: "The concept of volcano plot can be generalized to other
+applications, where the x-axis is related to a measure of the strength of a
+statistical signal, and y-axis is related to a measure of the statistical
+significance of the signal."
 }
 \examples{
 \dontrun{

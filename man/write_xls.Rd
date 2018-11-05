@@ -25,8 +25,8 @@ write_xls(data = "undef", wb = NULL, sheet = "first", excel = NULL,
 \item{...}{Set of extra arguments given to openxlsx.}
 }
 \value{
-List containing the sheet and workbook written as well as the bottom-right coordinates of
- the last row/column written to the worksheet.
+List containing the sheet and workbook written as well as the
+bottom-right coordinates of the last row/column written to the worksheet.
 }
 \description{
 I like to give folks data in any format they prefer, even though I sort

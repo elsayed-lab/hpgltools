@@ -24,7 +24,8 @@ what_happened(expt = NULL, transform = "raw", convert = "raw",
 An expression describing what has been done to this data.
 }
 \description{
-Sometimes it is nice to have a string like: log2(cpm(data)) describing what happened to the data.
+Sometimes it is nice to have a string like: log2(cpm(data)) describing what
+happened to the data.
 }
 \seealso{
 \code{\link{create_expt}}

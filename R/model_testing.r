@@ -1,8 +1,8 @@
 #' Make sure a given experimental factor and design will play together.
 #'
-#' Have you ever wanted to set up a differential expression analysis and after minutes of the
-#' computer churning away it errors out with some weird error about rank?  Then this is the function
-#' for you!
+#' Have you ever wanted to set up a differential expression analysis and after
+#' minutes of the computer churning away it errors out with some weird error
+#' about rank?  Then this is the function for you!
 #'
 #' @param design Dataframe describing the design of the experiment.
 #' @param goal Experimental factor you actually want to learn about.
@@ -19,7 +19,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
   ret_list <- list()
   if (is.null(factors)) {
     message("Testing an experimental design with only ", goal, ".")
-    matrix_all_formula <- as.formula(paste0("~ 0 + ", goal))
+    matrix_all_formula <- as.formula(glue("~ 0 + {goal}"))
     matrix_test <- model.matrix(matrix_all_formula, data=design)
     num_columns <- ncol(matrix_test)
     matrix_decomp <- qr(matrix_test)
@@ -42,7 +42,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
         message("Factor ", factor, " has only 1 level, skipping it.")
         next
       }
-      matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
+      matrix_all_formula <- as.formula(glue("~ 0 + {goal} + {factor}"))
       matrix_test <- model.matrix(matrix_all_formula, data=design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)
@@ -59,7 +59,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
     for (factor in factors) {
       matrix_goal <- design[, goal]
       matrix_factor <- design[, factor]
-      matrix_all_formula <- as.formula(paste0("~ 0 + ", goal, " + ", factor))
+      matrix_all_formula <- as.formula(glue("~ 0 + {goal} + {factor}"))
       matrix_test <- model.matrix(matrix_all_formula, data=design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)

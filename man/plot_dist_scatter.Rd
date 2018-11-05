@@ -2,8 +2,8 @@
 % Please edit documentation in R/plot_point.r
 \name{plot_dist_scatter}
 \alias{plot_dist_scatter}
-\title{Make a scatter plot between two sets of numbers with a cheesy distance metric and some statistics
-of the two sets.}
+\title{Make a scatter plot between two sets of numbers with a cheesy distance metric
+and some statistics of the two sets.}
 \usage{
 plot_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
   size = 2)
@@ -41,6 +41,6 @@ then normalized against the maximum.
 }
 \seealso{
 \pkg{ggplot2}
- \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
- \code{\link{plot_linear_scatter}}
+\code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
+\code{\link{plot_linear_scatter}}
 }

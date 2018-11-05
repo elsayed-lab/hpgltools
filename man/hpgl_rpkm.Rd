@@ -15,8 +15,9 @@ hpgl_rpkm(count_table, ...)
 Data frame of counts expressed as rpkm.
 }
 \description{
-Express a data frame of counts as reads per kilobase(gene) per million(library). This function
-wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get sent along.
+Express a data frame of counts as reads per kilobase(gene) per
+million(library). This function wraps EdgeR's rpkm in an attempt to make sure
+that the required gene lengths get sent along.
 }
 \examples{
 \dontrun{
@@ -25,5 +26,5 @@ wraps EdgeR's rpkm in an attempt to make sure that the required gene lengths get
 }
 \seealso{
 \pkg{edgeR}
- \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+\code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 }

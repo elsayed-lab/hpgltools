@@ -29,8 +29,9 @@ cluster_trees(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL,
 plots! Trees! oh my!
 }
 \description{
-TopGO's ontology trees can be very illustrative.  This function shoe-horns clusterProfiler data
-into the format expected by topGO and uses it to make those trees.
+TopGO's ontology trees can be very illustrative.  This function shoe-horns
+clusterProfiler data into the format expected by topGO and uses it to make
+those trees.
 }
 \examples{
 \dontrun{
@@ -40,5 +41,5 @@ into the format expected by topGO and uses it to make those trees.
 }
 \seealso{
 \pkg{Ramigo}
- \code{\link[topGO]{showSigOfNodes}}
+\code{\link[topGO]{showSigOfNodes}}
 }

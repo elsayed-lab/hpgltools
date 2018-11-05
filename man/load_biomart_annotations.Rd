@@ -23,11 +23,12 @@ load_biomart_annotations(species = "hsapiens", overwrite = FALSE,
 
 \item{host}{Ensembl hostname to use.}
 
-\item{drop_haplotypes}{Some chromosomes have stupid names because they are from non-standard
-haplotypes and they should go away.  Setting this to false stops that.}
+\item{drop_haplotypes}{Some chromosomes have stupid names because they are
+from non-standard haplotypes and they should go away.  Setting this to
+false stops that.}
 
-\item{trymart}{Biomart has become a circular dependency, this makes me sad, now to list the
-marts, you need to have a mart loaded.}
+\item{trymart}{Biomart has become a circular dependency, this makes me sad,
+now to list the marts, you need to have a mart loaded.}
 
 \item{trydataset}{Choose the biomart dataset from which to query.}
 
@@ -38,17 +39,21 @@ marts, you need to have a mart loaded.}
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
 }
 \value{
-Df of some (by default) human annotations.
+List containing:   a data frame of the found annotations, a copy of
+the mart instance to help with finding problems, the hostname queried, the
+name of the mart queried, a vector of rows queried, vector of the available
+attributes, and the ensembl dataset queried.
 }
 \description{
-Biomart is an amazing resource of information, but using it is a bit annoying.  This function
-hopes to alleviate some common headaches.
+Biomart is an amazing resource of information, but using it is a bit
+annoying.  This function hopes to alleviate some common headaches.
 }
 \details{
 Tested in test_40ann_biomart.R
-This goes to some lengths to find the relevant tables in biomart.  But biomart is incredibly
-complex and one should carefully inspect the output if it fails to see if there are more
-appropriate marts, datasets, and columns to download.
+This goes to some lengths to find the relevant tables in biomart.  But
+biomart is incredibly complex and one should carefully inspect the output if
+it fails to see if there are more appropriate marts, datasets, and columns to
+download.
 }
 \examples{
 \dontrun{
@@ -57,5 +62,8 @@ appropriate marts, datasets, and columns to download.
 }
 \seealso{
 \pkg{biomaRt}
- \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+\code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+}
+\author{
+atb
 }

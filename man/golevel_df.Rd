@@ -16,7 +16,8 @@ golevels  a dataframe of goids<->highest level
 }
 \description{
 This function is way faster than my previous iterative golevel function.
-That is not to say it is very fast, so it saves the result to ontlevel.rda for future lookups.
+That is not to say it is very fast, so it saves the result to ontlevel.rda
+for future lookups.
 }
 \seealso{
 \pkg{clusterProfiler}

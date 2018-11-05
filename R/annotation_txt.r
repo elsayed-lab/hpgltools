@@ -12,10 +12,10 @@
 #'  annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
 #'  expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
 #' }
+#' @author atb
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
-  big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
-  split_data <- data.table::as.data.table(big_table)
+  split_data <- sm(readr::read_tsv(trinotate))
   .data <- NULL  ## Shut up, R CMD check
 
   split_data <- split_data %>%
@@ -45,7 +45,7 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
                     c("rrna_subunit", "rrna_subunit_region"),
                     "\\^", extra="drop", fill="right")
 
-  split_data <- split_data[, c("X.gene_id", "transcript_id",
+  split_data <- split_data[, c("#gene_id", "transcript_id",
                                "blastx_name", "blastx_queryloc", "blastx_hitloc",
                                "blastx_identity", "blastx_evalue", "blastx_recname",
                                "blastx_taxonomy", "blastp_name", "blastp_queryloc",
@@ -136,8 +136,8 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   na_test <- is.na(split_data[["blastp_evalue"]])
   split_data[na_test, "blastp_evalue"] <- 1
 
-  rownames(split_data) <- make.names(split_data[["transcript_id"]], unique=TRUE)
-  ## split_data[["rownames"]] <- make.names(split_data[["transcript_id"]], unique=TRUE)
+  split_data[["rownames"]] <- make.names(split_data[["transcript_id"]], unique=TRUE)
+  ## rownames(split_data) <- make.names(split_data[["transcript_id"]], unique=TRUE)
   ## Use the 'transcript_seq' field to provide gene lengths
   ## split_data[["length"]] <- ""
   transcript_seq <- NULL  ## transcript_seq in this context is handled by data.table I think.
@@ -162,12 +162,13 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
 #' \dontrun{
 #'  go_lst <- load_trinotate_go("trinotate.csv.xz")
 #' }
+#' @author atb
 #' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
-  big_table <- read.csv(trinotate, sep="\t", stringsAsFactors=FALSE)
+  big_table <- data.table::as.data.table(sm(readr::read_tsv(trinotate)))
   big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
 
-  go_data <- big_table[, c("X.gene_id", "transcript_id", "gene_ontology_blast",
+  go_data <- big_table[, c("#gene_id", "transcript_id", "gene_ontology_blast",
                            "gene_ontology_pfam", "length")]
   colnames(go_data) <- c("gene_id", "transcript_id", "go_blast", "go_pfam", "length")
   dots <- go_data == "."
@@ -175,12 +176,13 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   .data <- NULL  ## Shush, R CMD check
 
   expanded <- go_data %>%
-    dplyr::mutate("GO"=strsplit(as.character(.data[["go_blast"]]), "`")) %>%
-    tidyr::unnest("GO") %>%
+    dplyr::mutate("GO"=as.list(strsplit(x=as.character(.data[["go_blast"]]), split="`"))) %>%
+    tidyr::unnest_("GO") %>%
     tidyr::separate("GO",
                     c("GO", "GO_ont", "GO_name"),
-                    "\\^")
-
+                    "\\^",
+                    extra="drop", fill="right")
+  ## extra="drop", fill="right")
   go_data <- expanded[, c("gene_id", "transcript_id", "GO", "GO_ont", "GO_name")]
 
   go_table <- data.table::setDT(go_data)

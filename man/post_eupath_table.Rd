@@ -17,20 +17,21 @@ post_eupath_table(query_body, species = NULL, entry = NULL,
 
 \item{entry}{The single metadatum containing the base url of the provider, species, etc.}
 
-\item{metadata}{If no entry is provided, then it may be retrieved given a species and this.}
+\item{metadata}{If no entry is provided, then it may be retrieved given a
+species and this.}
 
-\item{table_name}{The name of the table to extract, this is provided to make for prettier labeling.}
+\item{table_name}{The name of the table to extract, this is provided to make
+for prettier labeling.}
 
 \item{minutes}{A timeout when querying the eupathdb.}
 
 \item{...}{Extra arguments for stuff like download_metadtata()}
 }
 \value{
-list containing response from API request.
-
-More information
-----------------
-1. https://tritrypdb.org/tritrypdb/serviceList.jsp
+list containing response from API request.More information
+\enumerate{
+\item https://tritrypdb.org/tritrypdb/serviceList.jsp
+}
 }
 \description{
 Queries one of the EuPathDB APIs using a POST request and returns a

@@ -37,26 +37,26 @@ the run ID from the filename to a large signed integer.
 filename:  Which raw mzXML file provides this particular intensity value?
 rt: Retention time in seconds for the matching peak group.
 assay_rt: The expected retention time after normalization with the iRT. (how
-  does the iRT change this value?)
+does the iRT change this value?)
 delta_rt:  The difference between rt and assay_rt
 irt: (As described in the abstract of Claudia Escher's 2012 paper: "Here we
-  present iRT, an empirically derived dimensionless peptide-specific value that
-  allows for highly accurate RT prediction. The iRT of a peptide is a fixed
-  number relative to a standard set of reference iRT-peptides that can be
-  transferred across laboratories and chromatographic systems.")
+present iRT, an empirically derived dimensionless peptide-specific value that
+allows for highly accurate RT prediction. The iRT of a peptide is a fixed
+number relative to a standard set of reference iRT-peptides that can be
+transferred across laboratories and chromatographic systems.")
 assay_irt: The iRT observed in the actual chromatographic run.
 delta_irt: The difference.  I am seeing that all the delta iRTs are in the
-  -4000 range for our actual experiment; since this is in seconds, does that
-  mean that it is ok as long as they stay in a similar range?
+-4000 range for our actual experiment; since this is in seconds, does that
+mean that it is ok as long as they stay in a similar range?
 id: unique long signed integer for the peak group.
 sequence: The sequence of the matched peptide
 fullunimodpeptidename: The sequence, but with unimod formatted modifications
-  included.
+included.
 charge:  The assumed charge of the observed peptide.
 mz:  The m/z value of the precursor ion.
 intensity:  The sum of all transition intensities in the peak group.
 aggr_prec_peak_area:  Semi-colon separated list of intensities (peak areas)
-  of the MS traces for this match.
+of the MS traces for this match.
 aggr_prec_peak_apex:  Intensity peak apexes of the MS1 traces.
 leftwidth: The start of the peak group in seconds.
 rightwidth: The end of the peak group in seconds.

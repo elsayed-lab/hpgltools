@@ -30,35 +30,38 @@ deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
 
 \item{force}{Force deseq to accept data which likely violates its assumptions.}
 
-\item{deseq_method}{The DESeq2 manual shows a few ways to invoke it, I make 2 of them available here.}
+\item{deseq_method}{The DESeq2 manual shows a few ways to invoke it, I make
+2 of them available here.}
 
 \item{...}{Triple dots!  Options are passed to arglist.}
 }
 \value{
 List including the following information:
- run = the return from calling DESeq()
- denominators = list of denominators in the contrasts
- numerators = list of the numerators in the contrasts
- conditions = the list of conditions in the experiment
- coefficients = list of coefficients making the contrasts
- all_tables = list of DE tables
+run = the return from calling DESeq()
+denominators = list of denominators in the contrasts
+numerators = list of the numerators in the contrasts
+conditions = the list of conditions in the experiment
+coefficients = list of coefficients making the contrasts
+all_tables = list of DE tables
 }
 \description{
 Invoking DESeq2 is confusing, this should help.
 }
 \details{
 Tested in test_24de_deseq.R
-Like the other _pairwise() functions, this attempts to perform all pairwise contrasts in the
-provided data set.  The details are of course slightly different when using DESeq2.  Thus, this
-uses the function choose_binom_dataset() to try to ensure that the incoming data is appropriate
-for DESeq2 (if one normalized the data, it will attempt to revert to raw counts, for example).
-It continues on to extract the conditions and batches in the data, choose an appropriate
-experimental model, and run the DESeq analyses as described in the manual.  It defaults to using
-an experimental batch factor, but will accept a string like 'sva' instead, in which case it will
-use sva to estimate the surrogates, and append them to the experimental design.  The deseq_method
-parameter may be used to apply different DESeq2 code paths as outlined in the manual.  If you
-want to play with non-standard data, the force argument will round the data and shoe-horn it into
-DESeq2.
+Like the other _pairwise() functions, this attempts to perform all pairwise
+contrasts in the provided data set.  The details are of course slightly
+different when using DESeq2.  Thus, this uses the function
+choose_binom_dataset() to try to ensure that the incoming data is appropriate
+for DESeq2 (if one normalized the data, it will attempt to revert to raw
+counts, for example). It continues on to extract the conditions and batches
+in the data, choose an appropriate experimental model, and run the DESeq
+analyses as described in the manual.  It defaults to using an experimental
+batch factor, but will accept a string like 'sva' instead, in which case it
+will use sva to estimate the surrogates, and append them to the experimental
+design.  The deseq_method parameter may be used to apply different DESeq2
+code paths as outlined in the manual.  If you want to play with non-standard
+data, the force argument will round the data and shoe-horn it into DESeq2.
 }
 \examples{
 \dontrun{

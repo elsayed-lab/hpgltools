@@ -10,5 +10,6 @@ cp_options(species)
 \item{species}{Currently it only works for humans and fruit flies.}
 }
 \description{
-This hard-sets some defaults for orgdb/kegg databases when using clusterProfiler.
+This hard-sets some defaults for orgdb/kegg databases when using
+clusterProfiler.
 }

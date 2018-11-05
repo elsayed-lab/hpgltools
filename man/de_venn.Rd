@@ -4,14 +4,12 @@
 \alias{de_venn}
 \title{Create venn diagrams describing how well deseq/limma/edger agree.}
 \usage{
-de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, lfc = 0, ...)
+de_venn(table, adjp = FALSE, p = 0.05, lfc = 0, ...)
 }
 \arguments{
 \item{table}{Which table to query?}
 
 \item{adjp}{Use adjusted p-values}
-
-\item{euler}{Perform a euler plot}
 
 \item{p}{p-value cutoff, I forget what for right now.}
 
@@ -23,8 +21,8 @@ de_venn(table, adjp = FALSE, euler = FALSE, p = 0.05, lfc = 0, ...)
 A list of venn plots
 }
 \description{
-The sets of genes provided by limma and friends would ideally always agree,  but they do not.
-Use this to see out how much the (dis)agree.
+The sets of genes provided by limma and friends would ideally always agree,
+but they do not. Use this to see out how much the (dis)agree.
 }
 \examples{
 \dontrun{

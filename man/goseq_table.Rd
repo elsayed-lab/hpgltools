@@ -7,8 +7,9 @@
 goseq_table(df, file = NULL)
 }
 \arguments{
-\item{df}{Dataframe of ontology information.  This is intended to be the output from goseq
-including information like numbers/category, GOids, etc.  It requires a column 'category'
+\item{df}{Dataframe of ontology information.  This is intended to be the
+output from goseq including information like numbers/category, GOids, etc.
+It requires a column 'category'
 which contains: GO:000001 and such.}
 
 \item{file}{Csv file to which to write the table.}
@@ -17,9 +18,9 @@ which contains: GO:000001 and such.}
 Ontology table with annotation information included.
 }
 \description{
-While goseq has some nice functionality, the table of outputs it provides is somewhat lacking.
-This attempts to increase that with some extra helpful data like ontology categories,
-definitions, etc.
+While goseq has some nice functionality, the table of outputs it provides is
+somewhat lacking. This attempts to increase that with some extra helpful data
+like ontology categories, definitions, etc.
 }
 \examples{
 \dontrun{

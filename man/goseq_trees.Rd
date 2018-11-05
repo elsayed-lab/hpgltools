@@ -25,8 +25,9 @@ goseq_trees(goseq, goid_map = "id2go.map", score_limit = 0.01,
 A plot!
 }
 \description{
-This seeks to force goseq data into a format suitable for topGO and then use its tree plotting
-function to make it possible to see significantly increased ontology trees.
+This seeks to force goseq data into a format suitable for topGO and then use
+its tree plotting function to make it possible to see significantly increased
+ontology trees.
 }
 \seealso{
 \pkg{Ramigo}

@@ -24,3 +24,6 @@ them into a format usable in an expressionset.
  expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
 }
 }
+\author{
+atb
+}

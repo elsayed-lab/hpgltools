@@ -2,7 +2,8 @@
 % Please edit documentation in R/de_shared.r
 \name{sanitize_expt}
 \alias{sanitize_expt}
-\title{Get rid of characters which will mess up contrast making and such before playing with an expt.}
+\title{Get rid of characters which will mess up contrast making and such before
+playing with an expt.}
 \usage{
 sanitize_expt(expt)
 }
@@ -10,5 +11,6 @@ sanitize_expt(expt)
 \item{expt}{An expt object to clean.}
 }
 \description{
-Get rid of characters which will mess up contrast making and such before playing with an expt.
+Get rid of characters which will mess up contrast making and such before
+playing with an expt.
 }

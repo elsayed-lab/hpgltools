@@ -4,7 +4,8 @@
 \alias{compare_de_results}
 \title{Compare the results of separate all_pairwise() invocations.}
 \usage{
-compare_de_results(first, second, cor_method = "pearson")
+compare_de_results(first, second, cor_method = "pearson",
+  try_methods = c("limma", "deseq", "edger", "ebseq", "basic"))
 }
 \arguments{
 \item{first}{One invocation of combine_de_tables to examine.}
@@ -12,6 +13,8 @@ compare_de_results(first, second, cor_method = "pearson")
 \item{second}{A second invocation of combine_de_tables to examine.}
 
 \item{cor_method}{Method to use for cor.test().}
+
+\item{try_methods}{List of methods to attempt comparing.}
 }
 \value{
 A list of compared columns, tables, and methods.

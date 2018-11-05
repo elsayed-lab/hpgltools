@@ -33,7 +33,8 @@ write_topgo_data(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
 The result from openxlsx in a prettyified xlsx file.
 }
 \description{
-It is my intention to make a function like this for each ontology tool in my repetoire
+It is my intention to make a function like this for each ontology tool in my
+repetoire
 }
 \seealso{
 \pkg{openxlsx} \pkg{topgo}

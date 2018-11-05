@@ -58,7 +58,8 @@ normalize_expt(expt, transform = "raw", norm = "raw",
 \item{...}{more options}
 }
 \value{
-Expt object with normalized data and the original data saved as 'original_expressionset'
+Expt object with normalized data and the original data saved as
+'original_expressionset'
 }
 \description{
 It is the responsibility of normalize_expt() to perform any arbitrary
