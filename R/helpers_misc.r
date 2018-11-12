@@ -409,8 +409,8 @@ hpgl_dist <- function(df, method="euclidean", ...) {
 #' @export
 install_packrat_globally <- function() {
   packrat_installed <- packrat::status()
-  packrat_location <- packrat:::getProjectDir()
-  packrat_src <- packrat:::srcDir(packrat_location)
+  packrat_location <- getProjectDir()
+  packrat_src <- srcDir(packrat_location)
   paths <- sm(packrat::packrat_mode())
   num_installed <- nrow(packrat_installed)
   globally_installed <- installed.packages()
@@ -515,7 +515,9 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     message("Installing lianos/seqtools from github to get the find_au_start_end() C function.")
     test <- devtools::install_github("lianos/seqtools/R/pkg")
   }
-  library(SeqTools)
+  lib_result <- sm(requireNamespace("SeqTools"))
+  att_result <- sm(try(attachNamespace("SeqTools"), silent=TRUE))
+  ## library(SeqTools)
   fun <- function(i) {
     one_seq <- x[[i]]
     au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)

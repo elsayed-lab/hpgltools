@@ -828,7 +828,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
     golevels <- data.frame(GO=NULL, level=NULL)
     while (continue == 1) {
       level <- level + 1
-      GO <- try(clusterProfiler:::getGOLevel(ont, level), silent=TRUE)
+      GO <- try(getGOLevel(ont, level), silent=TRUE)
       if (class(GO) != "character") {
         golevels[["level"]] <- as.numeric(golevels[["level"]])
         save(golevels, file=savefile, compress="xz")

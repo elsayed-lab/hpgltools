@@ -232,6 +232,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     "medians" = median_table,
     "method" = "basic",
     "variances" = variance_table)
+  class(retlist) <- c("basic_result", "list")
   if (!is.null(arglist[["basic_excel"]])) {
     retlist[["basic_excel"]] <- write_basic(retlist, excel=arglist[["basic_excel"]])
   }

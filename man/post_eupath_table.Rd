@@ -28,10 +28,11 @@ for prettier labeling.}
 \item{...}{Extra arguments for stuff like download_metadtata()}
 }
 \value{
-list containing response from API request.More information
-\enumerate{
-\item https://tritrypdb.org/tritrypdb/serviceList.jsp
-}
+list containing response from API request.
+
+More information
+----------------
+1. https://tritrypdb.org/tritrypdb/serviceList.jsp
 }
 \description{
 Queries one of the EuPathDB APIs using a POST request and returns a

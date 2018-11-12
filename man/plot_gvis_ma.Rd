@@ -22,7 +22,7 @@ dots on the graph.}
 }
 \value{
 NULL, but along the way an html file is generated which contains a
-googleVis MA plot. See plot_de_ma() for details.
+  googleVis MA plot. See plot_de_ma() for details.
 }
 \description{
 A fun snippet from wikipedia: "In many microarray gene expression
@@ -41,5 +41,5 @@ should be normalized.
 }
 \seealso{
 \pkg{googleVis}
-\code{\link{plot_ma_de}}
+ \code{\link{plot_ma_de}}
 }

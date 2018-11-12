@@ -5,9 +5,10 @@
 \title{Write tiles of arbitrary heat-mappable data in circos.}
 \usage{
 circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
-  colname = "logFC", chr = "chr1", basename = "", colors = NULL,
+  colname = "logFC", color_mapping = 0, min_value = NULL,
+  max_value = NULL, chr = "chr1", basename = "", colors = NULL,
   color_choice = "spectral-9-div", scale_log_base = 1, outer = 0.9,
-  width = 0.08, spacing = 0.02)
+  rules = NULL, width = 0.08, spacing = 0.02)
 }
 \arguments{
 \item{df}{Dataframe with starts/ends and the floating point information.}
@@ -17,6 +18,10 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 \item{cfgout}{Master configuration file to write.}
 
 \item{colname}{Name of the column with the data of interest.}
+
+\item{min_value}{Minimum value for the data.}
+
+\item{max_value}{Maximum value for the data.}
 
 \item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
@@ -30,6 +35,8 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 respect to the values in the data.}
 
 \item{outer}{Floating point radius of the circle into which to place the heatmap.}
+
+\item{rules}{some extra rules?}
 
 \item{width}{Width of each tile in the heatmap.}
 

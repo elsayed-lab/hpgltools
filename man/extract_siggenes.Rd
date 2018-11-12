@@ -11,7 +11,7 @@ extract_siggenes(...)
 }
 \value{
 It should return a reminder for me to remember my function names or
-change them to something not stupid.
+  change them to something not stupid.
 }
 \description{
 Alias for extract_significant_genes because I am dumb.

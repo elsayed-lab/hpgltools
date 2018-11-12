@@ -2,7 +2,7 @@
 % Please edit documentation in R/proteomics.r
 \name{plot_intensity_mz}
 \alias{plot_intensity_mz}
-\title{Plot the peak intensities with respect to m/z}
+\title{Plot mzXML peak intensities with respect to m/z.}
 \usage{
 plot_intensity_mz(mzxml_data, loess = FALSE, alpha = 0.5, ms1 = TRUE,
   ms2 = TRUE, x_scale = NULL, y_scale = NULL, ...)

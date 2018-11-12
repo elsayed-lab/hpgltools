@@ -29,7 +29,7 @@ plot_corheat(expt_data, expt_colors = NULL, expt_design = NULL,
 }
 \value{
 Gplots heatmap describing describing how the samples are clustering
-vis a vis pairwise correlation.
+  vis a vis pairwise correlation.
 }
 \description{
 Given a set of count tables and design, this will calculate the pairwise
@@ -43,6 +43,6 @@ inputs and eventual output.
 }
 \seealso{
 \pkg{grDevice}
-\code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
-\code{\link[grDevices]{recordPlot}}
+ \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
+  \code{\link[grDevices]{recordPlot}}
 }

@@ -5,7 +5,7 @@
 \title{Write the beginning of a circos configuration file.}
 \usage{
 circos_prefix(name = "mgas", conf_dir = "circos/conf", radius = 1800,
-  band_url = NULL)
+  chr_units = 1000, band_url = NULL, ...)
 }
 \arguments{
 \item{name}{Name of the map, called with 'make name'.}
@@ -14,7 +14,11 @@ circos_prefix(name = "mgas", conf_dir = "circos/conf", radius = 1800,
 
 \item{radius}{Size of the image.}
 
+\item{chr_units}{How often to print chromosome in 'prefix' units.}
+
 \item{band_url}{Place to imagemap link.}
+
+\item{...}{Extra arguments passed to the tick/karyotype makers.}
 }
 \value{
 The master configuration file name.

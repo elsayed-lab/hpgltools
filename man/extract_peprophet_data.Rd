@@ -6,8 +6,7 @@
 I am not sure what if any parameters this should have, but it seeks to
 extract the useful data from a peptide prophet run.  In the situation in
 which I wish to use it, the input command was:
-
-xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
+> xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
 Eg. It is a peptideprophet result provided by TPP.
 I want to read the resulting xml table and turn it into a data.table so that
 I can plot some metrics from it.}
@@ -24,70 +23,67 @@ extract_peprophet_data(pepxml, decoy_string = "DECOY_", ...)
 \value{
 data table of all the information I saw fit to extract
 The columns are:
-\itemize{
-\item protein: The name of the matching sequence (DECOYs allowed here)
-\item decoy: TRUE/FALSE, is this one of our decoys?
-\item peptide: The sequence of the matching spectrum.
-\item start_scan: The scan in which this peptide was observed
-\item end scan: Ibid
-\item index This seems to just increment
-\item precursor_neutral_mass: Calculated mass of this fragment assuming no
-isotope shenanigans (yeah, looking at you C13).
-\item assumed_charge: The expected charge state of this peptide.
-\item retention_time_sec: The time at which this peptide eluted during the run.
-\item peptide_prev_aa:  The amino acid before the match.
-\item peptide_next_aa:  and the following amino acid.
-\item num_tot_proteins: The number of matches not counting decoys.
-\item num_matched_ions: How many ions for this peptide matched?
-\item tot_num_ions:  How many theoretical ions are in this fragment?
-\item matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
-\item cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
-recalculated by peptideProphet, so if there is a discrepency we should yell
-at someone!
-\item massdiff How far off is the observed mass vs. the calculated? (also
-redundant with massd later)
-\item num_tol_term: The number of peptide termini which are consistent with the
-cleavage (hopefully 2), but potentially 1 or even 0 if digestion was
-bad. (redundant with ntt later)
-\item num_missed_cleavages: How many cleavages must have failed in order for this
-to be a good match?
-\item num_matched_peptides: Number of alternate possible peptide matches.
-\item xcorr: cross correlation of the experimental and theoretical spectra (this
-is supposedly only used by sequest, but I seem to have it here...)
-\item deltacn: The normalized difference between the xcorr values for the best hit and next
-best hit.  Thus higher numbers suggest better matches.
-\item deltacnstar: Apparently 'important for things like phospho-searches
-containing homologous top-scoring peptides when analyzed by
-peptideprophet...' -- the comet release notes.
-\item spscore: The raw value of preliminary score from the sequest algorithm.
-\item sprank: The rank of the match in a preliminary score. 1 is good.
-\item expect: E-value of the given peptide hit.  Thus how many identifications
-one expect to observe by chance, lower is therefore better
-\item prophet_probability: The peptide prophet probability score, higher is
-better.
-\item fval: 0.6(the dot function + 0.4(the delta dot function) - (the dot bias
-penalty function) -- which is to say... well I dunno, but it is supposed to
-provide information about how similar this match is to other potential
-matches, so I presume higher means the match is more ambiguous.
-\item ntt: Redundant with num_tol_term above, but this time from peptide prophet.
-\item nmc: Redundant with num_missed_cleavages, except it coalesces them.
-\item massd: Redundant with massdiff
-\item isomassd: The mass difference, but taking into account stupid C13.
-\item RT: Retention time
-\item RT_score: The score of the retention time!
-\item modified_peptides: A string describing modifications in the found peptide
-\item variable_mods: A comma separated list of the variable modifications
-observed.
-\item static_mods: A comma separated list of the static modifications observed.
-}
+* protein: The name of the matching sequence (DECOYs allowed here)
+* decoy: TRUE/FALSE, is this one of our decoys?
+* peptide: The sequence of the matching spectrum.
+* start_scan: The scan in which this peptide was observed
+* end scan: Ibid
+* index This seems to just increment
+* precursor_neutral_mass: Calculated mass of this fragment assuming no
+  isotope shenanigans (yeah, looking at you C13).
+* assumed_charge: The expected charge state of this peptide.
+* retention_time_sec: The time at which this peptide eluted during the run.
+* peptide_prev_aa:  The amino acid before the match.
+* peptide_next_aa:  and the following amino acid.
+* num_tot_proteins: The number of matches not counting decoys.
+* num_matched_ions: How many ions for this peptide matched?
+* tot_num_ions:  How many theoretical ions are in this fragment?
+* matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
+* cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
+  recalculated by peptideProphet, so if there is a discrepency we should yell
+  at someone!
+* massdiff How far off is the observed mass vs. the calculated? (also
+  redundant with massd later)
+* num_tol_term: The number of peptide termini which are consistent with the
+  cleavage (hopefully 2), but potentially 1 or even 0 if digestion was
+  bad. (redundant with ntt later)
+* num_missed_cleavages: How many cleavages must have failed in order for this
+  to be a good match?
+* num_matched_peptides: Number of alternate possible peptide matches.
+* xcorr: cross correlation of the experimental and theoretical spectra (this
+  is supposedly only used by sequest, but I seem to have it here...)
+* deltacn: The normalized difference between the xcorr values for the best hit and next
+  best hit.  Thus higher numbers suggest better matches.
+* deltacnstar: Apparently 'important for things like phospho-searches
+  containing homologous top-scoring peptides when analyzed by
+  peptideprophet...' -- the comet release notes.
+* spscore: The raw value of preliminary score from the sequest algorithm.
+* sprank: The rank of the match in a preliminary score. 1 is good.
+* expect: E-value of the given peptide hit.  Thus how many identifications
+  one expect to observe by chance, lower is therefore better
+* prophet_probability: The peptide prophet probability score, higher is
+  better.
+* fval: 0.6(the dot function + 0.4(the delta dot function) - (the dot bias
+  penalty function) -- which is to say... well I dunno, but it is supposed to
+  provide information about how similar this match is to other potential
+  matches, so I presume higher means the match is more ambiguous.
+* ntt: Redundant with num_tol_term above, but this time from peptide prophet.
+* nmc: Redundant with num_missed_cleavages, except it coalesces them.
+* massd: Redundant with massdiff
+* isomassd: The mass difference, but taking into account stupid C13.
+* RT: Retention time
+* RT_score: The score of the retention time!
+* modified_peptides: A string describing modifications in the found peptide
+* variable_mods: A comma separated list of the variable modifications
+  observed.
+* static_mods: A comma separated list of the static modifications observed.
 }
 \description{
 Get some data from a peptideprophet run.
 I am not sure what if any parameters this should have, but it seeks to
 extract the useful data from a peptide prophet run.  In the situation in
 which I wish to use it, the input command was:
-
-xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
+> xinteract -dDECOY_ -OARPpd -Nfdr_library.xml comet_result.pep.xml
 Eg. It is a peptideprophet result provided by TPP.
 I want to read the resulting xml table and turn it into a data.table so that
 I can plot some metrics from it.

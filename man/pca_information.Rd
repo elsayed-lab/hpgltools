@@ -4,13 +4,10 @@
 \alias{pca_information}
 \title{Gather information about principle components.}
 \usage{
-pca_information(expt_data, expt_design = NULL,
-  expt_factors = c("condition", "batch"), num_components = NULL,
-  plot_pcas = FALSE, ...)
+pca_information(expt, expt_design = NULL, expt_factors = c("condition",
+  "batch"), num_components = NULL, plot_pcas = FALSE, ...)
 }
 \arguments{
-\item{expt_data}{Data to analyze (usually exprs(somedataset)).}
-
 \item{expt_design}{Dataframe describing the experimental design, containing
 columns with useful information like the conditions, batches, number of
 cells, whatever...}
@@ -25,19 +22,21 @@ as factors asked for.}
 \item{plot_pcas}{Plot the set of PCA plots for every pair of PCs queried.}
 
 \item{...}{Extra arguments for the pca plotter}
+
+\item{expt_data}{Data to analyze (usually exprs(somedataset)).}
 }
 \value{
 a list of fun pca information:
-svd_u/d/v: The u/d/v parameters from fast.svd
-rsquared_table: A table of the rsquared values between each factor and principle component
-pca_variance: A table of the pca variances
-pca_data: Coordinates for a pca plot
-pca_cor: A table of the correlations between the factors and principle components
-anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
-anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
-anova_p: The p-value calculated from the anova() call
-anova_sums: The RSS value from the above anova() call
-cor_heatmap: A heatmap from recordPlot() describing pca_cor.
+ svd_u/d/v: The u/d/v parameters from fast.svd
+ rsquared_table: A table of the rsquared values between each factor and principle component
+ pca_variance: A table of the pca variances
+ pca_data: Coordinates for a pca plot
+ pca_cor: A table of the correlations between the factors and principle components
+ anova_fstats: the sum of the residuals with the factor vs without (manually calculated)
+ anova_f: The result from performing anova(withfactor, withoutfactor), the F slot
+ anova_p: The p-value calculated from the anova() call
+ anova_sums: The RSS value from the above anova() call
+ cor_heatmap: A heatmap from recordPlot() describing pca_cor.
 }
 \description{
 Calculate some information useful for generating PCA plots.
@@ -53,7 +52,7 @@ set of all PCA plots with respect to one another. (PCx vs. PCy)
 }
 \section{Warning}{
 
-This function has gotten too damn big and needs to be split up.
+ This function has gotten too damn big and needs to be split up.
 }
 
 \examples{
@@ -64,5 +63,5 @@ This function has gotten too damn big and needs to be split up.
 }
 \seealso{
 \pkg{corpcor} \pkg{stats}
-\code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
+ \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
 }

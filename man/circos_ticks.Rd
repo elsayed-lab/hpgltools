@@ -15,7 +15,9 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
   third_spacing = 10, third_color = "black",
   third_show_label = "yes", third_label_size = 16,
   fourth_spacing = 100, fourth_color = "black",
-  fourth_show_label = "yes", fourth_label_size = 36)
+  fourth_show_label = "yes", suffix = " kb", fourth_label_size = 36,
+  include_first_label = TRUE, include_second_label = TRUE,
+  include_third_label = TRUE, include_fourth_label = TRUE, ...)
 }
 \arguments{
 \item{name}{Name of the configuration file to which to add the ideogram.}
@@ -76,7 +78,19 @@ circos_ticks(name = "default", conf_dir = "circos/conf",
 
 \item{fourth_show_label}{Provide a label?}
 
+\item{suffix}{String for printing chromosome distances.}
+
 \item{fourth_label_size}{They are big!}
+
+\item{include_first_label}{Provide the smallest labels?}
+
+\item{include_second_label}{Second smallest labels?}
+
+\item{include_third_label}{Second biggest labels?}
+
+\item{include_fourth_label}{Largest labels?}
+
+\item{...}{Extra arguments from circos_prefix().}
 }
 \value{
 The file to which the ideogram configuration was written.

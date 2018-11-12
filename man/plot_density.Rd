@@ -27,6 +27,8 @@ plot_density(data, colors = NULL, expt_names = NULL,
 
 \item{colors_by}{Factor for coloring the lines}
 
+\item{label_chars}{Maximum number of characters in sample names before abbreviation.}
+
 \item{...}{sometimes extra arguments might come from graph_metrics()}
 }
 \value{
@@ -44,5 +46,5 @@ colorful and fun!
 }
 \seealso{
 \pkg{ggplot2}
-\code{\link[ggplot2]{geom_density}}
+ \code{\link[ggplot2]{geom_density}}
 }

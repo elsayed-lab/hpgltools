@@ -56,7 +56,9 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
   para <- NULL
   ## One is not supposed to use library() in packages, but it needs to do all
   ## sorts of foolish attaching.
-  tt <- sm(library("variancePartition"))
+  ## tt <- sm(library("variancePartition"))
+  lib_result <- sm(requireNamespace("variancePartition"))
+  att_result <- sm(try(attachNamespace("variancePartition"), silent=TRUE))
   if (isTRUE(parallel)) {
     cl <- parallel::makeCluster(cpus)
     para <- doParallel::registerDoParallel(cl)
@@ -99,7 +101,7 @@ which are shared among multiple samples.")
     message("Placing factor: ", chosen_column, " at the beginning of the model.")
   }
 
-  my_sorted <- variancePartition:::.sortCols(my_extract)
+  my_sorted <- sortCols(my_extract)
   order_idx <- order(my_sorted[[chosen_column]], decreasing=TRUE)
   my_sorted <- my_sorted[order_idx, ]
   percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])

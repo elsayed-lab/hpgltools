@@ -29,9 +29,9 @@ load_biomart_go(species = "hsapiens", overwrite = FALSE,
 }
 \value{
 List containing the following:  data frame of ontology data, a copy
-of the biomart instance for further querying, the host queried, the biomart
-queried, a vector providing the attributes queried, and the ensembl dataset
-queried.
+  of the biomart instance for further querying, the host queried, the biomart
+  queried, a vector providing the attributes queried, and the ensembl dataset
+  queried.
 }
 \description{
 I perceive that every time I go to acquire annotation data from biomart, they
@@ -53,8 +53,8 @@ keep the annotation sets relatively consistent.
 }
 \seealso{
 \pkg{biomaRt}
-\code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
-\code{\link[biomaRt]{getBM}}
+  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
+  \code{\link[biomaRt]{getBM}}
 }
 \author{
 atb

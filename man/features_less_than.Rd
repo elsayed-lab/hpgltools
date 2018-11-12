@@ -11,7 +11,7 @@ features_less_than(...)
 }
 \value{
 The set of features less than whatever you would have done with
-features_greater_than().
+  features_greater_than().
 }
 \description{
 Do features_greater_than() inverted!

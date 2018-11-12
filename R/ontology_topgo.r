@@ -333,6 +333,7 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL,
     ) ## End of the switch
   }  ## End of for BP/MF/CC
   ##retlist[["pdists"]] <- try(plot_histogram(retlist[["test_result"]]@score, bins=20))
+  class(retlist) <- c("topgo_result", "list")
   return(retlist)
 }
 

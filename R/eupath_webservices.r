@@ -12,7 +12,7 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
                                      dir="eupathdb", use_savefile=TRUE, ...) {
   ## Get EuPathDB version (same for all databases)
   arglist <- list(...)
-  savefile <- glue("{webservice}_metadata-v{format(Sys.time(), '%Y%m')}.rda")
+  savefile <- glue::glue("{webservice}_metadata-v{format(Sys.time(), '%Y%m')}.rda")
 
   if (!file.exists(dir)) {
     dir.create(dir, recursive=TRUE)
@@ -30,7 +30,13 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     }
   }
 
-  db_version <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
+  db_version <- NULL
+  if (is.null(arglist[["version"]])) {
+    ## One could just as easily choose any of the other eupathdb hosts.
+    db_version <- readLines("http://tritrypdb.org/common/downloads/Current_Release/Build_number")
+  } else {
+    db_version <- arglist[["version"]]
+  }
   .data <- NULL  ## To satisfy R CMD CHECK
   shared_tags <- c("Annotation", "EuPathDB", "Eukaryote", "Pathogen", "Parasite")
   tags <- list(
@@ -49,20 +55,21 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   })
 
   ## construct API request URL
-  base_url <- glue("https://{webservice}.org/{webservice}/webservices/")
+  base_url <- glue::glue("https://{webservice}.org/{webservice}/webservices/")
   query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
-  request_url <- glue("{base_url}{query_string}")
+  request_url <- glue::glue("{base_url}{query_string}")
 
   ## retrieve organism metadata from EuPathDB
-  metadata_json <- glue("{dir}/metadata.json")
+  metadata_json <- glue::glue("{dir}/metadata.json")
+  ## It turns out that not all eupathdb hosts have moved to https...
   file <- try(download.file(url=request_url, destfile=metadata_json), silent=TRUE)
   if (class(file) == "try-error") {
     ## Try again without https?
-    base_url <- glue("http://{webservice}.org/{webservice}/webservices/")
+    base_url <- glue::glue("http://{webservice}.org/{webservice}/webservices/")
     query_string <- "OrganismQuestions/GenomeDataTypes.json?o-fields=all"
-    request_url <- glue("{base_url}{query_string}")
+    request_url <- glue::glue("{base_url}{query_string}")
     ## retrieve organism metadata from EuPathDB
-    metadata_json <- glue("{dir}/metadata.json")
+    metadata_json <- glue::glue("{dir}/metadata.json")
     file <- download.file(url=request_url, destfile=metadata_json)
   }
 
@@ -78,6 +85,11 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 
   ## shared metadata
   ## I wish I were this confident with %>% and transmute, I always get confused by them
+  ## A funny little oddity in the TriTrypdb (20181103)
+  ## The current version of the database remains 39; but the sourceUrl returned
+  ## by the above json query is 40.  As a result, attempted downloads fail due
+  ## to the mismatch in filenames/directories.
+  SourceUrl <- NULL  ## Because I still don't get NSE/SE semantics with mutate()!!
   shared_metadata <- dat %>%
     dplyr::transmute(
              "BiocVersion" = as.character(BiocInstaller::biocVersion()),
@@ -91,7 +103,19 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
              "TaxonomyId" = .data[["ncbi_tax_id"]],
              "Coordinate_1_based" = TRUE,
              "DataProvider" = .data[["project_id"]],
-             "Maintainer" = "Keith Hughitt <khughitt@umd.edu>")
+             "Maintainer" = "Keith Hughitt <khughitt@umd.edu>") %>%
+    dplyr::mutate_if(is.character,
+                     stringr::str_replace_all,
+                     pattern="Current_Release",
+                     replacement=glue::glue("release-{db_version}")) %>%
+    dplyr::mutate("SourceUrl" = gsub(pattern="DB-(\\d\\d)_",
+                                     replacement=glue::glue("DB-{db_version}_"),
+                                     x=SourceUrl))
+
+    ##dplyr::mutate(is.character,
+    ##              stringr::str_replace_all,
+    ##              pattern="DB-(\\d\\d)_",
+    ##              replacement=glue("DB-{db_version}_"))
 
   ## Add project-specific tags for each entry
   shared_metadata[["Tags"]] <- sapply(shared_metadata[["DataProvider"]],
@@ -121,11 +145,6 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   ## have no known taxonomy id, and are not in available.species()
   na_ind <- is.na(shared_metadata[["TaxonomyId"]])
   ## I think I will try to hack around this problem.
-  ##message(sprintf("- Excluding %d organisms with no taxonomy id (%d remaining)",
-  ##                sum(na_ind), sum(!na_ind)))
-  ##shared_metadata <- shared_metadata[!na_ind,]
-
-  ## convert remaining taxonomy ids to numeric
   shared_metadata[["TaxonomyId"]] <- as.numeric(shared_metadata[["TaxonomyId"]])
 
   ## remove any organisms for which no GFF is available
@@ -135,17 +154,14 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   ## Once again, I will attempt a workaround, probably via bioconductor.
   ## gff_exists <- sapply(shared_metadata$SourceUrl,
   ##                      function(url) { HEAD(url)$status_code == 200 })
-  ##message(sprintf("- Excluding %d organisms for which no GFF file is available (%d remaining)",
-  ##                sum(!gff_exists), sum(gff_exists)))
   ##shared_metadata <- shared_metadata[gff_exists,]
 
   ## generate separate metadata table for OrgDB and GRanges targets
   granges_metadata <- shared_metadata %>%
     dplyr::mutate(
-             Title=sprintf("Transcript information for %s", .data[["Species"]]),
-             Description=sprintf("%s %s transcript information for %s",
-                                 .data[["DataProvider"]], .data[["SourceVersion"]],
-                                 .data[["Species"]]),
+             Title=glue::glue("Transcript information for {.data[['Species']]}"),
+             Description=glue::glue("{.data[['DataProvider']]} \\
+{.data[['SourceVersion']]} transcript information for {.data[['Species']]}}"),
              RDataClass="GRanges",
              DispatchClass="GRanges",
              ResourceName=sprintf("GRanges.%s.%s%s.rda", gsub("[ /.]+", "_", .data[["Species"]]),
@@ -180,6 +196,21 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
+get_eupath_fields <- function(webservice) {
+  request_url <- glue::glue(
+     "http://{webservice}.org/webservices/GeneQuestions/GenesByMolecularWeight.wadl")
+  request <- curl::curl(request_url)
+  result <- xml2::read_xml(request)
+  fields <- xml_nodes(result, xpath='//*[@name="o-fields"]')[[1]] %>%
+    xml_children() %>%
+    xml_attr("value")
+  drop_idx <- is.na(fields)
+  fields <- fields[!drop_idx]
+  drop_idx <- fields == "none"
+  fields <- fields[!drop_idx]
+  return(fields)
+}
+
 #' The new eupath system provides 3 output types for downloading data.  This
 #' uses the raw one.
 #'
@@ -192,14 +223,14 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
 #' @param entry  Annotation entry for a given species
 #' @param question  Which query to try?  Molecular weight is the easiest, as it
 #'   was their example.
+#' @param parameters  Query parameters when posting
 #' @param table_name  Used to make sure all columns are unique by prefixing them
 #'   with the table name.
-#' @param parameters  Query parameters when posting
 #' @param columns  Columns for which to ask.
 #' @param minutes  How long to wait until giving up and throwing an error.
 #' @return  A hopefully huge table of eupath data.
 post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeight",
-                            table_name=NULL, parameters=NULL, columns="primary_key",
+                            parameters=NULL, table_name=NULL, columns=NULL,
                             minutes=40) {
   species <- entry[["Species"]]
   provider <- tolower(entry[["DataProvider"]])
@@ -217,8 +248,14 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   if (uri_prefix %in% names(prefix_mapping)) {
     uri_prefix <- prefix_mapping[[uri_prefix]]
   }
+
   if (is.null(parameters)) {
     parameters <- list("organism" = jsonlite::unbox(species))
+  }
+
+  query_columns <- columns
+  if (is.null(columns)) {
+    query_columns <- get_eupath_fields(uri_prefix)
   }
 
   ##query_body <- list(
@@ -245,7 +282,7 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   formattinglist <- list(
     "formatConfig" = list(
       "includeHeaders" = jsonlite::unbox("true"),
-      "attributes" = columns,
+      "attributes" = query_columns,
       "attachmentType" = jsonlite::unbox("plain")),
     "format" = jsonlite::unbox("fullRecord"))
   query_body <- list(
@@ -253,59 +290,15 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
     "formatting" = formattinglist)
   body <- jsonlite::toJSON(query_body)
 
-  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
-  result <- httr::POST(
-                    url=api_uri,
-                    body=body,
-                    httr::content_type("application/json"),
-                    httr::timeout(minutes * 60))
+  api_uri <- glue::glue("http://{provider}.org/{uri_prefix}/service/answer")
+  result <- httr::POST(url=api_uri, body=body,
+                       httr::content_type("application/json"),
+                       httr::timeout(minutes * 60))
   if (result[["status_code"]] == "422") {
     warning("The provided species does not have a table of weights.")
     return(data.frame())
   } else if (result[["status_code"]] == "400") {
     warning("Status 400 was returned, likely a bad formatConfig.")
-    ## Interesting, querying a tritrypdb entry with the above query_body works fine,
-    ## but querying microsporidiadb.org with it fails with 'Could not configure
-    ## reporter 'fullRecord' with passed formatConfig.
-    ## I wonder what is different between them?
-    ## Weirdly, if I remove the format fields from the formatting list, then I
-    ## get a nested response, but this response requires a subset of the
-    ## original columns and is in yet another format.
-    ##columns <- c(
-    ## "primary_key", "sequence_id", "chromosome", "organism", "gene_type", "gene_location_text",
-    ## "gene_name", "gene_exon_count", "is_pseudo", "gene_transcript_count", "gene_ortholog_number",
-    ## "gene_orthomcl_name", "gene_entrez_id", "transcript_length", "exon_count", "strand",
-    ## "cds_length", "tm_count", "molecular_weight", "isoelectric_point", "signalp_scores",
-    ## "signalp_peptide", "annotated_go_function", "annotated_go_process", "annotated_go_component",
-    ## "annotated_go_id_function", "annotated_go_id_process", "annotated_go_id_component",
-    ## "predicted_go_id_function", "predicted_go_id_process", "predicted_go_id_component",
-    ## "ec_numbers", "ec_numbers_derived", "five_prime_utr_length", "three_prime_utr_length",
-    ## "location_text", "gene_previous_ids", "protein_sequence", "cds")
-    ##answerlist <- list(
-    ##"questionName" = jsonlite::unbox(question),
-    ##"parameters" = parameters,
-    ##"viewFilters" = list(),
-    ##"filters" = list())
-    ##formattinglist <- list(
-    ##  "formatConfig" = list(
-    ##    "includeHeaders" = jsonlite::unbox("true"),
-    ##    "attributes" = columns,
-    ##    "attachmentType" = jsonlite::unbox("plain")),
-    ##  "format" = jsonlite::unbox("tableTabular"))
-    ##query_body <- list(
-    ##  "answerSpec" = answerlist,
-    ##  "formatting" = formattinglist,
-    ##  "format" = jsonlite::unbox("fullRecord"))
-    ##)
-    ##body <- jsonlite::toJSON(query_body)
-    ##api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
-    ##result <- httr::POST(
-    ##                  url=api_uri,
-    ##                  body=body,
-    ##                  httr::content_type("application/json"),
-    ##                  httr::timeout(minutes * 60))
-    ##cont <- httr::content(result)
-    return(data.frame())
   } else if (result[["status_code"]] != "200") {
     warning("An error status code was returned.")
     return(data.frame())
@@ -315,7 +308,7 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
 
   ## Get the content, this will take a while, as the result from eupathdb might
   ## be > 50 Mb of stuff.
-  cont <- httr::content(result)
+  cont <- httr::content(result, encoding="UTF-8")
   ## Sadly, most of that stuff is completely unwanted.  This is because we are
   ## using the 'fullRecord' format, as it is the only format I have been able to
   ## get to work so far. This format is newline separated fields with entries
@@ -332,19 +325,15 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   mypattern <- "^(.+?)\\: (.+)?$"
   ## If I am going to make column names, I need first to get the first part of
   ## stuff: otherstuff
-  stupid_column_names <- gsub(pattern=mypattern, replacement="\\1", x=stuff[["V1"]], perl=TRUE)
-  column_names <- columns
-  ## Then get rid of any punctuation, as there is a column '# TM domains' -- that is bad.
-  ##
-  ## column_names <- gsub(pattern="[[:punct:]]", replacement="", x=column_names)
-  ##
-  ## Get rid of any extraneous spaces from removing punctuation, but since I
-  ## cannot be certain that there is no punctuation in the middle of words, just
-  ## look at the beginning of the strings.
-  ##
-  ## column_names <- gsub(pattern="^ +", replacement="", x=column_names)
-  ## Finally, I do not accept column names with spaces.
-  ## column_names <- gsub(pattern=" ", replacement="_", x=column_names)
+  stupid_column_names <- gsub(pattern=mypattern, replacement="\\1",
+                              x=stuff[["V1"]], perl=TRUE)
+  if (length(query_columns) == length(stupid_column_names)) {
+    column_names <- query_columns
+  } else {
+    column_names <- make.names(stupid_column_names, unique=TRUE)
+  }
+
+  ## Create an empty data frame into which we will dump the text.
   column_names[1] <- "GID"
   information <- data.frame(row.names=1:length(entries))
   for (col in column_names) {
@@ -352,6 +341,7 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
     information <- cbind(information, new_col)
   }
   colnames(information) <- column_names
+
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
@@ -375,11 +365,11 @@ post_eupath_raw <- function(entry, question="GeneQuestions.GenesByMolecularWeigh
   if (!is.null(table_name)) {
     for (c in 2:length(colnames(information))) {
       col_name <- colnames(information)[c]
-      prefix_string <- glue("{toupper(table_name)}_")
+      prefix_string <- glue::glue("{toupper(table_name)}_")
       ## Use if() test this to avoid column names like 'GO_GO_ID'
-      foundp <- grepl(pattern=glue("^{prefix_string}"), x=toupper(col_name))
+      foundp <- grepl(pattern=glue::glue("^{prefix_string}"), x=toupper(col_name))
       if (!foundp) {
-        new_col <- glue("{toupper(table_name)}_{toupper(col_name)}")
+        new_col <- glue::glue("{toupper(table_name)}_{toupper(col_name)}")
         colnames(information)[c] <- new_col
       }
     }
@@ -438,13 +428,11 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
   }
 
   ## construct API query
-  api_uri <- sprintf("http://%s.org/%s/service/answer", provider, uri_prefix)
+  api_uri <- glue::glue("http://{provider}.org/{uri_prefix}/service/answer")
   body <- jsonlite::toJSON(query_body)
-  result <- httr::POST(
-                    url=api_uri,
-                    body=body,
-                    httr::content_type("application/json"),
-                    httr::timeout(minutes * 60))
+  result <- httr::POST(url=api_uri, body=body,
+                       httr::content_type("application/json"),
+                       httr::timeout(minutes * 60))
   if (result[["status_code"]] == "422") {
     warning("The provided species does not have a table of weights.")
     return(data.frame())
@@ -455,7 +443,7 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
     warning("A minimal amount of content was returned.")
   }
 
-  result <- httr::content(result)
+  result <- httr::content(result, encoding="UTF-8")
   result <- read.delim(textConnection(result), sep="\t")
   ## If nothing was received, return nothing.
   if (nrow(result) == 0) {
@@ -487,7 +475,7 @@ post_eupath_table <- function(query_body, species=NULL, entry=NULL, metadata=NUL
   if (!is.null(table_name)) {
     for (c in 2:length(colnames(result))) {
       col_name <- colnames(result)[c]
-      new_col <- glue("{toupper(table_name)}_{toupper(col_name)}")
+      new_col <- glue::glue("{toupper(table_name)}_{toupper(col_name)}")
       colnames(result)[c] <- new_col
     }
   }
@@ -525,7 +513,7 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
     species <- entry[["Species"]]
   }
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}_annotations.rda"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}_annotations.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -540,74 +528,74 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
   ## view-source:http://tritrypdb.org/webservices/GeneQuestions/GenesByMolecularWeight.wadl
   ## scrolling down to the 'o-fields' section, and writing down the most likely
   ## useful column names. These are written one per line in an attempt to make
-  ## looking for new/changed columns from one eupathdb release to the next easier.
-  field_list <- list(
-    "primary_key" = "Gene ID",
-    "transcript_link" = "Transcript ID",
-    "sequence_id" = "Genomic Sequence ID",
-    "chromosome" = "Chromosome",
-    "gene_product" = "Product Description",
-    "organism" = "Organism",
-    "gene_type" = "Gene Type",
-    "gene_location_text" = "Genomic Location (Gene)",
-    "gene_name" = "Gene Name or Symbol",
-    "gene_exon_count" = "# Exons in Gene",
-    "is_pseudo" = "Is Pseudo",
-    "gene_transcript_count" = "# Transcripts",
-    "gene_ortholog_number" = "Ortholog count",
-    "gene_paralog_number" = "Paralog Count",
-    "gene_orthomcl_name" = "Ortholog Group",
-    "gene_total_hts_snps" = "Total SNPs All Strains",
-    "gene_hts_nonsynonymous_snps" = "NonSynonymous SNPs All Strains",
-    "gene_hts_synonymous_snps" = "Synonymous SNPs All Strains",
-    "gene_hts_noncoding_snps" = "Non-Coding SNPs All Strains",
-    "gene_hts_stop_codon_snps" = "SNPs with Stop Codons All Strains",
-    "gene_hts_nonsyn_syn_ratio" = "NonSyn/Syn SNP Ratio All Strains",
-    "uniprot_id" = "UniProt ID",
-    "gene_entrez_id" = "Entrez Gene ID",
-    "transcript_product" = "Transcript Product Description",
-    "transcript_length" = "Transcript Length",
-    "exon_count" = "# Exons in Transcript",
-    "strand" = "Gene Strand",
-    "cds_length" = "CDS Length",
-    "tm_count" = "# TM Domains",
-    "molecular_weight" = "Molecular Weight",
-    "isoelectric_point" = "Isoelectric Point",
-    "signalp_scores" = "Signalp Scores",
-    "signalp_peptide" = "Signalp Peptide",
-    "annotated_go_function" = "Curated GO Functions",
-    "annotated_go_process" = "Curated GO Processes",
-    "annotated_go_component" = "Curated GO Components",
-    "annotated_go_id_function" = "Curated GO Function IDs",
-    "annotated_go_id_process" = "Curated GO Process IDs",
-    "annotated_go_id_component" = "Curated GO Component IDs",
-    "predicted_go_id_function" = "Computed GO Function IDs",
-    "predicted_go_id_process" = "Computed GO Process IDs",
-    "predicted_go_id_component" = "Computed GO Component IDs",
-    "ec_numbers" = "EC numbers",
-    "ec_numbers_derived" = "EC numbers from OrthoMCL",
-    "five_prime_utr_length" = "Annotated 5' UTR length",
-    "three_prime_utr_length" = "Annotated 3' UTR length",
-    "location_text" = "Genomic Location (Transcript)",
-    "gene_previous_ids" = "Previous ID(s)",
-    "transcripts_found_per_gene" = "# Transcripts that Met Search Critera",
-    "transcript_index_per_gene" = "Transcript local index",
-    "transcript_sequence" = "Predicted RNA/mRNA Sequence (introns spliced out)",
-    "protein_sequence" = "Predicted Protein Sequence",
-    "cds" = "Coding Sequence",
-    "uri" = "Image",
-    "gene_source_id" = "gene_source_id",
-    "source_id" = "source_id")
+  ## looking for new/changed columns from one eupathdb release to the next
+  ## easier.
+  ## This is no longer required, as I get all this information from get_eupath_fields().
+  ##field_list <- list(
+  ##  "primary_key" = "Gene ID",
+  ##  "transcript_link" = "Transcript ID",
+  ##  "sequence_id" = "Genomic Sequence ID",
+  ##  "chromosome" = "Chromosome",
+  ##  "gene_product" = "Product Description",
+  ##  "organism" = "Organism",
+  ##  "gene_type" = "Gene Type",
+  ##  "gene_location_text" = "Genomic Location (Gene)",
+  ##  "gene_name" = "Gene Name or Symbol",
+  ##  "gene_exon_count" = "# Exons in Gene",
+  ##  "is_pseudo" = "Is Pseudo",
+  ##  "gene_transcript_count" = "# Transcripts",
+  ##  "gene_ortholog_number" = "Ortholog count",
+  ##  "gene_paralog_number" = "Paralog Count",
+  ##  "gene_orthomcl_name" = "Ortholog Group",
+  ##  "gene_total_hts_snps" = "Total SNPs All Strains",
+  ##  "gene_hts_nonsynonymous_snps" = "NonSynonymous SNPs All Strains",
+  ##  "gene_hts_synonymous_snps" = "Synonymous SNPs All Strains",
+  ##  "gene_hts_noncoding_snps" = "Non-Coding SNPs All Strains",
+  ##  "gene_hts_stop_codon_snps" = "SNPs with Stop Codons All Strains",
+  ##  "gene_hts_nonsyn_syn_ratio" = "NonSyn/Syn SNP Ratio All Strains",
+  ##  "uniprot_id" = "UniProt ID",
+  ##  "gene_entrez_id" = "Entrez Gene ID",
+  ##  "transcript_product" = "Transcript Product Description",
+  ##  "transcript_length" = "Transcript Length",
+  ##  "exon_count" = "# Exons in Transcript",
+  ##  "strand" = "Gene Strand",
+  ##  "cds_length" = "CDS Length",
+  ##  "tm_count" = "# TM Domains",
+  ##  "molecular_weight" = "Molecular Weight",
+  ##  "isoelectric_point" = "Isoelectric Point",
+  ##  "signalp_scores" = "Signalp Scores",
+  ##  "signalp_peptide" = "Signalp Peptide",
+  ##  "annotated_go_function" = "Curated GO Functions",
+  ##  "annotated_go_process" = "Curated GO Processes",
+  ##  "annotated_go_component" = "Curated GO Components",
+  ##  "annotated_go_id_function" = "Curated GO Function IDs",
+  ##  "annotated_go_id_process" = "Curated GO Process IDs",
+  ##  "annotated_go_id_component" = "Curated GO Component IDs",
+  ##  "predicted_go_id_function" = "Computed GO Function IDs",
+  ##  "predicted_go_id_process" = "Computed GO Process IDs",
+  ##  "predicted_go_id_component" = "Computed GO Component IDs",
+  ##  "ec_numbers" = "EC numbers",
+  ##  "ec_numbers_derived" = "EC numbers from OrthoMCL",
+  ##  "five_prime_utr_length" = "Annotated 5' UTR length",
+  ##  "three_prime_utr_length" = "Annotated 3' UTR length",
+  ##  "location_text" = "Genomic Location (Transcript)",
+  ##  "gene_previous_ids" = "Previous ID(s)",
+  ##  "transcripts_found_per_gene" = "# Transcripts that Met Search Critera",
+  ##  "transcript_index_per_gene" = "Transcript local index",
+  ##  "transcript_sequence" = "Predicted RNA/mRNA Sequence (introns spliced out)",
+  ##  "protein_sequence" = "Predicted Protein Sequence",
+  ##  "cds" = "Coding Sequence",
+  ##  "uri" = "Image",
+  ##  "gene_source_id" = "gene_source_id",
+  ##  "source_id" = "source_id")
+
   parameters <- list(
     "organism" = jsonlite::unbox(species),
     "min_molecular_weight" = jsonlite::unbox("1"),
     "max_molecular_weight" = jsonlite::unbox("10000000000000000")
   )
-  result <- post_eupath_raw(entry,
-                            question="GeneQuestions.GenesByMolecularWeight",
-                            parameters=parameters,
-                            table_name="annot",
-                            columns=names(field_list))
+  result <- post_eupath_raw(entry, question="GeneQuestions.GenesByMolecularWeight",
+                            parameters=parameters, table_name="annot")
   colnames(result) <- tolower(colnames(result))
   numeric_columns <- c(
     "annot_gene_exon_count",
@@ -629,7 +617,9 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
     "annot_five_prime_utr_length",
     "annot_three_prime_utr_length")
   for (col in numeric_columns) {
-    result[[col]] <- as.numeric(result[[col]])
+    if (!is.null(result[[col]])) {
+      result[[col]] <- as.numeric(result[[col]])
+    }
   }
   factor_columns <- c(
     "annot_chromosome",
@@ -639,7 +629,9 @@ post_eupath_annotations <- function(species="Leishmania major", entry=NULL,
     "annot_tm_count",
     "annot_exon_count")
   for (col in factor_columns) {
-    result[[col]] <- as.factor(result[[col]])
+    if (!is.null(result[[col]])) {
+      result[[col]] <- as.factor(result[[col]])
+    }
   }
   colnames(result) <- toupper(colnames(result))
 
@@ -673,7 +665,7 @@ post_eupath_go_table <- function(species="Leishmania major", entry=NULL,
   ## Parameters taken from the pdf "Exporting Data - Web Services.pdf" received
   ## from Cristina
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}_go_table.rda"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}_go_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -749,7 +741,7 @@ post_eupath_ortholog_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}_ortholog_table.rda"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}_ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -810,7 +802,7 @@ post_eupath_interpro_table <- function(species="Leishmania major strain Friedlin
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}_interpro_table"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}_interpro_table"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -870,7 +862,7 @@ post_eupath_pathway_table <- function(species="Leishmania major", entry=NULL,
       "format" = jsonlite::unbox("tableTabular")
     ))
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}_pathway_table.rda"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}_pathway_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -925,7 +917,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
                             parameters=parameters,
                             columns=field_list)
 
-  savefile <- file.path(dir, glue("{entry[['Genome']]}ortholog_table.rda"))
+  savefile <- file.path(dir, glue::glue("{entry[['Genome']]}ortholog_table.rda"))
   if (file.exists(savefile)) {
     message("We can save some time by reading the savefile.")
     message("Delete the file ", savefile, " to regenerate.")
@@ -937,7 +929,7 @@ get_orthologs_all_genes <- function(species="Leishmania major", dir="eupathdb",
 
   all_orthologs <- data.frame()
   message("Downloading orthologs one gene at a time. Checkpointing if it fails.")
-  ortho_savefile <- glue("ortho_checkpoint_{entry[['Genome']]}.rda")
+  ortho_savefile <- glue::glue("ortho_checkpoint_{entry[['Genome']]}.rda")
   savelist <- list(
     "number_finished" = 0,
     "all_orthologs" = all_orthologs)
@@ -1025,7 +1017,7 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
   query_body <- list(
     ## 3 elements, answerSpec, formatting, format.
     "answerSpec" = list(
-      "questionName" = jsonlite::unbox(glue("GeneQuestions.{question}")),
+      "questionName" = jsonlite::unbox(glue::glue("GeneQuestions.{question}")),
       "parameters" = parameters,
       "viewFilters" = list(),
       "filters" = list()
@@ -1056,7 +1048,7 @@ get_orthologs_one_gene <- function(species="Leishmania major", gene="LmjF.01.001
     warning("A minimal amount of content was returned.")
   }
 
-  cont <- httr::content(result)
+  cont <- httr::content(result, encoding="UTF-8")
   entries <- strsplit(
     x=cont, split="\n\n------------------------------------------------------------\n\n")[[1]]
   stuff <- read.delim(textConnection(entries[1]), sep="\n", header=FALSE)

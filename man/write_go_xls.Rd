@@ -36,5 +36,5 @@ them into excel. Hopefully with a relatively consistent look.
 }
 \seealso{
 \pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats}
-\pkg{topGO} \pkg{gProfiler}
+  \pkg{topGO} \pkg{gProfiler}
 }

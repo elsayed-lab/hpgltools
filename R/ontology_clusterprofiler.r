@@ -494,7 +494,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     "david_data" = david_data,
     "plots" = plotlist,
     "pvalue_plots" = plotlist)
-
+  class(retlist) <- c("clusterprofiler_result", "list")
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_cp_data(retlist, excel=excel)))

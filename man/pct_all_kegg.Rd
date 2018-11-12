@@ -24,7 +24,7 @@ pct_all_kegg(all_ids, sig_ids, organism = "dme", pathways = "all",
 }
 \value{
 Dataframe including the filenames, percentages, nodes included, and
-differential nodes.
+  differential nodes.
 }
 \description{
 KEGGgraph provides some interesting functionality for mapping KEGGids and

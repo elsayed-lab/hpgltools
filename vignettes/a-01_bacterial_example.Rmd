@@ -161,7 +161,7 @@ raw_metrics$boxplot
 raw_metrics$density
 ## quantile/quantile plots compared to the median of all samples
 raw_metrics$qqrat
-raw_metrics$tsneplot
+raw_metrics$tsne_plot
 ## Here we can see some samples are differently 'shaped' compared to the median than others
 ## There are other plots one may view, but this data set is a bit too crowded as is.
 ## The following summary shows the other available plots:
@@ -215,10 +215,10 @@ has been reduced to a single sample per condition, but we can look at them
 anyhow.
 
 ```{r subset_show_plots}
-a_metrics$pcaplot
-b_metrics$pcaplot
-a_metrics$tsneplot
-b_metrics$tsneplot
+a_metrics$pc_plot
+b_metrics$pc_plot
+a_metrics$tsne_plot
+b_metrics$tsne_plot
 ```
 
 # Normalizing data
@@ -253,14 +253,14 @@ Now lets see some of the resulting metrics, in this case I will just compare som
 are good at fooling our silly visual brains into seeing patterns.
 
 ```{r view_metrics}
-l2_metrics$pcaplot
+l2_metrics$pc_plot
 ## Also viewable with plot_pca()$plot
 ## PCA plots seem (to me) to prefer log2 scale data.
-q_metrics$pcaplot
+q_metrics$pc_plot
 ## only normalizing on the quantiles leaves the data open to scale effects.
-c_metrics$pcaplot
+c_metrics$pc_plot
 ## but cpm alone is insufficient
-f_metrics$pcaplot
+f_metrics$pc_plot
 ## only filtering out low-count genes is helpful as well
 norm_graphs$pcaplot
 ## The different batch effect testing methods have a pretty widely ranging effect on the clustering
@@ -273,7 +273,7 @@ knitr::kable(norm_graphs$pcares)
 norm_graphs$smc
 norm_graphs$disheat  ## svaseq's batch correction seems to draw out the signal quite nicely.
 ## It is worth noting that the wt, early log, thy, replicate c samples are still a bit weird.
-norm_graphs$tsneplot
+norm_graphs$tsne_plot
 ```
 
 # Performing DE analyses
@@ -312,10 +312,6 @@ my_keepers <- list(
 In the above example, if the keepers argument to combine_de_tables() is given as my_keepers, then
 the resulting table will not have the set of 6 possible comparisons, but instead will only have 2
 tables named 'wt_media' and 'mga_media', which if printed to excel will be sheets named accordingly.
-
-Because these tables can get quickly extremely large, the excel workbooks may become too big for the
-zip(1) program to properly merge.  If that happens, one may either remove some(or all) of the plots
-and/or have it print csv versions of the same tables.
 
 ```{r combine_test}
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
@@ -383,7 +379,7 @@ circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df,
 circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
                                  cfgout=circos_test, basename="edger", outer=circos_deseq_hist)
 circos_suffix(cfgout=circos_test)
-circos_made <- circos_make(target="mgas")
+circos_made <- sm(circos_make(target="mgas"))
 getwd()
 ```
 
@@ -415,14 +411,12 @@ wt_mga_de <- sm(all_pairwise(input=wt_mga_expt,
 wt_mga_de$combined$comp_plot
 ## How well do the various DE tools agree on this data?
 
-wt_mga_plots$tsneplot
-wt_mga_nplots$pcaplot
+wt_mga_plots$tsne_plot
+wt_mga_nplots$pc_plot
 wt_mga_de$combined$limma_plots$WT_vs_mga$scatter
 wt_mga_de$combined$limma_ma_plots$WT_vs_mga$plot
 wt_mga_de$combined$limma_vol_plots$WT_vs_mga$plot
 ```
-
-[index.html](index.html)
 
 ```{r sysinfo, results='asis'}
 pander::pander(sessionInfo())

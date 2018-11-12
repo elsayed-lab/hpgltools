@@ -201,7 +201,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     godf <- extract_go(go_db, keytype=go_keytype)
   } else if (class(go_db)[[1]] == "OrgDb") {
     godf <- extract_go(go_db, keytype=go_keytype)
-  } else if (class(go_db)[[1]] == "data.table") {
+  } else if (class(go_db)[[1]] == "data.table" || class(go_db)[[1]] == "tbl_df") {
     godf <- as.data.frame(go_db)
   } else if (class(go_db)[[1]] == "data.frame") {
     godf <- go_db
@@ -352,6 +352,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "bp_subset" = bp_subset,
     "cc_subset" = cc_subset,
     "qdata" = qdata)
+  class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_goseq_data(retlist, excel=excel)))

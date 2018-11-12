@@ -36,5 +36,5 @@ https://github.com/kokrah/cbcbSEQ/blob/master/R/transform.R
 }
 \seealso{
 \pkg{sva}
-\code{\link[sva]{ComBat}}
+ \code{\link[sva]{ComBat}}
 }

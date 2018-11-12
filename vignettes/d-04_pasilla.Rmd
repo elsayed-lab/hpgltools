@@ -133,16 +133,19 @@ Now let us print the graphs
 
 ```{r print_graphs}
 pasilla_metrics$libsize
-## The library sizes range from 8-21 million reads, this might be a problem for some analyses
+## The library sizes range from 8-21 million reads, this might be a problem for
+## some analyses.
 pasilla_metrics$nonzero
-## Ergo, the lower abundance libraries have more genes of counts == 0 (bottom left)
+## Ergo, the lower abundance libraries have more genes of counts == 0 (bottom
+## left).
 pasilla_metrics$boxplot
-## And a boxplot downshifts them (but not that much because it decided to put the data on the log scale)
+## And a boxplot downshifts them (but not that much because it decided to put
+## the data on the log scale).
 pasilla_metrics$density
 ## Similarly, one can see those samples are a bit lower with respect to density
 
-## Unless the data is very well behaved, the rest of the plots are not likely to look good until the
-## data is normalized, nonetheless, lets see
+## Unless the data is very well behaved, the rest of the plots are not likely to
+## look good until the data is normalized, nonetheless, lets see
 pasilla_metrics$corheat
 pasilla_metrics$disheat
 pasilla_metrics$pcaplot
@@ -179,8 +182,6 @@ pasilla_tables <- sm(combine_de_tables(all_pairwise_result=pasilla_pairwise,
                                        abundant_excel="pasilla_abundant.xlsx"))
 pasilla_tables$deseq_ma_plots[[1]]$plot
 ```
-
-[index.html](index.html)
 
 ```{r saveme}
 pander::pander(sessionInfo())

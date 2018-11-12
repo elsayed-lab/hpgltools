@@ -21,9 +21,10 @@ normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant",
 
 ## Interestingly, doParallel does not work when run from packrat.
 test_keepers <- list("treatment" = c("treated", "untreated"))
-hpgl_all <- sm(all_pairwise(pasilla_expt,
-                            keepers=test_keepers,
-                            combined_excel="excel_test.xlsx"))
+hpgl_all <- all_pairwise(pasilla_expt,
+                         parallel=FALSE,
+                         keepers=test_keepers,
+                         combined_excel="excel_test.xlsx")
 
 combined_excel <- hpgl_all[["combined"]]
 test_that("Does combine_de_tables create an excel file?", {
@@ -31,8 +32,8 @@ test_that("Does combine_de_tables create an excel file?", {
 })
 
 hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
-                                limma_method="robust", edger_method="long",
-                                edger_test="qlr", parallel=FALSE))
+                                   limma_method="robust", edger_method="long",
+                                   edger_test="qlr", parallel=FALSE))
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 table_order <- rownames(expected)
@@ -189,20 +190,21 @@ expected <- c(
   "ensembltranscriptid", "ensemblgeneid", "version",
   "transcriptversion", "description", "genebiotype",
   "cdslength", "chromosomename", "strand",
-  "startposition", "endposition", "limma_logfc",
-  "limma_adjp", "deseq_logfc", "deseq_adjp",
-  "edger_logfc", "edger_adjp", "limma_ave",
-  "limma_t", "limma_b", "limma_p",
-  "deseq_basemean", "deseq_lfcse", "deseq_stat",
-  "deseq_p", "edger_logcpm", "edger_lr",
-  "edger_p", "ebseq_fc", "ebseq_logfc",
-  "ebseq_postfc", "ebseq_mean", "ebseq_ppee",
-  "ebseq_ppde", "ebseq_adjp", "basic_nummed", "basic_denmed",
-  "basic_numvar", "basic_denvar", "basic_logfc",
-  "basic_t", "basic_p", "basic_adjp",
-  "limma_adjp_fdr", "deseq_adjp_fdr", "edger_adjp_fdr",
-  "basic_adjp_fdr", "lfc_meta", "lfc_var",
-  "lfc_varbymed", "p_meta", "p_var")
+  "startposition", "endposition", "deseq_logfc",
+  "deseq_adjp", "edger_logfc", "edger_adjp",
+  "limma_logfc", "limma_adjp", "basic_nummed",
+  "basic_denmed", "basic_numvar", "basic_denvar",
+  "basic_logfc", "basic_t", "basic_p",
+  "basic_adjp", "deseq_basemean", "deseq_lfcse",
+  "deseq_stat", "deseq_p", "ebseq_fc",
+  "ebseq_logfc", "ebseq_postfc", "ebseq_mean",
+  "ebseq_ppee", "ebseq_ppde", "ebseq_adjp",
+  "edger_logcpm", "edger_lr", "edger_p",
+  "limma_ave", "limma_t", "limma_b",
+  "limma_p", "limma_adjp_fdr", "deseq_adjp_fdr",
+  "edger_adjp_fdr", "basic_adjp_fdr", "lfc_meta",
+  "lfc_var", "lfc_varbymed", "p_meta",
+  "p_var")
 actual <- colnames(combined_excel[["data"]][[table]])
 test_that("Do we get expected columns from the excel sheet?", {
     expect_equal(expected, actual)
@@ -326,7 +328,7 @@ combined_sva <- combine_de_tables(hpgl_sva_result,
                                   excel=NULL,
                                   keepers=test_keepers)
 sva_batch_test <- compare_de_results(combined_excel, combined_sva)
-expected <- 0.96
+expected <- 0.71
 actual <- sva_batch_test[["result"]][["limma"]][[table]][["logfc"]]
 test_that("Do limma with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
@@ -359,14 +361,14 @@ test_that("Ibid, but in the down direction?", {
 actual <- sum(nrow(test_intersect[["ups"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["deseq"]]))
-expected <- 29
+expected <- 30
 test_that("Are there very few genes observed without the others?", {
     expect_equal(actual, expected)
 })
 actual <- sum(nrow(test_intersect[["downs"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["deseq"]]))
-expected <- 20
+expected <- 23
 test_that("Ibid, but down?", {
     expect_equal(actual, expected)
 })
@@ -381,12 +383,12 @@ test_that("Do limma and edger have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["limma_deseq"]])
-expected <- 20
+expected <- 37
 test_that("Do limma and deseq have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_deseq"]])
-expected <- 5
+expected <- 12
 test_that("Do limma and deseq have some genes in common? (down)", {
     expect_equal(actual, expected)
 })

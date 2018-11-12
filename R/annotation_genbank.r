@@ -38,7 +38,6 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
   others <- genbankr::otherFeatures(gbk)
   genes <- GenomicFeatures::genes(gbk)
   exons <- GenomicFeatures::exons(gbk)
-  ## intergenic <- genbankr:::intergenic(gbk)
   cds <- GenomicFeatures::cds(gbk)
   ret <- list(
     "others" = others,

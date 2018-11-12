@@ -41,5 +41,5 @@ speed things along.
 }
 \seealso{
 \pkg{data.table}
-\code{\link{create_expt}}
+ \code{\link{create_expt}}
 }

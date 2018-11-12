@@ -52,5 +52,5 @@ or whatever.
 }
 \seealso{
 \pkg{openxlsx} \pkg{Biobase}
-\code{\link{normalize_expt}} \code{\link{graph_metrics}}
+ \code{\link{normalize_expt}} \code{\link{graph_metrics}}
 }

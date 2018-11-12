@@ -39,17 +39,17 @@ simple_goseq(sig_genes, go_db = NULL, length_db = NULL,
 }
 \value{
 Big list including:
-the pwd:pwf function,
-alldata:the godata dataframe,
-pvalue_histogram:p-value histograms,
-godata_interesting:the ontology information of the enhanced groups,
-term_table:the goterms with some information about them,
-mf_subset:a plot of the MF enhanced groups,
-mfp_plot:the pvalues of the MF group,
-bp_subset:a plot of the BP enhanced groups,
-bpp_plot,
-cc_subset,
-and ccp_plot
+ the pwd:pwf function,
+ alldata:the godata dataframe,
+ pvalue_histogram:p-value histograms,
+ godata_interesting:the ontology information of the enhanced groups,
+ term_table:the goterms with some information about them,
+ mf_subset:a plot of the MF enhanced groups,
+ mfp_plot:the pvalues of the MF group,
+ bp_subset:a plot of the BP enhanced groups,
+ bpp_plot,
+ cc_subset,
+ and ccp_plot
 }
 \description{
 goseq can be pretty difficult to get set up for non-supported organisms.

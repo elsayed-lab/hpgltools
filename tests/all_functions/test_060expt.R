@@ -181,7 +181,7 @@ test_that("Can we subset an expt?", {
 testing <- normalize_expt(pombe_expt, transform="log2", norm="tmm",
                           convert="cpm", filter=TRUE, batch="sva")
 actual <- what_happened(testing)
-expected <- "log2(sva(cpm(tmm(hpgl(data)))))"
+expected <- glue::glue("log2(sva(cpm(tmm(hpgl(data)))))")
 ## 32
 test_that("Will an expt tell us what happened to it?", {
   expect_equal(expected, actual)

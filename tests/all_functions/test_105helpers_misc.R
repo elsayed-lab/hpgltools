@@ -17,7 +17,7 @@ context("105helpers_misc.R:
 
 ## get_git_commit()
 testing <- get_git_commit()
-expected <- "character"
+expected <- c("glue", "character")
 actual <- class(testing)
 test_that("get_git_commit() gave me a commit id?", {
   expect_equal(expected, actual)

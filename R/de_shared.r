@@ -340,13 +340,13 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     "original_pvalues" = original_pvalues,
     "pre_batch" = pre_pca,
     "post_batch" = post_pca)
+  class(ret) <- c("all_pairwise", "list")
 
   if (!is.null(arglist[["combined_excel"]])) {
     message("Invoking combine_de_tables().")
     combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
   }
-  class(ret) <- c("all_pairwise", "list")
   return(ret)
 }
 
@@ -992,23 +992,23 @@ correlate_de_tables <- function(results, annot_df=NULL) {
   ## contrast performed
   retlst <- list()
   methods <- c()
-  if (class(results[["limma"]]) == "list") {
+  if (class(results[["limma"]])[1] == "limma_result") {
     retlst[["limma"]] <- results[["limma"]][["all_tables"]]
     methods <- c(methods, "limma")
   }
-  if (class(results[["deseq"]]) == "list") {
+  if (class(results[["deseq"]])[1] == "deseq_result") {
     retlst[["deseq"]] <- results[["deseq"]][["all_tables"]]
     methods <- c(methods, "deseq")
   }
-  if (class(results[["edger"]]) == "list") {
+  if (class(results[["edger"]])[1] == "edger_result") {
     retlst[["edger"]] <- results[["edger"]][["all_tables"]]
     methods <- c(methods, "edger")
   }
-  if (class(results[["ebseq"]]) == "list") {
+  if (class(results[["ebseq"]])[1] == "ebseq_result") {
     retlst[["ebseq"]] <- results[["ebseq"]][["all_tables"]]
     methods <- c(methods, "ebseq")
   }
-  if (class(results[["basic"]]) == "list") {
+  if (class(results[["basic"]])[1] == "basic_result") {
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
     methods <- c(methods, "basic")
   }
@@ -1738,7 +1738,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
     contrast_string <- glue("{contrast_string} {eval_string}")
   }
   ## The final element of makeContrasts() is the design from voom()
-  contrast_string <- glue("{contrast_string}, levels=model)")
+  contrast_string <- glue("{contrast_string} levels=model)")
   eval(parse(text=contrast_string))
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type

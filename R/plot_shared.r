@@ -73,7 +73,7 @@ ggplt <- function(gg, filename="ggplot.html",
   dir <- dirname(filename)
   out <- plotly::ggplotly(gg, ...)
   widget <- htmlwidgets::saveWidget(
-                           htmlwidgets::as_widget(out), base, selcontained=selfcontained,
+                           plotly::as_widget(out), base, selcontained=selfcontained,
                            libdir=libdir, background=background, title=title,
                            knitrOptions=knitrOptions)
   if (dir != ".") {
@@ -129,7 +129,6 @@ ggplt <- function(gg, filename="ggplot.html",
 #'  norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
 #'                         transform="log2", norm="rle")
 #'  holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
-#'  ## good luck, you are going to be waiting a while for the ma plots to print!
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
@@ -245,20 +244,20 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
     "ma" = ma_plots,
     "nonzero" = nonzero[["plot"]],
     "nonzero_table" = nonzero[["table"]],
-    "pcaplot" = pca[["plot"]],
-    "pcatable" = pca[["table"]],
-    "pcares" = pca[["res"]],
-    "pcavar" = pca[["variance"]],
     "qqlog" = qq_logs,
     "qqrat" = qq_ratios,
     "smc" = smc,
     "smd" = smd,
     "cvplot" = cv[["plot"]],
     "topnplot" = topn[["plot"]],
-    "tsneplot" = tsne[["plot"]],
-    "tsnetable" = tsne[["table"]],
-    "tsneres" = tsne[["res"]],
-    "tsnevar" = tsne[["variance"]]
+    "pc_summary" = pca[["residual_df"]],
+    "pc_propvar" = pca[["prop_var"]],
+    "pc_plot" = pca[["plot"]],
+    "pc_table" = pca[["table"]],
+    "tsne_summary" = tsne[["residual_df"]],
+    "tsne_propvar" = tsne[["prop_var"]],
+    "tsne_plot" = tsne[["plot"]],
+    "tsne_table" = tsne[["table"]]
   )
   new_options <- options(old_options)
   return(ret_data)

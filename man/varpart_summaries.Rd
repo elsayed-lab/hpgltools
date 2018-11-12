@@ -15,7 +15,7 @@ varpart_summaries(expt, factors = c("condition", "batch"), cpus = 6)
 }
 \value{
 Summaries of the new model,  in theory this would be a nicely
-batch-corrected data set.
+  batch-corrected data set.
 }
 \description{
 Note the word 'attempt'.  This function is so ungodly slow that it probably

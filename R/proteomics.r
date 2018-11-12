@@ -3,7 +3,7 @@
 #' When working with swath data, it is fundamentally important to know the
 #' correct values for a bunch of the input variables.  These are not trivial
 #' to acquire.  This function attempts to make this easier (but slow) by reading
-#' the mzXML file and using xml2 to parse and extract some hopefully helpful data.
+#' the mzXML file and parsing out helpful data.
 #'
 #' @param file  Filename to read.
 #' @param id  An id to give the result.
@@ -20,7 +20,7 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
   message("Extracting instrument information for ", file)
-  instruments <- rvest::xml_nodes(input, "msinstrument")
+  instruments <- rvest::xml_nodes(x=input, css="msinstrument")
   instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
   instrument_values <- c("msmanufacturer", "msmodel", "msionisation",
                          "msmassanalyzer", "msdetector")
@@ -212,7 +212,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
-      if (class(file_result) != "try-error") {
+      if (class(file_result)[1] != "try-error") {
         returns[[file]] <- file_result
       }
     }
@@ -225,7 +225,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
-      if (class(file_result) != "try-error") {
+      if (class(file_result)[1] != "try-error") {
         res[[file]] <- file_result
       }
     }
@@ -569,7 +569,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 
   gather_masses <- function(sequence) {
     atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
-    if (class(atoms) != "try-error") {
+    if (class(atoms)[1] != "try-error") {
       d <- BRAIN::useBRAIN(atoms)
       ret <- round(d[["avgMass"]])
     } else {
@@ -585,8 +585,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- sm(try(readr::read_csv(file, sep="\t"), silent=TRUE))
-    if (class(file_result) != "try-error") {
+    file_result <- sm(try(readr::read_tsv(file), silent=TRUE))
+    if (class(file_result)[1] != "try-error") {
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%
         dplyr::rowwise() %>%
@@ -613,7 +613,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   return(retlist)
 }
 
-#' Plot the peak intensities with respect to m/z
+#' Plot mzXML peak intensities with respect to m/z.
 #'
 #' I want to have a pretty plot of peak intensities and m/z.  The plot provided
 #' by this function is interesting, but suffers from some oddities; notably that
@@ -643,7 +643,7 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
   keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]]) == "try-error") {
+    if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
     keepers <- c(keepers, i)
@@ -747,7 +747,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   keepers <- c()
   for (i in 1:samples) {
     name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]]) == "try-error") {
+    if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
     keepers <- c(keepers, i)
@@ -823,19 +823,20 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #' Unfortunately, the two data types are subtly different enough that I felt it
 #' not worth while to generalize the functions.
 #'
-#' @param pyprophet_data  List containing the pyprophet results.
-#' @param column  What column of the pyprophet scored data to plot?
-#' @param keep_real  Do we keep the real data when plotting the data? (perhaps
+#' @param pyprophet_data List containing the pyprophet results.
+#' @param column What column of the pyprophet scored data to plot?
+#' @param keep_real Do we keep the real data when plotting the data? (perhaps
 #'   we only want the decoys)
-#' @param keep_decoys  Do we keep the decoys when plotting the data?
-#' @param names  Names for the x-axis of the plot.
-#' @param title  Title the plot?
-#' @param scale  Put the data on a specific scale?
-#' @param ...  Further arguments, presumably for colors or some such.
-#' @return  A boxplot describing the desired column from the data.
+#' @param keep_decoys Do we keep the decoys when plotting the data?
+#' @param expt_names Names for the x-axis of the plot.
+#' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param title Title the plot?
+#' @param scale Put the data on a specific scale?
+#' @param ... Further arguments, presumably for colors or some such.
+#' @return Boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_real=TRUE,
-                                        keep_decoys=TRUE, names=NULL,
+                                        keep_decoys=TRUE, expt_names=NULL, label_chars=10,
                                         title=NULL, scale=NULL, ...) {
   arglist <- list(...)
   metadata <- pyprophet_data[["metadata"]]
@@ -843,9 +844,19 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   sample_data <- pyprophet_data[["sample_data"]]
   plot_df <- data.frame()
   samples <- length(sample_data)
+
+  ## Reset the sample names if one wants a specific column from the metadata.
+  if (!is.null(expt_names) && class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
+    } else {
+      names(sample_data) <- expt_names
+    }
+  }
+
   keepers <- c()
   for (i in 1:samples) {
-    name <- metadata[i, "sampleid"]
+    name <- names(sample_data)[i]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
@@ -884,6 +895,9 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   }
   plot_df[[column]] <- scale_data[["data"]]
 
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
+    plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
+  }
   boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
     sm(ggplot2::geom_boxplot(na.rm=TRUE,
                              ggplot2::aes_string(fill="sample"),
@@ -897,9 +911,6 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
     ggplot2::xlab("Sample") + ggplot2::ylab(column)
   if (!is.null(title)) {
     boxplot <- boxplot + ggplot2::ggtitle(title)
-  }
-  if (!is.null(names)) {
-    boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
   }
   scale <- "log"
   if (scale == "log") {

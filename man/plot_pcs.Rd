@@ -58,5 +58,5 @@ that process as simple and pretty as possible.
 }
 \seealso{
 \pkg{ggplot2}
-\code{\link[directlabels]{geom_dl}}
+ \code{\link[directlabels]{geom_dl}}
 }

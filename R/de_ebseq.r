@@ -79,6 +79,7 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
     "conditions_table" = conditions_table,
     "method" = "ebseq"
   )
+  class(retlist) <- c("ebseq_result", "list")
   return(retlist)
 }
 
@@ -116,7 +117,6 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     name  <- apc[["names"]][[c]]
     a_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
     b_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
-    utils::setTxtProgressBar(bar, pct_done)
     if (! a_name %in% input[["conditions"]]) {
       message("The contrast ", a_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")

@@ -45,7 +45,7 @@ test_that("Do we get the expected amount of orgdb GO data?", {
 })
 
 ## take_from_ah()
-testing <- take_from_ah()
+testing <- orgdb_from_ah()
 expected <- 26
 actual <- length(AnnotationDbi::keytypes(testing))
 ## 07

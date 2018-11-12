@@ -30,7 +30,7 @@ search on some other attributes.
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools}
-\code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 }
 \author{
 atb

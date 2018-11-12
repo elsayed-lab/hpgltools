@@ -270,7 +270,8 @@ test_that("compare_led_tables provides some expected comparisons?", {
 })
 
 message("\nHuff huff, half way done.\n")
-
+## Strange, I got a failure here when running make test
+## but running manually everything seems to be working fine...
 ## 15 compare_significant_contrasts()
 cb_sig <- extract_significant_genes(combined=test_condbatch_combined, excel=NULL)
 actual <- dim(cb_sig$limma$ups[[1]])

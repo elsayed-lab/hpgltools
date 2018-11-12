@@ -133,9 +133,10 @@ plot_boxplot <- function(data, colors=NULL, title=NULL,
 #' @param position How to place the lines, either let them overlap (identity), or stack them.
 #' @param direct Use direct.labels for labeling the plot?
 #' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
-#' @param scale Plot on the log scale?
 #' @param title Title for the plot.
+#' @param scale Plot on the log scale?
 #' @param colors_by Factor for coloring the lines
+#' @param label_chars Maximum number of characters in sample names before abbreviation.
 #' @param ... sometimes extra arguments might come from graph_metrics()
 #' @return ggplot2 density plot!
 #' @seealso \pkg{ggplot2}
@@ -300,13 +301,15 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
 #'
 #' @param data Expressionset, expt, or dataframe of samples.
 #' @param labels What kind of labels to print?
+#' @param ... Arguments passed presumably from graph_metrics().
 #' @return List containing:
 #'  logs = a recordPlot() of the pairwise log qq plots.
 #'  ratios = a recordPlot() of the pairwise ratio qq plots.
 #'  means = a table of the median values of all the summaries of the qq plots.
 #' @seealso \pkg{Biobase}
 #' @export
-plot_qq_all <- function(data, labels="short") {
+plot_qq_all <- function(data, labels="short", ...) {
+  arglist <- list(...)
   data_class <- class(data)[1]
   if (data_class == "expt") {
     design <- pData(data)

@@ -16,7 +16,7 @@ load_genbank_annotations(accession = "AE009949", reread = TRUE,
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I
-haven't yet finalized.
+  haven't yet finalized.
 }
 \description{
 Let us admit it, sometimes biomart is a pain.  It also does not have easily
@@ -35,7 +35,7 @@ txdb instance.
 }
 \seealso{
 \pkg{genbankr} \pkg{rentrez}
-\code{\link[genbankr]{import}}
+ \code{\link[genbankr]{import}}
 }
 \author{
 atb

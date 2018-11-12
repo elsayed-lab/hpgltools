@@ -165,15 +165,15 @@ plots_wt_mut$volcano$plot
 ```{r simple_all}
 all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE, parallel=FALSE))
 all_combined <- sm(combine_de_tables(all_comparisons, excel=FALSE))
-head(all_combined$data[[1]])
+head(all_combined$data[[1]], n=3)
 sig_genes <- sm(extract_significant_genes(all_combined, excel=FALSE))
-head(sig_genes$limma$ups[[1]])
+head(sig_genes$limma$ups[[1]], n=3)
 
 ## Here we see that edger and deseq agree the least:
 all_comparisons$comparison$comp
 
 ## And here we can look at the set of 'significant' genes according to various tools:
-yeast_sig <- extract_significant_genes(all_combined, excel=FALSE)
+yeast_sig <- sm(extract_significant_genes(all_combined, excel=FALSE))
 yeast_barplots <- sm(significant_barplots(combined=all_combined))
 yeast_barplots$limma
 yeast_barplots$edger
@@ -271,9 +271,10 @@ pretty nice.  Sadly, there is no pre-defined orgdb for pombe...
 
 ```{r test_cp, eval=FALSE}
 ## holy crap makeOrgPackageFromNCBI is slow, no slower than some of mine, so who am I to complain.
-orgdb <- AnnotationForge::makeOrgPackageFromNCBI(version="0.1", author="atb <abelew@gmail.com>",
-                                                 maintainer="atb <abelew@gmail.com>", tax_id="4896",
-                                                 genus="Schizosaccharomyces", species="pombe")
+orgdb <- AnnotationForge::makeOrgPackageFromNCBI(
+                            version="0.1", author="atb <abelew@gmail.com>",
+                            maintainer="atb <abelew@gmail.com>", tax_id="4896",
+                            genus="Schizosaccharomyces", species="pombe")
 ## This created the directory 'org.spombe.eg.db'
 devtools::install_local("org.Spombe.eg.db")
 library(org.Spombe.eg.db)

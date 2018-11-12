@@ -4,18 +4,20 @@
 \alias{plot_qq_all}
 \title{Quantile/quantile comparison of the mean of all samples vs. each sample.}
 \usage{
-plot_qq_all(data, labels = "short")
+plot_qq_all(data, labels = "short", ...)
 }
 \arguments{
 \item{data}{Expressionset, expt, or dataframe of samples.}
 
 \item{labels}{What kind of labels to print?}
+
+\item{...}{Arguments passed presumably from graph_metrics().}
 }
 \value{
 List containing:
-logs = a recordPlot() of the pairwise log qq plots.
-ratios = a recordPlot() of the pairwise ratio qq plots.
-means = a table of the median values of all the summaries of the qq plots.
+ logs = a recordPlot() of the pairwise log qq plots.
+ ratios = a recordPlot() of the pairwise ratio qq plots.
+ means = a table of the median values of all the summaries of the qq plots.
 }
 \description{
 This allows one to visualize all individual data columns against the mean of

@@ -13,11 +13,11 @@ It falls under a few main topics
 
 \itemize{
 \item Data exploration, look for trends in sequencing data and identify batch
-effects or skewed distributions.
+      effects or skewed distributions.
 \item Differential expression analyses, use DESeq2/limma/EdgeR in a hopefully
-robust and flexible fashion.
+      robust and flexible fashion.
 \item Ontology analyses, use goseq/clusterProfiler/topGO/GOStats/gProfiler in
-hopefully robust ways.
+      hopefully robust ways.
 \item Perform some simple TnSeq analyses.
 }
 

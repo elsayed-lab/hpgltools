@@ -21,5 +21,5 @@ List containing a table of scan and precursor data.
 When working with swath data, it is fundamentally important to know the
 correct values for a bunch of the input variables.  These are not trivial
 to acquire.  This function attempts to make this easier (but slow) by reading
-the mzXML file and using xml2 to parse and extract some hopefully helpful data.
+the mzXML file and parsing out helpful data.
 }

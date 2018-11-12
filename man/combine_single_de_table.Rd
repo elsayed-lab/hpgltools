@@ -50,8 +50,8 @@ combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
 }
 \value{
 List containing a) Dataframe containing the merged
-limma/edger/deseq/basic tables, and b) A summary of how many
-genes were observed as up/down by output table.
+ limma/edger/deseq/basic tables, and b) A summary of how many
+ genes were observed as up/down by output table.
 }
 \description{
 This combines the outputs from the various differential expression

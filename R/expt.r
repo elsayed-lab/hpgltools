@@ -85,13 +85,13 @@ concatenate_runs <- function(expt, column="replicate") {
 #'   used, but that is not always true, this allows one to limit to a specific
 #'   annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
-#' @param file_column  Column to use in a gene information dataframe for
+#' @param file_column Column to use in a gene information dataframe for
 #' @param savefile Rdata filename prefix for saving the data of the resulting
 #'   expt.
 #' @param low_files Explicitly lowercase the filenames when searching the
 #'   filesystem?
 #' @param ... More parameters are fun!
-#' @return  experiment an expressionset
+#' @return experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
 #'   \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
@@ -636,13 +636,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 #' gene and sample.  Also those methods lead to shenanigans when I want to know
 #' what happened to the data over the course of the subset.
 #'
-#' @param expt  Expressionset containing expt object.
-#' @param column  fData column to use for subsetting.
-#' @param method  Either remove explicit rows, or keep them.
-#' @param ids  Specific IDs to exclude.
-#' @param patterns  Character list of patterns to remove/keep
-#' @param ...  Extra arguments are passed to arglist, currently unused.
-#' @return  A smaller expt
+#' @param expt Expressionset containing expt object.
+#' @param column fData column to use for subsetting.
+#' @param method Either remove explicit rows, or keep them.
+#' @param ids Specific IDs to exclude.
+#' @param patterns Character list of patterns to remove/keep
+#' @param ... Extra arguments are passed to arglist, currently unused.
+#' @return A smaller expt
 #' @seealso \code{\link{create_expt}}
 #' @export
 exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
@@ -838,7 +838,7 @@ analyses more difficult/impossible.")
 
 #' Do features_greater_than() inverted!
 #'
-#' @param  ...  Arguments passed to features_greather_than()
+#' @param  ... Arguments passed to features_greather_than()
 #' @return The set of features less than whatever you would have done with
 #'   features_greater_than().
 #' @export
@@ -853,11 +853,11 @@ features_less_than <- function(...) {
 #' Untested as of 2016-12-01 but used with Lucia.  I think it would be interesting to iterate
 #' this function from small to large cutoffs and plot how the number of kept genes decreases.
 #'
-#' @param data  A dataframe/exprs/matrix/whatever of counts.
-#' @param cutoff  Minimum number of counts.
-#' @param hard  Greater-than is hard, greater-than-equals is not.
-#' @param inverse  when inverted, this provides features less than the cutoff.
-#' @return  A list of two elements, the first comprised of the number of genes
+#' @param data Dataframe/exprs/matrix/whatever of counts.
+#' @param cutoff Minimum number of counts.
+#' @param hard Greater-than is hard, greater-than-equals is not.
+#' @param inverse when inverted, this provides features less than the cutoff.
+#' @return A list of two elements, the first comprised of the number of genes
 #'   greater than the cutoff, the second with the identities of said genes.
 #' @seealso \pkg{Biobase}
 #' @examples
@@ -907,8 +907,8 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
 #' The answer to this lies in a combination of subset_expt() and
 #' features_greater_than().
 #'
-#' @param expt  An experiment to query.
-#' @param cutoff  What is the minimum number of counts required to define
+#' @param expt An experiment to query.
+#' @param cutoff What is the minimum number of counts required to define
 #'   'included.'
 #' @return A set of features.
 #' @export
@@ -971,11 +971,11 @@ features_in_single_condition <- function(expt, cutoff=2) {
 #' terrible, I rely entirely upon RColorBrewer, but also allow one to choose
 #' his/her own colors.
 #'
-#' @param sample_definitions  Metadata, presumably containing a 'condition'
+#' @param sample_definitions Metadata, presumably containing a 'condition'
 #'   column.
-#' @param cond_column  Which column in the sample data provides the set of
+#' @param cond_column Which column in the sample data provides the set of
 #'   'conditions' used to define the colors?
-#' @param ...  Other arguments like a color palette, etc.
+#' @param ... Other arguments like a color palette, etc.
 #' @return  Colors!
 generate_expt_colors <- function(sample_definitions, cond_column="condition", ...) {
   arglist <- list(...)
@@ -1125,7 +1125,7 @@ median_by_factor <- function(data, fact="condition") {
 #' expressionset superclass out of the publicly available fission data set.
 #'
 #' @param annotation  Add annotation data?
-#' @return  Expressionset/expt of fission.
+#' @return Expressionset/expt of fission.
 #' @export
 make_pombe_expt <- function(annotation=TRUE) {
   fission <- new.env()
@@ -1275,7 +1275,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     retlist[["count_table"]] <- data.table::as.data.table(
                                               import[["counts"]], keep.rownames="rownames")
-    retlist[["count_table"]] <- setkey(retlist[["count_table"]], rownames)
+    retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
@@ -1322,7 +1322,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     }
     retlist[["count_table"]] <- data.table::as.data.table(
                                               import[["counts"]], keep.rownames="rownames")
-    retlist[["count_table"]] <- setkey(retlist[["count_table"]], rownames)
+    retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
@@ -1443,13 +1443,13 @@ read_metadata <- function(file, ...) {
 #' I find subsetting weirdly confusing.  Hopefully this function will allow one
 #' to include/exclude specific genes/families based on string comparisons.
 #'
-#' @param input  Expt to filter.
-#' @param invert  Keep only the things with the provided strings (TRUE), or
+#' @param input Expt to filter.
+#' @param invert Keep only the things with the provided strings (TRUE), or
 #'   remove them (FALSE).
 #' @param topn Take the topn most abundant genes rather than a text based heuristic.
-#' @param semantic  Character list of strings to search for in the annotation
+#' @param semantic Character list of strings to search for in the annotation
 #'   data.
-#' @param semantic_column  Column in the annotations to search.
+#' @param semantic_column Column in the annotations to search.
 #' @return A presumably smaller expt.
 #' @export
 semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
@@ -1507,11 +1507,11 @@ semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
 #' When exploring differential analyses, it might be useful to play with the
 #' conditions/batches of the experiment.  Use this to make that easier.
 #'
-#' @param expt  Expt to modify.
-#' @param fact  Batches to replace using this factor.
-#' @param ids  Specific samples to change.
-#' @param ...  Extra options are like spinach.
-#' @return  The original expt with some new metadata.
+#' @param expt Expt to modify.
+#' @param fact Batches to replace using this factor.
+#' @param ids Specific samples to change.
+#' @param ... Extra options are like spinach.
+#' @return The original expt with some new metadata.
 #' @seealso \code{\link{create_expt}} \code{\link{set_expt_conditions}}
 #' @examples
 #' \dontrun{
@@ -1545,10 +1545,10 @@ set_expt_batches <- function(expt, fact, ids=NULL, ...) {
 #' When exploring differential analyses, it might be useful to play with the
 #' conditions/batches of the experiment.  Use this to make that easier.
 #'
-#' @param expt  Expt to modify
-#' @param colors  colors to replace
-#' @param chosen_palette  I usually use Dark2 as the RColorBrewer palette.
-#' @param change_by  Assuming a list is passed, cross reference by condition or sample?
+#' @param expt Expt to modify
+#' @param colors colors to replace
+#' @param chosen_palette I usually use Dark2 as the RColorBrewer palette.
+#' @param change_by Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
 #' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
 #' @examples
@@ -1687,7 +1687,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @param expt Expt to modify
 #' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
-#' @param ...  Extra arguments are given to arglist.
+#' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
 #' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
 #' @examples
@@ -1917,7 +1917,7 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
 #' Notably: The gene IDs look like: "exon_ID-1 exon_ID-2 exon_ID-3"
 #' Therefore we should be able to quickly merge these.
 #'
-#' @param counts  Matrix/df/dt of count data.
+#' @param counts Matrix/df/dt of count data.
 #' @return The same data type but with the exons summed.
 sum_eupath_exon_counts <- function(counts) {
   rownames(counts) <- gsub(pattern="^exon_", replacement="", x=rownames(counts))
@@ -1940,12 +1940,12 @@ sum_eupath_exon_counts <- function(counts) {
 #' Sometimes it is nice to have a string like: log2(cpm(data)) describing what
 #' happened to the data.
 #'
-#' @param expt  The expressionset.
-#' @param transform  How was it transformed?
-#' @param convert  How was it converted?
-#' @param norm  How was it normalized?
-#' @param filter  How was it filtered?
-#' @param batch  How was it batch-corrected?
+#' @param expt The expressionset.
+#' @param transform How was it transformed?
+#' @param convert How was it converted?
+#' @param norm How was it normalized?
+#' @param filter How was it filtered?
+#' @param batch How was it batch-corrected?
 #' @return An expression describing what has been done to this data.
 #' @seealso \code{\link{create_expt}}
 #' @export
@@ -2045,7 +2045,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @param batch Batch correction applied.
 #' @param filter Filtering method used.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).
-#' @return  A big honking excel file and a list including the dataframes and images created.
+#' @return A big honking excel file and a list including the dataframes and images created.
 #' @seealso \pkg{openxlsx} \pkg{Biobase}
 #'  \code{\link{normalize_expt}} \code{\link{graph_metrics}}
 #' @examples
@@ -2088,7 +2088,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
-  metrics <- sm(graph_metrics(expt, qq=TRUE, ...))
+  metrics <- sm(graph_metrics(expt, qq=TRUE,
+                              ...))
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
   xls_result <- write_xls(data=libsizes, wb=wb, start_row=new_row,
@@ -2108,6 +2109,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_col <- 1
   reads <- exprs(expt)
   info <- fData(expt)
+  if (!is.null(info[["Row.names"]])) {
+    ridx <- colnames(info) == "Row.names"
+    message("Hey, you merged the annotation data and did not reset the column names!")
+    colnames(info)[ridx] <- "old_row_names"
+  }
   read_info <- merge(info, reads, by="row.names")
   xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
                           start_row=new_row, start_col=new_col, title="Raw Reads.")
@@ -2238,20 +2244,21 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
   new_row <- new_row + 1
-  pca_plot <- metrics[["pcaplot"]]
-  pca_table <- metrics[["pcatable"]]
-  tsne_plot <- metrics[["tsneplot"]]
-  tsne_table <- metrics[["tsnetable"]]
+  pca_plot <- metrics[["pc_plot"]]
+  pca_table <- metrics[["pc_table"]]
+  tsne_plot <- metrics[["tsne_plot"]]
+  tsne_table <- metrics[["tsne_table"]]
   try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="12_pcaplot", savedir=excel_basename, fancy_type="svg")
-  tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm", ...))
+  tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm",
+                                ...))
   rpca <- plot_pca(tmp_data, ...)
   rtsne <- plot_tsne(tmp_data, ...)
   rspca_plot <- rpca[["plot"]]
   rtsne_plot <- rtsne[["plot"]]
-  rpca_table <- rpca[["table"]]
-  rtsne_table <- rtsne[["table"]]
+  rpca_table <- rpca[["residual_df"]]
+  rtsne_table <- rtsne[["residual_df"]]
   rm(tmp_data)
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
@@ -2300,14 +2307,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pcares"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xls(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet, "Raw PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pcatable"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xls(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_row=new_row, start_col=new_col)
 
   ## Move on to the next sheet, normalized data
@@ -2329,7 +2336,10 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   message("Graphing the normalized reads.")
   sheet <- "norm_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
-  norm_metrics <- sm(graph_metrics(norm_data, qq=TRUE, ...))
+  norm_metrics <- sm(graph_metrics(norm_data, qq=TRUE,
+                                   ...))
+  openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
+                      startRow=new_row, startCol=new_col)
   ## Start with library sizes.
   openxlsx::writeData(wb, sheet, "Legend.",
                       startRow=new_row, startCol=new_col)
@@ -2437,10 +2447,10 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Normalized QQ, log scale.",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
-  npca_plot <- norm_metrics[["pcaplot"]]
-  ntsne_plot <- norm_metrics[["tsneplot"]]
-  npca_table <- norm_metrics[["pcatable"]]
-  ntsne_table <- norm_metrics[["tsnetable"]]
+  npca_plot <- norm_metrics[["pc_plot"]]
+  ntsne_plot <- norm_metrics[["tsne_plot"]]
+  npca_table <- norm_metrics[["pc_table"]]
+  ntsne_table <- norm_metrics[["tsne_table"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
@@ -2483,14 +2493,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pcares"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xls(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pcatable"]], wb=wb, sheet=sheet,
+  xls_result <- write_xls(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
                           rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
@@ -2566,111 +2576,63 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 ## default, R code is loaded in alphabetical order, but that won’t always work
 ## for your situation.
 
-#' An expt is an ExpressionSet superclass with a shorter name
+#' An expt is an ExpressionSet superclass with a shorter name.
 #'
 #' It is also a simple list so that one may summarize it more simply,
 #' provides colors and some slots to make one's life easier.
 #' It is created via the function create_expt() which perhaps should be changed.
 #'
-#' @param ...  Parameters for create_expt()
-#' @slot colors  Colors for the expt.
+#' Another important caveat: expressionSets and their methods are all S4; but I
+#' did not want to write S4 methods, so I made my expt a S3 class.  As a result,
+#' in order to make use of exprs, notes, pData, fData, and friends, I made use
+#' of setMethod() to set up calls for the expressionSet portion of the expt
+#' objects.
+#'
+#' @param ... Parameters for create_expt()
+#' @slot original_expressionset Copy of the original expressionSet.
+#' @slot original_metadata Copy of the original experimental design.
+#' @slot title Title for the expressionSet.
+#' @slot notes Notes for the expressionSet (redundant with S4 notes()).
+#' @slot design Copy of the experimental metadata (redundant with pData()).
+#' @slot annotation Gene annotations (redundant with fData()).
+#' @slot gff_file filename of a gff file which feeds this data.
+#' @slot state What is the state of the data vis a vis normalization,
+#'   conversion, etc.
+#' @slot conditions Usually the condition column from pData.
+#' @slot batches Usually the batch column from pData.
+#' @slot original_metadata Experimental metadata before messing with it.
+#' @slot original_libsize Library sizes of samples before messing with them.
+#' @slot libsize Library sizes of the data in its current state.
+#' @slot colors Chosen colors for plotting the data.
+#' @slot tximport Data provided by tximport() to create the exprs() data.
 #' @export expt
 expt <- function(...) {
     create_expt(...)
 }
-
-#' Extend Biobase::exprs to handle expt ojects.
-#'
-#' As time passes, I find myself increasingly thinking that the extra stuff I
-#' added to Biobase's ExpressionSet class is erroneous and I should remove.
-#' However, there remains a few things in my expt class which I rather like;
-#' most notably my color assignments, the state/what_happened data, and the
-#' backup of the original data.  So until I eventually get fed up and decide to
-#' extend the expressionSet, I will continue using these.
-#'
-#' @name exprs
-#' @aliases exprs, exprs-methods
-#' @param expt  The expt object from which to extract the expressionset.
-#' @importFrom Biobase exprs
-#' @docType methods
-#' @rdname exprs-methods
-#' @export exprs
 expt_set <- setOldClass("expt")
 setMethod("exprs", signature="expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
           })
-
-#' Extend Biobase::fData to handle expt objects.
-#'
-#' @name fData
-#' @aliases fData, fData-methods
-#' @param expt  An expt from which to extract the expressionset.
-#' @importFrom Biobase fData
-#' @docType methods
-#' @rdname fData-methods
-#' @export fData
 setMethod("fData", signature="expt",
           function(object) {
             Biobase::fData(object[["expressionset"]])
           })
-
-#' Extend Biobase::pData to handle expt objects.
-#'
-#' @name pData
-#' @aliases pData, pData-methods
-#' @param expt  The expt object from which to extract the expressionset.
-#' @importFrom Biobase pData
-#' @docType methods
-#' @rdname pData-methods
-#' @export pData
 setMethod("pData", signature="expt",
           function(object) {
             Biobase::pData(object[["expressionset"]])
           })
-
-#' Extend Biobase::sampleNames to handle expt objects.
-#'
-#' @name sampleNames
-#' @aliases sampleNames, sampleNames-methods
-#' @param expt  The expt object from which to extract the expressionset.
-#' @importFrom Biobase sampleNames
-#' @docType methods
-#' @rdname sampleNames-methods
-#' @export sampleNames
 setMethod("sampleNames", signature="expt",
           function(object) {
             Biobase::sampleNames(object[["expressionset"]])
           })
-
-## #' Extend Biobase::sampleNames<- to handle expt objects.
-## #'
-## #' @name sampleNames<-
-## #' @aliases sampleNames<-, sampleNames<--methods
-## #' @param object  The expt object from which to extract the expressionset.
-## #' @importFrom Biobase sampleNames<-
-## #' @docType methods
-## #' @rdname sampleNamesto-methods
-## #' @export sampleNames<-
-## setOldClass("expt")
-## setGeneric("sampleNames<-", function(value)
-##   standardGeneric("sampleNames<-"))
-## setMethod("sampleNames<-", signature="expt",
-##           function(object) {
-##             set_expt_samplenames(object, value)
-##           })
-
-#' Extend Biobase::notes to handle expt objects.
-#'
-#' @name notes
-#' @aliases notes, notes-methods
-#' @param expt  The expt object from which to extract the expressionset.
-#' @importFrom Biobase notes
-#' @docType methods
-#' @rdname notes-methods
-#' @export notes
 setMethod("notes", signature="expt",
           function(object) {
             Biobase::notes(object[["expressionset"]])
           })
+setMethod("sampleNames<-", signature="expt",
+          function(object, value) {
+            set_expt_samplenames(object, value)
+          })
+
 ## EOF
