@@ -26,7 +26,7 @@ pombe_norm <- normalize_expt(pombe_strain, filter=TRUE, batch="fsva",
 
 tsne_stuff <- plot_tsne(pombe_norm, size_column="minute")
 ##tsne_stuff$plot
-expected <- c(36, 10)
+expected <- c(36, 12)
 actual <- dim(tsne_stuff[["table"]])
 test_that("Did we get an expected tsne table?", {
   expect_equal(expected[1], actual[1])

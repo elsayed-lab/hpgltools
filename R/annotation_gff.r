@@ -299,8 +299,7 @@ sum_exon_widths <- function(data=NULL, gff=NULL, annotdf=NULL,
   rownames(tmp_data) <- tmp_data[["Row.names"]]
   tmp_data <- tmp_data[-1]
   ## Start out by summing the gene widths
-  ## This might actually be stats::aggregate...
-  column <- dplyr::aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
+  column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
   new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
   rownames(new_data) <- column[["Parent"]]
   colnames(new_data) <- c("width")

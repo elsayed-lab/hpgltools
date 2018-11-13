@@ -27,5 +27,5 @@ clusterprofiler easier.
 }
 \seealso{
 \pkg{goseq} \pkg{ggplot2}
-\code{\link[goseq]{goseq}}
+ \code{\link[goseq]{goseq}}
 }

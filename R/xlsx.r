@@ -5,13 +5,14 @@
 #' This function has been through many iterations, first using XLConnect,
 #' then xlsx, and now openxlsx.  Hopefully this will not change again.
 #'
-#' @param data  Data frame to print.
-#' @param wb  Workbook to which to write.
-#' @param sheet  Name of the sheet to write.
-#' @param excel  Filename of final excel workbook to write
-#' @param rownames  Include row names in the output?
-#' @param start_row  First row of the sheet to write. Useful if writing multiple tables.
-#' @param start_col  First column to write.
+#' @param data Data frame to print.
+#' @param wb Workbook to which to write.
+#' @param sheet Name of the sheet to write.
+#' @param excel Filename of final excel workbook to write
+#' @param rownames Include row names in the output?
+#' @param start_row First row of the sheet to write. Useful if writing multiple tables.
+#' @param start_col First column to write.
+#' @param title Title for this xlsx table.
 #' @param ...  Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the
 #'   bottom-right coordinates of the last row/column written to the worksheet.
@@ -23,64 +24,56 @@
 #'  }
 #' @export
 write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames=TRUE,
-                      start_row=1, start_col=1, ...) {
+                      start_row=1, start_col=1, title=NULL, ...) {
   arglist <- list(...)
-  if (class(data) == "matrix" | class(data) == "character") {
+  if (class(data)[1] == "matrix" | class(data)[1] == "character") {
     data <- as.data.frame(data, stringsAsFactors=FALSE)
   }
   if (is.null(wb)) {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
-  } else if (class(wb)[[1]] == "list") {
+  } else if (class(wb)[1] == "list") {
     ## In case the return from write_xls() was passed to write_xls()
     wb <- wb[["workbook"]]
-  } else if (class(wb)[[1]] != "Workbook") {
+  } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
+  ## Heading style 1 (For titles)
+  hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
+                               border="Bottom", fontSize="30")
 
   newsheet <- NULL
-  ##current_sheets <- names(wb@.xData$worksheets)
   current_sheets <- wb@.xData[[".->sheet_names"]]
   found_sheets <- 0
   if (sheet %in% current_sheets) {
     found_sheets <- found_sheets + 1
   } else {
     newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-    if (class(newsheet) == "try-error") {
+    if (class(newsheet)[1] == "try-error") {
       if (grepl(pattern="already exists", x=newsheet[1])) {
         message("The sheet already exists.")
         tt <- openxlsx::removeWorksheet(wb, sheet)
         newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
       } else if (grepl(pattern="too long", x=newsheet[1])) {
-        message("The sheet name was too long for Excel, truncating it by removing vowels.")
-        sheet <- gsub(pattern="a|e|i|o|u", replacement="", x=sheet)
+        sheet <- abbreviate(sheet, minlength=28)
         newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-        if (class(newsheet) == "try-error") {
-          if (grepl(pattern="already exists", x=newsheet[1])) {
-            tt <- openxlsx::removeWorksheet(wb, sheet)
-            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-          } else if (grepl(pattern="too long", x=newsheet[1])) {
-            message("hmph, still too long, truncating to 30 characters.")
-            sheet <- substr(sheet, start=1, stop=30)
-            newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet))
-            if (grepl(pattern="already exists", x=newsheet[1])) {
-              tt <- openxlsx::removeWorksheet(wb, sheet)
-              newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-            }
-          }
-        }
       } else {
         message("Unknown error: ", newsheet)
       }
     }
   }
-  hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
-                               border="Bottom", fontSize="30")
+
   new_row <- start_row
   new_col <- start_col
-  if (!is.null(arglist[["title"]])) {
-    xl_result <- openxlsx::writeData(wb, sheet, arglist[["title"]],
-                                     startRow=new_row, startCol=new_col)
-    openxlsx::addStyle(wb, sheet, hs1, new_row, new_col)
+  if (!is.null(title)) {
+    openxlsx::addStyle(wb=wb, sheet=sheet, style=hs1, rows=new_row,
+                       cols=new_col, gridExpand=FALSE, stack=FALSE)
+    ## An important caveat:
+    ## glue'd() strings are not just class character, but their own thing,
+    ## which means that just dumping them in this situation leads to unexpected results.
+    xl_result <- openxlsx::writeData(
+                             wb=wb, sheet=sheet,
+                             x=as.character(title),
+                             startCol=new_col, startRow=new_row)
     new_row <- new_row + 1
   }
 
@@ -95,18 +88,18 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
     ## Originally, this was a single test condition, but I fear I need to do
     ## separate tasks for each data type. If that proves to be the case, I am
     ## ready, but until then it remains a series of as.character() castings.
-    if (class(data[, test_column]) == "list") {
+    if (class(data[, test_column])[1] == "list") {
       ## The above did not work, trying what I found in:
       ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
       ##list_entries <- is.list(data[, test_column])
       ##ListCols <- sapply(data, is.list)
       ##cbind(data[!ListCols], t(apply(data[ListCols], 1, unlist)))
       data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column]) == "vector") {
+    } else if (class(data[, test_column])[1] == "vector") {
       data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column]) == "factor") {
+    } else if (class(data[, test_column])[1] == "factor") {
       data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column]) == "AsIs") {
+    } else if (class(data[, test_column])[1] == "AsIs") {
       data[, test_column] <- as.character(data[, test_column])
     }
   }  ## Finished adjusting stupid column types.
@@ -115,7 +108,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   final_colnames <- tolower(final_colnames)
   final_colnames <- make.names(final_colnames, unique=TRUE)
   colnames(data) <- final_colnames
-  wtf <- try(openxlsx::writeDataTable(wb, sheet, data, startCol=new_col,
+  wtf <- try(openxlsx::writeDataTable(wb=wb, sheet=sheet, x=data, startCol=new_col,
                                       startRow=new_row, tableStyle="TableStyleMedium9",
                                       rowNames=rownames, colNames=TRUE))
   new_row <- new_row + nrow(data) + 2
@@ -197,15 +190,15 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   }
   if (!is.null(arglist[["doWeights"]])) {
     requireNamespace(package="Vennerable")
-    library("Vennerable")
+    ## library("Vennerable")
   }
 
   if (is.null(wb)) {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
-  } else if (class(wb)[[1]] == "list") {
+  } else if (class(wb)[1] == "list") {
     ## In case the return from write_xls() was passed to write_xls()
     wb <- wb[["workbook"]]
-  } else if (class(wb)[[1]] != "Workbook") {
+  } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
   high_quality <- file.path(savedir, glue("(plotname).(fancy_type)"))
@@ -232,12 +225,12 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     ## I do not understand why some images are plot()ed while others
     ## seem to need to be print()ed.  Adding a try to attempt
     ## to work around this concern.
-    if (class(a_plot)[[1]] == "Venn") {
+    if (class(a_plot)[1] == "Venn") {
       pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
     } else {
       pdf_print_ret <- try(print(a_plot))
     }
-    if (class(pdf_print_ret)[[1]] == "try-error") {
+    if (class(pdf_print_ret)[1] == "try-error") {
       pdf_print_ret <- try(plot(a_plot, ...))
     }
     dev.off()
@@ -249,12 +242,12 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                      units=units,
                      res=res))
 
-  if (class(a_plot)[[1]] == "Venn") {
+  if (class(a_plot)[1] == "Venn") {
     pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
   } else {
     png_print_ret <- try(print(a_plot))
   }
-  if (class(png_print_ret)[[1]] == "try-error") {
+  if (class(png_print_ret)[1] == "try-error") {
     png_print_ret <- try(plot(a_plot, ...))
   }
   dev.off()
@@ -263,7 +256,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name, width=width,
                                             height=height, startRow=start_row, startCol=start_col,
                                             units=units, dpi=res))
-    if (class(insert_ret) == "try-error") {
+    if (class(insert_ret)[1] == "try-error") {
       message("There was an error inserting the image at: ", png_name)
     }
   } else {

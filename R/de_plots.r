@@ -247,12 +247,13 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     base_url <- arglist[["base_url"]]
   }
 
-  ## Extract the set of availble names -- FIXME this should be standardized!!
+  ## Extract the set of available names -- FIXME this should be standardized!!
+  coefficients <- data.frame()
   thenames <- NULL
   if (type == "edger") {
     thenames <- names(output[["contrasts"]][["identities"]])
   } else if (type == "limma") {
-    coefficients <- output[["identity_comparisons"]][["coefficients"]]
+    coefficients <- as.data.frame(output[["identity_comparisons"]][["coefficients"]])
     thenames <- colnames(coefficients)
   } else if (type == "deseq") {
     coefficients <- as.data.frame(output[["coefficients"]])
@@ -281,17 +282,34 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 
   ## Now extract the coefficent df
   if (type == "edger") {
-    coefficient_df <- output[["lrt"]][[1]][["coefficients"]]
+    coefficient_df <- as.data.frame(output[["lrt"]][[1]][["coefficients"]])
+    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
     coefficient_df <- coefficient_df[, c(xname, yname)]
     coef_offset <- min(coefficient_df)
+    ## This is dumb.
     coefficient_df <- coefficient_df + (coef_offset * -1.0)
   } else if (type == "limma") {
-    coefficient_df <- output[["pairwise_comparisons"]][["coefficients"]]
+    coefficient_df <- as.data.frame(output[["pairwise_comparisons"]][["coefficients"]])
+    if (is.null(coefficients[[x]]) || is.null(coefficients[[y]])) {
+      message("Did not find ", x, " or ", y, ".")
+      return(NULL)
+    }
     coefficient_df <- coefficients[, c(x, y)]
   } else if (type == "deseq") {
+    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
     coefficient_df <- coefficients[, c(xname, yname)]
   } else if (type == "basic") {
     coefficient_df <- output[["medians"]]
+    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
     coefficient_df <- coefficient_df[, c(xname, yname)]
   }
 

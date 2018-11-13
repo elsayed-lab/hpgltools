@@ -40,7 +40,7 @@ via mcols().  Check snp.r. for ideas.
 }
 \seealso{
 \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
-\code{\link[rtracklayer]{import.gff}}
+ \code{\link[rtracklayer]{import.gff}}
 }
 \author{
 atb

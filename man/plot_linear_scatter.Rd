@@ -49,16 +49,16 @@ possible types, I think linear is the most common.}
 }
 \value{
 List including a ggplot2 scatter plot and some histograms.  This plot
-provides a "bird's eye" view of two data sets.  This plot assumes a
-(potential) linear correlation between the data, so it calculates the
-correlation between them.  It then calculates and plots a robust linear
-model of the data using an 'SMDM' estimator (which I don't remember how to
-describe, just that the document I was reading said it is good).  The
-median/mad of each axis is calculated and plotted as well.  The distance
-from the linear model is finally used to color the dots on the plot.
-Histograms of each axis are plotted separately and then together under a
-single cdf to allow tests of distribution similarity.  This will make a fun
-clicky googleVis graph if requested.
+  provides a "bird's eye" view of two data sets.  This plot assumes a
+  (potential) linear correlation between the data, so it calculates the
+  correlation between them.  It then calculates and plots a robust linear
+  model of the data using an 'SMDM' estimator (which I don't remember how to
+  describe, just that the document I was reading said it is good).  The
+  median/mad of each axis is calculated and plotted as well.  The distance
+  from the linear model is finally used to color the dots on the plot.
+  Histograms of each axis are plotted separately and then together under a
+  single cdf to allow tests of distribution similarity.  This will make a fun
+  clicky googleVis graph if requested.
 }
 \description{
 Make a scatter plot between two groups with a linear model superimposed and
@@ -72,5 +72,5 @@ some supporting statistics.
 }
 \seealso{
 \pkg{robust} \pkg{stats} \pkg{ggplot2}
-\code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
+ \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
 }

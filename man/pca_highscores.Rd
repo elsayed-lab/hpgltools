@@ -20,7 +20,7 @@ pca_highscores(expt, n = 20, cor = TRUE, vs = "means",
 }
 \value{
 a list including the princomp biplot, histogram, and tables
-of top/bottom n scored genes with their scores by component.
+ of top/bottom n scored genes with their scores by component.
 }
 \description{
 This function uses princomp to acquire a principle component biplot
@@ -35,5 +35,5 @@ component by score.
 }
 \seealso{
 \pkg{stats}
-\code{\link[stats]{princomp}}
+ \code{\link[stats]{princomp}}
 }

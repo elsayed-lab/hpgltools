@@ -385,6 +385,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "numerators" = numerators,
     "run" = deseq_run
   )
+  class(retlist) <- c("deseq_result", "list")
   if (!is.null(arglist[["deseq_excel"]])) {
     retlist[["deseq_excel"]] <- write_deseq(retlist, excel=arglist[["deseq_excel"]])
   }

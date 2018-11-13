@@ -11,8 +11,12 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major",
     orgdb_installedp <- make_eupath_orgdb(species=species_name, metadata=metadata, ...)
   }
 
-  lib_result <- sm(library(orgdb_name, character.only=TRUE))
-  lib_result <- sm(library(bsgenome_name, character.only=TRUE))
+  ##lib_result <- sm(library(orgdb_name, character.only=TRUE))
+  lib_result <- sm(requireNamespace(orgdb_name))
+  att_result <- sm(try(attachNamespace(orgdb_name), silent=TRUE))
+  ##lib_result <- sm(library(bsgenome_name, character.only=TRUE))
+  lib_result <- sm(requireNamespace(bsgenome_name))
+  att_result <- sm(try(attachNamespace(bsgenome_name), silent=TRUE))
   orgdb <- get0(orgdb_name)
   bsgenome <- get0(bsgenome_name)
   wanted_fields <- c("annot_gene_location_text",

@@ -2,7 +2,7 @@
 % Please edit documentation in R/expt.r
 \name{expt}
 \alias{expt}
-\title{An expt is an ExpressionSet superclass with a shorter name}
+\title{An expt is an ExpressionSet superclass with a shorter name.}
 \usage{
 expt(...)
 }
@@ -14,9 +14,45 @@ It is also a simple list so that one may summarize it more simply,
 provides colors and some slots to make one's life easier.
 It is created via the function create_expt() which perhaps should be changed.
 }
+\details{
+Another important caveat: expressionSets and their methods are all S4; but I
+did not want to write S4 methods, so I made my expt a S3 class.  As a result,
+in order to make use of exprs, notes, pData, fData, and friends, I made use
+of setMethod() to set up calls for the expressionSet portion of the expt
+objects.
+}
 \section{Slots}{
 
 \describe{
-\item{\code{colors}}{Colors for the expt.}
+\item{\code{original_expressionset}}{Copy of the original expressionSet.}
+
+\item{\code{original_metadata}}{Copy of the original experimental design.}
+
+\item{\code{title}}{Title for the expressionSet.}
+
+\item{\code{notes}}{Notes for the expressionSet (redundant with S4 notes()).}
+
+\item{\code{design}}{Copy of the experimental metadata (redundant with pData()).}
+
+\item{\code{annotation}}{Gene annotations (redundant with fData()).}
+
+\item{\code{gff_file}}{filename of a gff file which feeds this data.}
+
+\item{\code{state}}{What is the state of the data vis a vis normalization,
+conversion, etc.}
+
+\item{\code{conditions}}{Usually the condition column from pData.}
+
+\item{\code{batches}}{Usually the batch column from pData.}
+
+\item{\code{original_metadata}}{Experimental metadata before messing with it.}
+
+\item{\code{original_libsize}}{Library sizes of samples before messing with them.}
+
+\item{\code{libsize}}{Library sizes of the data in its current state.}
+
+\item{\code{colors}}{Chosen colors for plotting the data.}
+
+\item{\code{tximport}}{Data provided by tximport() to create the exprs() data.}
 }}
 

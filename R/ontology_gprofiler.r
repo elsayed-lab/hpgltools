@@ -107,6 +107,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
     retlist[["excel"]] <- excel_ret
     message("Finished writing data.")
   }
+  class(retlist) <- c("gprofiler_result", "list")
   return(retlist)
 }
 

@@ -13,22 +13,22 @@ tnseq_saturation(data, column = "Reads")
 }
 \value{
 A plot and some numbers:
-\enumerate{
-\item maximum_reads = The maximum number of reads observed in a single position.
-\item hits_by_position = The full table of hits / position
-\item num_hit_table = A table of how many times every number of hits was observed.
-\item eq_0 = How many times were 0 hits observed?
-\item gt_1 = How many positions have > 1 hit?
-\item gt_2 = How many positions have > 2 hits?
-\item gt_4 = How many positions have > 4 hits?
-\item gt_8 = How many positions have > 8 hits?
-\item gt_16 = How many positions have > 16 hits?
-\item gt_32 = How many positions have > 32 hits?
-\item ratios = Character vector of the ratios of each number of hits vs. 0 hits.
-\item hit_positions = 2 column data frame of positions and the number of observed hits.
-\item hits_summary = summary(hit_positions)
-\item plot = Histogram of the number of hits observed.
-}
+ \enumerate{
+  \item maximum_reads = The maximum number of reads observed in a single position.
+  \item hits_by_position = The full table of hits / position
+  \item num_hit_table = A table of how many times every number of hits was observed.
+  \item eq_0 = How many times were 0 hits observed?
+  \item gt_1 = How many positions have > 1 hit?
+  \item gt_2 = How many positions have > 2 hits?
+  \item gt_4 = How many positions have > 4 hits?
+  \item gt_8 = How many positions have > 8 hits?
+  \item gt_16 = How many positions have > 16 hits?
+  \item gt_32 = How many positions have > 32 hits?
+  \item ratios = Character vector of the ratios of each number of hits vs. 0 hits.
+  \item hit_positions = 2 column data frame of positions and the number of observed hits.
+  \item hits_summary = summary(hit_positions)
+  \item plot = Histogram of the number of hits observed.
+ }
 }
 \description{
 This function takes as input a tab separated file from essentiality_tas.pl

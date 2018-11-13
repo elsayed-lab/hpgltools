@@ -39,8 +39,8 @@ quality of life.
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
-\code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
-\code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+ \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
 }
 \author{
 atb

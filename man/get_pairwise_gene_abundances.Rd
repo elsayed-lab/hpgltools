@@ -15,7 +15,7 @@ get_pairwise_gene_abundances(datum, type = "limma", excel = NULL)
 }
 \value{
 A list containing the expression values and some metrics of
-variance/error.
+  variance/error.
 }
 \description{
 Instead of pulling to top/bottom abundant genes, get all abundances and

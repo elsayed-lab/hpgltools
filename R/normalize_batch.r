@@ -516,8 +516,8 @@ I set it to 1 not knowing what its purpose is.")
     }
     gamma.bar <- apply(gamma.hat, 1, mean)
     t2 <- apply(gamma.hat, 1, var)
-    a.prior <- apply(delta.hat, 1, sva:::aprior)
-    b.prior <- apply(delta.hat, 1, sva:::bprior)
+    a.prior <- apply(delta.hat, 1, aprior)
+    b.prior <- apply(delta.hat, 1, bprior)
     if (prior.plots & par.prior) {
       oldpar <- par(mfrow = c(2, 2))
       tmp <- density(gamma.hat[1, ], na.rm=TRUE)
@@ -544,16 +544,16 @@ I set it to 1 not knowing what its purpose is.")
     if (par.prior) {
       message("Finding parametric adjustments.")
       for (i in 1:n.batch) {
-        temp <- sva:::it.sol(s.data[, batches[[i]]], gamma.hat[i, ],
-                             delta.hat[i, ], gamma.bar[i],
-                             t2[i], a.prior[i], b.prior[i])
+        temp <- it.sol(s.data[, batches[[i]]], gamma.hat[i, ],
+                       delta.hat[i, ], gamma.bar[i],
+                       t2[i], a.prior[i], b.prior[i])
         gamma.star <- rbind(gamma.star, temp[1, ])
         delta.star <- rbind(delta.star, temp[2, ])
       }
     } else {
       message("Finding nonparametric adjustments.")
       for (i in 1:n.batch) {
-        temp <- sva:::int.eprior(as.matrix(s.data[, batches[[i]]]),
+        temp <- int.eprior(as.matrix(s.data[, batches[[i]]]),
                                  gamma.hat[i, ], delta.hat[i, ])
         gamma.star <- rbind(gamma.star, temp[1, ])
         delta.star <- rbind(delta.star, temp[2, ])

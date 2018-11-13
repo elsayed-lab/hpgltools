@@ -67,7 +67,9 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
   message("And things fail without error, but if I try library() then R CMD check")
   message("gets pissed, well I tried both ways and I am calling library().")
   message("R CMD check can bite my shiny metal ass.")
-  tt <- sm(library("GOstats"))
+  ## tt <- sm(library("GOstats"))
+  lib_result <- sm(requireNamespace("GOstats"))
+  att_result <- sm(try(attachNamespace("GOstats"), silent=TRUE))
   message("simple_gostats(): gff_type is: ", gff_type,
           ". Change that if there are bad merges.")
   types <- c("cds", "gene", "exon", "protein_coding")
@@ -362,6 +364,7 @@ perhaps change gff_type to make the merge work.")
     "results" = results,
     "tables" = tables
   )
+  class(retlist) <- c("gostats_result", "list")
 
   pvalue_plots <- try(plot_gostats_pval(retlist))
   retlist[["pvalue_plots"]] <- pvalue_plots

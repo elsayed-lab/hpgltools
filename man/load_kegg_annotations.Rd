@@ -16,7 +16,7 @@ load_kegg_annotations(species = "coli", abbreviation = NULL,
 }
 \value{
 dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
-and KEGG paths.
+  and KEGG paths.
 }
 \description{
 This seeks to take the peculiar format from KEGGREST for pathway<->genes and

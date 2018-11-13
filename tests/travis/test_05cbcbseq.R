@@ -111,31 +111,6 @@ test_that("Are l2qcpm conversions/transformations identical using cbcbSEQ vs. no
     expect_equal(expected, actual)
 })
 
-## Check that PCA invocations are similar
-cbcb_svd <- cbcbSEQ::makeSVD(cbcb_l2qcpm)
-hpgl_pca_info <- plot_pca(hpgl_l2qcpm_expt)
-hpgl_svd <- hpgl_pca_info[["pca"]]
-cbcb_res <- cbcbSEQ::pcRes(cbcb_svd[["v"]], cbcb_svd[["d"]],
-                           design[["condition"]], design[["libType"]])
-hpgl_res <- hpgl_pca_info[["res"]]
-colnames(cbcb_svd[["v"]]) <- paste0("PC", 1:ncol(cbcb_svd[["v"]]))
-expected <- cbcb_svd[["v"]]
-
-actual <- hpgl_svd[["v"]]
-test_that("Do calls to svd return the same data v->?", {
-    expect_equal(expected, actual)
-})
-expected <- cbcb_svd[["d"]]
-actual <- hpgl_svd[["d"]]
-test_that("Do calls to svd return the same data d->?", {
-    expect_equal(expected, actual)
-})
-expected <- cbcb_res[[1]]
-actual <- hpgl_res[[1]]
-test_that("Do calls to svd return the same residuals?", {
-    expect_equal(expected, actual)
-})
-
 ## Check that the libsizes are properly maintained
 cbcb_libsize <- cbcb_l2qcpm_data[["lib.size"]]
 hpgl_libsize <- hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]

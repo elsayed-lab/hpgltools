@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?\n")
+context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?
+  1234567890123456\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -18,6 +19,7 @@ if (isTRUE(FALSE)) {
 libsize_plot <- plot_libsize(pasilla_expt)
 actual <- libsize_plot[["table"]][["sum"]]
 expected <- c(13971670, 21909886, 8357876, 9840745, 18668667, 9571213, 10343219)
+## 01
 test_that("The libsize plot is as expected?", {
     expect_equal(expected, actual)
 })
@@ -25,6 +27,7 @@ test_that("The libsize plot is as expected?", {
 nonzero_plot <- plot_nonzero(pasilla_expt)
 actual <- nonzero_plot[["table"]][["nonzero_genes"]]
 expected <- c(9863, 10074, 9730, 9786, 10087, 9798, 9797)
+## 02
 test_that("The non-zero genes is as expected?", {
     expect_equal(expected, actual)
 })
@@ -35,6 +38,7 @@ density_plot <- density[["plot"]]
 density_table <- density[["table"]]
 expected <- c(92, 5, 4664, 583, 10, 1446)
 actual <- head(density_table[["counts"]])
+## 03
 test_that("Density plot data is as expected?", {
     expect_equal(expected, actual)
 })
@@ -42,13 +46,14 @@ test_that("Density plot data is as expected?", {
 hist_plot <- sm(plot_histogram(data.frame(exprs(pasilla_expt))))
 actual <- head(hist_plot[["data"]][["values"]])
 ## The values of expected have not changed
+## 04
 test_that("Histogram data is as expected?", {
     expect_equal(expected, actual)
 })
 
 box_plot <- sm(plot_boxplot(pasilla_expt))
 actual <- head(box_plot[["data"]][["value"]])
-## The values of expected have not changed
+## 05
 test_that("Box plot data is as expected?", {
     expect_equal(expected, actual, tolerance=1)
 })
@@ -61,18 +66,21 @@ expected <- "recordedplot"  ## for all the heatmaps
 
 corheat_plot <- plot_corheat(norm)
 actual <- class(corheat_plot[["plot"]])
+## 06
 test_that("corheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
 disheat_plot <- plot_disheat(norm)
 actual <- class(disheat_plot[["plot"]])
+## 07
 test_that("disheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
 
 sampleheat_plot <- plot_sample_heatmap(norm)
 actual <- class(sampleheat_plot)
+## 08
 test_that("sampleheat is a recorded plot?", {
     expect_equal(expected, actual)
 })
@@ -80,6 +88,7 @@ test_that("sampleheat is a recorded plot?", {
 smc_plot <- sm(plot_sm(norm, method="pearson"))
 actual <- head(smc_plot[["data"]][["sm"]])
 expected <- c(0.9759981, 0.9824316, 0.9759981, 0.9821373, 0.9784851, 0.9786376)
+## 09
 test_that("Is the normalized smc data expected?", {
     expect_equal(expected, actual, tolerance=0.004)
 })
@@ -87,6 +96,7 @@ test_that("Is the normalized smc data expected?", {
 smd_plot <- sm(plot_sm(norm, method="euclidean"))
 actual <- head(smd_plot[["data"]][["sm"]])
 expected <- c(42.31502, 36.20613, 42.31502, 36.50773, 40.07146, 39.92637)
+## 10
 test_that("Is the normalized smd data expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
@@ -97,44 +107,49 @@ pca_pca <- head(pca_stuff[["pca"]])
 
 actual <- pca_plot[["data"]][["PC1"]]
 expected <- c(-0.3588028, -0.4049142, -0.2719889, -0.2427446, 0.2857222, 0.4986218, 0.4941065)
+## 11
 test_that("Is the pca data as expected for PC1?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- as.numeric(head(pca_stuff[["pca"]][["v"]][, 1]))
+actual <- as.numeric(head(pca_stuff[["result"]][["v"]][, 1]))
 expected <- c(-0.3588028, -0.4049142, -0.2719889, -0.2427446, 0.2857222, 0.4986218)
+## 12
 test_that("Is the SVD 'v' element expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- pca_stuff[["res"]][[1]]
+actual <- pca_stuff[["residual_df"]][[1]]
 expected <- c(42.54, 31.18, 13.13, 5.80, 4.13, 3.23)
+## 13
 test_that("Is the pca residual table as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- pca_stuff[["variance"]]
+actual <- pca_stuff[["prop_var"]]
 expected <- c(42.54, 31.18, 13.13, 5.80, 4.13, 3.23)
+## 14
 test_that("Is the variance list as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- pca_stuff[["table"]][["PC2"]]
 expected <- c(0.3023078, 0.2728941, -0.4563121, -0.3892918, 0.6362636, -0.1467970, -0.2190646)
+## 15
 test_that("Is the PCA PC2 as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-tsne_stuff <- plot_tsne(norm)
-actual <- tsne_stuff[["table"]][["Comp1"]]
-##expected <- c(242.72, 243.21, 36.59, 36.81, -192.08, -185.70, -181.56)
+tsne_stuff <- plot_tsne(norm, seed=1)
+tsne_stuff$plot
+actual <- tsne_stuff[["table"]][["Factor1"]]
 expected <- c(43.38839, 47.81978, 49.86403, 53.46306, -66.61691, -64.61091, -63.30744)
 ## These values seem to have changed in the new version of Rtsne.
 test_that("Is the tsne data as expected for Comp1?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- as.numeric(head(tsne_stuff[["tsne_data"]][["Y"]][, 2]))
+actual <- as.numeric(head(tsne_stuff[["result"]][["Y"]][, 2]))
 ##expected <- c(103.6740, 99.5090, 5.1610, 0.9747, -68.0061, -70.0072)
 expected <- c(-281.31250, -281.65911, -38.23591, -35.62775, 218.26716, 211.48767)
 ## These also changed.
@@ -142,14 +157,15 @@ test_that("Is the tsne second component data expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- tsne_stuff[["res"]][["cond.R2"]]
-expected <- c(99.74, 79.80)
+actual <- head(tsne_stuff[["residual_df"]][["condition_rsquared"]])
+expected <- c(0.9973538, 0.7980312, 0.9973538, 0.7980312, 0.9973538, 0.7980312)
+##expected <- c(99.74, 79.80)
 test_that("Is the tsne r-squared by condition as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- tsne_stuff[["res"]][["batch.R2"]]
-expected <- c(1.59, 23.38)
+actual <- head(tsne_stuff[["residual_df"]][["batch_rsquared"]])
+expected <- c(0.01593727, 0.23380803, 0.01593727, 0.23380803, 0.01593727, 0.23380803)
 test_that("Is the tsne r-squared by condition as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })

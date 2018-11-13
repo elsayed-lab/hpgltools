@@ -29,7 +29,9 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     second <- second_ids
   } else {
     message("Converting the rownames() of the expressionset to ENTREZID.")
-    tt <- sm(try(do.call("library", as.list(orgdb)), silent=TRUE))
+    ## tt <- sm(try(do.call("library", as.list(orgdb)), silent=TRUE))
+    lib_result <- sm(requireNamespace(orgdb))
+    att_restul <- sm(try(attachNamespace(orgdb), silent=TRUE))
     first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
                                        keys=first_ids,
                                        keytype=current_id,
@@ -159,7 +161,9 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  tt <- sm(library(orgdb, character.only=TRUE))
+  ## tt <- sm(library(orgdb, character.only=TRUE))
+  lib_result <- sm(requireNamespace(orgdb))
+  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
   up_lst <- list()
   down_lst <- list()
   colored_lst <- list()
@@ -321,7 +325,9 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  tt <- sm(library(orgdb, character.only=TRUE))
+  ## tt <- sm(library(orgdb, character.only=TRUE))
+  lib_result <- sm(requireNamespace(orgdb))
+  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
   high_lst <- list()
   low_lst <- list()
   colored_lst <- list()
@@ -346,7 +352,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
                                            keytype=current_id,
                                            columns=c(required_id)))
       high_idx <- complete.cases(high_ids)
-      high_ids <- up_ids[high_idx, ]
+      high_ids <- high_ids[high_idx, ]
       high <- merge(high, high_ids, by.x="row.names", by.y=current_id)
       if (!is.null(low_ids)) {
         low_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
@@ -472,7 +478,9 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
     if (exists(datasets)) {
       sig_data <- datasets
       if (class(sig_data)[[1]] == "character") {
-        tt <- sm(library(data_pkg, character.only=TRUE))
+        ##tt <- sm(library(data_pkg, character.only=TRUE))
+        lib_result <- sm(requireNamespace(data_pkg))
+        att_result <- sm(try(attachNamespace(data_pkg), silent=TRUE))
         lst <- list("list"=datasets, "package"=data_pkg)
         test <- do.call("data", as.list(datasets, lst))
         sig_data <- get0(datasets)
@@ -481,7 +489,9 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
         stop("The data must be a GeneSetCollection.")
       }
     } else {
-      tt <- sm(library(data_pkg, character.only=TRUE))
+      ##tt <- sm(library(data_pkg, character.only=TRUE))
+      lib_result <- sm(requireNamespace(data_pkg))
+      att_result <- sm(try(attachNamespace(data_pkg), silent=TRUE))
       lst <- list("list"=datasets, "package"=data_pkg)
       test <- do.call("data", as.list(datasets, lst))
       sig_data <- get0(datasets)
@@ -500,7 +510,9 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
   if (current_id != required_id) {
     message("Converting the rownames() of the expressionset to ENTREZID.")
-    tt <- sm(library(orgdb, character.only=TRUE))
+    ##tt <- sm(library(orgdb, character.only=TRUE))
+    lib_result <- sm(requireNamespace(orgdb))
+    att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
     old_ids <- rownames(exprs(eset))
     new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
                                         keys=old_ids,
@@ -694,7 +706,9 @@ get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_
 #' @export
 convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="ENTREZID") {
     message("Converting the rownames() of the expressionset to ", to_type, ".")
-    tt <- sm(library(orgdb, character.only=TRUE))
+    ##tt <- sm(library(orgdb, character.only=TRUE))
+    lib_result <- sm(requireNamespace(orgdb))
+    att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
     orgdb <- get0(orgdb)
     gsc_lst <- as.list(gsc)
     new_gsc <- list()

@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("010annotation_eupathdb.R
-  1\n")
+  12\n")
 ## 2018-02: Hey, there is a new eupathdb release!  Some stuff has changed!
 ## 2017-12, exported functions in annotation_eupathdb:
 ##  make_eupath_bsgenome(), make_eupath_organismdbi() download_eupath_metadata(),
@@ -13,10 +13,19 @@ context("010annotation_eupathdb.R
 
 testing <- download_eupath_metadata()
 ## Looks like 8 new species were added.
-expected <- c(318, 19)
+## oh wow, some species were removed now!
+expected <- c(289, 19)
 actual <- dim(testing)
 ## 01
 test_that("Is the eupathdb metadata the expected size?", {
+  expect_equal(expected, actual)
+})
+
+testing <- download_eupath_metadata(webservice="tritrypdb")
+expected <- c(46, 19)
+actual <- dim(testing)
+## 01
+test_that("Is the tritrypdb metadata the expected size?", {
   expect_equal(expected, actual)
 })
 
@@ -45,6 +54,12 @@ if (isTRUE(do_long_tests)) {
   test_that("Did the bsgenome get installed?", {
     expect_true(bsgenome_test[["bsgenome_name"]] %in% installed.packages())
   })
+
+  ## I found a note in Keith's EupathDb package that T. vaginalis took 12 hours.
+  ## I want to see how long this version of that idea takes...
+  ## Starting at 11:38
+  tvag <- make_eupath_organismdbi(species="vaginalis")
+  Sys.time()
 }
 
 end <- as.POSIXlt(Sys.time())

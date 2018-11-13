@@ -12,7 +12,7 @@ pombe_expt <- make_pombe_expt(annotation=FALSE)
 ## 01 pca_information()
 testing <- pca_information(pombe_expt, plot_pcas=TRUE,
                            expt_factors=c("strain", "minute", "replicate"))
-expected <- c(94.150, 4.612, 0.791, 0.120, 0.108, 0.081)
+expected <- c(94.15, 4.61, 0.79, 0.12, 0.11, 0.08)
 actual <- head(testing[["rsquared_table"]][["prop_var"]])
 ## 01
 test_that("pca_information() provides a rsquared table?", {
@@ -33,32 +33,32 @@ test_that("pca_highscores() provides some scores by PC?", {
 ## 05 plot_pcs()  This is also called from plot_pca()
 testing <- plot_pca(pombe_expt)
 expected <- c(6008536.5, 1329859.1, 550763.0, 214403.7, 203382.4, 176304.0)
-actual <- head(testing$pca$d)
+actual <- head(testing[["result"]][["d"]])
 ## 03
 test_that("plot_pca() provides expected SVD data?", {
   expect_equal(expected, actual, tolerance=1.0)
 })
 
 test_that("plot_pca() provides a plot!?", {
-  expect_equal(class(testing$plot)[1], "gg")
+  expect_equal(class(testing[["plot"]])[1], "gg")
 })
 
 expected <- c(-0.007178318, 0.070735209, -0.136645507, -0.374502211, 0.072181094, -0.028458656)
-actual <- head(testing$table)$PC1
+actual <- head(testing[["table"]])$PC1
 ## 04
 test_that("We acquire expected values for PC1?", {
   expect_equal(expected, actual)
 })
 
 expected <- c(0.20199545, -0.19923795, -0.10775070, 0.28537150, -0.06148581, -0.25190759)
-actual <- head(testing$table)$PC2
+actual <- head(testing[["table"]])[["PC2"]]
 ## 05
 test_that("We acquire expected values for PC2?", {
   expect_equal(expected, actual)
 })
 
 expected <- c(94.15, 4.61, 0.79, 0.12, 0.11, 0.08)
-actual <- head(testing$variance)
+actual <- head(testing[["prop_var"]])
 ## 06
 test_that("We get variances from pcRes?", {
   expect_equal(expected, actual)

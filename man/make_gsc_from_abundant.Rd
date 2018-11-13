@@ -35,7 +35,7 @@ make_gsc_from_abundant(pairwise, according_to = "deseq",
 }
 \value{
 List containing 3 GSCs, one containing both the highs/lows called
-'colored', one of the highs, and one of the lows.
+  'colored', one of the highs, and one of the lows.
 }
 \description{
 If I want to play with gsva and friends, then I need GeneSetCollections!

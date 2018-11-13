@@ -32,7 +32,7 @@ least.
 }
 \seealso{
 \pkg{RCurl}
-\code{\link[RCurl]{getURL}}
+ \code{\link[RCurl]{getURL}}
 }
 \author{
 atb

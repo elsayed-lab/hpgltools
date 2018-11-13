@@ -8,8 +8,8 @@ goseq_table(df, file = NULL)
 }
 \arguments{
 \item{df}{Dataframe of ontology information.  This is intended to be the
-output from goseq including information like numbers/category, GOids, etc.
-It requires a column 'category'
+ output from goseq including information like numbers/category, GOids, etc.
+ It requires a column 'category'
 which contains: GO:000001 and such.}
 
 \item{file}{Csv file to which to write the table.}

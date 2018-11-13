@@ -26,7 +26,7 @@ or leek, or a number.}
 }
 \value{
 List including the adjustments for a model matrix, a modified count
-table, and 3 plots of the known batch, surrogates, and batch/surrogate.
+  table, and 3 plots of the known batch, surrogates, and batch/surrogate.
 }
 \description{
 This applies the methodologies very nicely explained by Jeff Leek at

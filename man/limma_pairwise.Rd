@@ -45,21 +45,21 @@ than I previously realized.  Play with it here.}
 }
 \value{
 List including the following information:
-macb = the mashing together of condition/batch so you can look at it
-macb_model = The result of calling model.matrix(~0 + macb)
-macb_fit =  The result of calling lmFit(data, macb_model)
-voom_result = The result from voom()
-voom_design = The design from voom (redundant from voom_result, but convenient)
-macb_table = A table of the number of times each condition/batch pairing happens
-cond_table = A table of the number of times each condition appears (the
-denominator for the identities)
-batch_table = How many times each batch appears
-identities = The list of strings defining each condition by itself
-all_pairwise = The list of strings defining all the pairwise contrasts
-contrast_string = The string making up the makeContrasts() call
-pairwise_fits = The result from calling contrasts.fit()
-pairwise_comparisons = The result from eBayes()
-limma_result = The result from calling write_limma()
+ macb = the mashing together of condition/batch so you can look at it
+ macb_model = The result of calling model.matrix(~0 + macb)
+ macb_fit =  The result of calling lmFit(data, macb_model)
+ voom_result = The result from voom()
+ voom_design = The design from voom (redundant from voom_result, but convenient)
+ macb_table = A table of the number of times each condition/batch pairing happens
+ cond_table = A table of the number of times each condition appears (the
+  denominator for the identities)
+ batch_table = How many times each batch appears
+ identities = The list of strings defining each condition by itself
+ all_pairwise = The list of strings defining all the pairwise contrasts
+ contrast_string = The string making up the makeContrasts() call
+ pairwise_fits = The result from calling contrasts.fit()
+ pairwise_comparisons = The result from eBayes()
+ limma_result = The result from calling write_limma()
 }
 \description{
 Creates the set of all possible contrasts and performs them using voom/limma.
@@ -71,5 +71,5 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 \seealso{
 \pkg{limma} \pkg{Biobase}
-\code{\link{write_limma}}
+ \code{\link{write_limma}}
 }

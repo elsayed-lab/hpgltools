@@ -5,10 +5,10 @@
 \title{Collect the r^2 values from a linear model fitting between a singular
 value decomposition and factor.}
 \usage{
-factor_rsquared(svd_v, fact, type = "factor")
+factor_rsquared(datum, fact, type = "factor")
 }
 \arguments{
-\item{svd_v}{V' V = I portion of a fast.svd call.}
+\item{datum}{Result from corpcor::fast.svd.}
 
 \item{fact}{Experimental factor from the original data.}
 
@@ -23,5 +23,5 @@ value decomposition and factor.
 }
 \seealso{
 \pkg{corpcor}
-\code{\link[corpcor]{fast.svd}}
+ \code{\link[corpcor]{fast.svd}}
 }

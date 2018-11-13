@@ -41,5 +41,5 @@ those trees.
 }
 \seealso{
 \pkg{Ramigo}
-\code{\link[topGO]{showSigOfNodes}}
+ \code{\link[topGO]{showSigOfNodes}}
 }

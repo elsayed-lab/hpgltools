@@ -30,5 +30,5 @@ runs got repeated.
 }
 \seealso{
 \pkg{Biobase}
-\code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
+ \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
 }

@@ -5,7 +5,7 @@
 \title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
 write_xls(data = "undef", wb = NULL, sheet = "first", excel = NULL,
-  rownames = TRUE, start_row = 1, start_col = 1, ...)
+  rownames = TRUE, start_row = 1, start_col = 1, title = NULL, ...)
 }
 \arguments{
 \item{data}{Data frame to print.}
@@ -22,11 +22,13 @@ write_xls(data = "undef", wb = NULL, sheet = "first", excel = NULL,
 
 \item{start_col}{First column to write.}
 
+\item{title}{Title for this xlsx table.}
+
 \item{...}{Set of extra arguments given to openxlsx.}
 }
 \value{
 List containing the sheet and workbook written as well as the
-bottom-right coordinates of the last row/column written to the worksheet.
+  bottom-right coordinates of the last row/column written to the worksheet.
 }
 \description{
 I like to give folks data in any format they prefer, even though I sort

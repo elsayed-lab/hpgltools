@@ -41,6 +41,6 @@ A list of results from the various tests in topGO.
 }
 \description{
 My function 'simple_topgo()' was excessively long and a morass of copy/pasted
-fragments.  This attempts to simplify that and converge on a single piece
-of code for all the methodologies provided by topgo.
+  fragments.  This attempts to simplify that and converge on a single piece
+  of code for all the methodologies provided by topgo.
 }

@@ -23,8 +23,8 @@ load_biomart_orthologs(gene_ids, first_species = "hsapiens",
 }
 \value{
 list of 4 elements:  The first is the set of all ids, as getLDS seems
-to always send them all; the second is the subset corresponding to the
-actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
+  to always send them all; the second is the subset corresponding to the
+  actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 }
 \description{
 Biomart's function getLDS is incredibly powerful, but it makes me think very
@@ -50,7 +50,7 @@ humans.
 }
 \seealso{
 \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
-\code{\link[biomaRt]{useMart}}
+ \code{\link[biomaRt]{useMart}}
 }
 \author{
 atb

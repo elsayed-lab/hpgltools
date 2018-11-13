@@ -33,7 +33,7 @@ or other methods supported by get_model_adjust().}
 comparisons.  This can be pretty neat, lets say one has conditions
 A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like:
-"c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".}
+  "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".}
 
 \item{alt_model}{Alternate model to use rather than just condition/batch.}
 
@@ -83,6 +83,6 @@ comparisons among them.
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
-\code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
-\code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+ \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
+ \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 }

@@ -30,5 +30,5 @@ histogram together and look at the t.test results between distributions.
 }
 \seealso{
 \pkg{ggplot2}
-\code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
+ \code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
 }

@@ -29,5 +29,5 @@ and initially provided by Ramzi Temanni.
 }
 \seealso{
 \pkg{BiocInstaller}
-\code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
+ \code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
 }

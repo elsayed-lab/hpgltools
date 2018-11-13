@@ -25,5 +25,5 @@ It is essentially fancy pants rpkm.
 }
 \seealso{
 \pkg{edgeR} \pkg{Rsamtools}
-\code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
+ \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 }

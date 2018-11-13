@@ -32,5 +32,5 @@ These plots are quite difficult to describe.
 }
 \seealso{
 \pkg{ggplot2}
-\code{\link{extract_significant_genes}}
+ \code{\link{extract_significant_genes}}
 }

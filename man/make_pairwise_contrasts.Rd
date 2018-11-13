@@ -24,13 +24,13 @@ need to be set to FALSE, but just in case.}
 }
 \value{
 List including the following information:
-\enumerate{
-\item all_pairwise_contrasts = the result from makeContrasts(...)
-\item identities = the string identifying each condition alone
-\item all_pairwise = the string identifying each pairwise comparison alone
-\item contrast_string = the string passed to R to call makeContrasts(...)
-\item names = the names given to the identities/contrasts
-}
+ \enumerate{
+  \item all_pairwise_contrasts = the result from makeContrasts(...)
+  \item identities = the string identifying each condition alone
+  \item all_pairwise = the string identifying each pairwise comparison alone
+  \item contrast_string = the string passed to R to call makeContrasts(...)
+  \item names = the names given to the identities/contrasts
+ }
 }
 \description{
 In order to have uniformly consistent pairwise contrasts, I decided
@@ -47,5 +47,5 @@ Invoked by the _pairwise() functions.
 }
 \seealso{
 \pkg{limma}
-\code{\link[limma]{makeContrasts}}
+ \code{\link[limma]{makeContrasts}}
 }

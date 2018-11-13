@@ -6,7 +6,7 @@
 uses the raw one.}
 \usage{
 post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
-  table_name = NULL, parameters = NULL, columns = "primary_key",
+  parameters = NULL, table_name = NULL, columns = NULL,
   minutes = 40)
 }
 \arguments{
@@ -15,10 +15,10 @@ post_eupath_raw(entry, question = "GeneQuestions.GenesByMolecularWeight",
 \item{question}{Which query to try?  Molecular weight is the easiest, as it
 was their example.}
 
+\item{parameters}{Query parameters when posting}
+
 \item{table_name}{Used to make sure all columns are unique by prefixing them
 with the table name.}
-
-\item{parameters}{Query parameters when posting}
 
 \item{columns}{Columns for which to ask.}
 

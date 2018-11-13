@@ -583,7 +583,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     kidx <- plotting_mi_over[["term.name"]] != "NULL"
     plotting_mi_over <- plotting_mi_over[kidx, ]
     ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_md_over[["p.value"]] <= cutoff
+    kidx <- plotting_mi_over[["p.value"]] <= cutoff
     plotting_mi_over <- plotting_mi_over[kidx, ]
     ## Drop anything with fewer than x genes in the group
     kidx <- plotting_mi_over[["query.size"]] >= group_minsize

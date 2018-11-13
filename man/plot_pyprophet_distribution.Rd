@@ -6,8 +6,8 @@
 data.}
 \usage{
 plot_pyprophet_distribution(pyprophet_data, column = "delta_rt",
-  keep_real = TRUE, keep_decoys = TRUE, names = NULL, title = NULL,
-  scale = NULL, ...)
+  keep_real = TRUE, keep_decoys = TRUE, expt_names = NULL,
+  label_chars = 10, title = NULL, scale = NULL, ...)
 }
 \arguments{
 \item{pyprophet_data}{List containing the pyprophet results.}
@@ -19,7 +19,9 @@ we only want the decoys)}
 
 \item{keep_decoys}{Do we keep the decoys when plotting the data?}
 
-\item{names}{Names for the x-axis of the plot.}
+\item{expt_names}{Names for the x-axis of the plot.}
+
+\item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
 \item{title}{Title the plot?}
 
@@ -28,7 +30,7 @@ we only want the decoys)}
 \item{...}{Further arguments, presumably for colors or some such.}
 }
 \value{
-A boxplot describing the desired column from the data.
+Boxplot describing the desired column from the data.
 }
 \description{
 This function is mostly redundant with the plot_mzxml_boxplot above.

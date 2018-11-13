@@ -341,7 +341,7 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
   if (class(unused_var) == "try-error") {
     message("There was an error when creating the data table of coverage.")
   }
-  new_dt <- as.data.table(new_dt)
+  new_dt <- data.table::as.data.table(new_dt)
   new_dt[["rownames"]] <- snp_dt[["rownames"]]
 
 }

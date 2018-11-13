@@ -40,7 +40,7 @@ variables.}
 }
 \value{
 List including a model matrix and strings describing cell-means and
-intercept models.
+  intercept models.
 }
 \description{
 The _pairwise family of functions all demand an experimental model.  This
@@ -60,5 +60,5 @@ Invoked by the _pairwise() functions.
 }
 \seealso{
 \pkg{stats}
-\code{\link[stats]{model.matrix}}
+ \code{\link[stats]{model.matrix}}
 }

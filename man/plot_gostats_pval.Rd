@@ -31,5 +31,5 @@ currently does not.
 }
 \seealso{
 \pkg{clusterProfiler}
-\code{\link{plot_ontpval}}
+ \code{\link{plot_ontpval}}
 }

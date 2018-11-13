@@ -59,7 +59,7 @@ from clusterprofiler.}
 }
 \value{
 a list of up/down ontology results from
-goseq/clusterprofiler/topgo/gostats, and associated trees.
+  goseq/clusterprofiler/topgo/gostats, and associated trees.
 }
 \description{
 This takes a set of differential expression results, extracts a subset of
@@ -79,5 +79,5 @@ species in ways which the various tools expect.
 }
 \seealso{
 \pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats}
-\pkg{gProfiler} \pkg{GO.db}
+  \pkg{gProfiler} \pkg{GO.db}
 }

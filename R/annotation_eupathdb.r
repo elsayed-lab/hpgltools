@@ -554,17 +554,17 @@ get_eupath_pkgnames <- function(species="Coprinosis.cinerea.okayama7#130", versi
 #' @author  Keith Hughitt, modified by atb.
 #' @export
 make_eupath_organismdbi <- function(species="Leishmania major strain Friedlin", entry=NULL,
-                                    version=NULL, dir="eupathdb",
-                                    reinstall=FALSE,
-                                    metadata=NULL,
-                                    kegg_abbreviation=NULL, exclude_join="ENTREZID",
+                                    version=NULL, dir="eupathdb", reinstall=FALSE,
+                                    metadata=NULL, kegg_abbreviation=NULL,
+                                    exclude_join="ENTREZID",
                                     ...) {
   arglist <- list(...)
   if (is.null(entry) & is.null(species)) {
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
     if (is.null(metadata)) {
-      metadata <- download_eupath_metadata(dir=dir, ...)
+      metadata <- download_eupath_metadata(dir=dir,
+                                           ...)
       ## metadata <- download_eupath_metadata(dir=dir)
     }
     entry <- check_eupath_species(species=species, metadata=metadata)
@@ -885,7 +885,9 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb", version=
     ret <- file.rename(first_path, backup_path)
   }
 
-  tt <- sm(require("AnnotationForge"), wrap=FALSE)
+  ##tt <- sm(require("AnnotationForge"), wrap=FALSE)
+  lib_result <- sm(requireNamespace("AnnotationForge"))
+  att_result <- sm(try(attachNamespace("AnnotationForge"), silent=TRUE))
   message(sprintf("- Calling makeOrgPackage for %s", entry[["Species"]]))
   orgdb_path <- sm(try(do.call("makeOrgPackage", orgdb_args)), wrap=FALSE)
   if (class(orgdb_path) == "try-error") {
@@ -997,32 +999,32 @@ make_eupath_txdb <- function(species=NULL, entry=NULL, dir="eupathdb",
   }
 
   ## This is the section I yanked
-  provider <- GenomicFeatures:::.getMetaDataValue(txdb, "Data source")
-  providerVersion <- GenomicFeatures:::.getTxDbVersion(txdb)
-  dbType <- GenomicFeatures:::.getMetaDataValue(txdb, "Db type")
-  authors <- GenomicFeatures:::.normAuthor(entry[["Maintainer"]], entry[["Maintainer"]])
-  template_path <- system.file("txdb-template", package = "GenomicFeatures")
+  provider <- getMetaDataValue(txdb, "Data source")
+  providerVersion <- getTxDbVersion(txdb)
+  dbType <- getMetaDataValue(txdb, "Db type")
+  authors <- normAuthor(entry[["Maintainer"]], entry[["Maintainer"]])
+  template_path <- system.file("txdb-template", package="GenomicFeatures")
   version_string <- format(Sys.time(), "%Y.%m")
-  data_source <- GenomicFeatures:::.getMetaDataValue(txdb, "Data source")
+  data_source <- getMetaDataValue(txdb, "Data source")
   symvals <- list(
     "PKGTITLE" = glue("Annotation package for {dbType} object(s)"),
-    "PKGDESCRIPTION" = paste("Exposes an annotation databases generated from \\
+    "PKGDESCRIPTION" = glue("Exposes an annotation databases generated from \\
                              {data_source} by exposing these as {dbType} objects"),
     "PKGVERSION" = version_string,
     "AUTHOR" = paste(authors, collapse = ", "),
-    "MAINTAINER" = as.character(GenomicFeatures:::.getMaintainer(authors)),
-    "GFVERSION" = GenomicFeatures:::.getMetaDataValue(
-                                      txdb, "GenomicFeatures version at creation time"),
+    "MAINTAINER" = as.character(getMaintainer(authors)),
+    "GFVERSION" = getMetaDataValue(txdb,
+                                   "GenomicFeatures version at creation time"),
     "LIC" = "Artistic-2.0",
     "DBTYPE" = dbType,
-    "ORGANISM" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
-    "SPECIES" = GenomicFeatures:::.getMetaDataValue(txdb, "Organism"),
+    "ORGANISM" = getMetaDataValue(txdb, "Organism"),
+    "SPECIES" = getMetaDataValue(txdb, "Organism"),
     "PROVIDER" = provider,
     "PROVIDERVERSION" = providerVersion,
-    "RELEASEDATE" = GenomicFeatures:::.getMetaDataValue(txdb, "Creation time"),
-    ## SOURCEURL = GenomicFeatures:::.getMetaDataValue(txdb, "Resource URL"),
+    "RELEASEDATE" = getMetaDataValue(txdb, "Creation time"),
+    ## SOURCEURL = getMetaDataValue(txdb, "Resource URL"),
     "SOURCEURL" = entry[["SourceUrl"]],
-    "ORGANISMBIOCVIEW" = gsub(" ", "_", GenomicFeatures:::.getMetaDataValue(txdb, "Organism")),
+    "ORGANISMBIOCVIEW" = gsub(" ", "_", getMetaDataValue(txdb, "Organism")),
     "TXDBOBJNAME" = pkgname)
   if (any(duplicated(names(symvals)))) {
     str(symvals)

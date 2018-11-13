@@ -26,7 +26,7 @@ dots on the graph.}
 }
 \value{
 NULL, but along the way an html file is generated which contains a
-googleVis volcano plot.
+  googleVis volcano plot.
 }
 \description{
 Volcano plots provide some visual clues regarding the success of a given

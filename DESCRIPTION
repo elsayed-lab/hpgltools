@@ -1,7 +1,7 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2018.03
+Version: 2018.11
 Date: 2018-03-01
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
@@ -18,9 +18,10 @@ Description: This is a set of functions I have been using in my various analyses
 License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-  Biobase, BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
+  BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
-  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel, DOSE, doSNOW,
+  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
+  DOSE, doSNOW,
   EBSeq, EDASeq, edgeR,
   fastICA, ffpe, fission,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
@@ -38,19 +39,21 @@ Suggests:
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
-  S4Vectors, scales, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, sva,
+  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
   UniProt.ws,
   xCell,
   variancePartition, Vennerable, venneuler,
   XLConnect, xml2
 Imports:
-  Biobase, data.table, dplyr, foreach, ggplot2, glue, knitr, magrittr, methods, rlang
+  data.table, dplyr, foreach, ggplot2, glue, knitr, magrittr, methods, rlang
+Depends:
+  Biobase
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
-Roxygen: list(markdown=TRUE)
-RoxygenNote: 6.1.0
+Encoding: UTF-8
+RoxygenNote: 6.1.1
 Collate:
     '01_hpgltools.r'
     'alt_splicing.r'

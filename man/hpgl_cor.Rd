@@ -29,5 +29,5 @@ S4.
 }
 \seealso{
 \pkg{robust}
-\code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
+ \code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
 }

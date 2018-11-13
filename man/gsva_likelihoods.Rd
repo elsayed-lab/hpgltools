@@ -38,11 +38,9 @@ information.
 \details{
 The nicest thing in this, I think, is that it provides its scoring metric(s)
 according to a few different possibilities, including:
-\itemize{
-\item the mean of samples found in an experimental factor
-\item All provided scores against the distribution of observed scores as
-z-scores.
-\item A single score against all scores.
-\item Rows (gene sets) against the set of all gene sets.
-}
+  * the mean of samples found in an experimental factor
+  * All provided scores against the distribution of observed scores as
+    z-scores.
+  * A single score against all scores.
+  * Rows (gene sets) against the set of all gene sets.
 }
