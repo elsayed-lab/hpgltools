@@ -111,6 +111,8 @@ mgas_df <- mgas_df[, c("start", "end", "width", "strand", "gene")]
 colnames(mgas_df) <- c("start", "stop", "width", "strand", "COGFun")
 mgas_df[["start"]] <- suppressWarnings(as.numeric(mgas_df[["start"]]))
 mgas_df[["stop"]] <- suppressWarnings(as.numeric(mgas_df[["stop"]]))
+na_entries <- is.na(mgas_df[["start"]])
+mgas_df <- mgas_df[!na_entries, ]
 
 ## There is no way circos will work on travis, lets be realistic.
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
@@ -120,14 +122,17 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
   relevant_widths <- merge(glucose_table, mgas_df, by="row.names", all.x=TRUE)
   ## Since genbankr died, get the gene lengths from microbesonline
   relevant_widths <- suppressWarnings(as.numeric(relevant_widths[["width"]]))
+  na_widths <- is.na(relevant_widths)
+  relevant_widths[na_widths] <- 0
 
-  circos_test <- sm(circos_prefix())
-  circos_plus <- sm(circos_plus_minus(mgas_df, cfgout=circos_test))
-  circos_hist_ll_cg <- sm(circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus))
-  circos_heat_ll_cf <- sm(circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg))
-  circos_tile_wtmga <- sm(circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf))
+  circos_test <- circos_prefix()
+  circos_kary <- circos_karyotype(name="mgas", length=1899877)
+  circos_plus <- circos_plus_minus(mgas_df, cfgout=circos_test)
+  circos_hist_ll_cg <- circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus)
+  circos_heat_ll_cf <- circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg)
+  circos_tile_wtmga <- circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf)
   circos_suffix(cfgout=circos_test)
-  circos_made <- sm(circos_make(target="mgas"))
+  ## circos_made <- circos_make(target="mgas")
 }
 
 end <- as.POSIXlt(Sys.time())

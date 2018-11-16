@@ -23,7 +23,8 @@ untarred <- utils::untar(tarfile=system.file("sb/preprocessing.tar.xz", package=
 ## Let us see if that is true.
 
 sb_expt <- create_expt(metadata="preprocessing/kept_samples.xlsx", gene_info=sb_annot)
-sb_count <- normalize_expt(sb_expt, filter=TRUE, thresh=4)
-sb_plots <- graph_metrics(sb_count)
-sb_norm <- normalize_expt(sb_count, norm="quant", convert="cpm", transform="log2")
-sb_nplots <- graph_metrics(sb_norm)
+actual <- dim(exprs(sb_expt))
+expected <- c(234330, 8)
+test_that("Do we get an expected matrix from create_expt()?", {
+  expect_equal(expected, actual)
+})

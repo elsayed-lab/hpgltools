@@ -52,7 +52,7 @@ factor_rsquared <- function(datum, fact, type="factor") {
 #' @section Warning:
 #'  This function has gotten too damn big and needs to be split up.
 #'
-#' @param expt_data Data to analyze (usually exprs(somedataset)).
+#' @param expt Data to analyze (usually exprs(somedataset)).
 #' @param expt_design Dataframe describing the experimental design, containing
 #'   columns with useful information like the conditions, batches, number of
 #'   cells, whatever...
@@ -814,7 +814,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       "colors" = as.character(plot_colors),
       "labels" = label_list,
       stringsAsFactors=FALSE)
-  } else {
+    } else {
     comp_data <- data.frame(
       "sampleid" = rownames(pc_table),
       "condition" = "a",
@@ -825,7 +825,8 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     plot_size <- 0.5
     plot_alpha <- 0.3
     plot_labels <- FALSE
-  }
+    }
+  rownames(comp_data) <- rownames(pc_table)
   comp_data[[x_name]] <- pc_table[, x_pc]
   comp_data[[y_name]] <- pc_table[, y_pc]
   tmp <- as.data.frame(pc_table)

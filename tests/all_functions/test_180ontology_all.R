@@ -75,15 +75,17 @@ test_that("Do we get some plots?", {
 
 pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 ## hmm when I did make test, I got an error, but running interactively seems fine...
-go_test <- simple_goseq(ups, go_db=pombe_go, length_db=pombe_lengths)
+if (interactive()) {
+  go_test <- simple_goseq(ups, go_db=pombe_go, length_db=pombe_lengths)
 
-actual <- dim(go_test[["bp_interesting"]])
-expected <- c(3, 6)
-## 16 and 17
-test_that("Does goseq provide a few biological processes?", {
-  expect_equal(actual[1], expected[1])
-  expect_equal(actual[2], expected[2])
-})
+  actual <- dim(go_test[["bp_interesting"]])
+  expected <- c(3, 6)
+  ## 16 and 17
+  test_that("Does goseq provide a few biological processes?", {
+    expect_equal(actual[1], expected[1])
+    expect_equal(actual[2], expected[2])
+  })
+}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

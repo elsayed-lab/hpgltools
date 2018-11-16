@@ -148,7 +148,7 @@ pasilla_metrics$density
 ## look good until the data is normalized, nonetheless, lets see
 pasilla_metrics$corheat
 pasilla_metrics$disheat
-pasilla_metrics$pcaplot
+pasilla_metrics$pc_plot
 ## So the above 3 plots are pretty much the worst case scenario for this data.
 ```
 
@@ -169,17 +169,22 @@ norm_metrics$smc
 norm_metrics$disheat
 norm_metrics$smd
 ## some samples look a little troublesome here.
-norm_metrics$pcaplot
+norm_metrics$pc_plot
 ```
 
 # Try a pairwise comparison
 
 ```{r perform_pairwise}
-pasilla_pairwise <- all_pairwise(pasilla_expt)
-pasilla_tables <- sm(combine_de_tables(all_pairwise_result=pasilla_pairwise,
-                                       excel="pasilla_tables.xlsx",
-                                       sig_excel="pasilla_sig.xlsx",
-                                       abundant_excel="pasilla_abundant.xlsx"))
+pasilla_pairwise <- sm(all_pairwise(pasilla_expt))
+pasilla_tables <- sm(combine_de_tables(
+  pasilla_pairwise,
+  excel="pasilla_tables.xlsx"))
+pasilla_sig <- sm(extract_significant_genes(
+  pasilla_tables,
+  excel="pasilla_sig.xlsx"))
+pasilla_ab <- sm(extract_abundant_genes(
+  pasilla_pairwise,
+  excel="pasilla_abundant.xlsx"))
 pasilla_tables$deseq_ma_plots[[1]]$plot
 ```
 

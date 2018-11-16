@@ -929,6 +929,9 @@ circos_tile <- function(df, annot_df=NULL, cfgout="circos/conf/default.conf",
 #' @param annot_df Annotation data frame with starts/ends.
 #' @param cfgout Master configuration file to write.
 #' @param colname Name of the column with the data of interest.
+#' @param color_mapping 0 means no overflows for min/max, 1 means overflows
+#'        of min get a chosen color, 2 means overflows of both min/max get
+#'        chosen colors.
 #' @param min_value Minimum value for the data.
 #' @param max_value Maximum value for the data.
 #' @param chr Name of the chromosome (This currently assumes a bacterial chromosome).
@@ -1231,11 +1234,11 @@ circos_make <- function(target="", output="circos/Makefile", circos="circos") {
 .PHONY:\tclean
 CIRCOS=\"%s\"
 
-clean:
-\trm -rf conf data *.conf *.png *.svg *.html
-
 %%.png:\t%%.conf
 \t$(CIRCOS) -conf $< -outputfile $*.png
+
+clean:
+\trm -rf conf data *.conf *.png *.svg *.html
 
 %%.svg:\t%%.conf
 \t$(CIRCOS) -conf $< -outputfile $*.svg
@@ -1451,13 +1454,13 @@ chromosomes_display_default = yes
   cat(prefix_string, file=out, sep="")
   close(out)
   to_path <- glue::glue("{name}.conf")
-  if (!file.exists(to_path)) {
-    wd <- getwd()
+  wd <- getwd()
+  final_cfg <- glue::glue("{wd}/circos/{to_path}")
+  if (!file.exists(final_cfg)) {
     tmpwd <- glue::glue("{wd}/circos")
     setwd(tmpwd)
     from <- gsub("circos/", "", cfgout)
-    to <- "."
-    file.symlink(from, to)
+    file.symlink(from, to_path)
     setwd(wd)
   }
   return(cfgout)

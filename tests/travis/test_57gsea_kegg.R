@@ -22,8 +22,10 @@ test_that("Is it possible to look up a kegg species ID?", {
 ## Make a map of the weird flybase IDs FBgn to the also weird Cg ids.
 tt <- sm(library(org.Dm.eg.db))
 dm_orgdb <- org.Dm.eg.db
-mapping <- sm(map_orgdb_ids(dm_orgdb, mapto=c("ENSEMBL","ENTREZID","FLYBASE","FLYBASECG","GENENAME")))
-expected <- c("FBgn0040373", "FBgn0040372", "FBgn0261446", "FBgn0000316", "FBgn0005427", "FBgn0040370")
+mapping <- sm(map_orgdb_ids(dm_orgdb, mapto=c("ENSEMBL", "ENTREZID", "FLYBASE",
+                                              "FLYBASECG", "GENENAME")))
+expected <- c("FBgn0040373", "FBgn0040372", "FBgn0261446",
+              "FBgn0000316", "FBgn0005427", "FBgn0040370")
 actual <- head(mapping[["flybase"]])
 test_that("Did orgdb give useful ID mappings? (FBgn IDs)", {
     expect_equal(expected, actual)
@@ -38,7 +40,7 @@ test_that("Did orgdb give useful ID mappings? (entrez)", {
 limma_result <- limma[["hpgl_limma"]]
 all_genes <- limma_result[["all_tables"]][["untreated_vs_treated"]]
 all_genes <- merge(x=all_genes, y=mapping, by.x="row.names", by.y="flybase", all.x=TRUE)
-sig_up <- sm(get_sig_genes(all_genes, z=2)[["up_genes"]])
+sig_up <- get_sig_genes(all_genes, z=2)[["up_genes"]]
 all_ids <- paste0("Dmel_", all_genes[["flybasecg"]])
 sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 
@@ -48,7 +50,7 @@ sig_ids <- paste0("Dmel_", sig_up[["flybasecg"]])
 ## Note, I split the result of this into percent_nodes and percent_edges
 ## Looks like some KEGG functionality has died, www.genome.jp/kegg-bin/download no longer returns anything...
 ## So I hacked my own retrieveKGML which adds a referer to get around this problem.
-pct_citrate <- sm(pct_kegg_diff(all_ids, sig_ids, organism="dme", pathway="00500"))
+pct_citrate <- pct_kegg_diff(all_ids, sig_ids, organism="dme", pathway="00500")
 expected <- 18.18
 actual <- pct_citrate[["percent_nodes"]]
 test_that("Can we extract the percent differentially expressed genes in one pathway?", {

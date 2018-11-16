@@ -5,7 +5,7 @@
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
 extract_de_plots(pairwise, type = "edger", table = NULL, logfc = 1,
-  pval_cutoff = 0.05, invert = FALSE, ...)
+  p = 0.05, invert = FALSE, ...)
 }
 \arguments{
 \item{pairwise}{The result from all_pairwise(), which should be changed to
@@ -17,7 +17,7 @@ handle other invocations too.}
 
 \item{logfc}{What logFC to use for the MA plot horizontal lines.}
 
-\item{pval_cutoff}{Cutoff to define 'significant' by p-value.}
+\item{p}{Cutoff to define 'significant' by p-value.}
 
 \item{invert}{Invert the plot?}
 

@@ -11,6 +11,11 @@
 #' @param df Data frame of counts which have been normalized counts by
 #'   sample-type, which is to say the output from voom/voomMod/hpgl_voom().
 #' @param tooltip_data Df of tooltip information (gene names, etc).
+#' @param p P-value cutoff
+#' @param logfc Logfc cutoff
+#' @param p_col Column in the data containing the p-values.
+#' @param fc_col Column in the data containing the fold-changes.
+#' @param avg_col Column in the data containing the average expression values.
 #' @param filename Filename to write a fancy html graph.
 #' @param base_url String with a basename used for generating URLs for clicking
 #'   dots on the graph.
@@ -25,21 +30,22 @@
 #'               base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
-plot_gvis_ma <- function(df, tooltip_data=NULL,
+plot_gvis_ma <- function(df, tooltip_data=NULL, p=0.05, logfc=1.0,
+                         p_col="AdjPVal", fc_col="logfc", avg_col="AvgExp",
                          filename="html/gvis_ma_plot.html", base_url="", ...) {
     gvis_chartid <- gsub("\\.html$", "", basename(filename))
     gvis_df <- data.frame("AvgExp" = df[["avg"]],
                           "LogFC" = df[["logfc"]],
                           "AdjPVal" = df[["pval"]])
     ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
-    gvis_sig <- gvis_df[which(gvis_df[["AdjPVal"]] <= 0.05), ]
+    sig_idx <- gvis_df[[p_col]] <= p
+    gvis_sig <- gvis_df[sig_idx, ]
     gvis_sig <- gvis_sig[, c(1, 2)]
     gvis_sig <- merge(gvis_sig, tooltip_data, by="row.names")
     rownames(gvis_sig) <- gvis_sig[["Row.names"]]
     gvis_sig <- gvis_sig[, -1]
     colnames(gvis_sig) <- c("AvgExp", "Significant", "sig.tooltip")
-    ## gvis_nonsig = subset(gvis_df, AdjPVal > 0.05)
-    gvis_nonsig <- gvis_df[which(gvis_df[["AdjPVal"]] > 0.05), ]
+    gvis_nonsig <- gvis_df[!sig_idx, ]
     gvis_nonsig <- gvis_nonsig[, c(1, 2)]
     gvis_nonsig <- merge(gvis_nonsig, tooltip_data, by="row.names")
     rownames(gvis_nonsig) <- gvis_nonsig[["Row.names"]]
@@ -84,8 +90,8 @@ plot_gvis_ma <- function(df, tooltip_data=NULL,
 #' significance of the signal."
 #'
 #' @param toptable_data Df of toptable() data.
-#' @param fc_cutoff Fold change cutoff.
-#' @param p_cutoff Maximum p value to allow.
+#' @param logfc Fold change cutoff.
+#' @param p Maximum p value to allow.
 #' @param filename Filename to write a fancy html graph.
 #' @param tooltip_data Df of tooltip information.
 #' @param base_url String with a basename used for generating URLs for clicking
@@ -100,25 +106,24 @@ plot_gvis_ma <- function(df, tooltip_data=NULL,
 #'                     base_url="http://yeastgenome.org/accession?")
 #' }
 #' @export
-plot_gvis_volcano <- function(toptable_data, fc_cutoff=0.8, p_cutoff=0.05,
+plot_gvis_volcano <- function(toptable_data, logfc=1.0, p=0.05,
                               tooltip_data=NULL, filename="html/gvis_vol_plot.html",
                               base_url="", ...) {
     gvis_raw_df <- toptable_data[, c("logFC", "modified_p", "P.Value")]
     if (!is.null(tooltip_data)) {
         gvis_raw_df <- merge(gvis_raw_df, tooltip_data, by="row.names")
     }
-    ## gvis_sig = subset(gvis_raw_df, P.Value <= p_cutoff)
-    gvis_sig <- gvis_raw_df[which(gvis_raw_df$P.Value <= p_cutoff), ]
-    ## gvis_nsig = subset(gvis_raw_df, P.Value > p_cutoff)
-    gvis_nsig <- gvis_raw_df[which(gvis_raw_df$P.Value > p_cutoff), ]
+    sig_idx <- gvis_raw_df[["P.Value"]] <= p
+    gvis_sig <- gvis_raw_df[sig_idx, ]
+    gvis_nsig <- gvis_raw_df[!sig_idx, ]
     colnames(gvis_sig) <- c("Row.names", "logFCsig", "sig_modp", "sig_p", "sig.tooltip")
     colnames(gvis_nsig) <- c("Row.names", "logFCnsig", "nsig_modp", "nsig_p", "nsig.tooltip")
     gvis_sig <- gvis_sig[, c("Row.names", "sig_modp", "sig.tooltip")]
     gvis_nsig <- gvis_nsig[, c("Row.names", "nsig_modp", "nsig.tooltip")]
     gvis_df <- merge(gvis_raw_df, gvis_nsig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
     gvis_df <- merge(gvis_df, gvis_sig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
-    rownames(gvis_df) <- gvis_df$Row.names
-    gvis_df <- gvis_df[-1]
+    rownames(gvis_df) <- gvis_df[["Row.names"]]
+    gvis_df <- gvis_df[, -1]
     gvis_df <- gvis_df[, c("logFC", "nsig_modp", "nsig.tooltip", "sig_modp", "sig.tooltip")]
     colnames(gvis_df) <- c("logFC", "nsig_p", "nsig.tooltip", "sig_p", "sig.tooltip")
     gvis_chartid <- gsub("\\.html$", "", basename(filename))

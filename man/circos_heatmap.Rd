@@ -19,6 +19,10 @@ circos_heatmap(df, annot_df, cfgout = "circos/conf/default.conf",
 
 \item{colname}{Name of the column with the data of interest.}
 
+\item{color_mapping}{0 means no overflows for min/max, 1 means overflows
+of min get a chosen color, 2 means overflows of both min/max get
+chosen colors.}
+
 \item{min_value}{Minimum value for the data.}
 
 \item{max_value}{Maximum value for the data.}

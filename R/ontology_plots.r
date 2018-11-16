@@ -215,19 +215,23 @@ plot_goseq_pval <- function(goterms, wrapped_width=30, cutoff=0.1,
 #' @param cutoff P-value cutoff for the plots.
 #' @param n Maximum number of ontologies to include.
 #' @param type Type of score to use.
+#' @param ... arguments passed through presumably from simple_topgo()
 #' @return List of MF/BP/CC pvalue plots.
 #' @seealso \pkg{topgo} \pkg{clusterProfiler}
 #' @export
 plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1,
-                            n=30, type="fisher") {
-  kcols <- c("GO.ID", "Term", "Annotated", "Significant")
-  mf_newdf <- topgo[["tables"]][["mf_subset"]][, kcols, type]
+                            n=30, type="fisher", ...) {
+  kcols <- c("GO.ID", "Term", "Annotated", "Significant", type)
+  ## mf_newdf <- topgo[["tables"]][["mf_subset"]][, kcols, type]
+  mf_newdf <- topgo[["tables"]][["mf_subset"]][, kcols]
   mf_newdf[["term"]] <- as.character(lapply(strwrap(mf_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste,
                                             collapse="\n"))
   mf_newdf[["pvalue"]] <- as.numeric(mf_newdf[[type]])
-  mf_newdf <- subset(mf_newdf, get(type) <= cutoff)
+  ##mf_newdf <- subset(mf_newdf, get(type) <= cutoff)
+  cutoff_idx <- mf_newdf[["pvalue"]] <= cutoff
+  mf_newdf <- mf_newdf[cutoff_idx, ]
   mf_newdf <- mf_newdf[order(mf_newdf[["pvalue"]], mf_newdf[[type]]), ]
   mf_newdf <- head(mf_newdf, n=n)
   mf_newdf[["score"]] <- mf_newdf[["Significant"]] / mf_newdf[["Annotated"]]
@@ -236,13 +240,15 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1,
   mf_pval_plot <- plot_ontpval(mf_newdf, ontology="MF",
                                numerator="Significant", denominator="Annotated")
 
-  bp_newdf <- topgo[["tables"]][["bp_subset"]][, kcols, type]
+  bp_newdf <- topgo[["tables"]][["bp_subset"]][, kcols]
   bp_newdf[["term"]] <- as.character(lapply(strwrap(bp_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste,
                                             collapse="\n"))
   bp_newdf[["pvalue"]] <- as.numeric(bp_newdf[[type]])
-  bp_newdf <- subset(bp_newdf, get(type) < cutoff)
+  ##bp_newdf <- subset(bp_newdf, get(type) < cutoff)
+  cutoff_idx <- bp_newdf[["pvalue"]] <= cutoff
+  bp_newdf <- bp_newdf[cutoff_idx, ]
   bp_newdf <- bp_newdf[order(bp_newdf[["pvalue"]], bp_newdf[[type]]), ]
   bp_newdf <- head(bp_newdf, n=n)
   bp_newdf[["score"]] <- bp_newdf[["Significant"]] / bp_newdf[["Annotated"]]
@@ -250,13 +256,15 @@ plot_topgo_pval <- function(topgo, wrapped_width=20, cutoff=0.1,
   bp_newdf <- bp_newdf[new_order, ]
   bp_pval_plot <- plot_ontpval(bp_newdf, ontology="MF")
 
-  cc_newdf <- topgo[["tables"]][["cc_subset"]][, kcols, type]
+  cc_newdf <- topgo[["tables"]][["cc_subset"]][, kcols]
   cc_newdf[["term"]] <- as.character(lapply(strwrap(cc_newdf[["Term"]],
                                                     wrapped_width,
                                                     simplify=FALSE), paste,
                                             collapse="\n"))
   cc_newdf[["pvalue"]] <- as.numeric(cc_newdf[[type]])
-  cc_newdf <- subset(cc_newdf, get(type) < cutoff)
+  ##cc_newdf <- subset(cc_newdf, get(type) < cutoff)
+  cutoff_idx <- cc_newdf[["pvalue"]] <= cutoff
+  cc_newdf <- cc_newdf[cutoff_idx, ]
   cc_newdf <- cc_newdf[order(cc_newdf[["pvalue"]], cc_newdf[[type]]), ]
   cc_newdf <- head(cc_newdf, n=n)
   cc_newdf[["score"]] <- cc_newdf[["Significant"]] / cc_newdf[["Annotated"]]
