@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("03graph_metrics.R: Is it possible to graph the various metrics with hpgltools?
-  1234567890123456\n")
+  1234567890123456789\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -143,29 +143,33 @@ test_that("Is the PCA PC2 as expected?", {
 tsne_stuff <- plot_tsne(norm, seed=1)
 tsne_stuff$plot
 actual <- tsne_stuff[["table"]][["Factor1"]]
-expected <- c(43.38839, 47.81978, 49.86403, 53.46306, -66.61691, -64.61091, -63.30744)
+expected <- c(-498.6079, -491.3404, -159.4492, -167.6300, 450.3194, 437.5517, 429.1564)
 ## These values seem to have changed in the new version of Rtsne.
+## 16
 test_that("Is the tsne data as expected for Comp1?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- as.numeric(head(tsne_stuff[["result"]][["Y"]][, 2]))
 ##expected <- c(103.6740, 99.5090, 5.1610, 0.9747, -68.0061, -70.0072)
-expected <- c(-281.31250, -281.65911, -38.23591, -35.62775, 218.26716, 211.48767)
+expected <- c(394.14239, 398.38090, -466.51450, -464.56575, 49.16611, 45.80158)
 ## These also changed.
+## 17
 test_that("Is the tsne second component data expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- head(tsne_stuff[["residual_df"]][["condition_rsquared"]])
-expected <- c(0.9973538, 0.7980312, 0.9973538, 0.7980312, 0.9973538, 0.7980312)
+expected <- c(0.90183647, 0.01485401, 0.90183647, 0.01485401, 0.90183647, 0.01485401)
 ##expected <- c(99.74, 79.80)
+## 18
 test_that("Is the tsne r-squared by condition as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
 actual <- head(tsne_stuff[["residual_df"]][["batch_rsquared"]])
-expected <- c(0.01593727, 0.23380803, 0.01593727, 0.23380803, 0.01593727, 0.23380803)
+expected <- c(0.1514009, 0.5481391, 0.1514009, 0.5481391, 0.1514009, 0.5481391)
+## 19
 test_that("Is the tsne r-squared by condition as expected?", {
     expect_equal(expected, actual, tolerance=0.001)
 })

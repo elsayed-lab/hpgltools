@@ -5,9 +5,9 @@
 \title{Make a pretty MA plot from one of limma, deseq, edger, or basic.}
 \usage{
 plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
-  p_col = "qvalue", pval_cutoff = 0.05, alpha = 0.4,
-  logfc_cutoff = 1, label_numbers = TRUE, size = 2,
-  tooltip_data = NULL, gvis_filename = NULL, invert = FALSE, ...)
+  p_col = "qvalue", p = 0.05, alpha = 0.4, logfc = 1,
+  label_numbers = TRUE, size = 2, tooltip_data = NULL,
+  gvis_filename = NULL, invert = FALSE, ...)
 }
 \arguments{
 \item{table}{Df of linear-modelling, normalized counts by sample-type,}
@@ -18,11 +18,11 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
 
 \item{p_col}{Column containing the relevant p values.}
 
-\item{pval_cutoff}{Name of the pvalue column to use for cutoffs.}
+\item{p}{Name of the pvalue column to use for cutoffs.}
 
 \item{alpha}{How transparent to make the dots.}
 
-\item{logfc_cutoff}{Fold change cutoff.}
+\item{logfc}{Fold change cutoff.}
 
 \item{label_numbers}{Show how many genes were 'significant', 'up', and 'down'?}
 

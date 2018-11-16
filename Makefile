@@ -7,7 +7,7 @@ build:
 	@echo "Performing build with R CMD build hpgltools"
 	R CMD build .
 
-check:
+check: roxygen
 	@echo "Performing check with R CMD check hpgltools"
 	rm -rf ./..Rcheck 2>/dev/null 1>&2
 	export _R_CHECK_FORCE_SUGGESTS_=FALSE && R CMD check . --no-build-vignettes

@@ -101,7 +101,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
                                 ks_genes=ks_interesting_genes)
   }
   stopped <- parallel::stopCluster(cl)
-  if (class(stopped) == "try-error") {
+  if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")
   }
   for (r in 1:length(methods)) {
@@ -115,7 +115,7 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   p_dists <- list()
   for (o in c("BP", "MF", "CC")) {
     for (m in methods) {
-      name <- glue("{tolower(o)}_{m}")
+      name <- glue::glue("{tolower(o)}_{m}")
       p_dists[[name]] <- try(plot_histogram(
         ontology_result[[o]][[m]][["test_result"]]@score,
         bins=20))
@@ -176,37 +176,56 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
     "bp_densities" = bp_densities,
     "cc_densities" = cc_densities,
     "pdists" = p_dists)
-  pval_plots <- plot_topgo_pval(retlist)
+  pval_plots <- plot_topgo_pval(retlist,
+                                ...)
   retlist[["pvalue_plots"]] <- pval_plots
 
   pval_histograms <- list()
-  fisher_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["fisher"]],
-                            retlist[["tables"]][["bp_subset"]][["fisher"]],
-                            retlist[["tables"]][["cc_subset"]][["fisher"]]))
+  ## Caveat: when a value is very low, it is written as the character '< 1e-30'
+  ## Which when coerced to a number ends up as NA.
+  ## So let us fill those back in as 1e-30
+  fisher_ps <- suppressWarnings(
+    as.numeric(c(retlist[["tables"]][["mf_subset"]][["fisher"]],
+                 retlist[["tables"]][["bp_subset"]][["fisher"]],
+                 retlist[["tables"]][["cc_subset"]][["fisher"]])))
+  low_values <- is.na(fisher_ps)
+  fisher_ps[low_values] <- 1e-30
   pval_histograms[["fisher"]] <- sm(try(plot_histogram(fisher_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Fisher exact test score.")
-  ks_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["KS"]],
-                        retlist[["tables"]][["bp_subset"]][["KS"]],
-                        retlist[["tables"]][["cc_subset"]][["KS"]]))
+  ks_ps <- suppressWarnings(
+    as.numeric(c(retlist[["tables"]][["mf_subset"]][["KS"]],
+                 retlist[["tables"]][["bp_subset"]][["KS"]],
+                 retlist[["tables"]][["cc_subset"]][["KS"]])))
+  low_values <- is.na(ks_ps)
+  ks_ps[low_values] <- 1e-30
   pval_histograms[["KS"]] <- sm(try(plot_histogram(ks_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("KS test score.")
-  el_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["EL"]],
-                        retlist[["tables"]][["bp_subset"]][["EL"]],
-                        retlist[["tables"]][["cc_subset"]][["EL"]]))
+  el_ps <- suppressWarnings(
+    as.numeric(c(retlist[["tables"]][["mf_subset"]][["EL"]],
+                 retlist[["tables"]][["bp_subset"]][["EL"]],
+                 retlist[["tables"]][["cc_subset"]][["EL"]])))
+  low_values <- is.na(el_ps)
+  el_ps[low_values] <- 1e-30
   pval_histograms[["EL"]] <- sm(try(plot_histogram(el_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("EL test score.")
-  weight_ps <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["weight"]],
-                            retlist[["tables"]][["bp_subset"]][["weight"]],
-                            retlist[["tables"]][["cc_subset"]][["weight"]]))
+  weight_ps <- suppressWarnings(
+    as.numeric(c(retlist[["tables"]][["mf_subset"]][["weight"]],
+                 retlist[["tables"]][["bp_subset"]][["weight"]],
+                 retlist[["tables"]][["cc_subset"]][["weight"]])))
+  low_values <- is.na(weight_ps)
+  weight_ps[low_values] <- 1e-30
   pval_histograms[["weight"]] <- sm(try(plot_histogram(weight_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Weighted test score.")
-  qs <- as.numeric(c(retlist[["tables"]][["mf_subset"]][["qvalue"]],
-                     retlist[["tables"]][["bp_subset"]][["qvalue"]],
-                     retlist[["tables"]][["cc_subset"]][["qvalue"]]))
+  qs <- suppressWarnings(
+    as.numeric(c(retlist[["tables"]][["mf_subset"]][["qvalue"]],
+                 retlist[["tables"]][["bp_subset"]][["qvalue"]],
+                 retlist[["tables"]][["cc_subset"]][["qvalue"]])))
+  low_values <- is.na(qs)
+  qs[low_values] <- 1e-30
   pval_histograms[["qs"]] <- sm(try(plot_histogram(qs, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Q-value.")

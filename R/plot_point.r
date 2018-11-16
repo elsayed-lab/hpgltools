@@ -371,20 +371,20 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 #' DNA microarray gene expression data which has been transformed onto the M
 #' (log ratios) and A (mean average) scale."
 #'
-#' @param table  Df of linear-modelling, normalized counts by sample-type,
-#' @param expr_col  Column showing the average expression across genes.
-#' @param fc_col  Column showing the logFC for each gene.
-#' @param p_col  Column containing the relevant p values.
-#' @param pval_cutoff  Name of the pvalue column to use for cutoffs.
-#' @param alpha  How transparent to make the dots.
-#' @param logfc_cutoff  Fold change cutoff.
-#' @param label_numbers  Show how many genes were 'significant', 'up', and 'down'?
-#' @param size  How big are the dots?
-#' @param tooltip_data  Df of tooltip information for gvis.
-#' @param gvis_filename  Filename to write a fancy html graph.
-#' @param invert  Invert the ma plot?
-#' @param ...  More options for you
-#' @return  ggplot2 MA scatter plot.  This is defined as the rowmeans of the
+#' @param table Df of linear-modelling, normalized counts by sample-type,
+#' @param expr_col Column showing the average expression across genes.
+#' @param fc_col Column showing the logFC for each gene.
+#' @param p_col Column containing the relevant p values.
+#' @param p Name of the pvalue column to use for cutoffs.
+#' @param alpha How transparent to make the dots.
+#' @param logfc Fold change cutoff.
+#' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
+#' @param size How big are the dots?
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param invert Invert the ma plot?
+#' @param ... More options for you
+#' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
 #'   normalized counts by type across all sample types on the x axis, and the
 #'   log fold change between conditions on the y-axis. Dots are colored
 #'   depending on if they are 'significant.'  This will make a fun clicky
@@ -403,7 +403,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 #'  }
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
-                       pval_cutoff=0.05, alpha=0.4, logfc_cutoff=1, label_numbers=TRUE,
+                       p=0.05, alpha=0.4, logfc=1.0, label_numbers=TRUE,
                        size=2, tooltip_data=NULL, gvis_filename=NULL, invert=FALSE, ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
@@ -469,12 +469,12 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
 
   ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
   newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific=FALSE))
-  newdf[["pcut"]] <- newdf[["pval"]] <= pval_cutoff
-  newdf[["state"]] <- ifelse(newdf[["pval"]] > pval_cutoff, "c_insig",
-                      ifelse(newdf[["pval"]] <= pval_cutoff &
-                             newdf[["logfc"]] >= logfc_cutoff, "a_upsig",
-                      ifelse(newdf[["pval"]] <= pval_cutoff &
-                             newdf[["logfc"]] <= (-1.0 * logfc_cutoff),
+  newdf[["pcut"]] <- newdf[["pval"]] <= p
+  newdf[["state"]] <- ifelse(newdf[["pval"]] > p, "c_insig",
+                      ifelse(newdf[["pval"]] <= p &
+                             newdf[["logfc"]] >= logfc, "a_upsig",
+                      ifelse(newdf[["pval"]] <= p &
+                             newdf[["logfc"]] <= (-1.0 * logfc),
                              "b_downsig", "c_insig")))
   newdf[["state"]] <- as.factor(newdf[["state"]])
   df <- rbind(df, newdf)
@@ -508,7 +508,7 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                            fill="as.factor(pcut)",
                            colour="as.factor(pcut)",
                            shape="as.factor(state)")) +
-    ggplot2::geom_hline(yintercept=c((logfc_cutoff * -1.0), logfc_cutoff),
+    ggplot2::geom_hline(yintercept=c((logfc * -1.0), logfc),
                         color="red", size=(size / 3)) +
     ggplot2::geom_point(stat="identity", size=size, alpha=alpha)
   if (isTRUE(label_numbers)) {
@@ -843,26 +843,25 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black",
 #' statistical signal, and y-axis is related to a measure of the statistical
 #' significance of the signal."
 #'
-#' @param table  Dataframe from limma's toptable which includes log(fold change) and an
+#' @param table Dataframe from limma's toptable which includes log(fold change) and an
 #'     adjusted p-value.
-#' @param alpha  How transparent to make the dots.
-#' @param color_by  By p-value something else?
-#' @param color_list  A list of colors for significance.
-#' @param fc_col  Which column contains the fc data?
-#' @param fc_name  Name of the fold-change to put on the plot.
-#' @param gvis_filename  Filename to write a fancy html graph.
-#' @param line_color  What color for the significance lines?
-#' @param line_position  Put the significance lines above or below the dots?
-#' @param logfc_cutoff  Cutoff defining the minimum/maximum fold change for
-#'   interesting.  This is log, so I went with +/- 0.8 mostly arbitrarily as the
-#'   default.
-#' @param p_col  Which column contains the p-value data?
-#' @param p_name  Name of the p-value to put on the plot.
-#' @param pval_cutoff  Cutoff defining significant from not.
-#' @param shapes_by_state  Add fun shapes for the various significance states?
-#' @param size  How big are the dots?
-#' @param tooltip_data  Df of tooltip information for gvis.
-#' @param ...  I love parameters!
+#' @param alpha How transparent to make the dots.
+#' @param color_by By p-value something else?
+#' @param color_list List of colors for significance.
+#' @param fc_col Which column contains the fc data?
+#' @param fc_name Name of the fold-change to put on the plot.
+#' @param gvis_filename Filename to write a fancy html graph.
+#' @param line_color What color for the significance lines?
+#' @param line_position Put the significance lines above or below the dots?
+#' @param logfc Cutoff defining the minimum/maximum fold change for
+#'   interesting.
+#' @param p_col Which column contains the p-value data?
+#' @param p_name Name of the p-value to put on the plot.
+#' @param p Cutoff defining significant from not.
+#' @param shapes_by_state Add fun shapes for the various significance states?
+#' @param size How big are the dots?
+#' @param tooltip_data Df of tooltip information for gvis.
+#' @param ... I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
 #'   with respect to log(fold change).  The cutoff values are delineated with
 #'   lines and mark the boundaries between 'significant' and not.  This will
@@ -882,22 +881,22 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black",
 plot_volcano_de <- function(table, alpha=0.6, color_by="p",
                             color_list=c("FALSE"="darkred", "TRUE"="darkblue"),
                             fc_col="logFC", fc_name="log2 fold change", gvis_filename=NULL,
-                            line_color="black", line_position="bottom", logfc_cutoff=1.0,
-                            p_col="adj.P.Val", p_name="-log10 p-value", pval_cutoff=0.05,
+                            line_color="black", line_position="bottom", logfc=1.0,
+                            p_col="adj.P.Val", p_name="-log10 p-value", p=0.05,
                             shapes_by_state=TRUE, size=2, tooltip_data=NULL, ...) {
-  low_vert_line <- 0.0 - logfc_cutoff
-  horiz_line <- -1 * log10(pval_cutoff)
+  low_vert_line <- 0.0 - logfc
+  horiz_line <- -1 * log10(p)
 
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors=TRUE)
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
-  df[["pcut"]] <- df[["yaxis"]] <= pval_cutoff
-  df[["state"]] <- ifelse(table[[p_col]] > pval_cutoff, "pinsig",
-                   ifelse(table[[p_col]] <= pval_cutoff &
-                          table[[fc_col]] >= logfc_cutoff, "upsig",
-                   ifelse(table[[p_col]] <= pval_cutoff &
-                          table[[fc_col]] <= (-1 * logfc_cutoff),
+  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
+                   ifelse(table[[p_col]] <= p &
+                          table[[fc_col]] >= logfc, "upsig",
+                   ifelse(table[[p_col]] <= p &
+                          table[[fc_col]] <= (-1 * logfc),
                           "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
@@ -945,7 +944,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     ## lines, then points.
     plt <- plt +
       ggplot2::geom_hline(yintercept=horiz_line, color=line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept=logfc_cutoff, color=line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept=logfc, color=line_color, size=(size / 2)) +
       ggplot2::geom_vline(xintercept=low_vert_line, color=line_color, size=(size / 2)) +
       ggplot2::geom_point(stat="identity", size=size, alpha=alpha)
   } else {
@@ -953,7 +952,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     plt <- plt +
       ggplot2::geom_point(stat="identity", size=size, alpha=alpha) +
       ggplot2::geom_hline(yintercept=horiz_line, color=line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept=logfc_cutoff, color=line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept=logfc, color=line_color, size=(size / 2)) +
       ggplot2::geom_vline(xintercept=low_vert_line, color=line_color, size=(size / 2))
   }
 
@@ -986,8 +985,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {
     gvis_result <- plot_gvis_volcano(table, fc_col=fc_col, p_col=p_col,
-                                     logfc_cutoff=logfc_cutoff, fc_cutoff=logfc_cutoff,
-                                     pval_cutoff=pval_cutoff, tooltip_data=tooltip_data,
+                                     logfc=logfc, p=p, tooltip_data=tooltip_data,
                                      filename=gvis_filename)
   }
   retlist <- list("plot" = plt,

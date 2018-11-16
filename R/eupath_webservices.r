@@ -196,14 +196,22 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
   return(metadata)
 }
 
+#' Extract query-able fields from the EupathDb.
+#'
+#' This parses the result of a query to Eupath's webservice:
+#' 'GenesByMolecularWeight' and uses it to get a list of fields which are
+#' acquireable elsewhere.
+#'
+#' @param webservice Eupathdb, tritrypdb, fungidb, etc...
+#' @return List of parameters.
 get_eupath_fields <- function(webservice) {
   request_url <- glue::glue(
      "http://{webservice}.org/webservices/GeneQuestions/GenesByMolecularWeight.wadl")
   request <- curl::curl(request_url)
   result <- xml2::read_xml(request)
-  fields <- xml_nodes(result, xpath='//*[@name="o-fields"]')[[1]] %>%
-    xml_children() %>%
-    xml_attr("value")
+  fields <- rvest::xml_nodes(result, xpath='//*[@name="o-fields"]')[[1]] %>%
+    xml2::xml_children() %>%
+    xml2::xml_attr("value")
   drop_idx <- is.na(fields)
   fields <- fields[!drop_idx]
   drop_idx <- fields == "none"

@@ -31,7 +31,7 @@ concatenate_runs <- function(expt, column="replicate") {
   samplenames <- list()
   for (rep in replicates) {
     ## expression <- paste0(column, "=='", rep, "'")
-    expression <- glue("{column} == '{rep}'")
+    expression <- glue::glue("{column} == '{rep}'")
     tmp_expt <- sm(subset_expt(expt, expression))
     tmp_data <- rowSums(exprs(tmp_expt))
     tmp_design <- pData(tmp_expt)[1, ]
@@ -120,7 +120,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     title <- "This is an expt class."
   }
   if (is.null(notes)) {
-    notes <- glue("Created on {date()}.
+    notes <- glue::glue("Created on {date()}.
 ")
   }
   ## An expressionset needs to have a Biobase::annotation() in order for
@@ -209,7 +209,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     test_filenames <- file.path(
       "preprocessing", "count_tables",
       as.character(sample_definitions[[sample_column]]),
-      glue("{file_prefix}{as.character(sample_definitions[[sample_column]])}{file_suffix}"))
+      glue::glue("{file_prefix}{as.character(sample_definitions[[sample_column]])}{file_suffix}"))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -228,7 +228,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
         "preprocessing", "count_tables",
         tolower(as.character(sample_definitions[["type"]])),
         tolower(as.character(sample_definitions[["stage"]])),
-        glue("{sample_definitions[[sample_column]]}{file_suffix}"))
+        glue::glue("{sample_definitions[[sample_column]]}{file_suffix}"))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -656,7 +656,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   }
   pattern_string <- ""
   for (pat in patterns) {
-    pattern_string <- glue("{pattern_string}{pat}|")
+    pattern_string <- glue::glue("{pattern_string}{pat}|")
   }
   silly_string <- gsub(pattern="\\|$", replacement="", x=pattern_string)
   idx <- rep(x=TRUE, times=nrow(annotations))
@@ -919,9 +919,9 @@ features_in_single_condition <- function(expt, cutoff=2) {
   shared_list <- list()
   neither_list <- list()
   for (cond in condition_set) {
-    extract_string <- glue("condition == '{cond}'")
+    extract_string <- glue::glue("condition == '{cond}'")
     single_expt <- sm(subset_expt(expt=expt, subset=extract_string))
-    extract_string <- glue("condition != '{cond}'")
+    extract_string <- glue::glue("condition != '{cond}'")
     others_expt <- sm(subset_expt(expt=expt, subset=extract_string))
     single_data <- exprs(single_expt)
     others_data <- exprs(others_expt)
@@ -1136,7 +1136,7 @@ make_pombe_expt <- function(annotation=TRUE) {
   ## some minor shenanigans to get around the oddities of loading from data()
   fission <- fission[["fission"]]
   meta <- as.data.frame(fission@colData)
-  meta[["condition"]] <- glue("{meta[['strain']]}.{meta[['minute']]}")
+  meta[["condition"]] <- glue::glue("{meta[['strain']]}.{meta[['minute']]}")
   meta[["batch"]] <- meta[["replicate"]]
   meta[["sample.id"]] <- rownames(meta)
   fission_data <- fission@assays$data[["counts"]]
@@ -1640,7 +1640,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
         chosen_colors[[sampleid]] <- sample_color
         ## Set the condition for the changed samples to something unique.
         original_condition <- expt[["design"]][sampleid, "condition"]
-        changed_condition <- glue("{original_condition}{snum}")
+        changed_condition <- glue::glue("{original_condition}{snum}")
         expt[["design"]][sampleid, "condition"] <- changed_condition
         tmp_pdata <- pData(expt)
         old_levels <- levels(tmp_pdata[["condition"]])
@@ -1783,7 +1783,7 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt <- expt
   oldnames <- rownames(new_expt[["design"]])
   newnames <- make.unique(newnames)
-  newnote <- glue("Sample names changed from: {toString(oldnames)} \\
+  newnote <- glue::glue("Sample names changed from: {toString(oldnames)} \\
                    to: {toString(newnames)} at: {date()}
 ")
   ## Things to modify include: batches, conditions
@@ -1843,7 +1843,7 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
     } else {
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text=r_expression))
-      note_appended <- glue("Subsetted with {subset} on {date()}.
+      note_appended <- glue::glue("Subsetted with {subset} on {date()}.
 ")
     }
     if (nrow(subset_design) == 0) {
@@ -1881,7 +1881,7 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
 
   notes <- expt[["notes"]]
   if (!is.null(note_appended)) {
-    notes <- glue("{notes}{note_appended}")
+    notes <- glue::glue("{notes}{note_appended}")
   }
 
   for (col in 1:ncol(subset_design)) {
@@ -1983,39 +1983,39 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 
   what <- ""
   if (transform != "raw") {
-    what <- glue("{what}{transform}(")
+    what <- glue::glue("{what}{transform}(")
   }
   if (batch != "raw") {
     if (isTRUE(batch)) {
-      what <- glue("{what}batch-correct(")
+      what <- glue::glue("{what}batch-correct(")
     } else {
-      what <- glue("{what}{batch}(")
+      what <- glue::glue("{what}{batch}(")
     }
   }
   if (convert != "raw") {
-    what <- glue("{what}{convert}(")
+    what <- glue::glue("{what}{convert}(")
   }
   if (norm != "raw") {
-    what <- glue("{what}{norm}(")
+    what <- glue::glue("{what}{norm}(")
   }
   if (filter != "raw") {
-    what <- glue("{what}{filter}(")
+    what <- glue::glue("{what}{filter}(")
   }
-  what <- glue("{what}data")
+  what <- glue::glue("{what}data")
   if (transform != "raw") {
-    what <- glue("{what})")
+    what <- glue::glue("{what})")
   }
   if (batch != "raw") {
-    what <- glue("{what})")
+    what <- glue::glue("{what})")
   }
   if (convert != "raw") {
-    what <- glue("{what})")
+    what <- glue::glue("{what})")
   }
   if (norm != "raw") {
-    what <- glue("{what})")
+    what <- glue::glue("{what})")
   }
   if (filter != "raw") {
-    what <- glue("{what})")
+    what <- glue::glue("{what})")
   }
 
   return(what)
@@ -2065,16 +2065,16 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
 
   ## Write an introduction to this foolishness.
-  message("Writing the legend.")
+  message("Writing the first sheet, containing a legend and some summary data.")
   sheet <- "legend"
-  norm_state <- glue("{transform}({convert}({norm}({batch}({filter}(counts)))))")
+  norm_state <- glue::glue("{transform}({convert}({norm}({batch}({filter}(counts)))))")
   legend <- data.frame(
     "sheet" = c("1.", "2.", "3.", "4.", "5.", "6."),
     "sheet_definition" = c(
       "This sheet, including the experimental design.",
       "The raw counts and annotation data on worksheet 'raw_data'.",
       "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
-      glue("The counts normalized with: {norm_state}"),
+      glue::glue("The counts normalized with: {norm_state}"),
       "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
       "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)

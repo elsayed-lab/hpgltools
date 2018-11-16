@@ -7,7 +7,7 @@
 #' @param type  Type of table to use: deseq, edger, limma, basic.
 #' @param table  Result from edger to use, left alone it chooses the first.
 #' @param logfc  What logFC to use for the MA plot horizontal lines.
-#' @param pval_cutoff  Cutoff to define 'significant' by p-value.
+#' @param p  Cutoff to define 'significant' by p-value.
 #' @param invert  Invert the plot?
 #' @param ...  Extra arguments are passed to arglist.
 #' @return a plot!
@@ -18,7 +18,7 @@
 #' }
 #' @export
 extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
-                             pval_cutoff=0.05, invert=FALSE, ...) {
+                             p=0.05, invert=FALSE, ...) {
   arglist <- list(...)
   table_source <- "all_pairwise"
   ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
@@ -41,14 +41,14 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
   ## essentially convert the input by extracting the relevant type.
   if (class(pairwise)[1] == "all_pairwise") {
-    table_source <- glue("{type}_pairwise")
+    table_source <- glue::glue("{type}_pairwise")
     pairwise <- pairwise[[type]]
   } else if (class(pairwise)[1] == "combined_de" |
              class(pairwise)[1] == "combined_table") {
     ## Then this came from combine_de...
     table_source <- "combined"
   } else if (!is.null(pairwise[["method"]])) {
-    table_source <- glue("{pairwise[['method']]}_pairwise")
+    table_source <- glue::glue("{pairwise[['method']]}_pairwise")
   } else {
     stop("Unable to determine the source of this data.")
   }
@@ -99,8 +99,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     } else if (type =="ebseq") {
       expr_col <- "ebseq_mean"
     }
-    fc_col <- glue("{type}_logfc")
-    p_col <- glue("{type}_adjp")
+    fc_col <- glue::glue("{type}_logfc")
+    p_col <- glue::glue("{type}_adjp")
     all_tables <- pairwise[["data"]]
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
@@ -120,7 +120,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     ## Figure that out here and return the appropriate table.
     the_table <- wanted_table
     revname <- strsplit(x=the_table, split="_vs_")
-    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(all_tables)
     if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
@@ -144,9 +144,9 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     the_table <- all_tables[[table]]
   } else if (length(wanted_table) == 2) {
     ## Perhaps one will ask for c(numerator, denominator)
-    the_table <- glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
+    the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
     revname <- strsplit(x=the_table, split="_vs_")
-    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(pairwise[["data"]])
     if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
@@ -171,14 +171,21 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   ##  table=the_table, expr_col=expr_col, fc_col=fc_col,
   ##  p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
   ##  invert=invert)
-  ma_material <- plot_ma_de(
-    table=the_table, expr_col=expr_col, fc_col=fc_col,
-    p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
-    invert=invert, ...) ##)
-  vol_material <- plot_volcano_de(
-    table=the_table, fc_col=fc_col,
-    p_col=p_col, logfc_cutoff=logfc,
-    pval_cutoff=pval_cutoff, ...) ##)
+
+  ma_material <- NULL
+  vol_material <- NULL
+  if (!is.null(the_table[[expr_col]]) &&
+      !is.null(the_table[[fc_col]]) &&
+      !is.null(the_table[[p_col]])) {
+    ma_material <- plot_ma_de(
+      table=the_table, expr_col=expr_col, fc_col=fc_col,
+      p_col=p_col, logfc_cutoff=logfc, p=p,
+      invert=invert, ...) ##)
+    vol_material <- plot_volcano_de(
+      table=the_table, fc_col=fc_col,
+      p_col=p_col, logfc_cutoff=logfc,
+      p=p, ...) ##)
+  }
 
   retlist <- list(
     "ma" = ma_material,
@@ -447,10 +454,10 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
   p_columns <- c()
   kept_methods <- c()
   for (m in methods) {
-    colname <- glue("{m}_logfc")
+    colname <- glue::glue("{m}_logfc")
     if (!is.null(table[[colname]])) {
       lfc_columns <- c(lfc_columns, colname)
-      pcol <- glue("{m}_adjp")
+      pcol <- glue::glue("{m}_adjp")
       kept_methods <- c(kept_methods, m)
       p_columns <- c(p_columns, pcol)
       test_fc <- min(table[[colname]])
@@ -614,8 +621,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged <- merged[, -1]
 
   if (first_column == second_column) {
-    c1 <- glue("{first_column}.x")
-    c2 <- glue("{first_column}.y")
+    c1 <- glue::glue("{first_column}.x")
+    c2 <- glue::glue("{first_column}.y")
   } else {
     c1 <- first_column
     c2 <- second_column
@@ -630,8 +637,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 
   merged[["state"]] <- "neither"
   if (first_p_col == second_p_col) {
-    p1 <- glue("{first_p_col}.x")
-    p2 <- glue("{first_p_col}.y")
+    p1 <- glue::glue("{first_p_col}.x")
+    p2 <- glue::glue("{first_p_col}.y")
   } else {
     p1 <- first_p_col
     p2 <- second_p_col
@@ -644,9 +651,9 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged[p2_idx, "state"] <- "second"
   merged[["state"]] <- as.factor(merged[["state"]])
 
-  first_table_colname <- glue(
+  first_table_colname <- glue::glue(
     "Table: {first_table}, Type: {first_type}, column: {first_column}")
-  second_table_colname <- glue(
+  second_table_colname <- glue::glue(
     "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data=merged,
@@ -659,8 +666,8 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
                                          "second"=second_color,
                                          "neither"=no_color)) +
     ggplot2::geom_smooth(method="loess", color="lightblue") +
-    ggplot2::ylab(glue("Rank order of {second_table_colname}")) +
-    ggplot2::xlab(glue("Rank order of {first_table_colname}")) +
+    ggplot2::ylab(glue::glue("Rank order of {second_table_colname}")) +
+    ggplot2::xlab(glue::glue("Rank order of {first_table_colname}")) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(legend.position="none",
                    axis.text=ggplot2::element_text(size=base_size, colour="black"))
@@ -754,7 +761,7 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
   ##}
 
   for (type in types) {
-    test_column <- glue("{type}_logfc")
+    test_column <- glue::glue("{type}_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("We do not have the ", test_column, " in the data, skipping ", type, ".")
       next
@@ -766,7 +773,7 @@ significant_barplots <- function(combined, lfc_cutoffs=c(0, 1, 2), invert=FALSE,
                                              p=p, z=z, n=NULL, excel=FALSE,
                                              p_type=p_type, sig_bar=FALSE, ma=FALSE))
       table_length <- length(fc_sig[[type]][["ups"]])
-      fc_name <- glue("fc_{fc}")
+      fc_name <- glue::glue("fc_{fc}")
       fc_names <- append(fc_names, fc_name)
 
       for (tab in 1:table_length) {

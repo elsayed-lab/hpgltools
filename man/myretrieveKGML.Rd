@@ -4,17 +4,17 @@
 \alias{myretrieveKGML}
 \title{A couple functions from KEGGgraph that have broken}
 \usage{
-myretrieveKGML(pathwayid, organism, destfile, method = "wget",
+myretrieveKGML(pathway, organism, destfile, silent = TRUE,
   hostname = "http://www.kegg.jp", ...)
 }
 \arguments{
-\item{pathwayid}{The path to query.}
+\item{pathway}{The path to query.}
 
 \item{organism}{Which organism to query?}
 
 \item{destfile}{File to which to download.}
 
-\item{method}{Which download method to use?}
+\item{silent}{Send stdout and stderr to dev null?}
 
 \item{hostname}{Host to download from (this is what is broken.)}
 

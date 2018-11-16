@@ -5,7 +5,7 @@
 \title{Make a pvalue plot from topgo data.}
 \usage{
 plot_topgo_pval(topgo, wrapped_width = 20, cutoff = 0.1, n = 30,
-  type = "fisher")
+  type = "fisher", ...)
 }
 \arguments{
 \item{topgo}{Some data from topgo!}
@@ -17,6 +17,8 @@ plot_topgo_pval(topgo, wrapped_width = 20, cutoff = 0.1, n = 30,
 \item{n}{Maximum number of ontologies to include.}
 
 \item{type}{Type of score to use.}
+
+\item{...}{arguments passed through presumably from simple_topgo()}
 }
 \value{
 List of MF/BP/CC pvalue plots.

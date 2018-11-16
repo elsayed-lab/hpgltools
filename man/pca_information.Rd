@@ -8,6 +8,8 @@ pca_information(expt, expt_design = NULL, expt_factors = c("condition",
   "batch"), num_components = NULL, plot_pcas = FALSE, ...)
 }
 \arguments{
+\item{expt}{Data to analyze (usually exprs(somedataset)).}
+
 \item{expt_design}{Dataframe describing the experimental design, containing
 columns with useful information like the conditions, batches, number of
 cells, whatever...}
@@ -22,8 +24,6 @@ as factors asked for.}
 \item{plot_pcas}{Plot the set of PCA plots for every pair of PCs queried.}
 
 \item{...}{Extra arguments for the pca plotter}
-
-\item{expt_data}{Data to analyze (usually exprs(somedataset)).}
 }
 \value{
 a list of fun pca information:

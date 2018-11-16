@@ -5,14 +5,18 @@ context("055annotation_uniprot.R:
   1234\n")
 ## 2017-12, exported functions in annotation_gff:
 ## load_uniprot_annotations() download_uniprot_proteome()
-website_up <- FALSE
-if (isTRUE(website_up)) {
+website_up <- TRUE
 ## download_uniprot_proteome()
-  testing <- download_uniprot_proteome(
-    species="Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)",
-    first=TRUE)
+testing <- try(download_uniprot_proteome(
+  species="Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)",
+  first=TRUE))
+if (class(testing)[1] == "try-error") {
+  website_up <- FALSE
+}
+
+if (isTRUE(website_up)) {
   expected <- "UP000001584.txt.gz"
-  actual <- testing[["filename"]]
+  actual <- as.character(testing[["filename"]])
   ## 0102
   test_that("Did we get the correct uniprot text file?", {
     expect_equal(expected, actual)

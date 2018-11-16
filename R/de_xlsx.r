@@ -111,7 +111,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     do_excel <- FALSE
   }
   if (isTRUE(do_excel)) {
-    excel_dir <- dirname(excel)
+    excel_dir <- dirname(as.character(excel))
     if (!file.exists(excel_dir)) {
       dir.create(excel_dir, recursive=TRUE)
     }
@@ -698,6 +698,12 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
   comp <- list()
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
+    ## I am considering adding some logic to collect the linear models
+    ## Then check to see if the slopes/intercepts are duplicated across any
+    ## of the contrasts, if this is true, then it is highly likely a mistake was made
+    ## when setting up the contrasts such that something got duplicated.
+    ## slope_lst <- c()
+    ## yint_lst <- c()
     for (x in 1:length(names(combo))) {
       tab <- names(combo)[x]
       sheetname <- tab
@@ -1059,29 +1065,36 @@ Defaulting to fdr.")
 
   lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
                      "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
+  rownames(lidf) <- "dropme"
   dedf <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
                      "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
+  rownames(dedf) <- "dropme"
   eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
                      "edger_p" = 0, "edger_adjp" = 0)
+  rownames(eddf) <- "dropme"
   ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
                      "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0, "ebseq_adjp" = 0)
+  rownames(ebdf) <- "dropme"
   badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
+  rownames(badf) <- "dropme"
   ## Check that the limma result is valid.
   if (is.null(li) | class(li)[1] == "try-error") {
     message("The limma table is null.")
     li <- NULL
     include_limma <- FALSE
   } else {
-    lidf <- li[["all_tables"]][[table_name]]
-    if (is.null(lidf)) {
-      lidf <- li[["all_tables"]][[inverse_name]]
+    test_lidf <- li[["all_tables"]][[table_name]]
+    if (is.null(test_lidf)) {
+      test_lidf <- li[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
-      if (is.null(lidf)) {
+      if (is.null(test_lidf)) {
         warning("The limma table seems to be missing.")
-        lidf <- data.frame("limma_logfc" = 0, "limma_ave" = 0, "limma_t" = 0,
-                           "limma_p" = 0, "limma_adjp" = 0, "limma_b" = 0)
+      } else {
+        lidf <- test_lidf
       }
+    } else {
+      lidf <- test_lidf
     }
   }
 
@@ -1091,15 +1104,17 @@ Defaulting to fdr.")
     de <- NULL
     include_deseq <- FALSE
   } else {
-    dedf <- de[["all_tables"]][[table_name]]
-    if (is.null(dedf)) {
-      dedf <- de[["all_tables"]][[inverse_name]]
+    test_dedf <- de[["all_tables"]][[table_name]]
+    if (is.null(test_dedf)) {
+      test_dedf <- de[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC and stat.")
-      if (is.null(dedf)) {
+      if (is.null(test_dedf)) {
         warning("The deseq table seems to be missing.")
-        dedf <- data.frame("deseq_basemean" = 0, "deseq_logfc" = 0, "deseq_lfcse" = 0,
-                           "deseq_stat" = 0, "deseq_p" = 0, "deseq_adjp" = 0)
+      } else {
+        dedf <- test_dedf
       }
+    } else {
+      dedf <- test_dedf
     }
   }
 
@@ -1109,15 +1124,17 @@ Defaulting to fdr.")
     ed <- NULL
     include_edger <- FALSE
   } else {
-    eddf <- ed[["all_tables"]][[table_name]]
-    if (is.null(eddf)) {
-      eddf <- ed[["all_tables"]][[inverse_name]]
+    test_eddf <- ed[["all_tables"]][[table_name]]
+    if (is.null(test_eddf)) {
+      test_eddf <- ed[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
-      if (is.null(eddf)) {
+      if (is.null(test_eddf)) {
         warning("The edger table seems to be missing.")
-        eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
-                           "edger_p" = 0, "edger_adjp" = 0)
+      } else {
+        eddf <- test_eddf
       }
+    } else {
+      eddf <- test_eddf
     }
   }
 
@@ -1127,16 +1144,17 @@ Defaulting to fdr.")
     eb <- NULL
     include_ebseq <- FALSE
   } else {
-    ebdf <- eb[["all_tables"]][[table_name]]
-    if (is.null(ebdf)) {
-      ebdf <- eb[["all_tables"]][[inverse_name]]
+    test_ebdf <- eb[["all_tables"]][[table_name]]
+    if (is.null(test_ebdf)) {
+      test_ebdf <- eb[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
-      if (is.null(ebdf)) {
+      if (is.null(test_ebdf)) {
         warning("The ebseq table seems to be missing.")
-        ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
-                           "ebseq_mean" = 0, "ebseq_ppee" = 0,
-                           "ebseq_ppde" = 0, "ebseq_adjp" = 0)
+      } else {
+        ebdf <- test_ebdf
       }
+    } else {
+      ebdf <- test_ebdf
     }
   }
 
@@ -1146,16 +1164,17 @@ Defaulting to fdr.")
     ba <- NULL
     include_basic <- FALSE
   } else {
-    badf <- ba[["all_tables"]][[table_name]]
-    if (is.null(badf)) {
-      badf <- ba[["all_tables"]][[inverse_name]]
+    test_badf <- ba[["all_tables"]][[table_name]]
+    if (is.null(test_badf)) {
+      test_badf <- ba[["all_tables"]][[inverse_name]]
       message("Used the inverse table, might need to -1 the logFC.")
-      if (is.null(badf)) {
+      if (is.null(test_badf)) {
         warning("The basic table seems to be missing.")
-        badf <- data.frame("numerator_median" = 0, "denominator_median" = 0,
-                           "numerator_var" = 0, "denominator_var" = 0,
-                           "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
+      } else {
+        badf <- test_badf
       }
+    } else {
+      badf <- test_badf
     }
   }
 
@@ -1217,7 +1236,7 @@ Defaulting to fdr.")
   if (num_data == 1) {
     if (num_stats == 1) {
       ## Then this is a chunk of data and associated stats.
-      comb <- merge(datalst[[1]], statslst[[1]], by="rownames", all.x=TRUE)
+      comb <- merge(datalst[[1]], statslst[[1]], by="rownames", all=TRUE)
     } else {
       ## Then there must only be a chunk of data.
       comb <- datalst[[1]]
@@ -1226,17 +1245,23 @@ Defaulting to fdr.")
     ## There is more than one set of data to merge.
     comb <- datalst[[1]]
     for (i in 2:length(datalst)) {
-      comb <- merge(comb, datalst[[i]], by="rownames", all.x=TRUE)
+      comb <- merge(comb, datalst[[i]], by="rownames", all=TRUE)
     }
     if (length(statslst) > 0) {
       for (j in 1:length(statslst)) {
-        comb <- merge(comb, statslst[[j]], by="rownames", all.x=TRUE)
+        comb <- merge(comb, statslst[[j]], by="rownames", all=TRUE)
       }
     }
   }
+  ## Doing the merge in the way above will lead to a single row which is essentially blank
+  ## It is probably the first row.
 
+  ## The next lines are intended to drop that blank row.
   comb <- as.data.frame(comb)
   rownames(comb) <- comb[["rownames"]]
+  dropme <- rownames(comb) == "dropme"
+  comb <- comb[!dropme, ]
+
   keepers <- colnames(comb) != "rownames"
   comb <- comb[, keepers, drop=FALSE]
   comb[is.na(comb)] <- 0
@@ -1593,7 +1618,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
 
   wb <- NULL
   excel_basename <- NULL
-  if (class(excel)[1] == "character") {
+  if ("character" %in% class(excel)) {
+    excel <- as.character(excel)
     message("Writing a legend of columns.")
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
     wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -1688,6 +1714,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       according_kept <- according_to[!according == according_to]
       next
     }
+  }
+  according_to <- according_kept
+  for (summary_count in 1:length(according_to)) {
+    according <- according_to[summary_count]
     ret[[according]] <- list()
     ma_plots <- list()
     change_counts_up <- list()
@@ -1767,7 +1797,6 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       ## wb <- xlsx_ret[["workbook"]]
     } ## End of an if whether to print the data to excel
   } ## End list of according_to's
-  according_to <- according_kept
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
@@ -1823,7 +1852,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     for (according in according_to) {
       sig_message <- glue::glue("Significant {according} genes.")
       xls_result <- openxlsx::writeData(
-                                wb=wb, sheet="number_changed", x=sig_message,
+                                wb, "number_changed", x=sig_message,
                                 startRow=plot_row, startCol=plot_col)
       plot_row <- plot_row + 1
       plotname <- glue::glue("sigbar_{according}")

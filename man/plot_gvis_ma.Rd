@@ -4,7 +4,8 @@
 \alias{plot_gvis_ma}
 \title{Make an html version of an MA plot: M(log ratio of conditions) / A(mean average).}
 \usage{
-plot_gvis_ma(df, tooltip_data = NULL,
+plot_gvis_ma(df, tooltip_data = NULL, p = 0.05, logfc = 1,
+  p_col = "AdjPVal", fc_col = "logfc", avg_col = "AvgExp",
   filename = "html/gvis_ma_plot.html", base_url = "", ...)
 }
 \arguments{
@@ -12,6 +13,16 @@ plot_gvis_ma(df, tooltip_data = NULL,
 sample-type, which is to say the output from voom/voomMod/hpgl_voom().}
 
 \item{tooltip_data}{Df of tooltip information (gene names, etc).}
+
+\item{p}{P-value cutoff}
+
+\item{logfc}{Logfc cutoff}
+
+\item{p_col}{Column in the data containing the p-values.}
+
+\item{fc_col}{Column in the data containing the fold-changes.}
+
+\item{avg_col}{Column in the data containing the average expression values.}
 
 \item{filename}{Filename to write a fancy html graph.}
 
