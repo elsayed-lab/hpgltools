@@ -234,13 +234,13 @@ norm_test <- normalize_expt(expt, transform="log2")
 l2_metrics <- sm(graph_metrics(norm_test, cis=NULL))
 ## a quantile normalization alone affect some, but not all of the data
 norm_test <- sm(normalize_expt(expt, norm="quant"))
-q_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## q for quant, oh oh oh!
+q_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## q for quant, who quaffed nightshade.
 ## cpm alone brings out some samples, too
 norm_test <- sm(normalize_expt(expt, convert="cpm"))
-c_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## c for cpm!
+c_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## c for cpm, who could not see the train.
 ## low count filtering has some effect, too
 norm_test <- sm(normalize_expt(expt, filter="pofa"))
-f_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## f for filter!
+f_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## f for filter, who was hit with a spade.
 ## how about if we mix and match methods?
 norm_test <- sm(normalize_expt(expt, transform="log2", convert="cpm",
                                norm="quant", batch="combat_scale", filter=TRUE,

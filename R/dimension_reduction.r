@@ -640,6 +640,10 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       if (!is.null(arglist[["perplexity"]])) {
         perplexity <- arglist[["perplexity"]]
       }
+      if (perplexity <= 0) {
+        warning("TSNE: Attempting to auto-detect perplexity failed, setting it to 1.")
+        perplexity <- 1
+      }
 
       ## There is an interesting standardization idea in scater
       ## But I think I would prefer to have flexibility here
