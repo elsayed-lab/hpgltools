@@ -239,11 +239,19 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
                                   method="exact"))
       count_table <- fsva_result[["db"]]
     },
-    "combat" = ,  ## This peculiar syntax should match combat and combat_noscale
-                  ## to the same result.
-    "combat_noscale" = {
-      message("batch_counts: Using combat with a prior and no scaling.")
+    "combat" = {
+      ## This peculiar syntax should match combat and combat_noscale
+      ## to the same result.
+      message("batch_counts: Using combat with a prior, no scaling, and a null model.")
       count_table <- sm(sva::ComBat(count_table, batches, mod=NULL,
+                                    par.prior=TRUE, prior.plots=prior.plots,
+                                    mean.only=TRUE))
+    },
+    "combat_notnull" = {
+      ## This peculiar syntax should match combat and combat_noscale
+      ## to the same result.
+      message("batch_counts: Using combat with a prior, no scaling, and a conditional model.")
+      count_table <- sm(sva::ComBat(count_table, batches, mod=conditions,
                                     par.prior=TRUE, prior.plots=prior.plots,
                                     mean.only=TRUE))
     },

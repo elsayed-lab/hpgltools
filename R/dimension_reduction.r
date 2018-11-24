@@ -479,6 +479,16 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     base_size <<- arglist[["base_size"]]
   }
 
+  if (!is.null(arglist[["transform"]]) || !is.null(arglist[["convert"]]) ||
+      !is.null(arglist[["filter"]]) || !is.null(arglist[["norm"]]) ||
+      !is.null(arglist[["batch"]])) {
+    data <- normalize_expt(data, transform=arglist[["transform"]],
+                           convert=arglist[["convert"]],
+                           filter=arglist[["filter"]],
+                           batch=arglist[["batch"]],
+                           norm=arglist[["norm"]])
+  }
+
   ## The following if() series is used to check the type of data provided and
   ## extract the available metadata from it.  Since I commonly use my
   ## ExpressionSet wrapper (expt), most of the material is specific to that.

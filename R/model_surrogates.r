@@ -52,29 +52,37 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   if (!is.null(arglist[["convert"]])) {
     convert <- arglist[["convert"]]
   }
+  norm <- "raw"
+  if (!is.null(arglist[["norm"]])) {
+    norm <- arglist[["norm"]]
+  }
   if (class(input) == "expt") {
     ## Gather all the likely pieces we can use
     my_design <- input[["design"]]
     my_data <- as.data.frame(exprs(input))
     transform_state <- input[["state"]][["transform"]]
+    convert_state <- input[["state"]][["convert"]]
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
+    base10_data <- NULL
+    if (convert_state == "raw") {
+      base10_data <- sm(normalize_expt(input, convert=convert, norm=norm,
+                                       filter=filter, thresh=1))
+    } else {
+      base10_data <- sm(normalize_expt(input, norm=norm, filter=filter, thresh=1))
+    }
+    base10_mtrx <- exprs(base10_data)
     if (transform_state == "raw") {
       ## I think this was the cause of some problems.  The order of operations
       ## performed here was imperfect and could potentially lead to multiple
       ## different matrix sizes.
-      base10_data <- sm(normalize_expt(input, convert=convert,
-                                       filter=filter, thresh=1))
-      base10_mtrx <- exprs(base10_data)
       log_data <- sm(normalize_expt(base10_data, transform="log2"))
       log2_mtrx <- exprs(log_data)
-      rm(log_data)
-      rm(base10_data)
     } else {
       log2_mtrx <- as.matrix(my_data)
       base10_mtrx <- as.matrix(2 ^ my_data) - 1
     }
-  } else {
+  } else {  ## This is not an expt
     if (is.null(design)) {
       stop("If an expt is not passed, then design _must_ be.")
     }
@@ -87,8 +95,9 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
       transform_state <- "log2"
     }
     my_data <- input
-    base10_mtrx <- as.matrix(my_data)
-    log_mtrx <- as.matrix(my_data)
+    ## These two lines are redundant I think.
+    ##base10_mtrx <- as.matrix(my_data)
+    ##log_mtrx <- as.matrix(my_data)
     if (transform_state == "raw") {
       log_data <- sm(hpgl_norm(input, convert="cpm", transform="log2",
                                filter=filter, thresh=1))

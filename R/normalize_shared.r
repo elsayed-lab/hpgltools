@@ -95,25 +95,40 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     warning("This argument has been changed to 'filter'.")
     filter <- arglist[["filter"]]
   }
+  if (is.null(filter)) {
+    filter <- "raw"
+  }
   if (filter == FALSE) {
     filter <- "raw"
   } else if (isTRUE(filter)) {
     filter <- "hpgl"
+  }
+  if (is.null(convert)) {
+    convert <- "raw"
   }
   if (convert == FALSE) {
     convert <- "raw"
   } else if (isTRUE(convert)) {
     convert <- "cbcbcpm"
   }
+  if (is.null(norm)) {
+    norm <- "raw"
+  }
   if (norm == FALSE) {
     norm <- "raw"
   } else if (isTRUE(norm)) {
     norm <- "tmm"
   }
+  if (is.null(transform)) {
+    transform <- "raw"
+  }
   if (transform == FALSE) {
     transform <- "raw"
   } else if (isTRUE(transform)) {
     transform <- "log2"
+  }
+  if (is.null(batch)) {
+    batch <- "raw"
   }
   if (batch == FALSE) {
     batch <- "raw"

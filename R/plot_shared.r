@@ -138,6 +138,11 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   if (!exists("expt", inherits=FALSE)) {
     stop("The input data does not exist.")
   }
+  dev_length <- length(dev.list())
+  if (dev_length > 1) {
+    message("Hey! You have ", dev_length,
+            " plotting devices open, this might be in error.")
+  }
   ## First gather the necessary data for the various plots.
   old_options <- options(scipen=10)
   nonzero_title <- "Non zero genes"
