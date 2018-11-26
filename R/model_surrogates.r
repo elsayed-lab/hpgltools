@@ -65,6 +65,9 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
     base10_mtrx <- as.matrix(my_data)
     log_mtrx <- as.matrix(my_data)
     base10_data <- NULL
+    if (is.null(convert_state) || isFALSE(convert_state)) {
+      convert_state <- "raw"
+    }
     if (convert_state == "raw") {
       base10_data <- sm(normalize_expt(input, convert=convert, norm=norm,
                                        filter=filter, thresh=1))
