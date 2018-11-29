@@ -6,7 +6,8 @@
 \usage{
 varpart(expt, predictor = NULL, factors = c("condition", "batch"),
   chosen_factor = "batch", do_fit = FALSE, cor_gene = 1, cpus = 6,
-  genes = 40, parallel = TRUE, modify_expt = TRUE)
+  genes = 40, parallel = TRUE, deprecated = TRUE,
+  modify_expt = TRUE)
 }
 \arguments{
 \item{expt}{Some data}
@@ -29,6 +30,8 @@ to the first gene.}
 \item{genes}{Number of genes to count.}
 
 \item{parallel}{use doParallel?}
+
+\item{deprecated}{I want to rename this, but not immediately.}
 
 \item{modify_expt}{Add annotation columns with the variance/factor?}
 }

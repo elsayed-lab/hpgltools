@@ -5,6 +5,9 @@ context("130model_tsne.R:\n")
 ## 2018-03, exported functions in model_tsne:
 ## plot_tsne_genes(), plot_tsne(), tsne_res()
 
+## This file is somewhat deprecated, as I now just treat tsne as
+## another dimension reduction technique.
+
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 
 ## 01 plot_tsne_genes()

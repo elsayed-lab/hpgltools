@@ -484,6 +484,30 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
   rownames(mf_interesting) <- mf_interesting[["GO.ID"]]
   rownames(bp_interesting) <- bp_interesting[["GO.ID"]]
   rownames(cc_interesting) <- cc_interesting[["GO.ID"]]
+  mf_allRes[["fisher"]] <- as.numeric(mf_allRes[["fisher"]])
+  bp_allRes[["fisher"]] <- as.numeric(bp_allRes[["fisher"]])
+  cc_allRes[["fisher"]] <- as.numeric(cc_allRes[["fisher"]])
+  mf_interesting[["fisher"]] <- as.numeric(mf_interesting[["fisher"]])
+  bp_interesting[["fisher"]] <- as.numeric(bp_interesting[["fisher"]])
+  cc_interesting[["fisher"]] <- as.numeric(cc_interesting[["fisher"]])
+  mf_allRes[["KS"]] <- as.numeric(mf_allRes[["KS"]])
+  bp_allRes[["KS"]] <- as.numeric(bp_allRes[["KS"]])
+  cc_allRes[["KS"]] <- as.numeric(cc_allRes[["KS"]])
+  mf_interesting[["KS"]] <- as.numeric(mf_interesting[["KS"]])
+  bp_interesting[["KS"]] <- as.numeric(bp_interesting[["KS"]])
+  cc_interesting[["KS"]] <- as.numeric(cc_interesting[["KS"]])
+  mf_allRes[["EL"]] <- as.numeric(mf_allRes[["EL"]])
+  bp_allRes[["EL"]] <- as.numeric(bp_allRes[["EL"]])
+  cc_allRes[["EL"]] <- as.numeric(cc_allRes[["EL"]])
+  mf_interesting[["EL"]] <- as.numeric(mf_interesting[["EL"]])
+  bp_interesting[["EL"]] <- as.numeric(bp_interesting[["EL"]])
+  cc_interesting[["EL"]] <- as.numeric(cc_interesting[["EL"]])
+  mf_allRes[["weight"]] <- as.numeric(mf_allRes[["weight"]])
+  bp_allRes[["weight"]] <- as.numeric(bp_allRes[["weight"]])
+  cc_allRes[["weight"]] <- as.numeric(cc_allRes[["weight"]])
+  mf_interesting[["weight"]] <- as.numeric(mf_interesting[["weight"]])
+  bp_interesting[["weight"]] <- as.numeric(bp_interesting[["weight"]])
+  cc_interesting[["weight"]] <- as.numeric(cc_interesting[["weight"]])
   tables <- list(
     "mf_subset" = mf_allRes,
     "bp_subset" = bp_allRes,

@@ -354,13 +354,17 @@ number of surrogates is: ", num_surrogates, " and the method is: ", surrogate_me
 #' resulting count table look like? Hopefully this function answers that
 #' question.
 #'
-#' @param data  Original count table, may be an expt/expressionset or df/matrix.
-#' @param adjust  Surrogates with which to adjust the data.
-#' @param design  Experimental design if it is not included in the expressionset.
+#' @param data Original count table, may be an expt/expressionset or df/matrix.
+#' @param adjustment Surrogates with which to adjust the data.
+#' @param design Experimental design if it is not included in the expressionset.
+#' @param matrix_state Was the input for the surrogate estimator on a log or linear scale?
+#' @param return_state Does one want the output linear or log?
 #' @return A data frame of adjusted counts.
 #' @seealso \pkg{Biobase}
 #' @export
-counts_from_surrogates <- function(data, adjust, design=NULL) {
+counts_from_surrogates <- function(data, adjust=NULL,
+                                   design=NULL, matrix_state="base10",
+                                   return_state="base10") {
   data_mtrx <- NULL
   my_design <- NULL
   if (class(data) == "expt") {
@@ -383,6 +387,11 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
   ## In the previous code, this was: 'X <- cbind(conditional_model, sva$sv)'
   ## new_model <- cbind(conditional_model, adjust)
   new_colnames <- colnames(conditional_model)
+  if (is.null(adjust)) {
+    message("No adjust was provided, leaving the data alone.")
+    adjust <- data.frame(row.names=rownames(my_design))
+    adjust[["SV1"]] <- 1
+  }
   adjust_mtrx <- as.matrix(adjust)
   for (col in 1:ncol(adjust_mtrx)) {
     new_model <- cbind(new_model, adjust_mtrx[, col])
@@ -400,12 +409,24 @@ counts_from_surrogates <- function(data, adjust, design=NULL) {
     message("Leaving counts untouched.")
     return(data_mtrx)
   }
+
   ## If the solve operation passes, then the '%*% t(X)' is allowed to happen.
   data_modifier <- data_solve %*% t(new_model)
   transformation <- (data_modifier %*% t(data_mtrx))
   conds <- ncol(conditional_model)
   new_counts <- data_mtrx - t(as.matrix(new_model[, -c(1:conds)]) %*%
                               transformation[-c(1:conds), ])
+
+  ## If the matrix state and return state are not the same, fix it.
+  ## It appears to me that the logic of this is wrong, but I am not yet certain why.
+  if (matrix_state != return_state) {
+    if (return_state == "base10") {
+      ## Well, then the current state is obviously log2
+      new_counts <- (2 ^ new_counts) - 1
+    } else {
+      new_counts <- log2(new_counts + 1)
+    }
+  }
   return(new_counts)
 }
 
@@ -578,6 +599,64 @@ I set it to 1 not knowing what its purpose is.")
     bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, n.array)))) + stand.mean
     return(bayesdata)
   }
+}
+
+compare_batches <- function(expt=NULL, methods=NULL) {
+  if (is.null(methods)) {
+    ## writing this oddly until I work out which ones to include
+    methods <- c(
+      "combat",
+      "combatmod",
+      "combat_notnull",
+##      "combat_noprior",
+##      "combat_noprior_scale",
+      "combat_scale",
+      "fsva",
+      "isva",
+      "limma",
+  ##    "limmaresid",
+      "pca",
+      "ruv_empirical",
+      "ruvg",
+      "ruv_residuals",
+      "ruv_supervised",
+      "smartsva",
+      "svaseq",
+      "sva_supervised",
+      "sva_unsupervised")
+      ##"varpart")
+  }
+  if (is.null(expt)) {
+    message("Going to make an spombe expressionSet from the fission data set.")
+    expt <- make_pombe_expt()
+  }
+  combined <- data.frame()
+  lst <- list()
+  for (m in 1:length(methods)) {
+    method <- methods[m]
+    res <- exprs(normalize_expt(expt, filter=TRUE, batch=method))
+    lst[[method]] <- res
+    column <- c()
+    names <- c()
+    for (c in 1:length(colnames(res))) {
+      names <- c(names, rownames(res))
+      column <- c(column, res[, c])
+    }
+    column <- as.data.frame(column)
+    rownames(column) <- make.unique(names)
+    if (m == 1) {
+      combined <- column
+    } else {
+      combined <- merge(combined, column, by="row.names")
+      rownames(combined) <- combined[["Row.names"]]
+      combined <- combined[, -1]
+      colnames(combined)[m] <- method
+    }
+  }
+  ##fun <- corrplot::corrplot(cor(combined), method="ellipse", type="lower", tl.pos="d")
+  ##tt <- cor(combined)
+  something <- plot_disheat(combined)
+
 }
 
 ## EOF

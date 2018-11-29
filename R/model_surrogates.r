@@ -205,7 +205,10 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   adjusted_counts <- NULL
   type_color <- NULL
   returned_counts <- NULL
-
+  mtrx_state <- "linear"
+  ## Just an aside, calling this a base 10 matrix is stupid.  Just because something is
+  ## put on a log scale does not suddently make it octal or binary or imaginary!
+  surrogate_input <- base10_mtrx
   switchret <- switch(
     estimate_type,
     "sva_supervised" = {
@@ -217,6 +220,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
                                      n.sv=chosen_surrogates))
       model_adjust <- as.matrix(supervised_sva[["sv"]])
       surrogate_result <- supervised_sva
+      mtrx_state <- "log2"
+      surrogate_input <- log2_mtrx
     },
     "fsva" = {
       ## Ok, I have a question:
@@ -233,6 +238,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
                                method="exact")
       model_adjust <- as.matrix(fsva_result[["newsv"]])
       surrogate_result <- fsva_result
+      mtrx_state <- "log2"
+      surrogate_input <- log2_mtrx
     },
     "isva" = {
       message("Attempting isva surrogate estimation with ",
@@ -333,6 +340,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
                                             n.sv=chosen_surrogates))
       surrogate_result <- unsupervised_sva_batch
       model_adjust <- as.matrix(unsupervised_sva_batch[["sv"]])
+      mtrx_state <- "log2"
+      surrogate_input <- log2_mtrx
     },
     "pca" = {
       message("Attempting pca surrogate estimation with ",
@@ -342,6 +351,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
       svd_result <- corpcor::fast.svd(data_vs_means)
       surrogate_result <- svd_result
       model_adjust <- as.matrix(svd_result[["v"]][, 1:chosen_surrogates])
+      mtrx_state <- "log2"
+      surrogate_input <- log2_mtrx
     },
     "ruv_supervised" = {
       message("Attempting ruvseq supervised surrogate estimation with ",
@@ -379,6 +390,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
       controls <- rep(TRUE, dim(base10_mtrx)[1])
       ruv_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
       model_adjust <- as.matrix(ruv_result[["W"]])
+      surrogate_input <- ruv_normalized
+      mtrx_state <- "log2"
     },
     "ruv_empirical" = {
       message("Attempting ruvseq empirical surrogate estimation with ",
@@ -403,6 +416,7 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
       ruv_result <- RUVSeq::RUVg(round(base10_mtrx), ruv_controls, k=chosen_surrogates)
       surrogate_result <- ruv_result
       model_adjust <- as.matrix(ruv_result[["W"]])
+      mtrx_state <- "log2"
     },
     {
       type_color <- "grey"
@@ -421,7 +435,8 @@ get_model_adjust <- function(input, design=NULL, estimate_type="sva",
   rownames(model_adjust) <- sample_names
   sv_names <- glue("SV{1:ncol(model_adjust)}")
   colnames(model_adjust) <- sv_names
-  new_counts <- counts_from_surrogates(base10_mtrx, model_adjust, design=my_design)
+  new_counts <- counts_from_surrogates(surrogate_input, model_adjust,
+                                       matrix_state=mtrx_state, design=my_design)
   plotbatch <- as.integer(batches)
   plotcond <- as.numeric(conditions)
   x_marks <- 1:length(colnames(data))

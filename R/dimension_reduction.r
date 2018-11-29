@@ -158,8 +158,8 @@ pca_information <- function(expt, expt_design=NULL, expt_factors=c("condition", 
 
   ## Now start filling in data which may be used for correlations/fstats/etc.
   factor_df <- data.frame(
-    "sampleid" = rownames(expt_design))
-  rownames(factor_df) <- rownames(expt_design)
+    "sampleid" = tolower(rownames(expt_design)))
+  rownames(factor_df) <- tolower(rownames(expt_design))
   for (fact in expt_factors) {
     if (!is.null(expt_design[[fact]])) {
       factor_df[[fact]] <- as.numeric(as.factor(as.character(expt_design[, fact])))

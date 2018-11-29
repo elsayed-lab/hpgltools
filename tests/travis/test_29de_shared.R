@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("29de_shared.R: Do the combined differential expression searches work?\n")
+context("29de_shared.R: Do the combined differential expression searches work?
+  1234567890123456789012345678901234567890123456789012345678901234\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)

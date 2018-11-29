@@ -63,6 +63,26 @@ tt <- sm(library(fission))
 tt <- data(fission)
 ```
 
+## Annotation collection
+
+Later on in this, I will do some ontology shenanigans.  But I can grab some
+annotations from biomart now.
+
+```{r spombe_annotations}
+pombe_annotations <- sm(load_biomart_annotations(
+  host="fungi.ensembl.org",
+  trymart="fungal_mart",
+  trydataset="spombe_eg_gene",
+  gene_requests=c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+                  "hgnc_symbol", "description", "gene_biotype"),
+  species="spombe", overwrite=TRUE))
+pombe_mart <- pombe_annotations[["mart"]]
+annotations <- pombe_annotations[["annotation"]]
+rownames(annotations) <- make.names(gsub(pattern="\\.\\d+$",
+                                         replacement="",
+                                         x=rownames(annotations)), unique=TRUE)
+```
+
 ## Data import
 
 All the work I do in Dr. El-Sayed's lab makes some pretty hard
@@ -84,7 +104,9 @@ fission_data <- fission@assays$data$counts
 ## This will make an experiment superclass called 'expt' and it contains
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
-fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
+fission_expt <- create_expt(metadata=meta,
+                            count_dataframe=fission_data,
+                            gene_info=annotations)
 ```
 
 # Some simple differential expression analyses

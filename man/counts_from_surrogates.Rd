@@ -4,14 +4,19 @@
 \alias{counts_from_surrogates}
 \title{A single place to extract count tables from a set of surrogate variables.}
 \usage{
-counts_from_surrogates(data, adjust, design = NULL)
+counts_from_surrogates(data, adjust = NULL, design = NULL,
+  matrix_state = "base10", return_state = "base10")
 }
 \arguments{
 \item{data}{Original count table, may be an expt/expressionset or df/matrix.}
 
-\item{adjust}{Surrogates with which to adjust the data.}
-
 \item{design}{Experimental design if it is not included in the expressionset.}
+
+\item{matrix_state}{Was the input for the surrogate estimator on a log or linear scale?}
+
+\item{return_state}{Does one want the output linear or log?}
+
+\item{adjustment}{Surrogates with which to adjust the data.}
 }
 \value{
 A data frame of adjusted counts.
