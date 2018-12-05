@@ -81,7 +81,6 @@ Collate:
     'gsva.r'
     'helpers_misc.r'
     'mlseq.r'
-    'model_surrogates.r'
     'model_testing.r'
     'model_varpartition.r'
     'motif.r'

@@ -2,7 +2,6 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("150normalize_batch.R:\n")
-## 2017-12, exported functions in annotation_gff:
 
 pombe_expt <- make_pombe_expt()
 
@@ -15,7 +14,9 @@ test_that("limma batch modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="svaseq")
+########### THIS IS THE SOLUTION TO MY CONFUSION RECENTLY!!!!
+################################                                    vvvvvvvvvvvv
+testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="svaseq", surrogates=1)
 test_counts <- exprs(testing)
 actual <- as.numeric(test_counts[1:10, 1])
 expected <- c(12.7446437, 25.2166087, 119.5960057, -0.1616566, 72.0400874,
@@ -24,7 +25,7 @@ test_that("svaseq batch modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="fsva")
+testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="fsva", surrogates=1)
 test_counts <- exprs(testing)
 actual <- as.numeric(test_counts[1:10, 1])
 expected <- c(22.62965, 36.77725, 154.51700, 18.85615, 90.74690,
@@ -32,6 +33,15 @@ expected <- c(22.62965, 36.77725, 154.51700, 18.85615, 90.74690,
 test_that("fsva batch modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
+
+t2 <- all_adjusters(pombe_expt, filter=TRUE, estimate_type="fsva", surrogates=1)
+t2$model_adjust
+t2$new_counts[1:10, 1]
+t2$source_counts[1:10, 1]
+
+t3 <- counts_from_surrogates(pombe_expt, adjust=t2$model_adjust)
+t3[1:10, 1]
+
 
 testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="ssva")
 test_counts <- exprs(testing)
@@ -42,7 +52,7 @@ test_that("ssva batch modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
-testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="ruvg")
+testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="ruvg", surrogates=1, thresh=1)
 test_counts <- exprs(testing)
 actual <- as.numeric(test_counts[1:10, 1])
 expected <- c(23, 26, 90, 32, 70, 141, 44, 64, 74, 11)
@@ -78,6 +88,64 @@ test_that("combat batch modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
 
+## Now I think on it, compare_surrogate_estimates runs all of the others for me...
+pombe_result <- compare_surrogate_estimates(pombe_expt, do_catplots=TRUE)
+## Hmm I am not sure what to test in this.
+expected <- 4
+actual <- ncol(pombe_result[["adjustments"]][["pca_adjust"]])
+## 01
+test_that("Do we get expected results from compare_surrogate_estimates()?", {
+  expect_equal(actual, expected)
+})
+
+pombe_filt <- normalize_expt(pombe_expt, filter=TRUE)
+adjust_test_sva <- all_adjusters(pombe_filt, estimate_type="ssva")
+adjust_test_svaseq <- all_adjusters(pombe_filt, estimate_type="svaseq")
+comparison <- cor(adjust_test_sva[["new_counts"]][, 1],
+                  adjust_test_svaseq[["new_counts"]][, 1])
+## 02
+test_that("Do we get similar sva/svaseq results?", {
+  expect_gt(comparison, 0.99)
+})
+
+## Something is messed up here.
+adjust_test_isva <- sm(all_adjusters(pombe_filt, estimate_type="isva"))
+comparison <- cor(adjust_test_sva[["new_counts"]][, 1],
+                  adjust_test_isva[["new_counts"]][, 1], method="spearman")
+## 03
+test_that("Do we get similar sva/isva results?", {
+  expect_gt(comparison, 0.55)
+})
+
+adjust_test_smartsva <- all_adjusters(pombe_filt, estimate_type="smartsva")
+comparison <- cor(adjust_test_smartsva[["new_counts"]][, 1],
+                  adjust_test_sva[["new_counts"]][, 1])
+## 04
+test_that("Do we get similar sva/isva results?", {
+  expect_gt(comparison, 0.99)
+})
+
+adjust_test_ruv <- all_adjusters(pombe_filt, estimate_type="ruv")
+comparison <- cor(adjust_test_ruv[["new_counts"]][, 1],
+                  adjust_test_sva[["new_counts"]][, 1])
+## 05
+test_that("Do we get similar sva/isva results?", {
+  expect_gt(comparison, 0.99)
+})
+
+## If I invoke RUVg, it returns surrogates + counts.
+## I attempted to implement their solver, I therefore want to test that
+## a matrix acquired from their solver + their model gets similar/identical
+## counts to that acquired entirely from RUVg.  If this is true, then I think
+## that gives me some confidence that I can use the solver for other methods.
+ruv_estimate <- all_adjusters(pombe_filt, estimate_type="ruvg")
+ruv_counts <- ruv_estimate$source_counts
+ruv_model <- ruv_estimate$model_adjust
+my_counts <- counts_from_surrogates(pombe_filt, adjust=ruv_model, method="ruv")
+test_that("Do we get to a similar end point from ruv with/without solving?", {
+  expect_equal(ruv_counts, my_counts, tolerance=0.5)
+})
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 150normalize_batch.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 120model_surrogates.R in ", elapsed,  " seconds."))

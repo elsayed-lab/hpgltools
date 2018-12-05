@@ -68,7 +68,8 @@ test_that("combatmod from cbcbSEQ batch gives expected values?", {
 ##expected <- c(0.2702588, 6.9005801, 333.1821527, 38.3304667, 0.6674336)
 expected <- c(0.2562567, 6.8468318, 332.5213682, 37.8301610, 0.6589789)
 names(expected) <- test_genes
-pasilla_batch <- normalize_expt(pasilla_expt, batch="sva")
+
+pasilla_batch <- normalize_expt(pasilla_expt, batch="sva", convert="raw")
 actual_df <- exprs(pasilla_batch)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("sva batch gives expected values?", {
@@ -101,7 +102,7 @@ test_that("combat_scale gives expected values?", {
 ##expected <- c(0.1139956, 7.7406815, 384.8292656, 34.1636051, 0.4937972)
 expected <- c(4.610009, 82.109047, 4099.039062, 519.407500, 9.116170)
 names(expected) <- test_genes
-pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="svaseq"))
+pasilla_batch <- normalize_expt(pasilla_expt, batch="svaseq")
 actual_df <- exprs(pasilla_batch)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("svaseq gives expected values?", {
@@ -110,7 +111,7 @@ test_that("svaseq gives expected values?", {
 
 expected <- c(4, 83, 4091, 496, 9)
 names(expected) <- test_genes
-pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="ruvg"))
+pasilla_batch <- normalize_expt(pasilla_expt, batch="ruvg")
 actual_df <- exprs(pasilla_batch)
 actual <- actual_df[test_genes, c("untreated1")]
 test_that("ruvg gives expected values?", {

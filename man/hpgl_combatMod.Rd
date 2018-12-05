@@ -4,7 +4,7 @@
 \alias{hpgl_combatMod}
 \title{A modified version of comBatMod.}
 \usage{
-hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE,
+hpgl_combatMod(dat, batch, mod, noscale = TRUE, prior.plots = FALSE,
   ...)
 }
 \arguments{
@@ -14,7 +14,7 @@ hpgl_combatMod(dat, batch, mod, noScale = TRUE, prior.plots = FALSE,
 
 \item{mod}{Factor of conditions.}
 
-\item{noScale}{The normal 'scale' option squishes the data too much, so this
+\item{noscale}{The normal 'scale' option squishes the data too much, so this
 defaults to TRUE.}
 
 \item{prior.plots}{Print out prior plots?}

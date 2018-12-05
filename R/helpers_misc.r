@@ -578,7 +578,7 @@ please_install <- function(lib, update=FALSE) {
     if (is.null(github_path)) {
       source("http://bioconductor.org/biocLite.R")
       ##biocLite(character(), ask=FALSE) # update dependencies, if any.
-      eval(parse(text=paste("biocLite('", lib, "')", sep="")))
+      eval(parse(text=paste("BiocManager::install('", lib, "')", sep="")))
       count <- 1
     } else {
       ret <- try(devtools::install_github(github_path))
@@ -628,7 +628,7 @@ renderme <- function(file, format="html_document") {
   ex <- tools::file_ext(ret)
   from <- file.path(outdir, glue::glue("{b}.{ex}"))
   to <- file.path(outdir, glue::glue("{rundate}_{b}.{ex}"))
-  message("Moving ", from, " to ", to, ".")
+  message("Moving ", from, " to\n", basename(to), ".")
   final <- file.rename(from, to)
 }
 
