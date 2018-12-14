@@ -366,15 +366,18 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
   limma_plots <- list()
   limma_ma_plots <- list()
   limma_vol_plots <- list()
+  limma_pplots <- list()
   edger_plots <- list()
   edger_ma_plots <- list()
   edger_vol_plots <- list()
+  edger_pplots <- list()
   ebseq_plots <- list()
   ebseq_ma_plots <- list()
   ebseq_vol_plots <- list()
   deseq_plots <- list()
   deseq_ma_plots <- list()
   deseq_vol_plots <- list()
+  deseq_pplots <- list()
   sheet_count <- 0
   de_summaries <- data.frame()
   name_list <- c()
@@ -419,18 +422,11 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       dat <- NULL
       plt <- NULL
       de_summary <- NULL
-      limma_plt <- NULL
-      limma_ma_plt <- NULL
-      limma_vol_plt <- NULL
-      edger_plt <- NULL
-      edger_ma_plt <- NULL
-      edger_vol_plt <- NULL
-      ebseq_plt <- NULL
-      ebseq_ma_plt <- NULL
-      ebseq_vol_plt <- NULL
-      deseq_plt <- NULL
-      deseq_ma_plt <- NULL
-      deseq_vol_plt <- NULL
+      limma_plt <- limma_ma_plt <- limma_vol_plt <- NULL
+      edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
+      ebseq_plt <- ebseq_ma_plt <- ebseq_vol_plt <- NULL
+      deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
+      limma_pplt <- edger_pplt <- deseq_pplt <- ebseq_pplt <- NULL
 
       ## Do the actual table search, checking for the same_string (a_vs_b) and
       ## inverse (b_vs_a) Set a flag do_inverse appropriately, this will be used
@@ -474,6 +470,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         limma_plt <- edger_plt <- ebseq_plt <- deseq_plt <- NULL
         limma_ma_plt <- edger_ma_plt <- ebseq_ma_plt <- deseq_ma_plt <- NULL
         limma_vol_plt <- edger_vol_plt <- ebseq_vol_plt <- deseq_vol_plt <- NULL
+        limma_pplt <- edger_pplt <- ebseq_pplt <- deseq_pplt <- NULL
 
         ## The following logic will be repeated for limma, edger, deseq
         ## Check that the tool's data survived, and if so plot the coefficients,
@@ -492,6 +489,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             limma_ma_plt <- ma_vol[["ma"]]
             limma_vol_plt <- ma_vol[["volcano"]]
           }
+          ##limma_pplt <- plot_histogram(combined[["data"]][["limma_p"]])
+          limma_pplt <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
         }
         if (isTRUE(include_edger)) {
           edger_try <- sm(try(extract_coefficient_scatter(
@@ -505,6 +504,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             edger_ma_plt <- ma_vol[["ma"]]
             edger_vol_plt <- ma_vol[["volcano"]]
           }
+          ##edger_pplt <- plot_histogram(combined[["data"]][["edger_p"]])
+          edger_pplt <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
         }
         if (isTRUE(include_deseq)) {
           deseq_try <- sm(try(extract_coefficient_scatter(
@@ -518,6 +519,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             deseq_ma_plt <- ma_vol[["ma"]]
             deseq_vol_plt <- ma_vol[["volcano"]]
           }
+          ##deseq_pplt <- plot_histogram(combined[["data"]][["deseq_p"]])
+          deseq_pplt <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
         }
       } else {
         ## End checking that we found the numerator/denominator
@@ -531,12 +534,15 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       limma_plots[[name]] <- limma_plt
       limma_ma_plots[[name]] <- limma_ma_plt
       limma_vol_plots[[name]] <- limma_vol_plt
+      limma_pplots[[name]] <- limma_pplt
       edger_plots[[name]] <- edger_plt
       edger_ma_plots[[name]] <- edger_ma_plt
       edger_vol_plots[[name]] <- edger_vol_plt
+      edger_pplots[[name]] <- edger_pplt
       deseq_plots[[name]] <- deseq_plt
       deseq_ma_plots[[name]] <- deseq_ma_plt
       deseq_vol_plots[[name]] <- deseq_vol_plt
+      deseq_pplots[[name]] <- deseq_pplt
       final_table_names[[a]] <- combined[["summary"]][["table"]]
       de_summaries <- rbind(de_summaries, de_summary)
       ## names(combo) <- name_list  ## I think this is messing me up.
@@ -570,12 +576,15 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       combo[[tab]] <- combined[["data"]]
       limma_plots[[tab]] <- NULL
       limma_ma_plots[[tab]] <- NULL
+      limma_pplots[[tab]] <- NULL
       edger_plots[[tab]] <- NULL
       edger_ma_plots[[tab]] <- NULL
+      edger_pplots[[tab]] <- NULL
       ebseq_plots[[tab]] <- NULL
       ebseq_ma_plots[[tab]] <- NULL
       deseq_plots[[tab]] <- NULL
       deseq_ma_plots[[tab]] <- NULL
+      deseq_pplots[[tab]] <- NULL
       if (isTRUE(include_limma) & isTRUE(do_excel)) {
         limma_try <- sm(try(extract_coefficient_scatter(
           limma, type="limma", loess=loess, x=xname, y=yname)))
@@ -587,6 +596,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
           limma_ma_plots[[tab]] <- limma_ma_vol[["ma"]]
           limma_vol_plots[[tab]] <- limma_ma_vol[["volcano"]]
         }
+        ## limma_pplots[[tab]] <- plot_histogram(combined[["data"]][["limma_p"]])
+        limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
       }
       if (isTRUE(include_edger)) {
         edger_try <- sm(try(extract_coefficient_scatter(
@@ -599,6 +610,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
           edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
           edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
         }
+        ##edger_pplots[[tab]] <- plot_histogram(combined[["data"]][["edger_p"]])
+        edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
       }
       if (isTRUE(include_deseq)) {
         deseq_try <- sm(try(extract_coefficient_scatter(
@@ -611,6 +624,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
           deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
           deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
         }
+        ## deseq_pplots[[tab]] <- plot_histogram(combined[["data"]][["deseq_p"]])
+        deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
       }
     } ## End for list
   } ## End if looking at all contrasts
@@ -646,6 +661,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
     yname <- splitted[[1]][2]
     limma_plots[[name]] <- edger_plots[[name]] <- deseq_plots[[name]] <- NULL
     limma_ma_plots[[name]] <- edger_ma_plots[[name]] <- deseq_ma_plots[[name]] <- NULL
+    limma_pplots[[name]] <- edger_pplots[[name]] <- deseq_pplots[[name]] <- NULL
     if (isTRUE(include_limma)) {
       limma_try <- sm(try(extract_coefficient_scatter(
         limma, type="limma",
@@ -658,6 +674,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         limma_ma_plots[[name]] <- limma_ma_vol[["ma"]]
         limma_vol_plots[[name]] <- limma_ma_vol[["volcano"]]
       }
+      ## limma_pplots[[name]] <- plot_histogram(combined[["data"]][["limma_p"]])
+      limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
     }
     if (isTRUE(include_edger)) {
       edger_try <- sm(try(extract_coefficient_scatter(
@@ -671,6 +689,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
         edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
       }
+      ## edger_pplots[[name]] <- plot_histogram(combined[["data"]][["edger_p"]])
+      edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
     }
     if (isTRUE(include_deseq)) {
       deseq_try <- sm(try(extract_coefficient_scatter(
@@ -684,6 +704,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
         deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
       }
+      ## deseq_pplots[[name]] <- plot_histogram(combined[["data"]][["deseq_p"]])
+      deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
     }
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
@@ -816,10 +838,12 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         plt <- limma_plots[[sheetname]]
         ma_plt <- limma_ma_plots[[sheetname]]
         vol_plt <- limma_vol_plots[[sheetname]]
+        p_plt <- limma_pplots[[sheetname]]
         if (class(plt)[1] != "try-error" & !is.null(plt)) {
-          printme <- glue::glue("Limma expression coefficients for {names(combo)[[x]]}; R^2: \\
+          printme <- as.character(
+            glue::glue("Limma expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(x=plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}")
+                          {make_equate(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme,
@@ -828,13 +852,26 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             plt[["scatter"]], wb=wb, sheet=sheetname,
             width=plot_dim, height=plot_dim, start_col=plot_column,
             plotname="lmscatter", savedir=excel_basename, start_row=19)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="limma MA plot",
+                                   startRow=18, startCol=plot_column + 10)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 10, plotname="lmma",
             savedir=excel_basename, start_row=19)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="limma volcano plot",
+                                   startRow=18, startCol=plot_column + 20)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 20, pltname="lmvol",
+            savedir=excel_basename, start_row=19)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="limma p-value plot",
+                                   startRow=18, startCol=plot_column + 30)
+          try_p_result <- xlsx_plot_png(
+            p_plt, wb=wb, sheet=sheetname, width=plot_dim,
+            height=plot_dim, start_col=plot_column + 30, pltname="lmp",
             savedir=excel_basename, start_row=19)
         }
         ## Text on row 50, plots from 51-81
@@ -842,10 +879,12 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         plt <- edger_plots[[sheetname]]
         ma_plt <- edger_ma_plots[[sheetname]]
         vol_plt <- edger_vol_plots[[sheetname]]
+        p_plt <- edger_pplots[[sheetname]]
         if (class(plt)[1] != "try-error" & !is.null(plt)) {
-          printme <- glue::glue("Edger expression coefficients for {names(combo)[[x]]}; R^2: \\
+          printme <- as.character(
+            glue::glue("Edger expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}")
+                          {make_equate(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme,
@@ -854,23 +893,38 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column, plotname="edscatter",
             savedir=excel_basename, start_row=51)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="edgeR MA plot",
+                                   startRow=50, startCol=plot_column + 10)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 10, plotname="edma",
             savedir=excel_basename, start_row=51)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="edgeR volcano plot",
+                                   startRow=50, startCol=plot_column + 20)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 20, plotname="edvol",
+            savedir=excel_basename, start_row=51)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="edgeR p-value plot",
+                                   startRow=50, startCol=plot_column + 30)
+          try_p_result <- xlsx_plot_png(
+            p_plt, wb=wb, sheet=sheetname, width=plot_dim,
+            height=plot_dim, start_col=plot_column + 30, plotname="edp",
             savedir=excel_basename, start_row=51)
         }
         ## Text on 81, plots 82-112
         plt <- deseq_plots[[sheetname]]
         ma_plt <- deseq_ma_plots[[sheetname]]
         vol_plt <- deseq_vol_plots[[sheetname]]
+        p_plt <- deseq_pplots[[sheetname]]
         if (class(plt)[1] != "try-error" & !is.null(plt)) {
-          printme <- glue::glue("DESeq2 expression coefficients for {names(combo)[[x]]}; R^2: \\
+          printme <- as.character(
+            glue::glue("DESeq2 expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}")
+                          {make_equate(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb, sheetname, x=printme,
@@ -879,13 +933,26 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
             plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column, plotname="descatter",
             savedir=excel_basename, start_row=82)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="DESeq2 MA plot",
+                                   startRow=81, startCol=plot_column + 10)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 10, plotname="dema",
             savedir=excel_basename, start_row=82)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="DESeq2 volcano plot",
+                                   startRow=81, startCol=plot_column + 20)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
             height=plot_dim, start_col=plot_column + 20, plotname="devol",
+            savedir=excel_basename, start_row=82)
+          xl_result <- openxlsx::writeData(
+                                   wb, sheetname, x="DESeq2 p-value plot",
+                                   startRow=81, startCol=plot_column + 30)
+          try_p_result <- xlsx_plot_png(
+            p_plt, wb=wb, sheet=sheetname, width=plot_dim,
+            height=plot_dim, start_col=plot_column + 30, plotname="dep",
             savedir=excel_basename, start_row=82)
         }
       }
@@ -1317,7 +1384,8 @@ Defaulting to fdr.")
     temp_fc <- cbind(as.numeric(comb[["limma_logfc"]]),
                      as.numeric(comb[["edger_logfc"]]),
                      as.numeric(comb[["deseq_logfc"]]))
-    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
+    message("20181210 a pthread error in normalize.quantiles leads me to robust.")
+    temp_fc <- preprocessCore::normalize.quantiles.robust(as.matrix(temp_fc))
     comb[["lfc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
     comb[["lfc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
     comb[["lfc_varbymed"]] <- comb[["lfc_var"]] / comb[["lfc_meta"]]

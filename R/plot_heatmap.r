@@ -309,7 +309,7 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
 #'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
 #' @export
 plot_sample_heatmap <- function(data, colors=NULL, design=NULL, expt_names=NULL,
-                                title=NULL, Rowv=TRUE, label_chars=10, ...) {
+                                row_label=NA, title=NULL, Rowv=TRUE, label_chars=10, ...) {
   hpgl_env <- environment()
   data_class <- class(data)[1]
   if (data_class == "expt") {
@@ -342,7 +342,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, expt_names=NULL,
     expt_names <- abbreviate(expt_names, minlength=label_chars)
   }
 
-  heatmap.3(data, keysize=2, labRow=NA, col=heatmap_colors, dendrogram="column",
+  heatmap.3(data, keysize=2, labRow=row_label, col=heatmap_colors, dendrogram="column",
             labCol=expt_names, margins=c(12, 8), trace="none",
             linewidth=0.5, main=title, Rowv=Rowv)
   hpgl_heatmap_plot <- grDevices::recordPlot()

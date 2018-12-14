@@ -87,12 +87,29 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- DESeq2::getVarianceStabilizedData(cds)
       norm_performed <- "vsd"
     },
+    "quant_robust" = {
+      count_rownames <- rownames(count_table)
+      count_colnames <- colnames(count_table)
+      ## 20181210 -- this gives a pthread_create() error 22.
+      ##count_table <- preprocessCore::normalize.quantiles(
+      ##                                 as.matrix(count_table), copy=TRUE)
+      message("Using normalize.quantiles.robust due to a thread error in preprocessCore.")
+      count_table <- preprocessCore::normalize.quantiles.robust(
+                                       as.matrix(count_table))
+      rownames(count_table) <- count_rownames
+      colnames(count_table) <- count_colnames
+      norm_performed <- "quant_robust"
+    },
     "quant" = {
       ## Quantile normalization (Bolstad et al., 2003)
       count_rownames <- rownames(count_table)
       count_colnames <- colnames(count_table)
-      count_table <- preprocessCore::normalize.quantiles(
-                                       as.matrix(count_table), copy=TRUE)
+      ## 20181210 -- this gives a pthread_create() error 22.
+      ##count_table <- preprocessCore::normalize.quantiles(
+      ##                                 as.matrix(count_table), copy=TRUE)
+      message("Using normalize.quantiles.robust due to a thread error in preprocessCore.")
+      count_table <- preprocessCore::normalize.quantiles.robust(
+                                       as.matrix(count_table))
       rownames(count_table) <- count_rownames
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"

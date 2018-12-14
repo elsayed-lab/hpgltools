@@ -5,8 +5,8 @@
 \title{Combine all surrogate estimators and batch correctors into one function.}
 \usage{
 all_adjusters(input, design = NULL, estimate_type = "sva",
-  batch1 = "batch", batch2 = NULL, scale = FALSE,
-  surrogates = "be", expt_state = NULL, confounders = NULL, ...)
+  batch1 = "batch", batch2 = NULL, surrogates = "be",
+  expt_state = NULL, confounders = NULL, ...)
 }
 \arguments{
 \item{input}{Dataframe or expt or whatever as the data to analyze/modify.}
@@ -26,8 +26,6 @@ all_adjusters(input, design = NULL, estimate_type = "sva",
 \item{confounders}{List of confounded factors for smartSVA/iSVA.}
 
 \item{...}{Extra arguments passed along to other methods.}
-
-\item{noscale}{Only used for combat, scale the data?}
 }
 \value{
 List containing surrogate estimates, new counts, the models, and

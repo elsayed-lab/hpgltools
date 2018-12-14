@@ -54,7 +54,6 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
   return(a_histogram)
 }
 
-
 #' Make a pretty histogram of multiple datasets.
 #'
 #' If there are multiple data sets, it might be useful to plot them on a
@@ -73,7 +72,7 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
 #'  kittytime = plot_multihistogram(df)
 #' }
 #' @export
-plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
+plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, colors=NULL) {
   if (is.data.frame(data)) {
     df <- data
     columns <- colnames(df)
@@ -99,10 +98,11 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   bon_t <- try(stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]],
                                       p.adjust="bon", na.rm=TRUE))
   if (is.null(bins) & is.null(binwidth)) {
-    minval <- min(play_all[["expression"]], na.rm=TRUE)
-    maxval <- max(play_all[["expression"]], na.rm=TRUE)
-    bins <- 500
-    binwidth <- (maxval - minval) / bins
+    ##minval <- min(play_all[["expression"]], na.rm=TRUE)
+    ##maxval <- max(play_all[["expression"]], na.rm=TRUE)
+    ##bins <- 500
+    ##binwidth <- (maxval - minval) / bins
+    binwidth <- stats::density(play_all[["expression"]], na.rm=TRUE)[["bw"]]
   } else if  (is.null(binwidth)) {
     minval <- min(play_all[["expression"]], na.rm=TRUE)
     maxval <- max(play_all[["expression"]], na.rm=TRUE)
@@ -110,22 +110,27 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   } else {
     message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
   }
-  hpgl_multi <- ggplot2::ggplot(play_all,
-                                ggplot2::aes_string(x="expression", fill="cond")) +
+  multi <- ggplot2::ggplot(play_all,
+                           ggplot2::aes_string(x="expression", fill="cond")) +
     ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
                             binwidth=binwidth, alpha=0.4, position="identity") +
-    ggplot2::xlab("Expression") +
-    ggplot2::ylab("Observation likelihood") +
     ggplot2::geom_density(alpha=0.5) +
     ggplot2::geom_vline(data=play_cdf,
                         ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),
                         linetype="dashed", size=0.75) +
+    ggplot2::xlab("Expression") +
+    ggplot2::ylab("Observation likelihood") +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
+  if (!is.null(colors)) {
+    multi <- multi +
+      ggplot2::scale_fill_manual(values=colors) +
+      ggplot2::scale_color_manual(values=colors)
+  }
   if (log) {
-    logged <- try(hpgl_multi + ggplot2::scale_x_log10())
+    logged <- try(multi + ggplot2::scale_x_log10())
     if (class(logged) != "try-error") {
-      hpgl_multi <- logged
+      multi <- logged
     }
   }
   if (class(bon_t) == "try-error") {
@@ -135,7 +140,7 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL) {
   }
 
   returns <- list(
-    "plot" = hpgl_multi,
+    "plot" = multi,
     "data_summary" = summary_df,
     "uncor_t" = uncor_t,
     "bon_t" = bon_t)

@@ -19,7 +19,6 @@
 #' @param estimate_type Name of the estimator.
 #' @param batch1 Column in the experimental design for the first known batch.
 #' @param batch2 Only used by the limma method, a second batch column.
-#' @param noscale Only used for combat, scale the data?
 #' @param surrogates Either a number of surrogates or a method to search for them.
 #' @param expt_state If this is not an expt, provide the state of the data here.
 #' @param confounders List of confounded factors for smartSVA/iSVA.
@@ -28,7 +27,7 @@
 #'   some plots, as available.
 #' @export
 all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch",
-                          batch2=NULL, scale=FALSE, surrogates="be",
+                          batch2=NULL, surrogates="be",
                           expt_state=NULL, confounders=NULL, ...) {
   arglist <- list(...)
   my_design <- NULL
@@ -57,6 +56,8 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   noscale=FALSE
   if (!is.null(arglist[["scale"]])) {
     noscale <- !arglist[["scale"]]
+  } else if (!is.null(arglist[["noscale"]])) {
+    noscale <- arglist[["noscale"]]
   }
 
   if (class(input)[1] == "expt") {
@@ -221,8 +222,8 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
       ## to the same result.
       message("batch_counts: Using combat with a prior, no scaling, and a null model.")
       new_counts <- sm(sva::ComBat(linear_mtrx, batches, mod=NULL,
-                                    par.prior=TRUE, prior.plots=prior.plots,
-                                    mean.only=TRUE))
+                                   par.prior=TRUE, prior.plots=prior.plots,
+                                   mean.only=TRUE))
     },
     "combat_noprior" = {
       message("batch_counts: Using combat without a prior and no scaling.")
@@ -253,8 +254,8 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     },
     "combatmod" = {
       message("batch_counts: Using a modified cbcbSEQ combatMod for batch correction.")
-      new_counts <- hpgl_combatMod(dat=linear_mtrx, batch=batches,
-                                   mod=conditions, noscale=noscale, ...)
+      new_counts <- cbcb_combat(dat=linear_mtrx, batch=batches,
+                                mod=conditions, noscale=noscale)
     },
     "fsva" = {
       ## Ok, I have a question:
@@ -317,181 +318,181 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
         new_counts <- (2 ^ new_counts) - 1
       }
     },
-    "limmaresid" = {
-      ## ok a caveat:  voom really does require input on the base 10 scale and returns
-      ## log2 scale data.  Therefore we need to make sure that the input is
-      ## provided appropriately.
-      message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
-      batch_model <- model.matrix(~batches)
-      batch_voom <- limma::voom(linear_mtrx, batch_model,
-                                normalize.method="quantile",
-                                plot=FALSE)
-      batch_fit <- limma::lmFit(batch_voom, design=batch_model)
-      ## count_table <- residuals(batch_fit, batch_voom[["E"]])
-      ## This is still fubar!
-      new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
-      new_counts <- (2 ^ new_counts) - 1
-    },
-    "pca" = {
-      message("Attempting pca surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "green"
-      data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
-      surrogate_result <- corpcor::fast.svd(data_vs_means)
-      model_adjust <- as.matrix(surrogate_result[["v"]][, 1:chosen_surrogates])
-    },
-    "ruvg" = {
-      message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.)")
-      ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
-      ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
-      ruv_input_norm <- ruv_input
-      if (expt_state[["normalization"]] == "raw") {
-        ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
-      }
-      ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
-      ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
-      ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
-      ## Use RUVSeq with empirical controls
-      ## The previous instance of ruv_input should work here, and the ruv_input_norm
-      ## Ditto for _glm and _tag, and indeed ruv_fit
-      ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
-      ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
-      ruv_control_table <- ruv_lrt[["table"]]
-      ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
-      bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
-      ruv_controls <- ranked <= bottom_third  ## what is going on here?!
-      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
-      ## fail with 400 hard-set
-      surrogate_result <- RUVSeq::RUVg(linear_mtrx, ruv_controls, k=chosen_surrogates)
-      model_adjust <- surrogate_result[["W"]]
-      source_counts <- surrogate_result[["normalizedCounts"]]
-      returned_scale <- "e"
-    },
-    "ruv_empirical" = {
-      message("Attempting ruvseq empirical surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "orange"
-      ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
-      ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
-      ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
-      ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
-      ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
-      ## Use RUVSeq with empirical controls
-      ## The previous instance of ruv_input should work here, and the ruv_input_norm
-      ## Ditto for _glm and _tag, and indeed ruv_fit
-      ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
-      ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
-      ruv_control_table <- ruv_lrt[["table"]]
-      ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
-      bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
-      ruv_controls <- ranked <= bottom_third  ## what is going on here?!
-      ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
-      ## fail with 400 hard-set
-      surrogate_result <- RUVSeq::RUVg(round(linear_mtrx), ruv_controls, k=chosen_surrogates)
-      model_adjust <- as.matrix(surrogate_result[["W"]])
-      source_counts <- surrogate_result[["normalizedCounts"]]
-    },
-    "ruv_residuals" = {
-      message("Attempting ruvseq residual surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "purple"
-      ## Use RUVSeq and residuals
-      ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
-      norm <- edgeR::calcNormFactors(ruv_input)
-      ruv_input <- try(edgeR::estimateDisp(norm, design=conditional_model, robust=TRUE))
-      ruv_fit <- edgeR::glmFit(ruv_input, conditional_model)
-      ruv_res <- residuals(ruv_fit, type="deviance")
-      ruv_normalized <- EDASeq::betweenLaneNormalization(linear_mtrx, which="upper")
-      ## This also gets mad if you pass it a df and not matrix
-      controls <- rep(TRUE, dim(linear_mtrx)[1])
-      surrogate_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
-      model_adjust <- as.matrix(surrogate_result[["W"]])
-      source_counts <- as.matrix(surrogate_result[["normalizedCounts"]])
-    },
-    "ruv_supervised" = {
-      message("Attempting ruvseq supervised surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "black"
-      ## Re-calculating the numer of surrogates with this modified data.
-      surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
-      if (min(rowSums(linear_mtrx)) == 0) {
-        warning("empirical.controls will likely fail because some rows are all 0.")
-      }
-      control_likelihoods <- sm(sva::empirical.controls(
-                                       dat=log2_mtrx,
-                                       mod=conditional_model,
-                                       mod0=null_model,
-                                       n.sv=surrogate_estimate))
-      surrogate_result <- RUVSeq::RUVg(round(linear_mtrx),
-                                       k=surrogate_estimate,
-                                       cIdx=as.logical(control_likelihoods))
-      model_adjust <- as.matrix(surrogate_result[["W"]])
-      source_counts <- surrogate_result[["normalizedCounts"]]
-    },
-    "smartsva" = {
-      message("Attempting svaseq estimation with ",
-              chosen_surrogates, " surrogates.")
-      surrogate_result <- SmartSVA::smartsva.cpp(
-                                      dat=linear_mtrx,
-                                      mod=conditional_model,
-                                      mod0=null_model,
-                                      n.sv=chosen_surrogates)
-      model_adjust <- as.matrix(surrogate_result[["sv"]])
-    },
-    "svaseq" = {
-      message("Attempting svaseq estimation with ",
-              chosen_surrogates, " surrogates.")
-      surrogate_result <- sm(sva::svaseq(dat=linear_mtrx,
-                                         n.sv=chosen_surrogates,
-                                         mod=conditional_model,
-                                         mod0=null_model))
-      model_adjust <- as.matrix(surrogate_result[["sv"]])
-    },
-    "sva_supervised" = {
-      message("Attempting sva supervised surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "red"
-      surrogate_result <- sm(sva::ssva(dat=log2_mtrx,
-                                       controls=control_likelihoods,
-                                       n.sv=chosen_surrogates))
-      model_adjust <- as.matrix(surrogate_result[["sv"]])
-    },
-    "sva_unsupervised" = {
-      message("Attempting sva unsupervised surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
-      type_color <- "blue"
-      if (min(rowSums(linear_mtrx)) == 0) {
-        warning("sva will likely fail because some rowSums are 0.")
-      }
-      surrogate_result <- sm(sva::sva(dat=log2_mtrx,
-                                      mod=conditional_model,
-                                      mod0=null_model,
-                                      n.sv=chosen_surrogates))
-      model_adjust <- as.matrix(surrogate_result[["sv"]])
-    },
-    "varpart" = {
-      message("Taking residuals from a linear mixed model as suggested by variancePartition.")
-      cl <- parallel::makeCluster(cpus)
-      doParallel::registerDoParallel(cl)
-      batch_model <- as.formula("~ (1|batch)")
-      message("The function fitvarPartModel may take excessive memory, you have been warned.")
-      batch_fit <- variancePartition::fitVarPartModel(linear_mtrx, formula=batch_model, design)
-      new_counts <- residuals(batch_fit)
-      rm(batch_fit)
-      parallel::stopCluster(cl)
-    },
-    {
-      type_color <- "grey"
-      ## If given nothing to work with, use supervised sva
-      message("Did not understand ", estimate_type, ", assuming supervised sva.")
-      surrogate_result <- sva::svaseq(dat=linear_mtrx,
-                                      mod=conditional_model,
-                                      mod0=null_model,
+ "limmaresid" = {
+   ## ok a caveat:  voom really does require input on the base 10 scale and returns
+   ## log2 scale data.  Therefore we need to make sure that the input is
+   ## provided appropriately.
+   message("batch_counts: Using residuals of limma's lmfit to remove batch effect.")
+   batch_model <- model.matrix(~batches)
+   batch_voom <- limma::voom(linear_mtrx, batch_model,
+                             normalize.method="quantile",
+                             plot=FALSE)
+   batch_fit <- limma::lmFit(batch_voom, design=batch_model)
+   ## count_table <- residuals(batch_fit, batch_voom[["E"]])
+   ## This is still fubar!
+   new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
+   new_counts <- (2 ^ new_counts) - 1
+ },
+ "pca" = {
+   message("Attempting pca surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "green"
+   data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
+   surrogate_result <- corpcor::fast.svd(data_vs_means)
+   model_adjust <- as.matrix(surrogate_result[["v"]][, 1:chosen_surrogates])
+ },
+ "ruvg" = {
+   message("Using RUVSeq and edgeR for batch correction (similar to lmfit residuals.)")
+   ## Adapted from: http://jtleek.com/svaseq/simulateData.html -- but not quite correct yet
+   ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
+   ruv_input_norm <- ruv_input
+   if (expt_state[["normalization"]] == "raw") {
+     ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
+   }
+   ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
+   ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
+   ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
+   ## Use RUVSeq with empirical controls
+   ## The previous instance of ruv_input should work here, and the ruv_input_norm
+   ## Ditto for _glm and _tag, and indeed ruv_fit
+   ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
+   ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
+   ruv_control_table <- ruv_lrt[["table"]]
+   ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
+   bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
+   ruv_controls <- ranked <= bottom_third  ## what is going on here?!
+   ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
+   ## fail with 400 hard-set
+   surrogate_result <- RUVSeq::RUVg(linear_mtrx, ruv_controls, k=chosen_surrogates)
+   model_adjust <- surrogate_result[["W"]]
+   source_counts <- surrogate_result[["normalizedCounts"]]
+   returned_scale <- "e"
+ },
+ "ruv_empirical" = {
+   message("Attempting ruvseq empirical surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "orange"
+   ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
+   ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
+   ruv_input_glm <- edgeR::estimateGLMCommonDisp(ruv_input_norm, conditional_model)
+   ruv_input_tag <- edgeR::estimateGLMTagwiseDisp(ruv_input_glm, conditional_model)
+   ruv_fit <- edgeR::glmFit(ruv_input_tag, conditional_model)
+   ## Use RUVSeq with empirical controls
+   ## The previous instance of ruv_input should work here, and the ruv_input_norm
+   ## Ditto for _glm and _tag, and indeed ruv_fit
+   ## Thus repeat the first 7 lines of the previous RUVSeq before anything changes.
+   ruv_lrt <- edgeR::glmLRT(ruv_fit, coef=2)
+   ruv_control_table <- ruv_lrt[["table"]]
+   ranked <- as.numeric(rank(ruv_control_table[["LR"]]))
+   bottom_third <- (summary(ranked)[[2]] + summary(ranked)[[3]]) / 2
+   ruv_controls <- ranked <= bottom_third  ## what is going on here?!
+   ## ruv_controls = rank(ruv_control_table$LR) <= 400  ## some data sets
+   ## fail with 400 hard-set
+   surrogate_result <- RUVSeq::RUVg(round(linear_mtrx), ruv_controls, k=chosen_surrogates)
+   model_adjust <- as.matrix(surrogate_result[["W"]])
+   source_counts <- surrogate_result[["normalizedCounts"]]
+ },
+ "ruv_residuals" = {
+   message("Attempting ruvseq residual surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "purple"
+   ## Use RUVSeq and residuals
+   ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
+   norm <- edgeR::calcNormFactors(ruv_input)
+   ruv_input <- try(edgeR::estimateDisp(norm, design=conditional_model, robust=TRUE))
+   ruv_fit <- edgeR::glmFit(ruv_input, conditional_model)
+   ruv_res <- residuals(ruv_fit, type="deviance")
+   ruv_normalized <- EDASeq::betweenLaneNormalization(linear_mtrx, which="upper")
+   ## This also gets mad if you pass it a df and not matrix
+   controls <- rep(TRUE, dim(linear_mtrx)[1])
+   surrogate_result <- RUVSeq::RUVr(ruv_normalized, controls, k=chosen_surrogates, ruv_res)
+   model_adjust <- as.matrix(surrogate_result[["W"]])
+   source_counts <- as.matrix(surrogate_result[["normalizedCounts"]])
+ },
+ "ruv_supervised" = {
+   message("Attempting ruvseq supervised surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "black"
+   ## Re-calculating the numer of surrogates with this modified data.
+   surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
+   if (min(rowSums(linear_mtrx)) == 0) {
+     warning("empirical.controls will likely fail because some rows are all 0.")
+   }
+   control_likelihoods <- sm(sva::empirical.controls(
+                                    dat=log2_mtrx,
+                                    mod=conditional_model,
+                                    mod0=null_model,
+                                    n.sv=surrogate_estimate))
+   surrogate_result <- RUVSeq::RUVg(round(linear_mtrx),
+                                    k=surrogate_estimate,
+                                    cIdx=as.logical(control_likelihoods))
+   model_adjust <- as.matrix(surrogate_result[["W"]])
+   source_counts <- surrogate_result[["normalizedCounts"]]
+ },
+ "smartsva" = {
+   message("Attempting svaseq estimation with ",
+           chosen_surrogates, " surrogates.")
+   surrogate_result <- SmartSVA::smartsva.cpp(
+                                   dat=linear_mtrx,
+                                   mod=conditional_model,
+                                   mod0=null_model,
+                                   n.sv=chosen_surrogates)
+   model_adjust <- as.matrix(surrogate_result[["sv"]])
+ },
+ "svaseq" = {
+   message("Attempting svaseq estimation with ",
+           chosen_surrogates, " surrogates.")
+   surrogate_result <- sm(sva::svaseq(dat=linear_mtrx,
                                       n.sv=chosen_surrogates,
-                                      controls=control_likelihoods)
-      model_adjust <- as.matrix(surrogate_result[["sv"]])
-    }
-  ) ## End of the switch.
+                                      mod=conditional_model,
+                                      mod0=null_model))
+   model_adjust <- as.matrix(surrogate_result[["sv"]])
+ },
+ "sva_supervised" = {
+   message("Attempting sva supervised surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "red"
+   surrogate_result <- sm(sva::ssva(dat=log2_mtrx,
+                                    controls=control_likelihoods,
+                                    n.sv=chosen_surrogates))
+   model_adjust <- as.matrix(surrogate_result[["sv"]])
+ },
+ "sva_unsupervised" = {
+   message("Attempting sva unsupervised surrogate estimation with ",
+           chosen_surrogates, " surrogates.")
+   type_color <- "blue"
+   if (min(rowSums(linear_mtrx)) == 0) {
+     warning("sva will likely fail because some rowSums are 0.")
+   }
+   surrogate_result <- sm(sva::sva(dat=log2_mtrx,
+                                   mod=conditional_model,
+                                   mod0=null_model,
+                                   n.sv=chosen_surrogates))
+   model_adjust <- as.matrix(surrogate_result[["sv"]])
+ },
+ "varpart" = {
+   message("Taking residuals from a linear mixed model as suggested by variancePartition.")
+   cl <- parallel::makeCluster(cpus)
+   doParallel::registerDoParallel(cl)
+   batch_model <- as.formula("~ (1|batch)")
+   message("The function fitvarPartModel may take excessive memory, you have been warned.")
+   batch_fit <- variancePartition::fitVarPartModel(linear_mtrx, formula=batch_model, design)
+   new_counts <- residuals(batch_fit)
+   rm(batch_fit)
+   parallel::stopCluster(cl)
+ },
+ {
+   type_color <- "grey"
+   ## If given nothing to work with, use supervised sva
+   message("Did not understand ", estimate_type, ", assuming supervised sva.")
+   surrogate_result <- sva::svaseq(dat=linear_mtrx,
+                                   mod=conditional_model,
+                                   mod0=null_model,
+                                   n.sv=chosen_surrogates,
+                                   controls=control_likelihoods)
+   model_adjust <- as.matrix(surrogate_result[["sv"]])
+ }
+ ) ## End of the switch.
 
   surrogate_plots <- NULL
   if (!is.null(model_adjust)) {
@@ -1205,10 +1206,10 @@ counts_from_surrogates <- function(data, adjust=NULL, design=NULL, method="ruv",
 #'  \code{\link[sva]{ComBat}}
 #' @examples
 #' \dontrun{
-#'  df_new = hpgl_combatMod(df, batches, model)
+#'  df_new = cbcb_combat(df, batches, model)
 #' }
 #' @export
-hpgl_combatMod <- function(dat, batch, mod, noscale=TRUE, prior.plots=FALSE, ...) {
+cbcb_combat <- function(dat, batch, mod, noscale=TRUE, prior.plots=FALSE, ...) {
   arglist <- list(...)
   par.prior <- TRUE
   numCovs <- NULL
@@ -1340,7 +1341,7 @@ I set it to 1 not knowing what its purpose is.")
       message("Finding nonparametric adjustments.")
       for (i in 1:n.batch) {
         temp <- int.eprior(as.matrix(s.data[, batches[[i]]]),
-                                 gamma.hat[i, ], delta.hat[i, ])
+                           gamma.hat[i, ], delta.hat[i, ])
         gamma.star <- rbind(gamma.star, temp[1, ])
         delta.star <- rbind(delta.star, temp[2, ])
       }

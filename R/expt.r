@@ -2055,7 +2055,8 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                        violin=FALSE, convert="cpm", transform="log2",
-                       batch="sva", filter="cbcb", ...) {
+                       batch="sva", filter=TRUE, ...) {
+  arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
   plot_dim <- 6
   plot_cols <- floor(plot_dim * 1.5)
@@ -2231,6 +2232,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Raw PCA.",
                       startRow=new_row, startCol=new_col)
   new_col <- new_col + plot_cols + 1
+  openxlsx::writeData(wb, sheet=sheet, x="top 40 PC1 loadings.",
+                      startRow=new_row, startCol=new_col)
+  new_col <- new_col + plot_cols + 1
   openxlsx::writeData(wb, sheet=sheet, x="PCA(log2(cpm())).",
                       startRow=new_row, startCol=new_col)
   new_col <- new_col + plot_cols + 1
@@ -2245,16 +2249,23 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_col <- 1
   new_row <- new_row + 1
   pca_plot <- metrics[["pc_plot"]]
+  pca_topn <- metrics[["pc_loadplot"]]
   pca_table <- metrics[["pc_table"]]
   tsne_plot <- metrics[["tsne_plot"]]
   tsne_table <- metrics[["tsne_table"]]
   try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="12_pcaplot", savedir=excel_basename, fancy_type="svg")
+  new_col <- new_col + plot_cols + 1
+  try_result <- xlsx_plot_png(pca_topn, wb=wb, sheet=sheet, width=plot_dim,
+                              height=plot_dim, start_col=new_col, start_row=new_row,
+                              plotname="13_pctopn", savedir=excel_basename, fancy_type="svg")
   tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm",
                                 ...))
-  rpca <- plot_pca(tmp_data, ...)
-  rtsne <- plot_tsne(tmp_data, ...)
+  rpca <- plot_pca(tmp_data,
+                   ...)
+  rtsne <- plot_tsne(tmp_data,
+                     ...)
   rspca_plot <- rpca[["plot"]]
   rtsne_plot <- rtsne[["plot"]]
   rpca_table <- rpca[["residual_df"]]
@@ -2263,20 +2274,20 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="13_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
+                              plotname="14_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(tsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="14_tsneplot", savedir=excel_basename, fancy_type="svg")
+                              plotname="15_tsneplot", savedir=excel_basename, fancy_type="svg")
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(rtsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="15_rtsneplot", savedir=excel_basename, fancy_type="svg")
+                              plotname="16_rtsneplot", savedir=excel_basename, fancy_type="svg")
   qq_plot <- metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="16_qqlog", savedir=excel_basename)
+                              plotname="17_qqlog", savedir=excel_basename)
   new_col <- 1
 
   violin_plot <- NULL
@@ -2291,13 +2302,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       new_col <- 1
       try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
-                                  plotname="17_violin", savedir=excel_basename)
+                                  plotname="18_violin", savedir=excel_basename)
       new_col <- new_col + plot_cols + 1
 
       pct_plot <- varpart_raw[["percent_plot"]]
       try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
-                                  plotname="18_pctvar", savedir=excel_basename)
+                                  plotname="19_pctvar", savedir=excel_basename)
     }
   }
 
@@ -2322,7 +2333,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "norm_data"
   new_col <- 1
   new_row <- 1
-  norm_data <- sm(normalize_expt(expt=expt, transform=transform, norm=norm,
+  message("Line 2336 of expt.r, removed normalization of pca plotting.")
+  norm_data <- sm(normalize_expt(expt=expt, transform=transform,
                                  convert=convert, batch=batch, filter=filter,
                                  ...))
   norm_reads <- exprs(norm_data)
@@ -2358,13 +2370,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nlibsize_plot <- norm_metrics[["libsize"]]
   try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="19_nlibsize", savedir=excel_basename)
+                              plotname="20_nlibsize", savedir=excel_basename)
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
   nnzero_plot <- norm_metrics[["nonzero"]]
   try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="20_nnzero", savedir=excel_basename)
+                              plotname="21_nnzero", savedir=excel_basename)
   new_col <- new_col + plot_cols + 1
 
   ## Visualize distributions
@@ -2380,17 +2392,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="21_ndensity", savedir=excel_basename)
+                              plotname="22_ndensity", savedir=excel_basename)
   nboxplot_plot <- norm_metrics[["boxplot"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="22_nboxplot", savedir=excel_basename)
+                              plotname="23_nboxplot", savedir=excel_basename)
   ntopn_plot <- norm_metrics[["topnplot"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ntopn_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="23_nboxplot", savedir=excel_basename)
+                              plotname="24_nboxplot", savedir=excel_basename)
   new_col <- 1
 
   ## Move down next set of rows, heatmaps
@@ -2406,12 +2418,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="24_ncorheat", savedir=excel_basename)
+                              plotname="25_ncorheat", savedir=excel_basename)
   ndisheat_plot <- norm_metrics[["disheat"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="25_ndisheat", savedir=excel_basename)
+                              plotname="26_ndisheat", savedir=excel_basename)
   new_col <- 1
 
   ## SM plots
@@ -2427,12 +2439,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="26_nsmc", savedir=excel_basename, fancy_type="svg")
+                              plotname="27_nsmc", savedir=excel_basename, fancy_type="svg")
   nsmd_plot <- norm_metrics[["smd"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="27_nsmd", savedir=excel_basename, fancy_type="svg")
+                              plotname="28_nsmd", savedir=excel_basename, fancy_type="svg")
   new_col <- 1
 
   ## PCA and qq_log
@@ -2448,22 +2460,27 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_col <- 1
   npca_plot <- norm_metrics[["pc_plot"]]
+  npc_topnplot <- norm_metrics[["pc_loadplot"]]
   ntsne_plot <- norm_metrics[["tsne_plot"]]
   npca_table <- norm_metrics[["pc_table"]]
   ntsne_table <- norm_metrics[["tsne_table"]]
   new_row <- new_row + 1
   try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="28_npcaplot", savedir=excel_basename, fancy_type="svg")
+                              plotname="29_npcaplot", savedir=excel_basename, fancy_type="svg")
+  new_col <- new_col + plot_cols + 1
+  try_result <- xlsx_plot_png(npc_topnplot, wb=wb, sheet=sheet, width=plot_dim,
+                              height=plot_dim, start_col=new_col, start_row=new_row,
+                              plotname="30_npcloadplot", savedir=excel_basename, fancy_type="svg")
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ntsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="29_ntsneplot", savedir=excel_basename, fancy_type="svg")
+                              plotname="31_ntsneplot", savedir=excel_basename, fancy_type="svg")
   nqq_plot <- norm_metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
-                              plotname="30_nqqplot", savedir=excel_basename)
+                              plotname="32_nqqplot", savedir=excel_basename)
 
   new_col <- 1
 
@@ -2478,12 +2495,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       new_col <- 1
       try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
-                                  plotname="31_nviolin", savedir=excel_basename)
+                                  plotname="33_nviolin", savedir=excel_basename)
       new_col <- new_col + plot_cols + 1
       npct_plot <- varpart_norm[["percent_plot"]]
       try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
-                                  plotname="32_npctplot", savedir=excel_basename)
+                                  plotname="34_npctplot", savedir=excel_basename)
     }
   }
 
@@ -2533,6 +2550,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "raw_disheat" = disheat_plot,
     "raw_smc" = smc_plot,
     "raw_smd" = smd_plot,
+    "raw_pctopn" = pca_topn,
     "raw_pca" = pca_plot,
     "raw_pca_table" = pca_table,
     "raw_tsne" = tsne_plot,
@@ -2554,6 +2572,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "norm_smc" = nsmc_plot,
     "norm_smd" = nsmd_plot,
     "norm_pca" = npca_plot,
+    "norm_pctopn" = npc_topnplot,
     "norm_pca_table" = npca_table,
     "norm_tsne" = ntsne_plot,
     "norm_tsne_table" = ntsne_table,
@@ -2570,7 +2589,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 ## But instead R will call them for us.
 
 ## Here is a note from Hadley which is relevant here:
-## Another consideration is that S4 code often needs to run in a certain
+## Another consideration is that
 ## order. For example, to define the method setMethod("foo", c("bar", "baz"),
 ## ...) you must already have created the foo generic and the two classes. By
 ## default, R code is loaded in alphabetical order, but that won’t always work

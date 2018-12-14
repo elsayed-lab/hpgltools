@@ -5,7 +5,7 @@
 \title{Make a MA plot of some limma output with pretty colors and shapes}
 \usage{
 extract_de_plots(pairwise, type = "edger", table = NULL, logfc = 1,
-  p = 0.05, invert = FALSE, ...)
+  p_type = "adj", p = 0.05, invert = FALSE, ...)
 }
 \arguments{
 \item{pairwise}{The result from all_pairwise(), which should be changed to

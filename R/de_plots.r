@@ -18,7 +18,7 @@
 #' }
 #' @export
 extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
-                             p=0.05, invert=FALSE, ...) {
+                             p_type="adj", p=0.05, invert=FALSE, ...) {
   arglist <- list(...)
   table_source <- "all_pairwise"
   ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
@@ -65,27 +65,47 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     ## This column will need to be changed from base 10 to log scale.
     expr_col <- "baseMean"
     fc_col <- "logFC"  ## The most common
-    p_col <- "adj.P.Val"
+    if (p_type == "adj") {
+      p_col <- "adj.P.Val"
+    } else {
+      p_col <- "P.Value"
+    }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "edger_pairwise") {
     expr_col <- "logCPM"
     fc_col <- "logFC"  ## The most common
-    p_col <- "FDR"
+    if (p_type == "adj") {
+      p_col <- "FDR"
+    } else {
+      p_col <- "PValue"
+    }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "limma_pairwise") {
     expr_col <- "AveExpr"
     fc_col <- "logFC"  ## The most common
-    p_col <- "adj.P.Val"
+    if (p_type == "adj") {
+      p_col <- "adj.P.Val"
+    } else {
+      p_col <- "P.Value"
+    }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "basic_pairwise") {
     expr_col <- "numerator_median"
     fc_col <- "logFC"  ## The most common
-    p_col <- "p"
+    if (p_type == "adj") {
+      p_col <- "adjp"
+    } else {
+      p_col <- "p"
+    }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "ebseq_pairwise") {
     expr_col <- "ebseq_mean"
     fc_col <- "logFC"
-    p_col <- "ebseq_adjp"
+    if (p_type == "adj") {
+      p_col <- "ebseq_adjp"
+    } else {
+      p_col <- "ebseq_p"
+    }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "combined") {
     if (type == "deseq") {
@@ -100,7 +120,11 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       expr_col <- "ebseq_mean"
     }
     fc_col <- glue::glue("{type}_logfc")
-    p_col <- glue::glue("{type}_adjp")
+    if (p_type == "adj") {
+      p_col <- glue::glue("{type}_adjp")
+    } else {
+      p_col <- glue::glue("{type}_p")
+    }
     all_tables <- pairwise[["data"]]
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
@@ -167,24 +191,19 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     expr_col <- "log_basemean"
   }
 
-  ##ma_material <- plot_ma_de(
-  ##  table=the_table, expr_col=expr_col, fc_col=fc_col,
-  ##  p_col=p_col, logfc_cutoff=logfc, pval_cutoff=pval_cutoff,
-  ##  invert=invert)
-
   ma_material <- NULL
   vol_material <- NULL
   if (!is.null(the_table[[expr_col]]) &&
       !is.null(the_table[[fc_col]]) &&
       !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
-      table=the_table, expr_col=expr_col, fc_col=fc_col,
-      p_col=p_col, logfc_cutoff=logfc, p=p,
-      invert=invert, ...) ##)
+      table=the_table, expr_col=expr_col, fc_col=fc_col, p_col=p_col,
+      logfc=logfc, p=p, invert=invert)
+    ##...)
     vol_material <- plot_volcano_de(
-      table=the_table, fc_col=fc_col,
-      p_col=p_col, logfc_cutoff=logfc,
-      p=p, ...) ##)
+      table=the_table, fc_col=fc_col, p_col=p_col,
+      logfc=logfc, p=p)
+    ##...)
   }
 
   retlist <- list(
@@ -424,6 +443,29 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
     "down_noweight" = down_venn_noweight,
     "down_data" = comp_down)
   return(retlist)
+}
+
+#' Given a DE table with p-values, plot them.
+#'
+#' Plot a multi-histogram containing (adjusted)p-values.
+#'
+#' @param combined Table to extract the values from.
+#' @param type If provided, extract the {type}_p and {type}_adjp columns.
+#' @param columns Otherwise, extract whatever columns are provided.
+#' @return Multihistogram of the result.
+plot_de_pvals <- function(combined, type="limma", columns=NULL) {
+  if (is.null(type) && is.null(columns)) {
+    stop("Some columns are required to extract p-values.")
+  }
+  if (is.null(columns)) {
+    columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
+  }
+  plot_df <- combined[, columns]
+  for (c in 1:ncol(plot_df)) {
+    plot_df[[c]] <- as.numeric(plot_df[[c]])
+  }
+  p_stuff <- plot_multihistogram(plot_df, colors=c("darkred", "darkblue"))
+  return(p_stuff)
 }
 
 #' Given a DE table with fold changes and p-values, show how 'significant'

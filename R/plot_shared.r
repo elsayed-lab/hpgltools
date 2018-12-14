@@ -157,6 +157,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   dens_title <- "Density plot"
   cv_title <- "Coefficient of variance plot"
   topn_title <- "Top-n representation"
+  pc_loading_title <- "Expression of top-n PC loading-genes"
   if (!is.null(title_suffix)) {
     nonzero_title <- glue("{nonzero_title}: {title_suffix}")
     libsize_title <- glue("{libsize_title}: {title_suffix}")
@@ -170,6 +171,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
     dens_title <- glue("{dens_title}: {title_suffix}")
     cv_title <- glue("{cv_title}: {title_suffix}")
     topn_title <- glue("{topn_title}: {title_suffix}")
+    pc_loading_title <- glue("{pc_loading_title}: {title_suffix}")
   }
 
   ## I am putting the ... arguments on a separate line so that I can check that
@@ -210,6 +212,9 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   message("Plotting the representation of the top-n genes.")
   topn <- try(plot_topn(expt, title=topn_title,
                         ...))
+  message("Plotting the expression of the top-n PC loaded genes.")
+  pcload <- try(plot_pcload(expt, title=pc_loading_title,
+                            ...))
   message("Printing a color to condition legend.")
   legend <- try(plot_legend(expt))
 
@@ -237,6 +242,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   ret_data <- list(
     "boxplot" = boxplot,
     "corheat" = corheat[["plot"]],
+    "cvplot" = cv[["plot"]],
     "density" = density[["plot"]],
     "density_table" = density[["table"]],
     "disheat" = disheat[["plot"]],
@@ -249,16 +255,16 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
     "ma" = ma_plots,
     "nonzero" = nonzero[["plot"]],
     "nonzero_table" = nonzero[["table"]],
-    "qqlog" = qq_logs,
-    "qqrat" = qq_ratios,
-    "smc" = smc,
-    "smd" = smd,
-    "cvplot" = cv[["plot"]],
-    "topnplot" = topn[["plot"]],
+    "pc_loadplot" = pcload[["plot"]],
     "pc_summary" = pca[["residual_df"]],
     "pc_propvar" = pca[["prop_var"]],
     "pc_plot" = pca[["plot"]],
     "pc_table" = pca[["table"]],
+    "qqlog" = qq_logs,
+    "qqrat" = qq_ratios,
+    "smc" = smc,
+    "smd" = smd,
+    "topnplot" = topn[["plot"]],
     "tsne_summary" = tsne[["residual_df"]],
     "tsne_propvar" = tsne[["prop_var"]],
     "tsne_plot" = tsne[["plot"]],

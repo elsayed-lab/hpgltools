@@ -25,7 +25,7 @@ normalization state, etc.}
 of the p-values.}
 
 \item{model_batch}{Include batch in the model?  This may be true/false/"sva"
-or other methods supported by get_model_adjust().}
+or other methods supported by all_adjusters().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 

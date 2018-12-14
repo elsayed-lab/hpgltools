@@ -6,7 +6,7 @@
 \usage{
 write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   violin = FALSE, convert = "cpm", transform = "log2",
-  batch = "sva", filter = "cbcb", ...)
+  batch = "sva", filter = TRUE, ...)
 }
 \arguments{
 \item{expt}{An expressionset to print.}

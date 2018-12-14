@@ -17,7 +17,7 @@
 #' @param modify_p  Depending on how it is used, sva may require a modification
 #'   of the p-values.
 #' @param model_batch  Include batch in the model?  This may be true/false/"sva"
-#'   or other methods supported by get_model_adjust().
+#'   or other methods supported by all_adjusters().
 #' @param model_intercept  Use an intercept model instead of cell means?
 #' @param extra_contrasts  Optional extra contrasts beyone the pairwise
 #'   comparisons.  This can be pretty neat, lets say one has conditions
@@ -75,8 +75,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   sv_model <- NULL
   model_type <- model_batch
   if (class(model_batch) == "character") {
-    model_params <- get_model_adjust(input, estimate_type=model_batch,
-                                     surrogates=surrogates)
+    model_params <- all_adjusters(input, estimate_type=model_batch,
+                                  surrogates=surrogates)
     model_batch <- model_params[["model_adjust"]]
     null_model <- model_params[["null_model"]]
     sv_model <- model_batch
@@ -755,10 +755,10 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
       including <- "condition+batch"
     }
   } else if (class(model_batch) == "character") {
-    ## Then calculate the estimates using get_model_adjust
+    ## Then calculate the estimates using all_adjusters
     message("Extracting surrogate estimates from ", model_batch,
             " and adding them to the model.")
-    model_batch_info <- get_model_adjust(input, estimate_type=model_batch,
+    model_batch_info <- all_adjusters(input, estimate_type=model_batch,
                                          surrogates=surrogates)
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.

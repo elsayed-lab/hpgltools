@@ -620,7 +620,7 @@ rex <- function(display=":0") {
 #' @return Final filename including the prefix rundate.
 #' @export
 renderme <- function(file, format="html_document") {
-  ret <- rmarkdown::render(file, output_format=format)
+  ret <- rmarkdown::render(file, output_format=format, envir=globalenv())
   rundate <- format(Sys.Date(), format="%Y%m%d")
   outdir <- dirname(ret)
   base <- basename(ret)
@@ -630,6 +630,7 @@ renderme <- function(file, format="html_document") {
   to <- file.path(outdir, glue::glue("{rundate}_{b}.{ex}"))
   message("Moving ", from, " to\n", basename(to), ".")
   final <- file.rename(from, to)
+  return(ret)
 }
 
 #' Make a backup rdata file for future reference

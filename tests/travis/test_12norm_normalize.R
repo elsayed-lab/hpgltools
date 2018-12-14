@@ -17,7 +17,9 @@ load("pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 ## Test normalizations -- I should change this to be automatically generated for expected
-expected <- as.numeric(c(5.857143, 91.500000, 4400.000000, 543.785714, 10.714286))
+## Same troubles apply
+##expected <- as.numeric(c(5.857143, 91.500000, 4400.000000, 543.785714, 10.714286))
+expected <- c(5.166667, 81.083333, 3911.000000, 484.083333, 9.500000)
 pasilla_norm <- sm(normalize_expt(pasilla_expt, norm="quant"))
 actual_df <- exprs(pasilla_norm)
 actual <- as.numeric(actual_df[test_genes, c("untreated1")])

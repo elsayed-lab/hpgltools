@@ -73,7 +73,10 @@ download_eupath_metadata <- function(overwrite=FALSE, webservice="eupathdb",
     file <- download.file(url=request_url, destfile=metadata_json)
   }
 
-  result <- jsonlite::fromJSON(metadata_json)
+  result <- try(jsonlite::fromJSON(metadata_json), silent=TRUE)
+  if (class(result)[1] == "try-error") {
+    stop("There was a parsing failure when reading the metadata.")
+  }
   records <- result[["response"]][["recordset"]][["records"]]
   message("Downloaded: ", request_url)
 
