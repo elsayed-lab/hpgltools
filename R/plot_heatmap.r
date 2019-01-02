@@ -105,6 +105,10 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
   if (!is.null(arglist[["keysize"]])) {
     keysize <- arglist[["keysize"]]
   }
+  remove_equal <- FALSE
+  if (!is.null(arglist[["remove_equal"]])) {
+    remove_equal <- arglist[["remove_equal"]]
+  }
 
   data_class <- class(expt_data)[1]
   if (data_class == "expt") {
@@ -141,6 +145,21 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
   }
   if (!is.null(label_chars) && is.numeric(label_chars)) {
     expt_names <- abbreviate(expt_names, minlength=label_chars)
+  }
+
+  if (isTRUE(remove_equal)) {
+    cv_min <- 1
+    if (!is.null(arglist[["cv_min"]])) {
+      cv_min <- arglist[["cv_min"]]
+    }
+    cv_max <- Inf
+    if (!is.null(arglist[["cv_max"]])) {
+      cv_min <- arglist[["cv_max"]]
+    }
+    test <- genefilter::cv(cv_min, cv_max)
+    filter_list <- genefilter::filterfun(test)
+    answer <- genefilter::genefilter(expt_data, filter_list)
+    expt_data <- expt_data[answer, ]
   }
 
   heatmap_data <- NULL

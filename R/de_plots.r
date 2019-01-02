@@ -2,14 +2,14 @@
 #'
 #' Yay pretty colors and shapes!
 #'
-#' @param pairwise  The result from all_pairwise(), which should be changed to
+#' @param pairwise The result from all_pairwise(), which should be changed to
 #'   handle other invocations too.
-#' @param type  Type of table to use: deseq, edger, limma, basic.
-#' @param table  Result from edger to use, left alone it chooses the first.
-#' @param logfc  What logFC to use for the MA plot horizontal lines.
-#' @param p  Cutoff to define 'significant' by p-value.
-#' @param invert  Invert the plot?
-#' @param ...  Extra arguments are passed to arglist.
+#' @param type Type of table to use: deseq, edger, limma, basic.
+#' @param table Result from edger to use, left alone it chooses the first.
+#' @param logfc What logFC to use for the MA plot horizontal lines.
+#' @param p Cutoff to define 'significant' by p-value.
+#' @param invert Invert the plot?
+#' @param ... Extra arguments are passed to arglist.
 #' @return a plot!
 #' @seealso \code{\link{plot_ma_de}}
 #' @examples
@@ -218,26 +218,26 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' comparison. By default, genes past 1.5 z scores from the mean are colored
 #' red/green.
 #'
-#' @param output  Result from the de_ family of functions, all_pairwise, or
+#' @param output Result from the de_ family of functions, all_pairwise, or
 #'   combine_de_tables().
-#' @param toptable  Chosen table to query for abundances.
-#' @param type  Query limma, deseq, edger, or basic outputs.
-#' @param x  The x-axis column to use, either a number of name.
-#' @param y  The y-axis column to use.
-#' @param z  Define the range of genes to color (FIXME: extend this to p-value
+#' @param toptable Chosen table to query for abundances.
+#' @param type Query limma, deseq, edger, or basic outputs.
+#' @param x The x-axis column to use, either a number of name.
+#' @param y The y-axis column to use.
+#' @param z Define the range of genes to color (FIXME: extend this to p-value
 #'   and fold-change).
-#' @param p  Set a p-value cutoff for coloring the scatter plot (currently not
+#' @param p Set a p-value cutoff for coloring the scatter plot (currently not
 #'   supported).
-#' @param lfc  Set a fold-change cutoff for coloring points in the scatter plot
+#' @param lfc Set a fold-change cutoff for coloring points in the scatter plot
 #'   (currently not supported.)
-#' @param n  Set a top-n fold-change for coloring the points in the scatter plot
+#' @param n Set a top-n fold-change for coloring the points in the scatter plot
 #'   (this should work, actually).
-#' @param loess  Add a loess estimation (This is slow.)
-#' @param alpha  How see-through to make the dots.
-#' @param color_low  Color for the genes less than the mean.
-#' @param color_high  Color for the genes greater than the mean.
-#' @param z_lines  Add lines to show the z-score demarcations.
-#' @param ...  More arguments are passed to arglist.
+#' @param loess Add a loess estimation (This is slow.)
+#' @param alpha How see-through to make the dots.
+#' @param color_low Color for the genes less than the mean.
+#' @param color_high Color for the genes greater than the mean.
+#' @param z_lines Add lines to show the z-score demarcations.
+#' @param ... More arguments are passed to arglist.
 #' @seealso \pkg{ggplot2}
 #'  \code{\link{plot_linear_scatter}}
 #' @examples
@@ -359,11 +359,11 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
 #' but they do not. Use this to see out how much the (dis)agree.
 #'
 #' @param table Which table to query?
-#' @param adjp  Use adjusted p-values
-#' @param p  p-value cutoff, I forget what for right now.
-#' @param lfc  What fold-change cutoff to include?
+#' @param adjp Use adjusted p-values
+#' @param p p-value cutoff, I forget what for right now.
+#' @param lfc What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
-#' @return  A list of venn plots
+#' @return A list of venn plots
 #' @seealso \pkg{venneuler} \pkg{Vennerable}
 #' @examples
 #' \dontrun{
@@ -477,7 +477,7 @@ plot_de_pvals <- function(combined, type="limma", columns=NULL) {
 #' constant, as well as number when fold-change is held constant.
 #'
 #' @param table DE table to examine.
-#' @param methods  List of methods to use when plotting.
+#' @param methods List of methods to use when plotting.
 #' @param bins Number of incremental changes in p-value/FC to examine.
 #' @param constant_p When plotting changing FC, where should the p-value be held?
 #' @param constant_fc When plotting changing p, where should the FC be held?
@@ -621,23 +621,23 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
 #' tables.  I though they were super-cool, so I co-opted the idea in this
 #' function.
 #'
-#' @param first  First table of values.
-#' @param second  Second table of values, if null it will use the first.
-#' @param first_type  Assuming this is from all_pairwise(), use this method.
+#' @param first First table of values.
+#' @param second Second table of values, if null it will use the first.
+#' @param first_type Assuming this is from all_pairwise(), use this method.
 #' @param second_type Ibid.
-#' @param first_table  Again, assuming all_pairwise(), use this to choose the
+#' @param first_table Again, assuming all_pairwise(), use this to choose the
 #'   table to extract.
-#' @param alpha  How see-through to make the dots?
+#' @param alpha How see-through to make the dots?
 #' @param second_table Ibid.
-#' @param first_column  What column to use to rank-order from the first table?
-#' @param second_column  What column to use to rank-order from the second table?
-#' @param first_p_col  Use this column for pretty colors from the first table.
-#' @param second_p_col  Use this column for pretty colors from the second table.
-#' @param p_limit  A p-value limit for coloring dots.
-#' @param both_color  If both columns are 'significant', use this color.
-#' @param first_color  If only the first column is 'significant', this color.
+#' @param first_column What column to use to rank-order from the first table?
+#' @param second_column What column to use to rank-order from the second table?
+#' @param first_p_col Use this column for pretty colors from the first table.
+#' @param second_p_col Use this column for pretty colors from the second table.
+#' @param p_limit A p-value limit for coloring dots.
+#' @param both_color If both columns are 'significant', use this color.
+#' @param first_color If only the first column is 'significant', this color.
 #' @param second_color If the second column is 'significant', this color.
-#' @param no_color  If neither column is 'significant', then this color.
+#' @param no_color If neither column is 'significant', then this color.
 #' @return a list with a plot and a couple summary statistics.
 #' @export
 rank_order_scatter <- function(first, second=NULL, first_type="limma",
@@ -734,17 +734,17 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #' genes/contrast which are up and down given a set of fold changes and
 #' p-value.
 #'
-#' @param combined  Result from combine_de_tables and/or extract_significant_genes().
-#' @param lfc_cutoffs  Choose 3 fold changes to define the queries.  0, 1, 2
+#' @param combined Result from combine_de_tables and/or extract_significant_genes().
+#' @param lfc_cutoffs Choose 3 fold changes to define the queries.  0, 1, 2
 #'   mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.
-#' @param invert  Reverse the order of contrasts for readability?
-#' @param p  Chosen p-value cutoff.
-#' @param z  Choose instead a z-score cutoff.
-#' @param p_type  Adjusted or not?
-#' @param according_to  limma, deseq, edger, basic, or all of the above.
-#' @param order  Choose a specific order for the plots.
-#' @param maximum  Set a specific limit on the number of genes on the x-axis.
-#' @param ...  More arguments are passed to arglist.
+#' @param invert Reverse the order of contrasts for readability?
+#' @param p Chosen p-value cutoff.
+#' @param z Choose instead a z-score cutoff.
+#' @param p_type Adjusted or not?
+#' @param according_to limma, deseq, edger, basic, or all of the above.
+#' @param order Choose a specific order for the plots.
+#' @param maximum Set a specific limit on the number of genes on the x-axis.
+#' @param ... More arguments are passed to arglist.
 #' @return list containing the significance bar plots and some information to
 #'   hopefully help interpret them.
 #' @seealso \pkg{ggplot2}

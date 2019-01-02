@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("150normalize_batch.R:\n")
+context("150normalize_batch.R:
+  123456789012\n")
 
 pombe_expt <- make_pombe_expt()
 
