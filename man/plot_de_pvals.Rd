@@ -4,7 +4,8 @@
 \alias{plot_de_pvals}
 \title{Given a DE table with p-values, plot them.}
 \usage{
-plot_de_pvals(combined, type = "limma", columns = NULL)
+plot_de_pvals(combined, type = "limma", p_type = "both",
+  columns = NULL, ...)
 }
 \arguments{
 \item{combined}{Table to extract the values from.}
@@ -12,6 +13,8 @@ plot_de_pvals(combined, type = "limma", columns = NULL)
 \item{type}{If provided, extract the {type}_p and {type}_adjp columns.}
 
 \item{columns}{Otherwise, extract whatever columns are provided.}
+
+\item{...}{Arguments passed through to the histogram plotter}
 }
 \value{
 Multihistogram of the result.

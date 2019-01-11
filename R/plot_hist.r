@@ -21,7 +21,6 @@
 #' @export
 plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
                            fillcolor="darkgrey", color="black") {
-  hpgl_env <- environment()
   if (class(df) == "data.frame") {
     colnames(df) <- c("values")
   } else if (class(df) == "list") {
@@ -36,12 +35,12 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     maxval <- max(df, na.rm=TRUE)
     binwidth <- (maxval - minval) / bins
   }
-  a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values"), environment=hpgl_env) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), stat="bin",
+  a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values")) +
+    ggplot2::geom_histogram(ggplot2::aes(y=..density..),
                             binwidth=binwidth,
                             colour=color, fill=fillcolor, position="identity") +
     ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
-    ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=T)"),
+    ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=TRUE)"),
                         color=color, linetype="dashed", size=1) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
@@ -112,8 +111,8 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, color
   }
   multi <- ggplot2::ggplot(play_all,
                            ggplot2::aes_string(x="expression", fill="cond")) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
-                            binwidth=binwidth, alpha=0.4, position="identity") +
+    ggplot2::geom_histogram(ggplot2::aes(y=..density..), binwidth=binwidth,
+                            alpha=0.4, position="identity") +
     ggplot2::geom_density(alpha=0.5) +
     ggplot2::geom_vline(data=play_cdf,
                         ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),

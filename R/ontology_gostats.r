@@ -127,7 +127,7 @@ perhaps change gff_type to make the merge work.")
   gostats_go[["frame.Evidence"]] <- "TAS"
   gostats_go <- gostats_go[, c("frame.go_id", "frame.Evidence", "frame.gene_id")]
   gostats_frame <- AnnotationDbi::GOFrame(gostats_go, organism=species)
-  gostats_all <- AnnotationDbi::GOAllFrame(gostats_frame)
+  gostats_all <- suppressWarnings(AnnotationDbi::GOAllFrame(gostats_frame))
   message("simple_gostats(): Creating the gene set collection.  This is slow.")
   gsc <- GSEABase::GeneSetCollection(gostats_all,
                                      setType=GSEABase::GOCollection())
@@ -143,7 +143,7 @@ perhaps change gff_type to make the merge work.")
   mf_under <- bp_under <- cc_under <- NULL
   message("simple_gostats(): Performing MF GSEA.")
   mf_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="MF", pvalueCutoff=pcutoff,
                            conditional=conditional, testDirection="over")
@@ -155,7 +155,7 @@ perhaps change gff_type to make the merge work.")
   message("Found ", nrow(GOstats::summary(mf_over)), " over MF categories.")
   message("simple_gostats(): Performing BP GSEA.")
   bp_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="BP", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")
@@ -166,7 +166,7 @@ perhaps change gff_type to make the merge work.")
   message("Found ", nrow(GOstats::summary(bp_over)), " over BP categories.")
   message("simple_gostats(): Performing CC GSEA.")
   cc_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="CC", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="over")
@@ -174,7 +174,7 @@ perhaps change gff_type to make the merge work.")
   message("Found ", nrow(GOstats::summary(cc_over)), " over CC categories.")
   message("simple_gostats(): Performing under MF GSEA.")
   mf_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="MF", pvalueCutoff=pcutoff,
                            conditional=conditional, testDirection="under")
@@ -182,7 +182,7 @@ perhaps change gff_type to make the merge work.")
   message("Found ", nrow(GOstats::summary(mf_under)), " under MF categories.")
   message("simple_gostats(): Performing under BP GSEA.")
   bp_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="BP", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="under")
@@ -190,7 +190,7 @@ perhaps change gff_type to make the merge work.")
   message("Found ", nrow(GOstats::summary(bp_under)), " under BP categories.")
   message("simple_gostats(): Performing under CC GSEA.")
   cc_params <- Category::GSEAGOHyperGParams(
-                           name=glue("GSEA of {species}"), geneSetCollection=gsc,
+                           name=glue::glue("GSEA of {species}"), geneSetCollection=gsc,
                            geneIds=degenes_ids, universeGeneIds=universe_ids,
                            ontology="CC", pvalueCutoff=pcutoff,
                            conditional=FALSE, testDirection="under")

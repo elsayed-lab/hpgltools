@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("180gene_ontology_enrichment.R:
-  12345678901234567\n")
+  123456789012345678901234567890123456789\n")
 ## 2017-12, exported functions in ontology_cluster_profiler: simple_clusterprofiler
 
 ## hmm I think I should split that up into separate functions for the various things it can do.

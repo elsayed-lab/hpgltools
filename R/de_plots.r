@@ -452,8 +452,9 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #' @param combined Table to extract the values from.
 #' @param type If provided, extract the {type}_p and {type}_adjp columns.
 #' @param columns Otherwise, extract whatever columns are provided.
+#' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.
-plot_de_pvals <- function(combined, type="limma", columns=NULL) {
+plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, ...) {
   if (is.null(type) && is.null(columns)) {
     stop("Some columns are required to extract p-values.")
   }
@@ -464,7 +465,14 @@ plot_de_pvals <- function(combined, type="limma", columns=NULL) {
   for (c in 1:ncol(plot_df)) {
     plot_df[[c]] <- as.numeric(plot_df[[c]])
   }
-  p_stuff <- plot_multihistogram(plot_df, colors=c("darkred", "darkblue"))
+
+  if (p_type == "both") {
+    p_stuff <- plot_multihistogram(plot_df, colors=c("darkred", "darkblue"), ...)
+  } else if (p_type == "raw") {
+    p_stuff <- plot_histogram(plot_df[[1]])
+  } else {
+    p_stuff <- plot_histogram(plot_df[[2]])
+  }
   return(p_stuff)
 }
 
