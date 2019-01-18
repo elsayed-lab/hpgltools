@@ -3,16 +3,16 @@ library(testthat)
 library(hpgltools)
 context("21de_limma_combat.R: Does hpgltools work with limma and combat?\n")
 
-pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
-pasilla_expt <- pasilla[["expt"]]
-limma <- new.env()
-load("de_limma.rda", envir=limma)
-counts <- limma[["counts"]]
-design <- limma[["design"]]
+## Once again, disabling until changes in preprocessCore or pthread_create()
+if (FALSE) {
+  pasilla <- new.env()
+  load("pasilla.Rdata", envir=pasilla)
+  pasilla_expt <- pasilla[["expt"]]
+  limma <- new.env()
+  load("de_limma.rda", envir=limma)
+  counts <- limma[["counts"]]
+  design <- limma[["design"]]
 
-works <- FALSE
-if (works) {
 
   ## Testing that hpgltools gets a similar result to cbcbSEQ using limma.
   cbcb <- sm(library(cbcbSEQ))
@@ -221,9 +221,9 @@ if (works) {
     expect_equal(expected, actual, tolerance=0.02)
   })
 
-}
-save(list=ls(), file="de_limma_combat.rda")
 
+  save(list=ls(), file="de_limma_combat.rda")
+}
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))

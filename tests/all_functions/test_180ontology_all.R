@@ -28,6 +28,8 @@ pombe_expt <- make_pombe_expt()
 pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
 colnames(pombe_lengths) <- c("ID", "length")
 
+pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
+
 cp_test <- simple_clusterprofiler(ups, de_table=all, orgdb=pombe)
 test_that("Did clusterprofiler provide the expected number of entries?", {
   ## 010203
@@ -75,7 +77,6 @@ test_that("Do we get some plots?", {
   expect_equal(expected, actual)
 })
 
-pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 go_test <- simple_goseq(ups, go_db=pombe_go, length_db=pombe_lengths)
 
 actual <- dim(go_test[["bp_interesting"]])
@@ -121,32 +122,50 @@ top_test <- simple_topgo(ups, go_db=pombe_go)
 cat_expected <- c("GO:0016491", "GO:0016614", "GO:0016616",
                   "GO:0004032", "GO:0008106", "GO:0010844")
 cat_actual <- rownames(head(top_test[["tables"]][["mf_subset"]]))
+test_that("Do we get expected catalogs from topgo?", {
+  expect_equal(cat_expected, cat_actual)
+})
+
 annot_expected <- c(297, 67, 63, 6, 7, 2)
 annot_actual <- head(top_test[["tables"]][["mf_subset"]][["Annotated"]])
+test_that("Do we get expected annotations from topgo?", {
+  expect_equal(annot_expected, annot_actual)
+})
+
 sig_actual <- head(top_test[["tables"]][["mf_subset"]][["Significant"]])
 sig_expected <- c(21, 9, 8, 3, 3, 2)
+test_that("Do we get expected significances from topgo?", {
+  expect_equal(sig_expected, sig_actual)
+})
+
 exp_actual <- head(top_test[["tables"]][["mf_subset"]][["Expected"]])
 exp_expected <- c(7.60, 1.71, 1.61, 0.15, 0.18, 0.05)
+test_that("Do we get expected MF values from topgo?", {
+  expect_equal(exp_expected, exp_actual)
+})
+
 fi_actual <- head(top_test[["tables"]][["mf_subset"]][["fisher"]])
 fi_expected <- c(1.6e-05, 4.3e-05, 1.8e-04, 3.1e-04, 5.3e-04, 6.5e-04)
+test_that("Do we get expected fisher values from topgo?", {
+  expect_equal(fi_expected, fi_actual)
+})
+
 ks_actual <- head(top_test[["tables"]][["mf_subset"]][["KS"]])
 ks_expected <- c(0.1134, 0.1728, 0.2361, 0.0538, 0.0825, 0.0208)
+test_that("Do we get expected KS values from topgo?", {
+  expect_equal(ks_expected, ks_actual)
+})
+
 el_actual <- head(top_test[["tables"]][["mf_subset"]][["EL"]])
 el_expected <- c(0.426, 0.305, 0.405, 0.054, 0.083, 0.021)
+test_that("Do we get expected EL values from topgo?", {
+  expect_equal(el_expected, el_actual)
+})
+
 we_actual <- head(top_test[["tables"]][["mf_subset"]][["weight"]])
 we_expected <- c(0.84363, 0.48465, 0.35583, 0.00031, 1.00000, 0.00065)
-q_actual <- head(top_test[["tables"]][["mf_subset"]][["qvalue"]])
-q_expected <- c(0.04032759, 0.05407051, 0.14596579, 0.19310957, 0.26530034, 0.27036311)
-test_that("Do we get expected stuff from topgo?", {
-  expect_equal(cat_expected, cat_actual)
-  expect_equal(annot_expected, annot_actual)
-  expect_equal(sig_expected, sig_actual)
-  expect_equal(exp_expected, exp_actual)
-  expect_equal(fi_expected, fi_actual)
-  expect_equal(ks_expected, ks_actual)
-  expect_equal(el_expected, el_actual)
+test_that("Do we get expected weight values from topgo?", {
   expect_equal(we_expected, we_actual)
-  expect_equal(q_expected, q_actual, tolerance=0.01)
 })
 
 ## I think it would not be difficult for me to add a little logic to make gostats smarter
@@ -180,6 +199,21 @@ test_that("Do we get expected stuff from gostats?", {
   expect_equal(size_expected, size_actual)
 })
 
+gprof_test <- simple_gprofiler(sig_genes=ups, species="spombe")
+gprof_table <- gprof_test[["go"]]
+actual_dim <- dim(gprof_table)
+expected_dim <- c(35, 14)
+test_that("Does gprofiler provide some expected tables?", {
+  expect_equal(actual_dim, expected_dim)
+})
+
+actual_go <- head(sort(gprof_table[["term.id"]]))
+expected_go <- c("GO:0001678", "GO:0006884", "GO:0007186",
+                 "GO:0007187", "GO:0007188", "GO:0007189")
+test_that("Does gprofiler give some expected GO categories?", {
+  expect_equal(actual_go, expected_go)
+})
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 180ontology_clusterprofiler.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 180ontology_all.R in ", elapsed,  " seconds."))

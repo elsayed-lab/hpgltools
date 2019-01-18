@@ -5,7 +5,7 @@
 \title{Make pretty tables out of topGO data}
 \usage{
 topgo_tables(result, limit = 0.1, limitby = "fisher", numchar = 300,
-  orderby = "classic", ranksof = "classic")
+  orderby = "fisher", ranksof = "fisher")
 }
 \arguments{
 \item{result}{Topgo result.}

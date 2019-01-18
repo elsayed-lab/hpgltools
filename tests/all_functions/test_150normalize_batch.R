@@ -42,7 +42,7 @@ test_that("fsva batch modification provides expected values?", {
 ##t3 <- counts_from_surrogates(pombe_expt, adjust=t2$model_adjust)
 ##t3[1:10, 1]
 
-testing <-  normalize_expt(pombe_expt, filter=TRUE, batch="ssva")
+testing <-  sm(normalize_expt(pombe_expt, filter=TRUE, batch="ssva"))
 test_counts <- exprs(testing)
 actual <- as.numeric(test_counts[1:10, 1])
 expected <- c(25.082365, 26.421625, 87.254755, 34.719536, 60.721234,
@@ -99,8 +99,8 @@ test_that("Do we get expected results from compare_surrogate_estimates()?", {
 })
 
 pombe_filt <- normalize_expt(pombe_expt, filter=TRUE)
-adjust_test_sva <- all_adjusters(pombe_filt, estimate_type="ssva")
-adjust_test_svaseq <- all_adjusters(pombe_filt, estimate_type="svaseq")
+adjust_test_sva <- sm(all_adjusters(pombe_filt, estimate_type="ssva"))
+adjust_test_svaseq <- sm(all_adjusters(pombe_filt, estimate_type="svaseq"))
 comparison <- cor(adjust_test_sva[["new_counts"]][, 1],
                   adjust_test_svaseq[["new_counts"]][, 1])
 ## 02

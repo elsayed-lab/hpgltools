@@ -181,54 +181,30 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   retlist[["pvalue_plots"]] <- pval_plots
 
   pval_histograms <- list()
-  ## Caveat: when a value is very low, it is written as the character '< 1e-30'
-  ## Which when coerced to a number ends up as NA.
-  ## So let us fill those back in as 1e-30
-  fisher_ps <- suppressWarnings(
-    as.numeric(c(retlist[["tables"]][["mf_subset"]][["fisher"]],
+  fisher_ps <- c(retlist[["tables"]][["mf_subset"]][["fisher"]],
                  retlist[["tables"]][["bp_subset"]][["fisher"]],
-                 retlist[["tables"]][["cc_subset"]][["fisher"]])))
-  low_values <- is.na(fisher_ps)
-  fisher_ps[low_values] <- 1e-30
+                 retlist[["tables"]][["cc_subset"]][["fisher"]])
   pval_histograms[["fisher"]] <- sm(try(plot_histogram(fisher_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Fisher exact test score.")
-  ks_ps <- suppressWarnings(
-    as.numeric(c(retlist[["tables"]][["mf_subset"]][["KS"]],
-                 retlist[["tables"]][["bp_subset"]][["KS"]],
-                 retlist[["tables"]][["cc_subset"]][["KS"]])))
-  low_values <- is.na(ks_ps)
-  ks_ps[low_values] <- 1e-30
+  ks_ps <- c(retlist[["tables"]][["mf_subset"]][["KS"]],
+             retlist[["tables"]][["bp_subset"]][["KS"]],
+             retlist[["tables"]][["cc_subset"]][["KS"]])
   pval_histograms[["KS"]] <- sm(try(plot_histogram(ks_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("KS test score.")
-  el_ps <- suppressWarnings(
-    as.numeric(c(retlist[["tables"]][["mf_subset"]][["EL"]],
-                 retlist[["tables"]][["bp_subset"]][["EL"]],
-                 retlist[["tables"]][["cc_subset"]][["EL"]])))
-  low_values <- is.na(el_ps)
-  el_ps[low_values] <- 1e-30
+  el_ps <- c(retlist[["tables"]][["mf_subset"]][["EL"]],
+             retlist[["tables"]][["bp_subset"]][["EL"]],
+             retlist[["tables"]][["cc_subset"]][["EL"]])
   pval_histograms[["EL"]] <- sm(try(plot_histogram(el_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("EL test score.")
-  weight_ps <- suppressWarnings(
-    as.numeric(c(retlist[["tables"]][["mf_subset"]][["weight"]],
+  weight_ps <- c(retlist[["tables"]][["mf_subset"]][["weight"]],
                  retlist[["tables"]][["bp_subset"]][["weight"]],
-                 retlist[["tables"]][["cc_subset"]][["weight"]])))
-  low_values <- is.na(weight_ps)
-  weight_ps[low_values] <- 1e-30
+                 retlist[["tables"]][["cc_subset"]][["weight"]])
   pval_histograms[["weight"]] <- sm(try(plot_histogram(weight_ps, bins=50))) +
     ggplot2::ylab("Number of ontologies observed.") +
     ggplot2::xlab("Weighted test score.")
-  qs <- suppressWarnings(
-    as.numeric(c(retlist[["tables"]][["mf_subset"]][["qvalue"]],
-                 retlist[["tables"]][["bp_subset"]][["qvalue"]],
-                 retlist[["tables"]][["cc_subset"]][["qvalue"]])))
-  low_values <- is.na(qs)
-  qs[low_values] <- 1e-30
-  pval_histograms[["qs"]] <- sm(try(plot_histogram(qs, bins=50))) +
-    ggplot2::ylab("Number of ontologies observed.") +
-    ggplot2::xlab("Q-value.")
   retlist[["pvalue_histograms"]] <- pval_histograms
 
   if (!is.null(excel)) {
@@ -371,11 +347,9 @@ do_topgo <- function(type, go_map=NULL, fisher_genes=NULL, ks_genes=NULL,
 #' @seealso \pkg{topGO}
 #' @export
 topgo_tables <- function(result, limit=0.1, limitby="fisher",
-                         numchar=300, orderby="classic", ranksof="classic") {
+                         numchar=300, orderby="fisher", ranksof="fisher") {
   ## The following if statement could be replaced by get(limitby)
   ## But I am leaving it as a way to ensure that no shenanigans ensue
-  mf_allRes <- bp_allRes <- cc_allRes <- NULL
-  mf_interesting <- bp_interesting <- cc_interesting <- NULL
   if (limitby == "fisher") {
     mf_siglist <- names(which(result[["mf_fisher"]]@score <= limit))
     bp_siglist <- names(which(result[["bp_fisher"]]@score <= limit))
@@ -395,126 +369,71 @@ topgo_tables <- function(result, limit=0.1, limitby="fisher",
   } else {
     stop("I can only limit by: fisher, KS, EL, or weight.")
   }
-  mf_topnodes <- length(mf_siglist)
-  if (mf_topnodes > 0) {
-    mf_allRes <- try(topGO::GenTable(
-                              result[["fmf_godata"]], classic=result[["mf_fisher"]],
-                              KS=result[["mf_ks"]], EL=result[["mf_el"]],
-                              weight=result[["mf_weight"]], orderBy=orderby,
-                              ranksOf=ranksof, topNodes=mf_topnodes, numChar=numchar))
-    if (class(mf_allRes) != "try-error") {
-      mf_qvalues <- as.data.frame(
-        qvalue::qvalue(topGO::score(result[["mf_fisher"]]))[["qvalues"]])
-      mf_allRes <- merge(mf_allRes, mf_qvalues, by.x="GO.ID", by.y="row.names")
-      mf_allRes[["classic"]] <- as.numeric(mf_allRes[["classic"]])
-      mf_allRes <- mf_allRes[with(mf_allRes, order(classic)), ]
-      colnames(mf_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
-                               "fisher", "KS", "EL", "weight", "qvalue")
-      mf_interesting <- subset(mf_allRes, get(limitby) <= limit)
-      rownames(mf_interesting) <- NULL
-      mf_interesting[["ont"]] <- "MF"
-      mf_interesting <- mf_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
-                                           "Expected", "fisher", "qvalue", "KS", "EL",
-                                           "weight", "Term")]
-    }
-  }
-  bp_topnodes <- length(bp_siglist)
-  if (bp_topnodes > 0) {
-    bp_allRes <- try(topGO::GenTable(
-                              result[["fbp_godata"]], classic=result[["bp_fisher"]],
-                              KS=result[["bp_ks"]], EL=result[["bp_el"]],
-                              weight=result[["bp_weight"]], orderBy=orderby,
-                              ranksOf=ranksof, topNodes=bp_topnodes, numChar=numchar))
-    if (class(bp_allRes) != "try-error") {
-      bp_qvalues <- as.data.frame(
-        qvalue::qvalue(topGO::score(result[["bp_fisher"]]))[["qvalues"]])
-      bp_allRes <- merge(bp_allRes, bp_qvalues,
-                         by.x="GO.ID", by.y="row.names", all.x=TRUE)
-      bp_allRes[["classic"]] <- as.numeric(bp_allRes[["classic"]])
-      bp_allRes <- bp_allRes[with(bp_allRes, order(classic)), ]
-      colnames(bp_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
-                               "fisher", "KS", "EL", "weight", "qvalue")
-      bp_interesting <- subset(bp_allRes, get(limitby) <= limit)
-      rownames(bp_interesting) <- NULL
-      bp_interesting[["ont"]] <- "BP"
-      bp_interesting <- bp_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
-                                           "Expected", "fisher", "qvalue", "KS", "EL",
-                                           "weight", "Term")]
-    }
-  }
-  cc_topnodes <- length(cc_siglist)
-  if (cc_topnodes > 0) {
-    cc_allRes <- try(topGO::GenTable(
-                              result[["fcc_godata"]], classic=result[["cc_fisher"]],
-                              KS=result[["cc_ks"]], EL=result[["cc_el"]],
-                              weight=result[["cc_weight"]], orderBy=orderby,
-                              ranksOf=ranksof, topNodes=cc_topnodes, numChar=numchar))
-    if (class(cc_allRes) != "try-error") {
-      cc_qvalues <- as.data.frame(
-        qvalue::qvalue(topGO::score(result[["cc_fisher"]]))[["qvalues"]])
-      cc_allRes <- merge(cc_allRes, cc_qvalues, by.x="GO.ID", by.y="row.names")
-      cc_allRes[["classic"]] <- as.numeric(cc_allRes[["classic"]])
-      cc_allRes <- cc_allRes[with(cc_allRes, order(classic)), ]
-      colnames(cc_allRes) <- c("GO.ID", "Term", "Annotated", "Significant", "Expected",
-                               "fisher", "KS", "EL", "weight", "qvalue")
-      cc_interesting <- subset(cc_allRes, get(limitby) <= limit)
-      rownames(cc_interesting) <- NULL
-      cc_interesting[["ont"]] <- "CC"
-      cc_interesting <- cc_interesting[, c("GO.ID", "ont", "Annotated", "Significant",
-                                           "Expected", "fisher", "qvalue", "KS", "EL",
-                                           "weight", "Term")]
-    }
-  }
+  siglist <- list(
+    "mf" = mf_siglist,
+    "bp" = bp_siglist,
+    "cc" = cc_siglist)
+  topnode_list <- list(
+    "mf" = length(siglist[["mf"]]),
+    "bp" = length(siglist[["bp"]]),
+    "cc" = length(siglist[["cc"]]))
+  interest_lst <- list()
+  allres_lst <- list()
+  for (ont in c("mf", "bp", "cc")) {
+    godata_name <- glue::glue("f{ont}_godata")
+    fisher_name <- glue::glue("{ont}_fisher")
+    ks_name <- glue::glue("{ont}_ks")
+    el_name <- glue::glue("{ont}_el")
+    weight_name <- glue::glue("{ont}_weight")
+    if (topnode_list[[ont]] > 0) {
+      allres <- try(topGO::GenTable(
+                             result[[godata_name]], fisher=result[[fisher_name]],
+                             KS=result[[ks_name]], EL=result[[el_name]],
+                             weight=result[[weight_name]], orderBy=orderby,
+                             ranksOf=ranksof, topNodes=topnode_list[[ont]], numChar=numchar))
+      allres[["GO.ID"]] <- gsub(
+        pattern="GO\\.", replacement="GO:", x=allres[["GO.ID"]])
+      rownames(allres) <- allres[["GO.ID"]]
+      allres[["fisher"]] <- gsub(x=allres[["fisher"]], pattern="^< ", replacement="")
+      allres[["fisher"]] <- as.numeric(allres[["fisher"]])
+      allres[["KS"]] <- gsub(x=allres[["KS"]], pattern="^< ", replacement="")
+      allres[["KS"]] <- as.numeric(allres[["KS"]])
+      allres[["EL"]] <- gsub(x=allres[["EL"]], pattern="^< ", replacement="")
+      allres[["EL"]] <- as.numeric(allres[["EL"]])
+      allres[["weight"]] <- gsub(x=allres[["weight"]], pattern="^< ", replacement="")
+      allres[["weight"]] <- as.numeric(allres[["weight"]])
+      allres_lst[[ont]] <- allres
 
-  mf_allRes[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=mf_allRes[["GO.ID"]])
-  bp_allRes[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=bp_allRes[["GO.ID"]])
-  cc_allRes[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=cc_allRes[["GO.ID"]])
-  mf_interesting[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=mf_interesting[["GO.ID"]])
-  bp_interesting[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=bp_interesting[["GO.ID"]])
-  cc_interesting[["GO.ID"]] <- gsub(
-    pattern="GO\\.", replacement="GO:", x=cc_interesting[["GO.ID"]])
-  rownames(mf_allRes) <- mf_allRes[["GO.ID"]]
-  rownames(bp_allRes) <- bp_allRes[["GO.ID"]]
-  rownames(cc_allRes) <- cc_allRes[["GO.ID"]]
-  rownames(mf_interesting) <- mf_interesting[["GO.ID"]]
-  rownames(bp_interesting) <- bp_interesting[["GO.ID"]]
-  rownames(cc_interesting) <- cc_interesting[["GO.ID"]]
-  mf_allRes[["fisher"]] <- as.numeric(mf_allRes[["fisher"]])
-  bp_allRes[["fisher"]] <- as.numeric(bp_allRes[["fisher"]])
-  cc_allRes[["fisher"]] <- as.numeric(cc_allRes[["fisher"]])
-  mf_interesting[["fisher"]] <- as.numeric(mf_interesting[["fisher"]])
-  bp_interesting[["fisher"]] <- as.numeric(bp_interesting[["fisher"]])
-  cc_interesting[["fisher"]] <- as.numeric(cc_interesting[["fisher"]])
-  mf_allRes[["KS"]] <- as.numeric(mf_allRes[["KS"]])
-  bp_allRes[["KS"]] <- as.numeric(bp_allRes[["KS"]])
-  cc_allRes[["KS"]] <- as.numeric(cc_allRes[["KS"]])
-  mf_interesting[["KS"]] <- as.numeric(mf_interesting[["KS"]])
-  bp_interesting[["KS"]] <- as.numeric(bp_interesting[["KS"]])
-  cc_interesting[["KS"]] <- as.numeric(cc_interesting[["KS"]])
-  mf_allRes[["EL"]] <- as.numeric(mf_allRes[["EL"]])
-  bp_allRes[["EL"]] <- as.numeric(bp_allRes[["EL"]])
-  cc_allRes[["EL"]] <- as.numeric(cc_allRes[["EL"]])
-  mf_interesting[["EL"]] <- as.numeric(mf_interesting[["EL"]])
-  bp_interesting[["EL"]] <- as.numeric(bp_interesting[["EL"]])
-  cc_interesting[["EL"]] <- as.numeric(cc_interesting[["EL"]])
-  mf_allRes[["weight"]] <- as.numeric(mf_allRes[["weight"]])
-  bp_allRes[["weight"]] <- as.numeric(bp_allRes[["weight"]])
-  cc_allRes[["weight"]] <- as.numeric(cc_allRes[["weight"]])
-  mf_interesting[["weight"]] <- as.numeric(mf_interesting[["weight"]])
-  bp_interesting[["weight"]] <- as.numeric(bp_interesting[["weight"]])
-  cc_interesting[["weight"]] <- as.numeric(cc_interesting[["weight"]])
+      if (class(allres) != "try-error") {
+        qvalues <- as.data.frame(
+          qvalue::qvalue(topGO::score(result[[fisher_name]]))[["qvalues"]])
+        ## qvalue::qvalue returns the adjusted pvalues out of order.
+        ## Perhaps I should stop with stupid qvalue::qvalue() and just use p.adjust!!
+        allres <- merge(allres, qvalues, by.x="GO.ID", by.y="row.names")
+        colnames(allres)[length(colnames(allres))] <- "qvalue"
+        order_idx <- order(allres[["fisher"]])
+        allres <- allres[order_idx, ]
+        interest_idx <- allres[[limitby]] <= limit
+        interesting <- allres[interest_idx, ]
+        interesting[["ont"]] <- "MF"
+        interesting <- interesting[, c("GO.ID", "ont", "Annotated", "Significant",
+                                       "Expected", "fisher", "qvalue", "KS", "EL",
+                                       "weight", "Term")]
+        interesting[["GO.ID"]] <- gsub(
+          pattern="GO\\.", replacement="GO:", x=interesting[["GO.ID"]])
+        rownames(interesting) <- interesting[["GO.ID"]]
+        interest_lst[[ont]] <- interesting
+      }
+    }
+  } ## End for mf/bp/cc
+
   tables <- list(
-    "mf_subset" = mf_allRes,
-    "bp_subset" = bp_allRes,
-    "cc_subset" = cc_allRes,
-    "mf_interesting" = mf_interesting,
-    "bp_interesting" = bp_interesting,
-    "cc_interesting" = cc_interesting)
+    "mf_subset" = allres_lst[["mf"]],
+    "bp_subset" = allres_lst[["bp"]],
+    "cc_subset" = allres_lst[["cc"]],
+    "mf_interesting" = interest_lst[["mf"]],
+    "bp_interesting" = interest_lst[["bp"]],
+    "cc_interesting" = interest_lst[["cc"]])
   return(tables)
 }
 

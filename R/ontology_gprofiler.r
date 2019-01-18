@@ -86,6 +86,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
     if (class(a_result) == "try-error") {
       a_result <- data.frame(stringsAsFactors=FALSE)
     }
+    a_result[["domain"]] <- as.factor(a_result[["domain"]])
     message(type, " search found ", nrow(a_result), " hits.")
     result_lst[[type]] <- a_result
   }
