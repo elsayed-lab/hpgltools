@@ -391,8 +391,8 @@ make_eupath_bsgenome <- function(species="Leishmania major strain Friedlin", ent
   author <- "Ashton Trey Belew <abelew@umd.edu>"
   ## title <- paste0(taxa[["genus"]], " ", taxa[["species"]], " strain ", taxa[["strain"]],
   ##                 " version ", db_version)
-  title <- glue("{taxa[['genus']]} {taxa[['species']]} {strain} {taxa[['strain']]} \\
-                {version} {db_version}")
+  title <- glue("{taxa[['genus']]} {taxa[['species']]} strain {taxa[['strain']]} \\
+                version {db_version}")
 
   descript$set(Title=title)
   descript$set(Author=author)

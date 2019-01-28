@@ -328,7 +328,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
     "attributes" = dl_rows,
     "dataset" = chosen_dataset
   )
-  return(biomart_go)
+  return(retlist)
 }
 
 #' Use biomart to get orthologs between supported species.

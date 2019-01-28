@@ -17,10 +17,10 @@
 #'  estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
 #' }
 #' @export
-plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="factor") {
+plot_svfactor <- function(expt, svest, sv=1, chosen_factor="batch", factor_type="factor") {
   chosen <- expt[["design"]][[chosen_factor]]
   sv_df <- data.frame(
-    "adjust" = svest[, 1],  ## Take a single estimate from compare_estimates()
+    "adjust" = svest[, sv],  ## Take a single estimate from compare_estimates()
     "factors" = chosen,
     "samplenames" = rownames(expt[["design"]])
   )
@@ -28,8 +28,8 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
   my_colors <- expt[["colors"]]
 
   sv_melted <- reshape2::melt(sv_df, idvars="factors")
-  minval <- min(sv_df$adjust)
-  maxval <- max(sv_df$adjust)
+  minval <- min(sv_df[["adjust"]])
+  maxval <- max(sv_df[["adjust"]])
   my_binwidth <- (maxval - minval) / 40
   sv_plot <- ggplot2::ggplot(sv_melted, ggplot2::aes_string(x="factors", y="value")) +
     ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
@@ -63,7 +63,7 @@ plot_svfactor <- function(expt, svest, chosen_factor="batch", factor_type="facto
 #'  estimate_vs_snps <- plot_batchsv(start, surrogate_estimate, "snpcategory")
 #' }
 #' @export
-plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") {
+plot_batchsv <- function(expt, svs, sv=1, batch_column="batch", factor_type="factor") {
   chosen <- pData(expt)[, batch_column]
   names(chosen) <- sampleNames(expt)
   num_batches <- length(unique(chosen))
@@ -75,7 +75,7 @@ plot_batchsv <- function(expt, svs, batch_column="batch", factor_type="factor") 
     "condition" = expt[["conditions"]],
     "batch" = expt[["batches"]],
     "color" = "black",
-    "svs" = svs[, 1])
+    "svs" = svs[, sv])
   if (num_batches <= 5) {
     factor_df[["shape"]] <- 20 + as.numeric(factor_df[["batch"]])
   } else {
@@ -207,18 +207,18 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
   minval <- min(pc_df[[component]])
   maxval <- max(pc_df[[component]])
   my_binwidth <- (maxval - minval) / 40
-  sv_plot <- ggplot2::ggplot(pc_df, aes_string(x="factors", y="value")) +
+  sv_plot <- ggplot2::ggplot(pc_df, aes_string(x=exp_factor, y=component)) +
     ggplot2::geom_dotplot(binwidth=my_binwidth, binaxis="y",
                           stackdir="center", binpositions="all",
                           colour="black", fill=my_colors) +
     ggplot2::xlab(glue("Experimental factor: {exp_factor}")) +
     ggplot2::ylab("1st surrogate variable estimation") +
-    ggplot2::geom_text(
-               ggplot2::aes_string(x="factors", y="value", label="strains"),
-               angle=45, size=3, vjust=2) +
+    ##ggplot2::geom_text(
+    ##           ggplot2::aes_string(x=exp_factor, y=component, label="strains"),
+    ##           angle=45, size=3, vjust=2) +
+    ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5)) +
-    ggplot2::theme_bw(base_size=base_size)
+                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5))
   return(sv_plot)
 }
 

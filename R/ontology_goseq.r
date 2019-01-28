@@ -255,8 +255,8 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     merged_ids_lengths[["ID"]]), unique=TRUE)
 
   pwf_plot <- NULL
-  pwf <- goseq::nullp(DEgenes=de_vector, bias.data=length_vector,
-                      plot.fit=doplot)
+  pwf <- suppressWarnings(goseq::nullp(DEgenes=de_vector, bias.data=length_vector,
+                                       plot.fit=doplot))
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
@@ -338,7 +338,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "input" = sig_genes,
     "pwf" = pwf,
     "pwf_plot" = pwf_plot,
-    "alldata" = godata,
+    "all_data" = godata,
     "go_db" = godf,
     "pvalue_histogram" = goseq_p,
     "godata_interesting" = godata_interesting,

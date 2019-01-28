@@ -61,7 +61,7 @@ prereq:
 	@echo "Checking a few prerequisites."
 	R -e "suppressPackageStartupMessages(suppressMessages(source('http://bioconductor.org/biocLite.R')));\
 bioc_prereq <- c('R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocLite(req) } } \
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { biocManager(req) } } \
 ## hahaha looks like lisp!"
 
 push:
@@ -70,7 +70,8 @@ push:
 
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
-	rm -f inst/doc/reference.pdf
+	@mkdir -p inst/doc
+	@rm -f inst/doc/reference.pdf
 	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview
 
 roxygen:
@@ -99,8 +100,11 @@ update:
 update_bioc:
 	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
 
-vignette:
+vignette: reference
+	@cp inst/doc/reference.pdf inst/
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes()"
+	@cp inst/reference.pdf doc/
+	@cp inst/reference.Rnw doc/
 
 vt:	clean_vignette vignette reference install

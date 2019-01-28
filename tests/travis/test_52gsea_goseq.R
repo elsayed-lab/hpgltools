@@ -11,8 +11,9 @@ context("52gsea_goseq.R: Does goseq work?\n")
 ##if (!identical(Sys.getenv("TRAVIS"), "true")) {
 load("gsea_siggenes.rda")
 
-goseq_result <- sm(simple_goseq(fcp_sig_genes,
-                                length_db=dmel_lengths, go_db=dmel_ontologies))
+goseq_result <- simple_goseq(fcp_sig_genes,
+                             length_db=dmel_lengths,
+                             go_db=dmel_ontologies)
 
 expected <- 53
 actual <- nrow(goseq_result[["mf_interesting"]])
@@ -25,7 +26,7 @@ actual <- nrow(goseq_result[["bp_interesting"]])
 test_that("Do we get the expected number of interesting bp categories?", {
     expect_equal(expected, actual, tolerance=2)
 })
-expected <- 10
+expected <- 9
 actual <- nrow(goseq_result[["cc_interesting"]])
 test_that("Do we get the expected number of interesting cc categories?", {
     expect_equal(expected, actual)
@@ -45,8 +46,10 @@ test_that("Are the goseq interesting results as expected (bp categories)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0005578", "GO:0005639", "GO:0005859",
-              "GO:0005967", "GO:0009897", "GO:0016607")
+##expected <- c("GO:0005578", "GO:0005639", "GO:0005859",
+##              "GO:0005967", "GO:0009897", "GO:0016607")
+expected <- c("GO:0005639", "GO:0005859", "GO:0005967",
+              "GO:0009897", "GO:0016607", "GO:0017090")
 actual <- head(sort(rownames(goseq_result[["cc_interesting"]])))
 test_that("Are the goseq interesting results as expected (cc categories)?", {
     expect_equal(expected, actual)

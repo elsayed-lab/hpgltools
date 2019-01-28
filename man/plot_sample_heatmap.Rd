@@ -5,8 +5,8 @@
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
 plot_sample_heatmap(data, colors = NULL, design = NULL,
-  expt_names = NULL, title = NULL, Rowv = TRUE, label_chars = 10,
-  ...)
+  expt_names = NULL, row_label = NA, title = NULL, Rowv = TRUE,
+  label_chars = 10, ...)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}

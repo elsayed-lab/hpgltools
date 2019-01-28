@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("29de_shared.R: Do the combined differential expression searches work?\n")
+context("29de_shared.R: Do the combined differential expression searches work?
+  1234567890123456789012345678901234567890123456789012345678901234\n")
 
 pasilla <- new.env()
 load("pasilla.Rdata", envir=pasilla)
@@ -368,7 +369,7 @@ test_that("Are there very few genes observed without the others?", {
 actual <- sum(nrow(test_intersect[["downs"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["deseq"]]))
-expected <- 23
+expected <- 22
 test_that("Ibid, but down?", {
     expect_equal(actual, expected)
 })
@@ -378,7 +379,7 @@ test_that("Do limma and edger have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_edger"]])
-expected <- 4
+expected <- 5
 test_that("Do limma and edger have some genes in common? (down)", {
     expect_equal(actual, expected)
 })

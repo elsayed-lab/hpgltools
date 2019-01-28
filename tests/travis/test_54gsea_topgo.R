@@ -32,8 +32,10 @@ test_that("Are the topGO interesting results expected (BP GOIDs)?", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0005576", "GO:0005578", "GO:0005604",
-              "GO:0005637", "GO:0005639", "GO:0005811")
+##expected <- c("GO:0005576", "GO:0005578", "GO:0005604",
+##              "GO:0005637", "GO:0005639", "GO:0005811")
+expected <- c("GO:0005604", "GO:0005637", "GO:0005639",
+              "GO:0005811", "GO:0005859", "GO:0005967")
 actual <- head(sort(tp_result[["tables"]][["cc_interesting"]][["GO.ID"]]))
 test_that("Are the topGO interesting results expected (CC GOIDs)?", {
     expect_equal(expected, actual)

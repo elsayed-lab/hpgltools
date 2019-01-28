@@ -159,7 +159,7 @@ test_that("write_limma() did something?", {
 })
 
 ## 08 all_pairwise()
-test_condbatch <- all_pairwise(pombe_subset)
+test_condbatch <- all_pairwise(pombe_subset, parallel=FALSE)
 actual <- min(test_condbatch[["comparison"]][["comp"]])
 expected <- 0.71
 ## 17
@@ -169,7 +169,7 @@ test_that("all_pairwise() provided results reasonably similar (batch in model)?"
 
 test_cond <- all_pairwise(pombe_subset, model_batch=FALSE)
 actual <- min(test_cond[["comparison"]][["comp"]])
-expected <- 0.77
+expected <- 0.76
 ## 18
 test_that("all_pairwise() provided results reasonably similar (no batch in model)?", {
   expect_gt(actual, expected)
@@ -334,14 +334,14 @@ test_that("Did get_pairwise_gene_abundances() get some stuff?", {
 
 ## 18 get_sig_genes()
 testing <- get_sig_genes(table=test_sva$deseq$all_tables[[1]])
-expected <- c(209, 6)
+expected <- c(199, 6)
 actual <- dim(testing[["up_genes"]])
 ## 3839
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_equal(expected[2], actual[2])
 })
-expected <- c(155, 6)
+expected <- c(182, 6)
 actual <- dim(testing[["down_genes"]])
 ## 4041
 test_that("Did get_sig_genes() get some stuff?", {

@@ -578,7 +578,7 @@ please_install <- function(lib, update=FALSE) {
     if (is.null(github_path)) {
       source("http://bioconductor.org/biocLite.R")
       ##biocLite(character(), ask=FALSE) # update dependencies, if any.
-      eval(parse(text=paste("biocLite('", lib, "')", sep="")))
+      eval(parse(text=paste("BiocManager::install('", lib, "')", sep="")))
       count <- 1
     } else {
       ret <- try(devtools::install_github(github_path))
@@ -610,6 +610,27 @@ rex <- function(display=":0") {
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
   X11(display=display)
   return(NULL)
+}
+
+#' Add a little logic to rmarkdown::render to date the final outputs as per a
+#' request from Najib.
+#'
+#' @param file Rmd file to render.
+#' @param format Chosen file format.
+#' @return Final filename including the prefix rundate.
+#' @export
+renderme <- function(file, format="html_document") {
+  ret <- rmarkdown::render(file, output_format=format, envir=globalenv())
+  rundate <- format(Sys.Date(), format="%Y%m%d")
+  outdir <- dirname(ret)
+  base <- basename(ret)
+  b <- tools::file_path_sans_ext(base)
+  ex <- tools::file_ext(ret)
+  from <- file.path(outdir, glue::glue("{b}.{ex}"))
+  to <- file.path(outdir, glue::glue("{rundate}_{b}.{ex}"))
+  message("Moving ", from, " to\n", basename(to), ".")
+  final <- file.rename(from, to)
+  return(ret)
 }
 
 #' Make a backup rdata file for future reference

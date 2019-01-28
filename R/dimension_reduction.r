@@ -158,8 +158,8 @@ pca_information <- function(expt, expt_design=NULL, expt_factors=c("condition", 
 
   ## Now start filling in data which may be used for correlations/fstats/etc.
   factor_df <- data.frame(
-    "sampleid" = rownames(expt_design))
-  rownames(factor_df) <- rownames(expt_design)
+    "sampleid" = tolower(rownames(expt_design)))
+  rownames(factor_df) <- tolower(rownames(expt_design))
   for (fact in expt_factors) {
     if (!is.null(expt_design[[fact]])) {
       factor_df[[fact]] <- as.numeric(as.factor(as.character(expt_design[, fact])))
@@ -321,7 +321,7 @@ pca_information <- function(expt, expt_design=NULL, expt_factors=c("condition", 
 #'  information$pca_bitplot  ## oo pretty
 #' }
 #' @export
-pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
+pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE, row_label=NA) {
   if (isTRUE(logged)) {
     if (expt[["state"]][["transform"]] == "raw") {
       expt <- sm(normalize_expt(expt, transform="log2"))
@@ -477,6 +477,16 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   }
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
+  }
+
+  if (!is.null(arglist[["transform"]]) || !is.null(arglist[["convert"]]) ||
+      !is.null(arglist[["filter"]]) || !is.null(arglist[["norm"]]) ||
+      !is.null(arglist[["batch"]])) {
+    data <- normalize_expt(data, transform=arglist[["transform"]],
+                           convert=arglist[["convert"]],
+                           filter=arglist[["filter"]],
+                           batch=arglist[["batch"]],
+                           norm=arglist[["norm"]])
   }
 
   ## The following if() series is used to check the type of data provided and
@@ -639,6 +649,10 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       }
       if (!is.null(arglist[["perplexity"]])) {
         perplexity <- arglist[["perplexity"]]
+      }
+      if (perplexity <= 0) {
+        warning("TSNE: Attempting to auto-detect perplexity failed, setting it to 1.")
+        perplexity <- 1
       }
 
       ## There is an interesting standardization idea in scater
@@ -883,6 +897,46 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     "table" = comp_data,
     "result" = svd_result)
   return(pca_return)
+}
+
+#' Print a plot of the top-n most PC loaded genes.
+#'
+#' Sometimes it is nice to know what is happening with the genes which have the
+#' greatest effect on a given principal component.  This function provides that.
+#'
+#' @param expt Input expressionset.
+#' @param genes How many genes to observe?
+#' @param desired_pc Which component to examine?
+#' @param which_scores Perhaps one wishes to see the least-important genes, if
+#'   so set this to low.
+#' @param ... Extra arguments passed, currently to nothing.
+#' @return List containing an expressionset of the subset and a plot of their
+#'   expression.
+#' @export
+plot_pcload <- function(expt, genes=40, desired_pc=1, which_scores="high",
+                        ...) {
+  arglist <- list(...)
+  scores <- pca_highscores(expt, n=genes)
+
+  desired <- data.frame()
+  if (which_scores == "high") {
+    desired <- scores[["highest"]]
+  } else if (which_scores == "low") {
+    desired <- scores[["lowest"]]
+  } else {
+    stop("This only accepts high or low to extract PC scored genes.")
+  }
+
+  comp_genes <- desired[, desired_pc]
+  comp_genes <- gsub(pattern="^\\d+\\.\\d+:", replacement="", x=comp_genes)
+  comp_genes_subset <- sm(exclude_genes_expt(expt, ids=comp_genes, method="keep"))
+  samples <- plot_sample_heatmap(comp_genes_subset, row_label=NULL)
+  sample_plot <- grDevices::recordPlot()
+
+  retlist <- list(
+    "comp_genes_expt" = comp_genes_subset,
+    "plot" = sample_plot)
+  return(retlist)
 }
 
 #' Plot principle components and make them pretty.

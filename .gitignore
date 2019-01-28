@@ -1,5 +1,5 @@
 Meta
-doc
+./doc/
 packrat/lib*/
 packrat/bundles
 packrat/src

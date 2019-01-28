@@ -1,3 +1,52 @@
+classify_samples <- function(train_expt, test_expt, classifier="condition", positions=1000) {
+  ##train_expt <- subset_expt(snp_strain_expt, subset="pathogenstrain!='s2272'")
+  ##train_expt <- subset_expt(train_expt, subset="pathogenstrain!='s2504'")
+  train_expt <- normalize_expt(train_expt, convert="cpm", norm="quant")
+  ##test_expt <- subset_expt(snp_strain_expt, subset="pathogenstrain=='s5397'")
+  ##test_expt <- subset_expt(snp_strain_expt, subset="pathogenstrain=='s2504'")
+  test_expt <- normalize_expt(test_expt, convert="cpm", norm="quant")
+  train_mtrx <- exprs(train_expt)
+  test_mtrx <- exprs(test_expt)
+  ##classifier <- "pathogenstrain"
+
+  classifier_col <- pData(train_expt)[, classifier]
+  kept_idx <- sample(x=nrow(train_mtrx), size=5000)
+  kept_rownames <- rownames(train_mtrx[kept_idx, ])
+
+  teed <- as.data.frame(t(train_mtrx[kept_idx, ]))
+  summary(teed[, 1:10])
+  teed <- cbind(teed, classifier_col)
+  ## Make sure it stayed numeric
+  summary(teed[, 1:10])
+  test_data <- as.data.frame(test_mtrx)
+  test_data <- test_data[kept_rownames, ]
+  test_data <- t(test_data)
+  tail(test_data, n=1)
+
+  library(caret)
+  library(parallel)
+  library(doParallel)
+  cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+  registerDoParallel(cluster)
+  train_control <- caret::trainControl(method="repeatedcv",
+                                       repeats=10, allowParallel=TRUE)
+  form <- as.formula("classifier_col ~ .")
+  train_fit <- caret::train(form,
+                            data=teed,
+                            method="pls",
+                            tuneLength=15,
+                            trControl=train_control)
+  stopCluster(cluster)
+  registerDoSEQ()
+
+  train_fit
+  train_plot <- ggplot(train_fit)
+  train_plot
+
+  call <- stats::predict(train_fit, newdata=test_data, type="prob")
+  plot_sample_heatmap(call, row_label=NULL)
+
+}
 
 #' Use MLSeq to seek important genes given an experimental factor and an expressionSet.
 #'

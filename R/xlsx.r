@@ -235,7 +235,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     }
     dev.off()
   }
-  png_name <- tempfile(pattern = "figureImage", fileext = glue(".(file_type)"))
+  png_name <- tempfile(pattern = "figureImage", fileext = glue(".{file_type}"))
   png_ret <- try(png(filename=png_name,
                      width=width,
                      height=height,

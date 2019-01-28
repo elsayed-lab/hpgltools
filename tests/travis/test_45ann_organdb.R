@@ -24,7 +24,7 @@ orgdb_go <- sm(load_orgdb_go(
   columns=c("go", "goall", "goid")))
 actual <- sort(head(unique(orgdb_go[["GO"]])))
 expected <- c("GO:0005783", "GO:0005794", "GO:0006486",
-              "GO:0006493", "GO:0008375", "GO:0008376")
+              "GO:0008376", "GO:0008378", "GO:0008532")
 test_that("Can we use GO.db with Orgdb to extract gene ontology information?", {
     expect_equal(expected, actual)
 })

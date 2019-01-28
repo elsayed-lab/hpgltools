@@ -1142,10 +1142,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                                    wb=wb, sheet="legend", start_col=1,
                                    start_row=summary_row + 31, plotname="weight_histogram",
                                    savedir=excel_basename))
-      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["qs"]],
-                                   wb=wb, sheet="legend", start_col=11,
-                                   start_row=summary_row + 31, plotname="q_histogram",
-                                   savedir=excel_basename))
       trees <- try(topgo_trees(topgo_result), silent=TRUE)
       if (class(trees)[1] == "try-error") {
         trees <- NULL

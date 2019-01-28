@@ -16,34 +16,65 @@ analyses.
 
 There are too many ways to install software in R.  The following are a few which
 I have performed for this package.  This contains a mix of bioconductor and cran
-packages, thus some methods may prove more difficult.
+packages.  The following instructions are what I used on a brand-new Debian unstable
+computer with nothing pre-installed.
 
-* Using bioconductor, devtools, and remotes
+## Compiled Prerequisites
 
-From a fresh R installation:
+Quite a few packages used by hpgltools have compiled code, here is an incomplete list of
+requisites and the likely Debian-based (circa 201811) solution.
 
-```r
-source("http://bioconductor.org/biocLite.R")
-biocLite("devtools")
-devtools::install_github("mangothecat/remotes")
-remotes::install_github("abelew/hpgltools", dependencies=TRUE)
+* The basics: gcc,g++,gfortran,make,boost,build-essential,automake,autoconf
+* curl
+* graphviz (This has problems, I ended up using the Rgraphviz from github and fiddling around in
+    the src/ directory to get it to compile.)
+* java
+* libgvc
+* libnlopt
+* libxml2
+* mysqlclient (mariadb)
+* pandoc
+* pkg-config
+* texlive
+* udunits2
+
+```bash
+## As the super user:
+
+## For the basics:
+apt-get install gcc g++ cc1plus gfortran gawk sed bison libboost-all-dev build-essential \
+  curl libcurl4-gnutls-dev:amd64 libcurl4:amd64 default-jdk automake autoconf autotools-dev \
+  pkg-config
+
+## For a large set of potentially relevant development tools:
+apt-get install kdesdk
+
+## For the prerequisite tools:
+apt-get install udunits2-bin libudunit2-0 libudunits2-dev libnlopt0 libnlopt-dev \
+  libxml2-dev pandoc texlive-latex-recommended texlive-science texlive-extra-utils \
+  texlive-fonts-extra texlive-latex-extra libgvc6 libgraphviz-dev libmariadbclient-dev
 ```
 
-* Otherwise, using make and bioconductor
+### Caveats
+
+1.  Rgraphviz compilation fails with 'too few arguments to agedge' and similar problems.
+
+## The actual R installation
 
 Download the package via 'git pull' or from the github download link, go
 into the hpgltools/ directory and:
 
 ```bash
-make prereq
-make install
+R CMD javareconf -e
+make prereq  ## install knitr, devtools, and friends.
+make deps  ## Pick up dependencies from the DESCRIPTION file.
+make install  ## Perform the installation
+make check  ## Perform the R CMD check suite.
+make vt  ## Rebuild the vignettes to make sure everything is ok.
+make test  ## Run the tests
 ```
 
-If you wish to run some tests and (re)build the documentation:
-
-```bash
-make
-```
+## Other Makefile targets of interest
 
 The provided Makefile has other targets which might be useful:
 

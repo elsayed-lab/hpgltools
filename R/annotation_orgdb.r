@@ -408,8 +408,10 @@ orgdb_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
     ah <- AnnotationHub::query(x=ah, pattern=type)
   }
   if (is.null(title) & is.null(species) & is.null(ahid)) {
-    ahid <- "AH61777"  ## org.Hs.eg.db.sqlite
-  } else if (is.null(ahid) & is.null(title)) {
+    message("Going to attempt to find a human database.  I hope this is what you want!")
+    hits <- grepl(pattern="Hs\\.eg\\.db", x=ah$title)
+    ahid <- names(ah)[hits]
+  } else if (is.null(ahid) & is.null(title) & is.null(organism)) {
     ## Then we got a species
     possible <- ah$species
     titles <- ah$title

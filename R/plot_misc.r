@@ -15,6 +15,7 @@
 #' @export
 pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
   ext <- tools::file_ext(file)
+  start_dev <- dev.list()
   result <- NULL
   if (ext == "png") {
     result <- png(filename=file, width=width, height=height, units="in", res=res, ...)
@@ -30,6 +31,8 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     message("Defaulting to tiff.")
     result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
   }
+  now_dev <- dev.list()
+  new_dev <- now_dev[length(now_dev)]
 
   ## Check and make sure I am not looking at something containing a plot, as a bunch of
   ## my functions are lists with a plot slot.
@@ -49,7 +52,7 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     } else {
       plot(image)
     }
-    dev.off()
+    dev.off(which=new_dev)
   }
 
   return(image)

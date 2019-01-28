@@ -4,7 +4,8 @@
 \alias{plot_batchsv}
 \title{Make a dotplot of known batches vs. SVs.}
 \usage{
-plot_batchsv(expt, svs, batch_column = "batch", factor_type = "factor")
+plot_batchsv(expt, svs, sv = 1, batch_column = "batch",
+  factor_type = "factor")
 }
 \arguments{
 \item{expt}{Experiment from which to acquire the design, counts, etc.}

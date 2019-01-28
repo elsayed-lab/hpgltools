@@ -26,6 +26,13 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
   return(new_plot)
 }
 
+#' I think varpart() is a bad name for a function, so I will rename it.
+#'
+#' @param ... Arguments for varpart.
+simple_varpart <- function(...) {
+  varpart(..., deprecated=FALSE)
+}
+
 #' Use variancePartition to try and understand where the variance lies in a data set.
 #'
 #' variancePartition is the newest toy introduced by Hector.
@@ -44,14 +51,18 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
+#' @param deprecated I want to rename this, but not immediately.
 #' @param modify_expt  Add annotation columns with the variance/factor?
 #' @return partitions  List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                     chosen_factor="batch", do_fit=FALSE, cor_gene=1,
-                    cpus=6, genes=40, parallel=TRUE,
+                    cpus=6, genes=40, parallel=TRUE, deprecated=TRUE,
                     modify_expt=TRUE) {
+  if (isTRUE(deprecated)) {
+    warning("Renaming this soon to 'simple_varpart().'")
+  }
   cl <- NULL
   para <- NULL
   ## One is not supposed to use library() in packages, but it needs to do all
