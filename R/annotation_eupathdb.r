@@ -179,17 +179,17 @@ clean_pkg <- function(path, removal="-like", replace="", sqlite=TRUE) {
 #' @author atb
 #' @export
 extract_eupath_orthologs <- function(db, master="GID", query_species=NULL,
-                                     id_column="ORTHOLOG_ID",
+                                     id_column="ORTHOLOG_ID", webservice="tritrypdb",
                                      org_column="ORGANISM",
                                      url_column="ORTHOLOG_GROUP",
                                      count_column="ORTHOLOG_COUNT",
-                                     print_speciesnames=FALSE) {
+                                     print_speciesnames=FALSE, version=NULL, ...) {
 
   load_pkg <- function(name, ...) {
-    metadata <- download_eupath_metadata(...)
+    metadata <- download_eupath_metadata(webservice=webservice)
     ## metadata <- download_eupath_metadata()
     first_name <- check_eupath_species(name)[["Species"]]
-    first_pkg <- get_eupath_pkgnames(species=first_name, metadata=metadata)[["orgdb"]]
+    first_pkg <- get_eupath_pkgnames(species=first_name, metadata=metadata, version=version)[["orgdb"]]
     tt <- try(do.call("library", as.list(first_pkg)), silent=TRUE)
     if (class(tt) == "try-error") {
       message("Did not find the package: ",
@@ -231,6 +231,7 @@ extract_eupath_orthologs <- function(db, master="GID", query_species=NULL,
                                       keys=gene_set, columns=columns)
   all_orthos[["ORTHOLOG_GROUP_ID"]] <- gsub(pattern="^.*>(.*)<\\/a>$",
                                             replacement="\\1", x=all_orthos[[url_column]])
+  all_orthos[["ORGANISM"]] <- as.factor(all_orthos[["ORGANISM"]])
 
   num_possible <- 1
   species_names <- unique(all_orthos[[org_column]])
@@ -252,6 +253,7 @@ extract_eupath_orthologs <- function(db, master="GID", query_species=NULL,
       message("Found species: ", sp)
     } else {
       message("Did not find species: ", sp)
+      return(all_orthos)
     }
   }
   kept_orthos_idx <- all_orthos[[org_column]] %in% query_species
@@ -298,6 +300,44 @@ extract_gene_locations <- function(annot_df, location_column="annot_gene_locatio
   newdf[["strand"]] <- as.factor(gsub(pattern="\\)", replacement="", x=newdf[["strand"]]))
   newdf[["length"]] <- abs(newdf[["start"]] - newdf[["end"]])
   return(newdf)
+}
+#' Shortcut for loading annotation data from a eupathdb-based orgdb.
+#'
+#' Every time I go to load the annotation data from an orgdb for a parasite, it
+#' takes me an annoyingly long time to get the darn flags right.  As a result I
+#' wrote this to shortcut that process.  Ideally, one should only need to pass
+#' it a species name and get out a nice big table of annotation data.
+#'
+#' @param species  String containing a unique portion of the desired species.
+#' @param webservice Which eupath webservice is desired?
+#' @param version Gather data from a specific eupathdb version?
+#' @param wanted_fields If not provided, this will gather all columns starting
+#'   with 'annot'.
+#' @return Big huge data frame of annotation data.
+#' @export
+load_eupath_annotations <- function(species="Leishmania major", webservice="tritrypdb",
+                                    version=NULL, wanted_fields=NULL) {
+  metadata <- download_eupath_metadata(webservice=webservice)
+  pkg_names <- get_eupath_pkgnames(species=species, metadata=metadata, version=version)
+  pkg_installedp <- pkg_names[["orgdb_installed"]]
+  if (isFALSE(pkg_installedp)) {
+    stop("The required package is not installed.")
+  }
+  pkg <- as.character(pkg_names[["orgdb"]])
+
+  if (is.null(wanted_fields)) {
+    org_pkgstring <- glue("library({pkg}); pkg <- {pkg}")
+    eval(parse(text=org_pkgstring))
+    all_fields <- AnnotationDbi::keytypes(x=pkg)
+    annot_fields_idx <- grepl(pattern="^ANNOT", x=all_fields)
+    annot_fields <- all_fields[annot_fields_idx]
+    wanted_fields <- c("gid", annot_fields)
+  }
+  org <- load_orgdb_annotations(pkg, keytype="gid", fields=wanted_fields)[["genes"]]
+  colnames(org) <- gsub(pattern="^annot_", replacement="", x=colnames(org))
+  kept_columns <- !duplicated(colnames(org))
+  org <- org[, kept_columns]
+  return(org)
 }
 
 #' Generate a BSgenome package from the eupathdb.
@@ -721,7 +761,8 @@ make_eupath_orgdb <- function(species=NULL, entry=NULL, dir="eupathdb", version=
     stop("Need either an entry or species.")
   } else if (is.null(entry)) {
     if (is.null(metadata)) {
-      metadata <- download_eupath_metadata(dir=dir, ...)
+      metadata <- download_eupath_metadata(dir=dir,
+                                           ...)
       ## metadata <- download_eupath_metadata(dir=dir)
     }
     entry <- check_eupath_species(species=species, metadata=metadata)

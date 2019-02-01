@@ -593,7 +593,7 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xCell.data <- NULL
   tt <- requireNamespace("xCell")
   data("xCell.data", package="xCell")
-  xcell_result <- xCell::xCellAnalysis(xcell_input)
+  xcell_result <- sm(xCell::xCellAnalysis(xcell_input))
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))

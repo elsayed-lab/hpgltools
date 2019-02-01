@@ -600,6 +600,11 @@ please_install <- function(lib, update=FALSE) {
 #'
 #' @export
 rex <- function(display=":0") {
+  if (!is.null(dev.list())) {
+    for (i in 1:length(dev.list())) {
+      dev.off()
+    }
+  }
   home <- Sys.getenv("HOME")
   host <- Sys.info()[["nodename"]]
   if (is.null(display)) {

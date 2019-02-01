@@ -126,8 +126,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## An expressionset needs to have a Biobase::annotation() in order for
   ## GSEABase to work with it. Reading the documentation, these are primarily
   ## used for naming the type of microarray chip used.
-  annotation_name <- "Fill me in with a package name containing the annotations.
-(org.hs.eg.db seems to work for gsva())."
+  annotation_name <- "org.Hs.eg.db"
   if (!is.null(arglist[["annotation"]])) {
     annotation_name <- arglist[["annotation"]]
   }
@@ -1485,7 +1484,7 @@ semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
     }
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
-    mtrx <- exprs(expressionset)
+    mtrx <- exprs(input)
     medians <- rowMedians(mtrx)
     new_order <- order(medians, decreasing=TRUE)
     reordered <- mtrx[new_order, ]
