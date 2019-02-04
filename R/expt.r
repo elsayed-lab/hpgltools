@@ -791,12 +791,20 @@ extract_metadata <- function(metadata, ...) {
     message("Did not find the condition column in the sample sheet.")
     message("Filling it in as undefined.")
     sample_definitions[["condition"]] <- "undefined"
+  } else {
+    ## Make sure there are no NAs in this column.
+    na_idx <- is.na(sample_definitions[["condition"]])
+    sample_definitions[na_idx, "condition"] <- "undefined"
   }
   found_batch <- "batch" %in% sample_columns
   if (!isTRUE(found_batch)) {
     message("Did not find the batch column in the sample sheet.")
     message("Filling it in as undefined.")
     sample_definitions[["batch"]] <- "undefined"
+  } else {
+    ## Make sure there are no NAs in this column.
+    na_idx <- is.na(sample_definitions[["batch"]])
+    sample_definitions[na_idx, "batch"] <- "undefined"
   }
 
   ## Double-check that there is a usable condition column
