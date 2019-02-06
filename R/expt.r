@@ -1,3 +1,30 @@
+combine_expts <- function(expt1, expt2, condition="", batch="") {
+  exp1 <- expt1[["expressionset"]]
+  pData(exp1)[["condition"]] <- ""
+  pData(exp1)[["batch"]] <- ""
+  exp2 <- expt2[["expressionset"]]
+  pData(exp2)[["condition"]] <- ""
+  pData(exp2)[["batch"]] <- ""
+  fData(exp2) <- fData(exp1)
+
+  new <- combine(exp1, exp2)
+  expt1[["expressionset"]] <- new
+  expt1[["design"]] <- pData(new)
+  expt1[["conditions"]] <- pData(expt1)[["condition"]]
+  expt1[["batches"]] <- pData(expt1)[["batch"]]
+  expt1[["colors"]] <- c(expt1[["colors"]], expt2[["colors"]])
+  expt1 <- set_expt_conditions(expt1, fact=condition)
+
+  ## It appears combining expressionsets can lead to NAs?
+  new_exprs <- exprs(expt1)
+  na_idx <- is.na(new_exprs)
+  new_exprs[na_idx] <- 0
+  tmp <- expt1[["expressionset"]]
+  exprs(tmp) <- new_exprs
+  expt1[["expressionset"]] <- tmp
+  return(expt1)
+}
+
 #' Sum the reads/gene for multiple sequencing runs of a single condition/batch.
 #'
 #' On occasion we have multiple technical replicates of a sequencing run.  This
@@ -52,7 +79,6 @@ concatenate_runs <- function(expt, column="replicate") {
   experiment <- new("ExpressionSet", exprs=final_data,
                     phenoData=metadata, featureData=feature_data)
   final_expt[["expressionset"]] <- experiment
-  final_expt[["original_expressionset"]] <- experiment
   final_expt[["samples"]] <- final_design
   final_expt[["colors"]] <- as.character(colors)
   final_expt[["batches"]] <- as.character(batches)
@@ -577,8 +603,6 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Now that the expressionset has been created, pack it into an expt object so that I
   ## can keep backups etc.
   expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
-  expt[["original_expressionset"]] <- experiment
-  expt[["original_metadata"]] <- Biobase::pData(experiment)
 
   ## I only leared fairly recently that there is quite a bit of redundancy between my expt
   ## and ExpressionSets. I do not mind this. Yet.
@@ -608,11 +632,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
   names(expt[["batches"]]) <- rownames(sample_definitions)
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
-  expt[["original_metadata"]] <- metadata
   ## Keep a backup of the library sizes for limma.
-  expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
-  names(expt[["original_libsize"]]) <- rownames(sample_definitions)
-  expt[["libsize"]] <- expt[["original_libsize"]]
+  expt[["libsize"]] <- colSums(Biobase::exprs(experiment))
   names(expt[["libsize"]]) <- rownames(sample_definitions)
   ## Save the chosen colors
   expt[["colors"]] <- chosen_colors
@@ -1678,10 +1699,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
   }
 
   ## Catchall in case I forgot to set the names before now.
-  if (is.null(names(chosen_colors))) {
-    names(chosen_colors) <- chosen_names
-  }
-
+  names(chosen_colors) <- chosen_names
   expt[["colors"]] <- chosen_colors
   return(expt)
 }
@@ -1739,9 +1757,8 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
     new_expt[["design"]][["condition"]] <- fact
   }
 
-  tmp_expt <- set_expt_colors(new_expt)
-  rm(new_expt)
-  return(tmp_expt)
+  new_expt <- set_expt_colors(new_expt)
+  return(new_expt)
 }
 
 #' Change the factors (condition and batch) of an expt
@@ -1769,6 +1786,30 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
   if (!is.null(batch)) {
     expt <- set_expt_batches(expt, fact=batch, ...)
   }
+  return(expt)
+}
+
+#' Change the gene names of an expt.
+#'
+#' I want to change all the gene names of a big expressionset to the
+#' ortholog groups.  But I want to also continue using my expts.
+#' Ergo this little function.
+#'
+#' @param expt Expt to modify
+#' @param ids Specific sample IDs to change.
+#' @param ... Extra arguments are given to arglist.
+#' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
+#' }
+#' @export
+set_expt_genenames <- function(expt, ids=NULL, ...) {
+  arglist <- list(...)
+  expr <- expt[["expressionset"]]
+  rownames(expr) <- ids
+  expt[["expressionset"]] <- expr
   return(expt)
 }
 
@@ -1878,13 +1919,9 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
   subset_conditions <- starting_conditions[subset_positions, drop=TRUE]
   starting_batches <- expt[["batches"]]
   subset_batches <- starting_batches[subset_positions, drop=TRUE]
-  original_libsize <- expt[["original_libsize"]]
-  subset_original_libsize <- original_libsize[subset_positions, drop=TRUE]
-  current_libsize <- expt[["libsize"]]
+    current_libsize <- expt[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop=TRUE]
   subset_expressionset <- starting_expressionset[, subset_positions]
-  original_expressionset <- expt[["original_expressionset"]]
-  subset_original_expressionset <- original_expressionset[, subset_positions]
 
   notes <- expt[["notes"]]
   if (!is.null(note_appended)) {
@@ -1909,8 +1946,6 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
     "samplenames" = subset_ids,
     "colors" = subset_colors,
     "state" = expt[["state"]],
-    "original_expressionset" = subset_original_expressionset,
-    "original_libsize" = subset_original_libsize,
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
@@ -2615,8 +2650,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #' objects.
 #'
 #' @param ... Parameters for create_expt()
-#' @slot original_expressionset Copy of the original expressionSet.
-#' @slot original_metadata Copy of the original experimental design.
 #' @slot title Title for the expressionSet.
 #' @slot notes Notes for the expressionSet (redundant with S4 notes()).
 #' @slot design Copy of the experimental metadata (redundant with pData()).
@@ -2626,8 +2659,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #'   conversion, etc.
 #' @slot conditions Usually the condition column from pData.
 #' @slot batches Usually the batch column from pData.
-#' @slot original_metadata Experimental metadata before messing with it.
-#' @slot original_libsize Library sizes of samples before messing with them.
 #' @slot libsize Library sizes of the data in its current state.
 #' @slot colors Chosen colors for plotting the data.
 #' @slot tximport Data provided by tximport() to create the exprs() data.
