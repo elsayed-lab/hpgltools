@@ -152,7 +152,7 @@ plots_wt_mut$volcano$plot
 
 ## EdgeR
 
-```{r simple_edger}
+```{r simple_edger1}
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
 plots_wt_mut <- extract_de_plots(edger_comparison, type="edger")
 scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
@@ -164,7 +164,7 @@ plots_wt_mut$volcano$plot
 
 ## EBSeq
 
-```{r simple_edger}
+```{r simple_edger2
 ebseq_comparison <- sm(ebseq_pairwise(fun_data))
 head(ebseq_comparison$all_tables[[1]])
 ```
