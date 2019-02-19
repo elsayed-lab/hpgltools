@@ -5,7 +5,7 @@
 \title{Get the highest/lowest scoring genes for every principle component.}
 \usage{
 pca_highscores(expt, n = 20, cor = TRUE, vs = "means",
-  logged = TRUE, row_label = NA)
+  logged = TRUE)
 }
 \arguments{
 \item{expt}{Experiment to poke.}

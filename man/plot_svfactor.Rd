@@ -13,6 +13,8 @@ plot_svfactor(expt, svest, sv = 1, chosen_factor = "batch",
 \item{svest}{Set of surrogate variable estimations from sva/svg
 or batch estimates.}
 
+\item{sv}{Which surrogate to plot?}
+
 \item{chosen_factor}{Factor to compare against.}
 
 \item{factor_type}{This may be a factor or range, it is intended to plot

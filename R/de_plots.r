@@ -7,6 +7,7 @@
 #' @param type Type of table to use: deseq, edger, limma, basic.
 #' @param table Result from edger to use, left alone it chooses the first.
 #' @param logfc What logFC to use for the MA plot horizontal lines.
+#' @param p_type Adjusted or raw pvalues?
 #' @param p Cutoff to define 'significant' by p-value.
 #' @param invert Invert the plot?
 #' @param ... Extra arguments are passed to arglist.
@@ -451,6 +452,7 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #'
 #' @param combined Table to extract the values from.
 #' @param type If provided, extract the {type}_p and {type}_adjp columns.
+#' @param p_type Which type of pvalue to show (adjusted, raw, or all)?
 #' @param columns Otherwise, extract whatever columns are provided.
 #' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.

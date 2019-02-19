@@ -323,7 +323,7 @@ pca_information <- function(expt, expt_design=NULL, expt_factors=c("condition", 
 #'  information$pca_bitplot  ## oo pretty
 #' }
 #' @export
-pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE, row_label=NA) {
+pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
   if (isTRUE(logged)) {
     if (expt[["state"]][["transform"]] == "raw") {
       expt <- sm(normalize_expt(expt, transform="log2"))
@@ -437,7 +437,6 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE, row_la
 #' @param pc_method how to extract the components? (svd
 #' @param x_pc Component to put on the x axis.
 #' @param y_pc Component to put on the y axis.
-#' @param pc_type Reduce the data by samples or genes?
 #' @param num_pc How many components to calculate, default to the number of
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.

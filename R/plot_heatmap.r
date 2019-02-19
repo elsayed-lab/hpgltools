@@ -319,6 +319,7 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
 #' @param colors Color scheme of the samples (not needed if input is an expt).
 #' @param design Design matrix describing the experiment (gotten for free if an expt).
 #' @param expt_names Alternate samples names.
+#' @param row_label Passed through to heatmap.2.
 #' @param title Title of the plot!
 #' @param Rowv Reorder the rows by expression?
 #' @param label_chars Maximum number of characters before abbreviating sample names.

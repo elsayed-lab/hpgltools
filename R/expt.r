@@ -15,6 +15,37 @@ combine_expts <- function(expt1, expt2, condition="", batch="") {
   expt1[["colors"]] <- c(expt1[["colors"]], expt2[["colors"]])
   expt1 <- set_expt_conditions(expt1, fact=condition)
 
+  if (!is.null(expt1[["tximport"]])) {
+    raw1 <- expt1[["tximport"]][["raw"]]
+    raw2 <- expt2[["tximport"]][["raw"]]
+    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["abundance"]] <- merged
+    merged <- merge(raw1[["counts"]], raw2[["counts"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["counts"]] <- merged
+    merged <- merge(raw1[["length"]], raw2[["length"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["length"]] <- merged
+    scaled1 <- expt1[["tximport"]][["scaled"]]
+    scaled2 <- expt2[["tximport"]][["scaled"]]
+    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
+    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["counts"]] <- merged
+    merged <- merge(scaled1[["length"]], scaled2[["length"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["length"]] <- merged
+  }
+
   ## It appears combining expressionsets can lead to NAs?
   new_exprs <- exprs(expt1)
   na_idx <- is.na(new_exprs)
@@ -694,9 +725,39 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   if (method == "remove") {
     kept <- ex[!idx, ]
     removed <- ex[idx, ]
+    if (!is.null(expt[["tximport"]])) {
+      df <- expt[["tximport"]][["raw"]][["abundance"]][idx, ]
+      expt[["tximport"]][["raw"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["raw"]][["counts"]][idx, ]
+      expt[["tximport"]][["raw"]][["counts"]] <- df
+      df <- expt[["tximport"]][["raw"]][["length"]][idx, ]
+      expt[["tximport"]][["raw"]][["length"]] <- df
+
+      df <- expt[["tximport"]][["scaled"]][["abundance"]][idx, ]
+      expt[["tximport"]][["scaled"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["counts"]][idx, ]
+      expt[["tximport"]][["scaled"]][["counts"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["length"]][idx, ]
+      expt[["tximport"]][["scaled"]][["length"]] <- df
+    }
   } else {
     kept <- ex[idx, ]
     removed <- ex[!idx, ]
+    if (!is.null(expt[["tximport"]])) {
+      df <- expt[["tximport"]][["raw"]][["abundance"]][idx, ]
+      expt[["tximport"]][["raw"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["raw"]][["counts"]][idx, ]
+      expt[["tximport"]][["raw"]][["counts"]] <- df
+      df <- expt[["tximport"]][["raw"]][["length"]][idx, ]
+      expt[["tximport"]][["raw"]][["length"]] <- df
+
+      df <- expt[["tximport"]][["scaled"]][["abundance"]][idx, ]
+      expt[["tximport"]][["scaled"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["counts"]][idx, ]
+      expt[["tximport"]][["scaled"]][["counts"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["length"]][idx, ]
+      expt[["tximport"]][["scaled"]][["length"]] <- df
+    }
   }
 
   message("Before removal, there were ", nrow(Biobase::fData(ex)), " entries.")
@@ -1810,6 +1871,15 @@ set_expt_genenames <- function(expt, ids=NULL, ...) {
   expr <- expt[["expressionset"]]
   rownames(expr) <- ids
   expt[["expressionset"]] <- expr
+
+  if (!is.null(expt[["tximport"]])) {
+    rownames(expt[["tximport"]][["raw"]][["abundance"]]) <- ids
+    rownames(expt[["tximport"]][["raw"]][["counts"]]) <- ids
+    rownames(expt[["tximport"]][["raw"]][["length"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["abundance"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["counts"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["length"]]) <- ids
+  }
   return(expt)
 }
 

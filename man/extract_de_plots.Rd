@@ -17,6 +17,8 @@ handle other invocations too.}
 
 \item{logfc}{What logFC to use for the MA plot horizontal lines.}
 
+\item{p_type}{Adjusted or raw pvalues?}
+
 \item{p}{Cutoff to define 'significant' by p-value.}
 
 \item{invert}{Invert the plot?}

@@ -40,8 +40,6 @@ rows in the metadata.}
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
 \item{...}{Arguments passed through to the pca implementations and plotter.}
-
-\item{pc_type}{Reduce the data by samples or genes?}
 }
 \value{
 a list containing the following (this is currently wrong)

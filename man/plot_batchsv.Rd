@@ -13,6 +13,8 @@ plot_batchsv(expt, svs, sv = 1, batch_column = "batch",
 \item{svs}{Set of surrogate variable estimations from sva/svg
 or batch estimates.}
 
+\item{sv}{Which surrogate variable to show?}
+
 \item{batch_column}{Which experimental design column to use?}
 
 \item{factor_type}{This may be a factor or range, it is intended to plot

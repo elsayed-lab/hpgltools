@@ -12,10 +12,14 @@ plot_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
 
 \item{log}{Plot the data on the log scale?}
 
-\item{binwidth}{Set a static bin width with an unknown # of bins?  If neither of these are
-provided, then bins is set to 500, if both are provided, then bins wins.}
+\item{binwidth}{Set a bin width?}
 
 \item{bins}{Set a static # of bins of an unknown width?}
+
+\item{colors}{Change the default colors of the densities?}
+
+\item{binwidth}{Set a static bin width with an unknown # of bins?  If neither of these are
+provided, then bins is set to 500, if both are provided, then bins wins.}
 }
 \value{
 List of the ggplot histogram and some statistics describing the distributions.

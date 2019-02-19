@@ -229,7 +229,6 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
           "PIR" = {
             ## The protein information resource: https://pir.georgetown.edu/
             uniprot_data[gene_num, "pir"] <- information
-            message("Setting pir to ", information)
           },
           "RefSeq" = {
             ## RefSeq: https://www.ncbi.nlm.nih.gov/refseq/
@@ -494,7 +493,6 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
         aa_length <- gsub(
           pattern="^SQ\\s+SEQUENCE\\s+(\\d+)\\s+AA;\\s+\\d+\\s+MW.*$", replacement="\\1", x=line)
         uniprot_data[gene_num, "aa_length"] <- aa_length
-        message("Set the ", gene_num, "th weight field to: ", mweight, " and length to: ", aa_length, ".")
         if (isTRUE(reading_sequence)) {
           if (grepl(pattern="^\\s+", x=line)) {
             aa_line <- gsub(pattern="\\s", replacement="", x=line)
@@ -503,7 +501,6 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
         }
         if (grepl(pattern="^\\/\\/", x=line)) {
           uniprot_data[gene_num, "aa_sequence"] <- aa_seq
-          message("Setting the sequence to ", aa_seq, ".")
           reading_sequence <- FALSE
         }
       })
