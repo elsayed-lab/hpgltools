@@ -1,7 +1,7 @@
 Package: hpgltools
 Type: Package
 Title: A pile of (hopefully) useful R functions
-Version: 2018.11
+Version: 1.0
 Date: 2018-03-01
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
