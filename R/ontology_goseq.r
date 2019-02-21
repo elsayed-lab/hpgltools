@@ -29,28 +29,28 @@
 #' }
 #' @export
 goseq_table <- function(df, file=NULL) {
-    if (is.null(df[["term"]])) {
-        df[["term"]] <- goterm(df[["category"]])
-    }
-    if (is.null(df[["ontology"]])) {
-        df[["ontology"]] <- goont(df[["category"]])
-    }
-    message("Testing that go categories are defined.")
-    df[["good"]] <- gotest(df[["category"]])
-    message("Removing undefined categories.")
-    good_idx <- df[["good"]] == 1
-    df <- df[good_idx, ]
-    message("Gathering synonyms.")
-    df[["synonym"]] <- gosyn(df[["category"]])
-    message("Gathering category definitions.")
-    df[["definition"]] <- godef(df[["category"]])
-    df <- df[, c("category", "numDEInCat", "numInCat", "over_represented_pvalue",
-                 "under_represented_pvalue", "qvalue", "ontology", "term",
-                 "synonym", "definition")]
-    if (!is.null(file)) {
-        write.csv(df, file=file)
-    }
-    return(df)
+  df[["term"]] <- goterm(df[["category"]])
+  df[["ontology"]] <- goont(df[["category"]])
+  message("Testing that go categories are defined.")
+  df[["good"]] <- gotest(df[["category"]])
+  message("Removing undefined categories.")
+  good_idx <- df[["good"]] == 1
+  df <- df[good_idx, ]
+  na_idx <- is.na(df[["category"]])
+  df <- df[!na_idx, ]
+  na_idx <- is.na(df[["term"]])
+  df <- df[!na_idx, ]
+  message("Gathering synonyms.")
+  df[["synonym"]] <- gosyn(df[["category"]])
+  message("Gathering category definitions.")
+  df[["definition"]] <- godef(df[["category"]])
+  df <- df[, c("category", "numDEInCat", "numInCat", "over_represented_pvalue",
+               "under_represented_pvalue", "qvalue", "ontology", "term",
+               "synonym", "definition")]
+  if (!is.null(file)) {
+    write.csv(df, file=file)
+  }
+  return(df)
 }
 
 #' Perform a simplified goseq analysis.
@@ -228,10 +228,10 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
 
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
           " from the sig_genes in the go_db.")
   id_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(sig_genes),
+  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
           " from the sig_genes in the length_db.")
 
   ## So lets merge the de genes and gene lengths to ensure that they are
@@ -265,66 +265,66 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins=50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
   goseq_y_limit <- goseq_p_nearzero * 2
-  goseq_p <- goseq_p + ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
+  goseq_p <- goseq_p +
+    ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
   message("simple_goseq(): Calculating q-values")
-  qdata <- godata[["over_represented_pvalue"]]
-  ## For scientific numbers which are 1.0000E+00 it might evaluate to 1.000000000001
-  qdata[qdata > 1] <- 1
-  qvalues <- tryCatch({
-    ttmp <- as.numeric(qdata)
-    ttmp <- qvalue::qvalue(ttmp)[["qvalues"]]
-  },
-  error=function(cond) {
-    message("The qvalue estimate failed.")
-    return(1)
-  },
-  finally={
-  })
-  message("Using GO.db to extract terms and categories.")
-  godata[["term"]] <- goterm(godata[["category"]])
-  godata[["ontology"]] <- goont(godata[["category"]])
-  godata <- cbind(godata, qvalues)
-  colnames(godata) <- c("category", "over_represented_pvalue", "under_represented_pvalue",
-                        "numDEInCat", "numInCat", "term", "ontology", "qvalue")
+  godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
+                                        method=padjust_method)
+
+  ## Optionally, use GO.db to extract more information about the categories.
+  ##message("Using GO.db to extract terms and categories.")
+  ##godata[["term"]] <- goterm(godata[["category"]])
+  ##godata[["ontology"]] <- goont(godata[["category"]])
+  message("simple_goseq(): Filling godata with terms, this is slow.")
+  godata_interesting <- goseq_table(godata)
+
   if (is.null(adjust)) {
     interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
     godata_interesting <- godata[godata_interesting, ]
     padjust_method <- "none"
   } else {
     ## There is a requested pvalue adjustment
-    interesting_idx <- stats::p.adjust(godata[["over_represented_pvalue"]],
-                                       method=padjust_method) <= adjust
+    interesting_idx <- godata[["over_represented_pvalue"]] <= adjust
     godata_interesting <- godata[interesting_idx, ]
     if (dim(godata_interesting)[1] < minimum_interesting) {
       message("simple_goseq(): There are no genes with an adj.p < ", adjust, " using: ",
               padjust_method, ".")
       message("simple_goseq(): Providing genes with raw pvalue < ", pvalue, ".")
       interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
-      godata_interesting <- godata[interesting_idx, ]
+      godata_interesting <- godata_interesting[interesting_idx, ]
       padjust_method <- "none"
     }
   }
-  message("simple_goseq(): Filling godata with terms, this is slow.")
-  godata_interesting <- goseq_table(godata_interesting)
-  message("simple_goseq(): Making pvalue plots for the ontologies.")
-  pvalue_plots <- plot_goseq_pval(godata, ...)
 
-  mf_subset <- godata[godata[["ontology"]] == "MF", ]
+  message("simple_goseq(): Making pvalue plots for the ontologies.")
+  pvalue_plots <- plot_goseq_pval(godata,
+                                  ...)
+  na_idx <- is.na(godata[["ontology"]])
+  godata <- godata[!na_idx, ]
+  mf_idx <- godata[["ontology"]] == "MF"
+  mf_subset <- godata[mf_idx, ]
   rownames(mf_subset) <- mf_subset[["category"]]
-  bp_subset <- godata[godata[["ontology"]] == "BP", ]
+  bp_idx <- godata[["ontology"]] == "BP"
+  bp_subset <- godata[bp_idx, ]
   rownames(bp_subset) <- bp_subset[["category"]]
-  cc_subset <- godata[godata[["ontology"]] == "CC", ]
+  cc_idx <- godata[["ontology"]] == "CC"
+  cc_subset <- godata[cc_idx, ]
   rownames(cc_subset) <- cc_subset[["category"]]
 
-  mf_interesting <- godata_interesting[godata_interesting[["ontology"]] == "MF", ]
+  na_idx <- is.na(godata_interesting[["ontology"]])
+  godata_interesting <- godata_interesting[!na_idx, ]
+  mf_idx <- godata_interesting[["ontology"]] == "MF"
+  mf_interesting <- godata_interesting[mf_idx, ]
   rownames(mf_interesting) <- mf_interesting[["category"]]
   mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
-  bp_interesting <- godata_interesting[godata_interesting[["ontology"]] == "BP", ]
+  bp_idx <- godata_interesting[["ontology"]] == "BP"
+  bp_interesting <- godata_interesting[bp_idx, ]
   rownames(bp_interesting) <- bp_interesting[["category"]]
   bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
-  cc_interesting <- godata_interesting[godata_interesting[["ontology"]] == "CC", ]
+  cc_idx <- godata_interesting[["ontology"]] == "CC"
+  cc_interesting <- godata_interesting[cc_idx, ]
   rownames(cc_interesting) <- cc_interesting[["category"]]
   cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
                                        "over_represented_pvalue", "qvalue", "term")]
@@ -350,8 +350,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     "mf_subset" = mf_subset,
     "pvalue_plots" = pval_plots,
     "bp_subset" = bp_subset,
-    "cc_subset" = cc_subset,
-    "qdata" = qdata)
+    "cc_subset" = cc_subset)
   class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")

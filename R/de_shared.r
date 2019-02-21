@@ -92,7 +92,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
-      message("Using limma's removeBatchEffect to visualize with/out batch inclusion.")
+      message("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type) == "character") {
       message("Using ", model_type, " to visualize before/after batch inclusion.")
@@ -1017,18 +1017,29 @@ correlate_de_tables <- function(results, annot_df=NULL) {
   plotlst <- list()
   comparison_df <- data.frame()
   lenminus <- length(methods) - 1
+  message("Comparing analyses.")
+  len <- length(names(retlst[["deseq"]]))
+  total_comparisons <- lenminus * (length(methods) - 1) * len
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  progress_count <- 0
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
   for (c in 1:lenminus) {
     c_name <- methods[c]
     nextc <- c + 1
     for (d in nextc:length(methods)) {
       d_name <- methods[d]
       method_comp_name <- glue("{c_name}_vs_{d_name}")
-      len <- length(names(retlst[["deseq"]]))
       for (l in 1:len) {
+        progress_count <- progress_count + 1
+        if (isTRUE(show_progress)) {
+          pct_done <- progress_count / total_comparisons
+          utils::setTxtProgressBar(bar, pct_done)
+        }
         contr <- names(retlst[["deseq"]])[l]
         ## assume all three have the same names() -- note that limma has more
         ## than the other two though
-        message("Comparing analyses ", l, "/", len, ": ", contr)
         num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
         num_name <- num_den_names[1]
         den_name <- num_den_names[2]
@@ -1066,6 +1077,9 @@ correlate_de_tables <- function(results, annot_df=NULL) {
       }
     }
   } ## End loop
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
 
   comparison_df <- as.matrix(comparison_df)
   colnames(comparison_df) <- names(retlst[["deseq"]])

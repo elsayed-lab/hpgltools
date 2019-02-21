@@ -17,6 +17,8 @@ plot_sample_heatmap(data, colors = NULL, design = NULL,
 
 \item{expt_names}{Alternate samples names.}
 
+\item{row_label}{Passed through to heatmap.2.}
+
 \item{title}{Title of the plot!}
 
 \item{Rowv}{Reorder the rows by expression?}

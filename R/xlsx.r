@@ -201,7 +201,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
-  high_quality <- file.path(savedir, glue("(plotname).(fancy_type)"))
+  high_quality <- file.path(savedir, glue("{plotname}.{fancy_type}"))
   png_print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {

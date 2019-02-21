@@ -7,6 +7,7 @@
 #' @param expt Experiment from which to acquire the design, counts, etc.
 #' @param svest Set of surrogate variable estimations from sva/svg
 #'  or batch estimates.
+#' @param sv Which surrogate to plot?
 #' @param chosen_factor Factor to compare against.
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'  a scatterplot if it is a range, a dotplot if a factor.
@@ -53,6 +54,7 @@ plot_svfactor <- function(expt, svest, sv=1, chosen_factor="batch", factor_type=
 #' @param expt Experiment from which to acquire the design, counts, etc.
 #' @param svs Set of surrogate variable estimations from sva/svg
 #'  or batch estimates.
+#' @param sv Which surrogate variable to show?
 #' @param batch_column Which experimental design column to use?
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'  a scatterplot if it is a range, a dotplot if a factor.

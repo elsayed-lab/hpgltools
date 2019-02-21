@@ -1,3 +1,61 @@
+combine_expts <- function(expt1, expt2, condition="", batch="") {
+  exp1 <- expt1[["expressionset"]]
+  pData(exp1)[["condition"]] <- ""
+  pData(exp1)[["batch"]] <- ""
+  exp2 <- expt2[["expressionset"]]
+  pData(exp2)[["condition"]] <- ""
+  pData(exp2)[["batch"]] <- ""
+  fData(exp2) <- fData(exp1)
+
+  new <- combine(exp1, exp2)
+  expt1[["expressionset"]] <- new
+  expt1[["design"]] <- pData(new)
+  expt1[["conditions"]] <- pData(expt1)[["condition"]]
+  expt1[["batches"]] <- pData(expt1)[["batch"]]
+  expt1[["colors"]] <- c(expt1[["colors"]], expt2[["colors"]])
+  expt1 <- set_expt_conditions(expt1, fact=condition)
+
+  if (!is.null(expt1[["tximport"]])) {
+    raw1 <- expt1[["tximport"]][["raw"]]
+    raw2 <- expt2[["tximport"]][["raw"]]
+    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["abundance"]] <- merged
+    merged <- merge(raw1[["counts"]], raw2[["counts"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["counts"]] <- merged
+    merged <- merge(raw1[["length"]], raw2[["length"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["raw"]][["length"]] <- merged
+    scaled1 <- expt1[["tximport"]][["scaled"]]
+    scaled2 <- expt2[["tximport"]][["scaled"]]
+    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
+    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["counts"]] <- merged
+    merged <- merge(scaled1[["length"]], scaled2[["length"]], by="row.names")
+    rownames(merged) <- merged[["Row.names"]]
+    merged <- merged[, -1]
+    expt1[["tximport"]][["scaled"]][["length"]] <- merged
+  }
+
+  ## It appears combining expressionsets can lead to NAs?
+  new_exprs <- exprs(expt1)
+  na_idx <- is.na(new_exprs)
+  new_exprs[na_idx] <- 0
+  tmp <- expt1[["expressionset"]]
+  exprs(tmp) <- new_exprs
+  expt1[["expressionset"]] <- tmp
+  return(expt1)
+}
+
 #' Sum the reads/gene for multiple sequencing runs of a single condition/batch.
 #'
 #' On occasion we have multiple technical replicates of a sequencing run.  This
@@ -52,7 +110,6 @@ concatenate_runs <- function(expt, column="replicate") {
   experiment <- new("ExpressionSet", exprs=final_data,
                     phenoData=metadata, featureData=feature_data)
   final_expt[["expressionset"]] <- experiment
-  final_expt[["original_expressionset"]] <- experiment
   final_expt[["samples"]] <- final_design
   final_expt[["colors"]] <- as.character(colors)
   final_expt[["batches"]] <- as.character(batches)
@@ -126,8 +183,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## An expressionset needs to have a Biobase::annotation() in order for
   ## GSEABase to work with it. Reading the documentation, these are primarily
   ## used for naming the type of microarray chip used.
-  annotation_name <- "Fill me in with a package name containing the annotations.
-(org.hs.eg.db seems to work for gsva())."
+  annotation_name <- "org.Hs.eg.db"
   if (!is.null(arglist[["annotation"]])) {
     annotation_name <- arglist[["annotation"]]
   }
@@ -578,8 +634,6 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Now that the expressionset has been created, pack it into an expt object so that I
   ## can keep backups etc.
   expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
-  expt[["original_expressionset"]] <- experiment
-  expt[["original_metadata"]] <- Biobase::pData(experiment)
 
   ## I only leared fairly recently that there is quite a bit of redundancy between my expt
   ## and ExpressionSets. I do not mind this. Yet.
@@ -609,11 +663,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## expt[["batches"]] <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=expt[["batches"]])
   names(expt[["batches"]]) <- rownames(sample_definitions)
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
-  expt[["original_metadata"]] <- metadata
   ## Keep a backup of the library sizes for limma.
-  expt[["original_libsize"]] <- colSums(Biobase::exprs(experiment))
-  names(expt[["original_libsize"]]) <- rownames(sample_definitions)
-  expt[["libsize"]] <- expt[["original_libsize"]]
+  expt[["libsize"]] <- colSums(Biobase::exprs(experiment))
   names(expt[["libsize"]]) <- rownames(sample_definitions)
   ## Save the chosen colors
   expt[["colors"]] <- chosen_colors
@@ -674,9 +725,39 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   if (method == "remove") {
     kept <- ex[!idx, ]
     removed <- ex[idx, ]
+    if (!is.null(expt[["tximport"]])) {
+      df <- expt[["tximport"]][["raw"]][["abundance"]][idx, ]
+      expt[["tximport"]][["raw"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["raw"]][["counts"]][idx, ]
+      expt[["tximport"]][["raw"]][["counts"]] <- df
+      df <- expt[["tximport"]][["raw"]][["length"]][idx, ]
+      expt[["tximport"]][["raw"]][["length"]] <- df
+
+      df <- expt[["tximport"]][["scaled"]][["abundance"]][idx, ]
+      expt[["tximport"]][["scaled"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["counts"]][idx, ]
+      expt[["tximport"]][["scaled"]][["counts"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["length"]][idx, ]
+      expt[["tximport"]][["scaled"]][["length"]] <- df
+    }
   } else {
     kept <- ex[idx, ]
     removed <- ex[!idx, ]
+    if (!is.null(expt[["tximport"]])) {
+      df <- expt[["tximport"]][["raw"]][["abundance"]][idx, ]
+      expt[["tximport"]][["raw"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["raw"]][["counts"]][idx, ]
+      expt[["tximport"]][["raw"]][["counts"]] <- df
+      df <- expt[["tximport"]][["raw"]][["length"]][idx, ]
+      expt[["tximport"]][["raw"]][["length"]] <- df
+
+      df <- expt[["tximport"]][["scaled"]][["abundance"]][idx, ]
+      expt[["tximport"]][["scaled"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["counts"]][idx, ]
+      expt[["tximport"]][["scaled"]][["counts"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["length"]][idx, ]
+      expt[["tximport"]][["scaled"]][["length"]] <- df
+    }
   }
 
   message("Before removal, there were ", nrow(Biobase::fData(ex)), " entries.")
@@ -721,10 +802,10 @@ extract_metadata <- function(metadata, ...) {
 
   meta_dataframe <- NULL
   meta_file <- NULL
-  if (class(metadata) == "character") {
+  if ("character" %in% class(metadata)) {
     ## This is a filename containing the metadata
     meta_file <- metadata
-  } else if (class(metadata) == "data.frame") {
+  } else if ("data.frame" %in% class(metadata)) {
     ## A data frame of metadata was passed.
     meta_dataframe <- metadata
   } else {
@@ -792,12 +873,20 @@ extract_metadata <- function(metadata, ...) {
     message("Did not find the condition column in the sample sheet.")
     message("Filling it in as undefined.")
     sample_definitions[["condition"]] <- "undefined"
+  } else {
+    ## Make sure there are no NAs in this column.
+    na_idx <- is.na(sample_definitions[["condition"]])
+    sample_definitions[na_idx, "condition"] <- "undefined"
   }
   found_batch <- "batch" %in% sample_columns
   if (!isTRUE(found_batch)) {
     message("Did not find the batch column in the sample sheet.")
     message("Filling it in as undefined.")
     sample_definitions[["batch"]] <- "undefined"
+  } else {
+    ## Make sure there are no NAs in this column.
+    na_idx <- is.na(sample_definitions[["batch"]])
+    sample_definitions[na_idx, "batch"] <- "undefined"
   }
 
   ## Double-check that there is a usable condition column
@@ -1485,7 +1574,7 @@ semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
     }
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
-    mtrx <- exprs(expressionset)
+    mtrx <- exprs(input)
     medians <- rowMedians(mtrx)
     new_order <- order(medians, decreasing=TRUE)
     reordered <- mtrx[new_order, ]
@@ -1671,10 +1760,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
   }
 
   ## Catchall in case I forgot to set the names before now.
-  if (is.null(names(chosen_colors))) {
-    names(chosen_colors) <- chosen_names
-  }
-
+  names(chosen_colors) <- chosen_names
   expt[["colors"]] <- chosen_colors
   return(expt)
 }
@@ -1732,9 +1818,8 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
     new_expt[["design"]][["condition"]] <- fact
   }
 
-  tmp_expt <- set_expt_colors(new_expt)
-  rm(new_expt)
-  return(tmp_expt)
+  new_expt <- set_expt_colors(new_expt)
+  return(new_expt)
 }
 
 #' Change the factors (condition and batch) of an expt
@@ -1761,6 +1846,90 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
   }
   if (!is.null(batch)) {
     expt <- set_expt_batches(expt, fact=batch, ...)
+  }
+  return(expt)
+}
+
+#' Change the gene names of an expt.
+#'
+#' I want to change all the gene names of a big expressionset to the
+#' ortholog groups.  But I want to also continue using my expts.
+#' Ergo this little function.
+#'
+#' @param expt Expt to modify
+#' @param ids Specific sample IDs to change.
+#' @param ... Extra arguments are given to arglist.
+#' @return expt Send back the expt with some new metadata
+#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @examples
+#' \dontrun{
+#'  expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
+#' }
+#' @export
+set_expt_genenames <- function(expt, ids=NULL, ...) {
+  arglist <- list(...)
+  expr <- expt[["expressionset"]]
+
+  ## Make sure the order of the IDs stays consistent.
+  current_ids <- rownames(exprs(expr))
+  if (class(ids) == "data.frame") {
+    ## our_column contains the IDs from my species.
+    our_column <- NULL
+    ## their_column contains the IDs from the species we want to map against.
+    their_column <- NULL
+    ## Grab the first ID in the first column.
+    ## We will explicitly assume there are 2 columns in the data frame.
+    test_first_id <- ids[1, 1]
+    test_second_id <- ids[1, 2]
+    if (test_first_id %in% current_ids) {
+      our_column <- colnames(ids)[1]
+      their_column <- colnames(ids)[2]
+    } else if (test_second_id %in% current_ids) {
+      our_column <- colnames(ids)[2]
+      their_column <- colnames(ids)[1]
+    } else {
+      stop("Unable to match the IDs.")
+    }
+    message("Our column is: ", our_column, ", their column is: ", their_column, ".")
+    ## Now the job is to ensure that the ordering is maintained.
+    ## We need therefore to merge the rownames of the current IDs into the
+    ## data frame of the ID mapping between our species.
+    ## In addition, we must keep all of the IDs from our species (all.x=TRUE).
+    exprs_id_df <- as.data.frame(current_ids)
+    reordered <- merge(exprs_id_df, ids, by.x="current_ids", by.y=our_column, all.x=TRUE)
+    ## This merge should give a NA in the other column if there is no gene in the
+    ## other species for a gene in our species.  In addition, it should give us
+    ## duplicate IDs where a single gene from our species maps against multiple
+    ## genes from the other species.
+    ## Take care of the first scenario:
+    na_ids <- is.na(reordered[[their_column]])
+    reordered[na_ids, ] <- reordered[na_ids, "current_ids"]
+    ## Then get rid of the duplicates.
+    dup_ids <- duplicated(reordered[["current_ids"]])
+    reordered <- reordered[!dup_ids, ]
+    ## Now we should have a data frame with the same number of rows as our expressionset.
+    ## The second column of this should contain the IDs from the other species when possible
+    ## and a copy of the ID from our species when it is not.
+
+    ## One final caveat: some of our new IDs may be duplicated in this (multigene families present
+    ## in the other species),
+    ## I will make.names() them and report how many there are, this might not be the correct way
+    ## to handle this scenario!
+    dup_ids <- sum(duplicated(reordered[[their_column]]))
+    message("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
+    ids <- make.names(reordered[[their_column]], unique=TRUE)
+  }
+
+  rownames(expr) <- ids
+  expt[["expressionset"]] <- expr
+
+  if (!is.null(expt[["tximport"]])) {
+    rownames(expt[["tximport"]][["raw"]][["abundance"]]) <- ids
+    rownames(expt[["tximport"]][["raw"]][["counts"]]) <- ids
+    rownames(expt[["tximport"]][["raw"]][["length"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["abundance"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["counts"]]) <- ids
+    rownames(expt[["tximport"]][["scaled"]][["length"]]) <- ids
   }
   return(expt)
 }
@@ -1871,13 +2040,9 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
   subset_conditions <- starting_conditions[subset_positions, drop=TRUE]
   starting_batches <- expt[["batches"]]
   subset_batches <- starting_batches[subset_positions, drop=TRUE]
-  original_libsize <- expt[["original_libsize"]]
-  subset_original_libsize <- original_libsize[subset_positions, drop=TRUE]
-  current_libsize <- expt[["libsize"]]
+    current_libsize <- expt[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop=TRUE]
   subset_expressionset <- starting_expressionset[, subset_positions]
-  original_expressionset <- expt[["original_expressionset"]]
-  subset_original_expressionset <- original_expressionset[, subset_positions]
 
   notes <- expt[["notes"]]
   if (!is.null(note_appended)) {
@@ -1902,8 +2067,6 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
     "samplenames" = subset_ids,
     "colors" = subset_colors,
     "state" = expt[["state"]],
-    "original_expressionset" = subset_original_expressionset,
-    "original_libsize" = subset_original_libsize,
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
@@ -2608,8 +2771,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #' objects.
 #'
 #' @param ... Parameters for create_expt()
-#' @slot original_expressionset Copy of the original expressionSet.
-#' @slot original_metadata Copy of the original experimental design.
 #' @slot title Title for the expressionSet.
 #' @slot notes Notes for the expressionSet (redundant with S4 notes()).
 #' @slot design Copy of the experimental metadata (redundant with pData()).
@@ -2619,8 +2780,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #'   conversion, etc.
 #' @slot conditions Usually the condition column from pData.
 #' @slot batches Usually the batch column from pData.
-#' @slot original_metadata Experimental metadata before messing with it.
-#' @slot original_libsize Library sizes of samples before messing with them.
 #' @slot libsize Library sizes of the data in its current state.
 #' @slot colors Chosen colors for plotting the data.
 #' @slot tximport Data provided by tximport() to create the exprs() data.

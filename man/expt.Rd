@@ -24,10 +24,6 @@ objects.
 \section{Slots}{
 
 \describe{
-\item{\code{original_expressionset}}{Copy of the original expressionSet.}
-
-\item{\code{original_metadata}}{Copy of the original experimental design.}
-
 \item{\code{title}}{Title for the expressionSet.}
 
 \item{\code{notes}}{Notes for the expressionSet (redundant with S4 notes()).}
@@ -44,10 +40,6 @@ conversion, etc.}
 \item{\code{conditions}}{Usually the condition column from pData.}
 
 \item{\code{batches}}{Usually the batch column from pData.}
-
-\item{\code{original_metadata}}{Experimental metadata before messing with it.}
-
-\item{\code{original_libsize}}{Library sizes of samples before messing with them.}
 
 \item{\code{libsize}}{Library sizes of the data in its current state.}
 

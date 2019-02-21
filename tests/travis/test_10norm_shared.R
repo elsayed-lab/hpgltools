@@ -24,7 +24,7 @@ test_that("Pasilla title?", {
 
 ## Ensure that the beginning count table library sizes are identical.
 expected <- colSums(counts)
-actual <- pasilla_expt[["original_libsize"]]
+actual <- pasilla_expt[["libsize"]]
 names(expected) <- c("untreated1", "untreated2", "untreated3", "untreated4",
                      "treated1", "treated2", "treated3")
 test_that("Pasilla libsize?", {

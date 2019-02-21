@@ -365,7 +365,7 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' }
 #' @author atb
 #' @export
-load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
+load_biomart_orthologs <- function(gene_ids=NULL, first_species="hsapiens",
                                    second_species="mmusculus",
                                    host="dec2016.archive.ensembl.org",
                                    trymart="ENSEMBL_MART_ENSEMBL",
@@ -433,8 +433,11 @@ load_biomart_orthologs <- function(gene_ids, first_species="hsapiens",
   linked_genes <- biomaRt::getLDS(attributes=attributes, values=gene_ids,
                                   mart=first_ensembl, attributesL=attributes,
                                   martL=second_ensembl)
-  kept_idx <- linked_genes[[1]] %in% gene_ids
-  kept_genes <- linked_genes[kept_idx, ]
+  kept_genes <- linked_genes
+  if (!is.null(gene_ids)) {
+    kept_idx <- linked_genes[[1]] %in% gene_ids
+    kept_genes <- linked_genes[kept_idx, ]
+  }
   new_colnames <- colnames(linked_genes)
   new_colnames[[1]] <- first_species
   second_position <- length(attributes) + 1

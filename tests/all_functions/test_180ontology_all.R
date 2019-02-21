@@ -77,10 +77,12 @@ test_that("Do we get some plots?", {
   expect_equal(expected, actual)
 })
 
+## I made a change to how I process goseq data which leaves is significantly less restrictive.
+## and therefore requires one to come back and decide what to drop.
 go_test <- simple_goseq(ups, go_db=pombe_go, length_db=pombe_lengths)
 
 actual <- dim(go_test[["bp_interesting"]])
-expected <- c(3, 6)
+expected <- c(106, 6)
 ## 16 and 17
 test_that("Does goseq provide a few biological processes?", {
   expect_equal(actual[1], expected[1])
@@ -89,15 +91,17 @@ test_that("Does goseq provide a few biological processes?", {
 
 ## 18
 ## only 1 mf interesting category
-expected <- c(8.6640560513167e-06)
-actual <- go_test[["mf_interesting"]][["over_represented_pvalue"]]
+expected <- c(8.481665e-06, 2.841514e-04, 4.305725e-04,
+              2.514813e-03, 3.659096e-03, 3.659096e-03)
+actual <- head(go_test[["mf_interesting"]][["over_represented_pvalue"]])
 test_that("Did goseq give the expected mf_interesting?", {
   expect_equal(expected, actual, tolerance=0.01)
 })
 
 ## 19
-expected <- c(3.649345e-12, 3.097698e-06, 3.363297e-05)
-actual <- go_test[["bp_interesting"]][["over_represented_pvalue"]]
+expected <- c(4.322235e-12, 3.097237e-06, 3.451860e-05,
+              1.204558e-04, 4.305725e-04, 4.308406e-04)
+actual <- head(go_test[["bp_interesting"]][["over_represented_pvalue"]])
 test_that("Did goseq give the expected bp_interesting?", {
   expect_equal(expected, actual, tolerance=0.01)
 })
@@ -118,7 +122,7 @@ test_that("Did the table of all results include the expected material?", {
   expect_equal(cat_expected, cat_actual, tolerance=0.001)
 })
 
-top_test <- simple_topgo(ups, go_db=pombe_go)
+top_test <- simple_topgo(ups, go_db=pombe_go, overwrite=TRUE)
 cat_expected <- c("GO:0016491", "GO:0016614", "GO:0016616",
                   "GO:0004032", "GO:0008106", "GO:0010844")
 cat_actual <- rownames(head(top_test[["tables"]][["mf_subset"]]))

@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 
 context("70expt_spyogenes.R: Does a small bacterial RNAseq experiment load?
-  1234567890123\n")
+  1234567890123456789012345678901\n")
 
 mgas_data <- new.env()
 cdm_data <- system.file("cdm_expt.rda", package="hpgltools")

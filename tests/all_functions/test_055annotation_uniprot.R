@@ -25,7 +25,7 @@ if (isTRUE(website_up)) {
 
   ## load_uniprot_annotations()
   testing <- load_uniprot_annotations(file=expected)
-  expected <- c(3993, 41)
+  expected <- c(3993, 76)
   actual <- dim(testing)
   ## 0304
   test_that("Did we get the correct uniprot annotations?", {

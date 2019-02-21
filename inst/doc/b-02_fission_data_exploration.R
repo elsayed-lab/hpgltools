@@ -79,7 +79,7 @@ fis_normpca$plot
 summary(fis_normpca)
 
 ## ----test_3d-------------------------------------------------------------
-testing <- plot_pca(fission_expt, num_pc=3)
+testing <- plot_pca(norm_expt, num_pc=3)
 silly <- make_3d_pca(testing)
 silly$plot
 

@@ -12,6 +12,8 @@ plot_de_pvals(combined, type = "limma", p_type = "both",
 
 \item{type}{If provided, extract the {type}_p and {type}_adjp columns.}
 
+\item{p_type}{Which type of pvalue to show (adjusted, raw, or all)?}
+
 \item{columns}{Otherwise, extract whatever columns are provided.}
 
 \item{...}{Arguments passed through to the histogram plotter}

@@ -7,8 +7,7 @@
 plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
   plot_size = 5, plot_alpha = NULL, plot_labels = NULL,
   size_column = NULL, pc_method = "fast_svd", x_pc = 1, y_pc = 2,
-  pc_type = "sample", num_pc = NULL, expt_names = NULL,
-  label_chars = 10, ...)
+  num_pc = NULL, expt_names = NULL, label_chars = 10, ...)
 }
 \arguments{
 \item{data}{an expt set of samples.}
@@ -32,8 +31,6 @@ plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 \item{x_pc}{Component to put on the x axis.}
 
 \item{y_pc}{Component to put on the y axis.}
-
-\item{pc_type}{Reduce the data by samples or genes?}
 
 \item{num_pc}{How many components to calculate, default to the number of
 rows in the metadata.}

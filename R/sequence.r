@@ -1,14 +1,14 @@
 gather_eupath_utrs_padding <- function(species_name="Leishmania major",
                                        webservice="tritrypdb", ...) {
-  metadata <- sm(download_eupath_metadata(webservice=webservice))
-  pkg_names <- get_eupath_pkgnames(species=species_name, metadata=metadata)
+  metadata <- sm(EuPathDB::download_eupath_metadata(webservice=webservice))
+  pkg_names <- EuPathDB::get_eupath_pkgnames(species=species_name, metadata=metadata)
   bsgenome_name <- pkg_names[["bsgenome"]]
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
-    genome_installedp <- make_eupath_bsgenome(species=species_name, metadata=metadata, ...)
+    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, metadata=metadata, ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
-    orgdb_installedp <- make_eupath_orgdb(species=species_name, metadata=metadata, ...)
+    orgdb_installedp <- EuPathDB::make_eupath_orgdb(species=species_name, metadata=metadata, ...)
   }
 
   ##lib_result <- sm(library(orgdb_name, character.only=TRUE))
@@ -24,7 +24,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major",
                      "annot_gene_product",
                      "annot_gene_type")
   annot <- load_orgdb_annotations(orgdb, keytype="gid", fields=wanted_fields)
-  annot <- extract_gene_locations(annot[["genes"]])
+  annot <- EuPathDB::extract_gene_locations(annot[["genes"]])
   annot_complete <- complete.cases(annot)
   annot_df <- annot[annot_complete, ]
 

@@ -22,6 +22,20 @@ library(hpgltools)
 tt <- sm(library(fission))
 tt <- data(fission)
 
+## ----spombe_annotations--------------------------------------------------
+pombe_annotations <- sm(load_biomart_annotations(
+  host="fungi.ensembl.org",
+  trymart="fungal_mart",
+  trydataset="spombe_eg_gene",
+  gene_requests=c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+                  "hgnc_symbol", "description", "gene_biotype"),
+  species="spombe", overwrite=TRUE))
+pombe_mart <- pombe_annotations[["mart"]]
+annotations <- pombe_annotations[["annotation"]]
+rownames(annotations) <- make.names(gsub(pattern="\\.\\d+$",
+                                         replacement="",
+                                         x=rownames(annotations)), unique=TRUE)
+
 ## ----data_import---------------------------------------------------------
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
@@ -34,7 +48,9 @@ fission_data <- fission@assays$data$counts
 ## This will make an experiment superclass called 'expt' and it contains
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
-fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
+fission_expt <- create_expt(metadata=meta,
+                            count_dataframe=fission_data,
+                            gene_info=annotations)
 
 ## ----simple_subset-------------------------------------------------------
 fun_data <- subset_expt(fission_expt,
@@ -64,7 +80,7 @@ plots_wt_mut <- extract_de_plots(deseq_comparison, type="deseq")
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
-## ----simple_edger--------------------------------------------------------
+## ----simple_edger1-------------------------------------------------------
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
 plots_wt_mut <- extract_de_plots(edger_comparison, type="edger")
 scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
@@ -72,10 +88,6 @@ scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
 scatter_wt_mut$scatter
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
-
-## ----simple_edger--------------------------------------------------------
-ebseq_comparison <- sm(ebseq_pairwise(fun_data))
-head(ebseq_comparison$all_tables[[1]])
 
 ## ----simple_basic--------------------------------------------------------
 basic_comparison <- sm(basic_pairwise(fun_data))

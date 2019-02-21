@@ -4,7 +4,7 @@
 \alias{load_biomart_orthologs}
 \title{Use biomart to get orthologs between supported species.}
 \usage{
-load_biomart_orthologs(gene_ids, first_species = "hsapiens",
+load_biomart_orthologs(gene_ids = NULL, first_species = "hsapiens",
   second_species = "mmusculus", host = "dec2016.archive.ensembl.org",
   trymart = "ENSEMBL_MART_ENSEMBL", attributes = "ensembl_gene_id")
 }

@@ -22,7 +22,7 @@ Suggests:
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW,
-  EBSeq, EDASeq, edgeR,
+  EBSeq, EDASeq, edgeR, EuPathDB,
   fastICA, ffpe, fission,
   genbankr, genefilter, GenomicFeatures, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
@@ -41,7 +41,7 @@ Suggests:
   rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, sva,
   taxize, testthat, tidyr, topGO, tximport,
-  UniProt.ws,
+  UniProt.ws, uwot,
   xCell,
   variancePartition, Vennerable, venneuler,
   XLConnect, xml2
@@ -58,7 +58,6 @@ Collate:
     '01_hpgltools.r'
     'alt_splicing.r'
     'annotation_biomart.r'
-    'annotation_eupathdb.r'
     'annotation_genbank.r'
     'annotation_gff.r'
     'annotation_kegg.r'
@@ -76,7 +75,6 @@ Collate:
     'de_shared.r'
     'de_xlsx.r'
     'dimension_reduction.r'
-    'eupath_webservices.r'
     'expt.r'
     'gsva.r'
     'helpers_misc.r'

@@ -691,6 +691,13 @@ This will choose the number of surrogates differently depending on method chosen
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch
 #'   factors.
+#' @param batch1 Column containing the first batch's metadata in the experimental design.
+#' @param condition Column containing the condition information in the metadata.
+#' @param matrix_scale Is the data on a linear or log scale?
+#' @param return_scale Do you want the data returned on the linear or log scale?
+#' @param method I found a couple ways to apply the surrogates to the data.  One
+#'   method subtracts the residuals of a batch model, the other adds the
+#'   conditional.
 #' @return Dataframe of residuals after subtracting batch from the model.
 #' @seealso \pkg{limma}
 #'  \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
@@ -722,8 +729,9 @@ cbcb_batch <- function(normalized_counts, model,
     new_data <- residuals(modified_fit, batch_voom)
   } else if (method == "add") {
     fit <- limma::lmFit(normal_voom)
-    new_data <- tcrossprod(voomed_fit$coefficient, modified_model) +
-      residuals(voomed_fit, normalized_counts)
+    ## I got confusered here, this might be incorrect.
+    new_data <- tcrossprod(normal_voom[["coefficient"]], cond_modified_model) +
+      residuals(normal_voom, normalized_counts)
   } else {
     stop("This currently only understands 'add' or 'subtract'.")
   }
@@ -819,7 +827,6 @@ compare_batches <- function(expt=NULL, methods=NULL) {
 #'   number.
 #' @param ...  Extra arguments when filtering.
 #' @return List of the results.
-#' @seealso \code{\link{get_model_adjust}}
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors=NULL,
                                         filter_it=TRUE, filter_type=TRUE,

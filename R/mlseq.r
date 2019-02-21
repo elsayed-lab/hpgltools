@@ -23,11 +23,8 @@ classify_samples <- function(train_expt, test_expt, classifier="condition", posi
   test_data <- t(test_data)
   tail(test_data, n=1)
 
-  library(caret)
-  library(parallel)
-  library(doParallel)
-  cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
-  registerDoParallel(cluster)
+  cluster <- parallel::makeCluster(parallel::detectCores() - 1) # convention to leave 1 core for OS
+  doParallel::registerDoParallel(cluster)
   train_control <- caret::trainControl(method="repeatedcv",
                                        repeats=10, allowParallel=TRUE)
   form <- as.formula("classifier_col ~ .")
@@ -36,8 +33,8 @@ classify_samples <- function(train_expt, test_expt, classifier="condition", posi
                             method="pls",
                             tuneLength=15,
                             trControl=train_control)
-  stopCluster(cluster)
-  registerDoSEQ()
+  parallel::stopCluster(cluster)
+  foreach::registerDoSEQ()
 
   train_fit
   train_plot <- ggplot(train_fit)

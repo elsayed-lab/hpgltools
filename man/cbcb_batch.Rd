@@ -14,6 +14,18 @@ cbcb_batch(normalized_counts, model, batch1 = "batch",
 
 \item{model}{Balanced experimental model containing condition and batch
 factors.}
+
+\item{batch1}{Column containing the first batch's metadata in the experimental design.}
+
+\item{condition}{Column containing the condition information in the metadata.}
+
+\item{matrix_scale}{Is the data on a linear or log scale?}
+
+\item{return_scale}{Do you want the data returned on the linear or log scale?}
+
+\item{method}{I found a couple ways to apply the surrogates to the data.  One
+method subtracts the residuals of a batch model, the other adds the
+conditional.}
 }
 \value{
 Dataframe of residuals after subtracting batch from the model.

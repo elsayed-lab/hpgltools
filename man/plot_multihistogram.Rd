@@ -16,6 +16,8 @@ plot_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
 provided, then bins is set to 500, if both are provided, then bins wins.}
 
 \item{bins}{Set a static # of bins of an unknown width?}
+
+\item{colors}{Change the default colors of the densities?}
 }
 \value{
 List of the ggplot histogram and some statistics describing the distributions.

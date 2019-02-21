@@ -71,8 +71,8 @@ push:
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	@mkdir -p inst/doc
-	@rm -f inst/doc/reference.pdf
-	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview
+	@rm -f vignettes/reference.pdf
+	R CMD Rd2pdf . -o vignettes/reference.pdf --no-preview
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"
@@ -100,11 +100,10 @@ update:
 update_bioc:
 	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
 
-vignette: reference
-	@cp inst/doc/reference.pdf inst/
+vignette: 
+	@mkdir -p doc/
+	@mkdir -p inst/doc/
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes()"
-	@cp inst/reference.pdf doc/
-	@cp inst/reference.Rnw doc/
 
 vt:	clean_vignette vignette reference install

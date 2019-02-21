@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 context("40ann_biomartgenbank.R: Does biomart function?
   123456789\n")
-if (FALSE) {
+
 limma <- new.env()
 load("de_limma.rda", envir=limma)
 limma_result <- limma[["hpgl_limma"]]
@@ -82,7 +82,7 @@ test_that("I downloaded an accession using download_gbk()?", {
     expect_equal(expected, actual)
     expect_true(file.exists("AE009949.gb"))
 })
-}
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 40ann_biomartgenbank.R in ", elapsed,  " seconds."))
