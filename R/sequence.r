@@ -24,7 +24,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major",
                      "annot_gene_product",
                      "annot_gene_type")
   annot <- load_orgdb_annotations(orgdb, keytype="gid", fields=wanted_fields)
-  annot <- extract_gene_locations(annot[["genes"]])
+  annot <- EuPathDB::extract_gene_locations(annot[["genes"]])
   annot_complete <- complete.cases(annot)
   annot_df <- annot[annot_complete, ]
 

@@ -24,7 +24,7 @@ classify_samples <- function(train_expt, test_expt, classifier="condition", posi
   tail(test_data, n=1)
 
   cluster <- parallel::makeCluster(parallel::detectCores() - 1) # convention to leave 1 core for OS
-  parallel::registerDoParallel(cluster)
+  doParallel::registerDoParallel(cluster)
   train_control <- caret::trainControl(method="repeatedcv",
                                        repeats=10, allowParallel=TRUE)
   form <- as.formula("classifier_col ~ .")

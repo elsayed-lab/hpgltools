@@ -61,10 +61,9 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
 #'
 #' @param data Dataframe of lots of pretty numbers, this also accepts lists.
 #' @param log Plot the data on the log scale?
-#' @param binwidth Set a bin width?
-#' @param bins Set a static # of bins of an unknown width?
 #' @param binwidth Set a static bin width with an unknown # of bins?  If neither of these are
 #'  provided, then bins is set to 500, if both are provided, then bins wins.
+#' @param bins Set a static # of bins of an unknown width?
 #' @param colors Change the default colors of the densities?
 #' @return List of the ggplot histogram and some statistics describing the distributions.
 #' @seealso \pkg{ggplot2}
@@ -114,7 +113,7 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, color
   }
   multi <- ggplot2::ggplot(play_all,
                            ggplot2::aes_string(x="expression", fill="cond")) +
-    ggplot2::geom_histogram(ggplot2::aes(y=..density..), binwidth=binwidth,
+    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), binwidth=binwidth,
                             alpha=0.4, position="identity") +
     ggplot2::geom_density(alpha=0.5) +
     ggplot2::geom_vline(data=play_cdf,

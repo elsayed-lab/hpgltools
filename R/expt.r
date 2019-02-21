@@ -802,10 +802,10 @@ extract_metadata <- function(metadata, ...) {
 
   meta_dataframe <- NULL
   meta_file <- NULL
-  if (class(metadata) == "character") {
+  if ("character" %in% class(metadata)) {
     ## This is a filename containing the metadata
     meta_file <- metadata
-  } else if (class(metadata) == "data.frame") {
+  } else if ("data.frame" %in% class(metadata)) {
     ## A data frame of metadata was passed.
     meta_dataframe <- metadata
   } else {
@@ -1869,6 +1869,57 @@ set_expt_factors <- function(expt, condition=NULL, batch=NULL, ids=NULL, ...) {
 set_expt_genenames <- function(expt, ids=NULL, ...) {
   arglist <- list(...)
   expr <- expt[["expressionset"]]
+
+  ## Make sure the order of the IDs stays consistent.
+  current_ids <- rownames(exprs(expr))
+  if (class(ids) == "data.frame") {
+    ## our_column contains the IDs from my species.
+    our_column <- NULL
+    ## their_column contains the IDs from the species we want to map against.
+    their_column <- NULL
+    ## Grab the first ID in the first column.
+    ## We will explicitly assume there are 2 columns in the data frame.
+    test_first_id <- ids[1, 1]
+    test_second_id <- ids[1, 2]
+    if (test_first_id %in% current_ids) {
+      our_column <- colnames(ids)[1]
+      their_column <- colnames(ids)[2]
+    } else if (test_second_id %in% current_ids) {
+      our_column <- colnames(ids)[2]
+      their_column <- colnames(ids)[1]
+    } else {
+      stop("Unable to match the IDs.")
+    }
+    message("Our column is: ", our_column, ", their column is: ", their_column, ".")
+    ## Now the job is to ensure that the ordering is maintained.
+    ## We need therefore to merge the rownames of the current IDs into the
+    ## data frame of the ID mapping between our species.
+    ## In addition, we must keep all of the IDs from our species (all.x=TRUE).
+    exprs_id_df <- as.data.frame(current_ids)
+    reordered <- merge(exprs_id_df, ids, by.x="current_ids", by.y=our_column, all.x=TRUE)
+    ## This merge should give a NA in the other column if there is no gene in the
+    ## other species for a gene in our species.  In addition, it should give us
+    ## duplicate IDs where a single gene from our species maps against multiple
+    ## genes from the other species.
+    ## Take care of the first scenario:
+    na_ids <- is.na(reordered[[their_column]])
+    reordered[na_ids, ] <- reordered[na_ids, "current_ids"]
+    ## Then get rid of the duplicates.
+    dup_ids <- duplicated(reordered[["current_ids"]])
+    reordered <- reordered[!dup_ids, ]
+    ## Now we should have a data frame with the same number of rows as our expressionset.
+    ## The second column of this should contain the IDs from the other species when possible
+    ## and a copy of the ID from our species when it is not.
+
+    ## One final caveat: some of our new IDs may be duplicated in this (multigene families present
+    ## in the other species),
+    ## I will make.names() them and report how many there are, this might not be the correct way
+    ## to handle this scenario!
+    dup_ids <- sum(duplicated(reordered[[their_column]]))
+    message("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
+    ids <- make.names(reordered[[their_column]], unique=TRUE)
+  }
+
   rownames(expr) <- ids
   expt[["expressionset"]] <- expr
 
