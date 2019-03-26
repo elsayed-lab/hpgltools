@@ -111,7 +111,7 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
   if (is(counts, "DGEList")) {
     out[["genes"]] <- counts[["genes"]]
     out[["targets"]] <- counts[["samples"]]
-    if (is.null(model) &&
+    if (is.null(model) &
         diff(range(as.numeric(counts[["sample"]][["group"]]))) > 0) {
       model <- model.matrix(~group, data = counts[["samples"]])
     }

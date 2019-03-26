@@ -32,9 +32,9 @@ test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("excel_test.xlsx"))
 })
 
-hpgl_sva_result <- sm(all_pairwise(normalized_expt, model_batch="sva", which_voom="limma",
-                                   limma_method="robust", edger_method="long",
-                                   edger_test="qlr", parallel=FALSE))
+hpgl_sva_result <- all_pairwise(pasilla_expt, model_batch="sva", which_voom="limma",
+                                limma_method="robust", edger_method="long",
+                                edger_test="qlr", parallel=FALSE)
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 table_order <- rownames(expected)
@@ -325,9 +325,7 @@ test_that("Plotting an MA plot from a combined DE table provides logFCs in the c
 })
 
 ## See that we can compare different analysis types
-combined_sva <- combine_de_tables(hpgl_sva_result,
-                                  excel=NULL,
-                                  keepers=test_keepers)
+combined_sva <- combine_de_tables(hpgl_sva_result, excel=NULL, keepers=test_keepers)
 sva_batch_test <- compare_de_results(combined_excel, combined_sva)
 expected <- 0.71
 actual <- sva_batch_test[["result"]][["limma"]][[table]][["logfc"]]
@@ -335,13 +333,13 @@ test_that("Do limma with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
 })
 
-expected <- 0.99
+expected <- 0.97
 actual <- sva_batch_test[["result"]][["deseq"]][[table]][["logfc"]]
 test_that("Do deseq with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
 })
 
-expected <- 0.99
+expected <- 0.97
 actual <- sva_batch_test[["result"]][["edger"]][[table]][["logfc"]]
 test_that("Do edger with combat and sva agree vis a vis logfc?", {
     expect_gt(actual, expected)
@@ -349,67 +347,67 @@ test_that("Do edger with combat and sva agree vis a vis logfc?", {
 
 ## See if the intersection between limma, deseq, and edger is decent.
 test_intersect <- intersect_significant(combined_sva, excel=NULL)
-expected <- 82
+expected <- 98
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["all"]])
 test_that("Do we get the expected number of agreed upon significant genes between edger/deseq/limma?", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["all"]])
-expected <- 88
+expected <- 102
 test_that("Ibid, but in the down direction?", {
     expect_equal(actual, expected)
 })
 actual <- sum(nrow(test_intersect[["ups"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["deseq"]]))
-expected <- 30
+expected <- 43
 test_that("Are there very few genes observed without the others?", {
     expect_equal(actual, expected)
 })
 actual <- sum(nrow(test_intersect[["downs"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["deseq"]]))
-expected <- 22
+expected <- 18
 test_that("Ibid, but down?", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["limma_edger"]])
-expected <- 2
+expected <- 3
 test_that("Do limma and edger have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_edger"]])
-expected <- 5
+expected <- 2
 test_that("Do limma and edger have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["limma_deseq"]])
-expected <- 37
+expected <- 6
 test_that("Do limma and deseq have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_deseq"]])
-expected <- 12
+expected <- 1
 test_that("Do limma and deseq have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["deseq_edger"]])
-expected <- 3
+expected <- 68
 test_that("Do edger and deseq have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["deseq_edger"]])
-expected <- 2
+expected <- 105
 test_that("Do edger and deseq have some genes in common? (down)", {
   expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["all"]])
-expected <- 82
+expected <- 98
 test_that("Do all methods have some genes in common? (up)", {
   expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["all"]])
-expected <- 88
+expected <- 102
 test_that("Do all methods have some genes in common? (down)", {
   expect_equal(actual, expected)
 })

@@ -79,7 +79,7 @@ plot_batchsv <- function(expt, svs, sv=1, batch_column="batch", factor_type="fac
     "color" = "black",
     "svs" = svs[, sv])
   if (num_batches <= 5) {
-    factor_df[["shape"]] <- 20 + as.numeric(factor_df[["batch"]])
+    factor_df[["shape"]] <- 20 + as.numeric(as.factor(factor_df[["batch"]]))
   } else {
     factor_df[["shape"]] <- 21
   }
@@ -341,11 +341,11 @@ plot_sm <- function(data, colors=NULL, method="pearson", plot_legend=FALSE,
   }
   num_batches <- nlevels(sm_df[["batch"]])
 
-  if (class(expt_names) == "character" && length(expt_names) == 1) {
+  if (class(expt_names) == "character" & length(expt_names) == 1) {
     ## Then this refers to an experimental metadata column.
     sm_df[["sample"]] <- design[[expt_names]]
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     sm_df[["sample"]] <- abbreviate(sm_df[["sample"]], minlength=label_chars)
   }
 

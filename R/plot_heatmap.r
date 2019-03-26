@@ -138,12 +138,12 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
   if (is.null(expt_names)) {
     expt_names <- colnames(expt_data)
   } else {
-    if (class(expt_names) == "character" && length(expt_names) == 1) {
+    if (class(expt_names) == "character" & length(expt_names) == 1) {
       ## Then this refers to an experimental metadata column.
       expt_names <- expt_design[[expt_names]]
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     expt_names <- abbreviate(expt_names, minlength=label_chars)
   }
 
@@ -353,12 +353,12 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL, expt_names=NULL,
   if (is.null(expt_names)) {
     expt_names <- colnames(data)
   } else {
-    if (class(expt_names) == "character" && length(expt_names) == 1) {
+    if (class(expt_names) == "character" & length(expt_names) == 1) {
       ## Then this refers to an experimental metadata column.
       expt_names <- design[[expt_names]]
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     expt_names <- abbreviate(expt_names, minlength=label_chars)
   }
 

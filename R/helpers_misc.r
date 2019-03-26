@@ -495,9 +495,9 @@ local_get_value <- function(x, delimiter=": ") {
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
-  stopifnot(S4Vectors::isSingleNumber(min.length) && min.length >= 5 &&  min.length <= 50)
-  stopifnot(S4Vectors::isSingleNumber(p.to.start) && p.to.start >= 0.5 && p.to.start <= 0.95)
-  stopifnot(S4Vectors::isSingleNumber(p.to.end) && p.to.end >= 0.2 && p.to.end <= 0.7)
+  stopifnot(S4Vectors::isSingleNumber(min.length) & min.length >= 5 &  min.length <= 50)
+  stopifnot(S4Vectors::isSingleNumber(p.to.start) & p.to.start >= 0.5 & p.to.start <= 0.95)
+  stopifnot(S4Vectors::isSingleNumber(p.to.end) & p.to.end >= 0.2 & p.to.end <= 0.7)
   stopifnot(p.to.start > p.to.end)
   if (xtype == "DNA") {
     AU <- "AT"

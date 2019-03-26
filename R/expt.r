@@ -1,10 +1,18 @@
-combine_expts <- function(expt1, expt2, condition="", batch="") {
+#' Take two expressionsets and smoosh them together.
+#'
+#' Because of the extra sugar I added to expressionSets, the combine() function
+#' needs a little help when combining expts.  Notably, the information from
+#' tximport needs some help.
+#'
+#' @param expt1 First expt object.
+#' @param expt2 Second expt object.
+#' @param condition Column with which to reset the conditions.
+#' @param batch Column with which to reset the batches.
+#' @return Larger expt.
+#' @export
+combine_expts <- function(expt1, expt2, condition="condition", batch="batch") {
   exp1 <- expt1[["expressionset"]]
-  pData(exp1)[["condition"]] <- ""
-  pData(exp1)[["batch"]] <- ""
   exp2 <- expt2[["expressionset"]]
-  pData(exp2)[["condition"]] <- ""
-  pData(exp2)[["batch"]] <- ""
   fData(exp2) <- fData(exp1)
 
   new <- combine(exp1, exp2)
@@ -412,7 +420,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
       annotation <- load_gff_annotations(gff=include_gff, type=gff_type)
       gene_info <- data.table::as.data.table(annotation, keep.rownames="rownames")
     }
-  } else if (class(gene_info)[[1]] == "list" && !is.null(gene_info[["genes"]])) {
+  } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames="rownames")
   } else if (class(gene_info)[[1]] == "data.table" || class(gene_info)[[1]] == "tbl_df") {
@@ -665,6 +673,11 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
   ## Keep a backup of the library sizes for limma.
   expt[["libsize"]] <- colSums(Biobase::exprs(experiment))
+  if (sum(expt[["libsize"]] == 0) > 0) {
+    zero_idx <- expt[["libsize"]] == 0
+    zero_samples <- names(expt[["libsize"]])[zero_idx]
+    warning("The following samples have no counts! ", zero_samples)
+  }
   names(expt[["libsize"]]) <- rownames(sample_definitions)
   ## Save the chosen colors
   expt[["colors"]] <- chosen_colors
@@ -672,8 +685,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   expt[["tximport"]] <- tximport_data
   ## Save an rdata file of the expressionset.
   if (!is.null(savefile)) {
-    save_result <- try(save(list = c("expt"),
-                            file=paste(savefile, ".Rdata", sep="")), silent=TRUE)
+    save_result <- try(save(expt, file=savefile), silent=TRUE)
   }
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
@@ -1980,6 +1992,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #'
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
+#' @param ids List of sample IDs to extract.
 #' @param coverage Request a minimum coverage/sample rather than text-based subset.
 #' @return metadata Expt class which contains the smaller set of data.
 #' @seealso \pkg{Biobase}
@@ -1990,7 +2003,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #'  all_expt = expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
-subset_expt <- function(expt, subset=NULL, coverage=NULL) {
+subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
@@ -2002,6 +2015,15 @@ subset_expt <- function(expt, subset=NULL, coverage=NULL) {
     starting_metadata <- pData(expt)
   } else {
     stop("expt is neither an expt nor ExpressionSet")
+  }
+
+  if (!is.null(ids)) {
+    string <- ""
+    for (id in ids) {
+      string <- glue::glue("{string}|sampleid=='{id}'")
+    }
+    ## Remove the leading |
+    subset <- substring(string, 2)
   }
 
   note_appended <- NULL

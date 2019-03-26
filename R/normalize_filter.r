@@ -21,7 +21,7 @@
 #'  new <- filter_counts(old)
 #' }
 #' @export
-filter_counts <- function(count_table, filter="hpgl", p=0.01, A=1, k=1,
+filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
                           cv_min=0.01, cv_max=1000, thresh=1, min_samples=2, ...) {
   arglist <- list(...)
   if (tolower(filter) == "povera") {
@@ -128,14 +128,20 @@ cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=
 #' }
 #' @export
 hpgl_filter_counts <- function(count_table, threshold=2, min_samples=2, libsize=NULL, ...) {
-  cpms <- edgeR::cpm(count_table, ...)
+  neg_idx <- count_table < 0
+  neg_sum <- sum(neg_idx)
+  if (sum(neg_sum) > 0) {
+    warning("Found ", neg_sum, " negative entries, setting them to 0.")
+    count_table[neg_idx] <- 0
+  }
+  cpms <- edgeR::cpm(count_table)
   keep <- rowSums(cpms > threshold) >= min_samples
   num_before <- nrow(count_table)
   count_table <- count_table[keep, ]
-
-  message(sprintf("Removing %d low-count genes (%d remaining).",
-                  num_before - nrow(count_table), nrow(count_table)))
-
+  num_after <- nrow(count_table)
+  removed_rows <- num_before - num_after
+  message("Removing ", removed_rows, " low-count genes (",
+          num_after, " remaining).")
   libsize <- colSums(count_table)
   counts <- list(
     "count_table" = count_table,

@@ -135,14 +135,18 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     summarized <- import_deseq(data, column_data,
                                model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
-  } else if (class(model_batch) == "matrix") {
+  } else if (class(model_batch)[1] == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
     ##model_string <- "~ condition"
     ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
+    for (i in 1:length(ncol(data))) {
+      data[[i]] <- as.integer(data[[i]])
+    }
     summarized <- import_deseq(data, column_data,
                                sv_model_string, tximport=input[["tximport"]][["raw"]])
+
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(sv_model_string))
   } else {
     message("DESeq2 step 1/5: Including only condition in the deseq model.")
@@ -464,15 +468,22 @@ import_deseq <- function(data, column_data, model_string,
     keepers <- rownames(data)
     ## These recasts were because some matrix subsets were failing.
     abundances <- as.data.frame(tximport[["abundance"]])
+    abundances <- abundances[keepers, ]
     counts <- as.data.frame(tximport[["counts"]])
+    counts <- counts[keepers, ]
     lengths <- as.data.frame(tximport[["length"]])
+    lengths <- lengths[keepers, ]
+    ## Something about this does not feel right, I need to look over this some more.
+    na_rows <- grepl(pattern="^NA", x=rownames(counts))
+    counts <- counts[!na_rows, ]
+    lengths <- lengths[!na_rows, ]
+    abundances <- abundances[!na_rows, ]
     ## That should no longer be a problem now that I explicitly change the
     ## rownames of all the tximport data to match the rownames from
     ## as.data.table() but I am leaving it for now.
-    tximport[["abundance"]] <- as.matrix(abundances[keepers, ])
-    ##tximport[["abundance"]] <- tximport[["abundance"]][keepers, ]
-    tximport[["counts"]] <- as.matrix(counts[keepers, ])
-    tximport[["length"]] <- as.matrix(lengths[keepers, ])
+    tximport[["abundance"]] <- as.matrix(abundances)
+    tximport[["counts"]] <- as.matrix(counts)
+    tximport[["length"]] <- as.matrix(lengths)
     summarized <- DESeq2::DESeqDataSetFromTximport(txi=tximport,
                                                    colData=column_data,
                                                    design=as.formula(model_string))

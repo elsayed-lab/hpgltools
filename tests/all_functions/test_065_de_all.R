@@ -43,14 +43,14 @@ test_that("Basic performed the expected number of contrasts?", {
 
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
-expected <- 3
+expected <- 4
 ## 02
 test_that("Basic got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
 actual <- sum(as.numeric(test[["p"]]) < 0.1)
-expected <- 359
+expected <- 358
 ## 03
 test_that("Basic got some expected results (p)?", {
   expect_equal(expected, actual)
@@ -324,7 +324,7 @@ test_that("Did get_abundant_genes get some stuff?", {
 
 ## 17 get_pairwise_gene_abundances()
 testing <- get_pairwise_gene_abundances(test_sva)
-expected <- c(5712, 6)
+expected <- c(5720, 6)
 actual <- dim(testing[["expression_values"]])
 ## 3637
 test_that("Did get_pairwise_gene_abundances() get some stuff?", {
@@ -341,7 +341,7 @@ test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_equal(expected[2], actual[2])
 })
-expected <- c(182, 6)
+expected <- c(183, 6)
 actual <- dim(testing[["down_genes"]])
 ## 4041
 test_that("Did get_sig_genes() get some stuff?", {

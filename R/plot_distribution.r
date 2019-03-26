@@ -63,14 +63,14 @@ plot_boxplot <- function(data, colors=NULL, title=NULL,
   ## Likely only needed when using quantile norm/batch correction and it sets a value to < 0
   data[data < 0] <- 0
 
-  if (!is.null(expt_names) && class(expt_names) == "character") {
+  if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       colnames(data) <- make.names(design[[expt_names]], unique=TRUE)
     } else {
       colnames(data) <- expt_names
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
   }
 
@@ -189,14 +189,14 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
   }
 
   if (!is.null(expt_names)) {
-    if (class(expt_names) == "character" && length(expt_names) == 1) {
+    if (class(expt_names) == "character" & length(expt_names) == 1) {
     ## Then this refers to an experimental metadata column.
       colnames(data) <- design[[expt_names]]
     } else {
       colnames(data) <- expt_names
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
   }
 
@@ -565,7 +565,7 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
     smoother <- arglist[["smoother"]]
   }
 
-  if (!is.null(expt_names) && class(expt_names) == "character") {
+  if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       colnames(newdf) <- make.names(design[[expt_names]], unique=TRUE)
     } else {
@@ -573,7 +573,7 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
     }
     colnames(newdf)[ncol(newdf)] <- "rank"
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     colnames(newdf) <- abbreviate(colnames(newdf), minlength=label_chars)
   }
 

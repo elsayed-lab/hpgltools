@@ -96,16 +96,35 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     linear_mtrx <- as.matrix(exp(my_data) - 1)
   }
 
-  num_low <- sum(linear_mtrx < 1 && linear_mtrx >= 0)
+  zero_rows <- sum(rowSums(linear_mtrx) == 0)
+  if (zero_rows > 0) {
+    warning("batch_counts: Before batch/surrogate estimation, ",
+            zero_rows, " rows are 0.")
+  }
+
+  elements <- nrow(linear_mtrx) * ncol(linear_mtrx)
+  num_normal <- sum(linear_mtrx > 1)
+  normal_pct <- scales::percent(num_normal / elements)
+  message("batch_counts: Before batch/surrogate estimation, ",
+          num_normal, " entries are x>1: ", normal_pct, ".")
+  num_zero <- sum(linear_mtrx == 0)
+  zero_pct <- scales::percent(num_zero / elements)
+  message("batch_counts: Before batch/surrogate estimation, ",
+          num_zero, " entries are x==0: ", zero_pct, ".")
+  num_low <- sum(linear_mtrx < 1 & linear_mtrx > 0)
+  low_pct <- scales::percent(num_low / elements)
   if (is.null(num_low)) {
     num_low <- 0
   }
   if (num_low > 0) {
-    message("batch_counts: Before batch/surrogate estimation, ", num_low, " entries are 0<=x<1.")
+    message("batch_counts: Before batch/surrogate estimation, ",
+            num_low, " entries are 0<x<1: ", low_pct, ".")
   }
-  num_zero <- sum(linear_mtrx <= 0)
-  if (num_zero > 0) {
-    message("batch_counts: Before batch/surrogate estimation, ", num_zero, " entries are x<=0.")
+  num_neg <- sum(linear_mtrx < 0)
+  if (num_neg > 0) {
+    neg_pct <- scales::percent(num_neg / elements)
+    message("batch_counts: Before batch/surrogate estimation, ",
+            num_zero, " entries are x<0: ", neg_pct, ".")
   }
 
   conditions <- droplevels(as.factor(my_design[["condition"]]))
@@ -491,8 +510,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
                                    n.sv=chosen_surrogates,
                                    controls=control_likelihoods)
    model_adjust <- as.matrix(surrogate_result[["sv"]])
- }
- ) ## End of the switch.
+ }) ## End of the switch.
 
   surrogate_plots <- NULL
   if (!is.null(model_adjust)) {
@@ -501,7 +519,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     colnames(model_adjust) <- sv_names
     if (class(input) == "expt") {
       surrogate_plots <- plot_batchsv(input, model_adjust)
-    }
+   }
   }
   ## Only use counts_from_surrogates if the method does not provide counts on its own
   if (is.null(new_counts)) {
@@ -626,17 +644,6 @@ This will choose the number of surrogates differently depending on method chosen
   message("Note to self:  If you get an error like 'x contains missing values' ",
           "The data has too many 0's and needs a stronger low-count filter applied.")
 
-  num_low <- sum(count_table < 1 & count_table > 0)
-  if (is.null(num_low)) {
-    num_low <- 0
-  }
-  if (num_low > 0) {
-    message("batch_counts: Before batch correction, ", num_low, " entries 0<=x<1.")
-  }
-  num_zero <- sum(count_table <= 0)
-  if (num_zero > 0) {
-    message("batch_counts: Before batch correction, ", num_zero, " entries are >= 0.")
-  }
   if (isTRUE(batch)) {
     batch <- "limma"
   }
@@ -646,7 +653,6 @@ This will choose the number of surrogates differently depending on method chosen
   conditional_model <- model.matrix(~conditions, data=count_df)
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
-
   message("Passing off to all_adjusters.")
   new_material <- all_adjusters(count_table, design=design, estimate_type=batch,
                                 batch1=batch1, batch2=batch2, expt_state=expt_state,
@@ -666,11 +672,12 @@ This will choose the number of surrogates differently depending on method chosen
     num_low <- 0
   }
   if (num_low > 0) {
-    message("The number of elements which are < 0 after batch correction is: ",
-            num_low)
-    message("The variable low_to_zero sets whether to change <0 values to 0 and is: ",
-            low_to_zero)
+    elements <- nrow(count_table) * ncol(count_table)
+    low_pct <- scales::percent(num_low / elements)
+    message("There are ", num_low, " (", low_pct,
+            ") elements which are < 0 after batch correction.")
     if (isTRUE(low_to_zero)) {
+      message("Setting low elements to zero.")
       count_table[count_table < 0] <- 0
     }
   }
@@ -1114,7 +1121,7 @@ counts_from_surrogates <- function(data, adjust=NULL, design=NULL, method="ruv",
       ## W <- svdWa$u[, (first:k), drop = FALSE]
       ## alpha <- solve(t(W) %*% W) %*% t(W) %*% Y
       ## correctedY <- Y - W %*% alpha
-      ## if(!isLog && all(.isWholeNumber(x))) {
+      ## if(!isLog & all(.isWholeNumber(x))) {
       ##   if(round) {
       ##     correctedY <- round(exp(correctedY) - epsilon)
       ##     correctedY[correctedY<0] <- 0

@@ -15,7 +15,7 @@ actual <- as.character(pombe_varpart[["model_used"]])[2]
 test_that("Do we get the assumed model?", {
   expect_equal(expected, actual)
 })
-expected <- c(5810, 3)
+expected <- c(6727, 3)
 actual <- dim(pombe_varpart[["fitted_df"]])
 ## 0203
 test_that("Did we get an expected table of post-fitting percentages?", {

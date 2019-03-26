@@ -561,7 +561,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   label_list <- NULL
   if (is.null(arglist[["label_list"]]) & is.null(expt_names)) {
     label_list <- design[["sampleid"]]
-  } else if (class(expt_names) == "character" && length(expt_names) == 1) {
+  } else if (class(expt_names) == "character" & length(expt_names) == 1) {
     label_list <- design[[expt_names]]
   } else if (is.null(arglist[["label_list"]])) {
     label_list <- given_samples
@@ -570,7 +570,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   } else {
     label_list <- glue::glue("{design[['sampleid']]}_{design[[cond_column]]}")
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     label_list <- abbreviate(label_list, minlength=label_chars)
   }
 
@@ -866,6 +866,17 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     ## Leave the title blank.
   }
 
+  ## Perform a check of the PC table.
+  if (sum(is.na(comp_data)) > 0) {
+    message("Potentially check over the experimental design, there appear to be missing values.")
+    warning("There are NA values in the component data.  This can lead to weird plotting errors.")
+  }
+
+  if (nrow(comp_data) > 100 & is.null(plot_labels)) {
+    message("plot labels was not set and there are more than 100 samples, disabling it.")
+    plot_labels <- FALSE
+  }
+
   ## The plot_pcs() function gives a decent starting plot
   comp_plot <- plot_pcs(
     comp_data, first=x_name, second=y_name, design=design,
@@ -1003,7 +1014,7 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   label_list <- NULL
   if (is.null(arglist[["label_list"]]) & is.null(expt_names)) {
     label_list <- design[["sampleid"]]
-  } else if (class(expt_names) == "character" && length(expt_names) == 1) {
+  } else if (class(expt_names) == "character" & length(expt_names) == 1) {
     label_list <- design[[expt_names]]
   } else if (is.null(arglist[["label_list"]])) {
     label_list <- given_samples
@@ -1012,7 +1023,7 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   } else {
     label_list <- glue::glue("{design[['sampleid']]}_{design[[cond_column]]}")
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     label_list <- abbreviate(label_list, minlength=label_chars)
   }
 

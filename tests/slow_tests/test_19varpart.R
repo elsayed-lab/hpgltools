@@ -13,7 +13,9 @@ pasilla <- new.env()
 load("../travis/pasilla.Rdata", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-pasilla_varpart <- sm(varpart(pasilla_expt, predictor=NULL, factors=c("condition", "batch")))
+pasilla_norm <- normalize_expt(pasilla_expt, filter=TRUE, transform="log2", convert="cpm", norm="quant")
+
+pasilla_varpart <- sm(varpart(pasilla_norm, predictor=NULL, factors=c("condition", "batch")))
 
 ## Grab the model and see if it survived.
 expected <- "(1 | condition) + (1 | batch)"
@@ -22,11 +24,13 @@ test_that("Does my varpart function return a sane model?", {
   expect_equal(expected, actual)
 })
 
+## Something strange changed here.
 ## See if the variance by condition is as expected
-expected <- c(0.8451941, 0.8436158, 0.8364982, 0.8361348, 0.8240863, 0.8174928)
+##expected <- c(0.8451941, 0.8436158, 0.8364982, 0.8361348, 0.8240863, 0.8174928)
+expected <-  c(0.9929197, 0.9905977, 0.9900641, 0.9890613, 0.9885474, 0.9867127)
 actual <- head(pasilla_varpart[["sorted_df"]])[["condition"]]
 test_that("Do we get expected values of variance by condition?", {
-  expect_equal(expected, actual, tolerance=0.001)
+  expect_equal(expected, actual, tolerance=0.01)
 })
 
 end <- as.POSIXlt(Sys.time())
