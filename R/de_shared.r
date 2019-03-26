@@ -86,9 +86,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   pre_pca <- NULL
   post_pca <- NULL
   if (isTRUE(test_pca)) {
-    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
-                                   transform="log2", convert="cpm", norm="quant"))
-    pre_pca <- plot_pca(pre_batch)[["plot"]]
+    pre_batch <- normalize_expt(input, filter=TRUE, batch=FALSE,
+                                transform="log2", convert="cpm", norm="quant")
+    message("Plotting a PCA before surrogates/batch inclusion.")
+    pre_pca <- plot_pca(pre_batch, ...)[["plot"]]
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
@@ -102,14 +103,14 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         test_norm <- "raw"
       }
       message("Performing a test normalization with: ", test_norm)
-      post_batch <- sm(try(normalize_expt(input, filter=TRUE, batch=model_type,
-                                          transform="log2", convert="cpm",
-                                          norm=test_norm)))
+      post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
+                                       transform="log2", convert="cpm",
+                                       norm=test_norm))
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
     }
-    post_pca <- plot_pca(post_batch)[["plot"]]
+    post_pca <- plot_pca(post_batch, ...)[["plot"]]
   }
 
   ## do_ebseq defaults to NULL, this is so that we can query the number of
@@ -162,7 +163,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         type, input=input, conditions=conditions, batches=batches,
         model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
         extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize,
-        annot_df=annot_df, ...)
+        annot_df=annot_df,
+        ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     message("Finished running DE analyses, collecting outputs.")
@@ -177,6 +179,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     ## End performing parallel comparisons
   } else {
     for (type in names(results)) {
+      message("Starting ", type, "_pairwise().")
       results[[type]] <- do_pairwise(
         type, input=input, conditions=conditions, batches=batches,
         model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
@@ -963,6 +966,21 @@ compare_de_results <- function(first, second, cor_method="pearson",
   return(retlist)
 }
 
+expressionset_to_deseq <- function(expt, model_cond=TRUE, model_batch=FALSE) {
+  design <- pData(expt)
+  mtrx <- exprs(expt)
+  model_string <- "~ 0 + condition"
+  int_mtrx <- mtrx
+  for (it in 1:length(colnames(int_mtrx))) {
+    int_mtrx[, it] <- as.integer(int_mtrx[, it])
+    na_idx <- is.na(int_mtrx[, it])
+    int_mtrx[na_idx, it] <- 0
+  }
+  summarized <- import_deseq(data=int_mtrx, column_data=design, model_string=model_string)
+  dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
+  return(dataset)
+}
+
 #' See how similar are results from limma/deseq/edger/ebseq.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions.
@@ -1242,8 +1260,8 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
 #' Test for infected/control/beads -- a placebo effect?
 #'
 #' The goal is therefore to find responses different than beads
-#' The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
-#' The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
+#' The null hypothesis is (H0): (infected == uninfected) | (infected == beads)
+#' The alt hypothesis is (HA): (infected != uninfected) & (infected != beads)
 #'
 #' @param contrast_fit  The result of lmFit.
 #' @param cellmeans_fit  The result of a cellmeans fit.

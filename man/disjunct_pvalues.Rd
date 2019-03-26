@@ -18,6 +18,6 @@ disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts,
 }
 \description{
 The goal is therefore to find responses different than beads
-The null hypothesis is (H0): (infected == uninfected) || (infected == beads)
-The alt hypothesis is (HA): (infected != uninfected) && (infected != beads)
+The null hypothesis is (H0): (infected == uninfected) | (infected == beads)
+The alt hypothesis is (HA): (infected != uninfected) & (infected != beads)
 }

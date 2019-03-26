@@ -45,6 +45,15 @@ convert_counts <- function(data, convert="raw", ...) {
   switchret <- switch(
     convert,
     "cpm" = {
+      na_idx <- is.na(count_table)
+      if (sum(na_idx) > 0) {
+        warning("There are ", sum(na_idx), " NAs in the expressionset.")
+      }
+      neg_idx <- count_table < 0
+      if (sum(neg_idx) > 0) {
+        warning("There are ", sum(neg_idx), " negative values in the expressionset, modifying it.")
+        count_table[neg_idx] <- 0
+      }
       count_table <- edgeR::cpm(count_table)
     },
     "cbcbcpm" = {

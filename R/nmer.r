@@ -8,11 +8,18 @@
 #' @param pattern  Count off this string.
 #' @param mismatch  How many mismatches are acceptable?
 #' @return Set of counts by sequence.
+#' @export
 count_nmer <- function(genome, pattern="ATG", mismatch=0) {
-    seq_obj <- Biostrings::getSeq(genome)
-    dict <- Biostrings::PDict(pattern, max.mismatch=mismatch)
-    result <- Biostrings::vcountPDict(dict, seq_obj)
-    return(result)
+  if (class(genome)[1] == "character") {
+    genome <- Rsamtools::FaFile(genome)
+  }
+  seq_obj <- Biostrings::getSeq(genome)
+  dict <- Biostrings::PDict(pattern, max.mismatch=mismatch)
+  result <- as.data.frame(Biostrings::vcountPDict(dict, seq_obj))
+  rownames(result) <- pattern
+  colnames(result) <- names(seq_obj)
+  result <- t(result)
+  return(result)
 }
 
 ## EOF

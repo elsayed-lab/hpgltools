@@ -194,8 +194,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 
   ma_material <- NULL
   vol_material <- NULL
-  if (!is.null(the_table[[expr_col]]) &&
-      !is.null(the_table[[fc_col]]) &&
+  if (!is.null(the_table[[expr_col]]) &
+      !is.null(the_table[[fc_col]]) &
       !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
       table=the_table, expr_col=expr_col, fc_col=fc_col, p_col=p_col,
@@ -457,7 +457,7 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.
 plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, ...) {
-  if (is.null(type) && is.null(columns)) {
+  if (is.null(type) & is.null(columns)) {
     stop("Some columns are required to extract p-values.")
   }
   if (is.null(columns)) {

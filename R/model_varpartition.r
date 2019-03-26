@@ -82,15 +82,15 @@ varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
   }
   model_string <- "~ "
   if (!is.null(predictor)) {
-    model_string <- glue("{model_string}{predictor} +")
+    model_string <- glue::glue("{model_string}{predictor} +")
   }
   for (fact in factors) {
-    model_string <- glue("{model_string} (1|{fact}) +")
+    model_string <- glue::glue("{model_string} (1|{fact}) +")
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
   message("Attempting mixed linear model with: ", model_string)
   my_model <- as.formula(model_string)
-  norm <- sm(normalize_expt(expt, filter=TRUE))
+  norm <- sm(normalize_expt(expt, filter="simple"))
   data <- exprs(norm)
 
   message("Fitting the expressionset to the model, this is slow.")

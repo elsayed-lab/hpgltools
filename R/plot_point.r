@@ -639,14 +639,14 @@ plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL,
   condition <- design[["condition"]]
   batch <- design[["batch"]]
 
-  if (!is.null(expt_names) && class(expt_names) == "character") {
+  if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       colnames(data) <- make.names(design[[expt_names]], unique=TRUE)
     } else {
       colnames(data) <- expt_names
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
   }
   nz_df <- data.frame(

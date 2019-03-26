@@ -25,7 +25,7 @@ mgas_norm <- normalize_expt(mgas_expt, transform="log2",
                             convert="cbcbcpm", filter=TRUE)
 ## 02
 test_that("Is the filter state maintained?", {
-  expect_equal("hpgl", mgas_norm[["state"]][["filter"]])
+  expect_equal("cbcb", mgas_norm[["state"]][["filter"]])
 })
 ## 03
 test_that("Is the normalization state maintained?", {

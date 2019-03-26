@@ -32,7 +32,7 @@ test_that("Do we get the values for treated and untreated samples?", {
 expected_medians_untreated <- c(-1.8156755, -1.5986007, -1.1228487, -1.1045870, -1.0358351, -0.8590158)
 actual_medians_untreated <- head(sort(hpgl_norm_basic[["medians"]][["untreated"]]))
 test_that("Do we get the values for treated and untreated samples?", {
-    expect_equal(expected_medians_untreated, actual_medians_untreated, tolerance=0.001)
+    expect_equal(expected_medians_untreated, actual_medians_untreated, tolerance=0.01)
 })
 
 expected_logfc <- c(-3.307, -3.136, -3.061, -2.997, -2.961, -2.948)

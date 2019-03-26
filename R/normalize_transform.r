@@ -20,6 +20,8 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
                              base=NULL, ...) {
   arglist <- list(...)
   ## Short circuit this if we are going with raw data.
+
+
   switchret <- switch(
     transform,
     "raw" = {
@@ -93,18 +95,20 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
   }
   count_table <- as.matrix(count_table)
   ## As a final check, remove any NaNs produced due to some shenanigans.
+  ## This logic was removed, which is causing some unintended consequences.
+  ## We should consider further how to deal with this.
   num_before <- nrow(count_table)
   nans <- is.nan(count_table)
   ## print(head(nans))
   nans_sum <- sum(nans)
-  if (nans_sum > 0) {
-    message("Setting nan containing elements to 0.")
-    count_table[nans] <- 0
+  ##if (nans_sum > 0) {
+    ##message("Setting nan containing elements to 0.")
+    ##count_table[nans] <- 0
     ##nans <- nans == 0
     ##count_table <- count_table[!nans, ]
     ##message(sprintf("Removing %d NaN containing rows (%d remaining).",
     ##                num_before - nrow(count_table), nrow(count_table)))
-  }
+  ##}
 
   libsize <- colSums(count_table)
   counts <- list(

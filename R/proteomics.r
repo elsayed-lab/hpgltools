@@ -1,17 +1,73 @@
-#' Read a mzXML file and extract from it some important metadata.
+#' Read output from mayu to get the IP/PP number corresponding to a given FDR value.
+#'
+#' @param file Mayu output file.
+#' @param fdr Chosen fdr value to acquire.
+#' @return List of two elements: the full mayu table sorted by fdr and the number
+#'   corresponding to the chosen fdr value.
+#' @export
+extract_mayu_pps_fdr <- function(file, fdr=0.01) {
+  mayu_df <- readr::read_csv(file)
+  fdr_df <- mayu_df[, c("IP/PPs", "protFDR")]
+  fdr_idx <- order(fdr_df[["protFDR"]])
+  fdr_df <- fdr_df[fdr_idx, ]
+  mayu_df <- mayu_df[fdr_idx, ]
+  keepers <- fdr_df[["protFDR"]] <= fdr
+  fdr_df <- fdr_df[keepers, ]
+  result <- tail(fdr_df, n=1)[[1]]
+  retlist <- list(
+    "fdr_number" = result,
+    "table" = mayu_df)
+  return(retlist)
+}
+
+#' Read a mzML/mzXML file and extract from it some important metadata.
 #'
 #' When working with swath data, it is fundamentally important to know the
 #' correct values for a bunch of the input variables.  These are not trivial
 #' to acquire.  This function attempts to make this easier (but slow) by reading
 #' the mzXML file and parsing out helpful data.
 #'
-#' @param file  Filename to read.
-#' @param id  An id to give the result.
-#' @param write_acquisitions  If a filename is provided, write a tab separated
+#' @param file Filename to read.
+#' @param id An id to give the result.
+#' @param write_acquisitions If a filename is provided, write a tab separated
 #'   table of windows.
+#' @param start_add Add a minute to the start of the windows to avoid overlaps?
 #' @return List containing a table of scan and precursor data.
 #' @export
-extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
+extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
+                               allow_window_overlap=FALSE, start_add=0) {
+  if (format == "mzML") {
+    extract_mzML_scans(file, id=id, write_acquisitions=write_acqusitions,
+                       allow_window_overlap=allow_window_overlap, start_add=start_add)
+  } else {
+    extract_mzXML_scans(file, id=id, write_acquisitions=write_acqusitions,
+                        allow_window_overlap=allow_window_overlap, start_add=start_add)
+  }
+}
+
+#' Parse a mzXML file and return the relevant data.
+#'
+#' This does the actual work for extract_scan_data().  When I wrote this
+#' function, I had forgotten about the mzR library; with that in mind, this
+#' seems to give a bit more information and be a bit faster than my short tests
+#' with mzR (note however that my tests were to compare mzR parsing mzML files
+#' vs. this function with mzXML, which is a classic apples to oranges).
+#'
+#' This goes a step further to pull out the windows acquired in the MS/MS scan
+#' and print them in formats acceptable to TPP/OpenMS (eg. with and without
+#' headers).
+#'
+#' @param file Input mzXML file to parse.
+#' @param id Chosen ID for the given file.
+#' @param write_acquisitions Write acquisition windows.
+#' @param allow_window_overlap Some downstream tools cannot deal with
+#'   overlapping windows. Toggle that here.
+#' @param start_add Other downstream tools appear to expect some padding at the
+#'   beginning of each window.  Add that here.
+#' @return The list of metadata, scan data, etc from the mzXML file.
+#' @export
+extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
+                                allow_window_overlap=FALSE, start_add=0) {
   if (is.null(id)) {
     id <- file
   }
@@ -81,6 +137,21 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   acquisition_unique <- !duplicated(x=acquisition_windows)
   acquisition_windows <- acquisition_windows[acquisition_unique, ]
   colnames(acquisition_windows) <- c("start", "end")
+  if (!isTRUE(allow_window_overlap)) {
+    previous_end <- acquisition_windows[1, "end"]
+    ## If we are not allowing windows to overlap, then we will add 0.01 to the previous endpoint.
+    for (it in 2:nrow(acquisition_windows)) {
+      new_start <- acquisition_windows[it, "start"]
+      if (new_start != previous_end) {
+        acquisition_windows[it, "start"] <- previous_end
+      }
+      previous_end <- acquisition_windows[it, "end"]
+    }
+  } else if (!is.null(start_add)) {
+    ## Conversely, we can add a static amount of time to the start of each window.
+    acquisition_windows[["start"]] <- acquisition_windows[["start"]] + start_add
+  }
+
   ## If requested, write out the acquisition windows in a format acceptable to openswath.
   if (write_acquisitions != FALSE) {
     acq_dir <- "windows"
@@ -100,12 +171,12 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
     ## invocation of OpenSwathWorkFlow or whatever it is, _requires_ them.
     ## So, yeah, that is annoying, but whatever.
     pre_file <- file.path(acq_dir, acq_file)
-    message("Hopefully writing acquisition file to: ", pre_file)
+    message("Writing acquisition file to: ", pre_file)
     no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
                            row.names=FALSE, col.names=FALSE)
     osw_file <- file.path(acq_dir, glue("openswath_{acq_file}"))
     ## This is the file for openswathworkflow.
-    message("Hopefully writing osw acquisitions to: ", osw_file)
+    message("Writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
                             sep="\t", quote=FALSE,
                             row.names=FALSE, col.names=TRUE)
@@ -119,11 +190,48 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
   return(retlist)
 }
 
+#' Parse a mzML file and return the relevant data.
+#'
+#' This does the actual work for extract_scan_data().  This levers mzR to
+#' provide the data and goes a step further to pull out the windows acquired in
+#' the MS/MS scan and print them in formats acceptable to TPP/OpenMS (eg. with
+#' and without headers).
+#'
+#' @param file Input mzML file to parse.
+#' @param id Chosen ID for the given file.
+#' @param write_acquisitions Write acquisition windows.
+#' @param allow_window_overlap Some downstream tools cannot deal with
+#'   overlapping windows. Toggle that here.
+#' @param start_add Other downstream tools appear to expect some padding at the
+#'   beginning of each window.  Add that here.
+#' @return The list of metadata, scan data, etc from the mzXML file.
+#' @export
+extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
+                              allow_window_overlap=FALSE, start_add=0) {
+  if (is.null(id)) {
+    id <- file
+  }
+  message("Reading ", file)
+  input <- mzR::openMSfile(file)
+  instrument <- mzR::instrumentInfo(input)
+  info <- mzR::runInfo(input)
+  scan_data <- mzR::header(input)
+  closed <- mzR::close(input)
+  retlist <- list(
+    "instrument" = instrument,
+    "info" = info,
+    "scan" = scan_data)
+  return(retlist)
+}
+
 #' Read a bunch of mzXML files to acquire their metadata.
 #'
 #' I have had difficulties getting the full set of correct parameters for a
 #' DDA/DIA experiment.  After some poking, I eventually found most of these
 #' required prameters in the mzXML raw files.  Ergo, this function uses them.
+#' 20190310: I had forgotten about the mzR library.  I think much (all?) of this
+#' is redundant with respect to it and perhaps should be removed in deference to
+#' the more complete and fast implementation included in mzR.
 #'
 #' @param metadata  Data frame describing the samples, including the mzXML
 #'   filenames.
@@ -135,7 +243,8 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE) {
 #'   stuff like that.
 #' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
-extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
+extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
+                               allow_window_overlap=FALSE, add_start=0, format="mzXML",
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
@@ -156,7 +265,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     sample_definitions <- metadata
   } else {
       sample_definitions <- extract_metadata(metadata, ...)
-      ## sample_definitions <- extract_metadata(metadata)
+      ##sample_definitions <- extract_metadata(metadata)
   }
 
   file_column <- "file"
@@ -196,7 +305,7 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     cores <- 4
     cl <- parallel::makeCluster(cores)
     doSNOW::registerDoSNOW(cl)
-    show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+    show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
     if (isTRUE(show_progress)) {
       bar <- utils::txtProgressBar(max=num_files, style=3)
     }
@@ -211,7 +320,9 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
+                                           allow_window_overlap=allow_window_overlap,
+                                           format=format, start_add=start_add))
       if (class(file_result)[1] != "try-error") {
         returns[[file]] <- file_result
       }
@@ -224,7 +335,9 @@ extract_mzxml_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows))
+      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
+                                           allow_window_overlap=allow_window_overlap,
+                                           format=format, start_add=start_add))
       if (class(file_result)[1] != "try-error") {
         res[[file]] <- file_result
       }
@@ -367,7 +480,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
     rvest::html_node(xpath="modification_info")
 
   message("Filling in modification information, this is slow.")
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }
@@ -846,7 +959,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   samples <- length(sample_data)
 
   ## Reset the sample names if one wants a specific column from the metadata.
-  if (!is.null(expt_names) && class(expt_names) == "character") {
+  if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
     } else {
@@ -871,11 +984,12 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
       good_idx <- plotted_table[["decoy"]] != 0
       plotted_table <- plotted_table[good_idx, ]
     }
-    plotted_data <- as.data.frame(plotted_table[[column]])
+    plotted_data <- as.data.frame(plotted_table[c("sequence", "proteinname",
+                                                  "aggr_fragment_annotation", column)])
     plotted_data[["sample"]] <- name
-    colnames(plotted_data) <- c(column, "sample")
+    colnames(plotted_data) <- c("sequence", "proteinname", "fragment", column, "sample")
     ## Re-order the columns because I like sample first.
-    plotted_data <- plotted_data[, c("sample", column)]
+    plotted_data <- plotted_data[, c("sample", column, "sequence", "proteinname", "fragment")]
     plot_df <- rbind(plot_df, plotted_data)
   }
   ## I am not certain this is valid.
@@ -895,7 +1009,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   }
   plot_df[[column]] <- scale_data[["data"]]
 
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
   }
   boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
@@ -952,6 +1066,122 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
     "dotboxplot" = dotboxplot,
     "density" = density)
   return(retlist)
+}
+
+#' Read data from pyprophet and plot columns from it.
+#'
+#' More proteomics diagnostics!  Now that I am looking more closely, I think
+#' this should be folded into plot_pyprophet_distribution().
+#'
+#' @param pyprophet_data Data from extract_pyprophet_data()
+#' @param column Chosen column to plot.
+#' @param keep_real FIXME: This should be changed to something like 'data_type'
+#'   here and in plot_pyprophet_distribution.
+#' @param keep_decoys Do we keep the decoys when plotting the data?
+#' @param expt_names Names for the x-axis of the plot.
+#' @param label_chars Maximum number of characters before abbreviating sample
+#'   names.
+#' @param protein chosen protein(s) to plot.
+#' @param title Title the plot?
+#' @param scale Put the data on a specific scale?
+#' @param ... Further arguments, presumably for colors or some such.
+#' @return Boxplot describing the desired column from the data.
+#' @export
+plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real=TRUE,
+                                   keep_decoys=TRUE, expt_names=NULL, label_chars=10,
+                                   protein=NULL, title=NULL, scale=NULL, ...) {
+  arglist <- list(...)
+  metadata <- pyprophet_data[["metadata"]]
+  colors <- pyprophet_data[["colors"]]
+  sample_data <- pyprophet_data[["sample_data"]]
+  plot_df <- data.frame()
+  samples <- length(sample_data)
+
+  ## Reset the sample names if one wants a specific column from the metadata.
+  if (!is.null(expt_names) & class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
+    } else {
+      names(sample_data) <- expt_names
+    }
+  }
+
+  keepers <- c()
+  for (i in 1:samples) {
+    name <- names(sample_data)[i]
+    if (class(sample_data[[i]])[1] == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
+    plotted_table <- sample_data[[i]]
+    if (!isTRUE(keep_decoys)) {
+      good_idx <- plotted_table[["decoy"]] != 1
+      plotted_table <- plotted_table[good_idx, ]
+    }
+    if (!isTRUE(keep_real)) {
+      good_idx <- plotted_table[["decoy"]] != 0
+      plotted_table <- plotted_table[good_idx, ]
+    }
+    plotted_data <- as.data.frame(plotted_table[c("sequence", "proteinname",
+                                                  "aggr_fragment_annotation", column)])
+    plotted_data[["sample"]] <- name
+    colnames(plotted_data) <- c("sequence", "proteinname", "fragment", column, "sample")
+    ## Re-order the columns because I like sample first.
+    plotted_data <- plotted_data[, c("sample", column, "sequence", "proteinname", "fragment")]
+    plot_df <- rbind(plot_df, plotted_data)
+  }
+
+  ## Drop rows from the metadata and colors which had errors.
+  if (length(keepers) > 0) {
+    metadata <- metadata[keepers, ]
+    colors <- colors[keepers]
+  } else {
+    stop("Something bad happened to the set of kept samples.")
+  }
+
+  if (is.null(protein)) {
+    stop("This requires a protein ID to search.")
+  } else {
+    kept_prot_idx <- grepl(pattern=protein, x=plot_df[["proteinname"]])
+    plot_df <- plot_df[kept_prot_idx, ]
+  }
+  plot_df[["sequence"]] <- as.factor(plot_df[["sequence"]])
+
+  scale_data <- check_plot_scale(plot_df[[column]], scale, ...)
+  if (is.null(scale)) {
+    scale <- scale_data[["scale"]]
+  }
+  plot_df[[column]] <- scale_data[["data"]]
+
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
+    plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
+  }
+  violin <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
+    ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
+    ggplot2::scale_fill_manual(values=as.character(colors)) +
+    ggplot2::theme_bw(base_size=base_size) +
+    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    ggplot2::xlab("Sample") +
+    ggplot2::ylab(column) +
+    ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
+                         size=2, alpha=0.5)
+  if (!is.null(title)) {
+    violin <- violin + ggplot2::ggtitle(title)
+  }
+  scale <- "log"
+  if (scale == "log") {
+    violin <- violin + ggplot2::scale_y_continuous(
+                                  labels=scales::scientific,
+                                  trans=scales::log2_trans())
+  } else if (scale == "logdim") {
+    violin <- violin + ggplot2::coord_trans(y="log2")
+  } else if (isTRUE(scale)) {
+    violin <- violin + ggplot2::scale_y_log10()
+  }
+
+  return(violin)
 }
 
 #' Plot some data from the result of extract_peprophet_data()
@@ -1199,7 +1429,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   message("Reading ", xlsx_file)
   result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
   group_data <- list()
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }
@@ -1285,7 +1515,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   peptide_df <- data.frame()
   protein_names <- c()
   message("Starting to iterate over ", length(group_data),  " groups.")
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }

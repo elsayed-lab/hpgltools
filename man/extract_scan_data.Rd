@@ -2,9 +2,10 @@
 % Please edit documentation in R/proteomics.r
 \name{extract_scan_data}
 \alias{extract_scan_data}
-\title{Read a mzXML file and extract from it some important metadata.}
+\title{Read a mzML/mzXML file and extract from it some important metadata.}
 \usage{
-extract_scan_data(file, id = NULL, write_acquisitions = TRUE)
+extract_scan_data(file, id = NULL, write_acquisitions = TRUE,
+  format = "mzXML", allow_window_overlap = FALSE, start_add = 0)
 }
 \arguments{
 \item{file}{Filename to read.}
@@ -13,6 +14,8 @@ extract_scan_data(file, id = NULL, write_acquisitions = TRUE)
 
 \item{write_acquisitions}{If a filename is provided, write a tab separated
 table of windows.}
+
+\item{start_add}{Add a minute to the start of the windows to avoid overlaps?}
 }
 \value{
 List containing a table of scan and precursor data.

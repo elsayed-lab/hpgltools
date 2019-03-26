@@ -75,14 +75,14 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
   colors <- as.character(colors)
   sum <- NULL
 
-  if (!is.null(expt_names) && class(expt_names) == "character") {
+  if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       colnames(mtrx) <- make.names(design[[expt_names]], unique=TRUE)
     } else {
       colnames(mtrx) <- expt_names
     }
   }
-  if (!is.null(label_chars) && is.numeric(label_chars)) {
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
     colnames(mtrx) <- abbreviate(colnames(mtrx), minlength=label_chars)
   }
 
