@@ -15,6 +15,10 @@ extract_scan_data(file, id = NULL, write_acquisitions = TRUE,
 \item{write_acquisitions}{If a filename is provided, write a tab separated
 table of windows.}
 
+\item{format}{Either mzXML or mzML.}
+
+\item{allow_window_overlap}{One may choose to foce windows to not overlap.}
+
 \item{start_add}{Add a minute to the start of the windows to avoid overlaps?}
 }
 \value{

@@ -32,7 +32,7 @@ Suggests:
   jsonlite,
   KEGGREST, KEGGgraph,
   lattice, limma, locfit,
-  matrixStats, MLSeq, motifRG, mygene,
+  matrixStats, MLSeq, motifRG, mygene, mzR,
   openxlsx, OrganismDbi,
   packrat, pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,

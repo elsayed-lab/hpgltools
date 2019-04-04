@@ -859,12 +859,14 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
 
   if (isTRUE(plot_title)) {
     plot_title <- what_happened(expt=data)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt=data)
-    plot_title <- glue::glue("{plot_title}; {data_title}")
-  } else {
-    ## Leave the title blank.
   }
+  ## I think this is now redundant, removing it to see.
+  ## else if (!is.null(plot_title)) {
+  ##data_title <- what_happened(expt=data)
+  ##  plot_title <- glue::glue("{plot_title}; {data_title}")
+  ##} else {
+  ##  ## Leave the title blank.
+  ##}
 
   ## Perform a check of the PC table.
   if (sum(is.na(comp_data)) > 0) {

@@ -8,13 +8,13 @@ disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts,
   disj_contrast)
 }
 \arguments{
-\item{contrast_fit}{The result of lmFit.}
+\item{contrast_fit}{Result of lmFit.}
 
-\item{cellmeans_fit}{The result of a cellmeans fit.}
+\item{cellmeans_fit}{Result of a cellmeans fit.}
 
-\item{conj_contrasts}{The result from the makeContrasts of the first set.}
+\item{conj_contrasts}{Result from the makeContrasts of the first set.}
 
-\item{disj_contrast}{The result of the makeContrasts of the second set.}
+\item{disj_contrast}{Result of the makeContrasts of the second set.}
 }
 \description{
 The goal is therefore to find responses different than beads

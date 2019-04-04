@@ -31,6 +31,8 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @param id An id to give the result.
 #' @param write_acquisitions If a filename is provided, write a tab separated
 #'   table of windows.
+#' @param format Either mzXML or mzML.
+#' @param allow_window_overlap One may choose to foce windows to not overlap.
 #' @param start_add Add a minute to the start of the windows to avoid overlaps?
 #' @return List containing a table of scan and precursor data.
 #' @export
@@ -72,7 +74,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     id <- file
   }
   message("Reading ", file)
-  input <- xml2::read_html(file, options="NOBLANKS")
+  input <- xml2::read_html(x=file, options="NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
   message("Extracting instrument information for ", file)
@@ -233,18 +235,24 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' is redundant with respect to it and perhaps should be removed in deference to
 #' the more complete and fast implementation included in mzR.
 #'
-#' @param metadata  Data frame describing the samples, including the mzXML
+#' @param metadata Data frame describing the samples, including the mzXML
 #'   filenames.
-#' @param write_windows  Write out SWATH window frames.
-#' @param id_column  What column in the sample sheet provides the ID for the samples?
-#' @param parallel  Perform operations using an R foreach cluster?
-#' @param savefile  If not null, save the resulting data structure to an rda file.
+#' @param write_windows Write out SWATH window frames.
+#' @param id_column What column in the sample sheet provides the ID for the samples?
+#' @param allow_window_overlap What it says on the tin, some tools do not like
+#'   DIA windows to overlap, if TRUE, this will make sure each annotated window
+#'   starts at the end of the previous window if they overlap.
+#' @param start_add Another strategy is to just add a static amount to each
+#'   window.
+#' @param format Currently this handles mzXML or mzML files.
+#' @param parallel Perform operations using an R foreach cluster?
+#' @param savefile If not null, save the resulting data structure to an rda file.
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
-#' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
+#' @return List of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
 extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
-                               allow_window_overlap=FALSE, add_start=0, format="mzXML",
+                               allow_window_overlap=FALSE, start_add=0, format="mzXML",
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
@@ -725,6 +733,20 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   }
   return(retlist)
 }
+
+##extract_traml_data <- function(traml) {
+##  message("Reading the TraML file.")
+##  ## xml2 is painfully slow and annoying with these files, but I do not know why.
+##  input <- xml2::read_html(x=traml, options="NOBLANKS")
+##  ##children <- input %>%
+##  ##  xml2::xml_children()
+##  ##contents <- input %>%
+##  ##  xml2::xml_contents()
+##  all_nodes <- input %>%
+##    rvest::html_nodes("*")
+##  protein_nodes <- all_nodes %>%
+##    rvest::html_nodes(xpath="//Protein")
+##}
 
 #' Plot mzXML peak intensities with respect to m/z.
 #'
