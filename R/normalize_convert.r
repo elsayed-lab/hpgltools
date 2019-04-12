@@ -44,6 +44,13 @@ convert_counts <- function(data, convert="raw", ...) {
 
   switchret <- switch(
     convert,
+    "nacpm" = {
+      zero_idx <- count_table == 0
+      message("Converting ", sum(zero_idx), " zeros to NA.")
+      count_table[zero_idx] <- NA
+      na_colsums <- colSums(count_table, na.rm=TRUE)
+      count_table <- edgeR::cpm(count_table, lib.size=na_colsums)
+    },
     "cpm" = {
       na_idx <- is.na(count_table)
       if (sum(na_idx) > 0) {

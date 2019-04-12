@@ -34,7 +34,7 @@ test_that("Does combine_de_tables create an excel file?", {
 
 hpgl_sva_result <- all_pairwise(pasilla_expt, model_batch="sva", which_voom="limma",
                                 limma_method="robust", edger_method="long",
-                                edger_test="qlr", parallel=FALSE)
+                                edger_test="qlr")
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 table_order <- rownames(expected)

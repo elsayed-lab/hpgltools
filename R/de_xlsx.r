@@ -1355,25 +1355,25 @@ Defaulting to fdr.")
   if (!is.null(comb[["limma_p"]])) {
     colname <- glue::glue("limma_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["deseq_p"]])) {
     colname <- glue::glue("deseq_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["deseq_p"]], method=padj_type)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["edger_p"]])) {
     colname <- glue::glue("edger_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["edger_p"]], method=padj_type)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["ebseq_ppde"]])) {
-    comb[["ebseq_ppde"]] <- format(x=comb[["ebseq_ppde"]], digits=4, scientific=TRUE)
+    comb[["ebseq_ppde"]] <- format(x=comb[["ebseq_ppde"]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["basic_p"]])) {
     colname <- glue::glue("basic_adjp_{padj_type}")
     comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE)
+    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
 
 
@@ -1395,10 +1395,10 @@ Defaulting to fdr.")
     comb[["p_meta"]] <- rowMeans(temp_p, na.rm=TRUE)
     comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm=TRUE)
     comb[["lfc_meta"]] <- signif(x=comb[["lfc_meta"]], digits=4)
-    comb[["lfc_var"]] <- format(x=comb[["lfc_var"]], digits=4, scientific=TRUE)
-    comb[["lfc_varbymed"]] <- format(x=comb[["lfc_varbymed"]], digits=4, scientific=TRUE)
-    comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE)
-    comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE)
+    comb[["lfc_var"]] <- format(x=comb[["lfc_var"]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[["lfc_varbymed"]] <- format(x=comb[["lfc_varbymed"]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(annot_df)) {
     ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))

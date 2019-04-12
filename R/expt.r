@@ -1181,7 +1181,7 @@ make_exampledata <- function(ngenes=1000, columns=5) {
 #'  compressed = median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data, fact="condition") {
+median_by_factor <- function(data, fact="condition", fun="median") {
   if (length(fact) == 1) {
     design <- pData(data)
     fact <- design[[fact]]
@@ -1208,8 +1208,15 @@ median_by_factor <- function(data, fact="condition") {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
     } else {
-      message("The factor ", type, " has ", length(columns), " rows.")
-      med <- matrixStats::rowMedians(data[, columns])
+      if (fun == "median") {
+        message("The factor ", type, " has ", length(columns), " rows.")
+        med <- matrixStats::rowMedians(data[, columns], na.rm=TRUE)
+      } else if (fun == "mean") {
+        message("The factor ", type, " has ", length(columns), " rows.")
+        med <- BiocGenerics::rowMeans(data[, columns], na.rm=TRUE)
+      } else {
+        stop("I do not understand that funct.")
+      }
     }
     medians <- cbind(medians, med)
   }
@@ -1527,7 +1534,7 @@ read_metadata <- function(file, ...) {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
     definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
-    if (class(definitions) == "try-error") {
+    if (class(definitions)[1] == "try-error") {
       stop("Unable to read the metadata file: ", file)
     }
   } else if (tools::file_ext(file) == "xls") {
@@ -1810,7 +1817,10 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
     new_pdata <- old_pdata
     new_pdata[["condition"]] <- as.factor(new_cond)
     pData(expt[["expressionset"]]) <- new_pdata
-    new_expt[["conditions"]][ids] <- fact
+    new_conditions <- as.character(new_expt[["conditions"]])
+    names(new_conditions) <- names(new_expt[["conditions"]])
+    new_conditions[ids] <- fact
+    new_expt[["conditions"]] <- as.factor(new_conditions)
     new_expt[["design"]][["condition"]] <- new_cond
   } else if (length(fact) == 1) {
     ## Assume it is a column in the design
@@ -2518,7 +2528,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "norm_data"
   new_col <- 1
   new_row <- 1
-  message("Line 2336 of expt.r, removed normalization of pca plotting.")
   norm_data <- sm(normalize_expt(expt=expt, transform=transform,
                                  convert=convert, batch=batch, filter=filter,
                                  ...))

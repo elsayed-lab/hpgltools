@@ -714,6 +714,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
         dplyr::mutate(mass=gather_masses(sequence))
       res[[id]] <- file_result
     } else {
+      message("Failed to read: ", id, ".")
       failed_files <- c(failed_files, file)
     }
   }
@@ -747,6 +748,61 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 ##  protein_nodes <- all_nodes %>%
 ##    rvest::html_nodes(xpath="//Protein")
 ##}
+
+#' An attempt to address a troubling question when working with DIA data.
+#'
+#' My biggest concern when treating DIA data in a RNASeqish manner is the fact
+#' that if a given peptide is not identified, that is not the same thing as
+#' stating that it was not translated.  It is somewhat reminiscent of the often
+#' mocked and repeated Donald Rumsfeld statement regarding known unknowns
+#' vs. unknown unknowns.  Thus, in an RNASeq experiment, if one sees a zero, one
+#' may assume that transcript was not transcribed, it may be assumed to be a
+#' known zero(unknown).  In contrast, if the same thing happens in a DIA data
+#' set, that represents an unknown unknown.  Perhaps it was not translated, and
+#' perhaps it was not identified.
+#'
+#' This function therefore does the following:
+#'   1.  Backfill all 0s in the matrix to NA.
+#'   2.  Performs a mean across all samples which are known technical replicates
+#'   of the same biological replicate.  This mean is performed using
+#'   na.rm=TRUE.  Thus the entries which used to be 0 should no longer affect
+#'   the result.
+#'   3.  Recreate the expressionset with the modified set of samples.
+#'
+#' @param expt Starting expressionset to mangle.
+#' @param fact Metadata factor to use when taking the mean of biological
+#'   replicates.
+#' @param fun Assumed to be mean, but one might want median.
+#' @return new expressionset
+#' @export
+mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
+  ## Set all the zeros to NA so that when we do cpm and mean they will get dropped.
+  exprs_set <- expt[["expressionset"]]
+  mtrx <- exprs(expt)
+  zero_idx <- mtrx == 0
+  new <- mtrx
+  new[zero_idx] <- NA
+  new_libsize <- colSums(new, na.rm=TRUE)
+  new <- edgeR::cpm(new, lib.size=new_libsize)
+  exprs(exprs_set) <- new
+  expt[["expressionset"]] <- exprs_set
+  annot <- fData(expt)
+  final <- median_by_factor(expt, fact=fact, fun=fun)
+  current_design <- pData(expt)
+  new_design <- data.frame()
+  for (c in 1:length(colnames(final))) {
+    colname <- colnames(final)[c]
+    possible_rows <- which(current_design[[fact]] == colname)
+    chosen_row_idx <- possible_rows[1]
+    chosen_row <- current_design[chosen_row_idx, ]
+    new_design <- rbind(new_design, chosen_row)
+  }
+  rownames(new_design) <- colnames(final)
+  new_design[["sampleid"]] <- rownames(new_design)
+  new_design[["batch"]] <- "undefined"
+  new_set <- create_expt(count_dataframe=final, metadata=new_design, gene_info=annot)
+  return(new_set)
+}
 
 #' Plot mzXML peak intensities with respect to m/z.
 #'
@@ -1016,6 +1072,24 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   }
   ## I am not certain this is valid.
   plot_df[[column]] <- abs(plot_df[[column]])
+
+##  testing <- data.table::as.data.table(plot_df)
+##  recast_dt <- data.table::dcast.data.table(data=testing,
+##                                            formula=sequence+proteinname~sample,
+##                                            fun.aggregate=mean,
+##                                            value.var="intensity")
+##  names <- recast_dt[["proteinname"]]
+##  sequences <- recast_dt[["sequence"]]
+##  recast_dt[, c("proteinname", "sequence") := NULL]
+##  nan_idx <- is.na(recast_dt)
+##  recast_dt[nan_idx] <- 0
+##  recast_norm <- log2(
+##    1 + preprocessCore::normalize.quantiles.robust(as.matrix(recast_dt)))
+##  remelt <- as.data.table(recast_norm)
+##  remelt[["proteinname"]] <- names
+##  remelt[["sequence"]] <- sequences
+##  remelted <- data.table::melt(data=remelt, value.name="intensity")
+##  colnames(remelted) <- c("proteinname", "sequence", "sample", "intensity")
 
   ## Drop rows from the metadata and colors which had errors.
   if (length(keepers) > 0) {

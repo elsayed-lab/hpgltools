@@ -6,7 +6,7 @@
 \usage{
 write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
   dated = TRUE, n = NULL, overwritefile = TRUE, add_plots = TRUE,
-  table_style = "TableStyleMedium9", ...)
+  ...)
 }
 \arguments{
 \item{kept_ontology}{A result from subset_ontology_search()}
@@ -20,8 +20,6 @@ write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
 \item{overwritefile}{Overwrite an existing workbook?}
 
 \item{add_plots}{Add the various p-value plots to the end of each sheet?}
-
-\item{table_style}{The chosen table style for excel}
 
 \item{...}{some extra parameters}
 }
