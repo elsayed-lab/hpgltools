@@ -6,8 +6,9 @@
 \usage{
 plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
   design = NULL, plot_title = TRUE, plot_labels = NULL,
-  x_label = NULL, y_label = NULL, plot_size = 5, plot_alpha = NULL,
-  size_column = NULL, rug = TRUE, cis = c(0.95, 0.9), ...)
+  x_label = NULL, y_label = NULL, plot_size = 5, outlines = TRUE,
+  plot_alpha = NULL, size_column = NULL, rug = TRUE, cis = c(0.95,
+  0.9), ...)
 }
 \arguments{
 \item{pca_data}{Dataframe of principle components PC1 .. PCN with any other
@@ -30,6 +31,8 @@ arbitrary information.}
 \item{y_label}{Label for the y-axis.}
 
 \item{plot_size}{Size of the dots on the plot}
+
+\item{outlines}{Add a black outline to the plotted shapes?}
 
 \item{plot_alpha}{Add an alpha channel to the dots?}
 

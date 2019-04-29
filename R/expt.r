@@ -690,6 +690,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
+  message("The final expressionset has ", nrow(exprs(expt)),
+          " rows and ", ncol(exprs(expt)), " columns.")
   return(expt)
 }
 

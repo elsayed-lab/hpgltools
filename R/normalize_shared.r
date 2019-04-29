@@ -144,8 +144,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   operations <- what_happened(transform=transform, batch=batch, convert=convert,
                               norm=norm, filter=filter)
   message(operations)
-  message("It backs up the current data into a slot named:
- expt$backup_expressionset. It will also save copies of each step along the way
+  message("It will save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
  when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
  This is most likely kept at:
