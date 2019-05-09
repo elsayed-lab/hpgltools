@@ -145,8 +145,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                               norm=norm, filter=filter)
   message(operations)
   message("It will save copies of each step along the way
- in expt$normalized with the corresponding libsizes. Keep the libsizes in mind
- when invoking limma.  The appropriate libsize is the non-log(cpm(normalized)).
+ in expt$normalized with the corresponding libsizes. Keep libsizes in mind
+ when invoking limma.  The appropriate libsize is non-log(cpm(normalized)).
  This is most likely kept at:
  'new_expt$normalized$intermediate_counts$normalization$libsizes'
  A copy of this may also be found at:
@@ -363,6 +363,7 @@ hpgl_norm <- function(data, ...) {
   } else {
     stop("This only understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
+
   count_table <- as.matrix(counts)
   expt_design <- design
   if (is.null(original_counts)) {

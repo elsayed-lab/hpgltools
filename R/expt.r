@@ -1520,6 +1520,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #'   read_csv/read.table parameters.
 #' @return Df of metadata.
 #' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
+#' @export
 read_metadata <- function(file, ...) {
   arglist <- list(...)
   if (is.null(arglist[["sep"]])) {
@@ -1802,7 +1803,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #'  expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
-set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
+set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...) {
   arglist <- list(...)
   original_conditions <- expt[["conditions"]]
   original_length <- length(original_conditions)
@@ -2491,7 +2492,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
-    varpart_raw <- try(varpart(
+    varpart_raw <- try(simple_varpart(
       expt, predictor=NULL, factors=c("condition", "batch")))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
@@ -2684,7 +2685,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
+    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
