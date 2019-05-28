@@ -667,7 +667,7 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   backup_file(savefile, backups=backups)
   ## The following save strings work:
   save_string <- glue(
-    "con <- pipe(paste0('pxz -T{cpus} > {savefile}'), 'wb'); \\
+    "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
     save(list=ls(all.names=TRUE, envir=globalenv()),
          envir=globalenv(), file=con, compress=FALSE); \\
     close(con)")

@@ -39,10 +39,10 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
                                allow_window_overlap=FALSE, start_add=0) {
   if (format == "mzML") {
-    extract_mzML_scans(file, id=id, write_acquisitions=write_acqusitions,
+    extract_mzML_scans(file, id=id, write_acquisitions=write_acquisitions,
                        allow_window_overlap=allow_window_overlap, start_add=start_add)
   } else {
-    extract_mzXML_scans(file, id=id, write_acquisitions=write_acqusitions,
+    extract_mzXML_scans(file, id=id, write_acquisitions=write_acquisitions,
                         allow_window_overlap=allow_window_overlap, start_add=start_add)
   }
 }

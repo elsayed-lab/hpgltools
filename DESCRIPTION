@@ -24,7 +24,7 @@ Suggests:
   DOSE, doSNOW,
   EBSeq, EDASeq, edgeR, EuPathDB,
   fastICA, ffpe, fission,
-  genbankr, genefilter, GenomicFeatures, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
+  genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
   GSEABase,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
@@ -34,7 +34,7 @@ Suggests:
   lattice, limma, locfit,
   matrixStats, MLSeq, motifRG, mygene, mzR,
   openxlsx, OrganismDbi,
-  packrat, pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
+  pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
@@ -46,7 +46,12 @@ Suggests:
   variancePartition, Vennerable, venneuler,
   XLConnect, xml2
 Imports:
-  data.table, dplyr, foreach, ggplot2, glue, knitr, magrittr, methods, rlang
+  data.table, dplyr,
+  foreach,
+  ggplot2, GenomicFeatures, glue,
+  knitr,
+  magrittr, methods,
+  rlang
 Depends:
   Biobase
 VignetteBuilder: knitr

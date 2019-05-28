@@ -1033,7 +1033,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         start_row=1, rownames=rownames)
     }
 
-    message("Performing save of the workbook.")
+    message("Performing save of ", excel, ".")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     if (class(save_result)[1] == "try-error") {
       message("Saving xlsx failed.")
