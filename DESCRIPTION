@@ -19,7 +19,7 @@ License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
-  caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
+  caret, Category, cleaver, corpcor, corrplot, curl,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW,
   EBSeq, EDASeq, edgeR, EuPathDB,
@@ -39,19 +39,22 @@ Suggests:
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
-  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, sva,
+  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda,
   taxize, testthat, tidyr, topGO, tximport,
   UniProt.ws, uwot,
   xCell,
-  variancePartition, Vennerable, venneuler,
+  Vennerable, venneuler,
   XLConnect, xml2
 Imports:
+  clusterProfiler,
   data.table, dplyr,
   foreach,
   ggplot2, GenomicFeatures, glue,
   knitr,
   magrittr, methods,
-  rlang
+  rlang,
+  sva,
+  variancePartition
 Depends:
   Biobase
 VignetteBuilder: knitr
