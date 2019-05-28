@@ -44,7 +44,6 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @param cpus  Number cpus to use
 #' @param genes  Number of genes to count.
 #' @param parallel  use doParallel?
-#' @param deprecated I want to rename this, but not immediately.
 #' @param modify_expt  Add annotation columns with the variance/factor?
 #' @return partitions  List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}

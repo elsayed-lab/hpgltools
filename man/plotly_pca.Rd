@@ -34,12 +34,16 @@ plotly_pca(data, design = NULL, plot_colors = NULL,
 
 \item{y_pc}{Component to put on the y axis.}
 
+\item{outlines}{Include black outlines around glyphs?}
+
 \item{num_pc}{How many components to calculate, default to the number of
 rows in the metadata.}
 
 \item{expt_names}{Column or character list of preferred sample names.}
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
+
+\item{tooltip}{Which columns to include in the tooltip.}
 
 \item{...}{Arguments passed through to the pca implementations and plotter.}
 }

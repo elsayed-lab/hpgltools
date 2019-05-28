@@ -10,6 +10,8 @@ median_by_factor(data, fact = "condition", fun = "median")
 \item{data}{Data frame, presumably of counts.}
 
 \item{fact}{Factor describing the columns in the data.}
+
+\item{fun}{Optionally choose mean or another function.}
 }
 \value{
 Data frame of the medians.
