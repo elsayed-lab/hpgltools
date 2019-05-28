@@ -9,33 +9,35 @@
 #' basic_pairwise() each in turn. It collects the results and does some simple
 #' comparisons among them.
 #'
-#' @param input  Dataframe/vector or expt class containing count tables,
+#' @param input Dataframe/vector or expt class containing count tables,
 #'   normalization state, etc.
-#' @param conditions  Factor of conditions in the experiment.
-#' @param batches  Factor of batches in the experiment.
-#' @param model_cond  Include condition in the model?  This is likely always true.
-#' @param modify_p  Depending on how it is used, sva may require a modification
+#' @param conditions Factor of conditions in the experiment.
+#' @param batches Factor of batches in the experiment.
+#' @param model_cond Include condition in the model?  This is likely always true.
+#' @param modify_p Depending on how it is used, sva may require a modification
 #'   of the p-values.
-#' @param model_batch  Include batch in the model?  This may be true/false/"sva"
+#' @param model_batch Include batch in the model?  This may be true/false/"sva"
 #'   or other methods supported by all_adjusters().
-#' @param model_intercept  Use an intercept model instead of cell means?
-#' @param extra_contrasts  Optional extra contrasts beyone the pairwise
+#' @param filter Added because I am tired of needing to filter the data before
+#'   invoking all_pairwise().
+#' @param model_intercept Use an intercept model instead of cell means?
+#' @param extra_contrasts Optional extra contrasts beyone the pairwise
 #'   comparisons.  This can be pretty neat, lets say one has conditions
 #'   A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'   with a string like:
 #'     "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".
-#' @param alt_model  Alternate model to use rather than just condition/batch.
-#' @param libsize  Library size of the original data to help voom().
-#' @param test_pca  Perform some tests of the data before/after applying a given
+#' @param alt_model Alternate model to use rather than just condition/batch.
+#' @param libsize Library size of the original data to help voom().
+#' @param test_pca Perform some tests of the data before/after applying a given
 #'   batch effect.
-#' @param annot_df  Annotations to add to the result tables.
-#' @param parallel  Use dopar to run limma, deseq, edger, and basic simultaneously.
-#' @param do_basic  Perform a basic analysis?
-#' @param do_deseq  Perform DESeq2 pairwise?
-#' @param do_ebseq  Perform EBSeq (caveat, this is NULL as opposed to TRUE/FALSE
+#' @param annot_df Annotations to add to the result tables.
+#' @param parallel Use dopar to run limma, deseq, edger, and basic simultaneously.
+#' @param do_basic Perform a basic analysis?
+#' @param do_deseq Perform DESeq2 pairwise?
+#' @param do_ebseq Perform EBSeq (caveat, this is NULL as opposed to TRUE/FALSE
 #'   so it can choose).
-#' @param do_edger  Perform EdgeR?
-#' @param do_limma  Perform limma?
+#' @param do_edger Perform EdgeR?
+#' @param do_limma Perform limma?
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
 #'   write_limma().
 #' @return A list of limma, deseq, edger results.
@@ -51,7 +53,7 @@
 #' @export
 all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
-                         modify_p=FALSE, model_batch=TRUE,
+                         modify_p=FALSE, model_batch=TRUE, filter=NULL,
                          model_intercept=FALSE, extra_contrasts=NULL,
                          alt_model=NULL, libsize=NULL, test_pca=TRUE,
                          annot_df=NULL, parallel=TRUE,
@@ -70,6 +72,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   }
   if (is.null(model_intercept)) {
     model_intercept <- FALSE
+  }
+  if (!is.null(filter)) {
+    input <- sm(normalize_expt(input, filter=filter))
   }
   null_model <- NULL
   sv_model <- NULL
@@ -502,7 +507,7 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #'
 #' @param input Expressionset containing expt object.
 #' @param force Ingore warnings and use the provided data asis.
-#' @param which_voom  Choose between limma'svoom, voomWithQualityWeights, or the
+#' @param which_voom Choose between limma'svoom, voomWithQualityWeights, or the
 #'   hpgl equivalents.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
@@ -595,21 +600,21 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #'
 #' Invoked by the _pairwise() functions.
 #'
-#' @param input  Input data used to make the model.
-#' @param conditions  Factor of conditions in the putative model.
-#' @param batches  Factor of batches in the putative model.
-#' @param model_batch  Try to include batch in the model?
-#' @param model_cond  Try to include condition in the model? (Yes!)
-#' @param model_intercept  Use an intercept model instead of cell-means?
-#' @param alt_model  Use your own model.
-#' @param alt_string  String describing an alternate model.
-#' @param intercept  Choose an intercept for the model as opposed to 0.
-#' @param reverse  Reverse condition/batch in the model?  This shouldn't/doesn't
+#' @param input Input data used to make the model.
+#' @param conditions Factor of conditions in the putative model.
+#' @param batches Factor of batches in the putative model.
+#' @param model_batch Try to include batch in the model?
+#' @param model_cond Try to include condition in the model? (Yes!)
+#' @param model_intercept Use an intercept model instead of cell-means?
+#' @param alt_model Use your own model.
+#' @param alt_string String describing an alternate model.
+#' @param intercept Choose an intercept for the model as opposed to 0.
+#' @param reverse Reverse condition/batch in the model?  This shouldn't/doesn't
 #'   matter but I wanted to test.
-#' @param contr  List of contrasts.arg possibilities.
-#' @param surrogates  Number of or method used to choose the number of surrogate
+#' @param contr List of contrasts.arg possibilities.
+#' @param surrogates Number of or method used to choose the number of surrogate
 #'   variables.
-#' @param ...  Further options are passed to arglist.
+#' @param ... Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and
 #'   intercept models.
 #' @seealso \pkg{stats}
@@ -883,11 +888,11 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 #'
 #' Tested in 29de_shared.R
 #'
-#' @param first  One invocation of combine_de_tables to examine.
-#' @param second  A second invocation of combine_de_tables to examine.
-#' @param cor_method  Method to use for cor.test().
-#' @param try_methods  List of methods to attempt comparing.
-#' @return  A list of compared columns, tables, and methods.
+#' @param first One invocation of combine_de_tables to examine.
+#' @param second A second invocation of combine_de_tables to examine.
+#' @param cor_method Method to use for cor.test().
+#' @param try_methods List of methods to attempt comparing.
+#' @return A list of compared columns, tables, and methods.
 #' @examples
 #'  \dontrun{
 #'   first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
@@ -990,7 +995,7 @@ expressionset_to_deseq <- function(expt, model_cond=TRUE, model_batch=FALSE) {
 #'
 #' Invoked by all_pairwise().
 #'
-#' @param results  Data from do_pairwise()
+#' @param results Data from do_pairwise()
 #' @param annot_df Include annotation data?
 #' @param ... More options!
 #' @return Heatmap showing how similar they are along with some
@@ -1206,10 +1211,10 @@ compare_logfc_plots <- function(combined_tables) {
 #' This should provide nice venn diagrams and some statistics to compare 2 or 3
 #' contrasts in a differential expression analysis.
 #'
-#' @param sig_tables  A set of significance tables to poke at.
-#' @param compare_by  Use which program for the comparisons?
-#' @param weights  When printing venn diagrams, weight them?
-#' @param contrasts  A list of contrasts to compare.
+#' @param sig_tables Set of significance tables to poke at.
+#' @param compare_by Use which program for the comparisons?
+#' @param weights When printing venn diagrams, weight them?
+#' @param contrasts List of contrasts to compare.
 #' @export
 compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
                                           weights=FALSE, contrasts=c(1, 2, 3)) {
@@ -1263,10 +1268,10 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
 #' The null hypothesis is (H0): (infected == uninfected) | (infected == beads)
 #' The alt hypothesis is (HA): (infected != uninfected) & (infected != beads)
 #'
-#' @param contrast_fit  The result of lmFit.
-#' @param cellmeans_fit  The result of a cellmeans fit.
-#' @param conj_contrasts  The result from the makeContrasts of the first set.
-#' @param disj_contrast  The result of the makeContrasts of the second set.
+#' @param contrast_fit Result of lmFit.
+#' @param cellmeans_fit Result of a cellmeans fit.
+#' @param conj_contrasts Result from the makeContrasts of the first set.
+#' @param disj_contrast Result of the makeContrasts of the second set.
 disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast) {
   ## arglist <- list(...)
   contr_level_counts <- rowSums(
@@ -1316,10 +1321,10 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #'
 #' Used to make parallel operations easier.
 #'
-#' @param type  Which type of pairwise comparison to perform
-#' @param ...  The set of arguments intended for limma_pairwise(),
+#' @param type Which type of pairwise comparison to perform
+#' @param ... Set of arguments intended for limma_pairwise(),
 #'   edger_pairwise(), and friends.
-#' @return The result from limma/deseq/edger/basic
+#' @return Result from limma/deseq/edger/basic
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
 #'   \code{\link{deseq_pairwise}} \code{\link{basic_pairwise}}
 #' @export
@@ -1347,13 +1352,13 @@ do_pairwise <- function(type, ...) {
 #' what are the most and least abundant genes, much like get_sig_genes() does to
 #' find the most significantly different genes for each contrast.
 #'
-#' @param datum  Output from the _pairwise() functions.
-#' @param type  Extract abundant genes according to what?
-#' @param n  Perhaps take just the top/bottom n genes.
-#' @param z  Or take genes past a given z-score.
-#' @param unique  Unimplemented: take only the genes unique among the conditions surveyed.
-#' @param least  When true, this finds the least abundant rather than most.
-#' @return  List of data frames containing the genes of interest.
+#' @param datum Output from the _pairwise() functions.
+#' @param type Extract abundant genes according to what?
+#' @param n Perhaps take just the top/bottom n genes.
+#' @param z Or take genes past a given z-score.
+#' @param unique Unimplemented: take only the genes unique among the conditions surveyed.
+#' @param least When true, this finds the least abundant rather than most.
+#' @return List of data frames containing the genes of interest.
 #' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
 #'  \dontrun{
@@ -1446,10 +1451,10 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
 #' Instead of pulling to top/bottom abundant genes, get all abundances and
 #' variances or stderr.
 #'
-#' @param datum  Output from _pairwise() functions.
-#' @param type  According to deseq/limma/ed ger/basic?
-#' @param excel  Print this to an excel file?
-#' @return  A list containing the expression values and some metrics of
+#' @param datum Output from _pairwise() functions.
+#' @param type According to deseq/limma/ed ger/basic?
+#' @param excel Print this to an excel file?
+#' @return A list containing the expression values and some metrics of
 #'   variance/error.
 #' @seealso \pkg{limma}
 #' @examples
@@ -1672,14 +1677,14 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #'
 #' Invoked by the _pairwise() functions.
 #'
-#' @param model  Describe the conditions/batches/etc in the experiment.
-#' @param conditions  Factor of conditions in the experiment.
-#' @param do_identities  Include all the identity strings? Limma can
+#' @param model Describe the conditions/batches/etc in the experiment.
+#' @param conditions Factor of conditions in the experiment.
+#' @param do_identities Include all the identity strings? Limma can
 #'  use this information while edgeR can not.
 #' @param do_pairwise Include all pairwise strings? This shouldn't
 #'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
-#' @param ...  Extra arguments passed here are caught by arglist.
+#' @param ... Extra arguments passed here are caught by arglist.
 #' @return List including the following information:
 #'  \enumerate{
 #'   \item all_pairwise_contrasts = the result from makeContrasts(...)
@@ -1786,11 +1791,18 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
   return(result)
 }
 
-## This is a copy of limma::makeContrasts without the test of make.names()
-## Because I want to be able to use it with interaction models potentially
-## and if a model has first:second, make.names() turns the ':' to a '.'
-## and then the equivalence test fails, causing makeContrasts() to error
-## spuriously (I think).
+#' A copy of limma::makeContrasts() with special sauce.
+#'
+#' This is a copy of limma::makeContrasts without the test of make.names()
+#' Because I want to be able to use it with interaction models potentially
+#' and if a model has first:second, make.names() turns the ':' to a '.'
+#' and then the equivalence test fails, causing makeContrasts() to error
+#' spuriously (I think).
+#'
+#' @param ... Conditions used to make the contrasts.
+#' @param contrasts Actual contrast names.
+#' @param levels contrast levels used.
+#' @return Same contrasts as used in makeContrasts, but with unique names.
 mymakeContrasts <- function(..., contrasts=NULL, levels) {
   e <- substitute(list(...))
   if (is.factor(levels)) {
@@ -1890,7 +1902,7 @@ sanitize_expt <- function(expt) {
 #' Currently untested, used for Trypanosome analyses primarily, thus the default
 #' strings.
 #'
-#' @param ...  Arguments for semantic_copynumber_filter()
+#' @param ... Arguments for semantic_copynumber_filter()
 #' @export
 semantic_copynumber_extract <- function(...) {
   ret <- semantic_copynumber_filter(..., invert=TRUE)
@@ -1908,14 +1920,14 @@ semantic_copynumber_extract <- function(...) {
 #' Currently untested, used for Trypanosome analyses primarily, thus the default
 #' strings.
 #'
-#' @param input  List of sets of genes deemed significantly
+#' @param input List of sets of genes deemed significantly
 #'  up/down with a column expressing approximate count numbers.
-#' @param max_copies  Keep only those genes with <= n putative
+#' @param max_copies Keep only those genes with <= n putative
 #'  copies.
-#' @param use_files  Use a set of sequence alignments to define the copy numbers?
-#' @param invert  Keep these genes rather than drop them?
-#' @param semantic  Set of strings with gene names to exclude.
-#' @param semantic_column  Column in the DE table used to find the
+#' @param use_files Use a set of sequence alignments to define the copy numbers?
+#' @param invert Keep these genes rather than drop them?
+#' @param semantic Set of strings with gene names to exclude.
+#' @param semantic_column Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
 #' @seealso \code{\link{semantic_copynumber_extract}}

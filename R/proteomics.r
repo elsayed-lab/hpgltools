@@ -31,16 +31,18 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @param id An id to give the result.
 #' @param write_acquisitions If a filename is provided, write a tab separated
 #'   table of windows.
+#' @param format Either mzXML or mzML.
+#' @param allow_window_overlap One may choose to foce windows to not overlap.
 #' @param start_add Add a minute to the start of the windows to avoid overlaps?
 #' @return List containing a table of scan and precursor data.
 #' @export
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
                                allow_window_overlap=FALSE, start_add=0) {
   if (format == "mzML") {
-    extract_mzML_scans(file, id=id, write_acquisitions=write_acqusitions,
+    extract_mzML_scans(file, id=id, write_acquisitions=write_acquisitions,
                        allow_window_overlap=allow_window_overlap, start_add=start_add)
   } else {
-    extract_mzXML_scans(file, id=id, write_acquisitions=write_acqusitions,
+    extract_mzXML_scans(file, id=id, write_acquisitions=write_acquisitions,
                         allow_window_overlap=allow_window_overlap, start_add=start_add)
   }
 }
@@ -72,7 +74,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     id <- file
   }
   message("Reading ", file)
-  input <- xml2::read_html(file, options="NOBLANKS")
+  input <- xml2::read_html(x=file, options="NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
   message("Extracting instrument information for ", file)
@@ -233,18 +235,24 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' is redundant with respect to it and perhaps should be removed in deference to
 #' the more complete and fast implementation included in mzR.
 #'
-#' @param metadata  Data frame describing the samples, including the mzXML
+#' @param metadata Data frame describing the samples, including the mzXML
 #'   filenames.
-#' @param write_windows  Write out SWATH window frames.
-#' @param id_column  What column in the sample sheet provides the ID for the samples?
-#' @param parallel  Perform operations using an R foreach cluster?
-#' @param savefile  If not null, save the resulting data structure to an rda file.
+#' @param write_windows Write out SWATH window frames.
+#' @param id_column What column in the sample sheet provides the ID for the samples?
+#' @param allow_window_overlap What it says on the tin, some tools do not like
+#'   DIA windows to overlap, if TRUE, this will make sure each annotated window
+#'   starts at the end of the previous window if they overlap.
+#' @param start_add Another strategy is to just add a static amount to each
+#'   window.
+#' @param format Currently this handles mzXML or mzML files.
+#' @param parallel Perform operations using an R foreach cluster?
+#' @param savefile If not null, save the resulting data structure to an rda file.
 #' @param ... Extra arguments, presumably color palettes and column names and
 #'   stuff like that.
-#' @return  A list of data extracted from every sample in the MS run (DIA or DDA).
+#' @return List of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
 extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
-                               allow_window_overlap=FALSE, add_start=0, format="mzXML",
+                               allow_window_overlap=FALSE, start_add=0, format="mzXML",
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
@@ -706,6 +714,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
         dplyr::mutate(mass=gather_masses(sequence))
       res[[id]] <- file_result
     } else {
+      message("Failed to read: ", id, ".")
       failed_files <- c(failed_files, file)
     }
   }
@@ -724,6 +733,75 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
   }
   return(retlist)
+}
+
+##extract_traml_data <- function(traml) {
+##  message("Reading the TraML file.")
+##  ## xml2 is painfully slow and annoying with these files, but I do not know why.
+##  input <- xml2::read_html(x=traml, options="NOBLANKS")
+##  ##children <- input %>%
+##  ##  xml2::xml_children()
+##  ##contents <- input %>%
+##  ##  xml2::xml_contents()
+##  all_nodes <- input %>%
+##    rvest::html_nodes("*")
+##  protein_nodes <- all_nodes %>%
+##    rvest::html_nodes(xpath="//Protein")
+##}
+
+#' An attempt to address a troubling question when working with DIA data.
+#'
+#' My biggest concern when treating DIA data in a RNASeqish manner is the fact
+#' that if a given peptide is not identified, that is not the same thing as
+#' stating that it was not translated.  It is somewhat reminiscent of the often
+#' mocked and repeated Donald Rumsfeld statement regarding known unknowns
+#' vs. unknown unknowns.  Thus, in an RNASeq experiment, if one sees a zero, one
+#' may assume that transcript was not transcribed, it may be assumed to be a
+#' known zero(unknown).  In contrast, if the same thing happens in a DIA data
+#' set, that represents an unknown unknown.  Perhaps it was not translated, and
+#' perhaps it was not identified.
+#'
+#' This function therefore does the following:
+#'   1.  Backfill all 0s in the matrix to NA.
+#'   2.  Performs a mean across all samples which are known technical replicates
+#'   of the same biological replicate.  This mean is performed using
+#'   na.rm=TRUE.  Thus the entries which used to be 0 should no longer affect
+#'   the result.
+#'   3.  Recreate the expressionset with the modified set of samples.
+#'
+#' @param expt Starting expressionset to mangle.
+#' @param fact Metadata factor to use when taking the mean of biological
+#'   replicates.
+#' @param fun Assumed to be mean, but one might want median.
+#' @return new expressionset
+#' @export
+mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
+  ## Set all the zeros to NA so that when we do cpm and mean they will get dropped.
+  exprs_set <- expt[["expressionset"]]
+  mtrx <- exprs(expt)
+  zero_idx <- mtrx == 0
+  new <- mtrx
+  new[zero_idx] <- NA
+  new_libsize <- colSums(new, na.rm=TRUE)
+  new <- edgeR::cpm(new, lib.size=new_libsize)
+  exprs(exprs_set) <- new
+  expt[["expressionset"]] <- exprs_set
+  annot <- fData(expt)
+  final <- median_by_factor(expt, fact=fact, fun=fun)
+  current_design <- pData(expt)
+  new_design <- data.frame()
+  for (c in 1:length(colnames(final))) {
+    colname <- colnames(final)[c]
+    possible_rows <- which(current_design[[fact]] == colname)
+    chosen_row_idx <- possible_rows[1]
+    chosen_row <- current_design[chosen_row_idx, ]
+    new_design <- rbind(new_design, chosen_row)
+  }
+  rownames(new_design) <- colnames(final)
+  new_design[["sampleid"]] <- rownames(new_design)
+  new_design[["batch"]] <- "undefined"
+  new_set <- create_expt(count_dataframe=final, metadata=new_design, gene_info=annot)
+  return(new_set)
 }
 
 #' Plot mzXML peak intensities with respect to m/z.
@@ -994,6 +1072,24 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   }
   ## I am not certain this is valid.
   plot_df[[column]] <- abs(plot_df[[column]])
+
+##  testing <- data.table::as.data.table(plot_df)
+##  recast_dt <- data.table::dcast.data.table(data=testing,
+##                                            formula=sequence+proteinname~sample,
+##                                            fun.aggregate=mean,
+##                                            value.var="intensity")
+##  names <- recast_dt[["proteinname"]]
+##  sequences <- recast_dt[["sequence"]]
+##  recast_dt[, c("proteinname", "sequence") := NULL]
+##  nan_idx <- is.na(recast_dt)
+##  recast_dt[nan_idx] <- 0
+##  recast_norm <- log2(
+##    1 + preprocessCore::normalize.quantiles.robust(as.matrix(recast_dt)))
+##  remelt <- as.data.table(recast_norm)
+##  remelt[["proteinname"]] <- names
+##  remelt[["sequence"]] <- sequences
+##  remelted <- data.table::melt(data=remelt, value.name="intensity")
+##  colnames(remelted) <- c("proteinname", "sequence", "sample", "intensity")
 
   ## Drop rows from the metadata and colors which had errors.
   if (length(keepers) > 0) {

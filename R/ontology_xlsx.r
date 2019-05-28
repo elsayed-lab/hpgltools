@@ -164,9 +164,8 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
                           add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                           height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
-  table_style <- "TableStyleMedium9"
   if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["TableStyleMedium9"]]
+    table_style <- arglist[["table_style"]]
   }
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   excel_dir <- dirname(excel)
@@ -382,9 +381,8 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
                              add_trees=TRUE, order_by="qvalue", pval=0.1,
                              add_plots=TRUE, height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
-  table_style <- "TableStyleMedium9"
   if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["TableStyleMedium9"]]
+    table_style <- arglist[["table_style"]]
   }
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   excel_dir <- dirname(excel)
@@ -536,9 +534,8 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
                                add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                                height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
-  table_style <- "TableStyleMedium9"
   if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["TableStyleMedium9"]]
+    table_style <- arglist[["table_style"]]
   }
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   excel_dir <- dirname(excel)
@@ -754,9 +751,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
                                  order_by="recall", add_plots=TRUE, height=15,
                                  width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
-  table_style <- "TableStyleMedium9"
   if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["TableStyleMedium9"]]
+    table_style <- arglist[["table_style"]]
   }
 
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
@@ -1072,9 +1068,8 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                              order_by="fisher", decreasing=FALSE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
   arglist <- list(...)
-  table_style <- "TableStyleMedium9"
   if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["TableStyleMedium9"]]
+    table_style <- arglist[["table_style"]]
   }
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   excel_dir <- dirname(excel)
@@ -1228,7 +1223,6 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
 #' @param n   How many ontology categories to write for each search
 #' @param overwritefile   Overwrite an existing workbook?
 #' @param add_plots   Add the various p-value plots to the end of each sheet?
-#' @param table_style   The chosen table style for excel
 #' @param ...  some extra parameters
 #' @return a set of excel sheet/coordinates
 #' @seealso \pkg{openxlsx}
@@ -1245,10 +1239,10 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
 #' @export
 write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", dated=TRUE,
                                     n=NULL, overwritefile=TRUE,
-                                    add_plots=TRUE, table_style="TableStyleMedium9", ...) {
+                                    add_plots=TRUE, ...) {
   arglist <- list(...)
-  if (is.null(table_style)) {
-    table_style <- "TableStyleMedium9"
+  if (!is.null(arglist[["table_style"]])) {
+    table_style <- arglist[["table_style"]]
   }
   if (is.null(outfile)) {
     outfile <- "excel/subset_go"
@@ -2187,13 +2181,13 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_mf"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   new_row <- new_row + nrow(lst[["goseq_mf"]]) + 2
   openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_cc"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
 
   new_row <- 1
@@ -2203,19 +2197,19 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_bp"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   new_row <- new_row + nrow(lst[["cluster_bp"]]) + 2
   openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_mf"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   new_row <- new_row + nrow(lst[["cluster_mf"]]) + 2
   openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_cc"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
 
   new_row <- 1
@@ -2225,19 +2219,19 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_bp"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   new_row <- new_row + nrow(lst[["topgo_bp"]]) + 2
   openxlsx::writeData(wb, sheet, glue("MF Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_mf"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   new_row <- new_row + nrow(lst[["topgo_mf"]]) + 2
   openxlsx::writeData(wb, sheet, glue("CC Results from {sheet}."), startRow=new_row)
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_cc"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
 
   new_row <- 1
@@ -2247,7 +2241,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_bp"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   links <- lst[["gostats_bp"]][["Link"]]
   class(links) <- "hyperlink"
   names(links) <- lst[["gostats_bp"]][["Category"]]
@@ -2257,7 +2251,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_mf"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   links <- lst[["gostats_mf"]][["Link"]]
   class(links) <- "hyperlink"
   names(links) <- lst[["gostats_mf"]][["Category"]]
@@ -2267,7 +2261,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   new_row <- new_row + 1
   openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_cc"]],
-                           tableStyle="TableStyleMedium9", startRow=new_row)
+                           tableStyle=table_style, startRow=new_row)
   links <- lst[["gostats_cc"]][["Link"]]
   class(links) <- "hyperlink"
   names(links) <- lst[["gostats_cc"]][["Category"]]

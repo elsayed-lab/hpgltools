@@ -210,14 +210,11 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #'
 #' One might reasonably ask about this function: "Why?"  I invoke this function
 #' at the end of my various knitr documents so that if necessary I can do a
-#' > git reset <commit id> and get back to the exact state of my code.  As a
-#' bonus, since I have this under packrat I can furthermore use packrat reset to
-#' get the exact state of all the packages, too!
+#' > git reset <commit id> and get back to the exact state of my code.
 #'
 #' @param gitdir  Directory containing the git repository.
-#' @param packrat  Is this tree under packrat control?
 #' @export
-get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
+get_git_commit <- function(gitdir="~/hpgltools") {
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{{print $2}}'")
   commit_result <- system(cmdline, intern=TRUE)
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
@@ -226,9 +223,6 @@ get_git_commit <- function(gitdir="~/hpgltools", packrat=FALSE) {
   message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
   message("> git reset ", commit_result)
-  if (isTRUE(packrat)) {
-    message("R> packrat::restore()")
-  }
   return(result)
 }
 
@@ -402,52 +396,6 @@ hpgl_dist <- function(df, method="euclidean", ...) {
   input <- t(as.matrix(df))
   result <- as.matrix(dist(input, method=method, ...))
   return(result)
-}
-
-#'  Install the set of local packrat packages so everyone may use them!
-#'
-#' @export
-install_packrat_globally <- function() {
-  packrat_installed <- packrat::status()
-  packrat_location <- getProjectDir()
-  packrat_src <- srcDir(packrat_location)
-  paths <- sm(packrat::packrat_mode())
-  num_installed <- nrow(packrat_installed)
-  globally_installed <- installed.packages()
-
-  newly_installed <- 0
-  message("Going to check on/install ", num_installed, " packages.")
-  for (c in 1:num_installed) {
-    pkg_name <- packrat_installed[c, "package"]
-    pkg_ver <- packrat_installed[c, "packrat.version"]
-    if (is.na(pkg_ver)) {
-      next
-    }
-    packrat_package_path <- glue(
-      "{packrat_src}/{pkg_name}/{pkg_name}_{pkg_ver}.tar.gz")
-    if (pkg_name %in% rownames(globally_installed)) {
-      global_version <- globally_installed[pkg_name, "Version"]
-      if (global_version == pkg_ver) {
-        message("Package: ", pkg_name, " is globally installed as the same version.")
-      } else {
-        message("Package: ", pkg_name, " is globally installed as version: ",
-                global_version, "; packrat has version ", pkg_ver, ".")
-        inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
-        if (class(inst) != "try-error") {
-          newly_installed <- newly_installed + 1
-        }
-      }
-    } else {
-      message("Package: ", pkg_name, " is not installed.")
-      inst <- try(devtools::install_url(glue("file://{packrat_package_path}")))
-      if (class(inst) != "try-error") {
-        newly_installed <- newly_installed + 1
-      }
-    }
-  } ## End of the for loop
-  paths <- sm(packrat::packrat_mode())
-  message("Installed ", newly_installed, " packages.")
-  return(newly_installed)
 }
 
 #' Load a backup rdata file
@@ -667,7 +615,7 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   backup_file(savefile, backups=backups)
   ## The following save strings work:
   save_string <- glue(
-    "con <- pipe(paste0('pxz -T{cpus} > {savefile}'), 'wb'); \\
+    "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
     save(list=ls(all.names=TRUE, envir=globalenv()),
          envir=globalenv(), file=con, compress=FALSE); \\
     close(con)")

@@ -690,6 +690,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
+  message("The final expressionset has ", nrow(exprs(expt)),
+          " rows and ", ncol(exprs(expt)), " columns.")
   return(expt)
 }
 
@@ -1181,7 +1183,7 @@ make_exampledata <- function(ngenes=1000, columns=5) {
 #'  compressed = median_by_factor(data, experiment$condition)
 #' }
 #' @export
-median_by_factor <- function(data, fact="condition") {
+median_by_factor <- function(data, fact="condition", fun="median") {
   if (length(fact) == 1) {
     design <- pData(data)
     fact <- design[[fact]]
@@ -1208,8 +1210,15 @@ median_by_factor <- function(data, fact="condition") {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
     } else {
-      message("The factor ", type, " has ", length(columns), " rows.")
-      med <- matrixStats::rowMedians(data[, columns])
+      if (fun == "median") {
+        message("The factor ", type, " has ", length(columns), " rows.")
+        med <- matrixStats::rowMedians(data[, columns], na.rm=TRUE)
+      } else if (fun == "mean") {
+        message("The factor ", type, " has ", length(columns), " rows.")
+        med <- BiocGenerics::rowMeans(data[, columns], na.rm=TRUE)
+      } else {
+        stop("I do not understand that funct.")
+      }
     }
     medians <- cbind(medians, med)
   }
@@ -1511,6 +1520,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
 #'   read_csv/read.table parameters.
 #' @return Df of metadata.
 #' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
+#' @export
 read_metadata <- function(file, ...) {
   arglist <- list(...)
   if (is.null(arglist[["sep"]])) {
@@ -1527,7 +1537,7 @@ read_metadata <- function(file, ...) {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
     definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
-    if (class(definitions) == "try-error") {
+    if (class(definitions)[1] == "try-error") {
       stop("Unable to read the metadata file: ", file)
     }
   } else if (tools::file_ext(file) == "xls") {
@@ -1793,7 +1803,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #'  expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
 #' }
 #' @export
-set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
+set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...) {
   arglist <- list(...)
   original_conditions <- expt[["conditions"]]
   original_length <- length(original_conditions)
@@ -1810,7 +1820,10 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, ...) {
     new_pdata <- old_pdata
     new_pdata[["condition"]] <- as.factor(new_cond)
     pData(expt[["expressionset"]]) <- new_pdata
-    new_expt[["conditions"]][ids] <- fact
+    new_conditions <- as.character(new_expt[["conditions"]])
+    names(new_conditions) <- names(new_expt[["conditions"]])
+    new_conditions[ids] <- fact
+    new_expt[["conditions"]] <- as.factor(new_conditions)
     new_expt[["design"]][["condition"]] <- new_cond
   } else if (length(fact) == 1) {
     ## Assume it is a column in the design
@@ -2479,7 +2492,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
-    varpart_raw <- try(varpart(
+    varpart_raw <- try(simple_varpart(
       expt, predictor=NULL, factors=c("condition", "batch")))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
@@ -2518,7 +2531,6 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "norm_data"
   new_col <- 1
   new_row <- 1
-  message("Line 2336 of expt.r, removed normalization of pca plotting.")
   norm_data <- sm(normalize_expt(expt=expt, transform=transform,
                                  convert=convert, batch=batch, filter=filter,
                                  ...))
@@ -2673,7 +2685,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
+    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2

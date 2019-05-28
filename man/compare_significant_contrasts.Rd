@@ -9,13 +9,13 @@ compare_significant_contrasts(sig_tables, compare_by = "deseq",
   weights = FALSE, contrasts = c(1, 2, 3))
 }
 \arguments{
-\item{sig_tables}{A set of significance tables to poke at.}
+\item{sig_tables}{Set of significance tables to poke at.}
 
 \item{compare_by}{Use which program for the comparisons?}
 
 \item{weights}{When printing venn diagrams, weight them?}
 
-\item{contrasts}{A list of contrasts to compare.}
+\item{contrasts}{List of contrasts to compare.}
 }
 \description{
 This should provide nice venn diagrams and some statistics to compare 2 or 3

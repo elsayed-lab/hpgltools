@@ -100,6 +100,9 @@ NULL
 #' The following sets the ggplot2 default text size.
 base_size <- 16
 
+#' Set the xlsx table style
+table_style <- "TableStyleMedium9"
+
 #' R CMD check is super annoying about :::.
 #'
 #' In a fit of pique, I did a google search to see if anyone else has been
@@ -119,8 +122,8 @@ getMaintainer <- "GenomicFeatures" %:::% ".getMaintainer"
 getMetaDataValue <- "GenomicFeatures" %:::% ".getMetaDataValue"
 getTxDbVersion <- "GenomicFeatures" %:::% ".getTxDbVersion"
 normAuthor <- "GenomicFeatures" %:::% ".normAuthor"
-getProjectDir <- "packrat" %:::% "getProjectDir"
-srcDir <- "packrat" %:::% "srcDir"
+##getProjectDir <- "packrat" %:::% "getProjectDir"
+##srcDir <- "packrat" %:::% "srcDir"
 sortCols <- "variancePartition" %:::% ".sortCols"
 aprior <- "sva" %:::% "aprior"
 bprior <- "sva" %:::% "bprior"

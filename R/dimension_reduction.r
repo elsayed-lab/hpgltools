@@ -36,6 +36,39 @@ factor_rsquared <- function(datum, fact, type="factor") {
   return(rsq_result)
 }
 
+#' Attempt to get residuals from tsne data
+#'
+#' I strongly suspect that this is not correct, but it is a start.
+#'
+#' @param svd_result The set of results from one of the many potential svd-ish methods.
+#' @param design Experimental design from which to get experimental factors.
+#' @param factors Set of experimental factors for which to calculate rsquared values.
+#' @param res_slot Where is the res data in the svd result?
+#' @param var_slot Where is the var data in the svd result?
+get_res <- function(svd_result, design, factors=c("condition", "batch"),
+                    res_slot="v", var_slot="d") {
+  retlst <- list()
+  vars <- svd_result[[var_slot]]
+  rsquared_column <- round((vars ^ 2) / sum(vars ^ 2) * 100, 2)
+  cumulative_sum_column <- cumsum(rsquared_column)
+  datum <- svd_result[[res_slot]]
+
+  res_df <- data.frame(
+    "prop_var" = rsquared_column,
+    "cum_prop_var" = cumulative_sum_column)
+
+  for (j in 1:length(factors)) {
+    factor <- factors[j]
+    if (!is.null(design[[factor]])) {
+      fact <- design[[factor]]
+      column <- factor_rsquared(datum, fact)
+      column_name <- glue::glue("{factor}_rsquared")
+      res_df[[column_name]] <- column
+    }
+  }
+  return(res_df)
+}
+
 #' Gather information about principle components.
 #'
 #' Calculate some information useful for generating PCA plots.
@@ -370,61 +403,34 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
   return(retlist)
 }
 
-## #' Compute variance of each principal component and how they correlate with
-## #' batch and condition.
-## #'
-## #' This was copy/pasted from cbcbSEQ
-## #' https://github.com/kokrah/cbcbSEQ/blob/master/R/explore.R
-## #'
-## #' @param v from makeSVD
-## #' @param d from makeSVD
-## #' @param condition factor describing experiment
-## #' @param batch factor describing batch
-## #' @return A dataframe containig variance, cum. variance, cond.R-sqrd, batch.R-sqrd
-## #' @seealso \code{\link{plot_pca}}
-## #' @export
-## pcRes <- function(v, d, condition=NULL, batch=NULL){
-##   pcVar <- round((d ^ 2) / sum(d ^ 2) * 100, 2)
-##   cumPcVar <- cumsum(pcVar)
-##   calculate_rsquared_condition <- function(data) {
-##     lm_result <- lm(data ~ condition)
-##   }
-##   if (!is.null(condition)) {
-##     cond.R2 <- function(y) {
-##       round(summary(lm(y ~ condition))$r.squared * 100, 2)
-##     }
-##     cond.R2 <- apply(v, 2, cond.R2)
-##   }
-##   if (!is.null(batch)) {
-##     batch.R2 <- function(y) {
-##       round(summary(lm(y ~ batch))$r.squared * 100, 2)
-##     }
-##     batch.R2 <- apply(v, 2, batch.R2)
-##   }
-##   if (is.null(condition) & is.null(batch)) {
-##     res <- data.frame("propVar" = pcVar,
-##                       "cumPropVar" = cumPcVar)
-##   }
-##   if (!is.null(batch) & is.null(condition)) {
-##    res <- data.frame("propVar" = pcVar,
-##                       "cumPropVar" = cumPcVar,
-##                       "batch.R2" = batch.R2)
-##   }
-##   if (!is.null(condition) & is.null(batch)) {
-##     res <- data.frame("propVar" = pcVar,
-##                       "cumPropVar" = cumPcVar,
-##                       "cond.R2" = cond.R2)
-##   }
-##   if (!is.null(condition) & !is.null(batch)) {
-##     res <- data.frame("propVar" = pcVar,
-##                       "cumPropVar" = cumPcVar,
-##                       "cond.R2" = cond.R2,
-##                       "batch.R2" = batch.R2)
-##   }
-##   return(res)
-## }
+#' Something silly for Najib.
+#'
+#' This will make him very happy, but I remain skeptical.
+#'
+#' @param pc_result  The result from plot_pca()
+#' @param components  List of three axes by component.
+#' @param file  File to write the created plotly object.
+#' @export
+plot_3d_pca <- function(pc_result, components=c(1,2,3), file="3dpca.html") {
+  x_axis <- glue::glue("pc_{components[1]}")
+  y_axis <- glue::glue("pc_{components[2]}")
+  z_axis <- glue::glue("pc_{components[3]}")
+  table <- pc_result[["table"]]
+  color_levels <- levels(as.factor(table[["colors"]]))
+  silly_plot <- plotly::plot_ly(table, x=as.formula(glue::glue("~{x_axis}")),
+                                y=as.formula(glue::glue("~{y_axis}")), z=as.formula(glue::glue("~{z_axis}")),
+                                color=as.formula("~condition"), colors=color_levels,
+                                text=~paste0('condition: ', condition, ' batch: ', batch)) %>%
+    plotly::add_markers()
+  widget <- htmlwidgets::saveWidget(
+                           plotly::as_widget(silly_plot), file=file, selfcontained=TRUE)
+  retlist <- list(
+    "plot" = silly_plot,
+    "file" = file)
+  return(retlist)
+}
 
-#' Make a ggplot PCA plot describing the samples' clustering.
+#' Make a PCA plot describing the samples' clustering.
 #'
 #' @param data an expt set of samples.
 #' @param design a design matrix and.
@@ -859,12 +865,14 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
 
   if (isTRUE(plot_title)) {
     plot_title <- what_happened(expt=data)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt=data)
-    plot_title <- glue::glue("{plot_title}; {data_title}")
-  } else {
-    ## Leave the title blank.
   }
+  ## I think this is now redundant, removing it to see.
+  ## else if (!is.null(plot_title)) {
+  ##data_title <- what_happened(expt=data)
+  ##  plot_title <- glue::glue("{plot_title}; {data_title}")
+  ##} else {
+  ##  ## Leave the title blank.
+  ##}
 
   ## Perform a check of the PC table.
   if (sum(is.na(comp_data)) > 0) {
@@ -910,7 +918,41 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   return(pca_return)
 }
 
-
+#' Make a PC plot describing the gene' clustering.
+#'
+#' @param data an expt set of samples.
+#' @param design a design matrix and.
+#' @param plot_colors a color scheme.
+#' @param plot_title a title for the plot.
+#' @param plot_size size for the glyphs on the plot.
+#' @param plot_alpha Add an alpha channel to the dots?
+#' @param plot_labels add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param size_column use an experimental factor to size the glyphs of the plot
+#' @param pc_method how to extract the components? (svd
+#' @param x_pc Component to put on the x axis.
+#' @param y_pc Component to put on the y axis.
+#' @param label_column Which metadata column to use for labels.
+#' @param num_pc How many components to calculate, default to the number of
+#'   rows in the metadata.
+#' @param expt_names Column or character list of preferred sample names.
+#' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param ...  Arguments passed through to the pca implementations and plotter.
+#' @return a list containing the following (this is currently wrong)
+#' \enumerate{
+#'  \item  pca = the result of fast.svd()
+#'  \item  plot = ggplot2 pca_plot describing the principle component analysis of the samples.
+#'  \item  table = a table of the PCA plot data
+#'  \item  res = a table of the PCA res data
+#'  \item  variance = a table of the PCA plot variance
+#' }
+#' @seealso \pkg{directlabels}
+#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @examples
+#' \dontrun{
+#'  pca_plot <- plot_pca(expt=expt)
+#'  pca_plot
+#' }
+#' @export
 plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
                      plot_size=2, plot_alpha=0.4, plot_labels=FALSE, size_column=NULL,
                      pc_method="fast_svd", x_pc=1, y_pc=2, label_column="description",
@@ -1405,6 +1447,7 @@ plot_pcload <- function(expt, genes=40, desired_pc=1, which_scores="high",
 #' @param x_label Label for the x-axis.
 #' @param y_label Label for the y-axis.
 #' @param plot_size Size of the dots on the plot
+#' @param outlines Add a black outline to the plotted shapes?
 #' @param plot_alpha Add an alpha channel to the dots?
 #' @param size_column Experimental factor to use for sizing the glyphs
 #' @param rug Include the rugs on the sides of the plot?
@@ -1420,11 +1463,11 @@ plot_pcload <- function(expt, genes=40, desired_pc=1, which_scores="high",
 #' @export
 plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                      design=NULL, plot_title=TRUE, plot_labels=NULL,
-                     x_label=NULL, y_label=NULL, plot_size=5,
+                     x_label=NULL, y_label=NULL, plot_size=5, outlines=TRUE,
                      plot_alpha=NULL, size_column=NULL, rug=TRUE,
                      cis=c(0.95, 0.9), ...) {
   arglist <- list(...)
-  batches <- pca_data[["batch"]]
+  batches <- as.factor(pca_data[["batch"]])
   label_column <- "condition"
   if (!is.null(arglist[["label_column"]])) {
     label_column <- arglist[["label_column"]]
@@ -1478,8 +1521,34 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     plot_alpha <- 1
   }
 
-  pca_plot <- ggplot(data=as.data.frame(pca_data),
+  pca_data <- as.data.frame(pca_data)
+  pca_data[["condition"]] <- as.factor(pca_data[["condition"]])
+  pca_data[["batch"]] <- as.factor(pca_data[["batch"]])
+  pca_plot <- ggplot(data=pca_data,
                      aes_string(x="get(first)", y="get(second)", text="sampleid"))
+
+  ## Add a little check to only deal with the confidence-interval-able data.
+  count <- NULL
+  ci_keepers <- pca_data %>%
+    group_by(!!sym(ci_group)) %>%
+    summarise(count = n()) %>%
+    filter(count > 3)
+  if (nrow(ci_keepers) < 1) {
+    cis <- NULL
+  }
+  if (!is.null(cis)) {
+    ci_idx <- pca_data[[ci_group]] %in% ci_keepers[[ci_group]]
+    ci_data <- pca_data[ci_idx, ]
+    alpha <- 0
+    for (ci in cis) {
+      alpha <- alpha + 0.1
+      pca_plot <- pca_plot +
+        ggplot2::stat_ellipse(data=ci_data,
+                              mapping=aes_string(group=ci_group, fill=ci_fill),
+                              geom="polygon", type="t", level=ci, alpha=alpha)
+    }
+  }
+
   minimum_size <- 2
   maximum_size <- 2
   if (!is.null(size_column)) {
@@ -1489,12 +1558,16 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   if (is.null(size_column) & num_batches <= 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(size=plot_size, alpha=plot_alpha,
-                          aes_string(shape="as.factor(batches)",
-                                     colour="as.factor(condition)",
-                                     fill="as.factor(condition)")) +
-      ggplot2::geom_point(size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
-                          aes_string(shape="as.factor(batches)",
-                                     fill="as.factor(condition)")) +
+                          aes_string(shape="batches",
+                                     colour="condition",
+                                     fill="condition"))
+    if (isTRUE(outlines)) {
+      pca_plot <- pca_plot +
+        ggplot2::geom_point(size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
+                            aes_string(shape="batches",
+                                       fill="condition"))
+    }
+    pca_plot <- pca_plot +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
                                   values=color_list) +
@@ -1509,9 +1582,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   } else if (is.null(size_column) & num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(size=plot_size, alpha=plot_alpha,
-                          aes_string(shape="as.factor(batches)",
-                                     fill="as.factor(condition)",
-                                     colour="as.factor(condition)")) +
+                          aes_string(shape="batches",
+                                     fill="condition",
+                                     colour="condition")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
                                   values=color_list) +
@@ -1528,14 +1601,21 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                        aes_string(x="get(first)", y="get(second)", text="sampleid",
                                   shape="batches")) +
       ggplot2::geom_point(alpha=plot_alpha,
-                          aes_string(shape="as.factor(batches)",
+                          aes_string(shape="batches",
                                      size="size",
-                                     colour="as.factor(condition)",
-                                     fill="as.factor(condition)")) +
+                                     colour="condition",
+                                     fill="condition"))
+    if (isTRUE(outlines)) {
+      pca_plot <- pca_plot +
+        ggplot2::geom_point(size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
+                            aes_string(shape="batches",
+                                       fill="condition"))
+    }
+    pca_plot <- pca_plot +
       ggplot2::geom_point(colour="black", alpha=plot_alpha, show.legend=FALSE,
-                          aes_string(shape="as.factor(batches)",
+                          aes_string(shape="batches",
                                      size="size",
-                                     fill="as.factor(condition)")) +
+                                     fill="condition")) +
       ggplot2::scale_color_manual(name="Condition",
                                   guide="legend",
                                   values=color_list) +
@@ -1553,7 +1633,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   } else if (!is.null(size_column) & num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha=plot_alpha,
-                          aes_string(shape="as.factor(batches)",
+                          aes_string(shape="batches",
                                      colour="pca_data[['condition']]",
                                      size="size")) +
       ggplot2::scale_shape_manual(name="Batch",
@@ -1617,30 +1697,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
       directlabels::geom_dl(aes_string(label="labels"), method="first.qp")
   }
 
-  ## Add a little check to only deal with the confidence-interval-able data.
-  count <- NULL
-  ci_keepers <- pca_data %>%
-    group_by(!!sym(ci_group)) %>%
-    summarise(count = n()) %>%
-    filter(count > 3)
-  ##print("TESTME: ")
-  ##print(ci_keepers)
-  if (nrow(ci_keepers) < 1) {
-    cis <- NULL
-  }
-  if (!is.null(cis)) {
-    ci_idx <- pca_data[[ci_group]] %in% ci_keepers[[ci_group]]
-    ci_data <- pca_data[ci_idx, ]
-    alpha <- 0
-    for (ci in cis) {
-      alpha <- alpha + 0.1
-      pca_plot <- pca_plot +
-        ggplot2::stat_ellipse(data=ci_data,
-                              mapping=aes_string(group=ci_group, fill=ci_fill),
-                              geom="polygon", type="t", level=ci, alpha=alpha)
-    }
-  }
-
   legend_position <- "right"
   if (isFALSE(plot_legend)) {
     legend_position <- "none"
@@ -1654,6 +1710,45 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                    legend.key.size=grid::unit(0.5, "cm"))
 
   return(pca_plot)
+}
+
+#' Plot a PC plot with options suitable for ggplotly.
+#'
+#' @param data an expt set of samples.
+#' @param design a design matrix and.
+#' @param plot_colors a color scheme.
+#' @param plot_title a title for the plot.
+#' @param plot_size size for the glyphs on the plot.
+#' @param plot_alpha Add an alpha channel to the dots?
+#' @param plot_labels add labels?  Also, what type?  FALSE, "default", or "fancy".
+#' @param size_column use an experimental factor to size the glyphs of the plot
+#' @param pc_method how to extract the components? (svd
+#' @param x_pc Component to put on the x axis.
+#' @param y_pc Component to put on the y axis.
+#' @param num_pc How many components to calculate, default to the number of
+#'   rows in the metadata.
+#' @param expt_names Column or character list of preferred sample names.
+#' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param ...  Arguments passed through to the pca implementations and plotter.
+#' @return This passes directly to plot_pca(), so its returns should be
+#'   applicable along with the result from ggplotly.
+#' @export
+plotly_pca <-  function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
+                        plot_size=5, plot_alpha=NULL, plot_labels=NULL, size_column=NULL,
+                        pc_method="fast_svd", x_pc=1, y_pc=2, outlines=FALSE,
+                        num_pc=NULL, expt_names=NULL, label_chars=10,
+                        tooltip=c("shape", "fill", "sampleid"),
+                        ...) {
+  pca_result <- plot_pca(data, design=design, plot_colors=plot_colors,
+                         plot_title=plot_title, plot_size=plot_size,
+                         plot_alpha=plot_alpha, plot_labels=plot_labels,
+                         size_column=size_column, pc_method=pc_method,
+                         x_pc=x_pc, y_pc=y_pc, outlines=outlines, num_pc=num_pc,
+                         expt_names=expt_names, label_chars=label_chars, ...)
+  plotly_result <- plotly::ggplotly(pca_result[["plot"]], tooltip=tooltip)
+  retlist <- pca_result
+  retlist[["plotly"]] <- plotly_result
+  return(retlist)
 }
 
 #' Shortcut to plot_pca(pc_method="tsne")
@@ -1713,64 +1808,5 @@ u_plot <- function(plotted_us) {
   return(u_plot)
 }
 
-#' Something silly for Najib.
-#'
-#' This will make him very happy, but I remain skeptical.
-#'
-#' @param pc_result  The result from plot_pca()
-#' @param components  List of three axes by component.
-#' @param file  File to write the created plotly object.
-#' @export
-make_3d_pca <- function(pc_result, components=c(1,2,3), file="3dpca.html") {
-  x_axis <- glue::glue("pc_{components[1]}")
-  y_axis <- glue::glue("pc_{components[2]}")
-  z_axis <- glue::glue("pc_{components[3]}")
-  table <- pc_result[["table"]]
-  color_levels <- levels(as.factor(table[["colors"]]))
-  silly_plot <- plotly::plot_ly(table, x=as.formula(glue::glue("~{x_axis}")),
-                                y=as.formula(glue::glue("~{y_axis}")), z=as.formula(glue::glue("~{z_axis}")),
-                                color=as.formula("~condition"), colors=color_levels,
-                                text=~paste0('condition: ', condition, ' batch: ', batch)) %>%
-    plotly::add_markers()
-  widget <- htmlwidgets::saveWidget(
-                           plotly::as_widget(silly_plot), file=file, selfcontained=TRUE)
-  retlist <- list(
-    "plot" = silly_plot,
-    "file" = file)
-  return(retlist)
-}
-
-#' Attempt to get residuals from tsne data
-#'
-#' I strongly suspect that this is not correct, but it is a start.
-#'
-#' @param svd_result The set of results from one of the many potential svd-ish methods.
-#' @param design Experimental design from which to get experimental factors.
-#' @param factors Set of experimental factors for which to calculate rsquared values.
-#' @param res_slot Where is the res data in the svd result?
-#' @param var_slot Where is the var data in the svd result?
-get_res <- function(svd_result, design, factors=c("condition", "batch"),
-                    res_slot="v", var_slot="d") {
-  retlst <- list()
-  vars <- svd_result[[var_slot]]
-  rsquared_column <- round((vars ^ 2) / sum(vars ^ 2) * 100, 2)
-  cumulative_sum_column <- cumsum(rsquared_column)
-  datum <- svd_result[[res_slot]]
-
-  res_df <- data.frame(
-    "prop_var" = rsquared_column,
-    "cum_prop_var" = cumulative_sum_column)
-
-  for (j in 1:length(factors)) {
-    factor <- factors[j]
-    if (!is.null(design[[factor]])) {
-      fact <- design[[factor]]
-      column <- factor_rsquared(datum, fact)
-      column_name <- glue::glue("{factor}_rsquared")
-      res_df[[column_name]] <- column
-    }
-  }
-  return(res_df)
-}
 
 ## EOF

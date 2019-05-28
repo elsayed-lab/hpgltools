@@ -26,13 +26,6 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
   return(new_plot)
 }
 
-#' I think varpart() is a bad name for a function, so I will rename it.
-#'
-#' @param ... Arguments for varpart.
-simple_varpart <- function(...) {
-  varpart(..., deprecated=FALSE)
-}
-
 #' Use variancePartition to try and understand where the variance lies in a data set.
 #'
 #' variancePartition is the newest toy introduced by Hector.
@@ -56,13 +49,10 @@ simple_varpart <- function(...) {
 #' @return partitions  List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
-varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
-                    chosen_factor="batch", do_fit=FALSE, cor_gene=1,
-                    cpus=6, genes=40, parallel=TRUE, deprecated=TRUE,
-                    modify_expt=TRUE) {
-  if (isTRUE(deprecated)) {
-    warning("Renaming this soon to 'simple_varpart().'")
-  }
+simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
+                           chosen_factor="batch", do_fit=FALSE, cor_gene=1,
+                           cpus=6, genes=40, parallel=TRUE,
+                           modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
   ## One is not supposed to use library() in packages, but it needs to do all
@@ -118,16 +108,20 @@ which are shared among multiple samples.")
   percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
   partition_plot <- variancePartition::plotVarPart(my_sorted)
 
+  fitting <- NULL
+  stratify_batch_plot <- NULL
+  stratify_condition_plot <- NULL
   if (isTRUE(do_fit)) {
     ## Try fitting with lmer4
     fitting <- variancePartition::fitVarPartModel(exprObj=data,
                                                   formula=my_model, data=design)
     idx <- order(design[["condition"]], design[["batch"]])
-    first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
+    ##first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
     test_strat <- data.frame(Expression=data[3, ],
                              condition=design[["condition"]],
                              batch=design[["batch"]])
-    testing <- variancePartition::plotStratify(Expression ~ batch, test_strat)
+    stratify_batch_plot <- variancePartition::plotStratify(Expression ~ batch, test_strat)
+    stratify_condition_plot <- variancePartition::plotStratify(Expression ~ condition, test_strat)
   }
 
   if (isTRUE(parallel)) {
@@ -139,10 +133,14 @@ which are shared among multiple samples.")
     "percent_plot" = percent_plot,
     "partition_plot" = partition_plot,
     "sorted_df" = my_sorted,
-    "fitted_df" = my_extract)
+    "fitted_df" = my_extract,
+    "fitting" = fitting,
+    "stratify_batch_plot" = stratify_batch_plot,
+    "stratify_condition_plot" = stratify_condition_plot)
   if (isTRUE(modify_expt)) {
     new_expt <- expt
     tmp_annot <- fData(new_expt)
+    tmp_annot[["Row.names"]] <- NULL
     added_data <- my_sorted
     colnames(added_data) <- glue("variance_{colnames(added_data)}")
     tmp_annot <- merge(tmp_annot, added_data, by="row.names")

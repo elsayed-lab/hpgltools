@@ -4,7 +4,7 @@
 \alias{median_by_factor}
 \title{Create a data frame of the medians of rows by a given factor in the data.}
 \usage{
-median_by_factor(data, fact = "condition")
+median_by_factor(data, fact = "condition", fun = "median")
 }
 \arguments{
 \item{data}{Data frame, presumably of counts.}

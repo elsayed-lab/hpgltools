@@ -15,7 +15,7 @@ pasilla_expt <- pasilla[["expt"]]
 
 pasilla_norm <- normalize_expt(pasilla_expt, filter=TRUE, transform="log2", convert="cpm", norm="quant")
 
-pasilla_varpart <- sm(varpart(pasilla_norm, predictor=NULL, factors=c("condition", "batch")))
+pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor=NULL, factors=c("condition", "batch")))
 
 ## Grab the model and see if it survived.
 expected <- "(1 | condition) + (1 | batch)"

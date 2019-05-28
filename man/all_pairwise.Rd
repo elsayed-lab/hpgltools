@@ -6,10 +6,11 @@
 \usage{
 all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
-  model_intercept = FALSE, extra_contrasts = NULL, alt_model = NULL,
-  libsize = NULL, test_pca = TRUE, annot_df = NULL,
-  parallel = TRUE, do_basic = TRUE, do_deseq = TRUE,
-  do_ebseq = NULL, do_edger = TRUE, do_limma = TRUE, ...)
+  filter = NULL, model_intercept = FALSE, extra_contrasts = NULL,
+  alt_model = NULL, libsize = NULL, test_pca = TRUE,
+  annot_df = NULL, parallel = TRUE, do_basic = TRUE,
+  do_deseq = TRUE, do_ebseq = NULL, do_edger = TRUE,
+  do_limma = TRUE, ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables,
@@ -26,6 +27,9 @@ of the p-values.}
 
 \item{model_batch}{Include batch in the model?  This may be true/false/"sva"
 or other methods supported by all_adjusters().}
+
+\item{filter}{Added because I am tired of needing to filter the data before
+invoking all_pairwise().}
 
 \item{model_intercept}{Use an intercept model instead of cell means?}
 

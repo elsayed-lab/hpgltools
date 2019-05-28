@@ -109,7 +109,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   final_colnames <- make.names(final_colnames, unique=TRUE)
   colnames(data) <- final_colnames
   wtf <- try(openxlsx::writeDataTable(wb=wb, sheet=sheet, x=data, startCol=new_col,
-                                      startRow=new_row, tableStyle="TableStyleMedium9",
+                                      startRow=new_row, tableStyle=table_style,
                                       rowNames=rownames, colNames=TRUE))
   new_row <- new_row + nrow(data) + 2
   ## Set the column lengths, hard set the first to 20,
