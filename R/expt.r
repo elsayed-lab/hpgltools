@@ -1176,6 +1176,7 @@ make_exampledata <- function(ngenes=1000, columns=5) {
 #'
 #' @param data Data frame, presumably of counts.
 #' @param fact Factor describing the columns in the data.
+#' @param fun Optionally choose mean or another function.
 #' @return Data frame of the medians.
 #' @seealso \pkg{Biobase} \pkg{matrixStats}
 #' @examples
@@ -1795,6 +1796,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @param expt Expt to modify
 #' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
+#' @param null_cell How to fill elements of the design which are null?
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
 #' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}

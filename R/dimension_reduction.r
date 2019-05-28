@@ -1725,10 +1725,12 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
 #' @param pc_method how to extract the components? (svd
 #' @param x_pc Component to put on the x axis.
 #' @param y_pc Component to put on the y axis.
+#' @param outlines Include black outlines around glyphs?
 #' @param num_pc How many components to calculate, default to the number of
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param tooltip Which columns to include in the tooltip.
 #' @param ...  Arguments passed through to the pca implementations and plotter.
 #' @return This passes directly to plot_pca(), so its returns should be
 #'   applicable along with the result from ggplotly.

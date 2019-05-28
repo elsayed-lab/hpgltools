@@ -14,6 +14,8 @@ set_expt_conditions(expt, fact = NULL, ids = NULL,
 
 \item{ids}{Specific sample IDs to change.}
 
+\item{null_cell}{How to fill elements of the design which are null?}
+
 \item{...}{Extra arguments are given to arglist.}
 }
 \value{

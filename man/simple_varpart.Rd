@@ -31,8 +31,6 @@ to the first gene.}
 \item{parallel}{use doParallel?}
 
 \item{modify_expt}{Add annotation columns with the variance/factor?}
-
-\item{deprecated}{I want to rename this, but not immediately.}
 }
 \value{
 partitions  List of plots and variance data frames
