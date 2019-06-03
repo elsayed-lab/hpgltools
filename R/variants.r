@@ -8,33 +8,36 @@
 #' cyoa.
 #'
 #' @param expt an expressionset from which to extract information.
-#' @param type  Use counts / samples or ratios?
-#' @param input_dir  Directory to scan for snps output files.
-#' @param tolower  Lowercase stuff like 'HPGL'?
-#' @return  A new expt object
+#' @param type Use counts / samples or ratios?
+#' @param annot_column Column in the metadata for getting the table of bcftools calls.
+#' @param tolower Lowercase stuff like 'HPGL'?
+#' @return A new expt object
 #' @export
-count_expt_snps <- function(expt, type="counts",
-                            input_dir="preprocessing/outputs", tolower=TRUE) {
+count_expt_snps <- function(expt, type="counts", annot_column="bcftable", tolower=TRUE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
   }
-  if (type == "counts") {
-    file_suffix <- "_parsed_count.txt"
-  } else {
-    file_suffix <- "_parsed_ratio.txt"
-  }
+  file_lst <- pData(expt)[[annot_column]]
   ## Create a data table of snp columns
-  snp_dt <- read_snp_columns(samples, input_dir, file_suffix)
+  chosen_column <- "diff_count"
+  if (type == "percent") {
+    message("Making a matrix of percentages.")
+    chosen_column <- "pct"
+  } else {
+    message("Making a matrix of counts.")
+  }
+  snp_dt <- read_snp_columns(samples, file_lst, column=chosen_column)
 
   snp_exprs <- as.data.frame(snp_dt)
   rownames(snp_exprs) <- snp_exprs[["rownames"]]
   snp_exprs <- as.matrix(snp_exprs[, -1])
 
   snp_features <- data.table::as.data.table(snp_dt)
-  snp_features[, c("species", "chromosome", "position", "original", "new") :=
+  snp_features[, c("blank1", "chromosome", "blank2", "position",
+                   "blank3", "original", "blank4", "new", "na") :=
                    data.table::tstrsplit(snp_features[["rownames"]], "_", fixed=TRUE)]
-  snp_features <- snp_features[, c("species", "chromosome", "position", "original", "new")]
+  snp_features <- snp_features[, c("chromosome", "position", "original", "new")]
   snp_features <- as.data.frame(snp_features)
   rownames(snp_features) <- snp_dt[["rownames"]]
 
@@ -109,7 +112,8 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   medians <- median_by_factor(snp_expt, fact=factor)
   ## I am going to split this by chromosome, as a run of 10,000 took 2 seconds,
   ## 100,000 took a minute, and 400,000 took an hour.
-  chr <- gsub(pattern="^.+_(.+)_.+_.+_.+$", replacement="\\1", x=rownames(medians))
+  ##chr <- gsub(pattern="^.+_(.+)_.+_.+_.+$", replacement="\\1", x=rownames(medians))
+  chr <- gsub(pattern="^chr_(.+)_pos_.+_ref_.+_alt_.+$", replacement="\\1", x=rownames(medians))
   medians[["chr"]] <- chr
   tt <- sm(requireNamespace("parallel"))
   tt <- sm(requireNamespace("doParallel"))
@@ -164,8 +168,11 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
   for (chr in names(data_by_chr)) {
     snps <- rownames(data_by_chr[[chr]][["medians"]])
     num_snps <- length(snps)
-    last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
-                                         replacement="\\1", x=snps)))
+    ##last_position <- max(as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+    ##                                     replacement="\\1", x=snps)))
+    last_position <- max(
+      as.numeric(gsub(pattern="^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                      replacement="\\1", x=snps)))
     snp_density <- num_snps / as.numeric(last_position)
     density_by_chr[[chr]] <- snp_density
     for (inter in names(data_by_chr[[chr]][["intersections"]])) {
@@ -197,38 +204,39 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
 #'
 #' I put all my bcfutils output files into one directory, so hunt them down and
 #' read them into a data table.
-#' @param samples  Sample names to read
-#' @param input_dir  Directory from which to read them.
-#' @param file_suffix  The suffix of my output files.
+#' @param samples Sample names to read.
+#' @param file_lst Set of files to read.
 #' @return A big honking data table.
-read_snp_columns <- function(samples,
-                             input_dir="preprocessing/outputs",
-                             file_suffix="_parsed_ratio.txt") {
-  sample <- samples[1]
-  filename_prefix <- file.path(input_dir, sample)
-  count_filename <- glue("{filename_prefix}{file_suffix}")
-  column <- read.table(count_filename)
-  snp_columns <- data.table::as.data.table(column)
-  rownames(snp_columns) <- snp_columns[["V1"]]
-  colnames(snp_columns) <- c("rownames", sample)
+read_snp_columns <- function(samples, file_lst, column="diff_count") {
+  ## Read the first file
+  first_sample <- samples[1]
+  first_file <- file_lst[1]
+  first_read <- readr::read_tsv(first_file)
+  ## Create a simplified data table from it.
+  first_column <- data.table::as.data.table(first_read[[column]])
+  first_column[["rownames"]] <- first_read[[1]]
+  colnames(first_column) <- c(first_sample, "rownames")
+  ## Copy that dt to the final data structure.
+  snp_columns <- first_column
 
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }
+  ## Foreach sample, do the same read of the data and merge it onto the end of the
+  ## final data table.
   for (sample_num in 2:length(samples)) {
     if (isTRUE(show_progress)) {
       pct_done <- sample_num / length(samples)
       setTxtProgressBar(bar, pct_done)
     }
     sample <- samples[sample_num]
-    filename_prefix <- file.path(input_dir, samples[sample_num])
-    count_filename <- glue("{filename_prefix}{file_suffix}")
-    column <- read.table(count_filename)
-    snp_column <- data.table::as.data.table(column)
-    rownames(snp_column) <- snp_column[["V1"]]
-    colnames(snp_column) <- c("rownames", sample)
-    snp_columns <- merge(snp_columns, snp_column, by="rownames", all=TRUE)
+    file <- file_lst[sample_num]
+    new_table <- readr::read_tsv(file)
+    new_column <- data.table::as.data.table(new_table[[column]])
+    new_column[["rownames"]] <- new_table[[1]]
+    colnames(new_column) <- c(sample, "rownames")
+    snp_columns <- merge(snp_columns, new_column, by="rownames", all=TRUE)
   }
   if (isTRUE(show_progress)) {
     close(bar)
@@ -419,14 +427,14 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #'   in snp_result, the summary of numbers of variants per chromosome, and
 #'   summary of numbers per gene.
 #' @export
-snps_vs_intersections <- function(expt, snp_result) {
+snps_vs_intersections <- function(expt, snp_result, chr_column="seqnames") {
   features <- fData(expt)
   features[["start"]] <- sm(as.numeric(features[["start"]]))
   na_starts <- is.na(features[["start"]])
   features <- features[!na_starts, ]
   features[["end"]] <- as.numeric(features[["end"]])
-  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$",
-                                 replacement="\\1", x=features[["seqnames"]])
+  features[[chr_column]] <- gsub(pattern="^.+_(.+)$",
+                                 replacement="\\1", x=features[[chr_column]])
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
 
   set_names <- snp_result[["set_names"]]
@@ -436,10 +444,10 @@ snps_vs_intersections <- function(expt, snp_result) {
   for (inter in names(snp_result[["intersections"]])) {
     inter_name <- set_names[[inter]]
     inter_df <- data.frame(row.names=snp_result[["intersections"]][[inter]])
-    inter_df[["seqnames"]] <- gsub(pattern="^.+_(.+)_.+_.+_.+$",
+    inter_df[["seqnames"]] <- gsub(pattern="^chr_(.+)_pos_.+_ref.+_alt.+$",
                                    replacement="\\1",
                                    x=rownames(inter_df))
-    inter_df[["start"]] <- as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
+    inter_df[["start"]] <- as.numeric(gsub(pattern="^chr_.+_pos_(.+)_ref.+_alt.+$",
                                            replacement="\\1",
                                            x=rownames(inter_df)))
     inter_df[["end"]] <- inter_df[["start"]] + 1
@@ -482,6 +490,12 @@ snps_vs_intersections <- function(expt, snp_result) {
 #' @export
 snps_vs_genes <- function(expt, snp_result, start_col="start", end_col="end") {
   features <- fData(expt)
+  if (is.null(features[[start_col]])) {
+    stop("Unable to find the ", start_col, " column in the annotation data.")
+  }
+  if (is.null(features[[end_col]])) {
+    stop("Unable to find the ", end_col, " column in the annotation data.")
+  }
   features[[start_col]] <- sm(as.numeric(features[[start_col]]))
   na_starts <- is.na(features[[start_col]])
   features <- features[!na_starts, ]
@@ -499,12 +513,17 @@ snps_vs_genes <- function(expt, snp_result, start_col="start", end_col="end") {
 
   expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
   snp_positions <- snp_result[["medians"]]
-  snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$",
-                                      replacement="\\1",
-                                      x=rownames(snp_positions))
-  snp_positions[["start"]] <- as.numeric(gsub(pattern="^.+_.+_(.+)_.+_.+$",
-                                              replacement="\\1",
-                                              x=rownames(snp_positions)))
+  ##snp_positions[["seqnames"]] <- gsub(pattern="^(.+_.+)_.+_.+_.+$",
+  ##                                    replacement="\\1",
+  ##                                    x=rownames(snp_positions))
+  snp_positions[["seqnames"]] <- gsub(
+    pattern="^chr_(.+)_pos_.+_ref.+_alt.+$",
+    replacement="\\1",
+    x=rownames(snp_positions))
+  snp_positions[["start"]] <- as.numeric(
+    gsub(pattern="^chr_.+_pos_(.+)_ref.+_alt.+$",
+         replacement="\\1",
+         x=rownames(snp_positions)))
   snp_positions[["end"]] <- snp_positions[["start"]] + 1
   snp_positions[["strand"]] <- "+"
   snp_positions <- snp_positions[, c("seqnames", "start", "end", "strand")]

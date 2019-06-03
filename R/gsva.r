@@ -501,8 +501,9 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
   ## The expressionset must have the annotation field filled in for gsva to
   ## work.
   eset <- expt[["expressionset"]]
-  if (length(annotation(eset)) == 0 |
-      grep(pattern="Fill me in", x=annotation(eset))) {
+  eset_annotation <- annotation(eset)
+  eset_pattern <- grepl(pattern="Fill me in", x=annotation(eset))
+  if (length(eset_annotation) == 0 | isTRUE(eset_pattern)) {
     message("gsva requires the annotation field to be filled in.")
     annotation(eset) <- orgdb
   }

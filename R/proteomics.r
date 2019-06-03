@@ -749,6 +749,70 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 ##    rvest::html_nodes(xpath="//Protein")
 ##}
 
+#' Impute missing values using code from DEP reworked for expressionsets.
+#'
+#' \code{impute_expt} imputes missing values in a proteomics dataset.
+#'
+#' @param expt An ExpressionSet (well, expt), I think it is assumed that this should have
+#' been normalized and filtered for features which have no values across 'most' samples.
+#' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
+#' "MinProb", "man", "min", "zero", "mixed" or "nbavg",
+#' Function used for data imputation based on \code{\link{manual_impute}}
+#' and \code{\link[MSnbase:impute-methods]{impute}}.
+#' @param ... Additional arguments for imputation functions as depicted in
+#' \code{\link{manual_impute}} and \code{\link[MSnbase:impute-methods]{impute}}.
+#' @return An imputed expressionset.
+#' @export
+impute_expt <- function(expt, force=FALSE, p=0.5,
+                        fun=c("bpca", "knn", "QRILC", "MLE",
+                              "MinDet", "MinProb", "min", "zero",
+                              "mixed", "nbavg"), ...) {
+  ## Show error if inputs do not contain required columns
+  fun <- match.arg(fun)
+
+  ## Show error if there are no missing values
+  ## Since I reset NAs to 0, this needs to be reconsidered slightly.
+  found_zeros <- sum(exprs(expt) == 0)
+  if (found_zeros == 0) {
+    warning("No missing values in the expressionset, returning it unchanged.")
+    return(expt)
+  } else {
+    message("Found ", found_zeros, " zeros in the data.")
+  }
+  if (expt[["state"]][["filter"]] == "raw") {
+    message("The data has not been filtered.")
+    if (!isTRUE(force)) {
+      message("Filtering the data, turn on force to stop this.")
+      expt <- normalize_expt(expt, filter="pofa", p=p)
+    }
+  }
+
+  exprs_set <- expt[["expressionset"]]
+  ## Annotate whether or not there are missing values and how many
+  num_zeros <- apply(exprs(expt) == 0, 1, any)
+  fData(exprs_set)[["imputed"]] <- num_zeros
+  fData(exprs_set)[["num_nas"]] <- rowSums(exprs(expt) == 0)
+
+  msn_data <- as(exprs_set, "MSnSet")
+  starting_counts <- exprs(exprs_set)
+  message("Invoking impute from MSnbase with the ", fun, " method.")
+
+  imputed_data <- MSnbase::impute(msn_data, method=fun,
+                                  ...)
+  imputed_exprs <- as(imputed_data, "ExpressionSet")
+  imputed_counts <- exprs(imputed_exprs)
+
+  same <- all.equal(starting_counts, imputed_counts)
+  if (isTRUE(same)) {
+    message("The counts remained the same?")
+  } else {
+    print(same)
+  }
+
+  expt[["expressionset"]] <- imputed_exprs
+  return(expt)
+}
+
 #' An attempt to address a troubling question when working with DIA data.
 #'
 #' My biggest concern when treating DIA data in a RNASeqish manner is the fact
@@ -1005,6 +1069,157 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
   }
 
   return(boxplot)
+}
+
+#' Count some aspect(s) of the pyprophet data and plot them.
+#'
+#' This function is mostly redundant with the plot_mzxml_boxplot above.
+#' Unfortunately, the two data types are subtly different enough that I felt it
+#' not worth while to generalize the functions.
+#'
+#' @param pyprophet_data List containing the pyprophet results.
+#' @param type What to count/plot?
+#' @param keep_real Do we keep the real data when plotting the data? (perhaps
+#'   we only want the decoys)
+#' @param keep_decoys Do we keep the decoys when plotting the data?
+#' @param expt_names Names for the x-axis of the plot.
+#' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param title Title the plot?
+#' @param scale Put the data on a specific scale?
+#' @param ... Further arguments, presumably for colors or some such.
+#' @return Boxplot describing the desired column from the data.
+#' @export
+plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
+                                  keep_decoys=TRUE, expt_names=NULL, label_chars=10,
+                                  title=NULL, scale=NULL, ...) {
+  arglist <- list(...)
+  metadata <- pyprophet_data[["metadata"]]
+  colors <- pyprophet_data[["colors"]]
+  sample_data <- pyprophet_data[["sample_data"]]
+  plot_df <- data.frame()
+  samples <- length(sample_data)
+
+  ## Reset the sample names if one wants a specific column from the metadata.
+  if (!is.null(expt_names) & class(expt_names) == "character") {
+    if (length(expt_names) == 1) {
+      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
+    } else {
+      names(sample_data) <- expt_names
+    }
+  }
+
+  keepers <- c()
+  plotted_data <- data.frame()
+  for (i in 1:samples) {
+    name <- names(sample_data)[i]
+    if (class(sample_data[[i]])[1] == "try-error") {
+      next
+    }
+    keepers <- c(keepers, i)
+    message("Adding ", name)
+    plotted_table <- sample_data[[i]]
+    if (!isTRUE(keep_decoys)) {
+      good_idx <- plotted_table[["decoy"]] != 1
+      plotted_table <- plotted_table[good_idx, ]
+    }
+    if (!isTRUE(keep_real)) {
+      good_idx <- plotted_table[["decoy"]] != 0
+      plotted_table <- plotted_table[good_idx, ]
+    }
+
+    row_condition <- as.character(metadata[i, "condition"])
+    row_color <- colors[row_condition]
+    if (type == "count") {
+      row <- c(name, nrow(plotted_table), row_condition, row_color)
+    } else if (type == "intensity") {
+      row <- c(name, sum(as.numeric(plotted_table[["intensity"]])), row_condition, row_color)
+    } else {
+      row <- c(name, sum(as.numeric(plotted_table[[type]])), row_condition, row_color)
+    }
+
+    plotted_data <- rbind(plotted_data, row)
+  } ## End the for loop.
+
+  y_label <- "Identifications per sample"
+  if (type == "count") {
+    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
+    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
+  } else if (type == "intensity") {
+    y_label <- "Sum of intensities per sample."
+    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
+    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
+  } else {
+    y_label <- glue::glue("Sum of {type} per sample.")
+    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
+    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
+  }
+
+  if (!is.null(label_chars) & is.numeric(label_chars)) {
+    plot_df[["id"]] <- abbreviate(plot_df[["id"]], minlength=label_chars)
+  }
+  our_plot <- plot_sample_bars(plotted_data, integerp=TRUE,
+                               text=TRUE, yscale="log2",
+                               ylabel=y_label)
+
+  retlist <- list(
+    "df" = plotted_data,
+    "plot" = our_plot)
+  return(retlist)
+}
+
+plot_pyprophet_xy <- function(pyprophet_data, keep_real=TRUE, size=6, label_size=4,
+                              keep_decoys=TRUE, expt_names=NULL, label_chars=10,
+                              x_type="count", y_type="intensity",
+                              title=NULL, scale=NULL, ...) {
+  arglist <- list(...)
+
+  x_data <- plot_pyprophet_counts(pyprophet_data,
+                                  type=x_type,
+                                  keep_real=keep_real,
+                                  keep_decoys=keep_decoys,
+                                  expt_names=expt_names,
+                                  label_chars=label_chars,
+                                  title=title,
+                                  scale=scale,
+                                  ...)
+  y_data <- plot_pyprophet_counts(pyprophet_data,
+                                  type=y_type,
+                                  keep_real=keep_real,
+                                  keep_decoys=keep_decoys,
+                                  expt_names=expt_names,
+                                  label_chars=label_chars,
+                                  title=title,
+                                  scale=scale,
+                                  ...)
+  the_df <- x_data[["df"]]
+  y_df <- y_data[["df"]]
+  colnames(the_df)[2] <- x_type
+  the_df[[y_type]] <- y_df[[2]]
+
+
+  color_listing <- the_df[, c("condition", "colors")]
+  color_listing <- unique(color_listing)
+  color_list <- as.character(color_listing[["colors"]])
+  names(color_list) <- as.character(color_listing[["condition"]])
+
+  sc_plot <- ggplot(data=the_df,
+                    aes_string(x=x_type, y=y_type, label="id")) +
+    ggplot2::geom_point(size=size, shape=21,
+                        aes_string(colour="as.factor(condition)",
+                                   fill="as.factor(condition)")) +
+    ggplot2::geom_point(size=size, shape=21, colour="black", show.legend=FALSE,
+                        aes_string(fill="as.factor(condition)")) +
+    ggplot2::scale_color_manual(name="Condition",
+                                guide="legend",
+                                values=color_list) +
+    ggplot2::scale_fill_manual(name="Condition",
+                               guide="legend",
+                               values=color_list) +
+    ggrepel::geom_text_repel(aes_string(label="id"),
+                             size=label_size, box.padding=ggplot2::unit(0.5, "lines"),
+                             point.padding=ggplot2::unit(1.6, "lines"),
+                             arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
+  return(sc_plot)
 }
 
 #' Make a boxplot out of some of the various data available in the pyprophet

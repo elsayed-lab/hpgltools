@@ -14,9 +14,7 @@ test_genes <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
 
 ## load_orgdb_annotations()
 testing <- load_orgdb_annotations()
-## hmm, I get different answers here on different hosts.
-##expected <- c(327565, 6)
-expected <- c(334845, 6)
+expected <- c(327742, 6)
 actual <- dim(testing[["genes"]])
 ## 0102
 test_that("Do we get the expected amount of orgdb gene data?", {
@@ -40,7 +38,7 @@ test_that("Do we get the expected amount of orgdb transcript data?", {
 testing <- load_orgdb_go(gene_ids=test_genes)
 ##expected <- c(13627, 10)
 ## Another function on which I get different answers on different hosts.
-expected <- c(13062, 10)
+expected <- c(10140, 10)
 actual <- dim(testing)
 ## 0506
 test_that("Do we get the expected amount of orgdb GO data?", {
