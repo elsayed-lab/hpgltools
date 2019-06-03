@@ -4,7 +4,7 @@
 \alias{snps_vs_intersections}
 \title{Cross reference observed variants against the transcriptome annotation.}
 \usage{
-snps_vs_intersections(expt, snp_result)
+snps_vs_intersections(expt, snp_result, chr_column = "seqnames")
 }
 \arguments{
 \item{expt}{The original expressionset.  This provides the annotation data.}

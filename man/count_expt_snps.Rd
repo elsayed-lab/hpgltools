@@ -4,17 +4,17 @@
 \alias{count_expt_snps}
 \title{Gather snp information for an expt}
 \usage{
-count_expt_snps(expt, type = "counts",
-  input_dir = "preprocessing/outputs", tolower = TRUE)
+count_expt_snps(expt, type = "counts", annot_column = "bcftable",
+  tolower = TRUE)
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}
 
 \item{type}{Use counts / samples or ratios?}
 
-\item{input_dir}{Directory to scan for snps output files.}
-
 \item{tolower}{Lowercase stuff like 'HPGL'?}
+
+\item{input_dir}{Directory to scan for snps output files.}
 }
 \value{
 A new expt object

@@ -4,15 +4,12 @@
 \alias{read_snp_columns}
 \title{Read the output from bcfutils into a count-table-esque}
 \usage{
-read_snp_columns(samples, input_dir = "preprocessing/outputs",
-  file_suffix = "_parsed_ratio.txt")
+read_snp_columns(samples, file_lst, column = "diff_count")
 }
 \arguments{
-\item{samples}{Sample names to read}
+\item{samples}{Sample names to read.}
 
-\item{input_dir}{Directory from which to read them.}
-
-\item{file_suffix}{The suffix of my output files.}
+\item{file_lst}{Set of files to read.}
 }
 \value{
 A big honking data table.

@@ -1093,7 +1093,12 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     pc_method,
     "fast_svd" = {
       svd_result <- corpcor::fast.svd(mtrx - rowMeans(mtrx))
-      rownames(svd_result[["v"]]) <- rownames(fData(data))
+      fdata_data <- fData(data)
+      fdata_rows <- rownames(fdata_data)
+      pc_rows <- rownames(pc_table)
+      kept_rows <- fdata_rows %in% pc_rows
+      kept_fdata <- fdata_data[kept_rows, ]
+      rownames(svd_result[["v"]]) <- rownames(kept_fdata)
       colnames(svd_result[["v"]]) <- glue::glue("PC{1:ncol(svd_result[['v']])}")
       pc_table <- svd_result[["v"]]
       x_name <- glue::glue("PC{x_pc}")
@@ -1101,7 +1106,7 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       ## Depending on how much batch/condition information is available, invoke
       ## pcRes() to get some idea of how much variance in a batch model is
       ## accounted for with each PC.
-      residual_df <- get_res(svd_result, fData(data))
+      residual_df <- get_res(svd_result, kept_fdata)
       prop_lst <- residual_df[["prop_var"]]
       ## get the percentage of variance accounted for in each PC
       x_label <- sprintf("%s: %.2f%% variance", x_name, prop_lst[x_pc])
@@ -1170,7 +1175,7 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
                                  perplexity=perplexity)
       pc_table <- as.data.frame(svd_result[["Y"]])
       ## Changing these assignments because of my new attempts to use GSVA
-      rownames(pc_table) <- rownames(fData(data))
+      rownames(pc_table) <- rownames(plotting_data)
       colnames(pc_table) <- glue::glue("PC{1:ncol(pc_table)}")
       ##pc_table <- pc_table[, 1:components]
       pos_sing <- svd_result[["costs"]]
@@ -1321,13 +1326,20 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       y_label <- sprintf("%s: %.2f%% variance", y_name, prop_lst[y_pc])
     })  ## End of the switch()
 
+  ## An important caveat, some dimension reduction methods remove rows from the data.
+  fdata_data <- fData(data)
+  fdata_rows <- rownames(fdata_data)
+  pc_rows <- rownames(pc_table)
+  kept_rows <- fdata_rows %in% pc_rows
+  kept_fdata <- fdata_data[kept_rows, ]
+
   comp_data <- data.frame(
     "sampleid" = rownames(pc_table),
     "condition" = "a",
     "batch" = "a",
     "batch_int" = 1,
     "colors" = "black",
-    "text" = fData(data)[[label_column]],
+    "text" = kept_fdata[[label_column]],
     "labels" = FALSE)
 
   comp_data[[x_name]] <- pc_table[, x_pc]
