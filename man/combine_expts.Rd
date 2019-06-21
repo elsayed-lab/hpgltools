@@ -4,7 +4,8 @@
 \alias{combine_expts}
 \title{Take two expressionsets and smoosh them together.}
 \usage{
-combine_expts(expt1, expt2, condition = "condition", batch = "batch")
+combine_expts(expt1, expt2, condition = "condition", batch = "batch",
+  merge_meta = FALSE)
 }
 \arguments{
 \item{expt1}{First expt object.}

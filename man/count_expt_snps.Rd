@@ -12,9 +12,9 @@ count_expt_snps(expt, type = "counts", annot_column = "bcftable",
 
 \item{type}{Use counts / samples or ratios?}
 
-\item{tolower}{Lowercase stuff like 'HPGL'?}
+\item{annot_column}{Column in the metadata for getting the table of bcftools calls.}
 
-\item{input_dir}{Directory to scan for snps output files.}
+\item{tolower}{Lowercase stuff like 'HPGL'?}
 }
 \value{
 A new expt object

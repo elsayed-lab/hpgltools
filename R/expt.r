@@ -10,10 +10,26 @@
 #' @param batch Column with which to reset the batches.
 #' @return Larger expt.
 #' @export
-combine_expts <- function(expt1, expt2, condition="condition", batch="batch") {
+combine_expts <- function(expt1, expt2, condition="condition", batch="batch", merge_meta=FALSE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
+
+  if (isTRUE(merge_meta)) {
+    design1 <- pData(exp1)
+    d1_rows <- 1:nrow(design1)
+    design2 <- pData(exp2)
+    both <- as.data.frame(data.table::rbindlist(list(design1, design2), fill=TRUE))
+##    na_idx <- is.na(both)
+##    both[na_idx] <- ""
+    d2_rows <- (nrow(design1) + 1):nrow(both)
+    new_design1 <- both[d1_rows, ]
+    rownames(new_design1) <- rownames(design1)
+    new_design2 <- both[d2_rows, ]
+    rownames(new_design2) <- rownames(design2)
+    pData(exp1) <- new_design1
+    pData(exp2) <- new_design2
+  }
 
   new <- combine(exp1, exp2)
   expt1[["expressionset"]] <- new

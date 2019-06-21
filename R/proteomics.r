@@ -1130,6 +1130,7 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
     row_condition <- as.character(metadata[i, "condition"])
     row_color <- colors[row_condition]
     if (type == "count") {
+      ## Taking nrow is a simplistic way to count the number of identifications.
       row <- c(name, nrow(plotted_table), row_condition, row_color)
     } else if (type == "intensity") {
       row <- c(name, sum(as.numeric(plotted_table[["intensity"]])), row_condition, row_color)
@@ -1167,6 +1168,27 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
   return(retlist)
 }
 
+#' Invoked plot_pyprophet_counts() twice, once for the x-axis, and once for the y.
+#'
+#' Then plot the result, hopefully adding some new insights into the state of
+#' the post-pyprophet results.  By default, this puts the number of
+#' identifications (number of rows) on the x-axis for each sample, and the sum
+#' of intensities on the y.  Currently missing is the ability to change this
+#' from sum to mean/median/etc.  That should trivially be possible via the
+#' addition of arguments for the various functions of interest.
+#'
+#' @param pyprophet_data List of pyprophet matrices by sample.
+#' @param keep_real Use the real identifications (as opposed to the decoys)?
+#' @param size Size of the glyphs used in the plot.
+#' @param label_size Set the label sizes.
+#' @param keep_decoys Use the decoy identifications (vs. the real)?
+#' @param expt_names Manually change the labels to some other column than sample.
+#' @param label_chars Maximum number of characters in the label before
+#'   shortening.
+#' @param title Plot title.
+#' @param scale Put the data onto the log scale?
+#' @param ... Extra arguments passed along.
+#' @export
 plot_pyprophet_xy <- function(pyprophet_data, keep_real=TRUE, size=6, label_size=4,
                               keep_decoys=TRUE, expt_names=NULL, label_chars=10,
                               x_type="count", y_type="intensity",
@@ -1459,7 +1481,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   }
   plot_df[["sequence"]] <- as.factor(plot_df[["sequence"]])
 
-  scale_data <- check_plot_scale(plot_df[[column]], scale, ...)
+  scale_data <- check_plot_scale(plot_df[[column]], scale=scale,
+                                 ...)
   if (is.null(scale)) {
     scale <- scale_data[["scale"]]
   }
@@ -1481,7 +1504,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   if (!is.null(title)) {
     violin <- violin + ggplot2::ggtitle(title)
   }
-  scale <- "log"
+
   if (scale == "log") {
     violin <- violin + ggplot2::scale_y_continuous(
                                   labels=scales::scientific,
