@@ -269,7 +269,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   }
 
   sample_definitions <- data.frame()
-  if (class(metadata) == "data.frame") {
+  if (class(metadata)[1] == "data.frame") {
     sample_definitions <- metadata
   } else {
       sample_definitions <- extract_metadata(metadata, ...)
@@ -291,7 +291,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
-  meta <- sample_definitions[, c("sampleid", file_column)]
+  meta <- sample_definitions[, c(sample_column, file_column)]
   colnames(meta) <- c("id", "file")
   existing_files <- complete.cases(meta[["file"]])
   if (sum(existing_files) != nrow(meta)) {
@@ -324,6 +324,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     if (isTRUE(show_progress)) {
       pb_opts <- list("progress" = progress)
     }
+    res_names <- c()
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
       file <- meta[i, "file"]
@@ -331,7 +332,10 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
                                            allow_window_overlap=allow_window_overlap,
                                            format=format, start_add=start_add))
-      if (class(file_result)[1] != "try-error") {
+      if (class(file_result)[1] == "try-error") {
+        warning("There was an error reading ", file, ".")
+      } else {
+        res_names <- c(file, res_names)
         returns[[file]] <- file_result
       }
     }
@@ -340,19 +344,24 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     }
     parallel::stopCluster(cl)
   } else {
+    res_names <- c()
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
                                            allow_window_overlap=allow_window_overlap,
-                                           format=format, start_add=start_add))
-      if (class(file_result)[1] != "try-error") {
+                                           format=format, start_add=start_add), silent=TRUE)
+      if (class(file_result)[1] == "try-error") {
+        warning("There was an error reading ", file, ".")
+      } else {
+        res_names <- c(file, res_names)
         res[[file]] <- file_result
       }
     }
   }
+  try(names(res) <- res_names, silent=TRUE)
   rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
-  names(res) <- rownames(sample_definitions)
+
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -667,7 +676,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   }
 
   sample_definitions <- data.frame()
-  if (class(metadata) == "data.frame") {
+  if (class(metadata)[1] == "data.frame") {
     sample_definitions <- metadata
   } else {
     sample_definitions <- extract_metadata(metadata, ...)
@@ -770,8 +779,8 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
   ## Show error if inputs do not contain required columns
   fun <- match.arg(fun)
 
-  ## Show error if there are no missing values
-  ## Since I reset NAs to 0, this needs to be reconsidered slightly.
+  ## Caveat: Imputation works only on NA values.  I reset NAs to 0,
+  ## so I will need to send them back...
   found_zeros <- sum(exprs(expt) == 0)
   if (found_zeros == 0) {
     warning("No missing values in the expressionset, returning it unchanged.")
@@ -791,8 +800,11 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
   ## Annotate whether or not there are missing values and how many
   num_zeros <- apply(exprs(expt) == 0, 1, any)
   fData(exprs_set)[["imputed"]] <- num_zeros
-  fData(exprs_set)[["num_nas"]] <- rowSums(exprs(expt) == 0)
+  zero_idx <- exprs(expt) == 0
+  fData(exprs_set)[["num_nas"]] <- rowSums(zero_idx)
+  exprs(exprs_set)[zero_idx] <- NA
 
+  requireNamespace("MSnbase")
   msn_data <- as(exprs_set, "MSnSet")
   starting_counts <- exprs(exprs_set)
   message("Invoking impute from MSnbase with the ", fun, " method.")
@@ -804,9 +816,7 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
 
   same <- all.equal(starting_counts, imputed_counts)
   if (isTRUE(same)) {
-    message("The counts remained the same?")
-  } else {
-    print(same)
+    message("The counts remained the same.")
   }
 
   expt[["expressionset"]] <- imputed_exprs
@@ -1424,6 +1434,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
                                    keep_decoys=TRUE, expt_names=NULL, label_chars=10,
                                    protein=NULL, title=NULL, scale=NULL, ...) {
   arglist <- list(...)
+
   metadata <- pyprophet_data[["metadata"]]
   colors <- pyprophet_data[["colors"]]
   sample_data <- pyprophet_data[["sample_data"]]
@@ -1437,6 +1448,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     } else {
       names(sample_data) <- expt_names
     }
+    names(colors) <- names(sample_data)
   }
 
   keepers <- c()
@@ -1481,6 +1493,21 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   }
   plot_df[["sequence"]] <- as.factor(plot_df[["sequence"]])
 
+  ## Fix the darn colors!
+  ## The problem occurs when a sample does not have sufficient identifications
+  ## to make a violin. When that happens, the colors get out of sync
+  plot_df[["colors"]] <- ""
+  kept_colors <- c()
+  for (sample in names(colors)) {
+    sample_color <- colors[sample]
+    sample_idx <- plot_df[["sample"]] == sample
+    sample_sum <- sum(sample_idx)
+    if (sample_sum >= 3) {
+      kept_colors <- c(kept_colors, sample_color)
+    }
+    plot_df[sample_idx, "colors"] <- sample_color
+  }
+
   scale_data <- check_plot_scale(plot_df[[column]], scale=scale,
                                  ...)
   if (is.null(scale)) {
@@ -1491,9 +1518,13 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   if (!is.null(label_chars) & is.numeric(label_chars)) {
     plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
   }
+
+  plot_df[["sample"]] <- factor(plot_df[["sample"]], levels=names(colors))
+
   violin <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
     ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
-    ggplot2::scale_fill_manual(values=as.character(colors)) +
+    ggplot2::scale_fill_manual(values=as.character(kept_colors)) +
+    ##ggplot2::scale_fill_manual(aes_string(fill="colors")) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +

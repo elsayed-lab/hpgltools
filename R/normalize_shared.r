@@ -217,6 +217,13 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## replace an expressionset with a smaller version (low-filtered).
   ## Instead, one must properly subset the object first, then replace.
   ## While this is annoying, I suppose it is smart.
+
+  ## There is another peculiarity which has popped up in my proteomics data.
+  ## Some rows are all NA!  How this happened I have not yet figured out,
+  ## but these rows need to go.
+  row_na_idx <- !is.na(rownames(final_data))
+  final_data <- final_data[row_na_idx, ]
+
   unfiltered_genes <- rownames(exprs(current_exprs)) %in% rownames(final_data)
   current_exprs <- current_exprs[unfiltered_genes, ]
   ## This next line was added in response to an annoying occurance when

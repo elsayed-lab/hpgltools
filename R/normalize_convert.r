@@ -55,10 +55,13 @@ convert_counts <- function(data, convert="raw", ...) {
       na_idx <- is.na(count_table)
       if (sum(na_idx) > 0) {
         warning("There are ", sum(na_idx), " NAs in the expressionset.")
+        count_table[na_idx] <- 0
       }
       neg_idx <- count_table < 0
-      if (sum(neg_idx) > 0) {
-        warning("There are ", sum(neg_idx), " negative values in the expressionset, modifying it.")
+      neg_sum <- 0
+      neg_sum <- try(sum(neg_idx, na.rm=TRUE))
+      if (neg_sum > 0) {
+        warning("There are ", neg_sum, " negative values in the expressionset, modifying it.")
         count_table[neg_idx] <- 0
       }
       count_table <- edgeR::cpm(count_table)

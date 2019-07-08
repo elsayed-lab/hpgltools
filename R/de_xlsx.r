@@ -1384,8 +1384,7 @@ Defaulting to fdr.")
     temp_fc <- cbind(as.numeric(comb[["limma_logfc"]]),
                      as.numeric(comb[["edger_logfc"]]),
                      as.numeric(comb[["deseq_logfc"]]))
-    message("20181210 a pthread error in normalize.quantiles leads me to robust.")
-    temp_fc <- preprocessCore::normalize.quantiles.robust(as.matrix(temp_fc))
+    temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
     comb[["lfc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
     comb[["lfc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
     comb[["lfc_varbymed"]] <- comb[["lfc_var"]] / comb[["lfc_meta"]]
