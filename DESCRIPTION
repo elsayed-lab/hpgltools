@@ -115,7 +115,7 @@ Collate:
     'plot_heatmap.r'
     'plot_hist.r'
     'plot_misc.r'
-    'plot_peptides.r'
+    'plot_proteomics.r'
     'plot_point.r'
     'plot_shared.r'
     'plot_venn.r'

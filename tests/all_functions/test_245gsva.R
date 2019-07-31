@@ -33,6 +33,8 @@ types <- c("Neutrophils", "Lymphocytes", "Monocytes", "Eosinophils", "Basophils"
 expressionset <- hs_expt$expressionset
 colnames(pData(expressionset))[34:38] <- types
 
+##gsva_intersections <- intersect_signatures(gsva_expt)
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 180ontology_all.R in ", elapsed,  " seconds."))

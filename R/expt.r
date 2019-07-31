@@ -1094,9 +1094,11 @@ features_in_single_condition <- function(expt, cutoff=2) {
 #'   column.
 #' @param cond_column Which column in the sample data provides the set of
 #'   'conditions' used to define the colors?
+#' @param by Name the factor of colors according to this column.
 #' @param ... Other arguments like a color palette, etc.
 #' @return  Colors!
-generate_expt_colors <- function(sample_definitions, cond_column="condition", ...) {
+generate_expt_colors <- function(sample_definitions, cond_column="condition",
+                                 by="sampleid", ...) {
   arglist <- list(...)
   ## First figure out how many conditions we have
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -1139,7 +1141,7 @@ generate_expt_colors <- function(sample_definitions, cond_column="condition", ..
     chosen_colors <- mapping[chosen_colors]
   }
   ## Set the color names
-  ##names(chosen_colors) <- sample_definitions[[sample_column]]
+  names(chosen_colors) <- sample_definitions[[by]]
   return(chosen_colors)
 }
 

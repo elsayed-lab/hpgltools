@@ -855,7 +855,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     ## Adding a column with the same name as the size column from the experimental design
     ## and making sure it is a factor.
     if (is.null(arglist[["size_order"]])) {
-      comp_data[[size_column]] <- as.factor(comp_data[[size_column]])
+      comp_data[[size_column]] <- factor(design[[size_column]])
     } else {
       comp_data[[size_column]] <- factor(design[[size_column]], levels=arglist[["size_order"]])
     }
