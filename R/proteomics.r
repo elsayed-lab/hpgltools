@@ -1,3 +1,92 @@
+#' Replace 0 with NA if not all entries for a given condition are 0.
+#'
+#' This will hopefully handle a troubling corner case in Volker's data:
+#' He primarily wants to find proteins which are found in one condition, but
+#' _not_ in another.  However, due to the unknown unknown problem in DIA
+#' acquisition, answering this question is difficult.  If one uses a normal
+#' expressionset or msnset or whatever, one of two things will happen:
+#' either the 0/NA proteins will be entirely removed/ignored, or they will
+#' lead to spurious 'significant' calls.  MSstats, to its credit, does a lot to
+#' try to handle these cases; but in the case Volker is most interested, it will
+#' exclude the interesting proteins entirely.
+#'
+#' So, here is what I am going to do: Iterate through each element of the chosen
+#' experimental design factor, check if all samples for that condition are 0, if
+#' so; leave them.  If not all the samples have 0 for the given condition, then
+#' replace the zero entries with NA.  This should allow for stuff like
+#' rowMeans(na.rm=TRUE) to provide useful information.
+#'
+#' Finally, this will add columns to the annotations which tell the number of
+#' observations for each protein after doing this.
+#'
+#' @param expt Expressionset to examine.
+#' @param fact Experimental design factor to use.
+#' @param method Specify whether to leave the NAs as NA,
+#'   or replace them with the mean of all non-NA values.
+#' @return New expressionset with some, but not all, 0s replaced with NA.
+#' @export
+add_conditional_nas <- function(expt, fact="condition", method="NA") {
+  exprs_set <- expt[["expressionset"]]
+  mtrx <- exprs(expt)
+  annotations <- fData(expt)
+  if (length(fact) == 1) {
+    design <- pData(expt)
+    fact <- design[[fact]]
+    names(fact) <- rownames(design)
+  }
+  types <- levels(fact)
+  used_columns <- c()
+  observations_df <- data.frame(row.names=rownames(mtrx))
+  for (t in 1:length(types)) {
+    type <- types[t]
+    used_columns <- grep(pattern=type, x=fact)
+    if (length(used_columns) < 1) {
+      warning("The level ", type, " of the factor has no columns in the data.")
+      next
+    }
+    sub_mtrx <- mtrx[, used_columns]
+    ## Make a note of how many samples are in this factor
+    total_observations <- ncol(sub_mtrx)
+
+    ## These are the columns we will leave 0
+    zero_sum_idx <- rowSums(sub_mtrx) == 0
+    all_zeros <- rownames(sub_mtrx)[zero_sum_idx]
+    zero_idx <- sub_mtrx == 0
+    ## Now we set the zeros to NA and then reset the all-zeros to 0.
+    if (method == "NA") {
+      sub_mtrx[zero_idx] <- NA
+    } else if (method == "mean") {
+      all_mean <- mean(mtrx, na.rm=TRUE)
+      sub_mtrx[zero_idx] <- all_mean
+    } else if (method == "sub_mean") {
+      sub_mean <- mean(sub_mtrx, na.rm=TRUE)
+      sub_mtrx[zero_idx] <- sub_mean
+    }
+    sub_mtrx[all_zeros, ] <- 0
+    message("In condition ", type, " there are ", length(all_zeros),
+            " rows which are all zero.")
+    ## Record the number of observations for each protein for each condition.
+    observation_column <- total_observations - rowSums(zero_idx)
+    observations_df <- cbind(observations_df, observation_column)
+    colnames(observations_df)[t] <- glue::glue("{type}_observations")
+
+    for (c in 1:length(used_columns)) {
+      replace_col <- used_columns[c]
+      mtrx[, replace_col] <- sub_mtrx[, c]
+    }
+  }
+  ## Now put the pieces back together.
+  ## I am choosing not to use cbind to ensure that the orders are not screwed up.
+  ## annotations <- cbind(annotations, observations_df)
+  annotations <- merge(annotations, observations_df, by="row.names")
+  rownames(annotations) <- annotations[["Row.names"]]
+  annotations[["Row.names"]] <- NULL
+  exprs(exprs_set) <- mtrx
+  fData(exprs_set) <- annotations
+  expt[["expressionset"]] <- exprs_set
+  return(expt)
+}
+
 #' Read output from mayu to get the IP/PP number corresponding to a given FDR value.
 #'
 #' @param file Mayu output file.
@@ -37,7 +126,7 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @return List containing a table of scan and precursor data.
 #' @export
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
-                               allow_window_overlap=FALSE, start_add=0) {
+                              allow_window_overlap=FALSE, start_add=0) {
   if (format == "mzML") {
     extract_mzML_scans(file, id=id, write_acquisitions=write_acquisitions,
                        allow_window_overlap=allow_window_overlap, start_add=start_add)
@@ -180,8 +269,8 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     ## This is the file for openswathworkflow.
     message("Writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
-                            sep="\t", quote=FALSE,
-                            row.names=FALSE, col.names=TRUE)
+                             sep="\t", quote=FALSE,
+                             row.names=FALSE, col.names=TRUE)
   }
   retlist <- list(
     "file" = file,
@@ -209,7 +298,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
 extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
-                              allow_window_overlap=FALSE, start_add=0) {
+                               allow_window_overlap=FALSE, start_add=0) {
   if (is.null(id)) {
     id <- file
   }
@@ -239,6 +328,7 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #'   filenames.
 #' @param write_windows Write out SWATH window frames.
 #' @param id_column What column in the sample sheet provides the ID for the samples?
+#' @param file_column Which column in the sample sheet provides the filenames?
 #' @param allow_window_overlap What it says on the tin, some tools do not like
 #'   DIA windows to overlap, if TRUE, this will make sure each annotated window
 #'   starts at the end of the previous window if they overlap.
@@ -273,15 +363,15 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   if (class(metadata)[1] == "data.frame") {
     sample_definitions <- metadata
   } else {
-      sample_definitions <- extract_metadata(metadata, ...)
-      ## sample_definitions <- extract_metadata(metadata)
+    sample_definitions <- extract_metadata(metadata, ...)
+    ## sample_definitions <- extract_metadata(metadata)
   }
 
   sample_column <- "sampleid"
   if (!is.null(arglist[["sample_column"]])) {
-      sample_column <- arglist[["sample_column"]]
-      sample_column <- tolower(sample_column)
-      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+    sample_column <- arglist[["sample_column"]]
+    sample_column <- tolower(sample_column)
+    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
@@ -322,18 +412,18 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     res_names <- c()
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
-      file <- meta[i, "file"]
-      id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
-                                           allow_window_overlap=allow_window_overlap,
-                                           format=format, start_add=start_add))
-      if (class(file_result)[1] == "try-error") {
-        warning("There was an error reading ", file, ".")
-      } else {
-        res_names <- c(file, res_names)
-        returns[[file]] <- file_result
-      }
-    }
+                     file <- meta[i, "file"]
+                     id <- meta[i, "id"]
+                     file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
+                                                          allow_window_overlap=allow_window_overlap,
+                                                          format=format, start_add=start_add))
+                     if (class(file_result)[1] == "try-error") {
+                       warning("There was an error reading ", file, ".")
+                     } else {
+                       res_names <- c(file, res_names)
+                       returns[[file]] <- file_result
+                     }
+                   }
     if (isTRUE(show_progress)) {
       close(bar)
     }
@@ -357,7 +447,6 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   try(names(res) <- res_names, silent=TRUE)
   rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
 
-
   retlist <- list(
     "colors" = chosen_colors,
     "metadata" = sample_definitions,
@@ -370,7 +459,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 }
 
 #' Get some data from a peptideprophet run.
-#
+                                        #
 #' I am not sure what if any parameters this should have, but it seeks to
 #' extract the useful data from a peptide prophet run.  In the situation in
 #' which I wish to use it, the input command was:
@@ -747,6 +836,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 #'
 #' @param expt An ExpressionSet (well, expt), I think it is assumed that this should have
 #' been normalized and filtered for features which have no values across 'most' samples.
+#' @param filter Use normalize_expt() to filter the data?
+#' @param p When filtering with pofa, use this p parameter.
 #' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
 #' "MinProb", "man", "min", "zero", "mixed" or "nbavg",
 #' Function used for data imputation based on \code{\link{manual_impute}}
@@ -755,7 +846,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 #' \code{\link{manual_impute}} and \code{\link[MSnbase:impute-methods]{impute}}.
 #' @return An imputed expressionset.
 #' @export
-impute_expt <- function(expt, force=FALSE, p=0.5,
+impute_expt <- function(expt, filter=TRUE, p=0.5,
                         fun=c("bpca", "knn", "QRILC", "MLE",
                               "MinDet", "MinProb", "min", "zero",
                               "mixed", "nbavg"), ...) {
@@ -771,12 +862,15 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
   } else {
     message("Found ", found_zeros, " zeros in the data.")
   }
-  if (expt[["state"]][["filter"]] == "raw") {
-    message("The data has not been filtered.")
-    if (!isTRUE(force)) {
-      message("Filtering the data, turn on force to stop this.")
-      expt <- normalize_expt(expt, filter="pofa", p=p)
+
+  if (isTRUE(filter)) {
+    if (expt[["state"]][["filter"]] == "raw") {
+      message("The data has not been filtered.")
+    } else {
+      message("The data was already filtered with: ", expt[["state"]][["filter"]], ".")
     }
+    message("Filtering the data, turn off 'filter' to stop this.")
+    expt <- normalize_expt(expt, filter="pofa", p=p)
   }
 
   exprs_set <- expt[["expressionset"]]
@@ -1044,6 +1138,230 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     "group_data" = group_data,
     "protein_data" = protein_df,
     "peptide_data" = peptide_df)
+  return(retlist)
+}
+
+#' Gather together the various SWATH2stats filters into one place.
+#'
+#' There are quite a few filters available in SWATH2stats.  Reading the
+#' documentation, it seems at least possible, if not appropriate, to use them
+#' together when filtering DIA data before passing it to MSstats/etc.  This
+#' function attempts to formalize and simplify that process.
+#'
+#' @param s2s_exp SWHAT2stats result from the sample_annotation()
+#'   function. (s2s_exp stands for: SWATH2stats experiment)
+#' @param column What column in the data contains the protein name?
+#' @param pep_column What column in the data contains the peptide name (not
+#'   currently used, but it should be.)
+#' @param fft Ratio of false negatives to true positives, used by
+#'   assess_by_fdr() and similar functions.
+#' @param plot Print plots of the various rates by sample?
+#' @param target_fdr When invoking mscore4assayfdr, choose an mscore which
+#'   corresponds to this false discovery date.
+#' @param upper_fdr Used by filter_mscore_fdr() to choose the minimum threshold
+#'   of identification confidence.
+#' @param mscore Mscore cutoff for the mscore filter.
+#' @param percentage Cutoff for the mscore_freqobs filter.
+#' @param remove_decoys Get rid of decoys in the final filter, if they were not
+#'   already removed.
+#' @param max_peptides A maximum number of peptides filter.
+#' @param min_peptides A minimum number of peptides filter.
+#' @param do_mscore Perform the mscore filter? SWATH2stats::filter_mscore()
+#' @param do_freqobs Perform the mscore_freqobs filter?
+#'   SWATH2stats::filter_mscore_freqobs()
+#' @param do_fdr Perform the fdr filter? SWATH2stats::filter_mscore_fdr()
+#' @param do_proteotypic Perform the proteotypic filter?
+#'   SWATH2stats::filter_proteotypic_peptides()
+#' @param do_peptide Perform the single-peptide filter?
+#'   SWATH2stats::filter_all_peptides()
+#' @param do_max Perform the maximum peptide filter?
+#'   SWATH2stats::filter_max_peptides()
+#' @param do_min Perform the minimum peptide filter?
+#'   SWATH2stats::filter_min_peptides()
+#' @param ... Other arguments passed down to the filters.
+#' @return Smaller SWATH2stats data set.
+#' @export
+s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpeptidename",
+                            fft=0.7, plot=FALSE, target_fdr=0.02, upper_fdr=0.05,
+                            mscore=0.01, percentage=0.75, remove_decoys=TRUE,
+                            max_peptides=15, min_peptides=2,
+                            do_mscore=TRUE, do_freqobs=TRUE, do_fdr=TRUE,
+                            do_proteotypic=TRUE, do_peptide=TRUE,
+                            do_max=TRUE, do_min=TRUE, ...) {
+  retlist <- list()
+  retlist[["decoy_lists"]] <- SWATH2stats::assess_decoy_rate(s2s_exp)
+  decoy_ratio <- as.numeric(retlist[["decoy_lists"]][["ratio"]])
+  decoy_number <- grepl(pattern="^DECOY", x=s2s_exp[["proteinname"]])
+  message("There were ", sum(!decoy_number),
+          " observations and ", sum(decoy_number), " decoy observations.")
+  retlist[["fdr_overall"]] <- SWATH2stats::assess_fdr_overall(
+                                             s2s_exp,
+                                             output="Rconsole",
+                                             plot=plot)
+  retlist[["byrun_fdr"]] <- SWATH2stats::assess_fdr_byrun(
+                                           s2s_exp,
+                                           FFT=fft,
+                                           plot=plot,
+                                           output="Rconsole")
+  retlist[["chosen_mscore"]] <- SWATH2stats::mscore4assayfdr(
+                                               s2s_exp,
+                                               FFT=fft,
+                                               fdr_target=target_fdr,
+                                               ...)
+  retlist[["prot_score"]] <- SWATH2stats::mscore4protfdr(
+                                            s2s_exp,
+                                            FFT=fft,
+                                            fdr_target=target_fdr,
+                                            ...)
+  message("Starting mscore filter.")
+  retlist[["raw"]] <- s2s_exp
+  filt <- s2s_exp
+
+  if (isTRUE(do_mscore)) {
+    message("Starting mscore filter.")
+    filt <- try(SWATH2stats::filter_mscore(
+                               s2s_exp,
+                               retlist[["chosen_mscore"]],
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The mscore filter failed, reverting to the raw data.")
+      filt <- s2s_exp
+      retlist[["mscore_filtered"]] <- "error"
+    } else {
+      retlist[["mscore_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping mscore filter.")
+    retlist[["mscore_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_freqobs)) {
+    message("Starting freqobs filter.")
+    filt <- try(SWATH2stats::filter_mscore_freqobs(
+                               filt,
+                               mscore,
+                               percentage,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The mscore filter failed, reverting to the mscore filtered data.")
+      filt <- filt_backup
+      retlist[["freqobs_filtered"]] <- "error"
+    } else {
+      retlist[["freqobs_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping freqobs filter.")
+    retlist[["freqobs_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_fdr)) {
+    message("Starting fdr filter.")
+    ## filter_mscore_fdr should probably be modified for flexibility.
+    filt <- try(SWATH2stats::filter_mscore_fdr(
+                               filt,
+                               FFT=fft,
+                               overall_protein_fdr_target=retlist[["prot_score"]],
+                               upper_overall_peptide_fdr_limit=upper_fdr,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The fdr filter failed, reverting to the freqobs filtered data.")
+      filt <- filt_backup
+      retlist[["fdr_filtered"]] <- "error"
+    } else {
+      retlist[["fdr_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping fdr filter.")
+    retlist[["fdr_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_proteotypic)) {
+    message("Starting proteotypic filter.")
+    filt <- try(SWATH2stats::filter_proteotypic_peptides(
+                               filt,
+                               column=column,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The proteotypic filter failed, reverting to the fdr filtered data.")
+      filt <- filt_backup
+      retlist[["proteotypic_filtered"]] <- "error"
+    } else {
+      retlist[["proteotypic_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping proteotypic filter.")
+    retlist[["proteotypic_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_peptide)) {
+    message("Starting peptide filter.")
+    ## Looking at this function, it just renames the peptides to remove the 1/!
+    ## That is not a filter!
+    filt <- try(SWATH2stats::filter_all_peptides(
+                               filt,
+                               column=column))
+    if (class(filt)[1] == "try-error") {
+      warning("The peptide filter failed, reverting to the proteotypic filtered data.")
+      filt <- filt_backup
+      retlist[["peptide_filtered"]] <- "error"
+    } else {
+      retlist[["peptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping peptide filter.")
+    retlist[["peptide_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_max)) {
+    message("Starting maximum peptide filter.")
+    filt <- try(SWATH2stats::filter_on_max_peptides(
+                               data=filt,
+                               column=column,
+                               n_peptides=max_peptides,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The maximum peptide filter failed, reverting to the proteotypic filtered data.")
+      filt <- filt_backup
+      retlist[["maxpeptide_filtered"]] <- "error"
+    } else {
+      retlist[["maxpeptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping max peptide filter.")
+    filt_backup <- filt
+  }
+
+  if (isTRUE(do_min)) {
+    message("Starting minimum peptide filter.")
+    filt <- try(SWATH2stats::filter_on_min_peptides(
+                               data=filt,
+                               n_peptides=min_peptides,
+                               column=column,
+                               rm.decoy=remove_decoys))
+    if (class(filt)[1] == "try-error") {
+      warning("The minimum peptide filter failed, reverting to the maximum peptide filtered data.")
+      filt <- filt_backup
+      retlist[["minpeptide_filtered"]] <- "error"
+    } else {
+      retlist[["minpeptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping min peptide filter.")
+    retlist[["minpeptide_filtered"]] <- NULL
+  }
+  retlist[["final"]] <- filt
+
+  start_proteins <- length(unique(s2s_exp[[column]]))
+  start_peptides <- length(unique(s2s_exp[["fullpeptidename"]]))
+  end_proteins <- length(unique(retlist[["final"]][[column]]))
+  end_peptides <- length(unique(retlist[["final"]][["fullpeptidename"]]))
+  message("We went from ", start_proteins, "/", start_peptides, " proteins/peptides to:")
+  message("             ", end_proteins, "/", end_peptides, " proteins/peptides.")
   return(retlist)
 }
 

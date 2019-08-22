@@ -5,8 +5,8 @@
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
 plot_sample_heatmap(data, colors = NULL, design = NULL,
-  expt_names = NULL, row_label = NA, title = NULL, Rowv = TRUE,
-  label_chars = 10, ...)
+  expt_names = NULL, dendrogram = "column", row_label = NA,
+  title = NULL, Rowv = TRUE, Colv = TRUE, label_chars = 10, ...)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}
@@ -17,11 +17,15 @@ plot_sample_heatmap(data, colors = NULL, design = NULL,
 
 \item{expt_names}{Alternate samples names.}
 
+\item{dendrogram}{Where to put dendrograms?}
+
 \item{row_label}{Passed through to heatmap.2.}
 
 \item{title}{Title of the plot!}
 
 \item{Rowv}{Reorder the rows by expression?}
+
+\item{Colv}{Reorder the columns by expression?}
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
 

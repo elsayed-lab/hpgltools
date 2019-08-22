@@ -1,19 +1,17 @@
 #' Download the txt uniprot data for a given accession/species
 #'
-#' @param accession  Which accession to grab?
-#' @param species  Or perhaps species?
-#' @param all  If there are more than 1 hit, grab them all?
-#' @param first  Or perhaps just grab the first hit?
+#' @param accession Which accession to grab?
+#' @param species Or perhaps species?
+#' @param taxonomy Query for a specific taxonomy ID rather than species/accession?
+#' @param all If there are more than 1 hit, grab them all?
+#' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
 #' @export
-download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, first=FALSE) {
+download_uniprot_proteome <- function(accession=NULL, species=NULL,
+                                      taxonomy=NULL, all=FALSE, first=FALSE) {
   final_species <- ""
-  if (is.null(accession) & is.null(species)) {
-    message("Defaulting to the Mycobacterium tuberculosis H37Rv strain.")
-    accession <- "UP000001584"
-  } else if (is.null(accession)) {
-    message("Querying uniprot for the accession matching: ", species, ".")
-    request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
+  if (!is.null(taxonomy)) {
+    request_url <- glue::glue("https://www.uniprot.org/proteomes/?query=taxonomy%3A{xml2::url_escape(taxonomy)}")
     request <- curl::curl(request_url)
     result <- xml2::read_html(request)
     result_html <- rvest::html_nodes(result, "tr")
@@ -27,7 +25,31 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
     final_species <- species_text[species_text != ""]
     if (length(accessions) == 1) {
       accession <- accessions
-    } else if (isTRUE(all)) {
+    } else {
+      accession <- accessions[1]
+      name <- final_species[1]
+    }
+  } else {
+    if (is.null(accession) & is.null(species)) {
+      message("Defaulting to the Mycobacterium tuberculosis H37Rv strain.")
+      accession <- "UP000001584"
+    } else if (is.null(accession)) {
+      message("Querying uniprot for the accession matching: ", species, ".")
+      request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
+      request <- curl::curl(request_url)
+      result <- xml2::read_html(request)
+      result_html <- rvest::html_nodes(result, "tr")
+      accessions_text <- rvest::html_attr(result_html, "id")
+      ## The first two elements are headers
+      accessions_text <- accessions_text[3:length(accessions_text)]
+      accessions <- gsub(x=accessions_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\1")
+      species_text <- rvest::html_nodes(result, "td") %>%
+        rvest::html_nodes("span") %>%
+        rvest::html_text()
+      final_species <- species_text[species_text != ""]
+      if (length(accessions) == 1) {
+        accession <- accessions
+      } else if (isTRUE(all)) {
         for (a in 1:length(accessions)) {
           name <- final_species[a]
           accession <- accessions[a]
@@ -35,20 +57,21 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL, all=FALSE, f
           tmp <- download_uniprot_proteome(accession=accession)
           Sys.sleep(time=3)
         }
-    } else if (isTRUE(first)) {
-      accession <- accessions[1]
-      name <- final_species[1]
-      message("Downloading the proteome for ", name, ".")
-      tmp <- download_uniprot_proteome(accession=accession)
-    } else {
-      message("Here are the species found, please choose one and try again.")
-      for (a in 1:length(accessions)) {
-        name <- final_species[a]
-        accession <- accessions[a]
-        message(a, ") ", accession, ": ", name)
+      } else if (isTRUE(first)) {
+        accession <- accessions[1]
+        name <- final_species[1]
+        message("Downloading the proteome for ", name, ".")
+        tmp <- download_uniprot_proteome(accession=accession)
+      } else {
+        message("Here are the species found, please choose one and try again.")
+        for (a in 1:length(accessions)) {
+          name <- final_species[a]
+          accession <- accessions[a]
+          message(a, ") ", accession, ": ", name)
+        }
+        message(toString(final_species))
+        return(NULL)
       }
-      message(toString(final_species))
-      return(NULL)
     }
   }
   request_url <- glue(
@@ -192,11 +215,11 @@ load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
           next
         } else if (grepl(pattern="^GN\\s+.*ORFNames=(.*?);.*$", x=line)) {
           uniprot_data[gene_num, "orfnames"] <- gsub(
-            pattern="^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement="\\1", x=line)
+            pattern="^GN\\s+.*ORFNames=(.*?);.*$", replacement="\\1", x=line)
           next
         } else if (grepl(pattern="^GN\\s+.*Name=(.*?);.*$", x=line)) {
           tmp_ids <- gsub(
-            pattern="^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement="\\1", x=line)
+            pattern="^GN\\s+.*Name=(.*?);.*$", replacement="\\1", x=line)
           uniprot_data[gene_num, "shortnames"] <- gsub(
             pattern="^(.*?) .*", replacement="\\1", x=tmp_ids)
           next
@@ -540,56 +563,6 @@ load_uniprot_go <- function(input) {
   kept[["go"]] <- gsub(pattern="\\s+", replacement="", x=kept[["go"]])
   colnames(kept) <- c("ID", "GO", "length")
   return(kept)
-}
-
-
-#' Extract annotation data from the uniprot webservices.
-#'
-#' I keep thinking that this is in fact querying NCBI, but I think that is incorrect.
-#' This is because all of the examples are using ENTREZ_GENE as the primary key
-#' I bet.  In any event, this function seeks to simplify getting useful
-#' annotation from UniProt.ws by filling in some of the arguments and hopefully
-#' telling the user when things do not go according to plan.
-#'
-#' @param id  Species ID, if not provided, then this will try to find it using
-#'  the species
-#' @param species  Assuming no ID, use this to find one.
-#' @param keytype  The primary keytype when doing the final select statement.
-#' @param chosen_columns  What columns are desired from the webservices data?
-#'   If not provided, this will attempt to choose useful ones.
-#' @return Data frame from selecting the hopefully appropriate columns with
-#'   AnnotationDbi.
-#' @export
-load_uniprotws_annotations <- function(id=NULL, species="Mycobacterium tuberculosis",
-                                       keytype="GI_NUMBER*", chosen_columns=NULL) {
-  if (is.null(id)) {
-    result_df <- UniProt.ws::availableUniprotSpecies(pattern=species)
-    if (nrow(result_df) == 0) {
-      message("Unable to find an id corresponding to the provided species.")
-      return(data.frame())
-    } else if (nrow(result_df) > 1) {
-      message("More than 1 species was returned, the first was chosen arbitrarily.")
-      print(result_df)
-      id <- result_df[1, 1]
-    } else {
-      message("Found 1 species, using its ID: ", result_df[1, 1], ".")
-      id <- result_df[1, 1]
-    }
-  }
-
-  downloaded_data <- UniProt.ws::UniProt.ws(as.numeric(id))
-  ## keytypes which return something useful: EGGNOG, EMBL/GENBANK/DDBJ, ENSEMBL
-  ## GENOMES, ENSEMBL_GENOMES PROTEIN, ENSEMBL_GENOMES TRANSCRIPT, GI_NUMBER*
-  ## I wonder if the * at the end of GI_NUMBER is telling me that this is the
-  ## real primary key?
-  possible_keys <- AnnotationDbi::keys(x=downloaded_data, keytype=keytype)
-  possible_columns <- AnnotationDbi::columns(x=downloaded_data)
-  if (is.null(chosen_columns)) {
-    chosen_columns <- c("ENTREZ_GENE", "GO", "INTERPRO", "PATHWAY", "LENGTH", "EGGNOG")
-  }
-  ret <- sm(AnnotationDbi::select(x=downloaded_data, keytype=keytype,
-                                  columns=chosen_columns, keys=possible_keys))
-  return(ret)
 }
 
 ## EOF

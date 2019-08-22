@@ -15,6 +15,8 @@ combine_expts(expt1, expt2, condition = "condition", batch = "batch",
 \item{condition}{Column with which to reset the conditions.}
 
 \item{batch}{Column with which to reset the batches.}
+
+\item{merge_meta}{Merge the metadata when they mismatch?  This should perhaps default to TRUE.}
 }
 \value{
 Larger expt.

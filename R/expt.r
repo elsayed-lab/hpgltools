@@ -8,9 +8,11 @@
 #' @param expt2 Second expt object.
 #' @param condition Column with which to reset the conditions.
 #' @param batch Column with which to reset the batches.
+#' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
 #' @export
-combine_expts <- function(expt1, expt2, condition="condition", batch="batch", merge_meta=FALSE) {
+combine_expts <- function(expt1, expt2, condition="condition",
+                          batch="batch", merge_meta=FALSE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
@@ -20,8 +22,8 @@ combine_expts <- function(expt1, expt2, condition="condition", batch="batch", me
     d1_rows <- 1:nrow(design1)
     design2 <- pData(exp2)
     both <- as.data.frame(data.table::rbindlist(list(design1, design2), fill=TRUE))
-##    na_idx <- is.na(both)
-##    both[na_idx] <- ""
+    ## na_idx <- is.na(both)
+    ## both[na_idx] <- ""
     d2_rows <- (nrow(design1) + 1):nrow(both)
     new_design1 <- both[d1_rows, ]
     rownames(new_design1) <- rownames(design1)
@@ -1585,37 +1587,54 @@ read_metadata <- function(file, ...) {
 semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
                                  semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                  semantic_column="description") {
+  mtrx <- exprs(input)
   annots <- fData(input)
   if (isTRUE(invert)) {
     new_annots <- data.frame()
+    new_mtrx <- data.frame()
   } else {
     new_annots <- annots
+    new_mtrx <- mtrx
   }
 
   numbers_removed <- 0
   if (is.null(topn)) {
     for (string in semantic) {
-      pre_remove_size <- nrow(annots)
+      pre_remove_size <- nrow(new_annots)
       idx <- NULL
-      if (semantic_column == "rownames") {
-        idx <- grepl(pattern=string, x=rownames(annots))
-      } else {
-        idx <- grepl(pattern=string, x=annots[, semantic_column])
-      }
-      type <- "Removed"
       if (isTRUE(invert)) {
+        ## Keep the rows which match the ~7 strings above.
+        ## For these, we will re-grep the full table each time and just add the matches.
         type <- "Kept"
+        if (semantic_column == "rownames") {
+          idx <- grepl(pattern=string, x=rownames(annots))
+        } else {
+          idx <- grepl(pattern=string, x=annots[, semantic_column])
+        }
+        message("Hit ", sum(idx), " genes for term ", string, ".")
+        ## Then, after grepping, just append the matched rows to the new annotations and matrix.
         tmp_annots <- annots[idx, ]
+        tmp_mtrx <- mtrx[idx, ]
         new_annots <- rbind(new_annots, tmp_annots)
+        new_mtrx <- rbind(new_mtrx, tmp_mtrx)
       } else {
         type <- "Removed"
-        idx <- !idx
+        ## In the case of removals, I need to only grep what is left after each iteration.
+        if (semantic_column == "rownames") {
+          idx <- grepl(pattern=string, x=rownames(new_annots))
+        } else {
+          idx <- grepl(pattern=string, x=new_annots[, semantic_column])
+        }
+        message("Hit ", sum(idx), " genes for term ", string, ".")
+        idx <- ! idx
+        ## So, we take the index of stuff to keep, and just subset on that index.
         new_annots <- new_annots[idx, ]
+        new_mtrx <- new_mtrx[idx, ]
+        message("Now the matrix has ", nrow(new_mtrx), " elements.")
       }
     }
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
-    mtrx <- exprs(input)
     medians <- rowMedians(mtrx)
     new_order <- order(medians, decreasing=TRUE)
     reordered <- mtrx[new_order, ]
@@ -2258,6 +2277,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @param excel Filename to write.
 #' @param norm Normalization to perform.
 #' @param violin Include violin plots?
+#' @param sample_heat Include sample heatmaps?
 #' @param convert Conversion to perform.
 #' @param transform Transformation used.
 #' @param batch Batch correction applied.
@@ -2272,7 +2292,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
-                       violin=FALSE, convert="cpm", transform="log2",
+                       violin=FALSE, sample_heat=TRUE, convert="cpm", transform="log2",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -2421,6 +2441,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="09_disheat", savedir=excel_basename)
+  if (isTRUE(sample_heat)) {
+    tmp_expt <- sm(normalize_expt(expt, transform="log2"))
+    sampleheat_plot <- plot_sample_heatmap(tmp_expt)
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="09a_sampleheat", savedir=excel_basename)
+  }
   new_col <- 1
 
   ## SM plots
@@ -2641,6 +2669,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="26_ndisheat", savedir=excel_basename)
+  if (isTRUE(sample_heat)) {
+    sampleheat_plot <- plot_sample_heatmap(norm_data)
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="26a_sampleheat", savedir=excel_basename)
+  }
   new_col <- 1
 
   ## SM plots
@@ -2668,6 +2703,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + plot_rows + 2
   new_col <- 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA.",
+                      startRow=new_row, startCol=new_col)
+  new_col <- new_col + plot_cols + 1
+  openxlsx::writeData(wb, sheet=sheet, x="Top 40 PC1 loadings.",
                       startRow=new_row, startCol=new_col)
   new_col <- new_col + plot_cols + 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized TSNE.",

@@ -156,11 +156,11 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
     logged <- TRUE
   }
   if (isTRUE(logged)) {
-    if (max(dataframe) > 1000) {
+    if (max(dataframe, na.rm=TRUE) > 1000) {
       warning("This data appears to not be logged, the lmfit will do weird things.")
     }
   } else {
-    if (max(dataframe) < 200) {
+    if (max(dataframe, na.rm=TRUE) < 200) {
       warning("This data says it was not logged, but the maximum counts seem small.")
       warning("If it really was log2 transformed, ",
               "then we are about to double-log it and that would be very bad.")
@@ -170,27 +170,23 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
   }
   dataframe <- as.matrix(dataframe)
   dataframe <- limma::normalizeBetweenArrays(dataframe, method=normalize.method)
-
-
   linear_fit <- limma::lmFit(dataframe, model, method="ls")
   if (is.null(linear_fit[["Amean"]])) {
     linear_fit[["Amean"]] <- rowMeans(dataframe, na.rm=TRUE)
   }
   sx <- linear_fit[["Amean"]] + mean(log2(libsize + 1)) - log2(1e+06)
   sy <- sqrt(linear_fit[["sigma"]])
-  if (is.na(sum(sy))) {
-    ## 1 replicate
-    return(NULL)
-  }
-  allzero <- rowSums(dataframe) == 0
-  stupid_NAs <- is.na(sx)
-  sx <- sx[!stupid_NAs]
-  stupid_NAs <- is.na(sy)
-  sy <- sy[!stupid_NAs]
-  if (any(allzero == TRUE, na.rm=TRUE)) {
-    sx <- sx[!allzero]
-    sy <- sy[!allzero]
-  }
+
+  ## First remove NAs
+  sx_nas <- is.na(sx)
+  sy_nas <- is.na(sy)
+  or_nas <- sx_nas | sy_nas
+  ## Then look for all-zero entries.
+  all_zero <- rowSums(dataframe, na.rm=TRUE) == 0
+  or_nas_zero <- or_nas | all_zero
+  sx <- sx[!or_nas_zero]
+  sy <- sy[!or_nas_zero]
+
   fitted <- gplots::lowess(sx, sy, f=0.5)
   f <- stats::approxfun(fitted, rule=2)
   mean_var_df <- data.frame(mean=sx, var=sy)
@@ -352,7 +348,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
       libsize <- input[["libsize"]]
     } else if (!is.null(
                input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
-      libsize <- colSums(data)
+      libsize <- colSums(data, na.rm=TRUE)
     } else {
       message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
       libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
@@ -362,7 +358,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   }
 
   if (is.null(libsize)) {
-    libsize <- colSums(data)
+    libsize <- colSums(data, na.rm=TRUE)
   }
   condition_table <- table(conditions)
   batch_table <- table(batches)
@@ -420,6 +416,11 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     }
   }
 
+  na_sum <- sum(is.na(data))
+  if (na_sum > 0) {
+    ## My version of voom can handle nas
+    which_voom <- "hpgl"
+  }
   fun_voom <- NULL
   voom_plot <- NULL
   if (which_voom == "hpgl_weighted") {

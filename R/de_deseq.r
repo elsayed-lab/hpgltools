@@ -443,6 +443,8 @@ import_deseq <- function(data, column_data, model_string,
   ## DESeq explicitly limits the input of the data to the range of 2^32 integers.
   ## If one is insane and wants to dump intensity data into deseq, this might get violated.
   integer_limit <- .Machine[["integer.max"]]
+  na_idx <- is.na(data)
+  data[na_idx] <- 0
   too_big_idx <- data > integer_limit
   if (sum(too_big_idx) > 0) {
     warning("Converted down ", sum(too_big_idx),

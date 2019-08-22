@@ -153,7 +153,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  new_expt$best_libsize
 ")
 
-
   if (filter == "raw") {
     message("Filter is false, this should likely be set to something, good
  choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
@@ -207,7 +206,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                           fasta=fasta, thresh=thresh, batch_step=batch_step,
                           min_samples=min_samples, p=p, A=A, k=k,
                           ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
-                          cv_min=cv_min, cv_max=cv_max, entry_type=entry_type, ...)
+                          cv_min=cv_min, cv_max=cv_max, entry_type=entry_type,
+                          ...)
 
   final_libsize <- normalized[["libsize"]]
   final_data <- as.matrix(normalized[["count_table"]])
@@ -223,7 +223,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## but these rows need to go.
   row_na_idx <- !is.na(rownames(final_data))
   final_data <- final_data[row_na_idx, ]
-
   unfiltered_genes <- rownames(exprs(current_exprs)) %in% rownames(final_data)
   current_exprs <- current_exprs[unfiltered_genes, ]
   ## This next line was added in response to an annoying occurance when
@@ -507,6 +506,7 @@ hpgl_norm <- function(data, ...) {
   } else {
     message("Step 4: transforming the data with ", arglist[["transform"]], ".")
     transformed_counts <- transform_counts(count_table, ...)
+    ## transformed_counts <- transform_counts(count_table, transform=transform)
     count_table <- transformed_counts[["count_table"]]
     if (transform == "round") {
       transform_performed <- "raw"
@@ -547,7 +547,7 @@ hpgl_norm <- function(data, ...) {
     "actions" = actions,
     "intermediate_counts" = intermediate_counts,
     "count_table" = count_table,  ## The final count table
-    "libsize" = colSums(count_table)  ## The final libsizes
+    "libsize" = colSums(count_table, na.rm=TRUE)  ## The final libsizes
   )
   return(ret_list)
 }

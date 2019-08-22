@@ -171,7 +171,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- as.matrix(count_table)
     }
   ) ## End of the switch statement.
-  norm_libsize <- colSums(count_table)
+  norm_libsize <- colSums(count_table, na.rm=TRUE)
   norm_counts <- list(count_table=count_table, libsize=norm_libsize,
                       norm_performed=norm_performed)
   return(norm_counts)

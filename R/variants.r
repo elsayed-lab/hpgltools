@@ -206,6 +206,7 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
 #' read them into a data table.
 #' @param samples Sample names to read.
 #' @param file_lst Set of files to read.
+#' @param column Column from the bcf file to read.
 #' @return A big honking data table.
 read_snp_columns <- function(samples, file_lst, column="diff_count") {
   ## Read the first file
@@ -248,17 +249,18 @@ read_snp_columns <- function(samples, file_lst, column="diff_count") {
 
 #' Use Rsamtools to read alignments and get snp coverage.
 #'
-#' This is horrifyingly slow.
+#' This is horrifyingly slow.  I think I might remove this function.
 #'
-#' @param expt  Expressionset to analyze
-#' @param type  counts or percent?
-#' @param input_dir  Directory containing the samtools results.
+#' @param expt Expressionset to analyze
+#' @param type counts or percent?
+#' @param input_dir Directory containing the samtools results.
+#' @param annot_column Passed along to count_expt_snps()
 #' @param tolower lowercase the sample names?
-#' @param bam_suffix  In case the data came from sam.
-#' @return  It is so slow I no longer know if it works.
+#' @param bam_suffix In case the data came from sam.
+#' @return It is so slow I no longer know if it works.
 samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/outputs",
-                                  tolower=TRUE, bam_suffix=".bam") {
-  snp_counts <- count_expt_snps(expt, type=type, input_dir=input_dir, tolower=tolower)
+                                  tolower=TRUE, bam_suffix=".bam", annot_column=annot_column) {
+  snp_counts <- count_expt_snps(expt, type=type, tolower=tolower)
   snp_counts <- fData(snp_counts)
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
@@ -423,6 +425,7 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #'
 #' @param expt  The original expressionset.  This provides the annotation data.
 #' @param snp_result  The result from get_snp_sets or count_expt_snps.
+#' @param chr_column Column in the annotation with the chromosome names.
 #' @return List containing the set of intersections in the conditions contained
 #'   in snp_result, the summary of numbers of variants per chromosome, and
 #'   summary of numbers per gene.

@@ -257,6 +257,7 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
       plotted_table <- plotted_table[good_idx, ]
     }
 
+    row_condition <- as.character(metadata[i, "condition"])
     row_color <- colors[i]
     if (type == "count") {
       ## Taking nrow is a simplistic way to count the number of identifications.
@@ -314,6 +315,8 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
 #' @param expt_names Manually change the labels to some other column than sample.
 #' @param label_chars Maximum number of characters in the label before
 #'   shortening.
+#' @param x_type Column in the data to put on the x-axis.
+#' @param y_type Column in the data to put on the y-axis.
 #' @param title Plot title.
 #' @param scale Put the data onto the log scale?
 #' @param ... Extra arguments passed along.

@@ -21,13 +21,16 @@
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
+#' @param force Force ebseq to accept bad data (notably NA containing stuff from proteomics.
 #' @param ... Extra arguments currently unused.
 #' @export
 ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
                            batches=NULL, model_cond=NULL, model_intercept=NULL,
                            alt_model=NULL, model_batch=NULL,
                            ng_vector=NULL, rounds=10, target_fdr=0.05,
-                           method="pairwise_subset", norm="median", ...) {
+                           method="pairwise_subset", norm="median",
+                           force=FALSE,
+                           ...) {
   arglist <- list(...)
 
   input <- sanitize_expt(input)
@@ -43,7 +46,7 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
   if (method == "pairwise_subset") {
     result <- ebseq_pairwise_subset(input,
                                     ng_vector=ng_vector, rounds=rounds,
-                                    target_fdr=target_fdr, norm=norm,
+                                    target_fdr=target_fdr, norm=norm, force=force,
                                     ...)
   } else {
     message("Starting single EBSeq invocation.")
@@ -57,14 +60,8 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
                           ng_vector=ng_vector, rounds=rounds,
                           target_fdr=target_fdr, norm=norm)
     } else if (length(condition_levels) > 5) {
-      if (is.null(patterns)) {
-        stop("Beyond 5 conditions generates too many patterns, ",
-             "please provide a pattern matrix, or 'all_same'.")
-      }
-      message("Invoking ebseq with parameters for preset patterns.")
-      result <- ebseq_many(data, conditions, patterns=patterns,
-                           ng_vector=ng_vector, rounds=rounds,
-                           target_fdr=target_fdr, norm=norm)
+      stop("Beyond 5 conditions generates too many patterns, ",
+           "please provide a pattern matrix, or 'all_same'.")
     } else {
       message("Invoking ebseq with parameters suitable for a few conditions.")
       result <- ebseq_few(data, conditions, patterns=patterns,
@@ -83,10 +80,34 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
   return(retlist)
 }
 
+#' Perform pairwise comparisons with ebseq, one at a time.
+#'
+#' This uses the same logic as in the various *_pairwise functions to invoke
+#' the 'normal' ebseq pairwise comparison for each pair of conditions in an
+#' expressionset.  It therefore avoids the strange logic inherent in the ebseq
+#' multitest function.
+#'
+#' @param input Expressionset/expt to perform de upon.
+#' @param ng_vector Passed on to ebseq, I forget what this does.
+#' @param rounds Passed on to ebseq, I think it defines how many iterations to
+#'   perform before return the de estimates
+#' @param target_fdr If we reach this fdr before iterating rounds times, return.
+#' @param model_batch Provided by all_pairwise()  I do not think a Bayesian
+#'   analysis really care about models, but if one wished to try to add a batch
+#'   factor, do it here.  It is currently ignored though.
+#' @param model_cond Provided by all_pairwise(), ibid.
+#' @param model_intercept Ibid.
+#' @param alt_model Ibid.
+#' @param conditions Factor of conditions in the data, used to define the
+#'   contrasts.
+#' @param norm EBseq normalization method to apply to the data.
+#' @param force Flag used to force inappropriate data into the various methods.
+#' @param ... Extra arguments passed downstream, noably to choose_model()
+#' @return A pairwise comparison of the various conditions in the data.
 ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0.05,
-                                  model_batch=FALSE, method="pairwise_subset",
-                                  model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
-                                  conditions=NULL, norm="median", ...) {
+                                  model_batch=FALSE, model_cond=TRUE,
+                                  model_intercept=FALSE, alt_model=NULL,
+                                  conditions=NULL, norm="median", force=FALSE, ...) {
   message("Starting EBSeq pairwise subset.")
   ## Now that I understand pData a bit more, I should probably remove the
   ## conditions/batches slots from my expt classes.
@@ -100,9 +121,11 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
 
   model_choice <- choose_model(
     input, conditions=conditions, batches=batches,
-    model_batch=FALSE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL, ...)
+    model_batch=FALSE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
+    ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, ...)
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+                                 ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
@@ -130,7 +153,7 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     conditions <- pair[["conditions"]]
     a_result <- ebseq_two(pair_data, conditions, numerator=b_name, denominator=a_name,
                           ng_vector=ng_vector, rounds=rounds, target_fdr=target_fdr,
-                          norm=norm)
+                          norm=norm, force=force)
     retlst[[name]] <- a_result
   }
   if (isTRUE(show_progress)) {
@@ -139,21 +162,14 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
   return(retlst)
 }
 
-ebseq_many <- function(data, conditions, patterns="all_same",
-                       ng_vector=ng_vector, rounds=rounds,
-                       target_fdr=target_fdr, norm=norm) {
-
-  if (patterns == "all_same") {
-    patterns <- data.frame(row.names="Pattern1")
-    for (i in conditions) {
-      patterns[1, i] <- 1
-    }
-  }
-  normalized <- ebseq_size_factors(data, norm)
-  ## Not yet implemented.
-  return(NULL)
-}
-
+#' Choose the ebseq normalization method to apply to the data.
+#'
+#' EBSeq provides three normaliation methods.  Median, Quantile, and Rank.
+#' Choose among them here.
+#'
+#' @param data_mtrx This is exprs(expressionset)
+#' @param norm The method to pass along.
+#' @return a new matrix using the ebseq specific method of choice.
 ebseq_size_factors <- function(data_mtrx, norm=NULL) {
   ## Set up a null normalization vector
   normalized <- rep(x=1, times=ncol(data_mtrx))
@@ -166,10 +182,24 @@ ebseq_size_factors <- function(data_mtrx, norm=NULL) {
     normalized <- EBSeq::QuantileNorm(data_mtrx)
   } else if (norm == "rank") {
     normalized <- EBSeq::RankNorm(data_mtrx)
+  } else {
+    normalized <- data_mtrx
   }
   return(normalized)
 }
 
+#' Invoke EBMultiTest() when we do not have too many conditions to deal with.
+#'
+#' Starting at approximately 5 conditions, ebseq becomes too unwieldy to use
+#' effectively. But, its results until then are pretty neat.
+#'
+#' @param data Expressionset/matrix
+#' @param conditions Factor of conditions in the data to compare.
+#' @param patterns Set of patterns as described in the ebseq documentation to query.
+#' @param ng_vector Passed along to ebmultitest().
+#' @param rounds Passed to ebseq.
+#' @param target_fdr Passed to ebseq.
+#' @param norm Normalization method to apply to the data.
 ebseq_few <- function(data, conditions,
                       patterns=NULL, ng_vector=NULL, rounds=10,
                       target_fdr=0.05, norm="median") {
@@ -235,12 +265,35 @@ ebseq_few <- function(data, conditions,
   return(retlst)
 }
 
+#' The primary function used in my EBSeq implementation.
+#'
+#' Most of the time, my invocation of ebseq will fall into this function.
+#'
+#' @param pair_data Matrix containing the samples comprising two experimental
+#'  factors of interest.
+#' @param conditions Factor of conditions in the data.
+#' @param numerator Which factor has the numerator in the data.
+#' @param denominator Which factor has the denominator in the data.
+#' @param ng_vector Passed to ebseq.
+#' @param rounds Passed to ebseq.
+#' @param target_fdr Passed to ebseq.
+#' @param norm Normalization method of ebseq to apply.
+#' @param force Force inappropriate data into ebseq?
+#' @return EBSeq result table with some extra formatting.
 ebseq_two <- function(pair_data, conditions,
                       numerator=2, denominator=1,
                       ng_vector=NULL, rounds=10,
-                      target_fdr=0.05, norm="median") {
+                      target_fdr=0.05, norm="median",
+                      force=FALSE) {
   normalized <- ebseq_size_factors(pair_data, norm=norm)
   message("Starting EBTest of ", numerator, " vs. ", denominator, ".")
+  if (isTRUE(force)) {
+    message("Forcing out NA values by putting in the mean of all data.")
+    ## Put NA values (proteomics) to the mean of the existing values in the hopes
+    ## they will not mess anything up too badly.
+    na_idx <- is.na(pair_data)
+    pair_data[na_idx] <- mean(pair_data, na.rm=TRUE)
+  }
   eb_output <- sm(EBSeq::EBTest(
                            Data=pair_data, NgVector=NULL, Conditions=conditions,
                            sizeFactors=normalized, maxround=rounds))

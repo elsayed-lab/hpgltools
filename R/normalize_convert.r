@@ -25,12 +25,7 @@ convert_counts <- function(data, convert="raw", ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   annotations <- arglist[["annotations"]]
-  if (data_class == "expt") {
-    if (is.null(annotations)) {
-      annotations <- fData(data)
-    }
-    count_table <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
+  if (data_class == "expt" | data_class == "ExpressionSet") {
     if (is.null(annotations)) {
       annotations <- fData(data)
     }
@@ -52,22 +47,23 @@ convert_counts <- function(data, convert="raw", ...) {
       count_table <- edgeR::cpm(count_table, lib.size=na_colsums)
     },
     "cpm" = {
+      libsize <- NULL
       na_idx <- is.na(count_table)
       if (sum(na_idx) > 0) {
         warning("There are ", sum(na_idx), " NAs in the expressionset.")
-        count_table[na_idx] <- 0
+        libsize <- colSums(count_table, na.rm=TRUE)
       }
       neg_idx <- count_table < 0
       neg_sum <- 0
-      neg_sum <- try(sum(neg_idx, na.rm=TRUE))
+      neg_sum <- sum(neg_idx, na.rm=TRUE)
       if (neg_sum > 0) {
         warning("There are ", neg_sum, " negative values in the expressionset, modifying it.")
         count_table[neg_idx] <- 0
       }
-      count_table <- edgeR::cpm(count_table)
+      count_table <- edgeR::cpm(count_table, lib.size=libsize, na.rm=TRUE)
     },
     "cbcbcpm" = {
-      lib_size <- colSums(count_table)
+      lib_size <- colSums(count_table, na.rm=TRUE)
       ## count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
       transposed <- t(count_table + 0.5)
       cp_counts <- transposed / (lib_size + 1)
@@ -87,7 +83,7 @@ convert_counts <- function(data, convert="raw", ...) {
     }
   ) ## End of the switch
 
-  libsize <- colSums(count_table)
+  libsize <- colSums(count_table, na.rm=TRUE)
   counts <- list(
     "count_table" = count_table,
     "libsize" = libsize)
@@ -343,7 +339,7 @@ hpgl_rpkm <- function(count_table, ...) {
   kept_stuff <- colnames(merged_annotations) %in% colnames(annotations)
   merged_annot <- merged_annotations[, kept_stuff]
 
-  ##rownames(count_table_in) = merged_annotations[,"Row.names"]
+  ## rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
   if (is.null(arglist[["column"]]) &

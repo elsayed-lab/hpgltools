@@ -1,3 +1,13 @@
+#' Given an eupathdb species lacking UTR boundaries, extract an arbitrary region
+#' before/after each gene.
+#'
+#' This is a very domain-specific function.
+#'
+#' @param species_name Species name for which to query the eupathdb.
+#' @param webservice If specified, makes the query faster, I always used
+#'   tritrypdb.org.
+#' @param ... Extra arguments for the various EuPathDB functions.
+#' @return Set of padding UTR sequences/coordinates.
 gather_eupath_utrs_padding <- function(species_name="Leishmania major",
                                        webservice="tritrypdb", ...) {
   metadata <- sm(EuPathDB::download_eupath_metadata(webservice=webservice))
