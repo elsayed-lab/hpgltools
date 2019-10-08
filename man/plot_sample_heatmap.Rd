@@ -6,7 +6,8 @@
 \usage{
 plot_sample_heatmap(data, colors = NULL, design = NULL,
   expt_names = NULL, dendrogram = "column", row_label = NA,
-  title = NULL, Rowv = TRUE, Colv = TRUE, label_chars = 10, ...)
+  title = NULL, Rowv = TRUE, Colv = TRUE, label_chars = 10,
+  filter = TRUE, ...)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}

@@ -5,9 +5,10 @@
 \title{a minor change to heatmap.2 makes heatmap.3}
 \usage{
 heatmap.3(x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
-  distfun = dist, hclustfun = hclust, dendrogram = c("both", "row",
-  "column", "none"), reorderfun = function(d, w) reorder(d, w),
-  symm = FALSE, scale = c("none", "row", "column"), na.rm = TRUE,
+  distfun = dist, hclustfun = fastcluster::hclust,
+  dendrogram = c("both", "row", "column", "none"),
+  reorderfun = function(d, w) reorder(d, w), symm = FALSE,
+  scale = c("none", "row", "column"), na.rm = TRUE,
   revC = identical(Colv, "Rowv"), add.expr, breaks, symbreaks = min(x <
   0, na.rm = TRUE) || scale != "none", col = "heat.colors", colsep,
   rowsep, sepcolor = "white", sepwidth = c(0.05, 0.05), cellnote,

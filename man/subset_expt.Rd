@@ -25,8 +25,8 @@ operation allows one to break it into smaller pieces.
 }
 \examples{
 \dontrun{
- smaller_expt = expt_subset(big_expt, "condition=='control'")
- all_expt = expt_subset(expressionset, "")  ## extracts everything
+ smaller_expt <- expt_subset(big_expt, "condition=='control'")
+ all_expt <- expt_subset(expressionset, "")  ## extracts everything
 }
 }
 \seealso{
