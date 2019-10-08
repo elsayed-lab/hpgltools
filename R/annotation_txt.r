@@ -177,7 +177,7 @@ load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
 
   expanded <- go_data %>%
     dplyr::mutate("GO"=as.list(strsplit(x=as.character(.data[["go_blast"]]), split="`"))) %>%
-    tidyr::unnest_("GO") %>%
+    tidyr::unnest("GO") %>%
     tidyr::separate("GO",
                     c("GO", "GO_ont", "GO_name"),
                     "\\^",

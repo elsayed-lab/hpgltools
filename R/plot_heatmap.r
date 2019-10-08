@@ -247,7 +247,7 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
   }
 
   if (is.null(cluster_function)) {
-    cluster_function <- hclust
+    cluster_function <- fastcluster::hclust
   }
 
   mydendro <- list(
@@ -333,9 +333,12 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
 plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
                                 expt_names=NULL, dendrogram="column",
                                 row_label=NA, title=NULL, Rowv=TRUE,
-                                Colv=TRUE, label_chars=10, ...) {
+                                Colv=TRUE, label_chars=10, filter=TRUE, ...) {
   data_class <- class(data)[1]
   if (data_class == "expt") {
+    if (isTRUE(filter)) {
+     data <- sm(normalize_expt(data, filter=TRUE))
+    }
     design <- data[["design"]]
     colors <- data[["colors"]]
     data <- exprs(data)
@@ -446,7 +449,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
 #' @seealso \code{\link[gplots]{heatmap.2}}
 #' @export
 heatmap.3 <- function(x, Rowv=TRUE, Colv=if (symm) "Rowv" else TRUE,
-                      distfun=dist, hclustfun=hclust,
+                      distfun=dist, hclustfun=fastcluster::hclust,
                       dendrogram=c("both", "row", "column", "none"),
                       reorderfun=function(d, w) reorder(d, w),
                       symm=FALSE, scale=c("none", "row", "column"),

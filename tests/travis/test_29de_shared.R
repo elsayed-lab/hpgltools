@@ -138,16 +138,16 @@ test_that("Are the deseq significant downs expected?", {
     expect_equal(expected, actual)
 })
 
-expected <- 45
+expected <- 40
 actual <- nrow(sig_tables[["basic"]][["ups"]][[1]])
 test_that("Are the basic significant ups expected?", {
-    expect_equal(expected, actual)
+    expect_gt(actual, expected)
 })
 
-expected <- 31
+expected <- 30
 actual <- nrow(sig_tables[["basic"]][["downs"]][[1]])
 test_that("Are the basic significant downs expected?", {
-    expect_equal(expected, actual)
+    expect_equal(actual, expected)
 })
 
 ## I significantly changed the format of this function's output.
@@ -360,44 +360,44 @@ test_that("Ibid, but in the down direction?", {
 actual <- sum(nrow(test_intersect[["ups"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["ups"]][[table]][["data"]][["deseq"]]))
-expected <- 43
+expected <- 77
 test_that("Are there very few genes observed without the others?", {
     expect_equal(actual, expected)
 })
 actual <- sum(nrow(test_intersect[["downs"]][[table]][["data"]][["limma"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["edger"]]) +
               nrow(test_intersect[["downs"]][[table]][["data"]][["deseq"]]))
-expected <- 18
+expected <- 108
 test_that("Ibid, but down?", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["limma_edger"]])
-expected <- 3
+expected <- 29
 test_that("Do limma and edger have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_edger"]])
-expected <- 2
+expected <- 10
 test_that("Do limma and edger have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["limma_deseq"]])
-expected <- 6
+expected <- 0
 test_that("Do limma and deseq have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["limma_deseq"]])
-expected <- 1
+expected <- 4
 test_that("Do limma and deseq have some genes in common? (down)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["deseq_edger"]])
-expected <- 68
+expected <- 14
 test_that("Do edger and deseq have some genes in common? (up)", {
     expect_equal(actual, expected)
 })
 actual <- nrow(test_intersect[["downs"]][[table]][["data"]][["deseq_edger"]])
-expected <- 105
+expected <- 4
 test_that("Do edger and deseq have some genes in common? (down)", {
   expect_equal(actual, expected)
 })

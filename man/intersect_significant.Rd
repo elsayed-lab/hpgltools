@@ -9,7 +9,7 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
   order = "inverse", excel = "excel/intersect_significant.xlsx", ...)
 }
 \arguments{
-\item{combined}{A result from combine_de_tables().}
+\item{combined}{Result from combine_de_tables().}
 
 \item{lfc}{Define significant via fold-change.}
 
@@ -23,7 +23,9 @@ intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
 
 \item{selectors}{List of methods to intersect.}
 
-\item{order}{Low-to-high or vice-versa for returning log-fc vales.}
+\item{order}{When set to the default 'inverse', go from the set with the most
+least intersection to the most. E.g. Start with abc,bc,ac,c,ab,b,a as
+opposed to a,b,ab,c,ac,bc,abc.}
 
 \item{excel}{An optional excel workbook to which to write.}
 

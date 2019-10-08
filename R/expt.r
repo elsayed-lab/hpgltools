@@ -473,7 +473,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     message("Here are the first few rownames from the gene information table:")
     message(toString(head(gene_info[["rownames"]])))
   } else {
-      message("Matched ", found_sum, " annotations and counts.")
+    message("Matched ", found_sum, " annotations and counts.")
   }
 
   ## Take a moment to remove columns which are blank
@@ -2051,8 +2051,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 #' @examples
 #' \dontrun{
-#'  smaller_expt = expt_subset(big_expt, "condition=='control'")
-#'  all_expt = expt_subset(expressionset, "")  ## extracts everything
+#'  smaller_expt <- expt_subset(big_expt, "condition=='control'")
+#'  all_expt <- expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
 subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
@@ -2084,6 +2084,7 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
     if (is.null(subset)) {
       subset_design <- starting_metadata
     } else {
+      message("Using a subset expression.")
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text=r_expression))
       note_appended <- glue::glue("Subsetted with {subset} on {date()}.
@@ -2097,8 +2098,9 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
     ## standard deviation or somesuch...
+    message("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
-    subset_idx <- coverages >= coverage
+    subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
   }
@@ -2114,7 +2116,7 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
   subset_conditions <- starting_conditions[subset_positions, drop=TRUE]
   starting_batches <- expt[["batches"]]
   subset_batches <- starting_batches[subset_positions, drop=TRUE]
-    current_libsize <- expt[["libsize"]]
+  current_libsize <- expt[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop=TRUE]
   subset_expressionset <- starting_expressionset[, subset_positions]
 
@@ -2318,7 +2320,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
-  xls_result <- write_xls(wb, data=legend, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xls(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
@@ -2442,7 +2444,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="09_disheat", savedir=excel_basename)
   if (isTRUE(sample_heat)) {
-    tmp_expt <- sm(normalize_expt(expt, transform="log2"))
+    tmp_expt <- sm(normalize_expt(expt, transform="log2", filter=TRUE))
     sampleheat_plot <- plot_sample_heatmap(tmp_expt)
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
@@ -2877,7 +2879,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #' @slot tximport Data provided by tximport() to create the exprs() data.
 #' @export expt
 expt <- function(...) {
-    create_expt(...)
+  create_expt(...)
 }
 expt_set <- setOldClass("expt")
 setMethod("exprs", signature="expt",

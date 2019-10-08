@@ -12,8 +12,10 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
   final_species <- ""
   if (!is.null(taxonomy)) {
     request_url <- glue::glue("https://www.uniprot.org/proteomes/?query=taxonomy%3A{xml2::url_escape(taxonomy)}")
-    request <- curl::curl(request_url)
-    result <- xml2::read_html(request)
+    destination <- glue("{taxonomy}.txt.gz")
+    ##request <- curl::curl(request_url)
+    tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
+    result <- xml2::read_html(destination)
     result_html <- rvest::html_nodes(result, "tr")
     accessions_text <- rvest::html_attr(result_html, "id")
     ## The first two elements are headers
@@ -35,9 +37,11 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
       accession <- "UP000001584"
     } else if (is.null(accession)) {
       message("Querying uniprot for the accession matching: ", species, ".")
+      destination <- glue("{tempfile()}.txt.gz")
       request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
-      request <- curl::curl(request_url)
-      result <- xml2::read_html(request)
+      ##request <- curl::curl(request_url)
+      tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
+      result <- xml2::read_html(destination)
       result_html <- rvest::html_nodes(result, "tr")
       accessions_text <- rvest::html_attr(result_html, "id")
       ## The first two elements are headers
@@ -47,6 +51,7 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
         rvest::html_nodes("span") %>%
         rvest::html_text()
       final_species <- species_text[species_text != ""]
+      removed <- file.remove(destination)
       if (length(accessions) == 1) {
         accession <- accessions
       } else if (isTRUE(all)) {
@@ -78,7 +83,8 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
     "https://www.uniprot.org/uniprot/?query=proteome:\\
      {accession}&compress=yes&force=true&format=txt")
   destination <- glue("{accession}.txt.gz")
-  tt <- curl::curl_fetch_disk(url=request_url, path=destination)
+  ##tt <- curl::curl_fetch_disk(url=request_url, path=destination)
+  tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
   retlist <- list(
     "filename" = destination,
     "species" = final_species,

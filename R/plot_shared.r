@@ -212,8 +212,9 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   message("Plotting the representation of the top-n genes.")
   topn <- try(plot_topn(expt, title=topn_title,
                         ...))
+  tmp_expt <- sm(normalize_expt(expt, filter=TRUE))
   message("Plotting the expression of the top-n PC loaded genes.")
-  pcload <- try(plot_pcload(expt, title=pc_loading_title,
+  pcload <- try(plot_pcload(tmp_expt, title=pc_loading_title,
                             ...))
   message("Printing a color to condition legend.")
   legend <- try(plot_legend(expt))
@@ -222,7 +223,8 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   qq_ratios <- NULL
   if (isTRUE(qq)) {
     message("QQ plotting!")
-    qq_plots <- try(suppressWarnings(plot_qq_all(expt, ...)))
+    qq_plots <- try(suppressWarnings(plot_qq_all(tmp_expt,
+                                                 ...)))
     qq_logs <- qq_plots[["logs"]]
     qq_ratios <- qq_plots[["ratios"]]
   }
@@ -230,13 +232,15 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   ma_plots <- NULL
   if (isTRUE(ma)) {
     message("Many MA plots!")
-    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt, ...)))
+    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt,
+                                                      ...)))
   }
 
   gene_heatmap <- NULL
   if (isTRUE(gene_heat)) {
     message("gene heatmap!")
-    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(expt, ...)))
+    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(tmp_expt,
+                                                             ...)))
   }
 
   ret_data <- list(

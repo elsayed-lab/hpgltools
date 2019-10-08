@@ -835,15 +835,15 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 #' \code{impute_expt} imputes missing values in a proteomics dataset.
 #'
 #' @param expt An ExpressionSet (well, expt), I think it is assumed that this should have
-#' been normalized and filtered for features which have no values across 'most' samples.
+#'   been normalized and filtered for features which have no values across 'most' samples.
 #' @param filter Use normalize_expt() to filter the data?
 #' @param p When filtering with pofa, use this p parameter.
 #' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
-#' "MinProb", "man", "min", "zero", "mixed" or "nbavg",
-#' Function used for data imputation based on \code{\link{manual_impute}}
-#' and \code{\link[MSnbase:impute-methods]{impute}}.
+#'   "MinProb", "man", "min", "zero", "mixed" or "nbavg",
+#'   Function used for data imputation based on 
+#'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @param ... Additional arguments for imputation functions as depicted in
-#' \code{\link{manual_impute}} and \code{\link[MSnbase:impute-methods]{impute}}.
+#'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @return An imputed expressionset.
 #' @export
 impute_expt <- function(expt, filter=TRUE, p=0.5,

@@ -43,7 +43,7 @@ test_that("Basic performed the expected number of contrasts?", {
 
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
-expected <- 4
+expected <- 1
 ## 02
 test_that("Basic got some expected results (logFC)?", {
   expect_equal(expected, actual)

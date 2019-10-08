@@ -8,10 +8,14 @@
 #'   tritrypdb.org.
 #' @param ... Extra arguments for the various EuPathDB functions.
 #' @return Set of padding UTR sequences/coordinates.
-gather_eupath_utrs_padding <- function(species_name="Leishmania major",
+gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NULL,
                                        webservice="tritrypdb", ...) {
-  metadata <- sm(EuPathDB::download_eupath_metadata(webservice=webservice))
-  pkg_names <- EuPathDB::get_eupath_pkgnames(species=species_name, metadata=metadata)
+  if (!is.null(entry)) {
+    pkg_names <- EuPathDB::get_eupath_pkgnames(entry)
+  } else {
+    entry <- EuPathDB::get_eupath_entry(species_name, webservice=webservice)
+    pkg_names <- EuPathDB::get_eupath_pkgnames(entry)
+  }
   bsgenome_name <- pkg_names[["bsgenome"]]
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
@@ -37,8 +41,20 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major",
   annot <- EuPathDB::extract_gene_locations(annot[["genes"]])
   annot_complete <- complete.cases(annot)
   annot_df <- annot[annot_complete, ]
+  annot_df[["chr_length"]] <- 0
 
-  result <- gather_utrs_padding(bsgenome, annot_df, ...)
+  ## Gather the chromosome lengths to make sure we don't pass them.
+  genome_info <- BiocGenerics::as.data.frame(BSgenome::seqinfo(bsgenome))
+  chr_names <- rownames(genome_info)
+  for (l in 1:length(chr_names)) {
+    name <- chr_names[l]
+    len <- genome_info[l, "seqlengths"]
+    chr_idx <- annot_df[["chromosome"]] == name
+    annot_df[chr_idx, "chr_length"] <- len
+  }
+
+  result <- gather_utrs_padding(bsgenome, annot_df,
+                                ...)
   return(result)
 }
 
@@ -65,7 +81,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major",
 #' @param padding  Return this number of nucleotides for each gene.
 #' @param ... Arguments passed to child functions (I think none currently).
 #' @return List of 2 elements, the 5' and 3' regions.
-gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid",
+gather_utrs_padding <- function(bsgenome, annot_df, gid=NULL, name_column="gid",
                                 chr_column="chromosome", start_column="start",
                                 end_column="end", strand_column="strand",
                                 type_column="annot_gene_type",
@@ -76,59 +92,139 @@ gather_utrs_padding <- function(bsgenome, annot_df, name_column="gid",
     all_gene_idx <- annot_df[[type_column]] == gene_type
     annot_df <- annot_df[all_gene_idx, ]
   }
+  if (!is.null(gid)) {
+    annot_df <- annot_df[gid, ]
+  }
+  one_idx <- annot_df[[strand_column]] == 1
+  if (sum(one_idx) > 0) {
+    annot_df[one_idx, strand_column] <- "+"
+  }
+  minusone_idx <- annot_df[[strand_column]] == -1
+  if (sum(minusone_idx) > 0) {
+    annot_df[minusone_idx, strand_column] <- "-"
+  }
 
-  ## These are named 'smaller' and 'larger' because this is extracting the ranges
-  ## which are numerically smaller/larger than the CDS entry, not 5'/3' because
-  ## this does not yet take into account the strand information.
-  smaller <- GenomicRanges::GRanges(
-                              seqnames=S4Vectors::Rle(annot_df[[chr_column]]),
-                              ranges=IRanges::IRanges(
-                                                start=annot_df[[start_column]] - padding,
-                                                end=annot_df[[end_column]] + 2),
-                              strand=S4Vectors::Rle(annot_df[[strand_column]]),
-                              name=S4Vectors::Rle(annot_df[[name_column]]))
-  larger <- GenomicRanges::GRanges(
-                             seqnames=S4Vectors::Rle(annot_df[[chr_column]]),
-                             ranges=IRanges::IRanges(
-                                               start=annot_df[[start_column]],
-                                               end=annot_df[[end_column]] + padding),
-                             strand=S4Vectors::Rle(annot_df[[strand_column]]),
-                             name=S4Vectors::Rle(annot_df[[name_column]]))
-  smaller_seqstrings <- BSgenome::getSeq(bsgenome, smaller)
-  larger_seqstrings <- Biostrings::getSeq(bsgenome, larger)
-  names(smaller_seqstrings) <- smaller$name
-  names(larger_seqstrings) <- larger$name
+  ## Here is the thing I absolutely cannot remember:
+  ## start is _always_ a lower number than end.
+  annot_df[["low_boundary"]] <- annot_df[[start_column]] - padding
+  annot_df[["high_boundary"]] <- annot_df[[end_column]] + padding
+  ## Add some logic to make sure we do not have sequences which
+  ## expand beyond the chromosome boundaries.
+  sub_zero_idx <- annot_df[["low_boundary"]] < 1
+  if (sum(sub_zero_idx) > 0) {
+    message("Found ", sum(sub_zero_idx), " genes which are less than ",
+            padding, " nt. from the beginning of the chromosome.")
+    annot_df[sub_zero_idx, "low_boundary"] <- 1
+  }
+  past_end_idx <- annot_df[["high_boundary"]] > annot_df[["chr_length"]]
+  if (sum(past_end_idx) > 0) {
+    message("Found ", sum(past_end_idx), " genes which are less than ",
+            padding, " nt. from the end of the chromosome.")
+    annot_df[past_end_idx, "high_boundary"] <- annot_df[past_end_idx, "chr_length"]
+  }
+
+  plus_idx <- annot_df[[strand_column]] == "+"
+  minus_idx <- annot_df[[strand_column]] == "-"
+  plus_entries <- annot_df[plus_idx, ]
+  minus_entries <- annot_df[minus_idx, ]
+
+  pluses_fivep <- GenomicRanges::GRanges(
+                                   seqnames=S4Vectors::Rle(plus_entries[[chr_column]]),
+                                   ranges=IRanges::IRanges(
+                                                     start=plus_entries[["low_boundary"]],
+                                                     end=plus_entries[[start_column]]),
+                                   strand=S4Vectors::Rle(plus_entries[[strand_column]]),
+                                   name=S4Vectors::Rle(plus_entries[[name_column]]))
+  pluses_threep <- GenomicRanges::GRanges(
+                                    seqnames=S4Vectors::Rle(plus_entries[[chr_column]]),
+                                    ranges=IRanges::IRanges(
+                                                      start=plus_entries[[end_column]],
+                                                      end=plus_entries[["high_boundary"]]),
+                                    strand=S4Vectors::Rle(plus_entries[[strand_column]]),
+                                    name=S4Vectors::Rle(plus_entries[[name_column]]))
+  pluses_cds <- GenomicRanges::GRanges(
+                                 seqnames=S4Vectors::Rle(plus_entries[[chr_column]]),
+                                 ranges=IRanges::IRanges(
+                                                   start=plus_entries[[start_column]],
+                                                   end=plus_entries[[end_column]]),
+                                 strand=S4Vectors::Rle(plus_entries[[strand_column]]),
+                                 name=S4Vectors::Rle(plus_entries[[name_column]]))
+  pluses_all <- GenomicRanges::GRanges(
+                                 seqnames=S4Vectors::Rle(plus_entries[[chr_column]]),
+                                 ranges=IRanges::IRanges(
+                                                   start=plus_entries[["low_boundary"]],
+                                                   end=plus_entries[["high_boundary"]]),
+                                 strand=S4Vectors::Rle(plus_entries[[strand_column]]),
+                                 name=S4Vectors::Rle(plus_entries[[name_column]]))
+  plus_fivep_seqstrings <- BSgenome::getSeq(bsgenome, pluses_fivep)
+  names(plus_fivep_seqstrings) <- pluses_fivep$name
+  plus_threep_seqstrings <- BSgenome::getSeq(bsgenome, pluses_threep)
+  names(plus_threep_seqstrings) <- pluses_threep$name
+  plus_cds_seqstrings <- BSgenome::getSeq(bsgenome, pluses_cds)
+  names(plus_cds_seqstrings) <- pluses_cds$name
+  plus_all_seqstrings <- BSgenome::getSeq(bsgenome, pluses_all)
+  names(plus_all_seqstrings) <- pluses_all$name
+
+  minuses_fivep <- GenomicRanges::GRanges(
+                                   seqnames=S4Vectors::Rle(minus_entries[[chr_column]]),
+                                   ranges=IRanges::IRanges(
+                                                     start=minus_entries[[end_column]],
+                                                     end=minus_entries[["high_boundary"]]),
+                                   strand=S4Vectors::Rle(minus_entries[[strand_column]]),
+                                   name=S4Vectors::Rle(minus_entries[[name_column]]))
+  minuses_threep <- GenomicRanges::GRanges(
+                                    seqnames=S4Vectors::Rle(minus_entries[[chr_column]]),
+                                    ranges=IRanges::IRanges(
+                                                      start=minus_entries[["low_boundary"]],
+                                                      end=minus_entries[[start_column]]),
+                                    strand=S4Vectors::Rle(minus_entries[[strand_column]]),
+                                    name=S4Vectors::Rle(minus_entries[[name_column]]))
+  minuses_cds <- GenomicRanges::GRanges(
+                                 seqnames=S4Vectors::Rle(minus_entries[[chr_column]]),
+                                 ranges=IRanges::IRanges(
+                                                   start=minus_entries[[start_column]],
+                                                   end=minus_entries[[end_column]]),
+                                 strand=S4Vectors::Rle(minus_entries[[strand_column]]),
+                                 name=S4Vectors::Rle(minus_entries[[name_column]]))
+  minuses_all <- GenomicRanges::GRanges(
+                                 seqnames=S4Vectors::Rle(minus_entries[[chr_column]]),
+                                 ranges=IRanges::IRanges(
+                                                   start=minus_entries[["low_boundary"]],
+                                                   end=minus_entries[["high_boundary"]]),
+                                 strand=S4Vectors::Rle(minus_entries[[strand_column]]),
+                                 name=S4Vectors::Rle(minus_entries[[name_column]]))
+  minus_fivep_seqstrings <- BSgenome::getSeq(bsgenome, minuses_fivep)
+  names(minus_fivep_seqstrings) <- minuses_fivep$name
+  minus_threep_seqstrings <- BSgenome::getSeq(bsgenome, minuses_threep)
+  names(minus_threep_seqstrings) <- minuses_threep$name
+  minus_cds_seqstrings <- BSgenome::getSeq(bsgenome, minuses_cds)
+  names(minus_cds_seqstrings) <- minuses_cds$name
+  minus_all_seqstrings <- BSgenome::getSeq(bsgenome, minuses_all)
+  names(minus_all_seqstrings) <- minuses_all$name
+
 
   ## These provide data frames of the sequence lexically before/after every gene.
-  smaller_seqdf <- as.data.frame(smaller_seqstrings)
-  colnames(smaller_seqdf) <- "sequence"
-  larger_seqdf <- as.data.frame(larger_seqstrings)
-  colnames(larger_seqdf) <- "sequence"
-  ## These provide the strand and location information for the same.
-  smaller_infodf <- as.data.frame(smaller)
-  larger_infodf <- as.data.frame(larger)
-  ## Bring together the location and sequence information.
-  all_smaller <- merge(smaller_infodf, smaller_seqdf, by.x="name", by.y="row.names")
-  all_larger <- merge(larger_infodf, larger_seqdf, by.x="name", by.y="row.names")
+  plus_seqdf <- as.data.frame(plus_fivep_seqstrings)
+  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_threep_seqstrings))
+  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_cds_seqstrings))
+  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_all_seqstrings))
+  colnames(plus_seqdf) <- c("fivep", "threep", "cds", "all")
 
-  ## To pull the 5' and 3' entries for the + strand, we use smaller and larger respectively.
-  fivep_plus_idx <- all_smaller[["strand"]] == "+"
-  fivep_plus_entries <- all_smaller[fivep_plus_idx, ]
-  threep_plus_idx <- all_larger[["strand"]] == "+"
-  threep_plus_entries <- all_larger[threep_plus_idx, ]
-  ## In contrast, to pull the 5' and 3' entries from the - strand, use larger and smaller.
-  fivep_minus_idx <- all_larger[["strand"]] == "-"
-  fivep_minus_entries <- all_larger[fivep_minus_idx, ]
-  threep_minus_idx <- all_smaller[["strand"]] == "-"
-  threep_minus_entries <- all_smaller[threep_minus_idx, ]
+  minus_seqdf <- as.data.frame(minus_fivep_seqstrings)
+  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_threep_seqstrings))
+  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_cds_seqstrings))
+  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_all_seqstrings))
+  colnames(minus_seqdf) <- c("fivep", "threep", "cds", "all")
 
-  all_fivep_entries <- rbind(fivep_plus_entries, fivep_minus_entries)
-  all_threep_entries <- rbind(threep_plus_entries, threep_minus_entries)
+  plus_infodf <- merge(plus_entries, plus_seqdf, by="row.names")
+  rownames(plus_infodf) <- plus_infodf[[1]]
+  plus_infodf[[1]] <- NULL
+  minus_infodf <- merge(minus_entries, minus_seqdf, by="row.names")
+  rownames(minus_infodf) <- minus_infodf[[1]]
+  minus_infodf[[1]] <- NULL
 
-  retlist <- list(
-    "five_prime" = all_fivep_entries,
-    "three_prime" = all_threep_entries)
-  return(retlist)
+  allinfo_df <- rbind(plus_infodf, minus_infodf)
+  return(allinfo_df)
 }
 
 #' Get UTR sequences using information provided by TxDb and fiveUTRsByTranscript

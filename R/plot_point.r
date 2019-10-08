@@ -610,8 +610,7 @@ recolor_points <- function(plot, df, ids, color="red", ...) {
 #'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
 #' @examples
 #' \dontrun{
-#'  nonzero_plot = plot_nonzero(expt=expt)
-#'  nonzero_plot  ## ooo pretty
+#'  nonzero_plot <- plot_nonzero(expt=expt)
 #' }
 #' @export
 plot_nonzero <- function(data, design=NULL, colors=NULL, plot_labels=NULL,

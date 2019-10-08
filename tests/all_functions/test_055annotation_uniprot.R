@@ -5,6 +5,7 @@ context("055annotation_uniprot.R:
   1234\n")
 ## 2017-12, exported functions in annotation_gff:
 ## load_uniprot_annotations() download_uniprot_proteome()
+
 website_up <- TRUE
 ## download_uniprot_proteome()
 testing <- try(download_uniprot_proteome(

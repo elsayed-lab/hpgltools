@@ -18,11 +18,11 @@ been normalized and filtered for features which have no values across 'most' sam
 
 \item{fun}{"bpca", "knn", "QRILC", "MLE", "MinDet",
 "MinProb", "man", "min", "zero", "mixed" or "nbavg",
-Function used for data imputation based on \code{\link{manual_impute}}
-and \code{\link[MSnbase:impute-methods]{impute}}.}
+Function used for data imputation based on 
+\code{\link[MSnbase:impute-methods]{impute}}.}
 
 \item{...}{Additional arguments for imputation functions as depicted in
-\code{\link{manual_impute}} and \code{\link[MSnbase:impute-methods]{impute}}.}
+\code{\link[MSnbase:impute-methods]{impute}}.}
 }
 \value{
 An imputed expressionset.

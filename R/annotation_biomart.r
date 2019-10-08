@@ -35,7 +35,7 @@
 #' @author atb
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                     host="dec2016.archive.ensembl.org",
+                                     host="dec2017.archive.ensembl.org",
                                      drop_haplotypes=TRUE, trymart="ENSEMBL_MART_ENSEMBL",
                                      trydataset=NULL,
                                      gene_requests=c("ensembl_gene_id",

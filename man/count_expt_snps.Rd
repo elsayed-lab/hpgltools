@@ -5,7 +5,7 @@
 \title{Gather snp information for an expt}
 \usage{
 count_expt_snps(expt, type = "counts", annot_column = "bcftable",
-  tolower = TRUE)
+  tolower = TRUE, snp_column = "diff_count")
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}

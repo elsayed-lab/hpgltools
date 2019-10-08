@@ -21,7 +21,7 @@ ah <- AnnotationHub()
 sc_orgdb <- query(ah, c("OrgDB", "Saccharomyces pombe"))
 ## AH67545 | org.Sc.sgd.db.sqlite3
 sc_orgdb
-pombe <- sc_orgdb[[3]]
+pombe <- sc_orgdb[[1]]
 ##pombe <- orgdb_from_ah(species="^Schizosaccharomyces pombe$")
 
 pombe_expt <- make_pombe_expt()
