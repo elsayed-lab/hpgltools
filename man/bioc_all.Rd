@@ -4,7 +4,7 @@
 \alias{bioc_all}
 \title{Grab a copy of all bioconductor packages and install them by type}
 \usage{
-bioc_all(release = "3.5",
+bioc_all(release = "3.10",
   mirror = "bioconductor.statistik.tu-dortmund.de", base = "packages",
   type = "software", suppress_updates = TRUE, suppress_auto = TRUE,
   force = FALSE)
@@ -30,7 +30,7 @@ a number of packages installed
 }
 \description{
 This uses jsonlite to get a copy of all bioconductor packages by name and
-then iterates through them with BiocInstaller to install all of them.  It
+then iterates through them with BiocManager to install all of them.  It
 performs a sleep between each installation in an attempt to avoid being
 obnoxious.  As a result, it will of a necessity take forever.
 }
@@ -40,5 +40,5 @@ obnoxious.  As a result, it will of a necessity take forever.
 }
 }
 \seealso{
-\pkg{BiocInstaller}
+\pkg{BiocManager}
 }

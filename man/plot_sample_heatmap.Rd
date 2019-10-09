@@ -30,6 +30,8 @@ plot_sample_heatmap(data, colors = NULL, design = NULL,
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
+\item{filter}{Filter the data before performing this plot?}
+
 \item{...}{More parameters for a good time!}
 }
 \value{

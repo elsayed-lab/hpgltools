@@ -11,6 +11,7 @@
 #' @param type Use counts / samples or ratios?
 #' @param annot_column Column in the metadata for getting the table of bcftools calls.
 #' @param tolower Lowercase stuff like 'HPGL'?
+#' @param snp_column Which column of the parsed bcf table contains our interesting material?
 #' @return A new expt object
 #' @export
 count_expt_snps <- function(expt, type="counts", annot_column="bcftable", tolower=TRUE,

@@ -11,6 +11,8 @@ gather_eupath_utrs_padding(species_name = "Leishmania major",
 \arguments{
 \item{species_name}{Species name for which to query the eupathdb.}
 
+\item{entry}{EuPathDB metadatum entry.}
+
 \item{webservice}{If specified, makes the query faster, I always used
 tritrypdb.org.}
 

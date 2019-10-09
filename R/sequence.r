@@ -4,6 +4,7 @@
 #' This is a very domain-specific function.
 #'
 #' @param species_name Species name for which to query the eupathdb.
+#' @param entry EuPathDB metadatum entry.
 #' @param webservice If specified, makes the query faster, I always used
 #'   tritrypdb.org.
 #' @param ... Extra arguments for the various EuPathDB functions.
@@ -19,10 +20,10 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
   bsgenome_name <- pkg_names[["bsgenome"]]
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
-    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, metadata=metadata, ...)
+    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry, ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
-    orgdb_installedp <- EuPathDB::make_eupath_orgdb(species=species_name, metadata=metadata, ...)
+    orgdb_installedp <- EuPathDB::make_eupath_orgdb(species=species_name, entry=entry, ...)
   }
 
   ##lib_result <- sm(library(orgdb_name, character.only=TRUE))
@@ -65,22 +66,23 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
 #' it can be useful to query some arbitrary and consistent amount of sequence
 #' before/after every CDS sequence.  This function can provide that information.
 #'
-#' @param bsgenome  BSgenome object containing the genome of interest.
-#' @param annot_df  Annotation data frame containing all the entries of
+#' @param bsgenome BSgenome object containing the genome of interest.
+#' @param annot_df Annotation data frame containing all the entries of
 #'   interest, this is generally extracted using a function in the
 #'   load_something_annotations() family (load_orgdb_annotations() being the most
 #'   likely).
-#' @param name_column  Give each gene a name using this column.
-#' @param chr_column  Column name of the chromosome names.
-#' @param start_column  Column name of the start information.
-#' @param end_column  Ibid, end column.
-#' @param strand_column  Ibid, strand.
-#' @param type_column  Subset the annotation data using this column, if not null.
-#' @param gene_type  Subset the annotation data using the type_column with this
+#' @param gid Specific GID(s) to query.
+#' @param name_column Give each gene a name using this column.
+#' @param chr_column Column name of the chromosome names.
+#' @param start_column Column name of the start information.
+#' @param end_column Ibid, end column.
+#' @param strand_column Ibid, strand.
+#' @param type_column Subset the annotation data using this column, if not null.
+#' @param gene_type Subset the annotation data using the type_column with this
 #'   type.
-#' @param padding  Return this number of nucleotides for each gene.
+#' @param padding Return this number of nucleotides for each gene.
 #' @param ... Arguments passed to child functions (I think none currently).
-#' @return List of 2 elements, the 5' and 3' regions.
+#' @return Dataframe of UTR, CDS, and UTR+CDS sequences.
 gather_utrs_padding <- function(bsgenome, annot_df, gid=NULL, name_column="gid",
                                 chr_column="chromosome", start_column="start",
                                 end_column="end", strand_column="strand",

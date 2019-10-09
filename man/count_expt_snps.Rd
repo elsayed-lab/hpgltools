@@ -15,6 +15,8 @@ count_expt_snps(expt, type = "counts", annot_column = "bcftable",
 \item{annot_column}{Column in the metadata for getting the table of bcftools calls.}
 
 \item{tolower}{Lowercase stuff like 'HPGL'?}
+
+\item{snp_column}{Which column of the parsed bcf table contains our interesting material?}
 }
 \value{
 A new expt object

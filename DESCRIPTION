@@ -18,12 +18,12 @@ Description: This is a set of functions I have been using in my various analyses
 License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-  BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
+  BiocGenerics, BiocManager, biomaRt, Biostrings, BRAIN, BSgenome,
   caret, Category, cleaver, corpcor, corrplot, curl,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW,
   EBSeq, EDASeq, edgeR, EuPathDB,
-  fastICA, ffpe, fission,
+  fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
   GSEABase,

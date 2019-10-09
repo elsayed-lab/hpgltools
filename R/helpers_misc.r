@@ -28,7 +28,7 @@ backup_file <- function(backup_file, backups=4) {
 #' Grab a copy of all bioconductor packages and install them by type
 #'
 #' This uses jsonlite to get a copy of all bioconductor packages by name and
-#' then iterates through them with BiocInstaller to install all of them.  It
+#' then iterates through them with BiocManager to install all of them.  It
 #' performs a sleep between each installation in an attempt to avoid being
 #' obnoxious.  As a result, it will of a necessity take forever.
 #'
@@ -41,13 +41,13 @@ backup_file <- function(backup_file, backups=4) {
 #' @param suppress_auto  For BiocLite(), don't update?
 #' @param force  Install if already installed?
 #' @return a number of packages installed
-#' @seealso \pkg{BiocInstaller}
+#' @seealso \pkg{BiocManager}
 #' @examples
 #' \dontrun{
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release="3.5",
+bioc_all <- function(release="3.10",
                      mirror="bioconductor.statistik.tu-dortmund.de",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
@@ -78,9 +78,9 @@ bioc_all <- function(release="3.5",
     alr <- state[["already"]]
     message("Installing: ", pkg)
     if (isTRUE(forceme)) {
-      installedp <- sm(try(BiocInstaller::biocLite(pkg, ask=FALSE,
-                                                   suppressUpdates=update,
-                                                   suppressAutoUpdate=auto)))
+      installedp <- sm(try(BiocManager::install(pkg, ask=FALSE,
+                                                suppressUpdates=update,
+                                                suppressAutoUpdate=auto)))
       if (class(installedp) == "try-error") {
         fail <- append(fail, pkg)
       } else {
@@ -97,9 +97,9 @@ bioc_all <- function(release="3.5",
         alr <- append(alr, pkg)
         sleep <- 0
       } else {
-        installedp <- try(sm(BiocInstaller::biocLite(pkg, ask=FALSE,
-                                                     suppressUpdates=update,
-                                                     suppressAutoUpdate=auto)))
+        installedp <- try(sm(BiocManager::install(pkg, ask=FALSE,
+                                                  suppressUpdates=update,
+                                                  suppressAutoUpdate=auto)))
         if (class(installedp) == "try-error") {
           fail <- append(fail, pkg)
         } else {
@@ -498,8 +498,8 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #' @param lib String name of a library to check/install.
 #' @param update Update packages?
 #' @return 0 or 1, whether a package was installed or not.
-#' @seealso \pkg{BiocInstaller}
-#'  \code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
+#' @seealso \pkg{BiocManager}
+#'  \code{\link[BiocManager]{install}} \code{\link{install.packages}}
 #' @examples
 #' \dontrun{
 #'  require.auto("ggplot2")

@@ -19,6 +19,8 @@ interest, this is generally extracted using a function in the
 load_something_annotations() family (load_orgdb_annotations() being the most
 likely).}
 
+\item{gid}{Specific GID(s) to query.}
+
 \item{name_column}{Give each gene a name using this column.}
 
 \item{chr_column}{Column name of the chromosome names.}
@@ -39,7 +41,7 @@ type.}
 \item{...}{Arguments passed to child functions (I think none currently).}
 }
 \value{
-List of 2 elements, the 5' and 3' regions.
+Dataframe of UTR, CDS, and UTR+CDS sequences.
 }
 \description{
 For some species, we do not have a fully realized set of UTR boundaries, so

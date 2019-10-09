@@ -2003,7 +2003,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["topgo_cc"]], df=df, sheet=sheet,
+      dfwrite <- write_xls(data=down_stuff[["topgo_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {

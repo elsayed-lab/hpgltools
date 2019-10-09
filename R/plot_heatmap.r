@@ -325,6 +325,7 @@ plot_heatplus <- function(expt, type="correlation", method="pearson", annot_colu
 #' @param Rowv Reorder the rows by expression?
 #' @param Colv Reorder the columns by expression?
 #' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param filter Filter the data before performing this plot?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso \pkg{RColorBrewer}
