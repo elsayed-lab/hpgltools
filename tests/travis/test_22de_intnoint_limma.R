@@ -6,7 +6,7 @@ library(hpgltools)
 ## a model with an intercept and one without.  This should not be I think.
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla <- pasilla[["expt"]]
 
 ## First, let us invoke limma with batch in the model with no intercept.
@@ -30,14 +30,12 @@ int_fit <- limma::lmFit(int_voom, int_model)
 int_contrast_matrix <- limma::makeContrasts(untreat_vs_treated=conditionuntreated-conditiontreated, levels=int_model)
 int_contrasts <- limma::contrasts.fit(int_fit, int_contrast_matrix)
 
-noint_eb <- limma::eBayes(noint_fit)
+noint_eb <- suppressWarnings(limma::eBayes(noint_fit))
 int_eb <- limma::eBayes(int_contrasts)
 
 noint_table <- limma::topTable(noint_eb, coef="conditiontreated", n=Inf, adjust="BH")
 int_table <- limma::topTable(int_eb, coef="untreat_vs_treated", n=Inf, adjust="BH")
 
-head(noint_table)
-head(int_table)
 ## https://hopstat.wordpress.com/2014/06/26/be-careful-with-using-model-design-in-r/
 ## Toward the end of this document, I found that the big difference is in the setting
 ## of the intercept attribute to the model.  It looks like there is a test in summary.lm
@@ -52,6 +50,6 @@ head(int_table)
 interaction_model <- stats::model.matrix(~ condition + batch + condition:batch, data=design)
 interaction_voom <- limma::voom(counts, interaction_model, plot=TRUE, normalize.method="quantile")
 interaction_fit <- limma::lmFit(interaction_voom, interaction_model)
-interaction_eb <- limma::eBayes(interaction_fit)
+interaction_eb <- suppressWarnings(limma::eBayes(interaction_fit))
 interaction_table <- limma::topTable(interaction_eb, coef="conditiontreated", n=Inf, adjust="BH")
 head(interaction_table)

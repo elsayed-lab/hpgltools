@@ -9,7 +9,7 @@ ebseq_pairwise(input = NULL, patterns = NULL, conditions = NULL,
   batches = NULL, model_cond = NULL, model_intercept = NULL,
   alt_model = NULL, model_batch = NULL, ng_vector = NULL,
   rounds = 10, target_fdr = 0.05, method = "pairwise_subset",
-  norm = "median", ...)
+  norm = "median", force = FALSE, ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization
@@ -42,6 +42,8 @@ trivially complex, this is not tenable, so this defaults to subsetting the
 data into pairs of conditions.}
 
 \item{norm}{Normalization method to use.}
+
+\item{force}{Force ebseq to accept bad data (notably NA containing stuff from proteomics.}
 
 \item{...}{Extra arguments currently unused.}
 }

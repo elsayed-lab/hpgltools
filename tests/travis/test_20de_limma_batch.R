@@ -7,7 +7,7 @@ context("20de_limma_batch.R: Does hpgltools work with limma?\n")
 load("pasilla_df.rda")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 please_install("kokrah/cbcbSEQ")
 

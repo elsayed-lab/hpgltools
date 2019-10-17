@@ -149,7 +149,6 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
   if (!is.null(row.names)) {
     rownames(ret) <- ret[[row.names]]
   }
-
   return(ret)
 }
 

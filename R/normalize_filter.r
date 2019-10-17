@@ -81,10 +81,9 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
 #' }
 #' @export
 cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=NULL) {
-  ## It appears I introduced an error here.
   log2CPM <- function(qcounts, libsize=NULL) {
     if (is.null(libsize)) {
-      libsize <- colSums(qcounts)
+      libsize <- colSums(qcounts, na.rm=TRUE)
     }
     count_table <- t(log2(t(qcounts + 0.5) / (libsize + 1) * 1e+06))
     retlist <- list(
@@ -95,10 +94,9 @@ cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=
   ##cpms <- edgeR::cpm(count_table)
   l2cpm <- log2CPM(count_table, libsize=libsize)
   cpms <- 2 ^ l2cpm[["count_table"]]
-  keep <- rowSums(cpms > threshold) >= min_samples
+  keep <- rowSums(cpms > threshold, na.rm=TRUE) >= min_samples
   num_before <- nrow(count_table)
   count_table <- count_table[keep, ]
-
   message(sprintf("Removing %d low-count genes (%d remaining).",
                   num_before - nrow(count_table), nrow(count_table)))
 

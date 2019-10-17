@@ -534,8 +534,8 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
-                            kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores)
+  gsva_result <- suppressWarnings(GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
+                                             kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores))
   fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""

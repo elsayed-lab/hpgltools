@@ -359,11 +359,13 @@ pca_information <- function(expt, expt_design=NULL, expt_factors=c("condition", 
 pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
   if (isTRUE(logged)) {
     if (expt[["state"]][["transform"]] == "raw") {
-      expt <- sm(normalize_expt(expt, transform="log2"))
+      expt <- sm(normalize_expt(expt, transform="log2", filter=TRUE))
     }
   }
 
   data <- as.data.frame(exprs(expt))
+  na_idx <- is.na(data)
+  data[na_idx] <- 0
   if (!is.null(vs)) {
     if (vs == "means") {
       data <- as.matrix(data) - rowMeans(as.matrix(data))
@@ -527,6 +529,11 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
+
+  ## Get rid of NAs, this is relevant because of recent changes in how I handle
+  ## proteomic data with missing values.
+  na_idx <- is.na(mtrx)
+  mtrx[na_idx] <- 0
 
   ## Small modification for reusing some of my very oldest experimental designs.
   if (is.null(design[["sampleid"]])) {
@@ -702,10 +709,19 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       y_label <- sprintf("%s: %.2f tsne 'variance'", y_name, prop_lst[y_pc])
     },
     "umap" = {
-      message("Not yet implemented.")
+      message("Using uwot's implementation of umap.")
+      plotting_data <- t(mtrx)
+      pc_table <- as.data.frame(uwot::umap(X=plotting_data, n_components=num_pc, ...))
+      rownames(pc_table) <- rownames(design)
+      colnames(pc_table) <- glue::glue("PC{1:ncol(pc_table)}")
+      x_name <- glue::glue("Factor{x_pc}")
+      y_name <- glue::glue("Factor{y_pc}")
+      x_label <- x_name
+      y_label <- y_name
+      included_batch <- as.factor(as.character(design[[batch_column]]))
+      included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "uwot" = {
-
       plotting_data <- t(mtrx)
       pc_table <- as.data.frame(uwot::umap(X=plotting_data, n_components=num_pc, ...))
       rownames(pc_table) <- rownames(design)
@@ -855,7 +871,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     ## Adding a column with the same name as the size column from the experimental design
     ## and making sure it is a factor.
     if (is.null(arglist[["size_order"]])) {
-      comp_data[[size_column]] <- as.factor(comp_data[[size_column]])
+      comp_data[[size_column]] <- factor(design[[size_column]])
     } else {
       comp_data[[size_column]] <- factor(design[[size_column]], levels=arglist[["size_order"]])
     }
@@ -954,10 +970,10 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
 #' }
 #' @export
 plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
-                     plot_size=2, plot_alpha=0.4, plot_labels=FALSE, size_column=NULL,
-                     pc_method="fast_svd", x_pc=1, y_pc=2, label_column="description",
-                     num_pc=2, expt_names=NULL, label_chars=10,
-                     ...) {
+                           plot_size=2, plot_alpha=0.4, plot_labels=FALSE, size_column=NULL,
+                           pc_method="fast_svd", x_pc=1, y_pc=2, label_column="description",
+                           num_pc=2, expt_names=NULL, label_chars=10,
+                           ...) {
   arglist <- list(...)
   ## Set default columns in the experimental design for condition and batch
   ## changing these may be used to query other experimental factors with pca.
@@ -1368,9 +1384,20 @@ plot_pca_genes <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   }
 
   ## The plot_pcs() function gives a decent starting plot
+  ## plot_labels=comp_data[["text"]] I think is incorrect, as the plot_labels
+  ## parameters is intended to only be a single word defining how to place the
+  ## labels.  I think this should instead be point_labels -- but if we set that, given
+  ## the large number of dots, we will need to stop any attempted 'smart'
+  ## placement of the labels, otherwise it will make the computer very sad.
+  ##comp_plot <- plot_pcs(
+  ##  comp_data, first=x_name, second=y_name, design=design,
+  ##  plot_labels=comp_data[["text"]], x_label=x_label, y_label=y_label,
+  ##  plot_title=plot_title, plot_size=plot_size, size_column=size_column,
+  ##  plot_alpha=plot_alpha,
+  ##  ...)
   comp_plot <- plot_pcs(
     comp_data, first=x_name, second=y_name, design=design,
-    plot_labels=comp_data[["text"]], x_label=x_label, y_label=y_label,
+    x_label=x_label, y_label=y_label,
     plot_title=plot_title, plot_size=plot_size, size_column=size_column,
     plot_alpha=plot_alpha,
     ...)
@@ -1485,6 +1512,9 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     label_column <- arglist[["label_column"]]
   }
   point_labels <- factor(pca_data[[label_column]])
+  if (!is.null(arglist[["point_labels"]])) {
+    point_labels <- arglist[["point_labels"]]
+  }
   if (is.null(plot_title)) {
     plot_title <- paste(first, " vs. ", second, sep="")
   }
@@ -1689,7 +1719,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   if (is.null(plot_labels)) {
     plot_labels <- "repel"
   }
-  if (plot_labels == FALSE) {
+  if (isFALSE(plot_labels)) {
     message("Not putting labels on the plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +

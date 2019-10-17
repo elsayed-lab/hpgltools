@@ -6,7 +6,7 @@ tt <- library(edgeR)
 context("26de_edger.R: Does hpgltools work with edgeR?\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)

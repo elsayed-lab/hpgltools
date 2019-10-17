@@ -45,14 +45,59 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 
   switchret <- switch(
     norm,
-    "sf2" = {
-      ## Size-factored normalization is a part of DESeq
-      factors <- DESeq2::estimateSizeFactorsForMatrix(count_table)
-      num_rows <- dim(count_table)[1]
-      sf_counts <- count_table / do.call(rbind, rep(list(factors), num_rows))
-      ##sf_counts = counts / (libsizes * factors)
-      count_table <- as.matrix(sf_counts)
-      norm_performed <- "sf2"
+    "qshrink" = {
+      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
+                                  plot=TRUE)
+      norm_performed <- "qshrink"
+    },
+    "qshrink_median" = {
+      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
+                                  plot=TRUE, refType="median",
+                                  groupLoc="median", window=50)
+      norm_performed <- "qshrink_median"
+    },
+    "quant" = {
+      ## Quantile normalization (Bolstad et al., 2003)
+      count_rownames <- rownames(count_table)
+      count_colnames <- colnames(count_table)
+      count_table <- preprocessCore::normalize.quantiles(
+                                       as.matrix(count_table))
+      rownames(count_table) <- count_rownames
+      colnames(count_table) <- count_colnames
+      norm_performed <- "quant"
+    },
+    "quant_robust" = {
+      count_rownames <- rownames(count_table)
+      count_colnames <- colnames(count_table)
+      ## 20181210 -- this gives a pthread_create() error 22.
+      ##count_table <- preprocessCore::normalize.quantiles(
+      ##                                 as.matrix(count_table), copy=TRUE)
+      count_table <- preprocessCore::normalize.quantiles.robust(
+                                       as.matrix(count_table))
+      rownames(count_table) <- count_rownames
+      colnames(count_table) <- count_colnames
+      norm_performed <- "quant_robust"
+    },
+    "quantile" = {
+      ## Quantile normalization (Bolstad et al., 2003)
+      count_rownames <- rownames(count_table)
+      count_colnames <- colnames(count_table)
+      count_table <- preprocessCore::normalize.quantiles(
+                                       as.matrix(count_table), copy=TRUE)
+      rownames(count_table) <- count_rownames
+      colnames(count_table) <- count_colnames
+      norm_performed <- "quant"
+    },
+    "rle" = {
+      ## Get the tmm normalization factors
+      count_table <- edgeR::DGEList(counts=count_table)
+      norms <- edgeR::calcNormFactors(count_table, method="RLE")
+      ## libsizes = count_table$samples$lib.size
+      factors <- norms[["samples"]][["norm.factors"]]
+      counts <- norms[["counts"]]
+      tmm_counts <- counts / factors
+      count_table <- as.matrix(tmm_counts)
+      norm_performed <- "rle"
     },
     "sf" = {
       original_cols <- colnames(count_table)
@@ -65,75 +110,14 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- BiocGenerics::counts(factors, normalized=TRUE)
       norm_performed <- "sf"
     },
-    "vsd" = {
-      original_cols <- colnames(count_table)
-      conds <- design[["conditions"]]
-      if (is.null(conds)) {
-        conds <- design[["condition"]]
-        if (is.null(conds)) {
-          conds <- original_cols
-        }
-      }
-      fit_type <- "parametric"
-      if (!is.null(arglist[["fit_type"]])) {
-        fit_type <- arglist[["fit_type"]]
-      }
-      tt <- sm(requireNamespace("locfit"))
-      tt <- sm(requireNamespace("DESeq2"))
-      cds <- DESeq2::DESeqDataSetFromMatrix(
-                       countData=count_table, colData=design, design=~condition)
-      cds <- DESeq2::estimateSizeFactors(cds)
-      cds <- DESeq2::estimateDispersions(cds, fitType=fit_type)
-      count_table <- DESeq2::getVarianceStabilizedData(cds)
-      norm_performed <- "vsd"
-    },
-    "quant_robust" = {
-      count_rownames <- rownames(count_table)
-      count_colnames <- colnames(count_table)
-      ## 20181210 -- this gives a pthread_create() error 22.
-      ##count_table <- preprocessCore::normalize.quantiles(
-      ##                                 as.matrix(count_table), copy=TRUE)
-      message("Using normalize.quantiles.robust due to a thread error in preprocessCore.")
-      count_table <- preprocessCore::normalize.quantiles.robust(
-                                       as.matrix(count_table))
-      rownames(count_table) <- count_rownames
-      colnames(count_table) <- count_colnames
-      norm_performed <- "quant_robust"
-    },
-    "quant" = {
-      ## Quantile normalization (Bolstad et al., 2003)
-      count_rownames <- rownames(count_table)
-      count_colnames <- colnames(count_table)
-      ## 20181210 -- this gives a pthread_create() error 22.
-      ##count_table <- preprocessCore::normalize.quantiles(
-      ##                                 as.matrix(count_table), copy=TRUE)
-      message("Using normalize.quantiles.robust due to a thread error in preprocessCore.")
-      count_table <- preprocessCore::normalize.quantiles.robust(
-                                       as.matrix(count_table))
-      rownames(count_table) <- count_rownames
-      colnames(count_table) <- count_colnames
-      norm_performed <- "quant"
-    },
-    "quantile" = {
-      ## Quantile normalization (Bolstad et al., 2003)
-      count_rownames <- rownames(count_table)
-      count_colnames <- colnames(count_table)
-      count_table <- preprocessCore::normalize.quantiles(
-                                       as.matrix(count_table), copy=TRUE)
-      rownames(count_table) <- count_rownames
-      colnames(count_table) <- count_colnames
-      norm_performed <- "quant"
-    },
-    "qshrink" = {
-      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
-                                  plot=TRUE)
-      norm_performed <- "qshrink"
-    },
-    "qshrink_median" = {
-      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
-                                  plot=TRUE, refType="median",
-                                  groupLoc="median", window=50)
-      norm_performed <- "qshrink_median"
+    "sf2" = {
+      ## Size-factored normalization is a part of DESeq
+      factors <- DESeq2::estimateSizeFactorsForMatrix(count_table)
+      num_rows <- dim(count_table)[1]
+      sf_counts <- count_table / do.call(rbind, rep(list(factors), num_rows))
+      ##sf_counts = counts / (libsizes * factors)
+      count_table <- as.matrix(sf_counts)
+      norm_performed <- "sf2"
     },
     "tmm" = {
       ## TMM normalization is documented in edgeR
@@ -158,16 +142,27 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- as.matrix(tmm_counts)
       norm_performed <- "upperquartile"
     },
-    "rle" = {
-      ## Get the tmm normalization factors
-      count_table <- edgeR::DGEList(counts=count_table)
-      norms <- edgeR::calcNormFactors(count_table, method="RLE")
-      ## libsizes = count_table$samples$lib.size
-      factors <- norms[["samples"]][["norm.factors"]]
-      counts <- norms[["counts"]]
-      tmm_counts <- counts / factors
-      count_table <- as.matrix(tmm_counts)
-      norm_performed <- "rle"
+    "vsd" = {
+      original_cols <- colnames(count_table)
+      conds <- design[["conditions"]]
+      if (is.null(conds)) {
+        conds <- design[["condition"]]
+        if (is.null(conds)) {
+          conds <- original_cols
+        }
+      }
+      fit_type <- "parametric"
+      if (!is.null(arglist[["fit_type"]])) {
+        fit_type <- arglist[["fit_type"]]
+      }
+      tt <- sm(requireNamespace("locfit"))
+      tt <- sm(requireNamespace("DESeq2"))
+      cds <- DESeq2::DESeqDataSetFromMatrix(
+                       countData=count_table, colData=design, design=~condition)
+      cds <- DESeq2::estimateSizeFactors(cds)
+      cds <- DESeq2::estimateDispersions(cds, fitType=fit_type)
+      count_table <- DESeq2::getVarianceStabilizedData(cds)
+      norm_performed <- "vsd"
     },
     {
       message("Did not recognize the normalization, leaving the table alone.
@@ -176,7 +171,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- as.matrix(count_table)
     }
   ) ## End of the switch statement.
-  norm_libsize <- colSums(count_table)
+  norm_libsize <- colSums(count_table, na.rm=TRUE)
   norm_counts <- list(count_table=count_table, libsize=norm_libsize,
                       norm_performed=norm_performed)
   return(norm_counts)

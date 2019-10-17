@@ -11,6 +11,6 @@ rex(display = ":0")
 \item{display}{DISPLAY variable to use,  if NULL it looks in ~/.displays/$(host).last}
 }
 \description{
-This function assumes a line in the .profile which writes the DISPLAY variable to
-${HOME}/.displays/$(hostname).last
+Resets the display and xauthority variables to the new computer I am using so
+that plot() works.
 }

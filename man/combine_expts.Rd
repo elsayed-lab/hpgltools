@@ -4,7 +4,8 @@
 \alias{combine_expts}
 \title{Take two expressionsets and smoosh them together.}
 \usage{
-combine_expts(expt1, expt2, condition = "condition", batch = "batch")
+combine_expts(expt1, expt2, condition = "condition", batch = "batch",
+  merge_meta = FALSE)
 }
 \arguments{
 \item{expt1}{First expt object.}
@@ -14,6 +15,8 @@ combine_expts(expt1, expt2, condition = "condition", batch = "batch")
 \item{condition}{Column with which to reset the conditions.}
 
 \item{batch}{Column with which to reset the batches.}
+
+\item{merge_meta}{Merge the metadata when they mismatch?  This should perhaps default to TRUE.}
 }
 \value{
 Larger expt.

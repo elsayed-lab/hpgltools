@@ -18,12 +18,12 @@ Description: This is a set of functions I have been using in my various analyses
 License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-  BiocGenerics, BiocInstaller, biomaRt, Biostrings, BRAIN, BSgenome,
+  BiocGenerics, BiocManager, biomaRt, Biostrings, BRAIN, BSgenome,
   caret, Category, cleaver, corpcor, corrplot, curl,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW,
   EBSeq, EDASeq, edgeR, EuPathDB,
-  fastICA, ffpe, fission,
+  fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, goseq, GO.db, googleVis, GOstats, graph, GSVA, gtools, gplots, gProfileR,
   GSEABase,
@@ -32,14 +32,14 @@ Suggests:
   jsonlite,
   KEGGREST, KEGGgraph,
   lattice, limma, locfit,
-  matrixStats, MLSeq, motifRG, mygene, mzR,
+  matrixStats, MLSeq, motifRG, MSnbase, mygene, mzR,
   openxlsx, OrganismDbi,
   pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
-  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda,
+  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats,
   taxize, testthat, tidyr, topGO, tximport,
   UniProt.ws, uwot,
   xCell,
@@ -115,7 +115,7 @@ Collate:
     'plot_heatmap.r'
     'plot_hist.r'
     'plot_misc.r'
-    'plot_peptides.r'
+    'plot_proteomics.r'
     'plot_point.r'
     'plot_shared.r'
     'plot_venn.r'

@@ -28,6 +28,6 @@ and initially provided by Ramzi Temanni.
 }
 }
 \seealso{
-\pkg{BiocInstaller}
- \code{\link[BiocInstaller]{biocLite}} \code{\link{install.packages}}
+\pkg{BiocManager}
+ \code{\link[BiocManager]{install}} \code{\link{install.packages}}
 }

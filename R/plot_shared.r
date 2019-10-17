@@ -179,50 +179,95 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   message("Graphing number of non-zero genes with respect to CPM by library.")
   nonzero <- try(plot_nonzero(expt, title=nonzero_title,
                               ...))
+  if ("try-error" %in% class(nonzero)) {
+    nonzero <- list()
+  }
   message("Graphing library sizes.")
   libsize <- try(plot_libsize(expt, title=libsize_title,
                               ...))
+  if ("try-error" %in% class(libsize)) {
+    libsize <- list()
+  }
   message("Graphing a boxplot.")
   boxplot <- try(plot_boxplot(expt, title=boxplot_title,
                               ...))
+  if ("try-error" %in% class(boxplot)) {
+    boxplot <- NULL
+  }
   message("Graphing a correlation heatmap.")
   corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title,
                               ...))
+  if ("try-error" %in% class(corheat)) {
+    corheat <- list()
+  }
   message("Graphing a standard median correlation.")
   smc <- try(plot_sm(expt, method=cormethod, title=smc_title,
                      ...))
+  if ("try-error" %in% class(smc)) {
+    smc <- NULL
+  }
   message("Graphing a distance heatmap.")
   disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title,
                               ...))
+  if ("try-error" %in% class(disheat)) {
+    disheat <- list()
+  }
   message("Graphing a standard median distance.")
   smd <- try(plot_sm(expt, method=distmethod, title=smd_title,
                      ...))
+  if ("try-error" %in% class(smd)) {
+    smd <- NULL
+  }
   message("Graphing a PCA plot.")
   pca <- try(plot_pca(expt, title=pca_title,
                       ...))
+  if ("try-error" %in% class(pca)) {
+    pca <- list()
+  }
   message("Graphing a T-SNE plot.")
   tsne <- try(plot_tsne(expt, title=tsne_title,
                         ...))
+  if ("try-error" %in% class(tsne)) {
+    tsne <- list()
+  }
   message("Plotting a density plot.")
   density <- try(plot_density(expt, title=dens_title,
                               ...))
+  if ("try-error" %in% class(density)) {
+    density <- list()
+  }
   message("Plotting a CV plot.")
   cv <- try(plot_variance_coefficients(expt, title=dens_title,
                                        ...))
+  if ("try-error" %in% class(cv)) {
+    cv <- list()
+  }
   message("Plotting the representation of the top-n genes.")
   topn <- try(plot_topn(expt, title=topn_title,
                         ...))
+  if ("try-error" %in% class(topn)) {
+    topn <- list()
+  }
+  tmp_expt <- sm(normalize_expt(expt, filter=TRUE))
   message("Plotting the expression of the top-n PC loaded genes.")
-  pcload <- try(plot_pcload(expt, title=pc_loading_title,
-                            ...))
+  pcload <- try(plot_pcload(tmp_expt, title=pc_loading_title))
+  if ("try-error" %in% class(pcload)) {
+    pcload <- list()
+  }
   message("Printing a color to condition legend.")
   legend <- try(plot_legend(expt))
-
+  if ("try-error" %in% class(legend)) {
+    legend <- list()
+  }
   qq_logs <- NULL
   qq_ratios <- NULL
   if (isTRUE(qq)) {
     message("QQ plotting!")
-    qq_plots <- try(suppressWarnings(plot_qq_all(expt, ...)))
+    qq_plots <- try(sm(suppressWarnings(plot_qq_all(tmp_expt,
+                                                 ...))))
+    if ("try-error" %in% class(qq_plots)) {
+      qq_plots <- list()
+    }
     qq_logs <- qq_plots[["logs"]]
     qq_ratios <- qq_plots[["ratios"]]
   }
@@ -230,13 +275,21 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   ma_plots <- NULL
   if (isTRUE(ma)) {
     message("Many MA plots!")
-    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt, ...)))
+    ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt,
+                                                      ...)))
+    if ("try-error" %in% class(ma_plots)) {
+      ma_plots <- list()
+    }
   }
 
   gene_heatmap <- NULL
   if (isTRUE(gene_heat)) {
     message("gene heatmap!")
-    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(expt, ...)))
+    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(tmp_expt,
+                                                             ...)))
+    if ("try-error" %in% class(gene_heatmap)) {
+      gene_heatmap <- NULL
+    }
   }
 
   ret_data <- list(

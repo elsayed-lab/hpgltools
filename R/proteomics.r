@@ -1,3 +1,92 @@
+#' Replace 0 with NA if not all entries for a given condition are 0.
+#'
+#' This will hopefully handle a troubling corner case in Volker's data:
+#' He primarily wants to find proteins which are found in one condition, but
+#' _not_ in another.  However, due to the unknown unknown problem in DIA
+#' acquisition, answering this question is difficult.  If one uses a normal
+#' expressionset or msnset or whatever, one of two things will happen:
+#' either the 0/NA proteins will be entirely removed/ignored, or they will
+#' lead to spurious 'significant' calls.  MSstats, to its credit, does a lot to
+#' try to handle these cases; but in the case Volker is most interested, it will
+#' exclude the interesting proteins entirely.
+#'
+#' So, here is what I am going to do: Iterate through each element of the chosen
+#' experimental design factor, check if all samples for that condition are 0, if
+#' so; leave them.  If not all the samples have 0 for the given condition, then
+#' replace the zero entries with NA.  This should allow for stuff like
+#' rowMeans(na.rm=TRUE) to provide useful information.
+#'
+#' Finally, this will add columns to the annotations which tell the number of
+#' observations for each protein after doing this.
+#'
+#' @param expt Expressionset to examine.
+#' @param fact Experimental design factor to use.
+#' @param method Specify whether to leave the NAs as NA,
+#'   or replace them with the mean of all non-NA values.
+#' @return New expressionset with some, but not all, 0s replaced with NA.
+#' @export
+add_conditional_nas <- function(expt, fact="condition", method="NA") {
+  exprs_set <- expt[["expressionset"]]
+  mtrx <- exprs(expt)
+  annotations <- fData(expt)
+  if (length(fact) == 1) {
+    design <- pData(expt)
+    fact <- design[[fact]]
+    names(fact) <- rownames(design)
+  }
+  types <- levels(fact)
+  used_columns <- c()
+  observations_df <- data.frame(row.names=rownames(mtrx))
+  for (t in 1:length(types)) {
+    type <- types[t]
+    used_columns <- grep(pattern=type, x=fact)
+    if (length(used_columns) < 1) {
+      warning("The level ", type, " of the factor has no columns in the data.")
+      next
+    }
+    sub_mtrx <- mtrx[, used_columns]
+    ## Make a note of how many samples are in this factor
+    total_observations <- ncol(sub_mtrx)
+
+    ## These are the columns we will leave 0
+    zero_sum_idx <- rowSums(sub_mtrx) == 0
+    all_zeros <- rownames(sub_mtrx)[zero_sum_idx]
+    zero_idx <- sub_mtrx == 0
+    ## Now we set the zeros to NA and then reset the all-zeros to 0.
+    if (method == "NA") {
+      sub_mtrx[zero_idx] <- NA
+    } else if (method == "mean") {
+      all_mean <- mean(mtrx, na.rm=TRUE)
+      sub_mtrx[zero_idx] <- all_mean
+    } else if (method == "sub_mean") {
+      sub_mean <- mean(sub_mtrx, na.rm=TRUE)
+      sub_mtrx[zero_idx] <- sub_mean
+    }
+    sub_mtrx[all_zeros, ] <- 0
+    message("In condition ", type, " there are ", length(all_zeros),
+            " rows which are all zero.")
+    ## Record the number of observations for each protein for each condition.
+    observation_column <- total_observations - rowSums(zero_idx)
+    observations_df <- cbind(observations_df, observation_column)
+    colnames(observations_df)[t] <- glue::glue("{type}_observations")
+
+    for (c in 1:length(used_columns)) {
+      replace_col <- used_columns[c]
+      mtrx[, replace_col] <- sub_mtrx[, c]
+    }
+  }
+  ## Now put the pieces back together.
+  ## I am choosing not to use cbind to ensure that the orders are not screwed up.
+  ## annotations <- cbind(annotations, observations_df)
+  annotations <- merge(annotations, observations_df, by="row.names")
+  rownames(annotations) <- annotations[["Row.names"]]
+  annotations[["Row.names"]] <- NULL
+  exprs(exprs_set) <- mtrx
+  fData(exprs_set) <- annotations
+  expt[["expressionset"]] <- exprs_set
+  return(expt)
+}
+
 #' Read output from mayu to get the IP/PP number corresponding to a given FDR value.
 #'
 #' @param file Mayu output file.
@@ -37,7 +126,7 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @return List containing a table of scan and precursor data.
 #' @export
 extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
-                               allow_window_overlap=FALSE, start_add=0) {
+                              allow_window_overlap=FALSE, start_add=0) {
   if (format == "mzML") {
     extract_mzML_scans(file, id=id, write_acquisitions=write_acquisitions,
                        allow_window_overlap=allow_window_overlap, start_add=start_add)
@@ -180,8 +269,8 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     ## This is the file for openswathworkflow.
     message("Writing osw acquisitions to: ", osw_file)
     plus_cols <- write.table(x=acquisition_windows, file=osw_file,
-                            sep="\t", quote=FALSE,
-                            row.names=FALSE, col.names=TRUE)
+                             sep="\t", quote=FALSE,
+                             row.names=FALSE, col.names=TRUE)
   }
   retlist <- list(
     "file" = file,
@@ -209,7 +298,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
 extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
-                              allow_window_overlap=FALSE, start_add=0) {
+                               allow_window_overlap=FALSE, start_add=0) {
   if (is.null(id)) {
     id <- file
   }
@@ -239,6 +328,7 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #'   filenames.
 #' @param write_windows Write out SWATH window frames.
 #' @param id_column What column in the sample sheet provides the ID for the samples?
+#' @param file_column Which column in the sample sheet provides the filenames?
 #' @param allow_window_overlap What it says on the tin, some tools do not like
 #'   DIA windows to overlap, if TRUE, this will make sure each annotated window
 #'   starts at the end of the previous window if they overlap.
@@ -252,7 +342,8 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' @return List of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
 extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
-                               allow_window_overlap=FALSE, start_add=0, format="mzXML",
+                               file_column="raw_file", allow_window_overlap=FALSE,
+                               start_add=0, format="mzXML",
                                parallel=TRUE, savefile=NULL, ...) {
   arglist <- list(...)
 
@@ -269,29 +360,23 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   }
 
   sample_definitions <- data.frame()
-  if (class(metadata) == "data.frame") {
+  if (class(metadata)[1] == "data.frame") {
     sample_definitions <- metadata
   } else {
-      sample_definitions <- extract_metadata(metadata, ...)
-      ##sample_definitions <- extract_metadata(metadata)
-  }
-
-  file_column <- "file"
-  if (!is.null(arglist[["file_column"]])) {
-      file_column <- arglist[["file_column"]]  ## Make it possible to have multiple count
-      ## tables / sample in one sheet.
+    sample_definitions <- extract_metadata(metadata, ...)
+    ## sample_definitions <- extract_metadata(metadata)
   }
 
   sample_column <- "sampleid"
   if (!is.null(arglist[["sample_column"]])) {
-      sample_column <- arglist[["sample_column"]]
-      sample_column <- tolower(sample_column)
-      sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+    sample_column <- arglist[["sample_column"]]
+    sample_column <- tolower(sample_column)
+    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
   }
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
-  meta <- sample_definitions[, c("sampleid", file_column)]
+  meta <- sample_definitions[, c(sample_column, file_column)]
   colnames(meta) <- c("id", "file")
   existing_files <- complete.cases(meta[["file"]])
   if (sum(existing_files) != nrow(meta)) {
@@ -324,35 +409,43 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     if (isTRUE(show_progress)) {
       pb_opts <- list("progress" = progress)
     }
+    res_names <- c()
     res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
                    .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
-      file <- meta[i, "file"]
-      id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
-                                           allow_window_overlap=allow_window_overlap,
-                                           format=format, start_add=start_add))
-      if (class(file_result)[1] != "try-error") {
-        returns[[file]] <- file_result
-      }
-    }
+                     file <- meta[i, "file"]
+                     id <- meta[i, "id"]
+                     file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
+                                                          allow_window_overlap=allow_window_overlap,
+                                                          format=format, start_add=start_add))
+                     if (class(file_result)[1] == "try-error") {
+                       warning("There was an error reading ", file, ".")
+                     } else {
+                       res_names <- c(file, res_names)
+                       returns[[file]] <- file_result
+                     }
+                   }
     if (isTRUE(show_progress)) {
       close(bar)
     }
     parallel::stopCluster(cl)
   } else {
+    res_names <- c()
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
                                            allow_window_overlap=allow_window_overlap,
-                                           format=format, start_add=start_add))
-      if (class(file_result)[1] != "try-error") {
+                                           format=format, start_add=start_add), silent=TRUE)
+      if (class(file_result)[1] == "try-error") {
+        warning("There was an error reading ", file, ".")
+      } else {
+        res_names <- c(file, res_names)
         res[[file]] <- file_result
       }
     }
   }
+  try(names(res) <- res_names, silent=TRUE)
   rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
-  names(res) <- rownames(sample_definitions)
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -366,7 +459,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 }
 
 #' Get some data from a peptideprophet run.
-#
+                                        #
 #' I am not sure what if any parameters this should have, but it seeks to
 #' extract the useful data from a peptide prophet run.  In the situation in
 #' which I wish to use it, the input command was:
@@ -667,10 +760,11 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   }
 
   sample_definitions <- data.frame()
-  if (class(metadata) == "data.frame") {
+  if ("data.frame" %in% class(metadata)) {
     sample_definitions <- metadata
   } else {
-    sample_definitions <- extract_metadata(metadata, ...)
+    sample_definitions <- extract_metadata(metadata,
+                                           ...)
     ## sample_definitions <- extract_metadata(metadata)
   }
 
@@ -678,7 +772,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     stop("This required a column with the tsv scored pyprophet data.")
   }
 
-  chosen_colors <- generate_expt_colors(sample_definitions, ...)
+  chosen_colors <- generate_expt_colors(sample_definitions,
+                                        ...)
   ## chosen_colors <- generate_expt_colors(sample_definitions)
   meta <- sample_definitions[, c("sampleid", pyprophet_column)]
   colnames(meta) <- c("id", "scored")
@@ -735,43 +830,31 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   return(retlist)
 }
 
-##extract_traml_data <- function(traml) {
-##  message("Reading the TraML file.")
-##  ## xml2 is painfully slow and annoying with these files, but I do not know why.
-##  input <- xml2::read_html(x=traml, options="NOBLANKS")
-##  ##children <- input %>%
-##  ##  xml2::xml_children()
-##  ##contents <- input %>%
-##  ##  xml2::xml_contents()
-##  all_nodes <- input %>%
-##    rvest::html_nodes("*")
-##  protein_nodes <- all_nodes %>%
-##    rvest::html_nodes(xpath="//Protein")
-##}
-
 #' Impute missing values using code from DEP reworked for expressionsets.
 #'
 #' \code{impute_expt} imputes missing values in a proteomics dataset.
 #'
 #' @param expt An ExpressionSet (well, expt), I think it is assumed that this should have
-#' been normalized and filtered for features which have no values across 'most' samples.
+#'   been normalized and filtered for features which have no values across 'most' samples.
+#' @param filter Use normalize_expt() to filter the data?
+#' @param p When filtering with pofa, use this p parameter.
 #' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
-#' "MinProb", "man", "min", "zero", "mixed" or "nbavg",
-#' Function used for data imputation based on \code{\link{manual_impute}}
-#' and \code{\link[MSnbase:impute-methods]{impute}}.
+#'   "MinProb", "man", "min", "zero", "mixed" or "nbavg",
+#'   Function used for data imputation based on 
+#'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @param ... Additional arguments for imputation functions as depicted in
-#' \code{\link{manual_impute}} and \code{\link[MSnbase:impute-methods]{impute}}.
+#'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @return An imputed expressionset.
 #' @export
-impute_expt <- function(expt, force=FALSE, p=0.5,
+impute_expt <- function(expt, filter=TRUE, p=0.5,
                         fun=c("bpca", "knn", "QRILC", "MLE",
                               "MinDet", "MinProb", "min", "zero",
                               "mixed", "nbavg"), ...) {
   ## Show error if inputs do not contain required columns
   fun <- match.arg(fun)
 
-  ## Show error if there are no missing values
-  ## Since I reset NAs to 0, this needs to be reconsidered slightly.
+  ## Caveat: Imputation works only on NA values.  I reset NAs to 0,
+  ## so I will need to send them back...
   found_zeros <- sum(exprs(expt) == 0)
   if (found_zeros == 0) {
     warning("No missing values in the expressionset, returning it unchanged.")
@@ -779,20 +862,26 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
   } else {
     message("Found ", found_zeros, " zeros in the data.")
   }
-  if (expt[["state"]][["filter"]] == "raw") {
-    message("The data has not been filtered.")
-    if (!isTRUE(force)) {
-      message("Filtering the data, turn on force to stop this.")
-      expt <- normalize_expt(expt, filter="pofa", p=p)
+
+  if (isTRUE(filter)) {
+    if (expt[["state"]][["filter"]] == "raw") {
+      message("The data has not been filtered.")
+    } else {
+      message("The data was already filtered with: ", expt[["state"]][["filter"]], ".")
     }
+    message("Filtering the data, turn off 'filter' to stop this.")
+    expt <- normalize_expt(expt, filter="pofa", p=p)
   }
 
   exprs_set <- expt[["expressionset"]]
   ## Annotate whether or not there are missing values and how many
   num_zeros <- apply(exprs(expt) == 0, 1, any)
   fData(exprs_set)[["imputed"]] <- num_zeros
-  fData(exprs_set)[["num_nas"]] <- rowSums(exprs(expt) == 0)
+  zero_idx <- exprs(expt) == 0
+  fData(exprs_set)[["num_nas"]] <- rowSums(zero_idx)
+  exprs(exprs_set)[zero_idx] <- NA
 
+  requireNamespace("MSnbase")
   msn_data <- as(exprs_set, "MSnSet")
   starting_counts <- exprs(exprs_set)
   message("Invoking impute from MSnbase with the ", fun, " method.")
@@ -804,9 +893,7 @@ impute_expt <- function(expt, force=FALSE, p=0.5,
 
   same <- all.equal(starting_counts, imputed_counts)
   if (isTRUE(same)) {
-    message("The counts remained the same?")
-  } else {
-    print(same)
+    message("The counts remained the same.")
   }
 
   expt[["expressionset"]] <- imputed_exprs
@@ -866,862 +953,6 @@ mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
   new_design[["batch"]] <- "undefined"
   new_set <- create_expt(count_dataframe=final, metadata=new_design, gene_info=annot)
   return(new_set)
-}
-
-#' Plot mzXML peak intensities with respect to m/z.
-#'
-#' I want to have a pretty plot of peak intensities and m/z.  The plot provided
-#' by this function is interesting, but suffers from some oddities; notably that
-#' it does not currently separate the MS1 and MS2 data.  Since I am stuck on
-#' this forsaken plane with no hope of ever leaving, perhaps I can add that now.
-#'
-#' @param mzxml_data  The data structure from extract_mzxml or whatever it is.
-#' @param loess  Do a loess smoothing from which to extract a function
-#'   describing the data?  This is terribly slow, and in the data I have
-#'   examined so far, not very helpful, so it is FALSE by default.
-#' @param alpha  Make the plotted dots opaque to this degree.
-#' @param ms1  Include MS1 data in the plot?
-#' @param ms2  Include MS2 data in the plot?
-#' @param x_scale  Plot the x-axis on a non linear scale?
-#' @param y_scale  Plot the y-axis on a non linear scale?
-#' @param ...  Extra arguments for the downstream functions.
-#' @return  ggplot2 goodness.
-#' @export
-plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=TRUE,
-                              x_scale=NULL, y_scale=NULL, ...) {
-  arglist <- list(...)
-  metadata <- mzxml_data[["metadata"]]
-  colors <- mzxml_data[["colors"]]
-  sample_data <- mzxml_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-  keepers <- c()
-  for (i in 1:samples) {
-    name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    plotted_table <- sample_data[[i]][["scans"]]
-    ## Caveat!  I do not have my data while on this fucking plane, so I might
-    ## have forgotten the name of that column in the data.  If so, the following
-    ## will fail.
-    if (!isTRUE(ms1)) {
-      kept_idx <- plotted_table[["level"]] != "MS1"
-      plotted_table <- plotted_table[kept_idx, ]
-    }
-    if (!isTRUE(ms1)) {
-      kept_idx <- plotted_table[["level"]] != "MS2"
-      plotted_table <- plotted_table[kept_idx, ]
-    }
-    plotted_data <- plotted_table[, c("basepeakmz", "basepeakintensity")]
-    plotted_data[["sample"]] <- name
-    plotted_data <- plotted_data[, c("sample", "basepeakmz", "basepeakintensity")]
-    colnames(plotted_data) <- c("sample", "mz", "intensity")
-    ## Re-order the columns because I like sample first.
-    plot_df <- rbind(plot_df, plotted_data)
-  }
-
-  ## Drop rows from the metadata and colors which had errors.
-  metadata <- metadata[keepers, ]
-  colors <- colors[keepers]
-
-  chosen_palette <- "Dark2"
-  sample_colors <- sm(
-    grDevices::colorRampPalette(
-                 RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
-
-  ## Randomize the rows of the df so we can see if any sample is actually overrepresented
-  plot_df <- plot_df[sample(nrow(plot_df)), ]
-
-  if (!is.null(x_scale)) {
-    plot_df[["mz"]] <- check_plot_scale(plot_df[["mz"]], scale)[["data"]]
-  }
-  if (!is.null(y_scale)) {
-    plot_df[["intensity"]] <- check_plot_scale(plot_df[["intensity"]], scale)[["data"]]
-  }
-
-  int_vs_mz <- ggplot(data=plot_df, aes_string(x="mz", y="intensity",
-                                               fill="sample", colour="sample")) +
-    ggplot2::geom_point(alpha=alpha, size=0.5) +
-    ggplot2::scale_fill_manual(
-               name="Sample", values=sample_colors,
-               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
-    ggplot2::scale_color_manual(
-               name="Sample", values=sample_colors,
-               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
-    ggplot2::theme_bw(base_size=base_size)
-
-  if (!is.null(x_scale)) {
-    int_vs_mz <- int_vs_mz + ggplot2::scale_x_continuous(trans=scales::log2_trans())
-  }
-  if (!is.null(y_scale)) {
-    int_vs_mz <- int_vs_mz + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  }
-
-  if (isTRUE(lowess)) {
-    int_vs_mz <- int_vs_mz +
-      ggplot2::geom_smooth(method="loess", size=1.0)
-  }
-  retlist <- list(
-    "data" = plotted_data,
-    "plot" = int_vs_mz)
-  return(retlist)
-}
-
-#' Make a boxplot out of some of the various data available in the mzxml data.
-#'
-#' There are a few data within the mzXML raw data files which are likely
-#'   candidates for simple summary via a boxplot/densityplot/whatever.  For the
-#'   moment I am just doing boxplots of a few of them.  Since my metadata
-#'   extractor dumps a couple of tables, one must choose a desired table and
-#'   column from it to plot.
-#'
-#' @param mzxml_data  Provide a list of mzxml data, one element for each sample.
-#' @param table  One of precursors or scans
-#' @param column  One of the columns from the table; if 'scans' is chosen, then
-#'   likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
-#'   'precursors' is chosen, then the only likely choice for the moment is
-#'   'precursorintensity'.
-#' @param violin  Print the samples as violins rather than only box/whiskers?
-#' @param names  Names for the x-axis of the plot.
-#' @param title  Title the plot?
-#' @param scale  Put the data on a specific scale?
-#' @param ...  Further arguments, presumably for colors or some such.
-#' @return  Boxplot describing the requested column of data in the set of mzXML files.
-#' @export
-plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursorintensity",
-                               violin=FALSE, names=NULL, title=NULL, scale=NULL, ...) {
-  arglist <- list(...)
-  metadata <- mzxml_data[["metadata"]]
-  colors <- mzxml_data[["colors"]]
-  sample_data <- mzxml_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-  keepers <- c()
-  for (i in 1:samples) {
-    name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    names(colors)[i] <- name
-    plotted_table <- sample_data[[i]][[table]]
-    plotted_data <- as.data.frame(plotted_table[[column]])
-    plotted_data[["sample"]] <- name
-    plotted_data[["color"]] <- colors[[name]]
-    colnames(plotted_data) <- c(column, "sample", "color")
-    ## Re-order the columns because I like sample first.
-    plotted_data <- plotted_data[, c("sample", column, "color")]
-    plot_df <- rbind(plot_df, plotted_data)
-  }
-
-  ## Drop rows from the metadata and colors which had errors.
-  if (length(keepers) > 0) {
-    metadata <- metadata[keepers, ]
-    colors <- colors[keepers]
-  } else {
-    stop("Something bad happened to the set of kept samples.")
-  }
-
-  scale_data <- check_plot_scale(plot_df[[column]], scale)
-  if (is.null(scale)) {
-    scale <- scale_data[["scale"]]
-  }
-  plot_df[[column]] <- scale_data[["data"]]
-  plot_df[["color"]] <- as.factor(plot_df[["color"]])
-
-  boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column))
-  if (isTRUE(violin)) {
-    boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill="sample"),
-                           width=1, scale="area", show.legend=FALSE) +
-      ggplot2::geom_boxplot(na.rm=TRUE, alpha=0.3, color="black", size=0.5,
-                            outlier.alpha=0.01, width=0.2)
-  } else {
-    boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(aes_string(fill="sample"),
-                               na.rm=TRUE, fill=colors, size=0.5,
-                               outlier.size=1.5,
-                               outlier.colour=ggplot2::alpha("black", 0.2)))
-  }
-  boxplot <- boxplot +
-    ggplot2::scale_fill_manual(values=as.character(colors)) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-    ggplot2::xlab("Sample") + ggplot2::ylab(column)
-  if (!is.null(title)) {
-    boxplot <- boxplot + ggplot2::ggtitle(title)
-  }
-  if (!is.null(names)) {
-    boxplot <- boxplot + ggplot2::scale_x_discrete(labels=names)
-  }
-  scale <- "log"
-  if (scale == "log") {
-    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  } else if (scale == "logdim") {
-    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
-  } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
-  }
-
-  return(boxplot)
-}
-
-#' Count some aspect(s) of the pyprophet data and plot them.
-#'
-#' This function is mostly redundant with the plot_mzxml_boxplot above.
-#' Unfortunately, the two data types are subtly different enough that I felt it
-#' not worth while to generalize the functions.
-#'
-#' @param pyprophet_data List containing the pyprophet results.
-#' @param type What to count/plot?
-#' @param keep_real Do we keep the real data when plotting the data? (perhaps
-#'   we only want the decoys)
-#' @param keep_decoys Do we keep the decoys when plotting the data?
-#' @param expt_names Names for the x-axis of the plot.
-#' @param label_chars Maximum number of characters before abbreviating sample names.
-#' @param title Title the plot?
-#' @param scale Put the data on a specific scale?
-#' @param ... Further arguments, presumably for colors or some such.
-#' @return Boxplot describing the desired column from the data.
-#' @export
-plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
-                                  keep_decoys=TRUE, expt_names=NULL, label_chars=10,
-                                  title=NULL, scale=NULL, ...) {
-  arglist <- list(...)
-  metadata <- pyprophet_data[["metadata"]]
-  colors <- pyprophet_data[["colors"]]
-  sample_data <- pyprophet_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-
-  ## Reset the sample names if one wants a specific column from the metadata.
-  if (!is.null(expt_names) & class(expt_names) == "character") {
-    if (length(expt_names) == 1) {
-      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
-    } else {
-      names(sample_data) <- expt_names
-    }
-  }
-
-  keepers <- c()
-  plotted_data <- data.frame()
-  for (i in 1:samples) {
-    name <- names(sample_data)[i]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    plotted_table <- sample_data[[i]]
-    if (!isTRUE(keep_decoys)) {
-      good_idx <- plotted_table[["decoy"]] != 1
-      plotted_table <- plotted_table[good_idx, ]
-    }
-    if (!isTRUE(keep_real)) {
-      good_idx <- plotted_table[["decoy"]] != 0
-      plotted_table <- plotted_table[good_idx, ]
-    }
-
-    row_condition <- as.character(metadata[i, "condition"])
-    row_color <- colors[row_condition]
-    if (type == "count") {
-      row <- c(name, nrow(plotted_table), row_condition, row_color)
-    } else if (type == "intensity") {
-      row <- c(name, sum(as.numeric(plotted_table[["intensity"]])), row_condition, row_color)
-    } else {
-      row <- c(name, sum(as.numeric(plotted_table[[type]])), row_condition, row_color)
-    }
-
-    plotted_data <- rbind(plotted_data, row)
-  } ## End the for loop.
-
-  y_label <- "Identifications per sample"
-  if (type == "count") {
-    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
-    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
-  } else if (type == "intensity") {
-    y_label <- "Sum of intensities per sample."
-    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
-    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
-  } else {
-    y_label <- glue::glue("Sum of {type} per sample.")
-    colnames(plotted_data) <- c("id", "sum", "condition", "colors")
-    plotted_data[["sum"]] <- as.numeric(plotted_data[["sum"]])
-  }
-
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
-    plot_df[["id"]] <- abbreviate(plot_df[["id"]], minlength=label_chars)
-  }
-  our_plot <- plot_sample_bars(plotted_data, integerp=TRUE,
-                               text=TRUE, yscale="log2",
-                               ylabel=y_label)
-
-  retlist <- list(
-    "df" = plotted_data,
-    "plot" = our_plot)
-  return(retlist)
-}
-
-plot_pyprophet_xy <- function(pyprophet_data, keep_real=TRUE, size=6, label_size=4,
-                              keep_decoys=TRUE, expt_names=NULL, label_chars=10,
-                              x_type="count", y_type="intensity",
-                              title=NULL, scale=NULL, ...) {
-  arglist <- list(...)
-
-  x_data <- plot_pyprophet_counts(pyprophet_data,
-                                  type=x_type,
-                                  keep_real=keep_real,
-                                  keep_decoys=keep_decoys,
-                                  expt_names=expt_names,
-                                  label_chars=label_chars,
-                                  title=title,
-                                  scale=scale,
-                                  ...)
-  y_data <- plot_pyprophet_counts(pyprophet_data,
-                                  type=y_type,
-                                  keep_real=keep_real,
-                                  keep_decoys=keep_decoys,
-                                  expt_names=expt_names,
-                                  label_chars=label_chars,
-                                  title=title,
-                                  scale=scale,
-                                  ...)
-  the_df <- x_data[["df"]]
-  y_df <- y_data[["df"]]
-  colnames(the_df)[2] <- x_type
-  the_df[[y_type]] <- y_df[[2]]
-
-
-  color_listing <- the_df[, c("condition", "colors")]
-  color_listing <- unique(color_listing)
-  color_list <- as.character(color_listing[["colors"]])
-  names(color_list) <- as.character(color_listing[["condition"]])
-
-  sc_plot <- ggplot(data=the_df,
-                    aes_string(x=x_type, y=y_type, label="id")) +
-    ggplot2::geom_point(size=size, shape=21,
-                        aes_string(colour="as.factor(condition)",
-                                   fill="as.factor(condition)")) +
-    ggplot2::geom_point(size=size, shape=21, colour="black", show.legend=FALSE,
-                        aes_string(fill="as.factor(condition)")) +
-    ggplot2::scale_color_manual(name="Condition",
-                                guide="legend",
-                                values=color_list) +
-    ggplot2::scale_fill_manual(name="Condition",
-                               guide="legend",
-                               values=color_list) +
-    ggrepel::geom_text_repel(aes_string(label="id"),
-                             size=label_size, box.padding=ggplot2::unit(0.5, "lines"),
-                             point.padding=ggplot2::unit(1.6, "lines"),
-                             arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
-  return(sc_plot)
-}
-
-#' Make a boxplot out of some of the various data available in the pyprophet
-#' data.
-#'
-#' This function is mostly redundant with the plot_mzxml_boxplot above.
-#' Unfortunately, the two data types are subtly different enough that I felt it
-#' not worth while to generalize the functions.
-#'
-#' @param pyprophet_data List containing the pyprophet results.
-#' @param column What column of the pyprophet scored data to plot?
-#' @param keep_real Do we keep the real data when plotting the data? (perhaps
-#'   we only want the decoys)
-#' @param keep_decoys Do we keep the decoys when plotting the data?
-#' @param expt_names Names for the x-axis of the plot.
-#' @param label_chars Maximum number of characters before abbreviating sample names.
-#' @param title Title the plot?
-#' @param scale Put the data on a specific scale?
-#' @param ... Further arguments, presumably for colors or some such.
-#' @return Boxplot describing the desired column from the data.
-#' @export
-plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_real=TRUE,
-                                        keep_decoys=TRUE, expt_names=NULL, label_chars=10,
-                                        title=NULL, scale=NULL, ...) {
-  arglist <- list(...)
-  metadata <- pyprophet_data[["metadata"]]
-  colors <- pyprophet_data[["colors"]]
-  sample_data <- pyprophet_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-
-  ## Reset the sample names if one wants a specific column from the metadata.
-  if (!is.null(expt_names) & class(expt_names) == "character") {
-    if (length(expt_names) == 1) {
-      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
-    } else {
-      names(sample_data) <- expt_names
-    }
-  }
-
-  keepers <- c()
-  for (i in 1:samples) {
-    name <- names(sample_data)[i]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    plotted_table <- sample_data[[i]]
-    if (!isTRUE(keep_decoys)) {
-      good_idx <- plotted_table[["decoy"]] != 1
-      plotted_table <- plotted_table[good_idx, ]
-    }
-    if (!isTRUE(keep_real)) {
-      good_idx <- plotted_table[["decoy"]] != 0
-      plotted_table <- plotted_table[good_idx, ]
-    }
-    plotted_data <- as.data.frame(plotted_table[c("sequence", "proteinname",
-                                                  "aggr_fragment_annotation", column)])
-    plotted_data[["sample"]] <- name
-    colnames(plotted_data) <- c("sequence", "proteinname", "fragment", column, "sample")
-    ## Re-order the columns because I like sample first.
-    plotted_data <- plotted_data[, c("sample", column, "sequence", "proteinname", "fragment")]
-    plot_df <- rbind(plot_df, plotted_data)
-  }
-  ## I am not certain this is valid.
-  plot_df[[column]] <- abs(plot_df[[column]])
-
-##  testing <- data.table::as.data.table(plot_df)
-##  recast_dt <- data.table::dcast.data.table(data=testing,
-##                                            formula=sequence+proteinname~sample,
-##                                            fun.aggregate=mean,
-##                                            value.var="intensity")
-##  names <- recast_dt[["proteinname"]]
-##  sequences <- recast_dt[["sequence"]]
-##  recast_dt[, c("proteinname", "sequence") := NULL]
-##  nan_idx <- is.na(recast_dt)
-##  recast_dt[nan_idx] <- 0
-##  recast_norm <- log2(
-##    1 + preprocessCore::normalize.quantiles.robust(as.matrix(recast_dt)))
-##  remelt <- as.data.table(recast_norm)
-##  remelt[["proteinname"]] <- names
-##  remelt[["sequence"]] <- sequences
-##  remelted <- data.table::melt(data=remelt, value.name="intensity")
-##  colnames(remelted) <- c("proteinname", "sequence", "sample", "intensity")
-
-  ## Drop rows from the metadata and colors which had errors.
-  if (length(keepers) > 0) {
-    metadata <- metadata[keepers, ]
-    colors <- colors[keepers]
-  } else {
-    stop("Something bad happened to the set of kept samples.")
-  }
-
-  scale_data <- check_plot_scale(plot_df[[column]], scale)
-  if (is.null(scale)) {
-    scale <- scale_data[["scale"]]
-  }
-  plot_df[[column]] <- scale_data[["data"]]
-
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
-    plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
-  }
-  boxplot <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
-    sm(ggplot2::geom_boxplot(na.rm=TRUE,
-                             ggplot2::aes_string(fill="sample"),
-                             fill=colors,
-                             size=0.5,
-                             outlier.size=1.5,
-                             outlier.colour=ggplot2::alpha("black", 0.2))) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-    ggplot2::xlab("Sample") + ggplot2::ylab(column)
-  if (!is.null(title)) {
-    boxplot <- boxplot + ggplot2::ggtitle(title)
-  }
-  scale <- "log"
-  if (scale == "log") {
-    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  } else if (scale == "logdim") {
-    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
-  } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
-  }
-
-  density <- ggplot(data=plot_df, ggplot2::aes_string(x=column, colour="sample")) +
-    ggplot2::geom_density(aes_string(x=column, y="..count..", fill="sample"),
-                          position="identity", na.rm=TRUE) +
-    ggplot2::scale_colour_manual(values=as.character(colors)) +
-    ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1)) +
-    ggplot2::ylab("Number of genes.") +
-    ggplot2::xlab("Number of hits/gene.") +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   legend.key.size=ggplot2::unit(0.3, "cm"))
-  density <- directlabels::direct.label(density)
-
-  violin <- ggplot(data=plot_df, aes_string(x="sample", y=column)) +
-    ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
-    ggplot2::geom_boxplot(aes_string(fill="sample"), outlier.alpha=0.01, width=0.2) +
-    ggplot2::scale_fill_manual(values=as.character(colors)) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, hjust=1),
-                   legend.position="none")
-
-  dotboxplot <- boxplot +
-    ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
-                         size=2, alpha=0.2)
-
-  retlist <- list(
-    "violin" = violin,
-    "boxplot" = boxplot,
-    "dotboxplot" = dotboxplot,
-    "density" = density)
-  return(retlist)
-}
-
-#' Read data from pyprophet and plot columns from it.
-#'
-#' More proteomics diagnostics!  Now that I am looking more closely, I think
-#' this should be folded into plot_pyprophet_distribution().
-#'
-#' @param pyprophet_data Data from extract_pyprophet_data()
-#' @param column Chosen column to plot.
-#' @param keep_real FIXME: This should be changed to something like 'data_type'
-#'   here and in plot_pyprophet_distribution.
-#' @param keep_decoys Do we keep the decoys when plotting the data?
-#' @param expt_names Names for the x-axis of the plot.
-#' @param label_chars Maximum number of characters before abbreviating sample
-#'   names.
-#' @param protein chosen protein(s) to plot.
-#' @param title Title the plot?
-#' @param scale Put the data on a specific scale?
-#' @param ... Further arguments, presumably for colors or some such.
-#' @return Boxplot describing the desired column from the data.
-#' @export
-plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real=TRUE,
-                                   keep_decoys=TRUE, expt_names=NULL, label_chars=10,
-                                   protein=NULL, title=NULL, scale=NULL, ...) {
-  arglist <- list(...)
-  metadata <- pyprophet_data[["metadata"]]
-  colors <- pyprophet_data[["colors"]]
-  sample_data <- pyprophet_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-
-  ## Reset the sample names if one wants a specific column from the metadata.
-  if (!is.null(expt_names) & class(expt_names) == "character") {
-    if (length(expt_names) == 1) {
-      names(sample_data) <- make.names(metadata[[expt_names]], unique=TRUE)
-    } else {
-      names(sample_data) <- expt_names
-    }
-  }
-
-  keepers <- c()
-  for (i in 1:samples) {
-    name <- names(sample_data)[i]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    plotted_table <- sample_data[[i]]
-    if (!isTRUE(keep_decoys)) {
-      good_idx <- plotted_table[["decoy"]] != 1
-      plotted_table <- plotted_table[good_idx, ]
-    }
-    if (!isTRUE(keep_real)) {
-      good_idx <- plotted_table[["decoy"]] != 0
-      plotted_table <- plotted_table[good_idx, ]
-    }
-    plotted_data <- as.data.frame(plotted_table[c("sequence", "proteinname",
-                                                  "aggr_fragment_annotation", column)])
-    plotted_data[["sample"]] <- name
-    colnames(plotted_data) <- c("sequence", "proteinname", "fragment", column, "sample")
-    ## Re-order the columns because I like sample first.
-    plotted_data <- plotted_data[, c("sample", column, "sequence", "proteinname", "fragment")]
-    plot_df <- rbind(plot_df, plotted_data)
-  }
-
-  ## Drop rows from the metadata and colors which had errors.
-  if (length(keepers) > 0) {
-    metadata <- metadata[keepers, ]
-    colors <- colors[keepers]
-  } else {
-    stop("Something bad happened to the set of kept samples.")
-  }
-
-  if (is.null(protein)) {
-    stop("This requires a protein ID to search.")
-  } else {
-    kept_prot_idx <- grepl(pattern=protein, x=plot_df[["proteinname"]])
-    plot_df <- plot_df[kept_prot_idx, ]
-  }
-  plot_df[["sequence"]] <- as.factor(plot_df[["sequence"]])
-
-  scale_data <- check_plot_scale(plot_df[[column]], scale, ...)
-  if (is.null(scale)) {
-    scale <- scale_data[["scale"]]
-  }
-  plot_df[[column]] <- scale_data[["data"]]
-
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
-    plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
-  }
-  violin <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
-    ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
-    ggplot2::scale_fill_manual(values=as.character(colors)) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
-    ggplot2::xlab("Sample") +
-    ggplot2::ylab(column) +
-    ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
-                         size=2, alpha=0.5)
-  if (!is.null(title)) {
-    violin <- violin + ggplot2::ggtitle(title)
-  }
-  scale <- "log"
-  if (scale == "log") {
-    violin <- violin + ggplot2::scale_y_continuous(
-                                  labels=scales::scientific,
-                                  trans=scales::log2_trans())
-  } else if (scale == "logdim") {
-    violin <- violin + ggplot2::coord_trans(y="log2")
-  } else if (isTRUE(scale)) {
-    violin <- violin + ggplot2::scale_y_log10()
-  }
-
-  return(violin)
-}
-
-#' Plot some data from the result of extract_peprophet_data()
-#'
-#' extract_pyprophet_data() provides a ridiculously large data table of a scored
-#' openswath data after processing by pyprophet.
-#'
-#' @param pyprophet_data  List of pyprophet data, one element for each sample,
-#'   taken from  extract_peprophet_data()
-#' @param xaxis  Column to plot on the x-axis
-#' @param xscale Change the scale of the x-axis?
-#' @param yaxis  guess!
-#' @param yscale  Change the scale of the y-axis?
-#' @param alpha  How see-through to make the dots?
-#' @param legend  Include a legend of samples?
-#' @param size_column  Use a column for scaling the sizes of dots in the plot?
-#' @param ... extra options which may be used for plotting.
-#' @return a plot!
-#' @export
-plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
-                                yaxis="leftwidth", yscale=NULL, alpha=0.4,
-                                legend=TRUE, size_column="mscore", ...) {
-  arglist <- list(...)
-
-  metadata <- pyprophet_data[["metadata"]]
-  colors <- pyprophet_data[["colors"]]
-  sample_data <- pyprophet_data[["sample_data"]]
-  plot_df <- data.frame()
-  samples <- length(sample_data)
-  keepers <- c()
-  for (i in 1:samples) {
-    name <- metadata[i, "sampleid"]
-    if (class(sample_data[[i]])[1] == "try-error") {
-      next
-    }
-    keepers <- c(keepers, i)
-    message("Adding ", name)
-    plotted_table <- sample_data[[i]]
-    plotted_table[["sample"]] <- name
-    plot_df <- rbind(plot_df, plotted_table)
-  }
-
-  ## Drop rows from the metadata and colors which had errors.
-  metadata <- metadata[keepers, ]
-  colors <- colors[keepers]
-
-  chosen_palette <- "Dark2"
-  sample_colors <- sm(
-    grDevices::colorRampPalette(
-                 RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
-
-  ## Randomize the rows of the df so we can see if any sample is actually overrepresented
-  plot_df <- plot_df[sample(nrow(plot_df)), ]
-
-  if (is.null(plot_df[[xaxis]])) {
-    stop("The x axis data seems to be missing.")
-  }
-  if (is.null(plot_df[[yaxis]])) {
-    stop("The y axis data seems to be missing.")
-  }
-
-  if (!is.null(xscale)) {
-    plot_df[[xaxis]] <- check_plot_scale(plot_df[[xaxis]], scale)[["data"]]
-  }
-  if (!is.null(yscale)) {
-    plot_df[[yaxis]] <- check_plot_scale(plot_df[[yaxis]], scale)[["data"]]
-  }
-
-  x_vs_y <- ggplot(data=plot_df, aes_string(x=xaxis, y=yaxis,
-                                            fill="sample", colour="sample")) +
-    ggplot2::geom_point(alpha=alpha, size=0.5) +
-    ggplot2::scale_fill_manual(
-               name="Sample", values=sample_colors,
-               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
-    ggplot2::scale_color_manual(
-               name="Sample", values=sample_colors,
-               guide=ggplot2::guide_legend(override.aes=aes(size=3))) +
-    ggplot2::theme_bw(base_size=base_size)
-
-  if (!is.null(xscale)) {
-    x_vs_y <- x_vs_y + ggplot2::scale_x_continuous(trans=scales::log2_trans())
-  }
-  if (!is.null(yscale)) {
-    x_vs_y <- x_vs_y + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  }
-  if (isTRUE(lowess)) {
-    x_vs_y <- x_vs_y +
-      ggplot2::geom_smooth(method="loess", size=1.0)
-  }
-  if (!isTRUE(legend)) {
-    x_vs_y <- x_vs_y +
-      ggplot2::theme(legend.position="none")
-  }
-  retlist <- list(
-    "data" = plot_df,
-    "plot" = x_vs_y)
-  return(retlist)
-}
-
-#' Plot some data from the result of extract_peprophet_data()
-#'
-#' extract_peprophet_data() provides a ridiculously large data table of a comet
-#' result after processing by RefreshParser and xinteract/peptideProphet.
-#' This table has some 37-ish columns and I am not entirely certain which ones
-#' are useful as diagnostics of the data.  I chose a few and made options to
-#' pull some/most of the rest.  Lets play!
-#'
-#' @param table  Big honking data table from extract_peprophet_data()
-#' @param xaxis  Column to plot on the x-axis
-#' @param xscale Change the scale of the x-axis?
-#' @param yaxis  guess!
-#' @param yscale  Change the scale of the y-axis?
-#' @param size_column  Use a column for scaling the sizes of dots in the plot?
-#' @param ... extra options which may be used for plotting.
-#' @return a plot!
-#' @export
-plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NULL,
-                                yaxis="num_matched_ions", yscale=NULL,
-                                size_column="prophet_probability", ...) {
-  arglist <- list(...)
-  chosen_palette <- "Dark2"
-  if (!is.null(arglist[["chosen_palette"]])) {
-    chosen_palette <- arglist[["chosen_palette"]]
-  }
-  color_column <- "decoy"
-  if (!is.null(arglist[["color_column"]])) {
-    color_column <- arglist[["color_column"]]
-  }
-  if (is.null(table[[color_column]])) {
-    table[["color"]] <- "black"
-  } else {
-    table[["color"]] <- as.factor(table[[color_column]])
-  }
-  color_list <- NULL
-  num_colors <- nlevels(as.factor(table[["color"]]))
-  if (num_colors == 2) {
-    color_list <- c("darkred", "darkblue")
-  } else {
-    color_list <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
-  }
-
-  if (is.null(table[[xaxis]])) {
-    stop(glue("The x-axis column: {xaxis} does not appear in the data."))
-  }
-  if (is.null(table[[yaxis]])) {
-    stop(glue("The y-axis column: {yaxis} does not appear in the data."))
-  }
-
-  table <- as.data.frame(table)
-  if (is.null(table[[size_column]])) {
-    table[["size"]] <- 1
-  } else {
-    if (class(table[[size_column]]) == "numeric") {
-      ## quants <- as.numeric(quantile(unique(table[[size_column]])))
-      ## size_values <- c(4, 8, 12, 16, 20)
-      ## names(size_values) <- quants
-      table[["size"]] <- table[[size_column]]
-    } else {
-      table[["size"]] <- 1
-    }
-  }
-  ##min_val <- min(table[[size_column]])
-  ##max_val <- max(table[[size_column]])
-  range <- as.numeric(quantile(unique(table[["size"]])))
-  table[table[["size"]] >= range[[5]], "size"] <- "06biggest"
-  table[table[["size"]] >= range[[4]] &
-        table[["size"]] < range[[5]], "size"] <- "05big"
-  table[table[["size"]] >= range[[3]] &
-        table[["size"]] < range[[4]], "size"] <- "04medium_big"
-  table[table[["size"]] >= range[[2]] &
-        table[["size"]] < range[[3]], "size"] <- "03medium_small"
-  table[table[["size"]] >= range[[1]] &
-        table[["size"]] < range[[2]], "size"] <- "02small"
-  table[table[["size"]] < range[[1]], "size"] <- "01smallest"
-
-  ## Setting the factor/vector of sizes is a bit confusing to me.
-  table[["size"]] <- as.factor(table[["size"]])
-  levels(table[["size"]]) <- c("01smallest", "02small", "03medium_small",
-                              "04medium_big", "05big", "06biggest")
-  my_sizes <- c("01smallest"=0.4, "02small"=8, "03medium_small"=1.2,
-                "04medium_big"=1.6, "05big"=2.0, "06biggest"=2.4)
-
-  scale_x_cont <- "raw"
-  if (!is.null(xscale)) {
-    if (is.numeric(xscale)) {
-      table[[xaxis]] <- log(table[[xaxis]] + 1) / log(xscale)
-    } else if (xscale == "log2") {
-      scale_x_cont <- "log2"
-    } else if (xscale == "log10") {
-      scale_x_cont <- "log10"
-    } else {
-      message("I do not understand your scale.")
-    }
-  }
-  scale_y_cont <- "raw"
-  if (!is.null(yscale)) {
-    if (is.numeric(yscale)) {
-      table[[xaxis]] <- log(table[[yaxis]] + 1) / log(yscale)
-    } else if (yscale == "log2") {
-      scale_y_cont <- "log2"
-    } else if (yscale == "log10") {
-      scale_y_cont <- "log10"
-    } else {
-      message("I do not understand your scale.")
-    }
-  }
-
-  table[["text"]] <- glue("{table[['protein']]}:{table[['peptide']]}")
-
-  a_plot <- ggplot(data=table, aes_string(x=xaxis, y=yaxis, text="text",
-                                          color="color", size="size")) +
-    ggplot2::geom_point(alpha=0.4, aes_string(fill="color", color="color")) +
-    ggplot2::scale_color_manual(name="color", values=color_list) +
-    ggplot2::geom_rug() +
-    ggplot2::scale_size_manual(values=c(0.2, 0.6, 1.0, 1.4, 1.8, 2.2))
-  if (scale_x_cont == "log2") {
-    a_plot <- ggplot2::scale_x_continuous(trans=scales::log2_trans())
-  } else if (scale_x_cont == "log10") {
-    a_plot <- ggplot2::scale_x_continuous(trans=scales::log10_trans())
-  }
-  if (scale_y_cont == "log2") {
-    a_plot <- ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  } else if (scale_y_cont == "log10") {
-    a_plot <- ggplot2::scale_y_continuous(trans=scales::log10_trans())
-  }
-
-  return(a_plot)
 }
 
 #' Parse the difficult thermo fisher xlsx file.
@@ -1907,6 +1138,230 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     "group_data" = group_data,
     "protein_data" = protein_df,
     "peptide_data" = peptide_df)
+  return(retlist)
+}
+
+#' Gather together the various SWATH2stats filters into one place.
+#'
+#' There are quite a few filters available in SWATH2stats.  Reading the
+#' documentation, it seems at least possible, if not appropriate, to use them
+#' together when filtering DIA data before passing it to MSstats/etc.  This
+#' function attempts to formalize and simplify that process.
+#'
+#' @param s2s_exp SWHAT2stats result from the sample_annotation()
+#'   function. (s2s_exp stands for: SWATH2stats experiment)
+#' @param column What column in the data contains the protein name?
+#' @param pep_column What column in the data contains the peptide name (not
+#'   currently used, but it should be.)
+#' @param fft Ratio of false negatives to true positives, used by
+#'   assess_by_fdr() and similar functions.
+#' @param plot Print plots of the various rates by sample?
+#' @param target_fdr When invoking mscore4assayfdr, choose an mscore which
+#'   corresponds to this false discovery date.
+#' @param upper_fdr Used by filter_mscore_fdr() to choose the minimum threshold
+#'   of identification confidence.
+#' @param mscore Mscore cutoff for the mscore filter.
+#' @param percentage Cutoff for the mscore_freqobs filter.
+#' @param remove_decoys Get rid of decoys in the final filter, if they were not
+#'   already removed.
+#' @param max_peptides A maximum number of peptides filter.
+#' @param min_peptides A minimum number of peptides filter.
+#' @param do_mscore Perform the mscore filter? SWATH2stats::filter_mscore()
+#' @param do_freqobs Perform the mscore_freqobs filter?
+#'   SWATH2stats::filter_mscore_freqobs()
+#' @param do_fdr Perform the fdr filter? SWATH2stats::filter_mscore_fdr()
+#' @param do_proteotypic Perform the proteotypic filter?
+#'   SWATH2stats::filter_proteotypic_peptides()
+#' @param do_peptide Perform the single-peptide filter?
+#'   SWATH2stats::filter_all_peptides()
+#' @param do_max Perform the maximum peptide filter?
+#'   SWATH2stats::filter_max_peptides()
+#' @param do_min Perform the minimum peptide filter?
+#'   SWATH2stats::filter_min_peptides()
+#' @param ... Other arguments passed down to the filters.
+#' @return Smaller SWATH2stats data set.
+#' @export
+s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpeptidename",
+                            fft=0.7, plot=FALSE, target_fdr=0.02, upper_fdr=0.05,
+                            mscore=0.01, percentage=0.75, remove_decoys=TRUE,
+                            max_peptides=15, min_peptides=2,
+                            do_mscore=TRUE, do_freqobs=TRUE, do_fdr=TRUE,
+                            do_proteotypic=TRUE, do_peptide=TRUE,
+                            do_max=TRUE, do_min=TRUE, ...) {
+  retlist <- list()
+  retlist[["decoy_lists"]] <- SWATH2stats::assess_decoy_rate(s2s_exp)
+  decoy_ratio <- as.numeric(retlist[["decoy_lists"]][["ratio"]])
+  decoy_number <- grepl(pattern="^DECOY", x=s2s_exp[["proteinname"]])
+  message("There were ", sum(!decoy_number),
+          " observations and ", sum(decoy_number), " decoy observations.")
+  retlist[["fdr_overall"]] <- SWATH2stats::assess_fdr_overall(
+                                             s2s_exp,
+                                             output="Rconsole",
+                                             plot=plot)
+  retlist[["byrun_fdr"]] <- SWATH2stats::assess_fdr_byrun(
+                                           s2s_exp,
+                                           FFT=fft,
+                                           plot=plot,
+                                           output="Rconsole")
+  retlist[["chosen_mscore"]] <- SWATH2stats::mscore4assayfdr(
+                                               s2s_exp,
+                                               FFT=fft,
+                                               fdr_target=target_fdr,
+                                               ...)
+  retlist[["prot_score"]] <- SWATH2stats::mscore4protfdr(
+                                            s2s_exp,
+                                            FFT=fft,
+                                            fdr_target=target_fdr,
+                                            ...)
+  message("Starting mscore filter.")
+  retlist[["raw"]] <- s2s_exp
+  filt <- s2s_exp
+
+  if (isTRUE(do_mscore)) {
+    message("Starting mscore filter.")
+    filt <- try(SWATH2stats::filter_mscore(
+                               s2s_exp,
+                               retlist[["chosen_mscore"]],
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The mscore filter failed, reverting to the raw data.")
+      filt <- s2s_exp
+      retlist[["mscore_filtered"]] <- "error"
+    } else {
+      retlist[["mscore_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping mscore filter.")
+    retlist[["mscore_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_freqobs)) {
+    message("Starting freqobs filter.")
+    filt <- try(SWATH2stats::filter_mscore_freqobs(
+                               filt,
+                               mscore,
+                               percentage,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The mscore filter failed, reverting to the mscore filtered data.")
+      filt <- filt_backup
+      retlist[["freqobs_filtered"]] <- "error"
+    } else {
+      retlist[["freqobs_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping freqobs filter.")
+    retlist[["freqobs_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_fdr)) {
+    message("Starting fdr filter.")
+    ## filter_mscore_fdr should probably be modified for flexibility.
+    filt <- try(SWATH2stats::filter_mscore_fdr(
+                               filt,
+                               FFT=fft,
+                               overall_protein_fdr_target=retlist[["prot_score"]],
+                               upper_overall_peptide_fdr_limit=upper_fdr,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The fdr filter failed, reverting to the freqobs filtered data.")
+      filt <- filt_backup
+      retlist[["fdr_filtered"]] <- "error"
+    } else {
+      retlist[["fdr_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping fdr filter.")
+    retlist[["fdr_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_proteotypic)) {
+    message("Starting proteotypic filter.")
+    filt <- try(SWATH2stats::filter_proteotypic_peptides(
+                               filt,
+                               column=column,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The proteotypic filter failed, reverting to the fdr filtered data.")
+      filt <- filt_backup
+      retlist[["proteotypic_filtered"]] <- "error"
+    } else {
+      retlist[["proteotypic_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping proteotypic filter.")
+    retlist[["proteotypic_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_peptide)) {
+    message("Starting peptide filter.")
+    ## Looking at this function, it just renames the peptides to remove the 1/!
+    ## That is not a filter!
+    filt <- try(SWATH2stats::filter_all_peptides(
+                               filt,
+                               column=column))
+    if (class(filt)[1] == "try-error") {
+      warning("The peptide filter failed, reverting to the proteotypic filtered data.")
+      filt <- filt_backup
+      retlist[["peptide_filtered"]] <- "error"
+    } else {
+      retlist[["peptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping peptide filter.")
+    retlist[["peptide_filtered"]] <- NULL
+  }
+  filt_backup <- filt
+
+  if (isTRUE(do_max)) {
+    message("Starting maximum peptide filter.")
+    filt <- try(SWATH2stats::filter_on_max_peptides(
+                               data=filt,
+                               column=column,
+                               n_peptides=max_peptides,
+                               ...))
+    if (class(filt)[1] == "try-error") {
+      warning("The maximum peptide filter failed, reverting to the proteotypic filtered data.")
+      filt <- filt_backup
+      retlist[["maxpeptide_filtered"]] <- "error"
+    } else {
+      retlist[["maxpeptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping max peptide filter.")
+    filt_backup <- filt
+  }
+
+  if (isTRUE(do_min)) {
+    message("Starting minimum peptide filter.")
+    filt <- try(SWATH2stats::filter_on_min_peptides(
+                               data=filt,
+                               n_peptides=min_peptides,
+                               column=column,
+                               rm.decoy=remove_decoys))
+    if (class(filt)[1] == "try-error") {
+      warning("The minimum peptide filter failed, reverting to the maximum peptide filtered data.")
+      filt <- filt_backup
+      retlist[["minpeptide_filtered"]] <- "error"
+    } else {
+      retlist[["minpeptide_filtered"]] <- filt
+    }
+  } else {
+    message("Skipping min peptide filter.")
+    retlist[["minpeptide_filtered"]] <- NULL
+  }
+  retlist[["final"]] <- filt
+
+  start_proteins <- length(unique(s2s_exp[[column]]))
+  start_peptides <- length(unique(s2s_exp[["fullpeptidename"]]))
+  end_proteins <- length(unique(retlist[["final"]][[column]]))
+  end_peptides <- length(unique(retlist[["final"]][["fullpeptidename"]]))
+  message("We went from ", start_proteins, "/", start_peptides, " proteins/peptides to:")
+  message("             ", end_proteins, "/", end_peptides, " proteins/peptides.")
   return(retlist)
 }
 

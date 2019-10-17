@@ -26,15 +26,18 @@
 write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames=TRUE,
                       start_row=1, start_col=1, title=NULL, ...) {
   arglist <- list(...)
-  if (class(data)[1] == "matrix" | class(data)[1] == "character") {
+  if ("matrix" %in% class(data) | "character" %in% class(data)) {
+    data <- as.data.frame(data, stringsAsFactors=FALSE)
+  }
+  if ("data.table" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors=FALSE)
   }
   if (is.null(wb)) {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
-  } else if (class(wb)[1] == "list") {
+  } else if ("list" %in% class(wb)) {
     ## In case the return from write_xls() was passed to write_xls()
     wb <- wb[["workbook"]]
-  } else if (class(wb)[1] != "Workbook") {
+  } else if (! "Workbook" %in% class(wb)) {
     stop("A workbook was passed to this, but the format is not understood.")
   }
   ## Heading style 1 (For titles)
@@ -78,36 +81,36 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   }
 
   ## I might have run into a bug in openxlsx, in WorkbookClass.R there is a call to is.nan()
-  ## for a data.framye and it appears to me to be called oddly and causing problems
+  ## for a data.frame and it appears to me to be called oddly and causing problems
   ## I hacked the writeDataTable() function in openxlsx and sent a bug report.
   ## Another way to trip this up is for a column in the table to be of class 'list'
   test_column <- 0
+  final_colnames <- colnames(data)
+  final_colnames <- tolower(final_colnames)
+  final_colnames <- make.unique(final_colnames, sep="_")
+  final_colnames <- make.names(final_colnames)
+  colnames(data) <- final_colnames
+
   for (col in colnames(data)) {
-    test_column <- test_column + 1
-    colnames(data)[test_column] <- paste0(colnames(data)[test_column], "_", test_column)
     ## Originally, this was a single test condition, but I fear I need to do
     ## separate tasks for each data type. If that proves to be the case, I am
     ## ready, but until then it remains a series of as.character() castings.
-    if (class(data[, test_column])[1] == "list") {
+    if ("list" %in% class(data[, col])) {
       ## The above did not work, trying what I found in:
       ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
       ##list_entries <- is.list(data[, test_column])
       ##ListCols <- sapply(data, is.list)
       ##cbind(data[!ListCols], t(apply(data[ListCols], 1, unlist)))
-      data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column])[1] == "vector") {
-      data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column])[1] == "factor") {
-      data[, test_column] <- as.character(data[, test_column])
-    } else if (class(data[, test_column])[1] == "AsIs") {
-      data[, test_column] <- as.character(data[, test_column])
+      data[, col] <- as.character(data[, col])
+    } else if ("vector" %in% class(data[, col])) {
+      data[, col] <- as.character(data[, col])
+    } else if ("factor" %in% class(data[, test_column])) {
+      data[, col] <- as.character(data[, col])
+    } else if ("AsIs" %in% class(data[, test_column])) {
+      data[, col] <- as.character(data[, col])
     }
   }  ## Finished adjusting stupid column types.
 
-  final_colnames <- colnames(data)
-  final_colnames <- tolower(final_colnames)
-  final_colnames <- make.names(final_colnames, unique=TRUE)
-  colnames(data) <- final_colnames
   wtf <- try(openxlsx::writeDataTable(wb=wb, sheet=sheet, x=data, startCol=new_col,
                                       startRow=new_row, tableStyle=table_style,
                                       rowNames=rownames, colNames=TRUE))
@@ -123,6 +126,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
 
     if (isTRUE(test_null)) {
       test_max <- 1
+      data[[data_col]] <- NULL  ## Drop the offending column.
     } else {
       test_max <- max(nchar(as.character(test_column)), na.rm=TRUE)
     }
@@ -253,8 +257,9 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   dev.off()
   insert_ret <- NULL
   if (file.exists(png_name)) {
-    insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name, width=width,
-                                            height=height, startRow=start_row, startCol=start_col,
+    insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name,
+                                            width=width, height=height,
+                                            startRow=start_row, startCol=start_col,
                                             units=units, dpi=res))
     if (class(insert_ret)[1] == "try-error") {
       message("There was an error inserting the image at: ", png_name)

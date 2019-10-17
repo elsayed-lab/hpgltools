@@ -5,8 +5,8 @@
 \title{Make pretty xlsx files of count data.}
 \usage{
 write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
-  violin = FALSE, convert = "cpm", transform = "log2",
-  batch = "sva", filter = TRUE, ...)
+  violin = FALSE, sample_heat = TRUE, convert = "cpm",
+  transform = "log2", batch = "sva", filter = TRUE, ...)
 }
 \arguments{
 \item{expt}{An expressionset to print.}
@@ -16,6 +16,8 @@ write_expt(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 \item{norm}{Normalization to perform.}
 
 \item{violin}{Include violin plots?}
+
+\item{sample_heat}{Include sample heatmaps?}
 
 \item{convert}{Conversion to perform.}
 

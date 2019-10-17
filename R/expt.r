@@ -8,12 +8,30 @@
 #' @param expt2 Second expt object.
 #' @param condition Column with which to reset the conditions.
 #' @param batch Column with which to reset the batches.
+#' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
 #' @export
-combine_expts <- function(expt1, expt2, condition="condition", batch="batch") {
+combine_expts <- function(expt1, expt2, condition="condition",
+                          batch="batch", merge_meta=FALSE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
+
+  if (isTRUE(merge_meta)) {
+    design1 <- pData(exp1)
+    d1_rows <- 1:nrow(design1)
+    design2 <- pData(exp2)
+    both <- as.data.frame(data.table::rbindlist(list(design1, design2), fill=TRUE))
+    ## na_idx <- is.na(both)
+    ## both[na_idx] <- ""
+    d2_rows <- (nrow(design1) + 1):nrow(both)
+    new_design1 <- both[d1_rows, ]
+    rownames(new_design1) <- rownames(design1)
+    new_design2 <- both[d2_rows, ]
+    rownames(new_design2) <- rownames(design2)
+    pData(exp1) <- new_design1
+    pData(exp2) <- new_design2
+  }
 
   new <- combine(exp1, exp2)
   expt1[["expressionset"]] <- new
@@ -455,7 +473,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     message("Here are the first few rownames from the gene information table:")
     message(toString(head(gene_info[["rownames"]])))
   } else {
-      message("Matched ", found_sum, " annotations and counts.")
+    message("Matched ", found_sum, " annotations and counts.")
   }
 
   ## Take a moment to remove columns which are blank
@@ -1078,9 +1096,11 @@ features_in_single_condition <- function(expt, cutoff=2) {
 #'   column.
 #' @param cond_column Which column in the sample data provides the set of
 #'   'conditions' used to define the colors?
+#' @param by Name the factor of colors according to this column.
 #' @param ... Other arguments like a color palette, etc.
 #' @return  Colors!
-generate_expt_colors <- function(sample_definitions, cond_column="condition", ...) {
+generate_expt_colors <- function(sample_definitions, cond_column="condition",
+                                 by="sampleid", ...) {
   arglist <- list(...)
   ## First figure out how many conditions we have
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -1123,7 +1143,7 @@ generate_expt_colors <- function(sample_definitions, cond_column="condition", ..
     chosen_colors <- mapping[chosen_colors]
   }
   ## Set the color names
-  ##names(chosen_colors) <- sample_definitions[[sample_column]]
+  names(chosen_colors) <- sample_definitions[[by]]
   return(chosen_colors)
 }
 
@@ -1567,37 +1587,54 @@ read_metadata <- function(file, ...) {
 semantic_expt_filter <- function(input, invert=FALSE, topn=NULL,
                                  semantic=c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                  semantic_column="description") {
+  mtrx <- exprs(input)
   annots <- fData(input)
   if (isTRUE(invert)) {
     new_annots <- data.frame()
+    new_mtrx <- data.frame()
   } else {
     new_annots <- annots
+    new_mtrx <- mtrx
   }
 
   numbers_removed <- 0
   if (is.null(topn)) {
     for (string in semantic) {
-      pre_remove_size <- nrow(annots)
+      pre_remove_size <- nrow(new_annots)
       idx <- NULL
-      if (semantic_column == "rownames") {
-        idx <- grepl(pattern=string, x=rownames(annots))
-      } else {
-        idx <- grepl(pattern=string, x=annots[, semantic_column])
-      }
-      type <- "Removed"
       if (isTRUE(invert)) {
+        ## Keep the rows which match the ~7 strings above.
+        ## For these, we will re-grep the full table each time and just add the matches.
         type <- "Kept"
+        if (semantic_column == "rownames") {
+          idx <- grepl(pattern=string, x=rownames(annots))
+        } else {
+          idx <- grepl(pattern=string, x=annots[, semantic_column])
+        }
+        message("Hit ", sum(idx), " genes for term ", string, ".")
+        ## Then, after grepping, just append the matched rows to the new annotations and matrix.
         tmp_annots <- annots[idx, ]
+        tmp_mtrx <- mtrx[idx, ]
         new_annots <- rbind(new_annots, tmp_annots)
+        new_mtrx <- rbind(new_mtrx, tmp_mtrx)
       } else {
         type <- "Removed"
-        idx <- !idx
+        ## In the case of removals, I need to only grep what is left after each iteration.
+        if (semantic_column == "rownames") {
+          idx <- grepl(pattern=string, x=rownames(new_annots))
+        } else {
+          idx <- grepl(pattern=string, x=new_annots[, semantic_column])
+        }
+        message("Hit ", sum(idx), " genes for term ", string, ".")
+        idx <- ! idx
+        ## So, we take the index of stuff to keep, and just subset on that index.
         new_annots <- new_annots[idx, ]
+        new_mtrx <- new_mtrx[idx, ]
+        message("Now the matrix has ", nrow(new_mtrx), " elements.")
       }
     }
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
-    mtrx <- exprs(input)
     medians <- rowMedians(mtrx)
     new_order <- order(medians, decreasing=TRUE)
     reordered <- mtrx[new_order, ]
@@ -2014,8 +2051,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
 #' @examples
 #' \dontrun{
-#'  smaller_expt = expt_subset(big_expt, "condition=='control'")
-#'  all_expt = expt_subset(expressionset, "")  ## extracts everything
+#'  smaller_expt <- expt_subset(big_expt, "condition=='control'")
+#'  all_expt <- expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
 subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
@@ -2047,6 +2084,7 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
     if (is.null(subset)) {
       subset_design <- starting_metadata
     } else {
+      message("Using a subset expression.")
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text=r_expression))
       note_appended <- glue::glue("Subsetted with {subset} on {date()}.
@@ -2060,8 +2098,9 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
     ## standard deviation or somesuch...
+    message("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
-    subset_idx <- coverages >= coverage
+    subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors=FALSE)
   }
@@ -2077,7 +2116,7 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
   subset_conditions <- starting_conditions[subset_positions, drop=TRUE]
   starting_batches <- expt[["batches"]]
   subset_batches <- starting_batches[subset_positions, drop=TRUE]
-    current_libsize <- expt[["libsize"]]
+  current_libsize <- expt[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop=TRUE]
   subset_expressionset <- starting_expressionset[, subset_positions]
 
@@ -2240,6 +2279,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @param excel Filename to write.
 #' @param norm Normalization to perform.
 #' @param violin Include violin plots?
+#' @param sample_heat Include sample heatmaps?
 #' @param convert Conversion to perform.
 #' @param transform Transformation used.
 #' @param batch Batch correction applied.
@@ -2254,7 +2294,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
-                       violin=FALSE, convert="cpm", transform="log2",
+                       violin=FALSE, sample_heat=TRUE, convert="cpm", transform="log2",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -2280,11 +2320,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
-  xls_result <- write_xls(wb, data=legend, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xls(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
-  annot <- as.data.frame(pData(expt), stringsAsFactors=FALSE)
+  annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
   xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
@@ -2403,6 +2443,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="09_disheat", savedir=excel_basename)
+  if (isTRUE(sample_heat)) {
+    tmp_expt <- sm(normalize_expt(expt, transform="log2", filter=TRUE))
+    sampleheat_plot <- plot_sample_heatmap(tmp_expt)
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="09a_sampleheat", savedir=excel_basename)
+  }
   new_col <- 1
 
   ## SM plots
@@ -2623,6 +2671,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="26_ndisheat", savedir=excel_basename)
+  if (isTRUE(sample_heat)) {
+    sampleheat_plot <- plot_sample_heatmap(norm_data)
+    new_col <- new_col + plot_cols + 1
+    try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
+                                height=plot_dim, start_col=new_col, start_row=new_row,
+                                plotname="26a_sampleheat", savedir=excel_basename)
+  }
   new_col <- 1
 
   ## SM plots
@@ -2650,6 +2705,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + plot_rows + 2
   new_col <- 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA.",
+                      startRow=new_row, startCol=new_col)
+  new_col <- new_col + plot_cols + 1
+  openxlsx::writeData(wb, sheet=sheet, x="Top 40 PC1 loadings.",
                       startRow=new_row, startCol=new_col)
   new_col <- new_col + plot_cols + 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized TSNE.",
@@ -2687,7 +2745,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
+    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL,
+                                       factors=c("condition", "batch")))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2725,8 +2784,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "median_data"
   new_col <- 1
   new_row <- 1
-  median_data <- median_by_factor(exprs(norm_data),
-                                  fact=norm_data[["conditions"]])
+  median_data <- sm(median_by_factor(exprs(norm_data),
+                                     fact=norm_data[["conditions"]]))
   median_data_merged <- merge(median_data, info, by="row.names")
   xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
@@ -2821,7 +2880,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
 #' @slot tximport Data provided by tximport() to create the exprs() data.
 #' @export expt
 expt <- function(...) {
-    create_expt(...)
+  create_expt(...)
 }
 expt_set <- setOldClass("expt")
 setMethod("exprs", signature="expt",

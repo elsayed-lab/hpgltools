@@ -5,12 +5,14 @@
 \title{Download the txt uniprot data for a given accession/species}
 \usage{
 download_uniprot_proteome(accession = NULL, species = NULL,
-  all = FALSE, first = FALSE)
+  taxonomy = NULL, all = FALSE, first = FALSE)
 }
 \arguments{
 \item{accession}{Which accession to grab?}
 
 \item{species}{Or perhaps species?}
+
+\item{taxonomy}{Query for a specific taxonomy ID rather than species/accession?}
 
 \item{all}{If there are more than 1 hit, grab them all?}
 

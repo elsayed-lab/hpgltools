@@ -10,6 +10,8 @@ snps_vs_intersections(expt, snp_result, chr_column = "seqnames")
 \item{expt}{The original expressionset.  This provides the annotation data.}
 
 \item{snp_result}{The result from get_snp_sets or count_expt_snps.}
+
+\item{chr_column}{Column in the annotation with the chromosome names.}
 }
 \value{
 List containing the set of intersections in the conditions contained

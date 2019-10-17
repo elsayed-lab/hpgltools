@@ -5,7 +5,7 @@
 \title{Extract annotation information from biomart.}
 \usage{
 load_biomart_annotations(species = "hsapiens", overwrite = FALSE,
-  do_save = TRUE, host = "dec2016.archive.ensembl.org",
+  do_save = TRUE, host = "dec2017.archive.ensembl.org",
   drop_haplotypes = TRUE, trymart = "ENSEMBL_MART_ENSEMBL",
   trydataset = NULL, gene_requests = c("ensembl_gene_id", "version",
   "ensembl_transcript_id", "transcript_version", "hgnc_symbol",

@@ -4,7 +4,7 @@ library(hpgltools)
 context("27de_basic: Does the basic differential expression analysis work?\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 norm_expt <- normalize_expt(pasilla_expt, transform="log2",
@@ -22,14 +22,16 @@ test_that("Does a non-normalized basic run equal a normalized basic run?", {
 
 ## Another casuality of normalize.quantiles vs normalize.quantiles.robust
 ##expected_medians_treated <- c(-3.008634, -3.008632, -2.487802, -2.487802, -1.750838, -1.509827)
-expected_medians_treated <- c(-2.683566, -2.683564, -2.142998, -2.142998, -1.558036, -1.442555)
+expected_medians_treated <- c(-2.318990, -2.297095, -2.123484, -2.069237, -1.384643, -1.184830)
 actual_medians_treated <- head(sort(hpgl_norm_basic[["medians"]][["treated"]]))
 test_that("Do we get the values for treated and untreated samples?", {
     expect_equal(expected_medians_treated, actual_medians_treated, tolerance=0.001)
 })
 
-##expected_medians_untreated <- c(-1.9991457, -1.7320028, -1.2739709, -1.0014216, -0.9350436, -0.7902208)
-expected_medians_untreated <- c(-1.8156755, -1.5986007, -1.1228487, -1.1045870, -1.0358351, -0.8590158)
+##expected_medians_untreated <- c(-1.9991561, -1.7320136, -1.2739814,
+##                                -1.0475990, -0.9636259, -0.7944623)
+expected_medians_untreated <- c(-1.9202939, -1.2937864, -1.2228098,
+                                -1.1269285, -1.0597740, -0.9812334)
 actual_medians_untreated <- head(sort(hpgl_norm_basic[["medians"]][["untreated"]]))
 test_that("Do we get the values for treated and untreated samples?", {
     expect_equal(expected_medians_untreated, actual_medians_untreated, tolerance=0.01)

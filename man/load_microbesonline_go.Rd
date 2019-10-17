@@ -4,11 +4,13 @@
 \alias{load_microbesonline_go}
 \title{Extract the set of GO categories by microbesonline locus}
 \usage{
-load_microbesonline_go(id = "160490", id_column = "name",
-  data_column = "GO", name = NULL)
+load_microbesonline_go(id = "160490", table_df = NULL,
+  id_column = "name", data_column = "GO", name = NULL)
 }
 \arguments{
 \item{id}{Which species to query.}
+
+\item{table_df}{Pre-existing data frame of annotations containing GO stuff.}
 
 \item{id_column}{This no longer uses MySQL, so which column from the html
 table to pull?}

@@ -6,7 +6,7 @@
 \usage{
 samtools_snp_coverage(expt, type = "counts",
   input_dir = "preprocessing/outputs", tolower = TRUE,
-  bam_suffix = ".bam")
+  bam_suffix = ".bam", annot_column = annot_column)
 }
 \arguments{
 \item{expt}{Expressionset to analyze}
@@ -18,10 +18,12 @@ samtools_snp_coverage(expt, type = "counts",
 \item{tolower}{lowercase the sample names?}
 
 \item{bam_suffix}{In case the data came from sam.}
+
+\item{annot_column}{Passed along to count_expt_snps()}
 }
 \value{
 It is so slow I no longer know if it works.
 }
 \description{
-This is horrifyingly slow.
+This is horrifyingly slow.  I think I might remove this function.
 }

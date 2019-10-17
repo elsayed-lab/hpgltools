@@ -6,7 +6,8 @@
 \usage{
 basic_pairwise(input = NULL, design = NULL, conditions = NULL,
   batches = NULL, model_cond = TRUE, model_intercept = FALSE,
-  alt_model = NULL, model_batch = FALSE, force = FALSE, ...)
+  alt_model = NULL, model_batch = FALSE, force = FALSE,
+  fx = "mean", ...)
 }
 \arguments{
 \item{input}{Count table by sample.}
@@ -26,6 +27,8 @@ basic_pairwise(input = NULL, design = NULL, conditions = NULL,
 \item{model_batch}{Not currently used, but passed from all_pairwise()}
 
 \item{force}{Force as input non-normalized data?}
+
+\item{fx}{What function to use for mean/median?}
 
 \item{...}{Extra options passed to arglist.}
 }

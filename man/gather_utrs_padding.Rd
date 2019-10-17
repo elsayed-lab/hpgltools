@@ -5,11 +5,11 @@
 \title{Take a BSgenome and data frame of chr/start/end/strand, provide 5' and 3'
 padded sequence.}
 \usage{
-gather_utrs_padding(bsgenome, annot_df, name_column = "gid",
-  chr_column = "chromosome", start_column = "start",
-  end_column = "end", strand_column = "strand",
-  type_column = "annot_gene_type", gene_type = "protein coding",
-  padding = 120, ...)
+gather_utrs_padding(bsgenome, annot_df, gid = NULL,
+  name_column = "gid", chr_column = "chromosome",
+  start_column = "start", end_column = "end",
+  strand_column = "strand", type_column = "annot_gene_type",
+  gene_type = "protein coding", padding = 120, ...)
 }
 \arguments{
 \item{bsgenome}{BSgenome object containing the genome of interest.}
@@ -18,6 +18,8 @@ gather_utrs_padding(bsgenome, annot_df, name_column = "gid",
 interest, this is generally extracted using a function in the
 load_something_annotations() family (load_orgdb_annotations() being the most
 likely).}
+
+\item{gid}{Specific GID(s) to query.}
 
 \item{name_column}{Give each gene a name using this column.}
 
@@ -39,7 +41,7 @@ type.}
 \item{...}{Arguments passed to child functions (I think none currently).}
 }
 \value{
-List of 2 elements, the 5' and 3' regions.
+Dataframe of UTR, CDS, and UTR+CDS sequences.
 }
 \description{
 For some species, we do not have a fully realized set of UTR boundaries, so

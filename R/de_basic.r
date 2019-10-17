@@ -22,6 +22,7 @@
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force as input non-normalized data?
+#' @param fx What function to use for mean/median?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
@@ -32,7 +33,8 @@
 #' @export
 basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
                            batches=NULL, model_cond=TRUE, model_intercept=FALSE,
-                           alt_model=NULL, model_batch=FALSE, force=FALSE, ...) {
+                           alt_model=NULL, model_batch=FALSE, force=FALSE,
+                           fx="mean", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["input"]])) {
     input <- arglist[["input"]]
@@ -59,7 +61,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
   median_table <- data.frame()
   variance_table <- data.frame()
   ## First use conditions to rbind a table of medians by condition.
-  message("Basic step 1/3: Creating median and variance tables.")
+  message("Basic step 1/3: Creating ", fx, " and variance tables.")
   median_colnames <- c()
   for (c in 1:num_conds) {
     condition_name <- types[c]
@@ -69,8 +71,12 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
       med <- data.frame(data[, columns], stringsAsFactors=FALSE)
       var <- as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)), stringsAsFactors=FALSE)
     } else {
-      med_input <- data[, columns]
-      med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
+      med_input <- as.matrix(data[, columns])
+      if (fx == "mean") {
+        med <- data.frame(matrixStats::rowMeans2(x=med_input, na.rm=TRUE))
+      } else {
+        med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
+      }
       colnames(med) <- c(condition_name)
       var <- as.data.frame(genefilter::rowVars(as.matrix(med_input)))
       colnames(var) <- c(condition_name)
@@ -194,20 +200,24 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
     numerator <- numer_denom[1]
     denominator <- numer_denom[2]
+    num_col <- paste0("numerator_", fx)
+    den_col <- paste0("denominator_", fx)
     fc_table <- data.frame(
-      "numerator_median" = median_table[[numerator]],
-      "denominator_median" = median_table[[denominator]],
       "numerator_var" = variance_table[[numerator]],
       "denominator_var" = variance_table[[denominator]],
       "t" = t_column,
       "p" = p_column,
       "logFC" = fc_column)
+    fc_table[[num_col]] <- median_table[[numerator]]
+    fc_table[[den_col]] <- median_table[[denominator]]
+    fc_table <- fc_table[, c(num_col, den_col, "numerator_var",
+                             "denominator_var", "t", "p", "logFC")]
     fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
 
-    fc_table[["numerator_median"]] <- signif(
-      x=fc_table[["numerator_median"]], digits=4)
-    fc_table[["denominator_median"]] <- signif(
-      x=fc_table[["denominator_median"]], digits=4)
+    fc_table[[num_col]] <- signif(
+      x=fc_table[[num_col]], digits=4)
+    fc_table[[den_col]] <- signif(
+      x=fc_table[[den_col]], digits=4)
     fc_table[["numerator_var"]] <- format(
       x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
     fc_table[["denominator_var"]] <- format(

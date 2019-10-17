@@ -5,16 +5,18 @@
 \title{Gather snp information for an expt}
 \usage{
 count_expt_snps(expt, type = "counts", annot_column = "bcftable",
-  tolower = TRUE)
+  tolower = TRUE, snp_column = "diff_count")
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}
 
 \item{type}{Use counts / samples or ratios?}
 
+\item{annot_column}{Column in the metadata for getting the table of bcftools calls.}
+
 \item{tolower}{Lowercase stuff like 'HPGL'?}
 
-\item{input_dir}{Directory to scan for snps output files.}
+\item{snp_column}{Which column of the parsed bcf table contains our interesting material?}
 }
 \value{
 A new expt object

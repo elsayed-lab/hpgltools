@@ -15,12 +15,12 @@
 ## Some notes!
 ##
 ## Something I should have realized:
-## From: hcorrada@gmail.com [mailto:hcorrada@gmail.com] On Behalf Of Hector Corrada Bravo
+## From: <> On Behalf Of Hector Corrada Bravo
 ## To: Najib M. El-Sayed
 ## Subject: Re: fold change
 ## Sorry for the delay in answering, I missed this. Using 'topTable' you can get
-##confidence intervals for the logFC estimate. If you want the standard error
-##itself you can get by dividing the logFC by the t statistic.
+## confidence intervals for the logFC estimate. If you want the standard error
+## itself you can get by dividing the logFC by the t statistic.
 
 #' Pipe operator
 #'
@@ -122,8 +122,6 @@ getMaintainer <- "GenomicFeatures" %:::% ".getMaintainer"
 getMetaDataValue <- "GenomicFeatures" %:::% ".getMetaDataValue"
 getTxDbVersion <- "GenomicFeatures" %:::% ".getTxDbVersion"
 normAuthor <- "GenomicFeatures" %:::% ".normAuthor"
-##getProjectDir <- "packrat" %:::% "getProjectDir"
-##srcDir <- "packrat" %:::% "srcDir"
 sortCols <- "variancePartition" %:::% ".sortCols"
 aprior <- "sva" %:::% "aprior"
 bprior <- "sva" %:::% "bprior"

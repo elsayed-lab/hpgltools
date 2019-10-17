@@ -27,7 +27,8 @@ load_microbesonline_annotations <- function(id="160490") {
   titles <- rvest::html_nodes(result, "title")
   species <- (titles %>% rvest::html_text())[1]
   message("The species being downloaded is: ", species)
-  url <- paste0("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id, ";export=tab")
+  url <- glue::glue("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
+  message("Downloading: ", url)
   data <- sm(readr::read_tsv(url))
   return(data)
 }
@@ -38,10 +39,10 @@ load_microbesonline_annotations <- function(id="160490") {
 #' format proves useful under one condition or another, ergo this defaults to
 #' iterating through them all and getting every file.
 #'
-#' @param id  Species ID to query.
-#' @param type  File type(s) to download, if left null it will grab the genbank,
+#' @param id Species ID to query.
+#' @param type File type(s) to download, if left null it will grab the genbank,
 #'   tab, protein fasta, transcript fasta, and genome.
-#' @return  List describing the files downloaded and their locations.
+#' @return List describing the files downloaded and their locations.
 #' @author atb
 download_microbesonline_files <- function(id="160490", type=NULL) {
   retlist <- list()
@@ -107,7 +108,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
     prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
-    prot_downloaded <- download.file(prot_url, prot_file)
+    prot_downloaded <- download.file(prot_url, prot_file, quiet=TRUE)
     retlist[["prot"]] <- prot_file
   }
 
@@ -117,7 +118,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
     tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
-    tx_downloaded <- download.file(tx_url, tx_file)
+    tx_downloaded <- download.file(tx_url, tx_file, quiet=TRUE)
     retlist[["tx"]] <- tx_file
   }
 
@@ -127,7 +128,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
     genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")
-    genome_downloaded <- download.file(genome_url, genome_file)
+    genome_downloaded <- download.file(genome_url, genome_file, quiet=TRUE)
     retlist[["genome"]] <- genome_file
   }
   return(retlist)
@@ -144,11 +145,12 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' them, which is a start.
 #'
 #' @param id Which species to query.
-#' @param id_column  This no longer uses MySQL, so which column from the html
+#' @param table_df Pre-existing data frame of annotations containing GO stuff.
+#' @param id_column This no longer uses MySQL, so which column from the html
 #'   table to pull?
-#' @param data_column  Similar to above, there are lots of places from which one might
+#' @param data_column Similar to above, there are lots of places from which one might
 #'   extract the data.
-#' @param name  Allowing for non-specific searches by species name.
+#' @param name Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from www.microbesonline.org
 #' @examples
 #' \dontrun{
@@ -156,10 +158,17 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' }
 #' @author atb
 #' @export
-load_microbesonline_go <- function(id="160490", id_column="name", data_column="GO", name=NULL) {
+load_microbesonline_go <- function(id="160490", table_df=NULL, id_column="name", data_column="GO", name=NULL) {
   chosen <- id
-  table <- download_microbesonline_files(id=id, type="tab")
-  table_df <- sm(readr::read_tsv(file=table[["tab"]]))
+  if (is.null(table_df)) {
+    table <- download_microbesonline_files(id=id, type="tab")
+    table_df <- sm(readr::read_tsv(file=table[["tab"]]))
+  }
+  if (! id_column %in% colnames(table_df)) {
+    message(id_column, " was not found in the table, here are the available columns: ", toString(colnames(table_df)))
+    print(head(as.data.frame(table_df), n=2))
+    stop()
+  }
   go_df <- table_df[, c(id_column, data_column)] %>%
     tidyr::separate_rows(data_column, sep=",")
   keep_idx <- go_df[[data_column]] != ""

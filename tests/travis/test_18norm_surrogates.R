@@ -10,7 +10,7 @@ context("18norm_surrogates.R: Do surrogate estimators provide expected outputs?\
 ## which allows it to call on get_model_adjust() when a batch adjustment method is actually in it.
 ## The result is a more flexible batch method, but sadly one which has/had at least one error.
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 pasilla_svasup <- all_adjusters(pasilla_expt,

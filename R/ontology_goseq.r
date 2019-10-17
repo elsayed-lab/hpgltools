@@ -220,6 +220,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## entrez IDs are numeric.  This is a problem when doing the pwf function
   ## because it sets the rownames to the IDs.  As a result, we need to call
   ## make.names() on them.
+  colnames(godf) <- c("ID","GO")
   godf[["ID"]] <- make.names(godf[["ID"]])
   metadf[["ID"]] <- make.names(metadf[["ID"]])
   de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])

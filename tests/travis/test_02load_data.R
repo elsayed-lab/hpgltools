@@ -32,7 +32,7 @@ save(list=ls(), file="pasilla_df.rda")
 
 ## Make sure it is still possible to create an expt
 pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata,
-                               savefile="pasilla", gene_info=gene_info))
+                               savefile="pasilla.rda", gene_info=gene_info))
 ## Recent changes to how my expressionsets are created mean that the order of
 ## genes is hard-set to the order of annotations in the annotation data and
 ## therefore _not_ the order of genes found in the count tables.
@@ -53,7 +53,7 @@ test_that("Was the annotation information imported into the expressionset? (stat
 })
 
 ## Then lengths of features should therefore remain consistent.
-expected <- c(78, 81, 99, 123, 123, 123)
+expected <- c(75, 78, 96, 120, 120, 120)
 actual <- head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
     expect_equal(expected, actual)
