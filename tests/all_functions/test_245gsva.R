@@ -20,13 +20,13 @@ gsva_result <- simple_gsva(hs_expt)
 gsva_expt <- gsva_result[["expt"]]
 gsva_dis <- plot_sample_heatmap(gsva_expt)
 
-gsva_pca <- plot_pca_genes(gsva_expt, pc_method="tsne", theta=0.9,
-                           iterations=10000, perplexity=50)
-expected <- "gg"
-actual <- class(gsva_pca[["plot"]])[1]
-test_that("Do we get a pca plot?", {
-  expect_equal(expected, actual)
-})
+##gsva_pca <- plot_pca_genes(gsva_expt, pc_method="tsne", theta=0.9,
+##                           iterations=10000, perplexity=50)
+##expected <- "gg"
+##actual <- class(gsva_pca[["plot"]])[1]
+##test_that("Do we get a pca plot?", {
+##  expect_equal(expected, actual)
+##})
 
 reactome_subset <- grepl(x=rownames(gsva_expt$expressionset), pattern="^REACTOME")
 reactome_gsva <- gsva_expt$expressionset[reactome_subset, ]

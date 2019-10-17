@@ -17,7 +17,7 @@ test_that("Do we get expected gene IDs?", {
 })
 
 data <- testing[["annotation"]]
-expected <- c(197995, 12)
+expected <- c(200295, 12)
 actual <- dim(data)
 ## 02
 test_that("Do we receive expected output from load_biomart_annotations()?", {

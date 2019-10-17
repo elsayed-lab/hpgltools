@@ -20,12 +20,13 @@ test_that("pca_information() provides a rsquared table?", {
 })
 
 ## 02 pca_highscores()
+## I changed this to default to means vs. medians.
 testing <- pca_highscores(pombe_expt)
-expected <- c(-4.0946442, -2.3214251, -1.0686429, -1.1414550, -2.7090227, -0.5437997)
+expected <- c(-2.538439, -2.853661, 1.458443, -11.445837, -5.929639, -5.814761)
 actual <- head(as.numeric(testing[["scores"]][, "Comp.1"]))
 ## 02
 test_that("pca_highscores() provides some scores by PC?", {
-  expect_equal(expected, actual)
+  expect_equal(expected, actual, tolerance=0.01)
 })
 
 ## 03 pcRes()  This is called from plot_pca() and friends, test it there.

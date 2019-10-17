@@ -6,7 +6,7 @@ context("21de_limma_combat.R: Does hpgltools work with limma and combat?\n")
 ## Once again, disabling until changes in preprocessCore or pthread_create()
 if (FALSE) {
   pasilla <- new.env()
-  load("pasilla.Rdata", envir=pasilla)
+  load("pasilla.rda", envir=pasilla)
   pasilla_expt <- pasilla[["expt"]]
   limma <- new.env()
   load("de_limma.rda", envir=limma)

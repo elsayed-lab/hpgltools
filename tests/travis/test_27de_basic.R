@@ -4,7 +4,7 @@ library(hpgltools)
 context("27de_basic: Does the basic differential expression analysis work?\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 norm_expt <- normalize_expt(pasilla_expt, transform="log2",

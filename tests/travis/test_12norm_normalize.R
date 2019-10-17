@@ -14,7 +14,7 @@ load("pasilla_df.rda")
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 expected <- as.numeric(c(5.857143, 91.500000, 4400.000000, 543.785714, 10.714286))

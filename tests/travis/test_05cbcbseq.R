@@ -49,7 +49,7 @@ metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 cbcb_data <- as.matrix(counts)
 hpgl_data <- exprs(pasilla_expt)
@@ -58,8 +58,8 @@ working <- FALSE
 if (working) {
   ## Check that normalization tools work similarly
   cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
-  hpgl_quantile_data <- hpgl_norm(pasilla_expt, transform="raw", norm="quant",
-                                  convert="raw", filter=FALSE)
+  hpgl_quantile_data <- normalize_expt(pasilla_expt, transform="raw", norm="quant",
+                                       convert="raw", filter=FALSE)
   hpgl_quantile <- hpgl_quantile_data[["count_table"]]
   expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
   actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]

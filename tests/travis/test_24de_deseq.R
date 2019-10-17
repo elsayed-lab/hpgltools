@@ -4,7 +4,7 @@ library(hpgltools)
 context("24de_deseq.R: Does hpgltools work with DESeq2?\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)

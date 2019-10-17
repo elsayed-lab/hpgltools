@@ -5,7 +5,7 @@ context("03graph_metrics.R: Is it possible to graph the various metrics with hpg
   1234567890123456789\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")

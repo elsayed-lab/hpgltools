@@ -2324,7 +2324,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
-  annot <- as.data.frame(pData(expt), stringsAsFactors=FALSE)
+  annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
   xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
@@ -2745,7 +2745,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL, factors=c("condition", "batch")))
+    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL,
+                                       factors=c("condition", "batch")))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2783,8 +2784,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "median_data"
   new_col <- 1
   new_row <- 1
-  median_data <- median_by_factor(exprs(norm_data),
-                                  fact=norm_data[["conditions"]])
+  median_data <- sm(median_by_factor(exprs(norm_data),
+                                     fact=norm_data[["conditions"]]))
   median_data_merged <- merge(median_data, info, by="row.names")
   xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")

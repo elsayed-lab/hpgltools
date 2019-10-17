@@ -10,12 +10,14 @@ context("19varpart.R: Does variancePartition work as expected?\n")
 ## which allows it to call on get_model_adjust() when a batch adjustment method is actually in it.
 ## The result is a more flexible batch method, but sadly one which has/had at least one error.
 pasilla <- new.env()
-load("../travis/pasilla.Rdata", envir=pasilla)
+load("../travis/pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-pasilla_norm <- normalize_expt(pasilla_expt, filter=TRUE, transform="log2", convert="cpm", norm="quant")
+pasilla_norm <- normalize_expt(pasilla_expt, filter=TRUE, transform="log2",
+                               convert="cpm", norm="quant")
 
-pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor=NULL, factors=c("condition", "batch")))
+pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor=NULL,
+                                     factors=c("condition", "batch")))
 
 ## Grab the model and see if it survived.
 expected <- "(1 | condition) + (1 | batch)"

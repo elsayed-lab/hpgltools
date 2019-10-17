@@ -6,7 +6,7 @@ library(hpgltools)
 ## a model with an intercept and one without.  This should not be I think.
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla <- pasilla[["expt"]]
 
 ## First, let us invoke limma with batch in the model with no intercept.

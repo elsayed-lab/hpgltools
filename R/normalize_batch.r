@@ -82,6 +82,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     }
   } ## Ending the tests of the input and its state.
 
+  ## Once again this is a place where my new stance vis a vis NAs is relevant.
+  na_idx <- is.na(my_data)
+  my_data[na_idx] <- 0
+
   linear_mtrx <- NULL
   log2_mtrx <- NULL
   if (expt_state[["transform"]] == "linear" || expt_state[["transform"]] == "raw") {

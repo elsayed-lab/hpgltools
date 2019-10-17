@@ -11,7 +11,7 @@ context("045annotation_shared.R:
 ## a orgdb and biomart.
 
 testing <- load_annotations(type="biomart", species="mmusculus")
-expected <- c(122968, 12)
+expected <- c(133849, 12)
 actual <- dim(testing[["annotation"]])
 ## 01
 test_that("Do we get some data from load_annotations()?", {

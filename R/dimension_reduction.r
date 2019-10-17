@@ -364,6 +364,8 @@ pca_highscores <- function(expt, n=20, cor=TRUE, vs="means", logged=TRUE) {
   }
 
   data <- as.data.frame(exprs(expt))
+  na_idx <- is.na(data)
+  data[na_idx] <- 0
   if (!is.null(vs)) {
     if (vs == "means") {
       data <- as.matrix(data) - rowMeans(as.matrix(data))
@@ -527,6 +529,11 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
+
+  ## Get rid of NAs, this is relevant because of recent changes in how I handle
+  ## proteomic data with missing values.
+  na_idx <- is.na(mtrx)
+  mtrx[na_idx] <- 0
 
   ## Small modification for reusing some of my very oldest experimental designs.
   if (is.null(design[["sampleid"]])) {
@@ -702,10 +709,19 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
       y_label <- sprintf("%s: %.2f tsne 'variance'", y_name, prop_lst[y_pc])
     },
     "umap" = {
-      message("Not yet implemented.")
+      message("Using uwot's implementation of umap.")
+      plotting_data <- t(mtrx)
+      pc_table <- as.data.frame(uwot::umap(X=plotting_data, n_components=num_pc, ...))
+      rownames(pc_table) <- rownames(design)
+      colnames(pc_table) <- glue::glue("PC{1:ncol(pc_table)}")
+      x_name <- glue::glue("Factor{x_pc}")
+      y_name <- glue::glue("Factor{y_pc}")
+      x_label <- x_name
+      y_label <- y_name
+      included_batch <- as.factor(as.character(design[[batch_column]]))
+      included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "uwot" = {
-
       plotting_data <- t(mtrx)
       pc_table <- as.data.frame(uwot::umap(X=plotting_data, n_components=num_pc, ...))
       rownames(pc_table) <- rownames(design)

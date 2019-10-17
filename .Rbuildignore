@@ -4,3 +4,5 @@
 ^\.travis\.yml$
 ^packrat/
 ^\.Rprofile$
+^renv$
+^renv\.lock$
