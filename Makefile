@@ -45,8 +45,7 @@ clean_vignette:
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
-	R -e "prev=options(Ncpus=8); \
-all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { BiocManager::install(t) }"
+	R -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { BiocManager::install(t) }"
 
 document: roxygen vignette reference
 
@@ -59,8 +58,7 @@ install_bioconductor:
 
 prereq:
 	@echo "Checking a few prerequisites."
-	R -e "prev=options(Ncpus=8);\
-bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
+	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { BiocManager::install(req) } } \
 ## hahaha looks like lisp!"
 

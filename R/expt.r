@@ -1564,9 +1564,16 @@ read_metadata <- function(file, ...) {
   } else if (tools::file_ext(file) == "xls") {
     ## This is not correct, but it is a start
     definitions <- readxl::read_xls(path=file, sheet=1)
+  } else if (tools::file_ext(file) == "ods") {
+    sheet <- 1
+    if (!is.null(arglist[["sheet"]])) {
+      sheet <- arglist[["sheet"]]
+    }
+    definitions <- readODS::read_ods(path=file, sheet=sheet)
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
+  colnames(definitions) <- gsub(pattern="[[:punct:]]", replace="", x=colnames(definitions))
   return(definitions)
 }
 

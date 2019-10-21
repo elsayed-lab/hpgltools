@@ -37,7 +37,7 @@ Suggests:
   pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
-  rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats,
   taxize, testthat, tidyr, topGO, tximport,

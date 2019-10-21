@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
+context("56gsea_gprofiler.R: Do gProfiler searches work?
+  12345\n")
 
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
