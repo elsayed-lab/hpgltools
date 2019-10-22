@@ -145,8 +145,9 @@ spyogenes_de <- sm(all_pairwise(expt))
 
 ## ----keeper_example------------------------------------------------------
 my_keepers <- list(
-    "wt_media" = c("wt_ll_cf", "wt_ll_cg"),
-    "mga_media" = c("mga_ll_cf", "mga_ll_cg"))
+  ## name    =   numerator / denominator
+  "wt_media" = c("wt_ll_cf", "wt_ll_cg"),
+  "mga_media" = c("mga_ll_cf", "mga_ll_cg"))
 
 ## ----combine_test--------------------------------------------------------
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))

@@ -1,7 +1,6 @@
 ## ----options, include=FALSE----------------------------------------------
 ## These are the options I tend to favor
 library("hpgltools")
-devtools::load_all("~/hpgltools")
 knitr::opts_knit$set(progress=TRUE,
                      verbose=TRUE,
                      width=90,
@@ -18,17 +17,17 @@ set.seed(1)
 rmd_file <- "b-02_fission_data_exploration.Rmd"
 
 ## ----setup---------------------------------------------------------------
-if (! "BiocInstaller" %in% installed.packages()) {
+if (! "BiocManager" %in% installed.packages()) {
   source("http://bioconductor.org/biocLite.R")
 }
 if (! "devtools" %in% installed.packages()) {
-  biocLite("devtools")
+  biocManager::install("devtools")
 }
 if (! "hpgltools" %in% installed.packages()) {
   devtools::install_github("elsayed-lab/hpgltools")
 }
 if (! "fission" %in% installed.packages()) {
-  biocLite("fission")
+  biocManager::install("fission")
 }
 ## I use the function 'sm()' to quiet loud functions.
 tt <- sm(library(fission))
@@ -80,7 +79,7 @@ summary(fis_normpca)
 
 ## ----test_3d-------------------------------------------------------------
 testing <- plot_pca(norm_expt, num_pc=3)
-silly <- make_3d_pca(testing)
+silly <- plot_3d_pca(testing)
 silly$plot
 
 ## ----normalized_pca------------------------------------------------------
@@ -151,12 +150,12 @@ fission_dis <- plot_disheat(batchnorm_expt)
 fission_dis$plot
 
 ## ----variancePartition---------------------------------------------------
-test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
+test_varpart <- simple_varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 
 ## Here, let us test the variance contributed by strain, time, and replicate.
-test_varpart <- varpart(fission_expt, predictor=NULL, factors=c("condition", "strain", "minute", "replicate"))
+test_varpart <- simple_varpart(fission_expt, predictor=NULL, factors=c("condition", "strain", "minute", "replicate"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 

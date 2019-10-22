@@ -91,7 +91,11 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "basic_pairwise") {
+    ## basic_pairwise() may have columns which are 'numerator_median' or 'numerator_mean'.
     expr_col <- "numerator_median"
+    if (!is.null(pairwise[["all_tables"]][[1]][["numerator_mean"]])) {
+      expr_col <- "numerator_mean"
+    }
     fc_col <- "logFC"  ## The most common
     if (p_type == "adj") {
       p_col <- "adjp"
@@ -199,12 +203,12 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
       table=the_table, expr_col=expr_col, fc_col=fc_col, p_col=p_col,
-      logfc=logfc, p=p, invert=invert)
-    ##...)
+      logfc=logfc, p=p, invert=invert,
+      ...)
     vol_material <- plot_volcano_de(
       table=the_table, fc_col=fc_col, p_col=p_col,
-      logfc=logfc, p=p)
-    ##...)
+      logfc=logfc, p=p,
+      ...)
   }
 
   retlist <- list(
@@ -333,7 +337,7 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     coefficient_df <- coefficients[, c(xname, yname)]
   } else if (type == "basic") {
     coefficient_df <- output[["medians"]]
-    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
+    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
       message("Did not find ", xname, " or ", yname, ".")
       return(NULL)
     }

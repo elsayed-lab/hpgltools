@@ -55,7 +55,8 @@ fission_expt <- create_expt(metadata=meta,
 ## ----simple_subset-------------------------------------------------------
 fun_data <- subset_expt(fission_expt,
                         subset="condition=='wt.120'|condition=='wt.30'")
-fun_norm <- sm(normalize_expt(fun_data, batch="limma", norm="quant",
+fun_filt <- normalize_expt(fun_data, filter="simple")
+fun_norm <- sm(normalize_expt(fun_filt, batch="limma", norm="quant",
                               transform="log2", convert="cpm"))
 
 ## ----simple_limma--------------------------------------------------------
@@ -93,7 +94,7 @@ plots_wt_mut$volcano$plot
 basic_comparison <- sm(basic_pairwise(fun_data))
 summary(basic_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type="basic",
-                                              x="wt30", y="wt120", gvis_filename=NULL)
+                                              x="wt30", y="wt120")
 scatter_wt_mut$scatter
 plots_wt_mut <- extract_de_plots(basic_comparison, type="basic")
 plots_wt_mut$ma$plot
@@ -144,7 +145,7 @@ colnames(pombe_goids) <- c("ID", "GO")
 pombe_goids_simple <- load_biomart_go(species="spombe", overwrite=TRUE,
                                       dl_rows=c("pombase_transcript", "go_id"),
                                       host="fungi.ensembl.org")
-head(pombe_goids_simple)
+head(pombe_goids_simple[["go"]])
 head(pombe_goids)
 
 ## This used to work, but does so no longer and I do not know why.
@@ -212,16 +213,18 @@ tp_result <- sm(simple_topgo(sig_genes=test_genes, go_db=pombe_goids, pval_colum
 tp_result[["pvalue_plots"]][["mfp_plot_over"]]
 tp_result[["pvalue_plots"]][["bpp_plot_over"]]
 
-## ----gst_test, eval=FALSE------------------------------------------------
-#  ## Get rid of those stupid terminal .1s.
-#  rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
-#  pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
-#  ## universe_merge is the column in the final data frame when.
-#  ## gff_type is the field in the gff file providing the id, this may be redundant with
-#  ## universe merge, that is something to check on...
-#  gst_result <- sm(simple_gostats(sig_genes=test_genes, go_db=pombe_goids, universe_merge="id",
-#                                  gff_type="gene",
-#                                  gff="pombe.gff", pval_column="limma_adjp"))
+## ----gst_test------------------------------------------------------------
+## Get rid of those stupid terminal .1s.
+##rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
+pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
+## universe_merge is the column in the final data frame when.
+## gff_type is the field in the gff file providing the id, this may be redundant with
+## universe merge, that is something to check on...
+gst_result <- sm(simple_gostats(sig_genes=test_genes, go_db=pombe_goids, universe_merge="id",
+                                gff_type="gene",
+                                gff="pombe.gff", pval_column="limma_adjp"))
+gst_result[["pvalue_plots"]][["mfp_plot_over"]]
+gst_result[["pvalue_plots"]][["bpp_plot_over"]]
 
 ## ----sysinfo, results="asis"---------------------------------------------
 pander::pander(sessionInfo())

@@ -327,7 +327,7 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1,
       plotting <- plotting[good_cutoff, ]
       good_size <- plotting[["Size"]] >= group_minsize
       plotting <- plotting[good_size, ]
-      pval_order <- order(plotting[["Pvalue"]])
+      pval_order <- order(plotting[["score"]], decreasing=FALSE)
       plotting <- plotting[pval_order, ]
       plotting <- head(plotting, n=n)
       plotting <- plotting[, c("Term", "Pvalue", "score")]
