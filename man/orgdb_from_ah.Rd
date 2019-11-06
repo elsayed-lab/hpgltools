@@ -27,12 +27,9 @@ fragile than I would like.
 }
 \examples{
 \dontrun{
- orgdbi <- mytaxIdToOrgDb(taxid)
+ org <- mytaxIdToOrgDb(species="Leishmania", type="TxDb")
 }
 }
 \seealso{
 \pkg{AnnotationHub} \pkg{S4Vectors}
-}
-\author{
-atb
 }

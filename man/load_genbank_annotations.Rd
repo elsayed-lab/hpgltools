@@ -37,6 +37,3 @@ txdb instance.
 \pkg{genbankr} \pkg{rentrez}
  \code{\link[genbankr]{import}}
 }
-\author{
-atb
-}

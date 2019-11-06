@@ -134,11 +134,11 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, color
       multi <- logged
     }
   }
-  if (class(bon_t) == "try-error") {
-    message("Unable to perform corrected test.")
-  } else {
-    message("Used Bonferroni corrected t test(s) between columns.")
-  }
+##  if (class(bon_t) == "try-error") {
+##    message("Unable to perform corrected test.")
+##  } else {
+##    message("Used Bonferroni corrected t test(s) between columns.")
+##  }
 
   returns <- list(
     "plot" = multi,

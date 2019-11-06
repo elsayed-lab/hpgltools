@@ -50,7 +50,9 @@ and potentially save an extra svg-version of each plot inserted.
 \examples{
  \dontrun{
   fun_plot <- plot_pca(stuff)$plot
-  try_results <- xlsx_plot_png(fun_plot)
+  df <- some_data_frame
+  wb <- write_xlsx(df, excel="funkytown.xlsx")$workbook
+  try_results <- xlsx_plot_png(fun_plot, wb=wb)
 }
 }
 \seealso{

@@ -24,6 +24,3 @@ rather easier to use.
 \details{
 This could probably benefit from a tidyr-ish revisitation.
 }
-\author{
-atb
-}

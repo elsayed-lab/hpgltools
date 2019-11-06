@@ -42,6 +42,3 @@ quality of life.
  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
 }
-\author{
-atb
-}

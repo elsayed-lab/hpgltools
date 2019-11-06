@@ -3,26 +3,33 @@
 #'
 #' Invoking EBSeq is confusing, this should help.
 #'
-#' @param input  Dataframe/vector or expt class containing data, normalization
+#' @param input Dataframe/vector or expt class containing data, normalization
 #'   state, etc.
-#' @param patterns  Set of expression patterns to query.
+#' @param patterns Set of expression patterns to query.
 #' @param ng_vector I think this is for isoform quantification, but am not yet
 #'   certain.
-#' @param rounds  Number of iterations for doing the multi-test
-#' @param target_fdr  Definition of 'significant'
-#' @param method  The default ebseq methodology is to create the set of all
+#' @param rounds Number of iterations for doing the multi-test
+#' @param target_fdr Definition of 'significant'
+#' @param method The default ebseq methodology is to create the set of all
 #'   possible 'patterns' in the data; for data sets which are more than
 #'   trivially complex, this is not tenable, so this defaults to subsetting the
 #'   data into pairs of conditions.
-#' @param norm  Normalization method to use.
-#' @param conditions  Not currently used, but passed from all_pairwise()
-#' @param batches  Not currently used, but passed from all_pairwise()
-#' @param model_cond  Not currently used, but passed from all_pairwise()
+#' @param norm Normalization method to use.
+#' @param conditions Not currently used, but passed from all_pairwise()
+#' @param batches Not currently used, but passed from all_pairwise()
+#' @param model_cond Not currently used, but passed from all_pairwise()
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force ebseq to accept bad data (notably NA containing stuff from proteomics.
 #' @param ... Extra arguments currently unused.
+#' @return List containing tables from ebseq, the conditions tested, and the
+#'   ebseq table of conditions.
+#' @examples
+#'  \dontrun{
+#'   expt <- create_expt(metadata="sample_sheet.xlsx", gene_info=annotations)
+#'   ebseq_de <- ebseq_pairwise(input=expt)
+#' }
 #' @export
 ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
                            batches=NULL, model_cond=NULL, model_intercept=NULL,
@@ -93,8 +100,8 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
 #'   perform before return the de estimates
 #' @param target_fdr If we reach this fdr before iterating rounds times, return.
 #' @param model_batch Provided by all_pairwise()  I do not think a Bayesian
-#'   analysis really care about models, but if one wished to try to add a batch
-#'   factor, do it here.  It is currently ignored though.
+#'   analysis really cares about models, but if one wished to try to add a batch
+#'   factor, this would be the place to do it.  It is currently ignored.
 #' @param model_cond Provided by all_pairwise(), ibid.
 #' @param model_intercept Ibid.
 #' @param alt_model Ibid.

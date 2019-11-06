@@ -30,3 +30,11 @@ This should take either a dataframe or filename for the psi data from suppa,
 along with the same for the average log tpm data (acquired from suppa
 diffSplice with --save_tpm_events)
 }
+\examples{
+ \dontrun{
+ suppa_plot <- plot_suppa(dpsi_file, tmp_file)
+}
+}
+\seealso{
+\code{\link{plot_rmats}}
+}

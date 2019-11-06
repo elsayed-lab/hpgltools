@@ -373,8 +373,8 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
   na_idx <- is.na(data)
   data[na_idx] <- -20
 
-  heatmap.3(data, keysize=2, labRow=row_label, col=heatmap_colors, dendrogram=dendrogram,
-            labCol=expt_names, margins=c(12, 8), trace="none",
+  heatmap.3(data, keysize=0.8, labRow=row_label, col=heatmap_colors, dendrogram=dendrogram,
+            labCol=expt_names, margins=c(12, 8), trace="none", ColSideColors=colors,
             linewidth=0.5, main=title, Rowv=Rowv, Colv=Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   return(hpgl_heatmap_plot)

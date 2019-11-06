@@ -52,7 +52,9 @@ those, it is purposefully stupid.
 }
 \examples{
 \dontrun{
-stupid_de <- basic_pairwise(expt)
+ expt <- create_expt(metadata="sample_sheet.xlsx", gene_info="annotations")
+ basic_de <- basic_pairwise(expt)
+ basic_tables <- combine_de_tables(basic_de)
 }
 }
 \seealso{

@@ -22,6 +22,8 @@ dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
 This seeks to take the peculiar format from KEGGREST for pathway<->genes and
 make it easier to deal with.
 }
-\author{
-atb
+\examples{
+ \dontrun{
+  kegg_df <- load_kegg_annotations(species="cerevisiae")
+}
 }

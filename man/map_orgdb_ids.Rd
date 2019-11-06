@@ -27,7 +27,8 @@ columns for a given set of gene ids using the in a sqlite instance.
 }
 \examples{
 \dontrun{
- host <- map_orgdb_ids(org, c("a","b"))
+ org <- "org.Sneurona.SO.SN1.v42.eg.db"
+ gid_to_ensg <- map_orgdb_ids(org, mapto="ensembl", keytype="gid")
 }
 }
 \seealso{

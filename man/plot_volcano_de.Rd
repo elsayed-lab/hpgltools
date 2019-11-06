@@ -10,7 +10,7 @@ plot_volcano_de(table, alpha = 0.6, color_by = "p",
   gvis_filename = NULL, line_color = "black",
   line_position = "bottom", logfc = 1, p_col = "adj.P.Val",
   p_name = "-log10 p-value", p = 0.05, shapes_by_state = TRUE,
-  size = 2, tooltip_data = NULL, ...)
+  size = 2, tooltip_data = NULL, label = NULL, ...)
 }
 \arguments{
 \item{table}{Dataframe from limma's toptable which includes log(fold change) and an
@@ -46,6 +46,8 @@ interesting.}
 \item{size}{How big are the dots?}
 
 \item{tooltip_data}{Df of tooltip information for gvis.}
+
+\item{label}{Label the top/bottom n logFC values?}
 
 \item{...}{I love parameters!}
 }

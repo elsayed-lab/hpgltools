@@ -30,7 +30,6 @@
 #' \dontrun{
 #'  one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
 #' }
-#' @author atb
 #' @export
 load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
                                    keytype="ensembl", strand_column="cdsstrand",
@@ -198,7 +197,9 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
 #' @examples
 #' \dontrun{
-#'  go_terms <- load_go_terms(org, c("a","b"))
+#'  library(Mus.musculus)
+#'  org <- "Mus.musculus"
+#'  go_terms <- load_orgdb_go(org)
 #' }
 #' @author I think Keith provided the initial implementation of this, but atb
 #'   messed with it pretty extensively.
@@ -303,7 +304,8 @@ load_parasite_annotations <- function(...) {
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
 #' \dontrun{
-#'  host <- map_orgdb_ids(org, c("a","b"))
+#'  org <- "org.Sneurona.SO.SN1.v42.eg.db"
+#'  gid_to_ensg <- map_orgdb_ids(org, mapto="ensembl", keytype="gid")
 #' }
 #' @author Keith Hughitt with changes by atb.
 #' @export
@@ -351,8 +353,14 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
 #' IDs.  This will hopefully find them.
 #'
 #' @param ids Set of gene IDs to seek.
-#' @param orgdb  Orgdb instance to iterate through.
+#' @param orgdb Orgdb instance to iterate through.
 #' @return Likely keytype which provides the desired IDs.
+#' @examples
+#'  \dontrun{
+#'   orgdb <- "org.Sneurona.SO.SN1.v42.eg.db"
+#'   ids <- c("SNRNA_01", "SNRNA_02")
+#'   chosen_column <- guess_orgdb_keytype(ids, orgdb)
+#' }
 #' @export
 guess_orgdb_keytype <- function(ids, orgdb) {
   found_ids <- 0
@@ -386,17 +394,16 @@ guess_orgdb_keytype <- function(ids, orgdb) {
 #' non-obnoxious biomart.  But for the moment, this function is more
 #' fragile than I would like.
 #'
-#' @param ahid  TaxonID from AnnotationHub
-#' @param title  Title for the annotation hub instance
-#' @param species  Species to download
-#' @param type  Datatype to download
+#' @param ahid TaxonID from AnnotationHub
+#' @param title Title for the annotation hub instance
+#' @param species Species to download
+#' @param type Datatype to download
 #' @return An Orgdb instance
 #' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
 #' @examples
 #' \dontrun{
-#'  orgdbi <- mytaxIdToOrgDb(taxid)
+#'  org <- mytaxIdToOrgDb(species="Leishmania", type="TxDb")
 #' }
-#' @author atb
 #' @export
 orgdb_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
   ## Other available types:

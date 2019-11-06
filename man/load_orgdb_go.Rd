@@ -32,7 +32,9 @@ may use a lot of different ID types and still score some useful ontology data.
 }
 \examples{
 \dontrun{
- go_terms <- load_go_terms(org, c("a","b"))
+ library(Mus.musculus)
+ org <- "Mus.musculus"
+ go_terms <- load_orgdb_go(org)
 }
 }
 \seealso{

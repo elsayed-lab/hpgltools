@@ -34,3 +34,11 @@ A funky list by chromosome containing:  'medians', the median number
 I like this function.  It generates an exhaustive catalog of the snps by
 chromosome for all the various categories as defined by factor.
 }
+\examples{
+  \dontrun{
+ expt <- create_expt(metadata, gene_information)
+ snp_expt <- count_expt_snps(expt)
+ snp_sets <- get_snp_sets(snp_expt, factor="condition")
+ ## This assumes a column in the metadata for the expt named 'condition'.
+}
+}

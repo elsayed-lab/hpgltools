@@ -22,7 +22,7 @@ print_ups_downs(upsdowns, wb = NULL,
 \item{ma}{Include ma plots?}
 }
 \value{
-Return from write_xls.
+Return from write_xlsx.
 }
 \description{
 I found myself needing to reprint these excel sheets because I

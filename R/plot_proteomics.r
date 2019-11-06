@@ -259,7 +259,10 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
 
     row_condition <- as.character(metadata[i, "condition"])
     row_color <- colors[i]
-    if (type == "count") {
+    if (type == "protein_count") {
+      proteins <- length(unique(plotted_table[["proteinname"]]))
+      row <- c(name, proteins, row_condition, row_color)
+    } else if (type == "count") {
       ## Taking nrow is a simplistic way to count the number of identifications.
       row <- c(name, nrow(plotted_table), row_condition, row_color)
     } else if (type == "intensity") {
@@ -491,14 +494,6 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   if (!is.null(title)) {
     boxplot <- boxplot + ggplot2::ggtitle(title)
   }
-  scale <- "log"
-  if (scale == "log") {
-    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
-  } else if (scale == "logdim") {
-    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
-  } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
-  }
 
   density <- ggplot(data=plot_df, ggplot2::aes_string(x=column, colour="sample")) +
     ggplot2::geom_density(aes_string(x=column, y="..count..", fill="sample"),
@@ -525,6 +520,20 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
     ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
                          size=2, alpha=0.2)
 
+  if (scale == "log") {
+    boxplot <- boxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+    dotboxplot <- dotboxplot + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+    violin <- violin + ggplot2::scale_y_continuous(trans=scales::log2_trans())
+  } else if (scale == "logdim") {
+    boxplot <- boxplot + ggplot2::coord_trans(y="log2")
+    dotboxplot <- dotboxplot + ggplot2::coord_trans(y="log2")
+    violin <- violin + ggplot2::coord_trans(y="log2")
+  } else if (isTRUE(scale)) {
+    boxplot <- boxplot + ggplot2::scale_y_log10()
+    dotboxplot <- dotboxplot + ggplot2::scale_y_log10()
+    violin <- violin + ggplot2::scale_y_log10()
+  }
+
   retlist <- list(
     "violin" = violin,
     "boxplot" = boxplot,
@@ -549,12 +558,14 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
 #' @param protein chosen protein(s) to plot.
 #' @param title Title the plot?
 #' @param scale Put the data on a specific scale?
+#' @param legend Include the legend?
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real=TRUE,
                                    keep_decoys=TRUE, expt_names=NULL, label_chars=10,
-                                   protein=NULL, title=NULL, scale=NULL, ...) {
+                                   protein=NULL, title=NULL, scale=NULL, legend=NULL,
+                                   ...) {
   arglist <- list(...)
 
   metadata <- pyprophet_data[["metadata"]]
@@ -644,6 +655,10 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   }
 
   plot_df[["sample"]] <- factor(plot_df[["sample"]], levels=color_names)
+  observations_by_sample <- table(plot_df[["sample"]])
+  nonzero_observations <- observations_by_sample > 0
+  observations_by_sample <- observations_by_sample[nonzero_observations]
+  sum_obs <- sum(observations_by_sample)
 
   violin <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
     ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
@@ -655,7 +670,11 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     ggplot2::xlab("Sample") +
     ggplot2::ylab(column) +
     ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
-                         size=2, alpha=0.5)
+                         size=2, alpha=0.5) +
+    ggplot2::annotate("text", x=1:length(observations_by_sample),
+                      y=max(plot_df[[column]] + (0.2 * max(plot_df[[column]]))),
+                      label=as.character(observations_by_sample)) +
+    ggplot2::labs(caption=glue::glue("Number observed peptides in all samples: {sum_obs}"))
   if (!is.null(title)) {
     violin <- violin + ggplot2::ggtitle(title)
   }
@@ -669,30 +688,36 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   } else if (isTRUE(scale)) {
     violin <- violin + ggplot2::scale_y_log10()
   }
+  if (is.null(legend)) {
+    violin <- violin + ggplot2::theme(legend.position="none")
+  }
 
   return(violin)
 }
 
-#' Plot some data from the result of extract_peprophet_data()
+#' Plot some data from the result of extract_pyprophet_data()
 #'
 #' extract_pyprophet_data() provides a ridiculously large data table of a scored
 #' openswath data after processing by pyprophet.
 #'
-#' @param pyprophet_data  List of pyprophet data, one element for each sample,
-#'   taken from  extract_peprophet_data()
-#' @param xaxis  Column to plot on the x-axis
+#' @param pyprophet_data List of pyprophet data, one element for each sample,
+#'   taken from extract_peprophet_data()
+#' @param xaxis Column to plot on the x-axis
 #' @param xscale Change the scale of the x-axis?
-#' @param yaxis  guess!
-#' @param yscale  Change the scale of the y-axis?
-#' @param alpha  How see-through to make the dots?
-#' @param legend  Include a legend of samples?
-#' @param size_column  Use a column for scaling the sizes of dots in the plot?
+#' @param yaxis guess!
+#' @param yscale Change the scale of the y-axis?
+#' @param alpha How see-through to make the dots?
+#' @param color_by Change the colors of the points either by sample or condition?
+#' @param legend Include a legend of samples?
+#' @param sample Which sample(s) to include?
+#' @param size_column Use a column for scaling the sizes of dots in the plot?
+#' @param rug Add a distribution rug to the axes?
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
-plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
-                                yaxis="leftwidth", yscale=NULL, alpha=0.4,
-                                legend=TRUE, size_column="mscore", ...) {
+plot_pyprophet_points <- function(pyprophet_data, xaxis="mass", xscale=NULL, sample=NULL,
+                                  yaxis="leftwidth", yscale=NULL, alpha=0.4, color_by="sample",
+                                  legend=TRUE, size_column="mscore", rug=TRUE, ...) {
   arglist <- list(...)
 
   metadata <- pyprophet_data[["metadata"]]
@@ -706,21 +731,33 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
     if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
-    keepers <- c(keepers, i)
     message("Adding ", name)
     plotted_table <- sample_data[[i]]
     plotted_table[["sample"]] <- name
-    plot_df <- rbind(plot_df, plotted_table)
+    if (is.null(sample)) {
+      keepers <- c(keepers, i)
+      plot_df <- rbind(plot_df, plotted_table)
+    } else {
+      if (name %in% sample) {
+        keepers <- c(keepers, i)
+        plot_df <- rbind(plot_df, plotted_table)
+      }
+    }
   }
+  samples <- length(keepers)
 
   ## Drop rows from the metadata and colors which had errors.
   metadata <- metadata[keepers, ]
+  ## These colors are by condition.
   colors <- colors[keepers]
-
-  chosen_palette <- "Dark2"
-  sample_colors <- sm(
-    grDevices::colorRampPalette(
-                 RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+  if (color_by == "sample") {
+    chosen_palette <- "Dark2"
+    sample_colors <- sm(
+      grDevices::colorRampPalette(
+                   RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+  } else {
+    sample_colors <- colors
+  }
 
   ## Randomize the rows of the df so we can see if any sample is actually overrepresented
   plot_df <- plot_df[sample(nrow(plot_df)), ]
@@ -763,6 +800,9 @@ plot_pyprophet_data <- function(pyprophet_data, xaxis="mass", xscale=NULL,
   if (!isTRUE(legend)) {
     x_vs_y <- x_vs_y +
       ggplot2::theme(legend.position="none")
+  }
+  if (isTRUE(rug)) {
+    x_vs_y <- x_vs_y + ggplot2::geom_rug(colour="gray50", alpha=alpha)
   }
   retlist <- list(
     "data" = plot_df,

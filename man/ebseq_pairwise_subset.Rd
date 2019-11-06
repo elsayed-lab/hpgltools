@@ -20,8 +20,8 @@ perform before return the de estimates}
 \item{target_fdr}{If we reach this fdr before iterating rounds times, return.}
 
 \item{model_batch}{Provided by all_pairwise()  I do not think a Bayesian
-analysis really care about models, but if one wished to try to add a batch
-factor, do it here.  It is currently ignored though.}
+analysis really cares about models, but if one wished to try to add a batch
+factor, this would be the place to do it.  It is currently ignored.}
 
 \item{model_cond}{Provided by all_pairwise(), ibid.}
 

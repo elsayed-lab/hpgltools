@@ -56,6 +56,3 @@ keep the annotation sets relatively consistent.
   \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
   \code{\link[biomaRt]{getBM}}
 }
-\author{
-atb
-}

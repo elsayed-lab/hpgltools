@@ -45,7 +45,8 @@
 #' @seealso \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#'  pretend = edger_pairwise(data, conditions, batches)
+#'  expt <- create_expt(metadata="metadata.xlsx", gene_info=annotations)
+#'  pretend <- edger_pairwise(expt, model_batch="sva")
 #' }
 #' @export
 edger_pairwise <- function(input=NULL, conditions=NULL,
@@ -246,7 +247,14 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   return(retlist)
 }
 
-## Taken from the tximport manual with minor modification.
+#' Import tximport information into edgeR.
+#'
+#' This was taken from the tximport manual with minor modifications.
+#'
+#' @param data data to be coerced into edgeR.
+#' @param conditions Set of conditions used to make the DGEList.
+#' @param tximport Tell this if the data is actually coming from tximport.
+#' @return Hopefully valid DGEList for edgeR.
 import_edger <- function(data, conditions, tximport=NULL) {
   if (is.null(tximport)) {
     raw <- edgeR::DGEList(counts=data, group=conditions)
@@ -268,14 +276,14 @@ import_edger <- function(data, conditions, tximport=NULL) {
 #'
 #' Tested in test_26edger.R
 #'
-#' @param data  Output from deseq_pairwise()
-#' @param ...  Options for writing the xlsx file.
+#' @param data Output from deseq_pairwise()
+#' @param ... Options for writing the xlsx file.
 #' @seealso \pkg{limma}
-#'  \code{\link[limma]{toptable}} \code{\link{write_xls}}
+#'  \code{\link[limma]{toptable}} \code{\link{write_xlsx}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- edger_pairwise(expressionset)
-#'  data_list <- write_edger(finished_comparison)
+#'  data_list <- write_edger(finished_comparison, excel="edger_result.xlsx")
 #' }
 #' @export
 write_edger <- function(data, ...) {

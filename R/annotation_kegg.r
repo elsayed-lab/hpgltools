@@ -6,11 +6,10 @@
 #'
 #' This could probably benefit from a tidyr-ish revisitation.
 #'
-#' @param vector  Information from KEGGREST
-#' @param final_colname  Column name for the new information
+#' @param vector Information from KEGGREST
+#' @param final_colname Column name for the new information
 #' @param flatten Flatten nested data?
-#' @return  A normalized data frame of gene IDs to whatever.
-#' @author atb
+#' @return A normalized data frame of gene IDs to whatever.
 kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
   final_df <- data.frame(stringsAsFactors=FALSE)
   if (isTRUE(flatten)) {
@@ -53,12 +52,15 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
 #' This seeks to take the peculiar format from KEGGREST for pathway<->genes and
 #' make it easier to deal with.
 #'
-#' @param species  String to use to query KEGG abbreviation.
-#' @param abbreviation  If you already know the abbreviation, use it.
-#' @param flatten  Flatten nested tables?
-#' @return  dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
+#' @param species String to use to query KEGG abbreviation.
+#' @param abbreviation If you already know the abbreviation, use it.
+#' @param flatten Flatten nested tables?
+#' @return dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
 #'   and KEGG paths.
-#' @author atb
+#' @examples
+#'  \dontrun{
+#'   kegg_df <- load_kegg_annotations(species="cerevisiae")
+#' }
 #' @export
 load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
@@ -137,7 +139,9 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
 #'  \code{\link[KEGGREST]{keggGet}}
 #' @examples
 #' \dontrun{
-#' ensembl_list <- kegg_to_ensembl("a")
+#'  kegg_df <- load_kegg_annotations(species="coli")
+#'  kegg_ids <- kegg_df[["kegg_geneid"]]
+#'  ensembl_list <- kegg_to_ensembl(kegg_ids)
 #' }
 #' @export
 map_kegg_dbs <- function(kegg_ids) {

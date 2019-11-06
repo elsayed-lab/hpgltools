@@ -13,6 +13,14 @@
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
 #' @return A new expt object
+#' @examples
+#'   \dontrun{
+#'  expt <- create_expt(metadata, gene_information)
+#'  snp_expt <- count_expt_snps(expt)
+#'  ## This assumes that the metadata has a column named 'bcftable' with one file per
+#'  ## cell.  These files in turn should have a column named 'diff_count' which will
+#'  ## be the source of the numbers found when doing exprs(snp_expt).
+#' }
 #' @export
 count_expt_snps <- function(expt, type="counts", annot_column="bcftable", tolower=TRUE,
                             snp_column="diff_count") {
@@ -74,6 +82,11 @@ they probably came from an older version of this method.")
     new_expt <- expt
     new_expt[["expressionset"]] <- expressionset
     new_expt[["original_expressionset"]] <- expressionset
+    ## Make a matrix where the existence of a variant is 1 vs. 0.
+    mtrx <- exprs(expressionset)
+    idx <- mtrx > 0
+    mtrx[idx] <- 1
+    new_expt[["variants"]] <- mtrx
     return(new_expt)
 }
 
@@ -116,6 +129,13 @@ get_individual_snps <- function(retlist) {
 #'  of snp densities with respect to chromosomes.  Note that this last one is
 #'  approximate as I just calculate with the largest chromosome position
 #'  number, not the explicit number of nucleotides in the chromosome.
+#' @examples
+#'   \dontrun{
+#'  expt <- create_expt(metadata, gene_information)
+#'  snp_expt <- count_expt_snps(expt)
+#'  snp_sets <- get_snp_sets(snp_expt, factor="condition")
+#'  ## This assumes a column in the metadata for the expt named 'condition'.
+#' }
 #' @export
 get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
                          do_save=FALSE, savefile="variants.rda") {
@@ -234,8 +254,15 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
 
 #' Read the output from bcfutils into a count-table-esque
 #'
-#' I put all my bcfutils output files into one directory, so hunt them down and
-#' read them into a data table.
+#' Previously, I put all my bcfutils output files into one directory.  This
+#' function would iterate through every file in that directory and add the
+#' contents as columns to this growing data table.  Now it works by accepting a
+#' list of filenames (presumably kept in the metadata for the experiment) and
+#' reading them into the data table.  It is worth noting that it can accept
+#' either a column name or index -- which when you think about it is pretty much
+#' always true, but in this context is particularly interesting since I changed
+#' the names of all the columns when I rewrote this functionality.
+#'
 #' @param samples Sample names to read.
 #' @param file_lst Set of files to read.
 #' @param column Column from the bcf file to read.
@@ -394,10 +421,10 @@ samtools_snp_coverage <- function(expt, type="counts", input_dir="preprocessing/
 #' The real worker.  This extracts positions for a single chromosome and puts
 #' them into a parallelizable data structure.
 #'
-#' @param medians  A set of medians by position to look through
-#' @param chr_name  Chromosome name to search
-#' @param limit  Minimum number of median hits/position to count as a snp.
-#' @return  A fun list by chromosome!
+#' @param medians A set of medians by position to look through
+#' @param chr_name Chromosome name to search
+#' @param limit Minimum number of median hits/position to count as a snp.
+#' @return A list of variant positions where each element is one chromosome.
 snp_by_chr <- function(medians, chr_name="01", limit=1) {
     set_names <- list()
     possibilities <- c()
@@ -458,14 +485,22 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #' observed with respect to each chromosome and with respect to each annotated
 #' sequence (currently this is limited to CDS, but that is negotiable).
 #'
-#' @param expt  The original expressionset.  This provides the annotation data.
-#' @param snp_result  The result from get_snp_sets or count_expt_snps.
+#' @param expt The original expressionset.  This provides the annotation data.
+#' @param snp_result The result from get_snp_sets or count_expt_snps.
 #' @param chr_column Column in the annotation with the chromosome names.
 #' @return List containing the set of intersections in the conditions contained
 #'   in snp_result, the summary of numbers of variants per chromosome, and
 #'   summary of numbers per gene.
+#' @seealso \code{\link{snp_vs_genes}}
+#' @examples
+#'  \dontrun{
+#'  expt <- create_expt(metadata, gene_information)
+#'  snp_expt <- count_expt_snps(expt)
+#'  snp_result <- get_snp_sets(snp_expt)
+#'  intersections <- snps_vs_intersections(expt, snp_result)
+#' }
 #' @export
-snps_vs_intersections <- function(expt, snp_result, chr_column="seqnames") {
+snps_intersections <- function(expt, snp_result, chr_column="seqnames") {
     features <- fData(expt)
     features[["start"]] <- sm(as.numeric(features[["start"]]))
     na_starts <- is.na(features[["start"]])
@@ -522,13 +557,25 @@ snps_vs_intersections <- function(expt, snp_result, chr_column="seqnames") {
     return(retlist)
 }
 
-#' Make a summary of the observed snps/gene
+#' Make a summary of the observed snps by gene ID.
 #'
-#' @param expt  The original expressionset
-#' @param snp_result  The result from get_snp_sets()
-#' @param start_col  Which column provides the start of each gene?
-#' @param end_col  and the end column of each gene?
-#' @return a fun list with some information by gene.
+#' Instead of cross referencing variant positions against experimental
+#' condition, one might be interested in seeing what variants are observed per
+#' gene.  This function attempts to answer that question.
+#'
+#' @param expt The original expressionset.
+#' @param snp_result The result from get_snp_sets().
+#' @param start_col Which column provides the start of each gene?
+#' @param end_col and the end column of each gene?
+#' @return List with some information by gene.
+#' @seealso \code{\link{snp_intersections}}
+#' @examples
+#'  \dontrun{
+#'  expt <- create_expt(metadata, gene_information)
+#'  snp_expt <- count_expt_snps(expt)
+#'  snp_result <- get_snp_sets(snp_expt)
+#'  gene_intersections <- snps_vs_genes(expt, snp_result)
+#' }
 #' @export
 snps_vs_genes <- function(expt, snp_result, start_col="start", end_col="end") {
     features <- fData(expt)

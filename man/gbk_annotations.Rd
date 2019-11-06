@@ -35,6 +35,3 @@ useful tasks one can do here, check out snp.r.
 \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
  \code{\link[AnnotationDbi]{select}}
 }
-\author{
-atb
-}

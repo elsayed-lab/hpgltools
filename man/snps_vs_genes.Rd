@@ -2,22 +2,35 @@
 % Please edit documentation in R/variants.r
 \name{snps_vs_genes}
 \alias{snps_vs_genes}
-\title{Make a summary of the observed snps/gene}
+\title{Make a summary of the observed snps by gene ID.}
 \usage{
 snps_vs_genes(expt, snp_result, start_col = "start", end_col = "end")
 }
 \arguments{
-\item{expt}{The original expressionset}
+\item{expt}{The original expressionset.}
 
-\item{snp_result}{The result from get_snp_sets()}
+\item{snp_result}{The result from get_snp_sets().}
 
 \item{start_col}{Which column provides the start of each gene?}
 
 \item{end_col}{and the end column of each gene?}
 }
 \value{
-a fun list with some information by gene.
+List with some information by gene.
 }
 \description{
-Make a summary of the observed snps/gene
+Instead of cross referencing variant positions against experimental
+condition, one might be interested in seeing what variants are observed per
+gene.  This function attempts to answer that question.
+}
+\examples{
+ \dontrun{
+ expt <- create_expt(metadata, gene_information)
+ snp_expt <- count_expt_snps(expt)
+ snp_result <- get_snp_sets(snp_expt)
+ gene_intersections <- snps_vs_genes(expt, snp_result)
+}
+}
+\seealso{
+\code{\link{snp_intersections}}
 }

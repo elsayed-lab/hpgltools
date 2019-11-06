@@ -70,7 +70,8 @@ the force argument will round the data and shoe-horn it into EdgeR.
 }
 \examples{
 \dontrun{
- pretend = edger_pairwise(data, conditions, batches)
+ expt <- create_expt(metadata="metadata.xlsx", gene_info=annotations)
+ pretend <- edger_pairwise(expt, model_batch="sva")
 }
 }
 \seealso{

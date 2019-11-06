@@ -61,6 +61,3 @@ or pathological can pass it 'all'.
  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 }
-\author{
-atb
-}

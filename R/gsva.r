@@ -461,7 +461,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #'   should revisit it?
 #' @export
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
-                        cores=0, current_id="ENSEMBL", required_id="ENTREZID",
+                        cores=1, current_id="ENSEMBL", required_id="ENTREZID",
                         orgdb="org.Hs.eg.db", method="gsva", kcdf=NULL, ranking=FALSE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {

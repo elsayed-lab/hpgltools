@@ -9,8 +9,8 @@
 #' txdb instance.
 #'
 #' @param accession Accession to download and import
-#' @param reread  Re-read (download) the file from genbank
-#' @param savetxdb  Attempt saving a txdb object?
+#' @param reread Re-read (download) the file from genbank
+#' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
 #'   haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
@@ -19,7 +19,6 @@
 #' \dontrun{
 #'  txdb_result <- load_genbank_annotations(accession="AE009948", savetxdb=TRUE)
 #' }
-#' @author atb
 #' @export
 load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
   gbk <- NULL
@@ -72,7 +71,6 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 #'  annotations <- gbk_annotations("saureus_txdb")
 #' }
 #' @export
-#' @author atb
 gbk_annotations <- function(gbr) {
   ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
   genes <- AnnotationDbi::keys(gbr)
@@ -99,7 +97,7 @@ gbk_annotations <- function(gbr) {
 #' a few defaults so that it hopefully fails less often.
 #'
 #' @param accessions An accession -- actually a set of them.
-#' @param write  Write the files?  Otherwise return a list of the strings
+#' @param write Write the files?  Otherwise return a list of the strings
 #' @return A list containing the number of files downloaded and the character
 #'   strings acquired.
 #' @seealso \pkg{ape}

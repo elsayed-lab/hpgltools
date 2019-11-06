@@ -21,9 +21,6 @@ them into a format usable in an expressionset.
 \examples{
 \dontrun{
  annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
- expt <- create_expt(metadata=metadata.xlsx, gene_info=annotation_dt)
+ expt <- create_expt(metadata="metadata.xlsx", gene_info=annotation_dt)
 }
-}
-\author{
-atb
 }

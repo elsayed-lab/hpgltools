@@ -52,6 +52,3 @@ humans.
 \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
  \code{\link[biomaRt]{useMart}}
 }
-\author{
-atb
-}

@@ -18,3 +18,10 @@ Likely keytype which provides the desired IDs.
 Sometimes, one does not know what the correct keytype is for a given set of
 IDs.  This will hopefully find them.
 }
+\examples{
+ \dontrun{
+  orgdb <- "org.Sneurona.SO.SN1.v42.eg.db"
+  ids <- c("SNRNA_01", "SNRNA_02")
+  chosen_column <- guess_orgdb_keytype(ids, orgdb)
+}
+}

@@ -1529,7 +1529,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     expression_table <- merge(expression_table, errors, by="row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
-    expression_written <- write_xls(
+    expression_written <- write_xlsx(
       data=expression_table,
       sheet="expression_values",
       title="Values comprising the logFCs and errors (expression / t-statistic)")

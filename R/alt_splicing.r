@@ -4,14 +4,19 @@
 #' along with the same for the average log tpm data (acquired from suppa
 #' diffSplice with --save_tpm_events)
 #'
-#' @param dpsi  Table provided by suppa containing all the metrics.
-#' @param tpm  Table provided by suppa containing all the tpm values.
-#' @param events  List of event types to include.
-#' @param psi  Limit the set of included events by psi value?
-#' @param sig_threshold  Use this significance threshold.
-#' @param label_type  Choose a type of event to label.
-#' @param alpha  How see-through should the points be in the plot?
-#' @return  List containing the plot and some of the requisite data.
+#' @param dpsi Table provided by suppa containing all the metrics.
+#' @param tpm Table provided by suppa containing all the tpm values.
+#' @param events List of event types to include.
+#' @param psi Limit the set of included events by psi value?
+#' @param sig_threshold Use this significance threshold.
+#' @param label_type Choose a type of event to label.
+#' @param alpha How see-through should the points be in the plot?
+#' @return List containing the plot and some of the requisite data.
+#' @seealso \code{\link{plot_rmats}}
+#' @examples
+#'  \dontrun{
+#'  suppa_plot <- plot_suppa(dpsi_file, tmp_file)
+#' }
 #' @export
 plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
                        label_type=NULL, alpha=0.7) {
@@ -197,15 +202,21 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
 #' Suppa provides a tremendous amount of output, this attempts to standardize
 #' those results and print them to an excel sheet.
 #'
-#' @param table  Result table from suppa.
-#' @param annotations  Set of annotation data to include with the suppa result.
-#' @param by_table  Use this column to merge the annotations and data tables from
+#' @param table Result table from suppa.
+#' @param annotations Set of annotation data to include with the suppa result.
+#' @param by_table Use this column to merge the annotations and data tables from
 #'   the perspective of the data table.
-#' @param by_annot  Use this column to merge the annotations and data tables
+#' @param by_annot Use this column to merge the annotations and data tables
 #'   from the perspective of the annotations.
-#' @param columns  Choose a subset of columns to include, or leave the defaults.
-#' @param excel  Provide an excel file to write.
-#' @return  Data frame of the merged data.
+#' @param columns Choose a subset of columns to include, or leave the defaults.
+#' @param excel Provide an excel file to write.
+#' @return Data frame of the merged data.
+#' @examples
+#'  \dontrun{
+#'  prettier_table <- write_suppa_table(suppa_result_file,
+#'                                      annotations=gene_info,
+#'                                      excel="excel/pretty_suppa_table.xlsx")
+#' }
 #' @export
 write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
                               by_annot="ensembl_gene_id",
@@ -234,26 +245,30 @@ write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
   full_table <- full_table[, chosen_columns, with=FALSE]
   xls_data <- as.data.frame(full_table)
   ## Now coerce numeric columns
-  xlsx_result <- write_xls(data=xls_data, excel=excel)
+  xlsx_result <- write_xlsx(data=xls_data, excel=excel)
   return(xls_data)
 }
 
-#' Given some psi and tpm data from suppa, make a pretty plot!
+#' Given some psi and tpm data from rMATS, make a pretty plot!
 #'
-#' This should take either a dataframe or filename for the psi data from suppa,
-#' along with the same for the average log tpm data (acquired from suppa
-#' diffSplice with --save_tpm_events)
+#' This should take either a dataframe or filename for the psi data from rMATS.
+#' This was mostly copy/pasted from plot_suppa().
 #'
-#' @param se  Table of skipped exon data from rmats.
-#' @param a5ss  Table of alternate 5p exons.
-#' @param a3ss  Table of alternate 3p exons.
-#' @param mxe  Table of alternate exons.
-#' @param ri  Table of retained introns.
-#' @param sig_threshold  Use this significance threshold.
-#' @param dpsi_threshold  Use a delta threshold.
-#' @param label_type  Choose a type of event to label.
-#' @param alpha  How see-through should the points be in the plot?
-#' @return  List containing the plot and some of the requisite data.
+#' @param se Table of skipped exon data from rmats.
+#' @param a5ss Table of alternate 5p exons.
+#' @param a3ss Table of alternate 3p exons.
+#' @param mxe Table of alternate exons.
+#' @param ri Table of retained introns.
+#' @param sig_threshold Use this significance threshold.
+#' @param dpsi_threshold Use a delta threshold.
+#' @param label_type Choose a type of event to label.
+#' @param alpha How see-through should the points be in the plot?
+#' @return List containing the plot and some of the requisite data.
+#' @seealso \code{\link{plot_suppa}}
+#' @examples
+#'  \dontrun{
+#'  rmats_plot <- plot_rmats(se_table, a5_table, a3_table)
+#' }
 #' @export
 plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
                        sig_threshold=0.05, dpsi_threshold=0.7,

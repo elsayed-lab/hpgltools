@@ -30,3 +30,10 @@ Data frame of the merged data.
 Suppa provides a tremendous amount of output, this attempts to standardize
 those results and print them to an excel sheet.
 }
+\examples{
+ \dontrun{
+ prettier_table <- write_suppa_table(suppa_result_file,
+                                     annotations=gene_info,
+                                     excel="excel/pretty_suppa_table.xlsx")
+}
+}

@@ -1573,7 +1573,7 @@ read_metadata <- function(file, ...) {
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
-  colnames(definitions) <- gsub(pattern="[[:punct:]]", replace="", x=colnames(definitions))
+  colnames(definitions) <- gsub(pattern="[[:punct:]]", replacement="", x=colnames(definitions))
   return(definitions)
 }
 
@@ -1858,6 +1858,7 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
   ## the conditions and I do not know why.
   if (!is.null(ids)) {
     ## Change specific id(s) to given condition(s).
+    message("Setting condition for ids ", toString(ids), " to ", fact, ".")
     old_pdata <- pData(expt)
     old_cond <- as.character(old_pdata[["condition"]])
     names(old_cond) <- rownames(old_pdata)
@@ -1865,7 +1866,7 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     new_cond[ids] <- fact
     new_pdata <- old_pdata
     new_pdata[["condition"]] <- as.factor(new_cond)
-    pData(expt[["expressionset"]]) <- new_pdata
+    pData(new_expt[["expressionset"]]) <- new_pdata
     new_conditions <- as.character(new_expt[["conditions"]])
     names(new_conditions) <- names(new_expt[["conditions"]])
     new_conditions[ids] <- fact
@@ -2305,12 +2306,24 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
-  plot_dim <- 6
-  plot_cols <- floor(plot_dim * 1.5)
-  plot_rows <- ceiling(plot_dim * 5.0)
   new_row <- 1
   new_col <- 1
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+
+  ## For medians_by_condition, put the counts or annotations first?
+  merge_order == "counts_first"
+  if (!is.null(arglist[["merge_order"]])) {
+    merge_order <- arglist[["merge_order"]]
+  }
+
+  ## I think the plot dimensions should increase as the number of samples increase
+  plot_dim <- 6
+  num_samples <- ncol(exprs(expt))
+  if (num_samples > 12) {
+    plot_dim <- ceiling(num_samples / 4)
+  }
+  plot_cols <- floor(plot_dim * 1.5)
+  plot_rows <- ceiling(plot_dim * 5.0)
 
   ## Write an introduction to this foolishness.
   message("Writing the first sheet, containing a legend and some summary data.")
@@ -2327,12 +2340,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
-  xls_result <- write_xls(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xlsx(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
   annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
-  xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
+  xls_result <- write_xlsx(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
@@ -2340,13 +2353,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                               ...))
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
-  xls_result <- write_xls(data=libsizes, wb=wb, start_row=new_row,
+  xls_result <- write_xlsx(data=libsizes, wb=wb, start_row=new_row,
                           rownames=FALSE, sheet=sheet, start_col=1,
                           title="Library sizes.")
 
   new_row <- new_row + nrow(libsizes) + 3
   libsize_summary <- as.data.frame(metrics[["libsize_summary"]])
-  xls_result <- write_xls(data=libsize_summary, wb=wb, start_row=new_row,
+  xls_result <- write_xlsx(data=libsize_summary, wb=wb, start_row=new_row,
                           rownames=FALSE, sheet=sheet, start_col=1,
                           title="Library size summary.")
 
@@ -2363,7 +2376,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     colnames(info)[ridx] <- "old_row_names"
   }
   read_info <- merge(info, reads, by="row.names")
-  xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xlsx(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
                           start_row=new_row, start_col=new_col, title="Raw Reads.")
 
   ## Write some graphs for the raw data
@@ -2549,8 +2562,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
-    varpart_raw <- try(simple_varpart(
-      expt, predictor=NULL, factors=c("condition", "batch")))
+    varpart_raw <- suppressWarnings(try(simple_varpart(
+      expt, predictor=NULL, factors=c("condition", "batch"))))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2573,14 +2586,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet, "Raw PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_row=new_row, start_col=new_col)
 
   ## Move on to the next sheet, normalized data
@@ -2595,7 +2608,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   info <- fData(norm_data)
   read_info <- merge(norm_reads, info, by="row.names")
   title <- what_happened(norm_data)
-  xls_result <- write_xls(wb=wb, data=read_info, rownames=FALSE,
+  xls_result <- write_xlsx(wb=wb, data=read_info, rownames=FALSE,
                           start_row=new_row, start_col=new_col, sheet=sheet, title=title)
 
   ## Graphs of the normalized data
@@ -2752,8 +2765,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL,
-                                       factors=c("condition", "batch")))
+    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, predictor=NULL,
+                                       factors=c("condition", "batch"))))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2775,14 +2788,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
+  xls_result <- write_xlsx(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
                           rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
@@ -2793,8 +2806,15 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- 1
   median_data <- sm(median_by_factor(exprs(norm_data),
                                      fact=norm_data[["conditions"]]))
-  median_data_merged <- merge(median_data, info, by="row.names")
-  xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
+  median_data_merged <- data.frame()
+  if (merge_order == "annot_first") {
+    median_data_merged <- merge(info, median_data, by.x="row.names", by.y="row.names")
+  } else {
+    median_data_merged <- merge(median_data, info, by.x="row.names", by.y="row.names")
+  }
+  rownames(median_data_merged) <- median_data_merged[["Row.names"]]
+  median_data_merged[["Row.names"]] <- NULL
+  xls_result <- write_xlsx(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
 
   ## Save the result
@@ -2805,7 +2825,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "annotations" = info,
     "raw_reads" = reads,
     "design" = annot,
-    "legend" = legend_plot,
+    "legend_plot" = legend_plot,
     "raw_libsize" = libsize_plot,
     "raw_nonzero" = nonzero_plot,
     "raw_density" = density_plot,

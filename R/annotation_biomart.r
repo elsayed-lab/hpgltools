@@ -9,20 +9,20 @@
 #' it fails to see if there are more appropriate marts, datasets, and columns to
 #' download.
 #'
-#' @param species  Choose a species.
-#' @param overwrite  Overwite an existing save file?
-#' @param do_save  Create a savefile of annotations for future runs?
-#' @param host  Ensembl hostname to use.
-#' @param drop_haplotypes  Some chromosomes have stupid names because they are
+#' @param species Choose a species.
+#' @param overwrite Overwite an existing save file?
+#' @param do_save Create a savefile of annotations for future runs?
+#' @param host Ensembl hostname to use.
+#' @param drop_haplotypes Some chromosomes have stupid names because they are
 #'   from non-standard haplotypes and they should go away.  Setting this to
 #'   false stops that.
-#' @param trymart  Biomart has become a circular dependency, this makes me sad,
+#' @param trymart Biomart has become a circular dependency, this makes me sad,
 #'   now to list the marts, you need to have a mart loaded.
-#' @param trydataset  Choose the biomart dataset from which to query.
-#' @param gene_requests  Set of columns to query for description-ish annotations.
-#' @param length_requests  Set of columns to query for location-ish annotations.
-#' @param include_lengths  Also perform a search on structural elements in the genome?
-#' @return List containing:   a data frame of the found annotations, a copy of
+#' @param trydataset Choose the biomart dataset from which to query.
+#' @param gene_requests Set of columns to query for description-ish annotations.
+#' @param length_requests Set of columns to query for location-ish annotations.
+#' @param include_lengths Also perform a search on structural elements in the genome?
+#' @return List containing: a data frame of the found annotations, a copy of
 #'   the mart instance to help with finding problems, the hostname queried, the
 #'   name of the mart queried, a vector of rows queried, vector of the available
 #'   attributes, and the ensembl dataset queried.
@@ -32,7 +32,6 @@
 #' \dontrun{
 #'  tt = get_biomart_annotations()
 #' }
-#' @author atb
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                                      host="dec2017.archive.ensembl.org",
@@ -211,8 +210,8 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
 #' @param host Ensembl hostname to use.
 #' @param trymart Default mart to try, newer marts use a different notation.
 #' @param secondtry The newer mart name.
-#' @param dl_rows  List of rows from the final biomart object to download.
-#' @param dl_rowsv2  A second list of potential rows.
+#' @param dl_rows List of rows from the final biomart object to download.
+#' @param dl_rowsv2 A second list of potential rows.
 #' @return List containing the following:  data frame of ontology data, a copy
 #'   of the biomart instance for further querying, the host queried, the biomart
 #'   queried, a vector providing the attributes queried, and the ensembl dataset
@@ -224,7 +223,6 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
 #' \dontrun{
 #'  tt = get_biomart_ontologies()
 #' }
-#' @author atb
 #' @export
 load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                             host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
@@ -363,7 +361,6 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #'  yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus',
 #'                                   second_species='scerevisiae')
 #' }
-#' @author atb
 #' @export
 load_biomart_orthologs <- function(gene_ids=NULL, first_species="hsapiens",
                                    second_species="mmusculus",

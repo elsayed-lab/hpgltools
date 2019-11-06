@@ -459,7 +459,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 }
 
 #' Get some data from a peptideprophet run.
-                                        #
+#'
 #' I am not sure what if any parameters this should have, but it seeks to
 #' extract the useful data from a peptide prophet run.  In the situation in
 #' which I wish to use it, the input command was:
@@ -806,7 +806,8 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%
         dplyr::rowwise() %>%
-        dplyr::mutate(mass=gather_masses(sequence))
+        dplyr::mutate(mass=gather_masses(sequence)) %>%
+        dplyr::mutate(seqlength=nchar(sequence))
       res[[id]] <- file_result
     } else {
       message("Failed to read: ", id, ".")
@@ -840,7 +841,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 #' @param p When filtering with pofa, use this p parameter.
 #' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
 #'   "MinProb", "man", "min", "zero", "mixed" or "nbavg",
-#'   Function used for data imputation based on 
+#'   Function used for data imputation based on
 #'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @param ... Additional arguments for imputation functions as depicted in
 #'   \code{\link[MSnbase:impute-methods]{impute}}.

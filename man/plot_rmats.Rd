@@ -2,7 +2,7 @@
 % Please edit documentation in R/alt_splicing.r
 \name{plot_rmats}
 \alias{plot_rmats}
-\title{Given some psi and tpm data from suppa, make a pretty plot!}
+\title{Given some psi and tpm data from rMATS, make a pretty plot!}
 \usage{
 plot_rmats(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL,
   ri = NULL, sig_threshold = 0.05, dpsi_threshold = 0.7,
@@ -31,7 +31,14 @@ plot_rmats(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL,
 List containing the plot and some of the requisite data.
 }
 \description{
-This should take either a dataframe or filename for the psi data from suppa,
-along with the same for the average log tpm data (acquired from suppa
-diffSplice with --save_tpm_events)
+This should take either a dataframe or filename for the psi data from rMATS.
+This was mostly copy/pasted from plot_suppa().
+}
+\examples{
+ \dontrun{
+ rmats_plot <- plot_rmats(se_table, a5_table, a3_table)
+}
+}
+\seealso{
+\code{\link{plot_suppa}}
 }

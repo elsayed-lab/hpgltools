@@ -1,4 +1,9 @@
-#' Download the txt uniprot data for a given accession/species
+#' Download the txt uniprot data for a given accession/species.
+#'
+#' Uniprot is an astonishing resource, but man is it a pain to use.  Hopefully
+#' this function will help.  It takes either a uniprot accession, taxonomy ID,
+#' or species name and does its best to find the appropriate uniprot data.  This
+#' is therefore primarily used by load_uniprot_annotations().
 #'
 #' @param accession Which accession to grab?
 #' @param species Or perhaps species?
@@ -6,6 +11,10 @@
 #' @param all If there are more than 1 hit, grab them all?
 #' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
+#' @examples
+#'  \dontrun{
+#'   uniprot_file <- download_uniprot_proteome(species="Saccharomyces cerevisiae")
+#' }
 #' @export
 download_uniprot_proteome <- function(accession=NULL, species=NULL,
                                       taxonomy=NULL, all=FALSE, first=FALSE) {
@@ -100,8 +109,16 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
 #' @param savefile  Do a save?
 #' @return  Big dataframe of annotation data.
 #' @export
-load_uniprot_annotations <- function(file=NULL, savefile=TRUE) {
-  ## file <-  "uniprot_3AUP000001584.txt.gz"
+load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
+  if (is.null(file) & is.null(species)) {
+    stop("This requires either a filename or species name.")
+  } else if (is.null(file)) {
+    info <- download_uniprot_proteome(species=species)
+    message("Downloaded proteome for: ", info[["species"]], " accession: ",
+            info[["accession"]], " to file: ", info[["filename"]], ".")
+    file <- info[["filename"]]
+  }
+
   if (isTRUE(savefile)) {
     savefile <- "uniprot.rda"
   }

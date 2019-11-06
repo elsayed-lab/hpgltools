@@ -4,12 +4,14 @@
 \alias{write_de_table}
 \title{Writes out the results of a single pairwise comparison.}
 \usage{
-write_de_table(data, type = "limma", ...)
+write_de_table(data, type = "limma", excel = "de_table.xlsx", ...)
 }
 \arguments{
 \item{data}{Output from results().}
 
 \item{type}{Which DE tool to write.}
+
+\item{excel}{Filename into which to save the xlsx data.}
 
 \item{...}{Parameters passed downstream, dumped into arglist and passed,
 notably the number of genes (n), the coefficient column (coef)}
@@ -37,5 +39,5 @@ is far too big, this should become a template for that.
 }
 }
 \seealso{
-\code{\link{write_xls}}
+\code{\link{write_xlsx}}
 }

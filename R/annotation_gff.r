@@ -26,7 +26,6 @@
 #'  cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
 #'  cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
 #' }
-#' @author atb
 #' @export
 gff2irange <- function(gff, type=NULL) {
   ret <- NULL
@@ -76,7 +75,6 @@ gff2irange <- function(gff, type=NULL) {
 #' \dontrun{
 #'  funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
 #' }
-#' @author atb
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL, row.names=NULL) {
@@ -176,7 +174,6 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 #' \dontrun{
 #'  num_pattern <- pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
-#' @author atb
 #' @export
 pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -229,7 +226,6 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #' \dontrun{
 #'  num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
 #' }
-#' @author atb
 #' @export
 sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -282,7 +278,7 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
 #'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
-#' summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
+#'  summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
 #' }
 #' @author Keith Hughitt with some modifications by atb.
 #' @export

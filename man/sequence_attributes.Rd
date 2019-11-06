@@ -32,6 +32,3 @@ search on some other attributes.
 \pkg{Biostrings} \pkg{Rsamtools}
  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 }
-\author{
-atb
-}

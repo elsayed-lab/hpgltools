@@ -39,5 +39,5 @@ However, this will do a couple of things to make one's life easier:
 }
 \seealso{
 \pkg{limma} \pkg{qvalue}
- \code{\link{write_xls}} \code{\link[limma]{topTable}}
+ \code{\link{write_xlsx}} \code{\link[limma]{topTable}}
 }

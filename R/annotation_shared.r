@@ -3,13 +3,13 @@
 #' This function tries to gather an appropriate gene length column from
 #' whatever annotation data source is provided.
 #'
-#' @param annotation  There are a few likely data sources when getting gene
+#' @param annotation There are a few likely data sources when getting gene
 #'   sizes, choose one with this.
 #' @param type What type of annotation data are we using?
 #' @param gene_type Annotation type to use (3rd column of a gff file).
 #' @param type_column Type identifier (10th column of a gff file).
 #' @param key  What column has ID information?
-#' @param length_names  Provide some column names which give gene length information?
+#' @param length_names Provide some column names which give gene length information?
 #' @param ... Extra arguments likely for load_annotations()
 #' @return Data frame of gene IDs and widths.
 #' @seealso \pkg{rtracklayer}
@@ -26,7 +26,6 @@
 #' ## 5 YAL068W-A   255
 #' ## 6 YAL068W-A     3
 #' }
-#' @author atb
 #' @export
 get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
                           type_column="type", key=NULL, length_names=NULL, ...) {
@@ -100,11 +99,15 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
 #' We should be able to have an agnostic annotation loader which can take some
 #' standard arguments and figure out where to gather data on its own.
 #'
-#' @param type  Explicitly state the type of annotation data to load.  If not
+#' @param type Explicitly state the type of annotation data to load.  If not
 #'   provided, try to figure it out automagically.
-#' @param ...  Arguments passed to the other load_*_annotations().
-#' @return  Some annotations, hopefully.
-#' @author atb
+#' @param ... Arguments passed to the other load_*_annotations().
+#' @return Some annotations, hopefully.
+#' @examples
+#'  \dontrun{
+#'   stuff <- load_annotations(type="gff", gff="testing.gff")
+#'   ## This should give the same as load_gff_annotations("testing.gff")
+#' }
 #' @export
 load_annotations <- function(type=NULL, ...) {
   annotations <- NULL

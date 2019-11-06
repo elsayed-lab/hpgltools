@@ -7,7 +7,7 @@
 plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
   p_col = "qvalue", p = 0.05, alpha = 0.4, logfc = 1,
   label_numbers = TRUE, size = 2, tooltip_data = NULL,
-  gvis_filename = NULL, invert = FALSE, ...)
+  gvis_filename = NULL, invert = FALSE, label = NULL, ...)
 }
 \arguments{
 \item{table}{Df of linear-modelling, normalized counts by sample-type,}
@@ -33,6 +33,8 @@ plot_ma_de(table, expr_col = "logCPM", fc_col = "logFC",
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
 \item{invert}{Invert the ma plot?}
+
+\item{label}{Label the top/bottom n logFC values?}
 
 \item{...}{More options for you}
 }

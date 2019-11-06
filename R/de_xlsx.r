@@ -323,7 +323,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
     legend <- rbind(legend, summary_legend)
   }
   colnames(legend) <- c("column name", "column definition")
-  xls_result <- write_xls(
+  xls_result <- write_xlsx(
     wb, data=legend, sheet="legend", rownames=FALSE,
     title="Columns used in the following tables.")
 
@@ -739,10 +739,10 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       oddness <- summary(written_table)
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
       ## Dump each table to the appropriate excel sheet
-      xls_result <- write_xls(data=written_table, wb=wb, sheet=sheetname,
+      xls_result <- write_xlsx(data=written_table, wb=wb, sheet=sheetname,
                               title=final_excel_title, rownames=rownames)
 
-      ## The function write_xls has some logic in it to get around excel name
+      ## The function write_xlsx has some logic in it to get around excel name
       ## limitations (30 characters), therefore set the sheetname to what was
       ## returned in case it had to change the sheet's name.
       sheetname <- xls_result[["sheet"]]
@@ -981,10 +981,10 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       ## A change I made messes this up, I should come back through and figure out why
       ## I think it is because I am trying to make the rownames include whether
       ## the contrast was as written or its inverse.
-      xls_result <- write_xls(
+      xls_result <- write_xlsx(
         wb, data=de_summaries, sheet=sheetname, title="Summary of contrasts.")
       new_row <- xls_result[["end_row"]] + 2
-      xls_result <- write_xls(
+      xls_result <- write_xlsx(
         wb, data=comp[["summary"]], sheet=sheetname, start_row=new_row,
         title="Pairwise correlation coefficients among differential expression tools.")
 
@@ -1036,7 +1036,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
 
     if (!is.null(apr[["original_pvalues"]])) {
       message("Appending a data frame of the original pvalues before sva messed with them.")
-      xls_result <- write_xls(
+      xls_result <- write_xlsx(
         wb, data=apr[["original_pvalues"]], sheet="original_pvalues",
         title="Original pvalues for all contrasts before sva adjustment.",
         start_row=1, rownames=rownames)
@@ -1554,7 +1554,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
       c("Next column", "The most/least abundant genes.")),
       stringsAsFactors=FALSE)
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
   }
 
@@ -1576,7 +1576,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
       }
       if (class(excel)[1] == "character") {
         title <- glue::glue("Table SXXX: Abundant genes in {coef} according to {according}.")
-        xls_result <- write_xls(data=used_data, wb=wb, sheet=sheetname, title=title)
+        xls_result <- write_xlsx(data=used_data, wb=wb, sheet=sheetname, title=title)
       }
     }
   }
@@ -1777,7 +1777,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     stringsAsFactors=FALSE)
 
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
   }
 
@@ -1859,7 +1859,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     change_counts[] <- lapply(change_counts, as.numeric)
     summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
-    ## xls_result <- write_xls(data=change_counts, sheet="number_changed", file=sig_table,
+    ## xls_result <- write_xlsx(data=change_counts, sheet="number_changed", file=sig_table,
     ##                         title=summary_title,
     ##                         overwrite_file=TRUE, newsheet=TRUE)
 
@@ -1950,7 +1950,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       summary_col <- plot_col + 11
       de_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][[according]],
                                         sig_bar_plots[["downs"]][[according]])
-      xls_summary <- write_xls(
+      xls_summary <- write_xlsx(
         data=de_summary, wb=wb, sheet="number_changed", rownames=TRUE,
         start_row=summary_row, start_col=summary_col)
       plot_row <- plot_row + 30
@@ -2119,7 +2119,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
           xlsx_title <- glue::glue("Genes deemed {text_dir} significant via logFC: {lfc}\\
                              , p-value: {p}; by {clean_sname}.")
           if (!is.null(excel)) {
-            xl_result <- write_xls(data=table_subset, wb=wb, sheet=xlsx_table,
+            xl_result <- write_xlsx(data=table_subset, wb=wb, sheet=xlsx_table,
                                    start_row=xlsx_row, title=xlsx_title)
             xlsx_row <- xlsx_row + nrow(table_subset) + padding_rows + 2
           } ## End checking to write the excel file.
@@ -2141,7 +2141,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     summary_df <- summary_df[, -1]
     lst[["summary"]] <- summary_df
     if (!is.null(excel)) {
-      xl_result <- write_xls(wb=wb,
+      xl_result <- write_xlsx(wb=wb,
                              data=summary_df,
                              sheet="summary", title=venn_title,
                              start_row=venn_row, start_col=venn_col)
@@ -2176,7 +2176,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @param ma Include ma plots?
-#' @return Return from write_xls.
+#' @return Return from write_xlsx.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx",
@@ -2200,7 +2200,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   summary_count <- summary_count - 1
   num_tables <- length(names(ups))
   summary_start <- ((num_tables + 2) * summary_count) + 1
-  xls_summary_result <- write_xls(wb=wb, data=summary, start_col=1, start_row=summary_start,
+  xls_summary_result <- write_xlsx(wb=wb, data=summary, start_col=1, start_row=summary_start,
                                   sheet="number_changed", title=summary_title)
   for (table_count in 1:length(names(ups))) {
     base_name <- names(ups)[table_count]
@@ -2210,7 +2210,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     up_title <- up_titles[[table_count]]
     if (nrow(up_table) > 0) {
       message(table_count, "/", num_tables, ": Creating significant table ", up_name)
-      xls_result <- write_xls(data=up_table, wb=wb, sheet=up_name, title=up_title)
+      xls_result <- write_xlsx(data=up_table, wb=wb, sheet=up_name, title=up_title)
       ## This is in case the sheet name is past the 30 character limit.
       sheet_name <- xls_result[["sheet"]]
       if (isTRUE(ma)) {
@@ -2229,7 +2229,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     down_table <- downs[[table_count]]
     down_title <- down_titles[[table_count]]
     if (nrow(down_table) > 0) {
-      xls_result <- write_xls(data=down_table, wb=wb, sheet=down_name, title=down_title)
+      xls_result <- write_xlsx(data=down_table, wb=wb, sheet=down_name, title=down_title)
     } else {
       message("The down table ", base_name, " is empty.")
     }
@@ -2251,25 +2251,22 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #'
 #' @param data Output from results().
 #' @param type Which DE tool to write.
+#' @param excel Filename into which to save the xlsx data.
 #' @param ... Parameters passed downstream, dumped into arglist and passed,
 #'   notably the number of genes (n), the coefficient column (coef)
 #' @return List of data frames comprising the toptable output for each
 #'   coefficient, I also added a qvalue entry to these toptable() outputs.
-#' @seealso \code{\link{write_xls}}
+#' @seealso \code{\link{write_xlsx}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(deseq_output)
 #'  data_list = write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
 #' }
 #' @export
-write_de_table <- function(data, type="limma", ...) {
+write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
   arglist <- list(...)
   if (!is.null(data[[type]])) {
     data <- data[[type]]
-  }
-  excel <- arglist[["excel"]]
-  if (is.null(excel)) {
-    excel <- "table.xlsx"
   }
   n <- arglist[["n"]]
   if (is.null(n)) {
@@ -2307,7 +2304,7 @@ write_de_table <- function(data, type="limma", ...) {
     message("Writing ", c, "/", end, ": table: ", comparison, ".")
     table <- data[["all_tables"]][[c]]
 
-    written <- try(write_xls(
+    written <- try(write_xlsx(
       data=table, wb=wb, sheet=comparison,
       title=glue::glue("{type} results for: {comparison}.")))
   }

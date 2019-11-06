@@ -7,7 +7,7 @@
 plot_pyprophet_protein(pyprophet_data, column = "intensity",
   keep_real = TRUE, keep_decoys = TRUE, expt_names = NULL,
   label_chars = 10, protein = NULL, title = NULL, scale = NULL,
-  ...)
+  legend = NULL, ...)
 }
 \arguments{
 \item{pyprophet_data}{Data from extract_pyprophet_data()}
@@ -29,6 +29,8 @@ names.}
 \item{title}{Title the plot?}
 
 \item{scale}{Put the data on a specific scale?}
+
+\item{legend}{Include the legend?}
 
 \item{...}{Further arguments, presumably for colors or some such.}
 }

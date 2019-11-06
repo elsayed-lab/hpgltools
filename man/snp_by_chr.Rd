@@ -15,7 +15,7 @@ snp_by_chr(medians, chr_name = "01", limit = 1)
 \item{limit}{Minimum number of median hits/position to count as a snp.}
 }
 \value{
-A fun list by chromosome!
+A list of variant positions where each element is one chromosome.
 }
 \description{
 The real worker.  This extracts positions for a single chromosome and puts

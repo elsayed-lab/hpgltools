@@ -47,6 +47,16 @@ data into pairs of conditions.}
 
 \item{...}{Extra arguments currently unused.}
 }
+\value{
+List containing tables from ebseq, the conditions tested, and the
+  ebseq table of conditions.
+}
 \description{
 Invoking EBSeq is confusing, this should help.
+}
+\examples{
+ \dontrun{
+  expt <- create_expt(metadata="sample_sheet.xlsx", gene_info=annotations)
+  ebseq_de <- ebseq_pairwise(input=expt)
+}
 }

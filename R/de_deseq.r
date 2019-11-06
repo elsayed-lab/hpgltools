@@ -30,19 +30,19 @@ deseq_pairwise <- function(...) {
 #' code paths as outlined in the manual.  If you want to play with non-standard
 #' data, the force argument will round the data and shoe-horn it into DESeq2.
 #'
-#' @param input  Dataframe/vector or expt class containing data, normalization state, etc.
-#' @param conditions  Factor of conditions in the experiment.
-#' @param batches  Factor of batches in the experiment.
-#' @param model_cond  Is condition in the experimental model?
-#' @param model_batch  Is batch in the experimental model?
-#' @param model_intercept  Use an intercept model?
-#' @param alt_model  Provide an arbitrary model here.
-#' @param extra_contrasts  Provide extra contrasts here.
-#' @param annot_df  Include some annotation information in the results?
-#' @param force  Force deseq to accept data which likely violates its assumptions.
-#' @param deseq_method  The DESeq2 manual shows a few ways to invoke it, I make
+#' @param input Dataframe/vector or expt class containing data, normalization state, etc.
+#' @param conditions Factor of conditions in the experiment.
+#' @param batches Factor of batches in the experiment.
+#' @param model_cond Is condition in the experimental model?
+#' @param model_batch Is batch in the experimental model?
+#' @param model_intercept Use an intercept model?
+#' @param alt_model Provide an arbitrary model here.
+#' @param extra_contrasts Provide extra contrasts here.
+#' @param annot_df Include some annotation information in the results?
+#' @param force Force deseq to accept data which likely violates its assumptions.
+#' @param deseq_method The DESeq2 manual shows a few ways to invoke it, I make
 #'   2 of them available here.
-#' @param ...  Triple dots!  Options are passed to arglist.
+#' @param ... Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()
 #'  denominators = list of denominators in the contrasts
@@ -396,6 +396,19 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   return(retlist)
 }
 
+#' Given a set of surrogate variables from sva and friends, try adding them to a DESeqDataSet.
+#'
+#' Sometimes sva returns a set of surrogate variable estimates which lead to
+#' models which are invalid according to DESeq2.  This function will try before
+#' buying and tell the user if the sva model additions are valid according to
+#' DESeq.
+#'
+#' @param data DESeqDataSet to test out.
+#' @param summarized Existing DESeq metadata to append svs.
+#' @param svs Surrogates from sva and friends to test out.
+#' @param num_sv Optionally, provide the number of SVs, primarily used if
+#'   recursing in the hunt for a valid number of surrogates.
+#' @return DESeqDataSet with at least some of the SVs appended to the model.
 deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   counts <- DESeq2::counts(data)
   passed <- FALSE
@@ -432,7 +445,16 @@ surrogates explicitly stated with the option surrogates=number.")
   return(ret)
 }
 
-## Taken from the tximport manual with minor modification.
+#' Try to add data to DESeq in a flexible fashion.  This currently only handles
+#' matrices, htseq data, and tximport data.
+#'
+#' This will hopefully make adding counts to a DESeq data set easier, as it
+#' tries to handle the various arguments with minimal fuss.
+#'
+#' @param data Counts from htseq/mtrx/tximport/etc
+#' @param column_data I think this is the sample names, I forget.
+#' @param model_string Model describing the data by sample names.
+#' @param tximport Where is this data coming from?
 import_deseq <- function(data, column_data, model_string,
                          tximport=NULL) {
   summarized <- NULL
@@ -499,13 +521,13 @@ import_deseq <- function(data, column_data, model_string,
 #'
 #' Tested in test_24deseq.R
 #'
-#' @param data  Output from deseq_pairwise()
-#' @param ...  Options for writing the xlsx file.
-#' @seealso \pkg{DESeq2} \link{write_xls}
+#' @param data Output from deseq_pairwise()
+#' @param ... Options for writing the xlsx file.
+#' @seealso \pkg{DESeq2} \link{write_xlsx}
 #' @examples
 #' \dontrun{
-#'  finished_comparison = deseq_pairwise(expressionset)
-#'  data_list = write_deseq(finished_comparison)
+#'  finished_comparison <- deseq2_pairwise(expressionset)
+#'  data_list <- write_deseq(finished_comparison)
 #' }
 #' @export
 write_deseq <- function(data, ...) {
