@@ -10,6 +10,12 @@
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
+#' @examples
+#'  \dontrun{
+#'   expt1 <- create_expt(first_meta)
+#'   expt2 <- create_expt(second_meta)
+#'   combined <- combine_expts(expt1, expt2, merge_meta=TRUE)
+#' }
 #' @export
 combine_expts <- function(expt1, expt2, condition="condition",
                           batch="batch", merge_meta=FALSE) {
@@ -177,11 +183,13 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @return experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
-#'   \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
+#'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 #' @examples
 #' \dontrun{
 #'  new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
 #'  ## Remember that this depends on an existing data structure of gene annotations.
+#'  meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
+#'  another_expt <- create_expt(meta, gene_info=annotations, count_dataframe=df_I_downloaded)
 #' }
 #' @import Biobase
 #' @export
@@ -727,6 +735,16 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 #' @param ... Extra arguments are passed to arglist, currently unused.
 #' @return A smaller expt
 #' @seealso \code{\link{create_expt}}
+#' @examples
+#'  \dontrun{
+#'   all_expt <- create_expt(metadata)
+#'   ## This assumes a column in the metadata named 'txtype' containing the
+#'   ## information telling us what type of transcript each gene is.
+#'   no_ribosomes <- exclude_genes_expt(all_expt, column="txtype",
+#'                                      patterns=c("snRNA", "tRNA", "rRNA"))
+#'   i_hate_these_genes <- exclude_genes_expt(all_expt, ids=c("gene1", "gene2"))
+#'   only_ribosomes <- exclude_genes_expt(all_expt, method="keep")
+#' }
 #' @export
 exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
                                patterns=c("snRNA", "tRNA", "rRNA"), ...) {
@@ -815,10 +833,20 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 
 #' Pull metadata from a table (xlsx/xls/csv/whatever)
 #'
-#' @param metadata file or df of metadata
-#' @param ... Arguments to pass to the child functions.
-#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
+#' I find that when I acquire metadata from a paper or collaborator, annoyingly
+#' often there are many special characters or other shenanigans in the column
+#' names.  This function performs some simple sanitizations.  In addition, if I
+#' give it a filename it calls my generic 'read_metadata()' function before
+#' sanitizing.
 #'
+#' @param metadata file or df of metadata
+#' @param ... Arguments to pass to the child functions (read_csv etc).
+#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
+#' @examples
+#'  \dontrun{
+#'   sanitized <- extract_metadata("some_random_supplemental.xls")
+#'   saniclean <- extract_metadata(some_goofy_df)
+#' }
 #' @export
 extract_metadata <- function(metadata, ...) {
   arglist <- list(...)
@@ -962,6 +990,7 @@ analyses more difficult/impossible.")
 #' @param  ... Arguments passed to features_greather_than()
 #' @return The set of features less than whatever you would have done with
 #'   features_greater_than().
+#' @seealso \code{\link{features_greater_than}}
 #' @export
 features_less_than <- function(...) {
   features_greater_than(..., inverse=TRUE)
@@ -984,6 +1013,7 @@ features_less_than <- function(...) {
 #' @examples
 #' \dontrun{
 #'  features <- features_greater_than(expt)
+#'  fewer <- features_greater_than(expt, cutoff=100)
 #' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
@@ -1023,7 +1053,7 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
   return(result)
 }
 
-#' I want an easy way to answer the question: what features are in condition x but no others.
+#' I want an easy way to answer the question: what features are in only condition x?
 #'
 #' The answer to this lies in a combination of subset_expt() and
 #' features_greater_than().
@@ -1031,18 +1061,29 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
 #' @param expt An experiment to query.
 #' @param cutoff What is the minimum number of counts required to define
 #'   'included.'
+#' @param factor What metadata factor to query?
+#' @param chosen Either choose a subset or all conditions to query.
 #' @return A set of features.
+#' @examples
+#'  \dontrun{
+#'   unique_genes
+#' }
 #' @export
-features_in_single_condition <- function(expt, cutoff=2) {
-  condition_set <- levels(as.factor(pData(expt)[["condition"]]))
+features_in_single_condition <- function(expt, cutoff=2, factor="condition", chosen=NULL) {
+  condition_set <- levels(as.factor(pData(expt)[[factor]]))
   solo_this_list <- list()
   solo_other_list <- list()
   shared_list <- list()
   neither_list <- list()
   for (cond in condition_set) {
-    extract_string <- glue::glue("condition == '{cond}'")
+    if (!is.null(chosen)) {
+      if (! cond %in% chosen) {
+        next
+      }
+    }
+    extract_string <- glue::glue("{factor} == '{cond}'")
     single_expt <- sm(subset_expt(expt=expt, subset=extract_string))
-    extract_string <- glue::glue("condition != '{cond}'")
+    extract_string <- glue::glue("{factor} != '{cond}'")
     others_expt <- sm(subset_expt(expt=expt, subset=extract_string))
     single_data <- exprs(single_expt)
     others_data <- exprs(others_expt)
@@ -2311,7 +2352,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
 
   ## For medians_by_condition, put the counts or annotations first?
-  merge_order == "counts_first"
+  merge_order <- "counts_first"
   if (!is.null(arglist[["merge_order"]])) {
     merge_order <- arglist[["merge_order"]]
   }

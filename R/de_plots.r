@@ -386,22 +386,6 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
     }
     return(retlist)
   }
-  combine_tables <- function(d, e, l) {
-    ddf <- as.data.frame(l[, "limma_logfc"])
-    rownames(ddf) <- rownames(l)
-    colnames(ddf) <- c("limma_logfc")
-    ddf <- merge(ddf, e, by="row.names", all=TRUE)
-    rownames(ddf) <- ddf[["Row.names"]]
-    ddf <- ddf[, -1]
-    ddf <- ddf[, c("limma_logfc.x", "edger_logfc")]
-    ddf <- merge(ddf, d, by="row.names", all=TRUE)
-    rownames(ddf) <- ddf[["Row.names"]]
-    ddf <- ddf[, -1]
-    ddf <- ddf[, c("limma_logfc.x", "edger_logfc.x", "deseq_logfc")]
-    colnames(ddf) <- c("limma", "edger", "deseq")
-    return(ddf)
-  }
-
   limma_p <- "limma_p"
   deseq_p <- "deseq_p"
   edger_p <- "edger_p"
@@ -417,21 +401,14 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
                                 column="edger_logfc", p_column=edger_p, p=p))
   deseq_sig <- sm(get_sig_genes(table, lfc=lfc,
                                 column="deseq_logfc", p_column=deseq_p, p=p))
-  comp_up <- combine_tables(deseq_sig[["up_genes"]],
-                            edger_sig[["up_genes"]],
-                            limma_sig[["up_genes"]])
-  comp_down <- combine_tables(deseq_sig[["down_genes"]],
-                              edger_sig[["down_genes"]],
-                              limma_sig[["down_genes"]])
-
   up_venn_lst <- list(
-    "deseq" = comp_up[["deseq"]],
-    "edger" = comp_up[["edger"]],
-    "limma" = comp_up[["limma"]])
+    "deseq" = rownames(deseq_sig[["up_genes"]]),
+    "edger" = rownames(edger_sig[["up_genes"]]),
+    "limma" = rownames(limma_sig[["up_genes"]]))
   down_venn_lst <- list(
-    "deseq" = comp_down[["deseq"]],
-    "edger" = comp_down[["edger"]],
-    "limma" = comp_down[["limma"]])
+    "deseq" = rownames(deseq_sig[["down_genes"]]),
+    "edger" = rownames(edger_sig[["down_genes"]]),
+    "limma" = rownames(limma_sig[["down_genes"]]))
 
   up_venn <- Vennerable::Venn(Sets=up_venn_lst)
   down_venn <- Vennerable::Venn(Sets=down_venn_lst)

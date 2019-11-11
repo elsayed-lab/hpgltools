@@ -58,21 +58,6 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   ebseq <- apr[["ebseq"]]
   basic <- apr[["basic"]]
 
-  ## Prettily print the linear equation relating the genes for each contrast
-  make_equate <- function(lm_model) {
-    coefficients <- summary(lm_model)[["coefficients"]]
-    int <- signif(x=coefficients["(Intercept)", 1], digits=3)
-    m <- signif(x=coefficients["first", 1], digits=3)
-    ret <- NULL
-    if (as.numeric(int) >= 0) {
-      ret <- glue::glue("y = {m}x + {int}")
-    } else {
-      int <- int * -1
-      ret <- glue::glue("y = {m}x - {int}")
-    }
-    return(ret)
-  }
-
   ## If any of the tools failed, then we cannot plot stuff with confidence.
   if (!isTRUE(include_limma) || !isTRUE(include_deseq) ||
       !isTRUE(include_edger) || !isTRUE(include_basic)) {
@@ -339,17 +324,25 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
                              x="PCA plot before surrogate estimation.",
                              startRow=1, startCol=10)
     try_result <- xlsx_plot_png(
-      apr[["pre_batch"]], wb=wb, sheet="legend", start_row=2,
-      width=plot_dim, height=plot_dim, start_col=10,
+      apr[["pre_batch"]][["plot"]], wb=wb, sheet="legend", start_row=2,
+      width=(plot_dim * 3/2), height=plot_dim, start_col=10,
       plotname="pre_pca", savedir=excel_basename)
     xl_result <- openxlsx::writeData(
                              wb=wb, sheet="legend",
                              x=glue::glue("PCA after surrogate estimation with: {chosen_estimate}"),
                              startRow=36, startCol=10)
     try_result <- xlsx_plot_png(
-      apr[["post_batch"]], wb=wb, sheet="legend", start_row=37,
-      width=plot_dim, height=plot_dim, start_col=10,
+      apr[["post_batch"]][["plot"]], wb=wb, sheet="legend", start_row=37,
+      width=(plot_dim * 3/2), height=plot_dim, start_col=10,
       plotname="pre_pca", savedir=excel_basename)
+    pre_table <- write_xlsx(
+      wb, data=apr[["pre_batch"]][["table"]],
+      sheet="legend", title="Pre-Batch PCA table.",
+      start_row=66, start_col=10)
+    post_table <- write_xlsx(
+      wb, data=apr[["post_batch"]][["table"]],
+      sheet="legend", title="Pre-Batch PCA table.",
+      start_row=pre_table[["end_row"]] + 2, start_col=10)
   }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
@@ -386,330 +379,84 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
   name_list <- c()
   contrast_list <- c()
   ret_keepers <- list()
-  ## Here, we will look for only those elements in the keepers list.
-  ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
-  ## flip the logFCs.
+  numerators <- c()
+  denominators <- c()
   if (class(keepers)[1] == "list") {
-    ## First check that your set of kepers is in the data
-    all_coefficients <- unlist(strsplit(x=table_names, split="_vs_"))
-    all_keepers <- as.character(unlist(keepers))
-    found_keepers <- sum(all_keepers %in% all_coefficients)
-    ret_keepers <- keepers
-    ## Just make sure we have something to work with.
-    if (found_keepers == 0) {
-      message("The keepers has no elements in the coefficients.")
-      message("Here are the keepers: ", toString(all_keepers))
-      message("Here are the coefficients: ", toString(all_coefficients))
-      stop("Unable to find the set of contrasts to keep, fix this and try again.")
-    }
-    ## Then keep specific tables in specific orientations.
-
-    keeper_len <- length(names(keepers))
-    contrast_list <- names(keepers)
-    for (a in 1:length(names(keepers))) {
-      name <- names(keepers)[a]
-      ## Each element in the list gets one worksheet.
-      sheet_count <- sheet_count + 1
-      ## The numerators and denominators will be used to check that we are a_vs_b or b_vs_a
-      numerator <- keepers[[name]][1]
-      denominator <- keepers[[name]][2]
-      message("Working on ", a, "/", keeper_len, ": ",  name,
-              " which is: ", numerator, "/", denominator, ".")
-      same_string <- numerator
-      inverse_string <- numerator
-      if (!is.na(denominator)) {
-        same_string <- glue::glue("{numerator}_vs_{denominator}")
-        inverse_string <- glue::glue("{denominator}_vs_{numerator}")
-      }
-      ## Blank out some elements for plots and such.
-      dat <- NULL
-      plt <- NULL
-      de_summary <- NULL
-      limma_plt <- limma_ma_plt <- limma_vol_plt <- NULL
-      edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
-      ebseq_plt <- ebseq_ma_plt <- ebseq_vol_plt <- NULL
-      deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
-      limma_pplt <- edger_pplt <- deseq_pplt <- ebseq_pplt <- NULL
-
-      ## Do the actual table search, checking for the same_string (a_vs_b) and
-      ## inverse (b_vs_a) Set a flag do_inverse appropriately, this will be used
-      ## later to flip some numbers.
-      found <- 0
-      found_table <- NULL
-      do_inverse <- FALSE
-      for (t in 1:length(table_names)) {
-        tab <- table_names[t]
-        if (tab == same_string) {
-          do_inverse <- FALSE
-          found <- found + 1
-          found_table <- same_string
-          message("Found table with ", same_string)
-        } else if (tab == inverse_string) {
-          do_inverse <- TRUE
-          found <- found + 1
-          found_table <- inverse_string
-          message("Found inverse table with ", inverse_string)
-        }
-        name_list[a] <- same_string
-      }
-      if (found == 0) {
-        message("Found neither ", same_string, " nor ", inverse_string, ".")
-        break
-      }
-
-      ## Now make a single table from the limma etc results.
-      if (found > 0) {
-        combined <- combine_single_de_table(
-          li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-          table_name=found_table, do_inverse=do_inverse,
-          adjp=adjp, annot_df=annot_df, include_deseq=include_deseq,
-          include_edger=include_edger, include_ebseq=include_ebseq,
-          include_limma=include_limma, include_basic=include_basic,
-          excludes=excludes, padj_type=padj_type)
-        dat <- combined[["data"]]
-        de_summary <- as.data.frame(combined[["summary"]])
-        ## And get a bunch of variables ready to receive the coefficient, ma,
-        ## and volcano plots.
-        limma_plt <- edger_plt <- ebseq_plt <- deseq_plt <- NULL
-        limma_ma_plt <- edger_ma_plt <- ebseq_ma_plt <- deseq_ma_plt <- NULL
-        limma_vol_plt <- edger_vol_plt <- ebseq_vol_plt <- deseq_vol_plt <- NULL
-        limma_pplt <- edger_pplt <- ebseq_pplt <- deseq_pplt <- NULL
-
-        ## The following logic will be repeated for limma, edger, deseq
-        ## Check that the tool's data survived, and if so plot the coefficients,
-        ## ma, and vol. I think I will put extract_coefficient_scatter into
-        ## extract_de_plots partially to simplify this and partially because
-        ## having them separate is dumb.
-        if (isTRUE(include_limma)) {
-          limma_try <- sm(try(extract_coefficient_scatter(
-            limma, type="limma", loess=loess, x=denominator, y=numerator)))
-          if (class(limma_try)[1] == "list") {
-            limma_plt <- limma_try
-          }
-          ma_vol <- sm(try(extract_de_plots(
-            combined, type="limma", invert=do_inverse, table=found_table)))
-          if (class(ma_vol)[1] != "try-error") {
-            limma_ma_plt <- ma_vol[["ma"]]
-            limma_vol_plt <- ma_vol[["volcano"]]
-          }
-          ##limma_pplt <- plot_histogram(combined[["data"]][["limma_p"]])
-          limma_pplt <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
-        }
-        if (isTRUE(include_edger)) {
-          edger_try <- sm(try(extract_coefficient_scatter(
-            edger, type="edger", loess=loess, x=denominator, y=numerator), silent=TRUE))
-          if (class(edger_try)[1] == "list") {
-            edger_plt <- edger_try
-          }
-          ma_vol <- sm(try(extract_de_plots(
-            combined, type="edger", invert=do_inverse, table=found_table), silent=TRUE))
-          if (class(ma_vol)[1] != "try-error") {
-            edger_ma_plt <- ma_vol[["ma"]]
-            edger_vol_plt <- ma_vol[["volcano"]]
-          }
-          ##edger_pplt <- plot_histogram(combined[["data"]][["edger_p"]])
-          edger_pplt <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
-        }
-        if (isTRUE(include_deseq)) {
-          deseq_try <- sm(try(extract_coefficient_scatter(
-            deseq, type="deseq", loess=loess, x=denominator, y=numerator), silent=TRUE))
-          if (class(deseq_try)[1] == "list") {
-            deseq_plt <- deseq_try
-          }
-          ma_vol <- sm(try(extract_de_plots(
-            combined, type="deseq", invert=do_inverse, table=found_table), silent=TRUE))
-          if (class(ma_vol)[1] != "try-error") {
-            deseq_ma_plt <- ma_vol[["ma"]]
-            deseq_vol_plt <- ma_vol[["volcano"]]
-          }
-          ##deseq_pplt <- plot_histogram(combined[["data"]][["deseq_p"]])
-          deseq_pplt <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
-        }
-      } else {
-        ## End checking that we found the numerator/denominator
-        warning("Did not find either ", same_string, " nor ", inverse_string, ".")
-        message("Did not find either ", same_string, " nor ", inverse_string, ".")
-        break
-      }
-      ## Now that we have made the plots and tables, drop them into the
-      ## appropriate element in the top-level lists.
-      combo[[name]] <- dat
-      limma_plots[[name]] <- limma_plt
-      limma_ma_plots[[name]] <- limma_ma_plt
-      limma_vol_plots[[name]] <- limma_vol_plt
-      limma_pplots[[name]] <- limma_pplt
-      edger_plots[[name]] <- edger_plt
-      edger_ma_plots[[name]] <- edger_ma_plt
-      edger_vol_plots[[name]] <- edger_vol_plt
-      edger_pplots[[name]] <- edger_pplt
-      deseq_plots[[name]] <- deseq_plt
-      deseq_ma_plots[[name]] <- deseq_ma_plt
-      deseq_vol_plots[[name]] <- deseq_vol_plt
-      deseq_pplots[[name]] <- deseq_pplt
-      final_table_names[[a]] <- combined[["summary"]][["table"]]
-      de_summaries <- rbind(de_summaries, de_summary)
-      ## names(combo) <- name_list  ## I think this is messing me up.
-    } ## Ending the for loop of elements in the keepers list.
-
+    ## Here, we will look for only those elements in the keepers list.
+    ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
+    ## flip the logFCs.
+    extracted <- extract_keepers_lst(keepers, table_names, all_coefficients,
+                                     limma, edger, ebseq, deseq, basic,
+                                     adjp, annot_df,
+                                     include_deseq, include_edger,
+                                     include_ebseq, include_limma,
+                                     include_basic, excludes, padj_type)
+    combo <- extracted[["combo"]]
+    limma_plots <- extracted[["limma_plots"]]
+    limma_ma_plots <- extracted[["limma_ma_plots"]]
+    limma_vol_plots <- extracted[["limma_vol_plots"]]
+    limma_pplots <- extracted[["limma_pplots"]]
+    edger_plots <- extracted[["edger_plots"]]
+    edger_ma_plots <- extracted[["edger_ma_plots"]]
+    edger_vol_plots <- extracted[["edger_vol_plots"]]
+    edger_pplots <- extracted[["edger_pplots"]]
+    deseq_plots <- extracted[["deseq_plots"]]
+    deseq_ma_plots <- extracted[["deseq_ma_plots"]]
+    deseq_vol_plots <- extracted[["deseq_vol_plots"]]
+    deseq_pplots <- extracted[["deseq_pplots"]]
+    final_table_names extracted[["final_table_names"]]
+    de_summaries <- extracted[["de_summaries"]]
+  } else if (class(keepers)[1] == "character" & keepers == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
     ## instead just iterating through every returned table, combining them, and
     ## printing them to the excel.
-  } else if (class(keepers)[1] == "character" & keepers == "all") {
-    contrast_list <- table_names
-    ret_keepers <- list()
-    for (a in 1:length(table_names)) {
-      tab <- table_names[a]
-      ret_keepers[[tab]] <- tab
-      name_list[a] <- tab
-      message("Working on table ", a, "/", names_length, ": ", tab)
-      sheet_count <- sheet_count + 1
-      splitted <- strsplit(x=tab, split="_vs_")
-      xname <- splitted[[1]][1]
-      yname <- splitted[[1]][2]
-
-      combined <- combine_single_de_table(
-        li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-        table_name=tab, annot_df=annot_df,
-        include_basic=include_basic, include_deseq=include_deseq,
-        include_edger=include_edger, include_ebseq=include_ebseq,
-        include_limma=include_limma, excludes=excludes,
-        padj_type=padj_type)
-      de_summaries <- rbind(de_summaries, as.data.frame(combined[["summary"]]))
-      combo[[tab]] <- combined[["data"]]
-      limma_plots[[tab]] <- NULL
-      limma_ma_plots[[tab]] <- NULL
-      limma_pplots[[tab]] <- NULL
-      edger_plots[[tab]] <- NULL
-      edger_ma_plots[[tab]] <- NULL
-      edger_pplots[[tab]] <- NULL
-      ebseq_plots[[tab]] <- NULL
-      ebseq_ma_plots[[tab]] <- NULL
-      deseq_plots[[tab]] <- NULL
-      deseq_ma_plots[[tab]] <- NULL
-      deseq_pplots[[tab]] <- NULL
-      if (isTRUE(include_limma) & isTRUE(do_excel)) {
-        limma_try <- sm(try(extract_coefficient_scatter(
-          limma, type="limma", loess=loess, x=xname, y=yname)))
-        limma_ma_vol <- try(extract_de_plots(combined, type="limma", table=tab))
-        if (class(limma_ma_vol)[1] == "list") {
-          limma_plots[[tab]] <- limma_try
-        }
-        if (class(limma_ma_vol)[1] == "list") {
-          limma_ma_plots[[tab]] <- limma_ma_vol[["ma"]]
-          limma_vol_plots[[tab]] <- limma_ma_vol[["volcano"]]
-        }
-        ## limma_pplots[[tab]] <- plot_histogram(combined[["data"]][["limma_p"]])
-        limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
-      }
-      if (isTRUE(include_edger)) {
-        edger_try <- sm(try(extract_coefficient_scatter(
-          edger, type="edger", loess=loess, x=xname, y=yname)))
-        edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=tab)))
-        if (class(edger_try)[1] == "list") {
-          edger_plots[[tab]] <- edger_try
-        }
-        if (class(edger_ma_vol)[1] == "list") {
-          edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
-          edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
-        }
-        ##edger_pplots[[tab]] <- plot_histogram(combined[["data"]][["edger_p"]])
-        edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
-      }
-      if (isTRUE(include_deseq)) {
-        deseq_try <- sm(try(extract_coefficient_scatter(
-          deseq, type="deseq", loess=loess, x=xname, y=yname)))
-        deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=tab)))
-        if (class(deseq_try)[1] == "list") {
-          deseq_plots[[tab]] <- deseq_try
-        }
-        if (class(deseq_ma_vol)[1] == "list") {
-          deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
-          deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
-        }
-        ## deseq_pplots[[tab]] <- plot_histogram(combined[["data"]][["deseq_p"]])
-        deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
-      }
-    } ## End for list
+    extracted <- extract_keepers_all(keepers, table_names, all_coefficients,
+                                     limma, edger, ebseq, deseq, basic,
+                                     adjp, annot_df,
+                                     include_deseq, include_edger,
+                                     include_ebseq, include_limma,
+                                     include_basic, excludes, padj_type)
+    combo <- extracted[["combo"]]
+    limma_plots <- extracted[["limma_plots"]]
+    limma_ma_plots <- extracted[["limma_ma_plots"]]
+    limma_vol_plots <- extracted[["limma_vol_plots"]]
+    limma_pplots <- extracted[["limma_pplots"]]
+    edger_plots <- extracted[["edger_plots"]]
+    edger_ma_plots <- extracted[["edger_ma_plots"]]
+    edger_vol_plots <- extracted[["edger_vol_plots"]]
+    edger_pplots <- extracted[["edger_pplots"]]
+    deseq_plots <- extracted[["deseq_plots"]]
+    deseq_ma_plots <- extracted[["deseq_ma_plots"]]
+    deseq_vol_plots <- extracted[["deseq_vol_plots"]]
+    deseq_pplots <- extracted[["deseq_pplots"]]
+    final_table_names extracted[["final_table_names"]]
+    de_summaries <- extracted[["de_summaries"]]
   } ## End if looking at all contrasts
-
-  ## Finally, the simplest case, just print a single table.  Otherwise the logic
-  ## should be identical to the first case above.
   else if (class(keepers)[1] == "character") {
-    table <- keepers
-    contrast_list <- table
-    name_list[1] <- table
-    sheet_count <- sheet_count + 1
-    ret_keepers[[table]] <- table
-    if (table %in% names(edger[["contrast_list"]])) {
-      message("I found ", table, " in the available contrasts.")
-    } else {
-      message("I did not find ", table, " in the available contrasts.")
-      message("The available tables are: ", names(edger[["contrast_list"]]))
-      table <- names(edger[["contrast_list"]])[[1]]
-      message("Choosing the first table: ", table)
-    }
-    combined <- combine_single_de_table(
-      li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-      table_name=table, annot_df=annot_df,
-      include_basic=include_basic, include_deseq=include_deseq,
-      include_edger=include_edger, include_ebseq=include_ebseq,
-      include_limma=include_limma, excludes=excludes,
-      padj_type=padj_type)
-    combo[[table]] <- combined[["data"]]
-    splitted <- strsplit(x=tab, split="_vs_")
-    de_summaries <- rbind(de_summaries, combined[["summary"]])
-    final_table_names[[a]] <- combined[["summary"]][["table"]]
-    xname <- splitted[[1]][1]
-    yname <- splitted[[1]][2]
-    limma_plots[[name]] <- edger_plots[[name]] <- deseq_plots[[name]] <- NULL
-    limma_ma_plots[[name]] <- edger_ma_plots[[name]] <- deseq_ma_plots[[name]] <- NULL
-    limma_pplots[[name]] <- edger_pplots[[name]] <- deseq_pplots[[name]] <- NULL
-    if (isTRUE(include_limma)) {
-      limma_try <- sm(try(extract_coefficient_scatter(
-        limma, type="limma",
-        loess=loess, x=xname, y=yname)))
-      limma_ma_vol <- sm(try(extract_de_plots(combined, type="limma", table=table)))
-      if (class(limma_try)[1] == "list") {
-        limma_plots[[name]] <- limma_try
-      }
-      if (class(limma_ma_vol)[1] == "list") {
-        limma_ma_plots[[name]] <- limma_ma_vol[["ma"]]
-        limma_vol_plots[[name]] <- limma_ma_vol[["volcano"]]
-      }
-      ## limma_pplots[[name]] <- plot_histogram(combined[["data"]][["limma_p"]])
-      limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
-    }
-    if (isTRUE(include_edger)) {
-      edger_try <- sm(try(extract_coefficient_scatter(
-        edger, type="edger",
-        loess=loess, x=xname, y=yname)))
-      edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=table)))
-      if (class(edger_try)[1] == "list") {
-        edger_plots[[name]] <- edger_try
-      }
-      if (class(edger_ma_vol)[1] == "list") {
-        edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
-        edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
-      }
-      ## edger_pplots[[name]] <- plot_histogram(combined[["data"]][["edger_p"]])
-      edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
-    }
-    if (isTRUE(include_deseq)) {
-      deseq_try <- sm(try(extract_coefficient_scatter(
-        deseq, type="deseq",
-        loess=loess, x=xname, y=yname)))
-      deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=table)))
-      if (class(deseq_try)[1] == "list") {
-        deseq_plots[[name]] <- deseq_try
-      }
-      if (class(deseq_ma_vol)[1] == "list") {
-        deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
-        deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
-      }
-      ## deseq_pplots[[name]] <- plot_histogram(combined[["data"]][["deseq_p"]])
-      deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
-    }
+    ## Finally, the simplest case, just print a single table.  Otherwise the logic
+    ## should be identical to the first case above.
+    extracted <- extract_keepers_single(keepers, table_names, all_coefficients,
+                                        limma, edger, ebseq, deseq, basic,
+                                        adjp, annot_df,
+                                        include_deseq, include_edger,
+                                        include_ebseq, include_limma,
+                                        include_basic, excludes, padj_type)
+    combo <- extracted[["combo"]]
+    limma_plots <- extracted[["limma_plots"]]
+    limma_ma_plots <- extracted[["limma_ma_plots"]]
+    limma_vol_plots <- extracted[["limma_vol_plots"]]
+    limma_pplots <- extracted[["limma_pplots"]]
+    edger_plots <- extracted[["edger_plots"]]
+    edger_ma_plots <- extracted[["edger_ma_plots"]]
+    edger_vol_plots <- extracted[["edger_vol_plots"]]
+    edger_pplots <- extracted[["edger_pplots"]]
+    deseq_plots <- extracted[["deseq_plots"]]
+    deseq_ma_plots <- extracted[["deseq_ma_plots"]]
+    deseq_vol_plots <- extracted[["deseq_vol_plots"]]
+    deseq_pplots <- extracted[["deseq_pplots"]]
+    final_table_names extracted[["final_table_names"]]
+    de_summaries <- extracted[["de_summaries"]]
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -738,6 +485,8 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       written_table <- combo[[tab]]
       oddness <- summary(written_table)
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
+      final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.
+  Contrast denominator: {denominators[x]}.")
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data=written_table, wb=wb, sheet=sheetname,
                               title=final_excel_title, rownames=rownames)
@@ -746,104 +495,156 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       ## limitations (30 characters), therefore set the sheetname to what was
       ## returned in case it had to change the sheet's name.
       sheetname <- xls_result[["sheet"]]
+      current_row <- 1
+      venn_rows <- 16
+      plot_rows <- 31
+      current_column <- xls_result[["end_col"]] + 2
+      venn_columns <- 4
+      plot_columns <- 10
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
-        plot_column <- xls_result[["end_col"]] + 2
         message("Adding venn plots for ", names(combo)[[x]], ".")
         ## Make some venn diagrams comparing deseq/limma/edger!
+        venn_nop_lfc0 <- try(de_venn(written_table, lfc=0, adjp=FALSE, p=1.0))
+        venn_nop <- try(de_venn(written_table, lfc=1, adjp=FALSE, p=1.0))
         venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
         venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
-
         ## If they worked, add them to the excel sheets after the data,
         ## but make them smaller than other graphs.
         if (class(venn_list)[1] != "try-error") {
+          ## First row of plots all going up
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of all genes, lfc > 0.",
+                                   startRow=current_row, startCol=current_column)
+          up_plot <- venn_nop_lfc0[["up_venn"]]
+          try_result <- xlsx_plot_png(
+            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+            start_col=current_column, plotname="lfc0upvennnop", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of all genes, lfc > 1.",
+                                   startRow=1, startCol=current_column)
+          up_plot <- venn_nop[["up_venn"]]
+          try_result <- xlsx_plot_png(
+            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+            start_col=current_column, plotname="upvennnop", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname,
                                    x="Venn of p-value up genes, lfc > 0.",
-                                   startRow=1, startCol=plot_column)
+                                   startRow=1, startCol=current_column)
           up_plot <- venn_list[["up_venn"]]
           try_result <- xlsx_plot_png(
             up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=plot_column, plotname="upvenn", savedir=excel_basename,
-            start_row=2, doWeights=FALSE)
-          xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value down genes, lfc < 0.",
-                                   startRow=1, startCol=plot_column + 4)
-          down_plot <- venn_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=plot_column + 4, plotname="downvenn", savedir=excel_basename,
-            start_row=2, doWeights=FALSE)
-          venns[[tab]] <- venn_list
-
+            start_col=current_column, plotname="upvenn", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname,
                                    x="Venn of p-value up genes, lfc > 1.",
-                                   startRow=1, startCol=plot_column + 8)
+                                   startRow=current_row, startCol=current_column)
           sig_up_plot <- venn_sig_list[["up_venn"]]
           try_result <- xlsx_plot_png(
             sig_up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=plot_column + 8, plotname="upvenn", savedir=excel_basename,
-            start_row=2, doWeights=FALSE)
-          xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value down genes, lfc < -1.",
-                                   startRow=1, startCol=plot_column + 12)
-          down_plot <- venn_sig_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=plot_column + 12, plotname="downvenn", savedir=excel_basename,
-            start_row=2, doWeights=FALSE)
-          venns[[tab]] <- venn_list
-
+            start_col=current_column, plotname="upvenn", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
           siggene_lst <- try(plot_num_siggenes(written_table))
+          current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
                                      wb=wb, sheet=sheetname,
                                      x="Significant genes by fc going up.",
-                                     startRow=1, startCol=plot_column + 16)
+                                     startRow=current_row, startCol=current_column)
             try_result <- xlsx_plot_png(
               siggene_lst[["up"]], wb=wb, sheet=sheetname,
               width=plot_dim, height=(plot_dim / 2),
-              start_col=plot_column + 16, plotname="siggenesup",
-              savedir=excel_basename, start_row=2, doWeights=FALSE)
-
-            xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by fc going down.",
-                                     startRow=1, startCol=plot_column + 24)
-            try_result <- xlsx_plot_png(
-              siggene_lst[["down"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=plot_column + 24, plotname="siggenesup",
-              savedir=excel_basename, start_row=2, doWeights=FALSE)
-
+              start_col=current_column, plotname="siggenesup",
+              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+            current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
                                      wb=wb, sheet=sheetname,
                                      x="Significant genes by p going up.",
-                                     startRow=1, startCol=plot_column + 32)
+                                     startRow=1, startCol=current_column)
             try_result <- xlsx_plot_png(
               siggene_lst[["pup"]], wb=wb, sheet=sheetname,
               width=plot_dim, height=(plot_dim / 2),
-              start_col=plot_column + 32, plotname="siggenespup",
-              savedir=excel_basename, start_row=2, doWeights=FALSE)
-
+              start_col=current_column, plotname="siggenespup",
+              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+          }
+          ## Plot down venns etc, so reset the column but not the rows!
+          current_column <- xls_result[["end_col"]] + 2
+          current_row <- current_row + venn_rows
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of all genes, lfc < 0.",
+                                   startRow=current_row, startCol=current_column)
+          down_plot <- venn_nop_lfc0[["down_venn"]]
+          try_result <- xlsx_plot_png(
+            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
+            start_col=current_column, plotname="lfc0downvennnop", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of all genes, lfc < -1.",
+                                   startRow=current_row, startCol=current_column)
+          down_plot <- venn_nop[["down_venn"]]
+          try_result <- xlsx_plot_png(
+            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
+            start_col=current_column, plotname="downvennnop", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of p-value down genes, lfc < 0.",
+                                   startRow=current_row, startCol=current_column)
+          down_plot <- venn_list[["down_venn"]]
+          try_result <- xlsx_plot_png(
+            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
+            start_col=current_column, plotname="downvenn", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
+          xl_result <- openxlsx::writeData(
+                                   wb=wb, sheet=sheetname,
+                                   x="Venn of p-value down genes, lfc < -1.",
+                                   startRow=current_row, startCol=current_column)
+          down_plot <- venn_sig_list[["down_venn"]]
+          try_result <- xlsx_plot_png(
+            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
+            start_col=current_column, plotname="downvenn", savedir=excel_basename,
+            start_row=current_row + 1, doWeights=FALSE)
+          current_column <- current_column + venn_columns
+          if (class(siggene_lst)[1] != "try-error") {
+            xl_result <- openxlsx::writeData(
+                                     wb=wb, sheet=sheetname,
+                                     x="Significant genes by fc going down.",
+                                     startRow=current_row, startCol=current_column)
+            try_result <- xlsx_plot_png(
+              siggene_lst[["down"]], wb=wb, sheet=sheetname,
+              width=plot_dim, height=(plot_dim / 2),
+              start_col=current_column, plotname="siggenesup",
+              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+            current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
                                      wb=wb, sheet=sheetname,
                                      x="Significant genes by p going down.",
-                                     startRow=1, startCol=plot_column + 40)
+                                     startRow=current_row, startCol=current_column)
             try_result <- xlsx_plot_png(
               siggene_lst[["pdown"]], wb=wb, sheet=sheetname,
               width=plot_dim, height=(plot_dim / 2),
-              start_col=plot_column + 40, plotname="siggenespdown",
-              savedir=excel_basename, start_row=2, doWeights=FALSE)
+              start_col=current_column, plotname="siggenespdown",
+              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
           }
-
+          current_row <- current_row + venn_rows
         } ## End checking on venns
 
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
+        current_column <- xls_result[["end_col"]] + 2
         plt <- limma_plots[[sheetname]]
         ma_plt <- limma_ma_plots[[sheetname]]
         vol_plt <- limma_vol_plots[[sheetname]]
@@ -852,36 +653,40 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
           printme <- as.character(
             glue::glue("Limma expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(x=plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}"))
+                          {ymxb_print(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x=printme,
-                                   startRow=18, startCol=plot_column)
+                                   startRow=current_row, startCol=current_column)
           try_result <- xlsx_plot_png(
             plt[["scatter"]], wb=wb, sheet=sheetname,
-            width=plot_dim, height=plot_dim, start_col=plot_column,
-            plotname="lmscatter", savedir=excel_basename, start_row=19)
+            width=plot_dim, height=plot_dim, start_col=current_column,
+            plotname="lmscatter", savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="limma MA plot",
-                                   startRow=18, startCol=plot_column + 10)
+                                   startRow=current_row, startCol=current_column)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 10, plotname="lmma",
-            savedir=excel_basename, start_row=19)
+            height=plot_dim, start_col=current_column, plotname="lmma",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="limma volcano plot",
-                                   startRow=18, startCol=plot_column + 20)
+                                   startRow=current_row, startCol=current_column)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 20, pltname="lmvol",
-            savedir=excel_basename, start_row=19)
+            height=plot_dim, start_col=current_column, pltname="lmvol",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="limma p-value plot",
-                                   startRow=18, startCol=plot_column + 30)
+                                   startRow=current_row, startCol=current_column)
           try_p_result <- xlsx_plot_png(
             p_plt, wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 30, pltname="lmp",
-            savedir=excel_basename, start_row=19)
+            height=plot_dim, start_col=current_column, pltname="lmp",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_row <- current_row + plot_rows
         }
         ## Text on row 50, plots from 51-81
         ##plt <- edger_plots[count][[1]] ##FIXME this is suspicious
@@ -889,80 +694,89 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
         ma_plt <- edger_ma_plots[[sheetname]]
         vol_plt <- edger_vol_plots[[sheetname]]
         p_plt <- edger_pplots[[sheetname]]
+        current_column <- xls_result[["end_col"]] + 2
         if (class(plt)[1] != "try-error" & !is.null(plt)) {
           printme <- as.character(
             glue::glue("Edger expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}"))
+                          {ymxb_print(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x=printme,
-                                   startRow=50, startCol=plot_column)
+                                   startRow=current_row, startCol=current_column)
           try_result <- xlsx_plot_png(
             plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column, plotname="edscatter",
-            savedir=excel_basename, start_row=51)
+            height=plot_dim, start_col=current_column, plotname="edscatter",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="edgeR MA plot",
-                                   startRow=50, startCol=plot_column + 10)
+                                   startRow=current_row, startCol=current_column)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 10, plotname="edma",
-            savedir=excel_basename, start_row=51)
+            height=plot_dim, start_col=current_column, plotname="edma",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="edgeR volcano plot",
-                                   startRow=50, startCol=plot_column + 20)
+                                   startRow=current_row, startCol=current_column)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 20, plotname="edvol",
-            savedir=excel_basename, start_row=51)
+            height=plot_dim, start_col=current_column, plotname="edvol",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="edgeR p-value plot",
-                                   startRow=50, startCol=plot_column + 30)
+                                   startRow=current_row, startCol=current_column)
           try_p_result <- xlsx_plot_png(
             p_plt, wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 30, plotname="edp",
-            savedir=excel_basename, start_row=51)
+            height=plot_dim, start_col=current_column, plotname="edp",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_row <- current_row + plot_rows
         }
         ## Text on 81, plots 82-112
         plt <- deseq_plots[[sheetname]]
         ma_plt <- deseq_ma_plots[[sheetname]]
         vol_plt <- deseq_vol_plots[[sheetname]]
         p_plt <- deseq_pplots[[sheetname]]
+        current_column <- xls_result[["end_col"]] + 2
         if (class(plt)[1] != "try-error" & !is.null(plt)) {
           printme <- as.character(
             glue::glue("DESeq2 expression coefficients for {names(combo)[[x]]}; R^2: \\
                           {signif(plt[['lm_rsq']], digits=3)}; equation: \\
-                          {make_equate(plt[['lm_model']])}"))
+                          {ymxb_print(plt[['lm_model']])}"))
           message(printme)
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x=printme,
-                                   startRow=81, startCol=plot_column)
+                                   startRow=current_row, startCol=current_column)
           try_result <- xlsx_plot_png(
             plt[["scatter"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column, plotname="descatter",
-            savedir=excel_basename, start_row=82)
+            height=plot_dim, start_col=current_column, plotname="descatter",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="DESeq2 MA plot",
-                                   startRow=81, startCol=plot_column + 10)
+                                   startRow=current_row, startCol=current_column)
           try_ma_result <- xlsx_plot_png(
             ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 10, plotname="dema",
-            savedir=excel_basename, start_row=82)
+            height=plot_dim, start_col=current_column, plotname="dema",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="DESeq2 volcano plot",
-                                   startRow=81, startCol=plot_column + 20)
+                                   startRow=current_row, startCol=current_column)
           try_vol_result <- xlsx_plot_png(
             vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 20, plotname="devol",
-            savedir=excel_basename, start_row=82)
+            height=plot_dim, start_col=current_column, plotname="devol",
+            savedir=excel_basename, start_row=current_row + 1)
+          current_column <- current_column + plot_columns
           xl_result <- openxlsx::writeData(
                                    wb=wb, sheet=sheetname, x="DESeq2 p-value plot",
-                                   startRow=81, startCol=plot_column + 30)
+                                   startRow=current_row, startCol=current_column)
           try_p_result <- xlsx_plot_png(
             p_plt, wb=wb, sheet=sheetname, width=plot_dim,
-            height=plot_dim, start_col=plot_column + 30, plotname="dep",
-            savedir=excel_basename, start_row=82)
+            height=plot_dim, start_col=current_column, plotname="dep",
+            savedir=excel_basename, start_row=current_row + 1)
         }
       }
     }  ## End for loop iterating over every kept table.
@@ -1499,6 +1313,397 @@ Defaulting to fdr.")
   class(ret) <- c("combined_table", "list")
   return(ret)
 }
+
+extract_keepers_all <- function(keepers, table_names, all_coefficients,
+                                limma, edger, ebseq, deseq, basic,
+                                adjp, annot_df,
+                                include_deseq, include_edger,
+                                include_ebseq, include_limma,
+                                include_basic, excludes, padj_type) {
+    contrast_list <- table_names
+    ret_keepers <- list()
+    for (a in 1:length(table_names)) {
+      tab <- table_names[a]
+      ret_keepers[[tab]] <- tab
+      name_list[a] <- tab
+      message("Working on table ", a, "/", names_length, ": ", tab)
+      sheet_count <- sheet_count + 1
+      splitted <- strsplit(x=tab, split="_vs_")
+      xname <- splitted[[1]][1]
+      yname <- splitted[[1]][2]
+
+      combined <- combine_single_de_table(
+        li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
+        table_name=tab, annot_df=annot_df,
+        include_basic=include_basic, include_deseq=include_deseq,
+        include_edger=include_edger, include_ebseq=include_ebseq,
+        include_limma=include_limma, excludes=excludes,
+        padj_type=padj_type)
+      de_summaries <- rbind(de_summaries, as.data.frame(combined[["summary"]]))
+      combo[[tab]] <- combined[["data"]]
+      limma_plots[[tab]] <- NULL
+      limma_ma_plots[[tab]] <- NULL
+      limma_pplots[[tab]] <- NULL
+      edger_plots[[tab]] <- NULL
+      edger_ma_plots[[tab]] <- NULL
+      edger_pplots[[tab]] <- NULL
+      ebseq_plots[[tab]] <- NULL
+      ebseq_ma_plots[[tab]] <- NULL
+      deseq_plots[[tab]] <- NULL
+      deseq_ma_plots[[tab]] <- NULL
+      deseq_pplots[[tab]] <- NULL
+      if (isTRUE(include_limma) & isTRUE(do_excel)) {
+        limma_try <- sm(try(extract_coefficient_scatter(
+          limma, type="limma", loess=loess, x=xname, y=yname)))
+        limma_ma_vol <- try(extract_de_plots(combined, type="limma", table=tab))
+        if (class(limma_ma_vol)[1] == "list") {
+          limma_plots[[tab]] <- limma_try
+        }
+        if (class(limma_ma_vol)[1] == "list") {
+          limma_ma_plots[[tab]] <- limma_ma_vol[["ma"]]
+          limma_vol_plots[[tab]] <- limma_ma_vol[["volcano"]]
+        }
+        ## limma_pplots[[tab]] <- plot_histogram(combined[["data"]][["limma_p"]])
+        limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
+      }
+      if (isTRUE(include_edger)) {
+        edger_try <- sm(try(extract_coefficient_scatter(
+          edger, type="edger", loess=loess, x=xname, y=yname)))
+        edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=tab)))
+        if (class(edger_try)[1] == "list") {
+          edger_plots[[tab]] <- edger_try
+        }
+        if (class(edger_ma_vol)[1] == "list") {
+          edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
+          edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
+        }
+        ##edger_pplots[[tab]] <- plot_histogram(combined[["data"]][["edger_p"]])
+        edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
+      }
+      if (isTRUE(include_deseq)) {
+        deseq_try <- sm(try(extract_coefficient_scatter(
+          deseq, type="deseq", loess=loess, x=xname, y=yname)))
+        deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=tab)))
+        if (class(deseq_try)[1] == "list") {
+          deseq_plots[[tab]] <- deseq_try
+        }
+        if (class(deseq_ma_vol)[1] == "list") {
+          deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
+          deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
+        }
+        ## deseq_pplots[[tab]] <- plot_histogram(combined[["data"]][["deseq_p"]])
+        deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
+      }
+    } ## End for list
+    retlst <- list(
+      "combo" = combo,
+      "limma_plots" = limma_plots,
+      "limma_ma_plots" = limma_ma_plots,
+      "limma_vol_plots" = limma_vol_plots,
+      "limma_pplots" = limma_pplots,
+      "edger_plots" = edger_plots,
+      "edger_ma_plots" = edger_ma_plots,
+      "edger_vol_plots" = edger_vol_plots,
+      "edger_pplots" = edger_pplots,
+      "deseq_plots" = deseq_plots,
+      "deseq_ma_plots" = deseq_ma_plots,
+      "deseq_vol_plots" = deseq_vol_plots,
+      "deseq_pplots" = deseq_pplots,
+      "final_table_names" = final_table_names,
+      "de_summaries" = de_summaries
+    )
+    return(retlst)
+}
+
+extract_keepers_lst <- function(keepers, table_names, all_coefficients,
+                                limma, edger, ebseq, deseq, basic,
+                                adjp, annot_df,
+                                include_deseq, include_edger,
+                                include_ebseq, include_limma,
+                                include_basic, excludes, padj_type) {
+  ## First check that your set of kepers is in the data
+  all_coefficients <- unlist(strsplit(x=table_names, split="_vs_"))
+  all_keepers <- as.character(unlist(keepers))
+  found_keepers <- sum(all_keepers %in% all_coefficients)
+  ret_keepers <- keepers
+  ## Just make sure we have something to work with.
+  if (found_keepers == 0) {
+    message("The keepers has no elements in the coefficients.")
+    message("Here are the keepers: ", toString(all_keepers))
+    message("Here are the coefficients: ", toString(all_coefficients))
+    stop("Unable to find the set of contrasts to keep, fix this and try again.")
+  }
+  ## Then keep specific tables in specific orientations.
+
+  keeper_len <- length(names(keepers))
+  contrast_list <- names(keepers)
+  for (a in 1:length(names(keepers))) {
+    name <- names(keepers)[a]
+    ## Each element in the list gets one worksheet.
+    sheet_count <- sheet_count + 1
+    ## The numerators and denominators will be used to check that we are a_vs_b or b_vs_a
+    numerator <- keepers[[name]][1]
+    numerators[name] <- numerator
+    denominator <- keepers[[name]][2]
+    denominators[name] <- denominator
+    message("Working on ", a, "/", keeper_len, ": ",  name,
+            " which is: ", numerator, "/", denominator, ".")
+    same_string <- numerator
+    inverse_string <- numerator
+    if (!is.na(denominator)) {
+      same_string <- glue::glue("{numerator}_vs_{denominator}")
+      inverse_string <- glue::glue("{denominator}_vs_{numerator}")
+    }
+    ## Blank out some elements for plots and such.
+    dat <- NULL
+    plt <- NULL
+    de_summary <- NULL
+    limma_plt <- limma_ma_plt <- limma_vol_plt <- NULL
+    edger_plt <- edger_ma_plt <- edger_vol_plt <- NULL
+    ebseq_plt <- ebseq_ma_plt <- ebseq_vol_plt <- NULL
+    deseq_plt <- deseq_ma_plt <- deseq_vol_plt <- NULL
+    limma_pplt <- edger_pplt <- deseq_pplt <- ebseq_pplt <- NULL
+
+    ## Do the actual table search, checking for the same_string (a_vs_b) and
+    ## inverse (b_vs_a) Set a flag do_inverse appropriately, this will be used
+    ## later to flip some numbers.
+    found <- 0
+    found_table <- NULL
+    do_inverse <- FALSE
+    for (t in 1:length(table_names)) {
+      tab <- table_names[t]
+      if (tab == same_string) {
+        do_inverse <- FALSE
+        found <- found + 1
+        found_table <- same_string
+        message("Found table with ", same_string)
+      } else if (tab == inverse_string) {
+        do_inverse <- TRUE
+        found <- found + 1
+        found_table <- inverse_string
+        message("Found inverse table with ", inverse_string)
+      }
+      name_list[a] <- same_string
+    }
+    if (found == 0) {
+      message("Found neither ", same_string, " nor ", inverse_string, ".")
+      break
+    }
+
+    ## Now make a single table from the limma etc results.
+    if (found > 0) {
+      combined <- combine_single_de_table(
+        li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
+        table_name=found_table, do_inverse=do_inverse,
+        adjp=adjp, annot_df=annot_df, include_deseq=include_deseq,
+        include_edger=include_edger, include_ebseq=include_ebseq,
+        include_limma=include_limma, include_basic=include_basic,
+        excludes=excludes, padj_type=padj_type)
+      dat <- combined[["data"]]
+      de_summary <- as.data.frame(combined[["summary"]])
+      ## And get a bunch of variables ready to receive the coefficient, ma,
+      ## and volcano plots.
+      limma_plt <- edger_plt <- ebseq_plt <- deseq_plt <- NULL
+      limma_ma_plt <- edger_ma_plt <- ebseq_ma_plt <- deseq_ma_plt <- NULL
+      limma_vol_plt <- edger_vol_plt <- ebseq_vol_plt <- deseq_vol_plt <- NULL
+      limma_pplt <- edger_pplt <- ebseq_pplt <- deseq_pplt <- NULL
+
+      ## The following logic will be repeated for limma, edger, deseq
+      ## Check that the tool's data survived, and if so plot the coefficients,
+      ## ma, and vol. I think I will put extract_coefficient_scatter into
+      ## extract_de_plots partially to simplify this and partially because
+      ## having them separate is dumb.
+      if (isTRUE(include_limma)) {
+        limma_try <- sm(try(extract_coefficient_scatter(
+          limma, type="limma", loess=loess, x=denominator, y=numerator)))
+        if (class(limma_try)[1] == "list") {
+          limma_plt <- limma_try
+        }
+        ma_vol <- sm(try(extract_de_plots(
+          combined, type="limma", invert=do_inverse, table=found_table)))
+        if (class(ma_vol)[1] != "try-error") {
+          limma_ma_plt <- ma_vol[["ma"]]
+          limma_vol_plt <- ma_vol[["volcano"]]
+        }
+        ##limma_pplt <- plot_histogram(combined[["data"]][["limma_p"]])
+        limma_pplt <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
+      }
+      if (isTRUE(include_edger)) {
+        edger_try <- sm(try(extract_coefficient_scatter(
+          edger, type="edger", loess=loess, x=denominator, y=numerator), silent=TRUE))
+        if (class(edger_try)[1] == "list") {
+          edger_plt <- edger_try
+        }
+        ma_vol <- sm(try(extract_de_plots(
+          combined, type="edger", invert=do_inverse, table=found_table), silent=TRUE))
+        if (class(ma_vol)[1] != "try-error") {
+          edger_ma_plt <- ma_vol[["ma"]]
+          edger_vol_plt <- ma_vol[["volcano"]]
+        }
+        ##edger_pplt <- plot_histogram(combined[["data"]][["edger_p"]])
+        edger_pplt <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
+      }
+      if (isTRUE(include_deseq)) {
+        deseq_try <- sm(try(extract_coefficient_scatter(
+          deseq, type="deseq", loess=loess, x=denominator, y=numerator), silent=TRUE))
+        if (class(deseq_try)[1] == "list") {
+          deseq_plt <- deseq_try
+        }
+        ma_vol <- sm(try(extract_de_plots(
+          combined, type="deseq", invert=do_inverse, table=found_table), silent=TRUE))
+        if (class(ma_vol)[1] != "try-error") {
+          deseq_ma_plt <- ma_vol[["ma"]]
+          deseq_vol_plt <- ma_vol[["volcano"]]
+        }
+        ##deseq_pplt <- plot_histogram(combined[["data"]][["deseq_p"]])
+        deseq_pplt <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
+      }
+    } else {
+      ## End checking that we found the numerator/denominator
+      warning("Did not find either ", same_string, " nor ", inverse_string, ".")
+      message("Did not find either ", same_string, " nor ", inverse_string, ".")
+      break
+    }
+    ## Now that we have made the plots and tables, drop them into the
+    ## appropriate element in the top-level lists.
+    combo[[name]] <- dat
+    limma_plots[[name]] <- limma_plt
+    limma_ma_plots[[name]] <- limma_ma_plt
+    limma_vol_plots[[name]] <- limma_vol_plt
+    limma_pplots[[name]] <- limma_pplt
+    edger_plots[[name]] <- edger_plt
+    edger_ma_plots[[name]] <- edger_ma_plt
+    edger_vol_plots[[name]] <- edger_vol_plt
+    edger_pplots[[name]] <- edger_pplt
+    deseq_plots[[name]] <- deseq_plt
+    deseq_ma_plots[[name]] <- deseq_ma_plt
+    deseq_vol_plots[[name]] <- deseq_vol_plt
+    deseq_pplots[[name]] <- deseq_pplt
+    final_table_names[[a]] <- combined[["summary"]][["table"]]
+    de_summaries <- rbind(de_summaries, de_summary)
+    ## names(combo) <- name_list  ## I think this is messing me up.
+  } ## Ending the for loop of elements in the keepers list.
+  retlst <- list(
+    "combo" = combo,
+    "limma_plots" = limma_plots,
+    "limma_ma_plots" = limma_ma_plots,
+    "limma_vol_plots" = limma_vol_plots,
+    "limma_pplots" = limma_pplots,
+    "edger_plots" = edger_plots,
+    "edger_ma_plots" = edger_ma_plots,
+    "edger_vol_plots" = edger_vol_plots,
+    "edger_pplots" = edger_pplots,
+    "deseq_plots" = deseq_plots,
+    "deseq_ma_plots" = deseq_ma_plots,
+    "deseq_vol_plots" = deseq_vol_plots,
+    "deseq_pplots" = deseq_pplots,
+    "final_table_names" = final_table_names,
+    "de_summaries" = de_summaries
+  )
+  return(retlst)
+}
+
+
+extract_keepers_single <- function(keepers, table_names, all_coefficients,
+                                limma, edger, ebseq, deseq, basic,
+                                adjp, annot_df,
+                                include_deseq, include_edger,
+                                include_ebseq, include_limma,
+                                include_basic, excludes, padj_type) {
+  table <- keepers
+  contrast_list <- table
+  name_list[1] <- table
+  sheet_count <- sheet_count + 1
+  ret_keepers[[table]] <- table
+  if (table %in% names(edger[["contrast_list"]])) {
+    message("I found ", table, " in the available contrasts.")
+  } else {
+    message("I did not find ", table, " in the available contrasts.")
+    message("The available tables are: ", names(edger[["contrast_list"]]))
+    table <- names(edger[["contrast_list"]])[[1]]
+    message("Choosing the first table: ", table)
+  }
+  combined <- combine_single_de_table(
+    li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
+    table_name=table, annot_df=annot_df,
+    include_basic=include_basic, include_deseq=include_deseq,
+    include_edger=include_edger, include_ebseq=include_ebseq,
+    include_limma=include_limma, excludes=excludes,
+    padj_type=padj_type)
+  combo[[table]] <- combined[["data"]]
+  splitted <- strsplit(x=tab, split="_vs_")
+  de_summaries <- rbind(de_summaries, combined[["summary"]])
+  final_table_names[[a]] <- combined[["summary"]][["table"]]
+  xname <- splitted[[1]][1]
+  yname <- splitted[[1]][2]
+  limma_plots[[name]] <- edger_plots[[name]] <- deseq_plots[[name]] <- NULL
+  limma_ma_plots[[name]] <- edger_ma_plots[[name]] <- deseq_ma_plots[[name]] <- NULL
+  limma_pplots[[name]] <- edger_pplots[[name]] <- deseq_pplots[[name]] <- NULL
+  if (isTRUE(include_limma)) {
+    limma_try <- sm(try(extract_coefficient_scatter(
+      limma, type="limma",
+      loess=loess, x=xname, y=yname)))
+    limma_ma_vol <- sm(try(extract_de_plots(combined, type="limma", table=table)))
+    if (class(limma_try)[1] == "list") {
+      limma_plots[[name]] <- limma_try
+    }
+    if (class(limma_ma_vol)[1] == "list") {
+      limma_ma_plots[[name]] <- limma_ma_vol[["ma"]]
+      limma_vol_plots[[name]] <- limma_ma_vol[["volcano"]]
+    }
+    ## limma_pplots[[name]] <- plot_histogram(combined[["data"]][["limma_p"]])
+    limma_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
+  }
+  if (isTRUE(include_edger)) {
+    edger_try <- sm(try(extract_coefficient_scatter(
+      edger, type="edger",
+      loess=loess, x=xname, y=yname)))
+    edger_ma_vol <- sm(try(extract_de_plots(combined, type="edger", table=table)))
+    if (class(edger_try)[1] == "list") {
+      edger_plots[[name]] <- edger_try
+    }
+    if (class(edger_ma_vol)[1] == "list") {
+      edger_ma_plots[[tab]] <- edger_ma_vol[["ma"]]
+      edger_vol_plots[[tab]] <- edger_ma_vol[["volcano"]]
+    }
+    ## edger_pplots[[name]] <- plot_histogram(combined[["data"]][["edger_p"]])
+    edger_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
+  }
+  if (isTRUE(include_deseq)) {
+    deseq_try <- sm(try(extract_coefficient_scatter(
+      deseq, type="deseq",
+      loess=loess, x=xname, y=yname)))
+    deseq_ma_vol <- sm(try(extract_de_plots(combined, type="deseq", table=table)))
+    if (class(deseq_try)[1] == "list") {
+      deseq_plots[[name]] <- deseq_try
+    }
+    if (class(deseq_ma_vol)[1] == "list") {
+      deseq_ma_plots[[tab]] <- deseq_ma_vol[["ma"]]
+      deseq_vol_plots[[tab]] <- deseq_ma_vol[["volcano"]]
+    }
+    ## deseq_pplots[[name]] <- plot_histogram(combined[["data"]][["deseq_p"]])
+    deseq_pplots[[tab]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
+  }
+  retlst <- list(
+    "combo" = combo,
+    "limma_plots" = limma_plots,
+    "limma_ma_plots" = limma_ma_plots,
+    "limma_vol_plots" = limma_vol_plots,
+    "limma_pplots" = limma_pplots,
+    "edger_plots" = edger_plots,
+    "edger_ma_plots" = edger_ma_plots,
+    "edger_vol_plots" = edger_vol_plots,
+    "edger_pplots" = edger_pplots,
+    "deseq_plots" = deseq_plots,
+    "deseq_ma_plots" = deseq_ma_plots,
+    "deseq_vol_plots" = deseq_vol_plots,
+    "deseq_pplots" = deseq_pplots,
+    "final_table_names" = final_table_names,
+    "de_summaries" = de_summaries
+  )
+  return(retlst)
+}
+
 
 #' Extract the sets of genes which are significantly more abundant than the rest.
 #'

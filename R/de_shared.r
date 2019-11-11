@@ -58,7 +58,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          alt_model=NULL, libsize=NULL, test_pca=TRUE,
                          annot_df=NULL, parallel=TRUE,
                          do_basic=TRUE, do_deseq=TRUE, do_ebseq=NULL,
-                         do_edger=TRUE, do_limma=TRUE, ...) {
+                         do_edger=TRUE, do_limma=TRUE,
+                         convert="cpm", norm="quant", ...) {
   arglist <- list(...)
   surrogates <- "be"
   if (!is.null(arglist[["surrogates"]])) {
@@ -92,9 +93,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   post_pca <- NULL
   if (isTRUE(test_pca)) {
     pre_batch <- normalize_expt(input, filter=TRUE, batch=FALSE,
-                                transform="log2", convert="cpm", norm="quant")
+                                transform="log2", convert=convert, norm=norm)
     message("Plotting a PCA before surrogates/batch inclusion.")
-    pre_pca <- plot_pca(pre_batch, ...)[["plot"]]
+    pre_pca <- plot_pca(pre_batch, plot_labels=FALSE, ...)
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
@@ -108,14 +109,18 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         test_norm <- "raw"
       }
       message("Performing a test normalization with: ", test_norm)
-      post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
-                                       transform="log2", convert="cpm",
-                                       norm=test_norm))
+      if (!isFALSE(model_batch)) {
+        post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
+                                         transform="log2", convert="cpm",
+                                         norm=test_norm))
+      } else {
+        post_batch <- NULL
+      }
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
     }
-    post_pca <- plot_pca(post_batch, ...)[["plot"]]
+    post_pca <- plot_pca(post_batch, plot_labels=FALSE, ...)
   }
 
   ## do_ebseq defaults to NULL, this is so that we can query the number of

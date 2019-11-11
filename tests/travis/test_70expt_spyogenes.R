@@ -88,7 +88,7 @@ test_that("Can I extract the chromosome sequence from a genbank file? (gene name
 })
 
 taxon <- "293653"
-mgas_df <- sm(load_microbesonline_annotations(taxon))
+mgas_df <- sm(load_microbesonline_annotations(id=taxon))
 mgas_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_df[["sysName"]])
 expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
 actual <- as.character(head(mgas_df[["name"]]))

@@ -122,7 +122,7 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
     gsub(pattern="^.*?tId=([[:digit:]]+)$", replacement="\\1", x=.)
   id_table <- id_nodes %>%
     rvest::html_table(header=TRUE, fill=TRUE)
-  id_df <- id_lst[[1]]  ## Grab the first (only) element
+  id_df <- id_table[[1]]  ## Grab the first (only) element
   id_df[["tax_id"]] <- id_links
   foundp <- grep(pattern=species, x=id_df[["Genome"]])
   ret <- NULL
