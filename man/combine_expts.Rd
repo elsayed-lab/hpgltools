@@ -26,3 +26,10 @@ Because of the extra sugar I added to expressionSets, the combine() function
 needs a little help when combining expts.  Notably, the information from
 tximport needs some help.
 }
+\examples{
+ \dontrun{
+  expt1 <- create_expt(first_meta)
+  expt2 <- create_expt(second_meta)
+  combined <- combine_expts(expt1, expt2, merge_meta=TRUE)
+}
+}

@@ -57,10 +57,12 @@ a full pathname or local to the cwd of the project.
 \dontrun{
  new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
  ## Remember that this depends on an existing data structure of gene annotations.
+ meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
+ another_expt <- create_expt(meta, gene_info=annotations, count_dataframe=df_I_downloaded)
 }
 }
 \seealso{
 \pkg{Biobase}
  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
-  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
+ \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 }

@@ -1591,21 +1591,23 @@ read_metadata <- function(file, ...) {
   if (is.null(arglist[["header"]])) {
     arglist[["header"]] <- TRUE
   }
-
-  if (tools::file_ext(file) == "csv") {
+  extension <- file_expt(file)
+  if (extension == "csv") {
     definitions <- read.csv(file=file, comment.char="#",
                             sep=arglist[["sep"]], header=arglist[["header"]])
-  } else if (tools::file_ext(file) == "xlsx") {
+  } else if (extension == "tsv") {
+    definitions <- try(readr::read_tsv(file, ...))
+  } else if (extension == "xlsx") {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
     definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
     if (class(definitions)[1] == "try-error") {
       stop("Unable to read the metadata file: ", file)
     }
-  } else if (tools::file_ext(file) == "xls") {
+  } else if (extension == "xls") {
     ## This is not correct, but it is a start
-    definitions <- readxl::read_xls(path=file, sheet=1)
-  } else if (tools::file_ext(file) == "ods") {
+    definitions <- readxl::read_excel(path=file, sheet=1)
+  } else if (extension == "ods") {
     sheet <- 1
     if (!is.null(arglist[["sheet"]])) {
       sheet <- arglist[["sheet"]]
@@ -1624,8 +1626,8 @@ read_metadata <- function(file, ...) {
 #' to include/exclude specific genes/families based on string comparisons.
 #'
 #' @param input Expt to filter.
-#' @param invert Keep only the things with the provided strings (TRUE), or
-#'   remove them (FALSE).
+#' @param invert The default is to remove the genes with the semantic strings.
+#'   Keep them when inverted.
 #' @param topn Take the topn most abundant genes rather than a text based heuristic.
 #' @param semantic Character list of strings to search for in the annotation
 #'   data.

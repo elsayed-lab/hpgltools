@@ -28,6 +28,17 @@ Because I am too lazy to remember that expressionsets use matrix subsets for
 gene and sample.  Also those methods lead to shenanigans when I want to know
 what happened to the data over the course of the subset.
 }
+\examples{
+ \dontrun{
+  all_expt <- create_expt(metadata)
+  ## This assumes a column in the metadata named 'txtype' containing the
+  ## information telling us what type of transcript each gene is.
+  no_ribosomes <- exclude_genes_expt(all_expt, column="txtype",
+                                     patterns=c("snRNA", "tRNA", "rRNA"))
+  i_hate_these_genes <- exclude_genes_expt(all_expt, ids=c("gene1", "gene2"))
+  only_ribosomes <- exclude_genes_expt(all_expt, method="keep")
+}
+}
 \seealso{
 \code{\link{create_expt}}
 }

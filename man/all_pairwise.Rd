@@ -10,7 +10,7 @@ all_pairwise(input = NULL, conditions = NULL, batches = NULL,
   alt_model = NULL, libsize = NULL, test_pca = TRUE,
   annot_df = NULL, parallel = TRUE, do_basic = TRUE,
   do_deseq = TRUE, do_ebseq = NULL, do_edger = TRUE,
-  do_limma = TRUE, ...)
+  do_limma = TRUE, convert = "cpm", norm = "quant", ...)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables,

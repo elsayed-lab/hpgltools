@@ -4,10 +4,10 @@
 \alias{ymxb_print}
 \title{Print a model as y = mx + b just like in grade school!}
 \usage{
-ymxb_print(model)
+ymxb_print(lm_model)
 }
 \arguments{
-\item{model}{Model to print from glm/lm/robustbase.}
+\item{lm_model}{Model to print from glm/lm/robustbase.}
 }
 \value{
 a string representation of that model.

@@ -404,7 +404,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
     deseq_ma_plots <- extracted[["deseq_ma_plots"]]
     deseq_vol_plots <- extracted[["deseq_vol_plots"]]
     deseq_pplots <- extracted[["deseq_pplots"]]
-    final_table_names extracted[["final_table_names"]]
+    final_table_names <- extracted[["final_table_names"]]
     de_summaries <- extracted[["de_summaries"]]
   } else if (class(keepers)[1] == "character" & keepers == "all") {
     ## If you want all the tables in a dump
@@ -430,7 +430,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
     deseq_ma_plots <- extracted[["deseq_ma_plots"]]
     deseq_vol_plots <- extracted[["deseq_vol_plots"]]
     deseq_pplots <- extracted[["deseq_pplots"]]
-    final_table_names extracted[["final_table_names"]]
+    final_table_names <- extracted[["final_table_names"]]
     de_summaries <- extracted[["de_summaries"]]
   } ## End if looking at all contrasts
   else if (class(keepers)[1] == "character") {
@@ -455,7 +455,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
     deseq_ma_plots <- extracted[["deseq_ma_plots"]]
     deseq_vol_plots <- extracted[["deseq_vol_plots"]]
     deseq_pplots <- extracted[["deseq_pplots"]]
-    final_table_names extracted[["final_table_names"]]
+    final_table_names <- extracted[["final_table_names"]]
     de_summaries <- extracted[["de_summaries"]]
   } else {
     stop("I don't know what to do with your specification of tables to keep.")

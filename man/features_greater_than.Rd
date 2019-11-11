@@ -29,6 +29,7 @@ this function from small to large cutoffs and plot how the number of kept genes 
 \examples{
 \dontrun{
  features <- features_greater_than(expt)
+ fewer <- features_greater_than(expt, cutoff=100)
 }
 }
 \seealso{
