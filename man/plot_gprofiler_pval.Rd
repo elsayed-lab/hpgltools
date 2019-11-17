@@ -4,8 +4,15 @@
 \alias{plot_gprofiler_pval}
 \title{Make a pvalue plot from gprofiler data.}
 \usage{
-plot_gprofiler_pval(gp_result, wrapped_width = 30, cutoff = 0.1,
-  n = 30, group_minsize = 5, scorer = "recall", ...)
+plot_gprofiler_pval(
+  gp_result,
+  wrapped_width = 30,
+  cutoff = 0.1,
+  n = 30,
+  group_minsize = 5,
+  scorer = "recall",
+  ...
+)
 }
 \arguments{
 \item{gp_result}{Some data from gProfiler.}

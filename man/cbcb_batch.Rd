@@ -5,9 +5,15 @@
 \title{A function suggested by Hector Corrada Bravo and Kwame Okrah for batch
 removal.}
 \usage{
-cbcb_batch(normalized_counts, model, batch1 = "batch",
-  condition = "condition", matrix_scale = "linear",
-  return_scale = "linear", method = "subtract")
+cbcb_batch(
+  normalized_counts,
+  model,
+  batch1 = "batch",
+  condition = "condition",
+  matrix_scale = "linear",
+  return_scale = "linear",
+  method = "subtract"
+)
 }
 \arguments{
 \item{normalized_counts}{Data frame of log2cpm counts.}

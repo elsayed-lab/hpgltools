@@ -4,9 +4,17 @@
 \alias{plot_disheat}
 \title{Make a heatmap.3 of the distances (euclidean by default) between samples.}
 \usage{
-plot_disheat(expt_data, expt_colors = NULL, expt_design = NULL,
-  method = "euclidean", expt_names = NULL, batch_row = "batch",
-  title = NULL, label_chars = 10, ...)
+plot_disheat(
+  expt_data,
+  expt_colors = NULL,
+  expt_design = NULL,
+  method = "euclidean",
+  expt_names = NULL,
+  batch_row = "batch",
+  title = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}

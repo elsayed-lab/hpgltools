@@ -1591,7 +1591,7 @@ read_metadata <- function(file, ...) {
   if (is.null(arglist[["header"]])) {
     arglist[["header"]] <- TRUE
   }
-  extension <- file_expt(file)
+  extension <- tools::file_ext(file)
   if (extension == "csv") {
     definitions <- read.csv(file=file, comment.char="#",
                             sep=arglist[["sep"]], header=arglist[["header"]])

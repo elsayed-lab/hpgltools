@@ -4,8 +4,7 @@
 \alias{my_identifyAUBlocks}
 \title{copy/paste the function from SeqTools and figure out where it falls on its ass.}
 \usage{
-my_identifyAUBlocks(x, min.length = 20, p.to.start = 0.8,
-  p.to.end = 0.55)
+my_identifyAUBlocks(x, min.length = 20, p.to.start = 0.8, p.to.end = 0.55)
 }
 \arguments{
 \item{x}{Sequence object}

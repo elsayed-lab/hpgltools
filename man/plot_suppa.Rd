@@ -4,8 +4,15 @@
 \alias{plot_suppa}
 \title{Given some psi and tpm data, make a pretty plot!}
 \usage{
-plot_suppa(dpsi, tpm, events = NULL, psi = NULL,
-  sig_threshold = 0.05, label_type = NULL, alpha = 0.7)
+plot_suppa(
+  dpsi,
+  tpm,
+  events = NULL,
+  psi = NULL,
+  sig_threshold = 0.05,
+  label_type = NULL,
+  alpha = 0.7
+)
 }
 \arguments{
 \item{dpsi}{Table provided by suppa containing all the metrics.}

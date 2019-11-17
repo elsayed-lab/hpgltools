@@ -4,9 +4,16 @@
 \alias{counts_from_surrogates}
 \title{A single place to extract count tables from a set of surrogate variables.}
 \usage{
-counts_from_surrogates(data, adjust = NULL, design = NULL,
-  method = "ruv", cond_column = "condition", matrix_scale = "linear",
-  return_scale = "linear", ...)
+counts_from_surrogates(
+  data,
+  adjust = NULL,
+  design = NULL,
+  method = "ruv",
+  cond_column = "condition",
+  matrix_scale = "linear",
+  return_scale = "linear",
+  ...
+)
 }
 \arguments{
 \item{data}{Original count table, may be an expt/expressionset or df/matrix.}

@@ -5,8 +5,13 @@
 \title{Look at the (biological)coefficient of variation/quartile coefficient of dispersion
 with respect to an experimental factor.}
 \usage{
-plot_variance_coefficients(data, x_axis = "condition", colors = NULL,
-  title = NULL, ...)
+plot_variance_coefficients(
+  data,
+  x_axis = "condition",
+  colors = NULL,
+  title = NULL,
+  ...
+)
 }
 \arguments{
 \item{data}{Expressionset/epxt to poke at.}

@@ -4,9 +4,15 @@
 \alias{plot_gvis_volcano}
 \title{Make an html version of an volcano plot.}
 \usage{
-plot_gvis_volcano(toptable_data, logfc = 1, p = 0.05,
-  tooltip_data = NULL, filename = "html/gvis_vol_plot.html",
-  base_url = "", ...)
+plot_gvis_volcano(
+  toptable_data,
+  logfc = 1,
+  p = 0.05,
+  tooltip_data = NULL,
+  filename = "html/gvis_vol_plot.html",
+  base_url = "",
+  ...
+)
 }
 \arguments{
 \item{toptable_data}{Df of toptable() data.}

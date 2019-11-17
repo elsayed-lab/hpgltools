@@ -4,10 +4,20 @@
 \alias{plot_pyprophet_xy}
 \title{Invoked plot_pyprophet_counts() twice, once for the x-axis, and once for the y.}
 \usage{
-plot_pyprophet_xy(pyprophet_data, keep_real = TRUE, size = 6,
-  label_size = 4, keep_decoys = TRUE, expt_names = NULL,
-  label_chars = 10, x_type = "count", y_type = "intensity",
-  title = NULL, scale = NULL, ...)
+plot_pyprophet_xy(
+  pyprophet_data,
+  keep_real = TRUE,
+  size = 6,
+  label_size = 4,
+  keep_decoys = TRUE,
+  expt_names = NULL,
+  label_chars = 10,
+  x_type = "count",
+  y_type = "intensity",
+  title = NULL,
+  scale = NULL,
+  ...
+)
 }
 \arguments{
 \item{pyprophet_data}{List of pyprophet matrices by sample.}

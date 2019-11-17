@@ -4,8 +4,13 @@
 \alias{plot_essentiality}
 \title{Plot the essentiality of a library as per DeJesus et al.}
 \usage{
-plot_essentiality(file, order_by = "posterior_zbar",
-  keep_esses = FALSE, min_sig = 0.0371, max_sig = 0.9902)
+plot_essentiality(
+  file,
+  order_by = "posterior_zbar",
+  keep_esses = FALSE,
+  min_sig = 0.0371,
+  max_sig = 0.9902
+)
 }
 \arguments{
 \item{file}{result from the DeJesus essentiality package.  I think this has

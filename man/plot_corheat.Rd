@@ -4,9 +4,17 @@
 \alias{plot_corheat}
 \title{Make a heatmap.3 description of the correlation between samples.}
 \usage{
-plot_corheat(expt_data, expt_colors = NULL, expt_design = NULL,
-  method = "pearson", expt_names = NULL, batch_row = "batch",
-  title = NULL, label_chars = 10, ...)
+plot_corheat(
+  expt_data,
+  expt_colors = NULL,
+  expt_design = NULL,
+  method = "pearson",
+  expt_names = NULL,
+  batch_row = "batch",
+  title = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}

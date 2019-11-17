@@ -4,8 +4,14 @@
 \alias{exclude_genes_expt}
 \title{Exclude some genes given a pattern match}
 \usage{
-exclude_genes_expt(expt, column = "txtype", method = "remove",
-  ids = NULL, patterns = c("snRNA", "tRNA", "rRNA"), ...)
+exclude_genes_expt(
+  expt,
+  column = "txtype",
+  method = "remove",
+  ids = NULL,
+  patterns = c("snRNA", "tRNA", "rRNA"),
+  ...
+)
 }
 \arguments{
 \item{expt}{Expressionset containing expt object.}

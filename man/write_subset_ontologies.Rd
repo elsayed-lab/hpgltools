@@ -4,9 +4,15 @@
 \alias{write_subset_ontologies}
 \title{Write gene ontology tables for data subsets}
 \usage{
-write_subset_ontologies(kept_ontology, outfile = "excel/subset_go",
-  dated = TRUE, n = NULL, overwritefile = TRUE, add_plots = TRUE,
-  ...)
+write_subset_ontologies(
+  kept_ontology,
+  outfile = "excel/subset_go",
+  dated = TRUE,
+  n = NULL,
+  overwritefile = TRUE,
+  add_plots = TRUE,
+  ...
+)
 }
 \arguments{
 \item{kept_ontology}{A result from subset_ontology_search()}

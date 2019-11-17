@@ -231,7 +231,8 @@ load_microbesonline_go <- function(id=NULL, species=NULL, table_df=NULL, id_colu
     table_df <- sm(readr::read_tsv(file=table[["tab"]]))
   }
   if (! id_column %in% colnames(table_df)) {
-    message(id_column, " was not found in the table, here are the available columns: ", toString(colnames(table_df)))
+    message(id_column, " was not found in the table, here are the available columns: ",
+            toString(colnames(table_df)))
     print(head(as.data.frame(table_df), n=2))
     stop()
   }

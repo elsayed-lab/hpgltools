@@ -4,9 +4,17 @@
 \alias{write_xlsx}
 \title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
-write_xlsx(data = "undef", wb = NULL, sheet = "first",
-  excel = NULL, rownames = TRUE, start_row = 1, start_col = 1,
-  title = NULL, ...)
+write_xlsx(
+  data = "undef",
+  wb = NULL,
+  sheet = "first",
+  excel = NULL,
+  rownames = TRUE,
+  start_row = 1,
+  start_col = 1,
+  title = NULL,
+  ...
+)
 }
 \arguments{
 \item{data}{Data frame to print.}

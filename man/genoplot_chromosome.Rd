@@ -4,8 +4,12 @@
 \alias{genoplot_chromosome}
 \title{Try plotting a chromosome (region)}
 \usage{
-genoplot_chromosome(accession = "AE009949", start = NULL, end = NULL,
-  title = "Genome plot")
+genoplot_chromosome(
+  accession = "AE009949",
+  start = NULL,
+  end = NULL,
+  title = "Genome plot"
+)
 }
 \arguments{
 \item{accession}{An accession to plot, this will download it.}

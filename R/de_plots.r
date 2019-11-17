@@ -1,4 +1,4 @@
-#' Make a MA plot of some limma output with pretty colors and shapes
+#' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
 #'
@@ -247,6 +247,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
+#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+#'  pairwise_output <- all_pairwise(expt)
 #'  scatter_plot <- extract_coefficient_scatter(pairwise_output,
 #'                                              type="deseq", x="uninfected", y="infected")
 #' }
@@ -420,16 +422,18 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
   retlist <- list(
     "up_venn" = up_venn,
     "up_noweight" = up_venn_noweight,
-    "up_data" = comp_up,
     "down_venn" = down_venn,
-    "down_noweight" = down_venn_noweight,
-    "down_data" = comp_down)
+    "down_noweight" = down_venn_noweight)
   return(retlist)
 }
 
 #' Given a DE table with p-values, plot them.
 #'
 #' Plot a multi-histogram containing (adjusted)p-values.
+#'
+#' The assumption of this plot is that the adjustment will significantly
+#' decrease the representation of genes in the 'highly significant' range of
+#' p-values.  However, it is hoped that it will not utterly remove them.
 #'
 #' @param combined Table to extract the values from.
 #' @param type If provided, extract the {type}_p and {type}_adjp columns.
@@ -476,6 +480,7 @@ plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, .
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
+#'  pairwise_result <- all_pairwise(expt)
 #'  crazy_sigplots <- plot_num_siggenes(pairwise_result)
 #' }
 #' @export
@@ -741,6 +746,9 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
+#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+#'  pairwise_result <- all_pairwise(expt)
+#'  combined_result <- combine_de_tables(pairwise_result)
 #'  ## Damn I wish I were smrt enough to make this elegant, but I cannot.
 #'  barplots <- significant_barplots(combined_result)
 #' }

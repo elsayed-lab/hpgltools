@@ -4,9 +4,15 @@
 \alias{plot_peprophet_data}
 \title{Plot some data from the result of extract_peprophet_data()}
 \usage{
-plot_peprophet_data(table, xaxis = "precursor_neutral_mass",
-  xscale = NULL, yaxis = "num_matched_ions", yscale = NULL,
-  size_column = "prophet_probability", ...)
+plot_peprophet_data(
+  table,
+  xaxis = "precursor_neutral_mass",
+  xscale = NULL,
+  yaxis = "num_matched_ions",
+  yscale = NULL,
+  size_column = "prophet_probability",
+  ...
+)
 }
 \arguments{
 \item{table}{Big honking data table from extract_peprophet_data()}

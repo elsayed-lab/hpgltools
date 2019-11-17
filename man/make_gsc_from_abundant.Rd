@@ -4,11 +4,19 @@
 \alias{make_gsc_from_abundant}
 \title{Given a pairwise result, make a gene set collection.}
 \usage{
-make_gsc_from_abundant(pairwise, according_to = "deseq",
-  orgdb = "org.Hs.eg.db", researcher_name = "elsayed",
-  study_name = "macrophage", category_name = "infection",
-  phenotype_name = NULL, pair_names = "high", current_id = "ENSEMBL",
-  required_id = "ENTREZID", ...)
+make_gsc_from_abundant(
+  pairwise,
+  according_to = "deseq",
+  orgdb = "org.Hs.eg.db",
+  researcher_name = "elsayed",
+  study_name = "macrophage",
+  category_name = "infection",
+  phenotype_name = NULL,
+  pair_names = "high",
+  current_id = "ENSEMBL",
+  required_id = "ENTREZID",
+  ...
+)
 }
 \arguments{
 \item{pairwise}{A pairwise result, or combined de result, or extracted genes.}

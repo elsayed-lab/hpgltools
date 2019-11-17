@@ -4,8 +4,7 @@
 \alias{hpgl_qstats}
 \title{A hacked copy of Kwame's qsmooth/qstats code.}
 \usage{
-hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean",
-  window = 99)
+hpgl_qstats(data, groups, refType = "mean", groupLoc = "mean", window = 99)
 }
 \arguments{
 \item{data}{Initial count data}

@@ -4,8 +4,13 @@
 \alias{extract_mzML_scans}
 \title{Parse a mzML file and return the relevant data.}
 \usage{
-extract_mzML_scans(file, id = NULL, write_acquisitions = TRUE,
-  allow_window_overlap = FALSE, start_add = 0)
+extract_mzML_scans(
+  file,
+  id = NULL,
+  write_acquisitions = TRUE,
+  allow_window_overlap = FALSE,
+  start_add = 0
+)
 }
 \arguments{
 \item{file}{Input mzML file to parse.}

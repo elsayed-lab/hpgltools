@@ -4,8 +4,15 @@
 \alias{get_genesizes}
 \title{Grab gene length/width/size from an annotation database.}
 \usage{
-get_genesizes(annotation = NULL, type = "gff", gene_type = "gene",
-  type_column = "type", key = NULL, length_names = NULL, ...)
+get_genesizes(
+  annotation = NULL,
+  type = "gff",
+  gene_type = "gene",
+  type_column = "type",
+  key = NULL,
+  length_names = NULL,
+  ...
+)
 }
 \arguments{
 \item{annotation}{There are a few likely data sources when getting gene

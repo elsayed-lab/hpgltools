@@ -4,10 +4,23 @@
 \alias{extract_coefficient_scatter}
 \title{Perform a coefficient scatter plot of a limma/deseq/edger/basic table.}
 \usage{
-extract_coefficient_scatter(output, toptable = NULL, type = "limma",
-  x = 1, y = 2, z = 1.5, p = NULL, lfc = NULL, n = NULL,
-  loess = FALSE, alpha = 0.4, color_low = "#DD0000",
-  z_lines = FALSE, color_high = "#7B9F35", ...)
+extract_coefficient_scatter(
+  output,
+  toptable = NULL,
+  type = "limma",
+  x = 1,
+  y = 2,
+  z = 1.5,
+  p = NULL,
+  lfc = NULL,
+  n = NULL,
+  loess = FALSE,
+  alpha = 0.4,
+  color_low = "#DD0000",
+  z_lines = FALSE,
+  color_high = "#7B9F35",
+  ...
+)
 }
 \arguments{
 \item{output}{Result from the de_ family of functions, all_pairwise, or
@@ -52,6 +65,8 @@ red/green.
 }
 \examples{
 \dontrun{
+ expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+ pairwise_output <- all_pairwise(expt)
  scatter_plot <- extract_coefficient_scatter(pairwise_output,
                                              type="deseq", x="uninfected", y="infected")
 }

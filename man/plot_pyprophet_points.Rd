@@ -4,10 +4,20 @@
 \alias{plot_pyprophet_points}
 \title{Plot some data from the result of extract_pyprophet_data()}
 \usage{
-plot_pyprophet_points(pyprophet_data, xaxis = "mass", xscale = NULL,
-  sample = NULL, yaxis = "leftwidth", yscale = NULL, alpha = 0.4,
-  color_by = "sample", legend = TRUE, size_column = "mscore",
-  rug = TRUE, ...)
+plot_pyprophet_points(
+  pyprophet_data,
+  xaxis = "mass",
+  xscale = NULL,
+  sample = NULL,
+  yaxis = "leftwidth",
+  yscale = NULL,
+  alpha = 0.4,
+  color_by = "sample",
+  legend = TRUE,
+  size_column = "mscore",
+  rug = TRUE,
+  ...
+)
 }
 \arguments{
 \item{pyprophet_data}{List of pyprophet data, one element for each sample,

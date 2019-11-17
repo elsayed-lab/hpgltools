@@ -4,8 +4,15 @@
 \alias{ebseq_few}
 \title{Invoke EBMultiTest() when we do not have too many conditions to deal with.}
 \usage{
-ebseq_few(data, conditions, patterns = NULL, ng_vector = NULL,
-  rounds = 10, target_fdr = 0.05, norm = "median")
+ebseq_few(
+  data,
+  conditions,
+  patterns = NULL,
+  ng_vector = NULL,
+  rounds = 10,
+  target_fdr = 0.05,
+  norm = "median"
+)
 }
 \arguments{
 \item{data}{Expressionset/matrix}

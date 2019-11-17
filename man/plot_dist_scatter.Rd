@@ -5,8 +5,7 @@
 \title{Make a scatter plot between two sets of numbers with a cheesy distance metric
 and some statistics of the two sets.}
 \usage{
-plot_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
-  size = 2)
+plot_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}

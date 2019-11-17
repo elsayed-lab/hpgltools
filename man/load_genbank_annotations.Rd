@@ -4,8 +4,11 @@
 \alias{load_genbank_annotations}
 \title{Given a genbank accession, make a txDb object along with sequences, etc.}
 \usage{
-load_genbank_annotations(accession = "AE009949", reread = TRUE,
-  savetxdb = FALSE)
+load_genbank_annotations(
+  accession = "AE009949",
+  reread = TRUE,
+  savetxdb = FALSE
+)
 }
 \arguments{
 \item{accession}{Accession to download and import}

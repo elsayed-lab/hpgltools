@@ -4,8 +4,13 @@
 \alias{plot_multihistogram}
 \title{Make a pretty histogram of multiple datasets.}
 \usage{
-plot_multihistogram(data, log = FALSE, binwidth = NULL, bins = NULL,
-  colors = NULL)
+plot_multihistogram(
+  data,
+  log = FALSE,
+  binwidth = NULL,
+  bins = NULL,
+  colors = NULL
+)
 }
 \arguments{
 \item{data}{Dataframe of lots of pretty numbers, this also accepts lists.}

@@ -4,13 +4,28 @@
 \alias{s2s_all_filters}
 \title{Gather together the various SWATH2stats filters into one place.}
 \usage{
-s2s_all_filters(s2s_exp, column = "proteinname",
-  pep_column = "fullpeptidename", fft = 0.7, plot = FALSE,
-  target_fdr = 0.02, upper_fdr = 0.05, mscore = 0.01,
-  percentage = 0.75, remove_decoys = TRUE, max_peptides = 15,
-  min_peptides = 2, do_mscore = TRUE, do_freqobs = TRUE,
-  do_fdr = TRUE, do_proteotypic = TRUE, do_peptide = TRUE,
-  do_max = TRUE, do_min = TRUE, ...)
+s2s_all_filters(
+  s2s_exp,
+  column = "proteinname",
+  pep_column = "fullpeptidename",
+  fft = 0.7,
+  plot = FALSE,
+  target_fdr = 0.02,
+  upper_fdr = 0.05,
+  mscore = 0.01,
+  percentage = 0.75,
+  remove_decoys = TRUE,
+  max_peptides = 15,
+  min_peptides = 2,
+  do_mscore = TRUE,
+  do_freqobs = TRUE,
+  do_fdr = TRUE,
+  do_proteotypic = TRUE,
+  do_peptide = TRUE,
+  do_max = TRUE,
+  do_min = TRUE,
+  ...
+)
 }
 \arguments{
 \item{s2s_exp}{SWHAT2stats result from the sample_annotation()

@@ -4,9 +4,16 @@
 \alias{ggplt}
 \title{Simplify plotly ggplot conversion so that there are no shenanigans.}
 \usage{
-ggplt(gg, filename = "ggplot.html", selfcontained = TRUE,
-  libdir = NULL, background = "white", title = class(gg)[[1]],
-  knitrOptions = list(), ...)
+ggplt(
+  gg,
+  filename = "ggplot.html",
+  selfcontained = TRUE,
+  libdir = NULL,
+  background = "white",
+  title = class(gg)[[1]],
+  knitrOptions = list(),
+  ...
+)
 }
 \arguments{
 \item{gg}{Plot from ggplot2.}

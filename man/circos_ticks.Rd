@@ -4,20 +4,44 @@
 \alias{circos_ticks}
 \title{Create the ticks for a circos plot.}
 \usage{
-circos_ticks(name = "default", conf_dir = "circos/conf",
-  tick_separation = 2, min_label_distance = 0, label_separation = 5,
-  label_offset = 5, label_size = 8, multiplier = 0.001,
-  main_color = "black", main_thickness = 3, main_size = 20,
-  first_size = 10, first_spacing = 1, first_color = "black",
-  first_show_label = "no", first_label_size = 12, second_size = 15,
-  second_spacing = 5, second_color = "black",
-  second_show_label = "yes", second_label_size = 16, third_size = 18,
-  third_spacing = 10, third_color = "black",
-  third_show_label = "yes", third_label_size = 16,
-  fourth_spacing = 100, fourth_color = "black",
-  fourth_show_label = "yes", suffix = " kb", fourth_label_size = 36,
-  include_first_label = TRUE, include_second_label = TRUE,
-  include_third_label = TRUE, include_fourth_label = TRUE, ...)
+circos_ticks(
+  name = "default",
+  conf_dir = "circos/conf",
+  tick_separation = 2,
+  min_label_distance = 0,
+  label_separation = 5,
+  label_offset = 5,
+  label_size = 8,
+  multiplier = 0.001,
+  main_color = "black",
+  main_thickness = 3,
+  main_size = 20,
+  first_size = 10,
+  first_spacing = 1,
+  first_color = "black",
+  first_show_label = "no",
+  first_label_size = 12,
+  second_size = 15,
+  second_spacing = 5,
+  second_color = "black",
+  second_show_label = "yes",
+  second_label_size = 16,
+  third_size = 18,
+  third_spacing = 10,
+  third_color = "black",
+  third_show_label = "yes",
+  third_label_size = 16,
+  fourth_spacing = 100,
+  fourth_color = "black",
+  fourth_show_label = "yes",
+  suffix = " kb",
+  fourth_label_size = 36,
+  include_first_label = TRUE,
+  include_second_label = TRUE,
+  include_third_label = TRUE,
+  include_fourth_label = TRUE,
+  ...
+)
 }
 \arguments{
 \item{name}{Name of the configuration file to which to add the ideogram.}

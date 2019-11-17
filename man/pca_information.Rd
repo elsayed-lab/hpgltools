@@ -4,8 +4,14 @@
 \alias{pca_information}
 \title{Gather information about principle components.}
 \usage{
-pca_information(expt, expt_design = NULL, expt_factors = c("condition",
-  "batch"), num_components = NULL, plot_pcas = FALSE, ...)
+pca_information(
+  expt,
+  expt_design = NULL,
+  expt_factors = c("condition", "batch"),
+  num_components = NULL,
+  plot_pcas = FALSE,
+  ...
+)
 }
 \arguments{
 \item{expt}{Data to analyze (usually exprs(somedataset)).}

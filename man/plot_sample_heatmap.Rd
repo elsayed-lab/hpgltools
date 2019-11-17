@@ -4,10 +4,20 @@
 \alias{plot_sample_heatmap}
 \title{Make a heatmap.3 description of the similarity of the genes among samples.}
 \usage{
-plot_sample_heatmap(data, colors = NULL, design = NULL,
-  expt_names = NULL, dendrogram = "column", row_label = NA,
-  title = NULL, Rowv = TRUE, Colv = TRUE, label_chars = 10,
-  filter = TRUE, ...)
+plot_sample_heatmap(
+  data,
+  colors = NULL,
+  design = NULL,
+  expt_names = NULL,
+  dendrogram = "column",
+  row_label = NA,
+  title = NULL,
+  Rowv = TRUE,
+  Colv = TRUE,
+  label_chars = 10,
+  filter = TRUE,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt/expressionset/dataframe set of samples.}

@@ -4,8 +4,14 @@
 \alias{circos_prefix}
 \title{Write the beginning of a circos configuration file.}
 \usage{
-circos_prefix(name = "mgas", conf_dir = "circos/conf", radius = 1800,
-  chr_units = 1000, band_url = NULL, ...)
+circos_prefix(
+  name = "mgas",
+  conf_dir = "circos/conf",
+  radius = 1800,
+  chr_units = 1000,
+  band_url = NULL,
+  ...
+)
 }
 \arguments{
 \item{name}{Name of the map, called with 'make name'.}

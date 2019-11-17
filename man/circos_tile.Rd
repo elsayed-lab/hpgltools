@@ -4,10 +4,22 @@
 \alias{circos_tile}
 \title{Write tiles of arbitrary categorical point data in circos.}
 \usage{
-circos_tile(df, annot_df = NULL, cfgout = "circos/conf/default.conf",
-  colname = "logFC", chr = "chr1", basename = "", colors = NULL,
-  thickness = 90, margin = 0, stroke_thickness = 0, padding = 0.1,
-  outer = 0.9, width = 0.08, spacing = 0)
+circos_tile(
+  df,
+  annot_df = NULL,
+  cfgout = "circos/conf/default.conf",
+  colname = "logFC",
+  chr = "chr1",
+  basename = "",
+  colors = NULL,
+  thickness = 90,
+  margin = 0,
+  stroke_thickness = 0,
+  padding = 0.1,
+  outer = 0.9,
+  width = 0.08,
+  spacing = 0
+)
 }
 \arguments{
 \item{df}{Dataframe with starts/ends and the floating point information.}

@@ -4,8 +4,15 @@
 \alias{pct_all_kegg}
 \title{Extract the percent differentially expressed genes for all KEGG pathways.}
 \usage{
-pct_all_kegg(all_ids, sig_ids, organism = "dme", pathways = "all",
-  pathdir = "kegg_pathways", verbose = FALSE, ...)
+pct_all_kegg(
+  all_ids,
+  sig_ids,
+  organism = "dme",
+  pathways = "all",
+  pathdir = "kegg_pathways",
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{all_ids}{Set of all gene IDs in a given analysis.}

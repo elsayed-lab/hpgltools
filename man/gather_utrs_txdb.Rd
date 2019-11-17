@@ -4,10 +4,17 @@
 \alias{gather_utrs_txdb}
 \title{Get UTR sequences using information provided by TxDb and fiveUTRsByTranscript}
 \usage{
-gather_utrs_txdb(bsgenome, fivep_utr = NULL, threep_utr = NULL,
-  start_column = "start", end_column = "end",
-  strand_column = "strand", chr_column = "seqnames",
-  name_column = "group_name", ...)
+gather_utrs_txdb(
+  bsgenome,
+  fivep_utr = NULL,
+  threep_utr = NULL,
+  start_column = "start",
+  end_column = "end",
+  strand_column = "strand",
+  chr_column = "seqnames",
+  name_column = "group_name",
+  ...
+)
 }
 \arguments{
 \item{bsgenome}{A BSGenome instance containing the encoded genome.}

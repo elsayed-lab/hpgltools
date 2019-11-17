@@ -4,10 +4,20 @@
 \alias{ebseq_pairwise_subset}
 \title{Perform pairwise comparisons with ebseq, one at a time.}
 \usage{
-ebseq_pairwise_subset(input, ng_vector = NULL, rounds = 10,
-  target_fdr = 0.05, model_batch = FALSE, model_cond = TRUE,
-  model_intercept = FALSE, alt_model = NULL, conditions = NULL,
-  norm = "median", force = FALSE, ...)
+ebseq_pairwise_subset(
+  input,
+  ng_vector = NULL,
+  rounds = 10,
+  target_fdr = 0.05,
+  model_batch = FALSE,
+  model_cond = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  conditions = NULL,
+  norm = "median",
+  force = FALSE,
+  ...
+)
 }
 \arguments{
 \item{input}{Expressionset/expt to perform de upon.}

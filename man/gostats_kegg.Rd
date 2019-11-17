@@ -4,8 +4,11 @@
 \alias{gostats_kegg}
 \title{Use gostats() against kegg pathways.}
 \usage{
-gostats_kegg(organism = "Homo sapiens", pathdb = "org.Hs.egPATH",
-  godb = "org.Hs.egGO")
+gostats_kegg(
+  organism = "Homo sapiens",
+  pathdb = "org.Hs.egPATH",
+  godb = "org.Hs.egGO"
+)
 }
 \arguments{
 \item{organism}{The organism used to make the KEGG frame, human readable no taxonomic.}

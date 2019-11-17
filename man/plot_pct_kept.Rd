@@ -4,9 +4,17 @@
 \alias{plot_pct_kept}
 \title{Make a ggplot graph of the percentage/number of reads kept/removed.}
 \usage{
-plot_pct_kept(data, row = "pct_kept", condition = NULL,
-  colors = NULL, names = NULL, text = TRUE, title = NULL,
-  yscale = NULL, ...)
+plot_pct_kept(
+  data,
+  row = "pct_kept",
+  condition = NULL,
+  colors = NULL,
+  names = NULL,
+  text = TRUE,
+  title = NULL,
+  yscale = NULL,
+  ...
+)
 }
 \arguments{
 \item{data}{Dataframe of the material remaining, usually expt$summary_table}

@@ -4,9 +4,14 @@
 \alias{write_suppa_table}
 \title{Take a set of results from suppa and attempt to write it to a pretty xlsx file.}
 \usage{
-write_suppa_table(table, annotations = NULL, by_table = "gene_name",
-  by_annot = "ensembl_gene_id", columns = "default",
-  excel = "excel/suppa_table.xlsx")
+write_suppa_table(
+  table,
+  annotations = NULL,
+  by_table = "gene_name",
+  by_annot = "ensembl_gene_id",
+  columns = "default",
+  excel = "excel/suppa_table.xlsx"
+)
 }
 \arguments{
 \item{table}{Result table from suppa.}

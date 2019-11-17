@@ -4,8 +4,12 @@
 \alias{get_kegg_genes}
 \title{Extract the set of geneIDs matching pathways for a given species.}
 \usage{
-get_kegg_genes(pathway = "all", abbreviation = NULL,
-  species = "leishmania major", savefile = NULL)
+get_kegg_genes(
+  pathway = "all",
+  abbreviation = NULL,
+  species = "leishmania major",
+  savefile = NULL
+)
 }
 \arguments{
 \item{pathway}{Either a single pathway kegg id or 'all'.}

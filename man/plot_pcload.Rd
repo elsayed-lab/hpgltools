@@ -4,8 +4,7 @@
 \alias{plot_pcload}
 \title{Print a plot of the top-n most PC loaded genes.}
 \usage{
-plot_pcload(expt, genes = 40, desired_pc = 1, which_scores = "high",
-  ...)
+plot_pcload(expt, genes = 40, desired_pc = 1, which_scores = "high", ...)
 }
 \arguments{
 \item{expt}{Input expressionset.}

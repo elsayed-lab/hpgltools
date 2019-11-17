@@ -4,8 +4,12 @@
 \alias{set_expt_colors}
 \title{Change the colors of an expt}
 \usage{
-set_expt_colors(expt, colors = TRUE, chosen_palette = "Dark2",
-  change_by = "condition")
+set_expt_colors(
+  expt,
+  colors = TRUE,
+  chosen_palette = "Dark2",
+  change_by = "condition"
+)
 }
 \arguments{
 \item{expt}{Expt to modify}

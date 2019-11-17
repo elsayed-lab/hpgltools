@@ -4,9 +4,17 @@
 \alias{all_adjusters}
 \title{Combine all surrogate estimators and batch correctors into one function.}
 \usage{
-all_adjusters(input, design = NULL, estimate_type = "sva",
-  batch1 = "batch", batch2 = NULL, surrogates = "be",
-  expt_state = NULL, confounders = NULL, ...)
+all_adjusters(
+  input,
+  design = NULL,
+  estimate_type = "sva",
+  batch1 = "batch",
+  batch2 = NULL,
+  surrogates = "be",
+  expt_state = NULL,
+  confounders = NULL,
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe or expt or whatever as the data to analyze/modify.}

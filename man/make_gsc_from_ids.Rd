@@ -4,11 +4,18 @@
 \alias{make_gsc_from_ids}
 \title{Create a gene set collection from a set of arbitrary IDs.}
 \usage{
-make_gsc_from_ids(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
-  researcher_name = "elsayed", study_name = "macrophage",
-  category_name = "infection", phenotype_name = NULL,
-  pair_names = "up", current_id = "ENSEMBL",
-  required_id = "ENTREZID")
+make_gsc_from_ids(
+  first_ids,
+  second_ids = NULL,
+  orgdb = "org.Hs.eg.db",
+  researcher_name = "elsayed",
+  study_name = "macrophage",
+  category_name = "infection",
+  phenotype_name = NULL,
+  pair_names = "up",
+  current_id = "ENSEMBL",
+  required_id = "ENTREZID"
+)
 }
 \arguments{
 \item{first_ids}{The required IDs for a single set.}

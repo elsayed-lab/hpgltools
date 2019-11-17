@@ -4,9 +4,17 @@
 \alias{plot_sm}
 \title{Make an R plot of the standard median correlation or distance among samples.}
 \usage{
-plot_sm(data, colors = NULL, method = "pearson", plot_legend = FALSE,
-  expt_names = NULL, label_chars = 10, title = NULL, dot_size = 5,
-  ...)
+plot_sm(
+  data,
+  colors = NULL,
+  method = "pearson",
+  plot_legend = FALSE,
+  expt_names = NULL,
+  label_chars = 10,
+  title = NULL,
+  dot_size = 5,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}

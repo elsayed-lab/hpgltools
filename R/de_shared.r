@@ -1152,60 +1152,52 @@ compare_logfc_plots <- function(combined_tables) {
   } else {
     data <- combined_tables
   }
-  tt <- sm(requireNamespace("parallel"))
-  tt <- sm(requireNamespace("doParallel"))
-  tt <- sm(requireNamespace("iterators"))
-  tt <- sm(requireNamespace("foreach"))
-  tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
-  cores <- parallel::detectCores()
-  cl <- parallel::makeCluster(cores)
-  doSNOW::registerDoSNOW(cl)
-  num_levels <- length(data)
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(max=num_levels, style=3)
-  }
-  count <- 1
-  progress <- function(n) {
-    setTxtProgressBar(bar, n)
-  }
-  pb_opts <- list()
-  if (isTRUE(show_progress)) {
-    pb_opts <- list("progress" = progress)
-  }
-  returns <- list()
-  res <- list()
-  res <- foreach(count=1:num_levels,
-                 .packages=c("hpgltools", "ggplot2", "doParallel"),
-                 .options.snow=pb_opts) %dopar% {
-    tab <- data[[count]]
-    le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
-    le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
-    ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
-    ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
-    de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
-    de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
-    lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
-    lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
-    db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
-    db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
-    eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
-    eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
-    name <- names(data)[[count]]
+  tnames <- names(data)
+  retlist <- list()
+  for (c in 1:length(tnames)) {
+    tname <- tnames[c]
+    tab <- data[[tname]]
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+      le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
+      le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      le <- NULL
+    }
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
+      ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
+      ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      ld <- NULL
+    }
+    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+      de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
+      de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      de <- NULL
+    }
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
+      lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      lb <- NULL
+    }
+    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
+      db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      db <- NULL
+    }
+    if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
+      eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      db <- NULL
+    }
     compared <- list(
-      "name" = name,
+      "name" = tname,
       "le" = le, "ld" = ld, "de" = de,
       "lb" = lb, "db" = db, "eb" = eb)
-    ## plots[[name]] <- compared
-  }
-  if (isTRUE(show_progress)) {
-    close(bar)
-  }
-  parallel::stopCluster(cl)
-  retlist <- list()
-  for (i in 1:length(res)) {
-    name <- res[[i]][["name"]]
-    retlist[[name]] <- res[[i]]
+    retlist[[tname]] <- compared
   }
   return(retlist)
 }

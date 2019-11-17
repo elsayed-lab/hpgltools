@@ -4,10 +4,19 @@
 \alias{write_goseq_data}
 \title{Make a pretty table of goseq data in excel.}
 \usage{
-write_goseq_data(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
-  add_trees = TRUE, order_by = "qvalue", pval = 0.1,
-  add_plots = TRUE, height = 15, width = 10, decreasing = FALSE,
-  ...)
+write_goseq_data(
+  goseq_result,
+  excel = "excel/goseq.xlsx",
+  wb = NULL,
+  add_trees = TRUE,
+  order_by = "qvalue",
+  pval = 0.1,
+  add_plots = TRUE,
+  height = 15,
+  width = 10,
+  decreasing = FALSE,
+  ...
+)
 }
 \arguments{
 \item{goseq_result}{A set of results from simple_goseq().}

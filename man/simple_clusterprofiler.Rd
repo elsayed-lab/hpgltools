@@ -4,14 +4,29 @@
 \alias{simple_clusterprofiler}
 \title{Perform the array of analyses in the 2016-04 version of clusterProfiler}
 \usage{
-simple_clusterprofiler(sig_genes, de_table = NULL,
-  orgdb = "org.Dm.eg.db", orgdb_from = NULL, orgdb_to = "ENTREZID",
-  go_level = 3, pcutoff = 0.05, qcutoff = 0.1, fc_column = "logFC",
-  second_fc_column = "limma_logfc", updown = "up",
-  permutations = 100, min_groupsize = 5, kegg_prefix = NULL,
-  kegg_organism = NULL, do_gsea = TRUE, categories = 12,
-  excel = NULL, do_david = FALSE, david_id = "ENTREZ_GENE_ID",
-  david_user = "unknown@unknown.org")
+simple_clusterprofiler(
+  sig_genes,
+  de_table = NULL,
+  orgdb = "org.Dm.eg.db",
+  orgdb_from = NULL,
+  orgdb_to = "ENTREZID",
+  go_level = 3,
+  pcutoff = 0.05,
+  qcutoff = 0.1,
+  fc_column = "logFC",
+  second_fc_column = "limma_logfc",
+  updown = "up",
+  permutations = 100,
+  min_groupsize = 5,
+  kegg_prefix = NULL,
+  kegg_organism = NULL,
+  do_gsea = TRUE,
+  categories = 12,
+  excel = NULL,
+  do_david = FALSE,
+  david_id = "ENTREZ_GENE_ID",
+  david_user = "unknown@unknown.org"
+)
 }
 \arguments{
 \item{sig_genes}{Dataframe of genes deemed 'significant.'}

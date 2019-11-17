@@ -4,8 +4,13 @@
 \alias{get_snp_sets}
 \title{Create all possible sets of variants by sample (types).}
 \usage{
-get_snp_sets(snp_expt, factor = "pathogenstrain", limit = 1,
-  do_save = FALSE, savefile = "variants.rda")
+get_snp_sets(
+  snp_expt,
+  factor = "pathogenstrain",
+  limit = 1,
+  do_save = FALSE,
+  savefile = "variants.rda"
+)
 }
 \arguments{
 \item{snp_expt}{The result of count_expt_snps()}

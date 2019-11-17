@@ -4,10 +4,19 @@
 \alias{simple_gsva}
 \title{Provide some defaults and guidance when attempting to use gsva.}
 \usage{
-simple_gsva(expt, datasets = "c2BroadSets", data_pkg = "GSVAdata",
-  signatures = NULL, cores = 1, current_id = "ENSEMBL",
-  required_id = "ENTREZID", orgdb = "org.Hs.eg.db", method = "gsva",
-  kcdf = NULL, ranking = FALSE)
+simple_gsva(
+  expt,
+  datasets = "c2BroadSets",
+  data_pkg = "GSVAdata",
+  signatures = NULL,
+  cores = 1,
+  current_id = "ENSEMBL",
+  required_id = "ENTREZID",
+  orgdb = "org.Hs.eg.db",
+  method = "gsva",
+  kcdf = NULL,
+  ranking = FALSE
+)
 }
 \arguments{
 \item{expt}{Expt object to be analyzed.}

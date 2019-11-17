@@ -4,9 +4,14 @@
 \alias{impute_expt}
 \title{Impute missing values using code from DEP reworked for expressionsets.}
 \usage{
-impute_expt(expt, filter = TRUE, p = 0.5, fun = c("bpca", "knn",
-  "QRILC", "MLE", "MinDet", "MinProb", "min", "zero", "mixed", "nbavg"),
-  ...)
+impute_expt(
+  expt,
+  filter = TRUE,
+  p = 0.5,
+  fun = c("bpca", "knn", "QRILC", "MLE", "MinDet", "MinProb", "min", "zero", "mixed",
+    "nbavg"),
+  ...
+)
 }
 \arguments{
 \item{expt}{An ExpressionSet (well, expt), I think it is assumed that this should have

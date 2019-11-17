@@ -14,7 +14,7 @@ series of a/b comparisons.}
 series of a/b comparisons.}
 }
 \value{
-Contrast matrix
+Contrast matrix suitable for use in tools like MSstats.
 }
 \description{
 I rather like makeContrasts() from limma.  I troubled me to have to manually

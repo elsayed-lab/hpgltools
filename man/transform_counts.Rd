@@ -4,8 +4,13 @@
 \alias{transform_counts}
 \title{Perform a simple transformation of a count table (log2)}
 \usage{
-transform_counts(count_table, design = NULL, transform = "raw",
-  base = NULL, ...)
+transform_counts(
+  count_table,
+  design = NULL,
+  transform = "raw",
+  base = NULL,
+  ...
+)
 }
 \arguments{
 \item{count_table}{A matrix of count data}

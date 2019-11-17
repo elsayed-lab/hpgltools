@@ -4,8 +4,14 @@
 \alias{plot_topgo_pval}
 \title{Make a pvalue plot from topgo data.}
 \usage{
-plot_topgo_pval(topgo, wrapped_width = 20, cutoff = 0.1, n = 30,
-  type = "fisher", ...)
+plot_topgo_pval(
+  topgo,
+  wrapped_width = 20,
+  cutoff = 0.1,
+  n = 30,
+  type = "fisher",
+  ...
+)
 }
 \arguments{
 \item{topgo}{Some data from topgo!}

@@ -4,10 +4,18 @@
 \alias{extract_msraw_data}
 \title{Read a bunch of mzXML files to acquire their metadata.}
 \usage{
-extract_msraw_data(metadata, write_windows = TRUE,
-  id_column = "sampleid", file_column = "raw_file",
-  allow_window_overlap = FALSE, start_add = 0, format = "mzXML",
-  parallel = TRUE, savefile = NULL, ...)
+extract_msraw_data(
+  metadata,
+  write_windows = TRUE,
+  id_column = "sampleid",
+  file_column = "raw_file",
+  allow_window_overlap = FALSE,
+  start_add = 0,
+  format = "mzXML",
+  parallel = TRUE,
+  savefile = NULL,
+  ...
+)
 }
 \arguments{
 \item{metadata}{Data frame describing the samples, including the mzXML

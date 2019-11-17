@@ -4,8 +4,13 @@
 \alias{sum_exon_widths}
 \title{Given a data frame of exon counts and annotation information, sum the exons.}
 \usage{
-sum_exon_widths(data = NULL, gff = NULL, annotdf = NULL,
-  parent = "Parent", child = "row.names")
+sum_exon_widths(
+  data = NULL,
+  gff = NULL,
+  annotdf = NULL,
+  parent = "Parent",
+  child = "row.names"
+)
 }
 \arguments{
 \item{data}{Count tables of exons.}

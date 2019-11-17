@@ -4,8 +4,12 @@
 \alias{replot_varpart_percent}
 \title{A shortcut for replotting the percent plots from variancePartition.}
 \usage{
-replot_varpart_percent(varpart_output, n = 30, column = NULL,
-  decreasing = TRUE)
+replot_varpart_percent(
+  varpart_output,
+  n = 30,
+  column = NULL,
+  decreasing = TRUE
+)
 }
 \arguments{
 \item{varpart_output}{List returned by varpart()}

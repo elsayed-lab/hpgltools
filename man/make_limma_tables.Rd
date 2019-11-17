@@ -4,8 +4,14 @@
 \alias{make_limma_tables}
 \title{Writes out the results of a limma search using toptable().}
 \usage{
-make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
-  annot_df = NULL, intercept = FALSE)
+make_limma_tables(
+  fit = NULL,
+  adjust = "BH",
+  n = 0,
+  coef = NULL,
+  annot_df = NULL,
+  intercept = FALSE
+)
 }
 \arguments{
 \item{fit}{Result from lmFit()/eBayes()}

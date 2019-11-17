@@ -4,10 +4,20 @@
 \alias{simple_pathview}
 \title{Print some data onto KEGG pathways.}
 \usage{
-simple_pathview(path_data, indir = "pathview_in", outdir = "pathview",
-  pathway = "all", species = "lma", from_list = NULL,
-  to_list = NULL, suffix = "_colored", filenames = "id",
-  fc_column = "limma_logfc", format = "png", verbose = TRUE)
+simple_pathview(
+  path_data,
+  indir = "pathview_in",
+  outdir = "pathview",
+  pathway = "all",
+  species = "lma",
+  from_list = NULL,
+  to_list = NULL,
+  suffix = "_colored",
+  filenames = "id",
+  fc_column = "limma_logfc",
+  format = "png",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{path_data}{Some differentially expressed genes.}

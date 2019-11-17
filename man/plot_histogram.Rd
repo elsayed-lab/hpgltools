@@ -4,8 +4,14 @@
 \alias{plot_histogram}
 \title{Make a pretty histogram of something.}
 \usage{
-plot_histogram(df, binwidth = NULL, log = FALSE, bins = 500,
-  fillcolor = "darkgrey", color = "black")
+plot_histogram(
+  df,
+  binwidth = NULL,
+  log = FALSE,
+  bins = 500,
+  fillcolor = "darkgrey",
+  color = "black"
+)
 }
 \arguments{
 \item{df}{Dataframe of lots of pretty numbers.}

@@ -81,7 +81,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            ## performed.
                            annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
                            batch1="batch", batch2=NULL, batch_step=5,
-                           low_to_zero=FALSE, ## extra parameters for batch correction
+                           low_to_zero=TRUE, ## extra parameters for batch correction
                            thresh=2, min_samples=2, p=0.01, A=1, k=1,
                            cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
                            ...) {
@@ -233,6 +233,15 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## add a check here.
   colnames(final_data) <- sampleNames(current_exprs)
   exprs(current_exprs) <- final_data
+
+  if (isTRUE(low_to_zero)) {
+    low_idx <- exprs(current_exprs) < 0
+    low_num <- sum(low_idx)
+    if (low_num > 0) {
+      message("Setting ", low_num, " entries to zero.")
+      exprs(current_exprs)[low_idx] <- 0
+    }
+  }
 
   ## The original data structure contains the following slots:
   ## colors, batches, convert, conditions, design, expressionset,

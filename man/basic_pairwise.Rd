@@ -4,10 +4,19 @@
 \alias{basic_pairwise}
 \title{The simplest possible differential expression method.}
 \usage{
-basic_pairwise(input = NULL, design = NULL, conditions = NULL,
-  batches = NULL, model_cond = TRUE, model_intercept = FALSE,
-  alt_model = NULL, model_batch = FALSE, force = FALSE,
-  fx = "mean", ...)
+basic_pairwise(
+  input = NULL,
+  design = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  model_batch = FALSE,
+  force = FALSE,
+  fx = "mean",
+  ...
+)
 }
 \arguments{
 \item{input}{Count table by sample.}

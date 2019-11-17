@@ -5,8 +5,12 @@
 \title{Implement a cleaner version of 'subset_significants' from analyses with Maria
 Adelaida.}
 \usage{
-compare_significant_contrasts(sig_tables, compare_by = "deseq",
-  weights = FALSE, contrasts = c(1, 2, 3))
+compare_significant_contrasts(
+  sig_tables,
+  compare_by = "deseq",
+  weights = FALSE,
+  contrasts = c(1, 2, 3)
+)
 }
 \arguments{
 \item{sig_tables}{Set of significance tables to poke at.}

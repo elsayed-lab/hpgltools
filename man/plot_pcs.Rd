@@ -4,11 +4,24 @@
 \alias{plot_pcs}
 \title{Plot principle components and make them pretty.}
 \usage{
-plot_pcs(pca_data, first = "PC1", second = "PC2", variances = NULL,
-  design = NULL, plot_title = TRUE, plot_labels = NULL,
-  x_label = NULL, y_label = NULL, plot_size = 5, outlines = TRUE,
-  plot_alpha = NULL, size_column = NULL, rug = TRUE, cis = c(0.95,
-  0.9), ...)
+plot_pcs(
+  pca_data,
+  first = "PC1",
+  second = "PC2",
+  variances = NULL,
+  design = NULL,
+  plot_title = TRUE,
+  plot_labels = NULL,
+  x_label = NULL,
+  y_label = NULL,
+  plot_size = 5,
+  outlines = TRUE,
+  plot_alpha = NULL,
+  size_column = NULL,
+  rug = TRUE,
+  cis = c(0.95, 0.9),
+  ...
+)
 }
 \arguments{
 \item{pca_data}{Dataframe of principle components PC1 .. PCN with any other

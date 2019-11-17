@@ -4,11 +4,20 @@
 \alias{hpgl_GOplot}
 \title{A minor hack of the topGO GOplot function.}
 \usage{
-hpgl_GOplot(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
+hpgl_GOplot(
+  dag,
+  sigNodes,
+  dag.name = "GO terms",
+  edgeTypes = TRUE,
   nodeShape.type = c("box", "circle", "ellipse", "plaintext")[3],
-  genNodes = NULL, wantedNodes = NULL, showEdges = TRUE,
-  useFullNames = TRUE, oldSigNodes = NULL, nodeInfo = NULL,
-  maxchars = 30)
+  genNodes = NULL,
+  wantedNodes = NULL,
+  showEdges = TRUE,
+  useFullNames = TRUE,
+  oldSigNodes = NULL,
+  nodeInfo = NULL,
+  maxchars = 30
+)
 }
 \arguments{
 \item{dag}{DAG tree of ontologies.}

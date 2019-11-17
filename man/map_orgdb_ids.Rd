@@ -4,8 +4,7 @@
 \alias{map_orgdb_ids}
 \title{Map AnnotationDbi keys from one column to another.}
 \usage{
-map_orgdb_ids(orgdb, gene_ids = NULL, mapto = c("ensembl"),
-  keytype = "geneid")
+map_orgdb_ids(orgdb, gene_ids = NULL, mapto = c("ensembl"), keytype = "geneid")
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}

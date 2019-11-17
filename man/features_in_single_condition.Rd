@@ -4,8 +4,12 @@
 \alias{features_in_single_condition}
 \title{I want an easy way to answer the question: what features are in only condition x?}
 \usage{
-features_in_single_condition(expt, cutoff = 2, factor = "condition",
-  chosen = NULL)
+features_in_single_condition(
+  expt,
+  cutoff = 2,
+  factor = "condition",
+  chosen = NULL
+)
 }
 \arguments{
 \item{expt}{An experiment to query.}

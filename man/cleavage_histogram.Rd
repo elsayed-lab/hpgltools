@@ -5,8 +5,13 @@
 \title{Make a histogram of how many peptides are expected at every integer dalton
 from a given start to end size for a given enzyme digestion.}
 \usage{
-cleavage_histogram(pep_sequences, enzyme = "trypsin", start = 600,
-  end = 1500, color = "black")
+cleavage_histogram(
+  pep_sequences,
+  enzyme = "trypsin",
+  start = 600,
+  end = 1500,
+  color = "black"
+)
 }
 \arguments{
 \item{pep_sequences}{Protein sequences as per plot_cleaved().}

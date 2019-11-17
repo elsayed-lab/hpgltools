@@ -4,10 +4,21 @@
 \alias{gostats_trees}
 \title{Take gostats data and print it on a tree as topGO does.}
 \usage{
-gostats_trees(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
-  cc_under, goid_map = "id2go.map", score_limit = 0.01, go_db = NULL,
-  overwrite = FALSE, selector = "topDiffGenes",
-  pval_column = "adj.P.Val")
+gostats_trees(
+  de_genes,
+  mf_over,
+  bp_over,
+  cc_over,
+  mf_under,
+  bp_under,
+  cc_under,
+  goid_map = "id2go.map",
+  score_limit = 0.01,
+  go_db = NULL,
+  overwrite = FALSE,
+  selector = "topDiffGenes",
+  pval_column = "adj.P.Val"
+)
 }
 \arguments{
 \item{de_genes}{Some differentially expressed genes.}

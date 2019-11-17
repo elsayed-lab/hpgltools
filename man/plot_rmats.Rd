@@ -4,9 +4,17 @@
 \alias{plot_rmats}
 \title{Given some psi and tpm data from rMATS, make a pretty plot!}
 \usage{
-plot_rmats(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL,
-  ri = NULL, sig_threshold = 0.05, dpsi_threshold = 0.7,
-  label_type = NULL, alpha = 0.7)
+plot_rmats(
+  se = NULL,
+  a5ss = NULL,
+  a3ss = NULL,
+  mxe = NULL,
+  ri = NULL,
+  sig_threshold = 0.05,
+  dpsi_threshold = 0.7,
+  label_type = NULL,
+  alpha = 0.7
+)
 }
 \arguments{
 \item{se}{Table of skipped exon data from rmats.}

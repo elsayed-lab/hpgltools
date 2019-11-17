@@ -4,8 +4,16 @@
 \alias{plot_topn}
 \title{Plot the representation of the top-n genes in the total counts / sample.}
 \usage{
-plot_topn(data, title = NULL, num = 100, expt_names = NULL,
-  plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...)
+plot_topn(
+  data,
+  title = NULL,
+  num = 100,
+  expt_names = NULL,
+  plot_labels = "direct",
+  label_chars = 10,
+  plot_legend = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{Dataframe/matrix/whatever for performing topn-plot.}

@@ -4,10 +4,20 @@
 \alias{deseq2_pairwise}
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions using DESeq2.}
 \usage{
-deseq2_pairwise(input = NULL, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
-  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  force = FALSE, deseq_method = "long", ...)
+deseq2_pairwise(
+  input = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = TRUE,
+  model_batch = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  extra_contrasts = NULL,
+  annot_df = NULL,
+  force = FALSE,
+  deseq_method = "long",
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization state, etc.}

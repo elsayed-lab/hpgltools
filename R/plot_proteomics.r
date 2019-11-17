@@ -558,13 +558,16 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
 #' @param protein chosen protein(s) to plot.
 #' @param title Title the plot?
 #' @param scale Put the data on a specific scale?
+#' @param order_by Reorder the samples by some factor, presumably condition.
+#' @param add_nulls Add a minimal value for samples for which no observations were made.
 #' @param legend Include the legend?
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real=TRUE,
-                                   keep_decoys=TRUE, expt_names=NULL, label_chars=10,
+                                   keep_decoys=FALSE, expt_names=NULL, label_chars=10,
                                    protein=NULL, title=NULL, scale=NULL, legend=NULL,
+                                   order_by="condition", show_all=TRUE,
                                    ...) {
   arglist <- list(...)
 
@@ -572,7 +575,16 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
   colors <- pyprophet_data[["colors"]]
   sample_data <- pyprophet_data[["sample_data"]]
   plot_df <- data.frame()
-  samples <- length(sample_data)
+
+  samples <- metadata[["sampleid"]]
+  sample_order <- metadata[["sampleid"]]
+  if (!is.null(order_by)) {
+    new_order <- order(metadata[[order_by]])
+    metadata <- metadata[new_order, ]
+    sample_order <- metadata[["sampleid"]]
+    samples <- metadata[["sampleid"]]
+    colors <- colors[new_order]
+  }
 
   ## Reset the sample names if one wants a specific column from the metadata.
   if (!is.null(expt_names) & class(expt_names) == "character") {
@@ -584,14 +596,19 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     names(colors) <- names(sample_data)
   }
 
+  slength <- length(samples)
   keepers <- c()
-  for (i in 1:samples) {
-    name <- names(sample_data)[i]
-    if (class(sample_data[[i]])[1] == "try-error") {
+  for (i in 1:slength) {
+    name <- samples[i]
+    if (class(sample_data[[name]])[1] == "try-error") {
+      next
+    }
+    if (is.null(sample_data[[name]])) {
       next
     }
     keepers <- c(keepers, i)
     message("Adding ", name)
+    blank_df["blank", name] <- 0
     plotted_table <- sample_data[[i]]
     if (!isTRUE(keep_decoys)) {
       good_idx <- plotted_table[["decoy"]] != 1
@@ -609,7 +626,6 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     plotted_data <- plotted_data[, c("sample", column, "sequence", "proteinname", "fragment")]
     plot_df <- rbind(plot_df, plotted_data)
   }
-
   ## Drop rows from the metadata and colors which had errors.
   if (length(keepers) > 0) {
     metadata <- metadata[keepers, ]
@@ -618,52 +634,90 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     stop("Something bad happened to the set of kept samples.")
   }
 
+  ## Now we have a data frame of intensities by sample.
+  ## We want them to be ordered as specified in order_by.
+  ## Therefore we need to add in rows for those samples which are missing identifications.
+  null_samples <- rep(FALSE, length(sample_order))
+  names(null_samples) <- sample_order
+  data_minimum <- 0
+  final_df <- data.frame(matrix(ncol=5, nrow=0))
+  colnames(final_df) <- c("sample", column, "sequence", "proteinname", "fragment")
   if (is.null(protein)) {
     stop("This requires a protein ID to search.")
   } else {
     kept_prot_idx <- grepl(pattern=protein, x=plot_df[["proteinname"]])
     plot_df <- plot_df[kept_prot_idx, ]
-  }
-  plot_df[["sequence"]] <- as.factor(plot_df[["sequence"]])
+    data_minimum <- min(as.numeric(plot_df[[column]])) / 2
+    for (s in 1:length(sample_order)) {
+      sample <- sample_order[s]
+      found <- sample %in% plot_df[["sample"]]
+      if (isTRUE(found)) {
+        rows_idx <- plot_df[["sample"]] == sample
+        added_rows <- plot_df[rows_idx, ]
+        colnames(added_rows) <- colnames(plot_df)
+        final_df <- rbind(final_df, added_rows)
+      } else {
+        if (isTRUE(show_all)) {
+          ## Cut the minimum of the data by half and use it for the blank.
+          null_samples[sample] <- TRUE
+          blank_row <- c(sample, data_minimum, "", protein, NA)
+          final_df <- rbind(final_df, blank_row)
+          colnames(final_df) <- colnames(plot_df)
+        } ## End checking if we are going to show all samples.
+      } ## End checking if a given sample is not in the df at this time.
+    } ## End checking if we are to show all samples even if they have no observations.
+  } ## End checking if we want to look at a single protein.
+  final_df[["sequence"]] <- as.factor(final_df[["sequence"]])
+  final_df[[column]] <- as.numeric(final_df[[column]])
 
   ## Fix the darn colors!
   ## The problem occurs when a sample does not have sufficient identifications
   ## to make a violin. When that happens, the colors get out of sync
-  plot_df[["colors"]] <- ""
+  final_df[["colors"]] <- ""
   kept_colors <- c()
   for (sample in names(colors)) {
     sample_color <- colors[sample]
-    sample_idx <- plot_df[["sample"]] == sample
+    sample_idx <- final_df[["sample"]] == sample
     sample_sum <- sum(sample_idx)
     if (sample_sum >= 3) {
       kept_colors <- c(kept_colors, sample_color)
     }
-    plot_df[sample_idx, "colors"] <- sample_color
+    final_df[sample_idx, "colors"] <- sample_color
   }
 
-  scale_data <- check_plot_scale(plot_df[[column]], scale=scale,
+  scale_data <- check_plot_scale(final_df[[column]], scale=scale,
                                  ...)
   if (is.null(scale)) {
     scale <- scale_data[["scale"]]
   }
-  plot_df[[column]] <- scale_data[["data"]]
+  final_df[[column]] <- scale_data[["data"]]
 
   color_names <- names(colors)
   if (!is.null(label_chars) & is.numeric(label_chars)) {
-    plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength=label_chars)
+    final_df[["sample"]] <- abbreviate(final_df[["sample"]], minlength=label_chars)
     color_names <- abbreviate(color_names, minlength=label_chars)
+    names(null_samples) <- abbreviate(names(null_samples), minlength=label_chars)
   }
 
-  plot_df[["sample"]] <- factor(plot_df[["sample"]], levels=color_names)
-  observations_by_sample <- table(plot_df[["sample"]])
-  nonzero_observations <- observations_by_sample > 0
-  observations_by_sample <- observations_by_sample[nonzero_observations]
-  sum_obs <- sum(observations_by_sample)
+  final_df[["sample"]] <- factor(final_df[["sample"]], levels=color_names)
+  observations_by_sample <- table(final_df[["sample"]])
+  obs <- as.numeric(observations_by_sample)
+  names(obs) <- names(observations_by_sample)
+  for (c in 1:length(null_samples)) {
+    sample_id <- names(null_samples)[c]
+    if (isTRUE(null_samples[sample_id])) {
+      obs[sample_id] <- 0
+    }
+  }
+  if (!isTRUE(show_all)) {
+    obs_idx <- obs != 0
+    obs <- obs[obs_idx]
+  }
 
-  violin <- ggplot2::ggplot(data=plot_df, ggplot2::aes_string(x="sample", y=column)) +
+  sum_obs <- sum(obs)
+  violin <- ggplot2::ggplot(data=final_df, ggplot2::aes_string(x="sample", y=column)) +
     ggplot2::geom_violin(aes_string(fill="sample"), width=1, scale="area") +
     ggplot2::scale_fill_manual(values=as.character(kept_colors)) +
-    ##ggplot2::scale_fill_manual(aes_string(fill="colors")) +
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
                    axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
@@ -671,9 +725,9 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     ggplot2::ylab(column) +
     ggplot2::geom_jitter(shape=16, position=ggplot2::position_jitter(0.1),
                          size=2, alpha=0.5) +
-    ggplot2::annotate("text", x=1:length(observations_by_sample),
-                      y=max(plot_df[[column]] + (0.2 * max(plot_df[[column]]))),
-                      label=as.character(observations_by_sample)) +
+    ggplot2::annotate("text", x=1:length(obs),
+                      y=max(final_df[[column]] + (0.2 * max(final_df[[column]]))),
+                      label=as.character(obs)) +
     ggplot2::labs(caption=glue::glue("Number observed peptides in all samples: {sum_obs}"))
   if (!is.null(title)) {
     violin <- violin + ggplot2::ggtitle(title)

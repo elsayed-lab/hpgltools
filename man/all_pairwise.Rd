@@ -4,13 +4,30 @@
 \alias{all_pairwise}
 \title{Perform limma, DESeq2, EdgeR pairwise analyses.}
 \usage{
-all_pairwise(input = NULL, conditions = NULL, batches = NULL,
-  model_cond = TRUE, modify_p = FALSE, model_batch = TRUE,
-  filter = NULL, model_intercept = FALSE, extra_contrasts = NULL,
-  alt_model = NULL, libsize = NULL, test_pca = TRUE,
-  annot_df = NULL, parallel = TRUE, do_basic = TRUE,
-  do_deseq = TRUE, do_ebseq = NULL, do_edger = TRUE,
-  do_limma = TRUE, convert = "cpm", norm = "quant", ...)
+all_pairwise(
+  input = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = TRUE,
+  modify_p = FALSE,
+  model_batch = TRUE,
+  filter = NULL,
+  model_intercept = FALSE,
+  extra_contrasts = NULL,
+  alt_model = NULL,
+  libsize = NULL,
+  test_pca = TRUE,
+  annot_df = NULL,
+  parallel = TRUE,
+  do_basic = TRUE,
+  do_deseq = TRUE,
+  do_ebseq = NULL,
+  do_edger = TRUE,
+  do_limma = TRUE,
+  convert = "cpm",
+  norm = "quant",
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables,

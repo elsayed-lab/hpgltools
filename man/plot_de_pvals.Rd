@@ -4,8 +4,7 @@
 \alias{plot_de_pvals}
 \title{Given a DE table with p-values, plot them.}
 \usage{
-plot_de_pvals(combined, type = "limma", p_type = "both",
-  columns = NULL, ...)
+plot_de_pvals(combined, type = "limma", p_type = "both", columns = NULL, ...)
 }
 \arguments{
 \item{combined}{Table to extract the values from.}
@@ -23,4 +22,9 @@ Multihistogram of the result.
 }
 \description{
 Plot a multi-histogram containing (adjusted)p-values.
+}
+\details{
+The assumption of this plot is that the adjustment will significantly
+decrease the representation of genes in the 'highly significant' range of
+p-values.  However, it is hoped that it will not utterly remove them.
 }

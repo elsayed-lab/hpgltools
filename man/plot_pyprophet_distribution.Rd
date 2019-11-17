@@ -5,9 +5,17 @@
 \title{Make a boxplot out of some of the various data available in the pyprophet
 data.}
 \usage{
-plot_pyprophet_distribution(pyprophet_data, column = "delta_rt",
-  keep_real = TRUE, keep_decoys = TRUE, expt_names = NULL,
-  label_chars = 10, title = NULL, scale = NULL, ...)
+plot_pyprophet_distribution(
+  pyprophet_data,
+  column = "delta_rt",
+  keep_real = TRUE,
+  keep_decoys = TRUE,
+  expt_names = NULL,
+  label_chars = 10,
+  title = NULL,
+  scale = NULL,
+  ...
+)
 }
 \arguments{
 \item{pyprophet_data}{List containing the pyprophet results.}

@@ -4,8 +4,7 @@
 \alias{compare_go_searches}
 \title{Compare the results from different ontology tools}
 \usage{
-compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL,
-  gostats = NULL)
+compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL, gostats = NULL)
 }
 \arguments{
 \item{goseq}{The goseq result from simple_goseq()}

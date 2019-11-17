@@ -4,10 +4,19 @@
 \alias{simple_mlseq}
 \title{Use MLSeq to seek important genes given an experimental factor and an expressionSet.}
 \usage{
-simple_mlseq(expt, comparison = "condition", number_by_var = 100,
-  ceiling_factor = 1/3, training_number = 2, training_repeats = 10,
-  training_method = "repeatedcv", classify_method = "svmRadial",
-  classify_preprocess = "deseq-rlog", reference_factor = NULL, ...)
+simple_mlseq(
+  expt,
+  comparison = "condition",
+  number_by_var = 100,
+  ceiling_factor = 1/3,
+  training_number = 2,
+  training_repeats = 10,
+  training_method = "repeatedcv",
+  classify_method = "svmRadial",
+  classify_preprocess = "deseq-rlog",
+  reference_factor = NULL,
+  ...
+)
 }
 \arguments{
 \item{expt}{Input expressionset.}
