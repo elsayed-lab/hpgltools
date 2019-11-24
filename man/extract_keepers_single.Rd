@@ -5,6 +5,7 @@
 \title{When a single 'keeper' contrast is specified, find and extract it.}
 \usage{
 extract_keepers_single(
+  apr,
   extracted,
   keepers,
   table_names,

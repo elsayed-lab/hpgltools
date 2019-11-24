@@ -38,6 +38,8 @@ a plot!
 }
 \description{
 Yay pretty colors and shapes!
+This function should be reworked following my rewrite of combine_de_tables().
+It is certainly possible to make the logic here much simpler now.
 }
 \examples{
 \dontrun{

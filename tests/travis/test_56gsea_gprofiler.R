@@ -39,7 +39,7 @@ test_that("Does gprofiler return expected values? (ccpplot_data)", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- sm(write_gprofiler_data(gprofiler_result, excel="test_gprofiler.xlsx"))
+actual <- write_gprofiler_data(gprofiler_result, excel="test_gprofiler.xlsx")
 expected <- 1
 test_that("Can we write a gprofiler xlsx file?", {
   expect_equal(expected, actual)

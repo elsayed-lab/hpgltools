@@ -12,9 +12,13 @@ pombe_expt <- make_pombe_expt()
 testing <- normalize_expt(pombe_expt, convert="cpm")
 test_counts <- exprs(testing)
 
+test_genes <- c("SPAC212.11", "SPAC212.09c", "SPNCRNA.70", "SPAC212.12", "SPAC212.04c",
+                "SPAC212.03", "SPAC212.02", "SPAC212.01c", "SPAC977.03", "SPAC977.04")
+
 expected <- c(0.51068105, 1.46820803, 0.00000000, 0.06383513, 2.36189987,
               0.00000000, 0.00000000, 0.12767026, 0.00000000, 0.00000000)
-actual <- as.numeric(test_counts[1:10, 1])
+names(expected) <- test_genes
+actual <- test_counts[test_genes, 1]
 test_that("cpm modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })
@@ -23,7 +27,8 @@ testing <- normalize_expt(pombe_expt, convert="rpkm", column="cds_length")
 test_counts <- exprs(testing)
 expected <- c(0.09019446, NA, NA, 0.17159982, 2.72422131,
               0.00000000, 0.00000000, 0.15144752, 0.00000000, 0.00000000)
-actual <- as.numeric(test_counts[1:10, 1])
+names(expected) <- test_genes
+actual <- test_counts[test_genes, 1]
 test_that("rpkm modification provides expected values?", {
   expect_equal(expected, actual, tolerance=0.0001)
 })

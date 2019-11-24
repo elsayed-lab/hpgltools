@@ -944,17 +944,17 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
   } ## End checking tf data
 
   do_reactome <- TRUE
-  if (is.null(gprofiler_result[["reactome"]])) {
+  if (is.null(gprofiler_result[["reac"]])) {
     do_reactome <- FALSE
   }
-  if (nrow(gprofiler_result[["reactome"]]) == 0) {
+  if (nrow(gprofiler_result[["reac"]]) == 0) {
     do_reactome <- FALSE
   }
   if (isTRUE(do_reactome)) {
     new_row <- 1
     sheet <- "reactome"
     ##openxlsx::addWorksheet(wb, sheetName=sheet)
-    react_data <- gprofiler_result[["reactome"]]
+    react_data <- gprofiler_result[["reac"]]
     react_order <- order(react_data[[order_by]], decreasing=decreasing)
     react_data <- react_data[react_order, ]
     ##openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)

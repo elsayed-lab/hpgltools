@@ -5,6 +5,7 @@
 \title{When a list of 'keeper' contrasts is specified, extract it from the data.}
 \usage{
 extract_keepers_lst(
+  apr,
   extracted,
   keepers,
   table_names,

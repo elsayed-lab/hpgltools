@@ -1,6 +1,8 @@
 #' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
+#' This function should be reworked following my rewrite of combine_de_tables().
+#' It is certainly possible to make the logic here much simpler now.
 #'
 #' @param pairwise The result from all_pairwise(), which should be changed to
 #'   handle other invocations too.
@@ -37,6 +39,19 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   } else {
     wanted_table <- table
   }
+  if ("combined_de" %in% class(pairwise)) {
+    wanted_tablename <- pairwise[["kept"]][[wanted_table]]
+    actual_tablenames <- pairwise[["keepers"]][[wanted_table]]
+    actual_numerator <- actual_tablenames[[1]]
+    actual_denominator <- actual_tablenames[[2]]
+    actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
+    if (actual_tablename != wanted_tablename) {
+      invert <- TRUE
+    }
+    wanted_table <- wanted_tablename
+    pairwise <- pairwise[["input"]]
+    print(wanted_table)
+  }
 
   ## if it is in fact all_pairwise, then there should be a set of
   ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
@@ -44,10 +59,6 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   if (class(pairwise)[1] == "all_pairwise") {
     table_source <- glue::glue("{type}_pairwise")
     pairwise <- pairwise[[type]]
-  } else if (class(pairwise)[1] == "combined_de" |
-             class(pairwise)[1] == "combined_table") {
-    ## Then this came from combine_de...
-    table_source <- "combined"
   } else if (!is.null(pairwise[["method"]])) {
     table_source <- glue::glue("{pairwise[['method']]}_pairwise")
   } else {
@@ -109,7 +120,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     if (p_type == "adj") {
       p_col <- "ebseq_adjp"
     } else {
-      p_col <- "ebseq_p"
+      p_col <- "ebseq_ppde"
     }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "combined") {
@@ -135,6 +146,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
 
+  possible_tables <- names(all_tables)
   the_table <- NULL
   ## Now that we have the columns, figure out which table.
   if (class(all_tables) == "data.frame") {
@@ -150,7 +162,6 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     the_table <- wanted_table
     revname <- strsplit(x=the_table, split="_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    possible_tables <- names(all_tables)
     if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
@@ -293,6 +304,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     thenames <- colnames(output[["coefficients"]])
   } else if (type == "basic") {
     thenames <- names(output[["conditions_table"]])
+  } else if (type == "ebseq") {
+    thenames <- names(output[["conditions_table"]])
   } else {
     stop("I do not know what type you wish to query.")
   }
@@ -337,6 +350,25 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
       return(NULL)
     }
     coefficient_df <- coefficients[, c(xname, yname)]
+  } else if (type == "ebseq") {
+    tables <- names(output[["all_tables"]])
+    verted <- glue::glue("{xname}_vs_{yname}")
+    inverted <- glue::glue("{yname}_vs_{xname}")
+    coefficient_df <- data.frame()
+    if (verted %in% tables) {
+      table_idx <- verted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c1mean", "ebseq_c2mean")]
+    } else if (inverted %in% tables) {
+      table_idx <- inverted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c2mean", "ebseq_c1mean")]
+    } else {
+      stop("Did not find the table for ebseq.")
+    }
+    colnames(coefficient_df) <- c(xname, yname)
+    coefficient_df[[1]] <- log2(coefficient_df[[1]])
+    coefficient_df[[2]] <- log2(coefficient_df[[2]])
   } else if (type == "basic") {
     coefficient_df <- output[["medians"]]
     if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
@@ -441,14 +473,14 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #' @param columns Otherwise, extract whatever columns are provided.
 #' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.
-plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, ...) {
+plot_de_pvals <- function(combined_data, type="limma", p_type="both", columns=NULL, ...) {
   if (is.null(type) & is.null(columns)) {
     stop("Some columns are required to extract p-values.")
   }
   if (is.null(columns)) {
     columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
   }
-  plot_df <- combined[, columns]
+  plot_df <- combined_data[, columns]
   for (c in 1:ncol(plot_df)) {
     plot_df[[c]] <- as.numeric(plot_df[[c]])
   }

@@ -11,8 +11,8 @@ dmel_cp <- simple_clusterprofiler(
   do_david=FALSE,
   orgdb="org.Dm.eg.db")
 
-expected <- c("GO:0000981", "GO:0001871", "GO:0003700",
-              "GO:0004175", "GO:0004222", "GO:0004252")
+expected <- c("GO:0000976", "GO:0000977", "GO:0000981",
+              "GO:0001871", "GO:0003690", "GO:0003700")
 actual <- head(sort(dmel_cp[["enrich_go"]][["MF_all"]][["ID"]]))
 test_that("Does the set of MF_all have the expected IDs?", {
     expect_equal(expected, actual)
@@ -36,15 +36,10 @@ test_that("Do we get a similar number of BP ids?", {
 })
 
 expected <- c("GO:0005887", "GO:0009986", "GO:0031012",
-              "GO:0031226", "GO:0043235")
+              "GO:0031226")
 actual <- head(sort(dmel_cp[["enrich_go"]][["CC_all"]][["ID"]]))
 test_that("Does the set of CC_all have the expected IDs?", {
     expect_equal(expected, actual)
-})
-
-actual <- length(dmel_cp[["enrich_go"]][["CC_all"]][["ID"]])
-test_that("Do we get a similar number of CC ids?", {
-  expect_gt(actual, 4)
 })
 
 ## Gather some scores

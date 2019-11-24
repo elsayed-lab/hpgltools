@@ -5,6 +5,7 @@
 \title{When no set of 'keeper' contrasts is specified, grab them all.}
 \usage{
 extract_keepers_all(
+  apr,
   extracted,
   keepers,
   table_names,

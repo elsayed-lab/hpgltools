@@ -33,7 +33,7 @@
 #'  saturation <- tnseq_saturation(file=input)
 #' }
 #' @export
-tnseq_saturation <- function(data, column="Reads") {
+tnseq_saturation <- function(data, column="Reads", ylimit=100) {
   table <- NULL
   if (class(data) == "character") {
     table <- read.table(file=data, header=1, comment.char="")
@@ -47,6 +47,14 @@ tnseq_saturation <- function(data, column="Reads") {
   ## wig_comment removal
   variablestep_idx <- grepl(pattern="^variable", x=table[["Start"]])
   table <- table[-variablestep_idx, ]
+  table[[column]] <- as.numeric(table[[column]])
+  table[["Start"]] <- as.numeric(table[["Start"]])
+  max_reads <- max(table[[column]], na.rm=TRUE)
+  table[["l2"]] <- log2(table[[column]] + 1)
+  density_plot <- ggplot2::ggplot(data=table, mapping=aes_string(x="l2")) +
+    ggplot2::geom_density(y="..count..", position="identity") +
+    ggplot2::scale_y_continuous(limits=c(0, 0.25)) +
+    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
@@ -106,6 +114,7 @@ tnseq_saturation <- function(data, column="Reads") {
     "ratios" = saturation_ratios,
     "hit_positions" = hit_positions,
     "hits_summary" = hits_summary,
+    "density" = density_plot,
     "plot" = data_plot
   )
 
@@ -188,7 +197,7 @@ score_mhess <- function(expt, ess_column="essm1") {
   design <- pData(expt)
   file_lst <- design[[ess_column]]
   counts <- exprs(expt)
-  scores <- as.data.frame(counts, stringsAsFactors=FALSE)
+  scores <- data.frame(stringsAsFactors=FALSE)
   for (f in 1:length(file_lst)) {
     sample <- colnames(counts)[f]
     file <- file_lst[f]
@@ -203,10 +212,16 @@ score_mhess <- function(expt, ess_column="essm1") {
                              replacement="")
     dropped_idx <- rownames(ess_df) == "unfound"
     ess_df <- ess_df[!dropped_idx, ]
-    testthat::expect_equal(rownames(ess_df), rownames(counts))
-    scores[[sample]] <- ess_df[["call"]]
-    scores[[sample]] <- as.character(scores[[sample]])
+    if (f == 1) {
+      scores <- ess_df
+      scores[["gene"]] <- NULL
+    } else {
+      scores <- cbind(scores, ess_df[["call"]])
+    }
+    colnames(scores)[f] <- sample
+    scores[[f]] <- as.character(scores[[f]])
   }
+
   ## S gets a score of 0, NE gets 1, U gets 10, E gets 100.
   zero_idx <- scores == "S"
   scores[zero_idx] <- 0
@@ -240,6 +255,33 @@ score_mhess <- function(expt, ess_column="essm1") {
     "changed_genes" = changed_genes,
     "changed_state" = changed_df)
   return(retlist)
+}
+
+tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads") {
+  table <- NULL
+  filenames <- meta[[meta_column]]
+  for (f in 1:length(filenames)) {
+    file <- filenames[f]
+    sample <- rownames(meta)[f]
+    column_data <- read.table(file=file, header=1, comment.char="#")
+    colnames(column_data) <- c("start", sample)
+    column_data <- data.table::as.data.table(column_data)
+    if (f == 1) {
+      table <- column_data
+    } else {
+      table <- merge(table, column_data, by.x="start", by.y="start")
+    }
+  }
+
+  melted <- reshape2::melt(data=table, id.vars="start")
+  colnames(melted) <- c("start", "sample", "reads")
+  melted[["log2"]] <- log2(melted[["reads"]] + 1)
+  plt <- ggplot(data=melted, mapping=aes_string(x="log2", fill="sample")) +
+    ggplot2::geom_density(mapping=aes_string(y="..count.."), position="identity", alpha=0.3) +
+    ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
+    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+
+  return(plt)
 }
 
 ## EOF

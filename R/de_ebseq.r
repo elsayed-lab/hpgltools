@@ -50,6 +50,7 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
 
+
   if (method == "pairwise_subset") {
     result <- ebseq_pairwise_subset(input,
                                     ng_vector=ng_vector, rounds=rounds,
@@ -310,8 +311,11 @@ ebseq_two <- function(pair_data, conditions,
   table <- data.frame(row.names=names(fold_changes[["PostFC"]]))
   table[["ebseq_FC"]] <- fold_changes[["RealFC"]]
   table[["logFC"]] <- log2(table[["ebseq_FC"]])
-  table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
+  table[["ebseq_c1mean"]] <- as.numeric(eb_output[["C1Mean"]][[1]])
+  table[["ebseq_c2mean"]] <- as.numeric(eb_output[["C2Mean"]][[1]])
   table[["ebseq_mean"]] <- as.numeric(eb_output[["MeanList"]][[1]])
+  table[["ebseq_var"]] <- as.numeric(eb_output[["VarList"]][[1]])
+  table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
   table <- merge(table, as.data.frame(eb_result[["PPMat"]]),
                  by="row.names", all.x=TRUE)
   rownames(table) <- table[["Row.names"]]

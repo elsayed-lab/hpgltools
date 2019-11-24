@@ -99,9 +99,9 @@ update_bioc:
 	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
 
 vignette:
-	@mkdir -p doc/
-	@mkdir -p inst/doc/
+	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes()"
+	mv doc inst/doc
 
 vt:	clean_vignette vignette reference install

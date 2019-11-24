@@ -366,10 +366,11 @@ plot_gostats_pval <- function(gs_result, wrapped_width=20, cutoff=0.1,
 #' @export
 plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
                                 cutoff=0.1, n=30,
-                                group_minsize=5, scorer="recall", ...) {
+                                group_minsize=5, scorer="recall",
+                                ...) {
   go_result <- gp_result[["go"]]
   kegg_result <- gp_result[["kegg"]]
-  reactome_result <- gp_result[["reactome"]]
+  reactome_result <- gp_result[["reac"]]
   mi_result <- gp_result[["mi"]]
   tf_result <- gp_result[["tf"]]
   corum_result <- gp_result[["corum"]]
@@ -392,36 +393,40 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   cc_over[["p.value"]] <- as.numeric(format(x=cc_over[["p.value"]],
                                             digits=3, scientific=TRUE))
 
+  gp_rewrite_df <- function(plotting_df) {
+    ## First set the order of the table to be something most descriptive.
+    ## For the moment, we want that to be the score.
+    plotting_df[["score"]] <- plotting_df[[scorer]]
+    new_order <- order(plotting_df[["score"]], decreasing=FALSE)
+    plotting_df <- plotting_df[new_order, ]
+    ## Drop anything with no term name
+    kidx <- plotting_df[["term.name"]] != "NULL"
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything outside of our pvalue cutoff
+    kidx <- plotting_df[["p.value"]] <= cutoff
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything with fewer than x genes in the group
+    kidx <- plotting_df[["query.size"]] >= group_minsize
+    plotting_df <- plotting_df[kidx, ]
+    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+    ## the factor in plot_ontpval, which should have a note.
+    plotting_df <- tail(plotting_df, n=n)
+    plotting_df <- plotting_df[, c("term.name", "p.value", "score")]
+    colnames(plotting_df) <- c("term", "pvalue", "score")
+    plotting_df[["term"]] <- as.character(
+      lapply(strwrap(plotting_df[["term"]],
+                     wrapped_width, simplify=FALSE),
+             paste, collapse="\n"))
+    return(plotting_df)
+  }
+
   plotting_mf_over <- mf_over
   mf_pval_plot_over <- NULL
   if (is.null(mf_over) | nrow(mf_over) == 0) {
     plotting_mf_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_mf_over[["score"]] <- plotting_mf_over[[scorer]]
-    new_order <- order(plotting_mf_over[["score"]], decreasing=FALSE)
-    plotting_mf_over <- plotting_mf_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_mf_over[["term.name"]] != "NULL"
-    plotting_mf_over <- plotting_mf_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_mf_over[["p.value"]] <= cutoff
-    plotting_mf_over <- plotting_mf_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_mf_over[["query.size"]] >= group_minsize
-    plotting_mf_over <- plotting_mf_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_mf_over <- tail(plotting_mf_over, n=n)
-    plotting_mf_over <- plotting_mf_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_mf_over) <- c("term", "pvalue", "score")
-    plotting_mf_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_mf_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_mf_over <- gp_rewrite_df(plotting_mf_over)
     mf_pval_plot_over <- try(plot_ontpval(plotting_mf_over, ontology="MF"),
                              silent=TRUE)
   }
@@ -434,31 +439,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(bp_over) | nrow(bp_over) == 0) {
     plotting_bp_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_bp_over[["score"]] <- plotting_bp_over[[scorer]]
-    new_order <- order(plotting_bp_over[["score"]], decreasing=FALSE)
-    plotting_bp_over <- plotting_bp_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_bp_over[["term.name"]] != "NULL"
-    plotting_bp_over <- plotting_bp_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_bp_over[["p.value"]] <= cutoff
-    plotting_bp_over <- plotting_bp_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_bp_over[["query.size"]] >= group_minsize
-    plotting_bp_over <- plotting_bp_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_bp_over <- tail(plotting_bp_over, n=n)
-    plotting_bp_over <- plotting_bp_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_bp_over) <- c("term", "pvalue", "score")
-    plotting_bp_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_bp_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_bp_over <- gp_rewrite_df(plotting_bp_over)
     bp_pval_plot_over <- try(plot_ontpval(plotting_bp_over, ontology="BP"),
                              silent=TRUE)
   }
@@ -471,31 +452,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(cc_over) | nrow(cc_over) == 0) {
     plotting_cc_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_cc_over[["score"]] <- plotting_cc_over[[scorer]]
-    new_order <- order(plotting_cc_over[["score"]], decreasing=FALSE)
-    plotting_cc_over <- plotting_cc_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_cc_over[["term.name"]] != "NULL"
-    plotting_cc_over <- plotting_cc_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_cc_over[["p.value"]] <= cutoff
-    plotting_cc_over <- plotting_cc_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_cc_over[["query.size"]] >= group_minsize
-    plotting_cc_over <- plotting_cc_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_cc_over <- tail(plotting_cc_over, n=n)
-    plotting_cc_over <- plotting_cc_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_cc_over) <- c("term", "pvalue", "score")
-    plotting_cc_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_cc_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_cc_over <- gp_rewrite_df(plotting_cc_over)
     cc_pval_plot_over <- try(plot_ontpval(plotting_cc_over, ontology="CC"),
                              silent=TRUE)
   }
@@ -508,33 +465,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(kegg_result) | nrow(kegg_result) == 0) {
     plotting_kegg_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_kegg_over[["score"]] <- plotting_kegg_over[[scorer]]
-    new_order <- order(plotting_kegg_over[["score"]], decreasing=FALSE)
-    plotting_kegg_over <- plotting_kegg_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_kegg_over[["term.name"]] != "NULL"
-    plotting_kegg_over <- plotting_kegg_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_kegg_over[["p.value"]] <= cutoff
-    plotting_kegg_over <- plotting_kegg_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_kegg_over[["query.size"]] >= group_minsize
-    plotting_kegg_over <- plotting_kegg_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_kegg_over <- tail(plotting_kegg_over, n=n)
-    plotting_kegg_over <- plotting_kegg_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_kegg_over) <- c("term", "pvalue", "score")
-    plotting_kegg_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_kegg_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
-    kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"),
-                               silent=TRUE)
+    plotting_kegg_over <- gp_rewrite_df(plotting_kegg_over)
   }
   if (class(kegg_pval_plot_over)[[1]] == "try-error") {
     kegg_pval_plot_over <- NULL
@@ -545,31 +476,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(reactome_result) | nrow(reactome_result) == 0) {
     plotting_reactome_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_reactome_over[["score"]] <- plotting_reactome_over[[scorer]]
-    new_order <- order(plotting_reactome_over[["score"]], decreasing=FALSE)
-    plotting_reactome_over <- plotting_reactome_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_reactome_over[["term.name"]] != "NULL"
-    plotting_reactome_over <- plotting_reactome_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_reactome_over[["p.value"]] <= cutoff
-    plotting_reactome_over <- plotting_reactome_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_reactome_over[["query.size"]] >= group_minsize
-    plotting_reactome_over <- plotting_reactome_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_reactome_over <- tail(plotting_reactome_over, n=n)
-    plotting_reactome_over <- plotting_reactome_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_reactome_over) <- c("term", "pvalue", "score")
-    plotting_reactome_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_reactome_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_reactome_over <- gp_rewrite_df(plotting_reactome_over)
     reactome_pval_plot_over <- try(plot_ontpval(plotting_reactome_over, ontology="Reactome"),
                                    silent=TRUE)
   }
@@ -582,31 +489,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(mi_result) | nrow(mi_result) == 0) {
     plotting_mi_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_mi_over[["score"]] <- plotting_mi_over[[scorer]]
-    new_order <- order(plotting_mi_over[["score"]], decreasing=FALSE)
-    plotting_mi_over <- plotting_mi_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_mi_over[["term.name"]] != "NULL"
-    plotting_mi_over <- plotting_mi_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_mi_over[["p.value"]] <= cutoff
-    plotting_mi_over <- plotting_mi_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_mi_over[["query.size"]] >= group_minsize
-    plotting_mi_over <- plotting_mi_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_mi_over <- tail(plotting_mi_over, n=n)
-    plotting_mi_over <- plotting_mi_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_mi_over) <- c("term", "pvalue", "score")
-    plotting_mi_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_mi_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_mi_over <- gp_rewrite_df(plotting_mi_over)
     mi_pval_plot_over <- try(plot_ontpval(plotting_mi_over, ontology="miRNA"),
                              silent=TRUE)
   }
@@ -619,31 +502,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(tf_result) | nrow(tf_result) == 0) {
     plotting_tf_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_tf_over[["score"]] <- plotting_tf_over[[scorer]]
-    new_order <- order(plotting_tf_over[["score"]], decreasing=FALSE)
-    plotting_tf_over <- plotting_tf_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_tf_over[["term.name"]] != "NULL"
-    plotting_tf_over <- plotting_tf_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_tf_over[["p.value"]] <= cutoff
-    plotting_tf_over <- plotting_tf_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_tf_over[["query.size"]] >= group_minsize
-    plotting_tf_over <- plotting_tf_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_tf_over <- tail(plotting_tf_over, n=n)
-    plotting_tf_over <- plotting_tf_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_tf_over) <- c("term", "pvalue", "score")
-    plotting_tf_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_tf_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_tf_over <- gp_rewrite_df(plotting_tf_over)
     tf_pval_plot_over <- try(plot_ontpval(plotting_tf_over, ontology="Transcription factors"),
                              silent=TRUE)
   }
@@ -656,31 +515,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(corum_result) | nrow(corum_result) == 0) {
     plotting_corum_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_corum_over[["score"]] <- plotting_corum_over[[scorer]]
-    new_order <- order(plotting_corum_over[["score"]], decreasing=FALSE)
-    plotting_corum_over <- plotting_corum_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_corum_over[["term.name"]] != "NULL"
-    plotting_corum_over <- plotting_corum_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_corum_over[["p.value"]] <= cutoff
-    plotting_corum_over <- plotting_corum_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_corum_over[["query.size"]] >= group_minsize
-    plotting_corum_over <- plotting_corum_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_corum_over <- tail(plotting_corum_over, n=n)
-    plotting_corum_over <- plotting_corum_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_corum_over) <- c("term", "pvalue", "score")
-    plotting_corum_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_corum_over[["term"]],
-                     wrapped_width,
-                     simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_corum_over <- gp_rewrite_df(plotting_corum_over)
     corum_pval_plot_over <- try(plot_ontpval(plotting_corum_over, ontology="Corum"),
                                 silent=TRUE)
   }
@@ -693,30 +528,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
   if (is.null(hp_result) | nrow(hp_result) == 0) {
     plotting_hp_over <- NULL
   } else {
-    ## First set the order of the table to be something most descriptive.
-    ## For the moment, we want that to be the score.
-    plotting_hp_over[["score"]] <- plotting_hp_over[[scorer]]
-    new_order <- order(plotting_hp_over[["score"]], decreasing=FALSE)
-    plotting_hp_over <- plotting_hp_over[new_order, ]
-    ## Drop anything with no term name
-    kidx <- plotting_hp_over[["term.name"]] != "NULL"
-    plotting_hp_over <- plotting_hp_over[kidx, ]
-    ## Drop anything outside of our pvalue cutoff
-    kidx <- plotting_hp_over[["p.value"]] <= cutoff
-    plotting_hp_over <- plotting_hp_over[kidx, ]
-    ## Drop anything with fewer than x genes in the group
-    kidx <- plotting_hp_over[["query.size"]] >= group_minsize
-    plotting_hp_over <- plotting_hp_over[kidx, ]
-    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
-    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
-    ## the factor in plot_ontpval, which should have a note.
-    plotting_hp_over <- tail(plotting_hp_over, n=n)
-    plotting_hp_over <- plotting_hp_over[, c("term.name", "p.value", "score")]
-    colnames(plotting_hp_over) <- c("term", "pvalue", "score")
-    plotting_hp_over[["term"]] <- as.character(
-      lapply(strwrap(plotting_hp_over[["term"]],
-                     wrapped_width, simplify=FALSE),
-             paste, collapse="\n"))
+    plotting_hp_over <- gp_rewrite_df(plotting_hp_over)
     hp_pval_plot_over <- try(plot_ontpval(plotting_hp_over, ontology="Human pathology"),
                              silent=TRUE)
   }

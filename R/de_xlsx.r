@@ -83,7 +83,6 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   }
   if (class(ebseq)[1] == "try-error" || is.null(ebseq)) {
     include_ebseq <- FALSE
-    ##compare_plots <- FALSE
   }
   if (class(basic)[1] == "try-error" || is.null(basic)) {
     include_basic <- FALSE
@@ -141,7 +140,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     ## Here, we will look for only those elements in the keepers list.
     ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
     ## flip the logFCs.
-    extracted <- extract_keepers_lst(extracted, keepers, legend[["table_names"]],
+    extracted <- extract_keepers_lst(apr, extracted, keepers,
+                                     legend[["table_names"]],
                                      all_coefficients,
                                      limma, edger, ebseq, deseq, basic,
                                      adjp, annot_df,
@@ -153,7 +153,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     ## The logic here is the same as above without worrying about a_vs_b, but
     ## instead just iterating through every returned table, combining them, and
     ## printing them to the excel.
-    extracted <- extract_keepers_all(extracted, keepers, legend[["table_names"]],
+    extracted <- extract_keepers_all(apr, extracted, keepers,
+                                     legend[["table_names"]],
                                      all_coefficients,
                                      limma, edger, ebseq, deseq, basic,
                                      adjp, annot_df,
@@ -163,7 +164,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
-    extracted <- extract_keepers_single(extracted, keepers, legend[["table_names"]],
+    extracted <- extract_keepers_single(apr, extracted, keepers,
+                                        legend[["table_names"]],
                                         all_coefficients,
                                         limma, edger, ebseq, deseq, basic,
                                         adjp, annot_df,
@@ -265,7 +267,17 @@ combine_de_tables <- function(apr, extra_annot=NULL,
             sig_up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
             start_col=current_column, plotname="upvenn", savedir=excel_basename,
             start_row=current_row + 1, doWeights=FALSE)
-          siggene_lst <- try(plot_num_siggenes(written_table))
+          sig_methods <- c()
+          if (isTRUE(include_limma)) {
+            sig_methods <- c("limma", sig_methods)
+          }
+          if (isTRUE(include_edger)) {
+            sig_methods <- c("edger", sig_methods)
+          }
+          if (isTRUE(include_deseq)) {
+            sig_methods <- c("deseq", sig_methods)
+          }
+          siggene_lst <- try(plot_num_siggenes(written_table, method=sig_methods))
           current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
@@ -356,7 +368,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         } ## End checking on venns
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
-        for (type in c("limma", "deseq", "edger")) {
+        de_types <- c("limma", "deseq", "edger")
+        for (t in 1:length(de_types)) {
+          type <- de_types[t]
           sc <- paste0(type, "_scatter_plots")
           ma <- paste0(type, "_ma_plots")
           vo <- paste0(type, "_vol_plots")
@@ -445,7 +459,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
       "plots" = extracted[["plots"]],
       "comp_plot" = comp,
       "venns" = venns,
-      "keepers" = extracted[["kept"]],
+      "keepers" = keepers,
+      ## Kept is currently broken.
+      "kept" = extracted[["kept"]],
       "de_summary" = extracted[["summaries"]])
   } else {
     ret <- retlist
@@ -471,85 +487,57 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   return(ret)
 }
 
-combine_extracted_plots <- function(name,
-                                    include_basic, basic,
-                                    include_deseq, deseq,
-                                    include_ebseq, ebseq,
-                                    include_edger, edger,
-                                    include_limma, limma,
-                                    combined, loess,
-                                    denominator, numerator,
-                                    do_inverse, found_table) {
+combine_extracted_plots <- function(pairwise, name, combined, denominator, numerator,
+                                    basic, deseq, edger, limma, ebseq,
+                                    include_basic=TRUE, include_deseq=TRUE,
+                                    include_edger=TRUE, include_limma=TRUE,
+                                    include_ebseq=FALSE, loess=FALSE,
+                                    do_inverse=FALSE, found_table=NULL) {
+  combined_data <- combined[["data"]]
   plots <- list()
-  if (isTRUE(include_basic)) {
-    plots[["basic_scatter_plots"]] <- sm(try(extract_coefficient_scatter(
-      basic, type="basic", loess=loess, x=denominator, y=numerator), silent=TRUE))
-    ma_vol <- sm(try(extract_de_plots(
-      combined, type="basic", invert=do_inverse, table=found_table), silent=TRUE))
-    if (class(ma_vol)[1] == "try-error") {
-      plots[["basic_ma_plots"]] <- NULL
-      plots[["basic_vol_plots"]] <- NULL
-    } else {
-      plots[["basic_ma_plots"]] <- ma_vol[["ma"]]
-      plots[["basic_vol_plots"]] <- ma_vol[["volcano"]]
-    }
-    plots[["basic_p_plots"]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
-  }
   if (isTRUE(include_deseq)) {
-    plots[["deseq_scatter_plots"]] <- sm(try(extract_coefficient_scatter(
-      deseq, type="deseq", loess=loess, x=denominator, y=numerator), silent=TRUE))
-    ma_vol <- sm(try(extract_de_plots(
-      combined, type="deseq", invert=do_inverse, table=found_table), silent=TRUE))
-    if (class(ma_vol)[1] == "try-error") {
-      plots[["deseq_ma_plots"]] <- NULL
-      plots[["deseq_vol_plots"]] <- NULL
-    } else {
-      plots[["deseq_ma_plots"]] <- ma_vol[["ma"]]
-      plots[["deseq_vol_plots"]] <- ma_vol[["volcano"]]
-    }
-    plots[["deseq_p_plots"]] <- plot_de_pvals(combined[["data"]], type="deseq")[["plot"]]
-  }
-  if (isTRUE(include_ebseq)) {
-    plots[["ebseq_scatter_plots"]] <- sm(try(extract_coefficient_scatter(
-      ebseq, type="ebseq", loess=loess, x=denominator, y=numerator), silent=TRUE))
-    ma_vol <- sm(try(extract_de_plots(
-      combined, type="ebseq", invert=do_inverse, table=found_table), silent=TRUE))
-    if (class(ma_vol)[1] == "try-error") {
-      plots[["ebseq_ma_plots"]] <- NULL
-      plots[["ebseq_vol_plots"]] <- NULL
-    } else {
-      plots[["ebseq_ma_plots"]] <- ma_vol[["ma"]]
-      plots[["ebseq_vol_plots"]] <- ma_vol[["volcano"]]
-    }
-    plots[["ebseq_p_plots"]] <- plot_de_pvals(combined[["data"]], type="ebseq")[["plot"]]
+    plots[["deseq_scatter_plots"]] <- list()
+    plots[["deseq_ma_plots"]] <- list()
+    plots[["deseq_vol_plots"]] <- list()
+    plots[["deseq_p_plots"]] <- list()
   }
   if (isTRUE(include_edger)) {
-    plots[["edger_scatter_plots"]] <- sm(try(extract_coefficient_scatter(
-      edger, type="edger", loess=loess, x=denominator, y=numerator), silent=TRUE))
-    ma_vol <- sm(try(extract_de_plots(
-      combined, type="edger", invert=do_inverse, table=found_table), silent=TRUE))
-    if (class(ma_vol)[1] == "try-error") {
-      plots[["edger_ma_plots"]] <- NULL
-      plots[["edger_vol_plots"]] <- NULL
-    } else {
-      plots[["edger_ma_plots"]] <- ma_vol[["ma"]]
-      plots[["edger_vol_plots"]] <- ma_vol[["volcano"]]
-    }
-    plots[["edger_p_plots"]] <- plot_de_pvals(combined[["data"]], type="edger")[["plot"]]
+    plots[["edger_scatter_plots"]] <- list()
+    plots[["edger_ma_plots"]] <- list()
+    plots[["edger_vol_plots"]] <- list()
+    plots[["edger_p_plots"]] <- list()
   }
   if (isTRUE(include_limma)) {
-    plots[["limma_scatter_plots"]] <- sm(try(extract_coefficient_scatter(
-      limma, type="limma", loess=loess, x=denominator, y=numerator), silent=TRUE))
-    ma_vol <- sm(try(extract_de_plots(
-      combined, type="limma", invert=do_inverse, table=found_table), silent=TRUE))
-    if (class(ma_vol)[1] == "try-error") {
-      plots[["limma_ma_plots"]] <- NULL
-      plots[["limma_vol_plots"]] <- NULL
+    plots[["limma_scatter_plots"]] <- list()
+    plots[["limma_ma_plots"]] <- list()
+    plots[["limma_vol_plots"]] <- list()
+    plots[["limma_p_plots"]] <- list()
+  }
+  types <- c("deseq", "edger", "limma")
+  for (t in types) {
+    sc_name <- paste0(t, "_scatter_plots")
+    ma_name <- paste0(t, "_ma_plots")
+    vol_name <- paste0(t, "_vol_plots")
+    p_name <- paste0(t, "_p_plots")
+    if (is.null(sc_name)) {
+      message("Skipping scatter plot for ", t, ".")
     } else {
-      plots[["limma_ma_plots"]] <- ma_vol[["ma"]]
-      plots[["limma_vol_plots"]] <- ma_vol[["volcano"]]
+      plots[[sc_name]] <- sm(try(extract_coefficient_scatter(
+        get0(t), type=t, invert=do_inverse, table=found_table), silent=TRUE))
     }
-    plots[["limma_p_plots"]] <- plot_de_pvals(combined[["data"]], type="limma")[["plot"]]
+    if (is.null(ma_name)) {
+      message("Skipping volcano/MA plot for ", t, ".")
+    } else {
+      ma_vol <- try(extract_de_plots(
+        get0(t), type=t, invert=do_inverse, table=found_table))
+      plots[[ma_name]] <- ma_vol[["ma"]]
+      plots[[vol_name]] <- ma_vol[["volcano"]]
+    }
+    if (is.null(p_name)) {
+      message("Skipping p-value plot for ", t, ".")
+    } else {
+      plots[[p_name]] <- plot_de_pvals(combined[["data"]], type=t)[["plot"]]
+    }
   }
   return(plots)
 }
@@ -611,8 +599,10 @@ Defaulting to fdr.")
   eddf <- data.frame("edger_logfc" = 0, "edger_logcpm" = 0, "edger_lr" = 0,
                      "edger_p" = 0, "edger_adjp" = 0)
   rownames(eddf) <- "dropme"
-  ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_postfc" = 0,
-                     "ebseq_mean" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0, "ebseq_adjp" = 0)
+  ebdf <- data.frame("ebseq_fc" = 0, "ebseq_logfc" = 0, "ebseq_c1mean" = 0,
+                     "ebseq_c2mean" = 0, "ebseq_mean" = 0, "ebseq_var" = 0,
+                     "ebseq_postfc" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0,
+                     "ebseq_adjp" = 0)
   rownames(ebdf) <- "dropme"
   badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
@@ -730,9 +720,10 @@ Defaulting to fdr.")
   colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
   ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
   ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
-
-  colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_postfc", "ebseq_mean",
-                      "ebseq_ppee", "ebseq_ppde", "ebseq_adjp")
+  colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
+                      "ebseq_c2mean", "ebseq_mean", "ebseq_var",
+                      "ebseq_postfc", "ebseq_ppee", "ebseq_ppde",
+                      "ebseq_adjp")
 
   ## I recently changed basic to optionally do means or medians.  I need to take that into
   ## account when working with these tables.  For the moment, I think I will simply rename
@@ -988,7 +979,7 @@ Defaulting to fdr.")
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
 #' @param sheet_count What sheet is being written?
-extract_keepers_all <- function(extracted, keepers, table_names,
+extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
                                 adjp, annot_df,
@@ -999,30 +990,33 @@ extract_keepers_all <- function(extracted, keepers, table_names,
   kept_tables <- list()
   numerators <- denominators <- c()
   for (a in 1:names_length) {
-    tab <- table_names[a]
-    kept_tables[a] <- tab
-    message("Working on table ", a, "/", names_length, ": ", tab)
-    splitted <- strsplit(x=tab, split="_vs_")
-    xname <- splitted[[1]][1]
-    yname <- splitted[[1]][2]
-    numerators[a] <- yname
-    denominators[a] <- xname
+    name <- table_names[a]
+    kept_tables[a] <- name
+    message("Working on table ", a, "/", names_length, ": ", name)
+    splitted <- strsplit(x=name, split="_vs_")
+    denominator <- splitted[[1]][2]
+    numerator <- splitted[[1]][1]
+    numerators[a] <- numerator
+    denominators[a] <- denominator
     combined <- combine_single_de_table(
       li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-      table_name=tab, annot_df=annot_df,
       include_basic=include_basic, include_deseq=include_deseq,
       include_edger=include_edger, include_ebseq=include_ebseq,
-      include_limma=include_limma, excludes=excludes,
-      padj_type=padj_type)
+      include_limma=include_limma,
+      table_name=name, adjp=adjp, annot_df=annot_df,
+      excludes=excludes, padj_type=padj_type)
+    extracted[["data"]][[name]] <- combined[["data"]]
+    extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
+    extracted[["kept"]] <- kept_tables
+    extracted[["keepers"]] <- keepers
+    extracted[["plots"]][[name]] <- combine_extracted_plots(
+      apr, name, combined, denominator, numerator,
+      basic, deseq, edger, limma, ebseq,
+      include_basic=include_basic, include_deseq=include_deseq,
+      include_edger=include_edger, include_limma=include_limma,
+      include_ebseq=include_ebseq, loess=loess, found_table=name)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
-    ## extracted[["summaries"]][[name]] <- as.data.frame(combined[["summary"]])
-    extracted[["plots"]][[name]] <- combine_extracted_plots(
-      tab, include_basic, basic, include_deseq, deseq, include_ebseq, ebseq, include_edger, edger,
-      include_limma, limma, combined, loess, yname, xname, do_inverse, tab)
-    extracted[["table_names"]][[tab]] <- combined[["summary"]][["table"]]
-    extracted[["kept"]] <- kept_tables
-    extracted[["data"]][[tab]] <- combined[["data"]]
     extracted[["numerators"]] <- numerators
     extracted[["denominators"]] <- denominators
   } ## End for list
@@ -1057,7 +1051,7 @@ extract_keepers_all <- function(extracted, keepers, table_names,
 #' @param numerators Set of numerators
 #' @param denominators Set of denominators
 #' @param combo empty list
-extract_keepers_lst <- function(extracted, keepers, table_names,
+extract_keepers_lst <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
                                 adjp, annot_df,
@@ -1079,12 +1073,9 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
   keeper_len <- length(names(keepers))
   contrast_list <- names(keepers)
   kept_tables <- list()
-  sheet_count <- 0
   for (a in 1:length(names(keepers))) {
     name <- names(keepers)[a]
     extracted[["data"]][[name]] <- list()  ## Provided by combine_de_table() shortly.
-    ## Each element in the list gets one worksheet.
-    sheet_count <- sheet_count + 1
     ## The numerators and denominators will be used to check that we are a_vs_b or b_vs_a
     numerator <- keepers[[name]][1]
     numerators[name] <- numerator
@@ -1132,17 +1123,23 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     if (found > 0) {
       combined <- combine_single_de_table(
         li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
+        include_deseq=include_deseq, include_edger=include_edger,
+        include_ebseq=include_ebseq, include_limma=include_limma,
+        include_basic=include_basic,
         table_name=found_table, do_inverse=do_inverse,
-        adjp=adjp, annot_df=annot_df, include_deseq=include_deseq,
-        include_edger=include_edger, include_ebseq=include_ebseq,
-        include_limma=include_limma, include_basic=include_basic,
+        adjp=adjp, annot_df=annot_df,
         excludes=excludes, padj_type=padj_type)
       extracted[["data"]][[name]] <- combined[["data"]]
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
+      extracted[["keepers"]] <- keepers
       extracted[["plots"]][[name]] <- combine_extracted_plots(
-        name, include_basic, basic, include_deseq, deseq, include_ebseq, ebseq, include_edger, edger,
-        include_limma, limma, combined, loess, denominator, numerator, do_inverse, found_table)
+        apr, name, combined, denominator, numerator,
+        basic, deseq, edger, limma, ebseq,
+        include_basic=include_basic, include_deseq=include_deseq,
+        include_edger=include_edger, include_limma=include_limma,
+        include_ebseq=include_ebseq, loess=loess,
+        do_inverse=do_inverse, found_table=found_table)
       extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                         as.data.frame(combined[["summary"]]))
       extracted[["numerators"]] <- numerators
@@ -1177,43 +1174,54 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
-extract_keepers_single <- function(extracted, keepers, table_names,
+extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
                                    adjp, annot_df,
                                    include_deseq, include_edger,
                                    include_ebseq, include_limma,
                                    include_basic, excludes, padj_type) {
-  if (table %in% names(edger[["contrast_list"]])) {
-    message("I found ", table, " in the available contrasts.")
+  splitted <- strsplit(x=keepers, split="_vs_")
+  numerator <- splitted[[1]][1]
+  denominator <- splitted[[1]][2]
+  inverse_keeper <- paste0(denominator, "_vs_", numerator)
+  table <- keepers
+  do_inverse <- FALSE
+  if (keepers %in% table_names) {
+    message("I found ", keepers, " in the available contrasts.")
+  } else if (inverse_keeper %in% table_names) {
+    message("I found ", inverse_keeper, " the inverse keeper in the contrasts.")
+    table <- inverse_keeper
+    do_inverse <- TRUE
   } else {
-    message("I did not find ", table, " in the available contrasts.")
-    message("The available tables are: ", names(edger[["contrast_list"]]))
-    table <- names(edger[["contrast_list"]])[[1]]
+    message("I did not find ", keepers, " in the available contrasts.")
+    message("The available tables are: ", table_names, ".")
+    table <- table_names[1]
     message("Choosing the first table: ", table)
   }
   combined <- combine_single_de_table(
     li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-    table_name=table, annot_df=annot_df,
-    include_basic=include_basic, include_deseq=include_deseq,
-    include_edger=include_edger, include_ebseq=include_ebseq,
-    include_limma=include_limma, excludes=excludes,
-    padj_type=padj_type)
-  combo[[table]] <- combined[["data"]]
-  splitted <- strsplit(x=tab, split="_vs_")
-  de_summaries <- rbind(de_summaries, combined[["summary"]])
-  final_table_names[[1]] <- combined[["summary"]][["table"]]
-  xname <- splitted[[1]][1]
-  yname <- splitted[[1]][2]
-  extracted[["data"]][[name]] <- combined[["data"]]
+    include_deseq=include_deseq, include_edger=include_edger,
+    include_ebseq=include_ebseq, include_limma=include_limma,
+    include_basic=include_basic,
+    table_name=table,
+    adjp=adjp, annot_df=annot_df,
+    excludes=excludes, padj_type=padj_type)
+  extracted[["data"]][[table]] <- combined[["data"]]
   extracted[["table_names"]][[table]] <- combined[["summary"]][["table"]]
-  extracted[["plots"]][[table]] <- combined_extracted_plots(
-    table, do_basic, basic, do_deseq, deseq, do_ebseq, ebseq, do_edger, edger,
-    do_limma, limma, combined, loess, yname, xname, do_inverse, table)
-  extracted[["summaries"]] <- as.data.frame(combined[["summary"]][["table"]])
-  extracted[["kept"]] <- final_table_names[1]
-  extracted[["numerators"]] <- yname
-  extracted[["denominators"]] <- xname
+  extracted[["kept"]] <- table
+  extracted[["keepers"]] <- keepers
+  extracted[["plots"]][[table]] <- combine_extracted_plots(
+    apr, name, combined, denominator, numerator,
+    basic, deseq, edger, limma, ebseq,
+    include_basic=include_basic, include_deseq=include_deseq,
+    include_edger=include_edger, include_limma=include_limma,
+    include_ebseq=include_ebseq, loess=loess,
+    do_inverse=do_inverse, found_table=name)
+  extracted[["summaries"]] <- rbind(extracted[["summaries"]],
+                                    as.data.frame(combined[["summary"]]))
+  extracted[["numerators"]] <- numerators
+  extracted[["denominators"]] <- denominators
   return(extracted)
 }
 
@@ -1352,6 +1360,9 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     fc_column <- arglist[["fc_column"]]
   }
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  if (is.null(excel)) {
+    ma <- FALSE
+  }
   num_tables <- 0
   table_names <- NULL
   all_tables <- NULL
@@ -1365,7 +1376,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
   } else if (class(combined)[1] == "combined_de") {
     ## Then this is the result of combine_de_tables()
     num_tables <- length(names(combined[["data"]]))
-    table_names <- names(combined[["data"]])
+    ##table_names <- names(combined[["data"]])
+    table_names <- combined[["table_names"]]
     all_tables <- combined[["data"]]
     table_mappings <- table_names
   } else if (!is.null(combined[["contrast_list"]])) {
@@ -1424,78 +1436,9 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
   wb <- NULL
   excel_basename <- NULL
   if ("character" %in% class(excel)) {
-    excel <- as.character(excel)
-    message("Writing a legend of columns.")
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-    legend <- data.frame(rbind(
-      c("The first ~3-10 columns of each sheet:",
-        "are annotations provided by our chosen annotation source for this experiment."),
-      c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
-      c("limma_logfc", "The log2 fold change reported by limma."),
-      c("deseq_logfc", "The log2 fold change reported by DESeq2."),
-      c("edger_logfc", "The log2 fold change reported by edgeR."),
-      c("limma_adjp", "The adjusted-p value reported by limma."),
-      c("deseq_adjp", "The adjusted-p value reported by DESeq2."),
-      c("edger_adjp", "The adjusted-p value reported by edgeR."),
-      c("The next 5 columns", "Statistics generated by limma."),
-      c("limma_ave", "Average log2 expression observed by limma across all samples."),
-      c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
-      c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
-      c("limma_b", "Use a Bayesian estimate to calculate log-odds significance."),
-      c("limma_q", "A q-value FDR adjustment of the p-value above."),
-      c("The next 5 columns", "Statistics generated by DESeq2."),
-      c("deseq_basemean", "Analagous to limma's ave column, the base mean of all samples."),
-      c("deseq_lfcse", "The standard error observed given the log2 fold change."),
-      c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
-      c("deseq_p", "Resulting p-value."),
-      c("deseq_q", "False-positive corrected p-value."),
-      c("The next 4 columns", "Statistics generated by edgeR."),
-      c("edger_logcpm",
-        "Similar DESeq2's basemean, only including the samples in the comparison."),
-      c("edger_lr", "Undocumented, I think it is the T-statistic calculated by edgeR."),
-      c("edger_p", "The observed p-value from edgeR."),
-      c("edger_q", "The observed corrected p-value from edgeR."),
-      c("The next 7 columns", "Statistics generated by ebseq."),
-      c("ebseq_fc", "Fold-change reported by ebseq."),
-      c("ebseq_logfc", "Oddly, ebseq also reports a log2fc."),
-      c("ebseq_postfc", "Post-analysis fold change from ebseq."),
-      c("ebseq_mean", "Mean values in the ebseq analysis."),
-      c("ebseq_ppee", "Prior probability that the numerators and denominators are the same."),
-      c("ebseq_ppde", "... that they are different (eg. 1-ppee)."),
-      c("ebseq_adjp", "Currently just a copy of ppee until I figure them out."),
-      c("The next 8 columns", "Statistics generated by the basic analysis."),
-      c("basic_nummed", "log2 median values of the numerator (like edgeR's basemean)."),
-      c("basic_denmed", "log2 median values of the denominator for this comparison."),
-      c("basic_numvar", "Variance observed in the numerator values."),
-      c("basic_denvar", "Variance observed in the denominator values."),
-      c("basic_logfc", "The log2 fold change observed by the basic analysis."),
-      c("basic_t", "T-statistic from basic."),
-      c("basic_p", "Resulting p-value."),
-      c("basic_adjp", "BH correction of the p-value."),
-      c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
-      c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
-      c("lfc_var", "The variance between limma/deseq/edger."),
-      c("lfc_varbymed", "The ratio of the variance/median (lower means better agreement.)"),
-      c("p_meta", "A meta-p-value of the mean p-values."),
-      c("p_var", "Variance among the 3 p-values."),
-      c("The last columns: top plot left",
-        "Venn diagram of the genes with logFC > 0 and p-value <= 0.05 for limma/DESeq/Edger."),
-      c("The last columns: top plot right",
-        "Venn diagram of the genes with logFC < 0 and p-value <= 0.05 for limma/DESeq/Edger."),
-      c("The last columns: second plot",
-        "Scatter plot of the voom-adjusted/normalized counts for each coefficient."),
-      c("The last columns: third plot",
-        "Scatter plot of the adjusted/normalized counts for each coefficient from edgeR."),
-      c("The last columns: fourth plot",
-        "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
-      c("", "If this data was adjusted with sva, look 'original_pvalues' at the end.")
-    ),
-    stringsAsFactors=FALSE)
-
-    colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
-                            title="Columns used in the following tables.")
+    written <- write_sig_legend(excel)
+    wb <- written[["wb"]]
+    xls_result <- written[["xls_result"]]
   }
 
   ret <- list()
@@ -1527,11 +1470,13 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     change_counts_up <- list()
     change_counts_down <- list()
     for (table_count in 1:length(table_names)) {
-      table_name <- table_names[table_count]
+      table_name <- names(table_names)[table_count]
+      plot_name <- as.character(table_names)[table_count]
+      plot_name <- gsub(pattern="-inverted", replacement="", x=plot_name)
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
         single_ma <- extract_de_plots(
-          combined, type=according, table=table_name, lfc=lfc, pval_cutoff=p)
+          combined[["input"]], type=according, table=plot_name, lfc=lfc, p=p)
         ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
       }
 
@@ -1581,6 +1526,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     ##                         overwrite_file=TRUE, newsheet=TRUE)
 
     ret[[according]] <- list(
+      ##"input" = combined,
       "ups" = trimmed_up,
       "downs" = trimmed_down,
       "counts" = change_counts,
@@ -2084,7 +2030,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
   stringsAsFactors=FALSE)
 
   ## Here we including only those columns which are relevant to the analysis performed.
-  if (isTRUE(include_limma)) {
+ if (isTRUE(include_limma)) {
     legend <- rbind(legend,
                     c("limma_logfc", "The log2 fold change reported by limma."),
                     c("limma_adjp", "The adjusted-p value reported by limma."))
@@ -2192,7 +2138,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       plotname="pre_pca", savedir=excel_basename)
     xl_result <- openxlsx::writeData(
                              wb=wb, sheet="legend",
-                             x=glue::glue("PCA after surrogate estimation with: {chosen_estimate}"),
+                             x=as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
                              startRow=36, startCol=10)
     try_result <- xlsx_plot_png(
       apr[["post_batch"]][["plot"]], wb=wb, sheet="legend", start_row=37,
@@ -2357,5 +2303,83 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   return(save_result)
 }
+
+write_sig_legend <- function(excel) {
+    excel <- as.character(excel)
+    message("Writing a legend of columns.")
+    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+    wb <- openxlsx::createWorkbook(creator="hpgltools")
+    legend <- data.frame(rbind(
+      c("The first ~3-10 columns of each sheet:",
+        "are annotations provided by our chosen annotation source for this experiment."),
+      c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
+      c("limma_logfc", "The log2 fold change reported by limma."),
+      c("deseq_logfc", "The log2 fold change reported by DESeq2."),
+      c("edger_logfc", "The log2 fold change reported by edgeR."),
+      c("limma_adjp", "The adjusted-p value reported by limma."),
+      c("deseq_adjp", "The adjusted-p value reported by DESeq2."),
+      c("edger_adjp", "The adjusted-p value reported by edgeR."),
+      c("The next 5 columns", "Statistics generated by limma."),
+      c("limma_ave", "Average log2 expression observed by limma across all samples."),
+      c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
+      c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
+      c("limma_b", "Use a Bayesian estimate to calculate log-odds significance."),
+      c("limma_q", "A q-value FDR adjustment of the p-value above."),
+      c("The next 5 columns", "Statistics generated by DESeq2."),
+      c("deseq_basemean", "Analagous to limma's ave column, the base mean of all samples."),
+      c("deseq_lfcse", "The standard error observed given the log2 fold change."),
+      c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
+      c("deseq_p", "Resulting p-value."),
+      c("deseq_q", "False-positive corrected p-value."),
+      c("The next 4 columns", "Statistics generated by edgeR."),
+      c("edger_logcpm",
+        "Similar DESeq2's basemean, only including the samples in the comparison."),
+      c("edger_lr", "Undocumented, I think it is the T-statistic calculated by edgeR."),
+      c("edger_p", "The observed p-value from edgeR."),
+      c("edger_q", "The observed corrected p-value from edgeR."),
+      c("The next 7 columns", "Statistics generated by ebseq."),
+      c("ebseq_fc", "Fold-change reported by ebseq."),
+      c("ebseq_logfc", "Oddly, ebseq also reports a log2fc."),
+      c("ebseq_postfc", "Post-analysis fold change from ebseq."),
+      c("ebseq_mean", "Mean values in the ebseq analysis."),
+      c("ebseq_ppee", "Prior probability that the numerators and denominators are the same."),
+      c("ebseq_ppde", "... that they are different (eg. 1-ppee)."),
+      c("ebseq_adjp", "Currently just a copy of ppee until I figure them out."),
+      c("The next 8 columns", "Statistics generated by the basic analysis."),
+      c("basic_nummed", "log2 median values of the numerator (like edgeR's basemean)."),
+      c("basic_denmed", "log2 median values of the denominator for this comparison."),
+      c("basic_numvar", "Variance observed in the numerator values."),
+      c("basic_denvar", "Variance observed in the denominator values."),
+      c("basic_logfc", "The log2 fold change observed by the basic analysis."),
+      c("basic_t", "T-statistic from basic."),
+      c("basic_p", "Resulting p-value."),
+      c("basic_adjp", "BH correction of the p-value."),
+      c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
+      c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
+      c("lfc_var", "The variance between limma/deseq/edger."),
+      c("lfc_varbymed", "The ratio of the variance/median (lower means better agreement.)"),
+      c("p_meta", "A meta-p-value of the mean p-values."),
+      c("p_var", "Variance among the 3 p-values."),
+      c("The last columns: top plot left",
+        "Venn diagram of the genes with logFC > 0 and p-value <= 0.05 for limma/DESeq/Edger."),
+      c("The last columns: top plot right",
+        "Venn diagram of the genes with logFC < 0 and p-value <= 0.05 for limma/DESeq/Edger."),
+      c("The last columns: second plot",
+        "Scatter plot of the voom-adjusted/normalized counts for each coefficient."),
+      c("The last columns: third plot",
+        "Scatter plot of the adjusted/normalized counts for each coefficient from edgeR."),
+      c("The last columns: fourth plot",
+        "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
+      c("", "If this data was adjusted with sva, look 'original_pvalues' at the end.")
+    ),
+    stringsAsFactors=FALSE)
+
+    colnames(legend) <- c("column name", "column definition")
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
+                             title="Columns used in the following tables.")
+    retlist <- list("wb" = wb, xls_result = xls_result)
+    return(retlist)
+}
+
 
 ## EOF
