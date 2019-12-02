@@ -4,8 +4,12 @@
 \alias{load_orgdb_go}
 \title{Retrieve GO terms associated with a set of genes.}
 \usage{
-load_orgdb_go(orgdb = NULL, gene_ids = NULL, keytype = "ensembl",
-  columns = c("go", "goall", "goid"))
+load_orgdb_go(
+  orgdb = NULL,
+  gene_ids = NULL,
+  keytype = "ensembl",
+  columns = c("go", "goall", "goid")
+)
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
@@ -32,7 +36,9 @@ may use a lot of different ID types and still score some useful ontology data.
 }
 \examples{
 \dontrun{
- go_terms <- load_go_terms(org, c("a","b"))
+ library(Mus.musculus)
+ org <- "Mus.musculus"
+ go_terms <- load_orgdb_go(org)
 }
 }
 \seealso{

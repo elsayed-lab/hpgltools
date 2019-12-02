@@ -4,16 +4,34 @@
 \alias{plot_essentiality}
 \title{Plot the essentiality of a library as per DeJesus et al.}
 \usage{
-plot_essentiality(file)
+plot_essentiality(
+  file,
+  order_by = "posterior_zbar",
+  keep_esses = FALSE,
+  min_sig = 0.0371,
+  max_sig = 0.9902
+)
 }
 \arguments{
-\item{file}{a file created using the perl script 'essentiality_tas.pl'}
+\item{file}{result from the DeJesus essentiality package.  I think this has
+been effectively replaced by their TRANSIT package.}
 }
 \value{
 A couple of plots
 }
 \description{
-This provides a plot of the essentiality metrics 'zbar' with respect to gene.
+This provides a plot of the essentiality metrics 'zbar' with respect to
+gene.  In my pipeline, I use their stand alone mh_ess and tn_hmm packages.
+The result files produced are named
+mh_ess-{sequence_prefix}-{mapping_parameters}_gene_tas_{m_parameter}.csv
+where {sequence_prefix} is the basename() of the input sequence file,
+{mapping_parameters} are a string describing the bowtie mapping used,
+and {m_parameter} is usually one of 1,2,4,8,16,32 and defines the lower limit
+of read depth to be considered useful by the mh_ess package.  Thus, before
+using this, one may want to look at the result from tnseq_saturation() to see
+if there is a most-appropriate m_parameter.  I think I should figure out a
+heuristic to choose the m, but I am not sure what it would be, perhaps the
+median of the hits summary?
 }
 \seealso{
 \pkg{ggplot2}

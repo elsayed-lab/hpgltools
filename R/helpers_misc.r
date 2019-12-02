@@ -32,14 +32,14 @@ backup_file <- function(backup_file, backups=4) {
 #' performs a sleep between each installation in an attempt to avoid being
 #' obnoxious.  As a result, it will of a necessity take forever.
 #'
-#' @param release  Bioconductor release to use, should probably be adjusted to
+#' @param release Bioconductor release to use, should probably be adjusted to
 #'   automatically find it.
-#' @param mirror  Bioconductor mirror to use.
-#' @param base  Base directory on the mirror to download from.
-#' @param type  Type in the tree to use (software or annotation)
-#' @param suppress_updates  For BiocLite(), don't update?
-#' @param suppress_auto  For BiocLite(), don't update?
-#' @param force  Install if already installed?
+#' @param mirror Bioconductor mirror to use.
+#' @param base Base directory on the mirror to download from.
+#' @param type Type in the tree to use (software or annotation)
+#' @param suppress_updates For BiocLite(), don't update?
+#' @param suppress_auto For BiocLite(), don't update?
+#' @param force Install if already installed?
 #' @return a number of packages installed
 #' @seealso \pkg{BiocManager}
 #' @examples
@@ -143,10 +143,10 @@ bioc_all <- function(release="3.10",
 
 #' Clear an R session, this is probably unwise given what I have read about R.
 #'
-#' @param keepers  List of namespaces to leave alone (unimplemented).
-#' @param depth  Cheesy forloop of attempts to remove packages stops after this
+#' @param keepers List of namespaces to leave alone (unimplemented).
+#' @param depth Cheesy forloop of attempts to remove packages stops after this
 #'   many tries.
-#' @return  A spring-fresh R session, hopefully.
+#' @return A spring-fresh R session, hopefully.
 #' @export
 clear_session <- function(keepers=NULL, depth=10) {
   ## Partially taken from:
@@ -182,12 +182,13 @@ clear_session <- function(keepers=NULL, depth=10) {
 #' contributions.
 #'
 #' @param data Matrix of data
-#' @param cor_method  Which correlation method to use?
-#' @param dist_method  Which distance method to use?
-#' @param cor_weight  0-1 weight of the correlation, the distance weight
+#' @param cor_method Which correlation method to use?
+#' @param dist_method Which distance method to use?
+#' @param cor_weight 0-1 weight of the correlation, the distance weight
 #'   will be 1-cor_weight.
 #' @param ... extra arguments for cor/dist
 #' @author Keigth Hughitt
+#' @return Matrix of the correlation-modified distances of the original matrix.
 #' @export
 cordist <- function(data, cor_method="pearson", dist_method="euclidean",
   cor_weight=0.5, ...) {
@@ -212,7 +213,7 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #' at the end of my various knitr documents so that if necessary I can do a
 #' > git reset <commit id> and get back to the exact state of my code.
 #'
-#' @param gitdir  Directory containing the git repository.
+#' @param gitdir Directory containing the git repository.
 #' @export
 get_git_commit <- function(gitdir="~/hpgltools") {
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{{print $2}}'")
@@ -237,11 +238,11 @@ get_git_commit <- function(gitdir="~/hpgltools") {
 #' after the conditions of interest in an experiment and it returns a contrast
 #' matrix in a format acceptable to MSstats.
 #'
-#' @param numerators  Character list of conditions which are the numerators of a
+#' @param numerators Character list of conditions which are the numerators of a
 #'   series of a/b comparisons.
-#' @param denominators  Character list of conditions which are the denominators of a
+#' @param denominators Character list of conditions which are the denominators of a
 #'   series of a/b comparisons.
-#' @return  Contrast matrix
+#' @return Contrast matrix suitable for use in tools like MSstats.
 #' @export
 make_simplified_contrast_matrix <- function(numerators, denominators) {
   if (length(numerators) != length(denominators)) {
@@ -389,8 +390,8 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' It seems to me there should be a function as easy for distances are there is for correlations.
 #'
 #' @param df data frame from which to calculate distances.
-#' @param method  Which distance calculation to use?
-#' @param ...  Extra arguments for dist.
+#' @param method Which distance calculation to use?
+#' @param ... Extra arguments for dist.
 #' @export
 hpgl_dist <- function(df, method="euclidean", ...) {
   input <- t(as.matrix(df))
@@ -405,7 +406,7 @@ hpgl_dist <- function(df, method="euclidean", ...) {
 #' this function uses my backup directory to load its R environment.
 #'
 #' @param directory Directory containing the RData.rda.xz file.
-#' @param filename  Filename to which to save.
+#' @param filename Filename to which to save.
 #' @return a bigger global environment
 #' @seealso \code{\link{saveme}} \code{\link{load}} \code{\link{save}}
 #' @examples
@@ -424,8 +425,9 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' Perform a get_value for delimited files
 #'
 #' Keith wrote this as .get_value() but functions which start with . trouble me.
-#' @param x  Some stuff to split
-#' @param delimiter  The tritrypdb uses ': ' ergo the default.
+#'
+#' @param x Some stuff to split
+#' @param delimiter The tritrypdb uses ': ' ergo the default.
 #' @return A value!
 local_get_value <- function(x, delimiter=": ") {
   return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
@@ -439,7 +441,6 @@ local_get_value <- function(x, delimiter=": ") {
 #' @param min.length I dunno.
 #' @param p.to.start P to start of course
 #' @param p.to.end The p to end -- wtf who makes names like this?
-#'
 #' @return a list of IRanges which contain a bunch of As and Us.
 my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
@@ -453,9 +454,7 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     AU <- "AU"
   }
   y <- as(x, sprintf("%sStringSet", xtype))
-
   widths <- BiocGenerics::width(x)
-
 
   ## I don't want to steal lianos' C from his repository.
   test_seqtools <- "SeqTools" %in% installed.packages()
@@ -538,11 +537,13 @@ please_install <- function(lib, update=FALSE) {
   return(count)
 }
 
+#' Send the R plotter to the computer of your choice!
+#'
 #' Resets the display and xauthority variables to the new computer I am using so
 #' that plot() works.
 #'
-#' @param display DISPLAY variable to use,  if NULL it looks in ~/.displays/$(host).last
-#'
+#' @param display DISPLAY variable to use, if NULL it looks in ~/.displays/$(host).last
+#' @return Fresh plotting window to the display of your choice!
 #' @export
 rex <- function(display=":0") {
   if (!is.null(dev.list())) {
@@ -714,16 +715,22 @@ unAsIs <- function(stuff) {
 #'
 #' Because, why not!?
 #'
-#' @param model Model to print from glm/lm/robustbase.
+#' @param lm_model Model to print from glm/lm/robustbase.
 #' @return a string representation of that model.
 #' @export
-ymxb_print <- function(model) {
-  intercept <- round(coefficients(model)[1], 2)
-  x_name <- names(coefficients(model)[-1])
-  slope <- round(coefficients(model)[-1], 2)
-  ret <- glue("y = {slope}*{x_name} + {intercept}")
-  message(ret)
+ymxb_print <- function(lm_model) {
+  coefficients <- summary(lm_model)[["coefficients"]]
+  int <- signif(x=coefficients["(Intercept)", 1], digits=3)
+  m <- signif(x=coefficients["first", 1], digits=3)
+  ret <- NULL
+  if (as.numeric(int) >= 0) {
+    ret <- glue::glue("y = {m}x + {int}")
+  } else {
+    int <- int * -1
+    ret <- glue::glue("y = {m}x - {int}")
+  }
   return(ret)
 }
+
 
 ## EOF

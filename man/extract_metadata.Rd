@@ -9,11 +9,21 @@ extract_metadata(metadata, ...)
 \arguments{
 \item{metadata}{file or df of metadata}
 
-\item{...}{Arguments to pass to the child functions.}
+\item{...}{Arguments to pass to the child functions (read_csv etc).}
 }
 \value{
 Metadata dataframe hopefully cleaned up to not be obnoxious.
 }
 \description{
-Pull metadata from a table (xlsx/xls/csv/whatever)
+I find that when I acquire metadata from a paper or collaborator, annoyingly
+often there are many special characters or other shenanigans in the column
+names.  This function performs some simple sanitizations.  In addition, if I
+give it a filename it calls my generic 'read_metadata()' function before
+sanitizing.
+}
+\examples{
+ \dontrun{
+  sanitized <- extract_metadata("some_random_supplemental.xls")
+  saniclean <- extract_metadata(some_goofy_df)
+}
 }

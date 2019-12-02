@@ -5,8 +5,13 @@
 \title{Similarity measure which combines elements from Pearson correlation and
 Euclidean distance.}
 \usage{
-cordist(data, cor_method = "pearson", dist_method = "euclidean",
-  cor_weight = 0.5, ...)
+cordist(
+  data,
+  cor_method = "pearson",
+  dist_method = "euclidean",
+  cor_weight = 0.5,
+  ...
+)
 }
 \arguments{
 \item{data}{Matrix of data}
@@ -19,6 +24,9 @@ cordist(data, cor_method = "pearson", dist_method = "euclidean",
 will be 1-cor_weight.}
 
 \item{...}{extra arguments for cor/dist}
+}
+\value{
+Matrix of the correlation-modified distances of the original matrix.
 }
 \description{
 Here is Keith's summary:

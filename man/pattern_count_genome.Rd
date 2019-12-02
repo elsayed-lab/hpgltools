@@ -4,8 +4,13 @@
 \alias{pattern_count_genome}
 \title{Find how many times a given pattern occurs in every gene of a genome.}
 \usage{
-pattern_count_genome(fasta, gff = NULL, pattern = "TA",
-  type = "gene", key = NULL)
+pattern_count_genome(
+  fasta,
+  gff = NULL,
+  pattern = "TA",
+  type = "gene",
+  key = NULL
+)
 }
 \arguments{
 \item{fasta}{Genome sequence.}
@@ -41,7 +46,4 @@ quality of life.
 \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
-}
-\author{
-atb
 }

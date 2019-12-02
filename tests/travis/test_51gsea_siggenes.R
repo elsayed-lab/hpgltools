@@ -11,8 +11,8 @@ dmel_ontologies <- sm(load_biomart_go(species="dmelanogaster"))
 dmel_ontologies <- dmel_ontologies[["go"]]
 ## Get the annotations ready to be recast as a gff file.
 dmel_annotations[["strand"]] <- ifelse(dmel_annotations[["strand"]] == "1", "+", "-")
-colnames(dmel_annotations) <- c("transcript_id", "gene_id", "gene_version", "transcript_version",
-                                "description", "type", "length", "chromosome", "strand",
+colnames(dmel_annotations) <- c("transcript_id", "gene_id", "description", "type",
+                                "length", "chromosome", "strand",
                                 "start", "end")
 ## Then make them into a granges object
 ## WTF is with 'unable to find an inherited method for function 'seqinfo' for signature "GRanges". ??

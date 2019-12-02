@@ -4,10 +4,22 @@
 \alias{xlsx_plot_png}
 \title{An attempt to improve the behaivor of openxlsx's plot inserter.}
 \usage{
-xlsx_plot_png(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
-  res = 90, plotname = "plot", savedir = "saved_plots",
-  fancy_type = "pdf", start_row = 1, start_col = 1,
-  file_type = "png", units = "in", ...)
+xlsx_plot_png(
+  a_plot,
+  wb = NULL,
+  sheet = 1,
+  width = 6,
+  height = 6,
+  res = 90,
+  plotname = "plot",
+  savedir = "saved_plots",
+  fancy_type = "pdf",
+  start_row = 1,
+  start_col = 1,
+  file_type = "png",
+  units = "in",
+  ...
+)
 }
 \arguments{
 \item{a_plot}{The plot provided}
@@ -50,7 +62,9 @@ and potentially save an extra svg-version of each plot inserted.
 \examples{
  \dontrun{
   fun_plot <- plot_pca(stuff)$plot
-  try_results <- xlsx_plot_png(fun_plot)
+  df <- some_data_frame
+  wb <- write_xlsx(df, excel="funkytown.xlsx")$workbook
+  try_results <- xlsx_plot_png(fun_plot, wb=wb)
 }
 }
 \seealso{

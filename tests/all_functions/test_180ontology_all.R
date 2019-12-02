@@ -8,11 +8,15 @@ context("180gene_ontology_enrichment.R:
 ## hmm I think I should split that up into separate functions for the various things it can do.
 cb_sig <- environment()
 load(file="test_065_significant.rda", envir=cb_sig)
+cb_combined <- environment()
+load(file="test_065_combined.rda", envir=cb_combined)
+
 ##ups <- cb_sig[["cb_sig"]][["ups"]][[1]]
 ##all <- cb_sig[["test_condbatch"]][["all_tables"]][[1]]
 ## It looks like I messed up the save.
 ups <- cb_sig[["limma"]][["ups"]][[1]]
-all <- cb_sig[["limma"]][["ma_plots"]][[1]][["data"]]
+combined <- cb_combined[["test_condbatch_combined"]]
+table <- combined[["data"]][["data"]]
 
 ## Gather the pombe annotation data.
 tmp <- library(AnnotationHub)
@@ -30,7 +34,7 @@ colnames(pombe_lengths) <- c("ID", "length")
 
 pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 
-cp_test <- simple_clusterprofiler(ups, de_table=all, orgdb=pombe)
+cp_test <- simple_clusterprofiler(ups, de_table=table, orgdb=pombe)
 test_that("Did clusterprofiler provide the expected number of entries?", {
   ## 010203
   actual <- nrow(cp_test[["group_go"]][["MF"]])

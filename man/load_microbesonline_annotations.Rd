@@ -4,9 +4,11 @@
 \alias{load_microbesonline_annotations}
 \title{Skip the db and download all the text annotations for a given species.}
 \usage{
-load_microbesonline_annotations(id = "160490")
+load_microbesonline_annotations(species = NULL, id = NULL)
 }
 \arguments{
+\item{species}{Microbesonline species.}
+
 \item{id}{Microbesonline ID to query.}
 }
 \value{
@@ -27,13 +29,9 @@ least.
 }
 \examples{
 \dontrun{
- annotations <- get_microbesonline_annotation(ids=c("160490","160491"))
+ annotations <- get_microbesonline_annotations(species="coli")
 }
 }
 \seealso{
-\pkg{RCurl}
- \code{\link[RCurl]{getURL}}
-}
-\author{
-atb
+\pkg{rvest}
 }

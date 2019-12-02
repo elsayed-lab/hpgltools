@@ -19,10 +19,10 @@ Tested in test_24deseq.R
 }
 \examples{
 \dontrun{
- finished_comparison = deseq_pairwise(expressionset)
- data_list = write_deseq(finished_comparison)
+ finished_comparison <- deseq2_pairwise(expressionset)
+ data_list <- write_deseq(finished_comparison)
 }
 }
 \seealso{
-\pkg{DESeq2} \link{write_xls}
+\pkg{DESeq2} \link{write_xlsx}
 }

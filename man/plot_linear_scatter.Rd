@@ -5,11 +5,25 @@
 \title{Make a scatter plot between two groups with a linear model superimposed and
 some supporting statistics.}
 \usage{
-plot_linear_scatter(df, tooltip_data = NULL, gvis_filename = NULL,
-  cormethod = "pearson", size = 2, loess = FALSE, identity = FALSE,
-  gvis_trendline = NULL, z_lines = FALSE, first = NULL,
-  second = NULL, base_url = NULL, pretty_colors = TRUE,
-  color_high = NULL, color_low = NULL, alpha = 0.4, ...)
+plot_linear_scatter(
+  df,
+  tooltip_data = NULL,
+  gvis_filename = NULL,
+  cormethod = "pearson",
+  size = 2,
+  loess = FALSE,
+  identity = FALSE,
+  gvis_trendline = NULL,
+  z_lines = FALSE,
+  first = NULL,
+  second = NULL,
+  base_url = NULL,
+  pretty_colors = TRUE,
+  color_high = NULL,
+  color_low = NULL,
+  alpha = 0.4,
+  ...
+)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}

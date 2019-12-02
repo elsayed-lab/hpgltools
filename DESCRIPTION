@@ -36,8 +36,8 @@ Suggests:
   openxlsx, OrganismDbi,
   pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, reactome.db, readxl, reshape2, rGADEM, Rgraphviz,
-  rhdf5, rjson, rmarkdown, RMySQL, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
+  rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats,
   taxize, testthat, tidyr, topGO, tximport,
@@ -61,7 +61,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.0
 Collate:
     '01_hpgltools.r'
     'alt_splicing.r'

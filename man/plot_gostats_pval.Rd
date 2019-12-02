@@ -4,8 +4,13 @@
 \alias{plot_gostats_pval}
 \title{Make a pvalue plot similar to that from clusterprofiler from gostats data.}
 \usage{
-plot_gostats_pval(gs_result, wrapped_width = 20, cutoff = 0.1,
-  n = 30, group_minsize = 5)
+plot_gostats_pval(
+  gs_result,
+  wrapped_width = 20,
+  cutoff = 0.1,
+  n = 30,
+  group_minsize = 5
+)
 }
 \arguments{
 \item{gs_result}{Ontology search results.}

@@ -18,7 +18,9 @@ ids corresponding to those genes.
 }
 \examples{
 \dontrun{
-ensembl_list <- kegg_to_ensembl("a")
+ kegg_df <- load_kegg_annotations(species="coli")
+ kegg_ids <- kegg_df[["kegg_geneid"]]
+ ensembl_list <- kegg_to_ensembl(kegg_ids)
 }
 }
 \seealso{

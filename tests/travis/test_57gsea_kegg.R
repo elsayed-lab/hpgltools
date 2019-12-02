@@ -2,12 +2,13 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
-tt <- sm(library(pathview))
+library(pathview)
 data(pasillaGenes)
-context("57gsea_kegg.R: Do KEGGREST and pathview work?\n")
+context("57gsea_kegg.R: Do KEGGREST and pathview work?
+  123456\n")
 
 pasilla <- new.env()
-load("pasilla.Rdata", envir=pasilla)
+load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 load("de_limma.rda", envir=limma)

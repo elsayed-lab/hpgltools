@@ -4,8 +4,14 @@
 \alias{make_limma_tables}
 \title{Writes out the results of a limma search using toptable().}
 \usage{
-make_limma_tables(fit = NULL, adjust = "BH", n = 0, coef = NULL,
-  annot_df = NULL, intercept = FALSE)
+make_limma_tables(
+  fit = NULL,
+  adjust = "BH",
+  n = 0,
+  coef = NULL,
+  annot_df = NULL,
+  intercept = FALSE
+)
 }
 \arguments{
 \item{fit}{Result from lmFit()/eBayes()}
@@ -39,5 +45,5 @@ However, this will do a couple of things to make one's life easier:
 }
 \seealso{
 \pkg{limma} \pkg{qvalue}
- \code{\link{write_xls}} \code{\link[limma]{topTable}}
+ \code{\link{write_xlsx}} \code{\link[limma]{topTable}}
 }

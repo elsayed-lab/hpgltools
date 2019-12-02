@@ -4,11 +4,24 @@
 \alias{plot_pca_genes}
 \title{Make a PC plot describing the gene' clustering.}
 \usage{
-plot_pca_genes(data, design = NULL, plot_colors = NULL,
-  plot_title = NULL, plot_size = 2, plot_alpha = 0.4,
-  plot_labels = FALSE, size_column = NULL, pc_method = "fast_svd",
-  x_pc = 1, y_pc = 2, label_column = "description", num_pc = 2,
-  expt_names = NULL, label_chars = 10, ...)
+plot_pca_genes(
+  data,
+  design = NULL,
+  plot_colors = NULL,
+  plot_title = NULL,
+  plot_size = 2,
+  plot_alpha = 0.4,
+  plot_labels = FALSE,
+  size_column = NULL,
+  pc_method = "fast_svd",
+  x_pc = 1,
+  y_pc = 2,
+  label_column = "description",
+  num_pc = 2,
+  expt_names = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{data}{an expt set of samples.}

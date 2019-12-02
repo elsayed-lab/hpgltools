@@ -15,9 +15,9 @@
 #'
 #' @param input Count table by sample.
 #' @param design Data frame of samples and conditions.
-#' @param conditions  Not currently used, but passed from all_pairwise()
-#' @param batches  Not currently used, but passed from all_pairwise()
-#' @param model_cond  Not currently used, but passed from all_pairwise()
+#' @param conditions Not currently used, but passed from all_pairwise()
+#' @param batches Not currently used, but passed from all_pairwise()
+#' @param model_cond Not currently used, but passed from all_pairwise()
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
@@ -28,7 +28,9 @@
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#' stupid_de <- basic_pairwise(expt)
+#'  expt <- create_expt(metadata="sample_sheet.xlsx", gene_info="annotations")
+#'  basic_de <- basic_pairwise(expt)
+#'  basic_tables <- combine_de_tables(basic_de)
 #' }
 #' @export
 basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
@@ -253,8 +255,8 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
 #'
 #' basic_pairwise() assumes log2 data as input, use this to ensure that is true.
 #'
-#' @param input  An expressionset containing expt to test and/or modify.
-#' @param force  If we want to try out other distributed data sets, force it in using me.
+#' @param input An expressionset containing expt to test and/or modify.
+#' @param force If we want to try out other distributed data sets, force it in using me.
 #' @param ... future options, I think currently unused.
 #' @return data ready for basic_pairwise()
 #' @seealso \pkg{Biobase}
@@ -324,8 +326,8 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
 #'
 #' Tested in test_26basic.R
 #'
-#' @param data  Output from basic_pairwise()
-#' @param ...  Options for writing the xlsx file.
+#' @param data Output from basic_pairwise()
+#' @param ... Options for writing the xlsx file.
 #' @seealso \code{\link{write_de_table}}
 #' @examples
 #' \dontrun{

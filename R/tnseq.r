@@ -7,7 +7,7 @@
 #' which were observed on the forward vs. reverse strand as well as reads which
 #' appear to be on both strands (eg. they start and end with 'TA').
 #'
-#' @param data  data to plot
+#' @param data data to plot
 #' @param column which column to use for plotting
 #' @return A plot and some numbers:
 #'  \enumerate{
@@ -33,7 +33,7 @@
 #'  saturation <- tnseq_saturation(file=input)
 #' }
 #' @export
-tnseq_saturation <- function(data, column="Reads") {
+tnseq_saturation <- function(data, column="Reads", ylimit=100) {
   table <- NULL
   if (class(data) == "character") {
     table <- read.table(file=data, header=1, comment.char="")
@@ -47,6 +47,14 @@ tnseq_saturation <- function(data, column="Reads") {
   ## wig_comment removal
   variablestep_idx <- grepl(pattern="^variable", x=table[["Start"]])
   table <- table[-variablestep_idx, ]
+  table[[column]] <- as.numeric(table[[column]])
+  table[["Start"]] <- as.numeric(table[["Start"]])
+  max_reads <- max(table[[column]], na.rm=TRUE)
+  table[["l2"]] <- log2(table[[column]] + 1)
+  density_plot <- ggplot2::ggplot(data=table, mapping=aes_string(x="l2")) +
+    ggplot2::geom_density(y="..count..", position="identity") +
+    ggplot2::scale_y_continuous(limits=c(0, 0.25)) +
+    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
@@ -106,6 +114,7 @@ tnseq_saturation <- function(data, column="Reads") {
     "ratios" = saturation_ratios,
     "hit_positions" = hit_positions,
     "hits_summary" = hits_summary,
+    "density" = density_plot,
     "plot" = data_plot
   )
 
@@ -114,32 +123,165 @@ tnseq_saturation <- function(data, column="Reads") {
 
 #' Plot the essentiality of a library as per DeJesus et al.
 #'
-#' This provides a plot of the essentiality metrics 'zbar' with respect to gene.
+#' This provides a plot of the essentiality metrics 'zbar' with respect to
+#' gene.  In my pipeline, I use their stand alone mh_ess and tn_hmm packages.
+#' The result files produced are named
+#' mh_ess-{sequence_prefix}-{mapping_parameters}_gene_tas_{m_parameter}.csv
+#' where {sequence_prefix} is the basename() of the input sequence file,
+#' {mapping_parameters} are a string describing the bowtie mapping used,
+#' and {m_parameter} is usually one of 1,2,4,8,16,32 and defines the lower limit
+#' of read depth to be considered useful by the mh_ess package.  Thus, before
+#' using this, one may want to look at the result from tnseq_saturation() to see
+#' if there is a most-appropriate m_parameter.  I think I should figure out a
+#' heuristic to choose the m, but I am not sure what it would be, perhaps the
+#' median of the hits summary?
 #'
-#' @param file  a file created using the perl script 'essentiality_tas.pl'
+#' @param file result from the DeJesus essentiality package.  I think this has
+#'   been effectively replaced by their TRANSIT package.
 #' @return A couple of plots
 #' @seealso \pkg{ggplot2}
 #' @export
-plot_essentiality <- function(file) {
-  ess <- read.csv(file=file, comment.char="#", sep="\t", header=FALSE)
-  colnames(ess) <- c("gene", "orf_hits", "orf_tas", "max_run",
-                     "max_run_span", "posterior_zbar", "call")
-  ess <- ess[with(ess, order("posterior_zbar")), ]
-  ##ess <- subset(ess, posterior_zbar > -1)
-  ess <- ess[ess[["posterior_zbar"]] >= -1, ]
-  ess <- transform(ess, rank=ave("posterior_zbar",
-                                 FUN=function(x) order(x, decreasing=FALSE)))
+plot_essentiality <- function(file, order_by="posterior_zbar", keep_esses=FALSE,
+                              min_sig=0.0371, max_sig=0.9902) {
+  ess <- readr::read_tsv(file=file, comment="#",
+                         col_names=c("gene", "orf_hits", "orf_tas", "max_run",
+                                     "max_run_span", "posterior_zbar", "call"),
+                         col_types=c("gene"="c", "orf_hits"="i", "orf_tas"="i",
+                                     "max_run"="i", "max_run_span"="i",
+                                     "posterior_zbar"="d", "call"="f"))
+  if (!is.null(order_by)) {
+    order_idx <- order(ess[[order_by]], decreasing=FALSE)
+    ess <- ess[order_idx, ]
+  }
+  dropped_esses <- 0
+  num_essential <- sum(ess[["posterior_zbar"]] >= max_sig)
+  num_uncertain <- sum(ess[["posterior_zbar"]] < max_sig &
+                       ess[["posterior_zbar"]] > min_sig)
+  num_insig <- sum(ess[["posterior_zbar"]] <= min_sig)
+  insig_border <- num_insig
+  esses_idx <- ess[["posterior_zbar"]] > -1
+  dropped_esses <- sum(!esses_idx)
+  if (!isTRUE(keep_esses)) {
+    ess <- ess[esses_idx, ]
+    insig_border <- insig_border - dropped_esses
+  }
+  sig_border <- insig_border + num_uncertain
+
+  ess[["rank"]] <- 1:nrow(ess)
   zbar_plot <- ggplot2::ggplot(data=ess,
-                               ggplot2::aes_string(x="rank", y="posterior_zbar")) +
+                               aes_string(x="rank", y="posterior_zbar", colour="call")) +
     ggplot2::geom_point(stat="identity", size=2) +
-    ## What the crab apples are these static numbers (I think to define calling boundaries)
-    ggplot2::geom_hline(color="grey", yintercept=0.0371) +
-    ggplot2::geom_hline(color="grey", yintercept=0.9902) +
+    ggplot2::geom_hline(color="grey", yintercept=min_sig) +
+    ggplot2::geom_hline(color="grey", yintercept=max_sig) +
+    ggplot2::geom_vline(color="grey", xintercept=insig_border) +
+    ggplot2::geom_vline(color="grey", xintercept=sig_border) +
+    ggplot2::labs(caption=glue("Insufficient evidence: {dropped_esses}
+Essential genes: {num_essential}
+Uncertain genes: {num_uncertain}
+Non-Essential genes: {num_insig}")) +
     ggplot2::theme_bw()
+
   span_df <- ess[, c("max_run", "max_run_span")]
-  span_plot <- plot_linear_scatter(span_df)
-  returns <- list("zbar" = zbar_plot, "scatter" = span_plot[["scatter"]])
-  return(returns)
+  span <- plot_linear_scatter(span_df)
+  retlist <- list(
+    "zbar" = zbar_plot,
+    "span_plot" = span[["scatter"]],
+    "span_cor" = span[["correlation"]],
+    "span_hist" = span[["both_histogram"]],
+    "span_model" = span[["lm_model"]])
+  return(retlist)
+}
+
+score_mhess <- function(expt, ess_column="essm1") {
+  expr <- expt[["expressionset"]]
+  design <- pData(expt)
+  file_lst <- design[[ess_column]]
+  counts <- exprs(expt)
+  scores <- data.frame(stringsAsFactors=FALSE)
+  for (f in 1:length(file_lst)) {
+    sample <- colnames(counts)[f]
+    file <- file_lst[f]
+    ess <- readr::read_tsv(file=file, comment="#",
+                           col_names=c("gene", "orf_hits", "orf_tas", "max_run",
+                                       "max_run_span", "posterior_zbar", "call"),
+                           col_types=c("gene"="c", "orf_hits"="i", "orf_tas"="i",
+                                       "max_run"="i", "max_run_span"="i",
+                                       "posterior_zbar"="d", "call"="f"))
+    ess_df <- as.data.frame(ess[, c("gene", "call")])
+    rownames(ess_df) <- gsub(x=ess_df[["gene"]], pattern="^cds_",
+                             replacement="")
+    dropped_idx <- rownames(ess_df) == "unfound"
+    ess_df <- ess_df[!dropped_idx, ]
+    if (f == 1) {
+      scores <- ess_df
+      scores[["gene"]] <- NULL
+    } else {
+      scores <- cbind(scores, ess_df[["call"]])
+    }
+    colnames(scores)[f] <- sample
+    scores[[f]] <- as.character(scores[[f]])
+  }
+
+  ## S gets a score of 0, NE gets 1, U gets 10, E gets 100.
+  zero_idx <- scores == "S"
+  scores[zero_idx] <- 0
+  one_idx <- scores == "NE"
+  scores[one_idx] <- 1
+  ten_idx <- scores == "U"
+  scores[ten_idx] <- 10
+  hun_idx <- scores == "E"
+  scores[hun_idx] <- 100
+  for (c in colnames(scores)) {
+    scores[[c]] <- as.numeric(scores[[c]])
+  }
+  exprs(expt[["expressionset"]]) <- as.matrix(scores)
+  cond_scores <- median_by_factor(expt)
+
+  mscores <- rowMeans(cond_scores)
+  changed_idx <- mscores != cond_scores[[1]]
+  changed_genes <- rownames(cond_scores)[changed_idx]
+  changed_df <- cond_scores[changed_genes, ]
+  zero_idx <- changed_df == 0
+  one_idx <- changed_df == 1
+  ten_idx <- changed_df == 10
+  hun_idx <- changed_df == 100
+  changed_df[zero_idx] <- "S"
+  changed_df[one_idx] <- "NE"
+  changed_df[ten_idx] <- "U"
+  changed_df[hun_idx] <- "E"
+
+  retlist <- list(
+    "score_df" = scores,
+    "changed_genes" = changed_genes,
+    "changed_state" = changed_df)
+  return(retlist)
+}
+
+tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads") {
+  table <- NULL
+  filenames <- meta[[meta_column]]
+  for (f in 1:length(filenames)) {
+    file <- filenames[f]
+    sample <- rownames(meta)[f]
+    column_data <- read.table(file=file, header=1, comment.char="#")
+    colnames(column_data) <- c("start", sample)
+    column_data <- data.table::as.data.table(column_data)
+    if (f == 1) {
+      table <- column_data
+    } else {
+      table <- merge(table, column_data, by.x="start", by.y="start")
+    }
+  }
+
+  melted <- reshape2::melt(data=table, id.vars="start")
+  colnames(melted) <- c("start", "sample", "reads")
+  melted[["log2"]] <- log2(melted[["reads"]] + 1)
+  plt <- ggplot(data=melted, mapping=aes_string(x="log2", fill="sample")) +
+    ggplot2::geom_density(mapping=aes_string(y="..count.."), position="identity", alpha=0.3) +
+    ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
+    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+
+  return(plt)
 }
 
 ## EOF

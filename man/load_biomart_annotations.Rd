@@ -4,15 +4,20 @@
 \alias{load_biomart_annotations}
 \title{Extract annotation information from biomart.}
 \usage{
-load_biomart_annotations(species = "hsapiens", overwrite = FALSE,
-  do_save = TRUE, host = "dec2017.archive.ensembl.org",
-  drop_haplotypes = TRUE, trymart = "ENSEMBL_MART_ENSEMBL",
-  trydataset = NULL, gene_requests = c("ensembl_gene_id", "version",
-  "ensembl_transcript_id", "transcript_version", "hgnc_symbol",
-  "description", "gene_biotype"),
-  length_requests = c("ensembl_transcript_id", "cds_length",
-  "chromosome_name", "strand", "start_position", "end_position"),
-  include_lengths = TRUE)
+load_biomart_annotations(
+  species = "hsapiens",
+  overwrite = FALSE,
+  do_save = TRUE,
+  host = "dec2017.archive.ensembl.org",
+  drop_haplotypes = TRUE,
+  trymart = "ENSEMBL_MART_ENSEMBL",
+  trydataset = NULL,
+  gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
+    "transcript_version", "hgnc_symbol", "description", "gene_biotype"),
+  length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name",
+    "strand", "start_position", "end_position"),
+  include_lengths = TRUE
+)
 }
 \arguments{
 \item{species}{Choose a species.}
@@ -39,7 +44,7 @@ now to list the marts, you need to have a mart loaded.}
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
 }
 \value{
-List containing:   a data frame of the found annotations, a copy of
+List containing: a data frame of the found annotations, a copy of
   the mart instance to help with finding problems, the hostname queried, the
   name of the mart queried, a vector of rows queried, vector of the available
   attributes, and the ensembl dataset queried.
@@ -63,7 +68,4 @@ download.
 \seealso{
 \pkg{biomaRt}
  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
-}
-\author{
-atb
 }

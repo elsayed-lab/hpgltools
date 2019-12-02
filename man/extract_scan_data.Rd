@@ -4,8 +4,14 @@
 \alias{extract_scan_data}
 \title{Read a mzML/mzXML file and extract from it some important metadata.}
 \usage{
-extract_scan_data(file, id = NULL, write_acquisitions = TRUE,
-  format = "mzXML", allow_window_overlap = FALSE, start_add = 0)
+extract_scan_data(
+  file,
+  id = NULL,
+  write_acquisitions = TRUE,
+  format = "mzXML",
+  allow_window_overlap = FALSE,
+  start_add = 0
+)
 }
 \arguments{
 \item{file}{Filename to read.}

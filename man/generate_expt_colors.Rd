@@ -4,8 +4,12 @@
 \alias{generate_expt_colors}
 \title{Set up default colors for a data structure containing usable metadata}
 \usage{
-generate_expt_colors(sample_definitions, cond_column = "condition",
-  by = "sampleid", ...)
+generate_expt_colors(
+  sample_definitions,
+  cond_column = "condition",
+  by = "sampleid",
+  ...
+)
 }
 \arguments{
 \item{sample_definitions}{Metadata, presumably containing a 'condition'

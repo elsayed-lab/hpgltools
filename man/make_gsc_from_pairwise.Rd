@@ -4,11 +4,19 @@
 \alias{make_gsc_from_pairwise}
 \title{Given a pairwise result, make a gene set collection.}
 \usage{
-make_gsc_from_pairwise(pairwise, according_to = "deseq",
-  orgdb = "org.Hs.eg.db", pair_names = c("ups", "downs"),
-  category_name = "infection", phenotype_name = "parasite",
-  set_name = "elsayed_macrophage", color = TRUE,
-  current_id = "ENSEMBL", required_id = "ENTREZID", ...)
+make_gsc_from_pairwise(
+  pairwise,
+  according_to = "deseq",
+  orgdb = "org.Hs.eg.db",
+  pair_names = c("ups", "downs"),
+  category_name = "infection",
+  phenotype_name = "parasite",
+  set_name = "elsayed_macrophage",
+  color = TRUE,
+  current_id = "ENSEMBL",
+  required_id = "ENTREZID",
+  ...
+)
 }
 \arguments{
 \item{pairwise}{A pairwise result, or combined de result, or extracted genes.}

@@ -4,12 +4,28 @@
 \alias{combine_single_de_table}
 \title{Given a limma, edger, and deseq table, combine them into one.}
 \usage{
-combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
-  ba = NULL, table_name = "", annot_df = NULL, do_inverse = FALSE,
-  adjp = TRUE, padj_type = "fdr", include_deseq = TRUE,
-  include_edger = TRUE, include_ebseq = TRUE, include_limma = TRUE,
-  include_basic = TRUE, lfc_cutoff = 1, p_cutoff = 0.05,
-  excludes = NULL)
+combine_single_de_table(
+  li = NULL,
+  ed = NULL,
+  eb = NULL,
+  de = NULL,
+  ba = NULL,
+  table_name = "",
+  final_table_names = c(),
+  annot_df = NULL,
+  do_inverse = FALSE,
+  adjp = TRUE,
+  padj_type = "fdr",
+  include_deseq = TRUE,
+  include_edger = TRUE,
+  include_ebseq = TRUE,
+  include_limma = TRUE,
+  include_basic = TRUE,
+  lfc_cutoff = 1,
+  p_cutoff = 0.05,
+  excludes = NULL,
+  sheet_count = 0
+)
 }
 \arguments{
 \item{li}{Limma output table.}
@@ -47,6 +63,8 @@ combine_single_de_table(li = NULL, ed = NULL, eb = NULL, de = NULL,
 \item{p_cutoff}{Preferred pvalue cutoff.}
 
 \item{excludes}{Set of genes to exclude from the output.}
+
+\item{sheet_count}{What sheet is being written?}
 }
 \value{
 List containing a) Dataframe containing the merged

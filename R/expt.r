@@ -10,6 +10,12 @@
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
+#' @examples
+#'  \dontrun{
+#'   expt1 <- create_expt(first_meta)
+#'   expt2 <- create_expt(second_meta)
+#'   combined <- combine_expts(expt1, expt2, merge_meta=TRUE)
+#' }
 #' @export
 combine_expts <- function(expt1, expt2, condition="condition",
                           batch="batch", merge_meta=FALSE) {
@@ -177,11 +183,13 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @return experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
-#'   \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
+#'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 #' @examples
 #' \dontrun{
 #'  new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
 #'  ## Remember that this depends on an existing data structure of gene annotations.
+#'  meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
+#'  another_expt <- create_expt(meta, gene_info=annotations, count_dataframe=df_I_downloaded)
 #' }
 #' @import Biobase
 #' @export
@@ -727,6 +735,16 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 #' @param ... Extra arguments are passed to arglist, currently unused.
 #' @return A smaller expt
 #' @seealso \code{\link{create_expt}}
+#' @examples
+#'  \dontrun{
+#'   all_expt <- create_expt(metadata)
+#'   ## This assumes a column in the metadata named 'txtype' containing the
+#'   ## information telling us what type of transcript each gene is.
+#'   no_ribosomes <- exclude_genes_expt(all_expt, column="txtype",
+#'                                      patterns=c("snRNA", "tRNA", "rRNA"))
+#'   i_hate_these_genes <- exclude_genes_expt(all_expt, ids=c("gene1", "gene2"))
+#'   only_ribosomes <- exclude_genes_expt(all_expt, method="keep")
+#' }
 #' @export
 exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
                                patterns=c("snRNA", "tRNA", "rRNA"), ...) {
@@ -815,10 +833,20 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 
 #' Pull metadata from a table (xlsx/xls/csv/whatever)
 #'
-#' @param metadata file or df of metadata
-#' @param ... Arguments to pass to the child functions.
-#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
+#' I find that when I acquire metadata from a paper or collaborator, annoyingly
+#' often there are many special characters or other shenanigans in the column
+#' names.  This function performs some simple sanitizations.  In addition, if I
+#' give it a filename it calls my generic 'read_metadata()' function before
+#' sanitizing.
 #'
+#' @param metadata file or df of metadata
+#' @param ... Arguments to pass to the child functions (read_csv etc).
+#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
+#' @examples
+#'  \dontrun{
+#'   sanitized <- extract_metadata("some_random_supplemental.xls")
+#'   saniclean <- extract_metadata(some_goofy_df)
+#' }
 #' @export
 extract_metadata <- function(metadata, ...) {
   arglist <- list(...)
@@ -962,6 +990,7 @@ analyses more difficult/impossible.")
 #' @param  ... Arguments passed to features_greather_than()
 #' @return The set of features less than whatever you would have done with
 #'   features_greater_than().
+#' @seealso \code{\link{features_greater_than}}
 #' @export
 features_less_than <- function(...) {
   features_greater_than(..., inverse=TRUE)
@@ -984,6 +1013,7 @@ features_less_than <- function(...) {
 #' @examples
 #' \dontrun{
 #'  features <- features_greater_than(expt)
+#'  fewer <- features_greater_than(expt, cutoff=100)
 #' }
 #' @export
 features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
@@ -1023,7 +1053,7 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
   return(result)
 }
 
-#' I want an easy way to answer the question: what features are in condition x but no others.
+#' I want an easy way to answer the question: what features are in only condition x?
 #'
 #' The answer to this lies in a combination of subset_expt() and
 #' features_greater_than().
@@ -1031,18 +1061,29 @@ features_greater_than <- function(data, cutoff=1, hard=TRUE, inverse=FALSE) {
 #' @param expt An experiment to query.
 #' @param cutoff What is the minimum number of counts required to define
 #'   'included.'
+#' @param factor What metadata factor to query?
+#' @param chosen Either choose a subset or all conditions to query.
 #' @return A set of features.
+#' @examples
+#'  \dontrun{
+#'   unique_genes
+#' }
 #' @export
-features_in_single_condition <- function(expt, cutoff=2) {
-  condition_set <- levels(as.factor(pData(expt)[["condition"]]))
+features_in_single_condition <- function(expt, cutoff=2, factor="condition", chosen=NULL) {
+  condition_set <- levels(as.factor(pData(expt)[[factor]]))
   solo_this_list <- list()
   solo_other_list <- list()
   shared_list <- list()
   neither_list <- list()
   for (cond in condition_set) {
-    extract_string <- glue::glue("condition == '{cond}'")
+    if (!is.null(chosen)) {
+      if (! cond %in% chosen) {
+        next
+      }
+    }
+    extract_string <- glue::glue("{factor} == '{cond}'")
     single_expt <- sm(subset_expt(expt=expt, subset=extract_string))
-    extract_string <- glue::glue("condition != '{cond}'")
+    extract_string <- glue::glue("{factor} != '{cond}'")
     others_expt <- sm(subset_expt(expt=expt, subset=extract_string))
     single_data <- exprs(single_expt)
     others_data <- exprs(others_expt)
@@ -1550,23 +1591,32 @@ read_metadata <- function(file, ...) {
   if (is.null(arglist[["header"]])) {
     arglist[["header"]] <- TRUE
   }
-
-  if (tools::file_ext(file) == "csv") {
+  extension <- tools::file_ext(file)
+  if (extension == "csv") {
     definitions <- read.csv(file=file, comment.char="#",
                             sep=arglist[["sep"]], header=arglist[["header"]])
-  } else if (tools::file_ext(file) == "xlsx") {
+  } else if (extension == "tsv") {
+    definitions <- try(readr::read_tsv(file, ...))
+  } else if (extension == "xlsx") {
     ## xls = loadWorkbook(file, create=FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
     definitions <- try(openxlsx::read.xlsx(xlsxFile=file, sheet=1))
     if (class(definitions)[1] == "try-error") {
       stop("Unable to read the metadata file: ", file)
     }
-  } else if (tools::file_ext(file) == "xls") {
+  } else if (extension == "xls") {
     ## This is not correct, but it is a start
-    definitions <- readxl::read_xls(path=file, sheet=1)
+    definitions <- readxl::read_excel(path=file, sheet=1)
+  } else if (extension == "ods") {
+    sheet <- 1
+    if (!is.null(arglist[["sheet"]])) {
+      sheet <- arglist[["sheet"]]
+    }
+    definitions <- readODS::read_ods(path=file, sheet=sheet)
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
+  colnames(definitions) <- gsub(pattern="[[:punct:]]", replacement="", x=colnames(definitions))
   return(definitions)
 }
 
@@ -1576,8 +1626,8 @@ read_metadata <- function(file, ...) {
 #' to include/exclude specific genes/families based on string comparisons.
 #'
 #' @param input Expt to filter.
-#' @param invert Keep only the things with the provided strings (TRUE), or
-#'   remove them (FALSE).
+#' @param invert The default is to remove the genes with the semantic strings.
+#'   Keep them when inverted.
 #' @param topn Take the topn most abundant genes rather than a text based heuristic.
 #' @param semantic Character list of strings to search for in the annotation
 #'   data.
@@ -1851,6 +1901,7 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
   ## the conditions and I do not know why.
   if (!is.null(ids)) {
     ## Change specific id(s) to given condition(s).
+    message("Setting condition for ids ", toString(ids), " to ", fact, ".")
     old_pdata <- pData(expt)
     old_cond <- as.character(old_pdata[["condition"]])
     names(old_cond) <- rownames(old_pdata)
@@ -1858,7 +1909,7 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     new_cond[ids] <- fact
     new_pdata <- old_pdata
     new_pdata[["condition"]] <- as.factor(new_cond)
-    pData(expt[["expressionset"]]) <- new_pdata
+    pData(new_expt[["expressionset"]]) <- new_pdata
     new_conditions <- as.character(new_expt[["conditions"]])
     names(new_conditions) <- names(new_expt[["conditions"]])
     new_conditions[ids] <- fact
@@ -2298,12 +2349,24 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
-  plot_dim <- 6
-  plot_cols <- floor(plot_dim * 1.5)
-  plot_rows <- ceiling(plot_dim * 5.0)
   new_row <- 1
   new_col <- 1
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+
+  ## For medians_by_condition, put the counts or annotations first?
+  merge_order <- "counts_first"
+  if (!is.null(arglist[["merge_order"]])) {
+    merge_order <- arglist[["merge_order"]]
+  }
+
+  ## I think the plot dimensions should increase as the number of samples increase
+  plot_dim <- 6
+  num_samples <- ncol(exprs(expt))
+  if (num_samples > 12) {
+    plot_dim <- ceiling(num_samples / 4)
+  }
+  plot_cols <- floor(plot_dim * 1.5)
+  plot_rows <- ceiling(plot_dim * 5.0)
 
   ## Write an introduction to this foolishness.
   message("Writing the first sheet, containing a legend and some summary data.")
@@ -2320,12 +2383,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       "The median normalized counts by condition factor on 'median_data'."),
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
-  xls_result <- write_xls(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xlsx(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
   annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
-  xls_result <- write_xls(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
+  xls_result <- write_xlsx(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
                           sheet=sheet, start_col=1, title="Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
@@ -2333,13 +2396,13 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                               ...))
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
-  xls_result <- write_xls(data=libsizes, wb=wb, start_row=new_row,
+  xls_result <- write_xlsx(data=libsizes, wb=wb, start_row=new_row,
                           rownames=FALSE, sheet=sheet, start_col=1,
                           title="Library sizes.")
 
   new_row <- new_row + nrow(libsizes) + 3
   libsize_summary <- as.data.frame(metrics[["libsize_summary"]])
-  xls_result <- write_xls(data=libsize_summary, wb=wb, start_row=new_row,
+  xls_result <- write_xlsx(data=libsize_summary, wb=wb, start_row=new_row,
                           rownames=FALSE, sheet=sheet, start_col=1,
                           title="Library size summary.")
 
@@ -2356,7 +2419,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     colnames(info)[ridx] <- "old_row_names"
   }
   read_info <- merge(info, reads, by="row.names")
-  xls_result <- write_xls(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
+  xls_result <- write_xlsx(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
                           start_row=new_row, start_col=new_col, title="Raw Reads.")
 
   ## Write some graphs for the raw data
@@ -2542,8 +2605,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
-    varpart_raw <- try(simple_varpart(
-      expt, predictor=NULL, factors=c("condition", "batch")))
+    varpart_raw <- suppressWarnings(try(simple_varpart(
+      expt, predictor=NULL, factors=c("condition", "batch"))))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2566,14 +2629,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Raw PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet, "Raw PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_row=new_row, start_col=new_col)
 
   ## Move on to the next sheet, normalized data
@@ -2588,7 +2651,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   info <- fData(norm_data)
   read_info <- merge(norm_reads, info, by="row.names")
   title <- what_happened(norm_data)
-  xls_result <- write_xls(wb=wb, data=read_info, rownames=FALSE,
+  xls_result <- write_xlsx(wb=wb, data=read_info, rownames=FALSE,
                           start_row=new_row, start_col=new_col, sheet=sheet, title=title)
 
   ## Graphs of the normalized data
@@ -2745,8 +2808,8 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- try(simple_varpart(norm_data, predictor=NULL,
-                                       factors=c("condition", "batch")))
+    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, predictor=NULL,
+                                       factors=c("condition", "batch"))))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2768,14 +2831,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA res.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
+  xls_result <- write_xlsx(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
-  xls_result <- write_xls(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
+  xls_result <- write_xlsx(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
                           rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
@@ -2786,8 +2849,15 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- 1
   median_data <- sm(median_by_factor(exprs(norm_data),
                                      fact=norm_data[["conditions"]]))
-  median_data_merged <- merge(median_data, info, by="row.names")
-  xls_result <- write_xls(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
+  median_data_merged <- data.frame()
+  if (merge_order == "annot_first") {
+    median_data_merged <- merge(info, median_data, by.x="row.names", by.y="row.names")
+  } else {
+    median_data_merged <- merge(median_data, info, by.x="row.names", by.y="row.names")
+  }
+  rownames(median_data_merged) <- median_data_merged[["Row.names"]]
+  median_data_merged[["Row.names"]] <- NULL
+  xls_result <- write_xlsx(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
 
   ## Save the result
@@ -2798,7 +2868,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "annotations" = info,
     "raw_reads" = reads,
     "design" = annot,
-    "legend" = legend_plot,
+    "legend_plot" = legend_plot,
     "raw_libsize" = libsize_plot,
     "raw_nonzero" = nonzero_plot,
     "raw_density" = density_plot,

@@ -4,9 +4,15 @@
 \alias{gsva_likelihoods}
 \title{Score the results from gsva().}
 \usage{
-gsva_likelihoods(gsva_result, score = NULL, category = NULL,
-  factor = NULL, sample = NULL, factor_column = "condition",
-  method = "mean")
+gsva_likelihoods(
+  gsva_result,
+  score = NULL,
+  category = NULL,
+  factor = NULL,
+  sample = NULL,
+  factor_column = "condition",
+  method = "mean"
+)
 }
 \arguments{
 \item{gsva_result}{Input result from simple_gsva()}

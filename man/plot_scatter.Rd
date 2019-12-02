@@ -4,8 +4,13 @@
 \alias{plot_scatter}
 \title{Make a pretty scatter plot between two sets of numbers.}
 \usage{
-plot_scatter(df, tooltip_data = NULL, color = "black",
-  gvis_filename = NULL, size = 2)
+plot_scatter(
+  df,
+  tooltip_data = NULL,
+  color = "black",
+  gvis_filename = NULL,
+  size = 2
+)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}

@@ -604,7 +604,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #' @return List of data frames comprising the toptable output for each
 #'   coefficient, I also added a qvalue entry to these toptable() outputs.
 #' @seealso \pkg{limma} \pkg{qvalue}
-#'  \code{\link{write_xls}} \code{\link[limma]{topTable}}
+#'  \code{\link{write_xlsx}} \code{\link[limma]{topTable}}
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)

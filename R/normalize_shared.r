@@ -81,7 +81,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            ## performed.
                            annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
                            batch1="batch", batch2=NULL, batch_step=5,
-                           low_to_zero=FALSE, ## extra parameters for batch correction
+                           low_to_zero=TRUE, ## extra parameters for batch correction
                            thresh=2, min_samples=2, p=0.01, A=1, k=1,
                            cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
                            ...) {
@@ -205,7 +205,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                           filter=filter, annotations=annotations,
                           fasta=fasta, thresh=thresh, batch_step=batch_step,
                           min_samples=min_samples, p=p, A=A, k=k,
-                          ## cv_min=cv_min, cv_max=cv_max, entry_type=entry_type)
                           cv_min=cv_min, cv_max=cv_max, entry_type=entry_type,
                           ...)
 
@@ -234,6 +233,30 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   colnames(final_data) <- sampleNames(current_exprs)
   exprs(current_exprs) <- final_data
 
+  ## This state slot should match the information available in
+  ## new_expt$normalized$actions
+  ## I am hoping this will prove a more direct place to access it and provide a
+  ## chance to double-check that things match
+  new_state <- list(
+    "filter" = normalized[["actions"]][["filter"]],
+    "normalization" = normalized[["actions"]][["normalization"]],
+    "conversion" = normalized[["actions"]][["conversion"]],
+    "batch" = normalized[["actions"]][["batch"]],
+    "transform" = normalized[["actions"]][["transform"]])
+
+  ## Keep in mind that low_to_zero should be ignored if transform_state is not raw.
+  if (new_state[["transform"]] == "raw" & isTRUE(low_to_zero)) {
+    low_idx <- exprs(current_exprs) < 0
+    ## Do not forget that na does not count when looking for numbers < x.
+    na_idx <- is.na(exprs(current_exprs))
+    low_idx[na_idx] <- FALSE
+    low_num <- sum(low_idx)
+    if (low_num > 0) {
+      message("Setting ", low_num, " entries to zero.")
+      exprs(current_exprs)[low_idx] <- 0
+    }
+  }
+
   ## The original data structure contains the following slots:
   ## colors, batches, convert, conditions, design, expressionset,
   ## filtered, initial_metadata, norm, original_expressionset,
@@ -250,17 +273,6 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## count_table -- a dataframe count table from hpgl_norm()
   ## libsize -- a final libsize from hpgl_norm()
   new_expt[["normalized"]] <- normalized
-
-  ## This state slot should match the information available in
-  ## new_expt$normalized$actions
-  ## I am hoping this will prove a more direct place to access it and provide a
-  ## chance to double-check that things match
-  new_state <- list(
-    "filter" = normalized[["actions"]][["filter"]],
-    "normalization" = normalized[["actions"]][["normalization"]],
-    "conversion" = normalized[["actions"]][["conversion"]],
-    "batch" = normalized[["actions"]][["batch"]],
-    "transform" = normalized[["actions"]][["transform"]])
   new_expt[["state"]] <- new_state
 
   ## My concept of the 'best library size' comes from Kwame's work where the
@@ -517,7 +529,8 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 5) {
-    count_table <- do_batch(count_table, ...)
+    count_table <- do_batch(count_table,
+                            ...)
     ## count_table <- do_batch(count_table, arglist)
   }
 

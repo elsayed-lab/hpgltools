@@ -19,11 +19,12 @@
 #' @seealso \pkg{openxlsx}
 #' @examples
 #'  \dontrun{
-#'   xls_coords <- write_xls(dataframe, sheet="hpgl_data")
-#'   xls_coords <- write_xls(another_df, sheet="hpgl_data", start_row=xls_coords$end_col)
+#'   xls_coords <- write_xlsx(dataframe, sheet="hpgl_data", excel="testing.xlsx")
+#'   xls_coords <- write_xlsx(another_df, wb=xls_coords$workbook,
+#'                           sheet="hpgl_data", start_row=xls_coords$end_col)
 #'  }
 #' @export
-write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames=TRUE,
+write_xlsx <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames=TRUE,
                       start_row=1, start_col=1, title=NULL, ...) {
   arglist <- list(...)
   if ("matrix" %in% class(data) | "character" %in% class(data)) {
@@ -35,7 +36,7 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
   if (is.null(wb)) {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
   } else if ("list" %in% class(wb)) {
-    ## In case the return from write_xls() was passed to write_xls()
+    ## In case the return from write_xlsx() was passed to write_xlsx()
     wb <- wb[["workbook"]]
   } else if (! "Workbook" %in% class(wb)) {
     stop("A workbook was passed to this, but the format is not understood.")
@@ -182,7 +183,9 @@ write_xls <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames
 #' @examples
 #'  \dontrun{
 #'   fun_plot <- plot_pca(stuff)$plot
-#'   try_results <- xlsx_plot_png(fun_plot)
+#'   df <- some_data_frame
+#'   wb <- write_xlsx(df, excel="funkytown.xlsx")$workbook
+#'   try_results <- xlsx_plot_png(fun_plot, wb=wb)
 #' }
 #' @export
 xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
@@ -200,18 +203,17 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   if (is.null(wb)) {
     wb <- openxlsx::createWorkbook(creator="hpgltools")
   } else if (class(wb)[1] == "list") {
-    ## In case the return from write_xls() was passed to write_xls()
+    ## In case the return from write_xlsx() was passed to write_xlsx()
     wb <- wb[["workbook"]]
   } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
   high_quality <- file.path(savedir, glue("{plotname}.{fancy_type}"))
-  png_print_ret <- NULL
+  insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {
       dir.create(savedir, recursive=TRUE)
     }
-    fancy_ret <- NULL
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file=high_quality))
     } else if (fancy_type == "ps") {
@@ -230,12 +232,12 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     ## seem to need to be print()ed.  Adding a try to attempt
     ## to work around this concern.
     if (class(a_plot)[1] == "Venn") {
-      pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+      fancy_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
     } else {
-      pdf_print_ret <- try(print(a_plot))
+      fancy_ret <- try(print(a_plot))
     }
-    if (class(pdf_print_ret)[1] == "try-error") {
-      pdf_print_ret <- try(plot(a_plot, ...))
+    if (class(fancy_ret)[1] == "try-error") {
+      fancy_ret <- try(plot(a_plot, ...))
     }
     dev.off()
   }
@@ -247,15 +249,14 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
                      res=res))
 
   if (class(a_plot)[1] == "Venn") {
-    pdf_print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
+    print_ret <- try(Vennerable::plot(a_plot, doWeights=FALSE))
   } else {
-    png_print_ret <- try(print(a_plot))
+    print_ret <- try(print(a_plot))
   }
-  if (class(png_print_ret)[1] == "try-error") {
-    png_print_ret <- try(plot(a_plot, ...))
+  if (class(print_ret)[1] == "try-error") {
+    print_ret <- try(plot(a_plot, ...))
   }
   dev.off()
-  insert_ret <- NULL
   if (file.exists(png_name)) {
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name,
                                             width=width, height=height,
@@ -268,8 +269,9 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     message("The png file name did not exist: ", png_name)
   }
   ret <- list(
-    "png_print" = png_print_ret,
-    "pdf_print" = pdf_print_ret,
+    "png_fh" = png_ret,
+    "png_print" = print_ret,
+    "fancy_print" = fancy_ret,
     "openxlsx" = insert_ret)
   return(ret)
 }

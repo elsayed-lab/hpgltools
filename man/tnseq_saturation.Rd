@@ -4,7 +4,7 @@
 \alias{tnseq_saturation}
 \title{Make a plot and some simple numbers about tnseq saturation}
 \usage{
-tnseq_saturation(data, column = "Reads")
+tnseq_saturation(data, column = "Reads", ylimit = 100)
 }
 \arguments{
 \item{data}{data to plot}

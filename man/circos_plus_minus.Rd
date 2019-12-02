@@ -5,17 +5,40 @@
 \title{Write tiles of bacterial ontology groups using the categories from
 microbesonline.org.}
 \usage{
-circos_plus_minus(table, cfgout = "circos/conf/default.conf",
-  chr = "chr1", outer = 1, width = 0.08, spacing = 0,
-  acol = "orange", bcol = "reds-9-seq", ccol = "yellow",
-  dcol = "vlpurple", ecol = "vlgreen", fcol = "dpblue",
-  gcol = "vlgreen", hcol = "vlpblue", icol = "vvdpgreen",
-  jcol = "dpred", kcol = "orange", lcol = "vvlorange",
-  mcol = "dpgreen", ncol = "vvlpblue", ocol = "vvlgreen",
-  pcol = "vvdpred", qcol = "ylgn-3-seq", rcol = "vlgrey",
-  scol = "grey", tcol = "vlpurple", ucol = "greens-3-seq",
-  vcol = "vlred", wcol = "vvdppurple", xcol = "black",
-  ycol = "lred", zcol = "vlpblue")
+circos_plus_minus(
+  table,
+  cfgout = "circos/conf/default.conf",
+  chr = "chr1",
+  outer = 1,
+  width = 0.08,
+  spacing = 0,
+  acol = "orange",
+  bcol = "reds-9-seq",
+  ccol = "yellow",
+  dcol = "vlpurple",
+  ecol = "vlgreen",
+  fcol = "dpblue",
+  gcol = "vlgreen",
+  hcol = "vlpblue",
+  icol = "vvdpgreen",
+  jcol = "dpred",
+  kcol = "orange",
+  lcol = "vvlorange",
+  mcol = "dpgreen",
+  ncol = "vvlpblue",
+  ocol = "vvlgreen",
+  pcol = "vvdpred",
+  qcol = "ylgn-3-seq",
+  rcol = "vlgrey",
+  scol = "grey",
+  tcol = "vlpurple",
+  ucol = "greens-3-seq",
+  vcol = "vlred",
+  wcol = "vvdppurple",
+  xcol = "black",
+  ycol = "lred",
+  zcol = "vlpblue"
+)
 }
 \arguments{
 \item{table}{Dataframe with starts/ends and categories.}

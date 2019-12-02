@@ -4,8 +4,14 @@
 \alias{myretrieveKGML}
 \title{A couple functions from KEGGgraph that have broken}
 \usage{
-myretrieveKGML(pathway, organism, destfile, silent = TRUE,
-  hostname = "http://www.kegg.jp", ...)
+myretrieveKGML(
+  pathway,
+  organism,
+  destfile,
+  silent = TRUE,
+  hostname = "http://www.kegg.jp",
+  ...
+)
 }
 \arguments{
 \item{pathway}{The path to query.}

@@ -17,6 +17,12 @@ read_snp_columns(samples, file_lst, column = "diff_count")
 A big honking data table.
 }
 \description{
-I put all my bcfutils output files into one directory, so hunt them down and
-read them into a data table.
+Previously, I put all my bcfutils output files into one directory.  This
+function would iterate through every file in that directory and add the
+contents as columns to this growing data table.  Now it works by accepting a
+list of filenames (presumably kept in the metadata for the experiment) and
+reading them into the data table.  It is worth noting that it can accept
+either a column name or index -- which when you think about it is pretty much
+always true, but in this context is particularly interesting since I changed
+the names of all the columns when I rewrote this functionality.
 }

@@ -4,8 +4,12 @@
 \alias{extract_pyprophet_data}
 \title{Read a bunch of scored swath outputs from pyprophet to acquire their metrics.}
 \usage{
-extract_pyprophet_data(metadata, pyprophet_column = "diascored",
-  savefile = NULL, ...)
+extract_pyprophet_data(
+  metadata,
+  pyprophet_column = "diascored",
+  savefile = NULL,
+  ...
+)
 }
 \arguments{
 \item{metadata}{Data frame describing the samples, including the mzXML

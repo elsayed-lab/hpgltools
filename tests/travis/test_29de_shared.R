@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("29de_shared.R: Do the combined differential expression searches work?
-  1234567890123456789012345678901234567890123456789012345678901234\n")
+  1234567890123456789012345678901234567890123456789012345678901\n")
 
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
@@ -23,9 +23,8 @@ normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant",
 ## Interestingly, doParallel does not work when run from packrat.
 test_keepers <- list("treatment" = c("treated", "untreated"))
 hpgl_all <- all_pairwise(pasilla_expt,
-                         parallel=FALSE,
-                         keepers=test_keepers,
-                         combined_excel="excel_test.xlsx")
+                         combined_excel="excel_test.xlsx",
+                         keepers=test_keepers)
 
 combined_excel <- hpgl_all[["combined"]]
 test_that("Does combine_de_tables create an excel file?", {
@@ -94,7 +93,27 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
 })
 combined_table <- combine_de_tables(hpgl_all, excel=FALSE)
 
-num_cols <- 50
+expected_annotations <- c(
+  "ensembltranscriptid", "ensemblgeneid",
+  "description", "genebiotype",
+  "cdslength", "chromosomename", "strand",
+  "startposition", "endposition", "deseq_logfc",
+  "deseq_adjp", "edger_logfc", "edger_adjp",
+  "limma_logfc", "limma_adjp", "basic_nummed",
+  "basic_denmed", "basic_numvar", "basic_denvar",
+  "basic_logfc", "basic_t", "basic_p",
+  "basic_adjp", "deseq_basemean", "deseq_lfcse",
+  "deseq_stat", "deseq_p", "ebseq_fc",
+  "ebseq_logfc", "ebseq_c1mean", "ebseq_c2mean",
+  "ebseq_mean", "ebseq_var", "ebseq_postfc",
+  "ebseq_ppee", "ebseq_ppde", "ebseq_adjp",
+  "edger_logcpm", "edger_lr", "edger_p",
+  "limma_ave", "limma_t", "limma_b",
+  "limma_p", "limma_adjp_fdr", "deseq_adjp_fdr",
+  "edger_adjp_fdr", "basic_adjp_fdr", "lfc_meta",
+  "lfc_var", "lfc_varbymed", "p_meta",
+  "p_var")
+num_cols <- length(expected_annotations)
 expected <- c(10153, num_cols)
 actual <- dim(combined_table[["data"]][[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
@@ -174,43 +193,24 @@ test_that("Can we monitor changing significance (up_fc)?", {
 ##     expect_equal(expected, actual)
 ## })
 
-expected <- "gg"
-actual <- class(combined_excel[["limma_plots"]][["treatment"]][["scatter"]])[[1]]
+expected <- c("gg", "ggplot")
+actual <- class(combined_excel[["plots"]][["treatment"]][["limma_scatter_plots"]][["scatter"]])
 test_that("Do we get a pretty limma scatter plot?", {
     expect_equal(expected, actual)
 })
-actual <- class(combined_excel[["deseq_plots"]][["treatment"]][["scatter"]])[[1]]
+actual <- class(combined_excel[["plots"]][["treatment"]][["deseq_scatter_plots"]][["scatter"]])
 test_that("Do we get a pretty deseq scatter plot?", {
     expect_equal(expected, actual)
 })
-actual <- class(combined_excel[["edger_plots"]][["treatment"]][["scatter"]])[[1]]
+actual <- class(combined_excel[["plots"]][["treatment"]][["edger_scatter_plots"]][["scatter"]])
 test_that("Do we get a pretty edger scatter plot?", {
     expect_equal(expected, actual)
 })
 
 table <- "treatment"
-expected <- c(
-  "ensembltranscriptid", "ensemblgeneid",
-  "description", "genebiotype",
-  "cdslength", "chromosomename", "strand",
-  "startposition", "endposition", "deseq_logfc",
-  "deseq_adjp", "edger_logfc", "edger_adjp",
-  "limma_logfc", "limma_adjp", "basic_nummed",
-  "basic_denmed", "basic_numvar", "basic_denvar",
-  "basic_logfc", "basic_t", "basic_p",
-  "basic_adjp", "deseq_basemean", "deseq_lfcse",
-  "deseq_stat", "deseq_p", "ebseq_fc",
-  "ebseq_logfc", "ebseq_postfc", "ebseq_mean",
-  "ebseq_ppee", "ebseq_ppde", "ebseq_adjp",
-  "edger_logcpm", "edger_lr", "edger_p",
-  "limma_ave", "limma_t", "limma_b",
-  "limma_p", "limma_adjp_fdr", "deseq_adjp_fdr",
-  "edger_adjp_fdr", "basic_adjp_fdr", "lfc_meta",
-  "lfc_var", "lfc_varbymed", "p_meta",
-  "p_var")
 actual <- colnames(combined_excel[["data"]][[table]])
 test_that("Do we get expected columns from the excel sheet?", {
-    expect_equal(expected, actual)
+    expect_equal(expected_annotations, actual)
 })
 
 ## Test that we can extract the significant genes and get pretty graphs

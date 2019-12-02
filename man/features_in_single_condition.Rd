@@ -2,15 +2,24 @@
 % Please edit documentation in R/expt.r
 \name{features_in_single_condition}
 \alias{features_in_single_condition}
-\title{I want an easy way to answer the question: what features are in condition x but no others.}
+\title{I want an easy way to answer the question: what features are in only condition x?}
 \usage{
-features_in_single_condition(expt, cutoff = 2)
+features_in_single_condition(
+  expt,
+  cutoff = 2,
+  factor = "condition",
+  chosen = NULL
+)
 }
 \arguments{
 \item{expt}{An experiment to query.}
 
 \item{cutoff}{What is the minimum number of counts required to define
 'included.'}
+
+\item{factor}{What metadata factor to query?}
+
+\item{chosen}{Either choose a subset or all conditions to query.}
 }
 \value{
 A set of features.
@@ -18,4 +27,9 @@ A set of features.
 \description{
 The answer to this lies in a combination of subset_expt() and
 features_greater_than().
+}
+\examples{
+ \dontrun{
+  unique_genes
+}
 }

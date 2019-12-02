@@ -27,8 +27,7 @@ test_that("limma batch gives expected values?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-##expected <- c(1.60048774, 0.02101530, -0.07524254, 0.15555548, 0.49697157)
-expected <- c(2.03245815, 0.01467331, -0.05081747, 0.11385040, 0.41124803)
+expected <- c(2.03245815, 0.01467331, 0.00000000, 0.11385040, 0.41124803)
 names(expected) <- test_genes
 pasilla_batch <- sm(normalize_expt(pasilla_expt, batch="limmaresid"))
 actual_df <- exprs(pasilla_batch)

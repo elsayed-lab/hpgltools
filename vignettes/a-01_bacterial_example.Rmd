@@ -344,8 +344,9 @@ one actually wishes to see.  Therefore, the argument keepers takes a list of con
 
 ```{r keeper_example}
 my_keepers <- list(
-    "wt_media" = c("wt_ll_cf", "wt_ll_cg"),
-    "mga_media" = c("mga_ll_cf", "mga_ll_cg"))
+  ## name    =   numerator / denominator
+  "wt_media" = c("wt_ll_cf", "wt_ll_cg"),
+  "mga_media" = c("mga_ll_cf", "mga_ll_cg"))
 ```
 
 In the above example, if the keepers argument to combine_de_tables() is given as my_keepers, then

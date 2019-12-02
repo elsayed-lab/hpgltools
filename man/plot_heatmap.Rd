@@ -4,9 +4,18 @@
 \alias{plot_heatmap}
 \title{Make a heatmap.3 plot, does the work for plot_disheat and plot_corheat.}
 \usage{
-plot_heatmap(expt_data, expt_colors = NULL, expt_design = NULL,
-  method = "pearson", expt_names = NULL, type = "correlation",
-  batch_row = "batch", title = NULL, label_chars = 10, ...)
+plot_heatmap(
+  expt_data,
+  expt_colors = NULL,
+  expt_design = NULL,
+  method = "pearson",
+  expt_names = NULL,
+  type = "correlation",
+  batch_row = "batch",
+  title = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{expt_data}{Dataframe, expt, or expressionset to work with.}

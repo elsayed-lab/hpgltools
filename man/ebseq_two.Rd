@@ -4,9 +4,17 @@
 \alias{ebseq_two}
 \title{The primary function used in my EBSeq implementation.}
 \usage{
-ebseq_two(pair_data, conditions, numerator = 2, denominator = 1,
-  ng_vector = NULL, rounds = 10, target_fdr = 0.05,
-  norm = "median", force = FALSE)
+ebseq_two(
+  pair_data,
+  conditions,
+  numerator = 2,
+  denominator = 1,
+  ng_vector = NULL,
+  rounds = 10,
+  target_fdr = 0.05,
+  norm = "median",
+  force = FALSE
+)
 }
 \arguments{
 \item{pair_data}{Matrix containing the samples comprising two experimental

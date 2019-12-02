@@ -4,9 +4,16 @@
 \alias{cluster_trees}
 \title{Take clusterprofile group data and print it on a tree as per topGO.}
 \usage{
-cluster_trees(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL,
-  score_limit = 0.2, overwrite = FALSE, selector = "topDiffGenes",
-  pval_column = "adj.P.Val")
+cluster_trees(
+  de_genes,
+  cpdata,
+  goid_map = "id2go.map",
+  go_db = NULL,
+  score_limit = 0.2,
+  overwrite = FALSE,
+  selector = "topDiffGenes",
+  pval_column = "adj.P.Val"
+)
 }
 \arguments{
 \item{de_genes}{List of genes deemed 'interesting'.}

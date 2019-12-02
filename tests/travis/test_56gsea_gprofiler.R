@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("56gsea_gprofiler.R: Do gProfiler searches work?\n")
+context("56gsea_gprofiler.R: Do gProfiler searches work?
+  12345\n")
 
 ## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
 ## These will likely not work with Travis as they take forever.
@@ -38,7 +39,7 @@ test_that("Does gprofiler return expected values? (ccpplot_data)", {
     expect_equal(expected, actual, tolerance=0.001)
 })
 
-actual <- sm(write_gprofiler_data(gprofiler_result, excel="test_gprofiler.xlsx"))
+actual <- write_gprofiler_data(gprofiler_result, excel="test_gprofiler.xlsx")
 expected <- 1
 test_that("Can we write a gprofiler xlsx file?", {
   expect_equal(expected, actual)

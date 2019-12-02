@@ -2,10 +2,18 @@
 % Please edit documentation in R/de_plots.r
 \name{extract_de_plots}
 \alias{extract_de_plots}
-\title{Make a MA plot of some limma output with pretty colors and shapes}
+\title{Make a MA plot of some limma output with pretty colors and shapes.}
 \usage{
-extract_de_plots(pairwise, type = "edger", table = NULL, logfc = 1,
-  p_type = "adj", p = 0.05, invert = FALSE, ...)
+extract_de_plots(
+  pairwise,
+  type = "edger",
+  table = NULL,
+  logfc = 1,
+  p_type = "adj",
+  p = 0.05,
+  invert = FALSE,
+  ...
+)
 }
 \arguments{
 \item{pairwise}{The result from all_pairwise(), which should be changed to
@@ -30,6 +38,8 @@ a plot!
 }
 \description{
 Yay pretty colors and shapes!
+This function should be reworked following my rewrite of combine_de_tables().
+It is certainly possible to make the logic here much simpler now.
 }
 \examples{
 \dontrun{

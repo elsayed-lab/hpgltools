@@ -5,11 +5,23 @@
 \title{Set up model matrices contrasts and do pairwise comparisons of all conditions
 using EBSeq.}
 \usage{
-ebseq_pairwise(input = NULL, patterns = NULL, conditions = NULL,
-  batches = NULL, model_cond = NULL, model_intercept = NULL,
-  alt_model = NULL, model_batch = NULL, ng_vector = NULL,
-  rounds = 10, target_fdr = 0.05, method = "pairwise_subset",
-  norm = "median", force = FALSE, ...)
+ebseq_pairwise(
+  input = NULL,
+  patterns = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = NULL,
+  model_intercept = NULL,
+  alt_model = NULL,
+  model_batch = NULL,
+  ng_vector = NULL,
+  rounds = 10,
+  target_fdr = 0.05,
+  method = "pairwise_subset",
+  norm = "median",
+  force = FALSE,
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization
@@ -47,6 +59,16 @@ data into pairs of conditions.}
 
 \item{...}{Extra arguments currently unused.}
 }
+\value{
+List containing tables from ebseq, the conditions tested, and the
+  ebseq table of conditions.
+}
 \description{
 Invoking EBSeq is confusing, this should help.
+}
+\examples{
+ \dontrun{
+  expt <- create_expt(metadata="sample_sheet.xlsx", gene_info=annotations)
+  ebseq_de <- ebseq_pairwise(input=expt)
+}
 }

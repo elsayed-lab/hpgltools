@@ -4,9 +4,14 @@
 \alias{load_biomart_orthologs}
 \title{Use biomart to get orthologs between supported species.}
 \usage{
-load_biomart_orthologs(gene_ids = NULL, first_species = "hsapiens",
-  second_species = "mmusculus", host = "dec2016.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL", attributes = "ensembl_gene_id")
+load_biomart_orthologs(
+  gene_ids = NULL,
+  first_species = "hsapiens",
+  second_species = "mmusculus",
+  host = "dec2016.archive.ensembl.org",
+  trymart = "ENSEMBL_MART_ENSEMBL",
+  attributes = "ensembl_gene_id"
+)
 }
 \arguments{
 \item{gene_ids}{List of gene IDs to translate.}
@@ -51,7 +56,4 @@ humans.
 \seealso{
 \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
  \code{\link[biomaRt]{useMart}}
-}
-\author{
-atb
 }

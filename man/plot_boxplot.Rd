@@ -4,8 +4,16 @@
 \alias{plot_boxplot}
 \title{Make a ggplot boxplot of a set of samples.}
 \usage{
-plot_boxplot(data, colors = NULL, title = NULL, violin = FALSE,
-  scale = NULL, expt_names = NULL, label_chars = 10, ...)
+plot_boxplot(
+  data,
+  colors = NULL,
+  title = NULL,
+  violin = FALSE,
+  scale = NULL,
+  expt_names = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt or data frame set of samples.}

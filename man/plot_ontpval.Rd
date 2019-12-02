@@ -4,8 +4,13 @@
 \alias{plot_ontpval}
 \title{Make a pvalue plot from a df of IDs, scores, and p-values.}
 \usage{
-plot_ontpval(df, ontology = "MF", fontsize = 14, numerator = NULL,
-  denominator = NULL)
+plot_ontpval(
+  df,
+  ontology = "MF",
+  fontsize = 14,
+  numerator = NULL,
+  denominator = NULL
+)
 }
 \arguments{
 \item{df}{Some data from topgo/goseq/clusterprofiler.}

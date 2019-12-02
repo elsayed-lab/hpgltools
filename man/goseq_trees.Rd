@@ -4,9 +4,14 @@
 \alias{goseq_trees}
 \title{Make fun trees a la topgo from goseq data.}
 \usage{
-goseq_trees(goseq, goid_map = "id2go.map", score_limit = 0.01,
-  overwrite = FALSE, selector = "topDiffGenes",
-  pval_column = "adj.P.Val")
+goseq_trees(
+  goseq,
+  goid_map = "id2go.map",
+  score_limit = 0.01,
+  overwrite = FALSE,
+  selector = "topDiffGenes",
+  pval_column = "adj.P.Val"
+)
 }
 \arguments{
 \item{goseq}{Data from goseq.}

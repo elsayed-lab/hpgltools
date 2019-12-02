@@ -4,9 +4,17 @@
 \alias{plot_nonzero}
 \title{Make a ggplot graph of the number of non-zero genes by sample.}
 \usage{
-plot_nonzero(data, design = NULL, colors = NULL, plot_labels = NULL,
-  expt_names = NULL, label_chars = 10, plot_legend = FALSE,
-  title = NULL, ...)
+plot_nonzero(
+  data,
+  design = NULL,
+  colors = NULL,
+  plot_labels = NULL,
+  expt_names = NULL,
+  label_chars = 10,
+  plot_legend = FALSE,
+  title = NULL,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt, expressionset, or dataframe.}

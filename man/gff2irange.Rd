@@ -42,6 +42,3 @@ via mcols().  Check snp.r. for ideas.
 \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
  \code{\link[rtracklayer]{import.gff}}
 }
-\author{
-atb
-}

@@ -383,6 +383,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param gvis_filename Filename to write a fancy html graph.
 #' @param invert Invert the ma plot?
+#' @param label Label the top/bottom n logFC values?
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
 #'   normalized counts by type across all sample types on the x axis, and the
@@ -404,7 +405,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 #' @export
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        p=0.05, alpha=0.4, logfc=1.0, label_numbers=TRUE,
-                       size=2, tooltip_data=NULL, gvis_filename=NULL, invert=FALSE, ...) {
+                       size=2, tooltip_data=NULL, gvis_filename=NULL,
+                       invert=FALSE, label=NULL, ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
@@ -549,6 +551,21 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   if (!is.null(family)) {
     plt <- recolor_points(plt, df, family, color=family_color)
   }
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["logfc"]])
+    reordered <- df[reordered_idx, ]
+    top <- head(reordered, n=label)
+    bottom <- tail(reordered, n=label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(data=df_subset,
+                               aes_string(label="label", x="avg", y="logfc"),
+                               colour="black", box.padding=ggplot2::unit(0.5, "lines"),
+                               point.padding=ggplot2::unit(1.6, "lines"),
+                               arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
+  }
+
 
   ## Return the plot, some numbers, and the data frame used to make the plot so
   ## that I may check my work.
@@ -860,6 +877,7 @@ plot_scatter <- function(df, tooltip_data=NULL, color="black",
 #' @param shapes_by_state Add fun shapes for the various significance states?
 #' @param size How big are the dots?
 #' @param tooltip_data Df of tooltip information for gvis.
+#' @param label Label the top/bottom n logFC values?
 #' @param ... I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
 #'   with respect to log(fold change).  The cutoff values are delineated with
@@ -882,12 +900,14 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
                             fc_col="logFC", fc_name="log2 fold change", gvis_filename=NULL,
                             line_color="black", line_position="bottom", logfc=1.0,
                             p_col="adj.P.Val", p_name="-log10 p-value", p=0.05,
-                            shapes_by_state=TRUE, size=2, tooltip_data=NULL, ...) {
+                            shapes_by_state=TRUE, size=2, tooltip_data=NULL,
+                            label=NULL, ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
 
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors=TRUE)
+  rownames(df) <- rownames(table)
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
   df[["pcut"]] <- df[["yaxis"]] <= p
@@ -966,7 +986,7 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
                    glue("P Insig.: {num_pinsig}"),
                    glue("Up Sig.: {num_upsig}")),
                  guide=ggplot2::guide_legend(override.aes=aes(size=3, fill="grey")))
-      }
+  }
 
   ## Now set the colors and axis labels
   plt <- plt +
@@ -980,6 +1000,22 @@ plot_volcano_de <- function(table, alpha=0.6, color_by="p",
     ggplot2::theme_bw(base_size=base_size) +
     ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
   ##  axis.text.x=ggplot2::element_text(angle=-90))
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["xaxis"]])
+    reordered <- df[reordered_idx, ]
+    sig_idx <- reordered[["logyaxis"]] > horiz_line
+    reordered <- reordered[sig_idx, ]
+    top <- head(reordered, n=label)
+    bottom <- tail(reordered, n=label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(data=df_subset,
+                               aes_string(label="label", y="logyaxis", x="xaxis"),
+                               colour="black", box.padding=ggplot2::unit(0.5, "lines"),
+                               point.padding=ggplot2::unit(1.6, "lines"),
+                               arrow=ggplot2::arrow(length=ggplot2::unit(0.01, "npc")))
+  }
 
   gvis_result <- NULL
   if (!is.null(gvis_filename)) {

@@ -4,8 +4,15 @@
 \alias{plot_suppa}
 \title{Given some psi and tpm data, make a pretty plot!}
 \usage{
-plot_suppa(dpsi, tpm, events = NULL, psi = NULL,
-  sig_threshold = 0.05, label_type = NULL, alpha = 0.7)
+plot_suppa(
+  dpsi,
+  tpm,
+  events = NULL,
+  psi = NULL,
+  sig_threshold = 0.05,
+  label_type = NULL,
+  alpha = 0.7
+)
 }
 \arguments{
 \item{dpsi}{Table provided by suppa containing all the metrics.}
@@ -29,4 +36,12 @@ List containing the plot and some of the requisite data.
 This should take either a dataframe or filename for the psi data from suppa,
 along with the same for the average log tpm data (acquired from suppa
 diffSplice with --save_tpm_events)
+}
+\examples{
+ \dontrun{
+ suppa_plot <- plot_suppa(dpsi_file, tmp_file)
+}
+}
+\seealso{
+\code{\link{plot_rmats}}
 }

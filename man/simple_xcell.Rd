@@ -4,8 +4,7 @@
 \alias{simple_xcell}
 \title{Invoke xCell and pretty-ify the result.}
 \usage{
-simple_xcell(expt, label_size = NULL, col_margin = 6,
-  row_margin = 12, ...)
+simple_xcell(expt, label_size = NULL, col_margin = 6, row_margin = 12, ...)
 }
 \arguments{
 \item{expt}{Expressionset to query.}

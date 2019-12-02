@@ -4,8 +4,13 @@
 \alias{count_expt_snps}
 \title{Gather snp information for an expt}
 \usage{
-count_expt_snps(expt, type = "counts", annot_column = "bcftable",
-  tolower = TRUE, snp_column = "diff_count")
+count_expt_snps(
+  expt,
+  type = "counts",
+  annot_column = "bcftable",
+  tolower = TRUE,
+  snp_column = "diff_count"
+)
 }
 \arguments{
 \item{expt}{an expressionset from which to extract information.}
@@ -28,4 +33,13 @@ with the original data.  In its current iteration, it therefore makes some
 potentially bad assumptions about the naming conventions for its input
 files.  It furthermore assumes inputs from the variant calling methods in
 cyoa.
+}
+\examples{
+  \dontrun{
+ expt <- create_expt(metadata, gene_information)
+ snp_expt <- count_expt_snps(expt)
+ ## This assumes that the metadata has a column named 'bcftable' with one file per
+ ## cell.  These files in turn should have a column named 'diff_count' which will
+ ## be the source of the numbers found when doing exprs(snp_expt).
+}
 }

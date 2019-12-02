@@ -4,9 +4,15 @@
 \alias{load_gff_annotations}
 \title{Extract annotation information from a gff file into a df}
 \usage{
-load_gff_annotations(gff, type = NULL, id_col = "ID",
-  ret_type = "data.frame", second_id_col = "locus_tag", try = NULL,
-  row.names = NULL)
+load_gff_annotations(
+  gff,
+  type = NULL,
+  id_col = "ID",
+  ret_type = "data.frame",
+  second_id_col = "locus_tag",
+  try = NULL,
+  row.names = NULL
+)
 }
 \arguments{
 \item{gff}{Gff filename.}
@@ -45,7 +51,4 @@ functions fail in unpredictable ways.
 \seealso{
 \pkg{rtracklayer} \pkg{GenomicRanges}
  \code{\link[rtracklayer]{import.gff}}
-}
-\author{
-atb
 }

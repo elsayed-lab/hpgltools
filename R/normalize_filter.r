@@ -57,6 +57,7 @@ filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
       filtered_counts <- simple_filter_counts(count_table, threshold=thresh)
     },
     {
+      message("The requested filter did not match anything, defaulting to 'cbcb'.")
       filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                             min_samples=min_samples, ...)
     }

@@ -4,10 +4,20 @@
 \alias{ebseq_pairwise_subset}
 \title{Perform pairwise comparisons with ebseq, one at a time.}
 \usage{
-ebseq_pairwise_subset(input, ng_vector = NULL, rounds = 10,
-  target_fdr = 0.05, model_batch = FALSE, model_cond = TRUE,
-  model_intercept = FALSE, alt_model = NULL, conditions = NULL,
-  norm = "median", force = FALSE, ...)
+ebseq_pairwise_subset(
+  input,
+  ng_vector = NULL,
+  rounds = 10,
+  target_fdr = 0.05,
+  model_batch = FALSE,
+  model_cond = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  conditions = NULL,
+  norm = "median",
+  force = FALSE,
+  ...
+)
 }
 \arguments{
 \item{input}{Expressionset/expt to perform de upon.}
@@ -20,8 +30,8 @@ perform before return the de estimates}
 \item{target_fdr}{If we reach this fdr before iterating rounds times, return.}
 
 \item{model_batch}{Provided by all_pairwise()  I do not think a Bayesian
-analysis really care about models, but if one wished to try to add a batch
-factor, do it here.  It is currently ignored though.}
+analysis really cares about models, but if one wished to try to add a batch
+factor, this would be the place to do it.  It is currently ignored.}
 
 \item{model_cond}{Provided by all_pairwise(), ibid.}
 

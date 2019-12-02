@@ -2,10 +2,15 @@
 % Please edit documentation in R/annotation_uniprot.r
 \name{download_uniprot_proteome}
 \alias{download_uniprot_proteome}
-\title{Download the txt uniprot data for a given accession/species}
+\title{Download the txt uniprot data for a given accession/species.}
 \usage{
-download_uniprot_proteome(accession = NULL, species = NULL,
-  taxonomy = NULL, all = FALSE, first = FALSE)
+download_uniprot_proteome(
+  accession = NULL,
+  species = NULL,
+  taxonomy = NULL,
+  all = FALSE,
+  first = FALSE
+)
 }
 \arguments{
 \item{accession}{Which accession to grab?}
@@ -22,5 +27,13 @@ download_uniprot_proteome(accession = NULL, species = NULL,
 A filename/accession tuple.
 }
 \description{
-Download the txt uniprot data for a given accession/species
+Uniprot is an astonishing resource, but man is it a pain to use.  Hopefully
+this function will help.  It takes either a uniprot accession, taxonomy ID,
+or species name and does its best to find the appropriate uniprot data.  This
+is therefore primarily used by load_uniprot_annotations().
+}
+\examples{
+ \dontrun{
+  uniprot_file <- download_uniprot_proteome(species="Saccharomyces cerevisiae")
+}
 }

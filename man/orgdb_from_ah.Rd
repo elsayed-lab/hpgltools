@@ -4,8 +4,7 @@
 \alias{orgdb_from_ah}
 \title{Get an orgdb from an AnnotationHub taxonID.}
 \usage{
-orgdb_from_ah(ahid = NULL, title = NULL, species = NULL,
-  type = "OrgDb")
+orgdb_from_ah(ahid = NULL, title = NULL, species = NULL, type = "OrgDb")
 }
 \arguments{
 \item{ahid}{TaxonID from AnnotationHub}
@@ -27,12 +26,9 @@ fragile than I would like.
 }
 \examples{
 \dontrun{
- orgdbi <- mytaxIdToOrgDb(taxid)
+ org <- mytaxIdToOrgDb(species="Leishmania", type="TxDb")
 }
 }
 \seealso{
 \pkg{AnnotationHub} \pkg{S4Vectors}
-}
-\author{
-atb
 }

@@ -4,9 +4,18 @@
 \alias{plot_libsize}
 \title{Make a ggplot graph of library sizes.}
 \usage{
-plot_libsize(data, condition = NULL, colors = NULL, text = TRUE,
-  order = NULL, title = NULL, yscale = NULL, expt_names = NULL,
-  label_chars = 10, ...)
+plot_libsize(
+  data,
+  condition = NULL,
+  colors = NULL,
+  text = TRUE,
+  order = NULL,
+  title = NULL,
+  yscale = NULL,
+  expt_names = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt, dataframe, or expressionset of samples.}

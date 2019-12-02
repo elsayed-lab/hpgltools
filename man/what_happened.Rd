@@ -4,8 +4,14 @@
 \alias{what_happened}
 \title{Print a string describing what happened to this data.}
 \usage{
-what_happened(expt = NULL, transform = "raw", convert = "raw",
-  norm = "raw", filter = "raw", batch = "raw")
+what_happened(
+  expt = NULL,
+  transform = "raw",
+  convert = "raw",
+  norm = "raw",
+  filter = "raw",
+  batch = "raw"
+)
 }
 \arguments{
 \item{expt}{The expressionset.}

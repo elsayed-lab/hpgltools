@@ -4,10 +4,15 @@
 \alias{extract_lengths}
 \title{Take gene/exon lengths from a suitable data source (gff/TxDb/OrganismDbi)}
 \usage{
-extract_lengths(db = NULL, gene_list = NULL,
-  type = "GenomicFeatures::transcripts", id = "TXID",
+extract_lengths(
+  db = NULL,
+  gene_list = NULL,
+  type = "GenomicFeatures::transcripts",
+  id = "TXID",
   possible_types = c("GenomicFeatures::genes", "GenomicFeatures::cds",
-  "GenomicFeatures::transcripts"), ...)
+    "GenomicFeatures::transcripts"),
+  ...
+)
 }
 \arguments{
 \item{db}{Object containing data, if it is a string then a filename is

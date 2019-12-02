@@ -4,8 +4,16 @@
 \alias{get_sig_genes}
 \title{Get a set of up/down differentially expressed genes.}
 \usage{
-get_sig_genes(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
-  column = "logFC", fold = "plusminus", p_column = "adj.P.Val")
+get_sig_genes(
+  table,
+  n = NULL,
+  z = NULL,
+  lfc = NULL,
+  p = NULL,
+  column = "logFC",
+  fold = "plusminus",
+  p_column = "adj.P.Val"
+)
 }
 \arguments{
 \item{table}{Table from limma/edger/deseq.}

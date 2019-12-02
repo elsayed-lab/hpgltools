@@ -4,9 +4,16 @@
 \alias{extract_abundant_genes}
 \title{Extract the sets of genes which are significantly more abundant than the rest.}
 \usage{
-extract_abundant_genes(pairwise, according_to = "all", n = 200,
-  z = NULL, unique = FALSE, least = FALSE,
-  excel = "excel/abundant_genes.xlsx", ...)
+extract_abundant_genes(
+  pairwise,
+  according_to = "all",
+  n = 200,
+  z = NULL,
+  unique = FALSE,
+  least = FALSE,
+  excel = "excel/abundant_genes.xlsx",
+  ...
+)
 }
 \arguments{
 \item{pairwise}{Output from _pairwise()().}

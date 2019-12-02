@@ -4,8 +4,14 @@
 \alias{plot_fun_venn}
 \title{A quick wrapper around venneuler to help label stuff}
 \usage{
-plot_fun_venn(ones = c(), twos = c(), threes = c(), fours = c(),
-  fives = c(), factor = 0.9)
+plot_fun_venn(
+  ones = c(),
+  twos = c(),
+  threes = c(),
+  fours = c(),
+  fives = c(),
+  factor = 0.9
+)
 }
 \arguments{
 \item{ones}{Character list of singletone categories}

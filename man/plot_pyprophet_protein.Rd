@@ -4,10 +4,21 @@
 \alias{plot_pyprophet_protein}
 \title{Read data from pyprophet and plot columns from it.}
 \usage{
-plot_pyprophet_protein(pyprophet_data, column = "intensity",
-  keep_real = TRUE, keep_decoys = TRUE, expt_names = NULL,
-  label_chars = 10, protein = NULL, title = NULL, scale = NULL,
-  ...)
+plot_pyprophet_protein(
+  pyprophet_data,
+  column = "intensity",
+  keep_real = TRUE,
+  keep_decoys = FALSE,
+  expt_names = NULL,
+  label_chars = 10,
+  protein = NULL,
+  title = NULL,
+  scale = NULL,
+  legend = NULL,
+  order_by = "condition",
+  show_all = TRUE,
+  ...
+)
 }
 \arguments{
 \item{pyprophet_data}{Data from extract_pyprophet_data()}
@@ -30,7 +41,13 @@ names.}
 
 \item{scale}{Put the data on a specific scale?}
 
+\item{legend}{Include the legend?}
+
+\item{order_by}{Reorder the samples by some factor, presumably condition.}
+
 \item{...}{Further arguments, presumably for colors or some such.}
+
+\item{add_nulls}{Add a minimal value for samples for which no observations were made.}
 }
 \value{
 Boxplot describing the desired column from the data.

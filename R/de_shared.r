@@ -58,7 +58,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          alt_model=NULL, libsize=NULL, test_pca=TRUE,
                          annot_df=NULL, parallel=TRUE,
                          do_basic=TRUE, do_deseq=TRUE, do_ebseq=NULL,
-                         do_edger=TRUE, do_limma=TRUE, ...) {
+                         do_edger=TRUE, do_limma=TRUE,
+                         convert="cpm", norm="quant", ...) {
   arglist <- list(...)
   surrogates <- "be"
   if (!is.null(arglist[["surrogates"]])) {
@@ -92,9 +93,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   post_pca <- NULL
   if (isTRUE(test_pca)) {
     pre_batch <- normalize_expt(input, filter=TRUE, batch=FALSE,
-                                transform="log2", convert="cpm", norm="quant")
+                                transform="log2", convert=convert, norm=norm)
     message("Plotting a PCA before surrogates/batch inclusion.")
-    pre_pca <- plot_pca(pre_batch, ...)[["plot"]]
+    pre_pca <- plot_pca(pre_batch, plot_labels=FALSE, ...)
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
@@ -108,14 +109,18 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         test_norm <- "raw"
       }
       message("Performing a test normalization with: ", test_norm)
-      post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
-                                       transform="log2", convert="cpm",
-                                       norm=test_norm))
+      if (!isFALSE(model_batch)) {
+        post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
+                                         transform="log2", convert="cpm",
+                                         norm=test_norm))
+      } else {
+        post_batch <- NULL
+      }
     } else {
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
     }
-    post_pca <- plot_pca(post_batch, ...)[["plot"]]
+    post_pca <- plot_pca(post_batch, plot_labels=FALSE, ...)
   }
 
   ## do_ebseq defaults to NULL, this is so that we can query the number of
@@ -1147,60 +1152,52 @@ compare_logfc_plots <- function(combined_tables) {
   } else {
     data <- combined_tables
   }
-  tt <- sm(requireNamespace("parallel"))
-  tt <- sm(requireNamespace("doParallel"))
-  tt <- sm(requireNamespace("iterators"))
-  tt <- sm(requireNamespace("foreach"))
-  tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
-  cores <- parallel::detectCores()
-  cl <- parallel::makeCluster(cores)
-  doSNOW::registerDoSNOW(cl)
-  num_levels <- length(data)
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(max=num_levels, style=3)
-  }
-  count <- 1
-  progress <- function(n) {
-    setTxtProgressBar(bar, n)
-  }
-  pb_opts <- list()
-  if (isTRUE(show_progress)) {
-    pb_opts <- list("progress" = progress)
-  }
-  returns <- list()
-  res <- list()
-  res <- foreach(count=1:num_levels,
-                 .packages=c("hpgltools", "ggplot2", "doParallel"),
-                 .options.snow=pb_opts) %dopar% {
-    tab <- data[[count]]
-    le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
-    le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
-    ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
-    ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
-    de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
-    de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
-    lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
-    lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
-    db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
-    db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
-    eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
-    eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
-    name <- names(data)[[count]]
+  tnames <- names(data)
+  retlist <- list()
+  for (c in 1:length(tnames)) {
+    tname <- tnames[c]
+    tab <- data[[tname]]
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+      le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
+      le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      le <- NULL
+    }
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
+      ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
+      ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      ld <- NULL
+    }
+    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+      de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
+      de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      de <- NULL
+    }
+    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
+      lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      lb <- NULL
+    }
+    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
+      db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      db <- NULL
+    }
+    if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+      eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
+      eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
+    } else {
+      db <- NULL
+    }
     compared <- list(
-      "name" = name,
+      "name" = tname,
       "le" = le, "ld" = ld, "de" = de,
       "lb" = lb, "db" = db, "eb" = eb)
-    ## plots[[name]] <- compared
-  }
-  if (isTRUE(show_progress)) {
-    close(bar)
-  }
-  parallel::stopCluster(cl)
-  retlist <- list()
-  for (i in 1:length(res)) {
-    name <- res[[i]][["name"]]
-    retlist[[name]] <- res[[i]]
+    retlist[[tname]] <- compared
   }
   return(retlist)
 }
@@ -1529,7 +1526,7 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     expression_table <- merge(expression_table, errors, by="row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
-    expression_written <- write_xls(
+    expression_written <- write_xlsx(
       data=expression_table,
       sheet="expression_values",
       title="Values comprising the logFCs and errors (expression / t-statistic)")

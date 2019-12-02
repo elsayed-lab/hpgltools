@@ -4,8 +4,13 @@
 \alias{get_snp_sets}
 \title{Create all possible sets of variants by sample (types).}
 \usage{
-get_snp_sets(snp_expt, factor = "pathogenstrain", limit = 1,
-  do_save = FALSE, savefile = "variants.rda")
+get_snp_sets(
+  snp_expt,
+  factor = "pathogenstrain",
+  limit = 1,
+  do_save = FALSE,
+  savefile = "variants.rda"
+)
 }
 \arguments{
 \item{snp_expt}{The result of count_expt_snps()}
@@ -33,4 +38,12 @@ A funky list by chromosome containing:  'medians', the median number
 \description{
 I like this function.  It generates an exhaustive catalog of the snps by
 chromosome for all the various categories as defined by factor.
+}
+\examples{
+  \dontrun{
+ expt <- create_expt(metadata, gene_information)
+ snp_expt <- count_expt_snps(expt)
+ snp_sets <- get_snp_sets(snp_expt, factor="condition")
+ ## This assumes a column in the metadata for the expt named 'condition'.
+}
 }

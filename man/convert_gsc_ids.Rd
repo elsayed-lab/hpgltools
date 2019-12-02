@@ -4,8 +4,12 @@
 \alias{convert_gsc_ids}
 \title{Use AnnotationDbi to translate geneIDs from type x to type y.}
 \usage{
-convert_gsc_ids(gsc, orgdb = "org.Hs.eg.db", from_type = NULL,
-  to_type = "ENTREZID")
+convert_gsc_ids(
+  gsc,
+  orgdb = "org.Hs.eg.db",
+  from_type = NULL,
+  to_type = "ENTREZID"
+)
 }
 \arguments{
 \item{gsc}{geneSetCollection with IDs of a type one wishes to change.}

@@ -4,8 +4,13 @@
 \alias{hpgl_filter_counts}
 \title{Filter low-count genes from a data set using cpm data and a threshold.}
 \usage{
-hpgl_filter_counts(count_table, threshold = 2, min_samples = 2,
-  libsize = NULL, ...)
+hpgl_filter_counts(
+  count_table,
+  threshold = 2,
+  min_samples = 2,
+  libsize = NULL,
+  ...
+)
 }
 \arguments{
 \item{count_table}{Data frame of (pseudo)counts by sample.}

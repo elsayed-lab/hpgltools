@@ -4,9 +4,16 @@
 \alias{circos_karyotype}
 \title{Create the description of (a)chromosome(s) for circos.}
 \usage{
-circos_karyotype(name = "default", conf_dir = "circos/conf",
-  length = NULL, chr_name = "chr1", segments = 6, color = "white",
-  chr_num = 1, fasta = NULL)
+circos_karyotype(
+  name = "default",
+  conf_dir = "circos/conf",
+  length = NULL,
+  chr_name = "chr1",
+  segments = 6,
+  color = "white",
+  chr_num = 1,
+  fasta = NULL
+)
 }
 \arguments{
 \item{name}{Name of the chromosome (This currently assumes a bacterial chromosome).}

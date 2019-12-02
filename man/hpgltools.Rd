@@ -3,7 +3,6 @@
 \docType{package}
 \name{hpgltools}
 \alias{hpgltools}
-\alias{hpgltools-package}
 \title{hpgltools: a suite of tools to make our analyses easier}
 \description{
 This provides a series of helpers for working with sequencing data

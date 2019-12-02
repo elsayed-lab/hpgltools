@@ -5,8 +5,12 @@
 \title{Given an eupathdb species lacking UTR boundaries, extract an arbitrary region
 before/after each gene.}
 \usage{
-gather_eupath_utrs_padding(species_name = "Leishmania major",
-  entry = NULL, webservice = "tritrypdb", ...)
+gather_eupath_utrs_padding(
+  species_name = "Leishmania major",
+  entry = NULL,
+  webservice = "tritrypdb",
+  ...
+)
 }
 \arguments{
 \item{species_name}{Species name for which to query the eupathdb.}

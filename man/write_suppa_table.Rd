@@ -4,9 +4,14 @@
 \alias{write_suppa_table}
 \title{Take a set of results from suppa and attempt to write it to a pretty xlsx file.}
 \usage{
-write_suppa_table(table, annotations = NULL, by_table = "gene_name",
-  by_annot = "ensembl_gene_id", columns = "default",
-  excel = "excel/suppa_table.xlsx")
+write_suppa_table(
+  table,
+  annotations = NULL,
+  by_table = "gene_name",
+  by_annot = "ensembl_gene_id",
+  columns = "default",
+  excel = "excel/suppa_table.xlsx"
+)
 }
 \arguments{
 \item{table}{Result table from suppa.}
@@ -29,4 +34,11 @@ Data frame of the merged data.
 \description{
 Suppa provides a tremendous amount of output, this attempts to standardize
 those results and print them to an excel sheet.
+}
+\examples{
+ \dontrun{
+ prettier_table <- write_suppa_table(suppa_result_file,
+                                     annotations=gene_info,
+                                     excel="excel/pretty_suppa_table.xlsx")
+}
 }

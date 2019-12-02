@@ -16,3 +16,6 @@ The set of features less than whatever you would have done with
 \description{
 Do features_greater_than() inverted!
 }
+\seealso{
+\code{\link{features_greater_than}}
+}

@@ -4,12 +4,25 @@
 \alias{plotly_pca}
 \title{Plot a PC plot with options suitable for ggplotly.}
 \usage{
-plotly_pca(data, design = NULL, plot_colors = NULL,
-  plot_title = NULL, plot_size = 5, plot_alpha = NULL,
-  plot_labels = NULL, size_column = NULL, pc_method = "fast_svd",
-  x_pc = 1, y_pc = 2, outlines = FALSE, num_pc = NULL,
-  expt_names = NULL, label_chars = 10, tooltip = c("shape", "fill",
-  "sampleid"), ...)
+plotly_pca(
+  data,
+  design = NULL,
+  plot_colors = NULL,
+  plot_title = NULL,
+  plot_size = 5,
+  plot_alpha = NULL,
+  plot_labels = NULL,
+  size_column = NULL,
+  pc_method = "fast_svd",
+  x_pc = 1,
+  y_pc = 2,
+  outlines = FALSE,
+  num_pc = NULL,
+  expt_names = NULL,
+  label_chars = 10,
+  tooltip = c("shape", "fill", "sampleid"),
+  ...
+)
 }
 \arguments{
 \item{data}{an expt set of samples.}

@@ -4,8 +4,13 @@
 \alias{get_res}
 \title{Attempt to get residuals from tsne data}
 \usage{
-get_res(svd_result, design, factors = c("condition", "batch"),
-  res_slot = "v", var_slot = "d")
+get_res(
+  svd_result,
+  design,
+  factors = c("condition", "batch"),
+  res_slot = "v",
+  var_slot = "d"
+)
 }
 \arguments{
 \item{svd_result}{The set of results from one of the many potential svd-ish methods.}

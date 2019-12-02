@@ -4,9 +4,14 @@
 \alias{print_ups_downs}
 \title{Reprint the output from extract_significant_genes().}
 \usage{
-print_ups_downs(upsdowns, wb = NULL,
-  excel = "excel/significant_genes.xlsx", according = "limma",
-  summary_count = 1, ma = FALSE)
+print_ups_downs(
+  upsdowns,
+  wb = NULL,
+  excel = "excel/significant_genes.xlsx",
+  according = "limma",
+  summary_count = 1,
+  ma = FALSE
+)
 }
 \arguments{
 \item{upsdowns}{Output from extract_significant_genes().}
@@ -22,7 +27,7 @@ print_ups_downs(upsdowns, wb = NULL,
 \item{ma}{Include ma plots?}
 }
 \value{
-Return from write_xls.
+Return from write_xlsx.
 }
 \description{
 I found myself needing to reprint these excel sheets because I

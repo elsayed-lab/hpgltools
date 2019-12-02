@@ -4,9 +4,17 @@
 \alias{plot_pyprophet_counts}
 \title{Count some aspect(s) of the pyprophet data and plot them.}
 \usage{
-plot_pyprophet_counts(pyprophet_data, type = "count", keep_real = TRUE,
-  keep_decoys = TRUE, expt_names = NULL, label_chars = 10,
-  title = NULL, scale = NULL, ...)
+plot_pyprophet_counts(
+  pyprophet_data,
+  type = "count",
+  keep_real = TRUE,
+  keep_decoys = TRUE,
+  expt_names = NULL,
+  label_chars = 10,
+  title = NULL,
+  scale = NULL,
+  ...
+)
 }
 \arguments{
 \item{pyprophet_data}{List containing the pyprophet results.}

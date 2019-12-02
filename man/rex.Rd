@@ -2,13 +2,15 @@
 % Please edit documentation in R/helpers_misc.r
 \name{rex}
 \alias{rex}
-\title{Resets the display and xauthority variables to the new computer I am using so
-that plot() works.}
+\title{Send the R plotter to the computer of your choice!}
 \usage{
 rex(display = ":0")
 }
 \arguments{
-\item{display}{DISPLAY variable to use,  if NULL it looks in ~/.displays/$(host).last}
+\item{display}{DISPLAY variable to use, if NULL it looks in ~/.displays/$(host).last}
+}
+\value{
+Fresh plotting window to the display of your choice!
 }
 \description{
 Resets the display and xauthority variables to the new computer I am using so

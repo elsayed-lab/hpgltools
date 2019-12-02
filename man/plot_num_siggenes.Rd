@@ -5,8 +5,13 @@
 \title{Given a DE table with fold changes and p-values, show how 'significant'
 changes with changing cutoffs.}
 \usage{
-plot_num_siggenes(table, methods = c("limma", "edger", "deseq", "ebseq"),
-  bins = 100, constant_p = 0.05, constant_fc = 0)
+plot_num_siggenes(
+  table,
+  methods = c("limma", "edger", "deseq", "ebseq"),
+  bins = 100,
+  constant_p = 0.05,
+  constant_fc = 0
+)
 }
 \arguments{
 \item{table}{DE table to examine.}
@@ -30,6 +35,7 @@ constant, as well as number when fold-change is held constant.
 }
 \examples{
 \dontrun{
+ pairwise_result <- all_pairwise(expt)
  crazy_sigplots <- plot_num_siggenes(pairwise_result)
 }
 }

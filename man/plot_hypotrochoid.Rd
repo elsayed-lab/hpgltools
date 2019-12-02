@@ -4,8 +4,13 @@
 \alias{plot_hypotrochoid}
 \title{Make hypotrochoid plots!}
 \usage{
-plot_hypotrochoid(radius_a = 3, radius_b = 7, dist_b = 1,
-  revolutions = 7, increments = 6480)
+plot_hypotrochoid(
+  radius_a = 3,
+  radius_b = 7,
+  dist_b = 1,
+  revolutions = 7,
+  increments = 6480
+)
 }
 \arguments{
 \item{radius_a}{Radius of the major circle}

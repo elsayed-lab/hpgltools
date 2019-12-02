@@ -4,8 +4,14 @@
 \alias{read_counts_expt}
 \title{Read a bunch of count tables and create a usable data frame from them.}
 \usage{
-read_counts_expt(ids, files, header = FALSE,
-  include_summary_rows = FALSE, suffix = NULL, ...)
+read_counts_expt(
+  ids,
+  files,
+  header = FALSE,
+  include_summary_rows = FALSE,
+  suffix = NULL,
+  ...
+)
 }
 \arguments{
 \item{ids}{List of experimental ids.}

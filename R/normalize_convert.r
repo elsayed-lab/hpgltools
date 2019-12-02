@@ -356,7 +356,11 @@ hpgl_rpkm <- function(count_table, ...) {
     chosen_column <- arglist[["column"]]
   } else if (is.null(merged_annot[["width"]])) {
     chosen_column <- "length"
+  } else if (!is.null(merged_annot[["start"]]) &
+             !is.null(merged_annot[["end"]])) {
+    merged_annot[["width"]] <- abs(merged_annot[["end"]] - merged_annot[["start"]])
   }
+
   ## Keep in mind that I set missing material to 'undefined'
   ## So lets set those to NA now.
   undef_idx <- merged_annot[[chosen_column]] == "undefined"

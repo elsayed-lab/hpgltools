@@ -4,11 +4,19 @@
 \alias{load_microbesonline_go}
 \title{Extract the set of GO categories by microbesonline locus}
 \usage{
-load_microbesonline_go(id = "160490", table_df = NULL,
-  id_column = "name", data_column = "GO", name = NULL)
+load_microbesonline_go(
+  id = NULL,
+  species = NULL,
+  table_df = NULL,
+  id_column = "name",
+  data_column = "GO",
+  name = NULL
+)
 }
 \arguments{
 \item{id}{Which species to query.}
+
+\item{species}{Microbesonline species.}
 
 \item{table_df}{Pre-existing data frame of annotations containing GO stuff.}
 
@@ -35,9 +43,6 @@ them, which is a start.
 }
 \examples{
 \dontrun{
- go_df <- get_loci_go(id="160490")
+ go_df <- get_microbesonline_go(species="coli")
 }
-}
-\author{
-atb
 }

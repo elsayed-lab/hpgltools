@@ -4,9 +4,19 @@
 \alias{plot_density}
 \title{Create a density plot, showing the distribution of each column of data.}
 \usage{
-plot_density(data, colors = NULL, expt_names = NULL,
-  position = "identity", direct = TRUE, fill = NULL, title = NULL,
-  scale = NULL, colors_by = "condition", label_chars = 10, ...)
+plot_density(
+  data,
+  colors = NULL,
+  expt_names = NULL,
+  position = "identity",
+  direct = TRUE,
+  fill = NULL,
+  title = NULL,
+  scale = NULL,
+  colors_by = "condition",
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}

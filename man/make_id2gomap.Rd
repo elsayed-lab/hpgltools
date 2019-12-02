@@ -4,8 +4,11 @@
 \alias{make_id2gomap}
 \title{Make a go mapping from IDs in a format suitable for topGO.}
 \usage{
-make_id2gomap(goid_map = "reference/go/id2go.map", go_db = NULL,
-  overwrite = FALSE)
+make_id2gomap(
+  goid_map = "reference/go/id2go.map",
+  go_db = NULL,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{goid_map}{TopGO mapping file.}

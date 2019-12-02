@@ -4,8 +4,7 @@
 \alias{load_kegg_annotations}
 \title{Create a data frame of pathways to gene IDs from KEGGREST}
 \usage{
-load_kegg_annotations(species = "coli", abbreviation = NULL,
-  flatten = TRUE)
+load_kegg_annotations(species = "coli", abbreviation = NULL, flatten = TRUE)
 }
 \arguments{
 \item{species}{String to use to query KEGG abbreviation.}
@@ -22,6 +21,8 @@ dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
 This seeks to take the peculiar format from KEGGREST for pathway<->genes and
 make it easier to deal with.
 }
-\author{
-atb
+\examples{
+ \dontrun{
+  kegg_df <- load_kegg_annotations(species="cerevisiae")
+}
 }

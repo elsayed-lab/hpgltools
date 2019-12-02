@@ -197,7 +197,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
       c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
@@ -208,7 +208,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
       c("Queried CC ontologies", nrow(cp_result[["enrich_go"]][["CC_all"]])),
       c("Significant CC ontologies", nrow(cp_result[["enrich_go"]][["CC_sig"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
-    xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=summary_df, sheet="legend", rownames=FALSE,
                             title="Summary of the cp search.", start_row=1, start_col=4)
   }  ## End making sure that an excel is desired.
 
@@ -267,7 +267,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ##openxlsx::writeData(wb, sheet, "BP Results from cp.", startRow=new_row)
   ##openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   ##openxlsx::writeDataTable(wb, sheet, x=cp_bp, tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=cp_bp, wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=cp_bp, wb=wb, sheet=sheet,
                        title="BP REsults from cp.", start_row=new_row)
   ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
   if (isTRUE(add_plots)) {
@@ -294,7 +294,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ##openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=cp_mf, tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=cp_mf, wb=wb, sheet=sheet, title="MF Results from cp.",
+  dfwrite <- write_xlsx(data=cp_mf, wb=wb, sheet=sheet, title="MF Results from cp.",
                        start_row=new_row)
   ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
   if (isTRUE(add_plots)) {
@@ -321,7 +321,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ##openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=cp_cc, tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=cp_cc, wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=cp_cc, wb=wb, sheet=sheet,
                        title="CC Results from cp.",
                        start_row=new_row)
   ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -349,7 +349,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ##openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=cp_kegg, tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=cp_kegg, wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=cp_kegg, wb=wb, sheet=sheet,
                        title="KEGG Results from cp.",
                        start_row=new_row)
   ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -362,7 +362,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
   ##openxlsx::addStyle(wb, sheet, hs1, new_row, 1)
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=cp_david, tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=cp_david, wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=cp_david, wb=wb, sheet=sheet,
                        title="DAVID Results from cp.",
                        start_row=new_row)
 
@@ -426,7 +426,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
       c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
@@ -437,7 +437,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
       c("Queried CC ontologies", nrow(goseq_result[["cc_subset"]])),
       c("Significant CC ontologies", nrow(goseq_result[["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
-    xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=summary_df, sheet="legend", rownames=FALSE,
                             title="Summary of the goseq search.", start_row=1, start_col=4)
     if (isTRUE(add_plots)) {
       printme <- "Histogram of observed ontology (adjusted) p-values by goseq."
@@ -498,7 +498,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
     ##openxlsx::addStyle(wb, ont, hs1, new_row, 1)
     ##new_row <- new_row + 1
     ##openxlsx::writeDataTable(wb, ont, x=categories, tableStyle=table_style, startRow=new_row)
-    write_xls(data=categories, wb=wb, sheet=ont,
+    write_xlsx(data=categories, wb=wb, sheet=ont,
               title=glue("{ont} Results from goseq."))
 
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -581,7 +581,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
       c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
@@ -592,7 +592,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
       c("Queried CC ontologies", nrow(gostats_result[["cc_subset"]])),
       c("Significant CC ontologies", nrow(gostats_result[["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
-    xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=summary_df, sheet="legend", rownames=FALSE,
                             title="Summary of the gostats search.", start_row=1, start_col=4)
     if (isTRUE(add_plots)) {
       printme <- "Histogram of observed ontology (adjusted) p-values by gostats."
@@ -644,7 +644,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
     ##openxlsx::addStyle(wb, ont, hs1, new_row, 1)
     ##new_row <- new_row + 1
     ##openxlsx::writeDataTable(wb, ont, x=categories, tableStyle=table_style, startRow=new_row)
-    dfwrite <- write_xls(data=categories, wb=wb, sheet=ont, title=glue("{ont} Results from gostats."))
+    dfwrite <- write_xlsx(data=categories, wb=wb, sheet=ont, title=glue("{ont} Results from gostats."))
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       plot_name <- glue("{tolower(ont)}p_plot_over")
@@ -818,7 +818,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=bp_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=bp_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=bp_data, wb=wb, sheet=sheet,
                          title=glue("BP Results from {sheet}."), start_row=new_row)
 
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -839,7 +839,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=mf_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=mf_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=mf_data, wb=wb, sheet=sheet,
                          title=glue("MF Results from {sheet}."), start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
@@ -859,7 +859,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=cc_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=cc_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=cc_data, wb=wb, sheet=sheet,
                          title=glue("CC Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -893,7 +893,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=kegg_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=kegg_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=kegg_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -928,7 +928,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=tf_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=tf_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=tf_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                                     start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -944,17 +944,17 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
   } ## End checking tf data
 
   do_reactome <- TRUE
-  if (is.null(gprofiler_result[["reactome"]])) {
+  if (is.null(gprofiler_result[["reac"]])) {
     do_reactome <- FALSE
   }
-  if (nrow(gprofiler_result[["reactome"]]) == 0) {
+  if (nrow(gprofiler_result[["reac"]]) == 0) {
     do_reactome <- FALSE
   }
   if (isTRUE(do_reactome)) {
     new_row <- 1
     sheet <- "reactome"
     ##openxlsx::addWorksheet(wb, sheetName=sheet)
-    react_data <- gprofiler_result[["reactome"]]
+    react_data <- gprofiler_result[["reac"]]
     react_order <- order(react_data[[order_by]], decreasing=decreasing)
     react_data <- react_data[react_order, ]
     ##openxlsx::writeData(wb, sheet, glue("Results from {sheet}."), startRow=new_row)
@@ -962,7 +962,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=react_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=react_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=react_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -996,7 +996,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=mi_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=mi_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=mi_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -1030,7 +1030,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=hp_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=hp_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=hp_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -1064,7 +1064,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     ##new_row <- new_row + 1
     ##dfwrite <- try(openxlsx::writeDataTable(wb, sheet, x=corum_data,
     ##                                        tableStyle=table_style, startRow=new_row))
-    dfwrite <- write_xls(data=corum_data, wb=wb, sheet=sheet,
+    dfwrite <- write_xlsx(data=corum_data, wb=wb, sheet=sheet,
                          title=glue("Results from {sheet}."),
                          start_row=new_row)
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -1145,7 +1145,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
       c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xls(wb, data=legend, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
                             title="Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
@@ -1156,7 +1156,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
       c("Queried CC ontologies", nrow(table_list[["cc"]])),
       c("Significant CC ontologies", nrow(table_list[["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
-    xls_result <- write_xls(wb, data=summary_df, sheet="legend", rownames=FALSE,
+    xls_result <- write_xlsx(wb, data=summary_df, sheet="legend", rownames=FALSE,
                             title="Summary of the topgo search.", start_row=1, start_col=4)
     if (isTRUE(add_plots)) {
       printme <- "Histogram of observed ontology p-values by topgo."
@@ -1224,7 +1224,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
     ##new_row <- new_row + 1
     ##openxlsx::writeDataTable(wb, ont, x=categories,
     ##                         tableStyle=table_style, startRow=new_row)
-    dfwrite <- write_xls(data=categories, wb=wb, sheet=ont,
+    dfwrite <- write_xlsx(data=categories, wb=wb, sheet=ont,
                          title=glue("{ont} Results from topgo."),
                          start_row=new_row)
     p_plot_name <- glue("{tolower(ont)}p_plot_over")
@@ -1482,7 +1482,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["goseq_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["goseq_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -1503,7 +1503,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["goseq_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["goseq_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1523,7 +1523,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["goseq_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["goseq_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["goseq_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1548,7 +1548,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["cluster_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["cluster_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1568,7 +1568,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["cluster_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["cluster_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1588,7 +1588,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["cluster_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["cluster_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["cluster_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1613,7 +1613,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["topgo_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["topgo_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1633,7 +1633,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["topgo_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["topgo_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1653,7 +1653,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["topgo_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["topgo_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["topgo_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1678,7 +1678,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gostats_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gostats_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       links <- up_stuff[["gostats_bp"]][["Link"]]
@@ -1704,7 +1704,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gostats_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gostats_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       links <- up_stuff[["gostats_mf"]][["Link"]]
@@ -1729,7 +1729,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gostats_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gostats_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gostats_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       links <- up_stuff[["gostats_cc"]][["Link"]]
@@ -1757,7 +1757,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gprofiler_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gprofiler_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -1778,7 +1778,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gprofiler_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gprofiler_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1798,7 +1798,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=up_stuff[["gprofiler_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=up_stuff[["gprofiler_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=up_stuff[["gprofiler_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1833,7 +1833,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["goseq_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["goseq_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1853,7 +1853,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["goseq_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["goseq_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1873,7 +1873,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["goseq_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["goseq_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["goseq_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1898,7 +1898,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["cluster_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["cluster_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1918,7 +1918,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["cluster_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["cluster_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1938,7 +1938,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["cluster_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["cluster_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["cluster_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1963,7 +1963,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["topgo_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["topgo_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -1983,7 +1983,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["topgo_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["topgo_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2003,7 +2003,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["topgo_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["topgo_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["topgo_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2028,7 +2028,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gostats_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gostats_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2052,7 +2052,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gostats_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gostats_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2076,7 +2076,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gostats_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gostats_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gostats_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2105,7 +2105,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_bp"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gprofiler_bp"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gprofiler_bp"]], wb=wb, sheet=sheet,
                            title=glue("BP Results from {sheet}."),
                            start_row=new_row)
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
@@ -2126,7 +2126,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_mf"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gprofiler_mf"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gprofiler_mf"]], wb=wb, sheet=sheet,
                            title=glue("MF Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2146,7 +2146,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
       ##new_row <- new_row + 1
       ##openxlsx::writeDataTable(wb, sheet, x=down_stuff[["gprofiler_cc"]],
       ##                         tableStyle=table_style, startRow=new_row)
-      dfwrite <- write_xls(data=down_stuff[["gprofiler_cc"]], wb=wb, sheet=sheet,
+      dfwrite <- write_xlsx(data=down_stuff[["gprofiler_cc"]], wb=wb, sheet=sheet,
                            title=glue("CC Results from {sheet}."),
                            start_row=new_row)
       if (isTRUE(add_plots)) {
@@ -2315,7 +2315,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_mf"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["goseq_mf"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["goseq_mf"]], wb=wb, sheet=sheet,
                        title=glue("MF Results from {sheet}."),
                        start_row=new_row)
   new_row <- new_row + nrow(lst[["goseq_mf"]]) + 2
@@ -2324,7 +2324,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["goseq_cc"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["goseq_cc"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["goseq_cc"]], wb=wb, sheet=sheet,
                        title=glue("CC Results from {sheet}."),
                        start_row=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -2337,7 +2337,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_bp"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["cluster_bp"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["cluster_bp"]], wb=wb, sheet=sheet,
                        title=glue("BP Results from {sheet}."),
                        start_row=new_row)
   new_row <- new_row + nrow(lst[["cluster_bp"]]) + 2
@@ -2346,7 +2346,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_mf"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["cluster_mf"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["cluster_mf"]], wb=wb, sheet=sheet,
                        title=glue("MF Results from {sheet}."),
                        start_row=new_row)
   new_row <- new_row + nrow(lst[["cluster_mf"]]) + 2
@@ -2355,7 +2355,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["cluster_cc"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["cluster_cc"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["cluster_cc"]], wb=wb, sheet=sheet,
                        title=glue("CC Results from {sheet}."),
                        start_row=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -2368,7 +2368,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_bp"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["topgo_bp"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["topgo_bp"]], wb=wb, sheet=sheet,
                        title=glue("BP Results from {sheet}."),
                        start_row=new_row)
   new_row <- new_row + nrow(lst[["topgo_bp"]]) + 2
@@ -2377,7 +2377,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_mf"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["topgo_mf"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["topgo_mf"]], wb=wb, sheet=sheet,
                        title=glue("MF Results from {sheet}."),
                        start_row=new_row)
   new_row <- new_row + nrow(lst[["topgo_mf"]]) + 2
@@ -2386,7 +2386,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["topgo_cc"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["topgo_cc"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["topgo_cc"]], wb=wb, sheet=sheet,
                        title=glue("CC Results from {sheet}."),
                        start_row=new_row)
   openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
@@ -2399,7 +2399,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_bp"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["gostats_bp"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["gostats_bp"]], wb=wb, sheet=sheet,
                        title=glue("BP Results from {sheet}."),
                        start_row=new_row)
   links <- lst[["gostats_bp"]][["Link"]]
@@ -2412,7 +2412,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_mf"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["gostats_mf"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["gostats_mf"]], wb=wb, sheet=sheet,
                        title=glue("MF Results from {sheet}."),
                        start_row=new_row)
   links <- lst[["gostats_mf"]][["Link"]]
@@ -2425,7 +2425,7 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   ##new_row <- new_row + 1
   ##openxlsx::writeDataTable(wb, sheet, x=lst[["gostats_cc"]],
   ##                         tableStyle=table_style, startRow=new_row)
-  dfwrite <- write_xls(data=lst[["gostats_cc"]], wb=wb, sheet=sheet,
+  dfwrite <- write_xlsx(data=lst[["gostats_cc"]], wb=wb, sheet=sheet,
                        title=glue("CC Results from {sheet}."),
                        start_row=new_row)
   links <- lst[["gostats_cc"]][["Link"]]

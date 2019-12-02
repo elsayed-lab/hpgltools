@@ -4,11 +4,16 @@
 \alias{load_biomart_go}
 \title{Extract gene ontology information from biomart.}
 \usage{
-load_biomart_go(species = "hsapiens", overwrite = FALSE,
-  do_save = TRUE, host = "dec2015.archive.ensembl.org",
-  trymart = "ENSEMBL_MART_ENSEMBL", secondtry = "_gene",
+load_biomart_go(
+  species = "hsapiens",
+  overwrite = FALSE,
+  do_save = TRUE,
+  host = "dec2015.archive.ensembl.org",
+  trymart = "ENSEMBL_MART_ENSEMBL",
+  secondtry = "_gene",
   dl_rows = c("ensembl_gene_id", "go_accession"),
-  dl_rowsv2 = c("ensembl_gene_id", "go_id"))
+  dl_rowsv2 = c("ensembl_gene_id", "go_id")
+)
 }
 \arguments{
 \item{species}{Species to query.}
@@ -55,7 +60,4 @@ keep the annotation sets relatively consistent.
 \pkg{biomaRt}
   \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
   \code{\link[biomaRt]{getBM}}
-}
-\author{
-atb
 }

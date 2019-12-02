@@ -4,9 +4,13 @@
 \alias{plot_gvis_scatter}
 \title{Make an html version of a scatter plot.}
 \usage{
-plot_gvis_scatter(df, tooltip_data = NULL,
-  filename = "html/gvis_scatter.html", base_url = "",
-  trendline = NULL)
+plot_gvis_scatter(
+  df,
+  tooltip_data = NULL,
+  filename = "html/gvis_scatter.html",
+  base_url = "",
+  trendline = NULL
+)
 }
 \arguments{
 \item{df}{Df of two columns to compare.}

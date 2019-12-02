@@ -5,11 +5,21 @@
 \title{Extract the sets of genes which are significantly up/down regulated
 from the combined tables.}
 \usage{
-extract_significant_genes(combined, according_to = "all", lfc = 1,
-  p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, ma = TRUE,
-  p_type = "adj", invert_barplots = FALSE,
-  excel = "excel/significant_genes.xlsx", siglfc_cutoffs = c(0, 1, 2),
-  ...)
+extract_significant_genes(
+  combined,
+  according_to = "all",
+  lfc = 1,
+  p = 0.05,
+  sig_bar = TRUE,
+  z = NULL,
+  n = NULL,
+  ma = TRUE,
+  p_type = "adj",
+  invert_barplots = FALSE,
+  excel = "excel/significant_genes.xlsx",
+  siglfc_cutoffs = c(0, 1, 2),
+  ...
+)
 }
 \arguments{
 \item{combined}{Output from combine_de_tables().}

@@ -4,10 +4,20 @@
 \alias{edger_pairwise}
 \title{Set up a model matrix and set of contrasts to do pairwise comparisons using EdgeR.}
 \usage{
-edger_pairwise(input = NULL, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
-  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  force = FALSE, edger_method = "long", ...)
+edger_pairwise(
+  input = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = TRUE,
+  model_batch = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  extra_contrasts = NULL,
+  annot_df = NULL,
+  force = FALSE,
+  edger_method = "long",
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing data, normalization
@@ -70,7 +80,8 @@ the force argument will round the data and shoe-horn it into EdgeR.
 }
 \examples{
 \dontrun{
- pretend = edger_pairwise(data, conditions, batches)
+ expt <- create_expt(metadata="metadata.xlsx", gene_info=annotations)
+ pretend <- edger_pairwise(expt, model_batch="sva")
 }
 }
 \seealso{

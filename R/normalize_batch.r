@@ -86,18 +86,26 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   na_idx <- is.na(my_data)
   my_data[na_idx] <- 0
 
+  ## Different tools expect different inputs
   linear_mtrx <- NULL
+  ## So here I will be creating separate matrices on the linear and log scales.
   log2_mtrx <- NULL
+  ## I also want to record this along with the type of output returned by each method.
+  input_scale <- NULL
+  output_scale <- "linear"
   if (expt_state[["transform"]] == "linear" || expt_state[["transform"]] == "raw") {
     linear_mtrx <- as.matrix(my_data)
     log2_mtrx <- as.matrix(log2(linear_mtrx + 1))
+    input_scale <- "linear"
   } else if (expt_state[["transform"]] == "log2") {
     log2_mtrx <- as.matrix(my_data)
     linear_mtrx <- as.matrix((2 ^ my_data) - 1)
+    input_scale <- "log2"
   } else if (expt_state[["transform"]] == "log") {
     warning("Unexpected call for base e data.")
     log2_mtrx <- as.matrix(my_data / log(2))
     linear_mtrx <- as.matrix(exp(my_data) - 1)
+    input_scale <- "loge"
   }
 
   zero_rows <- rowSums(linear_mtrx, na.rm=TRUE) == 0
@@ -300,8 +308,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     "isva" = {
       message("Attempting isva surrogate estimation with ",
               chosen_surrogates, " surrogates.")
+      warning("isva, in my estimation, performs incredibly poorly.")
       type_color <- "darkgreen"
       condition_vector <- as.numeric(conditions)
+      batch_vector <- as.numeric(batches)
 
       confounder_lst <- list()
       if (is.null(confounders)) {
@@ -321,12 +331,11 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
         }
       }
       message("Estmated number of significant components: ", chosen_surrogates, ".")
-      surrogate_result <- isva::DoISVA(
-                                  log2_mtrx, condition_vector,
-                                  cf.m=NULL, factor.log=FALSE,
-                                  ncomp=chosen_surrogates, pvthCF=0.01,
-                                  th=0.05, icamethod="JADE")
+      surrogate_result <- my_doisva(data.m=log2_mtrx, pheno.v=condition_vector,
+                                    ncomp=chosen_surrogates,
+                                    icamethod="JADE")
       model_adjust <- as.matrix(surrogate_result[["isv"]])
+      output_scale <- "log2"
     },
     "limma" = {
       if (is.null(batch2)) {
@@ -355,7 +364,9 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
    ## count_table <- residuals(batch_fit, batch_voom[["E"]])
    ## This is still fubar!
    new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
-   new_counts <- (2 ^ new_counts) - 1
+   if (expt_state[["transform"]] == "raw") {
+     new_counts <- (2 ^ new_counts) - 1
+   }
  },
  "pca" = {
    message("Attempting pca surrogate estimation with ",
@@ -390,7 +401,6 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
    surrogate_result <- RUVSeq::RUVg(linear_mtrx, ruv_controls, k=chosen_surrogates)
    model_adjust <- surrogate_result[["W"]]
    source_counts <- surrogate_result[["normalizedCounts"]]
-   returned_scale <- "e"
  },
  "ruv_empirical" = {
    message("Attempting ruvseq empirical surrogate estimation with ",
@@ -529,7 +539,11 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   ## Only use counts_from_surrogates if the method does not provide counts on its own
   if (is.null(new_counts)) {
     new_counts <- counts_from_surrogates(data=surrogate_input, adjust=model_adjust,
-                                         design=my_design, ...)
+                                         design=my_design,
+                                         ...)
+    if (output_scale == "log2") {
+      new_counts <- (2 ^ new_counts) - 1
+    }
   }
 
   ret <- list(
@@ -1376,6 +1390,111 @@ I set it to 1 not knowing what its purpose is.")
     bayesdata <- (bayesdata * (sqrt(var.pooled) %*% t(rep(1, n.array)))) + stand.mean
     return(bayesdata)
   }
+}
+
+#' There are some funky scoping problems in isva::DoISVA().
+#'
+#' Thus I copy/pasted the function and attempted to address them here.
+my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
+                      th=0.05, ncomp=NULL, icamethod="fastICA") {
+  isva.o <- isvaFn(data.m, pheno.v, ncomp, icamethod)
+  ## The default values of selisv.idx and pv.m
+  selisv.idx <- 1:ncol(isva.o[["isv"]])
+  pv.m <- NULL
+  ## These change if cf.m is set.
+  if (!is.null(cf.m)) {
+    tmp.m <- cbind(pheno.v, cf.m)
+    treatfactor <- c(FALSE, factor.log)
+    pv.m <- matrix(nrow = ncol(isva.o$isv), ncol = 1 + ncol(cf.m))
+    colnames(pv.m) <- c("POI", colnames(cf.m))
+    for (c in 1:ncol(tmp.m)) {
+      if (treatfactor[c] == FALSE) {
+        for (sv in 1:ncol(isva.o[["isv"]])) {
+          lm.o <- lm(isva.o[["isv"]][, sv] ~ as.numeric(tmp.m[, c]))
+          pv.m[sv, c] <- summary(lm.o)[["coefficients"]][2, 4]
+        }
+      } else {
+        for (sv in 1:ncol(isva.o$isv)) {
+          lm.o <- lm(
+            isva.o$isv[, sv] ~ as.factor(tmp.m[, c]))
+          pv.m[sv, c] <- pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
+                            summary(lm.o)$fstat[3], lower.tail = FALSE)
+        }
+      }
+    }
+    print("Selecting ISVs")
+    selisv.idx <- vector()
+    for (sv in 1:nrow(pv.m)) {
+      ncf <- length(which(pv.m[sv, 2:ncol(pv.m)] < pvthCF))
+      minpv <- min(pv.m[sv, 2:ncol(pv.m)])
+      phpv <- pv.m[sv, 1]
+      if (ncf > 0) {
+        if (minpv < phpv) {
+          selisv.idx <- c(selisv.idx, sv)
+        }
+      }
+    }
+    if (length(selisv.idx) == 0) {
+      print("No ISVs selected because none correlated with the given confounders. Rerun ISVA with cf.m=NULL option")
+      stop
+    }
+  }
+
+  print("Running final multivariate regressions with selected ISVs")
+  selisv.m <- matrix(isva.o[["isv"]][, selisv.idx], ncol=length(selisv.idx))
+  print(selisv.m)
+  mod <- model.matrix(~ pheno.v + selisv.m)
+  modNULL <- model.matrix(~ selisv.m)
+  isv_fit <- limma::lmFit(data.m, design=modNULL)
+  new_counts <- limma::residuals.MArrayLM(isv_fit, data.m)
+  df1 <- dim(mod)[2]
+  df0 <- dim(modNULL)[2]
+  pv.v <- rep(0, nrow(data.m))
+  Id <- diag(ncol(data.m))
+  resid <- data.m %*%
+    (Id - mod %*% solve(t(mod) %*% mod) %*% t(mod))
+  rss1 <- rowSums(resid * resid)
+  residNULL <- data.m %*%
+    (Id - modNULL %*% solve(t(modNULL) %*% modNULL) %*% t(modNULL))
+  rssNULL <- rowSums(residNULL * residNULL)
+  fstats <- ((rssNULL - rss1) / (df1 - df0)) /
+    (rss1 / (ncol(data.m) - df1))
+  pv.v <- 1 - pf(fstats,
+                 df1=(df1 - df0),
+                 df2=(ncol(data.m) - df1))
+  pv.s <- sort(pv.v, decreasing=FALSE, index.return=TRUE)
+  qv.v <- p.adjust(pv.s[["x"]])
+  ##qv.v <- qvalue(pv.s[["x"]])[["qvalue"]]
+  ntop <- length(which(qv.v < th))
+  sig_mtrx <- as.matrix(data.m[pred.idx, ])
+  print(paste("Number of DEGs after ISV adjustment = ",
+              ntop, sep = ""))
+  if (ntop > 0) {
+    pred.idx <- pv.s[["ix"]][1:ntop]
+    lm.o <- lm(t(data.m) ~ pheno.v + selisv.m)
+    lm_sum <- summary(lm.o)
+    tstats.v <- unlist(lapply(lm_sum,
+                              function(x) {
+                                x[["coefficients"]][2, 3]
+                              }))
+    lm.m <- cbind(tstats.v, pv.s$x, qv.v)
+    colnames(lm.m) <- c("t-stat", "P-value", "q-value")
+  }
+  retlist <- list(
+    "spv" = pv.s[["x"]],
+    "qv" = qv.v,
+    "rk" = pv.s[["ix"]],
+    "ndeg" = ntop,
+    "deg" = pred.idx,
+    "lm" = lm.m,
+    "isv" = selisv.m,
+    "nsv" = length(selisv.idx),
+    "pvCF" = pv.m,
+    "selisv" = selisv.idx)
+  return(retlist)
+##  return(list(spv = pv.s$x, qv = qv.v, rk = pv.s$ix, ndeg = ntop,
+##              deg = pred.idx, lm = lm.m, isv = selisv.m, nsv = length(selisv.idx),
+##              pvCF = pv.m, selisv = selisv.idx))
 }
 
 ## EOF

@@ -4,10 +4,20 @@
 \alias{do_topgo}
 \title{An attempt to make topgo invocations a bit more standard.}
 \usage{
-do_topgo(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
-  selector = "topDiffGenes", sigforall = TRUE, numchar = 300,
-  pval_column = "adj.P.Val", overwrite = FALSE, cutoff = 0.05,
-  densities = FALSE, pval_plots = TRUE)
+do_topgo(
+  type,
+  go_map = NULL,
+  fisher_genes = NULL,
+  ks_genes = NULL,
+  selector = "topDiffGenes",
+  sigforall = TRUE,
+  numchar = 300,
+  pval_column = "adj.P.Val",
+  overwrite = FALSE,
+  cutoff = 0.05,
+  densities = FALSE,
+  pval_plots = TRUE
+)
 }
 \arguments{
 \item{type}{Type of topgo search to perform: fisher, KS, EL, or weight.}

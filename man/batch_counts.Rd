@@ -4,8 +4,16 @@
 \alias{batch_counts}
 \title{Perform different batch corrections using limma, sva, ruvg, and cbcbSEQ.}
 \usage{
-batch_counts(count_table, design, batch = TRUE, batch1 = "batch",
-  expt_state = NULL, batch2 = NULL, noscale = TRUE, ...)
+batch_counts(
+  count_table,
+  design,
+  batch = TRUE,
+  batch1 = "batch",
+  expt_state = NULL,
+  batch2 = NULL,
+  noscale = TRUE,
+  ...
+)
 }
 \arguments{
 \item{count_table}{Matrix of (pseudo)counts.}

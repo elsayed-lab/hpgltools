@@ -4,8 +4,13 @@
 \alias{flanking_sequence}
 \title{Extract sequence flanking a set of annotations (generally coding sequences)}
 \usage{
-flanking_sequence(bsgenome, annotation, distance = 200, type = "gene",
-  prefix = "")
+flanking_sequence(
+  bsgenome,
+  annotation,
+  distance = 200,
+  type = "gene",
+  prefix = ""
+)
 }
 \arguments{
 \item{bsgenome}{Genome sequence}

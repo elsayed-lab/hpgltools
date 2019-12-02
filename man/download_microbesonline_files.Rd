@@ -20,6 +20,3 @@ Microbesonline provides an interesting set of file formats to download.  Each
 format proves useful under one condition or another, ergo this defaults to
 iterating through them all and getting every file.
 }
-\author{
-atb
-}

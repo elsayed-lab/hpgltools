@@ -4,8 +4,13 @@
 \alias{intersect_signatures}
 \title{Take a result from simple_gsva(), a list of gene IDs, and intersect them.}
 \usage{
-intersect_signatures(gsva_result, lst, freq_cutoff = 2,
-  sig_weights = TRUE, gene_weights = TRUE)
+intersect_signatures(
+  gsva_result,
+  lst,
+  freq_cutoff = 2,
+  sig_weights = TRUE,
+  gene_weights = TRUE
+)
 }
 \arguments{
 \item{gsva_result}{Result from simple_gsva().}

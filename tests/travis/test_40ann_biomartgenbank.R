@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("40ann_biomartgenbank.R: Does biomart function?
-  123456789\n")
+  1234567\n")
 
 limma <- new.env()
 load("de_limma.rda", envir=limma)
@@ -12,7 +12,7 @@ sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
 dmel_annotations <- load_biomart_annotations(species="dmelanogaster")
 dmel_go <- load_biomart_go(species="dmelanogaster")
 
-expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
+expected_lengths <- c(1773, 816, 2358, NA, 630, 1161)
 actual_lengths <- head(dmel_annotations[["annotation"]][["cds_length"]])
 ## 01
 test_that("Did the gene lengths come out?", {

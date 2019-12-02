@@ -4,8 +4,16 @@
 \alias{plot_intensity_mz}
 \title{Plot mzXML peak intensities with respect to m/z.}
 \usage{
-plot_intensity_mz(mzxml_data, loess = FALSE, alpha = 0.5, ms1 = TRUE,
-  ms2 = TRUE, x_scale = NULL, y_scale = NULL, ...)
+plot_intensity_mz(
+  mzxml_data,
+  loess = FALSE,
+  alpha = 0.5,
+  ms1 = TRUE,
+  ms2 = TRUE,
+  x_scale = NULL,
+  y_scale = NULL,
+  ...
+)
 }
 \arguments{
 \item{mzxml_data}{The data structure from extract_mzxml or whatever it is.}

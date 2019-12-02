@@ -5,10 +5,20 @@
 \title{Set up a model matrix and set of contrasts for pairwise comparisons using
 voom/limma.}
 \usage{
-limma_pairwise(input = NULL, conditions = NULL, batches = NULL,
-  model_cond = TRUE, model_batch = TRUE, model_intercept = FALSE,
-  alt_model = NULL, extra_contrasts = NULL, annot_df = NULL,
-  libsize = NULL, force = FALSE, ...)
+limma_pairwise(
+  input = NULL,
+  conditions = NULL,
+  batches = NULL,
+  model_cond = TRUE,
+  model_batch = TRUE,
+  model_intercept = FALSE,
+  alt_model = NULL,
+  extra_contrasts = NULL,
+  annot_df = NULL,
+  libsize = NULL,
+  force = FALSE,
+  ...
+)
 }
 \arguments{
 \item{input}{Dataframe/vector or expt class containing count tables,

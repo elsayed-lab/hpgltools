@@ -4,8 +4,13 @@
 \alias{extract_mzXML_scans}
 \title{Parse a mzXML file and return the relevant data.}
 \usage{
-extract_mzXML_scans(file, id = NULL, write_acquisitions = TRUE,
-  allow_window_overlap = FALSE, start_add = 0)
+extract_mzXML_scans(
+  file,
+  id = NULL,
+  write_acquisitions = TRUE,
+  allow_window_overlap = FALSE,
+  start_add = 0
+)
 }
 \arguments{
 \item{file}{Input mzXML file to parse.}

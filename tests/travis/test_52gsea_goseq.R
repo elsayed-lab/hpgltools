@@ -26,7 +26,8 @@ actual <- nrow(goseq_result[["bp_interesting"]])
 test_that("Do we get the expected number of interesting bp categories?", {
     expect_equal(expected, actual, tolerance=2)
 })
-expected <- 9
+
+expected <- 8
 actual <- nrow(goseq_result[["cc_interesting"]])
 test_that("Do we get the expected number of interesting cc categories?", {
     expect_equal(expected, actual)
@@ -40,16 +41,14 @@ test_that("Are the goseq interesting results as expected (mf categories)?", {
 })
 
 expected <- c("GO:0000422", "GO:0000578", "GO:0001508",
-              "GO:0001676", "GO:0002121", "GO:0002385")
+              "GO:0001676", "GO:0002121", "GO:0002752")
 actual <- head(sort(rownames(goseq_result[["bp_interesting"]])))
 test_that("Are the goseq interesting results as expected (bp categories)?", {
     expect_equal(expected, actual)
 })
 
-##expected <- c("GO:0005578", "GO:0005639", "GO:0005859",
-##              "GO:0005967", "GO:0009897", "GO:0016607")
-expected <- c("GO:0005639", "GO:0005859", "GO:0005967",
-              "GO:0009897", "GO:0016607", "GO:0017090")
+expected <- c("GO:0005639", "GO:0005859", "GO:0009897",
+              "GO:0016324", "GO:0016607", "GO:0017090")
 actual <- head(sort(rownames(goseq_result[["cc_interesting"]])))
 test_that("Are the goseq interesting results as expected (cc categories)?", {
     expect_equal(expected, actual)
@@ -60,7 +59,7 @@ test_that("Are the goseq interesting results as expected (cc categories)?", {
 expected <- c(0.01983003, 0.02120141, 0.02403846, 0.02857143, 0.04651163, 0.06666667)
 actual <- head(goseq_result[["pvalue_plots"]][["mfp_plot_over"]][["data"]][["score"]])
 test_that("Are the goseq results as expected (mf pvalues)?", {
-    expect_equal(expected, actual, tolerance=0.000001)
+    expect_equal(expected, actual, tolerance=0.01)
 })
 
 expected <- c(0.08333333, 0.09090909, 0.09090909, 0.09090909, 0.10000000, 0.10000000)

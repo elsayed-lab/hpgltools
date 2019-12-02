@@ -1,6 +1,8 @@
-#' Make a MA plot of some limma output with pretty colors and shapes
+#' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
+#' This function should be reworked following my rewrite of combine_de_tables().
+#' It is certainly possible to make the logic here much simpler now.
 #'
 #' @param pairwise The result from all_pairwise(), which should be changed to
 #'   handle other invocations too.
@@ -37,6 +39,19 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   } else {
     wanted_table <- table
   }
+  if ("combined_de" %in% class(pairwise)) {
+    wanted_tablename <- pairwise[["kept"]][[wanted_table]]
+    actual_tablenames <- pairwise[["keepers"]][[wanted_table]]
+    actual_numerator <- actual_tablenames[[1]]
+    actual_denominator <- actual_tablenames[[2]]
+    actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
+    if (actual_tablename != wanted_tablename) {
+      invert <- TRUE
+    }
+    wanted_table <- wanted_tablename
+    pairwise <- pairwise[["input"]]
+    print(wanted_table)
+  }
 
   ## if it is in fact all_pairwise, then there should be a set of
   ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
@@ -44,10 +59,6 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
   if (class(pairwise)[1] == "all_pairwise") {
     table_source <- glue::glue("{type}_pairwise")
     pairwise <- pairwise[[type]]
-  } else if (class(pairwise)[1] == "combined_de" |
-             class(pairwise)[1] == "combined_table") {
-    ## Then this came from combine_de...
-    table_source <- "combined"
   } else if (!is.null(pairwise[["method"]])) {
     table_source <- glue::glue("{pairwise[['method']]}_pairwise")
   } else {
@@ -91,7 +102,11 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "basic_pairwise") {
+    ## basic_pairwise() may have columns which are 'numerator_median' or 'numerator_mean'.
     expr_col <- "numerator_median"
+    if (!is.null(pairwise[["all_tables"]][[1]][["numerator_mean"]])) {
+      expr_col <- "numerator_mean"
+    }
     fc_col <- "logFC"  ## The most common
     if (p_type == "adj") {
       p_col <- "adjp"
@@ -105,7 +120,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     if (p_type == "adj") {
       p_col <- "ebseq_adjp"
     } else {
-      p_col <- "ebseq_p"
+      p_col <- "ebseq_ppde"
     }
     all_tables <- pairwise[["all_tables"]]
   } else if (table_source == "combined") {
@@ -131,6 +146,7 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
 
+  possible_tables <- names(all_tables)
   the_table <- NULL
   ## Now that we have the columns, figure out which table.
   if (class(all_tables) == "data.frame") {
@@ -146,7 +162,6 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
     the_table <- wanted_table
     revname <- strsplit(x=the_table, split="_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    possible_tables <- names(all_tables)
     if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
@@ -199,12 +214,12 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
       !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
       table=the_table, expr_col=expr_col, fc_col=fc_col, p_col=p_col,
-      logfc=logfc, p=p, invert=invert)
-    ##...)
+      logfc=logfc, p=p, invert=invert,
+      ...)
     vol_material <- plot_volcano_de(
       table=the_table, fc_col=fc_col, p_col=p_col,
-      logfc=logfc, p=p)
-    ##...)
+      logfc=logfc, p=p,
+      ...)
   }
 
   retlist <- list(
@@ -243,6 +258,8 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #'  \code{\link{plot_linear_scatter}}
 #' @examples
 #' \dontrun{
+#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+#'  pairwise_output <- all_pairwise(expt)
 #'  scatter_plot <- extract_coefficient_scatter(pairwise_output,
 #'                                              type="deseq", x="uninfected", y="infected")
 #' }
@@ -286,6 +303,8 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
     coefficients <- as.data.frame(output[["coefficients"]])
     thenames <- colnames(output[["coefficients"]])
   } else if (type == "basic") {
+    thenames <- names(output[["conditions_table"]])
+  } else if (type == "ebseq") {
     thenames <- names(output[["conditions_table"]])
   } else {
     stop("I do not know what type you wish to query.")
@@ -331,9 +350,28 @@ extract_coefficient_scatter <- function(output, toptable=NULL, type="limma", x=1
       return(NULL)
     }
     coefficient_df <- coefficients[, c(xname, yname)]
+  } else if (type == "ebseq") {
+    tables <- names(output[["all_tables"]])
+    verted <- glue::glue("{xname}_vs_{yname}")
+    inverted <- glue::glue("{yname}_vs_{xname}")
+    coefficient_df <- data.frame()
+    if (verted %in% tables) {
+      table_idx <- verted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c1mean", "ebseq_c2mean")]
+    } else if (inverted %in% tables) {
+      table_idx <- inverted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c2mean", "ebseq_c1mean")]
+    } else {
+      stop("Did not find the table for ebseq.")
+    }
+    colnames(coefficient_df) <- c(xname, yname)
+    coefficient_df[[1]] <- log2(coefficient_df[[1]])
+    coefficient_df[[2]] <- log2(coefficient_df[[2]])
   } else if (type == "basic") {
     coefficient_df <- output[["medians"]]
-    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
+    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
       message("Did not find ", xname, " or ", yname, ".")
       return(NULL)
     }
@@ -382,22 +420,6 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
     }
     return(retlist)
   }
-  combine_tables <- function(d, e, l) {
-    ddf <- as.data.frame(l[, "limma_logfc"])
-    rownames(ddf) <- rownames(l)
-    colnames(ddf) <- c("limma_logfc")
-    ddf <- merge(ddf, e, by="row.names", all=TRUE)
-    rownames(ddf) <- ddf[["Row.names"]]
-    ddf <- ddf[, -1]
-    ddf <- ddf[, c("limma_logfc.x", "edger_logfc")]
-    ddf <- merge(ddf, d, by="row.names", all=TRUE)
-    rownames(ddf) <- ddf[["Row.names"]]
-    ddf <- ddf[, -1]
-    ddf <- ddf[, c("limma_logfc.x", "edger_logfc.x", "deseq_logfc")]
-    colnames(ddf) <- c("limma", "edger", "deseq")
-    return(ddf)
-  }
-
   limma_p <- "limma_p"
   deseq_p <- "deseq_p"
   edger_p <- "edger_p"
@@ -413,21 +435,14 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
                                 column="edger_logfc", p_column=edger_p, p=p))
   deseq_sig <- sm(get_sig_genes(table, lfc=lfc,
                                 column="deseq_logfc", p_column=deseq_p, p=p))
-  comp_up <- combine_tables(deseq_sig[["up_genes"]],
-                            edger_sig[["up_genes"]],
-                            limma_sig[["up_genes"]])
-  comp_down <- combine_tables(deseq_sig[["down_genes"]],
-                              edger_sig[["down_genes"]],
-                              limma_sig[["down_genes"]])
-
   up_venn_lst <- list(
-    "deseq" = comp_up[["deseq"]],
-    "edger" = comp_up[["edger"]],
-    "limma" = comp_up[["limma"]])
+    "deseq" = rownames(deseq_sig[["up_genes"]]),
+    "edger" = rownames(edger_sig[["up_genes"]]),
+    "limma" = rownames(limma_sig[["up_genes"]]))
   down_venn_lst <- list(
-    "deseq" = comp_down[["deseq"]],
-    "edger" = comp_down[["edger"]],
-    "limma" = comp_down[["limma"]])
+    "deseq" = rownames(deseq_sig[["down_genes"]]),
+    "edger" = rownames(edger_sig[["down_genes"]]),
+    "limma" = rownames(limma_sig[["down_genes"]]))
 
   up_venn <- Vennerable::Venn(Sets=up_venn_lst)
   down_venn <- Vennerable::Venn(Sets=down_venn_lst)
@@ -439,10 +454,8 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
   retlist <- list(
     "up_venn" = up_venn,
     "up_noweight" = up_venn_noweight,
-    "up_data" = comp_up,
     "down_venn" = down_venn,
-    "down_noweight" = down_venn_noweight,
-    "down_data" = comp_down)
+    "down_noweight" = down_venn_noweight)
   return(retlist)
 }
 
@@ -450,20 +463,24 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #'
 #' Plot a multi-histogram containing (adjusted)p-values.
 #'
+#' The assumption of this plot is that the adjustment will significantly
+#' decrease the representation of genes in the 'highly significant' range of
+#' p-values.  However, it is hoped that it will not utterly remove them.
+#'
 #' @param combined Table to extract the values from.
 #' @param type If provided, extract the {type}_p and {type}_adjp columns.
 #' @param p_type Which type of pvalue to show (adjusted, raw, or all)?
 #' @param columns Otherwise, extract whatever columns are provided.
 #' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.
-plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, ...) {
+plot_de_pvals <- function(combined_data, type="limma", p_type="both", columns=NULL, ...) {
   if (is.null(type) & is.null(columns)) {
     stop("Some columns are required to extract p-values.")
   }
   if (is.null(columns)) {
     columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
   }
-  plot_df <- combined[, columns]
+  plot_df <- combined_data[, columns]
   for (c in 1:ncol(plot_df)) {
     plot_df[[c]] <- as.numeric(plot_df[[c]])
   }
@@ -495,6 +512,7 @@ plot_de_pvals <- function(combined, type="limma", p_type="both", columns=NULL, .
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
+#'  pairwise_result <- all_pairwise(expt)
 #'  crazy_sigplots <- plot_num_siggenes(pairwise_result)
 #' }
 #' @export
@@ -760,6 +778,9 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
+#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+#'  pairwise_result <- all_pairwise(expt)
+#'  combined_result <- combine_de_tables(pairwise_result)
 #'  ## Damn I wish I were smrt enough to make this elegant, but I cannot.
 #'  barplots <- significant_barplots(combined_result)
 #' }

@@ -4,10 +4,23 @@
 \alias{plot_pca}
 \title{Make a PCA plot describing the samples' clustering.}
 \usage{
-plot_pca(data, design = NULL, plot_colors = NULL, plot_title = NULL,
-  plot_size = 5, plot_alpha = NULL, plot_labels = NULL,
-  size_column = NULL, pc_method = "fast_svd", x_pc = 1, y_pc = 2,
-  num_pc = NULL, expt_names = NULL, label_chars = 10, ...)
+plot_pca(
+  data,
+  design = NULL,
+  plot_colors = NULL,
+  plot_title = NULL,
+  plot_size = 5,
+  plot_alpha = NULL,
+  plot_labels = NULL,
+  size_column = NULL,
+  pc_method = "fast_svd",
+  x_pc = 1,
+  y_pc = 2,
+  num_pc = NULL,
+  expt_names = NULL,
+  label_chars = 10,
+  ...
+)
 }
 \arguments{
 \item{data}{an expt set of samples.}

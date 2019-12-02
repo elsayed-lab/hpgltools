@@ -4,9 +4,18 @@
 \alias{intersect_significant}
 \title{Find the sets of intersecting significant genes}
 \usage{
-intersect_significant(combined, lfc = 1, p = 0.05, padding_rows = 2,
-  z = NULL, p_type = "adj", selectors = c("limma", "deseq", "edger"),
-  order = "inverse", excel = "excel/intersect_significant.xlsx", ...)
+intersect_significant(
+  combined,
+  lfc = 1,
+  p = 0.05,
+  padding_rows = 2,
+  z = NULL,
+  p_type = "adj",
+  selectors = c("limma", "deseq", "edger"),
+  order = "inverse",
+  excel = "excel/intersect_significant.xlsx",
+  ...
+)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables().}
@@ -31,7 +40,20 @@ opposed to a,b,ab,c,ac,bc,abc.}
 
 \item{...}{Extra arguments for extract_significant_genes() and friends.}
 }
+\value{
+List containing the intersections between the various DE methods for
+  both the up and down sets of genes.  It should also provide some venn
+  diagrams showing the degree of similarity between the methods.
+}
 \description{
 Use extract_significant_genes() to find the points of agreement between
 limma/deseq/edger.
+}
+\examples{
+ \dontrun{
+ expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
+ big_result <- all_pairwise(expt, model_batch=FALSE)
+ pretty <- combine_de_tables(big_result, excel="excel/combined_expt.xlsx")
+ intersect <- intersect_significant(pretty, excel="excel/intersecting_genes.xlsx")
+}
 }
