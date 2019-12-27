@@ -4,7 +4,13 @@
 \alias{snps_vs_genes}
 \title{Make a summary of the observed snps by gene ID.}
 \usage{
-snps_vs_genes(expt, snp_result, start_col = "start", end_col = "end")
+snps_vs_genes(
+  expt,
+  snp_result,
+  start_col = "start",
+  end_col = "end",
+  name_col = "seqnames"
+)
 }
 \arguments{
 \item{expt}{The original expressionset.}
@@ -32,5 +38,5 @@ gene.  This function attempts to answer that question.
 }
 }
 \seealso{
-\code{\link{snp_intersections}}
+\code{\link{snps_intersections}}
 }

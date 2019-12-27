@@ -1395,9 +1395,18 @@ I set it to 1 not knowing what its purpose is.")
 #' There are some funky scoping problems in isva::DoISVA().
 #'
 #' Thus I copy/pasted the function and attempted to address them here.
+#'
+#' @param data.m Input matrix.
+#' @param pheno.v Vector of conditions of interest in the data.
+#' @param cf.m Matrix of confounded conditions in the data.
+#' @param factor.log I forget.
+#' @param pvthCF Minimal p-value for considering.
+#' @param th threshold for inclusion.
+#' @param ncomp Number of SVA components to estimate.
+#' @param icamethod Which ICA implementation to use?
 my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
                       th=0.05, ncomp=NULL, icamethod="fastICA") {
-  isva.o <- isvaFn(data.m, pheno.v, ncomp, icamethod)
+  isva.o <- doisva::isvaFn(data.m, pheno.v, ncomp, icamethod)
   ## The default values of selisv.idx and pv.m
   selisv.idx <- 1:ncol(isva.o[["isv"]])
   pv.m <- NULL
@@ -1417,8 +1426,8 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
         for (sv in 1:ncol(isva.o$isv)) {
           lm.o <- lm(
             isva.o$isv[, sv] ~ as.factor(tmp.m[, c]))
-          pv.m[sv, c] <- pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
-                            summary(lm.o)$fstat[3], lower.tail = FALSE)
+          pv.m[sv, c] <- isva::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
+                                  summary(lm.o)$fstat[3], lower.tail = FALSE)
         }
       }
     }

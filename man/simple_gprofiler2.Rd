@@ -58,7 +58,26 @@ genes.}
 
 \item{do_hp}{Do the hp search?}
 
+\item{do_hpa}{Do the hpa search?}
+
+\item{do_wp}{Do the wp search?}
+
 \item{significant}{Only return the statistically significant hits?}
+
+\item{exclude_iea}{Passed directly to gprofiler2.}
+
+\item{do_under}{Perform under-representation search?}
+
+\item{evcodes}{Get the set of evcodes in the data?  This makes it take
+longer.}
+
+\item{threshold}{p-value 'significance' threshold.}
+
+\item{adjp}{Method to adjust p-values.}
+
+\item{domain_scope}{Passed to gprofiler2.}
+
+\item{bg}{Background genes.}
 
 \item{pseudo_gsea}{Is the data in a ranked order by significance?}
 
@@ -72,7 +91,9 @@ entrez or whatever, translate it!}
 a list of results for go, kegg, reactome, and a few more.
 }
 \description{
-Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
+This is the beginning of a reimplementation to use gprofiler2.  However,
+AFAICT gprofiler2 does not yet actually work for anything other than their GO
+data.
 }
 \examples{
 \dontrun{

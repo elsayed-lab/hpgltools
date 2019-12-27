@@ -9,7 +9,7 @@ combine_expts(
   expt2,
   condition = "condition",
   batch = "batch",
-  merge_meta = FALSE
+  merge_meta = TRUE
 )
 }
 \arguments{

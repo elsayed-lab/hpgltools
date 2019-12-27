@@ -27,6 +27,9 @@
 write_xlsx <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rownames=TRUE,
                       start_row=1, start_col=1, title=NULL, ...) {
   arglist <- list(...)
+  if (is.null(data)) {
+    return(NULL)
+  }
   if ("matrix" %in% class(data) | "character" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors=FALSE)
   }

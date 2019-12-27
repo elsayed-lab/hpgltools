@@ -23,10 +23,15 @@ extract_keepers_single(
   include_limma,
   include_basic,
   excludes,
-  padj_type
+  padj_type,
+  loess = FALSE
 )
 }
 \arguments{
+\item{apr}{Data from all_pairwise().}
+
+\item{extracted}{Tables extracted in combine_de_tables().}
+
 \item{keepers}{In this case, one may assume either NULL or 'all'.}
 
 \item{table_names}{The set of tables produced by all_pairwise().}
@@ -61,6 +66,8 @@ experimental metadata.}
 \item{excludes}{Set of genes to exclude.}
 
 \item{padj_type}{Choose a specific p adjustment.}
+
+\item{loess}{Add a loess to plots?}
 }
 \description{
 When a single 'keeper' contrast is specified, find and extract it.

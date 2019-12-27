@@ -40,6 +40,8 @@ combine_single_de_table(
 
 \item{table_name}{Name of the table to merge.}
 
+\item{final_table_names}{Vector of the final table names.}
+
 \item{annot_df}{Add some annotation information?}
 
 \item{do_inverse}{Invert the fold changes?}
