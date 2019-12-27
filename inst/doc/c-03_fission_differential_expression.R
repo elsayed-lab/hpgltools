@@ -1,4 +1,4 @@
-## ----options, include=FALSE----------------------------------------------
+## ----options, include=FALSE---------------------------------------------------
 ## These are the options I tend to favor
 library("hpgltools")
 ## tt <- devtools::load_all("~/hpgltools")
@@ -17,12 +17,12 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "c-03_fission_differential_expression.Rmd"
 
-## ----setup---------------------------------------------------------------
+## ----setup--------------------------------------------------------------------
 library(hpgltools)
 tt <- sm(library(fission))
 tt <- data(fission)
 
-## ----spombe_annotations--------------------------------------------------
+## ----spombe_annotations-------------------------------------------------------
 pombe_annotations <- sm(load_biomart_annotations(
   host="fungi.ensembl.org",
   trymart="fungal_mart",
@@ -36,7 +36,7 @@ rownames(annotations) <- make.names(gsub(pattern="\\.\\d+$",
                                          replacement="",
                                          x=rownames(annotations)), unique=TRUE)
 
-## ----data_import---------------------------------------------------------
+## ----data_import--------------------------------------------------------------
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
 ## Make conditions and batches
@@ -52,14 +52,14 @@ fission_expt <- create_expt(metadata=meta,
                             count_dataframe=fission_data,
                             gene_info=annotations)
 
-## ----simple_subset-------------------------------------------------------
+## ----simple_subset------------------------------------------------------------
 fun_data <- subset_expt(fission_expt,
                         subset="condition=='wt.120'|condition=='wt.30'")
 fun_filt <- normalize_expt(fun_data, filter="simple")
 fun_norm <- sm(normalize_expt(fun_filt, batch="limma", norm="quant",
                               transform="log2", convert="cpm"))
 
-## ----simple_limma--------------------------------------------------------
+## ----simple_limma-------------------------------------------------------------
 limma_comparison <- sm(limma_pairwise(fun_data))
 names(limma_comparison$all_tables)
 summary(limma_comparison$all_tables$wt30_vs_wt120)
@@ -71,7 +71,7 @@ ma_wt_mut <- extract_de_plots(limma_comparison, type="limma")
 ma_wt_mut$ma$plot
 ma_wt_mut$volcano$plot
 
-## ----simple_deseq2-------------------------------------------------------
+## ----simple_deseq2------------------------------------------------------------
 deseq_comparison <- sm(deseq2_pairwise(fun_data))
 summary(deseq_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(deseq_comparison, type="deseq",
@@ -81,7 +81,7 @@ plots_wt_mut <- extract_de_plots(deseq_comparison, type="deseq")
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
-## ----simple_edger1-------------------------------------------------------
+## ----simple_edger1------------------------------------------------------------
 edger_comparison <- sm(edger_pairwise(fun_data, model_batch=TRUE))
 plots_wt_mut <- extract_de_plots(edger_comparison, type="edger")
 scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type="edger",
@@ -90,7 +90,7 @@ scatter_wt_mut$scatter
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
-## ----simple_basic--------------------------------------------------------
+## ----simple_basic-------------------------------------------------------------
 basic_comparison <- sm(basic_pairwise(fun_data))
 summary(basic_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type="basic",
@@ -100,7 +100,7 @@ plots_wt_mut <- extract_de_plots(basic_comparison, type="basic")
 plots_wt_mut$ma$plot
 plots_wt_mut$volcano$plot
 
-## ----simple_all----------------------------------------------------------
+## ----simple_all---------------------------------------------------------------
 all_comparisons <- sm(all_pairwise(fun_data, model_batch=TRUE, parallel=FALSE))
 all_combined <- sm(combine_de_tables(all_comparisons, excel=FALSE))
 head(all_combined$data[[1]], n=3)
@@ -117,7 +117,7 @@ yeast_barplots$limma
 yeast_barplots$edger
 yeast_barplots$deseq
 
-## ----ontology_setup------------------------------------------------------
+## ----ontology_setup-----------------------------------------------------------
 limma_results <- limma_comparison$all_tables
 ## The set of comparisons performed
 names(limma_results)
@@ -140,7 +140,7 @@ pombe_goids <- biomaRt::getBM(attributes=c("pombase_transcript", "go_id"),
                               values=gene_names, mart=pombe_mart)
 colnames(pombe_goids) <- c("ID", "GO")
 
-## ----ontology_setup_hpgltools--------------------------------------------
+## ----ontology_setup_hpgltools-------------------------------------------------
 ## In theory, the above should work with a single function call:
 pombe_goids_simple <- load_biomart_go(species="spombe", overwrite=TRUE,
                                       dl_rows=c("pombase_transcript", "go_id"),
@@ -169,7 +169,7 @@ gff_from_txdb <- GenomicFeatures::asGFF(pombe)
 gff_from_txdb$ID <- gsub(x=gff_from_txdb$ID, pattern="GeneID:", replacement="")
 written_gff <- rtracklayer::export.gff3(gff_from_txdb, con="pombe.gff")
 
-## ----test_goseq----------------------------------------------------------
+## ----test_goseq---------------------------------------------------------------
 summary(updown_genes)
 test_genes <- updown_genes$down_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
@@ -184,7 +184,7 @@ goseq_result <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_
 head(goseq_result$alldata)
 goseq_result$pvalue_plots$bpp_plot
 
-## ----test_cp, eval=FALSE-------------------------------------------------
+## ----test_cp, eval=FALSE------------------------------------------------------
 #  ## holy crap makeOrgPackageFromNCBI is slow, no slower than some of mine, so who am I to complain.
 #  orgdb <- AnnotationForge::makeOrgPackageFromNCBI(
 #                              version="0.1", author="atb <abelew@gmail.com>",
@@ -204,7 +204,7 @@ goseq_result$pvalue_plots$bpp_plot
 #  cp_result[["pvalue_plots"]][["ego_all_mf"]]
 #  ## Yay bar plots!
 
-## ----test_tp-------------------------------------------------------------
+## ----test_tp------------------------------------------------------------------
 ## Get rid of those stupid terminal .1s.
 rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
 pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
@@ -213,7 +213,7 @@ tp_result <- sm(simple_topgo(sig_genes=test_genes, go_db=pombe_goids, pval_colum
 tp_result[["pvalue_plots"]][["mfp_plot_over"]]
 tp_result[["pvalue_plots"]][["bpp_plot_over"]]
 
-## ----gst_test------------------------------------------------------------
+## ----gst_test-----------------------------------------------------------------
 ## Get rid of those stupid terminal .1s.
 ##rownames(test_genes) <- gsub(pattern=".1$", replacement="", x=rownames(test_genes))
 pombe_goids[["ID"]] <- gsub(pattern=".1$", replacement="", x=pombe_goids[["ID"]])
@@ -226,6 +226,6 @@ gst_result <- sm(simple_gostats(sig_genes=test_genes, go_db=pombe_goids, univers
 gst_result[["pvalue_plots"]][["mfp_plot_over"]]
 gst_result[["pvalue_plots"]][["bpp_plot_over"]]
 
-## ----sysinfo, results="asis"---------------------------------------------
+## ----sysinfo, results="asis"--------------------------------------------------
 pander::pander(sessionInfo())
 

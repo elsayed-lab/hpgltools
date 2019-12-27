@@ -23,10 +23,15 @@ extract_keepers_all(
   include_limma,
   include_basic,
   excludes,
-  padj_type
+  padj_type,
+  loess = FALSE
 )
 }
 \arguments{
+\item{apr}{Result from all_pairwise().}
+
+\item{extracted}{Table of extracted data.}
+
 \item{keepers}{In this case, one may assume either NULL or 'all'.}
 
 \item{table_names}{The set of tables produced by all_pairwise().}
@@ -62,7 +67,7 @@ experimental metadata.}
 
 \item{padj_type}{Choose a specific p adjustment.}
 
-\item{sheet_count}{What sheet is being written?}
+\item{loess}{Include a loess estimator in the plots?}
 }
 \description{
 This has a couple of cousin functions, extract_keepers_list and _single.

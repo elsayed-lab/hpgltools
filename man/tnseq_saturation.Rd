@@ -10,6 +10,8 @@ tnseq_saturation(data, column = "Reads", ylimit = 100)
 \item{data}{data to plot}
 
 \item{column}{which column to use for plotting}
+
+\item{ylimit}{Define the y axis?}
 }
 \value{
 A plot and some numbers:

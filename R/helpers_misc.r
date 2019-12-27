@@ -718,11 +718,17 @@ unAsIs <- function(stuff) {
 #' @param lm_model Model to print from glm/lm/robustbase.
 #' @return a string representation of that model.
 #' @export
-ymxb_print <- function(lm_model) {
+ymxb_print <- function(lm_model, as="glue") {
   coefficients <- summary(lm_model)[["coefficients"]]
   int <- signif(x=coefficients["(Intercept)", 1], digits=3)
   m <- signif(x=coefficients["first", 1], digits=3)
   ret <- NULL
+  if (as != "glue") {
+    retlst <- list(
+      "m" = m,
+      "int" = int)
+    return(retlst)
+  }
   if (as.numeric(int) >= 0) {
     ret <- glue::glue("y = {m}x + {int}")
   } else {

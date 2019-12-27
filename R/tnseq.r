@@ -9,6 +9,7 @@
 #'
 #' @param data data to plot
 #' @param column which column to use for plotting
+#' @param ylimit Define the y axis?
 #' @return A plot and some numbers:
 #'  \enumerate{
 #'   \item maximum_reads = The maximum number of reads observed in a single position.
@@ -136,8 +137,15 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100) {
 #' heuristic to choose the m, but I am not sure what it would be, perhaps the
 #' median of the hits summary?
 #'
-#' @param file result from the DeJesus essentiality package.  I think this has
+#' @param file Result from the DeJesus essentiality package.  I think this has
 #'   been effectively replaced by their TRANSIT package.
+#' @param order_by What column to use when ordering the data?
+#' @param keep_esses Keep entries in the data which are 'S' meaning insufficient
+#'   evidence.
+#' @param min_sig Minimal value below which a gene is deemed non-essential and
+#'   above which it is uncertain.
+#' @param max_sig Maximum value above which a gene is deemed essential and below
+#'   which it is uncertain.
 #' @return A couple of plots
 #' @seealso \pkg{ggplot2}
 #' @export

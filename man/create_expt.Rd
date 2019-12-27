@@ -15,7 +15,7 @@ create_expt(
   include_type = "all",
   include_gff = NULL,
   file_column = "file",
-  savefile = "expt",
+  savefile = "expt.rda",
   low_files = FALSE,
   ...
 )

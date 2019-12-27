@@ -1,4 +1,4 @@
-## ----options, include=FALSE----------------------------------------------
+## ----options, include=FALSE---------------------------------------------------
 ## These are the options I tend to favor
 library("hpgltools")
 knitr::opts_knit$set(progress=TRUE,
@@ -16,7 +16,7 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
 set.seed(1)
 rmd_file <- "b-02_fission_data_exploration.Rmd"
 
-## ----setup---------------------------------------------------------------
+## ----setup--------------------------------------------------------------------
 if (! "BiocManager" %in% installed.packages()) {
   source("http://bioconductor.org/biocLite.R")
 }
@@ -33,7 +33,7 @@ if (! "fission" %in% installed.packages()) {
 tt <- sm(library(fission))
 tt <- sm(data(fission))
 
-## ----data_import---------------------------------------------------------
+## ----data_import--------------------------------------------------------------
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
 ## Make conditions and batches
@@ -47,7 +47,7 @@ fission_data <- fission@assays$data$counts
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
 fission_expt <- create_expt(metadata=meta, count_dataframe=fission_data)
 
-## ----norm_explore--------------------------------------------------------
+## ----norm_explore-------------------------------------------------------------
 ## First make a bar plot of the library sizes in the experiment.
 ## Notice that the colors were auto-chosen by create_expt() and they should
 ## be maintained throughout this process
@@ -63,7 +63,7 @@ fis_density$condition_summary
 fis_density$batch_summary
 fis_density$sample_summary
 
-## ----pca-----------------------------------------------------------------
+## ----pca----------------------------------------------------------------------
 ## Something in this is causing a build loop on travis...
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 ##fis_rawpca <- plot_pca(fission_expt, expt_names=fission_expt$condition, cis=NULL)
@@ -77,12 +77,12 @@ fis_normpca$plot
 
 summary(fis_normpca)
 
-## ----test_3d-------------------------------------------------------------
+## ----test_3d------------------------------------------------------------------
 testing <- plot_pca(norm_expt, num_pc=3)
 silly <- plot_3d_pca(testing)
 silly$plot
 
-## ----normalized_pca------------------------------------------------------
+## ----normalized_pca-----------------------------------------------------------
 normbatch_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant",
                                     convert="cpm", batch="sva"))
 fis_normbatchpca <- plot_pca(normbatch_expt,
@@ -113,7 +113,7 @@ test_pca <- pca_information(batchnorm_expt,
                             expt_factors=c("condition","batch","strain","minute"),
                             num_components=6)
 
-## ----distributions-------------------------------------------------------
+## ----distributions------------------------------------------------------------
 fission_boxplot <- sm(plot_boxplot(fission_expt))
 fission_boxplot
 sf_expt <- sm(normalize_expt(fission_expt, norm="sf"))
@@ -139,7 +139,7 @@ fission_density$plot
 compare_12 <- plot_single_qq(fission_expt, x=1, y=2)
 compare_12$log
 
-## ----clustering----------------------------------------------------------
+## ----clustering---------------------------------------------------------------
 fission_cor <- plot_corheat(norm_expt)
 fission_cor$plot
 fission_cor <- plot_corheat(batchnorm_expt)
@@ -149,7 +149,7 @@ fission_dis$plot
 fission_dis <- plot_disheat(batchnorm_expt)
 fission_dis$plot
 
-## ----variancePartition---------------------------------------------------
+## ----variancePartition--------------------------------------------------------
 test_varpart <- simple_varpart(fission_expt, predictor=NULL, factors=c("condition","batch"))
 test_varpart$percent_plot
 test_varpart$partition_plot
@@ -159,6 +159,6 @@ test_varpart <- simple_varpart(fission_expt, predictor=NULL, factors=c("conditio
 test_varpart$percent_plot
 test_varpart$partition_plot
 
-## ----sysinfo, results='asis'---------------------------------------------
+## ----sysinfo, results='asis'--------------------------------------------------
 pander::pander(sessionInfo())
 

@@ -558,9 +558,9 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
 #' @param protein chosen protein(s) to plot.
 #' @param title Title the plot?
 #' @param scale Put the data on a specific scale?
-#' @param order_by Reorder the samples by some factor, presumably condition.
-#' @param add_nulls Add a minimal value for samples for which no observations were made.
 #' @param legend Include the legend?
+#' @param order_by Reorder the samples by some factor, presumably condition.
+#' @param show_all Skip samples for which no observations were made.
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the desired column from the data.
 #' @export
@@ -608,7 +608,6 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
     }
     keepers <- c(keepers, i)
     message("Adding ", name)
-    blank_df["blank", name] <- 0
     plotted_table <- sample_data[[i]]
     if (!isTRUE(keep_decoys)) {
       good_idx <- plotted_table[["decoy"]] != 1

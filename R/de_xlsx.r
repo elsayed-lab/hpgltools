@@ -147,7 +147,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      adjp, annot_df,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
-                                     include_basic, excludes, padj_type)
+                                     include_basic, excludes, padj_type,
+                                     loess=loess)
   } else if (class(keepers)[1] == "character" & keepers == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -160,7 +161,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      adjp, annot_df,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
-                                     include_basic, excludes, padj_type)
+                                     include_basic, excludes, padj_type,
+                                     loess=loess)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -171,7 +173,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                         adjp, annot_df,
                                         include_deseq, include_edger,
                                         include_ebseq, include_limma,
-                                        include_basic, excludes, padj_type)
+                                        include_basic, excludes, padj_type,
+                                        loess=loess)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -277,7 +280,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           if (isTRUE(include_deseq)) {
             sig_methods <- c("deseq", sig_methods)
           }
-          siggene_lst <- try(plot_num_siggenes(written_table, method=sig_methods))
+          siggene_lst <- try(plot_num_siggenes(written_table, methods=sig_methods))
           current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
@@ -487,6 +490,30 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   return(ret)
 }
 
+#' Gather data required to make MA/Volcano plots for pairwise comparisons.
+#'
+#' It should be possible to significantly simplify the arguments passed to this
+#' function, but I have thus far focused only on getting it to work with the
+#' newly split-apart combine_de_tables() functions.
+#'
+#' @param pairwise A pairwise result without modification.
+#' @param name Name of the table to plot.
+#' @param combined Modified pairwise result, containing the various DE methods.
+#' @param denominator Name of the denominator coefficient.
+#' @param numerator Name of the numerator coefficient.
+#' @param basic Tables from basic_pairiwse().
+#' @param deseq Tables from deseq_pairwise().
+#' @param edger Tables from edger_pairwise().
+#' @param limma Tables from limma_pairwise().
+#' @param ebseq Tables from ebseq_pairwise().
+#' @param include_basic Add basic data?
+#' @param include_deseq Add deseq data?
+#' @param include_edger Add edger data?
+#' @param include_limma Add limma data?
+#' @param include_ebseq Add ebseq data?
+#' @param loess Add a loess estimation?
+#' @param do_inverse Flip the numerator/denominator?
+#' @param found_table The table name actually used.
 combine_extracted_plots <- function(pairwise, name, combined, denominator, numerator,
                                     basic, deseq, edger, limma, ebseq,
                                     include_basic=TRUE, include_deseq=TRUE,
@@ -554,6 +581,7 @@ combine_extracted_plots <- function(pairwise, name, combined, denominator, numer
 #' @param de DESeq2 output table.
 #' @param ba Basic output table.
 #' @param table_name Name of the table to merge.
+#' @param final_table_names Vector of the final table names.
 #' @param annot_df Add some annotation information?
 #' @param do_inverse Invert the fold changes?
 #' @param adjp Use adjusted p-values?
@@ -960,6 +988,8 @@ Defaulting to fdr.")
 #' These handle extracting one or more contrasts out of the various tables
 #' produced by all_pairwise().
 #'
+#' @param apr Result from all_pairwise().
+#' @param extracted Table of extracted data.
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
@@ -978,14 +1008,14 @@ Defaulting to fdr.")
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
-#' @param sheet_count What sheet is being written?
+#' @param loess Include a loess estimator in the plots?
 extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
                                 adjp, annot_df,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
-                                include_basic, excludes, padj_type) {
+                                include_basic, excludes, padj_type, loess=FALSE) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
@@ -1029,6 +1059,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' that the numerators and denominators match the desired contrast and flip the
 #' signs in the logFCs when appropriate.
 #'
+#' @param apr Result from all_pairwise()
+#' @param extracted Tables extracted from the all_pairwise data.
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
@@ -1047,17 +1079,15 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
-#' @param sheet_count What sheet is being written?
-#' @param numerators Set of numerators
-#' @param denominators Set of denominators
-#' @param combo empty list
+#' @param loess Add a loess to plots?
 extract_keepers_lst <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
                                 adjp, annot_df,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
-                                include_basic, excludes, padj_type) {
+                                include_basic, excludes, padj_type,
+                                loess=FALSE) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   found_keepers <- sum(all_keepers %in% all_coefficients)
@@ -1156,6 +1186,8 @@ extract_keepers_lst <- function(apr, extracted, keepers, table_names,
 
 #' When a single 'keeper' contrast is specified, find and extract it.
 #'
+#' @param apr Data from all_pairwise().
+#' @param extracted Tables extracted in combine_de_tables().
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
@@ -1174,13 +1206,15 @@ extract_keepers_lst <- function(apr, extracted, keepers, table_names,
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
+#' @param loess Add a loess to plots?
 extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
                                    adjp, annot_df,
                                    include_deseq, include_edger,
                                    include_ebseq, include_limma,
-                                   include_basic, excludes, padj_type) {
+                                   include_basic, excludes, padj_type,
+                                   loess=FALSE) {
   splitted <- strsplit(x=keepers, split="_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
@@ -1216,12 +1250,12 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
     basic, deseq, edger, limma, ebseq,
     include_basic=include_basic, include_deseq=include_deseq,
     include_edger=include_edger, include_limma=include_limma,
-    include_ebseq=include_ebseq, loess=loess,
-    do_inverse=do_inverse, found_table=name)
+    include_ebseq=include_ebseq, loess=loess, found_table=table,
+    do_inverse=do_inverse)
   extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                     as.data.frame(combined[["summary"]]))
-  extracted[["numerators"]] <- numerators
-  extracted[["denominators"]] <- denominators
+  extracted[["numerators"]] <- numerator
+  extracted[["denominators"]] <- denominator
   return(extracted)
 }
 
@@ -1910,6 +1944,21 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   return(xls_result)
 }
 
+#' Write the legend of an excel file for combine_de_tables()
+#'
+#' @param wb Workbook to write
+#' @param excel_basename Where to write it
+#' @param plot_dim Default plot size.
+#' @param apr The all_pairwise() result.
+#' @param limma The limma result, which is redundant.
+#' @param include_limma Include the limma result?
+#' @param deseq The deseq result, which is redundant.
+#' @param include_deseq Include the deseq result?
+#' @param edger The edger result, which is redundant.
+#' @param include_edger Include the edger result?
+#' @param ebseq The ebseq result, which is redundant.
+#' @param include_ebseq Include the ebseq result?
+#' @param padj_type P-adjustment employed.
 write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
                                   limma, include_limma,
                                   deseq, include_deseq,

@@ -105,9 +105,10 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
 #'
 #' I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
 #'
-#' @param file  Uniprot file to read and parse
-#' @param savefile  Do a save?
-#' @return  Big dataframe of annotation data.
+#' @param file Uniprot file to read and parse
+#' @param species Species name to download/load.
+#' @param savefile Do a save?
+#' @return Big dataframe of annotation data.
 #' @export
 load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
   if (is.null(file) & is.null(species)) {

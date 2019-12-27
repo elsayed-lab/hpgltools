@@ -18,7 +18,7 @@
 #' }
 #' @export
 combine_expts <- function(expt1, expt2, condition="condition",
-                          batch="batch", merge_meta=FALSE) {
+                          batch="batch", merge_meta=TRUE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
@@ -83,7 +83,7 @@ combine_expts <- function(expt1, expt2, condition="condition",
   na_idx <- is.na(new_exprs)
   new_exprs[na_idx] <- 0
   tmp <- expt1[["expressionset"]]
-  exprs(tmp) <- new_exprs
+  exprs(tmp) <- as.matrix(new_exprs)
   expt1[["expressionset"]] <- tmp
   return(expt1)
 }
@@ -196,7 +196,7 @@ concatenate_runs <- function(expt, column="replicate") {
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL,
                         include_type="all", include_gff=NULL, file_column="file",
-                        savefile="expt", low_files=FALSE, ...) {
+                        savefile="expt.rda", low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -255,7 +255,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata=metadata, ...)
+  sample_definitions <- extract_metadata(metadata,
+                                         ...)
   ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
   ## This is a just in case measure to avoid conflicts.
@@ -751,10 +752,12 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   arglist <- list(...)
   ex <- expt[["expressionset"]]
   annotations <- Biobase::fData(ex)
+  expression <- Biobase::exprs(ex)
   if (is.null(ids) & is.null(annotations[[column]])) {
     message("The ", column, " column is null, doing nothing.")
     return(expt)
   }
+
   pattern_string <- ""
   for (pat in patterns) {
     pattern_string <- glue::glue("{pattern_string}{pat}|")
@@ -766,7 +769,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
   } else if (is.logical(ids)) {
     idx <- ids
   } else {
-    idx <- rownames(annotations) %in% ids
+    idx <- rownames(expression) %in% ids
   }
   kept <- NULL
   removed <- NULL
@@ -882,7 +885,8 @@ extract_metadata <- function(metadata, ...) {
     colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                          x=colnames(sample_definitions))
   }  else {
-    sample_definitions <- read_metadata(meta_file, ...)
+    sample_definitions <- read_metadata(meta_file,
+                                        ...)
     ## sample_definitions <- read_metadata(meta_file)
   }
 
@@ -1617,6 +1621,10 @@ read_metadata <- function(file, ...) {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
   colnames(definitions) <- gsub(pattern="[[:punct:]]", replacement="", x=colnames(definitions))
+  ## I recently received a sample sheet with a blank sample ID column name...
+  empty_idx <- colnames(definitions) == ""
+  colnames(definitions)[empty_idx] <- "empty"
+  colnames(definitions) <- make.names(colnames(definitions), unique=TRUE)
   return(definitions)
 }
 

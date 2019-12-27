@@ -467,7 +467,7 @@ de_venn <- function(table, adjp=FALSE, p=0.05, lfc=0, ...) {
 #' decrease the representation of genes in the 'highly significant' range of
 #' p-values.  However, it is hoped that it will not utterly remove them.
 #'
-#' @param combined Table to extract the values from.
+#' @param combined_data Table to extract the values from.
 #' @param type If provided, extract the {type}_p and {type}_adjp columns.
 #' @param p_type Which type of pvalue to show (adjusted, raw, or all)?
 #' @param columns Otherwise, extract whatever columns are provided.

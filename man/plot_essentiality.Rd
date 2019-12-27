@@ -13,8 +13,19 @@ plot_essentiality(
 )
 }
 \arguments{
-\item{file}{result from the DeJesus essentiality package.  I think this has
+\item{file}{Result from the DeJesus essentiality package.  I think this has
 been effectively replaced by their TRANSIT package.}
+
+\item{order_by}{What column to use when ordering the data?}
+
+\item{keep_esses}{Keep entries in the data which are 'S' meaning insufficient
+evidence.}
+
+\item{min_sig}{Minimal value below which a gene is deemed non-essential and
+above which it is uncertain.}
+
+\item{max_sig}{Maximum value above which a gene is deemed essential and below
+which it is uncertain.}
 }
 \value{
 A couple of plots

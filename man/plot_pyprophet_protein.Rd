@@ -45,9 +45,9 @@ names.}
 
 \item{order_by}{Reorder the samples by some factor, presumably condition.}
 
-\item{...}{Further arguments, presumably for colors or some such.}
+\item{show_all}{Skip samples for which no observations were made.}
 
-\item{add_nulls}{Add a minimal value for samples for which no observations were made.}
+\item{...}{Further arguments, presumably for colors or some such.}
 }
 \value{
 Boxplot describing the desired column from the data.

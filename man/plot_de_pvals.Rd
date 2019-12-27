@@ -13,6 +13,8 @@ plot_de_pvals(
 )
 }
 \arguments{
+\item{combined_data}{Table to extract the values from.}
+
 \item{type}{If provided, extract the {type}_p and {type}_adjp columns.}
 
 \item{p_type}{Which type of pvalue to show (adjusted, raw, or all)?}
@@ -20,8 +22,6 @@ plot_de_pvals(
 \item{columns}{Otherwise, extract whatever columns are provided.}
 
 \item{...}{Arguments passed through to the histogram plotter}
-
-\item{combined}{Table to extract the values from.}
 }
 \value{
 Multihistogram of the result.

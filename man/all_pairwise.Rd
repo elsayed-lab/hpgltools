@@ -78,6 +78,10 @@ so it can choose).}
 
 \item{do_limma}{Perform limma?}
 
+\item{convert}{Modify the data with a 'conversion' method for PCA?}
+
+\item{norm}{Modify the data with a 'normalization' method for PCA?}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to
 write_limma().}
 }

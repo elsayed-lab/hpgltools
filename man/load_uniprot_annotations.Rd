@@ -9,6 +9,8 @@ load_uniprot_annotations(file = NULL, species = NULL, savefile = TRUE)
 \arguments{
 \item{file}{Uniprot file to read and parse}
 
+\item{species}{Species name to download/load.}
+
 \item{savefile}{Do a save?}
 }
 \value{

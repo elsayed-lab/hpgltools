@@ -115,7 +115,7 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
   result <- xml2::read_html(id_url)
   id_nodes <- result %>%
     rvest::html_nodes("#GenomeList")
-
+  . <- id_nodes  ## Shush, R CMD check
   id_links <- id_nodes %>%
     rvest::html_nodes("td:nth-child(1) a") %>%
     rvest::html_attr("href") %>%

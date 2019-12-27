@@ -1,26 +1,38 @@
 #' Run searches against the web service g:Profiler.
 #'
-#' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
+#' This is the beginning of a reimplementation to use gprofiler2.  However,
+#' AFAICT gprofiler2 does not yet actually work for anything other than their GO
+#' data.
 #'
 #' @param sig_genes Guess!  The set of differentially expressed/interesting
 #'   genes.
-#' @param species  Organism supported by gprofiler.
-#' @param convert  Use gProfileR's conversion utility?
-#' @param first_col  First place used to define the order of 'significant'.
-#' @param second_col  If that fails, try a second column.
-#' @param do_go  Perform GO search?
-#' @param do_kegg  Perform KEGG search?
-#' @param do_reactome  Perform reactome search?
-#' @param do_mi  Do miRNA search?
-#' @param do_tf  Search for transcription factors?
-#' @param do_corum  Do corum search?
-#' @param do_hp  Do the hp search?
-#' @param significant  Only return the statistically significant hits?
-#' @param pseudo_gsea  Is the data in a ranked order by significance?
-#' @param id_col  Which column in the table should be used for gene ID
+#' @param species Organism supported by gprofiler.
+#' @param convert Use gProfileR's conversion utility?
+#' @param first_col First place used to define the order of 'significant'.
+#' @param second_col If that fails, try a second column.
+#' @param do_go Perform GO search?
+#' @param do_kegg Perform KEGG search?
+#' @param do_reactome Perform reactome search?
+#' @param do_mi Do miRNA search?
+#' @param do_tf Search for transcription factors?
+#' @param do_corum Do corum search?
+#' @param do_hp Do the hp search?
+#' @param do_hpa Do the hpa search?
+#' @param do_wp Do the wp search?
+#' @param significant Only return the statistically significant hits?
+#' @param exclude_iea Passed directly to gprofiler2.
+#' @param do_under Perform under-representation search?
+#' @param evcodes Get the set of evcodes in the data?  This makes it take
+#'   longer.
+#' @param threshold p-value 'significance' threshold.
+#' @param adjp Method to adjust p-values.
+#' @param domain_scope Passed to gprofiler2.
+#' @param bg Background genes.
+#' @param pseudo_gsea Is the data in a ranked order by significance?
+#' @param id_col Which column in the table should be used for gene ID
 #'   crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
 #'   entrez or whatever, translate it!
-#' @param excel  Print the results to an excel file?
+#' @param excel Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso \pkg{gProfiler}
 #' @examples
@@ -36,10 +48,6 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
                              evcodes=TRUE, threshold=0.05, adjp="fdr",
                              domain_scope="annotated", bg=NULL,
                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
-  ## Assume for the moment a limma-ish data frame
-  ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap /
-  ## #term) * (total genes / #query) However, the total number is a constant, so
-  ## we can likely get the same information from the overlap.size
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -175,10 +183,6 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
                              do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
                              do_corum=TRUE, do_hp=TRUE, significant=TRUE,
                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
-  ## Assume for the moment a limma-ish data frame
-  ## An idea from Dr. Mount: Add the enrichment number of genes as (overlap /
-  ## #term) * (total genes / #query) However, the total number is a constant, so
-  ## we can likely get the same information from the overlap.size
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -237,7 +241,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
   retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst), silent=TRUE)
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
-    excel_ret <- sm(try(write_gprofiler_data(retlist, excel=excel)))
+    excel_ret <- sm(try(write_gprofiler_data(retlst, excel=excel)))
     retlst[["excel"]] <- excel_ret
     message("Finished writing data.")
   }

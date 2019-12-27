@@ -69,8 +69,7 @@ push:
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	@mkdir -p inst/doc
-	@rm -f vignettes/reference.pdf
-	R CMD Rd2pdf . -o vignettes/reference.pdf --no-preview
+	R CMD Rd2pdf . -o inst/reference/reference.pdf --no-preview
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"
@@ -103,5 +102,6 @@ vignette:
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes()"
 	mv doc inst/doc
+	cp inst/reference/* inst/doc
 
 vt:	clean_vignette vignette reference install

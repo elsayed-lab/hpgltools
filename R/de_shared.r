@@ -38,6 +38,8 @@
 #'   so it can choose).
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
+#' @param convert Modify the data with a 'conversion' method for PCA?
+#' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
 #'   write_limma().
 #' @return A list of limma, deseq, edger results.

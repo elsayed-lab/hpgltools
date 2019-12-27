@@ -15,6 +15,23 @@ my_doisva(
   icamethod = "fastICA"
 )
 }
+\arguments{
+\item{data.m}{Input matrix.}
+
+\item{pheno.v}{Vector of conditions of interest in the data.}
+
+\item{cf.m}{Matrix of confounded conditions in the data.}
+
+\item{factor.log}{I forget.}
+
+\item{pvthCF}{Minimal p-value for considering.}
+
+\item{th}{threshold for inclusion.}
+
+\item{ncomp}{Number of SVA components to estimate.}
+
+\item{icamethod}{Which ICA implementation to use?}
+}
 \description{
 Thus I copy/pasted the function and attempted to address them here.
 }
