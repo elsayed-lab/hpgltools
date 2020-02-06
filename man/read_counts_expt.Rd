@@ -10,6 +10,7 @@ read_counts_expt(
   header = FALSE,
   include_summary_rows = FALSE,
   suffix = NULL,
+  countdir = NULL,
   ...
 )
 }

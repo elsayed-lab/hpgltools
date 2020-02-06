@@ -170,6 +170,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #'   generate its own colors using colorBrewer.
 #' @param title Provide a title for the expt?
 #' @param notes Additional notes?
+#' @param countdir Directory containing count tables.
 #' @param include_type I have usually assumed that all gff annotations should be
 #'   used, but that is not always true, this allows one to limit to a specific
 #'   annotation type.
@@ -194,7 +195,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @import Biobase
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
-                        sample_colors=NULL, title=NULL, notes=NULL,
+                        sample_colors=NULL, title=NULL, notes=NULL, countdir=NULL,
                         include_type="all", include_gff=NULL, file_column="file",
                         savefile="expt.rda", low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
@@ -352,7 +353,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- as.character(sample_definitions[[sample_column]])
-    count_data <- read_counts_expt(sample_ids, filenames,
+    count_data <- read_counts_expt(sample_ids, filenames, countdir=countdir,
                                    ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
@@ -857,7 +858,9 @@ extract_metadata <- function(metadata, ...) {
   ## Make sure it sets good, standard rownames.
   file <- NULL
   sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
+  if (is.null(arglist[["sample_column"]])) {
+    sample_column <- 1
+  } else {
     sample_column <- arglist[["sample_column"]]
     sample_column <- tolower(sample_column)
     sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
@@ -892,7 +895,16 @@ extract_metadata <- function(metadata, ...) {
 
   ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
   if (sample_column != "sampleid") {
-    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
+    ## sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
+    if (is.null(rownames(sample_definitions))) {
+      sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
+    } else {
+      sample_definitions[["sampleid"]] <- rownames(sample_definitions)
+    }
+  }
+
+  if (rownames(sample_definitions)[1] == "1") {
+    rownames(sample_definitions) <- sample_definitions[[sample_column]]
   }
 
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
@@ -902,7 +914,10 @@ extract_metadata <- function(metadata, ...) {
   colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
   ## Check that condition and batch have been filled in.
   sample_columns <- colnames(sample_definitions)
-  rownames(sample_definitions) <- make.names(sample_definitions[[sample_column]], unique=TRUE)
+
+  ## I think the following line was in error.
+  ## rownames(sample_definitions) <- make.names(sample_definitions[[sample_column]], unique=TRUE)
+
   ## The various proteomics data I am looking at annoyingly starts with a number
   ## So make.names() prefixes it with X which is ok as far as it goes, but
   ## since it is a 's'amplename, I prefer an 's'.
@@ -1315,6 +1330,9 @@ make_pombe_expt <- function(annotation=TRUE) {
   meta[["condition"]] <- glue::glue("{meta[['strain']]}.{meta[['minute']]}")
   meta[["batch"]] <- meta[["replicate"]]
   meta[["sample.id"]] <- rownames(meta)
+  meta <- meta[, c("sample.id", "id", "strain", "minute",
+                   "replicate", "condition", "batch")]
+
   fission_data <- fission@assays$data[["counts"]]
 
   annotations <- NULL
@@ -1366,14 +1384,12 @@ make_pombe_expt <- function(annotation=TRUE) {
 #' }
 #' @export
 read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
-                             suffix=NULL, ...) {
+                             suffix=NULL, countdir=NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
   ## Add an optional directory if I don't feel like specifying in the sample sheet.
-  countdir <- NULL
-  if (!is.null(arglist[["countdir"]])) {
-    countdir <- arglist[["countdir"]]
+  if (!is.null(countdir)) {
     files <- file.path(countdir, files)
   }
   skippers <- (files == "" | files == "undef" | is.null(files) | is.na(files))
@@ -1902,7 +1918,7 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @export
 set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...) {
   arglist <- list(...)
-  original_conditions <- expt[["conditions"]]
+  original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
   new_expt <- expt  ## Explicitly copying expt to new_expt
   ## because when I run this as a function call() it seems to be not properly setting
@@ -1925,8 +1941,8 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     new_expt[["design"]][["condition"]] <- new_cond
   } else if (length(fact) == 1) {
     ## Assume it is a column in the design
-    if (fact %in% colnames(expt[["design"]])) {
-      new_fact <- expt[["design"]][[fact]]
+    if (fact %in% colnames(pData(expt))) {
+      new_fact <- pData(expt)[[fact]]
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
       new_expt[["design"]][["condition"]] <- new_fact

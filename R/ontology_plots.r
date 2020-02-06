@@ -40,7 +40,13 @@ plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denomin
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
   reorder_size <- function(x) {
-    new_fact <- factor(x[["term"]], levels=x[["term"]])
+    attempt <- try(factor(x[["term"]], levels=x[["term"]]), silent=TRUE)
+    new_fact <- NULL
+    if (class(attempt)[1] == "try-error") {
+      new_fact <- as.factor(x[["term"]])
+    } else {
+      new_fact <- attempt
+    }
     return(new_fact)
   }
 

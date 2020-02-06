@@ -19,7 +19,7 @@
 #'  kittytime = plot_histogram(df)
 #' }
 #' @export
-plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
+plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, adjust=1,
                            fillcolor="darkgrey", color="black") {
   if (class(df) == "data.frame") {
     colnames(df) <- c("values")
@@ -39,7 +39,7 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500,
     ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
                             binwidth=binwidth,
                             colour=color, fill=fillcolor, position="identity") +
-    ggplot2::geom_density(alpha=0.4, fill=fillcolor) +
+    ggplot2::geom_density(alpha=0.4, fill=fillcolor, adjust=adjust) +
     ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=TRUE)"),
                         color=color, linetype="dashed", size=1) +
     ggplot2::theme_bw(base_size=base_size) +

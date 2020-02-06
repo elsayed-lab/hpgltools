@@ -34,7 +34,7 @@
 #'  saturation <- tnseq_saturation(file=input)
 #' }
 #' @export
-tnseq_saturation <- function(data, column="Reads", ylimit=100) {
+tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   table <- NULL
   if (class(data) == "character") {
     table <- read.table(file=data, header=1, comment.char="")
@@ -53,15 +53,16 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100) {
   max_reads <- max(table[[column]], na.rm=TRUE)
   table[["l2"]] <- log2(table[[column]] + 1)
   density_plot <- ggplot2::ggplot(data=table, mapping=aes_string(x="l2")) +
-    ggplot2::geom_density(y="..count..", position="identity") +
+    ggplot2::geom_density(y="..count..", position="identity", adjust=adjust) +
     ggplot2::scale_y_continuous(limits=c(0, 0.25)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
   log2_data_list <- as.numeric(log2(data_list + 1))
-  data_plot <- plot_histogram(log2_data_list, bins=300)
-  data_plot <- data_plot + ggplot2::scale_x_continuous(limits=c(0, 6)) +
+  data_plot <- plot_histogram(log2_data_list, bins=300, adjust=adjust)
+  data_plot <- data_plot +
+    ggplot2::scale_x_continuous(limits=c(0, 6)) +
     ggplot2::scale_y_continuous(limits=c(0, 2))
 
   raw <- table(unlist(data_list))
@@ -265,7 +266,7 @@ score_mhess <- function(expt, ess_column="essm1") {
   return(retlist)
 }
 
-tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads") {
+tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads", adjust=1) {
   table <- NULL
   filenames <- meta[[meta_column]]
   for (f in 1:length(filenames)) {
@@ -285,11 +286,15 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads"
   colnames(melted) <- c("start", "sample", "reads")
   melted[["log2"]] <- log2(melted[["reads"]] + 1)
   plt <- ggplot(data=melted, mapping=aes_string(x="log2", fill="sample")) +
-    ggplot2::geom_density(mapping=aes_string(y="..count.."), position="identity", alpha=0.3) +
+    ggplot2::geom_density(mapping=aes_string(y="..count.."), position="identity",
+                          adjust=adjust, alpha=0.3) +
     ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
-  return(plt)
+  retlist <- list(
+    "table" = table,
+    "plot" = plt)
+  return(retlist)
 }
 
 ## EOF

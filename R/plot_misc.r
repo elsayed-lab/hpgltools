@@ -206,4 +206,72 @@ plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
   return(image)
 }
 
+#' Add a little logic to ggplotly to simplify adding clicky link.
+#'
+#' There are some other ease of life improvements I have in a few of my plotly
+#' invocations which I should add here.
+#'
+#' @param plot Plot generated via ggplot2.
+#' @param filename filename to save the output html plot.
+#' @param id_column Column containing the gene IDs.
+#' @param title Provide a title for the generated html file.
+#' @param url_data Either a glue() string or column of urls.
+#' @param url_column Name of the column in the ggplot data containing the URLs.
+#' @param tooltip Passed to ggplotly().
+#' @return plotly with clicky links.
+#' @export
+ggplotly_url <- function(plot, filename, id_column="id", title=NULL,
+                         url_data=NULL, url_column="url",
+                         tooltip="all", ...) {
+  first_tooltip_column <- "label"
+  if (is.null(tooltip) | tooltip == "all") {
+    tooltip_columns <- "label"
+  } else {
+    first_tooltip_column <- tooltip[1]
+  }
+
+  if (is.null(plot[["data"]][[id_column]])) {
+    plot[["data"]][[id_column]] <- rownames(plot[["data"]])
+  }
+  if (is.null(url_data) & is.null(plot[["data"]][[url_column]])) {
+    warning("No url df was provided, nor is there a column: ", url_column, ", not much to do.")
+  } else if (is.null(plot[["data"]][[url_column]])) {
+    ## We have some url information, this may either be a df of rownames and URLs, or
+    ## a glue description string.
+    if ("character" %in% class(url_data)) {
+      ids <- plot[["data"]][[id_column]]
+      ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
+      plot[["data"]][[url_column]] <- glue::glue(url_data)
+    } else if ("data.frame" %in% class(url_data)) {
+      ## This assumes url data has a column named whatever is url_column
+      message("Merging the url data with the plot data.")
+      plot[["data"]] <- merge(plot[["data"]], url_data, by="row.names", all.x=TRUE)
+      rownames(plot[["data"]]) <- plot[["Row.names"]]
+      plot[["data"]][["Row.names"]] <- NULL
+    }
+  }
+
+  if (is.null(plot[["data"]][[first_tooltip_column]])) {
+    plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
+  }
+  plotly <- plotly::ggplotly(plot, tooltip=tooltip)
+  for (i in 1:length(plotly[["x"]][["data"]])) {
+    plotly[["x"]][["data"]][[i]][["customdata"]] <- plot[["data"]][[url_column]]
+  }
+  plotly <- htmlwidgets::onRender(plotly, "
+function(el, x) {
+  el.on('plotly_click', function(d) {
+    var url = d.points[0].customdata;
+    console.log(url);
+    window.open(url);
+  });
+}")
+  out <- htmlwidgets::saveWidget(plotly, filename, title=title)
+  retlist <- list(
+    "out" = out,
+    "plotly" = plotly,
+    "modified_df" = plot[["data"]])
+  return(retlist)
+}
+
 ## EOF

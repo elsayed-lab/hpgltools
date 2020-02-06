@@ -12,6 +12,7 @@ create_expt(
   sample_colors = NULL,
   title = NULL,
   notes = NULL,
+  countdir = NULL,
   include_type = "all",
   include_gff = NULL,
   file_column = "file",
@@ -36,6 +37,8 @@ generate its own colors using colorBrewer.}
 \item{title}{Provide a title for the expt?}
 
 \item{notes}{Additional notes?}
+
+\item{countdir}{Directory containing count tables.}
 
 \item{include_type}{I have usually assumed that all gff annotations should be
 used, but that is not always true, this allows one to limit to a specific

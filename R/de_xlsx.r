@@ -445,6 +445,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         start_row=1, rownames=rownames)
     }
 
+    design_result <- write_sample_design(wb, apr)
+
     message("Performing save of ", excel, ".")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
     if (class(save_result)[1] == "try-error") {
@@ -1908,7 +1910,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   num_tables <- length(names(ups))
   summary_start <- ((num_tables + 2) * summary_count) + 1
   xls_summary_result <- write_xlsx(wb=wb, data=summary, start_col=1, start_row=summary_start,
-                                  sheet="number_changed", title=summary_title)
+                                   sheet="number_changed", title=summary_title)
   for (table_count in 1:length(names(ups))) {
     base_name <- names(ups)[table_count]
     up_name <- glue::glue("up_{according}_{base_name}")
@@ -2354,9 +2356,9 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
 }
 
 write_sig_legend <- function(excel) {
-    excel <- as.character(excel)
-    message("Writing a legend of columns.")
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  excel <- as.character(excel)
+  message("Writing a legend of columns.")
+  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
     wb <- openxlsx::createWorkbook(creator="hpgltools")
     legend <- data.frame(rbind(
       c("The first ~3-10 columns of each sheet:",
@@ -2430,5 +2432,18 @@ write_sig_legend <- function(excel) {
     return(retlist)
 }
 
+#' Put the metadata at the end of combined_de_tables()
+#'
+#' For the moment this is a stupidly short function.  I am betting we will
+#' elaborate on this over time.
+#'
+#' @param wb workbook object.
+#' @param apr Pairwise result.
+write_sample_design <- function(wb, apr) {
+  meta_df <- pData(apr[["input"]])
+  xls_meta_result <- write_xlsx(wb=wb, data=meta_df,
+                                sheet="metadata", title="Experiment metadata.")
+  return(xls_meta_result)
+}
 
 ## EOF

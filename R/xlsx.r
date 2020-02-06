@@ -146,7 +146,7 @@ write_xlsx <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rowname
       openxlsx::setColWidths(wb, sheet, current_col, "auto")
     }
   }
-  end_col <- ncol(data) + 1
+  end_col <- new_col + ncol(data) + 1
   ret <- list(
     "workbook" = wb,
     "sheet" = sheet,

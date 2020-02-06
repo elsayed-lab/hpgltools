@@ -9,6 +9,7 @@ plot_histogram(
   binwidth = NULL,
   log = FALSE,
   bins = 500,
+  adjust = 1,
   fillcolor = "darkgrey",
   color = "black"
 )

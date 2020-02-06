@@ -31,8 +31,8 @@ metadata[["sampleid"]] <- rownames(metadata)
 save(list=ls(), file="pasilla_df.rda")
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- sm(create_expt(count_dataframe=counts, metadata=metadata,
-                               savefile="pasilla.rda", gene_info=gene_info))
+pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata,
+                            savefile="pasilla.rda", gene_info=gene_info)
 ## Recent changes to how my expressionsets are created mean that the order of
 ## genes is hard-set to the order of annotations in the annotation data and
 ## therefore _not_ the order of genes found in the count tables.

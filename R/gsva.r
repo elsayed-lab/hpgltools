@@ -570,7 +570,8 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
 #' @return  Small list providing the output from xCell, the set of signatures,
 #'   and heatmap.
 #' @export
-simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...) {
+simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected_types=NULL,
+                         label_size=NULL, col_margin=6, row_margin=12, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
@@ -594,7 +595,17 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xCell.data <- NULL
   tt <- requireNamespace("xCell")
   data("xCell.data", package="xCell")
-  xcell_result <- sm(xCell::xCellAnalysis(xcell_input))
+  if (is.null(signatures)) {
+    signatures <- xCell.data[["signatures"]]
+  }
+  if (is.null(genes)) {
+    genes <- xCell.data[["genes"]]
+  }
+  if (is.null(spill)) {
+    spill <- xCell.data[["spill"]]
+  }
+  xcell_result <- sm(xCell::xCellAnalysis(expr=xcell_input, signatures=signatures,
+                                          genes=genes, spill=spill, cell.types=expected_types, ...))
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
@@ -606,7 +617,6 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
                     margins=c(col_margin, row_margin),
                     cexCol=label_size, cexRow=label_size)
   }
-
   ht_plot <- grDevices::recordPlot()
 
   retlist <- list(

@@ -9,7 +9,8 @@ snps_vs_genes(
   snp_result,
   start_col = "start",
   end_col = "end",
-  name_col = "seqnames"
+  snp_name_col = "seqnames",
+  expt_name_col = "chromosome"
 )
 }
 \arguments{
