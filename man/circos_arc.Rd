@@ -11,7 +11,10 @@ circos_arc(
   second_col = "chr2",
   color = "blue",
   radius = 0.75,
-  thickness = 3
+  thickness = 3,
+  ribbon = "yes",
+  show = "yes",
+  z = "0"
 )
 }
 \arguments{

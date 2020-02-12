@@ -12,10 +12,11 @@ circos_tile(
   chr = "chr1",
   basename = "",
   colors = NULL,
-  thickness = 90,
+  thickness = 80,
+  padding = 1,
   margin = 0,
   stroke_thickness = 0,
-  padding = 0.1,
+  orientation = "out",
   outer = 0.9,
   width = 0.08,
   spacing = 0
@@ -39,11 +40,11 @@ chromosome)}
 
 \item{thickness}{How thick to make the tiles in radial units.}
 
+\item{padding}{Space between tiles.}
+
 \item{margin}{How much space between other rings and the tiles?}
 
 \item{stroke_thickness}{Size of the tile outlines.}
-
-\item{padding}{Space between tiles.}
 
 \item{outer}{Floating point radius of the circle into which to place the
 categorical data.}

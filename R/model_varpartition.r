@@ -83,17 +83,20 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   data <- exprs(norm)
 
   message("Fitting the expressionset to the model, this is slow.")
-  ##my_fit <- try(variancePartition::fitVarPartModel(data, my_model, design))
-  ##message("Extracting the variances.")
-  ##my_extract <- try(variancePartition::extractVarPart(my_fit))
-  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
+  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design), silent=TRUE)
   if (class(my_extract) == "try-error") {
     message("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
 An error like 'number of levels of each grouping factor must be < number of observations' means
 that the factor used is not appropriate for the analysis - it really only works for factors
 which are shared among multiple samples.")
-    stop()
+    message("Retrying with only condition in the model.")
+    my_model <- as.formula("~ condition")
+    my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
+    if (class(my_extract) == "try-error") {
+      message("Attempting again with only condition failed.")
+      stop()
+    }
   }
   chosen_column <- predictor
   if (is.null(predictor)) {

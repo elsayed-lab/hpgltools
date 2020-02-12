@@ -1248,7 +1248,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
   extracted[["kept"]] <- table
   extracted[["keepers"]] <- keepers
   extracted[["plots"]][[table]] <- combine_extracted_plots(
-    apr, name, combined, denominator, numerator,
+    ##   vv I changed this from 'name', I think that is correct but am uncertain.
+    apr, table, combined, denominator, numerator,
     basic, deseq, edger, limma, ebseq,
     include_basic=include_basic, include_deseq=include_deseq,
     include_edger=include_edger, include_limma=include_limma,

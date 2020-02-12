@@ -1468,7 +1468,7 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
   rssNULL <- rowSums(residNULL * residNULL)
   fstats <- ((rssNULL - rss1) / (df1 - df0)) /
     (rss1 / (ncol(data.m) - df1))
-  pv.v <- 1 - pf(fstats,
+  pv.v <- 1 - isva::pf(fstats,
                  df1=(df1 - df0),
                  df2=(ncol(data.m) - df1))
   pv.s <- sort(pv.v, decreasing=FALSE, index.return=TRUE)

@@ -10,10 +10,16 @@ circos_ideogram(
   band_url = NULL,
   fill = "yes",
   stroke_color = "black",
+  show_bands = "yes",
+  fill_bands = "yes",
   thickness = "20",
   stroke_thickness = "2",
+  label_font = "condensedbold",
+  spacing_default = "0",
+  spacing_break = "0",
   fill_color = "black",
   radius = "0.85",
+  radius_padding = "0.05",
   label_size = "36",
   band_stroke_thickness = "2"
 )

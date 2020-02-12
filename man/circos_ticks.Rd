@@ -7,6 +7,11 @@
 circos_ticks(
   name = "default",
   conf_dir = "circos/conf",
+  show_ticks = "yes",
+  show_tick_labels = "yes",
+  show_grid = "no",
+  skip_first_label = "yes",
+  skip_last_label = "no",
   tick_separation = 2,
   min_label_distance = 0,
   label_separation = 5,

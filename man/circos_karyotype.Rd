@@ -8,10 +8,9 @@ circos_karyotype(
   name = "default",
   conf_dir = "circos/conf",
   length = NULL,
-  chr_name = "chr1",
+  chr_names = NULL,
   segments = 6,
   color = "white",
-  chr_num = 1,
   fasta = NULL
 )
 }
@@ -22,15 +21,15 @@ circos_karyotype(
 
 \item{length}{Length of the chromosome (the default is mgas5005).}
 
-\item{chr_name}{Short name of the chromosome.}
+\item{chr_names}{Short name of the chromosome.}
 
 \item{segments}{How many segments to cut the chromosome into?}
 
 \item{color}{Color segments of the chromosomal arc?}
 
-\item{chr_num}{Number to record for each chromosome.}
-
 \item{fasta}{Fasta file to use to create the karyotype.}
+
+\item{chr_num}{Number to record for each chromosome.}
 }
 \value{
 The output filename.

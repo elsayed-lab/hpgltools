@@ -62,7 +62,7 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   log2_data_list <- as.numeric(log2(data_list + 1))
   data_plot <- plot_histogram(log2_data_list, bins=300, adjust=adjust)
   data_plot <- data_plot +
-    ggplot2::scale_x_continuous(limits=c(0, 6)) +
+    ggplot2::scale_x_continuous(limits=c(0, 6))
     ggplot2::scale_y_continuous(limits=c(0, 2))
 
   raw <- table(unlist(data_list))
@@ -266,6 +266,14 @@ score_mhess <- function(expt, ess_column="essm1") {
   return(retlist)
 }
 
+#' Plot the saturation of multiple libraries simultaneously.
+#'
+#' @param meta Experimental metadata
+#' @param meta_column Metadata column containing the filenames to query.
+#' @param ylimit Maximum y axis
+#' @param column Data file column to use for density calculation.
+#' @param adjust Density adjustment.
+#' @return a plot and table of the saturation for all samples.
 tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads", adjust=1) {
   table <- NULL
   filenames <- meta[[meta_column]]

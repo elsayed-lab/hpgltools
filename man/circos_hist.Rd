@@ -13,6 +13,10 @@ circos_hist(
   basename = "",
   color = "blue",
   fill_color = "blue",
+  fill_under = "yes",
+  extend_bin = "no",
+  thickness = "0",
+  orientation = "out",
   outer = 0.9,
   width = 0.08,
   spacing = 0

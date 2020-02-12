@@ -354,11 +354,23 @@ hpgl_rpkm <- function(count_table, ...) {
   chosen_column <- "width"
   if (!is.null(arglist[["column"]])) {
     chosen_column <- arglist[["column"]]
-  } else if (is.null(merged_annot[["width"]])) {
+  }
+
+  if (chosen_column == "width" && is.null(merged_annot[[chosen_column]])) {
     chosen_column <- "length"
-  } else if (!is.null(merged_annot[["start"]]) &
-             !is.null(merged_annot[["end"]])) {
-    merged_annot[["width"]] <- abs(merged_annot[["end"]] - merged_annot[["start"]])
+    if (is.null(merged_annot[[chosen_column]])) {
+      stop("Found neither width nor length as an annotation column.")
+    }
+  }
+
+  if (is.null(merged_annot[[chosen_column]])) {
+    if (!is.null(merged_annot[["start"]]) &
+        !is.null(merged_annot[["end"]])) {
+      merged_annot[["width"]] <- abs(merged_annot[["end"]] - merged_annot[["start"]])
+      chosen_column <- "width"
+    } else {
+      stop("Unable to make a width column.")
+    }
   }
 
   ## Keep in mind that I set missing material to 'undefined'

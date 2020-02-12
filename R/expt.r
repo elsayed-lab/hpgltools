@@ -197,7 +197,7 @@ concatenate_runs <- function(expt, column="replicate") {
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL, countdir=NULL,
                         include_type="all", include_gff=NULL, file_column="file",
-                        savefile="expt.rda", low_files=FALSE, ...) {
+                        savefile=NULL, low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -712,9 +712,15 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   names(expt[["colors"]]) <- rownames(sample_definitions)
   expt[["tximport"]] <- tximport_data
   ## Save an rdata file of the expressionset.
-  if (!is.null(savefile)) {
-    save_result <- try(save(expt, file=savefile), silent=TRUE)
+  if (is.null(savefile)) {
+    if ("character" %in% class(metadata)) {
+      name <- paste0(gsub(x=basename(metadata), pattern="^(.*)\\..*", replacement="\\1"), ".rda")
+    } else {
+      message("Saving the expressionset to 'expt.rda'.")
+      savefile <- "expt.rda"
+    }
   }
+  save_result <- try(save(expt, file=savefile), silent=TRUE)
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
@@ -893,20 +899,16 @@ extract_metadata <- function(metadata, ...) {
     ## sample_definitions <- read_metadata(meta_file)
   }
 
+  sample_column_name <- colnames(sample_definitions)[[sample_column]]
   ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
-  if (sample_column != "sampleid") {
-    ## sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
-    if (is.null(rownames(sample_definitions))) {
-      sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
-    } else {
-      sample_definitions[["sampleid"]] <- rownames(sample_definitions)
-    }
+  if (is.null(sample_definitions[[sample_column_name]])) {
+    sample_definitions[["sampleid"]] <- rownames(sample_definitions)
+  } else if (sample_column_name != "sampleid") {
+    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column_name]]
   }
 
-  if (rownames(sample_definitions)[1] == "1") {
-    rownames(sample_definitions) <- sample_definitions[[sample_column]]
-  }
-
+  ## Standardize the rownames/colnames.
+  rownames(sample_definitions) <- make.names(sample_definitions[["sampleid"]], unique=TRUE)
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
   colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                        x=colnames(sample_definitions))
@@ -2369,7 +2371,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
-                       violin=FALSE, sample_heat=TRUE, convert="cpm", transform="log2",
+                       violin=TRUE, sample_heat=TRUE, convert="cpm", transform="log2",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -2413,7 +2415,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + rows_down + 3
   annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
   xls_result <- write_xlsx(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
-                          sheet=sheet, start_col=1, title="Experimental Design.")
+                           sheet=sheet, start_col=1, title="Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
   metrics <- sm(graph_metrics(expt, qq=TRUE,

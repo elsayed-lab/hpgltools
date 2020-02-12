@@ -94,8 +94,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   pre_pca <- NULL
   post_pca <- NULL
   if (isTRUE(test_pca)) {
-    pre_batch <- normalize_expt(input, filter=TRUE, batch=FALSE,
-                                transform="log2", convert=convert, norm=norm)
+    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
+                                   transform="log2", convert=convert, norm=norm))
     message("Plotting a PCA before surrogates/batch inclusion.")
     pre_pca <- plot_pca(pre_batch, plot_labels=FALSE, ...)
     post_batch <- pre_batch
