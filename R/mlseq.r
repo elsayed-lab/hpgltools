@@ -159,7 +159,7 @@ simple_mlseq <- function(expt, comparison="condition", number_by_var=100,
     "discrete" = MLSeq::discreteControl(method="repeatedcv", number=training_number,
                                         repeats=training_repeats, tuneLength=tune_length),
     "voom_nsc" = MLSeq::voomControl(tuneLength=tune_length)
-    )
+  )
 
 
   ## Set up a trainer.

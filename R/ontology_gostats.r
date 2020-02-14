@@ -349,7 +349,7 @@ perhaps change gff_type to make the merge work.")
     "mf_under_enriched" = mf_under_sig,
     "bp_under_enriched" = bp_under_sig,
     "cc_under_enriched" = cc_under_sig
-    )
+  )
   results <- list(
     "gostats_mfp_over" = gostats_p_mf_over,
     "gostats_bpp_over" = gostats_p_bp_over,

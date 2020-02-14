@@ -19,6 +19,14 @@ simple_xcell(
 \arguments{
 \item{expt}{Expressionset to query.}
 
+\item{signatures}{Alternate set of signatures to use.}
+
+\item{genes}{Subset of genes to query.}
+
+\item{spill}{The xCell spill parameter.}
+
+\item{expected_types}{Set of assumed types in the data.}
+
 \item{label_size}{How large to make labels when printing the final heatmap.}
 
 \item{col_margin}{Used by par() when printing the final heatmap.}

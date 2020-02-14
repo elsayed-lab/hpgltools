@@ -1272,7 +1272,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         if (!is.null(n)) {
           cluster_up_ont <- head(cluster_up_ont, n=n)
         }
-        cluster_up_ont[["geneID"]] <- gsub(cluster_up_ont[["geneID"]],
+        cluster_up_ont[["geneID"]] <- gsub(x=cluster_up_ont[["geneID"]],
                                            pattern="/", replacement=" ")
         cluster_up_ont[["ontology"]] <- ONT
         cluster_up_ont <- cluster_up_ont[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
@@ -1284,7 +1284,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         if (!is.null(n)) {
           cluster_down_ont <- head(cluster_down_ont, n=n)
         }
-        cluster_down_ont[["geneID"]] <- gsub(cluster_down_ont[["geneID"]],
+        cluster_down_ont[["geneID"]] <- gsub(x=cluster_down_ont[["geneID"]],
                                              pattern="/", replacement=" ")
         cluster_down_ont[["ontology"]] <- ONT
         cluster_down_ont <- cluster_down_ont[, c(10, 1, 2, 5, 3, 4, 6, 7, 9, 8)]
@@ -1328,9 +1328,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         if (!is.null(n)) {
           gostats_up_ont <- head(gostats_up_ont, n=n)
         }
-        gostats_up_ont[["t"]] <- gsub(gostats_up_ont[["Term"]],
+        gostats_up_ont[["t"]] <- gsub(x=gostats_up_ont[["Term"]],
                                       pattern=".*\">(.*)</a>", replacement="\\1")
-        gostats_up_ont[["Term"]] <- gsub(gostats_up_ont[["Term"]],
+        gostats_up_ont[["Term"]] <- gsub(x=gostats_up_ont[["Term"]],
                                          pattern="<a href=\"(.*)\">.*", replacement="\\1")
         gostats_up_ont[["ont"]] <- ONT
         gostats_up_ont <- gostats_up_ont[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
@@ -1342,9 +1342,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
         if (!is.null(n)) {
           gostats_down_ont <- head(gostats_down_ont, n=n)
         }
-        gostats_down_ont[["t"]] <- gsub(gostats_down_ont[["Term"]],
+        gostats_down_ont[["t"]] <- gsub(x=gostats_down_ont[["Term"]],
                                         pattern=".*\">(.*)</a>", replacement="\\1")
-        gostats_down_ont[["Term"]] <- gsub(gostats_down_ont[["Term"]],
+        gostats_down_ont[["Term"]] <- gsub(x=gostats_down_ont[["Term"]],
                                            pattern="<a href=\"(.*)\">.*", replacement="\\1")
         gostats_down_ont[["ont"]] <- ONT
         gostats_down_ont <- gostats_down_ont[, c(10, 1, 9, 2, 5, 6, 3, 4, 8, 7)]
@@ -1948,8 +1948,8 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   }
 
   suffix <- ".xlsx"
-  file <- gsub(pattern="\\.xlsx", replacement="", file, perl=TRUE)
-  file <- gsub(pattern="\\.xls", replacement="", file, perl=TRUE)
+  file <- gsub(pattern="\\.xlsx", replacement="", x=file, perl=TRUE)
+  file <- gsub(pattern="\\.xls", replacement="", x=file, perl=TRUE)
   filename <- NULL
   if (isTRUE(dated)) {
     timestamp <- format(Sys.time(), "%Y%m%d%H")
@@ -1982,9 +1982,9 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   cluster_mf <- head(as.data.frame(cluster[["mf_all"]]@result), n=n)
   cluster_bp <- head(as.data.frame(cluster[["bp_all"]]@result), n=n)
   cluster_cc <- head(as.data.frame(cluster[["cc_all"]]@result), n=n)
-  cluster_mf[["geneID"]] <- gsub(cluster_mf[["geneID"]], pattern="/", replacement=" ")
-  cluster_bp[["geneID"]] <- gsub(cluster_bp[["geneID"]], pattern="/", replacement=" ")
-  cluster_cc[["geneID"]] <- gsub(cluster_cc[["geneID"]], pattern="/", replacement=" ")
+  cluster_mf[["geneID"]] <- gsub(x=cluster_mf[["geneID"]], pattern="/", replacement=" ")
+  cluster_bp[["geneID"]] <- gsub(x=cluster_bp[["geneID"]], pattern="/", replacement=" ")
+  cluster_cc[["geneID"]] <- gsub(x=cluster_cc[["geneID"]], pattern="/", replacement=" ")
   cluster_mf[["ontology"]] <- "MF"
   cluster_bp[["ontology"]] <- "BP"
   cluster_cc[["ontology"]] <- "CC"
@@ -2017,17 +2017,17 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   gostats_bp <- head(gostats[["bp_over_all"]], n=n)
   gostats_cc <- head(gostats[["cc_over_all"]], n=n)
   gostats_mf[["t"]] <- gsub(
-    gostats_mf[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    x=gostats_mf[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
   gostats_bp[["t"]] <- gsub(
-    gostats_bp[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    x=gostats_bp[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
   gostats_cc[["t"]] <- gsub(
-    gostats_cc[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
+    x=gostats_cc[["Term"]], pattern=".*\">(.*)</a>", replacement="\\1")
   gostats_mf[["Term"]] <- gsub(
-    gostats_mf[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    x=gostats_mf[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
   gostats_bp[["Term"]] <- gsub(
-    gostats_bp[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    x=gostats_bp[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
   gostats_cc[["Term"]] <- gsub(
-    gostats_cc[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
+    x=gostats_cc[["Term"]], pattern="<a href=\"(.*)\">.*", replacement="\\1")
   gostats_mf[["ont"]] <- "MF"
   gostats_bp[["ont"]] <- "BP"
   gostats_cc[["ont"]] <- "CC"

@@ -493,7 +493,7 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #' @return List containing the set of intersections in the conditions contained
 #'   in snp_result, the summary of numbers of variants per chromosome, and
 #'   summary of numbers per gene.
-#' @seealso \code{\link{snp_vs_genes}}
+#' @seealso \code{\link{snps_vs_genes}}
 #' @examples
 #'  \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -579,7 +579,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col="start", end_col="end",
                              expt_name_col="chromosome", snp_name_col="chromosome",
                              snp_start_col="position", expt_gid_column="gid",
                              genes=c("LPAL13_120010900", "LPAL13_340013000", "LPAL13_000054100",
-                                    "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
+                                     "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
   features <- fData(expt)
   if (is.null(features[[start_col]])) {
     stop("Unable to find the ", start_col, " column in the annotation data.")

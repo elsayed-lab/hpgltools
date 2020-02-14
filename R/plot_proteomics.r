@@ -5,17 +5,17 @@
 #' it does not currently separate the MS1 and MS2 data.  Since I am stuck on
 #' this forsaken plane with no hope of ever leaving, perhaps I can add that now.
 #'
-#' @param mzxml_data  The data structure from extract_mzxml or whatever it is.
-#' @param loess  Do a loess smoothing from which to extract a function
+#' @param mzxml_data The data structure from extract_mzxml or whatever it is.
+#' @param loess Do a loess smoothing from which to extract a function
 #'   describing the data?  This is terribly slow, and in the data I have
 #'   examined so far, not very helpful, so it is FALSE by default.
-#' @param alpha  Make the plotted dots opaque to this degree.
-#' @param ms1  Include MS1 data in the plot?
-#' @param ms2  Include MS2 data in the plot?
-#' @param x_scale  Plot the x-axis on a non linear scale?
-#' @param y_scale  Plot the y-axis on a non linear scale?
-#' @param ...  Extra arguments for the downstream functions.
-#' @return  ggplot2 goodness.
+#' @param alpha Make the plotted dots opaque to this degree.
+#' @param ms1 Include MS1 data in the plot?
+#' @param ms2 Include MS2 data in the plot?
+#' @param x_scale Plot the x-axis on a non linear scale?
+#' @param y_scale Plot the y-axis on a non linear scale?
+#' @param ... Extra arguments for the downstream functions.
+#' @return ggplot2 goodness.
 #' @export
 plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=TRUE,
                               x_scale=NULL, y_scale=NULL, ...) {
@@ -108,18 +108,18 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
 #'   extractor dumps a couple of tables, one must choose a desired table and
 #'   column from it to plot.
 #'
-#' @param mzxml_data  Provide a list of mzxml data, one element for each sample.
-#' @param table  One of precursors or scans
-#' @param column  One of the columns from the table; if 'scans' is chosen, then
+#' @param mzxml_data Provide a list of mzxml data, one element for each sample.
+#' @param table One of precursors or scans
+#' @param column One of the columns from the table; if 'scans' is chosen, then
 #'   likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 #'   'precursors' is chosen, then the only likely choice for the moment is
 #'   'precursorintensity'.
-#' @param violin  Print the samples as violins rather than only box/whiskers?
-#' @param names  Names for the x-axis of the plot.
-#' @param title  Title the plot?
-#' @param scale  Put the data on a specific scale?
-#' @param ...  Further arguments, presumably for colors or some such.
-#' @return  Boxplot describing the requested column of data in the set of mzXML files.
+#' @param violin Print the samples as violins rather than only box/whiskers?
+#' @param names Names for the x-axis of the plot.
+#' @param title Title the plot?
+#' @param scale Put the data on a specific scale?
+#' @param ... Further arguments, presumably for colors or some such.
+#' @return Boxplot describing the requested column of data in the set of mzXML files.
 #' @export
 plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursorintensity",
                                violin=FALSE, names=NULL, title=NULL, scale=NULL, ...) {
@@ -445,23 +445,23 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
   ## I am not certain this is valid.
   plot_df[[column]] <- abs(plot_df[[column]])
 
-##  testing <- data.table::as.data.table(plot_df)
-##  recast_dt <- data.table::dcast.data.table(data=testing,
-##                                            formula=sequence+proteinname~sample,
-##                                            fun.aggregate=mean,
-##                                            value.var="intensity")
-##  names <- recast_dt[["proteinname"]]
-##  sequences <- recast_dt[["sequence"]]
-##  recast_dt[, c("proteinname", "sequence") := NULL]
-##  nan_idx <- is.na(recast_dt)
-##  recast_dt[nan_idx] <- 0
-##  recast_norm <- log2(
-##    1 + preprocessCore::normalize.quantiles.robust(as.matrix(recast_dt)))
-##  remelt <- as.data.table(recast_norm)
-##  remelt[["proteinname"]] <- names
-##  remelt[["sequence"]] <- sequences
-##  remelted <- data.table::melt(data=remelt, value.name="intensity")
-##  colnames(remelted) <- c("proteinname", "sequence", "sample", "intensity")
+  ##  testing <- data.table::as.data.table(plot_df)
+  ##  recast_dt <- data.table::dcast.data.table(data=testing,
+  ##                                            formula=sequence+proteinname~sample,
+  ##                                            fun.aggregate=mean,
+  ##                                            value.var="intensity")
+  ##  names <- recast_dt[["proteinname"]]
+  ##  sequences <- recast_dt[["sequence"]]
+  ##  recast_dt[, c("proteinname", "sequence") := NULL]
+  ##  nan_idx <- is.na(recast_dt)
+  ##  recast_dt[nan_idx] <- 0
+  ##  recast_norm <- log2(
+  ##    1 + preprocessCore::normalize.quantiles.robust(as.matrix(recast_dt)))
+  ##  remelt <- as.data.table(recast_norm)
+  ##  remelt[["proteinname"]] <- names
+  ##  remelt[["sequence"]] <- sequences
+  ##  remelted <- data.table::melt(data=remelt, value.name="intensity")
+  ##  colnames(remelted) <- c("proteinname", "sequence", "sample", "intensity")
 
   ## Drop rows from the metadata and colors which had errors.
   if (length(keepers) > 0) {
@@ -871,12 +871,12 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis="mass", xscale=NULL, sam
 #' are useful as diagnostics of the data.  I chose a few and made options to
 #' pull some/most of the rest.  Lets play!
 #'
-#' @param table  Big honking data table from extract_peprophet_data()
-#' @param xaxis  Column to plot on the x-axis
+#' @param table Big honking data table from extract_peprophet_data()
+#' @param xaxis Column to plot on the x-axis
 #' @param xscale Change the scale of the x-axis?
-#' @param yaxis  guess!
-#' @param yscale  Change the scale of the y-axis?
-#' @param size_column  Use a column for scaling the sizes of dots in the plot?
+#' @param yaxis guess!
+#' @param yscale Change the scale of the y-axis?
+#' @param size_column Use a column for scaling the sizes of dots in the plot?
 #' @param ... extra options which may be used for plotting.
 #' @return a plot!
 #' @export
@@ -944,7 +944,7 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
   ## Setting the factor/vector of sizes is a bit confusing to me.
   table[["size"]] <- as.factor(table[["size"]])
   levels(table[["size"]]) <- c("01smallest", "02small", "03medium_small",
-                              "04medium_big", "05big", "06biggest")
+                               "04medium_big", "05big", "06biggest")
   my_sizes <- c("01smallest"=0.4, "02small"=8, "03medium_small"=1.2,
                 "04medium_big"=1.6, "05big"=2.0, "06biggest"=2.4)
 
@@ -1001,11 +1001,11 @@ plot_peprophet_data <- function(table, xaxis="precursor_neutral_mass", xscale=NU
 #' This uses the cleaver package to generate a plot of expected intensities
 #' vs. weight for a list of protein sequences.
 #'
-#' @param pep_sequences  Set of protein sequences.
-#' @param enzyme  One of the allowed enzymes for cleaver.
-#' @param start  Limit the set of fragments from this point
-#' @param end  to this point.
-#' @return  List containing the distribution of weights and the associated plot.
+#' @param pep_sequences Set of protein sequences.
+#' @param enzyme One of the allowed enzymes for cleaver.
+#' @param start Limit the set of fragments from this point
+#' @param end to this point.
+#' @return List containing the distribution of weights and the associated plot.
 #' @export
 plot_cleaved <- function(pep_sequences, enzyme="trypsin", start=600, end=1500) {
   products <- cleaver::cleave(pep_sequences, enzym=enzyme)
@@ -1040,12 +1040,12 @@ plot_cleaved <- function(pep_sequences, enzyme="trypsin", start=600, end=1500) {
 #'
 #' This is very similar to plot_cleaved() above, but tries to be a little bit smarter.
 #'
-#' @param pep_sequences  Protein sequences as per plot_cleaved().
-#' @param enzyme  Compatible enzyme name from cleaver.
-#' @param start  Print histogram from here
+#' @param pep_sequences Protein sequences as per plot_cleaved().
+#' @param enzyme Compatible enzyme name from cleaver.
+#' @param start Print histogram from here
 #' @param end to here.
-#' @param color  Make the bars this color.
-#' @return  List containing the plot and size distribution.
+#' @param color Make the bars this color.
+#' @return List containing the plot and size distribution.
 #' @export
 cleavage_histogram <- function(pep_sequences, enzyme="trypsin",
                                start=600, end=1500, color="black") {

@@ -722,9 +722,9 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   merged[["state"]] <- as.factor(merged[["state"]])
 
   first_table_colname <- glue::glue(
-    "Table: {first_table}, Type: {first_type}, column: {first_column}")
+                                 "Table: {first_table}, Type: {first_type}, column: {first_column}")
   second_table_colname <- glue::glue(
-    "Table: {second_table}, Type: {second_type}, column: {second_column}")
+                                  "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data=merged,
                 aes_string(color="state", fill="state",

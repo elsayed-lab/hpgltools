@@ -19,11 +19,11 @@
 #' intended scale is log, then this will set values less than 0 to zero to avoid
 #' imaginary numbers.
 #'
-#' @param data  Data to plot.
-#' @param scale  If known, this will be used to define what (if any) values to
+#' @param data Data to plot.
+#' @param scale If known, this will be used to define what (if any) values to
 #'   change.
-#' @param max_data  Define the upper limit for the heuristic.
-#' @param min_data  Define the lower limit for the heuristic.
+#' @param max_data Define the upper limit for the heuristic.
+#' @param min_data Define the lower limit for the heuristic.
 check_plot_scale <- function(data, scale=NULL, max_data=10000, min_data=10) {
   if (max(data) > max_data & min(data) < min_data) {
     message("This data will benefit from being displayed on the log scale.")
@@ -56,13 +56,13 @@ check_plot_scale <- function(data, scale=NULL, max_data=10000, min_data=10) {
 #' This hopefully will get around the most likely/worst problems.
 #'
 #' @param gg Plot from ggplot2.
-#' @param filename  Output filename.
-#' @param selfcontained  htmlwidgets: Return the plot as a self-contained file
+#' @param filename Output filename.
+#' @param selfcontained htmlwidgets: Return the plot as a self-contained file
 #'   with images re-encoded base64.
 #' @param libdir htmlwidgets: Directory into which to put dependencies.
-#' @param background  htmlwidgets: String for the background of the image.
-#' @param title  htmlwidgets: Title of the page!
-#' @param knitrOptions  htmlwidgets: I am not a fan of camelCase, but
+#' @param background htmlwidgets: String for the background of the image.
+#' @param title htmlwidgets: Title of the page!
+#' @param knitrOptions htmlwidgets: I am not a fan of camelCase, but
 #'   nonetheless, options from knitr for htmlwidgets.
 #' @param ... Any remaining elipsis options are passed to ggplotly.
 #' @return The final output filename
@@ -90,14 +90,14 @@ ggplt <- function(gg, filename="ggplot.html",
 #' density plots, pca plots, standard median distance/correlation, and
 #' qq plots.
 #'
-#' @param expt  an expt to process
-#' @param cormethod   the correlation test for heatmaps.
+#' @param expt an expt to process
+#' @param cormethod The correlation test for heatmaps.
 #' @param distmethod define the distance metric for heatmaps.
-#' @param title_suffix   text to add to the titles of the plots.
-#' @param qq   include qq plots?
-#' @param ma   include pairwise ma plots?
-#' @param gene_heat  Include a heatmap of the gene expression data?
-#' @param ... extra parameters optionally fed to the various plots
+#' @param title_suffix Text to add to the titles of the plots.
+#' @param qq Include qq plots?
+#' @param ma Include pairwise ma plots?
+#' @param gene_heat Include a heatmap of the gene expression data?
+#' @param ... Extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:
 #' \enumerate{
 #'   \item nonzero = a ggplot2 plot of the non-zero genes vs library size
@@ -361,10 +361,10 @@ plot_legend <- function(stuff) {
 ## http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_%28ggplot2%29/
 #' Make a grid of plots.
 #'
-#' @param plots  a list of plots
-#' @param file  a file to write to
-#' @param cols   the number of columns in the grid
-#' @param layout  set the layout specifically
+#' @param plots List of plots
+#' @param file File to write to
+#' @param cols Number of columns in the grid
+#' @param layout Set the layout specifically
 #' @return a multiplot!
 #' @export
 plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {

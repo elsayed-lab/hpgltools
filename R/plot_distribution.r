@@ -190,7 +190,7 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
 
   if (!is.null(expt_names)) {
     if (class(expt_names) == "character" & length(expt_names) == 1) {
-    ## Then this refers to an experimental metadata column.
+      ## Then this refers to an experimental metadata column.
       colnames(data) <- design[[expt_names]]
     } else {
       colnames(data) <- expt_names
@@ -290,7 +290,7 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
     "batch_summary" = batch_summary,
     "sample_summary" = sample_summary,
     "table" = melted)
-    return(retlist)
+  return(retlist)
 }
 
 #' Quantile/quantile comparison of the mean of all samples vs. each sample.

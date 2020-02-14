@@ -218,8 +218,8 @@ divide_seq <- function(counts, ...) {
   if (is.null(annotation_gr)) {
     annot_df <- annotation_df
     annotation_gr <- GenomicRanges::makeGRangesFromDataFrame(
-                                           annotation_df,
-                                           seqnames.field="chromosome")
+                                      annotation_df,
+                                      seqnames.field="chromosome")
   }
 
   ## Test that the annotations and genome have the same seqnames

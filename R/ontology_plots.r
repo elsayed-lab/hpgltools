@@ -472,6 +472,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     plotting_kegg_over <- NULL
   } else {
     plotting_kegg_over <- gp_rewrite_df(plotting_kegg_over)
+    kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"),
+                               silent=TRUE)
   }
   if (class(kegg_pval_plot_over)[[1]] == "try-error") {
     kegg_pval_plot_over <- NULL

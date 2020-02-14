@@ -5,10 +5,10 @@
 \title{Write arcs between chromosomes in circos.}
 \usage{
 circos_arc(
+  cfg,
   df,
-  cfgout = "circos/conf/default.conf",
-  first_col = "chr1",
-  second_col = "chr2",
+  first_col = "seqnames",
+  second_col = "seqnames.2",
   color = "blue",
   radius = 0.75,
   thickness = 3,
@@ -18,9 +18,9 @@ circos_arc(
 )
 }
 \arguments{
-\item{df}{Dataframe with starts/ends and the floating point information.}
+\item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
 
-\item{cfgout}{Master configuration file to write.}
+\item{df}{Dataframe with starts/ends and the floating point information.}
 
 \item{first_col}{Name of the first chromosome.}
 
@@ -31,6 +31,12 @@ circos_arc(
 \item{radius}{Outer radius at which to add the arcs.}
 
 \item{thickness}{Integer thickness of the arcs.}
+
+\item{ribbon}{Print as a ribbon?}
+
+\item{show}{Show these arcs?}
+
+\item{z}{Correction parameter.}
 }
 \value{
 The file to which the arc configuration information was written.

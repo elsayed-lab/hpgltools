@@ -39,9 +39,17 @@ circos_ideogram(
 
 \item{stroke_thickness}{How much of them to fill in}
 
+\item{label_font}{What font to use.}
+
+\item{spacing_default}{How much space between elements.}
+
+\item{spacing_break}{Space between breaks.}
+
 \item{fill_color}{What color to fill}
 
 \item{radius}{Where on the circle to put them}
+
+\item{radius_padding}{How much to pad between radii.}
 
 \item{label_size}{How large to make the labels in px.}
 

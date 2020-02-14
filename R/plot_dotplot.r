@@ -381,13 +381,13 @@ plot_sm <- function(data, colors=NULL, method="pearson", plot_legend=FALSE,
       ggplot2::scale_x_continuous(labels=sm_df[["sample"]],
                                   breaks=1:nrow(sm_df),
                                   limits=c(1, nrow(sm_df))) +
-    ggplot2::ylab(glue("Standard Median {method}")) +
-    ggplot2::xlab("Sample") +
-    ggplot2::ggtitle(title) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   legend.position=legend_position,
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5))
+      ggplot2::ylab(glue("Standard Median {method}")) +
+      ggplot2::xlab("Sample") +
+      ggplot2::ggtitle(title) +
+      ggplot2::theme_bw(base_size=base_size) +
+      ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
+                     legend.position=legend_position,
+                     axis.text.x=ggplot2::element_text(angle=90, vjust=0.5))
     ## Perhaps instead: hjust=1.5, vjust=0.5))
 
   } else {

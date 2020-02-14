@@ -1376,6 +1376,7 @@ make_pombe_expt <- function(annotation=TRUE) {
 #' @param header Whether or not the count tables include a header row.
 #' @param include_summary_rows Whether HTSeq summary rows should be included.
 #' @param suffix Optional suffix to add to the filenames when reading them.
+#' @param countdir Optional count directory to read from.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso \pkg{data.table}
@@ -2410,7 +2411,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
   xls_result <- write_xlsx(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
-                          title="Columns used in the following tables.")
+                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
   annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
@@ -2423,14 +2424,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
   xls_result <- write_xlsx(data=libsizes, wb=wb, start_row=new_row,
-                          rownames=FALSE, sheet=sheet, start_col=1,
-                          title="Library sizes.")
+                           rownames=FALSE, sheet=sheet, start_col=1,
+                           title="Library sizes.")
 
   new_row <- new_row + nrow(libsizes) + 3
   libsize_summary <- as.data.frame(metrics[["libsize_summary"]])
   xls_result <- write_xlsx(data=libsize_summary, wb=wb, start_row=new_row,
-                          rownames=FALSE, sheet=sheet, start_col=1,
-                          title="Library size summary.")
+                           rownames=FALSE, sheet=sheet, start_col=1,
+                           title="Library size summary.")
 
   ## Write the raw read data and gene annotations
   message("Writing the raw reads.")
@@ -2446,7 +2447,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   }
   read_info <- merge(info, reads, by="row.names")
   xls_result <- write_xlsx(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
-                          start_row=new_row, start_col=new_col, title="Raw Reads.")
+                           start_row=new_row, start_col=new_col, title="Raw Reads.")
 
   ## Write some graphs for the raw data
   message("Graphing the raw reads.")
@@ -2656,14 +2657,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_col=new_col, start_row=new_row)
+                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet, "Raw PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_row=new_row, start_col=new_col)
+                           sheet=sheet, start_row=new_row, start_col=new_col)
 
   ## Move on to the next sheet, normalized data
   message("Writing the normalized reads.")
@@ -2678,7 +2679,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   read_info <- merge(norm_reads, info, by="row.names")
   title <- what_happened(norm_data)
   xls_result <- write_xlsx(wb=wb, data=read_info, rownames=FALSE,
-                          start_row=new_row, start_col=new_col, sheet=sheet, title=title)
+                           start_row=new_row, start_col=new_col, sheet=sheet, title=title)
 
   ## Graphs of the normalized data
   message("Graphing the normalized reads.")
@@ -2835,7 +2836,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   npct_plot <- NULL
   if (isTRUE(violin)) {
     varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, predictor=NULL,
-                                       factors=c("condition", "batch"))))
+                                                        factors=c("condition", "batch"))))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2858,14 +2859,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_col=new_col, start_row=new_row)
+                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
-                          rownames=FALSE, start_col=new_col, start_row=new_row)
+                           rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
   ## Give a median-by-factor accounting of the data
@@ -2884,7 +2885,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   rownames(median_data_merged) <- median_data_merged[["Row.names"]]
   median_data_merged[["Row.names"]] <- NULL
   xls_result <- write_xlsx(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
-                          rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
+                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
 
   ## Save the result
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))

@@ -9,6 +9,7 @@
 #' @param binwidth Width of the bins for the histogram.
 #' @param log Replot on the log scale?
 #' @param bins Number of bins for the histogram.
+#' @param adjust The prettification parameter in the ggplot2 density.
 #' @param fillcolor Change the fill colors of the plotted elements?
 #' @param color Change the color of the lines of the plotted elements?
 #' @return Ggplot histogram.
@@ -134,11 +135,11 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, color
       multi <- logged
     }
   }
-##  if (class(bon_t) == "try-error") {
-##    message("Unable to perform corrected test.")
-##  } else {
-##    message("Used Bonferroni corrected t test(s) between columns.")
-##  }
+  ##  if (class(bon_t) == "try-error") {
+  ##    message("Unable to perform corrected test.")
+  ##  } else {
+  ##    message("Used Bonferroni corrected t test(s) between columns.")
+  ##  }
 
   returns <- list(
     "plot" = multi,

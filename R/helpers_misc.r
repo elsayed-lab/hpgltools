@@ -191,7 +191,7 @@ clear_session <- function(keepers=NULL, depth=10) {
 #' @return Matrix of the correlation-modified distances of the original matrix.
 #' @export
 cordist <- function(data, cor_method="pearson", dist_method="euclidean",
-  cor_weight=0.5, ...) {
+                    cor_weight=0.5, ...) {
   cor_matrix  <- hpgl_cor(t(data), method=cor_method, ...)
   dist_matrix <- as.matrix(dist(data, method=dist_method, diag=TRUE,
                                 upper=TRUE))
@@ -307,8 +307,8 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #' }
 #' @export
 hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
-                           d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
-                           aub.p.to.end=0.55) {
+                          d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
+                          aub.p.to.end=0.55) {
   ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
   ## However, the repository I want for it is 'seqtools'
   ## Ergo my stupid require.auto() will be confused by definition because it
@@ -430,7 +430,8 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' @param delimiter The tritrypdb uses ': ' ergo the default.
 #' @return A value!
 local_get_value <- function(x, delimiter=": ") {
-  return(gsub("^ ", "", tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
+  return(gsub(pattern="^ ", replacement="",
+              x=tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
 }
 
 #' copy/paste the function from SeqTools and figure out where it falls on its ass.
@@ -716,6 +717,7 @@ unAsIs <- function(stuff) {
 #' Because, why not!?
 #'
 #' @param lm_model Model to print from glm/lm/robustbase.
+#' @param as Type to return.
 #' @return a string representation of that model.
 #' @export
 ymxb_print <- function(lm_model, as="glue") {

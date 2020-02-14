@@ -7,13 +7,13 @@
 plot_multiplot(plots, file, cols = NULL, layout = NULL)
 }
 \arguments{
-\item{plots}{a list of plots}
+\item{plots}{List of plots}
 
-\item{file}{a file to write to}
+\item{file}{File to write to}
 
-\item{cols}{the number of columns in the grid}
+\item{cols}{Number of columns in the grid}
 
-\item{layout}{set the layout specifically}
+\item{layout}{Set the layout specifically}
 }
 \value{
 a multiplot!

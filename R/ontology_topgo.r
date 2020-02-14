@@ -95,11 +95,11 @@ simple_topgo <- function(sig_genes, goid_map="id2go.map", go_db=NULL,
   tt <- sm(requireNamespace("foreach"))
   res <- foreach(c=1:length(methods),
                  .packages=c("hpgltools", "Hmisc", "topGO")) %dopar% {
-    type <- methods[c]
-    returns[[type]] <- do_topgo(type, go_map=geneID2GO,
-                                fisher_genes=fisher_interesting_genes,
-                                ks_genes=ks_interesting_genes)
-  }
+                   type <- methods[c]
+                   returns[[type]] <- do_topgo(type, go_map=geneID2GO,
+                                               fisher_genes=fisher_interesting_genes,
+                                               ks_genes=ks_interesting_genes)
+                 }
   stopped <- parallel::stopCluster(cl)
   if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")
@@ -610,7 +610,8 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
   } else {
     ##        print(class(nodeInfo))
     ##        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
-    nodeInfo = gsub("(\\w.{18}).*(\\\\\\n)","\\1\\2", nodeInfo, perl=TRUE)
+    nodeInfo <- gsub(pattern="(\\w.{18}).*(\\\\\\n)",
+                     replacement="\\1\\2", x=nodeInfo, perl=TRUE)
     nodeInfo <- glue("\\\n{nodeInfo}")
   }
   ##teststring = paste("test:", nodeInfo)

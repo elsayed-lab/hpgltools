@@ -11,8 +11,7 @@ ggplotly_url(
   title = NULL,
   url_data = NULL,
   url_column = "url",
-  tooltip = "all",
-  ...
+  tooltip = "all"
 )
 }
 \arguments{

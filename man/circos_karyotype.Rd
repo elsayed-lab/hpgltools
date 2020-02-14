@@ -5,23 +5,15 @@
 \title{Create the description of (a)chromosome(s) for circos.}
 \usage{
 circos_karyotype(
-  name = "default",
-  conf_dir = "circos/conf",
-  length = NULL,
-  chr_names = NULL,
+  cfg,
   segments = 6,
   color = "white",
-  fasta = NULL
+  fasta = NULL,
+  lengths = NULL
 )
 }
 \arguments{
-\item{name}{Name of the chromosome (This currently assumes a bacterial chromosome).}
-
-\item{conf_dir}{Where to put the circos configuration file(s).}
-
-\item{length}{Length of the chromosome (the default is mgas5005).}
-
-\item{chr_names}{Short name of the chromosome.}
+\item{cfg}{Result from circos_prefix(), contains a bunch of useful things.}
 
 \item{segments}{How many segments to cut the chromosome into?}
 
@@ -29,7 +21,7 @@ circos_karyotype(
 
 \item{fasta}{Fasta file to use to create the karyotype.}
 
-\item{chr_num}{Number to record for each chromosome.}
+\item{lengths}{If no sequence file is provided, use a named numeric vector to provide them.}
 }
 \value{
 The output filename.

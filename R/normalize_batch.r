@@ -534,7 +534,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     colnames(model_adjust) <- sv_names
     if (class(input) == "expt") {
       surrogate_plots <- plot_batchsv(input, model_adjust)
-   }
+    }
   }
   ## Only use counts_from_surrogates if the method does not provide counts on its own
   if (is.null(new_counts)) {
@@ -1469,8 +1469,8 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
   fstats <- ((rssNULL - rss1) / (df1 - df0)) /
     (rss1 / (ncol(data.m) - df1))
   pv.v <- 1 - isva::pf(fstats,
-                 df1=(df1 - df0),
-                 df2=(ncol(data.m) - df1))
+                       df1=(df1 - df0),
+                       df2=(ncol(data.m) - df1))
   pv.s <- sort(pv.v, decreasing=FALSE, index.return=TRUE)
   qv.v <- p.adjust(pv.s[["x"]])
   ##qv.v <- qvalue(pv.s[["x"]])[["qvalue"]]
@@ -1501,9 +1501,9 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
     "pvCF" = pv.m,
     "selisv" = selisv.idx)
   return(retlist)
-##  return(list(spv = pv.s$x, qv = qv.v, rk = pv.s$ix, ndeg = ntop,
-##              deg = pred.idx, lm = lm.m, isv = selisv.m, nsv = length(selisv.idx),
-##              pvCF = pv.m, selisv = selisv.idx))
+  ##  return(list(spv = pv.s$x, qv = qv.v, rk = pv.s$ix, ndeg = ntop,
+  ##              deg = pred.idx, lm = lm.m, isv = selisv.m, nsv = length(selisv.idx),
+  ##              pvCF = pv.m, selisv = selisv.idx))
 }
 
 ## EOF

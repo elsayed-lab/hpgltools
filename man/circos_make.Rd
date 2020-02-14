@@ -4,12 +4,12 @@
 \alias{circos_make}
 \title{Write a simple makefile for circos.}
 \usage{
-circos_make(target = "", output = "circos/Makefile", circos = "circos")
+circos_make(cfg, target = "", circos = "circos")
 }
 \arguments{
-\item{target}{Default make target.}
+\item{cfg}{Configuration from circos_prefix().}
 
-\item{output}{Makefile to write.}
+\item{target}{Default make target.}
 
 \item{circos}{Location of circos.  I have a copy in home/bin/circos and use that sometimes.}
 }

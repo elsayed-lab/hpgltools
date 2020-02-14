@@ -5,11 +5,9 @@
 \title{Write histograms of arbitrary floating point data in circos.}
 \usage{
 circos_hist(
+  cfg,
   df,
-  annot_df,
-  cfgout = "circos/conf/default.conf",
   colname = "logFC",
-  chr = "chr1",
   basename = "",
   color = "blue",
   fill_color = "blue",
@@ -23,21 +21,25 @@ circos_hist(
 )
 }
 \arguments{
+\item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
+
 \item{df}{Dataframe with starts/ends and the floating point information.}
 
-\item{annot_df}{Annotation data frame containing starts/ends.}
-
-\item{cfgout}{Master configuration file to write.}
-
 \item{colname}{Name of the column with the data of interest.}
-
-\item{chr}{Name of the chromosome (This currently assumes a bacterial chromosome).}
 
 \item{basename}{Location to write the circos data (usually cwd).}
 
 \item{color}{Color of the plotted data.}
 
-\item{fill_color}{Guess!}
+\item{fill_color}{Guess}
+
+\item{fill_under}{The circos histogram fill under parameter}
+
+\item{extend_bin}{Extend bins?}
+
+\item{thickness}{histogram thickness.}
+
+\item{orientation}{facing in or out?}
 
 \item{outer}{Floating point radius of the circle into which to place the data.}
 

@@ -71,7 +71,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
   if (class(mart) == "try-error") {
     message("Unable to perform useMart, perhaps the host/mart is incorrect: ",
-                   host, " ", trymart, ".")
+            host, " ", trymart, ".")
     marts <- biomaRt::listMarts(host=host)
     mart_names <- as.character(marts[[1]])
     message("The available marts are: ")

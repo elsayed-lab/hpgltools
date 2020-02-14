@@ -51,7 +51,17 @@ circos_ticks(
 \arguments{
 \item{name}{Name of the configuration file to which to add the ideogram.}
 
-\item{conf_dir}{Where does the configuration live?}
+\item{conf_dir}{Where does the configuration live.}
+
+\item{show_ticks}{Show them or not.}
+
+\item{show_tick_labels}{Show the tick labels, or do not.}
+
+\item{show_grid}{Print a grid behind.}
+
+\item{skip_first_label}{Like a clock.}
+
+\item{skip_last_label}{Ditto.}
 
 \item{tick_separation}{Top-level separation between tick marks.}
 

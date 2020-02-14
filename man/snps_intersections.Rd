@@ -32,5 +32,5 @@ sequence (currently this is limited to CDS, but that is negotiable).
 }
 }
 \seealso{
-\code{\link{snp_vs_genes}}
+\code{\link{snps_vs_genes}}
 }

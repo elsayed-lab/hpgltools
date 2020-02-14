@@ -23,6 +23,8 @@ plot_histogram(
 
 \item{bins}{Number of bins for the histogram.}
 
+\item{adjust}{The prettification parameter in the ggplot2 density.}
+
 \item{fillcolor}{Change the fill colors of the plotted elements?}
 
 \item{color}{Change the color of the lines of the plotted elements?}

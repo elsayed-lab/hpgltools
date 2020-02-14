@@ -222,7 +222,7 @@ plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
 #' @export
 ggplotly_url <- function(plot, filename, id_column="id", title=NULL,
                          url_data=NULL, url_column="url",
-                         tooltip="all", ...) {
+                         tooltip="all") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
     tooltip_columns <- "label"

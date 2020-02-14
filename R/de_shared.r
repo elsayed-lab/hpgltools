@@ -68,7 +68,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     surrogates <- arglist[["surrogates"]]
   }
   if (is.null(model_cond)) {
-   model_cond <- TRUE
+    model_cond <- TRUE
   }
   if (is.null(model_batch)) {
     model_batch <- FALSE
@@ -774,7 +774,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     message("Extracting surrogate estimates from ", model_batch,
             " and adding them to the model.")
     model_batch_info <- all_adjusters(input, estimate_type=model_batch,
-                                         surrogates=surrogates)
+                                      surrogates=surrogates)
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.
     model_batch <- model_batch_info[["model_adjust"]]

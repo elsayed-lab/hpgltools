@@ -51,6 +51,7 @@ then xlsx, and now openxlsx.  Hopefully this will not change again.
   xls_coords <- write_xlsx(another_df, wb=xls_coords$workbook,
                           sheet="hpgl_data", start_row=xls_coords$end_col)
  }
+
 }
 \seealso{
 \pkg{openxlsx}

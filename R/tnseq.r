@@ -10,6 +10,7 @@
 #' @param data data to plot
 #' @param column which column to use for plotting
 #' @param ylimit Define the y axis?
+#' @param adjust Prettification parameter from ggplot2.
 #' @return A plot and some numbers:
 #'  \enumerate{
 #'   \item maximum_reads = The maximum number of reads observed in a single position.
@@ -63,7 +64,7 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   data_plot <- plot_histogram(log2_data_list, bins=300, adjust=adjust)
   data_plot <- data_plot +
     ggplot2::scale_x_continuous(limits=c(0, 6))
-    ggplot2::scale_y_continuous(limits=c(0, 2))
+  ggplot2::scale_y_continuous(limits=c(0, 2))
 
   raw <- table(unlist(data_list))
   num_zeros <- raw[as.numeric(names(raw)) == 0]
@@ -188,7 +189,7 @@ plot_essentiality <- function(file, order_by="posterior_zbar", keep_esses=FALSE,
 Essential genes: {num_essential}
 Uncertain genes: {num_uncertain}
 Non-Essential genes: {num_insig}")) +
-    ggplot2::theme_bw()
+ggplot2::theme_bw()
 
   span_df <- ess[, c("max_run", "max_run_span")]
   span <- plot_linear_scatter(span_df)

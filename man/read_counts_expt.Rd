@@ -25,6 +25,8 @@ read_counts_expt(
 
 \item{suffix}{Optional suffix to add to the filenames when reading them.}
 
+\item{countdir}{Optional count directory to read from.}
+
 \item{...}{More options for happy time!}
 }
 \value{

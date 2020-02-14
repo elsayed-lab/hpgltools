@@ -104,12 +104,12 @@ transform_counts <- function(count_table, design=NULL, transform="raw",
   ## print(head(nans))
   nans_sum <- sum(nans)
   ##if (nans_sum > 0) {
-    ##message("Setting nan containing elements to 0.")
-    ##count_table[nans] <- 0
-    ##nans <- nans == 0
-    ##count_table <- count_table[!nans, ]
-    ##message(sprintf("Removing %d NaN containing rows (%d remaining).",
-    ##                num_before - nrow(count_table), nrow(count_table)))
+  ##message("Setting nan containing elements to 0.")
+  ##count_table[nans] <- 0
+  ##nans <- nans == 0
+  ##count_table <- count_table[!nans, ]
+  ##message(sprintf("Removing %d NaN containing rows (%d remaining).",
+  ##                num_before - nrow(count_table), nrow(count_table)))
   ##}
 
   libsize <- colSums(count_table)
