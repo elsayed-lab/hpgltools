@@ -16,6 +16,7 @@ plot_ma_de(
   size = 2,
   tooltip_data = NULL,
   gvis_filename = NULL,
+  shapes = TRUE,
   invert = FALSE,
   label = NULL,
   ...

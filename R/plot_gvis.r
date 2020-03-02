@@ -126,7 +126,7 @@ plot_gvis_volcano <- function(toptable_data, logfc=1.0, p=0.05,
   gvis_df <- gvis_df[, -1]
   gvis_df <- gvis_df[, c("logFC", "nsig_modp", "nsig.tooltip", "sig_modp", "sig.tooltip")]
   colnames(gvis_df) <- c("logFC", "nsig_p", "nsig.tooltip", "sig_p", "sig.tooltip")
-  gvis_chartid <- gsub(pattern="\\.html$", replacment="", x=basename(filename))
+  gvis_chartid <- gsub(pattern="\\.html$", replacement="", x=basename(filename))
   vol_json_ids <- rjson::toJSON(row.names(gvis_df))
   vol_jscode <- glue("
  var IDs = {vol_json_ids};

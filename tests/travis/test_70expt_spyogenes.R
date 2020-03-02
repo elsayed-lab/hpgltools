@@ -107,13 +107,10 @@ test_that("Do we get expected gene ontology information?", {
   expect_equal(expected, actual)
 })
 
-mgas_df <- fData(mgas_expt)
-mgas_df <- mgas_df[, c("start", "end", "width", "strand", "gene")]
-colnames(mgas_df) <- c("start", "stop", "width", "strand", "COGFun")
-mgas_df[["start"]] <- suppressWarnings(as.numeric(mgas_df[["start"]]))
-mgas_df[["stop"]] <- suppressWarnings(as.numeric(mgas_df[["stop"]]))
-na_entries <- is.na(mgas_df[["start"]])
-mgas_df <- mgas_df[!na_entries, ]
+circos_annot_df <- as.data.frame(mgas_df)
+circos_annot_df <- circos_annot_df[, c("start", "stop", "strand", "COGFun")]
+circos_annot_df[["chromosome"]] <- "chr1"
+rownames(circos_annot_df) <- make.names(gsub(x=mgas_df[["sysName"]], pattern="Spy_", replacement="Spy"), unique=TRUE)
 
 ## There is no way circos will work on travis, lets be realistic.
 if (!identical(Sys.getenv("TRAVIS"), "true")) {
@@ -126,14 +123,15 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
   na_widths <- is.na(relevant_widths)
   relevant_widths[na_widths] <- 0
 
-  circos_test <- circos_prefix()
-  circos_kary <- circos_karyotype(name="mgas", length=1899877)
-  circos_plus <- circos_plus_minus(mgas_df, cfgout=circos_test)
-  circos_hist_ll_cg <- circos_hist(glucose_table, mgas_df, circos_test, outer=circos_plus)
-  circos_heat_ll_cf <- circos_heatmap(glucose_table, mgas_df, circos_test, outer=circos_hist_ll_cg)
-  circos_tile_wtmga <- circos_tile(wtvmga_glucose, mgas_df, circos_test, outer=circos_heat_ll_cf)
-  circos_suffix(cfgout=circos_test)
-  ## circos_made <- circos_make(target="mgas")
+  circos_test <- circos_prefix(circos_annot_df, name="mgas", chr_column="chromosome", stop_column="stop")
+  lengths <- 1835600
+  names(lengths) <- "chr1"
+  circos_kary <- circos_karyotype(circos_test, lengths=lengths)
+  circos_plus <- circos_plus_minus(circos_test)
+  circos_hist_ll_cg <- circos_hist(circos_test, df=glucose_table, colname="logFC", outer=circos_plus)
+  circos_tile_wtmga <- circos_tile(circos_test, df=wtvmga_glucose, colname="logFC", outer=circos_hist_ll_cg)
+  circos_suffix(circos_test)
+  circos_made <- circos_make(circos_test, target="mgas")
 }
 
 end <- as.POSIXlt(Sys.time())

@@ -37,7 +37,7 @@ test_that("Do we get annotation data from our expt?", {
 ## pData()
 testing <- pData(pombe_expt)
 actual <- dim(testing)
-expected <- c(36, 8)
+expected <- c(36, 9)
 ## 0405
 test_that("Do we get experimental metadata from our expt?", {
   expect_equal(actual[1], expected[1])
@@ -69,7 +69,7 @@ test_that("Do we get expression from our expt?", {
 ## concatenate_runs()
 test_expt <- concatenate_runs(expt=pombe_expt, column="minute")
 actual <- dim(pData(test_expt))
-expected <- c(6,8)
+expected <- c(6, 9)
 ## 1415
 test_that("Do we get a reasonable number of resulting samples if we collapse by time?", {
   expect_equal(actual[1], expected[1], tolerance=0.001)

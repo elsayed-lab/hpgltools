@@ -864,8 +864,14 @@ extract_metadata <- function(metadata, ...) {
   ## Make sure it sets good, standard rownames.
   file <- NULL
   sample_column <- "sampleid"
+  current_rownames <- rownames(metadata)
+  bad_rownames <- as.character(1:nrow(metadata))
   if (is.null(arglist[["sample_column"]])) {
-    sample_column <- 1
+    if (identical(current_rownames, bad_rownames)) {
+      sample_column <- colnames(metadata)[1]
+    } else {
+      metadata[[sample_column]] <- rownames(metadata)
+    }
   } else {
     sample_column <- arglist[["sample_column"]]
     sample_column <- tolower(sample_column)
@@ -899,21 +905,19 @@ extract_metadata <- function(metadata, ...) {
     ## sample_definitions <- read_metadata(meta_file)
   }
 
-  sample_column_name <- colnames(sample_definitions)[[sample_column]]
-  ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
-  if (is.null(sample_definitions[[sample_column_name]])) {
-    sample_definitions[["sampleid"]] <- rownames(sample_definitions)
-  } else if (sample_column_name != "sampleid") {
-    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column_name]]
-  }
-
   ## Standardize the rownames/colnames.
-  rownames(sample_definitions) <- make.names(sample_definitions[["sampleid"]], unique=TRUE)
+  num_duplicated <- sum(duplicated(sample_definitions[[sample_column]]))
+  if (num_duplicated > 0) {
+    rownames(sample_definitions) <- make.names(sample_definitions[["sampleid"]], unique=TRUE)
+  }
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
   colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
                                        x=colnames(sample_definitions))
   ## In case I am a doofus and repeated some column names.
-  colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
+  num_duplicated <- sum(duplicated(colnames(sample_definitions)))
+  if (num_duplicated > 0) {
+    colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
+  }
   ## Check that condition and batch have been filled in.
   sample_columns <- colnames(sample_definitions)
 
@@ -1793,7 +1797,8 @@ set_expt_batches <- function(expt, fact, ids=NULL, ...) {
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by="condition") {
-  num_conditions <- length(levels(as.factor(expt[["conditions"]])))
+  condition_factor <- as.factor(pData(expt)[["condition"]])
+  num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
   chosen_colors <- expt[["conditions"]]
@@ -1923,6 +1928,7 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
   arglist <- list(...)
   original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
+  original_num_conditions <- length(levels(as.factor(original_conditions)))
   new_expt <- expt  ## Explicitly copying expt to new_expt
   ## because when I run this as a function call() it seems to be not properly setting
   ## the conditions and I do not know why.
@@ -1946,6 +1952,8 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     ## Assume it is a column in the design
     if (fact %in% colnames(pData(expt))) {
       new_fact <- pData(expt)[[fact]]
+      null_ids <- is.na(new_fact) | is.null(new_fact)
+      new_fact[null_ids] <- null_cell
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
       new_expt[["design"]][["condition"]] <- new_fact

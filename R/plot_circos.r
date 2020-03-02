@@ -450,6 +450,7 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #' @export
 circos_karyotype <- function(cfg, segments=6, color="white", fasta=NULL, lengths=NULL) {
   conf_dir <- cfg[["conf_dir"]]
+  name <- cfg[["name"]]
   ## genome_length <- 0
   chr_df <- data.frame()
   if (is.null(length) & is.null(fasta)) {
@@ -471,9 +472,10 @@ circos_karyotype <- function(cfg, segments=6, color="white", fasta=NULL, lengths
   ## First write the summary line
   for (ch in 1:chr_num) {
     chr_name <- chr_df[ch, "names"]
-    start_string <- glue::glue("chr - {chr_name} {chr_num} 0 {genome_length} {color}")
-    cat(start_string, file=out, sep="\n")
     chr_width <- chr_df[ch, "width"]
+    start_string <- glue::glue("chr - {chr_name} {chr_num} 0 {chr_width} {color}")
+    cat(start_string, file=out, sep="\n")
+
     individual_segments <- segments
     if (chr_width < 100000) {
       individual_segments <- 1

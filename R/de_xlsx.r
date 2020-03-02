@@ -226,6 +226,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         venn_nop <- try(de_venn(written_table, lfc=1, adjp=FALSE, p=1.0))
         venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
         venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
+        venns[[tab]] <- list(venn_nop_lfc0, venn_nop, venn_list, venn_sig_list)
+        names(venns[[tab]]) <- c("nop_lfc0", "nop_lfc1", "p_lfc0", "p_lfc1")
         ## If they worked, add them to the excel sheets after the data,
         ## but make them smaller than other graphs.
         if (class(venn_list)[1] != "try-error") {

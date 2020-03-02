@@ -27,7 +27,6 @@ design <- data.frame(
             "paired_end", "single_end", "paired_end", "paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
-metadata[["sampleid"]] <- rownames(metadata)
 save(list=ls(), file="pasilla_df.rda")
 
 ## Make sure it is still possible to create an expt
