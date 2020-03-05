@@ -176,6 +176,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #'   annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
 #' @param file_column Column to use in a gene information dataframe for
+#' @param id_column Column which contains the sample IDs.
 #' @param savefile Rdata filename prefix for saving the data of the resulting
 #'   expt.
 #' @param low_files Explicitly lowercase the filenames when searching the
@@ -197,7 +198,7 @@ concatenate_runs <- function(expt, column="replicate") {
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
                         sample_colors=NULL, title=NULL, notes=NULL, countdir=NULL,
                         include_type="all", include_gff=NULL, file_column="file",
-                        savefile=NULL, low_files=FALSE, ...) {
+                        id_column=NULL, savefile=NULL, low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -239,13 +240,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (!is.null(arglist[["include_type"]])) {
     gff_type <- arglist[["include_type"]]
   }
-  sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
 
+  if (is.null(id_column)) {
+    id_column <- "sampleid"
+  } else {
+    id_column <- tolower(id_column)
+    id_column <- gsub(pattern="[[:punct:]]", replacement="", x=id_column)
+  }
   file_column <- tolower(file_column)
   file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
 
@@ -256,7 +257,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata,
+  sample_definitions <- extract_metadata(metadata, id_column=id_column,
                                          ...)
   ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
@@ -300,8 +301,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## Look for files organized by sample
     test_filenames <- file.path(
       "preprocessing", "count_tables",
-      as.character(sample_definitions[[sample_column]]),
-      glue::glue("{file_prefix}{as.character(sample_definitions[[sample_column]])}{file_suffix}"))
+      rownames(sample_definitions),
+      glue::glue("{file_prefix}{rownames(sample_definitions)}{file_suffix}"))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -320,7 +321,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
         "preprocessing", "count_tables",
         tolower(as.character(sample_definitions[["type"]])),
         tolower(as.character(sample_definitions[["stage"]])),
-        glue::glue("{sample_definitions[[sample_column]]}{file_suffix}"))
+        glue::glue("{rownames(sample_definitions)}{file_suffix}"))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -352,7 +353,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## If all_count_tables does not exist, then we want to read the various files
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
-    sample_ids <- as.character(sample_definitions[[sample_column]])
+    sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir=countdir,
                                    ...)
     if (count_data[["source"]] == "tximport") {
@@ -366,7 +367,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     count_data <- list(
       "source" = "dataframe",
       "raw" = all_count_tables,
-      "kept_ids" = as.character(sample_definitions[[sample_column]]))
+      "kept_ids" = rownames(sample_definitions))
     ## Remember that R does not like rownames to start with a number, and if they do
     ## I already changed the count table rownames to begin with 's'.
     count_data[["kept_ids"]] <- gsub(pattern="^([[:digit:]])",
@@ -616,10 +617,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   chosen_colors <- generate_expt_colors(sample_definitions, sample_colors=sample_colors,
                                         chosen_palette=chosen_palette)
 
-  ## Perhaps I do not understand something about R's syntactic sugar
-  ## Given a data frame with columns bob, jane, alice -- but not foo
-  ## I can do df[["bob"]]) or df[, "bob"] to get the column bob
-  ## however df[["foo"]] gives me null while df[, "foo"] gives an error.
+  ## Fill in incomplete tables.
   if (is.null(sample_definitions[["condition"]])) {
     sample_definitions[["condition"]] <- "unknown"
   }
@@ -629,13 +627,6 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (is.null(sample_definitions[["file"]])) {
     sample_definitions[["file"]] <- "null"
   }
-
-  ## Adding these so that deseq does not complain about characters when
-  ## calling DESeqDataSetFromMatrix()
-  ## I think these lines are not needed any longer, as I explicitly set the
-  ## parameters of these factors now in extract_metadata()
-  ##sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
-  ##sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
   ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
   requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
@@ -850,6 +841,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 #' sanitizing.
 #'
 #' @param metadata file or df of metadata
+#' @param id_column Column in the metadat containing the sample names.
 #' @param ... Arguments to pass to the child functions (read_csv etc).
 #' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
 #' @examples
@@ -858,25 +850,11 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 #'   saniclean <- extract_metadata(some_goofy_df)
 #' }
 #' @export
-extract_metadata <- function(metadata, ...) {
+extract_metadata <- function(metadata, id_column="sampleid", ...) {
   arglist <- list(...)
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
   file <- NULL
-  sample_column <- "sampleid"
-  current_rownames <- rownames(metadata)
-  bad_rownames <- as.character(1:nrow(metadata))
-  if (is.null(arglist[["sample_column"]])) {
-    if (identical(current_rownames, bad_rownames)) {
-      sample_column <- colnames(metadata)[1]
-    } else {
-      metadata[[sample_column]] <- rownames(metadata)
-    }
-  } else {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
 
   meta_dataframe <- NULL
   meta_file <- NULL
@@ -896,33 +874,60 @@ extract_metadata <- function(metadata, ...) {
   } else if (is.null(meta_file)) {
     ## punctuation is the devil
     sample_definitions <- meta_dataframe
-    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-    colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
-                                         x=colnames(sample_definitions))
   }  else {
     sample_definitions <- read_metadata(meta_file,
                                         ...)
     ## sample_definitions <- read_metadata(meta_file)
   }
 
-  ## Standardize the rownames/colnames.
-  num_duplicated <- sum(duplicated(sample_definitions[[sample_column]]))
-  if (num_duplicated > 0) {
-    rownames(sample_definitions) <- make.names(sample_definitions[["sampleid"]], unique=TRUE)
-  }
-  colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-  colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
+  colnames(sample_definitions) <- gsub(pattern="[[:punct:]]",
+                                       replacement="",
                                        x=colnames(sample_definitions))
-  ## In case I am a doofus and repeated some column names.
-  num_duplicated <- sum(duplicated(colnames(sample_definitions)))
-  if (num_duplicated > 0) {
-    colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
+  id_column <- tolower(id_column)
+  id_column <- gsub(pattern="[[:punct:]]",
+                    replacement="",
+                    x=id_column)
+
+  ## Get appropriate row and column names.
+  current_rownames <- rownames(sample_definitions)
+  bad_rownames <- as.character(1:nrow(sample_definitions))
+  ## Try to ensure that we have a useful ID column by:
+  ## 1. Look for data in the id_column column.
+  ##  a.  If it is null, look at the rownames
+  ##    i.  If they are 1...n, arbitrarily grab the first column.
+  ##    ii. If not, use the rownames.
+  if (is.null(sample_definitions[[id_column]])) {
+    if (identical(current_rownames, bad_rownames)) {
+      id_column <- colnames(sample_definitions)[1]
+    } else {
+      sample_definitions[[id_column]] <- rownames(sample_definitions)
+    }
   }
+
+  ## Drop empty rows in the sample sheet
+  empty_samples <- which(sample_definitions[, id_column] == "" |
+                         grepl(x=sample_definitions[, id_column], pattern="^undef") |
+                         is.na(sample_definitions[, id_column]) |
+                         grepl(pattern="^#", x=sample_definitions[, id_column]))
+  if (length(empty_samples) > 0) {
+    message("Dropped ", length(empty_samples),
+            " rows from the sample metadata because they were blank.")
+    sample_definitions <- sample_definitions[-empty_samples, ]
+  }
+
+  ## Drop duplicated elements.
+  num_duplicated <- sum(duplicated(sample_definitions[[id_column]]))
+  if (num_duplicated > 0) {
+    message("There are ", num_duplicated,
+            " duplicate rows in the sample ID column.")
+    sample_definitions[[id_column]] <- make.names(sample_definitions[[id_column]],
+                                                  unique=TRUE)
+  }
+
+  ## Now we should have consistent sample IDs, set the rownames.
+  rownames(sample_definitions) <- sample_definitions[[id_column]]
   ## Check that condition and batch have been filled in.
   sample_columns <- colnames(sample_definitions)
-
-  ## I think the following line was in error.
-  ## rownames(sample_definitions) <- make.names(sample_definitions[[sample_column]], unique=TRUE)
 
   ## The various proteomics data I am looking at annoyingly starts with a number
   ## So make.names() prefixes it with X which is ok as far as it goes, but
@@ -930,13 +935,6 @@ extract_metadata <- function(metadata, ...) {
   rownames(sample_definitions) <- gsub(pattern="^X([[:digit:]])",
                                        replacement="s\\1",
                                        x=rownames(sample_definitions))
-  empty_samples <- which(sample_definitions[, sample_column] == "" |
-                         grepl(x=sample_definitions[, sample_column], pattern="^undef") |
-                         is.na(sample_definitions[, sample_column]) |
-                         grepl(pattern="^#", x=sample_definitions[, sample_column]))
-  if (length(empty_samples) > 0) {
-    sample_definitions <- sample_definitions[-empty_samples, ]
-  }
 
   sample_columns_to_remove <- NULL
   for (col in 1:length(colnames(sample_definitions))) {
@@ -1643,7 +1641,9 @@ read_metadata <- function(file, ...) {
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
-  colnames(definitions) <- gsub(pattern="[[:punct:]]", replacement="", x=colnames(definitions))
+  colnames(definitions) <- tolower(gsub(pattern="[[:punct:]]",
+                                        replacement="",
+                                        x=colnames(definitions)))
   ## I recently received a sample sheet with a blank sample ID column name...
   empty_idx <- colnames(definitions) == ""
   colnames(definitions)[empty_idx] <- "empty"
@@ -1953,7 +1953,10 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     if (fact %in% colnames(pData(expt))) {
       new_fact <- pData(expt)[[fact]]
       null_ids <- is.na(new_fact) | is.null(new_fact)
-      new_fact[null_ids] <- null_cell
+      ## Only do this if there are some null entries.
+      if (sum(null_ids) > 0) {
+        new_fact[null_ids] <- null_cell
+      }
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
       new_expt[["design"]][["condition"]] <- new_fact

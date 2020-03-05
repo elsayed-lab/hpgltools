@@ -35,7 +35,7 @@ test_that("Created pseudomonas expt of the correct annotation table size?", {
   expect_equal(expected, actual)
 })
 
-expected <- c(12, 28)
+expected <- c(12, 27)
 actual <- dim(pData(pa_expt))
 ## 03
 test_that("Created pseudomonas expt of the correct metadata size?", {

@@ -45,6 +45,8 @@ plot_ma_de(
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
+\item{shapes}{Provide different shapes for up/down/etc?}
+
 \item{invert}{Invert the ma plot?}
 
 \item{label}{Label the top/bottom n logFC values?}

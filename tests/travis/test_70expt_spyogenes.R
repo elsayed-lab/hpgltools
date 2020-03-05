@@ -131,7 +131,7 @@ if (!identical(Sys.getenv("TRAVIS"), "true")) {
   circos_hist_ll_cg <- circos_hist(circos_test, df=glucose_table, colname="logFC", outer=circos_plus)
   circos_tile_wtmga <- circos_tile(circos_test, df=wtvmga_glucose, colname="logFC", outer=circos_hist_ll_cg)
   circos_suffix(circos_test)
-  circos_made <- circos_make(circos_test, target="mgas")
+  circos_made <- sm(circos_make(circos_test, target="mgas"))
 }
 
 end <- as.POSIXlt(Sys.time())

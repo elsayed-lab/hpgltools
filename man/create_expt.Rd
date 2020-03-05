@@ -16,6 +16,7 @@ create_expt(
   include_type = "all",
   include_gff = NULL,
   file_column = "file",
+  id_column = NULL,
   savefile = NULL,
   low_files = FALSE,
   ...
@@ -47,6 +48,8 @@ annotation type.}
 \item{include_gff}{Gff file to help in sorting which features to keep.}
 
 \item{file_column}{Column to use in a gene information dataframe for}
+
+\item{id_column}{Column which contains the sample IDs.}
 
 \item{savefile}{Rdata filename prefix for saving the data of the resulting
 expt.}

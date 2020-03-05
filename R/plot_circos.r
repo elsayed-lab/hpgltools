@@ -361,10 +361,12 @@ circos_hist <- function(cfg, df, colname="logFC", basename="", color="blue", fil
 #'
 #' @param name Name of the configuration file to which to add the ideogram.
 #' @param conf_dir Where does the configuration live?
-                                                  #' @param band_url Provide a url for making these imagemaps?
-                                                                                                    #' @param fill Fill in the strokes?
-                                                                                                                               #' @param stroke_color What color?
-                                                                                                                                                           #' @param thickness How thick to color the lines
+#' @param band_url Provide a url for making these imagemaps?
+#' @param fill Fill in the strokes?
+#' @param stroke_color What color?
+#' @param show_bands Show the bands for the ideogram?
+#' @param fill_bands and fill them in?
+#' @param thickness How thick to color the lines
 #' @param stroke_thickness How much of them to fill in
 #' @param label_font What font to use.
 #' @param spacing_default How much space between elements.

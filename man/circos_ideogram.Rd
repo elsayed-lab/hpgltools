@@ -35,6 +35,10 @@ circos_ideogram(
 
 \item{stroke_color}{What color?}
 
+\item{show_bands}{Show the bands for the ideogram?}
+
+\item{fill_bands}{and fill them in?}
+
 \item{thickness}{How thick to color the lines}
 
 \item{stroke_thickness}{How much of them to fill in}

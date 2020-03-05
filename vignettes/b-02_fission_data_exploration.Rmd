@@ -119,9 +119,9 @@ fis_nonzero$plot
 
 fis_density <- plot_density(fission_expt)
 fis_density$plot
-fis_density$condition_summary
-fis_density$batch_summary
-fis_density$sample_summary
+knitr::kable(fis_density$condition_summary)
+knitr::kable(fis_density$batch_summary)
+knitr::kable(head(fis_density$sample_summary))
 ```
 
 ### An initial pca plot
@@ -142,8 +142,7 @@ norm_expt <- sm(normalize_expt(fission_expt, transform="log2", norm="quant", con
 ## And try the pca again
 fis_normpca <- plot_pca(norm_expt, plot_labels="normal", title="normalized pca", cis=NULL)
 fis_normpca$plot
-
-summary(fis_normpca)
+## Clearly time is an important factor in the data.
 ```
 
 ## Try something for Najib
@@ -181,12 +180,12 @@ fis_info <- pca_information(norm_expt,
                             expt_factors=c("condition","batch","strain","minute"),
                             num_components=6)
 ## The r^2 table shows that quite a lot of the variance in the data is explained by condition
-head(fis_info$rsquared_table)
+knitr::kable(head(fis_info$rsquared_table))
 ## We can look at the correlation between the principle components and the factors in the experiment
 ## in this case looking at condition/batch vs the first 4 components.
-fis_info$pca_cor
+knitr::kable(fis_info$pca_cor)
 ## And p-values to lend some credence(or not to those assertions)
-fis_info$anova_p
+knitr::kable(fis_info$anova_p)
 
 ## Try again with batch removed data
 batchnorm_expt <- sm(normalize_expt(fission_expt, batch="limma", norm="quant",
