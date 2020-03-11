@@ -33,7 +33,7 @@ knitr::kable(head(expt$design))
 summary(expt)
 
 ## ----test_se------------------------------------------------------------------
-library(SummarizedExperiment)
+tt <- sm(library(SummarizedExperiment))
 test_expr <- expt[["expressionset"]]
 
 ## The following in theory converts to a SE, but is a bit unhelpful in its result.
@@ -126,11 +126,11 @@ c_metrics$pc_plot
 ## but cpm alone is insufficient
 f_metrics$pc_plot
 ## only filtering out low-count genes is helpful as well
-norm_graphs$pcaplot
+norm_graphs$pc_plot
 ## The different batch effect testing methods have a pretty widely ranging effect on the clustering
 ## play with them by changing the batch= parameter to:
 ## "limma", "sva", "svaseq", "limmaresid", "ruvg", "combat", combatmod"
-knitr::kable(norm_graphs$pcares)
+knitr::kable(norm_graphs$pc_summary)
 ## Thus we see a dramatic decrease in variance accounted for
 ## by batch after applying limma's 'removebatcheffect'
 ## (see batch.R2 here vs. above)
@@ -154,7 +154,7 @@ spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
 summary(spyogenes_tables)
 ## Try changing the p-adjustment
 spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE, padj_type="BH"))
-head(spyogenes_tables$data[[1]])
+knitr::kable(head(spyogenes_tables$data[[1]]))
 
 ## ----sig_genes_test, fig.show="hide"------------------------------------------
 spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
@@ -189,20 +189,30 @@ colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", 
                        "GO", "EC", "ECDesc")
 
 ## First make a template configuration
-circos_test <- sm(circos_prefix())
+circos_test <- circos_prefix(annotation=mgas_df)
 ## Fill it in with the data for s.pyogenes
-circos_kary <- circos_karyotype("mgas", length=1895017)
+lengths <- 1838600
+names(lengths) <- "chr1"
+circos_kary <- circos_karyotype(cfg=circos_test, lengths=lengths)
 ## Fill in the gene category annotations by gene-strand
-circos_plus <- circos_plus_minus(mgas_df, circos_test)
-
-circos_limma_hist <- circos_hist(spyogenes_de$limma$all_tables[[1]], mgas_df,
-                                 cfgout=circos_test, basename="limma", outer=circos_plus)
-circos_deseq_hist <- circos_hist(spyogenes_de$deseq$all_tables[[1]], mgas_df,
-                                 cfgout=circos_test, basename="deseq", outer=circos_limma_hist)
-circos_edger_hist <- circos_hist(spyogenes_de$edger$all_tables[[1]], mgas_df,
-                                 cfgout=circos_test, basename="edger", outer=circos_deseq_hist)
-circos_suffix(cfgout=circos_test)
-circos_made <- sm(circos_make(target="mgas"))
+circos_plus <- circos_plus_minus(cfg=circos_test)
+circos_limma_hist <- circos_hist(cfg=circos_test,
+                                 df=spyogenes_de$limma$all_tables[[1]],
+                                 basename="limma",
+                                 colname="logFC",
+                                 outer=circos_plus)
+circos_deseq_hist <- circos_hist(cfg=circos_test,
+                                 df=spyogenes_de$deseq$all_tables[[1]],
+                                 basename="deseq",
+                                 colname="logFC",
+                                 outer=circos_limma_hist)
+circos_edger_hist <- circos_hist(cfg=circos_test,
+                                 df=spyogenes_de$edger$all_tables[[1]],
+                                 basename="edger",
+                                 colname="logFC",
+                                 outer=circos_deseq_hist)
+circos_suffix(cfg=circos_test)
+circos_made <- sm(circos_make(cfg=circos_test, target="mgas"))
 getwd()
 
 ## ----genoplot-----------------------------------------------------------------

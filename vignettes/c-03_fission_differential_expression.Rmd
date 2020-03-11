@@ -283,7 +283,7 @@ goseq_result$pvalue_plots$mfp_plot
 test_genes <- updown_genes$up_genes
 rownames(test_genes) <- paste0(rownames(test_genes), ".1")
 goseq_result <- sm(simple_goseq(sig_genes=test_genes, go_db=pombe_goids, length_db=lengths))
-head(goseq_result$alldata)
+head(goseq_result$all_data)
 goseq_result$pvalue_plots$bpp_plot
 ```
 

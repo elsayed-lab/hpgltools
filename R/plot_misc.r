@@ -27,6 +27,8 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     result <- cairo_ps(filename=file, width=width, height=height, ...)
   } else if (ext == "pdf") {
     result <- cairo_pdf(filename=file, ...)
+  } else if (ext == "tif" | ext == "tiff") {
+    result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
   } else {
     message("Defaulting to tiff.")
     result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
