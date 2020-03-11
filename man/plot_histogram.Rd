@@ -9,6 +9,7 @@ plot_histogram(
   binwidth = NULL,
   log = FALSE,
   bins = 500,
+  adjust = 1,
   fillcolor = "darkgrey",
   color = "black"
 )
@@ -21,6 +22,8 @@ plot_histogram(
 \item{log}{Replot on the log scale?}
 
 \item{bins}{Number of bins for the histogram.}
+
+\item{adjust}{The prettification parameter in the ggplot2 density.}
 
 \item{fillcolor}{Change the fill colors of the plotted elements?}
 

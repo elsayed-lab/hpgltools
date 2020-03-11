@@ -18,19 +18,19 @@ graph_metrics(
 \arguments{
 \item{expt}{an expt to process}
 
-\item{cormethod}{the correlation test for heatmaps.}
+\item{cormethod}{The correlation test for heatmaps.}
 
 \item{distmethod}{define the distance metric for heatmaps.}
 
-\item{title_suffix}{text to add to the titles of the plots.}
+\item{title_suffix}{Text to add to the titles of the plots.}
 
-\item{qq}{include qq plots?}
+\item{qq}{Include qq plots?}
 
-\item{ma}{include pairwise ma plots?}
+\item{ma}{Include pairwise ma plots?}
 
 \item{gene_heat}{Include a heatmap of the gene expression data?}
 
-\item{...}{extra parameters optionally fed to the various plots}
+\item{...}{Extra parameters optionally fed to the various plots}
 }
 \value{
 a loooong list of plots including the following:

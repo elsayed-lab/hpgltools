@@ -5,32 +5,27 @@
 \title{Write tiles of arbitrary categorical point data in circos.}
 \usage{
 circos_tile(
+  cfg,
   df,
-  annot_df = NULL,
-  cfgout = "circos/conf/default.conf",
   colname = "logFC",
-  chr = "chr1",
   basename = "",
   colors = NULL,
-  thickness = 90,
+  thickness = 80,
+  padding = 1,
   margin = 0,
   stroke_thickness = 0,
-  padding = 0.1,
+  orientation = "out",
   outer = 0.9,
   width = 0.08,
   spacing = 0
 )
 }
 \arguments{
+\item{cfg}{Result from circos_prefix().}
+
 \item{df}{Dataframe with starts/ends and the floating point information.}
 
-\item{annot_df}{Annotation data frame defining starts/stops.}
-
-\item{cfgout}{Master configuration file to write.}
-
-\item{colname}{Name of the column with the data of interest.}
-
-\item{chr}{Name of the chromosome (This currently assumes a bacterial
+\item{colname}{Name of the column with the data of interest.
 chromosome)}
 
 \item{basename}{Used to make unique filenames for the data/conf files.}
@@ -39,11 +34,13 @@ chromosome)}
 
 \item{thickness}{How thick to make the tiles in radial units.}
 
+\item{padding}{Space between tiles.}
+
 \item{margin}{How much space between other rings and the tiles?}
 
 \item{stroke_thickness}{Size of the tile outlines.}
 
-\item{padding}{Space between tiles.}
+\item{orientation}{Facing in or out.}
 
 \item{outer}{Floating point radius of the circle into which to place the
 categorical data.}

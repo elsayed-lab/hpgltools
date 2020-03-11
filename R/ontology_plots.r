@@ -40,7 +40,13 @@ plot_ontpval <- function(df, ontology="MF", fontsize=14, numerator=NULL, denomin
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
   reorder_size <- function(x) {
-    new_fact <- factor(x[["term"]], levels=x[["term"]])
+    attempt <- try(factor(x[["term"]], levels=x[["term"]]), silent=TRUE)
+    new_fact <- NULL
+    if (class(attempt)[1] == "try-error") {
+      new_fact <- as.factor(x[["term"]])
+    } else {
+      new_fact <- attempt
+    }
     return(new_fact)
   }
 
@@ -466,6 +472,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
     plotting_kegg_over <- NULL
   } else {
     plotting_kegg_over <- gp_rewrite_df(plotting_kegg_over)
+    kegg_pval_plot_over <- try(plot_ontpval(plotting_kegg_over, ontology="KEGG"),
+                               silent=TRUE)
   }
   if (class(kegg_pval_plot_over)[[1]] == "try-error") {
     kegg_pval_plot_over <- NULL

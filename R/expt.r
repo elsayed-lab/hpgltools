@@ -170,11 +170,13 @@ concatenate_runs <- function(expt, column="replicate") {
 #'   generate its own colors using colorBrewer.
 #' @param title Provide a title for the expt?
 #' @param notes Additional notes?
+#' @param countdir Directory containing count tables.
 #' @param include_type I have usually assumed that all gff annotations should be
 #'   used, but that is not always true, this allows one to limit to a specific
 #'   annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
 #' @param file_column Column to use in a gene information dataframe for
+#' @param id_column Column which contains the sample IDs.
 #' @param savefile Rdata filename prefix for saving the data of the resulting
 #'   expt.
 #' @param low_files Explicitly lowercase the filenames when searching the
@@ -194,9 +196,9 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @import Biobase
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
-                        sample_colors=NULL, title=NULL, notes=NULL,
+                        sample_colors=NULL, title=NULL, notes=NULL, countdir=NULL,
                         include_type="all", include_gff=NULL, file_column="file",
-                        savefile="expt.rda", low_files=FALSE, ...) {
+                        id_column=NULL, savefile=NULL, low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -238,13 +240,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (!is.null(arglist[["include_type"]])) {
     gff_type <- arglist[["include_type"]]
   }
-  sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
 
+  if (is.null(id_column)) {
+    id_column <- "sampleid"
+  } else {
+    id_column <- tolower(id_column)
+    id_column <- gsub(pattern="[[:punct:]]", replacement="", x=id_column)
+  }
   file_column <- tolower(file_column)
   file_column <- gsub(pattern="[[:punct:]]", replacement="", x=file_column)
 
@@ -255,7 +257,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
 
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
-  sample_definitions <- extract_metadata(metadata,
+  sample_definitions <- extract_metadata(metadata, id_column=id_column,
                                          ...)
   ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
@@ -299,8 +301,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## Look for files organized by sample
     test_filenames <- file.path(
       "preprocessing", "count_tables",
-      as.character(sample_definitions[[sample_column]]),
-      glue::glue("{file_prefix}{as.character(sample_definitions[[sample_column]])}{file_suffix}"))
+      rownames(sample_definitions),
+      glue::glue("{file_prefix}{rownames(sample_definitions)}{file_suffix}"))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -319,7 +321,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
         "preprocessing", "count_tables",
         tolower(as.character(sample_definitions[["type"]])),
         tolower(as.character(sample_definitions[["stage"]])),
-        glue::glue("{sample_definitions[[sample_column]]}{file_suffix}"))
+        glue::glue("{rownames(sample_definitions)}{file_suffix}"))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -351,8 +353,8 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     ## If all_count_tables does not exist, then we want to read the various files
     ## in the sample definitions to get them.
     filenames <- as.character(sample_definitions[[file_column]])
-    sample_ids <- as.character(sample_definitions[[sample_column]])
-    count_data <- read_counts_expt(sample_ids, filenames,
+    sample_ids <- rownames(sample_definitions)
+    count_data <- read_counts_expt(sample_ids, filenames, countdir=countdir,
                                    ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
@@ -365,7 +367,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     count_data <- list(
       "source" = "dataframe",
       "raw" = all_count_tables,
-      "kept_ids" = as.character(sample_definitions[[sample_column]]))
+      "kept_ids" = rownames(sample_definitions))
     ## Remember that R does not like rownames to start with a number, and if they do
     ## I already changed the count table rownames to begin with 's'.
     count_data[["kept_ids"]] <- gsub(pattern="^([[:digit:]])",
@@ -615,10 +617,7 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   chosen_colors <- generate_expt_colors(sample_definitions, sample_colors=sample_colors,
                                         chosen_palette=chosen_palette)
 
-  ## Perhaps I do not understand something about R's syntactic sugar
-  ## Given a data frame with columns bob, jane, alice -- but not foo
-  ## I can do df[["bob"]]) or df[, "bob"] to get the column bob
-  ## however df[["foo"]] gives me null while df[, "foo"] gives an error.
+  ## Fill in incomplete tables.
   if (is.null(sample_definitions[["condition"]])) {
     sample_definitions[["condition"]] <- "unknown"
   }
@@ -628,13 +627,6 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   if (is.null(sample_definitions[["file"]])) {
     sample_definitions[["file"]] <- "null"
   }
-
-  ## Adding these so that deseq does not complain about characters when
-  ## calling DESeqDataSetFromMatrix()
-  ## I think these lines are not needed any longer, as I explicitly set the
-  ## parameters of these factors now in extract_metadata()
-  ##sample_definitions[["condition"]] <- as.factor(sample_definitions[["condition"]])
-  ##sample_definitions[["batch"]] <- as.factor(sample_definitions[["batch"]])
 
   ## Finally, create the ExpressionSet using the counts, annotations, and metadata.
   requireNamespace("Biobase")  ## AnnotatedDataFrame is from Biobase
@@ -711,9 +703,15 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   names(expt[["colors"]]) <- rownames(sample_definitions)
   expt[["tximport"]] <- tximport_data
   ## Save an rdata file of the expressionset.
-  if (!is.null(savefile)) {
-    save_result <- try(save(expt, file=savefile), silent=TRUE)
+  if (is.null(savefile)) {
+    if ("character" %in% class(metadata)) {
+      name <- paste0(gsub(x=basename(metadata), pattern="^(.*)\\..*", replacement="\\1"), ".rda")
+    } else {
+      message("Saving the expressionset to 'expt.rda'.")
+      savefile <- "expt.rda"
+    }
   }
+  save_result <- try(save(expt, file=savefile), silent=TRUE)
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
@@ -843,6 +841,7 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 #' sanitizing.
 #'
 #' @param metadata file or df of metadata
+#' @param id_column Column in the metadat containing the sample names.
 #' @param ... Arguments to pass to the child functions (read_csv etc).
 #' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
 #' @examples
@@ -851,17 +850,11 @@ exclude_genes_expt <- function(expt, column="txtype", method="remove", ids=NULL,
 #'   saniclean <- extract_metadata(some_goofy_df)
 #' }
 #' @export
-extract_metadata <- function(metadata, ...) {
+extract_metadata <- function(metadata, id_column="sampleid", ...) {
   arglist <- list(...)
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
   file <- NULL
-  sample_column <- "sampleid"
-  if (!is.null(arglist[["sample_column"]])) {
-    sample_column <- arglist[["sample_column"]]
-    sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
-  }
 
   meta_dataframe <- NULL
   meta_file <- NULL
@@ -881,41 +874,67 @@ extract_metadata <- function(metadata, ...) {
   } else if (is.null(meta_file)) {
     ## punctuation is the devil
     sample_definitions <- meta_dataframe
-    colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-    colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
-                                         x=colnames(sample_definitions))
   }  else {
     sample_definitions <- read_metadata(meta_file,
                                         ...)
     ## sample_definitions <- read_metadata(meta_file)
   }
 
-  ## Keep a standardized sample column named 'sampleid', even if we fed in other IDs.
-  if (sample_column != "sampleid") {
-    sample_definitions[["sampleid"]] <- sample_definitions[[sample_column]]
+  colnames(sample_definitions) <- gsub(pattern="[[:punct:]]",
+                                       replacement="",
+                                       x=colnames(sample_definitions))
+  id_column <- tolower(id_column)
+  id_column <- gsub(pattern="[[:punct:]]",
+                    replacement="",
+                    x=id_column)
+
+  ## Get appropriate row and column names.
+  current_rownames <- rownames(sample_definitions)
+  bad_rownames <- as.character(1:nrow(sample_definitions))
+  ## Try to ensure that we have a useful ID column by:
+  ## 1. Look for data in the id_column column.
+  ##  a.  If it is null, look at the rownames
+  ##    i.  If they are 1...n, arbitrarily grab the first column.
+  ##    ii. If not, use the rownames.
+  if (is.null(sample_definitions[[id_column]])) {
+    if (identical(current_rownames, bad_rownames)) {
+      id_column <- colnames(sample_definitions)[1]
+    } else {
+      sample_definitions[[id_column]] <- rownames(sample_definitions)
+    }
   }
 
-  colnames(sample_definitions) <- tolower(colnames(sample_definitions))
-  colnames(sample_definitions) <- gsub(pattern="[[:punct:]]", replacement="",
-                                       x=colnames(sample_definitions))
-  ## In case I am a doofus and repeated some column names.
-  colnames(sample_definitions) <- make.names(colnames(sample_definitions), unique=TRUE)
+  ## Drop empty rows in the sample sheet
+  empty_samples <- which(sample_definitions[, id_column] == "" |
+                         grepl(x=sample_definitions[, id_column], pattern="^undef") |
+                         is.na(sample_definitions[, id_column]) |
+                         grepl(pattern="^#", x=sample_definitions[, id_column]))
+  if (length(empty_samples) > 0) {
+    message("Dropped ", length(empty_samples),
+            " rows from the sample metadata because they were blank.")
+    sample_definitions <- sample_definitions[-empty_samples, ]
+  }
+
+  ## Drop duplicated elements.
+  num_duplicated <- sum(duplicated(sample_definitions[[id_column]]))
+  if (num_duplicated > 0) {
+    message("There are ", num_duplicated,
+            " duplicate rows in the sample ID column.")
+    sample_definitions[[id_column]] <- make.names(sample_definitions[[id_column]],
+                                                  unique=TRUE)
+  }
+
+  ## Now we should have consistent sample IDs, set the rownames.
+  rownames(sample_definitions) <- sample_definitions[[id_column]]
   ## Check that condition and batch have been filled in.
   sample_columns <- colnames(sample_definitions)
-  rownames(sample_definitions) <- make.names(sample_definitions[[sample_column]], unique=TRUE)
+
   ## The various proteomics data I am looking at annoyingly starts with a number
   ## So make.names() prefixes it with X which is ok as far as it goes, but
   ## since it is a 's'amplename, I prefer an 's'.
   rownames(sample_definitions) <- gsub(pattern="^X([[:digit:]])",
                                        replacement="s\\1",
                                        x=rownames(sample_definitions))
-  empty_samples <- which(sample_definitions[, sample_column] == "" |
-                         grepl(x=sample_definitions[, sample_column], pattern="^undef") |
-                         is.na(sample_definitions[, sample_column]) |
-                         grepl(pattern="^#", x=sample_definitions[, sample_column]))
-  if (length(empty_samples) > 0) {
-    sample_definitions <- sample_definitions[-empty_samples, ]
-  }
 
   sample_columns_to_remove <- NULL
   for (col in 1:length(colnames(sample_definitions))) {
@@ -1315,6 +1334,9 @@ make_pombe_expt <- function(annotation=TRUE) {
   meta[["condition"]] <- glue::glue("{meta[['strain']]}.{meta[['minute']]}")
   meta[["batch"]] <- meta[["replicate"]]
   meta[["sample.id"]] <- rownames(meta)
+  meta <- meta[, c("sample.id", "id", "strain", "minute",
+                   "replicate", "condition", "batch")]
+
   fission_data <- fission@assays$data[["counts"]]
 
   annotations <- NULL
@@ -1356,6 +1378,7 @@ make_pombe_expt <- function(annotation=TRUE) {
 #' @param header Whether or not the count tables include a header row.
 #' @param include_summary_rows Whether HTSeq summary rows should be included.
 #' @param suffix Optional suffix to add to the filenames when reading them.
+#' @param countdir Optional count directory to read from.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso \pkg{data.table}
@@ -1366,14 +1389,12 @@ make_pombe_expt <- function(annotation=TRUE) {
 #' }
 #' @export
 read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALSE,
-                             suffix=NULL, ...) {
+                             suffix=NULL, countdir=NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
   ## Add an optional directory if I don't feel like specifying in the sample sheet.
-  countdir <- NULL
-  if (!is.null(arglist[["countdir"]])) {
-    countdir <- arglist[["countdir"]]
+  if (!is.null(countdir)) {
     files <- file.path(countdir, files)
   }
   skippers <- (files == "" | files == "undef" | is.null(files) | is.na(files))
@@ -1620,7 +1641,9 @@ read_metadata <- function(file, ...) {
   } else {
     definitions <- read.table(file=file, sep=arglist[["sep"]], header=arglist[["header"]])
   }
-  colnames(definitions) <- gsub(pattern="[[:punct:]]", replacement="", x=colnames(definitions))
+  colnames(definitions) <- tolower(gsub(pattern="[[:punct:]]",
+                                        replacement="",
+                                        x=colnames(definitions)))
   ## I recently received a sample sheet with a blank sample ID column name...
   empty_idx <- colnames(definitions) == ""
   colnames(definitions)[empty_idx] <- "empty"
@@ -1774,7 +1797,8 @@ set_expt_batches <- function(expt, fact, ids=NULL, ...) {
 #' }
 #' @export
 set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by="condition") {
-  num_conditions <- length(levels(as.factor(expt[["conditions"]])))
+  condition_factor <- as.factor(pData(expt)[["condition"]])
+  num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
   chosen_colors <- expt[["conditions"]]
@@ -1902,8 +1926,9 @@ set_expt_colors <- function(expt, colors=TRUE, chosen_palette="Dark2", change_by
 #' @export
 set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...) {
   arglist <- list(...)
-  original_conditions <- expt[["conditions"]]
+  original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
+  original_num_conditions <- length(levels(as.factor(original_conditions)))
   new_expt <- expt  ## Explicitly copying expt to new_expt
   ## because when I run this as a function call() it seems to be not properly setting
   ## the conditions and I do not know why.
@@ -1925,8 +1950,13 @@ set_expt_conditions <- function(expt, fact=NULL, ids=NULL, null_cell="null", ...
     new_expt[["design"]][["condition"]] <- new_cond
   } else if (length(fact) == 1) {
     ## Assume it is a column in the design
-    if (fact %in% colnames(expt[["design"]])) {
-      new_fact <- expt[["design"]][[fact]]
+    if (fact %in% colnames(pData(expt))) {
+      new_fact <- pData(expt)[[fact]]
+      null_ids <- is.na(new_fact) | is.null(new_fact)
+      ## Only do this if there are some null entries.
+      if (sum(null_ids) > 0) {
+        new_fact[null_ids] <- null_cell
+      }
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
       new_expt[["design"]][["condition"]] <- new_fact
@@ -2353,7 +2383,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' }
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
-                       violin=FALSE, sample_heat=TRUE, convert="cpm", transform="log2",
+                       violin=TRUE, sample_heat=TRUE, convert="cpm", transform="log2",
                        batch="sva", filter=TRUE, ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
@@ -2392,12 +2422,12 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     stringsAsFactors=FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
   xls_result <- write_xlsx(data=legend, wb=wb, sheet=sheet, rownames=FALSE,
-                          title="Columns used in the following tables.")
+                           title="Columns used in the following tables.")
   rows_down <- nrow(legend)
   new_row <- new_row + rows_down + 3
   annot <- as.data.frame(pData(expt), strinsAsFactors=FALSE)
   xls_result <- write_xlsx(data=annot, wb=wb, start_row=new_row, rownames=FALSE,
-                          sheet=sheet, start_col=1, title="Experimental Design.")
+                           sheet=sheet, start_col=1, title="Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
   metrics <- sm(graph_metrics(expt, qq=TRUE,
@@ -2405,14 +2435,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
   xls_result <- write_xlsx(data=libsizes, wb=wb, start_row=new_row,
-                          rownames=FALSE, sheet=sheet, start_col=1,
-                          title="Library sizes.")
+                           rownames=FALSE, sheet=sheet, start_col=1,
+                           title="Library sizes.")
 
   new_row <- new_row + nrow(libsizes) + 3
   libsize_summary <- as.data.frame(metrics[["libsize_summary"]])
   xls_result <- write_xlsx(data=libsize_summary, wb=wb, start_row=new_row,
-                          rownames=FALSE, sheet=sheet, start_col=1,
-                          title="Library size summary.")
+                           rownames=FALSE, sheet=sheet, start_col=1,
+                           title="Library size summary.")
 
   ## Write the raw read data and gene annotations
   message("Writing the raw reads.")
@@ -2428,7 +2458,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   }
   read_info <- merge(info, reads, by="row.names")
   xls_result <- write_xlsx(data=read_info, wb=wb, sheet=sheet, rownames=FALSE,
-                          start_row=new_row, start_col=new_col, title="Raw Reads.")
+                           start_row=new_row, start_col=new_col, title="Raw Reads.")
 
   ## Write some graphs for the raw data
   message("Graphing the raw reads.")
@@ -2638,14 +2668,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=metrics[["pc_summary"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_col=new_col, start_row=new_row)
+                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet, "Raw PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=metrics[["pc_table"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_row=new_row, start_col=new_col)
+                           sheet=sheet, start_row=new_row, start_col=new_col)
 
   ## Move on to the next sheet, normalized data
   message("Writing the normalized reads.")
@@ -2660,7 +2690,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   read_info <- merge(norm_reads, info, by="row.names")
   title <- what_happened(norm_data)
   xls_result <- write_xlsx(wb=wb, data=read_info, rownames=FALSE,
-                          start_row=new_row, start_col=new_col, sheet=sheet, title=title)
+                           start_row=new_row, start_col=new_col, sheet=sheet, title=title)
 
   ## Graphs of the normalized data
   message("Graphing the normalized reads.")
@@ -2817,7 +2847,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   npct_plot <- NULL
   if (isTRUE(violin)) {
     varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, predictor=NULL,
-                                       factors=c("condition", "batch"))))
+                                                        factors=c("condition", "batch"))))
     if (class(varpart_norm) != "try-error") {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2840,14 +2870,14 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=norm_metrics[["pc_summary"]], wb=wb, rownames=FALSE,
-                          sheet=sheet, start_col=new_col, start_row=new_row)
+                           sheet=sheet, start_col=new_col, start_row=new_row)
   new_col <- xls_result[["end_col"]] + 6
   new_row <- new_row - 1
   openxlsx::writeData(wb, sheet=sheet, x="Normalized PCA table.",
                       startRow=new_row, startCol=new_col)
   new_row <- new_row + 1
   xls_result <- write_xlsx(data=norm_metrics[["pc_table"]], wb=wb, sheet=sheet,
-                          rownames=FALSE, start_col=new_col, start_row=new_row)
+                           rownames=FALSE, start_col=new_col, start_row=new_row)
 
 
   ## Give a median-by-factor accounting of the data
@@ -2866,7 +2896,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   rownames(median_data_merged) <- median_data_merged[["Row.names"]]
   median_data_merged[["Row.names"]] <- NULL
   xls_result <- write_xlsx(wb, data=median_data_merged, start_row=new_row, start_col=new_col,
-                          rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
+                           rownames=FALSE, sheet=sheet, title="Median Reads by factor.")
 
   ## Save the result
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))

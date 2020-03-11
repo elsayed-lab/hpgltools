@@ -33,50 +33,50 @@
 plot_gvis_ma <- function(df, tooltip_data=NULL, p=0.05, logfc=1.0,
                          p_col="AdjPVal", fc_col="logfc", avg_col="AvgExp",
                          filename="html/gvis_ma_plot.html", base_url="", ...) {
-    gvis_chartid <- gsub("\\.html$", "", basename(filename))
-    gvis_df <- data.frame("AvgExp" = df[["avg"]],
-                          "LogFC" = df[["logfc"]],
-                          "AdjPVal" = df[["pval"]])
-    ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
-    sig_idx <- gvis_df[[p_col]] <= p
-    gvis_sig <- gvis_df[sig_idx, ]
-    gvis_sig <- gvis_sig[, c(1, 2)]
-    gvis_sig <- merge(gvis_sig, tooltip_data, by="row.names")
-    rownames(gvis_sig) <- gvis_sig[["Row.names"]]
-    gvis_sig <- gvis_sig[, -1]
-    colnames(gvis_sig) <- c("AvgExp", "Significant", "sig.tooltip")
-    gvis_nonsig <- gvis_df[!sig_idx, ]
-    gvis_nonsig <- gvis_nonsig[, c(1, 2)]
-    gvis_nonsig <- merge(gvis_nonsig, tooltip_data, by="row.names")
-    rownames(gvis_nonsig) <- gvis_nonsig[["Row.names"]]
-    gvis_nonsig <- gvis_nonsig[, -1]
-    colnames(gvis_nonsig) <- c("AvgExp", "NonSignificant", "nsig.tooltip")
-    gvis_final_df <- merge(gvis_df, gvis_nonsig, by="row.names", all.x=TRUE)
-    gvis_final_df <- merge(gvis_final_df, gvis_sig, by.x="Row.names",
-                           by.y="row.names", all.x=TRUE)
-    rownames(gvis_final_df) <- gvis_final_df[["Row.names"]]
-    gvis_final_df <- gvis_final_df[, c(2, 6, 7, 9, 10)]
-    colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip",
-                                 "Significant", "sig.tooltip")
-    ma_json_ids <- rjson::toJSON(row.names(gvis_final_df))
-    ma_jscode <- glue("
+  gvis_chartid <- gsub(pattern="\\.html$", replacement="", x=basename(filename))
+  gvis_df <- data.frame("AvgExp" = df[["avg"]],
+                        "LogFC" = df[["logfc"]],
+                        "AdjPVal" = df[["pval"]])
+  ## gvis_sig = subset(gvis_df, AdjPVal <= 0.05)
+  sig_idx <- gvis_df[[p_col]] <= p
+  gvis_sig <- gvis_df[sig_idx, ]
+  gvis_sig <- gvis_sig[, c(1, 2)]
+  gvis_sig <- merge(gvis_sig, tooltip_data, by="row.names")
+  rownames(gvis_sig) <- gvis_sig[["Row.names"]]
+  gvis_sig <- gvis_sig[, -1]
+  colnames(gvis_sig) <- c("AvgExp", "Significant", "sig.tooltip")
+  gvis_nonsig <- gvis_df[!sig_idx, ]
+  gvis_nonsig <- gvis_nonsig[, c(1, 2)]
+  gvis_nonsig <- merge(gvis_nonsig, tooltip_data, by="row.names")
+  rownames(gvis_nonsig) <- gvis_nonsig[["Row.names"]]
+  gvis_nonsig <- gvis_nonsig[, -1]
+  colnames(gvis_nonsig) <- c("AvgExp", "NonSignificant", "nsig.tooltip")
+  gvis_final_df <- merge(gvis_df, gvis_nonsig, by="row.names", all.x=TRUE)
+  gvis_final_df <- merge(gvis_final_df, gvis_sig, by.x="Row.names",
+                         by.y="row.names", all.x=TRUE)
+  rownames(gvis_final_df) <- gvis_final_df[["Row.names"]]
+  gvis_final_df <- gvis_final_df[, c(2, 6, 7, 9, 10)]
+  colnames(gvis_final_df) <- c("AvgExp", "NonSignificant", "nsig.tooltip",
+                               "Significant", "sig.tooltip")
+  ma_json_ids <- rjson::toJSON(row.names(gvis_final_df))
+  ma_jscode <- glue("
  var IDs = {ma_json_ids};
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
  window.open('{base_url}' + text, '_blank');
 ")
-    gvis_options <- list(pointSize=2, height=800, width=800,
-                         tooltip="[{isHtml: true},{trigger:'selection'}]",
-                         hAxes="[{title:'AvgExp'}]",
-                         vAxes="[{title:'LogFC'}]",
-                         title="MA Plot!",
-                         gvis.listener.jscode=ma_jscode,
-                         axisTitlesPosition="out")
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
-                                           as.data.frame(gvis_final_df),
-                                           chartid=gvis_chartid, options=gvis_options)
-    print(hpgl_gvis_scatterchart, file=filename)
+  gvis_options <- list(pointSize=2, height=800, width=800,
+                       tooltip="[{isHtml: true},{trigger:'selection'}]",
+                       hAxes="[{title:'AvgExp'}]",
+                       vAxes="[{title:'LogFC'}]",
+                       title="MA Plot!",
+                       gvis.listener.jscode=ma_jscode,
+                       axisTitlesPosition="out")
+  hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
+                                         as.data.frame(gvis_final_df),
+                                         chartid=gvis_chartid, options=gvis_options)
+  print(hpgl_gvis_scatterchart, file=filename)
 }
 
 #' Make an html version of an volcano plot.
@@ -109,44 +109,44 @@ plot_gvis_ma <- function(df, tooltip_data=NULL, p=0.05, logfc=1.0,
 plot_gvis_volcano <- function(toptable_data, logfc=1.0, p=0.05,
                               tooltip_data=NULL, filename="html/gvis_vol_plot.html",
                               base_url="", ...) {
-    gvis_raw_df <- toptable_data[, c("logFC", "modified_p", "P.Value")]
-    if (!is.null(tooltip_data)) {
-        gvis_raw_df <- merge(gvis_raw_df, tooltip_data, by="row.names")
-    }
-    sig_idx <- gvis_raw_df[["P.Value"]] <= p
-    gvis_sig <- gvis_raw_df[sig_idx, ]
-    gvis_nsig <- gvis_raw_df[!sig_idx, ]
-    colnames(gvis_sig) <- c("Row.names", "logFCsig", "sig_modp", "sig_p", "sig.tooltip")
-    colnames(gvis_nsig) <- c("Row.names", "logFCnsig", "nsig_modp", "nsig_p", "nsig.tooltip")
-    gvis_sig <- gvis_sig[, c("Row.names", "sig_modp", "sig.tooltip")]
-    gvis_nsig <- gvis_nsig[, c("Row.names", "nsig_modp", "nsig.tooltip")]
-    gvis_df <- merge(gvis_raw_df, gvis_nsig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
-    gvis_df <- merge(gvis_df, gvis_sig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
-    rownames(gvis_df) <- gvis_df[["Row.names"]]
-    gvis_df <- gvis_df[, -1]
-    gvis_df <- gvis_df[, c("logFC", "nsig_modp", "nsig.tooltip", "sig_modp", "sig.tooltip")]
-    colnames(gvis_df) <- c("logFC", "nsig_p", "nsig.tooltip", "sig_p", "sig.tooltip")
-    gvis_chartid <- gsub("\\.html$", "", basename(filename))
-    vol_json_ids <- rjson::toJSON(row.names(gvis_df))
-    vol_jscode <- glue("
+  gvis_raw_df <- toptable_data[, c("logFC", "modified_p", "P.Value")]
+  if (!is.null(tooltip_data)) {
+    gvis_raw_df <- merge(gvis_raw_df, tooltip_data, by="row.names")
+  }
+  sig_idx <- gvis_raw_df[["P.Value"]] <= p
+  gvis_sig <- gvis_raw_df[sig_idx, ]
+  gvis_nsig <- gvis_raw_df[!sig_idx, ]
+  colnames(gvis_sig) <- c("Row.names", "logFCsig", "sig_modp", "sig_p", "sig.tooltip")
+  colnames(gvis_nsig) <- c("Row.names", "logFCnsig", "nsig_modp", "nsig_p", "nsig.tooltip")
+  gvis_sig <- gvis_sig[, c("Row.names", "sig_modp", "sig.tooltip")]
+  gvis_nsig <- gvis_nsig[, c("Row.names", "nsig_modp", "nsig.tooltip")]
+  gvis_df <- merge(gvis_raw_df, gvis_nsig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
+  gvis_df <- merge(gvis_df, gvis_sig, by.x="Row.names", by.y="Row.names", all.x=TRUE)
+  rownames(gvis_df) <- gvis_df[["Row.names"]]
+  gvis_df <- gvis_df[, -1]
+  gvis_df <- gvis_df[, c("logFC", "nsig_modp", "nsig.tooltip", "sig_modp", "sig.tooltip")]
+  colnames(gvis_df) <- c("logFC", "nsig_p", "nsig.tooltip", "sig_p", "sig.tooltip")
+  gvis_chartid <- gsub(pattern="\\.html$", replacement="", x=basename(filename))
+  vol_json_ids <- rjson::toJSON(row.names(gvis_df))
+  vol_jscode <- glue("
  var IDs = {vol_json_ids};
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
  window.open('{base_url}' + text, '_blank');
 ")
-    gvis_options <- list(pointSize=2, height=800, width=800,
-                         tooltip="[{isHtml: true},{trigger:'selection'}]",
-                         hAxes="[{title:'AvgExp'}]",
-                         vAxes="[{title:'LogFC'}]",
-                         series="[{color:'blue'}, {color:'red'}]",
-                         title="Volcano Plot!",
-                         gvis.listener.jscode=vol_jscode,
-                         axisTitlesPosition="out")
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
-                                           as.data.frame(gvis_df),
-                                           chartid=gvis_chartid, options=gvis_options)
-    print(hpgl_gvis_scatterchart, file=filename)
+  gvis_options <- list(pointSize=2, height=800, width=800,
+                       tooltip="[{isHtml: true},{trigger:'selection'}]",
+                       hAxes="[{title:'AvgExp'}]",
+                       vAxes="[{title:'LogFC'}]",
+                       series="[{color:'blue'}, {color:'red'}]",
+                       title="Volcano Plot!",
+                       gvis.listener.jscode=vol_jscode,
+                       axisTitlesPosition="out")
+  hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
+                                         as.data.frame(gvis_df),
+                                         chartid=gvis_chartid, options=gvis_options)
+  print(hpgl_gvis_scatterchart, file=filename)
 }
 
 #' Make an html version of a scatter plot.
@@ -171,37 +171,37 @@ plot_gvis_volcano <- function(toptable_data, logfc=1.0, p=0.05,
 #' @export
 plot_gvis_scatter <- function(df, tooltip_data=NULL, filename="html/gvis_scatter.html",
                               base_url="", trendline=NULL) {
-    gvis_df <- df
-    gvis_df <- merge(gvis_df, tooltip_data, by="row.names", all.x=TRUE)
-    rownames(gvis_df) <- gvis_df$Row.names
-    gvis_df <- gvis_df[-1]
-    json_ids <- rjson::toJSON(row.names(gvis_df))
-    gvis_chartid <- gsub("\\.html$", "", basename(filename))
-    scatter_jscode <- glue(" var IDs={json_ids}
+  gvis_df <- df
+  gvis_df <- merge(gvis_df, tooltip_data, by="row.names", all.x=TRUE)
+  rownames(gvis_df) <- gvis_df$Row.names
+  gvis_df <- gvis_df[-1]
+  json_ids <- rjson::toJSON(row.names(gvis_df))
+  gvis_chartid <- gsub(pattern="\\.html$", replacement="", x=basename(filename))
+  scatter_jscode <- glue(" var IDs={json_ids}
  var sel = chart.getSelection();
  var row = sel[0].row;
  var text = IDs[row];
  window.open('{base_url}' + text, '_blank');
 ")
-    if (is.null(trendline)) {
-        gvis_options <- list(pointSize=2, height=800, width=800,
-                             tooltip="[{isHtml: true},{trigger:'selection'}]",
-                             gvis.listener.jscode=scatter_jscode,
-                             axisTitlesPosition="out")
-    } else {
-      trendline_string <- sprintf(
-        "{0: {type: '%s', visibleInLegend: 'true', color: 'green', lineWidth: 10, opacity: 0.5}}",
-        trendline)
-        gvis_options <- list(pointSize=2, height=800, width=800,
-                             tooltip="[{isHtml: true},{trigger:'selection'}]",
-                             gvis.listener.jscode=scatter_jscode,
-                             trendlines=trendline_string,
-                             axisTitlesPosition="out")
-    }
-    hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
-                                           as.data.frame(gvis_df),
-                                           chartid=gvis_chartid, options=gvis_options)
-    print(hpgl_gvis_scatterchart, file=filename)
+  if (is.null(trendline)) {
+    gvis_options <- list(pointSize=2, height=800, width=800,
+                         tooltip="[{isHtml: true},{trigger:'selection'}]",
+                         gvis.listener.jscode=scatter_jscode,
+                         axisTitlesPosition="out")
+  } else {
+    trendline_string <- sprintf(
+      "{0: {type: '%s', visibleInLegend: 'true', color: 'green', lineWidth: 10, opacity: 0.5}}",
+      trendline)
+    gvis_options <- list(pointSize=2, height=800, width=800,
+                         tooltip="[{isHtml: true},{trigger:'selection'}]",
+                         gvis.listener.jscode=scatter_jscode,
+                         trendlines=trendline_string,
+                         axisTitlesPosition="out")
+  }
+  hpgl_gvis_scatterchart <- googleVis::gvisScatterChart(
+                                         as.data.frame(gvis_df),
+                                         chartid=gvis_chartid, options=gvis_options)
+  print(hpgl_gvis_scatterchart, file=filename)
 }
 
 ## EOF

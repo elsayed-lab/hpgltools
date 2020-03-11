@@ -1703,8 +1703,8 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
         ggplot2::ylab(y_label)
     }
   } else if (!is.null(variances)) {
-    x_var_num <- as.numeric(gsub("PC", "", first))
-    y_var_num <- as.numeric(gsub("PC", "", second))
+    x_var_num <- as.numeric(gsub(pattern="PC", replacement="", x=first))
+    y_var_num <- as.numeric(gsub(pattern="PC", replacement="", x=second))
     x_label <- glue::glue("PC1{first}: {variances[[x_var_num]]}% variance")
     y_label <- glue::glue("PC2{second}: {variances[[y_var_num]]}% variance")
     pca_plot <- pca_plot +

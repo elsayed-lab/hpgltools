@@ -4,10 +4,28 @@
 \alias{simple_xcell}
 \title{Invoke xCell and pretty-ify the result.}
 \usage{
-simple_xcell(expt, label_size = NULL, col_margin = 6, row_margin = 12, ...)
+simple_xcell(
+  expt,
+  signatures = NULL,
+  genes = NULL,
+  spill = NULL,
+  expected_types = NULL,
+  label_size = NULL,
+  col_margin = 6,
+  row_margin = 12,
+  ...
+)
 }
 \arguments{
 \item{expt}{Expressionset to query.}
+
+\item{signatures}{Alternate set of signatures to use.}
+
+\item{genes}{Subset of genes to query.}
+
+\item{spill}{The xCell spill parameter.}
+
+\item{expected_types}{Set of assumed types in the data.}
 
 \item{label_size}{How large to make labels when printing the final heatmap.}
 

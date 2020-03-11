@@ -338,7 +338,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
   data_class <- class(data)[1]
   if (data_class == "expt") {
     if (isTRUE(filter)) {
-     data <- sm(normalize_expt(data, filter=TRUE))
+      data <- sm(normalize_expt(data, filter=TRUE))
     }
     design <- data[["design"]]
     colors <- data[["colors"]]

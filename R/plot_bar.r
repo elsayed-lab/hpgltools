@@ -352,7 +352,7 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
 plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
                      start=1000, end=2000, strand=1, padding=100) {
 
-  mychr <- gsub("\\.\\d+$", "", name, perl=TRUE)
+  mychr <- gsub(pattern="\\.\\d+$", replacement="", x=name, perl=TRUE)
   plotted_start <- start - padding
   plotted_end <- end + padding
   my_start <- start

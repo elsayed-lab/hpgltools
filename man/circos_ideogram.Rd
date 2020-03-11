@@ -10,10 +10,16 @@ circos_ideogram(
   band_url = NULL,
   fill = "yes",
   stroke_color = "black",
+  show_bands = "yes",
+  fill_bands = "yes",
   thickness = "20",
   stroke_thickness = "2",
+  label_font = "condensedbold",
+  spacing_default = "0",
+  spacing_break = "0",
   fill_color = "black",
   radius = "0.85",
+  radius_padding = "0.05",
   label_size = "36",
   band_stroke_thickness = "2"
 )
@@ -29,13 +35,25 @@ circos_ideogram(
 
 \item{stroke_color}{What color?}
 
+\item{show_bands}{Show the bands for the ideogram?}
+
+\item{fill_bands}{and fill them in?}
+
 \item{thickness}{How thick to color the lines}
 
 \item{stroke_thickness}{How much of them to fill in}
 
+\item{label_font}{What font to use.}
+
+\item{spacing_default}{How much space between elements.}
+
+\item{spacing_break}{Space between breaks.}
+
 \item{fill_color}{What color to fill}
 
 \item{radius}{Where on the circle to put them}
+
+\item{radius_padding}{How much to pad between radii.}
 
 \item{label_size}{How large to make the labels in px.}
 

@@ -24,7 +24,8 @@ tt <- sm(data(pasillaGenes))
 
 ## ----biomart------------------------------------------------------------------
 ## Try loading some annotation information for this species.
-gene_info_lst <- sm(load_biomart_annotations(species="dmelanogaster"))
+gene_info_lst <- sm(load_biomart_annotations(species="dmelanogaster",
+                                             host="useast.ensembl.org"))
 gene_info <- gene_info_lst[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
@@ -87,7 +88,7 @@ norm_metrics$smd
 ## some samples look a little troublesome here.
 norm_metrics$pc_plot
 
-## ----perform_pairwise---------------------------------------------------------
+## ----perform_pairwise, fig.show="hide"----------------------------------------
 pasilla_pairwise <- sm(all_pairwise(pasilla_expt))
 pasilla_tables <- sm(combine_de_tables(
   pasilla_pairwise,
@@ -98,7 +99,26 @@ pasilla_sig <- sm(extract_significant_genes(
 pasilla_ab <- sm(extract_abundant_genes(
   pasilla_pairwise,
   excel="pasilla_abundant.xlsx"))
-pasilla_tables$deseq_ma_plots[[1]]$plot
+
+## ----de_pictures--------------------------------------------------------------
+pasilla_tables$plots[[1]][["deseq_ma_plots"]]$plot
+pasilla_tables$plots[[1]][["edger_ma_plots"]]$plot
+pasilla_tables$plots[[1]][["limma_ma_plots"]]$plot
+
+## ----goseq_test---------------------------------------------------------------
+up_genes <- pasilla_sig[["deseq"]][["ups"]][[1]]
+down_genes <- pasilla_sig[["deseq"]][["downs"]][[1]]
+pasilla_go <- load_biomart_go(species="dmelanogaster")$go
+pasilla_length <- fData(pasilla_expt)[, c("ensembl_gene_id", "cds_length")]
+colnames(pasilla_length) <- c("ID", "length")
+pasilla_goseq <- simple_goseq(sig_genes=up_genes, go_db=pasilla_go, length_db=pasilla_length)
+pasilla_goseq$pvalue_plots$bpp_plot_over
+
+pasilla_goseq <- simple_goseq(sig_genes=down_genes, go_db=pasilla_go, length_db=pasilla_length)
+pasilla_goseq$pvalue_plots$bpp_plot_over
+
+test <- simple_goseq(sig_genes=names(pasilla_ab$abundances$deseq$treated), go_db=pasilla_go, length_db=pasilla_length)
+test$pvalue_plots$bpp_plot_over
 
 ## ----saveme-------------------------------------------------------------------
 pander::pander(sessionInfo())

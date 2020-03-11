@@ -75,8 +75,8 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
   plotting_data[["psig"]] <- FALSE
   plotting_data[["adjpsig"]] <- FALSE
   plotting_data[["gene_name"]] <- gsub(x=rownames(plotting_data),
-                                  pattern="^(.*);.*$",
-                                  replacement="\\1")
+                                       pattern="^(.*);.*$",
+                                       replacement="\\1")
   plotting_data[["category"]] <- gsub(x=rownames(plotting_data),
                                       pattern="^(.*);(.{2}):.*$",
                                       replacement="\\2")

@@ -41,13 +41,13 @@
 #' }
 #' @export
 simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
-                             first_col="logFC", second_col="limma_logfc", do_go=TRUE,
-                             do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
-                             do_corum=TRUE, do_hp=TRUE, do_hpa=TRUE, do_wp=TRUE,
-                             significant=FALSE, exclude_iea=FALSE, do_under=FALSE,
-                             evcodes=TRUE, threshold=0.05, adjp="fdr",
-                             domain_scope="annotated", bg=NULL,
-                             pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
+                              first_col="logFC", second_col="limma_logfc", do_go=TRUE,
+                              do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
+                              do_corum=TRUE, do_hp=TRUE, do_hpa=TRUE, do_wp=TRUE,
+                              significant=FALSE, exclude_iea=FALSE, do_under=FALSE,
+                              evcodes=TRUE, threshold=0.05, adjp="fdr",
+                              domain_scope="annotated", bg=NULL,
+                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -186,6 +186,8 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
+  } else if (class(sig_genes) == "numeric") {
+    gene_ids <- names(sig_genes)
   } else {
     if (!is.null(sig_genes[[first_col]])) {
       gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
@@ -219,7 +221,7 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
     type <- type_names[t]
     if (isTRUE(retlst[[type]])) {
       message("Performing gProfiler ", type, " search of ",
-              length(gene_ids), " against ", species, ".")
+              length(gene_ids), " genes against ", species, ".")
       Sys.sleep(3)
       a_result <- suppressWarnings(
         try(gProfileR::gprofiler(

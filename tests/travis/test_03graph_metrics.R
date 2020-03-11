@@ -10,11 +10,6 @@ pasilla_expt <- pasilla[["expt"]]
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 
-## I am not sure if I should test this yet, it is slow.
-if (isTRUE(FALSE)) {
-    written <- write_expt(pasilla_expt, excel="pasilla_written.xlsx")
-}
-
 ## What graphs can we make!?
 libsize_plot <- plot_libsize(pasilla_expt)
 actual <- libsize_plot[["table"]][["sum"]]

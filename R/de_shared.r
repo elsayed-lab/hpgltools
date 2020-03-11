@@ -68,7 +68,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     surrogates <- arglist[["surrogates"]]
   }
   if (is.null(model_cond)) {
-   model_cond <- TRUE
+    model_cond <- TRUE
   }
   if (is.null(model_batch)) {
     model_batch <- FALSE
@@ -94,8 +94,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   pre_pca <- NULL
   post_pca <- NULL
   if (isTRUE(test_pca)) {
-    pre_batch <- normalize_expt(input, filter=TRUE, batch=FALSE,
-                                transform="log2", convert=convert, norm=norm)
+    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
+                                   transform="log2", convert=convert, norm=norm))
     message("Plotting a PCA before surrogates/batch inclusion.")
     pre_pca <- plot_pca(pre_batch, plot_labels=FALSE, ...)
     post_batch <- pre_batch
@@ -774,7 +774,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     message("Extracting surrogate estimates from ", model_batch,
             " and adding them to the model.")
     model_batch_info <- all_adjusters(input, estimate_type=model_batch,
-                                         surrogates=surrogates)
+                                      surrogates=surrogates)
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.
     model_batch <- model_batch_info[["model_adjust"]]

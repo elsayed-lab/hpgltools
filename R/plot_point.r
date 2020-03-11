@@ -382,6 +382,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 #' @param size How big are the dots?
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param gvis_filename Filename to write a fancy html graph.
+#' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
 #' @param ... More options for you
@@ -406,7 +407,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
 plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
                        p=0.05, alpha=0.4, logfc=1.0, label_numbers=TRUE,
                        size=2, tooltip_data=NULL, gvis_filename=NULL,
-                       invert=FALSE, label=NULL, ...) {
+                       shapes=TRUE, invert=FALSE, label=NULL, ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
@@ -498,8 +499,14 @@ plot_ma_de <- function(table, expr_col="logCPM", fc_col="logFC", p_col="qvalue",
   ## Set up the labels for the legend by significance.
   ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
   ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
-  state_shapes <- c(24, 25, 21)
-  names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  state_shapes <- 21
+  if (isTRUE(state_shapes)) {
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  } else {
+    state_shapes <- c(21, 21, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  }
 
   ## make the plot!
   plt <- ggplot(data=df,

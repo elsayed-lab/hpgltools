@@ -10,6 +10,7 @@ read_counts_expt(
   header = FALSE,
   include_summary_rows = FALSE,
   suffix = NULL,
+  countdir = NULL,
   ...
 )
 }
@@ -23,6 +24,8 @@ read_counts_expt(
 \item{include_summary_rows}{Whether HTSeq summary rows should be included.}
 
 \item{suffix}{Optional suffix to add to the filenames when reading them.}
+
+\item{countdir}{Optional count directory to read from.}
 
 \item{...}{More options for happy time!}
 }

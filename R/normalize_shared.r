@@ -61,6 +61,8 @@ default_norm <- function(expt, ...) {
 #' @param k Used by genefilter's kofa().
 #' @param cv_min Used by genefilter's cv().
 #' @param cv_max Also used by genefilter's cv().
+#' @param na_to_zero Sometimes rpkm gives some NA values for very low numbers.
+#'   I am not sure why, but I think they should be 0.
 #' @param ... more options
 #' @return Expt object with normalized data and the original data saved as
 #'   'original_expressionset'
@@ -84,6 +86,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            low_to_zero=TRUE, ## extra parameters for batch correction
                            thresh=2, min_samples=2, p=0.01, A=1, k=1,
                            cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
+                           na_to_zero=FALSE,
                            ...) {
   arglist <- list(...)
   expt_state <- expt[["state"]]
@@ -255,6 +258,11 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
       message("Setting ", low_num, " entries to zero.")
       exprs(current_exprs)[low_idx] <- 0
     }
+  }
+
+  if (isTRUE(na_to_zero)) {
+    na_idx <- is.na(exprs(current_exprs))
+    exprs(current_exprs)[na_idx] <- 0
   }
 
   ## The original data structure contains the following slots:

@@ -82,7 +82,6 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
       my_to <- to_list[[sub_count]]
       tmp_names <- gsub(pattern=my_from, replacement=my_to, x=tmp_names, perl=TRUE)
     }
-    ## tmp_names = gsub("\\.","_", tmp_names)
     names(path_data) <- tmp_names
     rm(tmp_names)
   }
@@ -98,8 +97,7 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
   if (pathway[1] == "all") {
     all_pathways <- unique(KEGGREST::keggLink("pathway", species))
     paths <- all_pathways
-    paths <- gsub("path:", "", paths)
-    ## all_modules = unique(KEGGREST::keggLink("module", species))
+    paths <- gsub(pattern="path:", replacement="", x=paths)
   } else {
     paths <- pathway
   }
@@ -195,8 +193,8 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
                                new.signature=FALSE,
                                cex=0.05,
                                key.pos="topright")))
-      }
-      if (class(pv) == "numeric") {
+    }
+    if (class(pv) == "numeric") {
       warning(glue("There was a failure for: {canonical_path}."))
       colored_genes <- NULL
       newfile <- NULL

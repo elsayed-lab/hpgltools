@@ -58,7 +58,7 @@ install_bioconductor:
 
 prereq:
 	@echo "Checking a few prerequisites."
-	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
+	R -e "bioc_prereq <- c('BiocManager', 'devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { BiocManager::install(req) } } \
 ## hahaha looks like lisp!"
 

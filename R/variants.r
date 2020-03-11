@@ -493,7 +493,7 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #' @return List containing the set of intersections in the conditions contained
 #'   in snp_result, the summary of numbers of variants per chromosome, and
 #'   summary of numbers per gene.
-#' @seealso \code{\link{snp_vs_genes}}
+#' @seealso \code{\link{snps_vs_genes}}
 #' @examples
 #'  \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -559,10 +559,27 @@ snps_intersections <- function(expt, snp_result, chr_column="seqnames") {
   return(retlist)
 }
 
-snp_subset_genes <- function(expt, snp_expt, start_col="start", end_col="end", expt_name_col="chromosome",
-                            snp_name_col="chromosome", snp_start_col="position", expt_gid_column="gid",
-                            genes=c("LPAL13_120010900", "LPAL13_340013000", "LPAL13_000054100",
-                                    "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
+#' Look for only the variant positions in a subset of genes.
+#'
+#' This was written in response to a query from Nancy and Maria Adelaida who
+#' wanted to look only at the variant positions in a few specific genes.
+#'
+#' @param expt Initial expressionset.
+#' @param snp_expt Variant position expressionset.
+#' @param start_col Metadata column with the start positions for each gene.
+#' @param end_col Metadata column with the end of the genes.
+#' @param expt_name_col Metadata column with the chromosome names.
+#' @param snp_name_col Ditto for the snp_expressionset.
+#' @param snp_start_col Metadata column containing the variant positions.
+#' @param expt_gid_column ID column for the genes.
+#' @param genes Set of genes to cross reference.
+#' @return New expressionset with only the variants for the genes of interest.
+#' @export
+snp_subset_genes <- function(expt, snp_expt, start_col="start", end_col="end",
+                             expt_name_col="chromosome", snp_name_col="chromosome",
+                             snp_start_col="position", expt_gid_column="gid",
+                             genes=c("LPAL13_120010900", "LPAL13_340013000", "LPAL13_000054100",
+                                     "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
   features <- fData(expt)
   if (is.null(features[[start_col]])) {
     stop("Unable to find the ", start_col, " column in the annotation data.")
@@ -621,8 +638,9 @@ snp_subset_genes <- function(expt, snp_expt, start_col="start", end_col="end", e
 #' @param snp_result The result from get_snp_sets().
 #' @param start_col Which column provides the start of each gene?
 #' @param end_col and the end column of each gene?
+#' @param snp_name_col Name of the column in the metadata with the sequence names.
+#' @param expt_name_col Name of the metadata column with the chromosome names.
 #' @return List with some information by gene.
-#' @seealso \code{\link{snps_intersections}}
 #' @examples
 #'  \dontrun{
 #'  expt <- create_expt(metadata, gene_information)

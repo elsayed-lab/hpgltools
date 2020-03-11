@@ -204,11 +204,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         next
       }
       final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
-      final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.
-  Contrast denominator: {denominators[x]}.")
+      final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  Contrast denominator: {denominators[x]}.")
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data=written_table, wb=wb, sheet=tab,
-                              title=final_excel_title, rownames=rownames)
+                               title=final_excel_title, rownames=rownames)
       ## The function write_xlsx has some logic in it to get around excel name
       ## limitations (30 characters), therefore set the sheetname to what was
       ## returned in case it had to change the sheet's name.
@@ -227,6 +226,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         venn_nop <- try(de_venn(written_table, lfc=1, adjp=FALSE, p=1.0))
         venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
         venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
+        venns[[tab]] <- list(venn_nop_lfc0, venn_nop, venn_list, venn_sig_list)
+        names(venns[[tab]]) <- c("nop_lfc0", "nop_lfc1", "p_lfc0", "p_lfc1")
         ## If they worked, add them to the excel sheets after the data,
         ## but make them smaller than other graphs.
         if (class(venn_list)[1] != "try-error") {
@@ -444,6 +445,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         title="Original pvalues for all contrasts before sva adjustment.",
         start_row=1, rownames=rownames)
     }
+
+    design_result <- write_sample_design(wb, apr)
 
     message("Performing save of ", excel, ".")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
@@ -900,7 +903,6 @@ Defaulting to fdr.")
     comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(annot_df)) {
-    ## colnames(annot_df) <- gsub("[[:digit:]]", "", colnames(annot_df))
     colnames(annot_df) <- gsub(pattern="[[:punct:]]",
                                replacement="",
                                x=colnames(annot_df))
@@ -1246,7 +1248,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
   extracted[["kept"]] <- table
   extracted[["keepers"]] <- keepers
   extracted[["plots"]][[table]] <- combine_extracted_plots(
-    apr, name, combined, denominator, numerator,
+    ##   vv I changed this from 'name', I think that is correct but am uncertain.
+    apr, table, combined, denominator, numerator,
     basic, deseq, edger, limma, ebseq,
     include_basic=include_basic, include_deseq=include_deseq,
     include_edger=include_edger, include_limma=include_limma,
@@ -1314,7 +1317,7 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
       stringsAsFactors=FALSE)
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
-                            title="Columns used in the following tables.")
+                             title="Columns used in the following tables.")
   }
 
   ## Now make the excel sheet for each method/coefficient
@@ -1827,7 +1830,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
                              , p-value: {p}; by {clean_sname}.")
           if (!is.null(excel)) {
             xl_result <- write_xlsx(data=table_subset, wb=wb, sheet=xlsx_table,
-                                   start_row=xlsx_row, title=xlsx_title)
+                                    start_row=xlsx_row, title=xlsx_title)
             xlsx_row <- xlsx_row + nrow(table_subset) + padding_rows + 2
           } ## End checking to write the excel file.
         }
@@ -1849,9 +1852,9 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     lst[["summary"]] <- summary_df
     if (!is.null(excel)) {
       xl_result <- write_xlsx(wb=wb,
-                             data=summary_df,
-                             sheet="summary", title=venn_title,
-                             start_row=venn_row, start_col=venn_col)
+                              data=summary_df,
+                              sheet="summary", title=venn_title,
+                              start_row=venn_row, start_col=venn_col)
       venn_row <- venn_row + 4
       try_result <- xlsx_plot_png(
         up_plot, wb=wb, sheet="summary", width=6, height=6,
@@ -1908,7 +1911,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   num_tables <- length(names(ups))
   summary_start <- ((num_tables + 2) * summary_count) + 1
   xls_summary_result <- write_xlsx(wb=wb, data=summary, start_col=1, start_row=summary_start,
-                                  sheet="number_changed", title=summary_title)
+                                   sheet="number_changed", title=summary_title)
   for (table_count in 1:length(names(ups))) {
     base_name <- names(ups)[table_count]
     up_name <- glue::glue("up_{according}_{base_name}")
@@ -1958,6 +1961,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
 #' @param include_edger Include the edger result?
 #' @param ebseq The ebseq result, which is redundant.
 #' @param include_ebseq Include the ebseq result?
+#' @param basic Basic data
+#' @param include_basic Include the basic result?
 #' @param padj_type P-adjustment employed.
 write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
                                   limma, include_limma,
@@ -2030,8 +2035,8 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
     c("PPDE",  "Post-probability that the numerator/denominator are different."),
     c("ebseq_adjp",  "Attempt at FDR correction of the PPEE, this is just copied from PPEE
 and is in _no_ way statistically valid, but added as a plotting conveinence.")
-  ),
-  stringsAsFactors=FALSE)
+),
+stringsAsFactors=FALSE)
   limma_legend <- data.frame(rbind(
     c("The next 7 columns", "Statistics generated by limma."),
     c("limma_logfc_rep", "The log2 fold change reported by limma, again."),
@@ -2079,7 +2084,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
   stringsAsFactors=FALSE)
 
   ## Here we including only those columns which are relevant to the analysis performed.
- if (isTRUE(include_limma)) {
+  if (isTRUE(include_limma)) {
     legend <- rbind(legend,
                     c("limma_logfc", "The log2 fold change reported by limma."),
                     c("limma_adjp", "The adjusted-p value reported by limma."))
@@ -2354,81 +2359,94 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
 }
 
 write_sig_legend <- function(excel) {
-    excel <- as.character(excel)
-    message("Writing a legend of columns.")
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-    legend <- data.frame(rbind(
-      c("The first ~3-10 columns of each sheet:",
-        "are annotations provided by our chosen annotation source for this experiment."),
-      c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
-      c("limma_logfc", "The log2 fold change reported by limma."),
-      c("deseq_logfc", "The log2 fold change reported by DESeq2."),
-      c("edger_logfc", "The log2 fold change reported by edgeR."),
-      c("limma_adjp", "The adjusted-p value reported by limma."),
-      c("deseq_adjp", "The adjusted-p value reported by DESeq2."),
-      c("edger_adjp", "The adjusted-p value reported by edgeR."),
-      c("The next 5 columns", "Statistics generated by limma."),
-      c("limma_ave", "Average log2 expression observed by limma across all samples."),
-      c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
-      c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
-      c("limma_b", "Use a Bayesian estimate to calculate log-odds significance."),
-      c("limma_q", "A q-value FDR adjustment of the p-value above."),
-      c("The next 5 columns", "Statistics generated by DESeq2."),
-      c("deseq_basemean", "Analagous to limma's ave column, the base mean of all samples."),
-      c("deseq_lfcse", "The standard error observed given the log2 fold change."),
-      c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
-      c("deseq_p", "Resulting p-value."),
-      c("deseq_q", "False-positive corrected p-value."),
-      c("The next 4 columns", "Statistics generated by edgeR."),
-      c("edger_logcpm",
-        "Similar DESeq2's basemean, only including the samples in the comparison."),
-      c("edger_lr", "Undocumented, I think it is the T-statistic calculated by edgeR."),
-      c("edger_p", "The observed p-value from edgeR."),
-      c("edger_q", "The observed corrected p-value from edgeR."),
-      c("The next 7 columns", "Statistics generated by ebseq."),
-      c("ebseq_fc", "Fold-change reported by ebseq."),
-      c("ebseq_logfc", "Oddly, ebseq also reports a log2fc."),
-      c("ebseq_postfc", "Post-analysis fold change from ebseq."),
-      c("ebseq_mean", "Mean values in the ebseq analysis."),
-      c("ebseq_ppee", "Prior probability that the numerators and denominators are the same."),
-      c("ebseq_ppde", "... that they are different (eg. 1-ppee)."),
-      c("ebseq_adjp", "Currently just a copy of ppee until I figure them out."),
-      c("The next 8 columns", "Statistics generated by the basic analysis."),
-      c("basic_nummed", "log2 median values of the numerator (like edgeR's basemean)."),
-      c("basic_denmed", "log2 median values of the denominator for this comparison."),
-      c("basic_numvar", "Variance observed in the numerator values."),
-      c("basic_denvar", "Variance observed in the denominator values."),
-      c("basic_logfc", "The log2 fold change observed by the basic analysis."),
-      c("basic_t", "T-statistic from basic."),
-      c("basic_p", "Resulting p-value."),
-      c("basic_adjp", "BH correction of the p-value."),
-      c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
-      c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
-      c("lfc_var", "The variance between limma/deseq/edger."),
-      c("lfc_varbymed", "The ratio of the variance/median (lower means better agreement.)"),
-      c("p_meta", "A meta-p-value of the mean p-values."),
-      c("p_var", "Variance among the 3 p-values."),
-      c("The last columns: top plot left",
-        "Venn diagram of the genes with logFC > 0 and p-value <= 0.05 for limma/DESeq/Edger."),
-      c("The last columns: top plot right",
-        "Venn diagram of the genes with logFC < 0 and p-value <= 0.05 for limma/DESeq/Edger."),
-      c("The last columns: second plot",
-        "Scatter plot of the voom-adjusted/normalized counts for each coefficient."),
-      c("The last columns: third plot",
-        "Scatter plot of the adjusted/normalized counts for each coefficient from edgeR."),
-      c("The last columns: fourth plot",
-        "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
-      c("", "If this data was adjusted with sva, look 'original_pvalues' at the end.")
-    ),
-    stringsAsFactors=FALSE)
+  excel <- as.character(excel)
+  message("Writing a legend of columns.")
+  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  wb <- openxlsx::createWorkbook(creator="hpgltools")
+  legend <- data.frame(rbind(
+    c("The first ~3-10 columns of each sheet:",
+      "are annotations provided by our chosen annotation source for this experiment."),
+    c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2."),
+    c("limma_logfc", "The log2 fold change reported by limma."),
+    c("deseq_logfc", "The log2 fold change reported by DESeq2."),
+    c("edger_logfc", "The log2 fold change reported by edgeR."),
+    c("limma_adjp", "The adjusted-p value reported by limma."),
+    c("deseq_adjp", "The adjusted-p value reported by DESeq2."),
+    c("edger_adjp", "The adjusted-p value reported by edgeR."),
+    c("The next 5 columns", "Statistics generated by limma."),
+    c("limma_ave", "Average log2 expression observed by limma across all samples."),
+    c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
+    c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
+    c("limma_b", "Use a Bayesian estimate to calculate log-odds significance."),
+    c("limma_q", "A q-value FDR adjustment of the p-value above."),
+    c("The next 5 columns", "Statistics generated by DESeq2."),
+    c("deseq_basemean", "Analagous to limma's ave column, the base mean of all samples."),
+    c("deseq_lfcse", "The standard error observed given the log2 fold change."),
+    c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
+    c("deseq_p", "Resulting p-value."),
+    c("deseq_q", "False-positive corrected p-value."),
+    c("The next 4 columns", "Statistics generated by edgeR."),
+    c("edger_logcpm",
+      "Similar DESeq2's basemean, only including the samples in the comparison."),
+    c("edger_lr", "Undocumented, I think it is the T-statistic calculated by edgeR."),
+    c("edger_p", "The observed p-value from edgeR."),
+    c("edger_q", "The observed corrected p-value from edgeR."),
+    c("The next 7 columns", "Statistics generated by ebseq."),
+    c("ebseq_fc", "Fold-change reported by ebseq."),
+    c("ebseq_logfc", "Oddly, ebseq also reports a log2fc."),
+    c("ebseq_postfc", "Post-analysis fold change from ebseq."),
+    c("ebseq_mean", "Mean values in the ebseq analysis."),
+    c("ebseq_ppee", "Prior probability that the numerators and denominators are the same."),
+    c("ebseq_ppde", "... that they are different (eg. 1-ppee)."),
+    c("ebseq_adjp", "Currently just a copy of ppee until I figure them out."),
+    c("The next 8 columns", "Statistics generated by the basic analysis."),
+    c("basic_nummed", "log2 median values of the numerator (like edgeR's basemean)."),
+    c("basic_denmed", "log2 median values of the denominator for this comparison."),
+    c("basic_numvar", "Variance observed in the numerator values."),
+    c("basic_denvar", "Variance observed in the denominator values."),
+    c("basic_logfc", "The log2 fold change observed by the basic analysis."),
+    c("basic_t", "T-statistic from basic."),
+    c("basic_p", "Resulting p-value."),
+    c("basic_adjp", "BH correction of the p-value."),
+    c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
+    c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
+    c("lfc_var", "The variance between limma/deseq/edger."),
+    c("lfc_varbymed", "The ratio of the variance/median (lower means better agreement.)"),
+    c("p_meta", "A meta-p-value of the mean p-values."),
+    c("p_var", "Variance among the 3 p-values."),
+    c("The last columns: top plot left",
+      "Venn diagram of the genes with logFC > 0 and p-value <= 0.05 for limma/DESeq/Edger."),
+    c("The last columns: top plot right",
+      "Venn diagram of the genes with logFC < 0 and p-value <= 0.05 for limma/DESeq/Edger."),
+    c("The last columns: second plot",
+      "Scatter plot of the voom-adjusted/normalized counts for each coefficient."),
+    c("The last columns: third plot",
+      "Scatter plot of the adjusted/normalized counts for each coefficient from edgeR."),
+    c("The last columns: fourth plot",
+      "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
+    c("", "If this data was adjusted with sva, look 'original_pvalues' at the end.")
+  ),
+  stringsAsFactors=FALSE)
 
-    colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
-                             title="Columns used in the following tables.")
-    retlist <- list("wb" = wb, xls_result = xls_result)
-    return(retlist)
+  colnames(legend) <- c("column name", "column definition")
+  xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
+                           title="Columns used in the following tables.")
+  retlist <- list("wb" = wb, xls_result = xls_result)
+  return(retlist)
 }
 
+#' Put the metadata at the end of combined_de_tables()
+#'
+#' For the moment this is a stupidly short function.  I am betting we will
+#' elaborate on this over time.
+#'
+#' @param wb workbook object.
+#' @param apr Pairwise result.
+write_sample_design <- function(wb, apr) {
+  meta_df <- pData(apr[["input"]])
+  xls_meta_result <- write_xlsx(wb=wb, data=meta_df,
+                                sheet="metadata", title="Experiment metadata.")
+  return(xls_meta_result)
+}
 
 ## EOF

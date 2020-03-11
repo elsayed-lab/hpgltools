@@ -8,7 +8,7 @@ write_expt(
   expt,
   excel = "excel/pretty_counts.xlsx",
   norm = "quant",
-  violin = FALSE,
+  violin = TRUE,
   sample_heat = TRUE,
   convert = "cpm",
   transform = "log2",

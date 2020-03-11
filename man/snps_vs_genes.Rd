@@ -9,7 +9,8 @@ snps_vs_genes(
   snp_result,
   start_col = "start",
   end_col = "end",
-  name_col = "seqnames"
+  snp_name_col = "seqnames",
+  expt_name_col = "chromosome"
 )
 }
 \arguments{
@@ -20,6 +21,10 @@ snps_vs_genes(
 \item{start_col}{Which column provides the start of each gene?}
 
 \item{end_col}{and the end column of each gene?}
+
+\item{snp_name_col}{Name of the column in the metadata with the sequence names.}
+
+\item{expt_name_col}{Name of the metadata column with the chromosome names.}
 }
 \value{
 List with some information by gene.
@@ -36,7 +41,4 @@ gene.  This function attempts to answer that question.
  snp_result <- get_snp_sets(snp_expt)
  gene_intersections <- snps_vs_genes(expt, snp_result)
 }
-}
-\seealso{
-\code{\link{snps_intersections}}
 }

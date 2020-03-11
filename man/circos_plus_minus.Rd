@@ -6,12 +6,17 @@
 microbesonline.org.}
 \usage{
 circos_plus_minus(
-  table,
-  cfgout = "circos/conf/default.conf",
-  chr = "chr1",
+  cfg,
   outer = 1,
   width = 0.08,
+  thickness = 95,
   spacing = 0,
+  padding = 1,
+  margin = 0,
+  plus_orientation = "out",
+  minus_orientation = "in",
+  layers = 1,
+  layers_overflow = "hide",
   acol = "orange",
   bcol = "reds-9-seq",
   ccol = "yellow",
@@ -41,18 +46,28 @@ circos_plus_minus(
 )
 }
 \arguments{
-\item{table}{Dataframe with starts/ends and categories.}
-
-\item{cfgout}{Master configuration file to write.}
-
-\item{chr}{Name of the chromosome.}
+\item{cfg}{Result from circos_prefix().}
 
 \item{outer}{Floating point radius of the circle into which to place the
 plus-strand data.}
 
 \item{width}{Radial width of each tile.}
 
+\item{thickness}{How wide to make the bars.}
+
 \item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
+
+\item{padding}{How much space between them.}
+
+\item{margin}{Margin between elements.}
+
+\item{plus_orientation}{Orientation of the plus pieces.}
+
+\item{minus_orientation}{Orientation of the minus pieces.}
+
+\item{layers}{How many layers to use}
+
+\item{layers_overflow}{How to handle too many layers.}
 
 \item{acol}{A color: RNA processing and modification.}
 

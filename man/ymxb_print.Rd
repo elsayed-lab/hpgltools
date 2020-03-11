@@ -8,6 +8,8 @@ ymxb_print(lm_model, as = "glue")
 }
 \arguments{
 \item{lm_model}{Model to print from glm/lm/robustbase.}
+
+\item{as}{Type to return.}
 }
 \value{
 a string representation of that model.

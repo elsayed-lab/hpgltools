@@ -16,6 +16,7 @@ plot_ma_de(
   size = 2,
   tooltip_data = NULL,
   gvis_filename = NULL,
+  shapes = TRUE,
   invert = FALSE,
   label = NULL,
   ...
@@ -43,6 +44,8 @@ plot_ma_de(
 \item{tooltip_data}{Df of tooltip information for gvis.}
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
+
+\item{shapes}{Provide different shapes for up/down/etc?}
 
 \item{invert}{Invert the ma plot?}
 

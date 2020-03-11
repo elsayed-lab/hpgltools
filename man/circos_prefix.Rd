@@ -5,8 +5,16 @@
 \title{Write the beginning of a circos configuration file.}
 \usage{
 circos_prefix(
+  annotation,
   name = "mgas",
-  conf_dir = "circos/conf",
+  basedir = "circos",
+  chr_column = "seqnames",
+  cog_column = "COGFun",
+  start_column = "start",
+  stop_column = "end",
+  strand_column = "strand",
+  id_column = NULL,
+  cog_map = NULL,
   radius = 1800,
   chr_units = 1000,
   band_url = NULL,
@@ -14,9 +22,25 @@ circos_prefix(
 )
 }
 \arguments{
+\item{annotation}{Annotation data frame.}
+
 \item{name}{Name of the map, called with 'make name'.}
 
-\item{conf_dir}{Directory containing the circos configuration data.}
+\item{basedir}{Base directory for writing the data.}
+
+\item{chr_column}{Name of the column containing the chromosome names in the annotations.}
+
+\item{cog_column}{Name of the column containing the COG groups in the annotations.}
+
+\item{start_column}{Name of the column containing the starts in the annotations.}
+
+\item{stop_column}{Name of the column containing the stops in the annotations.}
+
+\item{strand_column}{Name of the column containing the strand information.}
+
+\item{id_column}{Where do the gene IDs live? NULL means rownames.}
+
+\item{cog_map}{Not yet used, but used to provide an alternate map of groups/colors.}
 
 \item{radius}{Size of the image.}
 

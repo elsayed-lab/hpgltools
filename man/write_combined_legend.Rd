@@ -47,6 +47,10 @@ write_combined_legend(
 
 \item{include_ebseq}{Include the ebseq result?}
 
+\item{basic}{Basic data}
+
+\item{include_basic}{Include the basic result?}
+
 \item{padj_type}{P-adjustment employed.}
 }
 \description{

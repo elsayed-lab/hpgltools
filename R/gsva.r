@@ -33,9 +33,9 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     lib_result <- sm(requireNamespace(orgdb))
     att_restul <- sm(try(attachNamespace(orgdb), silent=TRUE))
     first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                       keys=first_ids,
-                                       keytype=current_id,
-                                       columns=c(required_id)))
+                                          keys=first_ids,
+                                          keytype=current_id,
+                                          columns=c(required_id)))
     first_idx <- complete.cases(first_ids)
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
@@ -356,9 +356,9 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
       high <- merge(high, high_ids, by.x="row.names", by.y=current_id)
       if (!is.null(low_ids)) {
         low_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                             keys=low_ids,
-                                             keytype=current_id,
-                                             columns=c(required_id)))
+                                            keys=low_ids,
+                                            keytype=current_id,
+                                            columns=c(required_id)))
         low_idx <- complete.cases(low_ids)
         low_ids <- low_ids[low_idx, ]
         low <- merge(low, low_ids, by.x="row.names", by.y=current_id)
@@ -411,18 +411,18 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
                                phenotypeColor=as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
     high_gsc <- GSEABase::GeneSet(
-                          GSEABase::EntrezIdentifier(),
-                          setName=high_name,
-                          geneIds=as.character(high[[required_id]]))
+                            GSEABase::EntrezIdentifier(),
+                            setName=high_name,
+                            geneIds=as.character(high[[required_id]]))
     high_lst[[name]] <- high_gsc
     low_gsc <- NULL
     low_lst[[name]] <- low_gsc
     if (!is.null(pair_names[2])) {
       low_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       low_gsc <- GSEABase::GeneSet(
-                              GSEABase::EntrezIdentifier(),
-                              setName=low_name,
-                              geneIds=as.character(low[[required_id]]))
+                             GSEABase::EntrezIdentifier(),
+                             setName=low_name,
+                             geneIds=as.character(low[[required_id]]))
       low_lst[[name]] <- low_gsc
     }
   } ## End of the for loop.
@@ -522,7 +522,7 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
     new_idx <- complete.cases(new_ids)
     new_ids <- new_ids[new_idx, ]
     message("Before conversion, the expressionset has ", length(rownames(eset)),
-  " entries.")
+            " entries.")
     converted_eset <- eset[new_ids[[current_id]], ]
     rownames(converted_eset) <- make.names(new_ids[[required_id]], unique=TRUE)
     message("After conversion, the expressionset has ",
@@ -562,15 +562,20 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
 #' seems pretty nifty for its use case.  Thus this function is intended to make
 #' invoking it easier/faster.
 #'
-#' @param expt  Expressionset to query.
-#' @param label_size  How large to make labels when printing the final heatmap.
-#' @param col_margin  Used by par() when printing the final heatmap.
+#' @param expt Expressionset to query.
+#' @param signatures Alternate set of signatures to use.
+#' @param genes Subset of genes to query.
+#' @param spill The xCell spill parameter.
+#' @param expected_types Set of assumed types in the data.
+#' @param label_size How large to make labels when printing the final heatmap.
+#' @param col_margin Used by par() when printing the final heatmap.
 #' @param row_margin Ibid.
 #' @param ...  Extra arguments when normalizing the data for use with xCell.
 #' @return  Small list providing the output from xCell, the set of signatures,
 #'   and heatmap.
 #' @export
-simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...) {
+simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected_types=NULL,
+                         label_size=NULL, col_margin=6, row_margin=12, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
@@ -594,7 +599,17 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
   xCell.data <- NULL
   tt <- requireNamespace("xCell")
   data("xCell.data", package="xCell")
-  xcell_result <- sm(xCell::xCellAnalysis(xcell_input))
+  if (is.null(signatures)) {
+    signatures <- xCell.data[["signatures"]]
+  }
+  if (is.null(genes)) {
+    genes <- xCell.data[["genes"]]
+  }
+  if (is.null(spill)) {
+    spill <- xCell.data[["spill"]]
+  }
+  xcell_result <- sm(xCell::xCellAnalysis(expr=xcell_input, signatures=signatures,
+                                          genes=genes, spill=spill, cell.types=expected_types, ...))
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
@@ -606,7 +621,6 @@ simple_xcell <- function(expt, label_size=NULL, col_margin=6, row_margin=12, ...
                     margins=c(col_margin, row_margin),
                     cexCol=label_size, cexRow=label_size)
   }
-
   ht_plot <- grDevices::recordPlot()
 
   retlist <- list(
@@ -706,41 +720,41 @@ get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_
 #' @return Fresh gene set collection replete with new names.
 #' @export
 convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="ENTREZID") {
-    message("Converting the rownames() of the expressionset to ", to_type, ".")
-    ##tt <- sm(library(orgdb, character.only=TRUE))
-    lib_result <- sm(requireNamespace(orgdb))
-    att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
-    orgdb <- get0(orgdb)
-    gsc_lst <- as.list(gsc)
-    new_gsc <- list()
-    show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  message("Converting the rownames() of the expressionset to ", to_type, ".")
+  ##tt <- sm(library(orgdb, character.only=TRUE))
+  lib_result <- sm(requireNamespace(orgdb))
+  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+  orgdb <- get0(orgdb)
+  gsc_lst <- as.list(gsc)
+  new_gsc <- list()
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  if (isTRUE(show_progress)) {
+    bar <- utils::txtProgressBar(style=3)
+  }
+  for (g in 1:length(gsc)) {
     if (isTRUE(show_progress)) {
-      bar <- utils::txtProgressBar(style=3)
+      pct_done <- g / length(gsc_lst)
+      setTxtProgressBar(bar, pct_done)
     }
-    for (g in 1:length(gsc)) {
-      if (isTRUE(show_progress)) {
-        pct_done <- g / length(gsc_lst)
-        setTxtProgressBar(bar, pct_done)
-      }
-      gs <- gsc[[g]]
-      old_ids <- GSEABase::geneIds(gs)
-      if (is.null(from_type)) {
-        from_type <- guess_orgdb_keytype(old_ids, orgdb)
-      }
-      new_ids <- sm(AnnotationDbi::select(x=orgdb,
-                                          keys=old_ids,
-                                          keytype=from_type,
-                                          columns=c(to_type)))
-      new_ids <- new_ids[[to_type]]
-      GSEABase::geneIds(gs) <- unique(new_ids)
-      ## gsc_lst[[g]] <- gs
-      new_gsc[[g]] <- gs
+    gs <- gsc[[g]]
+    old_ids <- GSEABase::geneIds(gs)
+    if (is.null(from_type)) {
+      from_type <- guess_orgdb_keytype(old_ids, orgdb)
     }
-    if (isTRUE(show_progress)) {
-      close(bar)
-    }
-    gsc <- GSEABase::GeneSetCollection(new_gsc)
-    return(gsc)
+    new_ids <- sm(AnnotationDbi::select(x=orgdb,
+                                        keys=old_ids,
+                                        keytype=from_type,
+                                        columns=c(to_type)))
+    new_ids <- new_ids[[to_type]]
+    GSEABase::geneIds(gs) <- unique(new_ids)
+    ## gsc_lst[[g]] <- gs
+    new_gsc[[g]] <- gs
+  }
+  if (isTRUE(show_progress)) {
+    close(bar)
+  }
+  gsc <- GSEABase::GeneSetCollection(new_gsc)
+  return(gsc)
 }
 
 #' Score the results from gsva().

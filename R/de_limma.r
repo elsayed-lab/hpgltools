@@ -347,7 +347,7 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
       message("Using the libsize from expt$libsize.")
       libsize <- input[["libsize"]]
     } else if (!is.null(
-               input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+                  input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
       libsize <- colSums(data, na.rm=TRUE)
     } else {
       message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")

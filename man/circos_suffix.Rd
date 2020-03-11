@@ -4,10 +4,10 @@
 \alias{circos_suffix}
 \title{Write the end of a circos master configuration.}
 \usage{
-circos_suffix(cfgout = "circos/conf/default.conf")
+circos_suffix(cfg)
 }
 \arguments{
-\item{cfgout}{Master configuration file to write.}
+\item{cfg}{Result from circos_prefix()}
 }
 \value{
 The filename of the configuration.
