@@ -41,7 +41,7 @@ clean:
 	done
 
 clean_vignette:
-	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata
+	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"

@@ -388,7 +388,6 @@ mgas_gff_df <- mgas_gff_df[-1, ]
 mgas_gff_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_gff_df[["locus_tag"]])
 rownames(mgas_gff_df) <- make.names(mgas_gff_df[["sysName"]], unique=TRUE)
 
-## I need to manually set the ID now, as my SQL-based selections are failing...
 mgas_microbes_df <- sm(load_microbesonline_annotations(id=293653))
 mgas_microbes_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_microbes_df$sysName)
 rownames(mgas_microbes_df) <- make.names(mgas_microbes_df$sysName, unique=TRUE)
@@ -409,7 +408,10 @@ colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", 
 circos_test <- circos_prefix(annotation=mgas_df)
 ## Fill it in with the data for s.pyogenes
 lengths <- 1838600
-names(lengths) <- "chr1"
+names(lengths) <- "NC_007297"
+## I need to manually set the ID now, as my SQL-based selections are failing...
+## I need to manually set the ID now, as my SQL-based selections are failing...
+
 circos_kary <- circos_karyotype(cfg=circos_test, lengths=lengths)
 ## Fill in the gene category annotations by gene-strand
 circos_plus <- circos_plus_minus(cfg=circos_test)
