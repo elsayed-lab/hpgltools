@@ -34,7 +34,11 @@ jobs:
       with:
         args: https://httpbin.org/get
     - name: Set Rprofile
-      run: echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
+      run: |
+        echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
+        echo 'r <- getOption("repos")' >> ${HOME}/.Rprofile
+        echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
+        echo 'options(repos = r)' >> ${HOME}/.Rprofile
     - name: Install dependencies
       run: |
         install.packages(c("remotes"))
