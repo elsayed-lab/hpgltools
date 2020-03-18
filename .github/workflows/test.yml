@@ -28,10 +28,12 @@ jobs:
       run: |
         apt-get update
         apt-get -yqq install r-cran-biocmanager r-base-dev r-base
-        echo "options(Ncpus = 4)" > ${HOME}/.Rprofile
+        echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
     - name: Install R prerequisites
       run: make prereq
-    - name: How many cpus
-      run: cat /proc/cpuinfo
     - name: Install hpgltools prerequisites
       run: make deps
+    - name: Run tests
+      run: make test
+    - name: Make vignettes
+      run: make vt
