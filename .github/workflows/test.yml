@@ -20,6 +20,9 @@ jobs:
        AUTOMATED_TESTING: 1
        RELEASE_TESTING: 1
        R_MAX_NUM_DLLS: 256
+       R_LIBS_SITE: ${HOME}/R
+       R_LIBS: ${HOME}/R
+       R_LIBS_USER: ${HOME}/R
        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
        PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
@@ -39,6 +42,9 @@ jobs:
         echo 'r <- getOption("repos")' >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo 'options(repos = r)' >> ${HOME}/.Rprofile
+    - name: Test R directory
+      run: |
+        env | grep R_
     - name: Install dependencies
       run: |
         install.packages(c("remotes"))
