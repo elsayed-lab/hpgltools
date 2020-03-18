@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - {os: debian-testing, r: '3.6'}
+          - {os: ubuntu-latest, r: '3.6'}
     container:
       image: perl:${{ matrix.perl-version }}
     steps:
