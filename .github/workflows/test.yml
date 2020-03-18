@@ -28,9 +28,19 @@ jobs:
       with:
         r-version: ${{ matrix.config.r }}
     - uses: r-lib/actions/setup-pandoc@master
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+    - name: curl
+      uses: wei/curl@master
+      with:
+        args: https://httpbin.org/get
     - name: Set Rprofile
       run: echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
+    - name: Install dependencies
+      run: |
+        install.packages(c("remotes"))
+        remotes::install_deps(dependencies = TRUE)
+        remotes::install_cran("lintr")
+      shell: Rscript {0}
     - name: Install R prerequisites
       run: make prereq
     - name: Install hpgltools prerequisites
