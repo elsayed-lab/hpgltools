@@ -30,7 +30,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install libcurl4-openssl1-dev curl libcurl
+        apt-cache search libcurl
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
