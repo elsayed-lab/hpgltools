@@ -59,6 +59,7 @@ jobs:
         install.packages(c("remotes"))
         remotes::install_deps(dependencies=TRUE)
         remotes::install_cran("lintr")
+      shell: Rscript {0}
     - name: Install R prerequisites
       run: make prereq
     - name: Install hpgltools prerequisites
