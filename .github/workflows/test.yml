@@ -31,7 +31,7 @@ jobs:
       run: |
         sudo apt-get update
         apt-cache search curl
-        sudo apt-get install libcurl4-openssl-dev libcurl4 curl
+        sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev r-cran-rcpp
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
