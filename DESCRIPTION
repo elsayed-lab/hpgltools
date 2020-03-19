@@ -19,7 +19,7 @@ License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   BiocGenerics, BiocManager, biomaRt, Biostrings, BRAIN, BSgenome,
-  caret, Category, cleaver, corpcor, corrplot, curl,
+  caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
   DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW,
   EBSeq, EDASeq, edgeR, EuPathDB,
@@ -44,9 +44,8 @@ Suggests:
   UniProt.ws, uwot,
   xCell,
   Vennerable, venneuler,
-  XLConnect, xml2
+  xml2
 Imports:
-  clusterProfiler,
   data.table, dplyr,
   foreach,
   ggplot2, GenomicFeatures, glue,
