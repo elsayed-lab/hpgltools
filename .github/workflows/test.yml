@@ -43,13 +43,17 @@ jobs:
         echo 'r <- getOption("repos")' >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo 'options(repos = r)' >> ${HOME}/.Rprofile
-    - name: Test R directory
+    - name: Install system dependencies
+      env:
+        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
       run: |
-        env | grep R_
+        Rscript -e "remotes::install_github('r-hub/sysreqs')"
+        sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        sudo -s eval "$sysreqs"
     - name: Install dependencies
       run: |
         install.packages(c("remotes"))
-        remotes::install_deps(dependencies = TRUE)
+        remotes::install_deps(dependencies=TRUE)
         remotes::install_cran("lintr")
       shell: Rscript {0}
     - name: Install R prerequisites
