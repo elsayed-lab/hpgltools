@@ -1,10 +1,10 @@
-name: CI
-
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+
+name: CI
 
 jobs:
   build:
@@ -24,7 +24,6 @@ jobs:
        R_LIBS: /home/runner/R
        R_LIBS_USER: /home/runner/R
        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-       PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
     steps:
     - name: Install packages
@@ -43,7 +42,6 @@ jobs:
         echo 'r <- getOption("repos")' >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo 'options(repos = r)' >> ${HOME}/.Rprofile
-
     - name: Query dependencies
       run: |
         install.packages('remotes')
