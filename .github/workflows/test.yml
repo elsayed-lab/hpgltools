@@ -39,9 +39,14 @@ jobs:
     - name: Set Rprofile
       run: |
         echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
-        echo 'r <- getOption("repos")' >> ${HOME}/.Rprofile
+        echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
-        echo 'options(repos = r)' >> ${HOME}/.Rprofile
+        echo "options(repos=r)" >> ${HOME}/.Rprofile
+    - name: Query dependencies
+      run: |
+        install.packages("remotes")
+        saveRDS(remotes::dev_package_deps(dependencies=TRUE), "depends.Rds", version=2)
+        shell: Rscript {0}
     - name: Install system dependencies
       env:
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
@@ -49,11 +54,7 @@ jobs:
         Rscript -e "remotes::install_github('r-hub/sysreqs')"
         sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo -s eval "$sysreqs"
-    - name: Query dependencies
-      run: |
-        install.packages('remotes')
-        saveRDS(remotes::dev_package_deps(dependencies = TRUE), "depends.Rds", version = 2)
-        shell: Rscript {0}
+
     - name: Install dependencies
       run: |
         install.packages(c("remotes"))
