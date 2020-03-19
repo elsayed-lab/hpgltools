@@ -1,10 +1,10 @@
-name: CI
-
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+
+name: CI
 
 jobs:
   build:
@@ -24,7 +24,6 @@ jobs:
        R_LIBS: /home/runner/R
        R_LIBS_USER: /home/runner/R
        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
-       PERL_CARTON_PATH: $GITHUB_WORKSPACE/local
 
     steps:
     - name: Install packages
@@ -55,7 +54,6 @@ jobs:
         install.packages(c("remotes"))
         remotes::install_deps(dependencies=TRUE)
         remotes::install_cran("lintr")
-      shell: Rscript {0}
     - name: Install R prerequisites
       run: make prereq
     - name: Install hpgltools prerequisites
