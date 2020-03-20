@@ -42,6 +42,12 @@ jobs:
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
+    - name: Install R prerequisites
+      run: make prereq
+    - name: GoSemSim
+      run: |
+        devtools::install_github("YuLab-SMU/GOSemSim")
+      shell: Rscript {0}
     - name: Query dependencies
       run: |
         install.packages("remotes")
@@ -56,12 +62,9 @@ jobs:
         sudo -s eval "$sysreqs"
     - name: Install dependencies
       run: |
-        install.packages(c("remotes"))
         remotes::install_deps(dependencies=TRUE)
         remotes::install_cran("lintr")
       shell: Rscript {0}
-    - name: Install R prerequisites
-      run: make prereq
     - name: Install hpgltools prerequisites
       run: make deps
     - name: Run tests
