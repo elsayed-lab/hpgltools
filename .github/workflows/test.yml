@@ -69,5 +69,3 @@ jobs:
       run: make deps
     - name: Run tests
       run: make test
-    - name: Make vignettes
-      run: make vt

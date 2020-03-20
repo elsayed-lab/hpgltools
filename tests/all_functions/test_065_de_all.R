@@ -25,6 +25,10 @@ context("065de_all.R:
 ## extract_significant_genes(), intersect_significant(),
 ## write_de_table()
 
+if (! "Vennerable" %in% installed.packages()) {
+    devtools::install_github("js229/Vennerable")
+}
+
 ## All of these functions will depend on an expt to play with:
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 pombe_subset <- subset_expt(

@@ -42,9 +42,12 @@ test_that("Do we get the expected uniprot IDs?", {
 
 actual <- head(test_kegg[["pathways"]])
 expected <- c(
-  "", "eco00260, eco00261, eco00270, eco00300, eco01100, eco01110, eco01120, eco01130, eco01230",
-  "eco00260, eco01100, eco01110, eco01120, eco01230",
-  "eco00260, eco00750, eco01100, eco01110, eco01120, eco01230", "", "")
+    "",
+    "eco00260, eco00261, eco00270, eco00300, eco01100, eco01110, eco01120, eco01230",
+    "eco00260, eco01100, eco01110, eco01120, eco01230",
+    "eco00260, eco00750, eco01100, eco01110, eco01120, eco01230",
+    "",
+    "")
 ## 05
 test_that("Do we get the expected KEGG pathways?", {
   expect_equal(expected, actual)

@@ -16,7 +16,8 @@ context("105helpers_misc.R:
 ## cordist()
 
 ## get_git_commit()
-testing <- get_git_commit()
+## This function actually makes untenable assumptions about where the repository lives.
+testing <- get_git_commit(gitdir="")
 expected <- c("glue", "character")
 actual <- class(testing)
 test_that("get_git_commit() gave me a commit id?", {
