@@ -361,9 +361,9 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
                              normalize.method="quantile",
                              plot=FALSE)
    batch_fit <- limma::lmFit(batch_voom, design=batch_model)
-   ## count_table <- residuals(batch_fit, batch_voom[["E"]])
+   new_counts <- residuals(batch_fit, batch_voom[["E"]])
    ## This is still fubar!
-   new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
+   ##new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
    if (expt_state[["transform"]] == "raw") {
      new_counts <- (2 ^ new_counts) - 1
    }

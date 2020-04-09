@@ -10,7 +10,7 @@
 #' @param ... Extra arguments for the various EuPathDB functions.
 #' @return Set of padding UTR sequences/coordinates.
 gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NULL,
-                                       webservice="tritrypdb", ...) {
+                                       webservice="tritrypdb", padding=200, ...) {
   if (!is.null(entry)) {
     pkg_names <- EuPathDB::get_eupath_pkgnames(entry)
   } else {
@@ -23,7 +23,8 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
     genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry, ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
-    orgdb_installedp <- EuPathDB::make_eupath_orgdb(species=species_name, entry=entry, ...)
+    orgdb_installedp <- EuPathDB::make_eupath_orgdb(entry=entry,
+                                                    ...)
   }
 
   ##lib_result <- sm(library(orgdb_name, character.only=TRUE))
@@ -54,7 +55,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
     annot_df[chr_idx, "chr_length"] <- len
   }
 
-  result <- gather_utrs_padding(bsgenome, annot_df,
+  result <- gather_utrs_padding(bsgenome, annot_df, padding=padding,
                                 ...)
   return(result)
 }

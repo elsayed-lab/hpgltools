@@ -7,7 +7,9 @@ context("005annotation_biomart.R
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 
 ## load_biomart_annotations()
-testing <- load_biomart_annotations(species="hsapiens")
+testing <- load_biomart_annotations(
+    host="useast.ensembl.org",
+    species="hsapiens")
 gene_ids <- head(rownames(testing[["annotation"]]))
 expected <- c("ENST00000000233", "ENST00000000412", "ENST00000000442",
               "ENST00000001008", "ENST00000001146", "ENST00000002125")
@@ -17,7 +19,7 @@ test_that("Do we get expected gene IDs?", {
 })
 
 data <- testing[["annotation"]]
-expected <- c(200295, 12)
+expected <- c(227784, 12)
 actual <- dim(data)
 ## 02
 test_that("Do we receive expected output from load_biomart_annotations()?", {

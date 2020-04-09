@@ -4,7 +4,9 @@
 \name{base_size}
 \alias{base_size}
 \title{The following sets the ggplot2 default text size.}
-\format{An object of class \code{numeric} of length 1.}
+\format{
+An object of class \code{numeric} of length 1.
+}
 \usage{
 base_size
 }

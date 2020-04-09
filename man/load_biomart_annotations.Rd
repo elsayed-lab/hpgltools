@@ -8,7 +8,7 @@ load_biomart_annotations(
   species = "hsapiens",
   overwrite = FALSE,
   do_save = TRUE,
-  host = "dec2017.archive.ensembl.org",
+  host = "sep2019.archive.ensembl.org",
   drop_haplotypes = TRUE,
   trymart = "ENSEMBL_MART_ENSEMBL",
   trydataset = NULL,

@@ -81,7 +81,7 @@ test_that("sampleheat is a recorded plot?", {
 })
 
 smc_plot <- sm(plot_sm(norm, method="pearson"))
-actual <- head(smc_plot[["data"]][["sm"]])
+actual <- head(smc_plot[["plot"]][["data"]][["sm"]])
 expected <- c(0.9759981, 0.9824316, 0.9759981, 0.9821373, 0.9784851, 0.9786376)
 ## 09
 test_that("Is the normalized smc data expected?", {
@@ -89,7 +89,7 @@ test_that("Is the normalized smc data expected?", {
 })
 
 smd_plot <- sm(plot_sm(norm, method="euclidean"))
-actual <- head(smd_plot[["data"]][["sm"]])
+actual <- head(smd_plot[["plot"]][["data"]][["sm"]])
 ## 201812 Changed due to peculiarities in normalization methods.
 ## 201907 I changed the normalization back, so the values need to return.
 expected <- c(42.43941, 36.43116, 42.43941, 36.60569, 40.01228, 40.04465)

@@ -9,6 +9,7 @@ gather_eupath_utrs_padding(
   species_name = "Leishmania major",
   entry = NULL,
   webservice = "tritrypdb",
+  padding = 200,
   ...
 )
 }

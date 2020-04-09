@@ -4,7 +4,9 @@
 \name{table_style}
 \alias{table_style}
 \title{Set the xlsx table style}
-\format{An object of class \code{character} of length 1.}
+\format{
+An object of class \code{character} of length 1.
+}
 \usage{
 table_style
 }

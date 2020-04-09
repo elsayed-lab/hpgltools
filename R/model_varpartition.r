@@ -23,7 +23,10 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
     }
   }
   new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
-  return(new_plot)
+  retlist <- list(
+      "resorted" = sorted,
+      "plot" = new_plot)
+  return(retlist)
 }
 
 #' Use variancePartition to try and understand where the variance lies in a data set.
@@ -50,7 +53,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 #' @export
 simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                            chosen_factor="batch", do_fit=FALSE, cor_gene=1,
-                           cpus=6, genes=40, parallel=TRUE,
+                           cpus=NULL, genes=40, parallel=TRUE,
                            modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
@@ -60,8 +63,14 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   lib_result <- sm(requireNamespace("variancePartition"))
   att_result <- sm(try(attachNamespace("variancePartition"), silent=TRUE))
   if (isTRUE(parallel)) {
-    cl <- parallel::makeCluster(cpus)
+    cl <- NULL
+    if (is.null(cpus)) {
+      cl <- parallel::makeCluster()
+    } else {
+      cl <- parallel::makeCluster(cpus)
+    }
     para <- doParallel::registerDoParallel(cl)
+    ## multi <- BiocParallel::MulticoreParam()
   }
   design <- pData(expt)
   num_batches <- length(levels(as.factor(design[[chosen_factor]])))

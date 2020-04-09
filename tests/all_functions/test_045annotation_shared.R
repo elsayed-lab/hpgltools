@@ -10,8 +10,10 @@ context("045annotation_shared.R:
 ## So we will use this as a chance to call two of the more troublesome annotation loaders:
 ## a orgdb and biomart.
 
-testing <- load_annotations(type="biomart", species="mmusculus")
-expected <- c(133849, 12)
+testing <- load_annotations(
+    host="useast.ensembl.org",
+    type="biomart", species="mmusculus")
+expected <- c(142552, 12)
 actual <- dim(testing[["annotation"]])
 ## 01
 test_that("Do we get some data from load_annotations()?", {

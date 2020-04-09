@@ -10,14 +10,15 @@ gst_result <- simple_gostats(fcp_sig_genes, gff_df=dmel,
                              gff_type="protein_coding")
 
 ## There is some run-to-run variability in these ontology searches
-expected <- c("GO:0000146", "GO:0000295", "GO:0001871")
+expected <- c("GO:0000295", "GO:0000827", "GO:0000828")
 actual <- head(sort(gst_result[["tables"]][["mf_over_enriched"]][["GOMFID"]]), n=3)
 test_that("Are the GOstats interesting results as expected? (MF)", {
     expect_equal(expected, actual)
 })
 
-expected <- c("GO:0000422", "GO:0001508", "GO:0001676",
-              "GO:0002118", "GO:0002121", "GO:0002218")
+expected <- c(
+    "GO:0000122", "GO:0001508", "GO:0001676",
+    "GO:0001993", "GO:0001994", "GO:0002218")
 actual <- head(sort(gst_result[["tables"]][["bp_over_enriched"]][["GOBPID"]]))
 test_that("Are the GOstats interesting results as expected? (BP)", {
     expect_equal(expected, actual)

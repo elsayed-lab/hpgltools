@@ -56,8 +56,8 @@ test_that("Does the set of CC_sig have the expected p.adjusts?", {
     expect_equal(expected, actual, tolerance=0.0001)
 })
 
-expected <- c("dme00240", "dme00410", "dme00650",
-              "dme00760", "dme00860", "dme00983")
+expected <- c("dme00230", "dme00240", "dme00410",
+              "dme00650", "dme00760", "dme00983")
 actual <- sort(head(rownames(dmel_cp[["kegg_data"]][["kegg_sig"]])))
 test_that("Did cp pick up consistent KEGG categories?", {
     expect_equal(expected, actual)

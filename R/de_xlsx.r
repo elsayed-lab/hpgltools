@@ -149,7 +149,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
                                      loess=loess)
-  } else if (class(keepers)[1] == "character" & keepers == "all") {
+  } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
     ## instead just iterating through every returned table, combining them, and
@@ -1223,7 +1223,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
   inverse_keeper <- paste0(denominator, "_vs_", numerator)
   table <- keepers
   do_inverse <- FALSE
-  if (keepers %in% table_names) {
+  if (keepers[1] %in% table_names) {
     message("I found ", keepers, " in the available contrasts.")
   } else if (inverse_keeper %in% table_names) {
     message("I found ", inverse_keeper, " the inverse keeper in the contrasts.")

@@ -196,9 +196,9 @@ concatenate_runs <- function(expt, column="replicate") {
 #' @import Biobase
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
-                        sample_colors=NULL, title=NULL, notes=NULL, countdir=NULL,
-                        include_type="all", include_gff=NULL, file_column="file",
-                        id_column=NULL, savefile=NULL, low_files=FALSE, ...) {
+                        sanitize_rownames=FALSE, sample_colors=NULL, title=NULL,
+                        notes=NULL, countdir=NULL, include_type="all", include_gff=NULL,
+                        file_column="file", id_column=NULL, savefile=NULL, low_files=FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -377,6 +377,9 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
   ## Here we will prune the metadata for any files/ids which were dropped
   ## when reading in the count tables.
   kept_definitions_idx <- rownames(sample_definitions) %in% count_data[["kept_ids"]]
+  if (sum(kept_definitions_idx) < length(kept_definitions_idx)) {
+      warning("Some samples were removed when cross referencing the samples against the count data.")
+  }
   sample_definitions <- sample_definitions[kept_definitions_idx, ]
   ## While we are removing stuff...
   ## I have had a couple data sets with incomplete counts, get rid of those rows
@@ -389,11 +392,13 @@ create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,
     all_count_tables[[col]] <- as.numeric(all_count_tables[[col]])
   }
   ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
-  all_count_tables[["rownames"]] <- gsub(pattern="^exon:", replacement="",
-                                         x=all_count_tables[["rownames"]])
-  all_count_tables[["rownames"]] <- make.names(gsub(pattern=":\\d+", replacement="",
-                                                    x=all_count_tables[["rownames"]]),
-                                               unique=TRUE)
+  if (isTRUE(sanitize_rownames)) {
+      all_count_tables[["rownames"]] <- gsub(pattern="^exon:", replacement="",
+                                             x=all_count_tables[["rownames"]])
+      all_count_tables[["rownames"]] <- make.names(gsub(pattern=":\\d+", replacement="",
+                                                        x=all_count_tables[["rownames"]]),
+                                                   unique=TRUE)
+  }
 
   ## There is an important caveat here!!
   ## data.table::as.data.table(stuff, keep.rownames='column') will change the
@@ -1450,7 +1455,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern="\\.tsv|\\.h5", x=files[1])) {
-    message("Reading kallisto inputs with tximport.")
+    message("Reading kallisto data with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1477,7 +1482,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern="\\.genes\\.results", x=files[1])) {
-    message("Reading rsem inputs with tximport.")
+    message("Reading rsem data with tximport.")
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -1524,7 +1529,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
-    message("Reading count tables with read.table().")
+    message("Reading count files with read.table().")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header=header, stringsAsFactors=FALSE)
     colnames(count_table) <- c("rownames", ids[1])
@@ -1593,7 +1598,7 @@ read_counts_expt <- function(ids, files, header=FALSE, include_summary_rows=FALS
     } ## End the difference between tximport and reading tables.
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
-  message("Finished reading count tables.")
+  message("Finished reading count data.")
   return(retlist)
 }
 
@@ -2148,10 +2153,10 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
-  if (class(expt)[[1]] == "ExpressionSet") {
+  if ("ExpressionSet" %in% class(expt)) {
     starting_expressionset <- expt
     starting_metadata <- pData(starting_expressionset)
-  } else if (class(expt)[[1]] == "expt") {
+  } else if ("expt" %in% class(expt)) {
     starting_expressionset <- expt[["expressionset"]]
     starting_metadata <- pData(expt)
   } else {
@@ -2215,7 +2220,7 @@ subset_expt <- function(expt, subset=NULL, ids=NULL, coverage=NULL) {
   }
 
   for (col in 1:ncol(subset_design)) {
-    if (class(subset_design[[col]]) == "factor") {
+    if (class(subset_design[[col]])[1] == "factor") {
       subset_design[[col]] <- droplevels(subset_design[[col]])
     }
   }

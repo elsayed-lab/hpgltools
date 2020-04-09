@@ -258,7 +258,8 @@ plot_pcfactor <- function(pc_df, expt, exp_factor="condition", component="PC1") 
 #' }
 #' @export
 plot_sm <- function(data, colors=NULL, method="pearson", plot_legend=FALSE,
-                    expt_names=NULL, label_chars=10, title=NULL, dot_size=5, ...) {
+                    expt_names=NULL, label_chars=10, title=NULL, dot_size=5,
+                    ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   conditions <- NULL
@@ -308,7 +309,7 @@ plot_sm <- function(data, colors=NULL, method="pearson", plot_legend=FALSE,
   ylimit <- NULL
   type <- "unknown"
   if (method == "pearson" | method == "spearman" | method == "robust") {
-    outer_limit <- prop_spread[1] - 1.5 * prop_iqr
+    outer_limit <- prop_spread[1] - (1.5 * prop_iqr)
     ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
     ylimit <- ylimit[[1]]
     type <- "correlation"
@@ -416,7 +417,14 @@ plot_sm <- function(data, colors=NULL, method="pearson", plot_legend=FALSE,
     sm_plot <- sm_plot +
       ggplot2::scale_y_continuous(labels=scales::scientific)
   }
-  return(sm_plot)
+
+  retlist <- list(
+      "measurement" = properties,
+      "medians" = prop_median,
+      "quantile" = prop_spread,
+      "plot" = sm_plot
+      )
+  return(retlist)
 }
 
 ## EOF

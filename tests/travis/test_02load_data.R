@@ -8,7 +8,9 @@ context("02load_data.R: Does pasilla load into hpgltools?\n")
 ## Try loading some annotation information for this species.
 
 ## This now generates an error on travis, but not on my computer.
-gene_info <- sm(load_biomart_annotations(species="dmelanogaster", overwrite=TRUE))[["annotation"]]
+gene_info <- sm(load_biomart_annotations(
+    host="useast.ensembl.org",
+    species="dmelanogaster", overwrite=TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique=TRUE)
@@ -52,14 +54,14 @@ test_that("Was the annotation information imported into the expressionset? (stat
 })
 
 ## Then lengths of features should therefore remain consistent.
-expected <- c(75, 78, 96, 120, 120, 120)
+expected <- c(78, 81, 99, 123, 123, 123)
 actual <- head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
     expect_equal(expected, actual)
 })
 
 ## By the same token, the start positions of genes should remain consistent.
-expected <- c(7529, 9839, 21823, 25402, 32478, 47710)
+expected <- c(9839, 21823, 25402, 32478, 47710, 65225)
 actual <- sm(head(sort(as.numeric(hpgl_annotations[["start_position"]]))))
 test_that("Was the annotation information imported into the expressionset? (static starts?)", {
     expect_equal(expected, actual)

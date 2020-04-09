@@ -97,7 +97,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
                                    transform="log2", convert=convert, norm=norm))
     message("Plotting a PCA before surrogates/batch inclusion.")
-    pre_pca <- plot_pca(pre_batch, plot_labels=FALSE, ...)
+    pre_pca <- plot_pca(pre_batch, plot_labels=FALSE,
+                        ...)
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
@@ -122,7 +123,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       model_type <- "none"
       message("Assuming no batch in model for testing pca.")
     }
-    post_pca <- plot_pca(post_batch, plot_labels=FALSE, ...)
+    post_pca <- plot_pca(post_batch, plot_labels=FALSE,
+                         ...)
   }
 
   ## do_ebseq defaults to NULL, this is so that we can query the number of
@@ -1048,7 +1050,8 @@ correlate_de_tables <- function(results, annot_df=NULL) {
   comparison_df <- data.frame()
   lenminus <- length(methods) - 1
   message("Comparing analyses.")
-  len <- length(names(retlst[["deseq"]]))
+  meth <- methods[1]
+  len <- length(names(retlst[[meth]]))
   total_comparisons <- lenminus * (length(methods) - 1) * len
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   progress_count <- 0
@@ -1067,7 +1070,7 @@ correlate_de_tables <- function(results, annot_df=NULL) {
           pct_done <- progress_count / total_comparisons
           utils::setTxtProgressBar(bar, pct_done)
         }
-        contr <- names(retlst[["deseq"]])[l]
+        contr <- names(retlst[[c_name]])[l]
         ## assume all three have the same names() -- note that limma has more
         ## than the other two though
         num_den_names <- strsplit(x=contr, split="_vs_")[[1]]

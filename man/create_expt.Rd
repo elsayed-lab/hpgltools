@@ -9,6 +9,7 @@ create_expt(
   metadata = NULL,
   gene_info = NULL,
   count_dataframe = NULL,
+  sanitize_rownames = FALSE,
   sample_colors = NULL,
   title = NULL,
   notes = NULL,
