@@ -62,10 +62,16 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   ## tt <- sm(library("variancePartition"))
   lib_result <- sm(requireNamespace("variancePartition"))
   att_result <- sm(try(attachNamespace("variancePartition"), silent=TRUE))
+  lib_result <- sm(requireNamespace("BiocParallel"))
+  att_result <- sm(try(attachNamespace("BiocParallel"), silent=TRUE))
   if (isTRUE(parallel)) {
     cl <- NULL
     if (is.null(cpus)) {
-      cl <- parallel::makeCluster()
+      cpus <- parallel::detectCores() - 4
+      if (cpus < 1) {
+        cpus <- 1
+      }
+      cl <- parallel::makeCluster(cpus)
     } else {
       cl <- parallel::makeCluster(cpus)
     }
@@ -92,7 +98,8 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   data <- exprs(norm)
 
   message("Fitting the expressionset to the model, this is slow.")
-  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design), silent=TRUE)
+  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
+  ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
   if (class(my_extract) == "try-error") {
     message("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
@@ -126,13 +133,16 @@ which are shared among multiple samples.")
     ## Try fitting with lmer4
     fitting <- variancePartition::fitVarPartModel(exprObj=data,
                                                   formula=my_model, data=design)
-    idx <- order(design[["condition"]], design[["batch"]])
+    last_fact <- factors[length(factors)]
+    idx <- order(design[[chosen_column]], design[[last_fact]])
     ##first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
     test_strat <- data.frame(Expression=data[3, ],
-                             condition=design[["condition"]],
-                             batch=design[["batch"]])
-    stratify_batch_plot <- variancePartition::plotStratify(Expression ~ batch, test_strat)
-    stratify_condition_plot <- variancePartition::plotStratify(Expression ~ condition, test_strat)
+                             condition=design[[chosen_column]],
+                             batch=design[[last_fact]])
+    batch_expression <- as.formula("Expression ~ batch")
+    cond_expression <- as.formula("Expression ~ condition")
+    stratify_batch_plot <- variancePartition::plotStratify(batch_expression, test_strat)
+    stratify_condition_plot <- variancePartition::plotStratify(cond_expression, test_strat)
   }
 
   if (isTRUE(parallel)) {

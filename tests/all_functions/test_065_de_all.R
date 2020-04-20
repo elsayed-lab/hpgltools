@@ -240,14 +240,14 @@ test_that("combine_de_tables() gave expected tables?", {
 })
 
 testing <- compare_de_results(test_condbatch_combined, test_cond_combined)
-expected <- 180
+expected <- 135
 actual <- length(unlist(testing[["result"]]))
 ## 26
 test_that("compare_de_results provides some expected output?", {
   expect_equal(expected, actual)
 })
 
-expected <- 0.98
+expected <- 0.96
 actual <- min(testing[["logfc"]])
 ## 27
 test_that("compare_de_results provides some expected logfc comparisons?", {

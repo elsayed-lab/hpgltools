@@ -11,7 +11,7 @@ simple_varpart(
   chosen_factor = "batch",
   do_fit = FALSE,
   cor_gene = 1,
-  cpus = 6,
+  cpus = NULL,
   genes = 40,
   parallel = TRUE,
   modify_expt = TRUE

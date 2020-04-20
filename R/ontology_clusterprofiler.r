@@ -44,7 +44,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
                                    go_level=3, pcutoff=0.05,
                                    qcutoff=0.1, fc_column="logFC",
                                    second_fc_column="limma_logfc",
-                                   updown="up", permutations=100, min_groupsize=5,
+                                   updown="up", permutations=1000, min_groupsize=5,
                                    kegg_prefix=NULL, kegg_organism=NULL, do_gsea=TRUE,
                                    categories=12, excel=NULL, do_david=FALSE,
                                    david_id="ENTREZ_GENE_ID",
@@ -161,8 +161,7 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
   group_go <- list(
     "MF" = as.data.frame(ggo_mf, stringsAsFactors=FALSE),
     "BP" = as.data.frame(ggo_bp, stringsAsFactors=FALSE),
-    "CC" = as.data.frame(ggo_cc, stringsAsFactors=FALSE)
-  )
+    "CC" = as.data.frame(ggo_cc, stringsAsFactors=FALSE))
   message("Found ", nrow(group_go[["MF"]]),
           " MF, ", nrow(group_go[["BP"]]),
           " BP, and ", nrow(group_go[["CC"]]), " CC hits.")
@@ -228,41 +227,13 @@ simple_clusterprofiler <- function(sig_genes, de_table=NULL, orgdb="org.Dm.eg.db
     ## I am using orgdb_from...
     message("Performing GSE analyses of gene lists (this is slow).")
     genelist <- as.vector(de_table_merged[[gsea_fc_column]])
-    names(genelist) <- de_table_merged[["Row.names"]]
-    gse_all_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="MF", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=1.0))
-    gse_sig_mf <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="MF", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=pcutoff))
-    gse_all_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="BP", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=1.0))
-    gse_sig_bp <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="BP", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=pcutoff))
-    gse_all_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="CC", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=1.0))
-    gse_sig_cc <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
-                                            ont="CC", keyType=orgdb_from,
-                                            nPerm=permutations, minGSSize=min_groupsize,
-                                            pvalueCutoff=pcutoff))
-    gse_go <- list(
-      "MF_all" = as.data.frame(gse_all_mf, stringsAsFactors=FALSE),
-      "MF_sig" = as.data.frame(gse_sig_mf, stringsAsFactors=FALSE),
-      "BP_all" = as.data.frame(gse_all_bp, stringsAsFactors=FALSE),
-      "BP_sig" = as.data.frame(gse_sig_bp, stringsAsFactors=FALSE),
-      "CC_all" = as.data.frame(gse_all_cc, stringsAsFactors=FALSE),
-      "CC_sig" = as.data.frame(gse_sig_cc, stringsAsFactors=FALSE))
-    message("Found ", nrow(gse_go[["MF_sig"]]),
-            " MF, ", nrow(gse_go[["BP_sig"]]),
-            " BP, and ", nrow(gse_go[["CC_sig"]]), " CC enriched hits.")
+    names(genelist) <- de_table_merged[[orgdb_to]]
+    ## 2020 04: Adding a pvalue cutoff argument causes an error, I do not know why.
+    gse <- sm(clusterProfiler::gseGO(geneList=genelist, OrgDb=org,
+                                     ont="ALL", nPerm=permutations,
+                                     minGSSize=min_groupsize))
+    gse_go <- as.data.frame(gse)
+    message("Found ", nrow(gse_go), " enriched hits.")
   }
 
   ## Now extract the kegg organism/gene IDs.

@@ -8,7 +8,7 @@ compare_de_results(
   first,
   second,
   cor_method = "pearson",
-  try_methods = c("limma", "deseq", "edger", "ebseq", "basic")
+  try_methods = c("limma", "deseq", "edger")
 )
 }
 \arguments{

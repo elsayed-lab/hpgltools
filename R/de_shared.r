@@ -910,7 +910,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 #' }
 #' @export
 compare_de_results <- function(first, second, cor_method="pearson",
-                               try_methods=c("limma", "deseq", "edger", "ebseq", "basic")) {
+                               try_methods=c("limma", "deseq", "edger")) {
 
   result <- list()
   logfc_result <- list()
@@ -938,6 +938,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
     tables <- names(first[["data"]])
     for (t in 1:length(tables)) {
       table <- tables[t]
+      message(" Starting method ", method, ", table ", table, ".")
       result[[method]][[table]] <- list()
       for (c in 1:length(comparisons)) {
         comparison <- comparisons[c]
@@ -972,11 +973,68 @@ compare_de_results <- function(first, second, cor_method="pearson",
       }
     }
   }
+  comp_df <- data.frame(row.names=names(result[[1]]))
+  p_df <- data.frame(row.names=names(result[[1]]))
+  adjp_df <- data.frame(row.names=names(result[[1]]))
+  cols <- names(result)
+  rows <- names(result[[1]])
+  for (i in 1:length(rows)) {
+    row <- rows[i]
+    for (j in 1:length(cols)) {
+      col <- cols[j]
+      if (col == "basic") {
+        next
+      }
+      element <- result[[col]][[row]][["logfc"]]
+      comp_df[row, col] <- element
+      element <- result[[col]][[row]][["p"]]
+      p_df[row, col] <- element
+      element <- result[[col]][[row]][["adjp"]]
+      adjp_df[row, col] <- element
+    }
+  }
+  heat_colors <- grDevices::colorRampPalette(c("white", "darkblue"))
+  lfc_heatmap <- try(heatmap.3(as.matrix(comp_df), scale="none",
+                               trace="none", keysize=1.5,
+                               linewidth=0.5, margins=c(9, 9),
+                               col=heat_colors, dendrogram="none",
+                               Rowv=FALSE, Colv=FALSE,
+                               main="Compare lFC results"), silent=TRUE)
+  lfc_heat <- NULL
+  if (class(lfc_heatmap) != "try-error") {
+    lfc_heat <- recordPlot()
+  }
+  heat_colors <- grDevices::colorRampPalette(c("white", "darkred"))
+  p_heatmap <- try(heatmap.3(as.matrix(p_df), scale="none",
+                             trace="none", keysize=1.5,
+                             linewidth=0.5, margins=c(9, 9),
+                             col=heat_colors, dendrogram="none",
+                             Rowv=FALSE, Colv=FALSE,
+                             main="Compare p-values"), silent=TRUE)
+  p_heat <- NULL
+  if (class(p_heatmap) != "try-error") {
+    p_heat <- recordPlot()
+  }
+  heat_colors <- grDevices::colorRampPalette(c("white", "darkgreen"))
+  adjp_heatmap <- try(heatmap.3(as.matrix(adjp_df), scale="none",
+                             trace="none", keysize=1.5,
+                             linewidth=0.5, margins=c(9, 9),
+                             col=heat_colors, dendrogram="none",
+                             Rowv=FALSE, Colv=FALSE,
+                             main="Compare adjp-values"), silent=TRUE)
+  adjp_heat <- NULL
+  if (class(adjp_heatmap) != "try-error") {
+    adjp_heat <- recordPlot()
+  }
+
   retlist <- list(
     "result" = result,
     "logfc" = logfc_result,
     "p" = p_result,
-    "adjp" = adjp_result)
+    "adjp" = adjp_result,
+    "lfc_heat" = lfc_heat,
+    "p_heat" = p_heat,
+    "adjp_heat" = adjp_heat)
   return(retlist)
 }
 

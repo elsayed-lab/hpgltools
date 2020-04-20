@@ -36,7 +36,7 @@ test_that("Can we plot principle components by factor?", {
 })
 
 test <- plot_sm(pombe_norm)
-actual <- class(test)[1]
+actual <- class(test[["plot"]])[1]
 test_that("Can we plot standard medians?", {
   expect_equal(expected, actual)
 })
