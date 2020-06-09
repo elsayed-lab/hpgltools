@@ -1518,8 +1518,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       }
 
       factor <- length(according_to)
-      message("Writing excel data according to ", according, " for ", table_name, ": ",
-              table_count, "/", num_tables * factor, ".")
+      ##message("Writing excel data according to ", according, " for ", table_name, ": ",
+      ##        table_count, "/", num_tables * factor, ".")
 
       table <- all_tables[[table_name]]
       if (is.null(arglist[["fc_column"]])) {
@@ -1537,7 +1537,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       }
 
       trimming <- get_sig_genes(
-        table, lfc=lfc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
+          table, lfc=lfc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
+
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
       trimmed_down[[table_name]] <- trimming[["down_genes"]]
@@ -1584,6 +1585,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       ## wb <- xlsx_ret[["workbook"]]
     } ## End of an if whether to print the data to excel
   } ## End list of according_to's
+
+  ## the extraneous message() statements and instead fill that information into
+  ## this data frame.
+  summary_df <- data.frame(rownames=rownames(ret[[1]][["counts"]]))
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
@@ -1636,7 +1641,11 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     ## at this point should start:
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
     ##xls_result <- openxlsx::addWorksheet(wb, "number_changed")
+
     for (according in according_to) {
+      tmp_df <- ret[[according]][["counts"]]
+      colnames(tmp_df) <- paste0(according, "_", colnames(tmp_df))
+      summary_df <- cbind(summary_df, tmp_df)
       sig_message <- as.character(glue::glue("Significant {according} genes."))
       xls_result <- openxlsx::writeData(
                                 wb=wb, sheet="number_changed", x=sig_message,
@@ -1657,6 +1666,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     } ## End for loop writing out significance bar plots
   } ## End if we want significance bar plots
   ret[["sig_bar_plots"]] <- sig_bar_plots
+  summary_df[["rownames"]] <- NULL
+  ret[["summary_df"]] <- summary_df
 
   if (isTRUE(do_excel)) {
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))

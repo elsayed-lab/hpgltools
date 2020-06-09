@@ -62,11 +62,11 @@ simple_gostats <- function(sig_genes, go_db=NULL, gff=NULL, gff_df=NULL, univers
   tt <- sm(requireNamespace("GSEABase"))
   tt <- sm(requireNamespace("AnnotationDbi"))
   tt <- sm(requireNamespace("Category"))
-  message("The namespaces/environments uses by GOstats are entirely too complex.")
-  message("If I try to call functions with Category:: or GOstats:: then they collide")
-  message("And things fail without error, but if I try library() then R CMD check")
-  message("gets pissed, well I tried both ways and I am calling library().")
-  message("R CMD check can bite my shiny metal ass.")
+  ## message("The namespaces/environments uses by GOstats are entirely too complex.")
+  ## message("If I try to call functions with Category:: or GOstats:: then they collide")
+  ## message("And things fail without error, but if I try library() then R CMD check")
+  ## message("gets pissed, well I tried both ways and I am calling library().")
+  ## message("R CMD check can bite my shiny metal ass.")
   ## tt <- sm(library("GOstats"))
   lib_result <- sm(requireNamespace("GOstats"))
   att_result <- sm(try(attachNamespace("GOstats"), silent=TRUE))
@@ -292,6 +292,13 @@ perhaps change gff_type to make the merge work.")
     bp_under_sig <- GOstats::summary(bp_under, categorySize=categorysize)
     cc_under_sig <- GOstats::summary(cc_under, categorySize=categorysize)
   }
+  rownames(mf_over_sig) <- mf_over_sig[["GOMFID"]]
+  rownames(bp_over_sig) <- mf_over_sig[["GOBPID"]]
+  rownames(cc_over_sig) <- mf_over_sig[["GOCCID"]]
+  rownames(mf_under_sig) <- mf_under_sig[["GOMFID"]]
+  rownames(bp_under_sig) <- bp_under_sig[["GOBPID"]]
+  rownames(cc_under_sig) <- cc_under_sig[["GOCCID"]]
+
   if (!is.null(dim(mf_over_sig))) {
     mf_over_sig[["definition"]] <- try(godef(mf_over_sig[["GOMFID"]]), silent=TRUE)
   } else {

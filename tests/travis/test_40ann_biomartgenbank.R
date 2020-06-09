@@ -13,7 +13,8 @@ dmel_annotations <- load_biomart_annotations(species="dmelanogaster",
                                              host="useast.ensembl.org",
                                              overwrite=TRUE)
 dmel_go <- load_biomart_go(species="dmelanogaster",
-                           host="useast.ensembl.org",
+                           ## Yay archive.ensembl is back!
+                           ## host="useast.ensembl.org",
                            overwrite=TRUE)
 
 expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
@@ -25,43 +26,32 @@ test_that("Did the gene lengths come out?", {
 
 ## I am not sure why, but these tests are failing when I do not run them interactively...
 ## But when I run them myself, no problems...
-if (interactive()) {
-  expected_ids <- c("FBgn0053882", "FBgn0053882", "FBgn0053882",
-                    "FBgn0053882", "FBgn0053882", "FBgn0053882")
-  actual_ids <- head(dmel_go[["go"]][["ID"]])
-  expected_go <- c("GO:0006333", "GO:0006334", "GO:0044877",
-                   "GO:0003677", "GO:0046982", "GO:0000786")
-  actual_go <- head(dmel_go[["go"]][["GO"]])
-  ## 0203
-  test_that("Did the ontologies come out?", {
-    expect_equal(expected_ids, actual_ids)
-    expect_equal(expected_go, actual_go)
-  })
-}
+expected_ids <- c(
+    "FBgn0041711", "FBgn0041711", "FBgn0041711",
+    "FBgn0041711", "FBgn0032283", "FBgn0042110")
+actual_ids <- head(dmel_go[["go"]][["ID"]])
+expected_go <- c(
+    "GO:0005576", "GO:0048067", "GO:0016853",
+    "GO:0042438", "", "GO:0016772")
+actual_go <- head(dmel_go[["go"]][["GO"]])
+## 0203
+test_that("Did the ontologies come out?", {
+  expect_equal(expected_ids, actual_ids)
+  expect_equal(expected_go, actual_go)
+})
 
 test_genes <- head(rownames(sig_genes))
 linkage_test <- load_biomart_orthologs(test_genes,
-                                       host="useast.ensembl.org",
+                                       ## host="useast.ensembl.org",
                                        first_species="dmelanogaster",
                                        second_species="mmusculus",
                                        attributes="ensembl_gene_id")
 linked_genes <- linkage_test[["subset_linked_genes"]]
 ## Hard-set the order of the genes to avoid test failures for silly reasons.
-linked_order <- order(linked_genes[["mmusculus"]])
-linked_genes <- linked_genes[linked_order, ]
-expected_linkage <- c("ENSMUSG00000023328", "ENSMUSG00000024176", "ENSMUSG00000025815",
-                      "ENSMUSG00000026818", "ENSMUSG00000031302", "ENSMUSG00000031725",
-                      "ENSMUSG00000031877", "ENSMUSG00000031886", "ENSMUSG00000041287",
-                      "ENSMUSG00000045179", "ENSMUSG00000046470", "ENSMUSG00000050097",
-                      "ENSMUSG00000051790", "ENSMUSG00000051817", "ENSMUSG00000053469",
-                      "ENSMUSG00000055730", "ENSMUSG00000056973", "ENSMUSG00000057074",
-                      "ENSMUSG00000057400", "ENSMUSG00000058019", "ENSMUSG00000060560",
-                      "ENSMUSG00000061825", "ENSMUSG00000061959", "ENSMUSG00000062181",
-                      "ENSMUSG00000062826", "ENSMUSG00000063060", "ENSMUSG00000063632",
-                      "ENSMUSG00000063887", "ENSMUSG00000069036", "ENSMUSG00000069922",
-                      "ENSMUSG00000070643", "ENSMUSG00000071047", "ENSMUSG00000074156",
-                      "ENSMUSG00000078964", "ENSMUSG00000091813")
-actual_linkage <- linked_genes[["mmusculus"]]
+actual_linkage <- sort(linked_genes[["mmusculus"]])
+expected_linkage <- c(
+    "ENSMUSG00000000567", "ENSMUSG00000024176",
+    "ENSMUSG00000025815", "ENSMUSG00000033006")
 ## 04
 test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)

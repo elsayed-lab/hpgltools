@@ -34,7 +34,7 @@ Suggests:
   lattice, limma, locfit,
   matrixStats, MLSeq, motifRG, MSnbase, mygene, mzR,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore,
+  pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore, PROPER,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
@@ -118,6 +118,7 @@ Collate:
     'plot_point.r'
     'plot_shared.r'
     'plot_venn.r'
+    'power_estimation.r'
     'proteomics.r'
     'sequence.r'
     'tnseq.r'

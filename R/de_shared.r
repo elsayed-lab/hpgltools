@@ -1666,10 +1666,10 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
       down_idx <- as.numeric(down_genes[[column]]) <= -1.0
       down_genes <- down_genes[down_idx, ]
     }
-    message("After (adj)p filter, the up genes table has ",
-            dim(up_genes)[1], " genes.")
-    message("After (adj)p filter, the down genes table has ",
-            dim(down_genes)[1], " genes.")
+    ##message("After (adj)p filter, the up genes table has ",
+    ##        dim(up_genes)[1], " genes.")
+    ##message("After (adj)p filter, the down genes table has ",
+    ##        dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(lfc)) {
@@ -1685,10 +1685,10 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]
     }
-    message("After fold change filter, the up genes table has ",
-            dim(up_genes)[1], " genes.")
-    message("After fold change filter, the down genes table has ",
-            dim(down_genes)[1], " genes.")
+    ##message("After fold change filter, the up genes table has ",
+    ##        dim(up_genes)[1], " genes.")
+    ##message("After fold change filter, the down genes table has ",
+    ##        dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(z)) {
@@ -1705,8 +1705,8 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[column]]) <= down_median_dist
     down_genes <- down_genes[down_idx, ]
-    message("After z filter, the up genes table has ", dim(up_genes)[1], " genes.")
-    message("After z filter, the down genes table has ", dim(down_genes)[1], " genes.")
+    ##message("After z filter, the up genes table has ", dim(up_genes)[1], " genes.")
+    ##message("After z filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(n)) {
@@ -1716,10 +1716,10 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_genes <- head(upranked, n=n)
     downranked <- down_genes[order(as.numeric(down_genes[[column]])), ]
     down_genes <- head(downranked, n=n)
-    message("After top-n filter, the up genes table has ",
-            dim(up_genes)[1], " genes.")
-    message("After bottom-n filter, the down genes table has ",
-            dim(down_genes)[1], " genes.")
+    ##message("After top-n filter, the up genes table has ",
+    ##        dim(up_genes)[1], " genes.")
+    ##message("After bottom-n filter, the down genes table has ",
+    ##        dim(down_genes)[1], " genes.")
   }
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing=FALSE), ]

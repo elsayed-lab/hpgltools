@@ -56,25 +56,24 @@ gather_ontology_genes <- function(result, ontology=NULL,
     retlist <- list()
     message("No ontology provided, performing all.")
     for (type in c("MF", "BP", "CC")) {
-      retlist[[type]] <- gather_ontology_genes(result,
+      retlist[[type]] <- gather_ontology_genes(result, column=column,
                                                ontology=type,
                                                pval=pval,
                                                include_all=include_all, ...)
     }
     return(retlist)
   } else if (ontology == "MF") {
-    categories <- table_list[["mf_subset"]]
+    categories <- table_list[["mf_over_all"]]
   } else if (ontology == "BP") {
-    categories <- table_list[["bp_subset"]]
+    categories <- table_list[["bp_over_all"]]
   } else if (ontology == "CC") {
-    categories <- table_list[["cc_subset"]]
+    categories <- table_list[["cc_over_all"]]
   } else {
     retlist <- list()
     message("No ontology provided, performing all.")
     for (type in c("MF", "BP", "CC")) {
-      retlist[[type]] <- gather_ontology_genes(result,
-                                               ontology=type,
-                                               pval=pval,
+      retlist[[type]] <- gather_ontology_genes(result, column=column,
+                                               ontology=type, pval=pval,
                                                include_all=include_all,
                                                ...)
     }
@@ -577,7 +576,8 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   trees <- NULL
   if (isTRUE(add_trees)) {
-    trees <- try(gostats_trees(gostats_result, pval_column=pval_column), silent=TRUE)
+    trees <- try(gostats_trees(gostats_result, pval_column=pval_column,
+                               go_db=go_db), silent=TRUE)
     if (class(trees[1]) == "try-error") {
       trees <- NULL
     }
@@ -585,25 +585,25 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   table_list <- list()
   for (ont in c("BP", "MF", "CC")) {
-    subset_name <- glue("{tolower(ont)}_subset")
-    categories <- gostats_result[[subset_name]]
+    subset_name <- glue("{tolower(ont)}_over_all")
+    categories <- gostats_result[["tables"]][[subset_name]]
     ## Pull out the relevant portions of the gostats data
     ## For this I am using the same (arbitrary) rules as in gather_ontology_genes()
-    keeper_idx <- categories[["over_represented_pvalue"]] <= pval
+    keeper_idx <- categories[["Pvalue"]] <= pval
     categories <- categories[keeper_idx, ]
     genes_per_category <- gather_ontology_genes(gostats_result, ontology=ont,
-                                                pval=pval)
+                                                column="Pvalue", pval=pval)
     categories <- merge(categories, genes_per_category, by="row.names")
     rownames(categories) <- categories[["Row.names"]]
-    categories <- categories[, -1]
+    categories[["ontology"]] <- ont
     order_idx <- order(categories[[order_by]], decreasing=decreasing)
     categories <- categories[order_idx, ]
-    kept_columns <- c("ontology", "category", "term", "over_represented_pvalue",
-                      "qvalue", "sig", "all", "numDEInCat", "numInCat",
+    kept_columns <- c("ontology", "Row.names", "Term", "Pvalue", "qvalue",
+                      "Count", "Size", "OddsRatio", "ExpCount",
                       "limma_sigfc", "deseq_sigfc", "edger_sigfc")
     categories <- categories[, kept_columns]
     better_column_names <- c("Ontology", "Category", "Term", "Over p-value", "Q-value",
-                             "DE genes in cat", "All genes in cat", "Num. DE", "Num. in cat.",
+                             "DE genes in cat", "All genes in cat", "Odds Ratio", "Exp. Count",
                              "FC from limma", "FC from DESeq", "FC from edgeR")
     colnames(categories) <- better_column_names
 
