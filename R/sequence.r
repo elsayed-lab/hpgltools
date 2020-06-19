@@ -7,6 +7,7 @@
 #' @param entry EuPathDB metadatum entry.
 #' @param webservice If specified, makes the query faster, I always used
 #'   tritrypdb.org.
+#' @param padding Number of nucleotides to gather.
 #' @param ... Extra arguments for the various EuPathDB functions.
 #' @return Set of padding UTR sequences/coordinates.
 gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NULL,
@@ -20,7 +21,8 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
   bsgenome_name <- pkg_names[["bsgenome"]]
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
-    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry, ...)
+    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry,
+                                                          ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
     orgdb_installedp <- EuPathDB::make_eupath_orgdb(entry=entry,

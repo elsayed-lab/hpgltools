@@ -166,6 +166,7 @@ concatenate_runs <- function(expt, column="replicate") {
 #'   this often comes from a call to import.gff() or biomart or organismdbi.
 #' @param count_dataframe If one does not wish to read the count tables from the
 #'   filesystem, they may instead be fed as a data frame here.
+#' @param sanitize_rownames Clean up weirdly written gene IDs?
 #' @param sample_colors List of colors by condition, if not provided it will
 #'   generate its own colors using colorBrewer.
 #' @param title Provide a title for the expt?
@@ -1284,8 +1285,10 @@ median_by_factor <- function(data, fact="condition", fun="median") {
   }
 
   medians <- data.frame("ID"=rownames(data), stringsAsFactors=FALSE)
+  cvs <- data.frame("ID"=rownames(data), stringsAsFactors=FALSE)
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
+  rownames(cvs) <- rownames(data)
   fact <- as.factor(fact)
   used_columns <- c()
   for (type in levels(fact)) {
@@ -1299,24 +1302,40 @@ median_by_factor <- function(data, fact="condition", fun="median") {
     if (length(columns) == 1) {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
+      cv <- as.data.frame(data[, columns], stringsAsFactors=FALSE)
     } else {
       if (fun == "median") {
         message("The factor ", type, " has ", length(columns), " rows.")
         med <- matrixStats::rowMedians(data[, columns], na.rm=TRUE)
+        cv <- matrixStats::rowMads(data[, columns], na.rm=TRUE)
+        cv <- cv / med
+        ## I am not really sure if this is appropriate.
+        nan_idx <- is.nan(cv)
+        cv[nan_idx] <- 0
       } else if (fun == "mean") {
         message("The factor ", type, " has ", length(columns), " rows.")
         med <- BiocGenerics::rowMeans(data[, columns], na.rm=TRUE)
+        cv <- matrixStats::rowSds(data[, columns], na.rm=TRUE)
+        cv <- cv / med
+        nan_idx <- is.nan(cv)
+        cv[nan_idx] <- 0
       } else {
-        stop("I do not understand that funct.")
+        stop("I do not understand that function.")
       }
     }
     medians <- cbind(medians, med)
+    cvs <- cbind(cvs, cv)
   }
   medians <- medians[, -1, drop=FALSE]
+  cvs <- cvs[, -1, drop=FALSE]
   ## Sometimes not all levels of the original experimental design are used.
   ## Thus lets make sure to use only those which appeared.
   colnames(medians) <- used_columns
-  return(medians)
+  colnames(cvs) <- used_columns
+  retlist <- list(
+      "medians" = medians,
+      "cvs" = cvs)
+  return(retlist)
 }
 
 #' Create a Schizosaccharomyces cerevisiae expt.
@@ -2378,6 +2397,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @param transform Transformation used.
 #' @param batch Batch correction applied.
 #' @param filter Filtering method used.
+#' @param med_or_mean When printing mean by condition, one may want median.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).
 #' @return A big honking excel file and a list including the dataframes and images created.
 #' @seealso \pkg{openxlsx} \pkg{Biobase}
@@ -2389,7 +2409,7 @@ what_happened <- function(expt=NULL, transform="raw", convert="raw",
 #' @export
 write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                        violin=TRUE, sample_heat=TRUE, convert="cpm", transform="log2",
-                       batch="sva", filter=TRUE, ...) {
+                       batch="sva", filter=TRUE, med_or_mean="mean", ...) {
   arglist <- list(...)
   wb <- openxlsx::createWorkbook(creator="hpgltools")
   new_row <- 1
@@ -2890,8 +2910,15 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   sheet <- "median_data"
   new_col <- 1
   new_row <- 1
-  median_data <- sm(median_by_factor(exprs(norm_data),
+  median_data <- sm(median_by_factor(exprs(norm_data), fun=med_or_mean,
                                      fact=norm_data[["conditions"]]))
+  med <- median_data[["medians"]]
+  colnames(med) <- paste0(med_or_mean, "_", colnames(med))
+  cv <- median_data[["cvs"]]
+  colnames(cv) <- paste0("cv_", colnames(cv))
+  median_data <- merge(med, cv, by="row.names")
+  rownames(median_data) <- median_data[["Row.names"]]
+  median_data[["Row.names"]] <- NULL
   median_data_merged <- data.frame()
   if (merge_order == "annot_first") {
     median_data_merged <- merge(info, median_data, by.x="row.names", by.y="row.names")

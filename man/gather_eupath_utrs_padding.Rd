@@ -21,6 +21,8 @@ gather_eupath_utrs_padding(
 \item{webservice}{If specified, makes the query faster, I always used
 tritrypdb.org.}
 
+\item{padding}{Number of nucleotides to gather.}
+
 \item{...}{Extra arguments for the various EuPathDB functions.}
 }
 \value{

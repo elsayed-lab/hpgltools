@@ -344,9 +344,9 @@ perhaps change gff_type to make the merge work.")
     cc_under_table[["Pvalue"]], bins=20), silent=TRUE)
 
   tables <- list(
-    "mf_over_all" = mf_over_table,
-    "bp_over_all" = bp_over_table,
-    "cc_over_all" = cc_over_table,
+    "mf_subset" = mf_over_table,
+    "bp_subset" = bp_over_table,
+    "cc_subset" = cc_over_table,
     "mf_under_all" = mf_under_table,
     "bp_under_all" = bp_under_table,
     "cc_under_all" = cc_under_table,

@@ -74,6 +74,8 @@ plot_bcv <- function(data) {
 #' @param tooltip_data Df of tooltip information for gvis graphs.
 #' @param gvis_filename Filename to write a fancy html graph.
 #' @param size Size of the dots.
+#' @param xlab x-axis label.
+#' @param ylab y-axis label.
 #' @return Ggplot2 scatter plot.  This plot provides a "bird's eye"
 #' view of two data sets.  This plot assumes the two data structures
 #' are not correlated, and so it calculates the median/mad of each
@@ -91,12 +93,19 @@ plot_bcv <- function(data) {
 #'                    gvis_filename="html/fun_scatterplot.html")
 #' }
 #' @export
-plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2) {
+plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2,
+                              xlab=NULL, ylab=NULL) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
+  if (is.null(xlab)) {
+      xlab <- glue::glue("Expression of {df_x_axis}")
+  }
+  if (is.null(ylab)) {
+      ylab <- glue::glue("Expression of {df_y_axis}")
+  }
   colnames(df) <- c("first", "second")
   first_median <- summary(df[, 1])["Median"]
   second_median <- summary(df[, 2])["Median"]
@@ -112,8 +121,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
-    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
+    ggplot2::xlab(xlab)
+    ggplot2::ylab(ylab)
     ggplot2::geom_vline(
                color="grey", xintercept=(first_median - first_mad), size=line_size) +
     ggplot2::geom_vline(
@@ -154,6 +163,8 @@ plot_dist_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL, size=2)
 #' @param second Second column to plot.
 #' @param base_url Base url to add to the plot.
 #' @param pretty_colors Colors!
+#' @param xlab Alternate x-axis label.
+#' @param ylab Alternate x-axis label.
 #' @param color_high Chosen color for points significantly above the mean.
 #' @param color_low Chosen color for points significantly below the mean.
 #' @param alpha  Choose an alpha channel to define how see-through the dots are.
@@ -182,6 +193,7 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
                                 identity=FALSE, gvis_trendline=NULL,
                                 z_lines=FALSE, first=NULL, second=NULL,
                                 base_url=NULL, pretty_colors=TRUE,
+                                xlab=NULL, ylab=NULL,
                                 color_high=NULL, color_low=NULL, alpha=0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
@@ -202,6 +214,12 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
   df_columns <- colnames(df)
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
+  if (is.null(xlab)) {
+      xlab <- glue::glue("Expression of {df_x_axis}")
+  }
+  if (is.null(ylab)) {
+      ylab <- glue::glue("Expression of {df_y_axis}")
+  }
   colnames(df) <- c("first", "second")
   model_test <- try(robustbase::lmrob(formula=second ~ first,
                                       data=df, method="SMDM"), silent=TRUE)
@@ -247,8 +265,8 @@ plot_linear_scatter <- function(df, tooltip_data=NULL, gvis_filename=NULL,
   line_size <- size / 2
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second", label="label")) +
-    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
-    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
+    ggplot2::xlab(xlab) +
+    ggplot2::ylab(ylab) +
     ggplot2::geom_vline(
                color="grey", xintercept=(first_median - first_mad), size=line_size) +
     ggplot2::geom_vline(
@@ -823,6 +841,9 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #' @param tooltip_data Df of tooltip information for gvis.
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
+#' @param xlab Alternate x-axis label.
+#' @param ylab Alternate x-axis label.
+#' @param alpha Define how see-through the dots are.
 #' @return Ggplot2 scatter plot.
 #' @seealso \pkg{ggplot2} \pkg{googleVis}
 #'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
@@ -834,19 +855,26 @@ plot_pairwise_ma <- function(data, log=NULL, ...) {
 #' }
 #' @export
 plot_scatter <- function(df, tooltip_data=NULL, color="black",
+                         xlab=NULL, ylab=NULL, alpha=0.6,
                          gvis_filename=NULL, size=2) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
+  if (is.null(xlab)) {
+      xlab <- glue::glue("Expression of {df_x_axis}")
+  }
+  if (is.null(ylab)) {
+      ylab <- glue::glue("Expression of {df_y_axis}")
+  }
   colnames(df) <- c("first", "second")
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x="first", y="second",
                                            label="label")) +
-    ggplot2::xlab(glue("Expression of {df_x_axis}")) +
-    ggplot2::ylab(glue("Expression of {df_y_axis}")) +
-    ggplot2::geom_point(colour=color, alpha=0.6, size=size) +
+    ggplot2::xlab(xlab) +
+    ggplot2::ylab(ylab) +
+    ggplot2::geom_point(colour=color, alpha=alpha, size=size) +
     ggplot2::theme(legend.position="none",
                    axis.text=ggplot2::element_text(size=10, colour="black"))
   if (!is.null(gvis_filename)) {

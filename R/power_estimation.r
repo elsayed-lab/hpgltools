@@ -1,3 +1,28 @@
+#' Invoke PROPER and replace its default data set with data of interest.
+#'
+#' Recent reviewers of Najib's grants have taken an increased interest in
+#' knowing the statistical power of the various experiments.  He queried
+#' Dr. Corrada-Bravo who suggested PROPER.  I spent some time looking through it
+#' and, with some revervations, modified its workflow to (at least in theory) be
+#' able to examine any dataset.  The workflow in question is particularly odd
+#' and warrants further discussion/analysis.  This function invokes PROPER
+#' exactly as it was performed in their paper.
+#'
+#' @param de_tables A set of differential expression results, presumably from
+#'  EdgeR or DESeq2.
+#' @param p Cutoff
+#' @param experiment The default data set in PROPER is entitled 'cheung'.
+#' @param nsims Number of simulations to perform.
+#' @param reps Simulate these number of experimental replicates.
+#' @param de_method There are a couple choices here for tools which are pretty
+#'   old, my version of this only accepts deseq or edger.
+#' @param alpha_type I assume p-adjust type.
+#' @param alpha Accepted fdr rate.
+#' @param stratify There are a few options here, I don't fully understand them.
+#' @param target Cutoff.
+#' @param filter Apply a filter?
+#' @param delta Not epsilon! (E.g. I forget what this does).
+#' @return List containing the various results and plots from proper.
 default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
                            reps=c(3, 5, 7, 10), de_method="edger", alpha_type="fdr",
                            alpha=0.1, stratify="expr", target="lfc",
@@ -7,6 +32,8 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
     DEmethod <- "edgeR"
   } else if (de_method == "deseq") {
     DEmethod <- "DESeq2"
+  } else {
+    stop("This accepts only 'deseq' or 'edger'.")
   }
   genes <- nrow(de_tables[["data"]][[1]])
   attached <- attachNamespace("PROPER")
@@ -25,26 +52,26 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   ## stratify types : expr, dispersion
   ## filter types : none, expr
   ## target types : lfc, effectsize
-  powers <- comparePower(simulation_result,
-                        alpha.type=alpha_type,
-                        alpha.nominal=alpha,
-                        stratify.by=stratify,
-                        filter.by=filter,
-                        target.by=target,
-                        delta=delta)
-  plotPower(powers)
+  powers <- PROPER::comparePower(simulation_result,
+                                 alpha.type=alpha_type,
+                                 alpha.nominal=alpha,
+                                 stratify.by=stratify,
+                                 filter.by=filter,
+                                 target.by=target,
+                                 delta=delta)
+  PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
-  plotPowerTD(powers)
+  PROPER::plotPowerTD(powers)
   powertd_plot <- grDevices::recordPlot()
-  plotPowerFD(powers)
+  PROPER::plotPowerFD(powers)
   powerfd_plot <- grDevices::recordPlot()
-  plotFDcost(powers)
+  PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
-  plotPowerHist(powerOutput=powers, simResult=simulation_result)
+  PROPER::plotPowerHist(powerOutput=powers, simResult=simulation_result)
   powerhist_plot <- grDevices::recordPlot()
-  plotPowerAlpha(powers)
+  PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
-  power_table <- power.seqDepth(simResult=simulation_result, powerOutput=powers)
+  PROPER::power_table <- power.seqDepth(simResult=simulation_result, powerOutput=powers)
   retlist <- list(
       "options" = simulation_options,
       "simulation" = simulation_result,
@@ -59,7 +86,33 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   return(retlist)
 }
 
-
+#' Invoke PROPER and replace its default data set with data of interest.
+#'
+#' Recent reviewers of Najib's grants have taken an increased interest in
+#' knowing the statistical power of the various experiments.  He queried
+#' Dr. Corrada-Bravo who suggested PROPER.  I spent some time looking through it
+#' and, with some revervations, modified its workflow to (at least in theory) be
+#' able to examine any dataset.  The workflow in question is particularly odd
+#' and warrants further discussion/analysis.  This function is a modified
+#' version of 'default_proper()' above and invokes PROPER after re-formatting a
+#' given dataset in the way expected by PROPER.
+#'
+#' @param de_tables A set of differential expression results, presumably from
+#'  EdgeR or DESeq2.
+#' @param p Cutoff
+#' @param experiment The default data set in PROPER is entitled 'cheung'.
+#' @param nsims Number of simulations to perform.
+#' @param reps Simulate these number of experimental replicates.
+#' @param de_method There are a couple choices here for tools which are pretty
+#'   old, my version of this only accepts deseq or edger.
+#' @param alpha_type I assume p-adjust type.
+#' @param alpha Accepted fdr rate.
+#' @param stratify There are a few options here, I don't fully understand them.
+#' @param target Cutoff.
+#' @param filter Apply a filter?
+#' @param delta Not epsilon! (E.g. I forget what this does).
+#' @return A list containin the various tables and plots returned by PROPER.
+#' @export
 simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
                           reps=c(3, 5, 7, 10), de_method="edger", alpha_type="fdr",
                           alpha=0.1, stratify="expr", target="lfc", mean_or_median="mean",
@@ -69,6 +122,8 @@ simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
     DEmethod <- "edgeR"
   } else if (de_method == "deseq") {
     DEmethod <- "DESeq2"
+  } else {
+      stop("This accepts only 'edger' or 'deseq'.")
   }
   exprs_mtrx <- exprs(de_tables[["input"]][["input"]])
   genes <- nrow(de_tables[["data"]][[1]])
@@ -163,6 +218,10 @@ simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   return(result_list)
 }
 
+#' A version of PROPER:::runsims which is (hopefully) a little more robust.
+#'
+#' When I was testing PROPER, it fell down mysteriously on a few occasions.  The
+#' source ended up being in runsims(), ergo this function.
 my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
                         DEmethod=c("edgeR", "DSS", "DESeq", "DESeq2"), verbose=TRUE) {
   DEmethod <- match.arg(DEmethod)

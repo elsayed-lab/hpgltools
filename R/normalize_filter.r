@@ -200,7 +200,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
   ## I will work merely with tables in this.
   num_before <- nrow(count_table)
 
-  if (class(count_table) == "ExpressionSet") {
+  if ("ExpressionSet" %in% class(count_table)) {
     counts <- exprs(count_table)
   }
   test <- genefilter::pOverA(p=p, A=A)

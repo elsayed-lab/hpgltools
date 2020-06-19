@@ -151,7 +151,7 @@ get_snp_sets <- function(snp_expt, factor="pathogenstrain", limit=1,
     return(retlist)
   }
 
-  medians <- median_by_factor(snp_expt, fact=factor)
+  medians <- median_by_factor(snp_expt, fact=factor)[["medians"]]
   ## I am going to split this by chromosome, as a run of 10,000 took 2 seconds,
   ## 100,000 took a minute, and 400,000 took an hour.
   ##chr <- gsub(pattern="^.+_(.+)_.+_.+_.+$", replacement="\\1", x=rownames(medians))

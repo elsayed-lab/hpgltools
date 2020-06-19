@@ -8,6 +8,9 @@ plot_scatter(
   df,
   tooltip_data = NULL,
   color = "black",
+  xlab = NULL,
+  ylab = NULL,
+  alpha = 0.6,
   gvis_filename = NULL,
   size = 2
 )
@@ -18,6 +21,12 @@ plot_scatter(
 \item{tooltip_data}{Df of tooltip information for gvis.}
 
 \item{color}{Color of the dots on the graph.}
+
+\item{xlab}{Alternate x-axis label.}
+
+\item{ylab}{Alternate x-axis label.}
+
+\item{alpha}{Define how see-through the dots are.}
 
 \item{gvis_filename}{Filename to write a fancy html graph.}
 

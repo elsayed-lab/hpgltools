@@ -939,7 +939,7 @@ mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
   exprs(exprs_set) <- new
   expt[["expressionset"]] <- exprs_set
   annot <- fData(expt)
-  final <- median_by_factor(expt, fact=fact, fun=fun)
+  final <- median_by_factor(expt, fact=fact, fun=fun)[["medians"]]
   current_design <- pData(expt)
   new_design <- data.frame()
   for (c in 1:length(colnames(final))) {

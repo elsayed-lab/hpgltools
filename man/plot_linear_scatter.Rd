@@ -19,6 +19,8 @@ plot_linear_scatter(
   second = NULL,
   base_url = NULL,
   pretty_colors = TRUE,
+  xlab = NULL,
+  ylab = NULL,
   color_high = NULL,
   color_low = NULL,
   alpha = 0.4,
@@ -52,6 +54,10 @@ possible types, I think linear is the most common.}
 \item{base_url}{Base url to add to the plot.}
 
 \item{pretty_colors}{Colors!}
+
+\item{xlab}{Alternate x-axis label.}
+
+\item{ylab}{Alternate x-axis label.}
 
 \item{color_high}{Chosen color for points significantly above the mean.}
 

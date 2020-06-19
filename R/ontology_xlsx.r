@@ -63,11 +63,11 @@ gather_ontology_genes <- function(result, ontology=NULL,
     }
     return(retlist)
   } else if (ontology == "MF") {
-    categories <- table_list[["mf_over_all"]]
+    categories <- table_list[["mf_subset"]]
   } else if (ontology == "BP") {
-    categories <- table_list[["bp_over_all"]]
+    categories <- table_list[["bp_subset"]]
   } else if (ontology == "CC") {
-    categories <- table_list[["cc_over_all"]]
+    categories <- table_list[["cc_subset"]]
   } else {
     retlist <- list()
     message("No ontology provided, performing all.")
@@ -450,6 +450,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 
     ## There is nothing to write.
     genes_per_category <- gather_ontology_genes(goseq_result, ontology=ont,
+                                                column="over_represented_pvalue",
                                                 pval=pval)
     categories <- merge(categories, genes_per_category, by="row.names")
     rownames(categories) <- categories[["Row.names"]]
@@ -518,6 +519,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
                                add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                                height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
+  go_db <- gostats_result[["go_db"]]
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }

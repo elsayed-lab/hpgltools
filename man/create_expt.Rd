@@ -33,6 +33,8 @@ this often comes from a call to import.gff() or biomart or organismdbi.}
 \item{count_dataframe}{If one does not wish to read the count tables from the
 filesystem, they may instead be fed as a data frame here.}
 
+\item{sanitize_rownames}{Clean up weirdly written gene IDs?}
+
 \item{sample_colors}{List of colors by condition, if not provided it will
 generate its own colors using colorBrewer.}
 

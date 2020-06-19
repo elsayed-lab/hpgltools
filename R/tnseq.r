@@ -245,7 +245,7 @@ score_mhess <- function(expt, ess_column="essm1") {
     scores[[c]] <- as.numeric(scores[[c]])
   }
   exprs(expt[["expressionset"]]) <- as.matrix(scores)
-  cond_scores <- median_by_factor(expt)
+  cond_scores <- median_by_factor(expt, fun="mean")[["medians"]]
 
   mscores <- rowMeans(cond_scores)
   changed_idx <- mscores != cond_scores[[1]]

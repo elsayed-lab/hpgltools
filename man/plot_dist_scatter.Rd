@@ -5,7 +5,14 @@
 \title{Make a scatter plot between two sets of numbers with a cheesy distance metric
 and some statistics of the two sets.}
 \usage{
-plot_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
+plot_dist_scatter(
+  df,
+  tooltip_data = NULL,
+  gvis_filename = NULL,
+  size = 2,
+  xlab = NULL,
+  ylab = NULL
+)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
@@ -15,6 +22,10 @@ plot_dist_scatter(df, tooltip_data = NULL, gvis_filename = NULL, size = 2)
 \item{gvis_filename}{Filename to write a fancy html graph.}
 
 \item{size}{Size of the dots.}
+
+\item{xlab}{x-axis label.}
+
+\item{ylab}{y-axis label.}
 }
 \value{
 Ggplot2 scatter plot.  This plot provides a "bird's eye"

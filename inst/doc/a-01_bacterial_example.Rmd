@@ -95,12 +95,12 @@ analyses easier. These analyses generally fall into a few stages:
 
 1.  Data visualization and outlier/batch evaluation
 2.  Differential expression analyses
- a. Visualization and export of these results
+  a. Visualization and export of these results
 3.  Gene ontology/KEGG analyses
- a. Visualization and export of these results
+  a. Visualization and export of these results
 4.  Genome visualizations
- a. With circos
- b. With genoplotR
+  a. With circos
+  b. With genoplotR
 
 Before any of these tasks may be performed, the data must be loaded
 into memory.  hpgltools attempts to make this easier with

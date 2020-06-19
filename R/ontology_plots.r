@@ -586,7 +586,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
 goseq_trees <- function(goseq, goid_map="id2go.map",
                         score_limit=0.01, overwrite=FALSE,
                         selector="topDiffGenes", pval_column="adj.P.Val") {
-  go_db <- goseq[["godf"]]
+  go_db <- goseq[["go_db"]]
   mapping <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
@@ -620,8 +620,8 @@ goseq_trees <- function(goseq, goid_map="id2go.map",
       geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
   }
 
-  enriched_ids <- goseq[["alldata"]][["category"]]
-  enriched_scores <- goseq[["alldata"]][["over_represented_pvalue"]]
+  enriched_ids <- goseq[["all_data"]][["category"]]
+  enriched_scores <- goseq[["all_data"]][["over_represented_pvalue"]]
   names(enriched_scores) <- enriched_ids
 
   ## Print the actual tree here for the molecular function data.
@@ -1044,16 +1044,9 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE,
 #' This shoehorns gostats data into a format acceptable by topgo and uses it to
 #' print pretty ontology trees showing the over represented ontologies.
 #'
-#' @param de_genes Some differentially expressed genes.
-#' @param mf_over Mfover data.
-#' @param bp_over Bpover data.
-#' @param cc_over Ccover data.
-#' @param mf_under Mfunder data.
-#' @param bp_under Bpunder data.
-#' @param cc_under Ccunder expression data.
+#' @param gostats_result Return from simple_gostats().
 #' @param goid_map Mapping of IDs to GO in the Ramigo expected format.
 #' @param score_limit Maximum score to include as 'significant'.
-#' @param go_db Dataframe of available goids (used to generate goid_map).
 #' @param overwrite Overwrite the goid_map?
 #' @param selector Function to choose differentially expressed genes in the data.
 #' @param pval_column Column in the data to be used to extract pvalue scores.
@@ -1061,9 +1054,10 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE,
 #' @seealso \pkg{topGO} \pkg{gostats}
 #' @export
 gostats_trees <- function(gostats_result, goid_map="id2go.map", score_limit=0.01,
-                          go_db=NULL, overwrite=FALSE, selector="topDiffGenes",
+                          overwrite=FALSE, selector="topDiffGenes",
                           pval_column="adj.P.Val") {
-  filename <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
+  filename <- make_id2gomap(goid_map=goid_map, go_db=gostats_result[["go_db"]],
+                            overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
   de_genes <- gostats_result[["input"]]
