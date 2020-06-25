@@ -519,7 +519,6 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
                                add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                                height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
-  go_db <- gostats_result[["go_db"]]
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -578,8 +577,7 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   trees <- NULL
   if (isTRUE(add_trees)) {
-    trees <- try(gostats_trees(gostats_result, pval_column=pval_column,
-                               go_db=go_db), silent=TRUE)
+    trees <- try(gostats_trees(gostats_result, pval_column=pval_column), silent=TRUE)
     if (class(trees[1]) == "try-error") {
       trees <- NULL
     }

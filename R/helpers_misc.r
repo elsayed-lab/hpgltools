@@ -47,10 +47,13 @@ backup_file <- function(backup_file, backups=4) {
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release="3.10",
+bioc_all <- function(release=NULL,
                      mirror="bioconductor.statistik.tu-dortmund.de",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
+  if (is.null(release)) {
+    release <- as.character(BiocManager::version())
+  }
   dl_url <- glue("https://{mirror}/{base}/{json}/{release}/tree.json")
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
