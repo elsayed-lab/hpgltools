@@ -51,7 +51,7 @@ document: roxygen vignette reference
 
 install:
 	@echo "Performing R CMD INSTALL hpgltools."
-	R CMD INSTALL .
+	R CMD INSTALL --install-tests .
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"

@@ -127,8 +127,7 @@ browseVignettes("hpgltools")
 As of last count, there were a couple examples using the data(fission)
 set, pasilla, and a bacterial data set.
 
-Status: Travis CI [![Build Status](https://travis-ci.org/abelew/hpgltools.svg?branch=master)]
-(https://travis-ci.org/abelew/hpgltools),
+![CI](https://github.com/abelew/hpgltools/workflows/CI/badge.svg)
 
 ## Functionality
 

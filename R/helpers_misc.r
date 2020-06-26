@@ -54,7 +54,7 @@ bioc_all <- function(release=NULL,
   if (is.null(release)) {
     release <- as.character(BiocManager::version())
   }
-  dl_url <- glue("https://{mirror}/{base}/{json}/{release}/tree.json")
+  dl_url <- glue("https://{mirror}/{base}/json/{release}/tree.json")
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
   ## Sadly, biocLite() does not give different returns for a successfully/failed
@@ -62,7 +62,9 @@ bioc_all <- function(release=NULL,
   ## That seems dumb to me, but what do I know.
   fail <- c()
   alr <- c()
-  pkg_list <- jsonlite::fromJSON(dl_url)
+  ## Soemthing is weird with the libcurl on the cluster...
+  test <- download.file(url=dl_url, destfile="test.json")
+  pkg_list <- jsonlite::fromJSON("test.json")
   pkg_names <- pkg_list[["attr"]][["packageList"]]
   software_names <- strsplit(x=pkg_names[[1]], split=",")[[1]]
   annotation_names <- strsplit(x=pkg_names[[2]], split=",")[[1]]
