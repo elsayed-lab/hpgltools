@@ -19,11 +19,11 @@ test_that("Do we get expected gene IDs?", {
 })
 
 data <- testing[["annotation"]]
-expected <- c(227784, 12)
-actual <- dim(data)
+expected <- 227000
+actual <- nrow(data)
 ## 02
 test_that("Do we receive expected output from load_biomart_annotations()?", {
-  expect_equal(expected, actual)
+  expect_gt(actual, expected)
 })
 
 ## load_biomart_go()
@@ -33,7 +33,7 @@ expected <- c(318558, 2)
 actual <- dim(data)
 ## 03
 test_that("Do we receive expected output from load_biomart_go()?", {
-  expect_equal(expected, actual)
+  expect_equal(actual, expected)
 })
 
 ## load_biomart_orthologs()
@@ -42,11 +42,11 @@ test_that("Do we receive expected output from load_biomart_go()?", {
 testing <- load_biomart_orthologs(gene_ids=gene_ids, first_species="hsapiens",
                                   second_species="mmusculus")
 data <- testing[["all_linked_genes"]]
-actual <- dim(data)
-expected <- c(26635, 3)
+actual <- nrow(data)
+expected <- 26600
 ## 04
 test_that("Do we get expected orthologs from load_biomart_orthologs()?", {
-  expect_equal(expected[1], actual[1])
+  expect_gt(actual, expected)
 })
 
 end <- as.POSIXlt(Sys.time())

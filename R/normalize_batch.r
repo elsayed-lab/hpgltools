@@ -60,7 +60,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     noscale <- arglist[["noscale"]]
   }
 
-  if (class(input)[1] == "expt") {
+  if ("expt" %in% class(input)) {
     ## Gather all the likely pieces we can use
     my_design <- input[["design"]]
     my_data <- exprs(input)
@@ -532,7 +532,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     rownames(model_adjust) <- sample_names
     sv_names <- glue("SV{1:ncol(model_adjust)}")
     colnames(model_adjust) <- sv_names
-    if (class(input) == "expt") {
+    if ("expt" %in% class(input)) {
       surrogate_plots <- plot_batchsv(input, model_adjust)
     }
   }

@@ -43,6 +43,10 @@ clean:
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
 
+covr: install
+	@echo "Invoking covr::codecov()"
+	R -e "x <- covr::package_coverage('.'); report(x)"
+
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
 	R -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; for (t in needed) { BiocManager::install(t) }"

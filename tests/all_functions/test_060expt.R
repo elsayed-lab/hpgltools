@@ -115,7 +115,8 @@ test_that("Do we get some example data from make_exampledata()?", {
 })
 
 ## median_by_factor()
-medians <- median_by_factor(pombe_expt)
+## I changed the output of this function!
+medians <- median_by_factor(pombe_expt)[["medians"]]
 actual <- medians[chosen_genes, 1]
 expected <- c(8, 31, 0, 0, 21, 0, 0, 2, 0)
 ## 25

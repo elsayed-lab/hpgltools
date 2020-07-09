@@ -1327,9 +1327,18 @@ circos_tile <- function(cfg, df, colname="logFC", basename="", colors=NULL,
   tile_cfg_out <- file(tile_cfg_file, open="w+")
   cat(tile_cfg_string, file=tile_cfg_out, sep="")
   for (c in 1:num_colors) {
-    red_component <- glue::glue("0x{substr(colors[[c]], 2, 3)}")
-    green_component <- glue::glue("0x{substr(colors[[c]], 4, 5)}")
-    blue_component <- glue::glue("0x{substr(colors[[c]], 5, 6)}")
+    red_component <- "0x00"
+    green_component <- "0x00"
+    blue_compnent <- "0x00"
+    if (colors[[1]] == "#") {
+      red_component <- glue::glue("0x{substr(colors[[c]], 2, 3)}")
+      green_component <- glue::glue("0x{substr(colors[[c]], 4, 5)}")
+      blue_component <- glue::glue("0x{substr(colors[[c]], 6, 7)}")
+    } else {
+      red_component <- glue::glue("0x{substr(colors[[c]], 1, 2)}")
+      green_component <- glue::glue("0x{substr(colors[[c]], 3, 4)}")
+      blue_component <- glue::glue("0x{substr(colors[[c]], 5, 6)}")
+    }
     red_component <- strtoi(red_component)
     green_component <- strtoi(green_component)
     blue_component <- strtoi(blue_component)

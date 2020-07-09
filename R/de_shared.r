@@ -382,12 +382,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @seealso \pkg{DESeq2} \pkg{edgeR}
 choose_binom_dataset <- function(input, force=FALSE, ...) {
   ## arglist <- list(...)
-  input_class <- class(input)[1]
+  input_class <- class(input)
   ## I think I would like to make this function smarter so that it will remove
   ## the log2 from transformed data.
   data <- NULL
   warn_user <- 0
-  if (input_class == "expt") {
+  if ("expt" %in% input_class) {
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]
     data <- as.data.frame(exprs(input))
@@ -523,7 +523,7 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #' @seealso \pkg{limma}
 choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
   ## arglist <- list(...)
-  input_class <- class(input)[1]
+  input_class <- class(input)
   data <- NULL
   warn_user <- 0
   libsize <- NULL
@@ -543,7 +543,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
   ## this, I will add a parameter which allows one to to turn on/off
   ## normalization at the voom() step.
 
-  if (input_class == "expt") {
+  if ("expt" %in% input_class) {
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]
     data <- as.data.frame(exprs(input))
@@ -2001,7 +2001,7 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
                                        semantic=c("mucin", "sialidase", "RHS",
                                                   "MASP", "DGF", "GP63"),
                                        semantic_column="1.tooltip") {
-  if (class(input) == "expt") {
+  if ("expt" %in% class(input)) {
     result <- semantic_expt_filter(input, invert=invert, semantic=semantic,
                                    semantic_column=semantic_column)
     return(result)
