@@ -71,7 +71,7 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   powerhist_plot <- grDevices::recordPlot()
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
-  PROPER::power_table <- power.seqDepth(simResult=simulation_result, powerOutput=powers)
+  power_table <- PROPER::power.seqDepth(simResult=simulation_result, powerOutput=powers)
   retlist <- list(
       "options" = simulation_options,
       "simulation" = simulation_result,
@@ -109,6 +109,7 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
 #' @param target Cutoff.
+#' @param mean_or_median Use mean or median values?
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return A list containin the various tables and plots returned by PROPER.
@@ -218,10 +219,25 @@ simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   return(result_list)
 }
 
+## Use my cheater infix ::: to handle some unexported stuff from PROPER.
+update.RNAseq.SimOptions.2grp <- "PROPER" %:::% "update.RNAseq.SimOptions.2grp"
+run.edgeR <- "PROPER" %:::% "run.edgeR"
+run.DESeq <- "PROPER" %:::% "run.DESeq"
+run.DSS <- "PROPER" %:::% "run.DSS"
+run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
+
 #' A version of PROPER:::runsims which is (hopefully) a little more robust.
 #'
 #' When I was testing PROPER, it fell down mysteriously on a few occasions.  The
 #' source ended up being in runsims(), ergo this function.
+#'
+#' @param Nreps Vector of numbers of replicates to simulate.
+#' @param Nreps2 Second vector of replicates.
+#' @param nsims How many simulations to perform?
+#' @param sim.opts Options provided in a list which include information about the expression,
+#'   numbers of genes, logFC values, etc.
+#' @param DEmethod I suggest using only either edgeR or DESeq2.
+#' @param verbose Print some information along the way?
 my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
                         DEmethod=c("edgeR", "DSS", "DESeq", "DESeq2"), verbose=TRUE) {
   DEmethod <- match.arg(DEmethod)
@@ -241,7 +257,7 @@ my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
   DEids <- lfcs <- NULL
   for (i in 1:nsims) {
     sim.opts[["sim.seed"]] <- sim.opts[["sim.seed"]] + 1
-    sim.opts <- PROPER:::update.RNAseq.SimOptions.2grp(sim.opts)
+    sim.opts <- update.RNAseq.SimOptions.2grp(sim.opts)
     dat.sim.big <- PROPER::simRNAseq(sim.opts, n1, n2)
     DEids[[i]] <- dat.sim.big[["DEid"]]
     lfcs[[i]] <- dat.sim.big[["simOptions"]][["lfc"]]
@@ -261,16 +277,16 @@ my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
       this.X.valid <- this.X[ix.valid, , drop=FALSE]
       data0 <- list(counts=this.X.valid, designs=this.design)
       if (DEmethod == "edgeR") {
-        res1 <- PROPER:::run.edgeR(data0)
+        res1 <- run.edgeR(data0)
       }
       if (DEmethod == "DESeq") {
-        res1 <- PROPER:::run.DESeq(data0)
+        res1 <- run.DESeq(data0)
       }
       if (DEmethod == "DSS") {
-        res1 <- PROPER:::run.DSS(data0)
+        res1 <- run.DSS(data0)
       }
       if (DEmethod == "DESeq2") {
-        res1 <- PROPER:::run.DESeq2(data0)
+        res1 <- run.DESeq2(data0)
       }
       pval <- fdr <- rep(1, nrow(this.X))
       X.bar1 <- rep(0, nrow(this.X))

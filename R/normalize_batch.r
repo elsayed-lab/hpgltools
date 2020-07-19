@@ -165,8 +165,12 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx,
                                             mod=conditional_model, method=surrogates))
       }
+      vword <- "variable"
+      if (surrogates > 1) {
+        vword <- "variables"
+      }
       message("The ", surrogates, " method chose ",
-              chosen_surrogates, " surrogate variable(s).")
+              chosen_surrogates, " surrogate ", vword, ".")
     } else if (class(surrogates) == "numeric") {
       message("A specific number of surrogate variables was chosen: ", surrogates, ".")
       chosen_surrogates <- surrogates
@@ -244,6 +248,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   source_counts <- NULL
   new_counts <- NULL
   matrx_scale <- "linear"
+  sword <- "surrogate"
+  if (chosen_surrogates > 1) {
+    sword <- "surrogates"
+  }
   ## Just an aside, calling this a base 10 matrix is stupid.  Just because something is
   ## put on a log scale does not suddently make it octal or binary or imaginary!
   surrogate_input <- linear_mtrx
@@ -295,7 +303,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
       ## to 1, then why are these valid for changing and visualizing the linear
       ## data.  That does not really make sense to me.
       message("Attempting fsva surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
+              chosen_surrogates, " ", sword, ".")
       type_color <- "darkred"
       sva_object <- sm(sva::sva(log2_mtrx, conditional_model,
                                 null_model, n.sv=chosen_surrogates))
@@ -307,7 +315,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     },
     "isva" = {
       message("Attempting isva surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
+              chosen_surrogates, " ", sword, ".")
       warning("isva, in my estimation, performs incredibly poorly.")
       type_color <- "darkgreen"
       condition_vector <- as.numeric(conditions)
@@ -330,8 +338,9 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
           names(confounder_mtrx)[i] <- names(confounder_lst)[i]
         }
       }
-      message("Estmated number of significant components: ", chosen_surrogates, ".")
-      surrogate_result <- my_doisva(data.m=log2_mtrx, pheno.v=condition_vector,
+      message("Attempting isva surrogate estimation with ",
+              chosen_surrogates, " ", sword, ".")
+      surrogate_result <- my_isva(data.m=log2_mtrx, pheno.v=condition_vector,
                                     ncomp=chosen_surrogates,
                                     icamethod="JADE")
       model_adjust <- as.matrix(surrogate_result[["isv"]])
@@ -370,7 +379,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "pca" = {
    message("Attempting pca surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "green"
    data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
    surrogate_result <- corpcor::fast.svd(data_vs_means)
@@ -404,7 +413,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_empirical" = {
    message("Attempting ruvseq empirical surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "orange"
    ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
    ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
@@ -428,7 +437,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_residuals" = {
    message("Attempting ruvseq residual surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "purple"
    ## Use RUVSeq and residuals
    ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
@@ -445,7 +454,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_supervised" = {
    message("Attempting ruvseq supervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "black"
    ## Re-calculating the numer of surrogates with this modified data.
    surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
@@ -465,7 +474,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "smartsva" = {
    message("Attempting svaseq estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    surrogate_result <- SmartSVA::smartsva.cpp(
                                    dat=linear_mtrx,
                                    mod=conditional_model,
@@ -475,7 +484,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "svaseq" = {
    message("Attempting svaseq estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    surrogate_result <- sm(sva::svaseq(dat=linear_mtrx,
                                       n.sv=chosen_surrogates,
                                       mod=conditional_model,
@@ -484,7 +493,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "sva_supervised" = {
    message("Attempting sva supervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "red"
    surrogate_result <- sm(sva::ssva(dat=log2_mtrx,
                                     controls=control_likelihoods,
@@ -493,7 +502,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "sva_unsupervised" = {
    message("Attempting sva unsupervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "blue"
    if (min(rowSums(linear_mtrx)) == 0) {
      warning("sva will likely fail because some rowSums are 0.")
@@ -1404,9 +1413,9 @@ I set it to 1 not knowing what its purpose is.")
 #' @param th threshold for inclusion.
 #' @param ncomp Number of SVA components to estimate.
 #' @param icamethod Which ICA implementation to use?
-my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
+my_isva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
                       th=0.05, ncomp=NULL, icamethod="fastICA") {
-  isva.o <- doisva::isvaFn(data.m, pheno.v, ncomp, icamethod)
+  isva.o <- isva::isvaFn(data.m, pheno.v, ncomp, icamethod)
   ## The default values of selisv.idx and pv.m
   selisv.idx <- 1:ncol(isva.o[["isv"]])
   pv.m <- NULL
@@ -1426,8 +1435,8 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
         for (sv in 1:ncol(isva.o$isv)) {
           lm.o <- lm(
             isva.o$isv[, sv] ~ as.factor(tmp.m[, c]))
-          pv.m[sv, c] <- isva::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
-                                  summary(lm.o)$fstat[3], lower.tail = FALSE)
+          pv.m[sv, c] <- stats::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
+                                   summary(lm.o)$fstat[3], lower.tail = FALSE)
         }
       }
     }

@@ -43,6 +43,8 @@ old, my version of this only accepts deseq or edger.}
 
 \item{target}{Cutoff.}
 
+\item{mean_or_median}{Use mean or median values?}
+
 \item{filter}{Apply a filter?}
 
 \item{delta}{Not epsilon! (E.g. I forget what this does).}

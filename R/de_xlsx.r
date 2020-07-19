@@ -499,16 +499,11 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 #' function, but I have thus far focused only on getting it to work with the
 #' newly split-apart combine_de_tables() functions.
 #'
-#' @param pairwise A pairwise result without modification.
 #' @param name Name of the table to plot.
 #' @param combined Modified pairwise result, containing the various DE methods.
 #' @param denominator Name of the denominator coefficient.
 #' @param numerator Name of the numerator coefficient.
-#' @param basic Tables from basic_pairiwse().
-#' @param deseq Tables from deseq_pairwise().
-#' @param edger Tables from edger_pairwise().
-#' @param limma Tables from limma_pairwise().
-#' @param ebseq Tables from ebseq_pairwise().
+#' @param plot_inputs The individual outputs from limma etc.
 #' @param include_basic Add basic data?
 #' @param include_deseq Add deseq data?
 #' @param include_edger Add edger data?
@@ -517,8 +512,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 #' @param loess Add a loess estimation?
 #' @param do_inverse Flip the numerator/denominator?
 #' @param found_table The table name actually used.
-combine_extracted_plots <- function(pairwise, name, combined, denominator, numerator,
-                                    basic, deseq, edger, limma, ebseq,
+combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     include_basic=TRUE, include_deseq=TRUE,
                                     include_edger=TRUE, include_limma=TRUE,
                                     include_ebseq=FALSE, loess=FALSE,
@@ -543,30 +537,45 @@ combine_extracted_plots <- function(pairwise, name, combined, denominator, numer
     plots[["limma_vol_plots"]] <- list()
     plots[["limma_p_plots"]] <- list()
   }
-  types <- c("deseq", "edger", "limma")
-  for (t in types) {
-    sc_name <- paste0(t, "_scatter_plots")
-    ma_name <- paste0(t, "_ma_plots")
-    vol_name <- paste0(t, "_vol_plots")
-    p_name <- paste0(t, "_p_plots")
+  types <- c()
+  if (isTRUE(include_limma)) {
+    types <- c("limma", types)
+  }
+  if (isTRUE(include_edger)) {
+    types <- c("edger", types)
+  }
+  if (isTRUE(include_deseq)) {
+    types <- c("deseq", types)
+  }
+  for (t in 1:length(types)) {
+    type <- types[t]
+    sc_name <- paste0(type, "_scatter_plots")
+    ma_name <- paste0(type, "_ma_plots")
+    vol_name <- paste0(type, "_vol_plots")
+    p_name <- paste0(type, "_p_plots")
     if (is.null(sc_name)) {
-      message("Skipping scatter plot for ", t, ".")
+      message("Skipping scatter plot for ", type, ".")
     } else {
-      plots[[sc_name]] <- sm(try(extract_coefficient_scatter(
-        get0(t), type=t, invert=do_inverse, table=found_table), silent=TRUE))
+      print(found_table)
+      x_y <- strsplit(x=found_table, split="_vs_")[[1]]
+      coef_scatter <- try(extract_coefficient_scatter(
+          plot_inputs[[type]], type=type, invert=do_inverse,
+          x=x_y[1], y=x_y[2]))
+      print(coef_scatter$lm_model)
+      plots[[sc_name]] <- coef_scatter
     }
     if (is.null(ma_name)) {
-      message("Skipping volcano/MA plot for ", t, ".")
+      message("Skipping volcano/MA plot for ", type, ".")
     } else {
       ma_vol <- try(extract_de_plots(
-        get0(t), type=t, invert=do_inverse, table=found_table))
+          plot_inputs[[type]], type=type, invert=do_inverse, table=found_table))
       plots[[ma_name]] <- ma_vol[["ma"]]
       plots[[vol_name]] <- ma_vol[["volcano"]]
     }
     if (is.null(p_name)) {
       message("Skipping p-value plot for ", t, ".")
     } else {
-      plots[[p_name]] <- plot_de_pvals(combined[["data"]], type=t)[["plot"]]
+      plots[[p_name]] <- plot_de_pvals(combined[["data"]], type=type)[["plot"]]
     }
   }
   return(plots)
@@ -610,7 +619,7 @@ combine_single_de_table <- function(li=NULL, ed=NULL, eb=NULL, de=NULL, ba=NULL,
                                     include_ebseq=TRUE, include_limma=TRUE,
                                     include_basic=TRUE, lfc_cutoff=1,
                                     p_cutoff=0.05, excludes=NULL, sheet_count=0) {
-  if (!padj_type %in% p.adjust.methods) {
+  if (padj_type != "ihw" & !padj_type %in% p.adjust.methods) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
 Defaulting to fdr.")
     padj_type <- "fdr"
@@ -857,28 +866,34 @@ Defaulting to fdr.")
   ## Add one final p-adjustment to ensure a consistent and user defined value.
   if (!is.null(comb[["limma_p"]])) {
     colname <- glue::glue("limma_adjp_{padj_type}")
-    comb[[colname]] <- p.adjust(comb[["limma_p"]], method=padj_type)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="limma_p", mean_column="limma_ave",
+                                    method=padj_type, significance=0.05)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["deseq_p"]])) {
     colname <- glue::glue("deseq_adjp_{padj_type}")
-    comb[[colname]] <- p.adjust(comb[["deseq_p"]], method=padj_type)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="deseq_p", mean_column="deseq_basemean",
+                                    method=padj_type, significance=0.05)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["edger_p"]])) {
     colname <- glue::glue("edger_adjp_{padj_type}")
-    comb[[colname]] <- p.adjust(comb[["edger_p"]], method=padj_type)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="edger_p", mean_column="edger_logcpm",
+                                    method=padj_type, significance=0.05)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["ebseq_ppde"]])) {
-    comb[["ebseq_ppde"]] <- format(x=comb[["ebseq_ppde"]], digits=4, scientific=TRUE, trim=TRUE)
+    colname <- glue::glue("ebseq_adjp_{padj_type}")
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="ebseq_ppde", mean_column="ebseq_mean",
+                                    method=padj_type, significance=0.05)
+    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
   if (!is.null(comb[["basic_p"]])) {
     colname <- glue::glue("basic_adjp_{padj_type}")
-    comb[[colname]] <- p.adjust(comb[["basic_p"]], method=padj_type)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="basic_p", mean_column="basic_nummed",
+                                    method=padj_type, significance=0.05)
     comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
   }
-
 
   ## I made an odd choice in a moment to normalize.quantiles the combined fold changes
   ## This should be reevaluated
@@ -1041,12 +1056,18 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
     extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
     extracted[["kept"]] <- kept_tables
     extracted[["keepers"]] <- keepers
+    plot_inputs <- list(
+        "limma" = limma,
+        "deseq" = deseq,
+        "edger" = edger,
+        "ebseq" = ebseq,
+        "basic" = basic)
     extracted[["plots"]][[name]] <- combine_extracted_plots(
-      apr, name, combined, denominator, numerator,
-      basic, deseq, edger, limma, ebseq,
+      name, combined, denominator, numerator, plot_inputs,
       include_basic=include_basic, include_deseq=include_deseq,
       include_edger=include_edger, include_limma=include_limma,
-      include_ebseq=include_ebseq, loess=loess, found_table=name)
+      include_ebseq=include_ebseq, loess=loess,
+      found_table=name)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
     extracted[["numerators"]] <- numerators
@@ -1165,9 +1186,14 @@ extract_keepers_lst <- function(apr, extracted, keepers, table_names,
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
       extracted[["keepers"]] <- keepers
+      plot_inputs <- list(
+          "limma" = limma,
+          "deseq" = deseq,
+          "edger" = edger,
+          "ebseq" = ebseq,
+          "basic" = basic)
       extracted[["plots"]][[name]] <- combine_extracted_plots(
-        apr, name, combined, denominator, numerator,
-        basic, deseq, edger, limma, ebseq,
+        name, combined, denominator, numerator, plot_inputs,
         include_basic=include_basic, include_deseq=include_deseq,
         include_edger=include_edger, include_limma=include_limma,
         include_ebseq=include_ebseq, loess=loess,
@@ -1247,10 +1273,15 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
   extracted[["table_names"]][[table]] <- combined[["summary"]][["table"]]
   extracted[["kept"]] <- table
   extracted[["keepers"]] <- keepers
+  plot_inputs <- list(
+      "limma" = limma,
+      "deseq" = deseq,
+      "edger" = edger,
+      "ebseq" = ebseq,
+      "basic" = basic)
   extracted[["plots"]][[table]] <- combine_extracted_plots(
-    ##   vv I changed this from 'name', I think that is correct but am uncertain.
-    apr, table, combined, denominator, numerator,
-    basic, deseq, edger, limma, ebseq,
+    ## vv I changed this from 'name', I think that is correct but am uncertain.
+    table, combined, denominator, numerator, plot_inputs,
     include_basic=include_basic, include_deseq=include_deseq,
     include_edger=include_edger, include_limma=include_limma,
     include_ebseq=include_ebseq, loess=loess, found_table=table,

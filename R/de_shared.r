@@ -96,7 +96,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   if (isTRUE(test_pca)) {
     pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
                                    transform="log2", convert=convert, norm=norm))
-    message("Plotting a PCA before surrogates/batch inclusion.")
+    message("Plotting a PCA before surrogate/batch inclusion.")
     pre_pca <- plot_pca(pre_batch, plot_labels=FALSE,
                         ...)
     post_batch <- pre_batch
@@ -917,6 +917,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
   p_result <- list()
   adjp_result <- list()
   comparisons <- c("logfc", "p", "adjp")
+  ## First make sure we can collect the data for each differential expression method.
   methods <- c()
   for (m in 1:length(try_methods)) {
     method <- try_methods[m]
@@ -932,6 +933,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
     }
   }
 
+  ## Now start building tables containing the correlations between the methods/contrasts.
   for (m in 1:length(methods)) {
     method <- methods[m]
     result[[method]] <- list()
@@ -993,10 +995,13 @@ compare_de_results <- function(first, second, cor_method="pearson",
       adjp_df[row, col] <- element
     }
   }
+
+  original <- par(mar=c(7, 4, 4, 2) + 0.1)
+  text_size <- 1.0
   heat_colors <- grDevices::colorRampPalette(c("white", "darkblue"))
   lfc_heatmap <- try(heatmap.3(as.matrix(comp_df), scale="none",
-                               trace="none", keysize=1.5,
-                               linewidth=0.5, margins=c(9, 9),
+                               trace="none", keysize=1.5, linewidth=0.5,
+                               margins=c(12, 8), cexRow=text_size, cexCol=text_size,
                                col=heat_colors, dendrogram="none",
                                Rowv=FALSE, Colv=FALSE,
                                main="Compare lFC results"), silent=TRUE)
@@ -1006,8 +1011,8 @@ compare_de_results <- function(first, second, cor_method="pearson",
   }
   heat_colors <- grDevices::colorRampPalette(c("white", "darkred"))
   p_heatmap <- try(heatmap.3(as.matrix(p_df), scale="none",
-                             trace="none", keysize=1.5,
-                             linewidth=0.5, margins=c(9, 9),
+                             trace="none", keysize=1.5, linewidth=0.5,
+                             margins=c(12, 8), cexRow=text_size, cexCol=text_size,
                              col=heat_colors, dendrogram="none",
                              Rowv=FALSE, Colv=FALSE,
                              main="Compare p-values"), silent=TRUE)
@@ -1017,15 +1022,16 @@ compare_de_results <- function(first, second, cor_method="pearson",
   }
   heat_colors <- grDevices::colorRampPalette(c("white", "darkgreen"))
   adjp_heatmap <- try(heatmap.3(as.matrix(adjp_df), scale="none",
-                             trace="none", keysize=1.5,
-                             linewidth=0.5, margins=c(9, 9),
-                             col=heat_colors, dendrogram="none",
-                             Rowv=FALSE, Colv=FALSE,
-                             main="Compare adjp-values"), silent=TRUE)
+                                trace="none", keysize=1.5, linewidth=0.5,
+                                margins=c(12, 8), cexRow=text_size, cexCol=text_size,
+                                col=heat_colors, dendrogram="none",
+                                Rowv=FALSE, Colv=FALSE,
+                                main="Compare adjp-values"), silent=TRUE)
   adjp_heat <- NULL
   if (class(adjp_heatmap) != "try-error") {
     adjp_heat <- recordPlot()
   }
+  new <- par(original)
 
   retlist <- list(
     "result" = result,
@@ -1064,7 +1070,6 @@ expressionset_to_deseq <- function(expt, model_cond=TRUE, model_batch=FALSE) {
 #'
 #' @param results Data from do_pairwise()
 #' @param annot_df Include annotation data?
-#' @param ... More options!
 #' @return Heatmap showing how similar they are along with some
 #'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
@@ -1175,12 +1180,15 @@ correlate_de_tables <- function(results, annot_df=NULL) {
   comparison_df <- as.matrix(comparison_df)
   colnames(comparison_df) <- names(retlst[["deseq"]])
   heat_colors <- grDevices::colorRampPalette(c("white", "black"))
+  original <- par(mar=c(7, 4, 4, 2) + 0.1)
   comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
                                       trace="none", keysize=1.5,
-                                      linewidth=0.5, margins=c(9, 9),
+                                      cexCol=1.0, cexRow=1.0,
+                                      linewidth=0.5, margins=c(12, 8),
                                       col=heat_colors, dendrogram="none",
                                       Rowv=FALSE, Colv=FALSE,
                                       main="Compare DE tools"), silent=TRUE)
+  new <- par(original)
   heat <- NULL
   if (class(comparison_heatmap) != "try-error") {
     heat <- recordPlot()
@@ -1597,6 +1605,48 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
                                            file=excel, overwrite=TRUE)
   }
   return(retlist)
+}
+
+ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
+                       mean_column="baseMean", significance=0.05) {
+
+  ## We need to know the method used, because the values returned are not
+  ## necessarily in the scale expected by IHW.
+  if (is.null(type)) {
+    if (grepl(pattern="^limma", x=pvalue_column)) {
+      type <- "limma"
+    } else if (grepl(pattern="^deseq", x=pvalue_column)) {
+      type <- "deseq"
+    } else if (grepl(pattern="^edger", x=pvalue_column)) {
+      type <- "edger"
+    } else if (grepl(pattern="^basic", x=pvalue_column)) {
+      type <- "basic"
+    } else if (grepl(pattern="^ebseq", x=pvalue_column)) {
+      type <- "ebseq"
+    } else {
+      stop("Unable to determine the type of pvalues in this data.")
+    }
+  }
+
+  ## Now that we know the method used, coerce the result from method x into something
+  ## which makes sense to IHW.
+  tmp_table <- de_result
+  if (type == "limma") {
+    tmp_table[["base10_mean"]] <- 2 ^ tmp_table[[mean_column]]
+    mean_column <- "base10_mean"
+  } else if (type == "edger") {
+    tmp_table[["base10_mean"]] <- 2 ^ tmp_table[[mean_column]]
+    mean_column <- "base10_mean"
+  } else if (type == "basic") {
+    tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_nummed"]] + tmp_table[["basic_denmed"]]) / 2)
+    mean_column <- "base10_median"
+  }
+
+  ## Finally, invoke IHW and get its interpretation of adjusted p-values.
+  formula <- as.formula(glue::glue("{pvalue_column} ~ {mean_column}"))
+  ihw_result <- IHW::ihw(formula, data=tmp_table, alpha=significance)
+  adjusted_p_values <- IHW::adj_pvalues(ihw_result)
+  return(adjusted_p_values)
 }
 
 #' Get a set of up/down differentially expressed genes.

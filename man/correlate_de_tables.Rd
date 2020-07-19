@@ -10,8 +10,6 @@ correlate_de_tables(results, annot_df = NULL)
 \item{results}{Data from do_pairwise()}
 
 \item{annot_df}{Include annotation data?}
-
-\item{...}{More options!}
 }
 \value{
 Heatmap showing how similar they are along with some

@@ -13,6 +13,20 @@ my_runsims(
   verbose = TRUE
 )
 }
+\arguments{
+\item{Nreps}{Vector of numbers of replicates to simulate.}
+
+\item{Nreps2}{Second vector of replicates.}
+
+\item{nsims}{How many simulations to perform?}
+
+\item{sim.opts}{Options provided in a list which include information about the expression,
+numbers of genes, logFC values, etc.}
+
+\item{DEmethod}{I suggest using only either edgeR or DESeq2.}
+
+\item{verbose}{Print some information along the way?}
+}
 \description{
 When I was testing PROPER, it fell down mysteriously on a few occasions.  The
 source ended up being in runsims(), ergo this function.

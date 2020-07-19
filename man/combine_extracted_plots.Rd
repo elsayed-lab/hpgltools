@@ -5,16 +5,11 @@
 \title{Gather data required to make MA/Volcano plots for pairwise comparisons.}
 \usage{
 combine_extracted_plots(
-  pairwise,
   name,
   combined,
   denominator,
   numerator,
-  basic,
-  deseq,
-  edger,
-  limma,
-  ebseq,
+  plot_inputs,
   include_basic = TRUE,
   include_deseq = TRUE,
   include_edger = TRUE,
@@ -26,8 +21,6 @@ combine_extracted_plots(
 )
 }
 \arguments{
-\item{pairwise}{A pairwise result without modification.}
-
 \item{name}{Name of the table to plot.}
 
 \item{combined}{Modified pairwise result, containing the various DE methods.}
@@ -36,15 +29,7 @@ combine_extracted_plots(
 
 \item{numerator}{Name of the numerator coefficient.}
 
-\item{basic}{Tables from basic_pairiwse().}
-
-\item{deseq}{Tables from deseq_pairwise().}
-
-\item{edger}{Tables from edger_pairwise().}
-
-\item{limma}{Tables from limma_pairwise().}
-
-\item{ebseq}{Tables from ebseq_pairwise().}
+\item{plot_inputs}{The individual outputs from limma etc.}
 
 \item{include_basic}{Add basic data?}
 

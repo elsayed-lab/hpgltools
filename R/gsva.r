@@ -451,7 +451,8 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @param required_id  gsva (I assume) always requires ENTREZ IDs, but just in
 #'   case this is a parameter.
 #' @param orgdb  What is the data source for the rownames()?
-#' @param method  Which gsva method to use?
+#' @param method  Which gsva method to use? Changed this from gsva to ssgsea
+#'   because it was throwing segmentation faults.
 #' @param kcdf  Options for the gsva methods.
 #' @param ranking  another gsva option.
 #' @return  List containing three elements: first a modified expressionset using
@@ -462,7 +463,7 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @export
 simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signatures=NULL,
                         cores=1, current_id="ENSEMBL", required_id="ENTREZID",
-                        orgdb="org.Hs.eg.db", method="gsva", kcdf=NULL, ranking=FALSE) {
+                        orgdb="org.Hs.eg.db", method="ssgsea", kcdf=NULL, ranking=FALSE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -534,8 +535,8 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  gsva_result <- suppressWarnings(GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
-                                             kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores))
+  gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
+                            kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores)
   fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""

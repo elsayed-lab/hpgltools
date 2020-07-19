@@ -314,16 +314,6 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                           d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                           aub.p.to.end=0.55) {
-  ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
-  ## However, the repository I want for it is 'seqtools'
-  ## Ergo my stupid require.auto() will be confused by definition because it
-  ## assumes equivalent names
-  ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
-  ##    library('SeqTools')
-  ##} else {
-  ##    require.auto("lianos/seqtools/R/pkg")
-  ##    library('SeqTools')
-  ##}
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
   if (xtype == "DNA") {
     pentamer <- "ATTTA"
@@ -388,6 +378,16 @@ hpgl_cor <- function(df, method="pearson", ...) {
     correlation <- stats::cor(df, method=method, ...)
   }
   return(correlation)
+}
+
+hpgl_padjust <- function(data, pvalue_column="pvalue", mean_column="base_mean", method="fdr", significance=0.05, type=NULL) {
+  if (method == "ihw") {
+    result <- ihw_adjust(data, pvalue_column=pvalue_column, type=type,
+                         mean_column=mean_column, significance=significance)
+  } else {
+    result <- p.adjust(data[[pvalue_column]], method=method)
+  }
+  return(result)
 }
 
 #' Because I am not smart enough to remember t()
