@@ -26,26 +26,24 @@ clean:
 			vignettes/*.R vignettes/*.html vignettes/*.gb vignettes/*.gz vignettes/*.Rdata \
 			vignettes/*.xlsx vignettes/*.tex vignettes/*.log vignettes/*.aux vignettes/*.map \
 			vignettes/*.rda
-	rm -rf R/.Rhistory vignettes/.Rhistory R/eupathdb R/*.rda R/*.Rdata
-	for testdir in travis all_functions slow_tests; do \
-	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
-			tests/$${testdir}/preprocessing tests/$${testdir}/test_gprofiler \
-			tests/$${testdir}/saved_plots tests/$${testdir}/excel_test_sig \
-			tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview \
-			tests/$${testdir}/UP000* tests/$${testdir}/topgo \
-	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb \
-			tests/$${testdir}/BSgenome* tests/$${testdir}/testing_write_expt ;\
-	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
-	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \
-	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json tests/$${testdir}/*.tab tests/$${testdir}/*kgml* ;\
-	done
+	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata
+	rm -rf tests/testthat/circos tests/testthat/EuPathDB tests/testthat/excel tests/testthat/excel_test \
+		tests/testthat/preprocessing tests/testthat/test_gprofiler \
+		tests/testthat/saved_plots tests/testthat/excel_test_sig \
+		tests/testthat/kegg_pathways tests/testthat/pathview \
+		tests/testthat/UP000* tests/testthat/topgo \
+ 		tests/testthat/pathview_in tests/testthat/eupathdb \
+		tests/testthat/BSgenome* tests/testthat/testing_write_expt ;\
+	  rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
+		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
+		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml* ;\
 
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
 
 covr: install
 	@echo "Invoking covr::codecov()"
-	R -e "x <- covr::package_coverage('.'); report(x)"
+	R -e "x <- covr::package_coverage('.'); covr::report(x)"
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
@@ -53,7 +51,7 @@ deps:
 
 document: roxygen vignette reference
 
-install:
+install: clean
 	@echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 

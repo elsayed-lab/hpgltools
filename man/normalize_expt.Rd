@@ -28,6 +28,7 @@ normalize_expt(
   cv_min = 0.01,
   cv_max = 1000,
   na_to_zero = FALSE,
+  verbose = TRUE,
   ...
 )
 }
@@ -74,7 +75,9 @@ normalize_expt(
 
 \item{cv_max}{Also used by genefilter's cv().}
 
-\item{na_to_zero}{Sometimes rpkm gives some NA values for very low numbers.
+\item{na_to_zero}{Sometimes rpkm gives some NA values for very low numbers.}
+
+\item{verbose}{Print what is happening while the normalization is performed?
 I am not sure why, but I think they should be 0.}
 
 \item{...}{more options}

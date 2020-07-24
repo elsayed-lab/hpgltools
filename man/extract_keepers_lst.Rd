@@ -5,7 +5,6 @@
 \title{When a list of 'keeper' contrasts is specified, extract it from the data.}
 \usage{
 extract_keepers_lst(
-  apr,
   extracted,
   keepers,
   table_names,
@@ -28,8 +27,6 @@ extract_keepers_lst(
 )
 }
 \arguments{
-\item{apr}{Result from all_pairwise()}
-
 \item{extracted}{Tables extracted from the all_pairwise data.}
 
 \item{keepers}{In this case, one may assume either NULL or 'all'.}
@@ -68,6 +65,8 @@ experimental metadata.}
 \item{padj_type}{Choose a specific p adjustment.}
 
 \item{loess}{Add a loess to plots?}
+
+\item{apr}{Result from all_pairwise()}
 }
 \description{
 This is the most interesting of the extract_keeper functions.  It must check

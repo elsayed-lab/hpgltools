@@ -24,7 +24,7 @@ combine_de_tables(
   loess = FALSE,
   plot_dim = 6,
   compare_plots = TRUE,
-  padj_type = "fdr",
+  padj_type = "ihw",
   ...
 )
 }
