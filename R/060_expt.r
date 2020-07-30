@@ -12,6 +12,8 @@
 #' @return Larger expt.
 #' @examples
 #'  \dontrun{
+#'   ## I am trying to get rid of all my dontrun sections, but I don't have two
+#'   ## expressionsets to combine.
 #'   expt1 <- create_expt(first_meta)
 #'   expt2 <- create_expt(second_meta)
 #'   combined <- combine_expts(expt1, expt2, merge_meta=TRUE)
@@ -151,49 +153,73 @@ concatenate_runs <- function(expt, column="replicate") {
   return(final_expt)
 }
 
-#' Wrap bioconductor's expressionset to include some other extraneous
-#' information.
+#' Wrap bioconductor's expressionset to include some extra information.
 #'
-#' It is worth noting that this function has a lot of logic used to
-#' find the count tables in the local filesystem.  This logic has been
-#' superceded by simply adding a field to the .csv file called
-#' 'file'.  create_expt() will then just read that filename, it may be
-#' a full pathname or local to the cwd of the project.
+#' The primary innovation of this function is that it will check the metadata
+#' for columns containing filenames for the count tables, thus hopefully making
+#' the collation and care of metadata/counts easier.  For example, I have some
+#' data which has been mapped against multiple species.  I can use this function
+#' and just change the file_column argument to pick up each species' tables.
 #'
 #' @param metadata Comma separated file (or excel) describing the samples with
-#'   information like condition, batch, count_filename, etc.
+#'  information like condition, batch, count_filename, etc.
 #' @param gene_info Annotation information describing the rows of the data set,
-#'   this often comes from a call to import.gff() or biomart or organismdbi.
+#'  this often comes from a call to import.gff() or biomart or organismdbi.
 #' @param count_dataframe If one does not wish to read the count tables from the
-#'   filesystem, they may instead be fed as a data frame here.
+#'  filesystem, they may instead be fed as a data frame here.
 #' @param sanitize_rownames Clean up weirdly written gene IDs?
 #' @param sample_colors List of colors by condition, if not provided it will
-#'   generate its own colors using colorBrewer.
+#'  generate its own colors using colorBrewer.
 #' @param title Provide a title for the expt?
 #' @param notes Additional notes?
 #' @param countdir Directory containing count tables.
 #' @param include_type I have usually assumed that all gff annotations should be
-#'   used, but that is not always true, this allows one to limit to a specific
-#'   annotation type.
+#'  used, but that is not always true, this allows one to limit to a specific
+#'  annotation type.
 #' @param include_gff Gff file to help in sorting which features to keep.
 #' @param file_column Column to use in a gene information dataframe for
 #' @param id_column Column which contains the sample IDs.
 #' @param savefile Rdata filename prefix for saving the data of the resulting
-#'   expt.
+#'  expt.
 #' @param low_files Explicitly lowercase the filenames when searching the
-#'   filesystem?
+#'  filesystem?
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso \pkg{Biobase}
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
 #'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 #' @examples
-#' \dontrun{
-#'  new_experiment <- create_expt("some_csv_file.csv", gene_info=gene_df)
-#'  ## Remember that this depends on an existing data structure of gene annotations.
-#'  meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
-#'  another_expt <- create_expt(meta, gene_info=annotations, count_dataframe=df_I_downloaded)
-#' }
+#'  load(file=system.file("cdm_expt.rda", package="hpgltools"))
+#'  head(cdm_counts)
+#'  head(cdm_metadata)
+#'  ## The gff file has differently labeled locus tags than the count tables
+#'  ## The naming standard changed since this experiment was performed and I
+#'  ## downloaded a new gff file.
+#'  rownames(gas_gff_annot) <- make.names(gsub(pattern="(Spy)_", replacement="\\1",
+#'                                             x=gas_gff_annot[["locus_tag"]]), unique=TRUE)
+#'  mgas_expt <- create_expt(metadata=cdm_metadata, gene_info=gas_gff_annot,
+#'                           count_dataframe=cdm_counts)
+#'  head(pData(mgas_expt))
+#'  ## An example using count tables referenced in the metadata.
+#'  sb_annot <- load_trinotate_annotations(
+#'    trinotate=system.file("sb/trinotate_head.csv.xz", package="hpgltools"))
+#' sb_annot <- as.data.frame(sb_annot)
+#'   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique=TRUE)
+#'  sb_annot[["rownames"]] <- NULL
+#'  untarred <- utils::untar(tarfile=system.file("sb/preprocessing.tar.xz",
+#'                           package="hpgltools"))
+#'  sb_expt <- create_expt(metadata="preprocessing/kept_samples.xlsx",
+#'                         gene_info=sb_annot)
+#'  dim(exprs(sb_expt))
+#'  dim(fData(sb_expt))
+#'  pData(sb_expt)
+#'  ## There are lots of other ways to use this, for example:
+#'  \dontrun{
+#'   new_experiment <- create_expt(metadata="some_csv_file.csv", gene_info=gene_df)
+#'   ## Remember that this depends on an existing data structure of gene annotations.
+#'   meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
+#'   another_expt <- create_expt(metadata=meta, gene_info=annotations, count_dataframe=df_I_downloaded)
+#'  }
 #' @import Biobase
 #' @export
 create_expt <- function(metadata=NULL, gene_info=NULL, count_dataframe=NULL,

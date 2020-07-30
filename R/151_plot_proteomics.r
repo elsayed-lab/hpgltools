@@ -2,13 +2,12 @@
 #'
 #' I want to have a pretty plot of peak intensities and m/z.  The plot provided
 #' by this function is interesting, but suffers from some oddities; notably that
-#' it does not currently separate the MS1 and MS2 data.  Since I am stuck on
-#' this forsaken plane with no hope of ever leaving, perhaps I can add that now.
+#' it does not currently separate the MS1 and MS2 data.
 #'
 #' @param mzxml_data The data structure from extract_mzxml or whatever it is.
 #' @param loess Do a loess smoothing from which to extract a function
-#'   describing the data?  This is terribly slow, and in the data I have
-#'   examined so far, not very helpful, so it is FALSE by default.
+#'  describing the data?  This is terribly slow, and in the data I have
+#'  examined so far, not very helpful, so it is FALSE by default.
 #' @param alpha Make the plotted dots opaque to this degree.
 #' @param ms1 Include MS1 data in the plot?
 #' @param ms2 Include MS2 data in the plot?
@@ -32,16 +31,13 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
       next
     }
     keepers <- c(keepers, i)
-    message("Adding ", name)
+    ## message("Adding ", name)
     plotted_table <- sample_data[[i]][["scans"]]
-    ## Caveat!  I do not have my data while on this fucking plane, so I might
-    ## have forgotten the name of that column in the data.  If so, the following
-    ## will fail.
     if (!isTRUE(ms1)) {
       kept_idx <- plotted_table[["level"]] != "MS1"
       plotted_table <- plotted_table[kept_idx, ]
     }
-    if (!isTRUE(ms1)) {
+    if (!isTRUE(ms2)) {
       kept_idx <- plotted_table[["level"]] != "MS2"
       plotted_table <- plotted_table[kept_idx, ]
     }
@@ -103,17 +99,17 @@ plot_intensity_mz <- function(mzxml_data, loess=FALSE, alpha=0.5, ms1=TRUE, ms2=
 #' Make a boxplot out of some of the various data available in the mzxml data.
 #'
 #' There are a few data within the mzXML raw data files which are likely
-#'   candidates for simple summary via a boxplot/densityplot/whatever.  For the
-#'   moment I am just doing boxplots of a few of them.  Since my metadata
-#'   extractor dumps a couple of tables, one must choose a desired table and
-#'   column from it to plot.
+#' candidates for simple summary via a boxplot/densityplot/whatever.  For the
+#' moment I am just doing boxplots of a few of them.  Since my metadata
+#' extractor dumps a couple of tables, one must choose a desired table and
+#' column from it to plot.
 #'
 #' @param mzxml_data Provide a list of mzxml data, one element for each sample.
 #' @param table One of precursors or scans
 #' @param column One of the columns from the table; if 'scans' is chosen, then
-#'   likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
-#'   'precursors' is chosen, then the only likely choice for the moment is
-#'   'precursorintensity'.
+#'  likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
+#'  'precursors' is chosen, then the only likely choice for the moment is
+#'  'precursorintensity'.
 #' @param violin Print the samples as violins rather than only box/whiskers?
 #' @param names Names for the x-axis of the plot.
 #' @param title Title the plot?
@@ -136,7 +132,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
       next
     }
     keepers <- c(keepers, i)
-    message("Adding ", name)
+    ## message("Adding ", name)
     names(colors)[i] <- name
     plotted_table <- sample_data[[i]][[table]]
     plotted_data <- as.data.frame(plotted_table[[column]])
@@ -210,7 +206,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table="precursors", column="precursor
 #' @param pyprophet_data List containing the pyprophet results.
 #' @param type What to count/plot?
 #' @param keep_real Do we keep the real data when plotting the data? (perhaps
-#'   we only want the decoys)
+#'  we only want the decoys)
 #' @param keep_decoys Do we keep the decoys when plotting the data?
 #' @param expt_names Names for the x-axis of the plot.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
@@ -246,7 +242,7 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
       next
     }
     keepers <- c(keepers, i)
-    message("Adding ", name)
+    ## message("Adding ", name)
     plotted_table <- sample_data[[i]]
     if (!isTRUE(keep_decoys)) {
       good_idx <- plotted_table[["decoy"]] != 1
@@ -317,7 +313,7 @@ plot_pyprophet_counts <- function(pyprophet_data, type="count", keep_real=TRUE,
 #' @param keep_decoys Use the decoy identifications (vs. the real)?
 #' @param expt_names Manually change the labels to some other column than sample.
 #' @param label_chars Maximum number of characters in the label before
-#'   shortening.
+#'  shortening.
 #' @param x_type Column in the data to put on the x-axis.
 #' @param y_type Column in the data to put on the y-axis.
 #' @param title Plot title.
@@ -389,7 +385,7 @@ plot_pyprophet_xy <- function(pyprophet_data, keep_real=TRUE, size=6, label_size
 #' @param pyprophet_data List containing the pyprophet results.
 #' @param column What column of the pyprophet scored data to plot?
 #' @param keep_real Do we keep the real data when plotting the data? (perhaps
-#'   we only want the decoys)
+#'  we only want the decoys)
 #' @param keep_decoys Do we keep the decoys when plotting the data?
 #' @param expt_names Names for the x-axis of the plot.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
@@ -424,7 +420,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column="delta_rt", keep_
       next
     }
     keepers <- c(keepers, i)
-    message("Adding ", name)
+    ## message("Adding ", name)
     plotted_table <- sample_data[[i]]
     if (!isTRUE(keep_decoys)) {
       good_idx <- plotted_table[["decoy"]] != 1
@@ -607,7 +603,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
       next
     }
     keepers <- c(keepers, i)
-    message("Adding ", name)
+    ## message("Adding ", name)
     plotted_table <- sample_data[[i]]
     if (!isTRUE(keep_decoys)) {
       good_idx <- plotted_table[["decoy"]] != 1
@@ -754,7 +750,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column="intensity", keep_real
 #' openswath data after processing by pyprophet.
 #'
 #' @param pyprophet_data List of pyprophet data, one element for each sample,
-#'   taken from extract_peprophet_data()
+#'  taken from extract_peprophet_data()
 #' @param xaxis Column to plot on the x-axis
 #' @param xscale Change the scale of the x-axis?
 #' @param yaxis guess!
@@ -784,7 +780,7 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis="mass", xscale=NULL, sam
     if (class(sample_data[[i]])[1] == "try-error") {
       next
     }
-    message("Adding ", name)
+    ## message("Adding ", name)
     plotted_table <- sample_data[[i]]
     plotted_table[["sample"]] <- name
     if (is.null(sample)) {
@@ -1053,17 +1049,6 @@ cleavage_histogram <- function(pep_sequences, enzyme="trypsin",
   prod_df <- as.data.frame(products)
   prod_df <- dplyr::as.tbl(prod_df[, c("group_name", "value")])
   colnames(prod_df) <- c("group_name", "sequence")
-
-  gather_masses <- function(sequence) {
-    atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
-    if (class(atoms) != "try-error") {
-      d <- BRAIN::useBRAIN(atoms)
-      ret <- round(d[["avgMass"]])
-    } else {
-      ret <- 0
-    }
-    return(ret)
-  }
 
   new_df <- prod_df %>%
     dplyr::rowwise() %>%

@@ -43,7 +43,7 @@ clean_vignette:
 
 covr: install
 	@echo "Invoking covr::codecov()"
-	R -e "x <- covr::package_coverage('.'); covr::report(x)"
+	R -e "x <- covr::package_coverage('.'); covr::report(x, file='hpgltools-report.html')"
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
@@ -51,7 +51,7 @@ deps:
 
 document: roxygen vignette reference
 
-install: clean
+install: clean roxygen
 	@echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 
@@ -88,9 +88,7 @@ d = description\$$new(); suggests = d\$$get('Suggests');\
  suggests = strsplit(x=suggests, split=',');\
  for (pkg in suggests[[1]]) { if (! pkg %in% installed.packages()) { biocLite(pkg); } else { message(paste0(pkg, ' is already installed.')) } };"
 
-test: roxygen
-	@echo "Installing hpgltools."
-	R CMD INSTALL .
+test: install
 	@echo "Running run_tests.R"
 	tests/testthat.R
 

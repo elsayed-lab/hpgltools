@@ -490,7 +490,6 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
                                       mod=conditional_model,
                                       mod0=null_model))
    model_adjust <- as.matrix(surrogate_result[["sv"]])
-   print(model_adjust)
  },
  "sva_supervised" = {
    message("Attempting sva supervised surrogate estimation with ",
@@ -1441,7 +1440,6 @@ my_isva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
         }
       }
     }
-    print("Selecting ISVs")
     selisv.idx <- vector()
     for (sv in 1:nrow(pv.m)) {
       ncf <- length(which(pv.m[sv, 2:ncol(pv.m)] < pvthCF))
@@ -1454,14 +1452,14 @@ my_isva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
       }
     }
     if (length(selisv.idx) == 0) {
-      print("No ISVs selected because none correlated with the given confounders. Rerun ISVA with cf.m=NULL option")
-      stop
+      message("No ISVs selected because none correlated with the given confounders. Rerun ISVA with cf.m=NULL option")
+      stop()
     }
   }
 
-  print("Running final multivariate regressions with selected ISVs")
+  message("Running final multivariate regressions with selected ISVs")
   selisv.m <- matrix(isva.o[["isv"]][, selisv.idx], ncol=length(selisv.idx))
-  print(selisv.m)
+  ## print(selisv.m)
   mod <- model.matrix(~ pheno.v + selisv.m)
   modNULL <- model.matrix(~ selisv.m)
   isv_fit <- limma::lmFit(data.m, design=modNULL)
@@ -1486,8 +1484,7 @@ my_isva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
   ##qv.v <- qvalue(pv.s[["x"]])[["qvalue"]]
   ntop <- length(which(qv.v < th))
   sig_mtrx <- as.matrix(data.m[pred.idx, ])
-  print(paste("Number of DEGs after ISV adjustment = ",
-              ntop, sep = ""))
+  message("Number of DEGs after ISV adjustment = ", ntop)
   if (ntop > 0) {
     pred.idx <- pv.s[["ix"]][1:ntop]
     lm.o <- lm(t(data.m) ~ pheno.v + selisv.m)

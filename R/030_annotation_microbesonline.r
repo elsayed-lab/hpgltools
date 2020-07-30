@@ -6,7 +6,7 @@
 #'
 #' @param id Species ID to query.
 #' @param type File type(s) to download, if left null it will grab the genbank,
-#'   tab, protein fasta, transcript fasta, and genome.
+#'  tab, protein fasta, transcript fasta, and genome.
 #' @return List describing the files downloaded and their locations.
 download_microbesonline_files <- function(id="160490", type=NULL) {
   retlist <- list()
@@ -106,9 +106,8 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' @param species String to search the set of microbesonline taxa.
 #' @return NULL or 1 or more taxon ids.
 #' @examples
-#'  \dontrun{
-#'  coli_ids <- get_microbesonline_taxid("coli")
-#' }
+#'  coli_taxids <- get_microbesonline_taxid(species="coli S88")
+#'  head(coli_taxids)
 #' @export
 get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
   id_url <- "http://microbesonline.org/cgi-bin/fetchGenome2.cgi?taxId=g1&byFavorites=1"
@@ -131,12 +130,12 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
   } else if (length(foundp) == 1) {
     result <- id_df[foundp, ]
     message("Found 1 entry.")
-    print(result)
+    message(result)
     ret <- result[["tax_id"]]
   } else {
     result <- id_df[foundp, ]
     message("Found multiple entries.")
-    print(result)
+    message(result)
     ret <- result[["tax_id"]]
     names(ret) <- result[["Genome"]]
   }
@@ -161,9 +160,8 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
 #' @return Dataframe containing the annotation information.
 #' @seealso \pkg{rvest}
 #' @examples
-#' \dontrun{
-#'  annotations <- get_microbesonline_annotations(species="coli")
-#' }
+#'  pa14_microbesonline_annot <- load_microbesonline_annotations(species="PA14")
+#'  colnames(pa14_microbesonline_annot)
 #' @export
 load_microbesonline_annotations <- function(species=NULL, id=NULL) {
   if (is.null(id) & is.null(species)) {
@@ -208,9 +206,8 @@ load_microbesonline_annotations <- function(species=NULL, id=NULL) {
 #' @param name Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from www.microbesonline.org
 #' @examples
-#' \dontrun{
-#'  go_df <- get_microbesonline_go(species="coli")
-#' }
+#'  pa14_microbesonline_go <- load_microbesonline_go(species="PA14")
+#'  head(pa14_microbesonline_go)
 #' @export
 load_microbesonline_go <- function(id=NULL, species=NULL, table_df=NULL, id_column="name",
                                    data_column="GO", name=NULL) {
@@ -233,7 +230,7 @@ load_microbesonline_go <- function(id=NULL, species=NULL, table_df=NULL, id_colu
   if (! id_column %in% colnames(table_df)) {
     message(id_column, " was not found in the table, here are the available columns: ",
             toString(colnames(table_df)))
-    print(head(as.data.frame(table_df), n=2))
+    ## message(head(as.data.frame(table_df), n=2))
     stop()
   }
   go_df <- table_df[, c(id_column, data_column)] %>%

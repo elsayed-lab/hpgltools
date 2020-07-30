@@ -23,18 +23,19 @@
 #' @param length_requests Set of columns to query for location-ish annotations.
 #' @param include_lengths Also perform a search on structural elements in the genome?
 #' @return List containing: a data frame of the found annotations, a copy of
-#'   the mart instance to help with finding problems, the hostname queried, the
-#'   name of the mart queried, a vector of rows queried, vector of the available
-#'   attributes, and the ensembl dataset queried.
+#'  The mart instance to help with finding problems, the hostname queried, the
+#'  name of the mart queried, a vector of rows queried, vector of the available
+#'  attributes, and the ensembl dataset queried.
 #' @seealso \pkg{biomaRt}
 #'  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
 #' @examples
-#' \dontrun{
-#'  tt = get_biomart_annotations()
-#' }
+#'  ## This downloads the hsapiens annotations by default.
+#'  hs_biomart_annot <- load_biomart_annotations()
+#'  summary(hs_biomart_annot)
+#'  dim(hs_biomart_annot$annotation)
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                     host="sep2019.archive.ensembl.org",
+                                     host="useast.ensembl.org",
                                      drop_haplotypes=TRUE, trymart="ENSEMBL_MART_ENSEMBL",
                                      trydataset=NULL,
                                      gene_requests=c("ensembl_gene_id",
@@ -184,7 +185,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     "mart" = ensembl,
     "host" = host,
     "mart_name" = used_mart,
-    "rows" = chosen_annotations,
+    "columns" = chosen_annotations,
     "possible_attribs" = available_attribs,
     "dataset" = chosen_dataset
   )
@@ -213,16 +214,16 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
 #' @param dl_rows List of rows from the final biomart object to download.
 #' @param dl_rowsv2 A second list of potential rows.
 #' @return List containing the following:  data frame of ontology data, a copy
-#'   of the biomart instance for further querying, the host queried, the biomart
-#'   queried, a vector providing the attributes queried, and the ensembl dataset
-#'   queried.
+#'  of the biomart instance for further querying, the host queried, the biomart
+#'  queried, a vector providing the attributes queried, and the ensembl dataset
+#'  queried.
 #' @seealso \pkg{biomaRt}
-#'   \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
-#'   \code{\link[biomaRt]{getBM}}
+#'  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
+#'  \code{\link[biomaRt]{getBM}}
 #' @examples
-#' \dontrun{
-#'  tt = get_biomart_ontologies()
-#' }
+#'  hs_biomart_ontology <-load_biomart_go()
+#'  summary(hs_biomart_ontology)
+#'  dim(hs_biomart_ontology$go)
 #' @export
 load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
                             host="dec2015.archive.ensembl.org", trymart="ENSEMBL_MART_ENSEMBL",
@@ -350,17 +351,14 @@ load_biomart_go <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
 #' @param trymart Assumed mart name to use.
 #' @param attributes Key to query
 #' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
-#'   to always send them all; the second is the subset corresponding to the
-#'   actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
+#'  to always send them all; the second is the subset corresponding to the
+#'  actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 #' @seealso \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
 #'  \code{\link[biomaRt]{useMart}}
 #' @examples
-#' \dontrun{
-#'  mouse_genes <- biomart_orthologs(some_ids)
-#'  ## Hopefully the defaults are sufficient to translate from human to mouse.
-#'  yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus',
-#'                                   second_species='scerevisiae')
-#' }
+#'  mouse_yeast_orthologs <- load_biomart_orthologs(gene_ids=NULL, first_species="mmusculus",
+#'                                                  second_species="scerevisiae")
+#'  head(mouse_yeast_orthologs$all_linked_genes)
 #' @export
 load_biomart_orthologs <- function(gene_ids=NULL, first_species="hsapiens",
                                    second_species="mmusculus",

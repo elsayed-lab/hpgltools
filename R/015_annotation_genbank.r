@@ -12,13 +12,12 @@
 #' @param reread Re-read (download) the file from genbank
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
-#'   haven't yet finalized.
+#'  haven't yet finalized.
 #' @seealso \pkg{genbankr} \pkg{rentrez}
 #'  \code{\link[genbankr]{import}}
 #' @examples
-#' \dontrun{
-#'  txdb_result <- load_genbank_annotations(accession="AE009948", savetxdb=TRUE)
-#' }
+#'  sagalacticae_genbank_annot <- load_genbank_annotations(accession="AE009948")
+#'  dim(as.data.frame(sagalacticae_genbank_annot$cds))
 #' @export
 load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
   gbk <- NULL
@@ -50,7 +49,8 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 
 #' Extract some useful information from a gbk imported as a txDb.
 #'
-#' Maybe this should get pulled into the previous function?
+#' This function no longer really stands on its own, but is more accessible
+#' from load_genbank_annotations().
 #'
 #' Tested in test_40ann_biomartgenbank.R
 #' This function should provide a quick reminder of how to use the AnnotationDbi
@@ -66,10 +66,6 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
 #' @return Granges data
 #' @seealso \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
 #'  \code{\link[AnnotationDbi]{select}}
-#' @examples
-#' \dontrun{
-#'  annotations <- gbk_annotations("saureus_txdb")
-#' }
 #' @export
 gbk_annotations <- function(gbr) {
   ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
@@ -102,9 +98,8 @@ gbk_annotations <- function(gbr) {
 #'   strings acquired.
 #' @seealso \pkg{ape}
 #' @examples
-#' \dontrun{
-#'  gbk_file <- download_gbk(accessions="AE009949")
-#' }
+#'  written <- download_gbk(accessions="AE009949")
+#'  written$written_file
 #' @author The ape authors with some modifications by atb.
 #' @export
 download_gbk <- function(accessions="AE009949", write=TRUE) {
@@ -113,6 +108,7 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
   downloaded <- character(0)
   num_downloaded <- 0
   strings <- list()
+  written_file <- NULL
   for (i in 1:nrequest) {
     a <- (i - 1) * 400 + 1
     b <- 400 * i
@@ -136,13 +132,15 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
       num_downloaded <- num_downloaded + 1
     }
     strings[[accession]] <- downloaded
+    written_file <- glue("{accessions[a]}.gb")
     if (isTRUE(write)) {
-      file_connection <- file(glue("{accessions[a]}.gb"))
+      file_connection <- file(written_file)
       writeLines(downloaded, file_connection)
       close(file_connection)
     }
   } ## End of for loop
   retlist <- list(
+    "written_file" = written_file,
     "num_success" = num_downloaded,
     "strings" = strings)
   return(retlist)

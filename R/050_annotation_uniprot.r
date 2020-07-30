@@ -12,9 +12,9 @@
 #' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
 #' @examples
-#'  \dontrun{
-#'   uniprot_file <- download_uniprot_proteome(species="Saccharomyces cerevisiae")
-#' }
+#'  uniprot_sc_downloaded <- download_uniprot_proteome(species="Saccharomyces cerevisiae S288c")
+#'  uniprot_sc_downloaded$filename
+#'  uniprot_sc_downloaded$species
 #' @export
 download_uniprot_proteome <- function(accession=NULL, species=NULL,
                                       taxonomy=NULL, all=FALSE, first=FALSE) {
@@ -109,6 +109,9 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
 #' @param species Species name to download/load.
 #' @param savefile Do a save?
 #' @return Big dataframe of annotation data.
+#' @examples
+#'  sc_uniprot_annot <- load_uniprot_annotations(file=uniprot_sc_downloaded$filename)
+#'  dim(sc_uniprot_annot)
 #' @export
 load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
   if (is.null(file) & is.null(species)) {
@@ -565,8 +568,16 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
   return(uniprot_data)
 }
 
+#' Extract ontology information from a uniprot dataframe.
+#'
+#' @param input uniprot filename or dataframe.
+#' @return Ontology dataframe
+#' @examples
+#'  sc_uniprot_go <- load_uniprot_go(sc_uniprot_annot)
+#'  head(sc_uniprot_go)
+#' @export
 load_uniprot_go <- function(input) {
-  if (class(input)[1] == "character") {
+  if ("character" %in% class(input)) {
     input <- load_uniprot_annotations(file=input)
   } else if ("data.frame" %in% class(input)) {
     input <- as.data.frame(input)

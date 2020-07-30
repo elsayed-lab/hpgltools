@@ -8,10 +8,9 @@
 #' @param trinotate CSV of trinotate annotation data.
 #' @return Dataframe of fun data.
 #' @examples
-#' \dontrun{
-#'  annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
-#'  expt <- create_expt(metadata="metadata.xlsx", gene_info=annotation_dt)
-#' }
+#'  trinotate <- system.file("sb/trinotate_head.csv.xz", package="hpgltools")
+#'  a_few_trinotate <- load_trinotate_annotations(trinotate=trinotate)
+#'  dim(a_few_trinotate)
 #' @export
 load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
   split_data <- sm(readr::read_tsv(trinotate))
@@ -158,9 +157,9 @@ load_trinotate_annotations <- function(trinotate="reference/trinotate.csv") {
 #' @return List of the extracted GO data, a table of it, length data, and the
 #'   resulting length table.
 #' @examples
-#' \dontrun{
-#'  go_lst <- load_trinotate_go("trinotate.csv.xz")
-#' }
+#'  trinotate_go <- load_trinotate_go(trinotate=trinotate)
+#'  dim(trinotate_go$go_data)
+#'  dim(trinotate_go$go_table)
 #' @export
 load_trinotate_go <- function(trinotate="reference/trinotate.csv") {
   big_table <- data.table::as.data.table(sm(readr::read_tsv(trinotate)))

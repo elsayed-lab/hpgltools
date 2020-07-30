@@ -12,9 +12,9 @@
 #' @param include_go  Ask the Dbi for gene ontology information?
 #' @param keytype mmm the key type used?
 #' @param strand_column  There are a few fields I want to gather by default:
-#'   start, end, strand, chromosome, type, and name; but these do not
-#'   necessarily have consistent names, use this column for the chromosome
-#'   strand.
+#'  start, end, strand, chromosome, type, and name; but these do not
+#'  necessarily have consistent names, use this column for the chromosome
+#'  strand.
 #' @param start_column  Use this column for the gene start.
 #' @param end_column  Use this column for the gene end.
 #' @param chromosome_column  Use this column to identify the chromosome.
@@ -27,9 +27,8 @@
 #'  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
 #' @examples
-#' \dontrun{
-#'  one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
-#' }
+#'  hs_orgdb_annot <- load_orgdb_annotations()
+#'  summary(hs_orgdb_annot$genes)
 #' @export
 load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
                                    keytype="ensembl", strand_column="cdsstrand",
@@ -196,13 +195,10 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
 #' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
 #'  \code{\link[AnnotationDbi]{select}}
 #' @examples
-#' \dontrun{
-#'  library(Mus.musculus)
-#'  org <- "Mus.musculus"
-#'  go_terms <- load_orgdb_go(org)
-#' }
+#'  drosophila_orgdb_go <- load_orgdb_go(orgdb="org.Dm.eg.db")
+#'  head(drosophila_orgdb_go)
 #' @author I think Keith provided the initial implementation of this, but atb
-#'   messed with it pretty extensively.
+#'  messed with it pretty extensively.
 #' @export
 load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
                           columns=c("go", "goall", "goid")) {
@@ -210,7 +206,7 @@ load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
     eval(parse(text=org_pkgstring))
-  } else if (class(orgdb) == "character") {
+  } else if ("character" %in% class(orgdb)) {
     org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
     eval(parse(text=org_pkgstring))
   }
@@ -278,16 +274,6 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
   return(go_terms)
 }
 
-#' I see no reason to have load_host_annotations and load_parasite_annotations.
-#'
-#' Thus I am making them both into aliases to load_annotations.
-#'
-#' @param ... Arguments to be passed to load_annotations.
-#' @export
-load_parasite_annotations <- function(...) {
-  load_orgdb_annotations(...)
-}
-
 #' Map AnnotationDbi keys from one column to another.
 #'
 #' Given a couple of keytypes, this provides a quick mapping across them.  I
@@ -303,13 +289,19 @@ load_parasite_annotations <- function(...) {
 #' @seealso \pkg{AnnotationDbi}
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
-#' \dontrun{
-#'  org <- "org.Sneurona.SO.SN1.v42.eg.db"
-#'  gid_to_ensg <- map_orgdb_ids(org, mapto="ensembl", keytype="gid")
-#' }
+#'  dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto="ensembl", keytype="unigene")
+#'  head(dm_unigene_to_ensembl)
 #' @author Keith Hughitt with changes by atb.
 #' @export
-map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="geneid") {
+map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto="ensembl", keytype="geneid") {
+  if (is.null(orgdb)) {
+    message("Assuming Homo.sapiens.")
+    org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
+    eval(parse(text=org_pkgstring))
+  } else if ("character" %in% class(orgdb)) {
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
+    eval(parse(text=org_pkgstring))
+  }
   mapto <- toupper(mapto)
   keytype <- toupper(keytype)
   avail_keytypes <- AnnotationDbi::keytypes(orgdb)
@@ -356,13 +348,19 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto=c("ensembl"), keytype="gen
 #' @param orgdb Orgdb instance to iterate through.
 #' @return Likely keytype which provides the desired IDs.
 #' @examples
-#'  \dontrun{
-#'   orgdb <- "org.Sneurona.SO.SN1.v42.eg.db"
-#'   ids <- c("SNRNA_01", "SNRNA_02")
-#'   chosen_column <- guess_orgdb_keytype(ids, orgdb)
-#' }
+#'  ids <- c("Dm.9", "Dm.2294", "Dm.4971")
+#'  keytype_guess <- guess_orgdb_keytype(ids, orgdb)
+#'  keytype_guess
 #' @export
 guess_orgdb_keytype <- function(ids, orgdb) {
+  if (is.null(orgdb)) {
+    message("Assuming Homo.sapiens.")
+    org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
+    eval(parse(text=org_pkgstring))
+  } else if ("character" %in% class(orgdb)) {
+    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
+    eval(parse(text=org_pkgstring))
+  }
   found_ids <- 0
   current_type <- NULL
   possible_keytypes <- AnnotationDbi::keytypes(orgdb)

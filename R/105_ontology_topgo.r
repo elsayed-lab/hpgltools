@@ -608,14 +608,11 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
     nodeInfo <- character(graph::numNodes(dag))
     names(nodeInfo) <- graph::nodes(dag)
   } else {
-    ##        print(class(nodeInfo))
     ##        nodeInfo <- paste('\\\n', nodeInfo, sep = '')
     nodeInfo <- gsub(pattern="(\\w.{18}).*(\\\\\\n)",
                      replacement="\\1\\2", x=nodeInfo, perl=TRUE)
     nodeInfo <- glue("\\\n{nodeInfo}")
   }
-  ##teststring = paste("test:", nodeInfo)
-  ##print(teststring)
 
   ## a good idea is to use xxxxxxx instead of GO:xxxxxxx as node labes
   node.names <- graph::nodes(dag)
@@ -659,8 +656,6 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name="GO terms", edgeTypes=TRUE,
       logSigNodes[logSigNodes > old.range[2]] <- old.range[2]
       ## debug:  old.range == range(logSigNodes)
       ## if(!identical(all.equal(old.range, range(logSigNodes)), TRUE)) {
-      ## print(old.range)
-      ## print(range(logSigNodes))
       ## stop('some stupid error here :)')
       ## }
     } else {
