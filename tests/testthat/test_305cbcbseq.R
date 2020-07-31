@@ -124,12 +124,12 @@ test_that("In preparing for voom(), are the library sizes maintained?", {
 ## Given that, lets try a voom() invocation and see what happens.
 condition <- design[["condition"]]
 test_model <- model.matrix(~condition)
-cbcb_voom <- cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize)
-hpgl_voom <- cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize)
-hpgl_voom2 <- hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model,
-                                   libsize=hpgl_libsize, logged=TRUE, converted=TRUE)
-hpgl_voom3 <- hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model,
-                                   libsize=hpgl_libsize, logged=FALSE, converted=FALSE)
+cbcb_voom <- suppressWarnings(cbcbSEQ::voomMod(x=as.matrix(cbcb_l2qcpm), design=test_model, lib.size=cbcb_libsize))
+hpgl_voom <- suppressWarnings(cbcbSEQ::voomMod(x=as.matrix(hpgl_l2qcpm), design=test_model, lib.size=hpgl_libsize))
+hpgl_voom2 <- suppressWarnings(hpgltools::hpgl_voom(as.matrix(hpgl_l2qcpm), model=test_model,
+                                   libsize=hpgl_libsize, logged=TRUE, converted=TRUE))
+hpgl_voom3 <- suppressWarnings(hpgltools::hpgl_voom(as.matrix(hpgl_quantile), test_model,
+                                                    libsize=hpgl_libsize, logged=FALSE, converted=FALSE))
 expected <- cbcb_voom
 actual <- hpgl_voom
 test_that("Do different voom() invocations end with the same result?", {
@@ -148,8 +148,8 @@ test_that("Does calling hpgltools::voom with hpgl-modified data return the same 
 
 ## To be extra-paranoid, make sure that the limma_pairwise() function invokes voom correctly.
 ## Note that this is where the data-ordering problems appear.
-hpgl_limma <- limma_pairwise(input=hpgl_l2qcpm_expt, model_batch=FALSE, limma_method="ls",
-                             model_intercept=TRUE, which_voom="hpgl")
+hpgl_limma <- suppressWarnings(limma_pairwise(input=hpgl_l2qcpm_expt, model_batch=FALSE, limma_method="ls",
+                                              model_intercept=TRUE, which_voom="hpgl"))
 
 ## First check the voom result from limma_pairwise
 hpgl_limma_voom <- hpgl_limma[["voom_result"]]

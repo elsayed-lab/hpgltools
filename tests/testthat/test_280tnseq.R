@@ -121,8 +121,7 @@ names(colors) <- c("E", "NE", "S", "U")
 low_df <- a909_tables[["data"]][["low_vs_control"]]
 high_df <- a909_tables[["data"]][["high_vs_control"]]
 
-circos_cfg <- circos_prefix(annotation=a909_annot, name="a909",
-                            start_column="start.x", strand_column="strand.x")
+circos_cfg <- circos_prefix(annotation=a909_annot, name="a909")
 a909_fasta <- system.file("gbs_tnseq/sagalactiae_a909.fasta", package="hpgltools")
 a909_kary <- circos_karyotype(circos_cfg, fasta=a909_fasta)
 a909_plus_minus <- circos_plus_minus(circos_cfg, width=0.06, thickness=40)

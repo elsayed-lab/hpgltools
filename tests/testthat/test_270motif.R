@@ -12,12 +12,12 @@ lm_bsg <- pkgnames[["bsgenome"]]
 
 motif_input <- system.file("motif/pro_high.fasta", package="hpgltools")
 
-lm_gadem <- simple_gadem(motif_input, genome=lm_bsg, p=1.0)
+lm_gadem <- sm(simple_gadem(motif_input, genome=lm_bsg, p=1.0))
 
-actual <- lm_gadem[["pvals"]][["CGTGCGTGTG"]]
-expected <- 4.686288e-05
+actual <- lm_gadem[["pvals"]][[1]]
+expected <- 5e-5
 test_that("Do we get an expected p-value?", {
-  expect_equal(actual, expected)
+  expect_lt(actual, expected)
 })
 
 end <- as.POSIXlt(Sys.time())

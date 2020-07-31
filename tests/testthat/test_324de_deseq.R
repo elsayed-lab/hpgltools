@@ -13,6 +13,8 @@ design <- limma[["design"]]
 
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
+metadata[["condition"]] <- as.factor(metadata[["condition"]])
+metadata[["batch"]] <- as.factor(metadata[["batch"]])
 ## Performing DESeq2 differential expression analysis as per the DESeq vignette.
 summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
                                              colData=metadata,
