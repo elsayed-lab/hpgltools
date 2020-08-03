@@ -232,6 +232,16 @@ test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_condbatch_combined[["data"]]), 15)
 })
 
+few <- list(
+    "first" = c("wt30", "wt15"),
+    "second" = c("wt30", "wt0"))
+small_combined <- combine_de_tables(test_condbatch, keepers=few)
+expected <- 2
+actual <- length(small_combined[["data"]])
+test_that("combine_de_tables() with keepers worked?", {
+  expect_equal(expected, actual)
+})
+
 ## Same query, condition in model
 test_cond_combined <- combine_de_tables(test_cond)
 ## 25

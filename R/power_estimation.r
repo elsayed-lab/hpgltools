@@ -261,7 +261,7 @@ my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
     dat.sim.big <- PROPER::simRNAseq(sim.opts, n1, n2)
     DEids[[i]] <- dat.sim.big[["DEid"]]
     lfcs[[i]] <- dat.sim.big[["simOptions"]][["lfc"]]
-    for (j in 1:Nreps) {
+    for (j in 1:length(Nreps)) {
       nn1 <- Nreps[j]
       nn2 <- Nreps2[j]
       idx <- c(1:nn1, n1 + (1:nn2))

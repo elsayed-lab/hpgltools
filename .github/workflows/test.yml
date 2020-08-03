@@ -29,8 +29,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
-        sudo apt-get install circos
+        sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev default-jre default-jdk circos libxml2-dev
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
@@ -42,6 +41,13 @@ jobs:
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
+        mkdir -p ${HOME}/R
+        echo "R_LIBS_SITE=${HOME}/R" > ${HOME}/.bashrc
+        export R_LIBS_SITE=${HOME}/R
+        echo "R_LIBS=${HOME}/R" >> ${HOME}/.bashrc
+        export R_LIBS=${HOME}/R
+        echo "R_LIBS_USER=${HOME}/R" >> ${HOME}/.bashrc
+        export R_LIBS_USER=${HOME}/R
     - name: Install R prerequisites
       run: make prereq
     - name: GoSemSim
