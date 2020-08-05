@@ -27,9 +27,8 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        apt-cache search curl
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
-        sudo apt-get install circos
+        sudo apt-get install circos libsvg-perl
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
@@ -46,9 +45,10 @@ jobs:
     - name: Install R prerequisites
       run: make prereq
 
-    - name: GoSemSim
+    - name: github_R_prerequisites
       run: |
         devtools::install_github("YuLab-SMU/GOSemSim")
+        devtools::install_github("abelew/EuPathDB")
       shell: Rscript {0}
 
     - name: Query dependencies
