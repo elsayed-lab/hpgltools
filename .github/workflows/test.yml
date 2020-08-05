@@ -7,8 +7,8 @@ on:
 name: CI
 jobs:
   build:
-    runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    runs-on: ubuntu-latest
+    name: testing hpgltools
     strategy:
       fail-fast: false
       matrix:
