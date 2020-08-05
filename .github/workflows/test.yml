@@ -29,9 +29,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev default-jre default-jdk circos libxml2-dev
-    - uses: actions/checkout-master
 
     - name: Install R
+    - uses: actions/checkout-master
       uses: r-lib/actions/setup-R@v1
       with:
         r-version: ${{ matrix.R }}
