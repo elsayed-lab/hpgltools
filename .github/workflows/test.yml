@@ -28,16 +28,20 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
-        sudo apt-get install circos libsvg-perl
+        sudo apt-get install circos libsvg-perl default-jdk
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
     - uses: r-lib/actions/setup-pandoc@master
     - uses: actions/checkout@v2
 
+    - name: R java reconf
+      run : |
+        sudo R CMD javareconf
+
     - name: Set Rprofile
       run: |
-        echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
+        echo "options(Ncpus=2)" > ${HOME}/.Rprofile
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
@@ -49,6 +53,8 @@ jobs:
       run: |
         devtools::install_github("YuLab-SMU/GOSemSim")
         devtools::install_github("abelew/EuPathDB")
+        devtools::install_github("js229/Vennerable")
+        devtools::install_github("kokrah/cbcbSEQ")
       shell: Rscript {0}
 
     - name: Query dependencies

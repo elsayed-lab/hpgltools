@@ -26,7 +26,7 @@ Suggests:
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, ggstatsplot, ggthemes, goseq, GO.db, googleVis, GOstats,
-  graph, GSVA, gtools, gplots, gProfileR, gprofiler2, GSEABase,
+  graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2, GSEABase,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
   IHW, inflection, IRanges, isva, iterators,
   jsonlite,
@@ -42,9 +42,8 @@ Suggests:
   S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats, sva,
   taxize, testthat, tidyr, topGO, tximport,
   UniProt.ws, uwot,
-  xCell,
-  Vennerable, venneuler,
-  xml2
+  xCell, xml2,
+  Vennerable, venneuler
 Imports:
   data.table, dplyr,
   foreach,
