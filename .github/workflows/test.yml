@@ -33,9 +33,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev default-jre default-jdk circos libxml2-dev
 
-      - name: Install pandoc
       - uses: actions/checkout@master
-      - uses: r-lib/actions/setup-pandoc@v1
+      - name: Install pandoc
+        uses: r-lib/actions/setup-pandoc@v1
       - run: echo "Installed pandoc."
 
       - name: Set Rprofile
