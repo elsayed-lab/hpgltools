@@ -29,7 +29,7 @@ jobs:
         uses: r-lib/actions/setup-R@v1
         with:
           r-version: ${{ matrix.R }}
-        run: |
+      - run: |
           sudo apt-get update
           sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev default-jre default-jdk circos libxml2-dev
 
