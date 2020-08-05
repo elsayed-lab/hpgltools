@@ -13,8 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - {os: ubuntu-latest, r: '3.6.1'}
+        R: [ '4.0.2' ]
     env:
        AUTHOR_TESTING: 1
        AUTOMATED_TESTING: 1
@@ -30,11 +29,15 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev default-jre default-jdk circos libxml2-dev
-    - uses: r-lib/actions/setup-r@master
+    - uses: actions/checkout-master
+
+    - name: Setup R
+    - uses: r-lib/actions/setup-R@v1
       with:
-        r-version: ${{ matrix.config.r }}
-    - uses: r-lib/actions/setup-pandoc@master
-    - uses: actions/checkout@v2
+        r-version: ${{ matrix.R }}
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-pandoc@v1
+
     - name: Set Rprofile
       run: |
         echo "options(Ncpus = 2)" > ${HOME}/.Rprofile
@@ -48,17 +51,21 @@ jobs:
         export R_LIBS=${HOME}/R
         echo "R_LIBS_USER=${HOME}/R" >> ${HOME}/.bashrc
         export R_LIBS_USER=${HOME}/R
+
     - name: Install R prerequisites
       run: make prereq
+
     - name: GoSemSim
       run: |
         devtools::install_github("YuLab-SMU/GOSemSim")
       shell: Rscript {0}
+
     - name: Query dependencies
       run: |
         install.packages("remotes")
         saveRDS(remotes::dev_package_deps(dependencies=TRUE), "depends.Rds", version=2)
       shell: Rscript {0}
+
     - name: Install system dependencies
       env:
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
@@ -66,12 +73,15 @@ jobs:
         Rscript -e "remotes::install_github('r-hub/sysreqs')"
         sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo -s eval "$sysreqs"
+
     - name: Install dependencies
       run: |
         remotes::install_deps(dependencies=TRUE)
         remotes::install_cran("lintr")
       shell: Rscript {0}
+
     - name: Install hpgltools prerequisites
       run: make deps
+
     - name: Run tests
       run: make test
