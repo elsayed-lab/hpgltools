@@ -2442,6 +2442,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_col <- 1
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
 
+  ## Set up a vector of images to clean up when finished.
+  image_files <- c()
+
   ## For medians_by_condition, put the counts or annotations first?
   merge_order <- "counts_first"
   if (!is.null(arglist[["merge_order"]])) {
@@ -2531,11 +2534,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(legend_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="01_legend", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   libsize_plot <- metrics[["libsize"]]
   try_result <- xlsx_plot_png(libsize_plot, wb=wb, sheet=sheet, width=plot_dim, height=plot_dim,
                               start_col=new_col, start_row=new_row,
                               plotname="02_libsize", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
 
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
@@ -2543,6 +2552,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(nonzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="03_nonzero", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
 
   ## Visualize distributions
@@ -2559,21 +2571,33 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(density_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="04_density", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   boxplot_plot <- metrics[["boxplot"]]
   try_result <- xlsx_plot_png(boxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="05_boxplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   topn_plot <- metrics[["topnplot"]]
   try_result <- xlsx_plot_png(topn_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="06_topnplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   cv_plot <- metrics[["cvplot"]]
   try_result <- xlsx_plot_png(cv_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="07_cvplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- 1
 
   ## Move down next set of rows, heatmaps
@@ -2590,11 +2614,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(corheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="08_corheat", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   disheat_plot <- metrics[["disheat"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(disheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="09_disheat", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   if (isTRUE(sample_heat)) {
     tmp_expt <- sm(normalize_expt(expt, transform="log2", filter=TRUE))
     sampleheat_plot <- plot_sample_heatmap(tmp_expt)
@@ -2602,6 +2632,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
                                 plotname="09a_sampleheat", savedir=excel_basename)
+    if (! "try-error" %in% class(try_result)) {
+      image_files <- c(image_files, try_result[["filename"]])
+    }
   }
   new_col <- 1
 
@@ -2619,11 +2652,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(smc_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="10_smc", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   smd_plot <- metrics[["smd"]]
   try_result <- xlsx_plot_png(smd_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="11_smd", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- 1
 
   ## PCA, PCA(l2cpm) and qq_log
@@ -2656,10 +2695,16 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(pca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="12_pcaplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(pca_topn, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="13_pctopn", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   tmp_data <- sm(normalize_expt(expt, transform="log2", convert="cpm",
                                 ...))
   rpca <- plot_pca(tmp_data,
@@ -2675,19 +2720,31 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(rspca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="14_norm_pcaplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(tsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="15_tsneplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(rtsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="16_rtsneplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   qq_plot <- metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(qq_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="17_qqlog", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- 1
 
   violin_plot <- NULL
@@ -2703,12 +2760,18 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       try_result <- xlsx_plot_png(violin_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
                                   plotname="18_violin", savedir=excel_basename)
+      if (! "try-error" %in% class(try_result)) {
+        image_files <- c(image_files, try_result[["filename"]])
+      }
       new_col <- new_col + plot_cols + 1
 
       pct_plot <- varpart_raw[["percent_plot"]]
       try_result <- xlsx_plot_png(pct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
                                   plotname="19_pctvar", savedir=excel_basename)
+      if (! "try-error" %in% class(try_result)) {
+        image_files <- c(image_files, try_result[["filename"]])
+      }
     }
   }
 
@@ -2765,17 +2828,26 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_plot <- norm_metrics[["legend"]]
   try_result <- xlsx_plot_png(new_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   nlibsize_plot <- norm_metrics[["libsize"]]
   try_result <- xlsx_plot_png(nlibsize_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="20_nlibsize", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
   nnzero_plot <- norm_metrics[["nonzero"]]
   try_result <- xlsx_plot_png(nnzero_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="21_nnzero", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
 
   ## Visualize distributions
@@ -2792,16 +2864,25 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(ndensity_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="22_ndensity", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   nboxplot_plot <- norm_metrics[["boxplot"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nboxplot_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="23_nboxplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   ntopn_plot <- norm_metrics[["topnplot"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ntopn_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="24_nboxplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- 1
 
   ## Move down next set of rows, heatmaps
@@ -2818,17 +2899,26 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(ncorheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="25_ncorheat", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   ndisheat_plot <- norm_metrics[["disheat"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ndisheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="26_ndisheat", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   if (isTRUE(sample_heat)) {
     sampleheat_plot <- plot_sample_heatmap(norm_data)
     new_col <- new_col + plot_cols + 1
     try_result <- xlsx_plot_png(sampleheat_plot, wb=wb, sheet=sheet, width=plot_dim,
                                 height=plot_dim, start_col=new_col, start_row=new_row,
                                 plotname="26a_sampleheat", savedir=excel_basename)
+    if (! "try-error" %in% class(try_result)) {
+      image_files <- c(image_files, try_result[["filename"]])
+    }
   }
   new_col <- 1
 
@@ -2846,11 +2936,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(nsmc_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="27_nsmc", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   nsmd_plot <- norm_metrics[["smd"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nsmd_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="28_nsmd", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- 1
 
   ## PCA and qq_log
@@ -2877,19 +2973,31 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   try_result <- xlsx_plot_png(npca_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="29_npcaplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(npc_topnplot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="30_npcloadplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(ntsne_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="31_ntsneplot", savedir=excel_basename, fancy_type="svg")
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
   nqq_plot <- norm_metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
   try_result <- xlsx_plot_png(nqq_plot, wb=wb, sheet=sheet, width=plot_dim,
                               height=plot_dim, start_col=new_col, start_row=new_row,
                               plotname="32_nqqplot", savedir=excel_basename)
+  if (! "try-error" %in% class(try_result)) {
+    image_files <- c(image_files, try_result[["filename"]])
+  }
 
   new_col <- 1
 
@@ -2906,11 +3014,17 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
       try_result <- xlsx_plot_png(nvarpart_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
                                   plotname="33_nviolin", savedir=excel_basename)
+      if (! "try-error" %in% class(try_result)) {
+        image_files <- c(image_files, try_result[["filename"]])
+      }
       new_col <- new_col + plot_cols + 1
       npct_plot <- varpart_norm[["percent_plot"]]
       try_result <- xlsx_plot_png(npct_plot, wb=wb, sheet=sheet, width=plot_dim,
                                   height=plot_dim, start_col=new_col, start_row=new_row,
                                   plotname="34_npctplot", savedir=excel_basename)
+      if (! "try-error" %in% class(try_result)) {
+        image_files <- c(image_files, try_result[["filename"]])
+      }
     }
   }
 
@@ -3005,6 +3119,9 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "norm_pct" = npct_plot,
     "medians" = median_data
   )
+  for (img in image_list) {
+    removed <- file.remove(img)
+  }
   return(retlist)
 }
 

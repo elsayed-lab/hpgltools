@@ -163,6 +163,7 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
                           add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                           height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
+  image_list <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -270,11 +271,17 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                               start_col=ncol(cp_bp) + 2, start_row=new_row,
                               plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+    if (! "try-error" %in% class(plot_try)) {
+      image_files <- c(image_files, plot_try[["filename"]])
+    }
     b_plot <- cp_result[["plots"]][["tree_sig_bp"]]
     if (!is.null(b_plot)) {
       plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
                                 start_col=ncol(cp_bp) + 2, start_row=80, res=210,
                                 plotname="bp_trees", savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
   }
   new_row <- new_row + nrow(cp_bp) + 2
@@ -292,11 +299,17 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                               start_col=ncol(cp_mf) + 2, start_row=new_row,
                               plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+    if (! "try-error" %in% class(plot_try)) {
+      image_files <- c(image_files, plot_try[["filename"]])
+    }
     b_plot <- cp_result[["plots"]][["tree_sig_mf"]]
     if (!is.null(b_plot)) {
       plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
                                 start_col=ncol(cp_mf) + 2, start_row=80, res=210,
                                 plotname="mf_trees", savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
   }
   new_row <- new_row + nrow(cp_mf) + 2
@@ -315,11 +328,17 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
     plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=sheet, width=width, height=height,
                               start_col=ncol(cp_cc) + 2, start_row=new_row,
                               plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+    if (! "try-error" %in% class(plot_try)) {
+      image_files <- c(image_files, plot_try[["filename"]])
+    }
     b_plot <- cp_result[["plots"]][["tree_sig_cc"]]
     if (!is.null(b_plot)) {
       plot_try <- xlsx_plot_png(b_plot, wb=wb, sheet=sheet, width=12, height=12,
                                 start_col=ncol(cp_cc) + 2, start_row=80, res=210,
                                 plotname="cc_trees", savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
   }
   new_row <- new_row + nrow(cp_cc) + 2
@@ -343,6 +362,9 @@ write_cp_data <- function(cp_result, excel="excel/clusterprofiler.xlsx", wb=NULL
 
   res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
   message("Finished writing excel file.")
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
   return(res)
 }
 
@@ -368,6 +390,7 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
                              add_trees=TRUE, order_by="qvalue", pval=0.1,
                              add_plots=TRUE, height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
+  image_files <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -421,9 +444,15 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
       plot_try <- xlsx_plot_png(goseq_result[["pvalue_histogram"]], wb=wb, sheet="legend",
                                 start_col=1, start_row=summary_row, plotname="p_histogram",
                                 savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       plot_try <- xlsx_plot_png(goseq_result[["pwf_plot"]], wb=wb, sheet="legend",
                                 start_col=8, start_row=summary_row, plotname="pwf_plot",
                                 savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
   }  ## End making sure that an excel is desired.
 
@@ -479,11 +508,17 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
       plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
                                 start_col=ncol(categories) + 2, start_row=new_row,
                                 plotname=plot_name, savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
         plot_try <- xlsx_plot_png(trees[[tree_name]], wb=wb, sheet=ont, width=12, height=12,
                                   start_col=ncol(categories) + 2, start_row=80, res=210,
                                   plotname=tree_name, savedir=excel_basename)
+        if (! "try-error" %in% class(plot_try)) {
+          image_files <- c(image_files, plot_try[["filename"]])
+        }
       }
     }
     new_row <- new_row + nrow(categories) + 2
@@ -494,6 +529,9 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 
   res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
   message("Finished writing excel file.")
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
   return(res)
 }
 
@@ -501,24 +539,25 @@ write_goseq_data <- function(goseq_result, excel="excel/goseq.xlsx", wb=NULL,
 #'
 #' It is my intention to make a function like this for each ontology tool in my repetoire
 #'
-#' @param gostats_result  A set of results from simple_gostats().
-#' @param excel  An excel file to which to write some pretty results.
-#' @param wb  Workbook object to write to.
-#' @param add_trees  Include topgoish ontology trees?
+#' @param gostats_result A set of results from simple_gostats().
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb Workbook object to write to.
+#' @param add_trees Include topgoish ontology trees?
 #' @param order_by Which column to order the data by?
-#' @param pval  Choose a cutoff for reporting by p-value.
-#' @param add_plots  Include some pvalue plots in the excel output?
-#' @param height  Height of included plots.
-#' @param width  and their width.
-#' @param decreasing  Which order?
-#' @param ...  Extra arguments are passed to arglist.
-#' @return  The result from openxlsx in a prettyified xlsx file.
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @param height Height of included plots.
+#' @param width and their width.
+#' @param decreasing Which order?
+#' @param ... Extra arguments are passed to arglist.
+#' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{gostats}
 #' @export
 write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NULL,
                                add_trees=TRUE, order_by="qvalue", pval=0.1, add_plots=TRUE,
                                height=15, width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
+  image_files <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -572,6 +611,9 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
       plot_try <- xlsx_plot_png(gostats_result[["pvalue_histogram"]], wb=wb, sheet="legend",
                                 start_col=1, start_row=summary_row, plotname="p_histogram",
                                 savedir=excel_basename)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
   }  ## End making sure that an excel is desired.
 
@@ -618,11 +660,17 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
       plot_try <- xlsx_plot_png(a_plot, wb=wb, sheet=ont, width=width, height=height,
                                 start_col=ncol(categories) + 2, start_row=new_row,
                                 plotname=plot_name, savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
         plot_try <- xlsx_plot_png(trees[[tree_name]], wb=wb, sheet=ont, width=12, height=12,
                                   start_col=ncol(categories) + 2, start_row=80, res=210,
                                   plotname=tree_name, savedir=excel_basename)
+        if (! "try-error" %in% class(plot_try)) {
+          image_files <- c(image_files, plot_try[["filename"]])
+        }
       }
     }
     new_row <- new_row + nrow(categories) + 2
@@ -633,6 +681,9 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 
   res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
   message("Finished writing excel file.")
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
   return(res)
 }
 
@@ -641,13 +692,13 @@ write_gostats_data <- function(gostats_result, excel="excel/gostats.xlsx", wb=NU
 #' It can be annoying/confusing to extract individual sets of 'significant' genes from a
 #' differential expression analysis.  This function should make that process easier.
 #'
-#' @param significant_result  Result from extract_siggenes()
-#' @param excel_prefix  How to start the output filenames?
-#' @param excel_suffix  How to end the excel filenames?
-#' @param search_by  Use the definition of 'significant' from which program?
-#' @param type  Which specific ontology search to use?
-#' @param ...   Arguments passed to the various simple_ontology() function.
-#' @return  A list of the up/down results of the ontology searches.
+#' @param significant_result Result from extract_siggenes()
+#' @param excel_prefix How to start the output filenames?
+#' @param excel_suffix How to end the excel filenames?
+#' @param search_by Use the definition of 'significant' from which program?
+#' @param type Which specific ontology search to use?
+#' @param ... Arguments passed to the various simple_ontology() function.
+#' @return A list of the up/down results of the ontology searches.
 sig_ontologies <- function(significant_result,
                            excel_prefix="excel/sig_ontologies",
                            search_by="deseq",
@@ -715,14 +766,14 @@ sig_ontologies <- function(significant_result,
 #' Gprofiler is pretty awesome.  This function will attempt to write its results
 #' to an excel file.
 #'
-#' @param gprofiler_result  The result from simple_gprofiler().
-#' @param wb  Optional workbook object, if you wish to append to an existing workbook.
-#' @param excel  Excel file to which to write.
-#' @param order_by  Which column to order the data by?
-#' @param add_plots  Add some pvalue plots?
-#' @param height  Height of included plots?
-#' @param width  And their width.
-#' @param decreasing  Which order?
+#' @param gprofiler_result The result from simple_gprofiler().
+#' @param wb Optional workbook object, if you wish to append to an existing workbook.
+#' @param excel Excel file to which to write.
+#' @param order_by Which column to order the data by?
+#' @param add_plots Add some pvalue plots?
+#' @param height Height of included plots?
+#' @param width And their width.
+#' @param decreasing Which order?
 #' @param ... More options, not currently used I think.
 #' @return A prettyified table in an xlsx document.
 #' @seealso \pkg{openxlsx} \pkg{gProfiler}
@@ -732,6 +783,7 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
                                  order_by="recall", add_plots=TRUE, height=15,
                                  width=10, decreasing=FALSE, ...) {
   arglist <- list(...)
+  image_files <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -747,15 +799,8 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
                                  textDecoration="bold", border="Bottom", fontSize="30")
   }
 
-  bp_data <- NULL
-  mf_data <- NULL
-  cc_data <- NULL
-  kegg_data <- NULL
-  tf_data <- NULL
-  react_data <- NULL
-  mi_data <- NULL
-  hp_data <- NULL
-  corum_data <- NULL
+  bp_data <- mf_data <- cc_data <- kegg_data <- NULL
+  tf_data <- react_data <- mi_data <- hp_data <- corum_data <- NULL
 
   do_go <- TRUE
   if (is.null(gprofiler_result[["go"]])) {
@@ -789,6 +834,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(bp_data) + 2, start_row=new_row,
         plotname="bp_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(bp_data) + 2
 
@@ -804,6 +852,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(mf_data) + 2, start_row=new_row,
         plotname="mf_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(mf_data) + 2
 
@@ -820,6 +871,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(cc_data) + 2, start_row=new_row,
         plotname="cc_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(cc_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -849,6 +903,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(kegg_data) + 2, start_row=new_row,
         plotname="kegg_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(kegg_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -878,6 +935,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(tf_data) + 2, start_row=new_row,
         plotname="tf_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(tf_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -907,6 +967,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(react_data) + 2, start_row=new_row,
         plotname="react_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(react_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -936,6 +999,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(mi_data) + 2, start_row=new_row,
         plotname="mi_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(mi_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -965,6 +1031,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(hp_data) + 2, start_row=new_row,
         plotname="hp_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(hp_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -994,6 +1063,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
         a_plot, wb=wb, sheet=sheet, width=width, height=height,
         start_col=ncol(corum_data) + 2, start_row=new_row,
         plotname="corum_plot", savedir=excel_basename, doWeights=FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
     }
     new_row <- new_row + nrow(corum_data) + 2
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -1004,6 +1076,9 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
   }
   message("Finished writing excel file.")
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
   return(excel_ret)
 }
 
@@ -1012,16 +1087,16 @@ write_gprofiler_data <- function(gprofiler_result, wb=NULL,
 #' It is my intention to make a function like this for each ontology tool in my
 #' repetoire
 #'
-#' @param topgo_result  A set of results from simple_topgo().
-#' @param excel  An excel file to which to write some pretty results.
-#' @param wb  Workbook object to write to.
-#' @param order_by  Which column to order the results by?
-#' @param pval  Choose a cutoff for reporting by p-value.
-#' @param add_plots  Include some pvalue plots in the excel output?
-#' @param height  Height of included plots.
-#' @param width  and their width.
-#' @param decreasing  In forward or reverse order?
-#' @param ...  Extra arguments are passed to arglist.
+#' @param topgo_result A set of results from simple_topgo().
+#' @param excel An excel file to which to write some pretty results.
+#' @param wb Workbook object to write to.
+#' @param order_by Which column to order the results by?
+#' @param pval Choose a cutoff for reporting by p-value.
+#' @param add_plots Include some pvalue plots in the excel output?
+#' @param height Height of included plots.
+#' @param width and their width.
+#' @param decreasing In forward or reverse order?
+#' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso \pkg{openxlsx} \pkg{topgo}
 #' @export
@@ -1029,6 +1104,7 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                              order_by="fisher", decreasing=FALSE,
                              pval=0.1, add_plots=TRUE, height=15, width=10, ...) {
   arglist <- list(...)
+  image_files <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -1086,18 +1162,30 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
                                    wb=wb, sheet="legend", start_col=1,
                                    start_row=summary_row, plotname="fisher_histogram",
                                    savedir=excel_basename))
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["KS"]],
                                    wb=wb, sheet="legend", start_col=11,
                                    start_row=summary_row, plotname="ks_histogram",
                                    savedir=excel_basename))
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["EL"]],
                                    wb=wb, sheet="legend", start_col=21,
                                    start_row=summary_row, plotname="el_histogram",
                                    savedir=excel_basename))
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["weight"]],
                                    wb=wb, sheet="legend", start_col=1,
                                    start_row=summary_row + 31, plotname="weight_histogram",
                                    savedir=excel_basename))
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
       trees <- try(topgo_trees(topgo_result), silent=TRUE)
       if (class(trees)[1] == "try-error") {
         trees <- NULL
@@ -1151,6 +1239,9 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
           a_plot, wb=wb, sheet=ont, width=width, height=height,
           start_col=ncol(categories) + 2, start_row=new_row,
           plotname=p_plot_name, savedir=excel_basename, doWeights=FALSE))
+        if (! "try-error" %in% class(plot_try)) {
+          image_files <- c(image_files, plot_try[["filename"]])
+        }
       }
       a_plot <- trees[[tree_plot_name]]
       if (!is.null(a_plot)) {
@@ -1158,6 +1249,9 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
           trees[[tree_plot_name]], wb=wb, sheet=ont, width=12, height=12,
           start_col=ncol(categories) + 2, start_row=80, res=210,
           plotname=tree_plot_name, savedir=excel_basename))
+        if (! "try-error" %in% class(plot_try)) {
+          image_files <- c(image_files, plot_try[["filename"]])
+        }
       }
     }
     new_row <- new_row + nrow(categories) + 2 ## I think not needed.
@@ -1167,21 +1261,24 @@ write_topgo_data <- function(topgo_result, excel="excel/topgo.xlsx", wb=NULL,
 
   res <- openxlsx::saveWorkbook(wb, excel, overwrite=TRUE)
   message("Finished writing excel file.")
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
   return(res)
 }
 
-#'   Write gene ontology tables for data subsets
+#' Write gene ontology tables for data subsets
 #'
 #' Given a set of ontology results, this attempts to write them to an excel
 #' workbook in a consistent and relatively easy-to-read fashion.
 #'
-#' @param kept_ontology  A result from subset_ontology_search()
-#' @param outfile   Workbook to which to write.
-#' @param dated    Append the year-month-day-hour to the workbook.
-#' @param n   How many ontology categories to write for each search
-#' @param overwritefile   Overwrite an existing workbook?
-#' @param add_plots   Add the various p-value plots to the end of each sheet?
-#' @param ...  some extra parameters
+#' @param kept_ontology A result from subset_ontology_search()
+#' @param outfile Workbook to which to write.
+#' @param dated Append the year-month-day-hour to the workbook.
+#' @param n How many ontology categories to write for each search
+#' @param overwritefile Overwrite an existing workbook?
+#' @param add_plots Add the various p-value plots to the end of each sheet?
+#' @param ... some extra parameters
 #' @return a set of excel sheet/coordinates
 #' @seealso \pkg{openxlsx}
 #' @examples
@@ -1199,6 +1296,7 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     n=NULL, overwritefile=TRUE,
                                     add_plots=TRUE, ...) {
   arglist <- list(...)
+  image_files <- c()
   if (!is.null(arglist[["table_style"]])) {
     table_style <- arglist[["table_style"]]
   }
@@ -1400,6 +1498,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["goseq_bp"]]) + 2,
                                     start_row=new_row, plotname="goseq_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["goseq_bp"]]) + 2
     }
@@ -1415,6 +1516,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["goseq_mf"]]) + 2,
                                     start_row=new_row, plotname="goseq_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["goseq_mf"]]) + 2
     }
@@ -1430,6 +1534,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["goseq_cc"]]) + 2,
                                     start_row=new_row, plotname="goseq_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     }
@@ -1449,6 +1556,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["cluster_bp"]]) + 2,
                                     start_row=new_row, plotname="cluster_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["cluster_bp"]]) + 2
     }
@@ -1464,6 +1574,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["cluster_mf"]]) + 2,
                                     start_row=new_row, plotname="cluster_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["cluster_mf"]]) + 2
     }
@@ -1479,6 +1592,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["cluster_cc"]]) + 2,
                                     start_row=new_row, plotname="cluster_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
     }
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:9, widths="auto")
@@ -1498,6 +1614,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["topgo_bp"]]) + 2,
                                     start_row=new_row, plotname="topgo_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["topgo_bp"]]) + 2
     }
@@ -1513,6 +1632,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["topgo_mf"]]) + 2,
                                     start_row=new_row, plotname="topgo_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["topgo_mf"]]) + 2
     }
@@ -1528,6 +1650,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["topgo_cc"]]) + 2,
                                     start_row=new_row, plotname="topgo_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       openxlsx::setColWidths(wb, sheet=sheet, cols=2:11, widths="auto")
     }
@@ -1550,6 +1675,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gostats_bp"]]) + 2,
                                     start_row=new_row, plotname="gostats_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["gostats_bp"]]) + 2
     }
@@ -1571,6 +1699,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gostats_mf"]]) + 2,
                                     start_row=new_row, plotname="gostats_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["gostats_mf"]]) + 2
     }
@@ -1591,6 +1722,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gostats_cc"]]) + 2,
                                     start_row=new_row, plotname="gostats_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       openxlsx::writeData(wb, sheet, x=links, startRow=new_row + 1, startCol=10)
     }
@@ -1610,6 +1744,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gprofiler_bp"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["gprofiler_bp"]]) + 2
     }
@@ -1625,6 +1762,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gprofiler_mf"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(up_stuff[["gprofiler_mf"]]) + 2
     }
@@ -1640,6 +1780,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(up_stuff[["gprofiler_cc"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     }
@@ -1669,6 +1812,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["goseq_bp"]]) + 2,
                                     start_row=new_row, plotname="goseq_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["goseq_bp"]]) + 2
     }
@@ -1684,6 +1830,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["goseq_mf"]]) + 2,
                                     start_row=new_row, plotname="goseq_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["goseq_mf"]]) + 2
     }
@@ -1699,6 +1848,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["goseq_cc"]]) + 2,
                                     start_row=new_row, plotname="goseq_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
     }
     openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
@@ -1718,6 +1870,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["cluster_bp"]]) + 2,
                                     start_row=new_row, plotname="cluster_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["cluster_bp"]]) + 2
     }
@@ -1733,6 +1888,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["cluster_mf"]]) + 2,
                                     start_row=new_row, plotname="cluster_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["cluster_mf"]]) + 2
     }
@@ -1748,6 +1906,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["cluster_cc"]]) + 2,
                                     start_row=new_row, plotname="cluster_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
     }
 
@@ -1766,6 +1927,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["topgo_bp"]]) + 2,
                                     start_row=new_row, plotname="topgo_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["topgo_bp"]]) + 2
     }
@@ -1781,6 +1945,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["topgo_mf"]]) + 2,
                                     start_row=new_row, plotname="topgo_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["topgo_mf"]]) + 2
     }
@@ -1796,6 +1963,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["topgo_cc"]]) + 2,
                                     start_row=new_row, plotname="topgo_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
     }
 
@@ -1814,6 +1984,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gostats_bp"]]) + 2,
                                     start_row=new_row, plotname="gotats_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       links <- down_stuff[["gostats_bp"]][["Link"]]
       class(links) <- "hyperlink"
@@ -1833,6 +2006,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gostats_mf"]]) + 2,
                                     start_row=new_row, plotname="gostats_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       links <- down_stuff[["gostats_mf"]][["Link"]]
       class(links) <- "hyperlink"
@@ -1852,6 +2028,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gostats_cc"]]) + 2,
                                     start_row=new_row, plotname="gostats_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       links <- down_stuff[["gostats_cc"]][["Link"]]
       class(links) <- "hyperlink"
@@ -1875,6 +2054,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gprofiler_bp"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_bp",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["gprofiler_bp"]]) + 2
     }
@@ -1890,6 +2072,9 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gprofiler_mf"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_mf",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       new_row <- new_row + nrow(down_stuff[["gprofiler_mf"]]) + 2
     }
@@ -1905,12 +2090,19 @@ write_subset_ontologies <- function(kept_ontology, outfile="excel/subset_go", da
                                     start_col=ncol(down_stuff[["gprofiler_cc"]]) + 2,
                                     start_row=new_row, plotname="gprofiler_cc",
                                     savedir=excel_basename)
+        if (! "try-error" %in% class(try_result)) {
+          image_files <- c(image_files, try_result[["filename"]])
+        }
       }
       openxlsx::setColWidths(wb, sheet=sheet, cols=2:7, widths="auto")
     }
 
     res <- openxlsx::saveWorkbook(wb, down_filename, overwrite=TRUE)
   }  ## End of name_list
+  for (img in image_files) {
+    removed <- file.remove(img)
+  }
+  return(res)
 }
 
 #' Write gene ontology tables for excel

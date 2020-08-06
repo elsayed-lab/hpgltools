@@ -272,11 +272,8 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
   } else {
     message("The png file name did not exist: ", png_name)
   }
-  removed <- file.remove(png_name)
-  if (isFALSE(removed)) {
-    warning("Did not remove: ", png_name, ".")
-  }
   ret <- list(
+    "filename" = png_name,
     "png_fh" = png_ret,
     "png_print" = print_ret,
     "fancy_print" = fancy_ret,
