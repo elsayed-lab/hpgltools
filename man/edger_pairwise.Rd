@@ -37,8 +37,8 @@ thing(tm).}
 \item{alt_model}{Alternate experimental model to use?}
 
 \item{extra_contrasts}{Add some extra contrasts to add to the list of
- pairwise contrasts. This can be pretty neat, lets say one has conditions
- A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+pairwise contrasts. This can be pretty neat, lets say one has conditions
+A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 de_vs_cb = (E-D)-(C-B),"}
 
@@ -63,7 +63,6 @@ List including the following information:
 This function performs the set of possible pairwise comparisons using EdgeR.
 }
 \details{
-Tested in test_26de_edger.R
 Like the other _pairwise() functions, this attempts to perform all pairwise
 contrasts in the provided data set.  The details are of course slightly
 different when using EdgeR.  Thus, this uses the function

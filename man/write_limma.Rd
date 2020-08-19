@@ -14,9 +14,6 @@ write_limma(data, ...)
 \description{
 Looking to provide a single interface for writing tables from limma and friends.
 }
-\details{
-Tested in test_21limma.R
-}
 \examples{
 \dontrun{
  finished_comparison = limma_pairwise(expressionset)

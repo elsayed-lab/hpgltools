@@ -58,7 +58,6 @@ List including the following information:
 Invoking DESeq2 is confusing, this should help.
 }
 \details{
-Tested in test_24de_deseq.R
 Like the other _pairwise() functions, this attempts to perform all pairwise
 contrasts in the provided data set.  The details are of course slightly
 different when using DESeq2.  Thus, this uses the function
