@@ -1392,13 +1392,12 @@ make_pombe_expt <- function(annotation=TRUE) {
   annotations <- NULL
   if (isTRUE(annotation)) {
     ## Neat, it works, and even figures out that the default mart is incorrect by itself.
-    pombe_annotations <- sm(load_biomart_annotations(
-      host="fungi.ensembl.org",
-      trymart="fungal_mart",
-      trydataset="spombe_eg_gene",
-      gene_requests=c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                      "hgnc_symbol", "description", "gene_biotype"),
-      species="spombe", overwrite=TRUE))
+    pombe_annotations <- load_biomart_annotations(
+        host="fungi.ensembl.org", trymart="fungi_mart",
+        trydataset="spombe_eg_gene",
+        gene_requests=c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+                        "hgnc_symbol", "description", "gene_biotype"),
+        species="spombe", overwrite=TRUE)
     pombe_mart <- pombe_annotations[["mart"]]
     annotations <- pombe_annotations[["annotation"]]
     rownames(annotations) <- make.names(gsub(pattern="\\.\\d+$",
@@ -2505,6 +2504,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
   new_col <- 1
   reads <- exprs(expt)
   info <- fData(expt)
+
   if (!is.null(info[["Row.names"]])) {
     ridx <- colnames(info) == "Row.names"
     message("Hey, you merged the annotation data and did not reset the column names!")
@@ -3119,7 +3119,7 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
     "norm_pct" = npct_plot,
     "medians" = median_data
   )
-  for (img in image_list) {
+  for (img in image_files) {
     removed <- file.remove(img)
   }
   return(retlist)

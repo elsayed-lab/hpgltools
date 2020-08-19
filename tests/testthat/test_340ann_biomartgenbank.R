@@ -9,6 +9,9 @@ load("de_limma.rda", envir=limma)
 limma_result <- limma[["hpgl_limma"]]
 table <- limma_result[["all_tables"]][[1]]
 sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
+
+table <- limma_result[["all_tables"]][[1]]
+sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
 dmel_annotations <- load_biomart_annotations(species="dmelanogaster",
                                              host="useast.ensembl.org",
                                              overwrite=TRUE)

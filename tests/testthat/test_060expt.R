@@ -189,7 +189,8 @@ test_that("Will an expt tell us what happened to it?", {
 })
 
 ## write_expt()
-testing <- write_expt(pombe_expt, excel="testing_write_expt.xlsx")
+## I run this on an interactive session and get no warnings...
+testing <- sm(write_expt(pombe_expt, excel="testing_write_expt.xlsx"))
 ## 33
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))

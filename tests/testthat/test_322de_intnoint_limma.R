@@ -5,16 +5,12 @@ library(hpgltools)
 ## I want to understand why I am getting different p-values between
 ## a model with an intercept and one without.  This should not be I think.
 
+## First, let us invoke limma with batch in the model with no intercept.
+## The following is mostly copy/pasted from the Section 15.4 of the limma manual.
+
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla <- pasilla[["expt"]]
-
-## First, let us invoke limma with batch in the model with no intercept.
-## The following is mostly copy/pasted from the limma manual.
-
-## Section 15.4 of the manual:
-## Ok, so the first thing I am seeing is that one might not always want to use voom().
-## But since all my work so far uses voom(), I will do these test with that.
 
 counts <- exprs(pasilla)
 design <- pData(pasilla)

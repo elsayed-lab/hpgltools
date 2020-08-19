@@ -6,11 +6,6 @@ context("54gsea_topgo.R: Does topGO work?\n")
 ## Load the set of limma results and pull the significantly 'up' genes.
 load("gsea_siggenes.rda")
 
-## When running this via 'make test' I get:
-## "Error in openxlsx::insertImage(wb = wb, sheet = sheet, file = fileName,  :
-## File does not exist."
-## Strangely, running it interactively does not give this at any point.
-## Thus I am not sure where to fix it.
 tp_result <- simple_topgo(fcp_sig_genes, go_db=dmel_ontologies, overwrite=TRUE,
                           excel="topgo.xlsx", pval_column="adj.P.Val")
 test_that("Did we get an excel output?", {

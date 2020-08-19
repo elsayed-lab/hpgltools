@@ -477,7 +477,9 @@ plot_de_pvals <- function(combined_data, type="limma", p_type="both", columns=NU
   if (is.null(type) & is.null(columns)) {
     stop("Some columns are required to extract p-values.")
   }
-  if (is.null(columns)) {
+  if (p_type == "all") {
+    columns <- c(paste0(type, "_p"), paste0(type, "_adjp"), paste0(type, "_adjp_ihw"))
+  } else if (is.null(columns)) {
     columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
   }
   plot_df <- combined_data[, columns]
@@ -485,7 +487,10 @@ plot_de_pvals <- function(combined_data, type="limma", p_type="both", columns=NU
     plot_df[[c]] <- as.numeric(plot_df[[c]])
   }
 
-  if (p_type == "both") {
+  if (p_type == "all") {
+    p_stuff <- plot_multihistogram(plot_df, colors=c("darkred", "darkblue", "forestgreen"),
+                                   ...)
+  } else if (p_type == "both") {
     p_stuff <- plot_multihistogram(plot_df, colors=c("darkred", "darkblue"), ...)
   } else if (p_type == "raw") {
     p_stuff <- plot_histogram(plot_df[[1]])

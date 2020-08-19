@@ -48,10 +48,11 @@ design <- data.frame(row.names=colnames(counts),
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
 metadata[["sampleid"]] <- rownames(metadata)
+cbcb_data <- as.matrix(counts)
+
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
-cbcb_data <- as.matrix(counts)
 hpgl_data <- exprs(pasilla_expt)
 
 ## Check that normalization tools work similarly

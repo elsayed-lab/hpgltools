@@ -8,7 +8,6 @@ context("125model_testing.R:
 
 ## model_test just uses qr() to test that the data for a given statistical model
 ## is of sufficient rank and yells at you if it does not.
-
 pombe_expt <- make_pombe_expt()
 design <- pData(pombe_expt)
 

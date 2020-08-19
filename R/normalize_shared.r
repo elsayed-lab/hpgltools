@@ -360,25 +360,26 @@ hpgl_norm <- function(data, ...) {
   original_libsize <- NULL
   annot <- NULL
   counts <- NULL
+  expt_design <- NULL
   ## I never quite realized just how nice data.tables are.  To what extent can I refactor
   ## all of my data frame usage to them?
   if (data_class == "expt") {
     original_counts <- data[["original_counts"]]
     original_libsizes <- data[["original_libsize"]]
-    design <- pData(data)
+    expt_design <- pData(data)
     annot <- fData(data)
     counts <- exprs(data)
     expt_state <- data[["state"]]
   } else if (data_class == "ExpressionSet") {
     counts <- exprs(data)
-    design <- pData(data)
+    expt_design <- pData(data)
     annot <- fData(data)
     if (!is.null(arglist[["expt_state"]])) {
       expt_state <- arglist[["expt_state"]]
     }
   } else if (data_class == "list") {
     counts <- data[["count_table"]]
-    design <- arglist[["design"]]
+    expt_design <- arglist[["design"]]
     if (is.null(data)) {
       stop("The list provided contains no count_table.")
     }
@@ -396,7 +397,7 @@ hpgl_norm <- function(data, ...) {
       rownames(counts) <- make.names(counts[[1]], unique=TRUE)
       counts <- counts[-1]
     }
-    design <- arglist[["design"]]
+    expt_design <- arglist[["design"]]
     if (!is.null(arglist[["expt_state"]])) {
       expt_state <- arglist[["expt_state"]]
     }
@@ -405,7 +406,6 @@ hpgl_norm <- function(data, ...) {
   }
 
   count_table <- as.matrix(counts)
-  expt_design <- design
   if (is.null(original_counts)) {
     original_counts <- counts
   }
@@ -419,6 +419,9 @@ hpgl_norm <- function(data, ...) {
     annotations <- annot
   }
 
+  ## Make changes to this as we go.
+  current_state <- expt_state
+
   batched_counts <- NULL
   batch_step <- 5
   if (!is.null(arglist[["batch_step"]])) {
@@ -430,17 +433,19 @@ hpgl_norm <- function(data, ...) {
     batch_step <- 5
   }
 
-  do_batch <- function(count_table, design=design, expt_state=expt_state, ...) {
+  do_batch <- function(count_table, expt_design=expt_design, current_state=current_state, ...) {
     batch <- "raw"
     if (!is.null(arglist[["batch"]])) {
       batch <- arglist[["batch"]]
     }
+
     if (batch == "raw") {
       message("Step ", arglist[["batch_step"]], ": not doing batch correction.")
     } else {
       message("Step ", arglist[["batch_step"]], ": doing batch correction with ",
               arglist[["batch"]], ".")
-      tmp_counts <- try(batch_counts(count_table, design=design, expt_state=expt_state, ...))
+      tmp_counts <- try(batch_counts(count_table, expt_design=expt_design,
+                                     current_state=current_state, ...))
       if (class(tmp_counts) == "try-error") {
         warning("The batch_counts call failed.  Returning non-batch reduced data.")
         batched_counts <<- NULL
@@ -455,7 +460,7 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 1) {
-    count_table <- do_batch(count_table, ...)
+    count_table <- do_batch(count_table, current_design=expt_design, ...)
   }
 
   ## Step 1: count filtering
@@ -476,10 +481,11 @@ hpgl_norm <- function(data, ...) {
     ## filtered_counts <- filter_counts(count_table, filter)
     count_table <- filtered_counts[["count_table"]]
     filter_performed <- filter
+    current_state[["filter"]] <- filter
   }
 
   if (batch_step == 2) {
-    count_table <- do_batch(count_table, ...)
+    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
   }
   ## Step 2: Normalization
   ## This section handles the various normalization strategies
@@ -501,6 +507,7 @@ hpgl_norm <- function(data, ...) {
     ## normalized_counts <- normalize_counts(data=count_table, design=design, norm=norm)
     count_table <- normalized_counts[["count_table"]]
     norm_performed <- norm
+    current_state[["normalization"]] <- norm
   }
 
   ## Step 3: Convert the data to (likely) cpm
@@ -508,7 +515,7 @@ hpgl_norm <- function(data, ...) {
   ## cpm and rpkm are both from edgeR
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
-    count_table <- do_batch(count_table, ...)
+    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
   }
   converted_counts <- NULL
   convert <- "raw"
@@ -523,12 +530,13 @@ hpgl_norm <- function(data, ...) {
     ## converted_counts <- convert_counts(count_table, convert=convert)
     count_table <- converted_counts[["count_table"]]
     convert_performed <- convert
+    current_state[["conversion"]] <- convert
   }
 
   ## Step 4: Transformation
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
-    count_table <- do_batch(count_table, ...)
+    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
   }
   transformed_counts <- NULL
   transform <- "raw"
@@ -545,13 +553,15 @@ hpgl_norm <- function(data, ...) {
     if (transform == "round") {
       transform_performed <- "raw"
       transform <- "raw"
+      current_state[["rounded"]] <- TRUE
     } else {
       transform_performed <- transform
     }
+    current_state[["transform"]] <- transform
   }
 
   if (batch_step == 5) {
-    count_table <- do_batch(count_table,
+    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state,
                             ...)
     ## count_table <- do_batch(count_table, arglist)
   }
@@ -582,6 +592,7 @@ hpgl_norm <- function(data, ...) {
     "actions" = actions,
     "intermediate_counts" = intermediate_counts,
     "count_table" = count_table,  ## The final count table
+    "final_state" = current_state,
     "libsize" = colSums(count_table, na.rm=TRUE)  ## The final libsizes
   )
   return(ret_list)

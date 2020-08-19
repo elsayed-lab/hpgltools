@@ -3,6 +3,8 @@ library(testthat)
 library(hpgltools)
 context("24de_deseq.R: Does hpgltools work with DESeq2?\n")
 
+load("pasilla_df.rda")
+## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]

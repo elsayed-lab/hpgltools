@@ -275,6 +275,7 @@ score_mhess <- function(expt, ess_column="essm1") {
 #' @param column Data file column to use for density calculation.
 #' @param adjust Density adjustment.
 #' @return a plot and table of the saturation for all samples.
+#' @export
 tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads", adjust=1) {
   table <- NULL
   filenames <- meta[[meta_column]]

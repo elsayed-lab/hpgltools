@@ -2,7 +2,6 @@
 #'
 #' This function performs the set of possible pairwise comparisons using EdgeR.
 #'
-#' Tested in test_26de_edger.R
 #' Like the other _pairwise() functions, this attempts to perform all pairwise
 #' contrasts in the provided data set.  The details are of course slightly
 #' different when using EdgeR.  Thus, this uses the function
@@ -18,23 +17,23 @@
 #' the force argument will round the data and shoe-horn it into EdgeR.
 #'
 #' @param input Dataframe/vector or expt class containing data, normalization
-#'   state, etc.
+#'  state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the experimental model?
 #' @param model_batch Include batch in the model?  In most cases this is a good
-#'   thing(tm).
+#'  thing(tm).
 #' @param model_intercept Use an intercept containing model?
 #' @param alt_model Alternate experimental model to use?
 #' @param extra_contrasts Add some extra contrasts to add to the list of
-#'   pairwise contrasts. This can be pretty neat, lets say one has conditions
-#'   A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  pairwise contrasts. This can be pretty neat, lets say one has conditions
+#'  A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
 #' @param edger_method  I found a couple/few ways of doing edger in the manual,
-#'   choose with this.
+#'  choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
 #'  contrasts = The string representation of the contrasts performed.

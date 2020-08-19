@@ -4,12 +4,13 @@ library(hpgltools)
 context("11norm_convert.R: Are normalizations consistent over time (Conversions)?\n")
 
 load("pasilla_df.rda")
-## Uses these genes for quick tests
-test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+
+## Uses these genes for quick tests
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 
 ## Make sure that my invocation of cpm() is the same as edgeR's.
 pasilla_convert <- sm(normalize_expt(pasilla_expt, convert="cpm"))

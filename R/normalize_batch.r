@@ -27,8 +27,10 @@
 #'   some plots, as available.
 #' @export
 all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch",
-                          batch2=NULL, surrogates="be",
-                          expt_state=NULL, confounders=NULL, ...) {
+                          batch2=NULL, surrogates="be", low_to_zero=FALSE, cpus=NULL,
+                          na_to_zero=TRUE, expt_state=NULL, confounders=NULL,
+                          chosen_surrogates=NULL,
+                          ...) {
   arglist <- list(...)
   my_design <- NULL
   my_data <- NULL
@@ -48,12 +50,9 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   if (!is.null(arglist[["thresh"]])) {
     thresh <- arglist[["thresh"]]
   }
-  low_to_zero <- FALSE
-  if (!is.null(arglist[["low_to_zero"]])) {
-    low_to_zero <- arglist[["low_to_zero"]]
-  }
+
   ## This option is used primarily be combatmod
-  noscale=FALSE
+  noscale <- FALSE
   if (!is.null(arglist[["scale"]])) {
     noscale <- !arglist[["scale"]]
   } else if (!is.null(arglist[["noscale"]])) {
@@ -83,8 +82,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   } ## Ending the tests of the input and its state.
 
   ## Once again this is a place where my new stance vis a vis NAs is relevant.
-  na_idx <- is.na(my_data)
-  my_data[na_idx] <- 0
+  if (isTRUE(na_to_zero)) {
+    na_idx <- is.na(my_data)
+    my_data[na_idx] <- 0
+  }
 
   ## Different tools expect different inputs
   linear_mtrx <- NULL
@@ -145,6 +146,13 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   conditional_model <- model.matrix(~ conditions, data=my_design)
   sample_names <- colnames(input)
   null_model <- conditional_model[, 1]
+
+  if (is.null(chosen_surrogates) & is.null(surrogates)) {
+    chosen_surrogates <- 1
+  } else if (is.null(surrogates)) {
+    surrogates <- chosen_surrogates
+  }
+
   chosen_surrogates <- 1
   if (is.null(surrogates)) {
     message("No estimate nor method to find surrogates was provided. ",
@@ -166,7 +174,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
                                             mod=conditional_model, method=surrogates))
       }
       vword <- "variable"
-      if (surrogates > 1) {
+      if (chosen_surrogates > 1) {
         vword <- "variables"
       }
       message("The ", surrogates, " method chose ",
@@ -175,16 +183,19 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
       message("A specific number of surrogate variables was chosen: ", surrogates, ".")
       chosen_surrogates <- surrogates
     }
-  }
-  if (chosen_surrogates < 1) {
-    message("One must have greater than 0 surrogates, setting chosen_surrogates to 1.")
-    chosen_surrogates <- 1
+    if (chosen_surrogates < 1) {
+      message("One must have greater than 0 surrogates, setting chosen_surrogates to 1.")
+      chosen_surrogates <- 1
+    }
   }
 
-  cpus <- 4
-  if (!is.null(arglist[["cpus"]])) {
-    cpus <- arglist[["cpus"]]
+  if (is.null(cpus)) {
+    cpus <- parallel::detectCores() - 2
   }
+  if (cpus < 0) {
+    cpus <- 1
+  }
+
   prior.plots <- FALSE
   if (!is.null(arglist[["prior.plots"]])) {
     message("When using ComBat, using prior.plots may result in an error due to infinite ylim.")
@@ -612,38 +623,27 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
 #'  sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_state=NULL,
-                         batch2=NULL, noscale=TRUE, ...) {
+batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", current_state=NULL,
+                         current_design=NULL, expt_state=NULL, surrogate_method=NULL,
+                         num_surrogates=NULL, low_to_zero=FALSE, cpus=NULL, batch2=NULL,
+                         noscale=TRUE, ...) {
   arglist <- list(...)
-  low_to_zero <- FALSE
-  if (!is.null(arglist[["low_to_zero"]])) {
-    low_to_zero <- arglist[["low_to_zero"]]
-  }
-  num_surrogates <- NULL
-  surrogate_method <- NULL
-  if (is.null(arglist[["num_surrogates"]]) & is.null(arglist[["surrogate_method"]])) {
-    surrogate_method <- "be"
-  } else if (!is.null(arglist[["num_surrogates"]])) {
-    if (class(arglist[["num_surrogates"]]) == "character") {
-      surrogate_method <- arglist[["num_surrogates"]]
-    } else {
-      num_surrogates <- arglist[["num_surrogates"]]
-    }
-  } else if (!is.null(arglist[["surrogate_method"]])) {
-    if (class(arglist[["surrogate_method"]]) == "numeric") {
-      num_surrogates <- arglist[["surrogate_method"]]
-    } else {
-      surrogate_method <- arglist[["surrogate_method"]]
-    }
+  chosen_surrogates <- NULL
+  if (is.null(num_surrogates) & is.null(surrogate_method)) {
+    chosen_surrogates <- "be"
+  } else if (!is.null(num_surrogates)) {
+    chosen_surrogates <- num_surrogates
   } else {
-    warning("Both num_surrogates and surrogate_method were defined.
-This will choose the number of surrogates differently depending on method chosen.")
+    chosen_surrogates <- surrogate_method
   }
 
-  cpus <- 4
-  if (!is.null(arglist[["cpus"]])) {
-    cpus <- arglist[["cpus"]]
+  if (is.null(cpus)) {
+    cpus <- parallel::detectCores() - 2
   }
+  if (cpus < 0) {
+    cpus <- 1
+  }
+
   prior.plots <- FALSE
   if (!is.null(arglist[["prior.plots"]])) {
     message("When using ComBat, using prior.plots may result in an error due to infinite ylim.")
@@ -652,25 +652,34 @@ This will choose the number of surrogates differently depending on method chosen
 
   ## Lets use expt_state to make sure we know if the data is already log2/cpm/whatever.
   ## We want to use this to back-convert or reconvert data to the appropriate
-  ## scale on return.
-  if (is.null(expt_state)) {
-    expt_state <- list(
+  ## scale on return.  Note that there are two possible variables, expt_state and current_state,
+  ## I am using current_state to keep track of changes made on scale/etc during each step
+  ## of the normalization process.
+  used_state <- list(
       "filter" = "raw",
       "normalization" = "raw",
       "conversion" = "raw",
       "batch" = "raw",
       "transform" = "raw")
+  if (is.null(expt_state) & is.null(current_state)) {
+    message("Assuming a completely raw expressionset.")
+  } else if (!is.null(current_state)) {
+    used_state <- current_state
+    message("Using the current state of normalization.")
+  } else {
+    used_state <- expt_state
+    message("Using the initial state of the expressionset.")
   }
-  ## Use current_state to keep track of changes made on scale/etc during batch
-  ## correction. This is pointed directly at limmaresid for the moment, which
-  ## converts to log2.
-  current_state <- expt_state
+
+  if (is.null(design) & is.null(current_design)) {
+    stop("I require an experimental design.")
+  } else if (!is.null(current_design)) {
+    design <- current_design
+  }
+
   ## These droplevels calls are required to avoid errors like 'confounded by batch'
   batches <- droplevels(as.factor(design[[batch1]]))
   conditions <- droplevels(as.factor(design[["condition"]]))
-
-  message("Note to self:  If you get an error like 'x contains missing values' ",
-          "The data has too many 0's and needs a stronger low-count filter applied.")
 
   if (isTRUE(batch)) {
     batch <- "limma"
@@ -681,10 +690,11 @@ This will choose the number of surrogates differently depending on method chosen
   conditional_model <- model.matrix(~conditions, data=count_df)
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
-  message("Passing off to all_adjusters.")
-  new_material <- all_adjusters(count_table, design=design, estimate_type=batch,
-                                batch1=batch1, batch2=batch2, expt_state=expt_state,
-                                noscale=noscale,
+  message("Passing the data to all_adjusters using the ", batch, " estimate type.")
+  new_material <- all_adjusters(count_table, design=design, estimate_type=batch, cpus=cpus,
+                                batch1=batch1, batch2=batch2, expt_state=used_state,
+                                noscale=noscale, chosen_surrogates=chosen_surrogates,
+                                low_to_zero=low_to_zero,
                                 ...)
   count_table <- new_material[["new_counts"]]
 

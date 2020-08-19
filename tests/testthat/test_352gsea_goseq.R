@@ -3,12 +3,6 @@ library(testthat)
 library(hpgltools)
 
 context("52gsea_goseq.R: Does goseq work?\n")
-## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
-## These will likely not work with Travis as they take forever.
-## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
-## useful bits here.
-
-##if (!identical(Sys.getenv("TRAVIS"), "true")) {
 load("gsea_siggenes.rda")
 
 goseq_result <- simple_goseq(fcp_sig_genes,

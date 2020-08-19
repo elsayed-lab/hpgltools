@@ -222,13 +222,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
       x=fc_table[[den_col]], digits=4)
     ## I am thinking to change my mind about this formatting, since
     ## it recasts the numbers as characters, and that is dumb.
-    ##fc_table[["numerator_var"]] <- format(
-    ##  x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
-    ##fc_table[["denominator_var"]] <- format(
-    ##  x=fc_table[["denominator_var"]], digits=4, scientific=TRUE)
     fc_table[["t"]] <- signif(x=fc_table[["t"]], digits=4)
-    ##fc_table[["p"]] <- format(x=fc_table[["p"]], digits=4, scientific=TRUE)
-    ##fc_table[["adjp"]] <- format(x=fc_table[["adjp"]], digits=4, scientific=TRUE)
     fc_table[["logFC"]] <- signif(x=fc_table[["logFC"]], digits=4)
     rownames(fc_table) <- rownames(data)
     all_tables[[e]] <- fc_table

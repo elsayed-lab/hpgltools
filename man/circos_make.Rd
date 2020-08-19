@@ -4,7 +4,7 @@
 \alias{circos_make}
 \title{Write a simple makefile for circos.}
 \usage{
-circos_make(cfg, target = "", circos = "circos")
+circos_make(cfg, target = "", circos = "circos", verbose = FALSE)
 }
 \arguments{
 \item{cfg}{Configuration from circos_prefix().}

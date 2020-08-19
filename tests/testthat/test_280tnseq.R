@@ -128,7 +128,7 @@ a909_plus_minus <- circos_plus_minus(circos_cfg, width=0.06, thickness=40)
 a909_low <- circos_hist(circos_cfg, low_df, colname="deseq_logfc", basename="low",
                         outer=a909_plus_minus, fill_color="vvdpgreen", width=0.06, thickness=0.1)
 a909_suffix <- circos_suffix(circos_cfg)
-made <- circos_make(circos_cfg, target="a909")
+made <- sm(circos_make(circos_cfg, target="a909"))
 
 test_that("circos provided an imagemap output?", {
   expect_true(file.exists("circos/a909.html"))

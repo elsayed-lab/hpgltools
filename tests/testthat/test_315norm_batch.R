@@ -7,9 +7,11 @@ context("15norm_batch.R: Are normalizations consistent over time (Batch estimati
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.
 ## Sadly, this means that most of these tests fail because they assume the previous generic order of genes.  Thus I am now adding
 ## the gene names to the tests.
-load("pasilla_df.rda")
 ## Uses these genes for quick tests
 test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
+## create_expt generates a .Rdata file which may be reread, do so.
+
+load("pasilla_df.rda")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)

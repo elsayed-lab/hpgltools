@@ -9,11 +9,12 @@ context("10norm_shared.R: Are normalizations consistent over time (Shared functi
 ## the gene names to the tests.
 
 load("pasilla_df.rda")
-test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+
+test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
 
 ## First make sure the pasilla_expt still has the stuff we expect
 expected <- "This is an expt class."

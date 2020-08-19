@@ -8,9 +8,14 @@ load_biomart_annotations(
   species = "hsapiens",
   overwrite = FALSE,
   do_save = TRUE,
-  host = "useast.ensembl.org",
-  drop_haplotypes = TRUE,
+  host = NULL,
   trymart = "ENSEMBL_MART_ENSEMBL",
+  archive = TRUE,
+  default_hosts = c("useast.ensembl.org", "uswest.ensembl.org", "www.ensembl.org",
+    "asia.ensembl.org"),
+  year = NULL,
+  month = NULL,
+  drop_haplotypes = TRUE,
   trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
     "transcript_version", "hgnc_symbol", "description", "gene_biotype"),
@@ -28,12 +33,12 @@ load_biomart_annotations(
 
 \item{host}{Ensembl hostname to use.}
 
+\item{trymart}{Biomart has become a circular dependency, this makes me sad,
+now to list the marts, you need to have a mart loaded.}
+
 \item{drop_haplotypes}{Some chromosomes have stupid names because they are
 from non-standard haplotypes and they should go away.  Setting this to
 false stops that.}
-
-\item{trymart}{Biomart has become a circular dependency, this makes me sad,
-now to list the marts, you need to have a mart loaded.}
 
 \item{trydataset}{Choose the biomart dataset from which to query.}
 

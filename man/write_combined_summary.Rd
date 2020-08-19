@@ -4,7 +4,15 @@
 \alias{write_combined_summary}
 \title{Internal function to write a summary of some combined data}
 \usage{
-write_combined_summary(wb, excel_basename, apr, extracted, compare_plots)
+write_combined_summary(
+  wb,
+  excel_basename,
+  apr,
+  extracted,
+  compare_plots,
+  lfc_cutoff = 1,
+  p_cutoff = 0.05
+)
 }
 \arguments{
 \item{wb}{xlsx workbook to which to write.}

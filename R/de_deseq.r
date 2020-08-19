@@ -15,7 +15,6 @@ deseq_pairwise <- function(...) {
 #'
 #' Invoking DESeq2 is confusing, this should help.
 #'
-#' Tested in test_24de_deseq.R
 #' Like the other _pairwise() functions, this attempts to perform all pairwise
 #' contrasts in the provided data set.  The details are of course slightly
 #' different when using DESeq2.  Thus, this uses the function
@@ -41,7 +40,7 @@ deseq_pairwise <- function(...) {
 #' @param annot_df Include some annotation information in the results?
 #' @param force Force deseq to accept data which likely violates its assumptions.
 #' @param deseq_method The DESeq2 manual shows a few ways to invoke it, I make
-#'   2 of them available here.
+#'  2 of them available here.
 #' @param ... Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()
@@ -120,7 +119,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## summarized <- DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset),
     ##                                     design=~ 0 + condition + batch)
     ## conditions and batch in this context is information taken from pData()
-    ##model_string <- "~ batch + condition"
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
@@ -129,7 +127,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (isTRUE(model_batch)) {
     message("DESeq2 step 1/5: Including only batch in the deseq model.")
-    ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
     summarized <- import_deseq(data, column_data,
@@ -137,8 +134,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch)[1] == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
-    ##model_string <- "~ condition"
-    ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     for (i in 1:length(ncol(data))) {
@@ -151,7 +146,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   } else {
     message("DESeq2 step 1/5: Including only condition in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
-    ##model_string <- "~ condition"
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     summarized <- import_deseq(data, column_data,
                                model_string, tximport=input[["tximport"]][["raw"]])
@@ -407,7 +401,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
 #' @param summarized Existing DESeq metadata to append svs.
 #' @param svs Surrogates from sva and friends to test out.
 #' @param num_sv Optionally, provide the number of SVs, primarily used if
-#'   recursing in the hunt for a valid number of surrogates.
+#'  recursing in the hunt for a valid number of surrogates.
 #' @return DESeqDataSet with at least some of the SVs appended to the model.
 deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   counts <- DESeq2::counts(data)

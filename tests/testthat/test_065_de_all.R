@@ -25,10 +25,6 @@ context("065de_all.R:
 ## extract_significant_genes(), intersect_significant(),
 ## write_de_table()
 
-if (! "Vennerable" %in% installed.packages()) {
-    devtools::install_github("js229/Vennerable")
-}
-
 ## All of these functions will depend on an expt to play with:
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 pombe_subset <- subset_expt(
@@ -236,6 +232,7 @@ few <- list(
     "first" = c("wt30", "wt15"),
     "second" = c("wt30", "wt0"))
 small_combined <- combine_de_tables(test_condbatch, keepers=few)
+saved <- save(list=c("small_combined"), file="small_combined.rda")
 expected <- 2
 actual <- length(small_combined[["data"]])
 test_that("combine_de_tables() with keepers worked?", {
@@ -302,11 +299,10 @@ test_that("Did compare_significant_contrasts provide some plots?", {
   expect_equal(class(testing[["down_plot"]]), "recordedplot")
 })
 
+## do_pairwise()
 ## Saving this so we can use it for ontology searches later.
 save(list="test_condbatch_combined", file="test_065_combined.rda", compress=TRUE)
 save(list="cb_sig", file="test_065_significant.rda", compress=TRUE)
-
-## do_pairwise()
 ## This is done by a bunch of other functions, I am not testing it.
 
 testing <- get_abundant_genes(test_sva)

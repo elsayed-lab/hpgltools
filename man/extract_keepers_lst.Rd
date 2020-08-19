@@ -23,7 +23,9 @@ extract_keepers_lst(
   include_basic,
   excludes,
   padj_type,
-  loess = FALSE
+  loess = FALSE,
+  lfc_cutoff = 1,
+  p_cutoff = 0.05
 )
 }
 \arguments{

@@ -32,11 +32,14 @@ clean:
 		tests/testthat/saved_plots tests/testthat/excel_test_sig \
 		tests/testthat/kegg_pathways tests/testthat/pathview \
 		tests/testthat/UP000* tests/testthat/topgo \
- 		tests/testthat/pathview_in tests/testthat/eupathdb \
-		tests/testthat/BSgenome* tests/testthat/testing_write_expt ;\
-	  rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
+		tests/testthat/pathview_in tests/testthat/eupathdb \
+		tests/testthat/BSgenome* tests/testthat/testing_write_expt \
+		tests/testthat/a909_sig	tests/testthat/a909_tables \
+		tests/testthat/mtb_rmats tests/testthat/mtb_suppa \
+		tests/testthat/.Rhistory
+	rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
 		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
-		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml* ;\
+		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml*
 
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
@@ -51,7 +54,7 @@ deps:
 
 document: roxygen vignette reference
 
-install: clean roxygen
+install: roxygen
 	@echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 

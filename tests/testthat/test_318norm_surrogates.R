@@ -9,6 +9,9 @@ context("18norm_surrogates.R: Do surrogate estimators provide expected outputs?\
 ## an error crept in.  In addition, in this time frame I added a hook to the batch_counts() function
 ## which allows it to call on get_model_adjust() when a batch adjustment method is actually in it.
 ## The result is a more flexible batch method, but sadly one which has/had at least one error.
+
+load("pasilla_df.rda")
+## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]

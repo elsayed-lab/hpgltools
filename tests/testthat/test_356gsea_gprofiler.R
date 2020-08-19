@@ -4,13 +4,7 @@ library(hpgltools)
 context("56gsea_gprofiler.R: Do gProfiler searches work?
   12345\n")
 
-## I want to do some much longer tests using goseq/clusterprofiler/topgo/gostats/gprofiler
-## These will likely not work with Travis as they take forever.
-## I am not however, certain how to use skip_on_travis(), so I printed it and am copying the
-## useful bits here.
-## Run your tests here
 load("gsea_siggenes.rda")
-
 ##gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated")
 gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="logFC")
 

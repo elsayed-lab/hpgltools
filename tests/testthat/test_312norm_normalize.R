@@ -10,12 +10,13 @@ context("12norm_normalize.R: Are normalizations consistent over time? (Normaliza
 ## the gene names to the tests.
 
 load("pasilla_df.rda")
-## Uses these genes for quick tests
-test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+
+## Uses these genes for quick tests
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 
 expected <- as.numeric(c(5.857143, 91.500000, 4400.000000, 543.785714, 10.714286))
 pasilla_norm <- sm(normalize_expt(pasilla_expt, norm="quant"))

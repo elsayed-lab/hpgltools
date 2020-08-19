@@ -3,6 +3,10 @@ library(testthat)
 library(hpgltools)
 context("51gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?\n")
 
+limma <- new.env()
+load("de_limma.rda", envir=limma)
+table <- limma[["hpgl_limma"]][["all_tables"]][[1]]
+
 ## Use biomart's result to get the gene lengths etc.
 dmel_annotations <- sm(load_biomart_annotations(species="dmelanogaster"))
 dmel_annotations <- dmel_annotations[["annotation"]]
@@ -31,9 +35,6 @@ rownames(dmel_lengths) <- make.names(dmel_lengths[["ID"]], unique=TRUE)
 ## Drop all duplicate gene IDs
 dmel_lengths <- dmel_lengths[ !grepl("\\.", rownames(dmel_lengths)), ]
 
-limma <- new.env()
-load("de_limma.rda", envir=limma)
-table <- limma[["hpgl_limma"]][["all_tables"]][[1]]
 z_sig_genes <- sm(get_sig_genes(table, column="logFC", z=1)[["up_genes"]])
 fc_sig_genes <- sm(get_sig_genes(table, column="logFC", lfc=1)[["up_genes"]])
 fcp_sig_genes <- sm(get_sig_genes(table, column="logFC", lfc=1, p=0.05)[["up_genes"]])

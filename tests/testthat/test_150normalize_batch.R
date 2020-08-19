@@ -4,7 +4,7 @@ library(hpgltools)
 context("150normalize_batch.R:
   123456789012\n")
 
-pombe_expt <- make_pombe_expt()
+pombe_expt <- make_pombe_expt(annotation=FALSE)
 
 testing <- normalize_expt(pombe_expt, filter=TRUE, batch="limma")
 test_counts <- exprs(testing)

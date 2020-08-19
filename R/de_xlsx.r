@@ -46,7 +46,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                               keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
                               include_deseq=TRUE, include_edger=TRUE, include_ebseq=TRUE,
                               include_basic=TRUE, rownames=TRUE, add_plots=TRUE, loess=FALSE,
-                              plot_dim=6, compare_plots=TRUE, padj_type="ihw", ...) {
+                              plot_dim=6, compare_plots=TRUE, padj_type="ihw",
+                              lfc_cutoff=1, p_cutoff=0.05, de_types=c("limma", "deseq", "edger"),
+                              ...) {
   arglist <- list(...)
   retlist <- NULL
   if (isFALSE(excel)) {
@@ -153,7 +155,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess)
+                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -167,7 +169,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess)
+                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -179,7 +181,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                         include_deseq, include_edger,
                                         include_ebseq, include_limma,
                                         include_basic, excludes, padj_type,
-                                        loess=loess)
+                                        loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -413,7 +415,6 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         } ## End checking on venns
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
-        de_types <- c("limma", "deseq", "edger")
         for (t in 1:length(de_types)) {
           type <- de_types[t]
           sc <- paste0(type, "_scatter_plots")
@@ -488,7 +489,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     }  ## End for loop iterating over every kept table.
 
     ## Now add some summary data and some plots comparing the tools.
-    xls_result <- write_combined_summary(wb, excel_basename, apr, extracted, compare_plots)
+    xls_result <- write_combined_summary(wb, excel_basename, apr, extracted, compare_plots,
+                                         lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
     image_files <- c(image_files, xls_result[["image_files"]])
 
     ## Finish up.
@@ -573,7 +575,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     include_basic=TRUE, include_deseq=TRUE,
                                     include_edger=TRUE, include_limma=TRUE,
-                                    include_ebseq=FALSE, loess=FALSE,
+                                    include_ebseq=FALSE, loess=FALSE, logfc=1, p=0.05,
                                     do_inverse=FALSE, found_table=NULL) {
   combined_data <- combined[["data"]]
   plots <- list()
@@ -624,14 +626,16 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       message("Skipping volcano/MA plot for ", type, ".")
     } else {
       ma_vol <- try(extract_de_plots(
-          plot_inputs[[type]], type=type, invert=do_inverse, table=found_table))
+          plot_inputs[[type]], type=type, invert=do_inverse,
+          logfc=logfc, p=p, table=found_table))
       plots[[ma_name]] <- ma_vol[["ma"]]
       plots[[vol_name]] <- ma_vol[["volcano"]]
     }
     if (is.null(p_name)) {
       message("Skipping p-value plot for ", t, ".")
     } else {
-      plots[[p_name]] <- plot_de_pvals(combined[["data"]], type=type)[["plot"]]
+      pval_plot <- plot_de_pvals(combined[["data"]], type=type, p_type="all")
+      plots[[p_name]] <- pval_plot[["plot"]]
     }
   }
   return(plots)
@@ -1088,7 +1092,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 adjp, annot_df,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
-                                include_basic, excludes, padj_type, loess=FALSE) {
+                                include_basic, excludes, padj_type, loess=FALSE,
+                                lfc_cutoff=1, p_cutoff=0.05) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
@@ -1107,7 +1112,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
       include_edger=include_edger, include_ebseq=include_ebseq,
       include_limma=include_limma,
       table_name=name, adjp=adjp, annot_df=annot_df,
-      excludes=excludes, padj_type=padj_type)
+      excludes=excludes, padj_type=padj_type,
+      lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
     extracted[["data"]][[name]] <- combined[["data"]]
     extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
     extracted[["kept"]] <- kept_tables
@@ -1122,7 +1128,7 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
       name, combined, denominator, numerator, plot_inputs,
       include_basic=include_basic, include_deseq=include_deseq,
       include_edger=include_edger, include_limma=include_limma,
-      include_ebseq=include_ebseq, loess=loess,
+      include_ebseq=include_ebseq, loess=loess, logfc=lfc_cutoff, p=p_cutoff,
       found_table=name)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
@@ -1166,7 +1172,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type,
-                                loess=FALSE) {
+                                loess=FALSE, lfc_cutoff=1, p_cutoff=0.05) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   found_keepers <- sum(all_keepers %in% all_coefficients)
@@ -1237,7 +1243,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
         include_basic=include_basic,
         table_name=found_table, do_inverse=do_inverse,
         adjp=adjp, annot_df=annot_df,
-        excludes=excludes, padj_type=padj_type)
+        excludes=excludes, padj_type=padj_type,
+        lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
       extracted[["data"]][[name]] <- combined[["data"]]
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
@@ -1252,7 +1259,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
         name, combined, denominator, numerator, plot_inputs,
         include_basic=include_basic, include_deseq=include_deseq,
         include_edger=include_edger, include_limma=include_limma,
-        include_ebseq=include_ebseq, loess=loess,
+        include_ebseq=include_ebseq, loess=loess, logfc=lfc_cutoff, p=p_cutoff,
         do_inverse=do_inverse, found_table=found_table)
       extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                         as.data.frame(combined[["summary"]]))
@@ -1298,7 +1305,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    include_deseq, include_edger,
                                    include_ebseq, include_limma,
                                    include_basic, excludes, padj_type,
-                                   loess=FALSE) {
+                                   loess=FALSE, lfc_cutoff=1, p_cutoff=0.05) {
   splitted <- strsplit(x=keepers, split="_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
@@ -1324,7 +1331,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
     include_basic=include_basic,
     table_name=table,
     adjp=adjp, annot_df=annot_df,
-    excludes=excludes, padj_type=padj_type)
+    excludes=excludes, padj_type=padj_type,
+    lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
   extracted[["data"]][[table]] <- combined[["data"]]
   extracted[["table_names"]][[table]] <- combined[["summary"]][["table"]]
   extracted[["kept"]] <- table
@@ -1341,7 +1349,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
     include_basic=include_basic, include_deseq=include_deseq,
     include_edger=include_edger, include_limma=include_limma,
     include_ebseq=include_ebseq, loess=loess, found_table=table,
-    do_inverse=do_inverse)
+    logfc=lfc_cutoff, p=p_cutoff, do_inverse=do_inverse)
   extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                     as.data.frame(combined[["summary"]]))
   extracted[["numerators"]] <- numerator
@@ -2352,7 +2360,8 @@ stringsAsFactors=FALSE)
 #' @param apr a pairwise result
 #' @param extracted table extracted from the pairwise result
 #' @param compare_plots series of plots to print out.
-write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots) {
+write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
+                                   lfc_cutoff=1, p_cutoff=0.05) {
   message("Writing summary information, compare_plot is: ", compare_plots, ".")
   image_files <- c()
   if (length(apr[["comparison"]]) == 0) {
@@ -2361,7 +2370,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
   if (isTRUE(compare_plots)) {
     sheetname <- "pairwise_summary"
     xls_result <- write_xlsx(
-      wb, data=extracted[["summaries"]], sheet=sheetname, title="Summary of contrasts.")
+      wb, data=extracted[["summaries"]], sheet=sheetname, title="Summary of contrasts (lfc cutoff:{lfc_cutoff} p cutoff: {p_cutoff}).")
     new_row <- xls_result[["end_row"]] + 2
     xls_result <- write_xlsx(
       wb, data=apr[["comparison"]][["comp"]], sheet=sheetname, start_row=new_row,

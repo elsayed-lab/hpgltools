@@ -16,6 +16,8 @@ combine_extracted_plots(
   include_limma = TRUE,
   include_ebseq = FALSE,
   loess = FALSE,
+  logfc = 1,
+  p = 0.05,
   do_inverse = FALSE,
   found_table = NULL
 )

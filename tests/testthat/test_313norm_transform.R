@@ -9,12 +9,14 @@ context("13norm_transform.R: Are normalizations consistent over time (Transforma
 ## the gene names to the tests.
 
 load("pasilla_df.rda")
-## Uses these genes for quick tests
-test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+
+## Uses these genes for quick tests
+test_genes <- c("FBgn0000014", "FBgn0000008", "FBgn0000017", "FBgn0000018", "FBgn0000024")
+## create_expt generates a .Rdata file which may be reread, do so.
 
 ## Test transformations
 expected <- c(2.584963, 6.539159, 12.187661, 9.189825, 3.459432)

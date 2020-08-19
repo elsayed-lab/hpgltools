@@ -128,3 +128,4 @@ bprior <- "sva" %:::% "bprior"
 it.sol <- "sva" %:::% "it.sol"
 int.eprior <- "sva" %:::% "int.eprior"
 getGOLevel <- "clusterProfiler" %:::% "getGOLevel"
+##myOpts <- curl::curl_options(timeout=30)

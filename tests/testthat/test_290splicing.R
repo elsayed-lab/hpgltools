@@ -60,16 +60,13 @@ test_that("We get a plot of some suppa data?", {
   expect_equal(expected, actual)
 })
 
-if (Sys.getenv("GITHUB_ACTIONS") != "true") {
-  annotation <- load_biomart_annotations()[["annotation"]]
-  stuff <- write_suppa_table(suppa_plots[["data"]], annotations=annotation)
-  actual <- nrow(stuff)
-  expected <- 72000
-  test_that("Can we write out suppa data with annotations?", {
-    expect_gt(actual, expected)
-  })
-}
-
+## annotation <- load_biomart_annotations()[["annotation"]]
+stuff <- write_suppa_table(suppa_plots[["data"]], excel="suppa.xlsx", annotations=NULL)
+actual <- nrow(stuff)
+expected <- 72000
+test_that("Can we write out suppa data?", {
+  expect_gt(actual, expected)
+})
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 290alt_splicing.R in ", elapsed,  " seconds."))

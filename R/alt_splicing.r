@@ -221,13 +221,11 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
 write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
                               by_annot="ensembl_gene_id",
                               columns="default", excel="excel/suppa_table.xlsx") {
-  default_columns <- c("ensembl_gene_id", "version", "hgnc_symbol", "description",
-                       "gene_biotype", "cds_length", "chromosome_name", "strand",
-                       "start_position", "end_position", "event", "dpsi", "pvalue", "adjp",
-                       "avglogtpm", "category", "coordinates", "alternative_transcripts",
-                       "total_transcripts", "denominator1", "denominator2", "denominator3",
-                       "numerator1", "numerator2", "numerator3", "numerator4", "numerator5",
-                       "numerator6")
+
+  default_columns <- c("event", "dpsi", "pvalue", "adjp", "avglogtpm", "category",
+                       "coordinates", "alternative_transcripts", "total_transcripts",
+                       "denominator1", "denominator2", "denominator3", "numerator1",
+                       "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
   full_table <- data.frame()
   if (is.null(annotations)) {
     full_table <- data.table::as.data.table(table)
@@ -238,11 +236,6 @@ write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
     full_table <- merge(annot, tab, by.x=by_annot, by.y=by_table, all.y=TRUE)
   }
 
-  chosen_columns <- default_columns
-  if (columns != "default") {
-    chosen_columns <- columns
-  }
-  full_table <- full_table[, chosen_columns, with=FALSE]
   xls_data <- as.data.frame(full_table)
   ## Now coerce numeric columns
   xlsx_result <- write_xlsx(data=xls_data, excel=excel)

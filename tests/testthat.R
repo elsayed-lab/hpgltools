@@ -2,4 +2,4 @@
 library(testthat)
 library(hpgltools)
 
-test_package("hpgltools", reporter="summary")
+test_package("hpgltools", reporter="summary", stop_on_failure=FALSE)

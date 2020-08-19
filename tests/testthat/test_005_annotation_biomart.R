@@ -8,10 +8,9 @@ context("005annotation_biomart.R
 
 if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
   ## load_biomart_annotations()
-  testing <- load_biomart_annotations(
-      host="useast.ensembl.org",
-      species="hsapiens")
-  gene_ids <- head(rownames(testing[["annotation"]]))
+  testing <- load_biomart_annotations(species="hsapiens")
+  annotations <- testing[["annotation"]]
+  gene_ids <- head(sort(annotations[["ensembl_transcript_id"]]))
   expected <- c("ENST00000000233", "ENST00000000412", "ENST00000000442",
                 "ENST00000001008", "ENST00000001146", "ENST00000002125")
   ## 01

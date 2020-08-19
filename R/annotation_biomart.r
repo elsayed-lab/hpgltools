@@ -1,3 +1,94 @@
+#' Find a functional biomart instance.
+#'
+#' In my experience, the various biomart mirrors are not varyingly likely to be
+#' functional at any given time.  In addition, I often find it useful to use an
+#' archive instance rather than the most recent ensembl instance.  This function
+#' therefore iterates over the various mirrors; or if archive=TRUE it will try a
+#' series of archive servers from 1, 2, and 3 years ago.
+#'
+#' @param default_hosts List of biomart mirrors.
+#' @param trymart Specific mart to query.
+#' @param archive Try an archive server instead of a mirror?  If this is a
+#'  character, it will assume it is a specific archive hostname.
+#' @param year Choose specific year(s) for the archive servers?
+#' @param month Choose specific month(s) for the archive servers?
+#' @return Either a mart instance or NULL if no love was forthcoming.
+#' @export
+find_working_mart <- function(default_hosts=c("useast.ensembl.org", "uswest.ensembl.org",
+                                              "www.ensembl.org", "asia.ensembl.org"),
+                              trymart="ENSEMBL_MART_ENSEMBL", archive=FALSE,
+                              year=NULL, month=NULL) {
+  if (isTRUE(archive)) {
+    if (is.null(month)) {
+      ## Then assume this month
+      month_numeric <- lubridate::month(lubridate::date(lubridate::now()))
+      month_nums <- c(month_numeric, month_numeric - 1, month_numeric - 2)
+      month_strings <- as.character(lubridate::month(month_nums, label=TRUE, abbr=TRUE))
+    }
+    if (is.null(year)) {
+      year_numeric <- lubridate::year(lubridate::date(lubridate::now()))
+      year_strings <- as.character(c(year_numeric - 1, year_numeric - 2, year_numeric - 3))
+    }
+    archives <- c()
+    for (y in year_strings) {
+      for (m in month_strings) {
+        archives <- c(archives, paste0(m, y))
+      }
+    }
+    default_hosts <- paste0(archives, ".archive.ensembl.org")
+  } else if ("character" %in% class(archive)) {
+    default_hosts <- archive
+  }
+
+  mart <- NULL
+  used_host <- NULL
+  used_mart <- NULL
+  for (h in default_hosts) {
+    mart <- try(biomaRt::useMart(biomart=trymart, host=h), silent=TRUE)
+    cmart <- class(mart)
+    if (cmart[1] == "Mart") {
+      message("Using mart: ", trymart, " from host: ", h, ".")
+      used_host <- h
+      used_mart <- trymart
+      break
+    } else if ("try-error" %in% cmart) {
+      if (grepl(pattern="Timeout", x=mart[1])) {
+        message("Timed out when trying ", h, ".")
+        next
+      } else if (grepl(pattern="Unexpected format", x=mart[1])) {
+        message("Got a bad mart type when trying host ", h, " mart ", trymart, ".")
+        next
+      } else {
+        message("Unable to perform useMart, perhaps the host/mart is incorrect: ",
+                host, " ", trymart, ".")
+        marts <- biomaRt::listMarts(host=h)
+        mart_names <- as.character(marts[[1]])
+        message("The available marts are: ")
+        message(toString(mart_names))
+        message("Trying the first one.")
+        mart <- try(biomaRt::useMart(biomart=marts[[1, 1]], host=h))
+        if (! "try-error" %in% class(mart)) {
+          used_host <- h
+          used_mart <- marts[[1, 1]]
+          break
+        } else {
+          used_mart <- trymart
+          used_host <- h
+          break
+        }
+      } ## End checking the state of the chosen mart.
+    } else {
+      ## This is neither a mart nor is it a try-error.
+      stop("I do not know what this is: ", class(mart))
+    }
+  } ## End iterating over the hosts.
+  retlist <- list(
+      "host" = used_host,
+      "used_mart" = used_mart,
+      "mart" = mart)
+  return(retlist)
+}
+
 #' Extract annotation information from biomart.
 #'
 #' Biomart is an amazing resource of information, but using it is a bit
@@ -14,10 +105,10 @@
 #' @param do_save Create a savefile of annotations for future runs?
 #' @param host Ensembl hostname to use.
 #' @param drop_haplotypes Some chromosomes have stupid names because they are
-#'   from non-standard haplotypes and they should go away.  Setting this to
-#'   false stops that.
+#'  from non-standard haplotypes and they should go away.  Setting this to
+#'  false stops that.
 #' @param trymart Biomart has become a circular dependency, this makes me sad,
-#'   now to list the marts, you need to have a mart loaded.
+#'  now to list the marts, you need to have a mart loaded.
 #' @param trydataset Choose the biomart dataset from which to query.
 #' @param gene_requests Set of columns to query for description-ish annotations.
 #' @param length_requests Set of columns to query for location-ish annotations.
@@ -35,9 +126,10 @@
 #'  dim(hs_biomart_annot$annotation)
 #' @export
 load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_save=TRUE,
-                                     host="useast.ensembl.org",
-                                     drop_haplotypes=TRUE, trymart="ENSEMBL_MART_ENSEMBL",
-                                     trydataset=NULL,
+                                     host=NULL, trymart="ENSEMBL_MART_ENSEMBL", archive=TRUE,
+                                     default_hosts=c("useast.ensembl.org", "uswest.ensembl.org",
+                                                     "www.ensembl.org", "asia.ensembl.org"),
+                                     year=NULL, month=NULL, drop_haplotypes=TRUE, trydataset=NULL,
                                      gene_requests=c("ensembl_gene_id",
                                                      "version",
                                                      "ensembl_transcript_id",
@@ -67,21 +159,23 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     )
     return(retlist)
   }
-  mart <- NULL
-  used_mart <- NULL
-  mart <- try(biomaRt::useMart(biomart=trymart, host=host), silent=TRUE)
-  if (class(mart) == "try-error") {
-    message("Unable to perform useMart, perhaps the host/mart is incorrect: ",
-            host, " ", trymart, ".")
-    marts <- biomaRt::listMarts(host=host)
-    mart_names <- as.character(marts[[1]])
-    message("The available marts are: ")
-    message(toString(mart_names))
-    message("Trying the first one.")
-    mart <- biomaRt::useMart(biomart=marts[[1, 1]], host=host)
-    used_mart <- marts[[1, 1]]
+  martlst <- NULL
+  if (is.null(host) & is.null(default_hosts)) {
+    stop("both host and default_hosts are null.")
+  } else if (is.null(host)) {
+    martlst <- find_working_mart(default_hosts=default_hosts, trymart=trymart,
+                                 archive=archive, year=year, month=month)
   } else {
-    used_mart <- trymart
+    martlst <- find_working_mart(default_hosts=host, trymart=trymart,
+                                 archive=FALSE)
+  }
+  used_mart <- NULL
+  mart <- NULL
+  host <- NULL
+  if (!is.null(martlst)) {
+    used_mart <- martlst[["used_mart"]]
+    host <- martlst[["host"]]
+    mart <- martlst[["mart"]]
   }
   chosen_dataset <- NULL
   dataset <- NULL
@@ -111,6 +205,7 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
   }
   ## The following was stolen from Laura's logs for human annotations.
   ## To see possibilities for attributes, use head(listAttributes(ensembl), n=20L)
+  gene_ids <- biomaRt::getBM(attributes="ensembl_gene_id", mart=ensembl)
   chosen_annotations <- c()
   available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
   found_attribs <- gene_requests %in% available_attribs
@@ -119,6 +214,8 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes=gene_requests,
+                                     filters="ensembl_gene_id",
+                                     values=gene_ids,
                                      mart=ensembl)
   chosen_annotations <- c(gene_requests)
   message("Finished downloading ensembl gene annotations.")
@@ -129,24 +226,42 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
       message("Some attributes in your request list were not in the ensembl database.")
       length_requests <- length_requests[found_attribs]
     }
-    structure_annotations <- biomaRt::getBM(attributes=length_requests,
-                                            mart=ensembl)
-    message("Finished downloading ensembl structure annotations.")
+    ## The following 10ish lines are in an attempt to work around annoying timeouts by biomart.
+    ## Asking for the set of coordinates by transcript is more than asking by gene,
+    ## So, first try asking by transcript and if that fails, try by gene.
+    ## If that also fails, then eff it.
     tmp_annot <- data.table::as.data.table(gene_annotations)
-    tmp_struct <- data.table::as.data.table(structure_annotations)
-    biomart_annotations <- merge(tmp_annot, tmp_struct,
-                                 by.x="ensembl_transcript_id", by.y="ensembl_transcript_id",
-                                 all.x=TRUE)
-    biomart_annotations <- as.data.frame(biomart_annotations)
-    chosen_annotations <- c(chosen_annotations, length_requests)
+    tmp_length_requests <- length_requests
+    chosen_by <- "ensembl_transcript_id"
+    structure_annotations <- try(biomaRt::getBM(attributes=tmp_length_requests,
+                                                filters="ensembl_gene_id",
+                                                values=gene_ids,
+                                                mart=ensembl))
+    if (class(structure_annotations)[1] == "try-error") {
+      chosen_by <- "ensembl_gene_id"
+      tmp_length_requests[1] <- chosen_by
+      structure_annotations <- try(biomaRt::getBM(attributes=tmp_length_requests,
+                                                  mart=ensembl))
+    }
+
+    if ("try-error" %in% class(structure_annotations)) {
+      biomart_annotations <- tmp_annot
+    } else {
+      message("Finished downloading ensembl structure annotations.")
+      tmp_struct <- data.table::as.data.table(structure_annotations)
+      biomart_annotations <- merge(tmp_annot, tmp_struct, by=chosen_by, all.x=TRUE)
+      biomart_annotations <- as.data.frame(biomart_annotations)
+      chosen_annotations <- c(chosen_annotations, length_requests)
+    }
   } else {
     ## Do not include the lengths
-    biomart_annotations <- as.data.frame(gene_annotations)
+    biomart_annotations <- gene_annotations
   }
   ## rownames(biomart_annotations) <- make.names(biomart_annotations[,
   ## "transcriptID"], unique=TRUE) It is not valid to arbitrarily set it to
   ## 'transcriptID' because we cannot guarantee that will be the column name,
   ## but I think we can safely assume it will be the 1st column.
+  biomart_annotations <- as.data.frame(biomart_annotations)
   rownames(biomart_annotations) <- make.names(biomart_annotations[, 1], unique=TRUE)
 
   ## In order for the return from this function to work with other functions in
@@ -171,8 +286,11 @@ load_biomart_annotations <- function(species="hsapiens", overwrite=FALSE, do_sav
                         pattern="^[[:alnum:]]{1,2}$")
       biomart_annotations <- biomart_annotations[good_idx, ]
     } else {
-      message("drop_haplotypes is true, but there is no chromosome information.")
+      message("drop_haplotypes is TRUE, but there is no chromosome information.")
     }
+  } else {
+    message("Not dropping haplotype chromosome annotations, ",
+            "set drop_haplotypes=TRUE if this is bad.")
   }
 
   if (isTRUE(do_save)) {

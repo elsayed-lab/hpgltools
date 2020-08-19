@@ -8,7 +8,6 @@ context("245gsva.R:
 ## I am thinking to copy some of my human macrophage data.
 
 ## I am not sure what I want to test with this either... hmmm
-
 hs_envir <- environment()
 hs_file <- system.file("hs_expt.rda", package="hpgltools")
 load(file=hs_file, envir=hs_envir)
@@ -16,7 +15,7 @@ hs_expt <- hs_envir[["expt"]]
 
 hs_filt <- normalize_expt(hs_expt, filter="cv")
 annotation(hs_filt[["expressionset"]]) <- "org.Hs.eg.db"
-gsva_result <- simple_gsva(hs_filt)
+gsva_result <- sm(simple_gsva(hs_filt))
 
 gsva_expt <- gsva_result[["expt"]]
 gsva_dis <- plot_sample_heatmap(gsva_expt)
