@@ -13,9 +13,8 @@ pkg \%:::\% fun
 }
 \description{
 In a fit of pique, I did a google search to see if anyone else has been
-annoyed in the same was as I.  I was in no way surprised to see that Yihui
-Xie was, and in his email to r-devel in 2013 he proposed a game of
-hide-and-seek; a game which I am repeating here.
+annoyed in the same way as was I.  Yihui Xie was, and in his email to r-devel
+in 2013 he proposed a game of hide-and-seek; which I am repeating here.
 }
 \details{
 This just implements ::: as an infix operator that will not trip check.

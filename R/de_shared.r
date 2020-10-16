@@ -10,38 +10,38 @@
 #' comparisons among them.
 #'
 #' @param input Dataframe/vector or expt class containing count tables,
-#'   normalization state, etc.
+#'  normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the model?  This is likely always true.
 #' @param modify_p Depending on how it is used, sva may require a modification
-#'   of the p-values.
+#'  of the p-values.
 #' @param model_batch Include batch in the model?  This may be true/false/"sva"
-#'   or other methods supported by all_adjusters().
+#'  or other methods supported by all_adjusters().
 #' @param filter Added because I am tired of needing to filter the data before
-#'   invoking all_pairwise().
+#'  invoking all_pairwise().
 #' @param model_intercept Use an intercept model instead of cell means?
 #' @param extra_contrasts Optional extra contrasts beyone the pairwise
-#'   comparisons.  This can be pretty neat, lets say one has conditions
-#'   A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
-#'   with a string like:
-#'     "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".
+#'  comparisons.  This can be pretty neat, lets say one has conditions
+#'  A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  with a string like:
+#'   "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".
 #' @param alt_model Alternate model to use rather than just condition/batch.
 #' @param libsize Library size of the original data to help voom().
 #' @param test_pca Perform some tests of the data before/after applying a given
-#'   batch effect.
+#'  batch effect.
 #' @param annot_df Annotations to add to the result tables.
 #' @param parallel Use dopar to run limma, deseq, edger, and basic simultaneously.
 #' @param do_basic Perform a basic analysis?
 #' @param do_deseq Perform DESeq2 pairwise?
 #' @param do_ebseq Perform EBSeq (caveat, this is NULL as opposed to TRUE/FALSE
-#'   so it can choose).
+#'  so it can choose).
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
-#'   write_limma().
+#'  write_limma().
 #' @return A list of limma, deseq, edger results.
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
@@ -212,6 +212,42 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   ## Thus we will use modified_data to note the data was modified by sva.
   modified_data <- FALSE
   if (is.null(sv_model) & isTRUE(modified_data)) {
+    ret <- sva_modify_pvalues(results)
+    results <- ret[["results"]]
+    original_pvalues <- ret[["original_pvalues"]]
+  }
+
+  result_comparison <- correlate_de_tables(results, annot_df=annot_df,
+                                           extra_contrasts=extra_contrasts)
+  ## The first few elements of this list are being passed through into the return
+  ## So that if I use combine_tables() I can report in the resulting tables
+  ## some information about what was performed.
+  ret <- list(
+    "basic" = results[["basic"]],
+    "deseq" = results[["deseq"]],
+    "ebseq" = results[["ebseq"]],
+    "edger" = results[["edger"]],
+    "limma" = results[["limma"]],
+    "batch_type" = model_type,
+    "comparison" = result_comparison,
+    "extra_contrasts" = extra_contrasts,
+    "input" = input,
+    "model_cond" = model_cond,
+    "model_batch" = model_batch,
+    "original_pvalues" = original_pvalues,
+    "pre_batch" = pre_pca,
+    "post_batch" = post_pca)
+  class(ret) <- c("all_pairwise", "list")
+
+  if (!is.null(arglist[["combined_excel"]])) {
+    message("Invoking combine_de_tables().")
+    combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
+    ret[["combined"]] <- combined
+  }
+  return(ret)
+}
+
+sva_modify_pvalues <- function(results) {
     original_pvalues <- data.table::data.table(
                                       rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
     message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
@@ -336,35 +372,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       } ## End checking that f.pvalue worked.
     }  ## End foreach table
     original_pvalues <- as.data.frame(original_pvalues)
-  } ## End checking if we should f-test modify the p-values
-
-  result_comparison <- correlate_de_tables(results, annot_df=annot_df)
-  ## The first few elements of this list are being passed through into the return
-  ## So that if I use combine_tables() I can report in the resulting tables
-  ## some information about what was performed.
-  ret <- list(
-    "basic" = results[["basic"]],
-    "deseq" = results[["deseq"]],
-    "ebseq" = results[["ebseq"]],
-    "edger" = results[["edger"]],
-    "limma" = results[["limma"]],
-    "batch_type" = model_type,
-    "comparison" = result_comparison,
-    "extra_contrasts" = extra_contrasts,
-    "input" = input,
-    "model_cond" = model_cond,
-    "model_batch" = model_batch,
-    "original_pvalues" = original_pvalues,
-    "pre_batch" = pre_pca,
-    "post_batch" = post_pca)
-  class(ret) <- c("all_pairwise", "list")
-
-  if (!is.null(arglist[["combined_excel"]])) {
-    message("Invoking combine_de_tables().")
-    combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
-    ret[["combined"]] <- combined
-  }
-  return(ret)
+    retlist <- list(
+      "original" = original_pvalues,
+      "results" = results)
+    return(retlist)
 }
 
 #' A sanity check that a given set of data is suitable for methods which assume
@@ -1067,7 +1078,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
 #'  fun = compare_led_tables(limma=l, deseq=d, edger=e)
 #' }
 #' @export
-correlate_de_tables <- function(results, annot_df=NULL) {
+correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
   ## Fill each column/row of these with the correlation between tools for one
   ## contrast performed
   retlst <- list()
@@ -1093,6 +1104,15 @@ correlate_de_tables <- function(results, annot_df=NULL) {
     methods <- c(methods, "basic")
   }
 
+  extra_eval_names <- NULL
+  if (!is.null(extra_contrasts)) {
+    extra_eval_strings <- strsplit(extra_contrasts, ",")[[1]]
+    extra_eval_names <- extra_eval_strings
+    extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
+                                                        "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
+    extra_eval_names <- gsub(pattern="^\\s+", replacement="", x=extra_eval_names, perl=TRUE)
+  }
+
   complst <- list()
   plotlst <- list()
   comparison_df <- data.frame()
@@ -1112,6 +1132,7 @@ correlate_de_tables <- function(results, annot_df=NULL) {
     for (d in nextc:length(methods)) {
       d_name <- methods[d]
       method_comp_name <- glue("{c_name}_vs_{d_name}")
+      contrast_name_list <- c()
       for (l in 1:len) {
         progress_count <- progress_count + 1
         if (isTRUE(show_progress)) {
@@ -1119,6 +1140,10 @@ correlate_de_tables <- function(results, annot_df=NULL) {
           utils::setTxtProgressBar(bar, pct_done)
         }
         contr <- names(retlst[[c_name]])[l]
+        if (contr %in% extra_eval_names) {
+          next
+        }
+
         ## assume all three have the same names() -- note that limma has more
         ## than the other two though
         num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
@@ -1140,6 +1165,11 @@ correlate_de_tables <- function(results, annot_df=NULL) {
           message("Used reverse contrast for ", d_name, ".")
           num_reversed <- num_reversed + 1
         }
+        ## An extra test condition in case of extra contrasts not performed by all methods.
+        if (is.na(contr)) {
+          next
+        }
+        contrast_name_list <- c(contr, contrast_name_list)
         fs <- merge(fst, scd, by="row.names")
         if (nrow(fs) == 0) {
           warning("The merge of ", c_name, ", ", contr, " and ",
@@ -1155,15 +1185,19 @@ correlate_de_tables <- function(results, annot_df=NULL) {
           ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
         complst[[method_comp_name]] <- fs_cor
         plotlst[[method_comp_name]] <- fs_plt
-      }
-    }
-  } ## End loop
+      } ## End iterating through the contrasts
+    } ## End the second method loop
+  } ## End the first method loop
   if (isTRUE(show_progress)) {
     close(bar)
   }
 
   comparison_df <- as.matrix(comparison_df)
-  colnames(comparison_df) <- names(retlst[["deseq"]])
+  ## I think this next line is a likely source of errors because
+  ## of differences when using extra_contrasts.
+  ## colnames(comparison_df) <- names(retlst[["deseq"]])
+  colnames(comparison_df) <- contrast_name_list
+
   heat_colors <- grDevices::colorRampPalette(c("white", "black"))
   original <- par(mar=c(7, 4, 4, 2) + 0.1)
   comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
@@ -1819,7 +1853,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
-                                    do_pairwise=TRUE, extra_contrasts=NULL, ...) {
+                                    do_extras=TRUE, do_pairwise=TRUE, extra_contrasts=NULL, ...) {
   arglist <- list(...)
   tmpnames <- colnames(model)
   tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
@@ -1871,14 +1905,17 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
   }
   eval_names <- names(eval_strings)
 
-  if (!is.null(extra_contrasts)) {
-    extra_eval_strings <- strsplit(extra_contrasts, ",")
+  if (!is.null(extra_contrasts) & isTRUE(do_extras)) {
+    extra_eval_strings <- strsplit(extra_contrasts, ",")[[1]]
     extra_eval_names <- extra_eval_strings
-    extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings[[1]],
-                                                        "^(\\s*)(\\w+)=.*$", "$2")
+    extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
+                                                        "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
+    extra_eval_names <- gsub(pattern="^\\s+", replacement="", x=extra_eval_names, perl=TRUE)
     for (i in 1:length(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
-      extra_contrast <- glue("{extra_eval_strings[[i]]}, ")
+      extra_eval_string <- extra_eval_strings[[i]]
+      extra_eval_string <- gsub(pattern="^\\s+", replacement="", x=extra_eval_string, perl=TRUE)
+      extra_contrast <- glue("{extra_eval_string}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
       all_pairwise[new_name] <- extra_contrast

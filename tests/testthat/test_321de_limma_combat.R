@@ -8,7 +8,7 @@ pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir=limma)
 counts <- limma[["counts"]]
 design <- limma[["design"]]
 
@@ -51,15 +51,15 @@ cbcb_actual_vignette_result <- c(30.97, 18.65, 14.69, 12.65, 12.09, 10.94)
 test_that("Does the post-batch correction PCA give the same result?", {
   expect_equal(cbcb_almost_vignette_result, as.numeric(cbcb_res[["propVar"]]))
 })
-cbcb_v <- cbcbSEQ::voomMod(cbcb_hpgl_combat,
-                           model.matrix(~design[["condition"]]),
-                           lib.size=cbcb_libsize)
+cbcb_v <- suppressWarnings(cbcbSEQ::voomMod(cbcb_hpgl_combat,
+                                            model.matrix(~design[["condition"]]),
+                                            lib.size=cbcb_libsize))
 ## It looks to me like the voomMod function is missing a is.na() check and so
 ## the lowess() function is failing.
-hpgl_v <- hpgl_voom(cbcb_hpgl_combat,
-                    model=model.matrix(~design[["condition"]]),
-                    libsize=cbcb_libsize,
-                    logged=TRUE, converted=TRUE)
+hpgl_v <- suppressWarnings(hpgl_voom(cbcb_hpgl_combat,
+                                     model=model.matrix(~design[["condition"]]),
+                                     libsize=cbcb_libsize,
+                                     logged=TRUE, converted=TRUE))
 ## Taking the first column of the E slot in in v
 cbcb_almost_vignette_result <- c(2.968411, 3.028748, 3.265501, 2.858357,
                                  2.838402, 3.178890, 2.713208)
@@ -101,7 +101,7 @@ test_that("Do cbcbSEQ and hpgltools agree on the definition of log2(quantile(cpm
 ## Getting log2(combat(cpm(quantile(counts))))
 cbcb_hpgl_combat <- cbcbSEQ::combatMod(dat=cbcb_qcpmcounts, batch=design[["libType"]],
                                        mod=design[["condition"]], noScale=TRUE)
-cbcb_filtered <- cbcbSEQ::filterCounts(cbcb_hpgl_combat)
+cbcb_filtered <- suppressWarnings(cbcbSEQ::filterCounts(cbcb_hpgl_combat))
 not_na <- !is.na(rownames(cbcb_filtered))
 cbcb_filtered <- cbcb_filtered[not_na, ]
 

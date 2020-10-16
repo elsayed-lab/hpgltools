@@ -401,7 +401,7 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
 plot_sample_cvheatmap <- function(expt, fun="mean", fact="condition",
                                   row_label=NA, title=NULL, Rowv=TRUE,
                                   Colv=TRUE, label_chars=10, dendrogram="column",
-                                  min_delta=0.5, x_factor=1, y_factor=2,
+                                  min_delta=0.5, x_factor=1, y_factor=2, min_cvsd=NULL,
                                   cv_min=1, cv_max=Inf, remove_equal=TRUE) {
 
 

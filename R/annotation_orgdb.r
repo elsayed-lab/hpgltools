@@ -91,19 +91,19 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
                        start_column, end_column, fields)
   }
 
-  if (sum(chosen_fields %in% all_fields) != length(chosen_fields)) {
-    missing_idx <- ! chosen_fields %in% all_fields
-    missing_fields <- chosen_fields[missing_idx]
-    found_fields <- chosen_fields %in% all_fields
-    chosen_fields <- chosen_fields[found_fields]
-    message("Some requested columns are not available: ", toString(missing_fields), ".")
-    message("The following are available: ", toString(all_fields))
-  }
-
-  if (chosen_fields[1] == "all") {
+  if ("ALL" %in% chosen_fields) {
     message("Selecting the following fields, this might be too many: \n",
             toString(all_fields))
     chosen_fields <- all_fields
+  } else {
+    if (sum(chosen_fields %in% all_fields) != length(chosen_fields)) {
+      missing_idx <- ! chosen_fields %in% all_fields
+      missing_fields <- chosen_fields[missing_idx]
+      found_fields <- chosen_fields %in% all_fields
+      chosen_fields <- chosen_fields[found_fields]
+      message("Some requested columns are not available: ", toString(missing_fields), ".")
+      message("The following are available: ", toString(all_fields))
+    }
   }
 
   ## Gene IDs

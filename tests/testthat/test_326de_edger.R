@@ -6,10 +6,21 @@ tt <- library(edgeR)
 context("26de_edger.R: Does hpgltools work with edgeR?\n")
 
 pasilla <- new.env()
-load("pasilla.rda", envir=pasilla)
+pasilla_file <- "pasilla.rda"
+if (file.exists(pasilla_file)) {
+  load(pasilla_file, envir=pasilla)
+} else {
+  stop("The pasilla data file does not exist.")
+}
 pasilla_expt <- pasilla[["expt"]]
+
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+limma_file <- "320_de_limma.rda"
+if (file.exists(limma_file)) {
+  load(limma_file, envir=limma)
+} else {
+  stop("The pasilla data file does not exist.")
+}
 counts <- limma[["counts"]]
 design <- limma[["design"]]
 
@@ -93,7 +104,7 @@ test_that("Can we write the results of an edger pairwise analysis?", {
 })
 
 hpgl_edger <- sm(edger_pairwise(pasilla_expt))
-save(list=ls(), file="de_edger.rda")
+save(list=ls(), file="326_de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

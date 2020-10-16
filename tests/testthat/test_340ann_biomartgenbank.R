@@ -1,30 +1,31 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("40ann_biomartgenbank.R: Does biomart function?
+context("340ann_biomartgenbank.R: Does biomart function?
   1234567\n")
 
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir=limma)
+
 limma_result <- limma[["hpgl_limma"]]
 table <- limma_result[["all_tables"]][[1]]
 sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
 
 table <- limma_result[["all_tables"]][[1]]
 sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
-dmel_annotations <- load_biomart_annotations(species="dmelanogaster",
-                                             host="useast.ensembl.org",
-                                             overwrite=TRUE)
-dmel_go <- load_biomart_go(species="dmelanogaster",
-                           ## Yay archive.ensembl is back!
-                           ## host="useast.ensembl.org",
-                           overwrite=TRUE)
+dmel_annotations <- load_biomart_annotations(species="dmelanogaster")[["annotation"]]
+dmel_go <- load_biomart_go(species="dmelanogaster")
 
-expected_lengths <- c(1776, 819, 2361, NA, 633, 1164)
-actual_lengths <- head(dmel_annotations[["annotation"]][["cds_length"]])
+## My recent changes inadvertently switched this from gene to transcript.
+## This makes me think I should consider making that an option...
+chosen_genes <- c("FBtr0005088", "FBtr0006151", "FBtr0070001",
+                  "FBtr0070002", "FBtr0070003", "FBtr0070006")
+##expected <- c(1776, 819, NA, 633, 1164, 1326)
+expected <- c(1773, 816, NA, 630, NA, 1323)
+actual <- dmel_annotations[chosen_genes, "cds_length"]
 ## 01
 test_that("Did the gene lengths come out?", {
-    expect_equal(expected_lengths, actual_lengths)
+    expect_equal(expected, actual)
 })
 
 ## I am not sure why, but these tests are failing when I do not run them interactively...

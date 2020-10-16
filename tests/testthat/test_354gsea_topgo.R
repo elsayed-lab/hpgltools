@@ -3,8 +3,12 @@ library(testthat)
 library(hpgltools)
 context("54gsea_topgo.R: Does topGO work?\n")
 
-## Load the set of limma results and pull the significantly 'up' genes.
-load("gsea_siggenes.rda")
+sig_file <- "351_gsea_siggenes.rda"
+if (file.exists(sig_file)) {
+  load(sig_file)
+} else {
+  stop("The significance file.")
+}
 
 tp_result <- simple_topgo(fcp_sig_genes, go_db=dmel_ontologies, overwrite=TRUE,
                           excel="topgo.xlsx", pval_column="adj.P.Val")

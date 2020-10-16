@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
-context("20de_limma_batch.R: Does hpgltools work with limma?\n")
+context("320de_limma_batch.R: Does hpgltools work with limma?\n")
 
 load("pasilla_df.rda")
 pasilla <- new.env()
@@ -149,7 +149,6 @@ test_that("Do cbcbSEQ and hpgltools agree on the p-values?", {
   expect_equal(expected, actual, tolerance=0.01)
 })
 
-
 ## Finished checking the no-intercept invocations, now compare intercept to no-intercept limma.
 noint_limma <- sm(limma_pairwise(hpgl_norm, which_voom="hpgl", limma_method="ls"))
 expected <- noint_limma[["voom_result"]][["E"]]
@@ -202,8 +201,12 @@ limma_written <- sm(write_limma(noint_limma, excel="limma_test.xlsx"))
 hpgl_limma <- sm(limma_pairwise(pasilla_expt))
 
 ## For the following tests
-save(list=ls(), file="de_limma.rda")
+limma_file <- "320_de_limma.rda"
+saved <- save(list=ls(), file=limma_file)
+test_that("Did we save the limma results?", {
+  expect_true(file.exists(limma_file))
+})
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 20de_limma_batch.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 320de_limma_batch.R in ", elapsed,  " seconds."))

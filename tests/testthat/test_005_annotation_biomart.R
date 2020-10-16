@@ -19,7 +19,7 @@ if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
   })
 
   data <- testing[["annotation"]]
-  expected <- 227000
+  expected <- 200000
   actual <- nrow(data)
   ## 02
   test_that("Do we receive expected output from load_biomart_annotations()?", {

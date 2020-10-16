@@ -1,10 +1,10 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("51gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?\n")
+context("351gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?\n")
 
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir=limma)
 table <- limma[["hpgl_limma"]][["all_tables"]][[1]]
 
 ## Use biomart's result to get the gene lengths etc.
@@ -90,7 +90,7 @@ test_that("Do we get a consistent top set of z-scored up genes?", {
     expect_equal(expected, actual)
 })
 
-save(list=ls(), file="gsea_siggenes.rda")
+save(list=ls(), file="351_gsea_siggenes.rda")
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 51gsea_siggenes.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 351gsea_siggenes.R in ", elapsed,  " seconds."))

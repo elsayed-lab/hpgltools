@@ -3,13 +3,25 @@ library(testthat)
 library(hpgltools)
 context("24de_deseq.R: Does hpgltools work with DESeq2?\n")
 
-load("pasilla_df.rda")
-## create_expt generates a .Rdata file which may be reread, do so.
+pasilladf_file <- "pasilla_df.rda"
+pasilla_file <- "pasilla.rda"
 pasilla <- new.env()
-load("pasilla.rda", envir=pasilla)
+if (file.exists(pasilla_file) & file.exists(pasilladf_file)) {
+  load(pasilladf_file, envir=pasilla)
+  load(pasilla_file, envir=pasilla)
+} else {
+  stop("The pasilla data file does not exist.")
+}
 pasilla_expt <- pasilla[["expt"]]
+## create_expt generates a .Rdata file which may be reread, do so.
+
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+limma_file <- "320_de_limma.rda"
+if (file.exists(limma_file)) {
+  load(limma_file, envir=limma)
+} else {
+  stop("The pasilla data file does not exist.")
+}
 counts <- limma[["counts"]]
 design <- limma[["design"]]
 
@@ -86,7 +98,11 @@ test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise():
   expect_equal(deseq_adjpval, hpgl_adjpval, tolerance=0.1)
 })
 
-save(list=ls(), file="de_deseq.rda")
+deseq_file <- "324_de_deseq.rda"
+save(list=ls(), file=deseq_file)
+test_that("Did we save the deseq results?", {
+  expect_true(file.exists(deseq_file))
+})
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))

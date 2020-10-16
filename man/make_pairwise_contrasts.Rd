@@ -8,6 +8,7 @@ make_pairwise_contrasts(
   model,
   conditions,
   do_identities = FALSE,
+  do_extras = TRUE,
   do_pairwise = TRUE,
   extra_contrasts = NULL,
   ...

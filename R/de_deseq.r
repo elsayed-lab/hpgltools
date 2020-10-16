@@ -234,20 +234,26 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                  do_identities=FALSE,
                                  ...)
   contrast_order <- apc[["names"]]
+  contrast_strings <- apc[["all_pairwise"]]
   contrasts <- c()
-  total_contrasts <- length(condition_levels)
-  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  ##total_contrasts <- length(condition_levels)
+  ##total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  total_contrasts <- length(contrast_order)
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }
-  for (c in 1:length(contrast_order)) {
-    contrast_string <- contrast_order[[c]]
+  for (i in 1:length(contrast_order)) {
+    contrast_name <- contrast_order[[i]]
+    contrast_string <- contrast_strings[[i]]
     if (isTRUE(show_progress)) {
-      pct_done <- c / length(contrast_order)
+      pct_done <- i / length(contrast_order)
       utils::setTxtProgressBar(bar, pct_done)
     }
-    num_den_string <- strsplit(x=contrast_string, split="_vs_")[[1]]
+    num_den_string <- strsplit(x=contrast_name, split="_vs_")[[1]]
+    if (length(num_den_string) == 0) {
+      warning("This contrast does not appear to have a _vs_ in it, it cannot be used.")
+    }
     num_name <- num_den_string[1]
     den_name <- num_den_string[2]
     denominators[[contrast_string]] <- den_name
@@ -381,6 +387,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "model" = model_data,
     "model_string" = model_string,
     "numerators" = numerators,
+    "deseq_dataset" = dataset,
     "run" = deseq_run
   )
   class(retlist) <- c("deseq_result", "list")

@@ -135,7 +135,14 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                   padj_type)
   image_files <- c(legend[["image_files"]], image_files)
   table_names <- legend[["table_names"]]
+
+  ## Because we sometimes use different names for tables in the keepers
+  ## This is probably not the correct way to handle the list of coefficients.
+  ## Instead, we should just grab the conditions list from deseq/edger/etc
   all_coefficients <- unlist(strsplit(x=table_names, split="_vs_"))
+  ## But I want to see what happend before I change this.
+  ## all_coefficients <- apr[["deseq"]][["conditions"]]
+
   ## Extract and write the data tables.
   extracted <- list(
     "data" = list(),
@@ -627,9 +634,14 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     } else {
       ma_vol <- try(extract_de_plots(
           plot_inputs[[type]], type=type, invert=do_inverse,
-          logfc=logfc, p=p, table=found_table))
-      plots[[ma_name]] <- ma_vol[["ma"]]
-      plots[[vol_name]] <- ma_vol[["volcano"]]
+        logfc=logfc, p=p, table=found_table), silent=TRUE)
+      if ("try-error" %in% class(ma_vol)) {
+        plots[[ma_name]] <- NULL
+        plots[[vol_name]] <- NULL
+      } else {
+        plots[[ma_name]] <- ma_vol[["ma"]]
+        plots[[vol_name]] <- ma_vol[["volcano"]]
+      }
     }
     if (is.null(p_name)) {
       message("Skipping p-value plot for ", t, ".")
@@ -1250,17 +1262,23 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
       extracted[["kept"]] <- kept_tables
       extracted[["keepers"]] <- keepers
       plot_inputs <- list(
-          "limma" = limma,
-          "deseq" = deseq,
-          "edger" = edger,
-          "ebseq" = ebseq,
-          "basic" = basic)
-      extracted[["plots"]][[name]] <- combine_extracted_plots(
+        "limma" = limma,
+        "deseq" = deseq,
+        "edger" = edger,
+        "ebseq" = ebseq,
+        "basic" = basic)
+      ## Changing this to a try() for when we have weirdo extra_contrasts.
+      extracted_plots <- try(combine_extracted_plots(
         name, combined, denominator, numerator, plot_inputs,
         include_basic=include_basic, include_deseq=include_deseq,
         include_edger=include_edger, include_limma=include_limma,
         include_ebseq=include_ebseq, loess=loess, logfc=lfc_cutoff, p=p_cutoff,
-        do_inverse=do_inverse, found_table=found_table)
+        do_inverse=do_inverse, found_table=found_table), silent=TRUE)
+      if ("try-error" %in% class(extracted_plots)) {
+        extracted[["plots"]][[name]] <- NULL
+      } else {
+        extracted[["plots"]][[name]] <- extracted_plots
+      }
       extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                         as.data.frame(combined[["summary"]]))
       extracted[["numerators"]] <- numerators
@@ -1608,9 +1626,13 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       plot_name <- gsub(pattern="-inverted", replacement="", x=plot_name)
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
-        single_ma <- extract_de_plots(
-          combined[["input"]], type=according, table=plot_name, lfc=lfc, p=p)
-        ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
+        single_ma <- try(extract_de_plots(
+          combined[["input"]], type=according, table=plot_name, lfc=lfc, p=p), silent=TRUE)
+        if ("try-error" %in% single_ma) {
+          ma_plots[[table_name]] <- NULL
+        } else {
+          ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
+        }
       }
 
       factor <- length(according_to)

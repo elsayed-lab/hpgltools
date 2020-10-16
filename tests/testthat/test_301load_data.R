@@ -3,13 +3,12 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 data(pasillaGenes)
-context("02load_data.R: Does pasilla load into hpgltools?\n")
+context("301load_data.R: Does pasilla load into hpgltools?\n")
 
 ## Try loading some annotation information for this species.
 
 ## This now generates an error on travis, but not on my computer.
 gene_info <- sm(load_biomart_annotations(
-    host="useast.ensembl.org",
     species="dmelanogaster", overwrite=TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
@@ -47,29 +46,36 @@ test_that("Does data from an expt equal a raw dataframe?", {
 
 ## The set of annotations should be in a consistent order.
 hpgl_annotations <- fData(pasilla_expt)
-expected <- c("FBgn0000008", "FBgn0000014", "FBgn0000017", "FBgn0000018", "FBgn0000024", "FBgn0000032")
-actual <- head(sort(rownames(hpgl_annotations)))
+chosen_genes <- c("FBgn0000008", "FBgn0000014", "FBgn0000017",
+                  "FBgn0000018", "FBgn0000024", "FBgn0000032")
+
+expected <- 10100
+actual <- nrow(exprs(pasilla_expt))
 test_that("Was the annotation information imported into the expressionset? (static rownames?)", {
-    expect_equal(expected, actual)
+    expect_gt(actual, expected)
 })
 
 ## Then lengths of features should therefore remain consistent.
-expected <- c(78, 81, 99, 123, 123, 123)
-actual <- head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
+##expected <- c(1521, 192, 1344, 1428, 1428, 1428)
+expected <- c(3987, 990, 4860, 1617, 1947, 1314)
+actual <- as.numeric(hpgl_annotations[chosen_genes, "cds_length"])
+##  head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {
     expect_equal(expected, actual)
 })
 
 ## By the same token, the start positions of genes should remain consistent.
-expected <- c(9839, 21823, 25402, 32478, 47710, 65225)
-actual <- sm(head(sort(as.numeric(hpgl_annotations[["start_position"]]))))
+##expected <- c(18822604, 30212156, 7782797, 19116483, 19116483, 19116483)
+expected <- c(22136968, 16807214, 16615866, 10973443, 13222951, 29991144)
+actual <- as.numeric(hpgl_annotations[chosen_genes, "start_position"])
 test_that("Was the annotation information imported into the expressionset? (static starts?)", {
     expect_equal(expected, actual)
 })
 
 ## As should the chromosome arms of these genes.
+##expected <- c("3L", "3R", "2R", "2L", "2L", "2L")
 expected <- c("2R", "3R", "3L", "2L", "3R", "3R")
-actual <- head(hpgl_annotations[["chromosome_name"]])
+actual <- hpgl_annotations[chosen_genes, "chromosome_name"]
 test_that("Was the annotation information imported into the expressionset? (static chromosomes?)", {
     expect_equal(expected, actual)
 })

@@ -4,14 +4,20 @@ library(hpgltools)
 library(pasilla)
 library(pathview)
 data(pasillaGenes)
-context("57gsea_kegg.R: Do KEGGREST and pathview work?
+context("357gsea_kegg.R: Do KEGGREST and pathview work?
   123456\n")
 
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
+
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+limma_file <- "320_de_limma.rda"
+if (file.exists(limma_file)) {
+  load(limma_file, envir=limma)
+} else {
+  stop("The pasilla data file does not exist.")
+}
 
 test_orgn <- get_kegg_orgn("Drosophila melanogaster", short=FALSE)
 actual <- as.character(test_orgn[["orgid"]])
@@ -81,4 +87,4 @@ test_that("Did pathview work? (total mapped nodes)", {
 unlink("kegg_pathways", recursive=TRUE)
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 57gsea_kegg.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 357gsea_kegg.R in ", elapsed,  " seconds."))

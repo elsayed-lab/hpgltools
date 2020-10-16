@@ -232,7 +232,12 @@ few <- list(
     "first" = c("wt30", "wt15"),
     "second" = c("wt30", "wt0"))
 small_combined <- combine_de_tables(test_condbatch, keepers=few)
-saved <- save(list=c("small_combined"), file="small_combined.rda")
+
+saved <- save(list=c("small_combined"), file="065_small_combined.rda")
+test_that("Did we save the result of combine_de_tables?", {
+  expect_true(file.exists("065_small_combined.rda"))
+})
+
 expected <- 2
 actual <- length(small_combined[["data"]])
 test_that("combine_de_tables() with keepers worked?", {

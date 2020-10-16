@@ -27,7 +27,7 @@
 #'   some plots, as available.
 #' @export
 all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch",
-                          batch2=NULL, surrogates="be", low_to_zero=FALSE, cpus=NULL,
+                          batch2=NULL, surrogates="be", low_to_zero=FALSE, cpus=4,
                           na_to_zero=TRUE, expt_state=NULL, confounders=NULL,
                           chosen_surrogates=NULL,
                           ...) {
@@ -625,7 +625,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
 #' @export
 batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", current_state=NULL,
                          current_design=NULL, expt_state=NULL, surrogate_method=NULL,
-                         num_surrogates=NULL, low_to_zero=FALSE, cpus=NULL, batch2=NULL,
+                         num_surrogates=NULL, low_to_zero=FALSE, cpus=4, batch2=NULL,
                          noscale=TRUE, ...) {
   arglist <- list(...)
   chosen_surrogates <- NULL

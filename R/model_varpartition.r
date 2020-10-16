@@ -31,24 +31,23 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 
 #' Use variancePartition to try and understand where the variance lies in a data set.
 #'
-#' variancePartition is the newest toy introduced by Hector.
+#' The arguments and usage of variancePartition are a bit opaque.  This function
+#' attempts to fill in reasonable values and simplify its invocation.
 #'
-#' Tested in 19varpart.R.
-#'
-#' @param expt  Some data
-#' @param predictor  Non-categorical predictor factor with which to begin the
-#'   model.
-#' @param factors  Character list of columns in the experiment design to query
-#' @param chosen_factor  When checking for sane 'batches', what column to
-#'   extract from the design?
-#' @param do_fit  Perform a fitting using variancePartition?
-#' @param cor_gene  Provide a set of genes to look at the correlations, defaults
-#'   to the first gene.
-#' @param cpus  Number cpus to use
-#' @param genes  Number of genes to count.
-#' @param parallel  use doParallel?
-#' @param modify_expt  Add annotation columns with the variance/factor?
-#' @return partitions  List of plots and variance data frames
+#' @param expt Some data
+#' @param predictor Non-categorical predictor factor with which to begin the
+#'  model.
+#' @param factors Character list of columns in the experiment design to query
+#' @param chosen_factor When checking for sane 'batches', what column to
+#'  extract from the design?
+#' @param do_fit Perform a fitting using variancePartition?
+#' @param cor_gene Provide a set of genes to look at the correlations, defaults
+#'  to the first gene.
+#' @param cpus Number cpus to use
+#' @param genes Number of genes to count.
+#' @param parallel Use doParallel?
+#' @param modify_expt Add annotation columns with the variance/factor?
+#' @return List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
@@ -184,11 +183,11 @@ which are shared among multiple samples.")
 #' Note the word 'attempt'.  This function is so ungodly slow that it probably
 #' will never be used.
 #'
-#' @param expt  Input expressionset.
-#' @param factors  Set of factors to query
-#' @param cpus  Number of cpus to use in doParallel.
-#' @return  Summaries of the new model,  in theory this would be a nicely
-#'   batch-corrected data set.
+#' @param expt Input expressionset.
+#' @param factors Set of factors to query
+#' @param cpus Number of cpus to use in doParallel.
+#' @return Summaries of the new model,  in theory this would be a nicely
+#'  batch-corrected data set.
 #' @seealso \pkg{variancePartition}
 varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
   cl <- parallel::makeCluster(cpus)

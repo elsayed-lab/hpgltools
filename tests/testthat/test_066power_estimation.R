@@ -5,7 +5,7 @@ context("066power_estimation.R:
   123\n")
 
 small_combined <- new.env()
-tt <- load(file="small_combined.rda", envir=small_combined)
+tt <- load(file="065_small_combined.rda", envir=small_combined)
 small_combined <- small_combined[["small_combined"]]
 test_proper <- sm(simple_proper(small_combined, reps=c(3,5), nsims=10))
 expected <- 6

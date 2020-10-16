@@ -1,9 +1,14 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("53gsea_clusterp.R: Does clusterProfiler work?\n")
+context("353gsea_clusterp.R: Does clusterProfiler work?\n")
 
-load("gsea_siggenes.rda")
+sig_file <- "351_gsea_siggenes.rda"
+if (file.exists(sig_file)) {
+  load(sig_file)
+} else {
+  stop("The significance file.")
+}
 
 dmel_cp <- simple_clusterprofiler(
     sig_genes=z_sig_genes,

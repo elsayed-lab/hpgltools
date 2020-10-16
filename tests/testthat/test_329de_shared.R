@@ -8,13 +8,13 @@ pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
 pasilla_expt <- pasilla[["expt"]]
 deseq <- new.env()
-load("de_deseq.rda", envir=deseq)
+load("324_de_deseq.rda", envir=deseq)
 edger <- new.env()
-load("de_edger.rda", envir=edger)
+load("326_de_edger.rda", envir=edger)
 limma <- new.env()
-load("de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir=limma)
 basic <- new.env()
-load("de_basic.rda", envir=basic)
+load("327_de_basic.rda", envir=basic)
 
 ## The following lines should not be needed any longer.
 normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant",

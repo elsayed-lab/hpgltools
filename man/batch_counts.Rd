@@ -15,7 +15,7 @@ batch_counts(
   surrogate_method = NULL,
   num_surrogates = NULL,
   low_to_zero = FALSE,
-  cpus = NULL,
+  cpus = 4,
   batch2 = NULL,
   noscale = TRUE,
   ...

@@ -1,16 +1,21 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("55gsea_gostats.R: Does GOstats work?\n")
+context("355gsea_gostats.R: Does GOstats work?\n")
 
-load("gsea_siggenes.rda")
+sig_file <- "351_gsea_siggenes.rda"
+if (file.exists(sig_file)) {
+  load(sig_file)
+} else {
+  stop("The significance file.")
+}
 
 gst_result <- sm(simple_gostats(fcp_sig_genes, gff_df=dmel,
                                 go_db=dmel_ontologies,
                                 gff_type="protein_coding"))
 
 ## There is some run-to-run variability in these ontology searches
-expected <- 70
+expected <- 65
 actual <- nrow(gst_result[["tables"]][["mf_over_enriched"]])
 test_that("Are the GOstats interesting results as expected? (MF)", {
     expect_gt(actual, expected)

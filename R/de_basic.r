@@ -112,7 +112,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     ...))
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, do_extras=FALSE,
                                  ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))

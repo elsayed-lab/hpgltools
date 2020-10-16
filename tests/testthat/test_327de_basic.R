@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("27de_basic: Does the basic differential expression analysis work?\n")
+context("327de_basic: Does the basic differential expression analysis work?\n")
 
 pasilla <- new.env()
 load("pasilla.rda", envir=pasilla)
@@ -49,8 +49,8 @@ test_that("Is it possible to write the results of a basic analysis?", {
 })
 
 hpgl_basic <- sm(basic_pairwise(pasilla_expt))
-save(list=ls(), file="de_basic.rda")
+save(list=ls(), file="327_de_basic.rda")
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 27de_basic.R in ", elapsed,  " seconds."))
+message(paste0("\nFinished 327de_basic.R in ", elapsed,  " seconds."))

@@ -7,20 +7,29 @@
 ## at each function declaration serves to make explicit what each function
 ## requires while not (I think) adding excessive cruft to the NAMESPACE
 
+#' I want to use R6 classes for my expressionSet superclass.
+#'
+#' When I was first learning R, S4's opacity offended me.  To a much smaller
+#' degree it still does.  I wanted to use expressionSets and add some
+#' information to them without having to deal with S4.  Now I understand R and
+#' S4 quite a bit more, but would still prefer to use something else; in this
+#' case I wish to reimplement my superclass as a S6 class because I like the
+#' idea of encapsulating all the data in an environment and being able to
+#' call/modify stuff by reference rather than R's default copy on write.  I wish
+#' to do this because I am thinking it will be useful to include more stuff in
+#' them, for example: the results of differential expression analyses, the
+#' definition(s) of 'significant'.  Doing these using CoW I think will be
+#' unwieldy.
+#'
+#' Most importantly, my normalize_expt() function is a pile of dogcrap and I
+#' want to reimplement it in a more sane fashion.
+#' @import R6
+NULL
+
 ## #' @import scales grid gtable Biobase
 ## #' @importFrom plyr defaults
 ## #' @importFrom stats setNames
 ## NULL
-
-## Some notes!
-##
-## Something I should have realized:
-## From: <> On Behalf Of Hector Corrada Bravo
-## To: Najib M. El-Sayed
-## Subject: Re: fold change
-## Sorry for the delay in answering, I missed this. Using 'topTable' you can get
-## confidence intervals for the logFC estimate. If you want the standard error
-## itself you can get by dividing the logFC by the t statistic.
 
 #' Pipe operator
 #'
@@ -86,11 +95,11 @@ NULL
 #' @importFrom grDevices recordPlot
 #' @importFrom rlang abort sym
 #' @importFrom stats
-#'     aggregate as.dendrogram as.formula ave biplot coef coefficients complete.cases
-#'     cor cor.test density dist dnorm formula glm hclust lm lowess median
-#'     model.matrix na.omit order.dendrogram p.adjust p.adjust.methods pnorm
-#'     princomp quantile relevel reorder resid residuals rnbinom sd setNames
-#'     t.test var
+#'  aggregate as.dendrogram as.formula ave biplot coef coefficients complete.cases
+#'  cor cor.test density dist dnorm formula glm hclust lm lowess median
+#'  model.matrix na.omit order.dendrogram p.adjust p.adjust.methods pnorm
+#'  princomp quantile relevel reorder resid residuals rnbinom sd setNames
+#'  t.test var
 #' @import graphics
 #' @import grDevices
 #' @import methods
@@ -106,9 +115,8 @@ table_style <- "TableStyleMedium9"
 #' R CMD check is super annoying about :::.
 #'
 #' In a fit of pique, I did a google search to see if anyone else has been
-#' annoyed in the same was as I.  I was in no way surprised to see that Yihui
-#' Xie was, and in his email to r-devel in 2013 he proposed a game of
-#' hide-and-seek; a game which I am repeating here.
+#' annoyed in the same way as was I.  Yihui Xie was, and in his email to r-devel
+#' in 2013 he proposed a game of hide-and-seek; which I am repeating here.
 #'
 #' This just implements ::: as an infix operator that will not trip check.
 #'
@@ -128,4 +136,3 @@ bprior <- "sva" %:::% "bprior"
 it.sol <- "sva" %:::% "it.sol"
 int.eprior <- "sva" %:::% "int.eprior"
 getGOLevel <- "clusterProfiler" %:::% "getGOLevel"
-##myOpts <- curl::curl_options(timeout=30)

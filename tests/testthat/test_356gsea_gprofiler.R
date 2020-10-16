@@ -4,7 +4,13 @@ library(hpgltools)
 context("56gsea_gprofiler.R: Do gProfiler searches work?
   12345\n")
 
-load("gsea_siggenes.rda")
+sig_file <- "351_gsea_siggenes.rda"
+if (file.exists(sig_file)) {
+  load(sig_file)
+} else {
+  stop("The significance file.")
+}
+
 ##gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="untreated")
 gprofiler_result <- simple_gprofiler(z_sig_genes, species="dmelanogaster", first_col="logFC")
 

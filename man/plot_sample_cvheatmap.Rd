@@ -17,6 +17,7 @@ plot_sample_cvheatmap(
   min_delta = 0.5,
   x_factor = 1,
   y_factor = 2,
+  min_cvsd = NULL,
   cv_min = 1,
   cv_max = Inf,
   remove_equal = TRUE

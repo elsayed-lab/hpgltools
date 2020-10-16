@@ -61,7 +61,7 @@ data into pairs of conditions.}
 }
 \value{
 List containing tables from ebseq, the conditions tested, and the
-  ebseq table of conditions.
+ ebseq table of conditions.
 }
 \description{
 Invoking EBSeq is confusing, this should help.

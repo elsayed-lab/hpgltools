@@ -12,7 +12,7 @@ all_adjusters(
   batch2 = NULL,
   surrogates = "be",
   low_to_zero = FALSE,
-  cpus = NULL,
+  cpus = 4,
   na_to_zero = TRUE,
   expt_state = NULL,
   confounders = NULL,
