@@ -1,12 +1,3 @@
-## The following was taken from ggplot2's ggplot2.r
-## I presume it is a blanket importer cue for roxygen2 to add
-## import statements to the NAMESPACE file so that when ggplot2 is used
-## it will ensure that these libraries are available.
-## I checked the roxygen documentation and it appears that
-## imports are saved as the exclusive set, as a result repeating these
-## at each function declaration serves to make explicit what each function
-## requires while not (I think) adding excessive cruft to the NAMESPACE
-
 #' I want to use R6 classes for my expressionSet superclass.
 #'
 #' When I was first learning R, S4's opacity offended me.  To a much smaller
@@ -25,11 +16,6 @@
 #' want to reimplement it in a more sane fashion.
 #' @import R6
 NULL
-
-## #' @import scales grid gtable Biobase
-## #' @importFrom plyr defaults
-## #' @importFrom stats setNames
-## NULL
 
 #' Pipe operator
 #'

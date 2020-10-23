@@ -4,7 +4,7 @@
 \alias{correlate_de_tables}
 \title{See how similar are results from limma/deseq/edger/ebseq.}
 \usage{
-correlate_de_tables(results, annot_df = NULL)
+correlate_de_tables(results, annot_df = NULL, extra_contrasts = NULL)
 }
 \arguments{
 \item{results}{Data from do_pairwise()}
