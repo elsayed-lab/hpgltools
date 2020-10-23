@@ -152,6 +152,8 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   }
 
+  normalized_counts <- NULL ## When performing the 'long' analysis, I pull
+  ## out the normalized counts so that we can compare against other analyses (e.g. with Julieth)
   deseq_run <- NULL
   chosen_beta <- model_intercept
   if (deseq_method == "short") {
@@ -201,7 +203,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     message("DESeq2 step 4/5: nbinomWaldTest.")
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
   }
-
+  normalized_counts <- DESeq2::counts(deseq_disp)
   dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
   dispersion_plot <- NULL
   if (class(dispersions)[1] != "try-error") {
@@ -386,6 +388,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "method" = "deseq",
     "model" = model_data,
     "model_string" = model_string,
+    "normalized_counts" = normalized_counts,
     "numerators" = numerators,
     "deseq_dataset" = dataset,
     "run" = deseq_run
