@@ -26,6 +26,7 @@ all_pairwise(
   do_limma = TRUE,
   convert = "cpm",
   norm = "quant",
+  verbose = TRUE,
   ...
 )
 }
@@ -100,11 +101,11 @@ basic_pairwise() each in turn. It collects the results and does some simple
 comparisons among them.
 }
 \examples{
- \dontrun{
-  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
-  summary(lotsodata)
-  ## limma, edger, deseq, basic results; plots; and summaries.
- }
+\dontrun{
+ lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+ summary(lotsodata)
+ ## limma, edger, deseq, basic results; plots; and summaries.
+}
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}

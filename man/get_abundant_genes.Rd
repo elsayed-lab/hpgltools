@@ -36,13 +36,13 @@ what are the most and least abundant genes, much like get_sig_genes() does to
 find the most significantly different genes for each contrast.
 }
 \examples{
- \dontrun{
-  abundant <- get_abundant_genes(all_pairwise_output, type="deseq", n=100)
-  ## Top 100 most abundant genes from deseq
-  least <- get_abundant_genes(all_pairwise_output, type="deseq", n=100, least=TRUE)
-  ## Top 100 least abundant genes from deseq
-  abundant <- get_abundant_genes(all_pairwise_output, type="edger", z=1.5)
-  ## Get the genes more than 1.5 standard deviations from the mean.
+\dontrun{
+ abundant <- get_abundant_genes(all_pairwise_output, type="deseq", n=100)
+ ## Top 100 most abundant genes from deseq
+ least <- get_abundant_genes(all_pairwise_output, type="deseq", n=100, least=TRUE)
+ ## Top 100 least abundant genes from deseq
+ abundant <- get_abundant_genes(all_pairwise_output, type="edger", z=1.5)
+ ## Get the genes more than 1.5 standard deviations from the mean.
 }
 }
 \seealso{

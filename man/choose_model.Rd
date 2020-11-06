@@ -17,6 +17,7 @@ choose_model(
   reverse = FALSE,
   contr = NULL,
   surrogates = "be",
+  verbose = TRUE,
   ...
 )
 }
@@ -51,7 +52,7 @@ variables.}
 }
 \value{
 List including a model matrix and strings describing cell-means and
-  intercept models.
+ intercept models.
 }
 \description{
 The _pairwise family of functions all demand an experimental model.  This
@@ -63,10 +64,10 @@ you want those do them yourself and pass them off as alt_model.
 Invoked by the _pairwise() functions.
 }
 \examples{
- \dontrun{
-  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
-  a_model$chosen_model
-  ## ~ 0 + condition + batch
+\dontrun{
+ a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
+ a_model$chosen_model
+ ## ~ 0 + condition + batch
 }
 }
 \seealso{

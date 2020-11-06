@@ -71,11 +71,16 @@ ggplt <- function(gg, filename="ggplot.html",
                   title=class(gg)[[1]], knitrOptions=list(), ...) {
   base <- basename(filename)
   dir <- dirname(filename)
-  out <- plotly::ggplotly(gg, ...)
+  out <- plotly::ggplotly(gg,
+                          ...)
+  ##widget <- htmlwidgets::saveWidget(
+  ##                         widget=plotly::as_widget(out), file=base, selcontained=selfcontained,
+  ##                         libdir=libdir, background=background, title=title,
+  ##                         knitrOptions=knitrOptions)
   widget <- htmlwidgets::saveWidget(
-                           plotly::as_widget(out), base, selcontained=selfcontained,
-                           libdir=libdir, background=background, title=title,
-                           knitrOptions=knitrOptions)
+                           plotly::as_widget(out), base, selfcontained, libdir=libdir,
+                           background=background, title=title, knitrOptions=knitrOptions)
+  final <- base
   if (dir != ".") {
     final <- file.path(dir, base)
     moved <- file.rename(base, final)

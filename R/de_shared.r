@@ -47,11 +47,11 @@
 #'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
 #'  \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 #' @examples
-#'  \dontrun{
-#'   lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
-#'   summary(lotsodata)
-#'   ## limma, edger, deseq, basic results; plots; and summaries.
-#'  }
+#' \dontrun{
+#'  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+#'  summary(lotsodata)
+#'  ## limma, edger, deseq, basic results; plots; and summaries.
+#' }
 #' @export
 all_pairwise <- function(input=NULL, conditions=NULL,
                          batches=NULL, model_cond=TRUE,
@@ -61,7 +61,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
                          annot_df=NULL, parallel=TRUE,
                          do_basic=TRUE, do_deseq=TRUE, do_ebseq=NULL,
                          do_edger=TRUE, do_limma=TRUE,
-                         convert="cpm", norm="quant", ...) {
+                         convert="cpm", norm="quant", verbose=TRUE, ...) {
   arglist <- list(...)
   surrogates <- "be"
   if (!is.null(arglist[["surrogates"]])) {
@@ -96,22 +96,30 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   if (isTRUE(test_pca)) {
     pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
                                    transform="log2", convert=convert, norm=norm))
-    message("Plotting a PCA before surrogate/batch inclusion.")
+    if (isTRUE(verbose)) {
+      message("Plotting a PCA before surrogate/batch inclusion.")
+    }
     pre_pca <- plot_pca(pre_batch, plot_labels=FALSE,
                         ...)
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
-      message("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
+      if (isTRUE(verbose)) {
+        message("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
+      }
       post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
     } else if (class(model_type)[1] == "character") {
-      message("Using ", model_type, " to visualize before/after batch inclusion.")
+      if (isTRUE(verbose)) {
+        message("Using ", model_type, " to visualize before/after batch inclusion.")
+      }
       test_norm <- "quant"
       if (model_type != "TRUE" & model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
-      message("Performing a test normalization with: ", test_norm)
+      if (isTRUE(verbose)) {
+        message("Performing a test normalization with: ", test_norm)
+      }
       if (!isFALSE(model_batch)) {
         post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
                                          transform="log2", convert="cpm",
@@ -121,7 +129,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       }
     } else {
       model_type <- "none"
-      message("Assuming no batch in model for testing pca.")
+      if (isTRUE(verbose)) {
+        message("Assuming no batch in model for testing pca.")
+      }
     }
     post_pca <- plot_pca(post_batch, plot_labels=FALSE,
                          ...)
@@ -181,7 +191,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
-    message("Finished running DE analyses, collecting outputs.")
+    if (isTRUE(verbose)) {
+      message("Finished running DE analyses, collecting outputs.")
+    }
     ## foreach returns the results in no particular order
     ## Therefore, I will reorder the results now and ensure that they are happy.
     for (r in 1:length(res)) {
@@ -193,7 +205,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     ## End performing parallel comparisons
   } else {
     for (type in names(results)) {
-      message("Starting ", type, "_pairwise().")
+      if (isTRUE(verbose)) {
+        message("Starting ", type, "_pairwise().")
+      }
       results[[type]] <- do_pairwise(
         type, input=input, conditions=conditions, batches=batches,
         model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
@@ -240,142 +254,152 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   class(ret) <- c("all_pairwise", "list")
 
   if (!is.null(arglist[["combined_excel"]])) {
-    message("Invoking combine_de_tables().")
+    if (isTRUE(verbose)) {
+      message("Invoking combine_de_tables().")
+    }
     combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
   }
   return(ret)
 }
 
+#' Use sva's f.pvalue to adjust p-values for data adjusted by combat.
+#'
+#' This is from section 5 of the sva manual:  "Adjusting for surrogate
+#' values using the f.pvalue function." The following chunk of code is longer
+#' and more complex than I would like. This is because f.pvalue() assumes a
+#' pairwise comparison of a data set containing only two experimental
+#' factors. As a way to provide an example of _how_ to calculate
+#' appropriately corrected p-values for surrogate factor adjusted models,
+#' this is great; but when dealing with actual data, it falls a bit short.
+#'
+#' @param results Table of differential expression results.
 sva_modify_pvalues <- function(results) {
-    original_pvalues <- data.table::data.table(
-                                      rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
+  original_pvalues <- data.table::data.table(
+                                    rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
+  if (isTRUE(verbose)) {
     message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
-    ## This is from section 5 of the sva manual:  "Adjusting for surrogate
-    ## values using the f.pvalue function. The following chunk of code is longer
-    ## and more complex than I would like. This is because f.pvalue() assumes a
-    ## pairwise comparison of a data set containing only two experimental
-    ## factors. As a way to provide an example of _how_ to calculate
-    ## appropriately corrected p-values for surrogate factor adjusted models,
-    ## this is great; but when dealing with actual data, it falls a bit short.
-    for (it in 1:length(results[["edger"]][["all_tables"]])) {
-      name <- names(results[["edger"]][["all_tables"]])[it]
+  }
+  for (it in 1:length(results[["edger"]][["all_tables"]])) {
+    name <- names(results[["edger"]][["all_tables"]])[it]
+    if (isTRUE(verbose)) {
       message("Readjusting the p-values for comparison: ", name)
-      namelst <- strsplit(x=name, split="_vs_")
-      ## something like 'mutant'
-      first <- namelst[[1]][[1]]
-      ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
-      second <- namelst[[1]][[2]]
-      ## The comments that follow will use mutant and wildtype as examples
+    }
+    namelst <- strsplit(x=name, split="_vs_")
+    ## something like 'mutant'
+    first <- namelst[[1]][[1]]
+    ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
+    second <- namelst[[1]][[2]]
+    ## The comments that follow will use mutant and wildtype as examples
 
-      ## I am going to need to extract the set of data for the samples in
-      ## 'first' and 'second'. I will need to also extract the surrogates for
-      ## those samples from sv_model. Then I rewrite null_model as the
-      ## subset(null_model, samples included) and rewrite sv_model as
-      ## subset(sv_model, samples_included) in that rewrite, there will just be
-      ## conditions a, b where a and b are the subsets for first and
-      ## second. Then the sv_model will be a for the first samples and b for the
-      ## second. With that information, I should e able to feed sva::f.pvalue
-      ## the appropriate information for it to run properly. The resulting
-      ## pvalues will then be appropriate for backfilling the various tables
-      ## from edger/limma/deseq.
+    ## I am going to need to extract the set of data for the samples in
+    ## 'first' and 'second'. I will need to also extract the surrogates for
+    ## those samples from sv_model. Then I rewrite null_model as the
+    ## subset(null_model, samples included) and rewrite sv_model as
+    ## subset(sv_model, samples_included) in that rewrite, there will just be
+    ## conditions a, b where a and b are the subsets for first and
+    ## second. Then the sv_model will be a for the first samples and b for the
+    ## second. With that information, I should e able to feed sva::f.pvalue
+    ## the appropriate information for it to run properly. The resulting
+    ## pvalues will then be appropriate for backfilling the various tables
+    ## from edger/limma/deseq.
 
-      ## Get the samples from the limma comparison which are condition 'mutant'
-      samples_first_idx <- results[["limma"]][["conditions"]] == first
-      num_first <- sum(samples_first_idx)
-      ## Subset the expressionset and make a new matrix of only the 'mutant' samples
-      samples_first <- exprs(input)[, samples_first_idx]
-      ## Repeat for the 'wildtype' samples, when finished the m columns for
-      ## samples_first 'mutant' and the n samples of samples_second will be
-      ## 'wildtype'
-      samples_second_idx <- results[["limma"]][["conditions"]] == second
-      num_second <- sum(samples_second_idx)
-      samples_second <- exprs(input)[, samples_second_idx]
-      ## Concatenate the 'mutant' and 'wildtype' samples by column
-      included_samples <- cbind(samples_first, samples_second)
-      ## Arbitrarily call them 'first' and 'second'
-      colnames(included_samples) <- c(rep("first", times=num_first),
-                                      rep("second", times=num_second))
-      ## Do the same thing, but using the rows of the sva model adjustment
-      first_sva <- sv_model[samples_first_idx, ]
-      second_sva <- sv_model[samples_second_idx, ]
-      ## But instead of just appending them, I need a matrix of 0s and 1s
-      ## identifying which sv rows correspond to 'wildtype' and 'mutant'
-      first_model <- append(rep(1, num_first), rep(0, num_second))
-      second_model <- append(rep(0, num_first), rep(1, num_second))
-      ## Once I have them, make the subset model matrix with append and cbind
-      new_sv_model <- append(first_sva, second_sva)
-      new_model <- cbind(first_model, second_model, new_sv_model)
-      colnames(new_model) <- c("first", "second", "sv")
-      ## The sva f.pvalue requires a null model of the appropriate size, create
-      ## that here.
-      new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
-      ## And give its columns suitable names
-      colnames(new_null) <- c("null", "sv")
-      ## Now all the pieces are in place, call f.pvalue().
-      new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent=TRUE)
-      ## For some things, f.pvalue returns NA, this is unacceptable.
-      na_pvalues_idx <- is.na(new_pvalues)
-      ## For the NaN pvalues, just set it to 1 under the assumption that
-      ## something is fubar.
-      new_pvalues[na_pvalues_idx] <- 2.2E-16
-      ## For strange non-pairwise contrasts, the f.pvalue() should fail.
-      if (class(new_pvalues)[1] == "try-error") {
-        new_pvalues <- NULL
-        warning("Unable to adjust pvalues for: ", name)
-        warning("If this was not for an extra contrast, then this is a serious problem.")
-      } else {
-        ## Most of the time it should succeed, so do a BH adjustment of the new values.
-        new_adjp <- p.adjust(new_pvalues, method="BH")
-        ## Now I need to fill in the tables with these new values.
-        ## This section is a little complex.  In brief, it pulls the appropriate
-        ## columns from each of the limma, edger, and deseq tables
-        ## copies them to a new data.table named 'original_pvalues', and
-        ## then replaces them with the just-calculated (adj)p-values.
+    ## Get the samples from the limma comparison which are condition 'mutant'
+    samples_first_idx <- results[["limma"]][["conditions"]] == first
+    num_first <- sum(samples_first_idx)
+    ## Subset the expressionset and make a new matrix of only the 'mutant' samples
+    samples_first <- exprs(input)[, samples_first_idx]
+    ## Repeat for the 'wildtype' samples, when finished the m columns for
+    ## samples_first 'mutant' and the n samples of samples_second will be
+    ## 'wildtype'
+    samples_second_idx <- results[["limma"]][["conditions"]] == second
+    num_second <- sum(samples_second_idx)
+    samples_second <- exprs(input)[, samples_second_idx]
+    ## Concatenate the 'mutant' and 'wildtype' samples by column
+    included_samples <- cbind(samples_first, samples_second)
+    ## Arbitrarily call them 'first' and 'second'
+    colnames(included_samples) <- c(rep("first", times=num_first),
+                                    rep("second", times=num_second))
+    ## Do the same thing, but using the rows of the sva model adjustment
+    first_sva <- sv_model[samples_first_idx, ]
+    second_sva <- sv_model[samples_second_idx, ]
+    ## But instead of just appending them, I need a matrix of 0s and 1s
+    ## identifying which sv rows correspond to 'wildtype' and 'mutant'
+    first_model <- append(rep(1, num_first), rep(0, num_second))
+    second_model <- append(rep(0, num_first), rep(1, num_second))
+    ## Once I have them, make the subset model matrix with append and cbind
+    new_sv_model <- append(first_sva, second_sva)
+    new_model <- cbind(first_model, second_model, new_sv_model)
+    colnames(new_model) <- c("first", "second", "sv")
+    ## The sva f.pvalue requires a null model of the appropriate size, create
+    ## that here.
+    new_null <- cbind(rep(1, (num_first + num_second)), new_sv_model)
+    ## And give its columns suitable names
+    colnames(new_null) <- c("null", "sv")
+    ## Now all the pieces are in place, call f.pvalue().
+    new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent=TRUE)
+    ## For some things, f.pvalue returns NA, this is unacceptable.
+    na_pvalues_idx <- is.na(new_pvalues)
+    ## For the NaN pvalues, just set it to 1 under the assumption that
+    ## something is fubar.
+    new_pvalues[na_pvalues_idx] <- 2.2E-16
+    ## For strange non-pairwise contrasts, the f.pvalue() should fail.
+    if (class(new_pvalues)[1] == "try-error") {
+      new_pvalues <- NULL
+      warning("Unable to adjust pvalues for: ", name)
+      warning("If this was not for an extra contrast, then this is a serious problem.")
+    } else {
+      ## Most of the time it should succeed, so do a BH adjustment of the new values.
+      new_adjp <- p.adjust(new_pvalues, method="BH")
+      ## Now I need to fill in the tables with these new values.
+      ## This section is a little complex.  In brief, it pulls the appropriate
+      ## columns from each of the limma, edger, and deseq tables
+      ## copies them to a new data.table named 'original_pvalues', and
+      ## then replaces them with the just-calculated (adj)p-values.
 
-        ## Start with limma, make no assumptions about table return-order
-        limma_table_order <- rownames(results[["limma"]][["all_tables"]][[name]])
-        reordered_pvalues <- new_pvalues[limma_table_order]
-        reordered_adjp <- new_adjp[limma_table_order]
-        ## Create a temporary dt with the old p-values and merge it into original_pvalues.
-        tmpdt <- data.table::data.table(
-                               results[["limma"]][["all_tables"]][[name]][["P.Value"]])
-        tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
-        ## Change the column name of the new data to reflect that it is from limma.
-        colnames(tmpdt) <- c(glue("limma_{name}"), "rownames")
-        original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
-        ## Swap out the p-values and adjusted p-values.
-        results[["limma"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
-        results[["limma"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
+      ## Start with limma, make no assumptions about table return-order
+      limma_table_order <- rownames(results[["limma"]][["all_tables"]][[name]])
+      reordered_pvalues <- new_pvalues[limma_table_order]
+      reordered_adjp <- new_adjp[limma_table_order]
+      ## Create a temporary dt with the old p-values and merge it into original_pvalues.
+      tmpdt <- data.table::data.table(
+                             results[["limma"]][["all_tables"]][[name]][["P.Value"]])
+      tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
+      ## Change the column name of the new data to reflect that it is from limma.
+      colnames(tmpdt) <- c(glue("limma_{name}"), "rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      ## Swap out the p-values and adjusted p-values.
+      results[["limma"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
+      results[["limma"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
 
-        ## Repeat the above verbatim, but for edger
-        edger_table_order <- rownames(results[["edger"]][["all_tables"]][[name]])
-        reordered_pvalues <- new_pvalues[edger_table_order]
-        reordered_adjp <- new_adjp[edger_table_order]
-        tmpdt <- data.table::data.table(
-                               results[["edger"]][["all_tables"]][[name]][["PValue"]])
-        tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
-        colnames(tmpdt) <- c(glue("edger_{name}"), "rownames")
-        original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
-        results[["edger"]][["all_tables"]][[name]][["PValue"]] <- reordered_pvalues
-        results[["edger"]][["all_tables"]][[name]][["FDR"]] <- reordered_adjp
+      ## Repeat the above verbatim, but for edger
+      edger_table_order <- rownames(results[["edger"]][["all_tables"]][[name]])
+      reordered_pvalues <- new_pvalues[edger_table_order]
+      reordered_adjp <- new_adjp[edger_table_order]
+      tmpdt <- data.table::data.table(
+                             results[["edger"]][["all_tables"]][[name]][["PValue"]])
+      tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
+      colnames(tmpdt) <- c(glue("edger_{name}"), "rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      results[["edger"]][["all_tables"]][[name]][["PValue"]] <- reordered_pvalues
+      results[["edger"]][["all_tables"]][[name]][["FDR"]] <- reordered_adjp
 
-        ## Ibid.
-        deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
-        tmpdt <- data.table::data.table(
-                               results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
-        tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
-        colnames(tmpdt) <- c(glue("deseq_{name}"), "rownames")
-        original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
-        results[["deseq"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
-        results[["deseq"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
-      } ## End checking that f.pvalue worked.
-    }  ## End foreach table
-    original_pvalues <- as.data.frame(original_pvalues)
-    retlist <- list(
-      "original" = original_pvalues,
-      "results" = results)
-    return(retlist)
+      ## Ibid.
+      deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
+      tmpdt <- data.table::data.table(
+                             results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
+      tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
+      colnames(tmpdt) <- c(glue("deseq_{name}"), "rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      results[["deseq"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
+      results[["deseq"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
+    } ## End checking that f.pvalue worked.
+  }  ## End foreach table
+  original_pvalues <- as.data.frame(original_pvalues)
+  retlist <- list(
+    "original" = original_pvalues,
+    "results" = results)
+  return(retlist)
 }
 
 #' A sanity check that a given set of data is suitable for methods which assume
@@ -391,7 +415,7 @@ sva_modify_pvalues <- function(results) {
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{DESeq2} \pkg{edgeR}
-choose_binom_dataset <- function(input, force=FALSE, ...) {
+choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
   ## I think I would like to make this function smarter so that it will remove
@@ -431,9 +455,11 @@ choose_binom_dataset <- function(input, force=FALSE, ...) {
     if (isTRUE(force)) {
       ## Setting force to TRUE allows one to round the data to fool edger/deseq
       ## into accepting it. This is a pretty terrible thing to do
-      message("About to round the data, this is a pretty terrible thing to do. ",
-              "But if you, like me, want to see what happens when you put ",
-              "non-standard data into deseq, then here you go.")
+      if (isTRUE(verbose)) {
+        message("About to round the data, this is a pretty terrible thing to do. ",
+                "But if you, like me, want to see what happens when you put ",
+                "non-standard data into deseq, then here you go.")
+      }
       data <- round(data)
       less_than <- data < 0
       data[less_than] <- 0
@@ -450,15 +476,19 @@ choose_binom_dataset <- function(input, force=FALSE, ...) {
       ## static. filter->normalization->convert->batch->transform. Thus, if the
       ## normalized state is not raw, we can look back either to the filtered or
       ## original data. The same is true for the transformation state.
-      message("EdgeR/DESeq expect raw data as input, reverting to count filtered data.")
+      if (isTRUE(verbose)) {
+        message("EdgeR/DESeq expect raw data as input, reverting to count filtered data.")
+      }
       data <- input[["normalized"]][["intermediate_counts"]][["filter"]][["count_table"]]
       if (is.null(data)) {
         data <- input[["normalized"]][["intermediate_counts"]][["original"]]
       }
     } else {
-      message("The data should be suitable for EdgeR/DESeq/EBSeq. ",
-              "If they freak out, check the state of the count table ",
-              "and ensure that it is in integer counts.")
+      if (isTRUE(verbose)) {
+        message("The data should be suitable for EdgeR/DESeq/EBSeq. ",
+                "If they freak out, check the state of the count table ",
+                "and ensure that it is in integer counts.")
+      }
     }
     ## End testing if normalization has been performed
   } else {
@@ -481,16 +511,16 @@ choose_binom_dataset <- function(input, force=FALSE, ...) {
 #'
 #' Invoked by _pairwise().
 #'
-#' @param input  Expt input.
-#' @param force  Force non-standard data?
-#' @param choose_for  One of limma, deseq, edger, or basic.  Defines the
-#'   requested data state.
+#' @param input Expt input.
+#' @param force Force non-standard data?
+#' @param choose_for One of limma, deseq, edger, or basic.  Defines the
+#'  requested data state.
 #' @param ...  More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
 #' @seealso \code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
 #'  \code{\link{choose_basic_dataset}}
 #' @examples
-#'  \dontrun{
+#' \dontrun{
 #'  starting_data <- create_expt(metadata)
 #'  modified_data <- normalize_expt(starting_data, transform="log2", norm="quant")
 #'  a_dataset <- choose_dataset(modified_data, choose_for="deseq")
@@ -498,7 +528,7 @@ choose_binom_dataset <- function(input, force=FALSE, ...) {
 #'  ## return it to a base10 state.
 #' }
 #' @export
-choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
+choose_dataset <- function(input, choose_for="limma", force=FALSE, verbose=TRUE, ...) {
   ## arglist <- list(...)
   result <- NULL
   if (choose_for == "limma") {
@@ -510,13 +540,14 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
   } else if (choose_for == "deseq") {
     result <- choose_binom_dataset(input, force=force, ...)
   } else {
-    message("Unknown tool for which to choose a data set.")
-    result <- list(
-      "conditions" = input[["design"]][["condition"]],
-      "batches" = input[["design"]][["batch"]],
-      "data" = as.data.frame(exprs(input)))
-
+    if (isTRUE(verbose)) {
+      message("Unknown tool for which to choose a data set.")
+    }
   }
+  result <- list(
+    "conditions" = input[["design"]][["condition"]],
+    "batches" = input[["design"]][["batch"]],
+    "data" = as.data.frame(exprs(input)))
   return(result)
 }
 
@@ -528,11 +559,11 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, ...) {
 #' @param input Expressionset containing expt object.
 #' @param force Ingore warnings and use the provided data asis.
 #' @param which_voom Choose between limma'svoom, voomWithQualityWeights, or the
-#'   hpgl equivalents.
+#'  hpgl equivalents.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{limma}
-choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
+choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose=TRUE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
   data <- NULL
@@ -581,7 +612,9 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
     ## ready <- input
     data <- exprs(input)
     if (isTRUE(force)) {
-      message("Leaving the data alone, regardless of normalization state.")
+      if (isTRUE(verbose)) {
+        message("Leaving the data alone, regardless of normalization state.")
+      }
       retlist <- list(
         "libsize" = libsize,
         "conditions" = conditions,
@@ -596,8 +629,10 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
       ## Limma's voom requires we return log2(cpm()) to base 10.
       ## Otherwise it should accept pretty much anything.
       if (tran_state == "log2") {
-        message("Using limma's voom, returning to base 10.")
-        data <- 2 ^ data
+        if (isTRUE(verbose)) {
+          message("Using limma's voom, returning to base 10.")
+        }
+        data <- (2 ^ data) - 1
       }
     }
   } else {
@@ -630,27 +665,27 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", ...) {
 #' @param alt_string String describing an alternate model.
 #' @param intercept Choose an intercept for the model as opposed to 0.
 #' @param reverse Reverse condition/batch in the model?  This shouldn't/doesn't
-#'   matter but I wanted to test.
+#'  matter but I wanted to test.
 #' @param contr List of contrasts.arg possibilities.
 #' @param surrogates Number of or method used to choose the number of surrogate
-#'   variables.
+#'  variables.
 #' @param ... Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and
-#'   intercept models.
+#'  intercept models.
 #' @seealso \pkg{stats}
 #'  \code{\link[stats]{model.matrix}}
 #' @examples
-#'  \dontrun{
-#'   a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
-#'   a_model$chosen_model
-#'   ## ~ 0 + condition + batch
+#' \dontrun{
+#'  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
+#'  a_model$chosen_model
+#'  ## ~ 0 + condition + batch
 #' }
 #' @export
 choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                          model_cond=TRUE, model_intercept=FALSE,
                          alt_model=NULL, alt_string=NULL,
                          intercept=0, reverse=FALSE, contr=NULL,
-                         surrogates="be", ...) {
+                         surrogates="be", verbose=TRUE, ...) {
   arglist <- list(...)
   design <- NULL
   if (class(input)[1] != "matrix" & class(input)[1] != "data.frame") {
@@ -669,7 +704,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   ## But I have it in my head to eventually compare results using different models.
 
   ## The previous iteration of this had an explicit contrasts.arg set, like this:
-  ##contrasts.arg=list(condition="contr.treatment"))
+  ## contrasts.arg=list(condition="contr.treatment"))
   ## Which looked like this for a full invocation:
   ## condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
   ##                                   contrasts.arg=list(condition="contr.treatment",
@@ -704,31 +739,35 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
                                     data=design), silent=TRUE)
 
   condbatch_noint_string <- "~ 0 + condition + batch"
-
   condbatch_noint_model <- try(stats::model.matrix(
                                         object=as.formula(condbatch_noint_string),
                                         contrasts.arg=cblist,
                                         data=design), silent=TRUE)
+
   batchcond_noint_string <- "~ 0 + batch + condition"
   batchcond_noint_model <- try(stats::model.matrix(
                                         object=as.formula(batchcond_noint_string),
                                         contrasts.arg=cblist,
                                         data=design), silent=TRUE)
+
   cond_int_string <- "~ condition"
   cond_int_model <- try(stats::model.matrix(
                                  object=as.formula(cond_int_string),
                                  contrasts.arg=clist,
                                  data=design), silent=TRUE)
+
   batch_int_string <- "~ batch"
   batch_int_model <- try(stats::model.matrix(
                                   object=as.formula(batch_int_string),
                                   contrasts.arg=blist,
                                   data=design), silent=TRUE)
+
   condbatch_int_string <- "~ condition + batch"
   condbatch_int_model <- try(stats::model.matrix(
                                       object=as.formula(condbatch_int_string),
                                       contrasts.arg=cblist,
                                       data=design), silent=TRUE)
+
   batchcond_int_string <- "~ batch + condition"
   batchcond_int_model <- try(stats::model.matrix(
                                       object=as.formula(batchcond_int_string),
@@ -761,9 +800,11 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     including <- "condition"
   } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
     if (class(condbatch_int_model)[1] == "try-error") {
-      message("The condition+batch model failed. ",
-              "Does your experimental design support both condition and batch? ",
-              "Using only a conditional model.")
+      if (isTRUE(verbose)) {
+        message("The condition+batch model failed. ",
+                "Does your experimental design support both condition and batch? ",
+                "Using only a conditional model.")
+      }
       int_model <- cond_int_model
       noint_model <- cond_noint_model
       int_string <- cond_int_string
@@ -784,8 +825,10 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     }
   } else if (class(model_batch)[1] == "character") {
     ## Then calculate the estimates using all_adjusters
-    message("Extracting surrogate estimates from ", model_batch,
-            " and adding them to the model.")
+    if (isTRUE(verbose)) {
+      message("Extracting surrogate estimates from ", model_batch,
+              " and adding them to the model.")
+    }
     model_batch_info <- all_adjusters(input, estimate_type=model_batch,
                                       surrogates=surrogates)
     ## Changing model_batch from 'sva' to the resulting matrix.
@@ -809,7 +852,9 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     rownames(model_batch) <- rownames(int_model)
     including <- glue("condition{sv_string}")
   } else if (class(model_batch)[1] == "numeric" | class(model_batch)[1] == "matrix") {
-    message("Including batch estimates from sva/ruv/pca in the model.")
+    if (isTRUE(verbose)) {
+      message("Including batch estimates from sva/ruv/pca in the model.")
+    }
     int_model <- stats::model.matrix(~ condition + model_batch,
                                      contrasts.arg=clist,
                                      data=design)
@@ -879,11 +924,15 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   chosen_model <- NULL
   chosen_string <- NULL
   if (isTRUE(model_intercept)) {
-    message("Choosing the intercept containing model.")
+    if (isTRUE(verbose)) {
+      message("Choosing the intercept containing model.")
+    }
     chosen_model <- int_model
     chosen_string <- int_string
   } else {
-    message("Choosing the non-intercept containing model.")
+    if (isTRUE(verbose)) {
+      message("Choosing the non-intercept containing model.")
+    }
     chosen_model <- noint_model
     chosen_string <- noint_string
   }
@@ -914,10 +963,10 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 #' @param try_methods List of methods to attempt comparing.
 #' @return A list of compared columns, tables, and methods.
 #' @examples
-#'  \dontrun{
-#'   first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
-#'   second <- all_pairwise(expt, model_batch="svaseq", excel="second.xlsx")
-#'   comparison <- compare_de_results(first$combined, second$combined)
+#' \dontrun{
+#'  first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
+#'  second <- all_pairwise(expt, model_batch="svaseq", excel="second.xlsx")
+#'  comparison <- compare_de_results(first$combined, second$combined)
 #' }
 #' @export
 compare_de_results <- function(first, second, cor_method="pearson",
@@ -1069,7 +1118,7 @@ compare_de_results <- function(first, second, cor_method="pearson",
 #' @return Heatmap showing how similar they are along with some
 #'  correlations betwee the three players.
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
-#'   \code{\link{deseq2_pairwise}}
+#'  \code{\link{deseq2_pairwise}}
 #' @examples
 #' \dontrun{
 #'  l = limma_pairwise(expt)
@@ -1228,10 +1277,10 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
 #' @return Some plots
 #' @seealso \code{\link{plot_linear_scatter}}
 #' @examples
-#'  \dontrun{
-#'   limma_vs_deseq_vs_edger <- compare_logfc_plots(combined)
-#'   ## Get a list of plots of logFC by contrast of LvD, LvE, DvE
-#'   ## It provides comparisons against the basic analysis, but who cares about that.
+#' \dontrun{
+#'  limma_vs_deseq_vs_edger <- compare_logfc_plots(combined)
+#'  ## Get a list of plots of logFC by contrast of LvD, LvE, DvE
+#'  ## It provides comparisons against the basic analysis, but who cares about that.
 #' }
 #' @export
 compare_logfc_plots <- function(combined_tables) {
@@ -1351,6 +1400,12 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
 
 #' Test for infected/control/beads -- a placebo effect?
 #'
+#' This was a function I copied out of Keith/Hector/Laura/Cecilia's paper in
+#' which they sought to discriminate the effect of inert beads on macrophages
+#' vs. the effect of parasites.  The simpler way of expressing it is: take the
+#' worst p-value observed for the pair of contrasts, infected/uninfected and
+#' beads/uninfected.
+#'
 #' The goal is therefore to find responses different than beads
 #' The null hypothesis is (H0): (infected == uninfected) | (infected == beads)
 #' The alt hypothesis is (HA): (infected != uninfected) & (infected != beads)
@@ -1410,7 +1465,7 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #'
 #' @param type Which type of pairwise comparison to perform
 #' @param ... Set of arguments intended for limma_pairwise(),
-#'   edger_pairwise(), and friends.
+#'  edger_pairwise(), and friends.
 #' @return Result from limma/deseq/edger/basic
 #' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
 #'   \code{\link{deseq_pairwise}} \code{\link{basic_pairwise}}
@@ -1448,13 +1503,13 @@ do_pairwise <- function(type, ...) {
 #' @return List of data frames containing the genes of interest.
 #' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
-#'  \dontrun{
-#'   abundant <- get_abundant_genes(all_pairwise_output, type="deseq", n=100)
-#'   ## Top 100 most abundant genes from deseq
-#'   least <- get_abundant_genes(all_pairwise_output, type="deseq", n=100, least=TRUE)
-#'   ## Top 100 least abundant genes from deseq
-#'   abundant <- get_abundant_genes(all_pairwise_output, type="edger", z=1.5)
-#'   ## Get the genes more than 1.5 standard deviations from the mean.
+#' \dontrun{
+#'  abundant <- get_abundant_genes(all_pairwise_output, type="deseq", n=100)
+#'  ## Top 100 most abundant genes from deseq
+#'  least <- get_abundant_genes(all_pairwise_output, type="deseq", n=100, least=TRUE)
+#'  ## Top 100 least abundant genes from deseq
+#'  abundant <- get_abundant_genes(all_pairwise_output, type="edger", z=1.5)
+#'  ## Get the genes more than 1.5 standard deviations from the mean.
 #' }
 #' @export
 get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
@@ -1542,12 +1597,12 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
 #' @param type According to deseq/limma/ed ger/basic?
 #' @param excel Print this to an excel file?
 #' @return A list containing the expression values and some metrics of
-#'   variance/error.
+#'  variance/error.
 #' @seealso \pkg{limma}
 #' @examples
-#'  \dontrun{
-#'   abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
-#'   ## This should provide a set of abundances after voom by condition.
+#' \dontrun{
+#'  abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
+#'  ## This should provide a set of abundances after voom by condition.
 #' }
 #' @export
 get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
@@ -1636,17 +1691,16 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
 #' https://bioconductor.org/packages/release/bioc/vignettes/IHW/inst/doc/introduction_to_ihw.html
 #'
 #' @param de_result Table which should have the 2 types of requisite columns:
-#'   mean value of counts and p-value.
+#'  mean value of counts and p-value.
 #' @param pvalue_column Name of the column of p-values.
 #' @param type If specified, this will explicitly perform the calculation for
-#'   the given type of differential expression analysis: limma, edger, deseq,
-#'   etc.
+#'  the given type of differential expression analysis: limma, edger, deseq,
+#'  etc.
 #' @param mean_column Name of the column of mean values.
 #' @param significance IHW uses this parameter, I don't know why.
 #' @return weight adjusted p-values.
 ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
                        mean_column="baseMean", significance=0.05) {
-
   ## We need to know the method used, because the values returned are not
   ## necessarily in the scale expected by IHW.
   if (is.null(type)) {
@@ -1680,7 +1734,8 @@ ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
   }
 
   ## Add a hopefully unneccessary check that everything is numeric (which is currently not true
-  ## because I have invoked format() on some numbers.
+  ## because I have invoked format() on some numbers, a task I subsequently
+  ## removed since it was bad and dumb.
   tmp_table[[pvalue_column]] <- as.numeric(tmp_table[[pvalue_column]])
   tmp_table[[mean_column]] <- as.numeric(tmp_table[[mean_column]])
 
@@ -1714,8 +1769,8 @@ ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
 #' @return Subset of the up/down genes given the provided criteria.
 #' @seealso \code{\link{extract_significant_genes}}
 #' @examples
-#'  \dontrun{
-#'   sig_table <- get_sig_genes(table, lfc=1)
+#' \dontrun{
+#'  sig_table <- get_sig_genes(table, lfc=1)
 #' }
 #' @export
 get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
@@ -1758,10 +1813,6 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
       down_idx <- as.numeric(down_genes[[column]]) <= -1.0
       down_genes <- down_genes[down_idx, ]
     }
-    ##message("After (adj)p filter, the up genes table has ",
-    ##        dim(up_genes)[1], " genes.")
-    ##message("After (adj)p filter, the down genes table has ",
-    ##        dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(lfc)) {
@@ -1777,10 +1828,6 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
       down_genes <- down_genes[down_idx, ]
     }
-    ##message("After fold change filter, the up genes table has ",
-    ##        dim(up_genes)[1], " genes.")
-    ##message("After fold change filter, the down genes table has ",
-    ##        dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(z)) {
@@ -1797,8 +1844,6 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[column]]) <= down_median_dist
     down_genes <- down_genes[down_idx, ]
-    ##message("After z filter, the up genes table has ", dim(up_genes)[1], " genes.")
-    ##message("After z filter, the down genes table has ", dim(down_genes)[1], " genes.")
   }
 
   if (!is.null(n)) {
@@ -1808,10 +1853,6 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     up_genes <- head(upranked, n=n)
     downranked <- down_genes[order(as.numeric(down_genes[[column]])), ]
     down_genes <- head(downranked, n=n)
-    ##message("After top-n filter, the up genes table has ",
-    ##        dim(up_genes)[1], " genes.")
-    ##message("After bottom-n filter, the down genes table has ",
-    ##        dim(down_genes)[1], " genes.")
   }
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing=FALSE), ]
@@ -1838,13 +1879,13 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @param ... Extra arguments passed here are caught by arglist.
 #' @return List including the following information:
-#'  \enumerate{
-#'   \item all_pairwise_contrasts = the result from makeContrasts(...)
-#'   \item identities = the string identifying each condition alone
-#'   \item all_pairwise = the string identifying each pairwise comparison alone
-#'   \item contrast_string = the string passed to R to call makeContrasts(...)
-#'   \item names = the names given to the identities/contrasts
-#'  }
+#' \enumerate{
+#'  \item all_pairwise_contrasts = the result from makeContrasts(...)
+#'  \item identities = the string identifying each condition alone
+#'  \item all_pairwise = the string identifying each pairwise comparison alone
+#'  \item contrast_string = the string passed to R to call makeContrasts(...)
+#'  \item names = the names given to the identities/contrasts
+#' }
 #' @seealso \pkg{limma}
 #'  \code{\link[limma]{makeContrasts}}
 #' @examples
@@ -2024,7 +2065,7 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 #' Get rid of characters which will mess up contrast making and such before
 #' playing with an expt.
 #'
-#' @param expt  An expt object to clean.
+#' @param expt An expt object to clean.
 sanitize_expt <- function(expt) {
   design <- pData(expt)
   conditions <- gsub(
@@ -2034,7 +2075,7 @@ sanitize_expt <- function(expt) {
   ## To be honest, there is absolutely no way I would have thought of this
   ## regular expression:
   ## https://stackoverflow.com/questions/30945993
-  ## In theory I am pretty good with regexes, but the idea
+  ## In theory I am pretty good with regexes, but this is devious to me!
   conditions <- gsub(pattern="[^\\PP_]", replacement="", x=conditions, perl=TRUE)
   batches <- gsub(pattern="[^\\PP_]", replacement="", x=batches, perl=TRUE)
   conditions <- gsub(pattern="[[:blank:]]", replacement="", x=conditions)
@@ -2087,9 +2128,9 @@ semantic_copynumber_extract <- function(...) {
 #' @return Smaller list of up/down genes.
 #' @seealso \code{\link{semantic_copynumber_extract}}
 #' @examples
-#'  \dontrun{
-#'   pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
-#'   ## Get rid of all genes with 'ribosomal' in the annotations.
+#' \dontrun{
+#'  pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
+#'  ## Get rid of all genes with 'ribosomal' in the annotations.
 #' }
 #' @export
 semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, invert=TRUE,

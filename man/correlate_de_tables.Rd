@@ -34,5 +34,5 @@ Invoked by all_pairwise().
 }
 \seealso{
 \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
-  \code{\link{deseq2_pairwise}}
+ \code{\link{deseq2_pairwise}}
 }

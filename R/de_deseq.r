@@ -80,6 +80,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
   ## batch_levels <- levels(as.factor(batches))
+
   ## Make a model matrix which will have one entry for
   ## each of the condition/batches
   summarized <- NULL
@@ -237,7 +238,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                  ...)
   contrast_order <- apc[["names"]]
   contrast_strings <- apc[["all_pairwise"]]
+  ## These two character lists are relevant because of the possibility that I
+  ## will ask for a series of extra contrasts; in addition, I use them to ask
+  ## for specific tables.
   contrasts <- c()
+  contrasts_full <- c()
   ##total_contrasts <- length(condition_levels)
   ##total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   total_contrasts <- length(contrast_order)
@@ -260,7 +265,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     den_name <- num_den_string[2]
     denominators[[contrast_string]] <- den_name
     numerators[[contrast_string]] <- num_name
-    contrasts <- append(contrast_string, contrasts)
+    contrasts <- append(contrast_name, contrasts)
+    ## I am pretty sure this is not needed, but I will hold on to it for the moment.
+    contrasts_full <- append(contrast_string, contrasts_full)
     if (! glue("condition{num_name}") %in% DESeq2::resultsNames(deseq_run)) {
       message("The contrast ", num_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")
@@ -285,7 +292,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     if (!is.null(annot_df)) {
       result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
     }
-    result_list[[contrast_string]] <- result
+    result_list[[contrast_name]] <- result
   }
   if (isTRUE(show_progress)) {
     close(bar)
@@ -381,6 +388,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "coefficients" = coefficient_df,
     "conditions" = conditions,
     "conditions_table" = conditions_table,
+    "contrasts_full" = contrasts_full,
     "contrasts_performed" = contrasts,
     "denominators" = denominators,
     "dispersion_plot" = dispersion_plot,

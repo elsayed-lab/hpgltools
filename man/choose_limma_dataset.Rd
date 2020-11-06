@@ -4,7 +4,13 @@
 \alias{choose_limma_dataset}
 \title{A sanity check that a given set of data is suitable for analysis by limma.}
 \usage{
-choose_limma_dataset(input, force = FALSE, which_voom = "limma", ...)
+choose_limma_dataset(
+  input,
+  force = FALSE,
+  which_voom = "limma",
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{input}{Expressionset containing expt object.}

@@ -53,7 +53,7 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
 simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                            chosen_factor="batch", do_fit=FALSE, cor_gene=1,
                            cpus=NULL, genes=40, parallel=TRUE,
-                           modify_expt=TRUE) {
+                           mixed=FALSE, modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
   ## One is not supposed to use library() in packages, but it needs to do all
@@ -84,11 +84,17 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
     factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
   }
   model_string <- "~ "
-  if (!is.null(predictor)) {
-    model_string <- glue::glue("{model_string}{predictor} +")
-  }
-  for (fact in factors) {
-    model_string <- glue::glue("{model_string} (1|{fact}) +")
+  if (isTRUE(mixed)) {
+    if (!is.null(predictor)) {
+      model_string <- glue::glue("{model_string}{predictor} +")
+    }
+    for (fact in factors) {
+      model_string <- glue::glue("{model_string} (1|{fact}) +")
+    }
+  } else {
+    for (fact in factors) {
+      model_string <- glue::glue("{model_string} {fact} +")
+    }
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
   message("Attempting mixed linear model with: ", model_string)
@@ -96,8 +102,9 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   norm <- sm(normalize_expt(expt, filter="simple"))
   data <- exprs(norm)
 
+  design_sub <- design[, factors]
   message("Fitting the expressionset to the model, this is slow.")
-  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
+  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
   ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
   if (class(my_extract) == "try-error") {
     message("A couple of common errors:

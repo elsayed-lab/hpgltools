@@ -14,6 +14,7 @@ simple_varpart(
   cpus = NULL,
   genes = 40,
   parallel = TRUE,
+  mixed = FALSE,
   modify_expt = TRUE
 )
 }

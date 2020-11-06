@@ -719,6 +719,7 @@ Defaulting to fdr.")
   badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   rownames(badf) <- "dropme"
+
   ## Check that the limma result is valid.
   if (is.null(li) | class(li)[1] == "try-error") {
     message("The limma table is null.")
