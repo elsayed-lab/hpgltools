@@ -112,7 +112,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     ...))
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, do_extras=FALSE,
                                  ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
@@ -220,13 +220,9 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
       x=fc_table[[num_col]], digits=4)
     fc_table[[den_col]] <- signif(
       x=fc_table[[den_col]], digits=4)
-    fc_table[["numerator_var"]] <- format(
-      x=fc_table[["numerator_var"]], digits=4, scientific=TRUE)
-    fc_table[["denominator_var"]] <- format(
-      x=fc_table[["denominator_var"]], digits=4, scientific=TRUE)
+    ## I am thinking to change my mind about this formatting, since
+    ## it recasts the numbers as characters, and that is dumb.
     fc_table[["t"]] <- signif(x=fc_table[["t"]], digits=4)
-    fc_table[["p"]] <- format(x=fc_table[["p"]], digits=4, scientific=TRUE)
-    fc_table[["adjp"]] <- format(x=fc_table[["adjp"]], digits=4, scientific=TRUE)
     fc_table[["logFC"]] <- signif(x=fc_table[["logFC"]], digits=4)
     rownames(fc_table) <- rownames(data)
     all_tables[[e]] <- fc_table
@@ -271,6 +267,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
   batches <- input[["batches"]]
   data <- as.data.frame(exprs(input))
   tran_state <- input[["state"]][["transform"]]
+  libsize <- NULL
   if (is.null(tran_state)) {
     tran_state <- "raw"
   }
@@ -312,8 +309,10 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     ready <- sm(normalize_expt(ready, transform="log2"))
   }
   data <- as.data.frame(exprs(ready))
+  libsize <- colSums(data)
   rm(ready)
   retlist <- list(
+    "libsize" = libsize,
     "conditions" = conditions,
     "batches" = batches,
     "data" = data)

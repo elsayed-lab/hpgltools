@@ -44,9 +44,8 @@ import.gff/import.gff3/import.gff2 calls in try() because sometimes those
 functions fail in unpredictable ways.
 }
 \examples{
-\dontrun{
- funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
-}
+ gas_gff_annot <- load_gff_annotations(gff_file)
+ dim(gas_gff_annot)
 }
 \seealso{
 \pkg{rtracklayer} \pkg{GenomicRanges}

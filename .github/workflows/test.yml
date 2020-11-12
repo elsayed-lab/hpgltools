@@ -1,0 +1,87 @@
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+name: CI
+jobs:
+  build:
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.R }})
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, R: '4.0.2'}
+    env:
+       AUTHOR_TESTING: 1
+       AUTOMATED_TESTING: 1
+       RELEASE_TESTING: 1
+       R_MAX_NUM_DLLS: 256
+       R_LIBS_SITE: /home/runner/R
+       R_LIBS: /home/runner/R
+       R_LIBS_USER: /home/runner/R
+       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+       TMPDIR: /home/runner/tmp
+    steps:
+
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
+        sudo apt-get install circos libsvg-perl default-jdk
+    - uses: r-lib/actions/setup-r@master
+      with:
+        r-version: ${{ matrix.config.r }}
+    - uses: r-lib/actions/setup-pandoc@master
+    - uses: actions/checkout@v2
+
+    - name: R java reconf
+      run : |
+        sudo R CMD javareconf
+
+    - name: Set Rprofile
+      run: |
+        echo "options(Ncpus=2)" > ${HOME}/.Rprofile
+        echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
+        echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
+        echo "options(repos=r)" >> ${HOME}/.Rprofile
+        mkdir -p /home/runner/tmp
+
+    - name: Install R prerequisites
+      run: make prereq
+
+    - name: github_R_prerequisites
+      run: |
+        devtools::install_github("YuLab-SMU/GOSemSim")
+        devtools::install_github("abelew/EuPathDB")
+        devtools::install_github("js229/Vennerable")
+        devtools::install_github("kokrah/cbcbSEQ")
+        devtools::install_bioc("RDAVIDWebService")
+      shell: Rscript {0}
+
+    - name: Query dependencies
+      run: |
+        install.packages("remotes")
+        saveRDS(remotes::dev_package_deps(dependencies=TRUE), "depends.Rds", version=2)
+      shell: Rscript {0}
+
+    - name: Install system dependencies
+      env:
+        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+      run: |
+        Rscript -e "remotes::install_github('r-hub/sysreqs')"
+        sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        sudo -s eval "$sysreqs"
+
+    - name: Install dependencies
+      run: |
+        remotes::install_deps(dependencies=TRUE)
+        remotes::install_cran("lintr")
+      shell: Rscript {0}
+
+    - name: Install hpgltools prerequisites
+      run: make deps
+
+    - name: Run tests
+      run: make test

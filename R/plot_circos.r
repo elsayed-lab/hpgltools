@@ -107,15 +107,14 @@ circos_arc <- function(cfg, df, first_col="seqnames", second_col="seqnames.2",
 #' @param df Dataframe with starts/ends and the floating point information.
 #' @param colname Name of the column with the data of interest.
 #' @param color_mapping 0 means no overflows for min/max, 1 means overflows
-#'        of min get a chosen color, 2 means overflows of both min/max get
-#'        chosen colors.
+#'  of min get a chosen color, 2 means overflows of both min/max get chosen colors.
 #' @param min_value Minimum value for the data.
 #' @param max_value Maximum value for the data.
 #' @param basename Make sure the written configuration files get different names with this.
 #' @param colors Colors of the heat map.
 #' @param color_choice  Name of the heatmap to use, I forget how this interacts with color...
 #' @param scale_log_base  Defines how the range of colors will be ranged with
-#'   respect to the values in the data.
+#'  respect to the values in the data.
 #' @param outer Floating point radius of the circle into which to place the heatmap.
 #' @param rules some extra rules?
 #' @param width Width of each tile in the heatmap.
@@ -261,9 +260,9 @@ circos_heatmap <- function(cfg, df, colname="logFC",
 #' @param fill_color Guess
 #' @param fill_under The circos histogram fill under parameter
 #' @param extend_bin Extend bins?
-                              #' @param thickness histogram thickness.
+#' @param thickness histogram thickness.
 #' @param orientation facing in or out?
-                                     #' @param outer Floating point radius of the circle into which to place the data.
+#' @param outer Floating point radius of the circle into which to place the data.
 #' @param width Radial width of each tile.
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
@@ -376,7 +375,7 @@ circos_hist <- function(cfg, df, colname="logFC", basename="", color="blue", fil
 #' @param radius_padding How much to pad between radii.
 #' @param label_size How large to make the labels in px.
 #' @param band_stroke_thickness How big to make the strokes!
-                                                      #' @return The file to which the ideogram configuration was written.
+#' @return The file to which the ideogram configuration was written.
 #' @export
 circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NULL,
                             fill="yes", stroke_color="black",
@@ -445,8 +444,8 @@ circos_ideogram <- function(name="default", conf_dir="circos/conf", band_url=NUL
 #'
 #' @param cfg Result from circos_prefix(), contains a bunch of useful things.
 #' @param segments How many segments to cut the chromosome into?
-                                                             #' @param color Color segments of the chromosomal arc?
-                                                                                                               #' @param fasta Fasta file to use to create the karyotype.
+#' @param color Color segments of the chromosomal arc?
+#' @param fasta Fasta file to use to create the karyotype.
 #' @param lengths If no sequence file is provided, use a named numeric vector to provide them.
 #' @return The output filename.
 #' @export
@@ -505,7 +504,7 @@ circos_karyotype <- function(cfg, segments=6, color="white", fasta=NULL, lengths
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
 #' @return a kitten
 #' @export
-circos_make <- function(cfg, target="", circos="circos") {
+circos_make <- function(cfg, target="", circos="circos", verbose=FALSE) {
   circos_dir <- cfg[["basedir"]]
   output <- file.path(circos_dir, "Makefile")
   if (!file.exists(circos_dir)) {
@@ -546,8 +545,10 @@ clean:
   make_target_png <- glue::glue("{make_target}.png")
 
   make_command <- glue::glue("cd circos && touch Makefile && make {make_target} 2>&1 | grep -v Redundant")
-  result <- system(make_command) ##, show.output.on.console=FALSE)
-
+  if (!isTRUE(verbose)) {
+    make_command <- glue::glue("cd circos && touch Makefile && make {make_target} >/dev/null 2>&1")
+  }
+  result <- system(make_command)
   return(result)
 }
 
@@ -1327,12 +1328,13 @@ circos_tile <- function(cfg, df, colname="logFC", basename="", colors=NULL,
   tile_cfg_out <- file(tile_cfg_file, open="w+")
   cat(tile_cfg_string, file=tile_cfg_out, sep="")
   for (c in 1:num_colors) {
-    red_component <- glue::glue("0x{substr(colors[[c]], 2, 3)}")
-    green_component <- glue::glue("0x{substr(colors[[c]], 4, 5)}")
-    blue_component <- glue::glue("0x{substr(colors[[c]], 5, 6)}")
-    red_component <- strtoi(red_component)
-    green_component <- strtoi(green_component)
-    blue_component <- strtoi(blue_component)
+    red_component <- "0x00"
+    green_component <- "0x00"
+    blue_compnent <- "0x00"
+    this_color <- gsub(pattern="^#", replacement="", x=colors[[c]])
+    red_component <- strtoi(glue::glue("0x{substr(this_color, 1, 2)}"))
+    green_component <- strtoi(glue::glue("0x{substr(this_color, 3, 4)}"))
+    blue_component <- strtoi(glue::glue("0x{substr(colors[[c]], 5, 6)}"))
     color_string <- glue::glue("{red_component},{green_component},{blue_component}")
     color_name <- names(colors)[[c]]
     new_string <- glue::glue("

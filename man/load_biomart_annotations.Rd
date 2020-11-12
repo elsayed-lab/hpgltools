@@ -8,9 +8,14 @@ load_biomart_annotations(
   species = "hsapiens",
   overwrite = FALSE,
   do_save = TRUE,
-  host = "dec2017.archive.ensembl.org",
-  drop_haplotypes = TRUE,
+  host = NULL,
   trymart = "ENSEMBL_MART_ENSEMBL",
+  archive = TRUE,
+  default_hosts = c("useast.ensembl.org", "uswest.ensembl.org", "www.ensembl.org",
+    "asia.ensembl.org"),
+  year = NULL,
+  month = NULL,
+  drop_haplotypes = TRUE,
   trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
     "transcript_version", "hgnc_symbol", "description", "gene_biotype"),
@@ -28,12 +33,12 @@ load_biomart_annotations(
 
 \item{host}{Ensembl hostname to use.}
 
+\item{trymart}{Biomart has become a circular dependency, this makes me sad,
+now to list the marts, you need to have a mart loaded.}
+
 \item{drop_haplotypes}{Some chromosomes have stupid names because they are
 from non-standard haplotypes and they should go away.  Setting this to
 false stops that.}
-
-\item{trymart}{Biomart has become a circular dependency, this makes me sad,
-now to list the marts, you need to have a mart loaded.}
 
 \item{trydataset}{Choose the biomart dataset from which to query.}
 
@@ -45,9 +50,9 @@ now to list the marts, you need to have a mart loaded.}
 }
 \value{
 List containing: a data frame of the found annotations, a copy of
-  the mart instance to help with finding problems, the hostname queried, the
-  name of the mart queried, a vector of rows queried, vector of the available
-  attributes, and the ensembl dataset queried.
+ The mart instance to help with finding problems, the hostname queried, the
+ name of the mart queried, a vector of rows queried, vector of the available
+ attributes, and the ensembl dataset queried.
 }
 \description{
 Biomart is an amazing resource of information, but using it is a bit
@@ -61,9 +66,10 @@ it fails to see if there are more appropriate marts, datasets, and columns to
 download.
 }
 \examples{
-\dontrun{
- tt = get_biomart_annotations()
-}
+ ## This downloads the hsapiens annotations by default.
+ hs_biomart_annot <- load_biomart_annotations()
+ summary(hs_biomart_annot)
+ dim(hs_biomart_annot$annotation)
 }
 \seealso{
 \pkg{biomaRt}

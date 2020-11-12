@@ -9,7 +9,13 @@ batch_counts(
   design,
   batch = TRUE,
   batch1 = "batch",
+  current_state = NULL,
+  current_design = NULL,
   expt_state = NULL,
+  surrogate_method = NULL,
+  num_surrogates = NULL,
+  low_to_zero = FALSE,
+  cpus = 4,
   batch2 = NULL,
   noscale = TRUE,
   ...

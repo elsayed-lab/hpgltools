@@ -33,6 +33,8 @@ tximport needs some help.
 }
 \examples{
  \dontrun{
+  ## I am trying to get rid of all my dontrun sections, but I don't have two
+  ## expressionsets to combine.
   expt1 <- create_expt(first_meta)
   expt2 <- create_expt(second_meta)
   combined <- combine_expts(expt1, expt2, merge_meta=TRUE)

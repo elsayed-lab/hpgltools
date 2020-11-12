@@ -19,7 +19,7 @@ load_genbank_annotations(
 }
 \value{
 List containing a txDb, sequences, and some other stuff which I
-  haven't yet finalized.
+ haven't yet finalized.
 }
 \description{
 Let us admit it, sometimes biomart is a pain.  It also does not have easily
@@ -32,9 +32,8 @@ facilitate downloading genomes from genbank and dumping them into a local
 txdb instance.
 }
 \examples{
-\dontrun{
- txdb_result <- load_genbank_annotations(accession="AE009948", savetxdb=TRUE)
-}
+ sagalacticae_genbank_annot <- load_genbank_annotations(accession="AE009948")
+ dim(as.data.frame(sagalacticae_genbank_annot$cds))
 }
 \seealso{
 \pkg{genbankr} \pkg{rentrez}

@@ -1,3 +1,27 @@
+#' Count n-mers in a given data set using Biostrings
+#'
+#' This just calls PDict() and vcountPDict() on a sequence database given a
+#' pattern and number of mismatches.  This may be used by divide_seq()
+#' normalization.
+#'
+#' @param genome  Sequence database, genome in this case.
+#' @param pattern  Count off this string.
+#' @param mismatch  How many mismatches are acceptable?
+#' @return Set of counts by sequence.
+#' @export
+count_nmer <- function(genome, pattern="ATG", mismatch=0) {
+  if (class(genome)[1] == "character") {
+    genome <- Rsamtools::FaFile(genome)
+  }
+  seq_obj <- Biostrings::getSeq(genome)
+  dict <- Biostrings::PDict(pattern, max.mismatch=mismatch)
+  result <- as.data.frame(Biostrings::vcountPDict(dict, seq_obj))
+  rownames(result) <- pattern
+  colnames(result) <- names(seq_obj)
+  result <- t(result)
+  return(result)
+}
+
 #' Given an eupathdb species lacking UTR boundaries, extract an arbitrary region
 #' before/after each gene.
 #'
@@ -7,10 +31,11 @@
 #' @param entry EuPathDB metadatum entry.
 #' @param webservice If specified, makes the query faster, I always used
 #'   tritrypdb.org.
+#' @param padding Number of nucleotides to gather.
 #' @param ... Extra arguments for the various EuPathDB functions.
 #' @return Set of padding UTR sequences/coordinates.
 gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NULL,
-                                       webservice="tritrypdb", ...) {
+                                       webservice="tritrypdb", padding=200, ...) {
   if (!is.null(entry)) {
     pkg_names <- EuPathDB::get_eupath_pkgnames(entry)
   } else {
@@ -20,10 +45,12 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
   bsgenome_name <- pkg_names[["bsgenome"]]
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
-    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry, ...)
+    genome_installedp <- EuPathDB::make_eupath_bsgenome(species=species_name, entry=entry,
+                                                          ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
-    orgdb_installedp <- EuPathDB::make_eupath_orgdb(species=species_name, entry=entry, ...)
+    orgdb_installedp <- EuPathDB::make_eupath_orgdb(entry=entry,
+                                                    ...)
   }
 
   ##lib_result <- sm(library(orgdb_name, character.only=TRUE))
@@ -54,7 +81,7 @@ gather_eupath_utrs_padding <- function(species_name="Leishmania major", entry=NU
     annot_df[chr_idx, "chr_length"] <- len
   }
 
-  result <- gather_utrs_padding(bsgenome, annot_df,
+  result <- gather_utrs_padding(bsgenome, annot_df, padding=padding,
                                 ...)
   return(result)
 }

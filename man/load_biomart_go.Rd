@@ -34,9 +34,9 @@ load_biomart_go(
 }
 \value{
 List containing the following:  data frame of ontology data, a copy
-  of the biomart instance for further querying, the host queried, the biomart
-  queried, a vector providing the attributes queried, and the ensembl dataset
-  queried.
+ of the biomart instance for further querying, the host queried, the biomart
+ queried, a vector providing the attributes queried, and the ensembl dataset
+ queried.
 }
 \description{
 I perceive that every time I go to acquire annotation data from biomart, they
@@ -52,12 +52,12 @@ of changes in table organization after December 2015 as well as an attempt to
 keep the annotation sets relatively consistent.
 }
 \examples{
-\dontrun{
- tt = get_biomart_ontologies()
-}
+ hs_biomart_ontology <-load_biomart_go()
+ summary(hs_biomart_ontology)
+ dim(hs_biomart_ontology$go)
 }
 \seealso{
 \pkg{biomaRt}
-  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
-  \code{\link[biomaRt]{getBM}}
+ \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
+ \code{\link[biomaRt]{getBM}}
 }

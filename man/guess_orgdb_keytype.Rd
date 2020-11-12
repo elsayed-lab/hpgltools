@@ -19,9 +19,7 @@ Sometimes, one does not know what the correct keytype is for a given set of
 IDs.  This will hopefully find them.
 }
 \examples{
- \dontrun{
-  orgdb <- "org.Sneurona.SO.SN1.v42.eg.db"
-  ids <- c("SNRNA_01", "SNRNA_02")
-  chosen_column <- guess_orgdb_keytype(ids, orgdb)
-}
+ ids <- c("Dm.9", "Dm.2294", "Dm.4971")
+ keytype_guess <- guess_orgdb_keytype(ids, orgdb)
+ keytype_guess
 }

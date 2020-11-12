@@ -42,7 +42,6 @@ ontology accessions. At the very least, it does return a large number of
 them, which is a start.
 }
 \examples{
-\dontrun{
- go_df <- get_microbesonline_go(species="coli")
-}
+ pa14_microbesonline_go <- load_microbesonline_go(species="PA14")
+ head(pa14_microbesonline_go)
 }

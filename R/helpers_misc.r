@@ -47,11 +47,14 @@ backup_file <- function(backup_file, backups=4) {
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release="3.10",
+bioc_all <- function(release=NULL,
                      mirror="bioconductor.statistik.tu-dortmund.de",
                      base="packages", type="software",
                      suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
-  dl_url <- glue("https://{mirror}/{base}/{json}/{release}/tree.json")
+  if (is.null(release)) {
+    release <- as.character(BiocManager::version())
+  }
+  dl_url <- glue("https://{mirror}/{base}/json/{release}/tree.json")
   ## dl_url <- "https://bioc.ism.ac.jp/packages/json/3.3/tree.json"
   suc <- c()
   ## Sadly, biocLite() does not give different returns for a successfully/failed
@@ -59,7 +62,9 @@ bioc_all <- function(release="3.10",
   ## That seems dumb to me, but what do I know.
   fail <- c()
   alr <- c()
-  pkg_list <- jsonlite::fromJSON(dl_url)
+  ## Soemthing is weird with the libcurl on the cluster...
+  test <- download.file(url=dl_url, destfile="test.json")
+  pkg_list <- jsonlite::fromJSON("test.json")
   pkg_names <- pkg_list[["attr"]][["packageList"]]
   software_names <- strsplit(x=pkg_names[[1]], split=",")[[1]]
   annotation_names <- strsplit(x=pkg_names[[2]], split=",")[[1]]
@@ -309,16 +314,6 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
                           d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
                           aub.p.to.end=0.55) {
-  ## The seqtools package I am using is called in R 'SeqTools' (note the capital S T)
-  ## However, the repository I want for it is 'seqtools'
-  ## Ergo my stupid require.auto() will be confused by definition because it
-  ## assumes equivalent names
-  ##if (isTRUE('SeqTools' %in% .packages(all.available=TRUE))) {
-  ##    library('SeqTools')
-  ##} else {
-  ##    require.auto("lianos/seqtools/R/pkg")
-  ##    library('SeqTools')
-  ##}
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
   if (xtype == "DNA") {
     pentamer <- "ATTTA"
@@ -383,6 +378,30 @@ hpgl_cor <- function(df, method="pearson", ...) {
     correlation <- stats::cor(df, method=method, ...)
   }
   return(correlation)
+}
+
+#' Wrap p.adjust to add IHW adjustments as an option.
+#'
+#' IHW and apeglm are the two new toys I found, this adds the former as a way to
+#' adjust p-values.
+#'
+#' @param data Column or table containing values to adjust.
+#' @param pvalue_column Name of the column in a table containing the p-values.
+#' @param mean_column Name of the column in a table containing the mean count
+#'   values to weight.
+#' @param method p adjustment method to apply.
+#' @param significance Passed to IHW
+#' @param type Assuming a DE table, what type of DE is this?
+#' @export
+hpgl_padjust <- function(data, pvalue_column="pvalue", mean_column="base_mean",
+                         method="fdr", significance=0.05, type=NULL) {
+  if (method == "ihw") {
+    result <- ihw_adjust(data, pvalue_column=pvalue_column, type=type,
+                         mean_column=mean_column, significance=significance)
+  } else {
+    result <- p.adjust(data[[pvalue_column]], method=method)
+  }
+  return(result)
 }
 
 #' Because I am not smart enough to remember t()

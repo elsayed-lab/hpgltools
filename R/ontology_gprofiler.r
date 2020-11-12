@@ -98,6 +98,12 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
   if (isTRUE(do_wp)) {
     retlst[["WP"]] <- data.frame()
   }
+
+  if (sum(grepl(pattern="gene:", x=gene_ids)) > 0) {
+    warning("Hey, it looks like you forgot to strip off the htseq prefix for the gene IDs.")
+    gene_ids <- gsub(x=gene_ids, pattern="gene:", replacement="")
+  }
+
   type_names <- names(retlst)
   for (t in 1:length(type_names)) {
     type <- type_names[t]

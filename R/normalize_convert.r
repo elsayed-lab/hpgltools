@@ -308,7 +308,7 @@ hpgl_rpkm <- function(count_table, ...) {
   arglist <- list(...)
   annotations <- arglist[["annotations"]]
   ## holy crapola I wrote this when I had no clue what I was doing.
-  if (class(count_table) == "edgeR") {
+  if (class(count_table)[1] == "edgeR") {
     count_table <- count_table[["counts"]]
   }
   count_table_in <- as.data.frame(

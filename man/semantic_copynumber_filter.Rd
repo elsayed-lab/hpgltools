@@ -44,9 +44,9 @@ Currently untested, used for Trypanosome analyses primarily, thus the default
 strings.
 }
 \examples{
- \dontrun{
-  pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
-  ## Get rid of all genes with 'ribosomal' in the annotations.
+\dontrun{
+ pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
+ ## Get rid of all genes with 'ribosomal' in the annotations.
 }
 }
 \seealso{

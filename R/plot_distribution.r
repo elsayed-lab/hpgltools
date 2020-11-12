@@ -635,6 +635,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   data_class <- class(data)
   if (data_class == "expt") {
     design <- pData(data)
+
     colors <- data[["colors"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
@@ -709,9 +710,9 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   } else if (!is.null(arglist[["colors"]])) {
     color_list <- arglist[["colors"]]
   } else {
-    num_colors <- length(levels(as.factor(cv_data[["x_axis"]])))
+    num_colors <- length(levels(as.factor(cv_data[[x_axis]])))
     color_list <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(num_colors)
-    names(color_list) <- levels(cv_data[["x_axis"]])
+    names(color_list) <- levels(cv_data[[x_axis]])
   }
 
   get_mean_cv <- function(x) {

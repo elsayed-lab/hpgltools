@@ -27,8 +27,10 @@
 #'   some plots, as available.
 #' @export
 all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch",
-                          batch2=NULL, surrogates="be",
-                          expt_state=NULL, confounders=NULL, ...) {
+                          batch2=NULL, surrogates="be", low_to_zero=FALSE, cpus=4,
+                          na_to_zero=TRUE, expt_state=NULL, confounders=NULL,
+                          chosen_surrogates=NULL,
+                          ...) {
   arglist <- list(...)
   my_design <- NULL
   my_data <- NULL
@@ -48,19 +50,16 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   if (!is.null(arglist[["thresh"]])) {
     thresh <- arglist[["thresh"]]
   }
-  low_to_zero <- FALSE
-  if (!is.null(arglist[["low_to_zero"]])) {
-    low_to_zero <- arglist[["low_to_zero"]]
-  }
+
   ## This option is used primarily be combatmod
-  noscale=FALSE
+  noscale <- FALSE
   if (!is.null(arglist[["scale"]])) {
     noscale <- !arglist[["scale"]]
   } else if (!is.null(arglist[["noscale"]])) {
     noscale <- arglist[["noscale"]]
   }
 
-  if (class(input)[1] == "expt") {
+  if ("expt" %in% class(input)) {
     ## Gather all the likely pieces we can use
     my_design <- input[["design"]]
     my_data <- exprs(input)
@@ -83,8 +82,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   } ## Ending the tests of the input and its state.
 
   ## Once again this is a place where my new stance vis a vis NAs is relevant.
-  na_idx <- is.na(my_data)
-  my_data[na_idx] <- 0
+  if (isTRUE(na_to_zero)) {
+    na_idx <- is.na(my_data)
+    my_data[na_idx] <- 0
+  }
 
   ## Different tools expect different inputs
   linear_mtrx <- NULL
@@ -145,6 +146,13 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   conditional_model <- model.matrix(~ conditions, data=my_design)
   sample_names <- colnames(input)
   null_model <- conditional_model[, 1]
+
+  if (is.null(chosen_surrogates) & is.null(surrogates)) {
+    chosen_surrogates <- 1
+  } else if (is.null(surrogates)) {
+    surrogates <- chosen_surrogates
+  }
+
   chosen_surrogates <- 1
   if (is.null(surrogates)) {
     message("No estimate nor method to find surrogates was provided. ",
@@ -165,22 +173,29 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
         chosen_surrogates <- sm(sva::num.sv(dat=log2_mtrx,
                                             mod=conditional_model, method=surrogates))
       }
+      vword <- "variable"
+      if (chosen_surrogates > 1) {
+        vword <- "variables"
+      }
       message("The ", surrogates, " method chose ",
-              chosen_surrogates, " surrogate variable(s).")
+              chosen_surrogates, " surrogate ", vword, ".")
     } else if (class(surrogates) == "numeric") {
       message("A specific number of surrogate variables was chosen: ", surrogates, ".")
       chosen_surrogates <- surrogates
     }
-  }
-  if (chosen_surrogates < 1) {
-    message("One must have greater than 0 surrogates, setting chosen_surrogates to 1.")
-    chosen_surrogates <- 1
+    if (chosen_surrogates < 1) {
+      message("One must have greater than 0 surrogates, setting chosen_surrogates to 1.")
+      chosen_surrogates <- 1
+    }
   }
 
-  cpus <- 4
-  if (!is.null(arglist[["cpus"]])) {
-    cpus <- arglist[["cpus"]]
+  if (is.null(cpus)) {
+    cpus <- parallel::detectCores() - 2
   }
+  if (cpus < 0) {
+    cpus <- 1
+  }
+
   prior.plots <- FALSE
   if (!is.null(arglist[["prior.plots"]])) {
     message("When using ComBat, using prior.plots may result in an error due to infinite ylim.")
@@ -244,6 +259,10 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
   source_counts <- NULL
   new_counts <- NULL
   matrx_scale <- "linear"
+  sword <- "surrogate"
+  if (chosen_surrogates > 1) {
+    sword <- "surrogates"
+  }
   ## Just an aside, calling this a base 10 matrix is stupid.  Just because something is
   ## put on a log scale does not suddently make it octal or binary or imaginary!
   surrogate_input <- linear_mtrx
@@ -295,7 +314,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
       ## to 1, then why are these valid for changing and visualizing the linear
       ## data.  That does not really make sense to me.
       message("Attempting fsva surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
+              chosen_surrogates, " ", sword, ".")
       type_color <- "darkred"
       sva_object <- sm(sva::sva(log2_mtrx, conditional_model,
                                 null_model, n.sv=chosen_surrogates))
@@ -307,7 +326,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     },
     "isva" = {
       message("Attempting isva surrogate estimation with ",
-              chosen_surrogates, " surrogates.")
+              chosen_surrogates, " ", sword, ".")
       warning("isva, in my estimation, performs incredibly poorly.")
       type_color <- "darkgreen"
       condition_vector <- as.numeric(conditions)
@@ -330,8 +349,9 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
           names(confounder_mtrx)[i] <- names(confounder_lst)[i]
         }
       }
-      message("Estmated number of significant components: ", chosen_surrogates, ".")
-      surrogate_result <- my_doisva(data.m=log2_mtrx, pheno.v=condition_vector,
+      message("Attempting isva surrogate estimation with ",
+              chosen_surrogates, " ", sword, ".")
+      surrogate_result <- my_isva(data.m=log2_mtrx, pheno.v=condition_vector,
                                     ncomp=chosen_surrogates,
                                     icamethod="JADE")
       model_adjust <- as.matrix(surrogate_result[["isv"]])
@@ -361,16 +381,16 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
                              normalize.method="quantile",
                              plot=FALSE)
    batch_fit <- limma::lmFit(batch_voom, design=batch_model)
-   ## count_table <- residuals(batch_fit, batch_voom[["E"]])
+   new_counts <- residuals(batch_fit, batch_voom[["E"]])
    ## This is still fubar!
-   new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
+   ##new_counts <- limma::residuals.MArrayLM(batch_fit, batch_voom)
    if (expt_state[["transform"]] == "raw") {
      new_counts <- (2 ^ new_counts) - 1
    }
  },
  "pca" = {
    message("Attempting pca surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "green"
    data_vs_means <- as.matrix(log2_mtrx - rowMeans(log2_mtrx))
    surrogate_result <- corpcor::fast.svd(data_vs_means)
@@ -404,7 +424,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_empirical" = {
    message("Attempting ruvseq empirical surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "orange"
    ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
    ruv_input_norm <- edgeR::calcNormFactors(ruv_input, method="upperquartile")
@@ -428,7 +448,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_residuals" = {
    message("Attempting ruvseq residual surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "purple"
    ## Use RUVSeq and residuals
    ruv_input <- edgeR::DGEList(counts=linear_mtrx, group=conditions)
@@ -445,7 +465,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "ruv_supervised" = {
    message("Attempting ruvseq supervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "black"
    ## Re-calculating the numer of surrogates with this modified data.
    surrogate_estimate <- sm(sva::num.sv(dat=log2_mtrx, mod=conditional_model))
@@ -465,7 +485,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "smartsva" = {
    message("Attempting svaseq estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    surrogate_result <- SmartSVA::smartsva.cpp(
                                    dat=linear_mtrx,
                                    mod=conditional_model,
@@ -475,7 +495,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "svaseq" = {
    message("Attempting svaseq estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    surrogate_result <- sm(sva::svaseq(dat=linear_mtrx,
                                       n.sv=chosen_surrogates,
                                       mod=conditional_model,
@@ -484,7 +504,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "sva_supervised" = {
    message("Attempting sva supervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "red"
    surrogate_result <- sm(sva::ssva(dat=log2_mtrx,
                                     controls=control_likelihoods,
@@ -493,7 +513,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
  },
  "sva_unsupervised" = {
    message("Attempting sva unsupervised surrogate estimation with ",
-           chosen_surrogates, " surrogates.")
+           chosen_surrogates, " ", sword, ".")
    type_color <- "blue"
    if (min(rowSums(linear_mtrx)) == 0) {
      warning("sva will likely fail because some rowSums are 0.")
@@ -532,7 +552,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
     rownames(model_adjust) <- sample_names
     sv_names <- glue("SV{1:ncol(model_adjust)}")
     colnames(model_adjust) <- sv_names
-    if (class(input) == "expt") {
+    if ("expt" %in% class(input)) {
       surrogate_plots <- plot_batchsv(input, model_adjust)
     }
   }
@@ -603,38 +623,27 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
 #'  sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", expt_state=NULL,
-                         batch2=NULL, noscale=TRUE, ...) {
+batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", current_state=NULL,
+                         current_design=NULL, expt_state=NULL, surrogate_method=NULL,
+                         num_surrogates=NULL, low_to_zero=FALSE, cpus=4, batch2=NULL,
+                         noscale=TRUE, ...) {
   arglist <- list(...)
-  low_to_zero <- FALSE
-  if (!is.null(arglist[["low_to_zero"]])) {
-    low_to_zero <- arglist[["low_to_zero"]]
-  }
-  num_surrogates <- NULL
-  surrogate_method <- NULL
-  if (is.null(arglist[["num_surrogates"]]) & is.null(arglist[["surrogate_method"]])) {
-    surrogate_method <- "be"
-  } else if (!is.null(arglist[["num_surrogates"]])) {
-    if (class(arglist[["num_surrogates"]]) == "character") {
-      surrogate_method <- arglist[["num_surrogates"]]
-    } else {
-      num_surrogates <- arglist[["num_surrogates"]]
-    }
-  } else if (!is.null(arglist[["surrogate_method"]])) {
-    if (class(arglist[["surrogate_method"]]) == "numeric") {
-      num_surrogates <- arglist[["surrogate_method"]]
-    } else {
-      surrogate_method <- arglist[["surrogate_method"]]
-    }
+  chosen_surrogates <- NULL
+  if (is.null(num_surrogates) & is.null(surrogate_method)) {
+    chosen_surrogates <- "be"
+  } else if (!is.null(num_surrogates)) {
+    chosen_surrogates <- num_surrogates
   } else {
-    warning("Both num_surrogates and surrogate_method were defined.
-This will choose the number of surrogates differently depending on method chosen.")
+    chosen_surrogates <- surrogate_method
   }
 
-  cpus <- 4
-  if (!is.null(arglist[["cpus"]])) {
-    cpus <- arglist[["cpus"]]
+  if (is.null(cpus)) {
+    cpus <- parallel::detectCores() - 2
   }
+  if (cpus < 0) {
+    cpus <- 1
+  }
+
   prior.plots <- FALSE
   if (!is.null(arglist[["prior.plots"]])) {
     message("When using ComBat, using prior.plots may result in an error due to infinite ylim.")
@@ -643,25 +652,34 @@ This will choose the number of surrogates differently depending on method chosen
 
   ## Lets use expt_state to make sure we know if the data is already log2/cpm/whatever.
   ## We want to use this to back-convert or reconvert data to the appropriate
-  ## scale on return.
-  if (is.null(expt_state)) {
-    expt_state <- list(
+  ## scale on return.  Note that there are two possible variables, expt_state and current_state,
+  ## I am using current_state to keep track of changes made on scale/etc during each step
+  ## of the normalization process.
+  used_state <- list(
       "filter" = "raw",
       "normalization" = "raw",
       "conversion" = "raw",
       "batch" = "raw",
       "transform" = "raw")
+  if (is.null(expt_state) & is.null(current_state)) {
+    message("Assuming a completely raw expressionset.")
+  } else if (!is.null(current_state)) {
+    used_state <- current_state
+    message("Using the current state of normalization.")
+  } else {
+    used_state <- expt_state
+    message("Using the initial state of the expressionset.")
   }
-  ## Use current_state to keep track of changes made on scale/etc during batch
-  ## correction. This is pointed directly at limmaresid for the moment, which
-  ## converts to log2.
-  current_state <- expt_state
+
+  if (is.null(design) & is.null(current_design)) {
+    stop("I require an experimental design.")
+  } else if (!is.null(current_design)) {
+    design <- current_design
+  }
+
   ## These droplevels calls are required to avoid errors like 'confounded by batch'
   batches <- droplevels(as.factor(design[[batch1]]))
   conditions <- droplevels(as.factor(design[["condition"]]))
-
-  message("Note to self:  If you get an error like 'x contains missing values' ",
-          "The data has too many 0's and needs a stronger low-count filter applied.")
 
   if (isTRUE(batch)) {
     batch <- "limma"
@@ -672,10 +690,11 @@ This will choose the number of surrogates differently depending on method chosen
   conditional_model <- model.matrix(~conditions, data=count_df)
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
-  message("Passing off to all_adjusters.")
-  new_material <- all_adjusters(count_table, design=design, estimate_type=batch,
-                                batch1=batch1, batch2=batch2, expt_state=expt_state,
-                                noscale=noscale,
+  message("Passing the data to all_adjusters using the ", batch, " estimate type.")
+  new_material <- all_adjusters(count_table, design=design, estimate_type=batch, cpus=cpus,
+                                batch1=batch1, batch2=batch2, expt_state=used_state,
+                                noscale=noscale, chosen_surrogates=chosen_surrogates,
+                                low_to_zero=low_to_zero,
                                 ...)
   count_table <- new_material[["new_counts"]]
 
@@ -1404,9 +1423,9 @@ I set it to 1 not knowing what its purpose is.")
 #' @param th threshold for inclusion.
 #' @param ncomp Number of SVA components to estimate.
 #' @param icamethod Which ICA implementation to use?
-my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
+my_isva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
                       th=0.05, ncomp=NULL, icamethod="fastICA") {
-  isva.o <- doisva::isvaFn(data.m, pheno.v, ncomp, icamethod)
+  isva.o <- isva::isvaFn(data.m, pheno.v, ncomp, icamethod)
   ## The default values of selisv.idx and pv.m
   selisv.idx <- 1:ncol(isva.o[["isv"]])
   pv.m <- NULL
@@ -1426,12 +1445,11 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
         for (sv in 1:ncol(isva.o$isv)) {
           lm.o <- lm(
             isva.o$isv[, sv] ~ as.factor(tmp.m[, c]))
-          pv.m[sv, c] <- isva::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
-                                  summary(lm.o)$fstat[3], lower.tail = FALSE)
+          pv.m[sv, c] <- stats::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
+                                   summary(lm.o)$fstat[3], lower.tail = FALSE)
         }
       }
     }
-    print("Selecting ISVs")
     selisv.idx <- vector()
     for (sv in 1:nrow(pv.m)) {
       ncf <- length(which(pv.m[sv, 2:ncol(pv.m)] < pvthCF))
@@ -1444,14 +1462,14 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
       }
     }
     if (length(selisv.idx) == 0) {
-      print("No ISVs selected because none correlated with the given confounders. Rerun ISVA with cf.m=NULL option")
-      stop
+      message("No ISVs selected because none correlated with the given confounders. Rerun ISVA with cf.m=NULL option")
+      stop()
     }
   }
 
-  print("Running final multivariate regressions with selected ISVs")
+  message("Running final multivariate regressions with selected ISVs")
   selisv.m <- matrix(isva.o[["isv"]][, selisv.idx], ncol=length(selisv.idx))
-  print(selisv.m)
+  ## print(selisv.m)
   mod <- model.matrix(~ pheno.v + selisv.m)
   modNULL <- model.matrix(~ selisv.m)
   isv_fit <- limma::lmFit(data.m, design=modNULL)
@@ -1476,8 +1494,7 @@ my_doisva <- function(data.m, pheno.v, cf.m=NULL, factor.log=FALSE, pvthCF=0.01,
   ##qv.v <- qvalue(pv.s[["x"]])[["qvalue"]]
   ntop <- length(which(qv.v < th))
   sig_mtrx <- as.matrix(data.m[pred.idx, ])
-  print(paste("Number of DEGs after ISV adjustment = ",
-              ntop, sep = ""))
+  message("Number of DEGs after ISV adjustment = ", ntop)
   if (ntop > 0) {
     pred.idx <- pv.s[["ix"]][1:ntop]
     lm.o <- lm(t(data.m) ~ pheno.v + selisv.m)

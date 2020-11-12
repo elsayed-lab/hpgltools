@@ -2,12 +2,12 @@
 #'
 #' This copies the logic employed in hpgl_voom().  I suspect one should not use it.
 #'
-#' @param data  Some data!
-#' @param fun_model  A model for voom() and arrayWeights()
-#' @param libsize  Library sizes passed to voom().
-#' @param normalize.method  Passed to voom()
-#' @param plot  Do the plot of mean variance?
-#' @param span  yes
+#' @param data Some data!
+#' @param fun_model A model for voom() and arrayWeights()
+#' @param libsize Library sizes passed to voom().
+#' @param normalize.method Passed to voom()
+#' @param plot Do the plot of mean variance?
+#' @param span yes
 #' @param var.design maybe
 #' @param method kitty!
 #' @param maxiter 50 is good
@@ -77,16 +77,16 @@ hpgl_voomweighted <- function(data, fun_model, libsize=NULL, normalize.method="n
 #' output gets a 'plot' slot which contains the plot rather than just printing
 #' it.
 #'
-#' @param dataframe  Dataframe of sample counts which have been normalized and
-#'   log transformed.
-#' @param model  Experimental model defining batches/conditions/etc.
-#' @param libsize  Size of the libraries (usually provided by edgeR).
-#' @param normalize.method  Normalization method used in voom().
-#' @param span  The span used in voom().
-#' @param stupid  Cheat when the resulting matrix is not solvable?
-#' @param logged  Is the input data is known to be logged?
-#' @param converted  Is the input data is known to be cpm converted?
-#' @param ...  Extra arguments are passed to arglist.
+#' @param dataframe Dataframe of sample counts which have been normalized and
+#'  log transformed.
+#' @param model Experimental model defining batches/conditions/etc.
+#' @param libsize Size of the libraries (usually provided by edgeR).
+#' @param normalize.method Normalization method used in voom().
+#' @param span The span used in voom().
+#' @param stupid Cheat when the resulting matrix is not solvable?
+#' @param logged Is the input data is known to be logged?
+#' @param converted Is the input data is known to be cpm converted?
+#' @param ... Extra arguments are passed to arglist.
 #' @return EList containing the following information:
 #'  E = The normalized data
 #'  weights = The weights of said data
@@ -240,14 +240,14 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #' Creates the set of all possible contrasts and performs them using voom/limma.
 #'
 #' @param input Dataframe/vector or expt class containing count tables,
-#'   normalization state, etc.
+#'  normalization state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the model?
 #' @param model_batch Include batch in the model? This is hopefully TRUE.
 #' @param model_intercept Perform a cell-means or intercept model? A little more
-#'   difficult for me to understand.  I have tested and get the same answer
-#'   either way.
+#'  difficult for me to understand.  I have tested and get the same answer
+#'  either way.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
@@ -256,8 +256,8 @@ hpgl_voom <- function(dataframe, model=NULL, libsize=NULL,
 #' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
 #' @param libsize I've recently figured out that libsize is far more important
-#'   than I previously realized.  Play with it here.
-#' @param force  Force data which may not be appropriate for limma into it?
+#'  than I previously realized.  Play with it here.
+#' @param force Force data which may not be appropriate for limma into it?
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it
@@ -385,9 +385,9 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
   fun_voom <- NULL
   ## voom() it, taking into account whether the data has been log2 transformed.
 
-  ##  Leaving the following here for the moment, but I think it will no longer be needed.
-  ##  Instead, I am checking the data state before passing it to this function with the
-  ##  choose_limma_dataset() call above.
+  ## Leaving the following here for the moment, but I think it will no longer be needed.
+  ## Instead, I am checking the data state before passing it to this function with the
+  ## choose_limma_dataset() call above.
   loggedp <- input[["state"]][["transform"]]
   if (is.null(loggedp)) {
     message("I don't know if this data is logged, testing if it is integer.")
@@ -594,15 +594,15 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
 #' 2.  Write out the toptable() output in separate .csv files and/or sheets in excel
 #' 3.  Since I have been using qvalues a lot for other stuff, add a column for them.
 #'
-#' @param fit  Result from lmFit()/eBayes()
-#' @param adjust  Pvalue adjustment chosen.
-#' @param n  Number of entries to report, 0 says do them all.
-#' @param coef  Which coefficients/contrasts to report, NULL says do them all.
-#' @param annot_df  Optional data frame including annotation information to
-#'   include with the tables.
-#' @param intercept  Intercept model?
+#' @param fit Result from lmFit()/eBayes()
+#' @param adjust Pvalue adjustment chosen.
+#' @param n Number of entries to report, 0 says do them all.
+#' @param coef Which coefficients/contrasts to report, NULL says do them all.
+#' @param annot_df Optional data frame including annotation information to
+#'  include with the tables.
+#' @param intercept Intercept model?
 #' @return List of data frames comprising the toptable output for each
-#'   coefficient, I also added a qvalue entry to these toptable() outputs.
+#'  coefficient, I also added a qvalue entry to these toptable() outputs.
 #' @seealso \pkg{limma} \pkg{qvalue}
 #'  \code{\link{write_xlsx}} \code{\link[limma]{topTable}}
 #' @examples
@@ -697,10 +697,8 @@ make_limma_tables <- function(fit=NULL, adjust="BH", n=0, coef=NULL,
 #'
 #' Looking to provide a single interface for writing tables from limma and friends.
 #'
-#' Tested in test_21limma.R
-#'
-#' @param data  Output from limma_pairwise()
-#' @param ...  Options for writing the xlsx file.
+#' @param data Output from limma_pairwise()
+#' @param ... Options for writing the xlsx file.
 #' @seealso \code{\link{write_de_table}}
 #' @examples
 #' \dontrun{

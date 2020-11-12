@@ -245,7 +245,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     }
     dev.off()
   }
-  png_name <- tempfile(pattern = "figureImage", fileext = glue(".{file_type}"))
+  png_name <- tempfile(pattern="figureImage", fileext=glue(".{file_type}"))
   png_ret <- try(png(filename=png_name,
                      width=width,
                      height=height,
@@ -273,6 +273,7 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     message("The png file name did not exist: ", png_name)
   }
   ret <- list(
+    "filename" = png_name,
     "png_fh" = png_ret,
     "png_print" = print_ret,
     "fancy_print" = fancy_ret,

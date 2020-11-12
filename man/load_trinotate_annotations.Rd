@@ -19,8 +19,7 @@ peculiar fashion, so this function attempts to make it easier to read and put
 them into a format usable in an expressionset.
 }
 \examples{
-\dontrun{
- annotation_dt <- load_trinotate_annotations("reference/trinotate.csv.xz")
- expt <- create_expt(metadata="metadata.xlsx", gene_info=annotation_dt)
-}
+ trinotate <- system.file("sb/trinotate_head.csv.xz", package="hpgltools")
+ a_few_trinotate <- load_trinotate_annotations(trinotate=trinotate)
+ dim(a_few_trinotate)
 }

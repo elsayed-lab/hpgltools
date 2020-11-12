@@ -245,7 +245,7 @@ score_mhess <- function(expt, ess_column="essm1") {
     scores[[c]] <- as.numeric(scores[[c]])
   }
   exprs(expt[["expressionset"]]) <- as.matrix(scores)
-  cond_scores <- median_by_factor(expt)
+  cond_scores <- median_by_factor(expt, fun="mean")[["medians"]]
 
   mscores <- rowMeans(cond_scores)
   changed_idx <- mscores != cond_scores[[1]]
@@ -274,8 +274,11 @@ score_mhess <- function(expt, ess_column="essm1") {
 #' @param ylimit Maximum y axis
 #' @param column Data file column to use for density calculation.
 #' @param adjust Density adjustment.
+#' @param ggstatsplot Include pretty ggstatsplot plot?
 #' @return a plot and table of the saturation for all samples.
-tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads", adjust=1) {
+#' @export
+tnseq_multi_saturation <- function(meta, meta_column, ylimit=100,
+                                   column="Reads", adjust=1, ggstatsplot=FALSE) {
   table <- NULL
   filenames <- meta[[meta_column]]
   for (f in 1:length(filenames)) {
@@ -291,7 +294,8 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads"
     }
   }
 
-  melted <- reshape2::melt(data=table, id.vars="start")
+  melted <- reshape2::melt(data=table, id.vars="start",
+                           value.name="reads", varnames="sample")
   colnames(melted) <- c("start", "sample", "reads")
   melted[["log2"]] <- log2(melted[["reads"]] + 1)
   plt <- ggplot(data=melted, mapping=aes_string(x="log2", fill="sample")) +
@@ -300,9 +304,18 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads"
     ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
+  ggstats <- NULL
+  if (isTRUE(ggstatsplot)) {
+    ggstats <- ggstatsplot::ggbetweenstats(data=melted, x=sample, y=log2,
+                                           notch=TRUE, mean.ci=TRUE, k=3, outlier.tagging=FALSE,
+                                           ggtheme=ggthemes::theme_fivethirtyeight(),
+                                           messages=TRUE)
+  }
+
   retlist <- list(
     "table" = table,
-    "plot" = plt)
+    "plot" = plt,
+    "ggstats" = ggstats)
   return(retlist)
 }
 

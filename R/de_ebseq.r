@@ -4,16 +4,16 @@
 #' Invoking EBSeq is confusing, this should help.
 #'
 #' @param input Dataframe/vector or expt class containing data, normalization
-#'   state, etc.
+#'  state, etc.
 #' @param patterns Set of expression patterns to query.
 #' @param ng_vector I think this is for isoform quantification, but am not yet
-#'   certain.
+#'  certain.
 #' @param rounds Number of iterations for doing the multi-test
 #' @param target_fdr Definition of 'significant'
 #' @param method The default ebseq methodology is to create the set of all
-#'   possible 'patterns' in the data; for data sets which are more than
-#'   trivially complex, this is not tenable, so this defaults to subsetting the
-#'   data into pairs of conditions.
+#'  possible 'patterns' in the data; for data sets which are more than
+#'  trivially complex, this is not tenable, so this defaults to subsetting the
+#'  data into pairs of conditions.
 #' @param norm Normalization method to use.
 #' @param conditions Not currently used, but passed from all_pairwise()
 #' @param batches Not currently used, but passed from all_pairwise()
@@ -24,7 +24,7 @@
 #' @param force Force ebseq to accept bad data (notably NA containing stuff from proteomics.
 #' @param ... Extra arguments currently unused.
 #' @return List containing tables from ebseq, the conditions tested, and the
-#'   ebseq table of conditions.
+#'  ebseq table of conditions.
 #' @examples
 #'  \dontrun{
 #'   expt <- create_expt(metadata="sample_sheet.xlsx", gene_info=annotations)
@@ -132,7 +132,7 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
     model_batch=FALSE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
     ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, do_extras=FALSE,
                                  ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))

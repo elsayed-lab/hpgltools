@@ -119,7 +119,7 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @param file Filename to read.
 #' @param id An id to give the result.
 #' @param write_acquisitions If a filename is provided, write a tab separated
-#'   table of windows.
+#'  table of windows.
 #' @param format Either mzXML or mzML.
 #' @param allow_window_overlap One may choose to foce windows to not overlap.
 #' @param start_add Add a minute to the start of the windows to avoid overlaps?
@@ -152,9 +152,9 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mz
 #' @param id Chosen ID for the given file.
 #' @param write_acquisitions Write acquisition windows.
 #' @param allow_window_overlap Some downstream tools cannot deal with
-#'   overlapping windows. Toggle that here.
+#'  overlapping windows. Toggle that here.
 #' @param start_add Other downstream tools appear to expect some padding at the
-#'   beginning of each window.  Add that here.
+#'  beginning of each window.  Add that here.
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
 extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
@@ -292,9 +292,9 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' @param id Chosen ID for the given file.
 #' @param write_acquisitions Write acquisition windows.
 #' @param allow_window_overlap Some downstream tools cannot deal with
-#'   overlapping windows. Toggle that here.
+#'  overlapping windows. Toggle that here.
 #' @param start_add Other downstream tools appear to expect some padding at the
-#'   beginning of each window.  Add that here.
+#'  beginning of each window.  Add that here.
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
 extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
@@ -325,20 +325,20 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #' the more complete and fast implementation included in mzR.
 #'
 #' @param metadata Data frame describing the samples, including the mzXML
-#'   filenames.
+#'  filenames.
 #' @param write_windows Write out SWATH window frames.
 #' @param id_column What column in the sample sheet provides the ID for the samples?
 #' @param file_column Which column in the sample sheet provides the filenames?
 #' @param allow_window_overlap What it says on the tin, some tools do not like
-#'   DIA windows to overlap, if TRUE, this will make sure each annotated window
-#'   starts at the end of the previous window if they overlap.
+#'  DIA windows to overlap, if TRUE, this will make sure each annotated window
+#'  starts at the end of the previous window if they overlap.
 #' @param start_add Another strategy is to just add a static amount to each
-#'   window.
+#'  window.
 #' @param format Currently this handles mzXML or mzML files.
 #' @param parallel Perform operations using an R foreach cluster?
 #' @param savefile If not null, save the resulting data structure to an rda file.
 #' @param ... Extra arguments, presumably color palettes and column names and
-#'   stuff like that.
+#'  stuff like that.
 #' @return List of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
 extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
@@ -783,17 +783,6 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
   }
   meta <- meta[existing_files, ]
 
-  gather_masses <- function(sequence) {
-    atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
-    if (class(atoms)[1] != "try-error") {
-      d <- BRAIN::useBRAIN(atoms)
-      ret <- round(d[["avgMass"]])
-    } else {
-      ret <- 0
-    }
-    return(ret)
-  }
-
   res <- list()
   num_files <- nrow(meta)
   failed_files <- c()
@@ -828,7 +817,25 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     pyprophet_data <- retlist
     save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
   }
+  class(retlist) <- c("pyprophet_tables", "list")
   return(retlist)
+}
+
+#' Use BRAIN to find the peptide mass from a sequence.
+#'
+#' This rounds the avgMass from BRAIN to deal with isotopes, maybe this should be changed.
+#'
+#' @param sequence Sequence to count.
+#' @return Rounded average mass.
+gather_masses <- function(sequence) {
+  atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
+  if (class(atoms)[1] != "try-error") {
+    d <- BRAIN::useBRAIN(atoms)
+    ret <- round(d[["avgMass"]])
+  } else {
+    ret <- 0
+  }
+  return(ret)
 }
 
 #' Impute missing values using code from DEP reworked for expressionsets.
@@ -939,7 +946,7 @@ mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
   exprs(exprs_set) <- new
   expt[["expressionset"]] <- exprs_set
   annot <- fData(expt)
-  final <- median_by_factor(expt, fact=fact, fun=fun)
+  final <- median_by_factor(expt, fact=fact, fun=fun)[["medians"]]
   current_design <- pData(expt)
   new_design <- data.frame()
   for (c in 1:length(colnames(final))) {
@@ -1150,35 +1157,35 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 #' function attempts to formalize and simplify that process.
 #'
 #' @param s2s_exp SWHAT2stats result from the sample_annotation()
-#'   function. (s2s_exp stands for: SWATH2stats experiment)
+#'  function. (s2s_exp stands for: SWATH2stats experiment)
 #' @param column What column in the data contains the protein name?
 #' @param pep_column What column in the data contains the peptide name (not
-#'   currently used, but it should be.)
+#'  currently used, but it should be.)
 #' @param fft Ratio of false negatives to true positives, used by
-#'   assess_by_fdr() and similar functions.
+#'  assess_by_fdr() and similar functions.
 #' @param plot Print plots of the various rates by sample?
 #' @param target_fdr When invoking mscore4assayfdr, choose an mscore which
-#'   corresponds to this false discovery date.
+#'  corresponds to this false discovery date.
 #' @param upper_fdr Used by filter_mscore_fdr() to choose the minimum threshold
-#'   of identification confidence.
+#'  of identification confidence.
 #' @param mscore Mscore cutoff for the mscore filter.
 #' @param percentage Cutoff for the mscore_freqobs filter.
 #' @param remove_decoys Get rid of decoys in the final filter, if they were not
-#'   already removed.
+#'  already removed.
 #' @param max_peptides A maximum number of peptides filter.
 #' @param min_peptides A minimum number of peptides filter.
 #' @param do_mscore Perform the mscore filter? SWATH2stats::filter_mscore()
 #' @param do_freqobs Perform the mscore_freqobs filter?
-#'   SWATH2stats::filter_mscore_freqobs()
+#'  SWATH2stats::filter_mscore_freqobs()
 #' @param do_fdr Perform the fdr filter? SWATH2stats::filter_mscore_fdr()
 #' @param do_proteotypic Perform the proteotypic filter?
-#'   SWATH2stats::filter_proteotypic_peptides()
+#'  SWATH2stats::filter_proteotypic_peptides()
 #' @param do_peptide Perform the single-peptide filter?
-#'   SWATH2stats::filter_all_peptides()
+#'  SWATH2stats::filter_all_peptides()
 #' @param do_max Perform the maximum peptide filter?
-#'   SWATH2stats::filter_max_peptides()
+#'  SWATH2stats::filter_max_peptides()
 #' @param do_min Perform the minimum peptide filter?
-#'   SWATH2stats::filter_min_peptides()
+#'  SWATH2stats::filter_min_peptides()
 #' @param ... Other arguments passed down to the filters.
 #' @return Smaller SWATH2stats data set.
 #' @export

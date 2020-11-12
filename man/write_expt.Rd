@@ -14,6 +14,7 @@ write_expt(
   transform = "log2",
   batch = "sva",
   filter = TRUE,
+  med_or_mean = "mean",
   ...
 )
 }
@@ -35,6 +36,8 @@ write_expt(
 \item{batch}{Batch correction applied.}
 
 \item{filter}{Filtering method used.}
+
+\item{med_or_mean}{When printing mean by condition, one may want median.}
 
 \item{...}{Parameters passed down to methods called here (graph_metrics, etc).}
 }

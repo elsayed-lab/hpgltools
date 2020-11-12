@@ -16,6 +16,13 @@ disjunct_pvalues(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast)
 \item{disj_contrast}{Result of the makeContrasts of the second set.}
 }
 \description{
+This was a function I copied out of Keith/Hector/Laura/Cecilia's paper in
+which they sought to discriminate the effect of inert beads on macrophages
+vs. the effect of parasites.  The simpler way of expressing it is: take the
+worst p-value observed for the pair of contrasts, infected/uninfected and
+beads/uninfected.
+}
+\details{
 The goal is therefore to find responses different than beads
 The null hypothesis is (H0): (infected == uninfected) | (infected == beads)
 The alt hypothesis is (HA): (infected != uninfected) & (infected != beads)

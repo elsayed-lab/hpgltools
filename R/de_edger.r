@@ -2,7 +2,6 @@
 #'
 #' This function performs the set of possible pairwise comparisons using EdgeR.
 #'
-#' Tested in test_26de_edger.R
 #' Like the other _pairwise() functions, this attempts to perform all pairwise
 #' contrasts in the provided data set.  The details are of course slightly
 #' different when using EdgeR.  Thus, this uses the function
@@ -18,23 +17,23 @@
 #' the force argument will round the data and shoe-horn it into EdgeR.
 #'
 #' @param input Dataframe/vector or expt class containing data, normalization
-#'   state, etc.
+#'  state, etc.
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the experimental model?
 #' @param model_batch Include batch in the model?  In most cases this is a good
-#'   thing(tm).
+#'  thing(tm).
 #' @param model_intercept Use an intercept containing model?
 #' @param alt_model Alternate experimental model to use?
 #' @param extra_contrasts Add some extra contrasts to add to the list of
-#'   pairwise contrasts. This can be pretty neat, lets say one has conditions
-#'   A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
+#'  pairwise contrasts. This can be pretty neat, lets say one has conditions
+#'  A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
 #' @param edger_method  I found a couple/few ways of doing edger in the manual,
-#'   choose with this.
+#'  choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
 #' @return List including the following information:
 #'  contrasts = The string representation of the contrasts performed.
@@ -85,7 +84,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
   ##                             model_intercept=model_intercept,
   ##                             alt_model=alt_model)
   model_including <- model_choice[["including"]]
-  if (class(model_choice[["model_batch"]]) == "matrix") {
+  if (class(model_choice[["model_batch"]])[1] == "matrix") {
     model_batch <- model_choice[["model_batch"]]
   }
   model_data <- model_choice[["chosen_model"]]
@@ -108,14 +107,14 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     state <- TRUE
     message("EdgeR step 2/9: Estimating the common dispersion.")
     disp_norm <- try(edgeR::estimateCommonDisp(norm))
-    if (class(disp_norm) == "try-error") {
+    if (class(disp_norm)[1] == "try-error") {
       warning("estimateCommonDisp() failed.  Trying again with estimateDisp().")
       state <- FALSE
     }
     if (isTRUE(state)) {
       message("EdgeR step 3/9: Estimating dispersion across genes.")
       tagdisp_norm <- try(edgeR::estimateTagwiseDisp(disp_norm))
-      if (class(tagdisp_norm) == "try-error") {
+      if (class(tagdisp_norm)[1] == "try-error") {
         warning("estimateTagwiseDisp() failed.  Trying again with estimateDisp().")
         state <- FALSE
       }
@@ -123,7 +122,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(state)) {
       message("EdgeR step 4/9: Estimating GLM Common dispersion.")
       glm_norm <- try(edgeR::estimateGLMCommonDisp(tagdisp_norm, model_data))
-      if (class(glm_norm) == "try-error") {
+      if (class(glm_norm)[1] == "try-error") {
         warning("estimateGLMCommonDisp() failed.  Trying again with estimateDisp().")
         state <- FALSE
       }
@@ -131,7 +130,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(state)) {
       message("EdgeR step 5/9: Estimating GLM Trended dispersion.")
       glm_trended <- try(edgeR::estimateGLMTrendedDisp(glm_norm, model_data))
-      if (class(glm_trended) == "try-error") {
+      if (class(glm_trended)[1] == "try-error") {
         warning("estimateGLMTrendedDisp() failed.  Trying again with estimateDisp().")
         state <- FALSE
       }
@@ -139,7 +138,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(state)) {
       message("EdgeR step 6/9: Estimating GLM Tagged dispersion.")
       final_norm <- try(edgeR::estimateGLMTagwiseDisp(glm_trended, model_data))
-      if (class(final_norm) == "try-error") {
+      if (class(final_norm)[1] == "try-error") {
         warning("estimateGLMTagwiseDisp() failed.  Trying again with estimateDisp().")
         state <- FALSE
       }
@@ -220,7 +219,7 @@ edger_pairwise <- function(input=NULL, conditions=NULL,
 
   dispersions <- sm(try(edgeR::plotBCV(y=final_norm), silent=TRUE))
   dispersion_plot <- NULL
-  if (class(dispersions)[[1]] != "try-error") {
+  if (class(dispersions)[1] != "try-error") {
     dispersion_plot <- grDevices::recordPlot()
   }
 

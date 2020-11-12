@@ -16,7 +16,7 @@ simple_clusterprofiler(
   fc_column = "logFC",
   second_fc_column = "limma_logfc",
   updown = "up",
-  permutations = 100,
+  permutations = 1000,
   min_groupsize = 5,
   kegg_prefix = NULL,
   kegg_organism = NULL,

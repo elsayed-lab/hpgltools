@@ -38,17 +38,8 @@ This function tries to gather an appropriate gene length column from
 whatever annotation data source is provided.
 }
 \examples{
-\dontrun{
- tt = get_genesizes(gff="pa14.gff")
- head(tt)
-##           ID width
-## 1   YAL069W   312
-## 2   YAL069W   315
-## 3   YAL069W     3
-## 4 YAL068W-A   252
-## 5 YAL068W-A   255
-## 6 YAL068W-A     3
-}
+ pa_genesizes <- get_genesizes(gff=gff_file)
+ head(pa_genesizes)
 }
 \seealso{
 \pkg{rtracklayer}

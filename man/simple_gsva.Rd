@@ -13,7 +13,7 @@ simple_gsva(
   current_id = "ENSEMBL",
   required_id = "ENTREZID",
   orgdb = "org.Hs.eg.db",
-  method = "gsva",
+  method = "ssgsea",
   kcdf = NULL,
   ranking = FALSE
 )
@@ -37,7 +37,8 @@ case this is a parameter.}
 
 \item{orgdb}{What is the data source for the rownames()?}
 
-\item{method}{Which gsva method to use?}
+\item{method}{Which gsva method to use? Changed this from gsva to ssgsea
+because it was throwing segmentation faults.}
 
 \item{kcdf}{Options for the gsva methods.}
 

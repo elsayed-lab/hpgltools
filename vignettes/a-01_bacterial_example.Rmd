@@ -51,7 +51,7 @@ rmd_file <- "a-01_bacterial_example.Rmd"
 
 # Loading (meta)data and annotations
 
-The following examples will use a real data set from a recent
+The following examples will use a real data set from an
 experiment in our lab.  The raw data was processed using a mix of
 trimmomatic, biopieces, bowtie, samtools, and htseq.  The final count
 tables were deposited into the 'preprocessing/count_tables/' tree.
@@ -95,12 +95,12 @@ analyses easier. These analyses generally fall into a few stages:
 
 1.  Data visualization and outlier/batch evaluation
 2.  Differential expression analyses
- a. Visualization and export of these results
+  a. Visualization and export of these results
 3.  Gene ontology/KEGG analyses
- a. Visualization and export of these results
+  a. Visualization and export of these results
 4.  Genome visualizations
- a. With circos
- b. With genoplotR
+  a. With circos
+  b. With genoplotR
 
 Before any of these tasks may be performed, the data must be loaded
 into memory.  hpgltools attempts to make this easier with
@@ -388,7 +388,6 @@ mgas_gff_df <- mgas_gff_df[-1, ]
 mgas_gff_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_gff_df[["locus_tag"]])
 rownames(mgas_gff_df) <- make.names(mgas_gff_df[["sysName"]], unique=TRUE)
 
-## I need to manually set the ID now, as my SQL-based selections are failing...
 mgas_microbes_df <- sm(load_microbesonline_annotations(id=293653))
 mgas_microbes_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_microbes_df$sysName)
 rownames(mgas_microbes_df) <- make.names(mgas_microbes_df$sysName, unique=TRUE)
@@ -409,7 +408,10 @@ colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", 
 circos_test <- circos_prefix(annotation=mgas_df)
 ## Fill it in with the data for s.pyogenes
 lengths <- 1838600
-names(lengths) <- "chr1"
+names(lengths) <- "NC_007297"
+## I need to manually set the ID now, as my SQL-based selections are failing...
+## I need to manually set the ID now, as my SQL-based selections are failing...
+
 circos_kary <- circos_karyotype(cfg=circos_test, lengths=lengths)
 ## Fill in the gene category annotations by gene-strand
 circos_plus <- circos_plus_minus(cfg=circos_test)

@@ -15,16 +15,16 @@ get_pairwise_gene_abundances(datum, type = "limma", excel = NULL)
 }
 \value{
 A list containing the expression values and some metrics of
-  variance/error.
+ variance/error.
 }
 \description{
 Instead of pulling to top/bottom abundant genes, get all abundances and
 variances or stderr.
 }
 \examples{
- \dontrun{
-  abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
-  ## This should provide a set of abundances after voom by condition.
+\dontrun{
+ abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
+ ## This should provide a set of abundances after voom by condition.
 }
 }
 \seealso{

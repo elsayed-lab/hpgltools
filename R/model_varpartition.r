@@ -23,35 +23,37 @@ replot_varpart_percent <- function(varpart_output, n=30, column=NULL, decreasing
     }
   }
   new_plot <- variancePartition::plotPercentBars(sorted[1:n, ])
-  return(new_plot)
+  retlist <- list(
+      "resorted" = sorted,
+      "plot" = new_plot)
+  return(retlist)
 }
 
 #' Use variancePartition to try and understand where the variance lies in a data set.
 #'
-#' variancePartition is the newest toy introduced by Hector.
+#' The arguments and usage of variancePartition are a bit opaque.  This function
+#' attempts to fill in reasonable values and simplify its invocation.
 #'
-#' Tested in 19varpart.R.
-#'
-#' @param expt  Some data
-#' @param predictor  Non-categorical predictor factor with which to begin the
-#'   model.
-#' @param factors  Character list of columns in the experiment design to query
-#' @param chosen_factor  When checking for sane 'batches', what column to
-#'   extract from the design?
-#' @param do_fit  Perform a fitting using variancePartition?
-#' @param cor_gene  Provide a set of genes to look at the correlations, defaults
-#'   to the first gene.
-#' @param cpus  Number cpus to use
-#' @param genes  Number of genes to count.
-#' @param parallel  use doParallel?
-#' @param modify_expt  Add annotation columns with the variance/factor?
-#' @return partitions  List of plots and variance data frames
+#' @param expt Some data
+#' @param predictor Non-categorical predictor factor with which to begin the
+#'  model.
+#' @param factors Character list of columns in the experiment design to query
+#' @param chosen_factor When checking for sane 'batches', what column to
+#'  extract from the design?
+#' @param do_fit Perform a fitting using variancePartition?
+#' @param cor_gene Provide a set of genes to look at the correlations, defaults
+#'  to the first gene.
+#' @param cpus Number cpus to use
+#' @param genes Number of genes to count.
+#' @param parallel Use doParallel?
+#' @param modify_expt Add annotation columns with the variance/factor?
+#' @return List of plots and variance data frames
 #' @seealso \pkg{doParallel} \pkg{variancePartition}
 #' @export
 simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch"),
                            chosen_factor="batch", do_fit=FALSE, cor_gene=1,
-                           cpus=6, genes=40, parallel=TRUE,
-                           modify_expt=TRUE) {
+                           cpus=NULL, genes=40, parallel=TRUE,
+                           mixed=FALSE, modify_expt=TRUE) {
   cl <- NULL
   para <- NULL
   ## One is not supposed to use library() in packages, but it needs to do all
@@ -59,9 +61,21 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   ## tt <- sm(library("variancePartition"))
   lib_result <- sm(requireNamespace("variancePartition"))
   att_result <- sm(try(attachNamespace("variancePartition"), silent=TRUE))
+  lib_result <- sm(requireNamespace("BiocParallel"))
+  att_result <- sm(try(attachNamespace("BiocParallel"), silent=TRUE))
   if (isTRUE(parallel)) {
-    cl <- parallel::makeCluster(cpus)
+    cl <- NULL
+    if (is.null(cpus)) {
+      cpus <- parallel::detectCores() - 4
+      if (cpus < 1) {
+        cpus <- 1
+      }
+      cl <- parallel::makeCluster(cpus)
+    } else {
+      cl <- parallel::makeCluster(cpus)
+    }
     para <- doParallel::registerDoParallel(cl)
+    ## multi <- BiocParallel::MulticoreParam()
   }
   design <- pData(expt)
   num_batches <- length(levels(as.factor(design[[chosen_factor]])))
@@ -70,11 +84,17 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
     factors <- factors[!grepl(pattern=chosen_factor, x=factors)]
   }
   model_string <- "~ "
-  if (!is.null(predictor)) {
-    model_string <- glue::glue("{model_string}{predictor} +")
-  }
-  for (fact in factors) {
-    model_string <- glue::glue("{model_string} (1|{fact}) +")
+  if (isTRUE(mixed)) {
+    if (!is.null(predictor)) {
+      model_string <- glue::glue("{model_string}{predictor} +")
+    }
+    for (fact in factors) {
+      model_string <- glue::glue("{model_string} (1|{fact}) +")
+    }
+  } else {
+    for (fact in factors) {
+      model_string <- glue::glue("{model_string} {fact} +")
+    }
   }
   model_string <- gsub(pattern="\\+$", replacement="", x=model_string)
   message("Attempting mixed linear model with: ", model_string)
@@ -82,8 +102,10 @@ simple_varpart <- function(expt, predictor=NULL, factors=c("condition", "batch")
   norm <- sm(normalize_expt(expt, filter="simple"))
   data <- exprs(norm)
 
+  design_sub <- design[, factors]
   message("Fitting the expressionset to the model, this is slow.")
-  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design), silent=TRUE)
+  my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
+  ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
   if (class(my_extract) == "try-error") {
     message("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
@@ -117,13 +139,16 @@ which are shared among multiple samples.")
     ## Try fitting with lmer4
     fitting <- variancePartition::fitVarPartModel(exprObj=data,
                                                   formula=my_model, data=design)
-    idx <- order(design[["condition"]], design[["batch"]])
+    last_fact <- factors[length(factors)]
+    idx <- order(design[[chosen_column]], design[[last_fact]])
     ##first <- variancePartition::plotCorrStructure(fitting, reorder=idx)
     test_strat <- data.frame(Expression=data[3, ],
-                             condition=design[["condition"]],
-                             batch=design[["batch"]])
-    stratify_batch_plot <- variancePartition::plotStratify(Expression ~ batch, test_strat)
-    stratify_condition_plot <- variancePartition::plotStratify(Expression ~ condition, test_strat)
+                             condition=design[[chosen_column]],
+                             batch=design[[last_fact]])
+    batch_expression <- as.formula("Expression ~ batch")
+    cond_expression <- as.formula("Expression ~ condition")
+    stratify_batch_plot <- variancePartition::plotStratify(batch_expression, test_strat)
+    stratify_condition_plot <- variancePartition::plotStratify(cond_expression, test_strat)
   }
 
   if (isTRUE(parallel)) {
@@ -165,11 +190,11 @@ which are shared among multiple samples.")
 #' Note the word 'attempt'.  This function is so ungodly slow that it probably
 #' will never be used.
 #'
-#' @param expt  Input expressionset.
-#' @param factors  Set of factors to query
-#' @param cpus  Number of cpus to use in doParallel.
-#' @return  Summaries of the new model,  in theory this would be a nicely
-#'   batch-corrected data set.
+#' @param expt Input expressionset.
+#' @param factors Set of factors to query
+#' @param cpus Number of cpus to use in doParallel.
+#' @return Summaries of the new model,  in theory this would be a nicely
+#'  batch-corrected data set.
 #' @seealso \pkg{variancePartition}
 varpart_summaries <- function(expt, factors=c("condition", "batch"), cpus=6) {
   cl <- parallel::makeCluster(cpus)

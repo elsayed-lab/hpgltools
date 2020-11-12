@@ -4,7 +4,7 @@
 \alias{map_orgdb_ids}
 \title{Map AnnotationDbi keys from one column to another.}
 \usage{
-map_orgdb_ids(orgdb, gene_ids = NULL, mapto = c("ensembl"), keytype = "geneid")
+map_orgdb_ids(orgdb, gene_ids = NULL, mapto = "ensembl", keytype = "geneid")
 }
 \arguments{
 \item{orgdb}{OrganismDb instance.}
@@ -25,10 +25,8 @@ requires ENTREZIDs.  In the mean time, this creates a dataframe of the mapped
 columns for a given set of gene ids using the in a sqlite instance.
 }
 \examples{
-\dontrun{
- org <- "org.Sneurona.SO.SN1.v42.eg.db"
- gid_to_ensg <- map_orgdb_ids(org, mapto="ensembl", keytype="gid")
-}
+ dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto="ensembl", keytype="unigene")
+ head(dm_unigene_to_ensembl)
 }
 \seealso{
 \pkg{AnnotationDbi}

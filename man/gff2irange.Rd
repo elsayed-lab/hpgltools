@@ -31,12 +31,9 @@ getSet()  This is another place which should be revisited for improvements
 via mcols().  Check snp.r. for ideas.
 }
 \examples{
-\dontrun{
- library(BSgenome.Tcruzi.clbrener.all)
- tc_clb_all <- BSgenome.Tcruzi.clbrener.all
- cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
- cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
-}
+ gff_file <- system.file("gas.gff", package="hpgltools")
+ gas_iranges <- gff2irange(gff_file)
+ colnames(as.data.frame(gas_iranges))
 }
 \seealso{
 \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}

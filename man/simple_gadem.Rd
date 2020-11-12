@@ -4,7 +4,13 @@
 \alias{simple_gadem}
 \title{run the rGADEM suite}
 \usage{
-simple_gadem(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19", ...)
+simple_gadem(
+  inputfile,
+  genome = "BSgenome.Hsapiens.UCSC.hs19",
+  p = 0.1,
+  e = 0,
+  ...
+)
 }
 \arguments{
 \item{inputfile}{Fasta or bed file containing sequences to search.}

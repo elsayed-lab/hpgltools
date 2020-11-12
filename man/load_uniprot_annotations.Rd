@@ -19,3 +19,7 @@ Big dataframe of annotation data.
 \description{
 I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
 }
+\examples{
+ sc_uniprot_annot <- load_uniprot_annotations(file=uniprot_sc_downloaded$filename)
+ dim(sc_uniprot_annot)
+}

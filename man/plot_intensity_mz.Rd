@@ -40,6 +40,5 @@ ggplot2 goodness.
 \description{
 I want to have a pretty plot of peak intensities and m/z.  The plot provided
 by this function is interesting, but suffers from some oddities; notably that
-it does not currently separate the MS1 and MS2 data.  Since I am stuck on
-this forsaken plane with no hope of ever leaving, perhaps I can add that now.
+it does not currently separate the MS1 and MS2 data.
 }

@@ -26,22 +26,27 @@ clean:
 			vignettes/*.R vignettes/*.html vignettes/*.gb vignettes/*.gz vignettes/*.Rdata \
 			vignettes/*.xlsx vignettes/*.tex vignettes/*.log vignettes/*.aux vignettes/*.map \
 			vignettes/*.rda
-	rm -rf R/.Rhistory vignettes/.Rhistory R/eupathdb R/*.rda R/*.Rdata
-	for testdir in travis all_functions slow_tests; do \
-	  rm -rf tests/$${testdir}/circos tests/$${testdir}/excel tests/$${testdir}/excel_test \
-			tests/$${testdir}/preprocessing tests/$${testdir}/test_gprofiler \
-			tests/$${testdir}/saved_plots tests/$${testdir}/excel_test_sig \
-			tests/$${testdir}/kegg_pathways tests/$${testdir}/pathview \
-			tests/$${testdir}/UP000* tests/$${testdir}/topgo \
-	    tests/$${testdir}/pathview_in tests/$${testdir}/eupathdb \
-			tests/$${testdir}/BSgenome* tests/$${testdir}/testing_write_expt ;\
-	  rm -f tests/$${testdir}/*.pdf tests/$${testdir}/*.png tests/$${testdir}/*.xlsx tests/$${testdir}/*.rda \
-	    tests/$${testdir}/*.gff tests/$${testdir}/*.gb tests/$${testdir}/*.map tests/$${testdir}/*.xml \
-	    tests/$${testdir}/*.Rdata tests/$${testdir}/*.json tests/$${testdir}/*.tab tests/$${testdir}/*kgml* ;\
-	done
+	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata
+	rm -rf tests/testthat/circos tests/testthat/EuPathDB tests/testthat/excel tests/testthat/excel_test \
+		tests/testthat/preprocessing tests/testthat/test_gprofiler \
+		tests/testthat/saved_plots tests/testthat/excel_test_sig \
+		tests/testthat/kegg_pathways tests/testthat/pathview \
+		tests/testthat/UP000* tests/testthat/topgo \
+		tests/testthat/pathview_in tests/testthat/eupathdb \
+		tests/testthat/BSgenome* tests/testthat/testing_write_expt \
+		tests/testthat/a909_sig	tests/testthat/a909_tables \
+		tests/testthat/mtb_rmats tests/testthat/mtb_suppa \
+		tests/testthat/.Rhistory
+	rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
+		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
+		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml*
 
 clean_vignette:
-	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata
+	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
+
+covr: install
+	@echo "Invoking covr::codecov()"
+	R -e "x <- covr::package_coverage('.'); covr::report(x, file='hpgltools-report.html')"
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
@@ -49,16 +54,17 @@ deps:
 
 document: roxygen vignette reference
 
-install:
+install: roxygen
 	@echo "Performing R CMD INSTALL hpgltools."
-	R CMD INSTALL .
+	R CMD INSTALL --install-tests .
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"
 
 prereq:
 	@echo "Checking a few prerequisites."
-	R -e "bioc_prereq <- c('BiocManager', 'devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
+	R -e "install.packages('BiocManager', repo='http://cran.rstudio.com/')"
+	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
 for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { BiocManager::install(req) } } \
 ## hahaha looks like lisp!"
 
@@ -85,9 +91,7 @@ d = description\$$new(); suggests = d\$$get('Suggests');\
  suggests = strsplit(x=suggests, split=',');\
  for (pkg in suggests[[1]]) { if (! pkg %in% installed.packages()) { biocLite(pkg); } else { message(paste0(pkg, ' is already installed.')) } };"
 
-test: roxygen
-	@echo "Installing hpgltools."
-	R CMD INSTALL .
+test: install
 	@echo "Running run_tests.R"
 	tests/testthat.R
 

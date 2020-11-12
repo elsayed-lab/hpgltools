@@ -40,8 +40,8 @@ Boxplot describing the requested column of data in the set of mzXML files.
 }
 \description{
 There are a few data within the mzXML raw data files which are likely
-  candidates for simple summary via a boxplot/densityplot/whatever.  For the
-  moment I am just doing boxplots of a few of them.  Since my metadata
-  extractor dumps a couple of tables, one must choose a desired table and
-  column from it to plot.
+candidates for simple summary via a boxplot/densityplot/whatever.  For the
+moment I am just doing boxplots of a few of them.  Since my metadata
+extractor dumps a couple of tables, one must choose a desired table and
+column from it to plot.
 }

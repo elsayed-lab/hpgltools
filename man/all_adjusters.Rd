@@ -11,8 +11,12 @@ all_adjusters(
   batch1 = "batch",
   batch2 = NULL,
   surrogates = "be",
+  low_to_zero = FALSE,
+  cpus = 4,
+  na_to_zero = TRUE,
   expt_state = NULL,
   confounders = NULL,
+  chosen_surrogates = NULL,
   ...
 )
 }

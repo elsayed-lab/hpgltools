@@ -5,41 +5,20 @@
 \title{Take gostats data and print it on a tree as topGO does.}
 \usage{
 gostats_trees(
-  de_genes,
-  mf_over,
-  bp_over,
-  cc_over,
-  mf_under,
-  bp_under,
-  cc_under,
+  gostats_result,
   goid_map = "id2go.map",
   score_limit = 0.01,
-  go_db = NULL,
   overwrite = FALSE,
   selector = "topDiffGenes",
   pval_column = "adj.P.Val"
 )
 }
 \arguments{
-\item{de_genes}{Some differentially expressed genes.}
-
-\item{mf_over}{Mfover data.}
-
-\item{bp_over}{Bpover data.}
-
-\item{cc_over}{Ccover data.}
-
-\item{mf_under}{Mfunder data.}
-
-\item{bp_under}{Bpunder data.}
-
-\item{cc_under}{Ccunder expression data.}
+\item{gostats_result}{Return from simple_gostats().}
 
 \item{goid_map}{Mapping of IDs to GO in the Ramigo expected format.}
 
 \item{score_limit}{Maximum score to include as 'significant'.}
-
-\item{go_db}{Dataframe of available goids (used to generate goid_map).}
 
 \item{overwrite}{Overwrite the goid_map?}
 

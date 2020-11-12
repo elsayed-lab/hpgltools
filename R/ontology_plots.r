@@ -586,7 +586,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width=30,
 goseq_trees <- function(goseq, goid_map="id2go.map",
                         score_limit=0.01, overwrite=FALSE,
                         selector="topDiffGenes", pval_column="adj.P.Val") {
-  go_db <- goseq[["godf"]]
+  go_db <- goseq[["go_db"]]
   mapping <- make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
@@ -620,8 +620,8 @@ goseq_trees <- function(goseq, goid_map="id2go.map",
       geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO))
   }
 
-  enriched_ids <- goseq[["alldata"]][["category"]]
-  enriched_scores <- goseq[["alldata"]][["over_represented_pvalue"]]
+  enriched_ids <- goseq[["all_data"]][["category"]]
+  enriched_scores <- goseq[["all_data"]][["over_represented_pvalue"]]
   names(enriched_scores) <- enriched_ids
 
   ## Print the actual tree here for the molecular function data.
@@ -1044,29 +1044,23 @@ topgo_trees <- function(tg, score_limit=0.01, sigforall=TRUE,
 #' This shoehorns gostats data into a format acceptable by topgo and uses it to
 #' print pretty ontology trees showing the over represented ontologies.
 #'
-#' @param de_genes Some differentially expressed genes.
-#' @param mf_over Mfover data.
-#' @param bp_over Bpover data.
-#' @param cc_over Ccover data.
-#' @param mf_under Mfunder data.
-#' @param bp_under Bpunder data.
-#' @param cc_under Ccunder expression data.
+#' @param gostats_result Return from simple_gostats().
 #' @param goid_map Mapping of IDs to GO in the Ramigo expected format.
 #' @param score_limit Maximum score to include as 'significant'.
-#' @param go_db Dataframe of available goids (used to generate goid_map).
 #' @param overwrite Overwrite the goid_map?
 #' @param selector Function to choose differentially expressed genes in the data.
 #' @param pval_column Column in the data to be used to extract pvalue scores.
 #' @return plots! Trees! oh my!
 #' @seealso \pkg{topGO} \pkg{gostats}
 #' @export
-gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_under,
-                          cc_under, goid_map="id2go.map", score_limit=0.01,
-                          go_db=NULL, overwrite=FALSE, selector="topDiffGenes",
+gostats_trees <- function(gostats_result, goid_map="id2go.map", score_limit=0.01,
+                          overwrite=FALSE, selector="topDiffGenes",
                           pval_column="adj.P.Val") {
-  make_id2gomap(goid_map=goid_map, go_db=go_db, overwrite=overwrite)
+  filename <- make_id2gomap(goid_map=goid_map, go_db=gostats_result[["go_db"]],
+                            overwrite=overwrite)
   geneID2GO <- topGO::readMappings(file=goid_map)
   annotated_genes <- names(geneID2GO)
+  de_genes <- gostats_result[["input"]]
   if (is.null(de_genes[["ID"]])) {
     de_genes[["ID"]] <- make.names(rownames(de_genes), unique=TRUE)
   }
@@ -1092,40 +1086,27 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     cc_GOdata <- new("topGOdata", description="CC", ontology="CC", allGenes=pvals,
                      geneSel=get(selector), annot=topGO::annFUN.gene2GO, gene2GO=geneID2GO)
   }
+  mf_over <- gostats_result[["tables"]][["mf_over_all"]]
   mf_over_enriched_ids <- mf_over[["GOMFID"]]
+  bp_over <- gostats_result[["tables"]][["bp_over_all"]]
   bp_over_enriched_ids <- bp_over[["GOBPID"]]
+  cc_over <- gostats_result[["tables"]][["cc_over_all"]]
   cc_over_enriched_ids <- cc_over[["GOCCID"]]
-  mf_under_enriched_ids <- mf_under[["GOMFID"]]
-  bp_under_enriched_ids <- bp_under[["GOBPID"]]
-  cc_under_enriched_ids <- cc_under[["GOCCID"]]
   mf_over_enriched_scores <- mf_over[["Pvalue"]]
   names(mf_over_enriched_scores) <- mf_over_enriched_ids
   bp_over_enriched_scores <- bp_over[["Pvalue"]]
   names(bp_over_enriched_scores) <- bp_over_enriched_ids
   cc_over_enriched_scores <- cc_over[["Pvalue"]]
   names(cc_over_enriched_scores) <- cc_over_enriched_ids
-  mf_under_enriched_scores <- mf_under[["Pvalue"]]
-  names(mf_under_enriched_scores) <- mf_under_enriched_ids
-  bp_under_enriched_scores <- bp_under[["Pvalue"]]
-  names(bp_under_enriched_scores) <- bp_under_enriched_ids
-  cc_under_enriched_scores <- cc_under[["Pvalue"]]
-  names(cc_under_enriched_scores) <- cc_under_enriched_ids
 
   mf_avail_nodes <- as.list(mf_GOdata@graph@nodes)
   names(mf_avail_nodes) <- mf_GOdata@graph@nodes
   kidx <- names(mf_over_enriched_scores) %in% names(mf_avail_nodes)
   mf_over_nodes <- mf_over_enriched_scores[kidx]
-  kidx <- names(mf_under_enriched_scores) %in% names(mf_avail_nodes)
-  mf_under_nodes <- mf_under_enriched_scores[kidx]
   mf_over_included <- length(which(mf_over_nodes <= score_limit))
-  mf_under_included <- length(which(mf_under_nodes <= score_limit))
   mf_over_tree_data <- try(suppressWarnings(
     topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo="all",
                           sigForAll=TRUE, firstSigNodes=mf_over_included,
-                          useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-  mf_under_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(mf_GOdata, mf_under_nodes, useInfo="all",
-                          sigForAll=TRUE, firstSigNodes=mf_under_included,
                           useFullNames=TRUE, plotFunction=hpgl_GOplot)))
   if (class(mf_over_tree_data) == "try-error") {
     message("There was an error generating the over MF tree.")
@@ -1133,28 +1114,15 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
   } else {
     mf_over_tree <- grDevices::recordPlot()
   }
-  if (class(mf_under_tree_data) == "try-error") {
-    message("There was an error generating the under MF tree.")
-    mf_under_tree <- NULL
-  } else {
-    mf_under_tree <- grDevices::recordPlot()
-  }
 
   bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
   names(bp_avail_nodes) <- bp_GOdata@graph@nodes
   kidx <- names(bp_over_enriched_scores) %in% names(bp_avail_nodes)
   bp_over_nodes <- bp_over_enriched_scores[kidx]
-  kidx <- names(bp_under_enriched_scores) %in% names(bp_avail_nodes)
-  bp_under_nodes <- bp_under_enriched_scores[kidx]
   bp_over_included <- length(which(bp_over_nodes <= score_limit))
-  bp_under_included <- length(which(bp_under_nodes <= score_limit))
   bp_over_tree_data <- try(suppressWarnings(
     topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo="all",
                           sigForAll=TRUE, firstSigNodes=bp_over_included,
-                          useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-  bp_under_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(bp_GOdata, bp_under_nodes, useInfo="all",
-                          sigForAll=TRUE, firstSigNodes=bp_under_included,
                           useFullNames=TRUE, plotFunction=hpgl_GOplot)))
   if (class(bp_over_tree_data) == "try-error") {
     message("There was an error generating the over BP tree.")
@@ -1162,40 +1130,21 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
   } else {
     bp_over_tree <- grDevices::recordPlot()
   }
-  if (class(bp_under_tree_data) == "try-error") {
-    message("There was an error generating the under BP tree.")
-    bp_under_tree <- NULL
-  } else {
-    bp_under_tree <- grDevices::recordPlot()
-  }
 
   cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
   names(cc_avail_nodes) <- cc_GOdata@graph@nodes
   kidx <- names(cc_over_enriched_scores) %in% names(cc_avail_nodes)
   cc_over_nodes <- cc_over_enriched_scores[kidx]
-  kidx <- names(cc_under_enriched_scores) %in% names(cc_avail_nodes)
-  cc_under_nodes <- cc_under_enriched_scores[kidx]
   cc_over_included <- length(which(cc_over_nodes <= score_limit))
-  cc_under_included <- length(which(cc_under_nodes <= score_limit))
   cc_over_tree_data <- try(suppressWarnings(
     topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo="all",
                           sigForAll=TRUE, firstSigNodes=cc_over_included,
-                          useFullNames=TRUE, plotFunction=hpgl_GOplot)))
-  cc_under_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(cc_GOdata, cc_under_nodes, useInfo="all",
-                          sigForAll=TRUE, firstSigNodes=cc_under_included,
                           useFullNames=TRUE, plotFunction=hpgl_GOplot)))
   if (class(cc_over_tree_data) == "try-error") {
     message("There was an error generating the over CC tree.")
     cc_over_tree <- NULL
   } else {
     cc_over_tree <- grDevices::recordPlot()
-  }
-  if (class(cc_under_tree_data) == "try-error") {
-    message("There was an error generating the under CC tree.")
-    cc_under_tree <- NULL
-  } else {
-    cc_under_tree <- grDevices::recordPlot()
   }
 
   trees <- list(
@@ -1204,13 +1153,8 @@ gostats_trees <- function(de_genes, mf_over, bp_over, cc_over, mf_under, bp_unde
     "CC_over" = cc_over_tree,
     "MF_overdata" = mf_over_tree_data,
     "BP_overdata" = bp_over_tree_data,
-    "CC_overdata" = cc_over_tree_data,
-    "MF_under" = mf_under_tree,
-    "BP_under" = bp_under_tree,
-    "CC_under" = cc_under_tree,
-    "MF_underdata" = mf_under_tree_data,
-    "BP_underdata" = bp_under_tree_data,
-    "CC_underdata" = cc_under_tree_data)
+    "CC_overdata" = cc_over_tree_data
+    )
   return(trees)
 }
 

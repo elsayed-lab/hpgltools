@@ -11,9 +11,10 @@ simple_varpart(
   chosen_factor = "batch",
   do_fit = FALSE,
   cor_gene = 1,
-  cpus = 6,
+  cpus = NULL,
   genes = 40,
   parallel = TRUE,
+  mixed = FALSE,
   modify_expt = TRUE
 )
 }
@@ -37,18 +38,16 @@ to the first gene.}
 
 \item{genes}{Number of genes to count.}
 
-\item{parallel}{use doParallel?}
+\item{parallel}{Use doParallel?}
 
 \item{modify_expt}{Add annotation columns with the variance/factor?}
 }
 \value{
-partitions  List of plots and variance data frames
+List of plots and variance data frames
 }
 \description{
-variancePartition is the newest toy introduced by Hector.
-}
-\details{
-Tested in 19varpart.R.
+The arguments and usage of variancePartition are a bit opaque.  This function
+attempts to fill in reasonable values and simplify its invocation.
 }
 \seealso{
 \pkg{doParallel} \pkg{variancePartition}

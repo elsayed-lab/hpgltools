@@ -4,7 +4,7 @@
 \alias{choose_dataset}
 \title{Choose a suitable data set for Edger/DESeq}
 \usage{
-choose_dataset(input, choose_for = "limma", force = FALSE, ...)
+choose_dataset(input, choose_for = "limma", force = FALSE, verbose = TRUE, ...)
 }
 \arguments{
 \item{input}{Expt input.}
@@ -27,7 +27,7 @@ This tries to make that consistent.
 Invoked by _pairwise().
 }
 \examples{
- \dontrun{
+\dontrun{
  starting_data <- create_expt(metadata)
  modified_data <- normalize_expt(starting_data, transform="log2", norm="quant")
  a_dataset <- choose_dataset(modified_data, choose_for="deseq")

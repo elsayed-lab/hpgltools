@@ -13,7 +13,8 @@ gbk_annotations(gbr)
 Granges data
 }
 \description{
-Maybe this should get pulled into the previous function?
+This function no longer really stands on its own, but is more accessible
+from load_genbank_annotations().
 }
 \details{
 Tested in test_40ann_biomartgenbank.R
@@ -25,11 +26,6 @@ for printing out a gff or whatever.
 I should revisit this function and improve the generated ranges objects to
 have better metadata columns via the mcols() function.  For examples of some
 useful tasks one can do here, check out snp.r.
-}
-\examples{
-\dontrun{
- annotations <- gbk_annotations("saureus_txdb")
-}
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}

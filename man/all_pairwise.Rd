@@ -26,6 +26,7 @@ all_pairwise(
   do_limma = TRUE,
   convert = "cpm",
   norm = "quant",
+  verbose = TRUE,
   ...
 )
 }
@@ -54,7 +55,7 @@ invoking all_pairwise().}
 comparisons.  This can be pretty neat, lets say one has conditions
 A,B,C,D,E and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 with a string like:
-  "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".}
+ "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A, de_vs_cb = (E-D)-(C-B)".}
 
 \item{alt_model}{Alternate model to use rather than just condition/batch.}
 
@@ -100,11 +101,11 @@ basic_pairwise() each in turn. It collects the results and does some simple
 comparisons among them.
 }
 \examples{
- \dontrun{
-  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
-  summary(lotsodata)
-  ## limma, edger, deseq, basic results; plots; and summaries.
- }
+\dontrun{
+ lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+ summary(lotsodata)
+ ## limma, edger, deseq, basic results; plots; and summaries.
+}
 }
 \seealso{
 \pkg{limma} \pkg{DESeq2} \pkg{edgeR}

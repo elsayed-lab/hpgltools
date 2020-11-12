@@ -28,9 +28,8 @@ annoying to download. This function makes that rather easier, or so I hope at
 least.
 }
 \examples{
-\dontrun{
- annotations <- get_microbesonline_annotations(species="coli")
-}
+ pa14_microbesonline_annot <- load_microbesonline_annotations(species="PA14")
+ colnames(pa14_microbesonline_annot)
 }
 \seealso{
 \pkg{rvest}

@@ -148,18 +148,18 @@ plot_heatmap <- function(expt_data, expt_colors=NULL, expt_design=NULL,
   }
 
   if (isTRUE(remove_equal)) {
-    cv_min <- 1
-    if (!is.null(arglist[["cv_min"]])) {
-      cv_min <- arglist[["cv_min"]]
-    }
-    cv_max <- Inf
-    if (!is.null(arglist[["cv_max"]])) {
-      cv_min <- arglist[["cv_max"]]
-    }
-    test <- genefilter::cv(cv_min, cv_max)
-    filter_list <- genefilter::filterfun(test)
-    answer <- genefilter::genefilter(expt_data, filter_list)
-    expt_data <- expt_data[answer, ]
+      cv_min <- 1
+      if (!is.null(arglist[["cv_min"]])) {
+          cv_min <- arglist[["cv_min"]]
+      }
+      cv_max <- Inf
+      if (!is.null(arglist[["cv_max"]])) {
+          cv_min <- arglist[["cv_max"]]
+      }
+      test <- genefilter::cv(cv_min, cv_max)
+      filter_list <- genefilter::filterfun(test)
+      answer <- genefilter::genefilter(expt_data, filter_list)
+      expt_data <- expt_data[answer, ]
   }
 
   heatmap_data <- NULL
@@ -378,6 +378,76 @@ plot_sample_heatmap <- function(data, colors=NULL, design=NULL,
             linewidth=0.5, main=title, Rowv=Rowv, Colv=Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   return(hpgl_heatmap_plot)
+}
+
+#' An experiment to see if I can visualize the genes with the highest variance.
+#'
+#' @param expt ExpressionSet
+#' @param fun mean or median
+#' @param fact Which factor to slice/dice the data?
+#' @param row_label Label the rows?
+#' @param title Title for the plot
+#' @param Rowv Row vs (yeah I forgot what this does.)
+#' @param Colv Col vs
+#' @param label_chars Maximum number of characters in the sample IDs.
+#' @param dendrogram Make a tree of the samples?
+#' @param min_delta Minimum delta value for filtering
+#' @param x_factor When plotting two factors against each other, which is x?
+#' @param y_factor When plotting two factors against each other, which is y?
+#' @param cv_min Minimum cv to examine (I think this should be slightly lower)
+#' @param cv_max Maximum cV to examine (I think this should be limited to ~ 0.7?)
+#' @param remove_equal Filter uninteresting genes.
+#' @export
+plot_sample_cvheatmap <- function(expt, fun="mean", fact="condition",
+                                  row_label=NA, title=NULL, Rowv=TRUE,
+                                  Colv=TRUE, label_chars=10, dendrogram="column",
+                                  min_delta=0.5, x_factor=1, y_factor=2, min_cvsd=NULL,
+                                  cv_min=1, cv_max=Inf, remove_equal=TRUE) {
+
+
+    ## I am certain there is a better way to do this, but I am tired and not thinking well.
+    colors <- c()
+    expt_colors <- expt[["colors"]]
+    fact_info <- pData(expt)[[fact]]
+    names(expt_colors) <- fact_info
+    for (i in 1:length(expt_colors)) {
+        name <- names(expt_colors)[i]
+        this_color <- as.character(expt_colors[i])
+        colors[name] <- this_color
+    }
+
+    if (isTRUE(remove_equal)) {
+        expt <- normalize_expt(expt, filter="cv", cv_min=1, cv_max=Inf)
+    }
+    cvs <- as.matrix(median_by_factor(expt, fun=fun, fact=fact)[["cvs"]])
+
+    if (!is.null(min_cvsd)) {
+        cv_sds <- matrixStats::rowSds(cvs)
+        if (is.numeric(min_cvsd)) {
+            keepers <- cv_sds >= min_cvsd
+        } else if (is.character(min_cvsd)) {
+            ## Min. 1st Qu. Median ...
+            min_cvsd <- summary(cv_sds)[[min_cvsd]]
+            keepers <- cv_sds >= min_cvsd
+        } else {
+            keepers <- cv_sds >= summary(cv_sds)[5]
+        }
+        cvs <- cvs[keepers, ]
+    }
+
+    heatmap_colors <- gplots::redgreen(75)
+    if (is.null(names)) {
+        names <- colnames(data)
+    }
+
+    heatmap.3(cvs, keysize=0.8, labRow=rownames(cvs), col=heatmap_colors, dendrogram=dendrogram,
+            margins=c(12, 8), trace="none", ColSideColors=colors,
+            linewidth=0.5, main=title, Rowv=Rowv, Colv=Colv)
+    cv_heatmap_plot <- grDevices::recordPlot()
+
+    point_df <- cvs[, c(x_factor, y_factor)]
+
+  return(cv_heatmap_plot)
 }
 
 #' a minor change to heatmap.2 makes heatmap.3

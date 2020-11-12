@@ -4,7 +4,7 @@
 #' whatever annotation data source is provided.
 #'
 #' @param annotation There are a few likely data sources when getting gene
-#'   sizes, choose one with this.
+#'  sizes, choose one with this.
 #' @param type What type of annotation data are we using?
 #' @param gene_type Annotation type to use (3rd column of a gff file).
 #' @param type_column Type identifier (10th column of a gff file).
@@ -15,17 +15,8 @@
 #' @seealso \pkg{rtracklayer}
 #'  \code{\link{load_gff_annotations}}
 #' @examples
-#' \dontrun{
-#'  tt = get_genesizes(gff="pa14.gff")
-#'  head(tt)
-#' ##           ID width
-#' ## 1   YAL069W   312
-#' ## 2   YAL069W   315
-#' ## 3   YAL069W     3
-#' ## 4 YAL068W-A   252
-#' ## 5 YAL068W-A   255
-#' ## 6 YAL068W-A     3
-#' }
+#'  pa_genesizes <- get_genesizes(gff=gff_file)
+#'  head(pa_genesizes)
 #' @export
 get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
                           type_column="type", key=NULL, length_names=NULL, ...) {
@@ -100,14 +91,12 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
 #' standard arguments and figure out where to gather data on its own.
 #'
 #' @param type Explicitly state the type of annotation data to load.  If not
-#'   provided, try to figure it out automagically.
+#'  provided, try to figure it out automagically.
 #' @param ... Arguments passed to the other load_*_annotations().
 #' @return Some annotations, hopefully.
 #' @examples
-#'  \dontrun{
-#'   stuff <- load_annotations(type="gff", gff="testing.gff")
-#'   ## This should give the same as load_gff_annotations("testing.gff")
-#' }
+#'  gff_annotations <- load_annotations(type="gff", gff=gff_file)
+#'  dim(gff_annotations)
 #' @export
 load_annotations <- function(type=NULL, ...) {
   annotations <- NULL

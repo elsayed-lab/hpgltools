@@ -221,13 +221,11 @@ plot_suppa <- function(dpsi, tpm, events=NULL, psi=NULL, sig_threshold=0.05,
 write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
                               by_annot="ensembl_gene_id",
                               columns="default", excel="excel/suppa_table.xlsx") {
-  default_columns <- c("ensembl_gene_id", "version", "hgnc_symbol", "description",
-                       "gene_biotype", "cds_length", "chromosome_name", "strand",
-                       "start_position", "end_position", "event", "dpsi", "pvalue", "adjp",
-                       "avglogtpm", "category", "coordinates", "alternative_transcripts",
-                       "total_transcripts", "denominator1", "denominator2", "denominator3",
-                       "numerator1", "numerator2", "numerator3", "numerator4", "numerator5",
-                       "numerator6")
+
+  default_columns <- c("event", "dpsi", "pvalue", "adjp", "avglogtpm", "category",
+                       "coordinates", "alternative_transcripts", "total_transcripts",
+                       "denominator1", "denominator2", "denominator3", "numerator1",
+                       "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
   full_table <- data.frame()
   if (is.null(annotations)) {
     full_table <- data.table::as.data.table(table)
@@ -238,11 +236,6 @@ write_suppa_table <- function(table, annotations=NULL, by_table="gene_name",
     full_table <- merge(annot, tab, by.x=by_annot, by.y=by_table, all.y=TRUE)
   }
 
-  chosen_columns <- default_columns
-  if (columns != "default") {
-    chosen_columns <- columns
-  }
-  full_table <- full_table[, chosen_columns, with=FALSE]
   xls_data <- as.data.frame(full_table)
   ## Now coerce numeric columns
   xlsx_result <- write_xlsx(data=xls_data, excel=excel)
@@ -365,12 +358,12 @@ plot_rmats <- function(se=NULL, a5ss=NULL, a3ss=NULL, mxe=NULL, ri=NULL,
   plotting_data <- all_data %>%
     tidyr::separate("level1", c("l1a", "l1b"), "\\,") %>%
     tidyr::separate("level2", c("l2a", "l2b"), "\\,")
-  plotting_data[["l1a"]] <- as.numeric(plotting_data[["l1a"]])
-  plotting_data[["l1b"]] <- as.numeric(plotting_data[["l1b"]])
-  plotting_data[["l2a"]] <- as.numeric(plotting_data[["l2a"]])
-  plotting_data[["l2b"]] <- as.numeric(plotting_data[["l2b"]])
+  plotting_data[["l1a"]] <- suppressWarnings(as.numeric(plotting_data[["l1a"]]))
+  plotting_data[["l1b"]] <- suppressWarnings(as.numeric(plotting_data[["l1b"]]))
+  plotting_data[["l2a"]] <- suppressWarnings(as.numeric(plotting_data[["l2a"]]))
+  plotting_data[["l2b"]] <- suppressWarnings(as.numeric(plotting_data[["l2b"]]))
   plotting_data[["id"]] <- rownames(plotting_data)
-  plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm=TRUE)), by=id]
+  suppressWarnings(plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm=TRUE)), by=id])
   plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm=TRUE)), by=id]
   plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm=TRUE)), by=id]
   plotting_data[["check"]] <- plotting_data[["l1mean"]] - plotting_data[["l2mean"]]

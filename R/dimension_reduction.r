@@ -587,6 +587,7 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
     label_list <- abbreviate(label_list, minlength=label_chars)
   }
 
+  ## This line should be redundant
   mtrx <- as.matrix(mtrx)
   ## How many components should be calculated when that is possible to define?
   if (is.null(num_pc)) {
@@ -1720,7 +1721,7 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
     plot_labels <- "repel"
   }
   if (isFALSE(plot_labels)) {
-    message("Not putting labels on the plot.")
+    message("Not putting labels on the PC plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
       ggplot2::geom_text(aes_string(x="PC1", y="PC2", label="labels",

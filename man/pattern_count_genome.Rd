@@ -38,9 +38,10 @@ This is once again a place where mcols() usage might improve the overall
 quality of life.
 }
 \examples{
-\dontrun{
- num_pattern <- pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
-}
+ fasta_file <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
+ gff_file <- system.file("paeruginosa_pa14.gff", package="hpgltools")
+ ta_count <- pattern_count_genome(fasta_file, gff_file)
+ head(ta_count)
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}

@@ -17,7 +17,6 @@ NULL or 1 or more taxon ids.
 This should simplify getting material from microbesonline.
 }
 \examples{
- \dontrun{
- coli_ids <- get_microbesonline_taxid("coli")
-}
+ coli_taxids <- get_microbesonline_taxid(species="coli S88")
+ head(coli_taxids)
 }

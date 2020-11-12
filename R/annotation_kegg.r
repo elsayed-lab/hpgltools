@@ -56,11 +56,10 @@ kegg_vector_to_df <- function(vector, final_colname="first", flatten=TRUE) {
 #' @param abbreviation If you already know the abbreviation, use it.
 #' @param flatten Flatten nested tables?
 #' @return dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
-#'   and KEGG paths.
+#'  and KEGG paths.
 #' @examples
-#'  \dontrun{
-#'   kegg_df <- load_kegg_annotations(species="cerevisiae")
-#' }
+#'  sc_kegg_annot <- load_kegg_annotations(species="cerevisiae")
+#'  head(sc_kegg_annot)
 #' @export
 load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRUE) {
   chosen <- NULL
@@ -138,11 +137,10 @@ load_kegg_annotations <- function(species="coli", abbreviation=NULL, flatten=TRU
 #' @seealso \pkg{KEGGREST}
 #'  \code{\link[KEGGREST]{keggGet}}
 #' @examples
-#' \dontrun{
 #'  kegg_df <- load_kegg_annotations(species="coli")
-#'  kegg_ids <- kegg_df[["kegg_geneid"]]
-#'  ensembl_list <- kegg_to_ensembl(kegg_ids)
-#' }
+#'  kegg_ids <- head(kegg_df[["kegg_geneid"]])
+#'  mapped <- map_kegg_dbs(kegg_ids)
+#'  mapped
 #' @export
 map_kegg_dbs <- function(kegg_ids) {
   ## query gene ids 10 at a time (max allowed)
@@ -151,7 +149,6 @@ map_kegg_dbs <- function(kegg_ids) {
   count <- 0
   for (x in split_kegg) {
     x <- as.character(unlist(x))
-    ## print(x)
     query <- KEGGREST::keggGet(x)
     for (d in 1:length(query)) {
       count <- count + 1

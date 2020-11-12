@@ -24,9 +24,8 @@ This extends the logic of the pattern searching in pattern_count_genome() to
 search on some other attributes.
 }
 \examples{
-\dontrun{
- num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
-}
+ pa_attribs <- sequence_attributes(fasta_file, gff=gff_file)
+ head(pa_attribs)
 }
 \seealso{
 \pkg{Biostrings} \pkg{Rsamtools}

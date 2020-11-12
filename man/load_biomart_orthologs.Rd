@@ -28,8 +28,8 @@ load_biomart_orthologs(
 }
 \value{
 list of 4 elements:  The first is the set of all ids, as getLDS seems
-  to always send them all; the second is the subset corresponding to the
-  actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
+ to always send them all; the second is the subset corresponding to the
+ actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
 }
 \description{
 Biomart's function getLDS is incredibly powerful, but it makes me think very
@@ -46,12 +46,9 @@ query.  I can say with confidence that it works well between mice and
 humans.
 }
 \examples{
-\dontrun{
- mouse_genes <- biomart_orthologs(some_ids)
- ## Hopefully the defaults are sufficient to translate from human to mouse.
- yeast_genes <- biomart_orthologs(some_ids, first_species='mmusculus',
-                                  second_species='scerevisiae')
-}
+ mouse_yeast_orthologs <- load_biomart_orthologs(gene_ids=NULL, first_species="mmusculus",
+                                                 second_species="scerevisiae")
+ head(mouse_yeast_orthologs$all_linked_genes)
 }
 \seealso{
 \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}

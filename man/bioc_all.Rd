@@ -5,7 +5,7 @@
 \title{Grab a copy of all bioconductor packages and install them by type}
 \usage{
 bioc_all(
-  release = "3.10",
+  release = NULL,
   mirror = "bioconductor.statistik.tu-dortmund.de",
   base = "packages",
   type = "software",

@@ -60,9 +60,8 @@ This defaults to a few fields which I have found most useful, but the brave
 or pathological can pass it 'all'.
 }
 \examples{
-\dontrun{
- one_gene <- load_orgdb_annotations(org, c("LmJF.01.0010"))
-}
+ hs_orgdb_annot <- load_orgdb_annotations()
+ summary(hs_orgdb_annot$genes)
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}

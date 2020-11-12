@@ -20,12 +20,9 @@
 #' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#' \dontrun{
-#'  library(BSgenome.Tcruzi.clbrener.all)
-#'  tc_clb_all <- BSgenome.Tcruzi.clbrener.all
-#'  cds_ranges <- gff2irange('reference/gff/tcruzi_clbrener.gff.xz', type='CDS')
-#'  cds_sequences <- Biostrings::getSeq(tc_clb_all, cds_ranges)
-#' }
+#'  gff_file <- system.file("gas.gff", package="hpgltools")
+#'  gas_iranges <- gff2irange(gff_file)
+#'  colnames(as.data.frame(gas_iranges))
 #' @export
 gff2irange <- function(gff, type=NULL) {
   ret <- NULL
@@ -72,9 +69,8 @@ gff2irange <- function(gff, type=NULL) {
 #' @seealso \pkg{rtracklayer} \pkg{GenomicRanges}
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#' \dontrun{
-#'  funkytown <- load_gff_annotations('reference/gff/saccharomyces_cerevsiae.gff.xz')
-#' }
+#'  gas_gff_annot <- load_gff_annotations(gff_file)
+#'  dim(gas_gff_annot)
 #' @export
 load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
                                  second_id_col="locus_tag", try=NULL, row.names=NULL) {
@@ -161,9 +157,9 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 #'
 #' @param fasta Genome sequence.
 #' @param gff Gff of annotation information from which to acquire CDS (if not
-#'   provided it will just query the entire genome).
+#'  provided it will just query the entire genome).
 #' @param pattern What to search for? This was used for tnseq and TA is the
-#'   mariner insertion point.
+#'  mariner insertion point.
 #' @param type Column to use in the gff file.
 #' @param key What type of entry of the gff file to key from?
 #' @return Data frame of gene names and number of times the pattern appears/gene.
@@ -171,9 +167,10 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 #'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 #'  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
 #' @examples
-#' \dontrun{
-#'  num_pattern <- pattern_count_genome('mgas_5005.fasta', 'mgas_5005.gff')
-#' }
+#'  fasta_file <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
+#'  gff_file <- system.file("paeruginosa_pa14.gff", package="hpgltools")
+#'  ta_count <- pattern_count_genome(fasta_file, gff_file)
+#'  head(ta_count)
 #' @export
 pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -216,16 +213,15 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #'
 #' @param fasta Genome encoded as a fasta file.
 #' @param gff Optional gff of annotations (if not provided it will just ask the
-#'   whole genome).
+#'  whole genome).
 #' @param type Column of the gff file to use.
 #' @param key What type of entry of the gff file to key from?
 #' @return List of data frames containing gc/at/gt/ac contents.
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools}
 #'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 #' @examples
-#' \dontrun{
-#'  num_pattern = sequence_attributes('mgas_5005.fasta', 'mgas_5005.gff')
-#' }
+#'  pa_attribs <- sequence_attributes(fasta_file, gff=gff_file)
+#'  head(pa_attribs)
 #' @export
 sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
@@ -278,7 +274,7 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
 #'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
-#'  summed <- sum_exons(counts, gff='reference/xenopus_laevis.gff.xz')
+#'  summed <- sum_exon_widths(counts, gff="reference/xenopus_laevis.gff.xz")
 #' }
 #' @author Keith Hughitt with some modifications by atb.
 #' @export

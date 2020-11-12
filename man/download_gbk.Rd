@@ -24,9 +24,8 @@ In this function I stole the same functionality from the ape package and set
 a few defaults so that it hopefully fails less often.
 }
 \examples{
-\dontrun{
- gbk_file <- download_gbk(accessions="AE009949")
-}
+ written <- download_gbk(accessions="AE009949")
+ written$written_file
 }
 \seealso{
 \pkg{ape}

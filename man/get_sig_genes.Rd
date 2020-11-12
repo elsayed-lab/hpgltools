@@ -48,8 +48,8 @@ are provided, it arbitrarily chooses all genes outside of 1-z.
 Tested in test_29de_shared.R
 }
 \examples{
- \dontrun{
-  sig_table <- get_sig_genes(table, lfc=1)
+\dontrun{
+ sig_table <- get_sig_genes(table, lfc=1)
 }
 }
 \seealso{

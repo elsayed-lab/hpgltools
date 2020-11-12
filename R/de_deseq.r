@@ -15,7 +15,6 @@ deseq_pairwise <- function(...) {
 #'
 #' Invoking DESeq2 is confusing, this should help.
 #'
-#' Tested in test_24de_deseq.R
 #' Like the other _pairwise() functions, this attempts to perform all pairwise
 #' contrasts in the provided data set.  The details are of course slightly
 #' different when using DESeq2.  Thus, this uses the function
@@ -41,7 +40,7 @@ deseq_pairwise <- function(...) {
 #' @param annot_df Include some annotation information in the results?
 #' @param force Force deseq to accept data which likely violates its assumptions.
 #' @param deseq_method The DESeq2 manual shows a few ways to invoke it, I make
-#'   2 of them available here.
+#'  2 of them available here.
 #' @param ... Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()
@@ -81,6 +80,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
   ## batch_levels <- levels(as.factor(batches))
+
   ## Make a model matrix which will have one entry for
   ## each of the condition/batches
   summarized <- NULL
@@ -106,7 +106,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   model_string <- model_choice[["chosen_string"]]
   ## This is redundant with the definition of design above.
   column_data <- pData(input)
-  if (class(model_choice[["model_batch"]]) == "matrix") {
+  if (class(model_choice[["model_batch"]])[1] == "matrix") {
     ## The SV matrix from sva/ruv/etc are put into the model batch slot of the return from choose_model.
     ## Use them here if appropriate
     model_batch <- model_choice[["model_batch"]]
@@ -120,7 +120,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     ## summarized <- DESeqDataSetFromMatrix(countData=data, colData=pData(input$expressionset),
     ##                                     design=~ 0 + condition + batch)
     ## conditions and batch in this context is information taken from pData()
-    ##model_string <- "~ batch + condition"
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
@@ -129,7 +128,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (isTRUE(model_batch)) {
     message("DESeq2 step 1/5: Including only batch in the deseq model.")
-    ##model_string <- "~ batch "
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
     summarized <- import_deseq(data, column_data,
@@ -137,8 +135,6 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   } else if (class(model_batch)[1] == "matrix") {
     message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
-    ##model_string <- "~ condition"
-    ##cond_model_string <- "~ condition"
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     for (i in 1:length(ncol(data))) {
@@ -151,26 +147,27 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
   } else {
     message("DESeq2 step 1/5: Including only condition in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
-    ##model_string <- "~ condition"
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     summarized <- import_deseq(data, column_data,
                                model_string, tximport=input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se=summarized, design=as.formula(model_string))
   }
 
+  normalized_counts <- NULL ## When performing the 'long' analysis, I pull
+  ## out the normalized counts so that we can compare against other analyses (e.g. with Julieth)
   deseq_run <- NULL
   chosen_beta <- model_intercept
   if (deseq_method == "short") {
     message("DESeq steps 2-4 in one shot.")
     deseq_run <- try(DESeq2::DESeq(dataset, fitType=fittype,
                                    betaPrior=chosen_beta), silent=TRUE)
-    if (class(deseq_run) == "try-error") {
+    if (class(deseq_run)[1] == "try-error") {
       message("A fitType of 'parametric' failed for this data, trying 'mean'.")
       deseq_run <- try(DESeq2::DESeq(dataset, fitType="mean"), silent=TRUE)
-      if (class(deseq_run) == "try-error") {
+      if (class(deseq_run)[1] == "try-error") {
         message("Both 'parametric' and 'mean' failed.  Trying 'local'.")
         deseq_run <- try(DESeq2::DESeq(dataset, fitType="local"), silent=TRUE)
-        if (class(deseq_run) == "try-error") {
+        if (class(deseq_run)[1] == "try-error") {
           warning("All fitting types failed.  This will end badly.")
         } else {
           message("Using a local fit seems to have worked.")
@@ -186,14 +183,14 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
     message("DESeq2 step 3/5: Estimate dispersions.")
     deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType=fittype), silent=TRUE)
-    if (class(deseq_disp) == "try-error") {
+    if (class(deseq_disp)[1] == "try-error") {
       message("Trying a mean fitting.")
       deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType="mean"), silent=TRUE)
-      if (class(deseq_disp) == "try-error") {
+      if (class(deseq_disp)[1] == "try-error") {
         warning("Both 'parametric' and 'mean' failed.  Trying 'local'.")
         deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf,
                                                       fitType="local"), silent=TRUE)
-        if (class(deseq_disp) == "try-error") {
+        if (class(deseq_disp)[1] == "try-error") {
           warning("All fitting types failed.  This will end badly.")
         } else {
           message("Using a local fit seems to have worked.")
@@ -207,10 +204,10 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     message("DESeq2 step 4/5: nbinomWaldTest.")
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=chosen_beta, quiet=TRUE)
   }
-
+  normalized_counts <- DESeq2::counts(deseq_disp)
   dispersions <- sm(try(DESeq2::plotDispEsts(deseq_run), silent=TRUE))
   dispersion_plot <- NULL
-  if (class(dispersions)[[1]] != "try-error") {
+  if (class(dispersions)[1] != "try-error") {
     dispersion_plot <- grDevices::recordPlot()
   }
 
@@ -240,25 +237,37 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
                                  do_identities=FALSE,
                                  ...)
   contrast_order <- apc[["names"]]
+  contrast_strings <- apc[["all_pairwise"]]
+  ## These two character lists are relevant because of the possibility that I
+  ## will ask for a series of extra contrasts; in addition, I use them to ask
+  ## for specific tables.
   contrasts <- c()
-  total_contrasts <- length(condition_levels)
-  total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  contrasts_full <- c()
+  ##total_contrasts <- length(condition_levels)
+  ##total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
+  total_contrasts <- length(contrast_order)
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style=3)
   }
-  for (c in 1:length(contrast_order)) {
-    contrast_string <- contrast_order[[c]]
+  for (i in 1:length(contrast_order)) {
+    contrast_name <- contrast_order[[i]]
+    contrast_string <- contrast_strings[[i]]
     if (isTRUE(show_progress)) {
-      pct_done <- c / length(contrast_order)
+      pct_done <- i / length(contrast_order)
       utils::setTxtProgressBar(bar, pct_done)
     }
-    num_den_string <- strsplit(x=contrast_string, split="_vs_")[[1]]
+    num_den_string <- strsplit(x=contrast_name, split="_vs_")[[1]]
+    if (length(num_den_string) == 0) {
+      warning("This contrast does not appear to have a _vs_ in it, it cannot be used.")
+    }
     num_name <- num_den_string[1]
     den_name <- num_den_string[2]
     denominators[[contrast_string]] <- den_name
     numerators[[contrast_string]] <- num_name
-    contrasts <- append(contrast_string, contrasts)
+    contrasts <- append(contrast_name, contrasts)
+    ## I am pretty sure this is not needed, but I will hold on to it for the moment.
+    contrasts_full <- append(contrast_string, contrasts_full)
     if (! glue("condition{num_name}") %in% DESeq2::resultsNames(deseq_run)) {
       message("The contrast ", num_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")
@@ -283,7 +292,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     if (!is.null(annot_df)) {
       result <- merge(result, annot_df, by.x="row.names", by.y="row.names")
     }
-    result_list[[contrast_string]] <- result
+    result_list[[contrast_name]] <- result
   }
   if (isTRUE(show_progress)) {
     close(bar)
@@ -379,6 +388,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "coefficients" = coefficient_df,
     "conditions" = conditions,
     "conditions_table" = conditions_table,
+    "contrasts_full" = contrasts_full,
     "contrasts_performed" = contrasts,
     "denominators" = denominators,
     "dispersion_plot" = dispersion_plot,
@@ -386,7 +396,9 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
     "method" = "deseq",
     "model" = model_data,
     "model_string" = model_string,
+    "normalized_counts" = normalized_counts,
     "numerators" = numerators,
+    "deseq_dataset" = dataset,
     "run" = deseq_run
   )
   class(retlist) <- c("deseq_result", "list")
@@ -407,7 +419,7 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
 #' @param summarized Existing DESeq metadata to append svs.
 #' @param svs Surrogates from sva and friends to test out.
 #' @param num_sv Optionally, provide the number of SVs, primarily used if
-#'   recursing in the hunt for a valid number of surrogates.
+#'  recursing in the hunt for a valid number of surrogates.
 #' @return DESeqDataSet with at least some of the SVs appended to the model.
 deseq_try_sv <- function(data, summarized, svs, num_sv=NULL) {
   counts <- DESeq2::counts(data)

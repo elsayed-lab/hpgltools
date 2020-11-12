@@ -35,17 +35,14 @@ are extremely fast and flexible, thus by changing the keytype argument, one
 may use a lot of different ID types and still score some useful ontology data.
 }
 \examples{
-\dontrun{
- library(Mus.musculus)
- org <- "Mus.musculus"
- go_terms <- load_orgdb_go(org)
-}
+ drosophila_orgdb_go <- load_orgdb_go(orgdb="org.Dm.eg.db")
+ head(drosophila_orgdb_go)
 }
 \seealso{
 \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
- \code{\link[AnnotationDbi]{select}} \code{\link[dplyr]{tbl_df}}
+ \code{\link[AnnotationDbi]{select}}
 }
 \author{
 I think Keith provided the initial implementation of this, but atb
-  messed with it pretty extensively.
+ messed with it pretty extensively.
 }

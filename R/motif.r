@@ -9,7 +9,8 @@
 #' @return A list containing slots for plots, the stdout output from gadem, the
 #'   gadem result, set of occurences of motif, and the returned set of motifs.
 #' @export
-simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
+simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19",
+                         p=0.1, e=0.0, ...) {
   arglist <- list(...)
   ext <- tools::file_ext(inputfile)
   sequences <- NULL
@@ -26,30 +27,34 @@ simple_gadem <- function(inputfile, genome="BSgenome.Hsapiens.UCSC.hs19", ...) {
     stop("Unable to interpret files of type: ", ext)
   }
 
-  gadem_and_prints <- sm(rGADEM::GADEM(sequences, verbose=1,
-                                       pValue=0.05, eValue=10, genome=genome))
-  gadem_result <- gadem_and_prints[["result"]]
-  gadem_occurences <- rGADEM::nOccurrences(gadem_result)
-  gadem_consensus <- rGADEM::consensus(gadem_occurences)
-  gadem_motifs <- rGADEM::getPWM(gadem_consensus)
+  gadem_out <- rGADEM::GADEM(sequences, verbose=1,
+                             pValue=p, eValue=e, genome=genome)
+  gadem_occurences <- rGADEM::nOccurrences(gadem_out)
+  gadem_consensus <- rGADEM::consensus(gadem_out)
+  gadem_motifs <- rGADEM::getPWM(gadem_out)
   plots <- list()
-  count <- 1
-  for (motif_name in names(gadem_motifs)) {
-    motif_matrix <- gadem_motifs[[motif_name]]
-    pwm <- seqLogo::makePWM(matrix)
-    ## Stolen from seqLogo with a minor change for RNA
-    seqLogo::seqLogo(pwm, ...)
-    plot <- recordPlot()
-    count <- count + 1
-    plots[[count]] <- plot
+  pvals <- list()
+  motif_names <- names(gadem_motifs)
+  for (m in 1:length(gadem_motifs)) {
+    name <- motif_names[m]
+    motif_matrix <- gadem_motifs[[name]]
+    pwm <- seqLogo::makePWM(as.matrix(motif_matrix))
+    plotted <- try(seqLogo::seqLogo(pwm))
+    if (class(plotted)[1] != "try-error") {
+      plot <- recordPlot()
+    } else {
+      plot <- NULL
+    }
+    plots[[name]] <- plot
+    pvals[[name]] <- gadem_out[[m]]@alignList[[1]]@pval
   }
   retlist <- list(
     "plots" = plots,
-    "log" = gadem_and_prints[["output"]],
-    "result" = gadem_result,
+    "result" = gadem_out,
     "occurences" = gadem_occurences,
     "consensus" = gadem_consensus,
-    "motifs" = gadem_motifs)
+    "motifs" = gadem_motifs,
+    "pvals" = pvals)
   return(retlist)
 }
 

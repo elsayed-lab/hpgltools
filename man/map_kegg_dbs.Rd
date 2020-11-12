@@ -17,11 +17,10 @@ Takes a list of KEGG gene identifiers and returns a list of ENSEMBL
 ids corresponding to those genes.
 }
 \examples{
-\dontrun{
  kegg_df <- load_kegg_annotations(species="coli")
- kegg_ids <- kegg_df[["kegg_geneid"]]
- ensembl_list <- kegg_to_ensembl(kegg_ids)
-}
+ kegg_ids <- head(kegg_df[["kegg_geneid"]])
+ mapped <- map_kegg_dbs(kegg_ids)
+ mapped
 }
 \seealso{
 \pkg{KEGGREST}
