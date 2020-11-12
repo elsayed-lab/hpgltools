@@ -13,6 +13,7 @@ extract_significant_genes(
   sig_bar = TRUE,
   z = NULL,
   n = NULL,
+  top_percent = NULL,
   ma = TRUE,
   p_type = "adj",
   invert_barplots = FALSE,
@@ -36,6 +37,8 @@ the deseq, edger, limma, basic, meta, or all.}
 \item{z}{Z-score to define 'significant'.}
 
 \item{n}{Take the top/bottom-n genes.}
+
+\item{top_percent}{Use a percentage to get the top-n genes.}
 
 \item{ma}{Add ma plots to the sheets of 'up' genes?}
 
