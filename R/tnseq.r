@@ -274,9 +274,11 @@ score_mhess <- function(expt, ess_column="essm1") {
 #' @param ylimit Maximum y axis
 #' @param column Data file column to use for density calculation.
 #' @param adjust Density adjustment.
+#' @param ggstatsplot Include pretty ggstatsplot plot?
 #' @return a plot and table of the saturation for all samples.
 #' @export
-tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads", adjust=1) {
+tnseq_multi_saturation <- function(meta, meta_column, ylimit=100,
+                                   column="Reads", adjust=1, ggstatsplot=FALSE) {
   table <- NULL
   filenames <- meta[[meta_column]]
   for (f in 1:length(filenames)) {
@@ -302,10 +304,13 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit=100, column="Reads"
     ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
 
-  ggstats <- ggstatsplot::ggbetweenstats(data=melted, x=sample, y=log2,
-                                         notch=TRUE, mean.ci=TRUE, k=3, outlier.tagging=FALSE,
-                                         ggtheme=ggthemes::theme_fivethirtyeight(),
-                                         messages=TRUE)
+  ggstats <- NULL
+  if (isTRUE(ggstatsplot)) {
+    ggstats <- ggstatsplot::ggbetweenstats(data=melted, x=sample, y=log2,
+                                           notch=TRUE, mean.ci=TRUE, k=3, outlier.tagging=FALSE,
+                                           ggtheme=ggthemes::theme_fivethirtyeight(),
+                                           messages=TRUE)
+  }
 
   retlist <- list(
     "table" = table,

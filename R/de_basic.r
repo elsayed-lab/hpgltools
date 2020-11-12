@@ -267,6 +267,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
   batches <- input[["batches"]]
   data <- as.data.frame(exprs(input))
   tran_state <- input[["state"]][["transform"]]
+  libsize <- NULL
   if (is.null(tran_state)) {
     tran_state <- "raw"
   }
@@ -308,8 +309,10 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
     ready <- sm(normalize_expt(ready, transform="log2"))
   }
   data <- as.data.frame(exprs(ready))
+  libsize <- colSums(data)
   rm(ready)
   retlist <- list(
+    "libsize" = libsize,
     "conditions" = conditions,
     "batches" = batches,
     "data" = data)

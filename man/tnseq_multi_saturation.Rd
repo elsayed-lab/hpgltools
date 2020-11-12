@@ -9,7 +9,8 @@ tnseq_multi_saturation(
   meta_column,
   ylimit = 100,
   column = "Reads",
-  adjust = 1
+  adjust = 1,
+  ggstatsplot = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ tnseq_multi_saturation(
 \item{column}{Data file column to use for density calculation.}
 
 \item{adjust}{Density adjustment.}
+
+\item{ggstatsplot}{Include pretty ggstatsplot plot?}
 }
 \value{
 a plot and table of the saturation for all samples.

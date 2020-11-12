@@ -24,8 +24,8 @@ table <- combined[["data"]][["data"]]
 ## Gather the pombe annotation data.
 ## tmp <- library(AnnotationHub)
 ## ah <- AnnotationHub()
-##  orgdbs <- AnnotationHub::query(ah, "OrgDb")
-## sc_orgdb <- query(ah, c("OrgDB", "Saccharomyces"))
+## orgdbs <- AnnotationHub::query(ah, "OrgDb")
+## sc_orgdb <- query(ah, c("OrgDB", "pombe"))
 ## AH67545 | org.Sc.sgd.db.sqlite3
 ## sc_orgdb
 ## pombe <- sc_orgdb[[1]]
@@ -39,9 +39,11 @@ pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 
 ## Since annotationhub seems to be having difficulty, I will use the eupathdb package
 ## that Keith wrote and I picked up.
+## Sadly, the Eupathdb has changed their interface and I haven't finished making it work.
+devtools::install_github("abelew/EuPathDB", force=TRUE)
 fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice="fungidb")
 pombe_entry <- EuPathDB::get_eupath_entry(species="pombe", metadata=fungidb_metadata)
-pombe_org <- sm(EuPathDB::make_eupath_orgdb(entry=pombe_entry))
+pombe_org <- EuPathDB::make_eupath_orgdb(entry=pombe_entry, overwrite=TRUE)
 pkgnames <- EuPathDB::get_eupath_pkgnames(pombe_entry)
 pombe_orgdb <- pkgnames[["orgdb"]]
 

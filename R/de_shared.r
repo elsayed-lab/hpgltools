@@ -422,6 +422,7 @@ choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
   ## the log2 from transformed data.
   data <- NULL
   warn_user <- 0
+  libsize <- NULL
   if ("expt" %in% input_class) {
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]
@@ -451,6 +452,7 @@ choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
     if (norm_state == "round") {
       norm_state <- "raw"
     }
+    libsize <- input[["libsize"]]
 
     if (isTRUE(force)) {
       ## Setting force to TRUE allows one to round the data to fool edger/deseq
@@ -493,8 +495,11 @@ choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
     ## End testing if normalization has been performed
   } else {
     data <- as.data.frame(input)
+    libsize <- colSums(data)
   }
+
   retlist <- list(
+    "libsize" = libsize,
     "conditions" = conditions,
     "batches" = batches,
     "data" = data)
@@ -544,10 +549,6 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, verbose=TRUE,
       message("Unknown tool for which to choose a data set.")
     }
   }
-  result <- list(
-    "conditions" = input[["design"]][["condition"]],
-    "batches" = input[["design"]][["batch"]],
-    "data" = as.data.frame(exprs(input)))
   return(result)
 }
 
@@ -588,6 +589,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose
   if ("expt" %in% input_class) {
     conditions <- input[["conditions"]]
     batches <- input[["batches"]]
+    libsize <- input[["libsize"]]
     data <- as.data.frame(exprs(input))
 
     tran_state <- input[["state"]][["transform"]]
@@ -637,6 +639,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose
     }
   } else {
     data <- as.data.frame(input)
+    libsize <- colSums(data)
   }
   retlist <- list(
     "libsize" = libsize,

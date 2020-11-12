@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("065de_all.R:
-  123456789012345678901234567890123456789012345678901234567890123\n")
+  12345678901234567890123456789012345678901234567890123456789012345\n")
 ## 2017-12, exported functions in de_basic:
 ## basic_pairwise(), write_basic()
 ## 2017-12, exported functions in de_deseq:
@@ -213,7 +213,23 @@ test_that("choose_model provides expected models?", {
 })
 
 ## choose_dataset()
-testing <- choose_dataset(pombe_subset)
+testing <- choose_dataset(pombe_subset, choose_for="limma")
+expected <- c("libsize", "conditions", "batches", "data")
+actual <- names(testing)
+## 23
+test_that("choose_dataset provides some expected output?", {
+  expect_equal(expected, actual)
+})
+
+testing <- choose_dataset(pombe_subset, choose_for="deseq")
+expected <- c("libsize", "conditions", "batches", "data")
+actual <- names(testing)
+## 23
+test_that("choose_dataset provides some expected output?", {
+  expect_equal(expected, actual)
+})
+
+testing <- choose_dataset(pombe_subset, choose_for="edger")
 expected <- c("libsize", "conditions", "batches", "data")
 actual <- names(testing)
 ## 23

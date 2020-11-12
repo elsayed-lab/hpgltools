@@ -8,8 +8,10 @@ context("135model_varpartition.R:
 
 pombe_expt <- make_pombe_expt(annotation=FALSE)
 
-pombe_varpart <- sm(simple_varpart(expt=pombe_expt))
-expected <- "(1 | condition) + (1 | batch)"
+pombe_varpart <- simple_varpart(expt=pombe_expt)
+## I decided to move away from the mixed models.
+##expected <- "(1 | condition) + (1 | batch)"
+expected <- "condition + batch"
 actual <- as.character(pombe_varpart[["model_used"]])[2]
 ## 01
 test_that("Do we get the assumed model?", {

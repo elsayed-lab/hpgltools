@@ -1491,6 +1491,7 @@ extract_siggenes <- function(...) {
 #' @param sig_bar Add bar plots describing various cutoffs of 'significant'?
 #' @param z Z-score to define 'significant'.
 #' @param n Take the top/bottom-n genes.
+#' @param top_percent Use a percentage to get the top-n genes.
 #' @param ma Add ma plots to the sheets of 'up' genes?
 #' @param p_type use an adjusted p-value?
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
@@ -1501,7 +1502,7 @@ extract_siggenes <- function(...) {
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
-                                      p=0.05, sig_bar=TRUE, z=NULL, n=NULL,
+                                      p=0.05, sig_bar=TRUE, z=NULL, n=NULL, top_percent=NULL,
                                       ma=TRUE, p_type="adj", invert_barplots=FALSE,
                                       excel="excel/significant_genes.xlsx",
                                       siglfc_cutoffs=c(0, 1, 2), ...) {
@@ -1547,6 +1548,11 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     table_names <- "all"
     num_tables <- 1
     table_mappings <- table_names
+  }
+
+  if (!is.null(top_percent)) {
+    n <- floor(nrow(all_tables[[1]]) * (top_percent / 100))
+    message("Setting n to ", n)
   }
 
   logfc_suffix <- "_logfc"
