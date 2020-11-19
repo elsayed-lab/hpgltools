@@ -1,22 +1,3 @@
-#' I want to use R6 classes for my expressionSet superclass.
-#'
-#' When I was first learning R, S4's opacity offended me.  To a much smaller
-#' degree it still does.  I wanted to use expressionSets and add some
-#' information to them without having to deal with S4.  Now I understand R and
-#' S4 quite a bit more, but would still prefer to use something else; in this
-#' case I wish to reimplement my superclass as a S6 class because I like the
-#' idea of encapsulating all the data in an environment and being able to
-#' call/modify stuff by reference rather than R's default copy on write.  I wish
-#' to do this because I am thinking it will be useful to include more stuff in
-#' them, for example: the results of differential expression analyses, the
-#' definition(s) of 'significant'.  Doing these using CoW I think will be
-#' unwieldy.
-#'
-#' Most importantly, my normalize_expt() function is a pile of dogcrap and I
-#' want to reimplement it in a more sane fashion.
-#' @import R6
-NULL
-
 #' Pipe operator
 #'
 #' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32

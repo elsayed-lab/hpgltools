@@ -273,9 +273,11 @@ deseq2_pairwise <- function(input=NULL, conditions=NULL,
       message("If this is not an extra contrast, then this is an error.")
       next
     }
-    result <- as.data.frame(DESeq2::results(deseq_run,
+    result <- as.data.frame(DESeq2::results(object=deseq_run,
                                             contrast=c("condition", num_name, den_name),
                                             format="DataFrame"))
+    ##result <- DESeq2::results(object=deseq_run,
+    ##                          contrast=c("condition", num_name, den_name))
     result <- result[order(result[["log2FoldChange"]]), ]
     colnames(result) <- c("baseMean", "logFC", "lfcSE", "stat", "P.Value", "adj.P.Val")
     ## From here on everything is the same.

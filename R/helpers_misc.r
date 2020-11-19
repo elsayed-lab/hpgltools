@@ -543,12 +543,11 @@ please_install <- function(lib, update=FALSE) {
   }
   if (!isTRUE(lib %in% .packages(all.available=TRUE))) {
     if (is.null(github_path)) {
-      ##source("http://bioconductor.org/biocLite.R")
-      ##biocLite(character(), ask=FALSE) # update dependencies, if any.
-      eval(parse(text=paste("BiocManager::install('", lib, "')", sep="")))
+      ##eval(parse(text=paste("BiocManager::install('", lib, "', update=FALSE)", sep="")))
+      installed <- BiocManager::install(lib, update=FALSE)
       count <- 1
     } else {
-      ret <- try(devtools::install_github(github_path))
+      ret <- try(devtools::install_github(github_path, upgrade="never"))
       if (class(ret) != "try-error") {
         count <- 1
       }

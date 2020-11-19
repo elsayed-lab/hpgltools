@@ -1504,7 +1504,7 @@ extract_siggenes <- function(...) {
 extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
                                       p=0.05, sig_bar=TRUE, z=NULL, n=NULL, top_percent=NULL,
                                       ma=TRUE, p_type="adj", invert_barplots=FALSE,
-                                      excel="excel/significant_genes.xlsx",
+                                      excel=NULL,
                                       siglfc_cutoffs=c(0, 1, 2), ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
@@ -1633,8 +1633,16 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       plot_name <- gsub(pattern="-inverted", replacement="", x=plot_name)
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
+        ma_lfc <- lfc
+        ma_p <- p
+        if (is.null(ma_lfc)) {
+          ma_lfc <- 1
+        }
+        if (is.null(ma_p)) {
+          ma_p <- 0.05
+        }
         single_ma <- try(extract_de_plots(
-          combined[["input"]], type=according, table=plot_name, lfc=lfc, p=p), silent=TRUE)
+          combined[["input"]], type=according, table=plot_name, lfc=ma_lfc, p=ma_p), silent=TRUE)
         if ("try-error" %in% single_ma) {
           ma_plots[[table_name]] <- NULL
         } else {

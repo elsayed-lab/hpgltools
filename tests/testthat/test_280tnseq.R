@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("280tnseq.R:
-")
+  1234567890123456\n")
 
 ## I am going to just copy some of my tasks from here:
 ## https://github.com/abelew/sagalacticae_2019
@@ -88,7 +88,6 @@ test_that("plot_essentiality returns expected outputs?", {
 plt <- sm(tnseq_multi_saturation(meta=pData(a909_expt), meta_column="a909esswig"))
 test_that("tnseq_multi_saturation returns some fun?", {
   expect_equal("gg", class(plt[["plot"]])[1])
-  expect_equal("gg", class(plt[["ggstats"]])[1])
 })
 
 ## Perform my 'fitness' analysis; which is just a normal differential expression analysis

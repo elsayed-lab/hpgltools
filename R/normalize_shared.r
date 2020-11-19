@@ -63,10 +63,10 @@ default_norm <- function(expt, ...) {
 #' @param cv_max Also used by genefilter's cv().
 #' @param na_to_zero Sometimes rpkm gives some NA values for very low numbers.
 #' @param verbose Print what is happening while the normalization is performed?
-#'   I am not sure why, but I think they should be 0.
+#'  I am not sure why, but I think they should be 0.
 #' @param ... more options
 #' @return Expt object with normalized data and the original data saved as
-#'   'original_expressionset'
+#'  'original_expressionset'
 #' @seealso \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
 #' @examples
 #' \dontrun{

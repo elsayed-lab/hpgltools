@@ -20,7 +20,7 @@ pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor=NULL,
                                      factors=c("condition", "batch")))
 
 ## Grab the model and see if it survived.
-expected <- "(1 | condition) + (1 | batch)"
+expected <- "condition + batch"
 actual <- as.character(pasilla_varpart[["model_used"]])[[2]]
 test_that("Does my varpart function return a sane model?", {
   expect_equal(expected, actual)

@@ -37,14 +37,11 @@ colnames(pombe_lengths) <- c("ID", "length")
 
 pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 
-## Since annotationhub seems to be having difficulty, I will use the eupathdb package
-## that Keith wrote and I picked up.
-## Sadly, the Eupathdb has changed their interface and I haven't finished making it work.
 devtools::install_github("abelew/EuPathDB", force=TRUE)
 fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice="fungidb")
 pombe_entry <- EuPathDB::get_eupath_entry(species="pombe", metadata=fungidb_metadata)
 pombe_org <- EuPathDB::make_eupath_orgdb(entry=pombe_entry, overwrite=TRUE)
-pkgnames <- EuPathDB::get_eupath_pkgnames(pombe_entry)
+pkgnames <- EuPathDB::get_eupath_pkgnames(entry=pombe_entry)
 pombe_orgdb <- pkgnames[["orgdb"]]
 
 ## Note that I default to using entrez IDs, but the eupathdb does not, so change the orgdb_to argument.
