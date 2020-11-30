@@ -53,10 +53,14 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   table[["Start"]] <- as.numeric(table[["Start"]])
   max_reads <- max(table[[column]], na.rm=TRUE)
   table[["l2"]] <- log2(table[[column]] + 1)
+  table[["sample"]] <- "sample"
   density_plot <- ggplot2::ggplot(data=table, mapping=aes_string(x="l2")) +
     ggplot2::geom_density(y="..count..", position="identity", adjust=adjust) +
     ggplot2::scale_y_continuous(limits=c(0, 0.25)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+
+  violin_plot <- ggplot(data=table, mapping=aes_string(x="sample", y="l2")) +
+    ggplot2::geom_violin()
 
   data_list <- as.numeric(table[, column])
   max_reads <- max(data_list, na.rm=TRUE)
@@ -303,6 +307,9 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit=100,
                           adjust=adjust, alpha=0.3) +
     ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
     ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+
+  violin <- ggplot(data=melted, mapping=aes_string(x="sample", y="log2")) +
+    ggplot2::geom_violin()
 
   ggstats <- NULL
   if (isTRUE(ggstatsplot)) {

@@ -51,7 +51,7 @@ rmd_file <- "a-01_bacterial_example.Rmd"
 
 # Loading (meta)data and annotations
 
-The following examples will use a real data set from a recent
+The following examples will use a real data set from an
 experiment in our lab.  The raw data was processed using a mix of
 trimmomatic, biopieces, bowtie, samtools, and htseq.  The final count
 tables were deposited into the 'preprocessing/count_tables/' tree.

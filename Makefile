@@ -26,7 +26,7 @@ clean:
 			vignettes/*.R vignettes/*.html vignettes/*.gb vignettes/*.gz vignettes/*.Rdata \
 			vignettes/*.xlsx vignettes/*.tex vignettes/*.log vignettes/*.aux vignettes/*.map \
 			vignettes/*.rda
-	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata
+	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata R/*.gb R/*.tab
 	rm -rf tests/testthat/circos tests/testthat/EuPathDB tests/testthat/excel tests/testthat/excel_test \
 		tests/testthat/preprocessing tests/testthat/test_gprofiler \
 		tests/testthat/saved_plots tests/testthat/excel_test_sig \
@@ -39,7 +39,8 @@ clean:
 		tests/testthat/.Rhistory
 	rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
 		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
-		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml*
+		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml* \
+		tests/testthat/*.csv
 
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
