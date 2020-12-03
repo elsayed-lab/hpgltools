@@ -5,7 +5,7 @@
 #' filter suggested by Hector.
 #'
 #' @param count_table Some counts to filter.
-#' @param filter Filtering method to apply (cbcb, pofa, kofa, cv right now).
+#' @param method Filtering method to apply (cbcb, pofa, kofa, cv right now).
 #' @param p Used by genefilter's pofa().
 #' @param A Also for pofa().
 #' @param k Used by genefilter's kofa().
@@ -21,20 +21,20 @@
 #'  new <- filter_counts(old)
 #' }
 #' @export
-filter_counts <- function(count_table, filter="cbcb", p=0.01, A=1, k=1,
+filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
                           cv_min=0.01, cv_max=1000, thresh=1, min_samples=2, ...) {
   arglist <- list(...)
-  if (tolower(filter) == "povera") {
+  if (tolower(method) == "povera") {
     type <- "pofa"
-  } else if (tolower(filter) == "kovera") {
+  } else if (tolower(method) == "kovera") {
     type <- "kofa"
   }
-  if (isTRUE(filter)) {
+  if (isTRUE(method)) {
     filter <- "cbcb"
   }
   filtered_counts <- NULL
   switchret <- switch(
-    filter,
+    method,
     "cbcb" = {
       filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
                                             min_samples=min_samples)

@@ -9,7 +9,7 @@
 #' example -- if one wanted to do such a thing.
 #'
 #' @param data Matrix of count data.
-#' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
+#' @param method Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into
 #'   arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
 #'   match, and annotation type).
@@ -18,10 +18,10 @@
 #'  \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
-#'  converted_table = convert_counts(count_table, convert='cbcbcpm')
+#'  converted_table = convert_counts(count_table, method='cbcbcpm')
 #' }
 #' @export
-convert_counts <- function(data, convert="raw", ...) {
+convert_counts <- function(data, method="raw", ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   annotations <- arglist[["annotations"]]
@@ -38,7 +38,7 @@ convert_counts <- function(data, convert="raw", ...) {
   }
 
   switchret <- switch(
-    convert,
+    method,
     "nacpm" = {
       zero_idx <- count_table == 0
       message("Converting ", sum(zero_idx), " zeros to NA.")
@@ -79,7 +79,7 @@ convert_counts <- function(data, convert="raw", ...) {
       ## count_table <- divide_seq(counts, annotations=annotations, genome=genome)
     },
     {
-      message("Not sure what to do with the method: ", convert)
+      message("Not sure what to do with the method: ", method, ".")
     }
   ) ## End of the switch
 

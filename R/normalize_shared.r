@@ -477,7 +477,7 @@ hpgl_norm <- function(data, ...) {
     }
     message("Step 1: performing count filter with option: ", filter)
     ## All the other intermediates have a libsize slot, perhaps this should too
-    filtered_counts <- filter_counts(count_table, ...)
+    filtered_counts <- filter_counts(count_table, method=filter, ...)
     ## filtered_counts <- filter_counts(count_table, filter)
     count_table <- filtered_counts[["count_table"]]
     filter_performed <- filter
@@ -485,7 +485,8 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 2) {
-    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
+    count_table <- do_batch(count_table, method=batch,
+                            expt_design=expt_design, current_state=current_state, ...)
   }
   ## Step 2: Normalization
   ## This section handles the various normalization strategies
@@ -498,12 +499,12 @@ hpgl_norm <- function(data, ...) {
   if (norm == "raw") {
     message("Step 2: not normalizing the data.")
   } else {
-    message("Step 2: normalizing the data with ", arglist[["norm"]], ".")
+    message("Step 2: normalizing the data with ", norm, ".")
     if (is.null(expt_design)) {
       message("The experimental design is null.  Some normalizations will fail.")
       message("If you get an error about 'no dimensions', that is likely why.")
     }
-    normalized_counts <- normalize_counts(data=count_table, ...)
+    normalized_counts <- normalize_counts(data=count_table, method=norm, ...)
     ## normalized_counts <- normalize_counts(data=count_table, design=design, norm=norm)
     count_table <- normalized_counts[["count_table"]]
     norm_performed <- norm
@@ -515,7 +516,8 @@ hpgl_norm <- function(data, ...) {
   ## cpm and rpkm are both from edgeR
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
-    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
+    count_table <- do_batch(count_table, method=batch,
+                            expt_design=expt_design, current_state=current_state, ...)
   }
   converted_counts <- NULL
   convert <- "raw"
@@ -525,8 +527,8 @@ hpgl_norm <- function(data, ...) {
   if (convert == "raw") {
     message("Step 3: not converting the data.")
   } else {
-    message("Step 3: converting the data with ", arglist[["convert"]], ".")
-    converted_counts <- convert_counts(count_table, ...)
+    message("Step 3: converting the data with ", convert, ".")
+    converted_counts <- convert_counts(count_table, method=convert, ...)
     ## converted_counts <- convert_counts(count_table, convert=convert)
     count_table <- converted_counts[["count_table"]]
     convert_performed <- convert
@@ -536,7 +538,8 @@ hpgl_norm <- function(data, ...) {
   ## Step 4: Transformation
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
-    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state, ...)
+    count_table <- do_batch(count_table, method=batch,
+                            expt_design=expt_design, current_state=current_state, ...)
   }
   transformed_counts <- NULL
   transform <- "raw"
@@ -546,8 +549,8 @@ hpgl_norm <- function(data, ...) {
   if (transform == "raw") {
     message("Step 4: not transforming the data.")
   } else {
-    message("Step 4: transforming the data with ", arglist[["transform"]], ".")
-    transformed_counts <- transform_counts(count_table, ...)
+    message("Step 4: transforming the data with ", transform, ".")
+    transformed_counts <- transform_counts(count_table, method=transform, ...)
     ## transformed_counts <- transform_counts(count_table, transform=transform)
     count_table <- transformed_counts[["count_table"]]
     if (transform == "round") {
@@ -561,7 +564,8 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 5) {
-    count_table <- do_batch(count_table, expt_design=expt_design, current_state=current_state,
+    count_table <- do_batch(count_table, method=batch,
+                            expt_design=expt_design, current_state=current_state,
                             ...)
     ## count_table <- do_batch(count_table, arglist)
   }
@@ -596,6 +600,44 @@ hpgl_norm <- function(data, ...) {
     "libsize" = colSums(count_table, na.rm=TRUE)  ## The final libsizes
   )
   return(ret_list)
+}
+
+normalize <- function(expt, todo=list()) {
+  ## This expects a list like:
+  ## list("norm" = "quant", "filter" = c(pofa, "A" = 1))
+  possible_types <- list(
+    "transform" = "transform_counts",
+    "norm" = "normalize_counts",
+    "convert" = "convert_counts",
+    "filter" = "filter_counts",
+    "batch" = "batch_counts",
+    "impute" = "impute_counts")
+  annot <- fData(expt)
+  counts <- exprs(expt)
+  design <- pData(expt)
+  count_table <- list(count_table=counts, libsize=expt[["libsize"]])
+  for (i in 1:length(todo)) {
+    type <- names(todo)[i]
+    operation <- todo[i]
+    method <- operation[1]
+    args <- c()
+    if (length(operation) > 1) {
+       args <- operation[2:length(operation)]
+    }
+    if (! type %in% names(possible_types)) {
+      stop("This type of todo is not known: ", type, ".")
+    }
+    call <- possible_methods[type]
+    arglist <- list(
+      "count_table" = count_table,
+      "design" = design,
+      "method" = method)
+    for (a in args) {
+      name <- names(args)[a]
+      arglist[[a]] <- as.character(args[[a]])
+    }
+    count_table <- do.call(what=call, args=arglist)
+  }
 }
 
 ## EOF

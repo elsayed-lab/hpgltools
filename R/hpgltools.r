@@ -90,7 +90,7 @@ table_style <- "TableStyleMedium9"
 #' @param pkg on the left hand side
 #' @param fun on the right hand side
 `%:::%` <- function(pkg, fun) {
-  get(fun, envir = asNamespace(pkg), inherits = FALSE)
+  get(fun, envir=asNamespace(pkg), inherits=FALSE)
 }
 
 getMaintainer <- "GenomicFeatures" %:::% ".getMaintainer"

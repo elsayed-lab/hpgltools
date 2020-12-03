@@ -17,7 +17,7 @@
 #'  norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
 #' }
 #' @export
-normalize_counts <- function(data, design=NULL, norm="raw", ...) {
+normalize_counts <- function(data, design=NULL, method="raw", ...) {
   arglist <- list(...)
   ## Note that checkUsage flagged my 'libsize = ' calls
   ## I set norm_libsize at the bottom of the function
@@ -44,7 +44,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
   }
 
   switchret <- switch(
-    norm,
+    method,
     "qshrink" = {
       count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
                                   plot=TRUE)

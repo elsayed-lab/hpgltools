@@ -623,7 +623,7 @@ all_adjusters <- function(input, design=NULL, estimate_type="sva", batch1="batch
 #'  sva_batch <- batch_counts(table, design, batch='sva')
 #' }
 #' @export
-batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", current_state=NULL,
+batch_counts <- function(count_table, method=TRUE, design=NULL, batch1="batch", current_state=NULL,
                          current_design=NULL, expt_state=NULL, surrogate_method=NULL,
                          num_surrogates=NULL, low_to_zero=FALSE, cpus=4, batch2=NULL,
                          noscale=TRUE, ...) {
@@ -681,8 +681,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", curren
   batches <- droplevels(as.factor(design[[batch1]]))
   conditions <- droplevels(as.factor(design[["condition"]]))
 
-  if (isTRUE(batch)) {
-    batch <- "limma"
+  if (isTRUE(method)) {
+    method <- "limma"
   }
 
   count_df <- data.frame(count_table)
@@ -690,8 +690,8 @@ batch_counts <- function(count_table, design, batch=TRUE, batch1="batch", curren
   conditional_model <- model.matrix(~conditions, data=count_df)
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
-  message("Passing the data to all_adjusters using the ", batch, " estimate type.")
-  new_material <- all_adjusters(count_table, design=design, estimate_type=batch, cpus=cpus,
+  message("Passing the data to all_adjusters using the ", method, " estimate type.")
+  new_material <- all_adjusters(count_table, design=design, estimate_type=method, cpus=cpus,
                                 batch1=batch1, batch2=batch2, expt_state=used_state,
                                 noscale=noscale, chosen_surrogates=chosen_surrogates,
                                 low_to_zero=low_to_zero,
