@@ -6,7 +6,7 @@
 \usage{
 filter_counts(
   count_table,
-  filter = "cbcb",
+  method = "cbcb",
   p = 0.01,
   A = 1,
   k = 1,
@@ -20,7 +20,7 @@ filter_counts(
 \arguments{
 \item{count_table}{Some counts to filter.}
 
-\item{filter}{Filtering method to apply (cbcb, pofa, kofa, cv right now).}
+\item{method}{Filtering method to apply (cbcb, pofa, kofa, cv right now).}
 
 \item{p}{Used by genefilter's pofa().}
 

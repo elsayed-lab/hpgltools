@@ -4,12 +4,12 @@
 \alias{convert_counts}
 \title{Perform a cpm/rpkm/whatever transformation of a count table.}
 \usage{
-convert_counts(data, convert = "raw", ...)
+convert_counts(data, method = "raw", ...)
 }
 \arguments{
 \item{data}{Matrix of count data.}
 
-\item{convert}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
+\item{method}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
 
 \item{...}{Options I might pass from other functions are dropped into
 arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
@@ -29,7 +29,7 @@ example -- if one wanted to do such a thing.
 }
 \examples{
 \dontrun{
- converted_table = convert_counts(count_table, convert='cbcbcpm')
+ converted_table = convert_counts(count_table, method='cbcbcpm')
 }
 }
 \seealso{

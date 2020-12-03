@@ -8,8 +8,7 @@ context("301load_data.R: Does pasilla load into hpgltools?\n")
 ## Try loading some annotation information for this species.
 
 ## This now generates an error on travis, but not on my computer.
-gene_info <- sm(load_biomart_annotations(
-    species="dmelanogaster", overwrite=TRUE))[["annotation"]]
+gene_info <- sm(load_biomart_annotations(species="dmelanogaster", overwrite=TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique=TRUE)

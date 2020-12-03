@@ -344,6 +344,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' }
 hpgl_norm <- function(data, ...) {
   arglist <- list(...)
+  batch <- arglist[["batch"]]
   filter_performed <- "raw"
   norm_performed <- "raw"
   convert_performed <- "raw"
@@ -433,18 +434,20 @@ hpgl_norm <- function(data, ...) {
     batch_step <- 5
   }
 
-  do_batch <- function(count_table, expt_design=expt_design, current_state=current_state, ...) {
-    batch <- "raw"
-    if (!is.null(arglist[["batch"]])) {
-      batch <- arglist[["batch"]]
-    }
+  do_batch <- function(count_table, method="raw", expt_design=expt_design,
+                       current_state=current_state, ...) {
+    ##batch <- method
+    ##if (!is.null(arglist[["batch"]])) {
+    ##  batch <- arglist[["batch"]]
+    ##}
+    message("The method is: ", method, ".")
 
-    if (batch == "raw") {
+    if (method == "raw") {
       message("Step ", arglist[["batch_step"]], ": not doing batch correction.")
     } else {
       message("Step ", arglist[["batch_step"]], ": doing batch correction with ",
               arglist[["batch"]], ".")
-      tmp_counts <- try(batch_counts(count_table, expt_design=expt_design,
+      tmp_counts <- try(batch_counts(count_table, method=method, expt_design=expt_design,
                                      current_state=current_state, ...))
       if (class(tmp_counts) == "try-error") {
         warning("The batch_counts call failed.  Returning non-batch reduced data.")
@@ -460,7 +463,7 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 1) {
-    count_table <- do_batch(count_table, current_design=expt_design, ...)
+    count_table <- do_batch(count_table, method=batch, current_design=expt_design, ...)
   }
 
   ## Step 1: count filtering
