@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("351gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?\n")
+context("351gsea_siggenes.R: Do we get consistent sets of 'significant' genes for GSEA analyses?
+  1234567890\n")
 
 limma <- new.env()
 load("320_de_limma.rda", envir=limma)

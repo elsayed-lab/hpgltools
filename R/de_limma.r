@@ -461,12 +461,16 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
                          counts=data, design=chosen_model, lib.size=libsize,
                          normalize.method=voom_norm, span=0.5, plot=TRUE, save.plot=TRUE)
     voom_plot <- grDevices::recordPlot()
-  } else if (which_voom == "none") {
+  } else if (which_voom == "cpm") {
     ## Reyy reminded me today that one does not necessarily need voom, but
     ## logcpm might be sufficient when the data distributions are nice and
     ## consistent.
     message("Limma step 2/6: using edgeR::cpm(), switch with the argument 'which_voom'.")
     fun_voom <- edgeR::cpm(data, log=TRUE, prior.count=3)
+  } else if (which_voom == "none") {
+    ## Then this is microarray-ish data.
+    message("Assuming this data is similar to a micro array and not performign voom.")
+    fun_voom <- data
   } else {
     message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
     message("Using normalize.method=", voom_norm, " for voom.")
@@ -478,14 +482,12 @@ limma_pairwise <- function(input=NULL, conditions=NULL,
     voom_plot <- grDevices::recordPlot()
   }
   one_replicate <- FALSE
+  fun_design <- pData(input)
   if (is.null(fun_voom)) {
     ## Apparently voom returns null where there is only 1 replicate.
     message("voom returned null, I am not sure what will happen.")
     one_replicate <- TRUE
     fun_voom <- data
-    fun_design <- NULL
-  } else {
-    fun_design <- fun_voom[["design"]]
   }
 
   ## Do the lmFit() using this model

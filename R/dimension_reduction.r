@@ -883,13 +883,6 @@ plot_pca <- function(data, design=NULL, plot_colors=NULL, plot_title=NULL,
   if (isTRUE(plot_title)) {
     plot_title <- what_happened(expt=data)
   }
-  ## I think this is now redundant, removing it to see.
-  ## else if (!is.null(plot_title)) {
-  ##data_title <- what_happened(expt=data)
-  ##  plot_title <- glue::glue("{plot_title}; {data_title}")
-  ##} else {
-  ##  ## Leave the title blank.
-  ##}
 
   ## Perform a check of the PC table.
   if (sum(is.na(comp_data)) > 0) {
@@ -1650,9 +1643,12 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                      fill="condition"))
     if (isTRUE(outlines)) {
       pca_plot <- pca_plot +
-        ggplot2::geom_point(size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
-                            aes_string(shape="batches",
-                                       fill="condition"))
+        ggplot2::geom_point(alpha=plot_alpha, colour="black", show.legend=FALSE,
+                            aes_string(size="size", shape="batches", fill="condition"))
+
+      ##size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
+      ##aes_string(shape="batches",
+      ##fill="condition"))
     }
     pca_plot <- pca_plot +
       ggplot2::geom_point(colour="black", alpha=plot_alpha, show.legend=FALSE,

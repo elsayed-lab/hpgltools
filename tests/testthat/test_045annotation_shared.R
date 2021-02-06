@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("045annotation_shared.R:
-  12345\n")
+  12\n")
 ## 2017-12, exported functions in annotation_shared:
 ## get_gene_size() load_annotations()
 

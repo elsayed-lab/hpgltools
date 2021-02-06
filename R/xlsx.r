@@ -1,3 +1,30 @@
+#' Initialize an xlsx file with a little bit of logic to make sure there are no
+#' annoying downstream errors.
+#'
+#' @param excel Excel file to create.
+#' @export
+init_xlsx <- function(excel="excel/something.xlsx") {
+  if (isFALSE(excel)) {
+    excel <- NULL
+  }
+  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+
+  if (is.null(excel)) {
+    return(NULL)
+  }
+
+  excel_dir <- dirname(as.character(excel))
+  if (!file.exists(excel_dir)) {
+    dir.create(excel_dir, recursive=TRUE)
+  }
+  if (file.exists(excel)) {
+    message("Deleting the file ", excel, " before writing the tables.")
+    file.remove(excel)
+  }
+  wb <- openxlsx::createWorkbook(creator="hpgltools")
+  return(wb)
+}
+
 #' Write a dataframe to an excel spreadsheet sheet.
 #'
 #' I like to give folks data in any format they prefer, even though I sort

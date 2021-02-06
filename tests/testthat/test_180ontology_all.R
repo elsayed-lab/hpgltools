@@ -37,11 +37,15 @@ colnames(pombe_lengths) <- c("ID", "length")
 
 pombe_go <- load_biomart_go(species="spombe", host="fungi.ensembl.org")[["go"]]
 
-devtools::install_github("abelew/EuPathDB", force=TRUE)
-fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice="fungidb")
+if (! "EupathDB" %in% installed.packages()) {
+  devtools::install_github("abelew/EuPathDB", force=TRUE)
+}
+fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice="fungidb", eu_version="46")
 pombe_entry <- EuPathDB::get_eupath_entry(species="pombe", metadata=fungidb_metadata)
-pombe_org <- EuPathDB::make_eupath_orgdb(entry=pombe_entry, overwrite=TRUE)
 pkgnames <- EuPathDB::get_eupath_pkgnames(entry=pombe_entry)
+if (! pkgnames$orgdb %in% installed.packages()) {
+  pombe_org <- EuPathDB::make_eupath_orgdb(entry=pombe_entry, overwrite=TRUE)
+}
 pombe_orgdb <- pkgnames[["orgdb"]]
 
 ## Note that I default to using entrez IDs, but the eupathdb does not, so change the orgdb_to argument.

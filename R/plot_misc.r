@@ -125,6 +125,7 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
+#' @export
 plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
                               revolutions=7, increments=6480) {
   points <- seq(0, revolutions * increments)
@@ -172,6 +173,7 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
+#' @export
 plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
                              revolutions=7, increments=6480) {
   points <- seq(0, revolutions * increments)

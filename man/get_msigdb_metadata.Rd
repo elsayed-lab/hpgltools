@@ -20,7 +20,7 @@ get_msigdb_metadata(
 }
 \value{
 list containing 2 data frames: all metadata from broad, and the set
-  matching the sig_data GeneSets.
+ matching the sig_data GeneSets.
 }
 \description{
 Create a metadata dataframe of msigdb data, this hopefully will be usable to

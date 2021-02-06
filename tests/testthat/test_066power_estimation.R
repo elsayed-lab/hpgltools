@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("066power_estimation.R:
-  123\n")
+  12\n")
 
 small_combined <- new.env()
 tt <- load(file="065_small_combined.rda", envir=small_combined)
@@ -19,3 +19,7 @@ actual <- class(test_proper[[1]][["powerfd_plot"]])
 test_that("Minimal check for proper plotting:", {
   expect_equal(expected, actual)
 })
+
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x=as.numeric(end) - as.numeric(start))
+message(paste0("\nFinished 066power_estimation.R in ", elapsed,  " seconds."))

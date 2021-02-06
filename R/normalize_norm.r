@@ -5,10 +5,10 @@
 #'
 #' @param data Matrix of count data.
 #' @param design Dataframe describing the experimental
-#'   design. (conditions/batches/etc)
+#'  design. (conditions/batches/etc)
 #' @param norm Normalization to perform:
-#'   'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
-#'   whether design is a required argument.
+#'  'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
+#'  whether design is a required argument.
 #' @param ... More arguments might be necessary.
 #' @return Dataframe of normalized(counts)
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
@@ -19,6 +19,9 @@
 #' @export
 normalize_counts <- function(data, design=NULL, method="raw", ...) {
   arglist <- list(...)
+  if (!is.null(arglist[["norm"]])) {
+    method <- arglist[["norm"]]
+  }
   ## Note that checkUsage flagged my 'libsize = ' calls
   ## I set norm_libsize at the bottom of the function
   ## but perhaps instead I should be using these libsizes?

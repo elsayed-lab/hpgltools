@@ -11,8 +11,8 @@
 #' @param data Matrix of count data.
 #' @param method Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into
-#'   arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
-#'   match, and annotation type).
+#'  arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
+#'  match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase}
 #'  \code{\link[edgeR]{cpm}}
@@ -23,6 +23,9 @@
 #' @export
 convert_counts <- function(data, method="raw", ...) {
   arglist <- list(...)
+  if (!is.null(arglist[["convert"]])) {
+    method <- arglist[["convert"]]
+  }
   data_class <- class(data)[1]
   annotations <- arglist[["annotations"]]
   if (data_class == "expt" | data_class == "ExpressionSet") {
@@ -307,13 +310,14 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 hpgl_rpkm <- function(count_table, ...) {
   arglist <- list(...)
   annotations <- arglist[["annotations"]]
+  chosen_column <- arglist[["column"]]
   ## holy crapola I wrote this when I had no clue what I was doing.
   if (class(count_table)[1] == "edgeR") {
     count_table <- count_table[["counts"]]
   }
-  count_table_in <- as.data.frame(
-    count_table[rownames(count_table) %in% rownames(annotations), ],
-    stringsAsFactors=FALSE)
+  found <- rownames(count_table) %in% rownames(annotations)
+  count_table_in <- as.data.frame(count_table[found, ],
+                                  stringsAsFactors=FALSE)
   if (dim(count_table_in)[1] == 0) {
     message("When the annotations and count_table were checked against each other
   the result was null.  Perhaps your annotation or count_table's rownames are not set?
@@ -342,7 +346,7 @@ hpgl_rpkm <- function(count_table, ...) {
   ## rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
-  if (is.null(arglist[["column"]]) &
+  if (is.null(chosen_column) &
       is.null(merged_annot[["length"]]) &
       is.null(merged_annot[["width"]])) {
     message("There appears to be no gene length annotation data, here are the possible columns:")
@@ -351,9 +355,8 @@ hpgl_rpkm <- function(count_table, ...) {
     stop("There appears to be no annotation data providing gene length.")
   }
 
-  chosen_column <- "width"
-  if (!is.null(arglist[["column"]])) {
-    chosen_column <- arglist[["column"]]
+  if (is.null(chosen_column)) {
+    chosen_column <- "width"
   }
 
   if (chosen_column == "width" && is.null(merged_annot[[chosen_column]])) {
@@ -375,9 +378,12 @@ hpgl_rpkm <- function(count_table, ...) {
 
   ## Keep in mind that I set missing material to 'undefined'
   ## So lets set those to NA now.
+  na_idx <- is.na(merged_annot[[chosen_column]])
+  merged_annot[na_idx, chosen_column] <- "undefined"
   undef_idx <- merged_annot[[chosen_column]] == "undefined"
   merged_annot[undef_idx, chosen_column] <- NA
   lenvec <- as.vector(as.numeric(merged_annot[[chosen_column]]))
+
   names(lenvec) <- rownames(merged_annot)
   tt <- sm(requireNamespace("edgeR"))
   rpkm_count_table <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)

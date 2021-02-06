@@ -13,15 +13,15 @@ sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
 
 table <- limma_result[["all_tables"]][[1]]
 sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
-dmel_annotations <- load_biomart_annotations(species="dmelanogaster")[["annotation"]]
+dmel_annotations <- load_biomart_annotations(species="dmelanogaster", overwrite=TRUE)[["annotation"]]
 dmel_go <- load_biomart_go(species="dmelanogaster")
 
 ## My recent changes inadvertently switched this from gene to transcript.
 ## This makes me think I should consider making that an option...
 chosen_genes <- c("FBtr0005088", "FBtr0006151", "FBtr0070001",
                   "FBtr0070002", "FBtr0070003", "FBtr0070006")
-##expected <- c(1776, 819, NA, 633, 1164, 1326)
-expected <- c(1773, 816, NA, 630, NA, 1323)
+expected <- c(1776, 819, NA, 633, 1164, 1326)
+##expected <- c(1773, 816, NA, 630, NA, NA)
 actual <- dmel_annotations[chosen_genes, "cds_length"]
 ## 01
 test_that("Did the gene lengths come out?", {

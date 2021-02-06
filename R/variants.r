@@ -29,6 +29,9 @@ count_expt_snps <- function(expt, type="counts", annot_column="bcftable", tolowe
     samples <- tolower(samples)
   }
   file_lst <- pData(expt)[[annot_column]]
+  if (is.null(file_lst)) {
+    stop("This requires a set of bcf filenames, the column: ", annot_column, " does not have any.")
+  }
   ## Create a data table of snp columns
   chosen_column <- snp_column
   if (is.null(chosen_column)) {
@@ -491,8 +494,8 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #' @param snp_result The result from get_snp_sets or count_expt_snps.
 #' @param chr_column Column in the annotation with the chromosome names.
 #' @return List containing the set of intersections in the conditions contained
-#'   in snp_result, the summary of numbers of variants per chromosome, and
-#'   summary of numbers per gene.
+#'  in snp_result, the summary of numbers of variants per chromosome, and
+#   summary of numbers per gene.
 #' @seealso \code{\link{snps_vs_genes}}
 #' @examples
 #'  \dontrun{
@@ -502,19 +505,33 @@ snp_by_chr <- function(medians, chr_name="01", limit=1) {
 #'  intersections <- snps_vs_intersections(expt, snp_result)
 #' }
 #' @export
-snps_intersections <- function(expt, snp_result, chr_column="seqnames") {
+snps_intersections <- function(expt, snp_result,
+                               start_column="start", end_column="end",
+                               chr_column="seqnames") {
   features <- fData(expt)
-  features[["start"]] <- sm(as.numeric(features[["start"]]))
+  if (is.null(features[[start_column]])) {
+    stop("The column containing the feature starts is missing.")
+  }
+  if (is.null(features[[end_column]])) {
+    stop("The column containing the feature ends is missing.")
+  }
+  if (is.null(features[[chr_column]])) {
+    stop("The column containing the feature chromosomes is missing.")
+  }
+
+  features[["start"]] <- sm(as.numeric(features[[start_column]]))
   na_starts <- is.na(features[["start"]])
   features <- features[!na_starts, ]
-  features[["end"]] <- as.numeric(features[["end"]])
+  features[["end"]] <- as.numeric(features[[end_column]])
   ## Again, remember that I modified the seqnames of the snp_expt.
   features[["seqnames"]] <- gsub(pattern="_",
                                  replacement="-",
-                                 x=features[["seqnames"]])
-  features[[chr_column]] <- gsub(pattern="^.+_(.+)$",
-                                 replacement="\\1", x=features[[chr_column]])
-  expt_granges <- GenomicRanges::makeGRangesFromDataFrame(features)
+                                 x=features[[chr_column]])
+  features[["seqnames"]] <- gsub(pattern="^.+_(.+)$",
+                                 replacement="\\1", x=features[["seqnames"]])
+  grange_input <- features[, c("start", "end", "seqnames")]
+  grange_dup <- duplicated(grange_input)
+  expt_granges <- GenomicRanges::makeGRangesFromDataFrame(grange_input)
 
   set_names <- snp_result[["set_names"]]
   chr_summaries <- list()

@@ -1,3 +1,28 @@
+goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata",
+                         signature_category="c2", current_id="ENSEMBL", required_id="ENTREZID",
+                         length_db=NULL, doplot=TRUE, adjust=0.1, pvalue=0.1,
+                         length_keytype="transcripts", go_keytype="entrezid",
+                         goseq_method="Wallenius", padjust_method="BH",
+                         bioc_length_db="ensGene", excel=NULL) {
+  sig_data <- load_gmt_signatures(signatures=signatures, data_pkg=data_pkg,
+                                  signature_category=signature_category)
+  go_db <- data.frame()
+  for (i in 1:length(sig_data)) {
+    gsc <- sig_data[[i]]
+    gsc_id <- gsc@setName
+    message("Adding ", gsc_id, ".")
+    gsc_genes <- gsc@geneIds
+    tmp_db <- data.frame("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
+    go_db <- rbind(go_db, tmp_db)
+  }
+  go_result <- simple_goseq(sig_genes, go_db=go_db, length_db=length_db,
+                            doplot=TRUE, adjust=0.1, pvalue=0.1,
+                            length_keytype="transcripts", go_keytype="entrezid",
+                            goseq_method="Wallenius", padjust_method="BH",
+                            bioc_length_db="ensGene", excel=NULL)
+  return(go_result)
+}
+
 #' Enhance the goseq table of gene ontology information.
 #'
 #' While goseq has some nice functionality, the table of outputs it provides is
@@ -5,8 +30,8 @@
 #' like ontology categories, definitions, etc.
 #'
 #' @param df Dataframe of ontology information.  This is intended to be the
-#'   output from goseq including information like numbers/category, GOids, etc.
-#'   It requires a column 'category'
+#'  output from goseq including information like numbers/category, GOids, etc.
+#'  It requires a column 'category'
 #'  which contains: GO:000001 and such.
 #' @param file Csv file to which to write the table.
 #' @return Ontology table with annotation information included.
@@ -60,18 +85,18 @@ goseq_table <- function(df, file=NULL) {
 #' standard outputs which should be similar to those returned by
 #' clusterprofiler/topgo/gostats/gprofiler.
 #'
-#' @param sig_genes  Data frame of differentially expressed genes, containing IDs etc.
-#' @param go_db  Database of go to gene mappings (OrgDb/OrganismDb)
-#' @param length_db  Database of gene lengths (gff/TxDb)
-#' @param doplot  Include pwf plots?
-#' @param adjust  Minimum adjusted pvalue for 'significant.'
-#' @param pvalue  Minimum pvalue for 'significant.'
-#' @param length_keytype  Keytype to provide to extract lengths
-#' @param go_keytype  Keytype to provide to extract go IDs
-#' @param goseq_method  Statistical test for goseq to use.
-#' @param padjust_method  Which method to use to adjust the pvalues.
-#' @param bioc_length_db  Source of gene lengths?
-#' @param excel  Print the results to an excel file?
+#' @param sig_genes Data frame of differentially expressed genes, containing IDs etc.
+#' @param go_db Database of go to gene mappings (OrgDb/OrganismDb)
+#' @param length_db Database of gene lengths (gff/TxDb)
+#' @param doplot Include pwf plots?
+#' @param adjust Minimum adjusted pvalue for 'significant.'
+#' @param pvalue Minimum pvalue for 'significant.'
+#' @param length_keytype Keytype to provide to extract lengths
+#' @param go_keytype Keytype to provide to extract go IDs
+#' @param goseq_method Statistical test for goseq to use.
+#' @param padjust_method Which method to use to adjust the pvalues.
+#' @param bioc_length_db Source of gene lengths?
+#' @param excel Print the results to an excel file?
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
 #'  the pwd:pwf function,

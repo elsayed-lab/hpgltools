@@ -51,9 +51,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                               ...) {
   arglist <- list(...)
   retlist <- NULL
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
+  wb <- init_xlsx(excel)
 
   ## Create a list of image files so that they may be properly cleaned up
   ## after writing the xlsx file.
@@ -94,27 +92,6 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     include_basic <- FALSE
     add_plots <- FALSE
     message("Not adding plots, basic had an error.")
-  }
-
-  ## Take a moment to ensure that we can create the excel file without error.
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-  wb <- NULL
-  do_excel <- TRUE
-  if (is.null(excel)) {
-    do_excel <- FALSE
-  } else if (excel == FALSE) {
-    do_excel <- FALSE
-  }
-  if (isTRUE(do_excel)) {
-    excel_dir <- dirname(as.character(excel))
-    if (!file.exists(excel_dir)) {
-      dir.create(excel_dir, recursive=TRUE)
-    }
-    if (file.exists(excel)) {
-      message("Deleting the file ", excel, " before writing the tables.")
-      file.remove(excel)
-    }
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
   }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
@@ -252,9 +229,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                    startRow=current_row, startCol=current_column)
           up_plot <- venn_nop_lfc0[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="lfc0upvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+              up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col=current_column, plotname="lfc0upvennnop", savedir=excel_basename,
+              start_row=current_row + 1, doWeights=FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -1083,7 +1060,7 @@ Defaulting to fdr.")
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1162,7 +1139,7 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1301,7 +1278,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1384,13 +1361,13 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #'
 #' @param pairwise Output from _pairwise()().
 #' @param according_to What tool(s) define 'most?'  One may use deseq, edger,
-#'   limma, basic, all.
+#'  limma, basic, all.
 #' @param n How many genes to pull?
 #' @param z Instead take the distribution of abundances and pull those past the
-#'   given z score.
+#'  given z score.
 #' @param unique One might want the subset of unique genes in the top-n which
-#'   are unique in the set of available conditions.  This will attempt to
-#'   provide that.
+#'  are unique in the set of available conditions.  This will attempt to
+#'  provide that.
 #' @param least Instead of the most abundant, do the least.
 #' @param excel Excel file to write.
 #' @param ... Arguments passed into arglist.
@@ -1400,10 +1377,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, unique=FALSE,
                                    least=FALSE, excel="excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  wb <- init_xlsx(excel)
   abundant_lists <- list()
   final_list <- list()
 
@@ -1418,12 +1392,10 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
                                                  unique=unique, least=least)
   }
 
-  wb <- NULL
   excel_basename <- NULL
   if (class(excel)[1] == "character") {
     message("Writing a legend of columns.")
     excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
     legend <- data.frame(rbind(
       c("The first ~3-10 columns of each sheet:",
         "are annotations provided by our chosen annotation source for this experiment."),
@@ -2055,12 +2027,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
                             according="limma", summary_count=1, ma=FALSE) {
   image_files <- c()
   xls_result <- NULL
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
-  if (is.null(wb)) {
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
+  wb <- init_xlsx(excel)
   excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]

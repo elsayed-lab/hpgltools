@@ -628,6 +628,9 @@ batch_counts <- function(count_table, method=TRUE, design=NULL, batch1="batch", 
                          num_surrogates=NULL, low_to_zero=FALSE, cpus=4, batch2=NULL,
                          noscale=TRUE, ...) {
   arglist <- list(...)
+  if (!is.null(arglist[["batch"]])) {
+    method <- arglist[["batch"]]
+  }
   chosen_surrogates <- NULL
   if (is.null(num_surrogates) & is.null(surrogate_method)) {
     chosen_surrogates <- "be"

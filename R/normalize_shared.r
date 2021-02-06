@@ -83,7 +83,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            ## used to ensure double-normalization isn't
                            ## performed.
                            annotations=NULL, fasta=NULL, entry_type="gene", use_original=FALSE,
-                           batch1="batch", batch2=NULL, batch_step=5,
+                           batch1="batch", batch2=NULL, batch_step=4,
                            low_to_zero=TRUE, ## extra parameters for batch correction
                            thresh=2, min_samples=2, p=0.01, A=1, k=1,
                            cv_min=0.01, cv_max=1000,  ## extra parameters for low-count filtering
@@ -440,6 +440,9 @@ hpgl_norm <- function(data, ...) {
     ##if (!is.null(arglist[["batch"]])) {
     ##  batch <- arglist[["batch"]]
     ##}
+    if (is.null(method)) {
+      method <- "raw"
+    }
     message("The method is: ", method, ".")
 
     if (method == "raw") {
@@ -531,7 +534,8 @@ hpgl_norm <- function(data, ...) {
     message("Step 3: not converting the data.")
   } else {
     message("Step 3: converting the data with ", convert, ".")
-    converted_counts <- convert_counts(count_table, method=convert, ...)
+    converted_counts <- convert_counts(count_table, method=convert, annotations=annotations,
+                                       ...)
     ## converted_counts <- convert_counts(count_table, convert=convert)
     count_table <- converted_counts[["count_table"]]
     convert_performed <- convert

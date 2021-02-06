@@ -4,7 +4,13 @@
 \alias{snps_intersections}
 \title{Cross reference observed variants against the transcriptome annotation.}
 \usage{
-snps_intersections(expt, snp_result, chr_column = "seqnames")
+snps_intersections(
+  expt,
+  snp_result,
+  start_column = "start",
+  end_column = "end",
+  chr_column = "seqnames"
+)
 }
 \arguments{
 \item{expt}{The original expressionset.  This provides the annotation data.}
@@ -15,8 +21,7 @@ snps_intersections(expt, snp_result, chr_column = "seqnames")
 }
 \value{
 List containing the set of intersections in the conditions contained
-  in snp_result, the summary of numbers of variants per chromosome, and
-  summary of numbers per gene.
+ in snp_result, the summary of numbers of variants per chromosome, and
 }
 \description{
 This function should provide counts of how many variant positions were

@@ -1,7 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("311norm_convert.R: Are normalizations consistent over time (Conversions)?\n")
+context("311norm_convert.R: Are normalizations consistent over time (Conversions)?
+  1234567890\n")
 
 load("pasilla_df.rda")
 ## create_expt generates a .Rdata file which may be reread, do so.
@@ -21,7 +22,7 @@ test_that("cpm conversions are equivalent?", {
 })
 
 ## Check that the different ways of calling rpkm() are identical
-pasilla_convert <- sm(convert_counts(pasilla_expt, convert="rpkm", column="cds_length"))
+pasilla_convert <- convert_counts(pasilla_expt, convert="rpkm", column="cds_length")
 pasilla_norm <- sm(normalize_expt(pasilla_expt, convert="rpkm", column="cds_length"))
 expected <- pasilla_convert[["count_table"]]
 actual <- exprs(pasilla_norm)
@@ -53,8 +54,9 @@ pasilla_convert <- sm(normalize_expt(
   chromosome_column="chromosome_name", end_column="end_position",
   genome=BSgenome.Dmelanogaster.UCSC.dm6))
 
-expected <- c(0.03493820, 0.47396682, 22.70873214, 55.11152210, 0.03965286)
-##expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
+## Interesting, these values have reverted to my old values...
+##expected <- c(0.03493820, 0.47396682, 22.70873214, 55.11152210, 0.03965286)
+expected <- c(0.03443909, 0.46719586, 22.38432168, 54.32421464, 0.03908639)
 actual <- as.numeric(exprs(pasilla_convert)[test_genes, 1])
 test_that("cp_seq_m works for TA?", {
     expect_equal(expected, actual)

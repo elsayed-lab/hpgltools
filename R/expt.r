@@ -45,7 +45,9 @@ combine_expts <- function(expt1, expt2, condition="condition",
   expt1[["expressionset"]] <- new
   expt1[["design"]] <- pData(new)
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
+  names(expt1[["conditions"]]) <- rownames(pData(expt1))
   expt1[["batches"]] <- pData(expt1)[["batch"]]
+  names(expt1[["batches"]]) <- rownames(pData(expt1))
   expt1[["colors"]] <- c(expt1[["colors"]], expt2[["colors"]])
   expt1 <- set_expt_conditions(expt1, fact=condition)
 

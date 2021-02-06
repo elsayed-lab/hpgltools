@@ -2,12 +2,14 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
-context("352gsea_goseq.R: Does goseq work?\n")
+context("352gsea_goseq.R: Does goseq work?
+  1234567890\n")
+
 sig_file <- "351_gsea_siggenes.rda"
 if (file.exists(sig_file)) {
   load(sig_file)
 } else {
-  stop("The significance file.")
+  stop("Unable to load the significance file.")
 }
 
 goseq_result <- simple_goseq(fcp_sig_genes,
@@ -38,7 +40,7 @@ test_that("Are the goseq interesting results as expected (mf categories)?", {
     expect_gt(actual, expected)
 })
 
-expected <- 60
+expected <- 55
 actual <- nrow(goseq_result[["bp_interesting"]])
 test_that("Are the goseq interesting results as expected (bp categories)?", {
     expect_gt(actual, expected)

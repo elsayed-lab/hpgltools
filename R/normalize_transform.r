@@ -8,7 +8,7 @@
 #' @param method A type of transformation to perform: log2/log10/log.
 #' @param base Other log scales?
 #' @param ...  Options I might pass from other functions are dropped into
-#'   arglist.
+#'  arglist.
 #' @return dataframe of transformed counts.
 #' @seealso \pkg{limma}
 #' @examples
@@ -19,6 +19,9 @@
 transform_counts <- function(count_table, design=NULL, method="raw",
                              base=NULL, ...) {
   arglist <- list(...)
+  if (!is.null(arglist[["transform"]])) {
+    method <- arglist[["transform"]]
+  }
   ## Short circuit this if we are going with raw data.
   switchret <- switch(
     method,

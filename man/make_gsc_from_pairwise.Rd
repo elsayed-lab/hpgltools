@@ -37,13 +37,13 @@ make_gsc_from_pairwise(
 
 \item{current_id}{Usually we use ensembl IDs, but that does not _need_ to be the case.}
 
-\item{required_id}{gsva uses entrezids by default.}
+\item{required_id}{GSVA uses entrezids by default.}
 
 \item{...}{Extra arguments for extract_significant_genes().}
 }
 \value{
 List containing 3 GSCs, one containing both the ups/downs called
-  'colored', one of the ups, and one of the downs.
+ 'colored', one of the ups, and one of the downs.
 }
 \description{
 If I want to play with gsva and friends, then I need GeneSetCollections!  To
