@@ -51,7 +51,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                               ...) {
   arglist <- list(...)
   retlist <- NULL
-  wb <- init_xlsx(excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
 
   ## Create a list of image files so that they may be properly cleaned up
   ## after writing the xlsx file.
@@ -1377,7 +1379,9 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, unique=FALSE,
                                    least=FALSE, excel="excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
-  wb <- init_xlsx(excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   abundant_lists <- list()
   final_list <- list()
 
@@ -1392,10 +1396,8 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
                                                  unique=unique, least=least)
   }
 
-  excel_basename <- NULL
   if (class(excel)[1] == "character") {
     message("Writing a legend of columns.")
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
     legend <- data.frame(rbind(
       c("The first ~3-10 columns of each sheet:",
         "are annotations provided by our chosen annotation source for this experiment."),
@@ -1484,7 +1486,10 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
   if (!is.null(arglist[["fc_column"]])) {
     fc_column <- arglist[["fc_column"]]
   }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   if (is.null(excel)) {
     ma <- FALSE
   }
@@ -1563,11 +1568,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     according_to <- c("limma", "edger", "deseq", "ebseq", "basic")
   }
 
-  wb <- NULL
-  excel_basename <- NULL
   if ("character" %in% class(excel)) {
-    written <- write_sig_legend(excel)
-    wb <- written[["wb"]]
+    written <- write_sig_legend(wb)
     xls_result <- written[["xls_result"]]
   }
 
@@ -1789,7 +1791,6 @@ summarize_ups_downs <- function(ups, downs) {
   return(summary_table)
 }
 
-
 #' Find the sets of intersecting significant genes
 #'
 #' Use extract_significant_genes() to find the points of agreement between
@@ -1803,20 +1804,20 @@ summarize_ups_downs <- function(ups, downs) {
 #' @param p_type Use normal or adjusted p-values.
 #' @param selectors List of methods to intersect.
 #' @param order When set to the default 'inverse', go from the set with the most
-#'   least intersection to the most. E.g. Start with abc,bc,ac,c,ab,b,a as
-#'   opposed to a,b,ab,c,ac,bc,abc.
+#' least intersection to the most. E.g. Start with abc,bc,ac,c,ab,b,a as
+#'  opposed to a,b,ab,c,ac,bc,abc.
 #' @param excel An optional excel workbook to which to write.
 #' @param ... Extra arguments for extract_significant_genes() and friends.
 #' @return List containing the intersections between the various DE methods for
-#'   both the up and down sets of genes.  It should also provide some venn
-#'   diagrams showing the degree of similarity between the methods.
+#'  both the up and down sets of genes.  It should also provide some venn
+#'  diagrams showing the degree of similarity between the methods.
 #' @examples
 #'  \dontrun{
-#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
-#'  big_result <- all_pairwise(expt, model_batch=FALSE)
-#'  pretty <- combine_de_tables(big_result, excel="excel/combined_expt.xlsx")
-#'  intersect <- intersect_significant(pretty, excel="excel/intersecting_genes.xlsx")
-#' }
+#'   expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
+#'   big_result <- all_pairwise(expt, model_batch=FALSE)
+#'   pretty <- combine_de_tables(big_result, excel="excel/combined_expt.xlsx")
+#'   intersect <- intersect_significant(pretty, excel="excel/intersecting_genes.xlsx")
+#'  }
 #' @export
 intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
                                   z=NULL, p_type="adj", selectors=c("limma", "deseq", "edger"),
@@ -1825,9 +1826,9 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
   ## Check the set of first->sixth and see that they exist in the combined table.
   arglist <- list(...)
   image_files <- c()
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   chosen_selectors <- c()
   extract_selectors <- c()
   alternate_selectors <- c()
@@ -1865,14 +1866,6 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
   }
 
   xls_result <- NULL
-  if (!is.null(excel)) {
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-    testdir <- dirname(excel)
-    if (!file.exists(testdir)) {
-      dir.create(testdir, recursive=TRUE)
-    }
-  }
-
   ## Set up the base data structure, a list of ups and a list of downs.
   lst <- list("ups" = list(), "downs" = list())
   set_names <- c()
@@ -2027,8 +2020,9 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
                             according="limma", summary_count=1, ma=FALSE) {
   image_files <- c()
   xls_result <- NULL
-  wb <- init_xlsx(excel)
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basedir <- xlsx[["basedir"]]
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]
   up_titles <- upsdowns[["up_titles"]]
@@ -2497,18 +2491,9 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
     n <- nrow(data[["coefficients"]])
   }
 
-  wb <- NULL
-  if (!is.null(excel) & excel != FALSE) {
-    excel_dir <- dirname(excel)
-    if (!file.exists(excel_dir)) {
-      dir.create(excel_dir, recursive=TRUE)
-    }
-    if (file.exists(excel)) {
-      message("Deleting the file ", excel, " before writing the tables.")
-      file.remove(excel)
-    }
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
 
   return_data <- list()
   end <- length(coef)
@@ -2528,12 +2513,8 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
 
 #' Internal function to write a legend for significant gene tables.
 #'
-#' @param excel xlsx file to which to write.
-write_sig_legend <- function(excel) {
-  excel <- as.character(excel)
-  message("Writing a legend of columns.")
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-  wb <- openxlsx::createWorkbook(creator="hpgltools")
+#' @param wb xlsx workbook object from openxlsx.
+write_sig_legend <- function(wb) {
   legend <- data.frame(rbind(
     c("The first ~3-10 columns of each sheet:",
       "are annotations provided by our chosen annotation source for this experiment."),

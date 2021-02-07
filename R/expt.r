@@ -2438,10 +2438,11 @@ write_expt <- function(expt, excel="excel/pretty_counts.xlsx", norm="quant",
                        violin=TRUE, sample_heat=TRUE, convert="cpm", transform="log2",
                        batch="sva", filter=TRUE, med_or_mean="mean", ...) {
   arglist <- list(...)
-  wb <- openxlsx::createWorkbook(creator="hpgltools")
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   new_row <- 1
   new_col <- 1
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
 
   ## Set up a vector of images to clean up when finished.
   image_files <- c()

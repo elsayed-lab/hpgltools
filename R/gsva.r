@@ -1100,8 +1100,9 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
 #' @param excel Excel file to write
 #' @param plot_dim Plot dimensions, likely needs adjustment.
 write_gsva <- function(retlist, excel, plot_dim=6) {
-  wb <- init_xlsx(excel)
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
 
   methods <- list(
       "gsva" = "Hänzelmann et al, 2013",

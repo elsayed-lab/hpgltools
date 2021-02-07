@@ -22,7 +22,8 @@ init_xlsx <- function(excel="excel/something.xlsx") {
     file.remove(excel)
   }
   wb <- openxlsx::createWorkbook(creator="hpgltools")
-  return(wb)
+  retlist <- list("basename" = excel_basename, "wb" = wb)
+  return(retlist)
 }
 
 #' Write a dataframe to an excel spreadsheet sheet.
@@ -194,22 +195,22 @@ write_xlsx <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rowname
 #' nice, but they can be a little annoying.  This attempt to catch some corner cases
 #' and potentially save an extra svg-version of each plot inserted.
 #'
-#' @param a_plot  The plot provided
-#' @param wb  Workbook to which to write.
-#' @param sheet  Name or number of the sheet to which to add the plot.
-#' @param width  Plot width in the sheet.
-#' @param height  Plot height in the sheet.
-#' @param res  Resolution of the png image inserted into the sheet.
-#' @param plotname  Prefix of the pdf file created.
-#' @param savedir  Directory to which to save pdf copies of the plots.
-#' @param fancy_type  Plot publication quality images in this format.
-#' @param start_row  Row on which to place the plot in the sheet.
-#' @param start_col  Column on which to place the plot in the sheet.
-#' @param file_type  Currently this only does pngs, but perhaps I will parameterize this.
-#' @param units  Units for the png plotter.
-#' @param ...  Extra arguments are passed to arglist (Primarily for vennerable
-#'   plots which are odd)
-#' @return  A list containing the result of the tryCatch{} used to invoke the plot prints.
+#' @param a_plot The plot provided
+#' @param wb Workbook to which to write.
+#' @param sheet Name or number of the sheet to which to add the plot.
+#' @param width Plot width in the sheet.
+#' @param height Plot height in the sheet.
+#' @param res Resolution of the png image inserted into the sheet.
+#' @param plotname Prefix of the pdf file created.
+#' @param savedir Directory to which to save pdf copies of the plots.
+#' @param fancy_type Plot publication quality images in this format.
+#' @param start_row Row on which to place the plot in the sheet.
+#' @param start_col Column on which to place the plot in the sheet.
+#' @param file_type Currently this only does pngs, but perhaps I will parameterize this.
+#' @param units Units for the png plotter.
+#' @param ... Extra arguments are passed to arglist (Primarily for vennerable
+#'  plots which are odd)
+#' @return A list containing the result of the tryCatch{} used to invoke the plot prints.
 #' @seealso \pkg{openxlsx}
 #' @examples
 #'  \dontrun{
