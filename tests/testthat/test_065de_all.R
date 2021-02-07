@@ -351,7 +351,7 @@ test_that("Did get_pairwise_gene_abundances() get some stuff?", {
   expect_equal(expected[2], actual[2])
 })
 
-testing <- get_sig_genes(table=test_sva$deseq$all_tables[[1]])
+testing <- get_sig_genes(table=test_sva[["deseq"]][["all_tables"]][[1]])
 expected <- c(199, 6)
 actual <- dim(testing[["up_genes"]])
 ## 3839
@@ -370,7 +370,7 @@ test_that("Did get_sig_genes() get some stuff?", {
 
 pombe_model <- choose_model(pombe_subset)
 testing <- make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
-                                   conditions=pombe_subset$conditions)
+                                   conditions=pombe_subset[["conditions"]])
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 15
 ## 42
@@ -382,7 +382,7 @@ test_that("Did make_pairwise_contrasts() get some stuff?", {
 ## models/contrast lists.
 pombe_model <- choose_model(pombe_expt)
 testing <- make_pairwise_contrasts(model=pombe_model[["chosen_model"]],
-                                   conditions=pombe_expt$conditions)
+                                   conditions=pombe_expt[["conditions"]])
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 66
 ## 43

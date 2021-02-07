@@ -54,6 +54,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
   excel_basename <- xlsx[["basename"]]
+  do_excel <- TRUE
+  if (is.null(wb)) {
+    do_excel <- FALSE
+  }
 
   ## Create a list of image files so that they may be properly cleaned up
   ## after writing the xlsx file.
@@ -1721,7 +1725,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     ## I messed up something here.  The plots and tables
     ## at this point should start:
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
-    ##xls_result <- openxlsx::addWorksheet(wb, "number_changed")
+    checked <- check_xlsx_worksheet(wb, "number_changed")
 
     for (according in according_to) {
       tmp_df <- ret[[according]][["counts"]]

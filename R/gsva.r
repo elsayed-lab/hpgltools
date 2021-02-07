@@ -1,11 +1,11 @@
 load_gmt_signatures <- function(signatures="c2BroadSets", data_pkg="GSVAdata",
                                 signature_category="c2") {
   sig_data <- NULL
-  if (class(signatures)[1] == "character" && grep(pattern="\\.gmt$", x=signatures)) {
+  if (class(signatures)[1] == "character" && grepl(pattern="\\.gmt$", x=signatures)) {
     sig_data <- GSEABase::getGmt(signatures,
                                  collectionType=GSEABase::BroadCollection(category=signature_category),
                                  geneIdType=GSEABase::EntrezIdentifier())
-  } else if (class(signatures)[1] == "character" && grep(pattern="\\.xml$", x=signatures)) {
+  } else if (class(signatures)[1] == "character" && grepl(pattern="\\.xml$", x=signatures)) {
     gsc <- GSEABase::getBroadSets(signatures)
     types <- sapply(gsc, function(elt) GSEABase::bcCategory(GSEABase::collectionType(elt)))
     sig_data <- gsc[types == signature_category]
@@ -509,8 +509,8 @@ simple_gsva <- function(expt, signatures="c2BroadSets", data_pkg="GSVAdata", sig
   if (is.null(signature_category)) {
     signature_category <- "c2"
   }
-  sig_data <- load_gmt_signatures(signatures="c2BroadSets", data_pkg="GSVAdata",
-                                  signature_category="c2")
+  sig_data <- load_gmt_signatures(signatures=signatures, data_pkg=data_pkg,
+                                  signature_category=signature_category)
 
   ## The expressionset must have the annotation field filled in for gsva to
   ## work.

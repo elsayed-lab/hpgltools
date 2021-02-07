@@ -1,3 +1,28 @@
+check_xlsx_worksheet <- function(wb, sheet) {
+  newsheet <- NULL
+  current_sheets <- wb@.xData[[".->sheet_names"]]
+  found_sheets <- 0
+  if (sheet %in% current_sheets) {
+    found_sheets <- found_sheets + 1
+    return(sheet)
+  }
+
+  newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+  if (class(newsheet)[1] == "try-error") {
+    if (grepl(pattern="already exists", x=newsheet[1])) {
+      message("The sheet already exists.")
+      tt <- openxlsx::removeWorksheet(wb, sheet)
+      newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+    } else if (grepl(pattern="too long", x=newsheet[1])) {
+      sheet <- abbreviate(sheet, minlength=28)
+      newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
+    } else {
+      message("Unknown error: ", newsheet)
+    }
+  }
+  return(newsheet)
+}
+
 #' Initialize an xlsx file with a little bit of logic to make sure there are no
 #' annoying downstream errors.
 #'
@@ -77,26 +102,8 @@ write_xlsx <- function(data="undef", wb=NULL, sheet="first", excel=NULL, rowname
   hs1 <- openxlsx::createStyle(fontColour="#000000", halign="LEFT", textDecoration="bold",
                                border="Bottom", fontSize="30")
 
-  newsheet <- NULL
-  current_sheets <- wb@.xData[[".->sheet_names"]]
-  found_sheets <- 0
-  if (sheet %in% current_sheets) {
-    found_sheets <- found_sheets + 1
-  } else {
-    newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-    if (class(newsheet)[1] == "try-error") {
-      if (grepl(pattern="already exists", x=newsheet[1])) {
-        message("The sheet already exists.")
-        tt <- openxlsx::removeWorksheet(wb, sheet)
-        newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-      } else if (grepl(pattern="too long", x=newsheet[1])) {
-        sheet <- abbreviate(sheet, minlength=28)
-        newsheet <- try(openxlsx::addWorksheet(wb, sheetName=sheet), silent=TRUE)
-      } else {
-        message("Unknown error: ", newsheet)
-      }
-    }
-  }
+  ## Create the new worksheet.
+  checked <- check_xlsx_worksheet(wb, sheet)
 
   new_row <- start_row
   new_col <- start_col
@@ -289,6 +296,10 @@ xlsx_plot_png <- function(a_plot, wb=NULL, sheet=1, width=6, height=6, res=90,
     print_ret <- try(plot(a_plot, ...))
   }
   dev.off()
+
+  ## Check that the worksheet exists and add the plot.
+  checked <- check_xlsx_worksheet(wb, sheet)
+
   if (file.exists(png_name)) {
     insert_ret <- try(openxlsx::insertImage(wb=wb, sheet=sheet, file=png_name,
                                             width=width, height=height,
