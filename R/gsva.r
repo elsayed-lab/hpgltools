@@ -940,10 +940,13 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
 
   expr <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
-  expr_order <- order(exprs(expr)[, 1], decreasing=TRUE)
-  expr <- expr[exp_order, ]
+  values <- as.data.frame(exprs(expr))
+  expr_order <- order(values[[1]], decreasing=TRUE)
+  exprs(expr) <- exprs(expr)[expr_order, ]
+  fData(expr) <- fData(expr)[expr_order, ]
 
   ## We will use these later...
+  annot <- fData(expr)
   meta <- pData(expr)
   exp <- exprs(expr)
 
@@ -975,7 +978,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
   }
   scored_ht_plot <- grDevices::recordPlot()
 
-  gsva_table <- merge(meta, exp, by="row.names")
+  gsva_table <- merge(annot, exp, by="row.names")
   rownames(gsva_table) <- gsva_table[["Row.names"]]
   gsva_table[["Row.names"]] <- NULL
   subset_table <- merge(fData(subset_mtrx), exprs(subset_mtrx), by="row.names")

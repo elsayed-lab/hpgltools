@@ -2026,7 +2026,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   xls_result <- NULL
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
-  excel_basedir <- xlsx[["basedir"]]
+  excel_basename <- xlsx[["basedir"]]
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]
   up_titles <- upsdowns[["up_titles"]]

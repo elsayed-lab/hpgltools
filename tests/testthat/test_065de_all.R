@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("065de_all.R:
-  12345678901234567890123456789012345678901234567890123456789012345\n")
+  1234567890123456789012345678901234567890123456789012345678901234567\n")
 ## 2017-12, exported functions in de_basic:
 ## basic_pairwise(), write_basic()
 ## 2017-12, exported functions in de_deseq:

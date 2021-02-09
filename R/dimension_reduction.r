@@ -1534,7 +1534,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   }
 
   pca_plot <- NULL
-
   color_listing <- pca_data[, c("condition", "colors")]
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["colors"]])
@@ -1552,7 +1551,6 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
   ## 6.  Finally, set the shape manual with a guide_legend override
 
   ## Step 1
-
   if (is.null(plot_alpha)) {
     plot_alpha <- 1
   }
@@ -1599,16 +1597,20 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                      fill="condition"))
     if (isTRUE(outlines)) {
       pca_plot <- pca_plot +
-        ggplot2::geom_point(size=plot_size, alpha=plot_alpha, colour="black", show.legend=FALSE,
+        ggplot2::geom_point(size=plot_size, alpha=plot_alpha,
+                            colour="black",
+                            ## show.legend=FALSE,
                             aes_string(shape="batches",
                                        fill="condition"))
     }
     pca_plot <- pca_plot +
       ggplot2::scale_color_manual(name="Condition",
+                                  ## guide="legend",
                                   guide="legend",
                                   values=color_list) +
       ggplot2::scale_fill_manual(name="Condition",
-                                 guide="legend",
+                                 ## guide="legend",
+                                 guide="none",
                                  values=color_list) +
       ggplot2::scale_shape_manual(
                  name="Batch",
@@ -1622,10 +1624,12 @@ plot_pcs <- function(pca_data, first="PC1", second="PC2", variances=NULL,
                                      fill="condition",
                                      colour="condition")) +
       ggplot2::scale_color_manual(name="Condition",
+                                  ##guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
                                   guide="legend",
                                   values=color_list) +
       ggplot2::scale_fill_manual(name="Condition",
-                                 guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
+                                 ##guide=ggplot2::guide_legend(override.aes=list(size=plot_size)),
+                                 guide="none",
                                  values=color_list) +
       ggplot2::scale_shape_manual(name="Batch",
                                   labels=levels(as.factor(pca_data[["batch"]])),

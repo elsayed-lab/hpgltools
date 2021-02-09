@@ -4,10 +4,10 @@
 \alias{write_sig_legend}
 \title{Internal function to write a legend for significant gene tables.}
 \usage{
-write_sig_legend(excel)
+write_sig_legend(wb)
 }
 \arguments{
-\item{excel}{xlsx file to which to write.}
+\item{wb}{xlsx workbook object from openxlsx.}
 }
 \description{
 Internal function to write a legend for significant gene tables.
