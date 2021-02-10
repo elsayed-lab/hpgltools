@@ -612,7 +612,7 @@ hpgl_norm <- function(data, ...) {
 normalize <- function(expt, todo=list()) {
   ## This expects a list like:
   ## list("norm" = "quant", "filter" = c(pofa, "A" = 1))
-  possible_types <- list(
+  possible_methods <- list(
     "transform" = "transform_counts",
     "norm" = "normalize_counts",
     "convert" = "convert_counts",
@@ -622,29 +622,32 @@ normalize <- function(expt, todo=list()) {
   annot <- fData(expt)
   counts <- exprs(expt)
   design <- pData(expt)
-  count_table <- list(count_table=counts, libsize=expt[["libsize"]])
+  count_table <- list("count_table" = counts,
+                      "libsize" = expt[["libsize"]])
   for (i in 1:length(todo)) {
     type <- names(todo)[i]
-    operation <- todo[i]
-    method <- operation[1]
+    operation <- todo[[i]]
+    method <- operation[[1]]
     args <- c()
     if (length(operation) > 1) {
        args <- operation[2:length(operation)]
     }
-    if (! type %in% names(possible_types)) {
+    if (! type %in% names(possible_methods)) {
       stop("This type of todo is not known: ", type, ".")
     }
-    call <- possible_methods[type]
-    arglist <- list(
-      "count_table" = count_table,
-      "design" = design,
-      "method" = method)
+    call <- possible_methods[[type]]
+    arglist <- list()
+    arglist[["count_table"]] <- count_table
+    arglist[["method"]] <- method
+    arglist[["design"]] <- design
     for (a in args) {
       name <- names(args)[a]
-      arglist[[a]] <- as.character(args[[a]])
+      arglist[[a]] <- args[[a]]
     }
-    count_table <- do.call(what=call, args=arglist)
+    message("Invoking: ", call)
+    count_table <- base::do.call(call, arglist)
   }
+  return(count_table)
 }
 
 ## EOF

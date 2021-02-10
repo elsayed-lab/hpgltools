@@ -21,21 +21,26 @@
 #'  converted_table = convert_counts(count_table, method='cbcbcpm')
 #' }
 #' @export
-convert_counts <- function(data, method="raw", ...) {
+convert_counts <- function(count_table, method="raw", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["convert"]])) {
     method <- arglist[["convert"]]
   }
-  data_class <- class(data)[1]
+  data_class <- class(count_table)[1]
+  if (data_class == "list") {
+    test <- count_table[["count_table"]]
+    count_table <- test
+    data_class <- class(count_table)[1]
+  }
   annotations <- arglist[["annotations"]]
   if (data_class == "expt" | data_class == "ExpressionSet") {
     if (is.null(annotations)) {
-      annotations <- fData(data)
+      annotations <- fData(count_table)
     }
-    count_table <- exprs(data)
+    count_table <- exprs(count_table)
   } else if (data_class == "matrix" | data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
-    count_table <- as.data.frame(data)
+    count_table <- as.data.frame(count_table)
   } else {
     stop("This function currently only types: expt, ExpressionSet, data.frame, and matrix.")
   }

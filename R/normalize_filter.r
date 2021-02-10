@@ -22,8 +22,11 @@
 #' }
 #' @export
 filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
-                          cv_min=0.01, cv_max=1000, thresh=1, min_samples=2, ...) {
+                          cv_min=0.01, cv_max=1000, thresh=2, min_samples=2, ...) {
   arglist <- list(...)
+  if (class(count_table)[1] == "list") {
+    count_table <- count_table[["count_table"]]
+  }
   if (!is.null(arglist[["filter"]])) {
     method <- arglist[["filter"]]
   }
@@ -33,8 +36,9 @@ filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
     type <- "kofa"
   }
   if (isTRUE(method)) {
-    filter <- "cbcb"
+    method <<- "cbcb"
   }
+
   filtered_counts <- NULL
   switchret <- switch(
     method,

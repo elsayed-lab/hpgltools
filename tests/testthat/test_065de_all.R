@@ -177,6 +177,8 @@ test_that("all_pairwise() provided results reasonably similar? (svaseq in model)
   expect_gt(actual, expected)
 })
 
+
+
 cond_model <- choose_model(pombe_subset, model_batch=FALSE)
 expected <- "~ 0 + condition"
 actual <- cond_model[["chosen_string"]]
@@ -472,6 +474,14 @@ testing <- write_de_table(data=test_sva, type="deseq")
 ## 62
 test_that("Did write_de_table() write something?", {
   expect_equal(testing, 1)
+})
+
+## Test that we can plot the similarities/difference between
+## experiments with Steve Christensen's function.
+compare <- rank_order_scatter(test_condbatch, test_cond)
+test_that("Did we compare the two de results with a rank order plot?", {
+  expect_equal(class(compare[["plot"]])[1], "gg")
+  expect_gt(as.numeric(compare[["correlation"]][["estimate"]]), 0.99)
 })
 
 end <- as.POSIXlt(Sys.time())

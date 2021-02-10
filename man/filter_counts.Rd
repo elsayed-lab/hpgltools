@@ -12,7 +12,7 @@ filter_counts(
   k = 1,
   cv_min = 0.01,
   cv_max = 1000,
-  thresh = 1,
+  thresh = 2,
   min_samples = 2,
   ...
 )

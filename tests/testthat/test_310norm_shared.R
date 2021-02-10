@@ -71,6 +71,14 @@ test_that("Pasilla (un)normalized libsize?", {
     expect_equal(expected, actual)
 })
 
+## Try out my new normalize function
+norm <- list("filter" = TRUE, "convert"="cpm")
+new <- normalize(pasilla_expt, todo=norm)
+old <- normalize_expt(pasilla_expt, filter=TRUE, convert="cpm")
+test_that("Does the new normalize() function work like the old normalize_expt()?", {
+  expect_equal(new[["count_table"]], exprs(old))
+})
+
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x=as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 10norm_shared.R in ", elapsed, " seconds."))

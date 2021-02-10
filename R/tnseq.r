@@ -206,6 +206,13 @@ ggplot2::theme_bw()
   return(retlist)
 }
 
+#' A scoring function for the mh_ess TNSeq method.
+#'
+#' I dunno, I might delete this function, I am not sure if it will ever get use.
+#'
+#' @param expt Input expressionset with a metadata column with the ess output files.
+#' @param ess_column Metadata column containing the mh_ess output files.
+#' @return List containing the scores along with the genes which have changed using it.
 score_mhess <- function(expt, ess_column="essm1") {
   expr <- expt[["expressionset"]]
   design <- pData(expt)

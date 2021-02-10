@@ -42,7 +42,7 @@ mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.}
 }
 \value{
 list containing the significance bar plots and some information to
-  hopefully help interpret them.
+ hopefully help interpret them.
 }
 \description{
 These plots are pretty annoying, and I am certain that this function is not

@@ -1,3 +1,20 @@
+convert_ids <- function(ids, from="ENSEMBL", to="ENTREZID", orgdb="org.Hs.eg.db") {
+  lib_result <- sm(requireNamespace(orgdb))
+  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+  new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
+                                      keys=ids,
+                                      keytype=current_id,
+                                      columns=c(required_id)))
+  new_idx <- complete.cases(new_ids)
+  new_ids <- new_ids[new_idx, ]
+  message("Before conversion, the expressionset has ", length(ids),
+          " entries.")
+  message("After conversion, the expressionset has ",
+          length(rownames(new_ids)),
+          " entries.")
+  return(new_ids)
+}
+
 load_gmt_signatures <- function(signatures="c2BroadSets", data_pkg="GSVAdata",
                                 signature_category="c2") {
   sig_data <- NULL
@@ -49,6 +66,12 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
                               pair_names="up", current_id="ENSEMBL", required_id="ENTREZID") {
   first <- NULL
   second <- NULL
+  if (is.null(current_id) | is.null(required_id)) {
+    first <- first_ids
+    current_id <- ""
+    second <- second_ids
+    required_id <- ""
+  }
   if (current_id == required_id) {
     first <- first_ids
     second <- second_ids
@@ -88,7 +111,6 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 
   set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
   fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
-  sec_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
   fst_gsc <- GSEABase::GeneSet(
                          GSEABase::EntrezIdentifier(),
                          setName=fst_name,
@@ -98,6 +120,12 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     if (is.null(phenotype_name)) {
       phenotype_name <- "unknown"
     }
+    if (is.na(pair_names[2]) & pair_names[1] == "up") {
+      message("Setting the second pair_names to 'down'.")
+      ## Then we can assume it is down.
+      pair_names <- c("up", "down")
+    }
+    sec_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
     sec[["direction"]] <- pair_names[2]
     sec[["phenotype"]] <- phenotype_name
     both <- rbind(fst, sec)
@@ -116,7 +144,7 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
   }
   retlst <- list()
   retlst[[fst_name]] <- fst_gsc
-  if (!is.na(pair_names[2])) {
+ if (!is.na(pair_names[2])) {
     ## Then there is a colored/down
     retlst[[sec_name]] <- sec_gsc
     retlst[["colored"]] <- all_colored
@@ -868,14 +896,27 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
       fact <- fact_lvls[f]
       message("Scoring ", fact, " against everything else.")
       sample_idx <- design[[factor_column]] == fact
+      if (sum(sample_idx) == 0) {
+        ## Just in case the factor has empty levels.
+        next
+      }
+
       test_values <- values[, sample_idx]
       against_values <- values[, !sample_idx]
       population_values <<- against_values
       if (method == "mean") {
-        tests <- rowMeans(test_values)
+        if (sum(sample_idx) == 1) {
+          tests <- test_values
+        } else {
+          tests <- rowMeans(test_values)
+        }
         againsts <- rowMeans(against_values)
       } else {
-        tests <- Biobase::rowMedians(test_values)
+        if (sum(sample_idx) == 1) {
+          tests <- test_values
+        } else {
+          tests <- Biobase::rowMedians(test_values)
+        }
         againsts <- Biobase::rowMedians(against_values)
       }
       a_column <- sapply(X=tests, FUN=cheesy_likelihood)
@@ -998,7 +1039,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
       ## The result from gsva_likelihoods, which compares condition vs. others.
       "likelihood_table" = likelihood_table,
       ## Corresponding plot from gsva_likelihoods
-      "score_plot" = gl[["score_plot"]],
+      "score_plot" = gl[["likelihood_plot"]],
       ## The subset of gsva scores deemed 'significant' by gsva_likelihoods.
       "subset_table" = subset_table,
       ## The corresponding plot for the subset.

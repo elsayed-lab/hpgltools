@@ -5,7 +5,7 @@
 #' It is certainly possible to make the logic here much simpler now.
 #'
 #' @param pairwise The result from all_pairwise(), which should be changed to
-#'   handle other invocations too.
+#'  handle other invocations too.
 #' @param type Type of table to use: deseq, edger, limma, basic.
 #' @param table Result from edger to use, left alone it chooses the first.
 #' @param logfc What logFC to use for the MA plot horizontal lines.
@@ -235,19 +235,19 @@ extract_de_plots <- function(pairwise, type="edger", table=NULL, logfc=1,
 #' red/green.
 #'
 #' @param output Result from the de_ family of functions, all_pairwise, or
-#'   combine_de_tables().
+#'  combine_de_tables().
 #' @param toptable Chosen table to query for abundances.
 #' @param type Query limma, deseq, edger, or basic outputs.
 #' @param x The x-axis column to use, either a number of name.
 #' @param y The y-axis column to use.
 #' @param z Define the range of genes to color (FIXME: extend this to p-value
-#'   and fold-change).
+#'  and fold-change).
 #' @param p Set a p-value cutoff for coloring the scatter plot (currently not
-#'   supported).
+#'  supported).
 #' @param lfc Set a fold-change cutoff for coloring points in the scatter plot
-#'   (currently not supported.)
+#'  (currently not supported.)
 #' @param n Set a top-n fold-change for coloring the points in the scatter plot
-#'   (this should work, actually).
+#'  (this should work, actually).
 #' @param loess Add a loess estimation (This is slow.)
 #' @param alpha How see-through to make the dots.
 #' @param color_low Color for the genes less than the mean.
@@ -651,7 +651,7 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
 #' Plot the rank order of the data in two tables against each other.
 #'
 #' Steve Christensen has some neat plots showing the relationship between two
-#' tables.  I though they were super-cool, so I co-opted the idea in this
+#' tables.  I thought they were cool, so I co-opted the idea in this
 #' function.
 #'
 #' @param first First table of values.
@@ -659,7 +659,7 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
 #' @param first_type Assuming this is from all_pairwise(), use this method.
 #' @param second_type Ibid.
 #' @param first_table Again, assuming all_pairwise(), use this to choose the
-#'   table to extract.
+#'  table to extract.
 #' @param alpha How see-through to make the dots?
 #' @param second_table Ibid.
 #' @param first_column What column to use to rank-order from the first table?
@@ -674,8 +674,8 @@ plot_num_siggenes <- function(table, methods=c("limma", "edger", "deseq", "ebseq
 #' @return a list with a plot and a couple summary statistics.
 #' @export
 rank_order_scatter <- function(first, second=NULL, first_type="limma",
-                               second_type="limma", first_table=1, alpha=0.5,
-                               second_table=2, first_column="logFC",
+                               second_type="limma", first_table=NULL, alpha=0.5,
+                               second_table=NULL, first_column="logFC",
                                second_column="logFC", first_p_col="adj.P.Val",
                                second_p_col="adj.P.Val", p_limit=0.05,
                                both_color="red", first_color="green",
@@ -683,6 +683,32 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
   if (is.null(second)) {
     second <- first
   }
+
+  ## If the two elements are equal, then default to two different tables
+  ## If the two elements are not equal, default to the same table.
+  test <- try(testthat::expect_equal(first, second), silent=TRUE)
+  if (class(test)[1] == "try-error") {
+    ## They are not equal.
+    if (is.null(first_table)) {
+      message("The two inputs are not equivalent and no first table was provided, setting it to the first table.")
+      first_table <- 1
+    }
+    if (is.null(second_table)) {
+      message("The two inputs are not equivalent and no second table was provided, setting it to the first table.")
+      second_table <- 1
+    }
+  } else {
+    ## Two different de results.
+    if (is.null(first_table)) {
+      message("The two inputs are equivalent and no first table was provided, setting it to the first table.")
+      first_table <- 1
+    }
+    if (is.null(second_table)) {
+      message("The two inputs are equivalent and no second table was provided, setting it to the second table.")
+      second_table <- 2
+    }
+  }
+
   if (!is.null(first[[first_type]])) {
     first <- first[[first_type]][["all_tables"]]
   }
@@ -769,7 +795,7 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #'
 #' @param combined Result from combine_de_tables and/or extract_significant_genes().
 #' @param lfc_cutoffs Choose 3 fold changes to define the queries.  0, 1, 2
-#'   mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.
+#'  mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.
 #' @param invert Reverse the order of contrasts for readability?
 #' @param p Chosen p-value cutoff.
 #' @param z Choose instead a z-score cutoff.
@@ -779,7 +805,7 @@ rank_order_scatter <- function(first, second=NULL, first_type="limma",
 #' @param maximum Set a specific limit on the number of genes on the x-axis.
 #' @param ... More arguments are passed to arglist.
 #' @return list containing the significance bar plots and some information to
-#'   hopefully help interpret them.
+#'  hopefully help interpret them.
 #' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{

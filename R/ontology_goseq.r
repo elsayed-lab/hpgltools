@@ -6,20 +6,32 @@ goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata
                          bioc_length_db="ensGene", excel=NULL) {
   sig_data <- load_gmt_signatures(signatures=signatures, data_pkg=data_pkg,
                                   signature_category=signature_category)
-  go_db <- data.frame()
+  message("Starting to coerce the msig data to the ontology format.")
+  go_db <- data.table::data.table()
   for (i in 1:length(sig_data)) {
     gsc <- sig_data[[i]]
     gsc_id <- gsc@setName
-    message("Adding ", gsc_id, ".")
     gsc_genes <- gsc@geneIds
-    tmp_db <- data.frame("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
+    tmp_db <- data.table::data.table("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
     go_db <- rbind(go_db, tmp_db)
   }
-  go_result <- simple_goseq(sig_genes, go_db=go_db, length_db=length_db,
+  message("Finished coercing the msig data.")
+
+  new_ids <- convert_ids(rownames(sig_genes), from=current_id, to=required_id, orgdb=orgdb)
+  new_sig <- merge(new_ids, sig_genes, by.x=current_id, by.y="row.names")
+  rownames(new_sig) <- new_sig[[required_id]]
+
+  new_lids <- convert_ids(rownames(length_db), from=current_id, to=required_id, orgdb=orgdb)
+  new_length <- merge(new_lids, length_db, by.x=current_id, by.y="row.names")
+  new_length[["ID"]] <- NULL
+  new_length[["ID"]] <- new_length[[required_id]]
+  new_length <- new_length[, c("ID", "length")]
+
+  go_result <- simple_goseq(new_sig, go_db=go_db, length_db=new_length,
                             doplot=TRUE, adjust=0.1, pvalue=0.1,
                             length_keytype="transcripts", go_keytype="entrezid",
                             goseq_method="Wallenius", padjust_method="BH",
-                            bioc_length_db="ensGene", excel=NULL)
+                            bioc_length_db="ensGene", expand_categories=FALSE, excel=NULL)
   return(go_result)
 }
 
@@ -96,6 +108,7 @@ goseq_table <- function(df, file=NULL) {
 #' @param goseq_method Statistical test for goseq to use.
 #' @param padjust_method Which method to use to adjust the pvalues.
 #' @param bioc_length_db Source of gene lengths?
+#' @param expand_categories Expand the GO categories to make the results more readable?
 #' @param excel Print the results to an excel file?
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
@@ -120,7 +133,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
                          adjust=0.1, pvalue=0.1,
                          length_keytype="transcripts", go_keytype="entrezid",
                          goseq_method="Wallenius", padjust_method="BH",
-                         bioc_length_db="ensGene", excel=NULL,
+                         bioc_length_db="ensGene", expand_categories=TRUE, excel=NULL,
                          ...) {
   arglist <- list(...)
 
@@ -297,12 +310,22 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
                                         method=padjust_method)
 
-  ## Optionally, use GO.db to extract more information about the categories.
-  ##message("Using GO.db to extract terms and categories.")
-  ##godata[["term"]] <- goterm(godata[["category"]])
-  ##godata[["ontology"]] <- goont(godata[["category"]])
-  message("simple_goseq(): Filling godata with terms, this is slow.")
-  godata_interesting <- goseq_table(godata)
+  ## Add a little logic if we are using a non-GO input database.
+  ## This is relevant if you use something like msigdb/reactome/kegg
+  ## I should probably make the rest of this function generic so that this is not required.
+  if (is.null(godata[["ontology"]])) {
+    godata[["ontology"]] <- "MF"
+  }
+
+  godata_interesting <- godata
+  if (isTRUE(expand_categories)) {
+    message("simple_goseq(): Filling godata with terms, this is slow.")
+    godata_interesting <- goseq_table(godata)
+  } else {
+    ## Set the 'term' category for plotting.
+    godata_interesting[["term"]] <- godata_interesting[["category"]]
+    godata[["term"]] <- godata[["category"]]
+  }
 
   if (is.null(adjust)) {
     interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
