@@ -1,11 +1,45 @@
-goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata",
-                         signature_category="c2", current_id="ENSEMBL", required_id="ENTREZID",
-                         length_db=NULL, doplot=TRUE, adjust=0.1, pvalue=0.1,
-                         length_keytype="transcripts", go_keytype="entrezid",
-                         goseq_method="Wallenius", padjust_method="BH",
-                         bioc_length_db="ensGene", excel=NULL) {
-  sig_data <- load_gmt_signatures(signatures=signatures, data_pkg=data_pkg,
-                                  signature_category=signature_category)
+## ontology_goseq.r: Some methods to simplify the usage of goseq.  goseq is the
+## first GSEA tool I learned about.  It is not particularly robust, this seeks
+## to amend that.
+
+#' Pass MSigDB categorical data to goseq and run it.
+#'
+#' goseq is probably the easiest method to push varying data types into.  Thus
+#' it was the first thing I thought of when looking to push MSigDB data into a
+#' GSEA method.
+#'
+#' @param sig_genes Character list of genes deemed significant.  I think in the
+#'  current implementation this must be just a list of IDs as opposed to the
+#'  full dataframe of interesting genes because we likely need to convert IDs.
+#' @param signatures Used by load_gmt_signatures(), the signature file or set.
+#' @param data_pkg Used by load_gmt_signatures().
+#' @param signature_category Ibid, but the name of the signatures group.
+#' @param current_id Used by convert_msig_ids(), when converting IDs, the name
+#'  of the existing type.
+#' @param required_id What type to convert to in convert_msig_ids().
+#' @param length_db Dataframe of lengths.  It is worth noting that goseq
+#'  explicitly states that one might wish to use other potentially confounding
+#'  factors here, but they only examine lenghts in their paper. Starting with
+#'  this parameter, everything is just passed directly to simple_goseq()
+#' @param doplot Print the prior plot?
+#' @param adjust passed to simple_goseq()
+#' @param pvalue passed to simple_goseq()
+#' @param length_keytype passed to simple_goseq()
+#' @param go_keytype passed to simple_goseq()
+#' @param goseq_method passed to simple_goseq()
+#' @param padjust_method passed to simple_goseq()
+#' @param bioc_length_db passed to simple_goseq()
+#' @param excel passed to simple_goseq()
+#' @return Some goseq data!
+#' @export
+goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVAdata",
+                         signature_category = "c2", current_id = "ENSEMBL", required_id = "ENTREZID",
+                         length_db = NULL, doplot = TRUE, adjust = 0.1, pvalue = 0.1,
+                         length_keytype = "transcripts", go_keytype = "entrezid",
+                         goseq_method = "Wallenius", padjust_method = "BH",
+                         bioc_length_db = "ensGene", excel = NULL) {
+  sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
+                                  signature_category = signature_category)
   message("Starting to coerce the msig data to the ontology format.")
   go_db <- data.table::data.table()
   for (i in 1:length(sig_data)) {
@@ -17,21 +51,27 @@ goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata
   }
   message("Finished coercing the msig data.")
 
-  new_ids <- convert_ids(rownames(sig_genes), from=current_id, to=required_id, orgdb=orgdb)
-  new_sig <- merge(new_ids, sig_genes, by.x=current_id, by.y="row.names")
+  new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
+  new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
   rownames(new_sig) <- new_sig[[required_id]]
 
-  new_lids <- convert_ids(rownames(length_db), from=current_id, to=required_id, orgdb=orgdb)
-  new_length <- merge(new_lids, length_db, by.x=current_id, by.y="row.names")
+  new_lids <- convert_ids(rownames(length_db), from = current_id, to = required_id, orgdb = orgdb)
+  new_length <- merge(new_lids, length_db, by.x = current_id, by.y = "row.names")
   new_length[["ID"]] <- NULL
   new_length[["ID"]] <- new_length[[required_id]]
-  new_length <- new_length[, c("ID", "length")]
+  if (is.null(new_length[["length"]])) {
+    new_length <- new_length[, c("ID", "width")]
+    colnames(new_length) <- c("ID", "length")
+  } else {
+    new_length <- new_length[, c("ID", "length")]
+  }
 
-  go_result <- simple_goseq(new_sig, go_db=go_db, length_db=new_length,
-                            doplot=TRUE, adjust=0.1, pvalue=0.1,
-                            length_keytype="transcripts", go_keytype="entrezid",
-                            goseq_method="Wallenius", padjust_method="BH",
-                            bioc_length_db="ensGene", expand_categories=FALSE, excel=NULL)
+  go_result <- simple_goseq(new_sig, go_db = go_db, length_db = new_length,
+                            doplot = TRUE, adjust = 0.1, pvalue = 0.1,
+                            length_keytype = "transcripts", go_keytype = "entrezid",
+                            goseq_method = "Wallenius", padjust_method = "BH",
+                            bioc_length_db = "ensGene", expand_categories = FALSE,
+                            excel = excel, add_trees = FALSE, gather_genes = FALSE, width = 20)
   return(go_result)
 }
 
@@ -51,7 +91,7 @@ goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata
 #' @examples
 #' \dontrun{
 #'  annotated_go = goseq_table(go_ids)
-#'  head(annotated_go, n=1)
+#'  head(annotated_go, n = 1)
 #'  ## >        category numDEInCat numInCat over_represented_pvalue
 #'  ## > 571  GO:0006364          9       26            4.655108e-08
 #'  ## >      under_represented_pvalue       qvalue ontology
@@ -65,7 +105,7 @@ goseq_msigdb <- function(sig_genes, signatures="c2BroadSets", data_pkg="GSVAdata
 #'  ##          RNA (rRNA) transcript into one or more mature rRNA molecules.
 #' }
 #' @export
-goseq_table <- function(df, file=NULL) {
+goseq_table <- function(df, file = NULL) {
   df[["term"]] <- goterm(df[["category"]])
   df[["ontology"]] <- goont(df[["category"]])
   message("Testing that go categories are defined.")
@@ -85,7 +125,7 @@ goseq_table <- function(df, file=NULL) {
                "under_represented_pvalue", "qvalue", "ontology", "term",
                "synonym", "definition")]
   if (!is.null(file)) {
-    write.csv(df, file=file)
+    write.csv(df, file = file)
   }
   return(df)
 }
@@ -129,11 +169,11 @@ goseq_table <- function(df, file=NULL) {
 #'  lotsotables <- simple_goseq(gene_list, godb, lengthdb)
 #' }
 #' @export
-simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
-                         adjust=0.1, pvalue=0.1,
-                         length_keytype="transcripts", go_keytype="entrezid",
-                         goseq_method="Wallenius", padjust_method="BH",
-                         bioc_length_db="ensGene", expand_categories=TRUE, excel=NULL,
+simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
+                         adjust = 0.1, pvalue = 0.1,
+                         length_keytype = "transcripts", go_keytype = "entrezid",
+                         goseq_method = "Wallenius", padjust_method = "BH",
+                         bioc_length_db = "ensGene", expand_categories = TRUE, excel = NULL,
                          ...) {
   arglist <- list(...)
 
@@ -187,11 +227,11 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   }
   if (class(length_db)[[1]] == "character")  {
     ## Then this should be either a gff file or species name.
-    if (grepl(pattern="\\.gff", x=length_db, perl=TRUE) |
-        grepl(pattern="\\.gtf", x=length_db, perl=TRUE)) {
+    if (grepl(pattern = "\\.gff", x = length_db, perl = TRUE) |
+        grepl(pattern = "\\.gtf", x = length_db, perl = TRUE)) {
       ## gff file
       txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
-      metadf <- extract_lengths(db=txdb, gene_list=gene_list)
+      metadf <- extract_lengths(db = txdb, gene_list = gene_list)
     } else {
       ## Then species name
       message("A species name.")
@@ -202,10 +242,10 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     stop("OrgDb objects contain links to other databases, but no gene lengths.")
   } else if (class(length_db)[[1]] == "OrganismDb" |
              class(length_db)[[1]] == "AnnotationDbi") {
-    ##metadf <- extract_lengths(db=length_db, gene_list=gene_list)
-    metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
+    ##metadf <- extract_lengths(db = length_db, gene_list = gene_list)
+    metadf <- sm(extract_lengths(db = length_db, gene_list = gene_list, ...))
   } else if (class(length_db)[[1]] == "TxDb") {
-    metadf <- sm(extract_lengths(db=length_db, gene_list=gene_list, ...))
+    metadf <- sm(extract_lengths(db = length_db, gene_list = gene_list, ...))
   } else if (class(length_db)[[1]] == "data.frame") {
     metadf <- length_db
   } else {
@@ -218,15 +258,15 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
     stop("The length db needs to have a length or width column.")
   } else if (is.null(metadf[["length"]])) {
     ## Then it is named 'width' and I want to rename it to length
-    colnames(metadf) <- gsub(x=colnames(metadf), pattern="width", replacement="length")
+    colnames(metadf) <- gsub(x = colnames(metadf), pattern = "width", replacement = "length")
   }
   ## Now I should have the gene list and gene lengths
 
   godf <- data.frame()
   if (class(go_db)[[1]] == "character") {
     ## A text table or species name
-    if (grepl(pattern="\\.csv", x=go_db, perl=TRUE) |
-        grepl(pattern="\\.tab", x=go_db, perl=TRUE)) {
+    if (grepl(pattern = "\\.csv", x = go_db, perl = TRUE) |
+        grepl(pattern = "\\.tab", x = go_db, perl = TRUE)) {
       ## table
       godf <- read.table(go_db, ...)
       colnames(godf) <- c("ID", "GO")
@@ -236,9 +276,9 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
       species <- go_db
     }
   } else if (class(go_db)[[1]] == "OrganismDb") {
-    godf <- extract_go(go_db, keytype=go_keytype)
+    godf <- extract_go(go_db, keytype = go_keytype)
   } else if (class(go_db)[[1]] == "OrgDb") {
-    godf <- extract_go(go_db, keytype=go_keytype)
+    godf <- extract_go(go_db, keytype = go_keytype)
   } else if (class(go_db)[[1]] == "data.table" || class(go_db)[[1]] == "tbl_df") {
     godf <- as.data.frame(go_db)
   } else if (class(go_db)[[1]] == "data.frame") {
@@ -280,7 +320,7 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## "'unimplemented type 'list' in 'orderVector1'"
   merged_ids_lengths[["ID"]] <- as.character(merged_ids_lengths[["ID"]])
   merged_ids_lengths <- merge(merged_ids_lengths,
-                              de_genelist, by.x="ID", by.y="ID", all.x=TRUE)
+                              de_genelist, by.x = "ID", by.y = "ID", all.x = TRUE)
   merged_ids_lengths[["length"]] <- suppressWarnings(
     as.numeric(merged_ids_lengths[["length"]]))
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
@@ -288,27 +328,27 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   ## must be the same length as the vector
   de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
   names(de_vector) <- make.names(as.character(
-    merged_ids_lengths[["ID"]]), unique=TRUE)
+    merged_ids_lengths[["ID"]]), unique = TRUE)
   length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
   names(length_vector) <- make.names(as.character(
-    merged_ids_lengths[["ID"]]), unique=TRUE)
+    merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
-  pwf <- suppressWarnings(goseq::nullp(DEgenes=de_vector, bias.data=length_vector,
-                                       plot.fit=doplot))
+  pwf <- suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
+                                       plot.fit = doplot))
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
-  godata <- goseq::goseq(pwf, gene2cat=godf, use_genes_without_cat=TRUE,
-                         method=goseq_method)
-  goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins=50))
+  godata <- goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
+                         method = goseq_method)
+  goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
   goseq_y_limit <- goseq_p_nearzero * 2
   goseq_p <- goseq_p +
-    ggplot2::scale_y_continuous(limits=c(0, goseq_y_limit))
+    ggplot2::scale_y_continuous(limits = c(0, goseq_y_limit))
   message("simple_goseq(): Calculating q-values")
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
-                                        method=padjust_method)
+                                        method = padjust_method)
 
   ## Add a little logic if we are using a non-GO input database.
   ## This is relevant if you use something like msigdb/reactome/kegg
@@ -403,7 +443,8 @@ simple_goseq <- function(sig_genes, go_db=NULL, length_db=NULL, doplot=TRUE,
   class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
-    excel_ret <- sm(try(write_goseq_data(retlist, excel=excel)))
+    excel_ret <- try(write_goseq_data(retlist, excel = excel,
+                                      ...))
   }
   return(retlist)
 }

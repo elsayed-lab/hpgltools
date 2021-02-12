@@ -21,6 +21,13 @@ test_that("Do we get the expected amount of orgdb gene data?", {
   expect_gt(actual, expected)
 })
 
+start <- testing[["genes"]][["ensembl"]]
+test_ids <- head(unique(start), n=500)
+guess <- guess_orgdb_keytype(ids=test_ids, orgdb=NULL)
+test_that("Can we guess appropriate keytypes from gene IDs?", {
+  expect_equal(guess, "ENSEMBL")
+})
+
 expected <- 82000
 actual <- nrow(as.data.frame(testing[["transcripts"]]))
 ## 0304

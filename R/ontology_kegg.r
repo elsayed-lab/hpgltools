@@ -29,18 +29,18 @@
 #' @seealso \pkg{Ramigo} \pkg{pathview}
 #' @examples
 #' \dontrun{
-#'  thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species="spz", indir="pathview_in",
-#'                                    outdir="kegg_thy_el_comp2", string_from="_Spy",
-#'                                    string_to="_Spy_", filenames="pathname")
+#'  thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species = "spz", indir = "pathview_in",
+#'                                    outdir = "kegg_thy_el_comp2", string_from = "_Spy",
+#'                                    string_to = "_Spy_", filenames = "pathname")
 #' }
 #' @export
-simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
-                            pathway="all", species="lma", from_list=NULL,
-                            to_list=NULL, suffix="_colored",
-                            filenames="id", fc_column="limma_logfc",
-                            format="png", verbose=TRUE) {
+simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview",
+                            pathway = "all", species = "lma", from_list = NULL,
+                            to_list = NULL, suffix = "_colored",
+                            filenames = "id", fc_column = "limma_logfc",
+                            format = "png", verbose = TRUE) {
   ## Please note that the KGML parser fails if other XML parsers are loaded into R
-  ## eh = new.env(hash=TRUE, size=NA)
+  ## eh = new.env(hash = TRUE, size = NA)
   ## There is a weird namespace conflict when using pathview, so I will reload it here
   ## tmp <- sm(library(pathview)) ## I am not sure how else to avoid the error
   ## 'unable to load 'bods''
@@ -80,7 +80,7 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     for (sub_count in 1:length(from_list)) {
       my_from <- from_list[[sub_count]]
       my_to <- to_list[[sub_count]]
-      tmp_names <- gsub(pattern=my_from, replacement=my_to, x=tmp_names, perl=TRUE)
+      tmp_names <- gsub(pattern = my_from, replacement = my_to, x = tmp_names, perl = TRUE)
     }
     names(path_data) <- tmp_names
     rm(tmp_names)
@@ -97,7 +97,7 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
   if (pathway[1] == "all") {
     all_pathways <- unique(KEGGREST::keggLink("pathway", species))
     paths <- all_pathways
-    paths <- gsub(pattern="path:", replacement="", x=paths)
+    paths <- gsub(pattern = "path:", replacement = "", x = paths)
   } else {
     paths <- pathway
   }
@@ -109,10 +109,10 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     unique_pct_mapped <- 0
     path <- paths[[count]]
     canonical_path <- path
-    if (!grepl(pattern=glue("^{species}"), x=canonical_path)) {
+    if (!grepl(pattern = glue("^{species}"), x = canonical_path)) {
       canonical_path <- glue("{species}{path}")
     }
-    path_name <- try(KEGGREST::keggGet(canonical_path), silent=TRUE)
+    path_name <- try(KEGGREST::keggGet(canonical_path), silent = TRUE)
     if (class(path_name) == "try-error") {
       next
     }
@@ -121,15 +121,15 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     path_name <- tolower(path_name)
     path_name <- gsub(" ", "_", path_name)
     ## RCurl is crap and fails sometimes for no apparent reason.
-    gene_examples <- try(KEGGREST::keggLink(paste("path", canonical_path, sep=":"))[, 2])
-    ## limits=c(min(path_data, na.rm=TRUE), max(path_data, na.rm=TRUE))
-    limit_test <- c(abs(min(as.numeric(path_data), na.rm=TRUE)),
-                    abs(max(as.numeric(path_data), na.rm=TRUE)))
+    gene_examples <- try(KEGGREST::keggLink(paste("path", canonical_path, sep = ":"))[, 2])
+    ## limits = c(min(path_data, na.rm = TRUE), max(path_data, na.rm = TRUE))
+    limit_test <- c(abs(min(as.numeric(path_data), na.rm = TRUE)),
+                    abs(max(as.numeric(path_data), na.rm = TRUE)))
     limit_min <- -1.0 * max(limit_test)
     limit_max <- max(limit_test)
     limits <- c(limit_min, limit_max)
-    example_string <- gsub(pattern=glue("{species}:"), replacement="",
-                           x=toString(head(gene_examples)))
+    example_string <- gsub(pattern = glue("{species}:"), replacement = "",
+                           x = toString(head(gene_examples)))
     if (isTRUE(verbose)) {
       if (count < 4) {
         ## Test if we have overlaps
@@ -143,56 +143,56 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     if (format == "png") {
       ## In this invocation, include all the possible arguments for debugging.
       pv <- suppressWarnings(
-        try(pathview::pathview(gene.data=path_data,
-                               cpd.data=NULL,
-                               pathway.id=canonical_path,
-                               species=species,
-                               kegg.dir=indir,
-                               cpd.idtype="kegg",
-                               gene.idtype="KEGG",
-                               gene.annotpkg=NULL,
-                               min.nnodes=3,
-                               kegg.native=TRUE,
-                               map.null=TRUE,
-                               expand.node=FALSE, ## Was true
-                               split.group=FALSE,
-                               map.symbol=TRUE,
-                               map.cpdname=TRUE,
-                               node.sum="sum",
-                               discrete=list(gene=FALSE, cpd=FALSE),
-                               limit=list(gene=limits, cpd=limits),
-                               bins=list(gene=10, cpd=10),
-                               both.dirs=list(gene=TRUE, cpd=TRUE),
-                               trans.fun=list(gene=NULL, cpd=NULL),
-                               low=list(gene="green", cpd="blue"),
-                               mid=list(gene="gray", cpd="gray"),
-                               high=list(gene="red", cpd="yellow"),
-                               na.col="transparent",
-                               out.suffix=suffix,
-                               same.layer=FALSE,
-                               res=1200,
-                               new.signature=FALSE,
-                               cex=0.05,
-                               key.pos="topright")))
+        try(pathview::pathview(gene.data = path_data,
+                               cpd.data = NULL,
+                               pathway.id = canonical_path,
+                               species = species,
+                               kegg.dir = indir,
+                               cpd.idtype = "kegg",
+                               gene.idtype = "KEGG",
+                               gene.annotpkg = NULL,
+                               min.nnodes = 3,
+                               kegg.native = TRUE,
+                               map.null = TRUE,
+                               expand.node = FALSE, ## Was true
+                               split.group = FALSE,
+                               map.symbol = TRUE,
+                               map.cpdname = TRUE,
+                               node.sum = "sum",
+                               discrete = list(gene = FALSE, cpd = FALSE),
+                               limit = list(gene = limits, cpd = limits),
+                               bins = list(gene = 10, cpd = 10),
+                               both.dirs = list(gene = TRUE, cpd = TRUE),
+                               trans.fun = list(gene = NULL, cpd = NULL),
+                               low = list(gene = "green", cpd = "blue"),
+                               mid = list(gene = "gray", cpd = "gray"),
+                               high = list(gene = "red", cpd = "yellow"),
+                               na.col = "transparent",
+                               out.suffix = suffix,
+                               same.layer = FALSE,
+                               res = 1200,
+                               new.signature = FALSE,
+                               cex = 0.05,
+                               key.pos = "topright")))
     } else {
       pv <- suppressWarnings(
-        try(pathview::pathview(gene.data=path_data,
-                               kegg.dir=indir,
-                               pathway.id=canonical_path,
-                               species=species,
-                               limit=list(gene=limits, cpd=limits),
-                               map.null=TRUE,
-                               gene.idtype="KEGG",
-                               out.suffix=suffix,
-                               split.group=TRUE,
-                               expand.node=TRUE,
-                               kegg.native=FALSE,
-                               map.symbol=TRUE,
-                               same.layer=FALSE,
-                               res=1200,
-                               new.signature=FALSE,
-                               cex=0.05,
-                               key.pos="topright")))
+        try(pathview::pathview(gene.data = path_data,
+                               kegg.dir = indir,
+                               pathway.id = canonical_path,
+                               species = species,
+                               limit = list(gene = limits, cpd = limits),
+                               map.null = TRUE,
+                               gene.idtype = "KEGG",
+                               out.suffix = suffix,
+                               split.group = TRUE,
+                               expand.node = TRUE,
+                               kegg.native = FALSE,
+                               map.symbol = TRUE,
+                               same.layer = FALSE,
+                               res = 1200,
+                               new.signature = FALSE,
+                               cex = 0.05,
+                               key.pos = "topright")))
     }
     if (class(pv) == "numeric") {
       warning(glue("There was a failure for: {canonical_path}."))
@@ -213,13 +213,13 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
       newfile <- NULL
       if (filenames == "id") {
         newfile <- file.path(outdir, glue::glue("{path}{suffix}{filetype}"))
-        ##newfile <- paste(outdir, "/", path, suffix, filetype, sep="")
+        ##newfile <- paste(outdir, "/", path, suffix, filetype, sep = "")
       } else {
         ## If filenames is not 'id', put in the path name...
-        ##newfile <- paste(outdir, "/", path_name, suffix, filetype, sep="")
+        ##newfile <- paste(outdir, "/", path_name, suffix, filetype, sep = "")
         newfile <- file.path(outdir, glue::glue("{path_name}{suffix}{filetype}"))
       }
-      rename_try <- try(file.rename(from=oldfile, to=newfile), silent=TRUE)
+      rename_try <- try(file.rename(from = oldfile, to = newfile), silent = TRUE)
       if (class(rename_try)[1] == "try-error") {
         warning("There was an error renaming the png, ",
                 "likely because it didn't download properly.")
@@ -233,15 +233,15 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
       total_mapped <- pathway_data[["all.mapped"]] != ""
       total_pct_mapped <- signif(mean(total_mapped) * 100.0, 4)
       unique_pathway <- pathway_data
-      rownames(unique_pathway) <- make.names(unique_pathway[["kegg.names"]], unique=TRUE)
+      rownames(unique_pathway) <- make.names(unique_pathway[["kegg.names"]], unique = TRUE)
       unique_path_genes <- make.names(unique(unique_pathway[["kegg.names"]]))
       unique_pathway <- unique_pathway[unique_path_genes, ]
       unique_mapped <- unique_pathway[["all.mapped"]] != ""
       unique_pct_mapped <- signif(mean(unique_mapped) * 100.0, 4)
 
       numbers_in_plot <- as.numeric(pv[["plot.data.gene"]][["mol.data"]])
-      up <- sum(numbers_in_plot >= data_high, na.rm=TRUE)
-      down <- sum(numbers_in_plot < data_low, na.rm=TRUE)
+      up <- sum(numbers_in_plot >= data_high, na.rm = TRUE)
+      down <- sum(numbers_in_plot < data_low, na.rm = TRUE)
 
     }
     return_list[[path]][["file"]] <- newfile
@@ -276,17 +276,17 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
     } else {
       retdf[path, "genes"] <- as.numeric(return_list[[path]][["genes"]])
     }
-    retdf[path, "file"] <- try(as.character(return_list[[path]][["file"]]), silent=TRUE)
-    retdf[path, "up"] <- try(as.numeric(return_list[[path]][["up"]]), silent=TRUE)
-    retdf[path, "down"] <- try(as.numeric(return_list[[path]][["down"]]), silent=TRUE)
+    retdf[path, "file"] <- try(as.character(return_list[[path]][["file"]]), silent = TRUE)
+    retdf[path, "up"] <- try(as.numeric(return_list[[path]][["up"]]), silent = TRUE)
+    retdf[path, "down"] <- try(as.numeric(return_list[[path]][["down"]]), silent = TRUE)
     retdf[path, "total_mapped_nodes"] <- try(
-      as.numeric(return_list[[path]][["total_mapped_nodes"]]), silent=TRUE)
+      as.numeric(return_list[[path]][["total_mapped_nodes"]]), silent = TRUE)
     retdf[path, "total_mapped_pct"] <- try(
-      as.numeric(return_list[[path]][["total_mapped_pct"]]), silent=TRUE)
+      as.numeric(return_list[[path]][["total_mapped_pct"]]), silent = TRUE)
     retdf[path, "unique_mapped_nodes"] <- try(
-      as.numeric(return_list[[path]][["unique_mapped_nodes"]]), silent=TRUE)
+      as.numeric(return_list[[path]][["unique_mapped_nodes"]]), silent = TRUE)
     retdf[path, "unique_mapped_pct"] <- try(
-      as.numeric(return_list[[path]][["unique_mapped_pct"]]), silent=TRUE)
+      as.numeric(return_list[[path]][["unique_mapped_pct"]]), silent = TRUE)
   }
   retdf <- retdf[with(retdf, order(up, down)), ]
   return(retdf)
@@ -307,11 +307,11 @@ simple_pathview <- function(path_data, indir="pathview_in", outdir="pathview",
 #' @seealso \pkg{KEGGREST}
 #' @examples
 #' \dontrun{
-#'  kegg_info <- get_kegg_genes(species="Canis familiaris")
+#'  kegg_info <- get_kegg_genes(species = "Canis familiaris")
 #' }
 #' @export
-get_kegg_genes <- function(pathway="all", abbreviation=NULL,
-                           species="leishmania major", savefile=NULL) {
+get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
+                           species = "leishmania major", savefile = NULL) {
   if (is.null(abbreviation) & is.null(species)) {
     stop("This requires either a species or 3 letter kegg id.")
   } else if (is.null(abbreviation)) {
@@ -321,13 +321,13 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
   }
 
   result <- NULL
-  species <- gsub(pattern=" ", replacement="_", x=as.character(species))
+  species <- gsub(pattern = " ", replacement = "_", x = as.character(species))
   savefile <- glue("kegg_{species}.rda.xz")
   kegg_data <- NULL
   if (file.exists(savefile)) {
     message("Reading from the savefile, delete ", savefile, " to regenerate.")
     result <- new.env()
-    load(savefile, envir=result)
+    load(savefile, envir = result)
     result <- result[["result"]]
   } else {
     paths <- list()
@@ -359,8 +359,8 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
       kegg_name <- tolower(kegg_name)
       kegg_name <- gsub(" ", "_", kegg_name)
       ## RCurl is crap and fails sometimes for no apparent reason.
-      kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep=":"))[, 2])
-      kegg_geneids <- gsub(pattern="^.*:", replacement="", x=kegg_geneids)
+      kegg_geneids <- try(KEGGREST::keggLink(paste("path", path, sep = ":"))[, 2])
+      kegg_geneids <- gsub(pattern = "^.*:", replacement = "", x = kegg_geneids)
       kegg_subst <- get_kegg_sub(abbreviation)
       tritryp_geneids <- kegg_geneids
       total_genes <- total_genes + length(kegg_geneids)
@@ -369,8 +369,8 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
       message(count, "/", length(paths), ": Working on path: ",
               path, " which has ", length(kegg_geneids), " genes.")
       for (r in 1:length(kegg_subst[["patterns"]])) {
-        tritryp_geneids <- gsub(pattern=patterns[r], replacement=replaces[r],
-                                x=tritryp_geneids)
+        tritryp_geneids <- gsub(pattern = patterns[r], replacement = replaces[r],
+                                x = tritryp_geneids)
       }
 
       for (s in 1:length(tritryp_geneids)) {
@@ -383,7 +383,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
       }
     } ## End iterating over pathways
     message("Total genes observed: ", total_genes)
-    save(result, file=savefile)
+    save(result, file = savefile)
   }
   return(result)
 }
@@ -399,7 +399,7 @@ get_kegg_genes <- function(pathway="all", abbreviation=NULL,
 #'   gsub(), order matters!
 #' @seealso \pkg{KEGGREST}
 #' @export
-get_kegg_sub <- function(species="lma") {
+get_kegg_sub <- function(species = "lma") {
   patterns <- c()
   replaces <- c()
   if (species == "lma") {
@@ -428,22 +428,22 @@ get_kegg_sub <- function(species="lma") {
 #' @return Results from hyperGTest using the KEGG pathways.
 #' @seealso \pkg{AnnotationDbi} \pkg{GSEABase} \pkg{Category}
 #' @export
-gostats_kegg <- function(organism="Homo sapiens",
-                         pathdb="org.Hs.egPATH", godb="org.Hs.egGO") {
+gostats_kegg <- function(organism = "Homo sapiens",
+                         pathdb = "org.Hs.egPATH", godb = "org.Hs.egGO") {
   org <- get0(pathdb)
   org_go <- get0(godb)
   frame <- AnnotationDbi::toTable(org)
   keggframedata <- data.frame(frame[["path_id"]], frame[["gene_id"]])
-  keggFrame <- AnnotationDbi::KEGGFrame(keggframedata, organism=organism)
-  gsc <- GSEABase::GeneSetCollection(keggFrame, setType=GSEABase::KEGGCollection())
+  keggFrame <- AnnotationDbi::KEGGFrame(keggframedata, organism = organism)
+  gsc <- GSEABase::GeneSetCollection(keggFrame, setType = GSEABase::KEGGCollection())
   universe <- AnnotationDbi::Lkeys(org_go)
   genes <- universe[1:500]
-  kparams <- Category::GSEAKEGGHyperGParams(name="My Custom GSEA based annot Params",
-                                            geneSetCollection=gsc,
-                                            geneIds=genes,
-                                            universeGeneIds=universe,
-                                            pvalueCutoff=0.05,
-                                            testDirection="over")
+  kparams <- Category::GSEAKEGGHyperGParams(name = "My Custom GSEA based annot Params",
+                                            geneSetCollection = gsc,
+                                            geneIds = genes,
+                                            universeGeneIds = universe,
+                                            pvalueCutoff = 0.05,
+                                            testDirection = "over")
   kOver <- Category::hyperGTest(kparams)
   return(kOver)
 }
@@ -466,10 +466,10 @@ gostats_kegg <- function(organism="Homo sapiens",
 #'  ## >  17 T01007   cfa Canis familiaris (dog) Eukaryotes;Animals;Vertebrates;Mammals
 #' }
 #' @export
-get_kegg_orgn <- function(species="Leishmania", short=TRUE) {
+get_kegg_orgn <- function(species = "Leishmania", short = TRUE) {
   all_organisms <- RCurl::getURL("http://rest.kegg.jp/list/organism")
   org_tsv <- textConnection(all_organisms)
-  all <- read.table(org_tsv, sep="\t", quote="", fill=TRUE)
+  all <- read.table(org_tsv, sep = "\t", quote = "", fill = TRUE)
   close(org_tsv)
   colnames(all) <- c("Tid", "orgid", "species", "phylogeny")
   ## Look for the search string in the species column
@@ -497,8 +497,8 @@ get_kegg_orgn <- function(species="Leishmania", short=TRUE) {
 #'   differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
-pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
-                         pathdir="kegg_pathways", verbose=FALSE, ...) {
+pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
+                         pathdir = "kegg_pathways", verbose = FALSE, ...) {
   arglist <- list(...)
   if (!file.exists(pathdir)) {
     dir.create(pathdir)
@@ -531,7 +531,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
   last_path <- length(paths)
   for (count in 1:length(paths)) {
     path <- paths[count]
-    path_name <- try(KEGGREST::keggGet(path), silent=TRUE)
+    path_name <- try(KEGGREST::keggGet(path), silent = TRUE)
     if (class(path_name) == "try-error") {
       path_ids[count] <- NA
       path_names[count] <- NA
@@ -550,11 +550,11 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
       path_names[count] <- path_name
       message("Extracting data for ", path, ": ", path_name, ".")
       if (isTRUE(verbose)) {
-        pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
-                                     pathdir=pathdir))
+        pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway = path, organism = organism,
+                                     pathdir = pathdir))
       } else {
-        pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway=path, organism=organism,
-                                     pathdir=pathdir))
+        pct_diff <- sm(pct_kegg_diff(all_ids, sig_ids, pathway = path, organism = organism,
+                                     pathdir = pathdir))
       }
       path_ids[count] <- path
       filenames[count] <- pct_diff[["filename"]]
@@ -582,23 +582,23 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
       "path_edges" = path_edges[[c]],
       "diff_edges" = diff_edges[[c]])
     ## Remove c(
-    a_row <- gsub(pattern="c\\(", replacement="", x=a_row)
+    a_row <- gsub(pattern = "c\\(", replacement = "", x = a_row)
     ## Remove ),
-    a_row <- gsub(pattern="\\),", replacement="", x=a_row)
+    a_row <- gsub(pattern = "\\),", replacement = "", x = a_row)
     ## Remove "
-    a_row <- gsub(pattern="\"", replacement="", x=a_row)
+    a_row <- gsub(pattern = "\"", replacement = "", x = a_row)
     ## Remove )
-    a_row <- gsub(pattern="\\)", replacement="", x=a_row)
+    a_row <- gsub(pattern = "\\)", replacement = "", x = a_row)
     ## Remove character(0
-    a_row <- gsub(pattern="character\\(0", replacement="", x=a_row)
+    a_row <- gsub(pattern = "character\\(0", replacement = "", x = a_row)
     ## Remove xxx: where xxx is the species abbreviation
-    a_row <- gsub(pattern=glue("{organism}:"), replacement="", x=a_row)
+    a_row <- gsub(pattern = glue("{organism}:"), replacement = "", x = a_row)
     ## Remove all commas
-    a_row <- gsub(pattern="\\,", replacement="", x=a_row)
+    a_row <- gsub(pattern = "\\,", replacement = "", x = a_row)
     ## Remove \n's
-    a_row <- gsub(pattern="\\\n", replacement="", x=a_row)
+    a_row <- gsub(pattern = "\\\n", replacement = "", x = a_row)
     ## Get rid of excess space
-    a_row <- gsub(pattern=" +", replacement=" ", x=a_row)
+    a_row <- gsub(pattern = " +", replacement = " ", x = a_row)
     for (k in 1:length(a_row)) {
       a_row[[k]] <- toString(a_row[[k]])
     }
@@ -635,15 +635,15 @@ pct_all_kegg <- function(all_ids, sig_ids, organism="dme", pathways="all",
 #' @return Percent genes/pathway deemed significant.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
-pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
-                          organism="dme", pathdir="kegg_pathways", ...) {
+pct_kegg_diff <- function(all_ids, sig_ids, pathway = "00500",
+                          organism = "dme", pathdir = "kegg_pathways", ...) {
   ## warning("This function may not work, it seems to be missing some genes.")
   arglist <- list(...)
   if (!file.exists(pathdir)) {
     dir.create(pathdir)
   }
-  pathway <- gsub(pattern=organism, replacement="", x=pathway)
-  pathway <- gsub(pattern="path:", replacement="", x=pathway)
+  pathway <- gsub(pattern = organism, replacement = "", x = pathway)
+  pathway <- gsub(pattern = "path:", replacement = "", x = pathway)
   filename <- file.path(pathdir, glue::glue("{organism}{pathway}.xml"))
   pathwayid <- glue::glue("{organism}{pathway}")
   retrieved <- NULL
@@ -651,8 +651,8 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
     message("The file already exists, loading from it.")
     retrieved <- filename
   } else {
-    retrieved <- try(myretrieveKGML(pathway, organism=organism,
-                                    destfile=filename))
+    retrieved <- try(myretrieveKGML(pathway, organism = organism,
+                                    destfile = filename))
     if (class(retrieved) == "try-error") {
       retlist <- list(
         "pathway" = pathway,
@@ -666,15 +666,15 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
       return(retlist)
     }
   }
-  parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+  parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes = TRUE))
   if (class(parse_result) == "try-error") {
-    if (grepl(pattern="Document is empty", x=parse_result[[1]])) {
+    if (grepl(pattern = "Document is empty", x = parse_result[[1]])) {
       message("Deleting the empty file and trying again.")
       file.remove(filename)
-      retrieved <- try(myretrieveKGML(pathway, organism=organism,
-                                      destfile=filename,
-                                      quiet=TRUE))
-      parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes=TRUE))
+      retrieved <- try(myretrieveKGML(pathway, organism = organism,
+                                      destfile = filename,
+                                      quiet = TRUE))
+      parse_result <- try(KEGGgraph::parseKGML2Graph(filename, expandGenes = TRUE))
       if (class(parse_result) == "try-error") {
         retlist <- list(
           "pathway" = pathway,
@@ -687,7 +687,7 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
           "diff_edges" = NULL)
         return(retlist)
       }
-    } else if (grepl(pattern="Start tag expected", x=parse_result[[1]])) {
+    } else if (grepl(pattern = "Start tag expected", x = parse_result[[1]])) {
       message("This pathway does not have a complete specification.")
       retlist <- list(
         "pathway" = pathway,
@@ -702,8 +702,8 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
     }
   }
 
-  all_keggids <- KEGGgraph::translateGeneID2KEGGID(all_ids, organism=organism)
-  de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism=organism)
+  all_keggids <- KEGGgraph::translateGeneID2KEGGID(all_ids, organism = organism)
+  de_keggids <- KEGGgraph::translateGeneID2KEGGID(sig_ids, organism = organism)
 
   possible_nodes <- KEGGgraph::nodes(parse_result)
   node_is_differential <- possible_nodes %in% de_keggids
@@ -745,11 +745,11 @@ pct_kegg_diff <- function(all_ids, sig_ids, pathway="00500",
 #' @param hostname Host to download from (this is what is broken.)
 #' @param ...  Arglist!
 #' @export
-myretrieveKGML <- function(pathway, organism, destfile, silent=TRUE,
-                           hostname="http://www.kegg.jp", ...) {
-  kgml <- mygetKGMLurl(pathwayid=pathway, organism=organism, hostname=hostname)
+myretrieveKGML <- function(pathway, organism, destfile, silent = TRUE,
+                           hostname = "http://www.kegg.jp", ...) {
+  kgml <- mygetKGMLurl(pathwayid = pathway, organism = organism, hostname = hostname)
   referer <- glue::glue("{hostname}/kegg-bin/show_pathway?org_name={organism}&mapno=\\
-                     {pathway}&mapscale=&show_description=hide")
+                     {pathway}&mapscale=&show_description = hide")
   cmdline <- glue::glue("wget --header={shQuote('Accept: text/html')} \\
 --user-agent={shQuote('Mozilla/5.0 (X11; Linux x86_64; \\
 rv:45.0) Gecko/20100101 Firefox/45.0')} \\
@@ -762,12 +762,12 @@ rv:45.0) Gecko/20100101 Firefox/45.0')} \\
   return(invisible(kgml))
 }
 
-mygetKGMLurl <- function(pathwayid, organism="hsa", hostname="http://www.kegg.jp", ...) {
+mygetKGMLurl <- function(pathwayid, organism = "hsa", hostname = "http://www.kegg.jp", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["hostname"]])) {
     hostname <- arglist[["hostname"]]
   }
-  baseurl <- glue("{hostname}/kegg-bin/download?entry=%s%s&format=kgml")
+  baseurl <- glue("{hostname}/kegg-bin/download?entry=%s%s&format = kgml")
   pathwayid <- gsub("path", "", pathwayid)
   pathwayid <- gsub(":", "", pathwayid)
   pco <- grepl("^[a-z][a-z][a-z]", pathwayid)

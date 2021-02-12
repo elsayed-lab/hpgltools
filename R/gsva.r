@@ -1,10 +1,25 @@
-convert_ids <- function(ids, from="ENSEMBL", to="ENTREZID", orgdb="org.Hs.eg.db") {
+## gsva.r: Some methods to simplify tools in the GSVA realm.
+
+#' GSVA expects Entrez IDs, but we usually have Ensembl IDs.  Use this to
+#' convert them.
+#'
+#' There is a non-zero chance that I have at least one other similar
+#' implementation hiding in this package.  This should be made more consistent,
+#' but this particular function provides a quick and easy way to make sure that
+#' GSVA has the gene IDs that it wants.
+#'
+#' @param ids Set of gene IDs in the 'from' format.
+#' @param from Name of the ID type as found in the 'orgdb'.
+#' @param to Format required by GSVA (or other tool/method if so desired).
+#' @param orgdb AnnotationDBI package containing the various IDs.
+#' @return Spit out a list of new IDs and a message telling how successful we were.
+convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.eg.db") {
   lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
-  new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                      keys=ids,
-                                      keytype=current_id,
-                                      columns=c(required_id)))
+  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
+  new_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                      keys = ids,
+                                      keytype = current_id,
+                                      columns = c(required_id)))
   new_idx <- complete.cases(new_ids)
   new_ids <- new_ids[new_idx, ]
   message("Before conversion, the expressionset has ", length(ids),
@@ -15,20 +30,35 @@ convert_ids <- function(ids, from="ENSEMBL", to="ENTREZID", orgdb="org.Hs.eg.db"
   return(new_ids)
 }
 
-load_gmt_signatures <- function(signatures="c2BroadSets", data_pkg="GSVAdata",
-                                signature_category="c2") {
+#' Extract particular gene sets from either gmt files or GSVA data.
+#'
+#' This could be extended to pull in the XML files from MSigDB as well.  In its
+#' current form it seeks to fill in the likely corners when looking to extract
+#' the signatures from either GSVA or manually downloaded gmt files from the
+#' MSigDB.
+#'
+#' @param signatures Potentially a filename or variable name.  If it is a
+#'  filename, it should be a locally downloaded gmt file, otherwise it should be
+#'  a variable from 'data_pkg'.
+#' @param data_pkg Most likely GSVAdata, but not necessarily.
+#' @param signature_category Choose a specific category from the
+#'  gmt/xml/database.
+#' @return gene set collection!
+#' @export
+load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata",
+                                signature_category = "c2") {
   sig_data <- NULL
-  if (class(signatures)[1] == "character" && grepl(pattern="\\.gmt$", x=signatures)) {
+  if (class(signatures)[1] == "character" && grepl(pattern = "\\.gmt$", x = signatures)) {
     sig_data <- GSEABase::getGmt(signatures,
-                                 collectionType=GSEABase::BroadCollection(category=signature_category),
-                                 geneIdType=GSEABase::EntrezIdentifier())
-  } else if (class(signatures)[1] == "character" && grepl(pattern="\\.xml$", x=signatures)) {
+                                 collectionType = GSEABase::BroadCollection(category = signature_category),
+                                 geneIdType = GSEABase::EntrezIdentifier())
+  } else if (class(signatures)[1] == "character" && grepl(pattern = "\\.xml$", x = signatures)) {
     gsc <- GSEABase::getBroadSets(signatures)
     types <- sapply(gsc, function(elt) GSEABase::bcCategory(GSEABase::collectionType(elt)))
     sig_data <- gsc[types == signature_category]
   } else if (class(signatures)[1] == "character") {
     lib_result <- sm(requireNamespace(data_pkg))
-    att_result <- sm(try(attachNamespace(data_pkg), silent=TRUE))
+    att_result <- sm(try(attachNamespace(data_pkg), silent = TRUE))
     lst <- list("list" = signatures, "package" = data_pkg)
     test <- do.call("data", as.list(signatures, lst))
     sig_data <- get0(signatures)
@@ -60,10 +90,10 @@ load_gmt_signatures <- function(signatures="c2BroadSets", data_pkg="GSVAdata",
 #' @param required_id What type of ID should the use?
 #' @return Small list comprised of the created gene set collection(s).
 #' @export
-make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
-                              researcher_name="elsayed", study_name="macrophage",
-                              category_name="infection", phenotype_name=NULL,
-                              pair_names="up", current_id="ENSEMBL", required_id="ENTREZID") {
+make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
+                              researcher_name = "elsayed", study_name = "macrophage",
+                              category_name = "infection", phenotype_name = NULL,
+                              pair_names = "up", current_id = "ENSEMBL", required_id = "ENTREZID") {
   first <- NULL
   second <- NULL
   if (is.null(current_id) | is.null(required_id)) {
@@ -77,21 +107,21 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     second <- second_ids
   } else {
     message("Converting the rownames() of the expressionset to ENTREZID.")
-    ## tt <- sm(try(do.call("library", as.list(orgdb)), silent=TRUE))
+    ## tt <- sm(try(do.call("library", as.list(orgdb)), silent = TRUE))
     lib_result <- sm(requireNamespace(orgdb))
-    att_restul <- sm(try(attachNamespace(orgdb), silent=TRUE))
-    first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                          keys=first_ids,
-                                          keytype=current_id,
-                                          columns=c(required_id)))
+    att_restul <- sm(try(attachNamespace(orgdb), silent = TRUE))
+    first_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                          keys = first_ids,
+                                          keytype = current_id,
+                                          columns = c(required_id)))
     first_idx <- complete.cases(first_ids)
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
     if (!is.null(second_ids)) {
-      second_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                             keys=second_ids,
-                                             keytype=current_id,
-                                             columns=c(required_id)))
+      second_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                             keys = second_ids,
+                                             keytype = current_id,
+                                             columns = c(required_id)))
       second_idx <- complete.cases(second_ids)
       second_ids <- second_ids[second_idx, ]
       second <- second_ids[[required_id]]
@@ -102,7 +132,7 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 
   all_colored <- NULL
   sec_gsc <- NULL
-  fst <- data.frame(row.names=unique(first))
+  fst <- data.frame(row.names = unique(first))
   if (is.null(phenotype_name)) {
     phenotype_name <- "unknown"
   }
@@ -113,10 +143,10 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
   fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
   fst_gsc <- GSEABase::GeneSet(
                          GSEABase::EntrezIdentifier(),
-                         setName=fst_name,
-                         geneIds=as.character(rownames(fst)))
+                         setName = fst_name,
+                         geneIds = as.character(rownames(fst)))
   if (!is.null(second)) {
-    sec <- data.frame(row.names=unique(second))
+    sec <- data.frame(row.names = unique(second))
     if (is.null(phenotype_name)) {
       phenotype_name <- "unknown"
     }
@@ -132,15 +162,15 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     color_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
     sec_gsc <- GSEABase::GeneSet(
                            GSEABase::EntrezIdentifier(),
-                           setName=sec_name,
-                           geneIds=as.character(rownames(sec)))
+                           setName = sec_name,
+                           geneIds = as.character(rownames(sec)))
     all_colored = GSEABase::GeneColorSet(
                               GSEABase::EntrezIdentifier(),
-                              setName=color_name,
-                              geneIds=rownames(both),
-                              phenotype=phenotype_name,
-                              geneColor=as.factor(both[["direction"]]),
-                              phenotypeColor=as.factor(both[["phenotype"]]))
+                              setName = color_name,
+                              geneIds = rownames(both),
+                              phenotype = phenotype_name,
+                              geneColor = as.factor(both[["direction"]]),
+                              phenotypeColor = as.factor(both[["phenotype"]]))
   }
   retlst <- list()
   retlst[[fst_name]] <- fst_gsc
@@ -173,10 +203,10 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
 #' @return List containing 3 GSCs, one containing both the ups/downs called
 #'  'colored', one of the ups, and one of the downs.
 #' @export
-make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
-                                   pair_names=c("ups", "downs"), category_name="infection",
-                                   phenotype_name="parasite", set_name="elsayed_macrophage",
-                                   color=TRUE, current_id="ENSEMBL", required_id="ENTREZID",
+make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
+                                   pair_names = c("ups", "downs"), category_name = "infection",
+                                   phenotype_name = "parasite", set_name = "elsayed_macrophage",
+                                   color = TRUE, current_id = "ENSEMBL", required_id = "ENTREZID",
                                    ...) {
   ups <- list()
   downs <- list()
@@ -188,14 +218,14 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     message("Invoking extract_significant_genes().")
     updown <- sm(extract_significant_genes(
       combined,
-      according_to=according_to, ...)[[according_to]])
+      according_to = according_to, ...)[[according_to]])
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "combined_de") {
     message("Invoking extract_significant_genes().")
     updown <- sm(extract_significant_genes(
       pairwise,
-      according_to=according_to,
+      according_to = according_to,
       ...)[[according_to]])
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
@@ -204,19 +234,19 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "character") {
     message("Invoking make_gsc_from_ids().")
-    ret <- make_gsc_from_ids(pairwise, orgdb=orgdb,
-                             pair_names=pair_names, category_name=category_name,
-                             phenotype_name=phenotype_name, current_id=current_id,
-                             required_id=required_id, ...)
+    ret <- make_gsc_from_ids(pairwise, orgdb = orgdb,
+                             pair_names = pair_names, category_name = category_name,
+                             phenotype_name = phenotype_name, current_id = current_id,
+                             required_id = required_id, ...)
     return(ret)
   } else {
     stop("I do not understand this type of input.")
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  ## tt <- sm(library(orgdb, character.only=TRUE))
+  ## tt <- sm(library(orgdb, character.only = TRUE))
   lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
   up_lst <- list()
   down_lst <- list()
   colored_lst <- list()
@@ -236,21 +266,21 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
       down[[required_id]] <- rownames(down)
     } else {
       message("Converting the rownames() of the expressionset to ENTREZID.")
-      up_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                         keys=up_ids,
-                                         keytype=current_id,
-                                         columns=c(required_id)))
+      up_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                         keys = up_ids,
+                                         keytype = current_id,
+                                         columns = c(required_id)))
       up_idx <- complete.cases(up_ids)
       up_ids <- up_ids[up_idx, ]
-      up <- merge(up, up_ids, by.x="row.names", by.y=current_id)
+      up <- merge(up, up_ids, by.x = "row.names", by.y = current_id)
       if (!is.null(down_ids)) {
-        down_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                             keys=down_ids,
-                                             keytype=current_id,
-                                             columns=c(required_id)))
+        down_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                             keys = down_ids,
+                                             keytype = current_id,
+                                             columns = c(required_id)))
         down_idx <- complete.cases(down_ids)
         down_ids <- down_ids[down_idx, ]
-        down <- merge(down, down_ids, by.x="row.names", by.y=current_id)
+        down <- merge(down, down_ids, by.x = "row.names", by.y = current_id)
       } else {
         down <- NULL
       }
@@ -293,16 +323,16 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
     up_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
-                               setName=color_set_name,
-                               geneIds=as.character(both[[required_id]]),
-                               phenotype=phenotype_name,
-                               geneColor=as.factor(both[["direction"]]),
-                               phenotypeColor=as.factor(both[["phenotype"]]))
+                               setName = color_set_name,
+                               geneIds = as.character(both[[required_id]]),
+                               phenotype = phenotype_name,
+                               geneColor = as.factor(both[["direction"]]),
+                               phenotypeColor = as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
     up_gsc <- GSEABase::GeneSet(
                           GSEABase::EntrezIdentifier(),
-                          setName=up_name,
-                          geneIds=as.character(up[[required_id]]))
+                          setName = up_name,
+                          geneIds = as.character(up[[required_id]]))
     up_lst[[name]] <- up_gsc
     down_gsc <- NULL
     down_lst[[name]] <- down_gsc
@@ -310,8 +340,8 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
       down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       down_gsc <- GSEABase::GeneSet(
                               GSEABase::EntrezIdentifier(),
-                              setName=down_name,
-                              geneIds=as.character(down[[required_id]]))
+                              setName = down_name,
+                              geneIds = as.character(down[[required_id]]))
       down_lst[[name]] <- down_gsc
     }
   } ## End of the for loop.
@@ -343,11 +373,11 @@ make_gsc_from_pairwise <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #' @return List containing 3 GSCs, one containing both the highs/lows called
 #'  'colored', one of the highs, and one of the lows.
 #' @export
-make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs.eg.db",
-                                   researcher_name="elsayed", study_name="macrophage",
-                                   category_name="infection", phenotype_name=NULL,
-                                   pair_names="high", current_id="ENSEMBL",
-                                   required_id="ENTREZID", ...) {
+make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
+                                   researcher_name = "elsayed", study_name = "macrophage",
+                                   category_name = "infection", phenotype_name = NULL,
+                                   pair_names = "high", current_id = "ENSEMBL",
+                                   required_id = "ENTREZID", ...) {
   highs <- list()
   lows <- list()
   if (class(pairwise)[1] == "data.frame") {
@@ -357,30 +387,30 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     combined <- sm(combine_de_tables(pairwise, ...))
     message("Invoking extract_significant_genes().")
     highs <- sm(extract_abundant_genes(
-      combined, according_to=according_to, ...)[[according_to]])
+      combined, according_to = according_to, ...)[[according_to]])
     lows <- sm(extract_abundant_genes(
-      combined, according_to=according_to, least=TRUE, ...)[[according_to]])
+      combined, according_to = according_to, least = TRUE, ...)[[according_to]])
   } else if (class(pairwise)[1] == "combined_de") {
     message("Invoking extract_significant_genes().")
     highs <- sm(extract_abundant_genes(
-      pairwise, according_to=according_to, ...)[[according_to]])
+      pairwise, according_to = according_to, ...)[[according_to]])
     lows <- sm(extract_abundant_genes(
-      pairwise, according_to=according_to, least=TRUE, ...)[[according_to]])
+      pairwise, according_to = according_to, least = TRUE, ...)[[according_to]])
   } else if (class(pairwise)[1] == "character") {
     message("Invoking make_gsc_from_ids().")
-    ret <- make_gsc_from_ids(pairwise, orgdb=orgdb,
-                             pair_names=pair_names, category_name=category_name,
-                             phenotype_name=phenotype_name,
-                             current_id=current_id, required_id=required_id, ...)
+    ret <- make_gsc_from_ids(pairwise, orgdb = orgdb,
+                             pair_names = pair_names, category_name = category_name,
+                             phenotype_name = phenotype_name,
+                             current_id = current_id, required_id = required_id, ...)
     return(ret)
   } else {
     stop("I do not understand this type of input.")
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  ## tt <- sm(library(orgdb, character.only=TRUE))
+  ## tt <- sm(library(orgdb, character.only = TRUE))
   lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
   high_lst <- list()
   low_lst <- list()
   colored_lst <- list()
@@ -400,21 +430,21 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
       low[[required_id]] <- rownames(low)
     } else {
       message("Converting the rownames() of the expressionset to ENTREZID.")
-      high_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                           keys=high_ids,
-                                           keytype=current_id,
-                                           columns=c(required_id)))
+      high_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                           keys = high_ids,
+                                           keytype = current_id,
+                                           columns = c(required_id)))
       high_idx <- complete.cases(high_ids)
       high_ids <- high_ids[high_idx, ]
-      high <- merge(high, high_ids, by.x="row.names", by.y=current_id)
+      high <- merge(high, high_ids, by.x = "row.names", by.y = current_id)
       if (!is.null(low_ids)) {
-        low_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                            keys=low_ids,
-                                            keytype=current_id,
-                                            columns=c(required_id)))
+        low_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                            keys = low_ids,
+                                            keytype = current_id,
+                                            columns = c(required_id)))
         low_idx <- complete.cases(low_ids)
         low_ids <- low_ids[low_idx, ]
-        low <- merge(low, low_ids, by.x="row.names", by.y=current_id)
+        low <- merge(low, low_ids, by.x = "row.names", by.y = current_id)
       } else {
         low <- NULL
       }
@@ -457,16 +487,16 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
     high_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     colored_gsc <- GSEABase::GeneColorSet(
                                GSEABase::EntrezIdentifier(),
-                               setName=color_set_name,
-                               geneIds=as.character(both[[required_id]]),
-                               phenotype=phenotype_name,
-                               geneColor=as.factor(both[["direction"]]),
-                               phenotypeColor=as.factor(both[["phenotype"]]))
+                               setName = color_set_name,
+                               geneIds = as.character(both[[required_id]]),
+                               phenotype = phenotype_name,
+                               geneColor = as.factor(both[["direction"]]),
+                               phenotypeColor = as.factor(both[["phenotype"]]))
     colored_lst[[name]] <- colored_gsc
     high_gsc <- GSEABase::GeneSet(
                             GSEABase::EntrezIdentifier(),
-                            setName=high_name,
-                            geneIds=as.character(high[[required_id]]))
+                            setName = high_name,
+                            geneIds = as.character(high[[required_id]]))
     high_lst[[name]] <- high_gsc
     low_gsc <- NULL
     low_lst[[name]] <- low_gsc
@@ -474,8 +504,8 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
       low_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
       low_gsc <- GSEABase::GeneSet(
                              GSEABase::EntrezIdentifier(),
-                             setName=low_name,
-                             geneIds=as.character(low[[required_id]]))
+                             setName = low_name,
+                             geneIds = as.character(low[[required_id]]))
       low_lst[[name]] <- low_gsc
     }
   } ## End of the for loop.
@@ -515,10 +545,10 @@ make_gsc_from_abundant <- function(pairwise, according_to="deseq", orgdb="org.Hs
 #'  gene sets in the expressionset.  This seems a bit redundant, perhaps I
 #'  should revisit it?
 #' @export
-simple_gsva <- function(expt, signatures="c2BroadSets", data_pkg="GSVAdata", signature_category="c2",
-                        cores=1, current_id="ENSEMBL", required_id="ENTREZID",
-                        min_catsize=5, orgdb="org.Hs.eg.db", method="ssgsea",
-                        kcdf=NULL, ranking=FALSE) {
+simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata", signature_category = "c2",
+                        cores = 1, current_id = "ENSEMBL", required_id = "ENTREZID",
+                        min_catsize = 5, orgdb = "org.Hs.eg.db", method = "ssgsea",
+                        kcdf = NULL, ranking = FALSE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -537,14 +567,14 @@ simple_gsva <- function(expt, signatures="c2BroadSets", data_pkg="GSVAdata", sig
   if (is.null(signature_category)) {
     signature_category <- "c2"
   }
-  sig_data <- load_gmt_signatures(signatures=signatures, data_pkg=data_pkg,
-                                  signature_category=signature_category)
+  sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
+                                  signature_category = signature_category)
 
   ## The expressionset must have the annotation field filled in for gsva to
   ## work.
   eset <- expt[["expressionset"]]
   eset_annotation <- annotation(eset)
-  eset_pattern <- grepl(pattern="Fill me in", x=annotation(eset))
+  eset_pattern <- grepl(pattern = "Fill me in", x = annotation(eset))
   if (length(eset_annotation) == 0 | isTRUE(eset_pattern)) {
     message("gsva requires the annotation field to be filled in.")
     annotation(eset) <- orgdb
@@ -553,32 +583,32 @@ simple_gsva <- function(expt, signatures="c2BroadSets", data_pkg="GSVAdata", sig
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
   if (current_id != required_id) {
     message("Converting the rownames() of the expressionset to ENTREZID.")
-    ##tt <- sm(library(orgdb, character.only=TRUE))
+    ##tt <- sm(library(orgdb, character.only = TRUE))
     lib_result <- sm(requireNamespace(orgdb))
-    att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+    att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
     old_ids <- rownames(exprs(eset))
-    new_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
-                                        keys=old_ids,
-                                        keytype=current_id,
-                                        columns=c(required_id)))
+    new_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                        keys = old_ids,
+                                        keytype = current_id,
+                                        columns = c(required_id)))
     new_idx <- complete.cases(new_ids)
     new_ids <- new_ids[new_idx, ]
     message("Before conversion, the expressionset has ", length(rownames(eset)),
             " entries.")
     converted_eset <- eset[new_ids[[current_id]], ]
-    rownames(converted_eset) <- make.names(new_ids[[required_id]], unique=TRUE)
+    rownames(converted_eset) <- make.names(new_ids[[required_id]], unique = TRUE)
     message("After conversion, the expressionset has ",
             length(rownames(converted_eset)),
             " entries.")
-    rownames(converted_eset) <- gsub(pattern="^X", replacement="",
-                                     x=rownames(converted_eset))
+    rownames(converted_eset) <- gsub(pattern = "^X", replacement = "",
+                                     x = rownames(converted_eset))
     eset <- converted_eset
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE, method=method, min.sz=min_catsize,
-                            kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores)
-  fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
+  gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method, min.sz = min_catsize,
+                            kcdf = kcdf, abs.ranking = ranking, parallel.sz = cores)
+  fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""
   for (i in 1:length(sig_data)) {
@@ -621,8 +651,8 @@ simple_gsva <- function(expt, signatures="c2BroadSets", data_pkg="GSVAdata", sig
 #' @return Small list providing the output from xCell, the set of signatures,
 #'  and heatmap.
 #' @export
-simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected_types=NULL,
-                         label_size=NULL, col_margin=6, row_margin=12, ...) {
+simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, expected_types = NULL,
+                         label_size = NULL, col_margin = 6, row_margin = 12, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
@@ -630,22 +660,22 @@ simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected
   xcell_input <- NULL
   if (expt_state != "rpkm") {
     message("xCell strongly perfers rpkm values, re-normalizing now.")
-    xcell_input <- normalize_expt(expt, convert="rpkm", ...)
+    xcell_input <- normalize_expt(expt, convert = "rpkm", ...)
   } else {
-    xcell_input <- normalize_expt(expt, norm=arglist[["norm"]], convert=arglist[["convert"]],
-                                  filter=arglist[["filter"]], batch=arglist[["batch"]])
+    xcell_input <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
+                                  filter = arglist[["filter"]], batch = arglist[["batch"]])
   }
   xcell_input <- exprs(xcell_input)
   xcell_na <- is.na(xcell_input)
   xcell_input[xcell_na] <- 0
-  xcell_input <- merge(xcell_input, xref, by.x="row.names", by.y="ensembl_gene_id")
-  rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique=TRUE)
+  xcell_input <- merge(xcell_input, xref, by.x = "row.names", by.y = "ensembl_gene_id")
+  rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique = TRUE)
   xcell_input[["Row.names"]] <- NULL
   xcell_input[["hgnc_symbol"]] <- NULL
 
   xCell.data <- NULL
   tt <- requireNamespace("xCell")
-  data("xCell.data", package="xCell")
+  data("xCell.data", package = "xCell")
   if (is.null(signatures)) {
     signatures <- xCell.data[["signatures"]]
   }
@@ -655,18 +685,18 @@ simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected
   if (is.null(spill)) {
     spill <- xCell.data[["spill"]]
   }
-  xcell_result <- sm(xCell::xCellAnalysis(expr=xcell_input, signatures=signatures,
-                                          genes=genes, spill=spill, cell.types=expected_types))
+  xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
+                                          genes = genes, spill = spill, cell.types = expected_types))
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
   if (is.null(label_size)) {
-    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors,
-                    margins=c(col_margin, row_margin))
+    ht <- heatmap.3(xcell_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin))
   } else {
-    ht <- heatmap.3(xcell_result, trace="none", col=jet_colors,
-                    margins=c(col_margin, row_margin),
-                    cexCol=label_size, cexRow=label_size)
+    ht <- heatmap.3(xcell_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin),
+                    cexCol = label_size, cexRow = label_size)
   }
   ht_plot <- grDevices::recordPlot()
 
@@ -686,14 +716,14 @@ simple_xcell <- function(expt, signatures=NULL, genes=NULL, spill=NULL, expected
 #' @param requests  Character list of sources to keep.
 #' @return  Whatever GeneSets remain.
 #' @export
-get_gsvadb_names <- function(sig_data, requests=NULL) {
+get_gsvadb_names <- function(sig_data, requests = NULL) {
   requests <- toupper(requests)
   categories <- names(sig_data)
-  prefixes <- gsub(pattern="^(.*?)_.*", replacement="\\1",
-                   x=categories)
+  prefixes <- gsub(pattern = "^(.*?)_.*", replacement = "\\1",
+                   x = categories)
   tab <- table(prefixes)
   if (is.null(requests)) {
-    new_order <- order(as.numeric(tab), decreasing=TRUE)
+    new_order <- order(as.numeric(tab), decreasing = TRUE)
     tab <- tab[new_order]
     return(tab)
   }
@@ -704,7 +734,7 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
 
   kept_idx <- rep(FALSE, length(names(sig_data)))
   for (kept in requests) {
-    keepers <- grepl(x=names(sig_data), pattern=glue("^{kept}"))
+    keepers <- grepl(x = names(sig_data), pattern = glue("^{kept}"))
     kept_idx <- kept_idx | keepers
   }
 
@@ -722,21 +752,21 @@ get_gsvadb_names <- function(sig_data, requests=NULL) {
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
 #' @export
-get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_result=NULL) {
-  msig_result <- xml2::read_xml(x=msig_xml)
+get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", gsva_result = NULL) {
+  msig_result <- xml2::read_xml(x = msig_xml)
 
-  db_data <- rvest::xml_nodes(x=msig_result, xpath="//MSIGDB")
-  db_name <- rvest::html_attr(x=db_data, name="NAME")
-  db_ver <- rvest::html_attr(x=db_data, name="VERSION")
-  db_date <- rvest::html_attr(x=db_data, name="BUILD_DATE")
+  db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
+  db_name <- rvest::html_attr(x = db_data, name = "NAME")
+  db_ver <- rvest::html_attr(x = db_data, name = "VERSION")
+  db_date <- rvest::html_attr(x = db_data, name = "BUILD_DATE")
 
-  genesets <- rvest::xml_nodes(x=msig_result, "GENESET")
-  row_names <- rvest::html_attr(x=genesets, name="STANDARD_NAME")
-  column_names <- names(rvest::html_attrs(x=genesets[[1]]))
-  all_data <- data.frame(row.names=row_names)
+  genesets <- rvest::xml_nodes(x = msig_result, "GENESET")
+  row_names <- rvest::html_attr(x = genesets, name = "STANDARD_NAME")
+  column_names <- names(rvest::html_attrs(x = genesets[[1]]))
+  all_data <- data.frame(row.names = row_names)
   for (i in 2:length(column_names)) {
     c_name <- column_names[i]
-    c_data <- rvest::html_attr(x=genesets, name=c_name)
+    c_data <- rvest::html_attr(x = genesets, name = c_name)
     all_data[[c_name]] <- c_data
   }
 
@@ -766,17 +796,17 @@ get_msigdb_metadata <- function(sig_data=NULL, msig_xml="msigdb_v6.2.xml", gsva_
 #' @param to_type Name of the ID you wish to use.
 #' @return Fresh gene set collection replete with new names.
 #' @export
-convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="ENTREZID") {
+convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_type = "ENTREZID") {
   message("Converting the rownames() of the expressionset to ", to_type, ".")
-  ##tt <- sm(library(orgdb, character.only=TRUE))
+  ##tt <- sm(library(orgdb, character.only = TRUE))
   lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
+  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
   orgdb <- get0(orgdb)
   gsc_lst <- as.list(gsc)
   new_gsc <- list()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (g in 1:length(gsc)) {
     if (isTRUE(show_progress)) {
@@ -788,10 +818,10 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="
     if (is.null(from_type)) {
       from_type <- guess_orgdb_keytype(old_ids, orgdb)
     }
-    new_ids <- sm(AnnotationDbi::select(x=orgdb,
-                                        keys=old_ids,
-                                        keytype=from_type,
-                                        columns=c(to_type)))
+    new_ids <- sm(AnnotationDbi::select(x = orgdb,
+                                        keys = old_ids,
+                                        keytype = from_type,
+                                        columns = c(to_type)))
     new_ids <- new_ids[[to_type]]
     GSEABase::geneIds(gs) <- unique(new_ids)
     ## gsc_lst[[g]] <- gs
@@ -831,9 +861,9 @@ convert_gsc_ids <- function(gsc, orgdb="org.Hs.eg.db", from_type=NULL, to_type="
 #' @return The scores according to the provided category, factor, sample, or
 #'  score(s).
 #' @export
-gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL, sample=NULL,
-                             factor_column="condition", method="mean", label_size=NULL,
-                             col_margin=6, row_margin=12, cutoff=0.05) {
+gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor = NULL, sample = NULL,
+                             factor_column = "condition", method = "mean", label_size = NULL,
+                             col_margin = 6, row_margin = 12, cutoff = 0.05) {
   values <- exprs(gsva_result[["expt"]])
   design <- pData(gsva_result[["expt"]])
   gsva_pca <- plot_pca(gsva_result[["expt"]])
@@ -844,12 +874,12 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
   jet_colors <- grDevices::colorRampPalette(color_range)
   starting_ht <- NULL
   if (is.null(label_size)) {
-    starting_ht <- heatmap.3(values, trace="none", col=jet_colors,
-                             margins=c(col_margin, row_margin))
+    starting_ht <- heatmap.3(values, trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin))
   } else {
-    starting_ht <- heatmap.3(values, trace="none", col=jet_colors,
-                             margins=c(col_margin, row_margin),
-                             cexCol=label_size, cexRow=label_size)
+    starting_ht <- heatmap.3(values, trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin),
+                             cexCol = label_size, cexRow = label_size)
   }
   starting_ht_plot <- grDevices::recordPlot()
 
@@ -919,7 +949,7 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
         }
         againsts <- Biobase::rowMedians(against_values)
       }
-      a_column <- sapply(X=tests, FUN=cheesy_likelihood)
+      a_column <- sapply(X = tests, FUN = cheesy_likelihood)
       if (f == 1) {
         result_df <- as.data.frame(a_column)
       } else {
@@ -928,17 +958,17 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
     } ## End iterating over every level in the chosen factor.
     colnames(result_df) <- fact_lvls
     heat_colors <- grDevices::colorRampPalette(c("black", "white"))
-    ht_result <- heatmap.3(as.matrix(result_df), trace="none", col=heat_colors,
-                           margins=c(col_margin, row_margin), Colv=FALSE,
-                           cexCol=label_size, cexRow=label_size)
+    ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
+                           margins = c(col_margin, row_margin), Colv = FALSE,
+                           cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
     test_results <- result_df
   } else if (choice == "column") {
-    test_results <- sapply(X=tests, FUN=cheesy_likelihood)
+    test_results <- sapply(X = tests, FUN = cheesy_likelihood)
     names(test_results) <- rownames(values)
     score_plot <- plot_histogram(test_results)
   } else if (choice == "row") {
-    test_results <- sapply(X=tests, FUN=cheesy_likelihood)
+    test_results <- sapply(X = tests, FUN = cheesy_likelihood)
     names(test_results) <- colnames(values)
     score_plot <- plot_histogram(test_results)
   } else {
@@ -970,19 +1000,20 @@ gsva_likelihoods <- function(gsva_result, score=NULL, category=NULL, factor=NULL
 #' @param factor_column When extracting significance information, use this
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
+#' @param label_size How large to make labels when printing the final heatmap.
 #' @export
-get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_subset.xlsx",
-                                    factor_column="condition", factor=NULL) {
+get_sig_gsva_categories <- function(gsva_result, cutoff = 0.05, excel = "excel/gsva_subset.xlsx",
+                                    factor_column = "condition", factor = NULL, label_size = NULL) {
 
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
-  gsva_limma <- limma_pairwise(gsva_scores, which_voom="none")
+  gsva_limma <- limma_pairwise(gsva_scores, which_voom = "none")
 
   expr <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
   values <- as.data.frame(exprs(expr))
-  expr_order <- order(values[[1]], decreasing=TRUE)
+  expr_order <- order(values[[1]], decreasing = TRUE)
   exprs(expr) <- exprs(expr)[expr_order, ]
   fData(expr) <- fData(expr)[expr_order, ]
 
@@ -1000,7 +1031,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
   subset_mtrx <- expr
-  gl <- gsva_likelihoods(gsva_result, factor=fact)
+  gl <- gsva_likelihoods(gsva_result, factor = fact)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] <= cutoff
   subset_mtrx <- subset_mtrx[keep_idx, ]
@@ -1010,22 +1041,22 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
 
   scored_ht <- NULL
   if (is.null(label_size)) {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace="none", col=jet_colors,
-                           margins=c(col_margin, row_margin))
+    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+                           margins = c(col_margin, row_margin))
   } else {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace="none", col=jet_colors,
-                           margins=c(col_margin, row_margin),
-                           cexCol=label_size, cexRow=label_size)
+    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+                           margins = c(col_margin, row_margin),
+                           cexCol = label_size, cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
 
-  gsva_table <- merge(annot, exp, by="row.names")
+  gsva_table <- merge(annot, exp, by = "row.names")
   rownames(gsva_table) <- gsva_table[["Row.names"]]
   gsva_table[["Row.names"]] <- NULL
-  subset_table <- merge(fData(subset_mtrx), exprs(subset_mtrx), by="row.names")
+  subset_table <- merge(fData(subset_mtrx), exprs(subset_mtrx), by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
   subset_table[["Row.names"]] <- NULL
-  likelihood_table <- merge(fData(gsva_scores), gl[["likelihoods"]], all.y=TRUE, by="row.names")
+  likelihood_table <- merge(fData(gsva_scores), gl[["likelihoods"]], all.y = TRUE, by = "row.names")
   rownames(likelihood_table) <- likelihood_table[["Row.names"]]
   likelihood_table[["Row.names"]] <- NULL
 
@@ -1068,10 +1099,10 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
 #' @param gene_weights  When venning genes, weight them?
 #' @return  List containing some venns, lists, and such.
 #' @export
-intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
-                                 sig_weights=TRUE, gene_weights=TRUE) {
-  sig_venn <- Vennerable::Venn(Sets=lst)
-  Vennerable::plot(sig_venn, doWeights=sig_weights)
+intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
+                                 sig_weights = TRUE, gene_weights = TRUE) {
+  sig_venn <- Vennerable::Venn(Sets = lst)
+  Vennerable::plot(sig_venn, doWeights = sig_weights)
   sig_plot <- grDevices::recordPlot()
   sig_int <- sig_venn@IntersectionSets
   annot <- fData(gsva_result[["expt"]])
@@ -1083,7 +1114,7 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
   for (i in 2:length(sig_int)) {
     name <- names(sig_int)[i]
     ## Make a human readable version of the venn names.
-    name_chars <- strsplit(x=name, split="")[[1]]
+    name_chars <- strsplit(x = name, split = "")[[1]]
     venn_name <- ""
     for (c in 1:length(name_chars)) {
       char <- name_chars[[c]]
@@ -1091,7 +1122,7 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
         venn_name <- glue("{venn_name}_{names(lst)[c]}")
       }
     }
-    venn_name <- gsub(pattern="^_", replacement="", x=venn_name)
+    venn_name <- gsub(pattern = "^_", replacement = "", x = venn_name)
 
     sigs <- sig_int[[i]]
     sig_annot <- annot[sigs, ]
@@ -1111,15 +1142,15 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
         }
       }
     }
-    internal_ret <- internal_ret[order(as.numeric(internal_ret), decreasing=TRUE)]
+    internal_ret <- internal_ret[order(as.numeric(internal_ret), decreasing = TRUE)]
     ret <- as.numeric(internal_ret)
     names(ret) <- names(internal_ret)
     sig_genes[[venn_name]] <- ret
     gene_venn_lst[[venn_name]] <- names(ret[ret >= freq_cutoff])
   }
 
-  gene_venn <- Vennerable::Venn(Sets=gene_venn_lst)
-  Vennerable::plot(gene_venn, doWeights=gene_weights)
+  gene_venn <- Vennerable::Venn(Sets = gene_venn_lst)
+  Vennerable::plot(gene_venn, doWeights = gene_weights)
   gene_venn_plot <- grDevices::recordPlot()
   gene_int <- gene_venn@IntersectionSets
 
@@ -1143,7 +1174,7 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff=2,
 #' @param retlist Result from running get_sig_gsva
 #' @param excel Excel file to write
 #' @param plot_dim Plot dimensions, likely needs adjustment.
-write_gsva <- function(retlist, excel, plot_dim=6) {
+write_gsva <- function(retlist, excel, plot_dim = 6) {
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
   excel_basename <- xlsx[["basename"]]
@@ -1177,47 +1208,47 @@ write_gsva <- function(retlist, excel, plot_dim=6) {
       c("Sheet 3: factor_likelihoods", "Likelihood values for each experimental factor."),
       c("Sheet 4: subset", "GSVA scores for the categories deemed 'significant' using sheet 2/3."),
       c("Sheet 5 on:", "Limma scoring of differential signatures.")),
-      stringsAsFactors=FALSE)
+      stringsAsFactors = FALSE)
   colnames(legend) <- c("Term", "Definition")
   xls_result <- write_xlsx(
-      wb, data=legend, sheet="legend", rownames=FALSE,
-      title="Summary and sheets in this workbook.")
-  xl_result <- openxlsx::writeData(wb=wb, sheet="legend", x="PCA of categories vs sample type.",
-                                   startRow=1, startCol=8)
-  try_result <- xlsx_plot_png(retlist[["score_pca"]], wb=wb, sheet="legend",
-                              start_row=2, start_col=8,
-                              width=(plot_dim * 3/2), height=plot_dim,
-                              plotname="gsva_pca", savedir=excel_basename)
+      wb, data = legend, sheet = "legend", rownames = FALSE,
+      title = "Summary and sheets in this workbook.")
+  xl_result <- openxlsx::writeData(wb = wb, sheet = "legend", x = "PCA of categories vs sample type.",
+                                   startRow = 1, startCol = 8)
+  try_result <- xlsx_plot_png(retlist[["score_pca"]], wb = wb, sheet = "legend",
+                              start_row = 2, start_col = 8,
+                              width=(plot_dim * 3/2), height = plot_dim,
+                              plotname = "gsva_pca", savedir = excel_basename)
 
   ## Write the result from gsva()
-  xls_result <- write_xlsx(data=retlist[["gsva_table"]], wb=wb, sheet="gsva_scores")
+  xls_result <- write_xlsx(data = retlist[["gsva_table"]], wb = wb, sheet = "gsva_scores")
   current_column <- xls_result[["end_col"]] + 2
   current_row <- 1
   plot_width <- 8
   plot_height <- 16
-  try_result <- xlsx_plot_png(a_plot=retlist[["raw_plot"]], wb=wb, sheet="gsva_scores",
-                              start_row=current_row, start_col=current_column,
-                              width=plot_width, height=plot_height)
+  try_result <- xlsx_plot_png(a_plot = retlist[["raw_plot"]], wb = wb, sheet = "gsva_scores",
+                              start_row = current_row, start_col = current_column,
+                              width = plot_width, height = plot_height)
 
   ## Write the likelihoods
-  xls_result <- write_xlsx(data=retlist[["likelihood_table"]], wb=wb, sheet="likelihood_scores")
+  xls_result <- write_xlsx(data = retlist[["likelihood_table"]], wb = wb, sheet = "likelihood_scores")
   current_column <- xls_result[["end_col"]] + 2
   current_row <- 1
   plot_width <- 6
   plot_height <- 15
-  try_result <- xlsx_plot_png(a_plot=retlist[["score_plot"]], wb=wb, sheet="likelihood_scores",
-                              start_row=current_row, start_col=current_column,
-                              width=plot_width, height=plot_height)
+  try_result <- xlsx_plot_png(a_plot = retlist[["score_plot"]], wb = wb, sheet = "likelihood_scores",
+                              start_row = current_row, start_col = current_column,
+                              width = plot_width, height = plot_height)
 
   ## Write the subset
-  xls_result <- write_xlsx(data=retlist[["subset_table"]], wb=wb, sheet="subset_table")
+  xls_result <- write_xlsx(data = retlist[["subset_table"]], wb = wb, sheet = "subset_table")
   current_column <- xls_result[["end_col"]] + 2
   current_row <- 1
   plot_width <- 6
   plot_height <- 6
-  try_result <- xlsx_plot_png(a_plot=retlist[["subset_plot"]], wb=wb, sheet="subset_table",
-                              start_row=current_row, start_col=current_column,
-                              width=plot_width, height=plot_height)
+  try_result <- xlsx_plot_png(a_plot = retlist[["subset_plot"]], wb = wb, sheet = "subset_table",
+                              start_row = current_row, start_col = current_column,
+                              width = plot_width, height = plot_height)
 
   limma_tables <- retlist[["gsva_limma"]][["all_tables"]]
   table_names <- names(limma_tables)
@@ -1225,12 +1256,12 @@ write_gsva <- function(retlist, excel, plot_dim=6) {
     table_name <- table_names[i]
     title <- glue::glue("Result from using limma to compare {table_name}.")
     table <- limma_tables[[table_name]]
-    table_idx <- order(table[["adj.P.Val"]], decreasing=FALSE)
+    table_idx <- order(table[["adj.P.Val"]], decreasing = FALSE)
     table <- table[table_idx, ]
-    xls_result <- write_xlsx(data=table, wb=wb, sheet=table_name, title=title)
+    xls_result <- write_xlsx(data = table, wb = wb, sheet = table_name, title = title)
   }
 
-  save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+  save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   if (class(save_result)[1] == "try-error") {
     message("Saving xlsx failed.")
   }

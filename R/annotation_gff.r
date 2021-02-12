@@ -1,3 +1,10 @@
+## annotation_gff.r: Extract annotations from GFF files.  When mapping, we
+## often/usually use the gene tagged entries from a gff file for counting along
+## with one of the annotation types.  Sadly, gff files are quite a mess, so this
+## tries to work around some of the more likely corner cases.  The results from
+## these functions are likely to be used along with another annotation source in
+## order to get a more complete view of the genome/transcriptome of interest.
+
 #' Extract annotation information from a gff file into an irange object.
 #'
 #' Try to make import.gff a little more robust; I acquire (hopefully) valid gff
@@ -20,15 +27,15 @@
 #' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#'  gff_file <- system.file("gas.gff", package="hpgltools")
+#'  gff_file <- system.file("gas.gff", package = "hpgltools")
 #'  gas_iranges <- gff2irange(gff_file)
 #'  colnames(as.data.frame(gas_iranges))
 #' @export
-gff2irange <- function(gff, type=NULL) {
+gff2irange <- function(gff, type = NULL) {
   ret <- NULL
-  annotations <- try(rtracklayer::import.gff3(gff), silent=TRUE)
+  annotations <- try(rtracklayer::import.gff3(gff), silent = TRUE)
   if (class(annotations) == "try-error") {
-    annotations <- try(rtracklayer::import.gff2(gff), silent=TRUE)
+    annotations <- try(rtracklayer::import.gff2(gff), silent = TRUE)
     if (class(annotations) == "try-error") {
       stop("Could not extract the widths from the gff file.")
     } else {
@@ -72,16 +79,16 @@ gff2irange <- function(gff, type=NULL) {
 #'  gas_gff_annot <- load_gff_annotations(gff_file)
 #'  dim(gas_gff_annot)
 #' @export
-load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.frame",
-                                 second_id_col="locus_tag", try=NULL, row.names=NULL) {
+load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "data.frame",
+                                 second_id_col = "locus_tag", try = NULL, row.names = NULL) {
   if (!file.exists(gff)) {
     stop("Unable to find the gff file: ", gff)
   }
   ret <- NULL
-  attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=TRUE)",
-                "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo=FALSE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=TRUE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo=FALSE)",
+  attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = TRUE)",
+                "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = FALSE)",
+                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = TRUE)",
+                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = FALSE)",
                 "rtracklayer::import.gff(gff, format='gtf')",
                 "rtracklayer::import.gff(gff)")
   if (!is.null(try)) {
@@ -94,8 +101,8 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
     annotations <- NULL
     message("Trying attempt: ", attempts[[att]])
     attempt <- attempts[[att]]
-    eval_string <- glue("annotations <- try({attempt}, silent=TRUE)")
-    eval(parse(text=eval_string))
+    eval_string <- glue("annotations <- try({attempt}, silent = TRUE)")
+    eval(parse(text = eval_string))
     if (class(annotations) == "try-error") {
       rm(annotations)
     } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
@@ -133,8 +140,8 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 
   for (col in colnames(ret)) {
     if (class(ret[[col]]) == "list") {
-      ret[[col]] <- sapply(X=ret[[col]], FUN=unlist)
-      ret[[col]] <- sapply(X=ret[[col]], FUN=toString)
+      ret[[col]] <- sapply(X = ret[[col]], FUN = unlist)
+      ret[[col]] <- sapply(X = ret[[col]], FUN = toString)
     } else if (class(ret[[col]]) == "factor") {
       ret[[col]] <- as.character(ret[[col]])
     }
@@ -167,12 +174,12 @@ load_gff_annotations <- function(gff, type=NULL, id_col="ID", ret_type="data.fra
 #'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 #'  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
 #' @examples
-#'  fasta_file <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
-#'  gff_file <- system.file("paeruginosa_pa14.gff", package="hpgltools")
+#'  fasta_file <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
+#'  gff_file <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
 #'  ta_count <- pattern_count_genome(fasta_file, gff_file)
 #'  head(ta_count)
 #' @export
-pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key=NULL) {
+pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene", key = NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
   if (is.null(key)) {
     key <- c("ID", "locus_tag")
@@ -180,7 +187,7 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
   if (is.null(gff)) {
     entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
-    ## entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    ## entries <- rtracklayer::import.gff3(gff, asRangedData = FALSE)
     entries <- rtracklayer::import.gff(gff)
     ## keep only the ones of the type of interest (gene).
     type_entries <- entries[entries$type == type, ]
@@ -196,12 +203,12 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
       }
     }
   }
-  dict <- Biostrings::PDict(pattern, max.mismatch=0)
+  dict <- Biostrings::PDict(pattern, max.mismatch = 0)
   result <- Biostrings::vcountPDict(dict, entry_sequences)
   num_pattern <- data.frame(
     "name" = names(entry_sequences),
     "num" = as.data.frame(t(result)),
-    stringsAsFactors=FALSE)
+    stringsAsFactors = FALSE)
   colnames(num_pattern) <- c("name", "number")
   return(num_pattern)
 }
@@ -220,10 +227,10 @@ pattern_count_genome <- function(fasta, gff=NULL, pattern="TA", type="gene", key
 #' @seealso \pkg{Biostrings} \pkg{Rsamtools}
 #'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
 #' @examples
-#'  pa_attribs <- sequence_attributes(fasta_file, gff=gff_file)
+#'  pa_attribs <- sequence_attributes(fasta_file, gff = gff_file)
 #'  head(pa_attribs)
 #' @export
-sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
+sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
   if (is.null(key)) {
     key <- c("ID", "locus_tag")
@@ -231,7 +238,7 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
   if (is.null(gff)) {
     entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
-    ## entries <- rtracklayer::import.gff3(gff, asRangedData=FALSE)
+    ## entries <- rtracklayer::import.gff3(gff, asRangedData = FALSE)
     entries <- rtracklayer::import.gff(gff)
     ## keep only the ones of the type of interest (gene).
     type_entries <- entries[entries$type == type, ]
@@ -248,11 +255,11 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
     }
   }
   attribs <- data.frame(
-    "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob=TRUE),
-    "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob=TRUE),
-    "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob=TRUE),
-    "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob=TRUE),
-    stringsAsFactors=FALSE)
+    "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob = TRUE),
+    "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob = TRUE),
+    "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob = TRUE),
+    "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob = TRUE),
+    stringsAsFactors = FALSE)
   rownames(attribs) <- names(entry_sequences)
   colnames(attribs) <- c("gc", "at", "gt", "ac")
   return(attribs)
@@ -274,35 +281,35 @@ sequence_attributes <- function(fasta, gff=NULL, type="gene", key=NULL) {
 #'  \code{\link{load_gff_annotations}}
 #' @examples
 #' \dontrun{
-#'  summed <- sum_exon_widths(counts, gff="reference/xenopus_laevis.gff.xz")
+#'  summed <- sum_exon_widths(counts, gff = "reference/xenopus_laevis.gff.xz")
 #' }
 #' @author Keith Hughitt with some modifications by atb.
 #' @export
-sum_exon_widths <- function(data=NULL, gff=NULL, annotdf=NULL,
-                            parent="Parent", child="row.names") {
+sum_exon_widths <- function(data = NULL, gff = NULL, annotdf = NULL,
+                            parent = "Parent", child = "row.names") {
   if (is.null(annotdf) & is.null(gff)) {
     stop("I need either a df with parents, children, and widths; or a gff filename.")
   } else if (is.null(annotdf)) {
     annotdf <- load_gff_annotations(gff)
   }
 
-  tmp_data <- merge(data, annotdf, by=child)
+  tmp_data <- merge(data, annotdf, by = child)
   rownames(tmp_data) <- tmp_data[["Row.names"]]
   tmp_data <- tmp_data[-1]
   ## Start out by summing the gene widths
-  column <- aggregate(tmp_data[, "width"], by=list(Parent=tmp_data[, parent]), FUN=sum)
-  new_data <- data.frame(column[["x"]], stringsAsFactors=FALSE)
+  column <- aggregate(tmp_data[, "width"], by = list(Parent = tmp_data[, parent]), FUN = sum)
+  new_data <- data.frame(column[["x"]], stringsAsFactors = FALSE)
   rownames(new_data) <- column[["Parent"]]
   colnames(new_data) <- c("width")
 
   for (c in 1:length(colnames(data))) {
     column_name <- colnames(data)[[c]]
-    column <- aggregate(tmp_data[, column_name], by=list(Parent=tmp_data[, parent]), FUN=sum)
+    column <- aggregate(tmp_data[, column_name], by = list(Parent = tmp_data[, parent]), FUN = sum)
     rownames(column) <- column[["Parent"]]
     new_data <- cbind(new_data, column[["x"]])
   } ## End for loop
 
-  width_df <- data.frame(new_data[["width"]], stringsAsFactors=FALSE)
+  width_df <- data.frame(new_data[["width"]], stringsAsFactors = FALSE)
   rownames(width_df) <- rownames(new_data)
   colnames(width_df) <- c("width")
   new_data <- new_data[-1]

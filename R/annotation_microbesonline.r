@@ -1,3 +1,7 @@
+## annotation_micbrobesonline.r: Extract bacterial annotations from
+## microbesonline.  I like microbesonline quite a lot!  Their MySQL interface is
+## a little clunky, so I rewrote these functions to just webscrape it.
+
 #' Download the various file formats from microbesoline.
 #'
 #' Microbesonline provides an interesting set of file formats to download.  Each
@@ -8,7 +12,7 @@
 #' @param type File type(s) to download, if left null it will grab the genbank,
 #'  tab, protein fasta, transcript fasta, and genome.
 #' @return List describing the files downloaded and their locations.
-download_microbesonline_files <- function(id="160490", type=NULL) {
+download_microbesonline_files <- function(id = "160490", type = NULL) {
   retlist <- list()
   gbk <- FALSE
   if (type == "gbk") {
@@ -39,7 +43,7 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   }
   if (length(type) > 1) {
     for (t in type) {
-      download_microbesonline_files(id=id, type=t)
+      download_microbesonline_files(id = id, type = t)
     }
   }
 
@@ -49,50 +53,50 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
   species <- (titles %>% rvest::html_text())[1]
 
   if (isTRUE(gbk)) {
-    gbk_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=gbk")
+    gbk_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = gbk")
     gbk_file <- glue("{id}.gbk")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", gbk_file, ".")
-    gbk_downloaded <- download.file(gbk_url, gbk_file, quiet=TRUE)
+    gbk_downloaded <- download.file(gbk_url, gbk_file, quiet = TRUE)
     retlist[["gbk"]] <- gbk_file
   }
 
   if (isTRUE(tab)) {
-    tab_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
+    tab_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = tab")
     tab_file <- glue("{id}.tab")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tab_file, ".")
-    tab_downloaded <- download.file(tab_url, tab_file, quiet=TRUE)
+    tab_downloaded <- download.file(tab_url, tab_file, quiet = TRUE)
     retlist[["tab"]] <- tab_file
   }
 
   if (isTRUE(prot)) {
     prot_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = proteomes")
     prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
-    prot_downloaded <- download.file(prot_url, prot_file, quiet=TRUE)
+    prot_downloaded <- download.file(prot_url, prot_file, quiet = TRUE)
     retlist[["prot"]] <- prot_file
   }
 
   if (isTRUE(tx)) {
     tx_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = transcriptomes")
     tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
-    tx_downloaded <- download.file(tx_url, tx_file, quiet=TRUE)
+    tx_downloaded <- download.file(tx_url, tx_file, quiet = TRUE)
     retlist[["tx"]] <- tx_file
   }
 
   if (isTRUE(genome)) {
     genome_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = genomes")
     genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")
-    genome_downloaded <- download.file(genome_url, genome_file, quiet=TRUE)
+    genome_downloaded <- download.file(genome_url, genome_file, quiet = TRUE)
     retlist[["genome"]] <- genome_file
   }
   return(retlist)
@@ -106,11 +110,11 @@ download_microbesonline_files <- function(id="160490", type=NULL) {
 #' @param species String to search the set of microbesonline taxa.
 #' @return NULL or 1 or more taxon ids.
 #' @examples
-#'  coli_taxids <- get_microbesonline_taxid(species="coli S88")
+#'  coli_taxids <- get_microbesonline_taxid(species = "coli S88")
 #'  head(coli_taxids)
 #' @export
-get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
-  id_url <- "http://microbesonline.org/cgi-bin/fetchGenome2.cgi?taxId=g1&byFavorites=1"
+get_microbesonline_taxid <- function(species = "Acyrthosiphon pisum virus") {
+  id_url <- "http://microbesonline.org/cgi-bin/fetchGenome2.cgi?taxId = g1&byFavorites = 1"
   result <- xml2::read_html(id_url)
   id_nodes <- result %>%
     rvest::html_nodes("#GenomeList")
@@ -118,12 +122,12 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
   id_links <- id_nodes %>%
     rvest::html_nodes("td:nth-child(1) a") %>%
     rvest::html_attr("href") %>%
-    gsub(pattern="^.*?tId=([[:digit:]]+)$", replacement="\\1", x=.)
+    gsub(pattern = "^.*?tId=([[:digit:]]+)$", replacement = "\\1", x=.)
   id_table <- id_nodes %>%
-    rvest::html_table(header=TRUE, fill=TRUE)
+    rvest::html_table(header = TRUE, fill = TRUE)
   id_df <- id_table[[1]]  ## Grab the first (only) element
   id_df[["tax_id"]] <- id_links
-  foundp <- grep(pattern=species, x=id_df[["Genome"]])
+  foundp <- grep(pattern = species, x = id_df[["Genome"]])
   ret <- NULL
   if (length(foundp) == 0) {
     message("Did not find any entries with species: ", species)
@@ -160,10 +164,10 @@ get_microbesonline_taxid <- function(species="Acyrthosiphon pisum virus") {
 #' @return Dataframe containing the annotation information.
 #' @seealso \pkg{rvest}
 #' @examples
-#'  pa14_microbesonline_annot <- load_microbesonline_annotations(species="PA14")
+#'  pa14_microbesonline_annot <- load_microbesonline_annotations(species = "PA14")
 #'  colnames(pa14_microbesonline_annot)
 #' @export
-load_microbesonline_annotations <- function(species=NULL, id=NULL) {
+load_microbesonline_annotations <- function(species = NULL, id = NULL) {
   if (is.null(id) & is.null(species)) {
     stop("This needs either a species or taxon id.")
   } else if (is.null(id)) {
@@ -175,12 +179,12 @@ load_microbesonline_annotations <- function(species=NULL, id=NULL) {
       id <- id[1]
     }
   }
-  prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id)
+  prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId = ", id)
   result <- xml2::read_html(prelude_url)
   titles <- rvest::html_nodes(result, "title")
   species <- (titles %>% rvest::html_text())[1]
   message("The species being downloaded is: ", species)
-  url <- glue::glue("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
+  url <- glue::glue("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = tab")
   message("Downloading: ", url)
   data <- sm(readr::read_tsv(url))
   return(data)
@@ -206,11 +210,11 @@ load_microbesonline_annotations <- function(species=NULL, id=NULL) {
 #' @param name Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from www.microbesonline.org
 #' @examples
-#'  pa14_microbesonline_go <- load_microbesonline_go(species="PA14")
+#'  pa14_microbesonline_go <- load_microbesonline_go(species = "PA14")
 #'  head(pa14_microbesonline_go)
 #' @export
-load_microbesonline_go <- function(id=NULL, species=NULL, table_df=NULL, id_column="name",
-                                   data_column="GO", name=NULL) {
+load_microbesonline_go <- function(id = NULL, species = NULL, table_df = NULL, id_column = "name",
+                                   data_column = "GO", name = NULL) {
   if (is.null(id) & is.null(species)) {
     stop("This needs either a species or taxon id.")
   } else if (is.null(id)) {
@@ -224,17 +228,17 @@ load_microbesonline_go <- function(id=NULL, species=NULL, table_df=NULL, id_colu
   }
   chosen <- id
   if (is.null(table_df)) {
-    table <- download_microbesonline_files(id=id, type="tab")
-    table_df <- sm(readr::read_tsv(file=table[["tab"]]))
+    table <- download_microbesonline_files(id = id, type = "tab")
+    table_df <- sm(readr::read_tsv(file = table[["tab"]]))
   }
   if (! id_column %in% colnames(table_df)) {
     message(id_column, " was not found in the table, here are the available columns: ",
             toString(colnames(table_df)))
-    ## message(head(as.data.frame(table_df), n=2))
+    ## message(head(as.data.frame(table_df), n = 2))
     stop()
   }
   go_df <- table_df[, c(id_column, data_column)] %>%
-    tidyr::separate_rows(data_column, sep=",")
+    tidyr::separate_rows(data_column, sep = ",")
   keep_idx <- go_df[[data_column]] != ""
   go_df <- go_df[keep_idx, ]
   return(go_df)

@@ -1,3 +1,8 @@
+## normalize_norm.r: Invoke the various normalization methods on expressionset
+## data.  For my purposes I keep this separate from the various log
+## transformations and scaling/conversion methods (cpm/rpkm) because ... well
+## because they just feel different to me.
+
 #' Perform a simple normalization of a count table.
 #'
 #' This provides shortcut interfaces for normalization functions from
@@ -14,10 +19,10 @@
 #' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
 #' @examples
 #' \dontrun{
-#'  norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+#'  norm_table = normalize_counts(count_table, design = design, norm='qsmooth')
 #' }
 #' @export
-normalize_counts <- function(data, design=NULL, method="raw", ...) {
+normalize_counts <- function(data, design = NULL, method = "raw", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["norm"]])) {
     method <- arglist[["norm"]]
@@ -49,14 +54,14 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
   switchret <- switch(
     method,
     "qshrink" = {
-      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
-                                  plot=TRUE)
+      count_table <- hpgl_qshrink(exprs = count_table, groups = design[["condition"]],
+                                  plot = TRUE)
       norm_performed <- "qshrink"
     },
     "qshrink_median" = {
-      count_table <- hpgl_qshrink(exprs=count_table, groups=design[["condition"]],
-                                  plot=TRUE, refType="median",
-                                  groupLoc="median", window=50)
+      count_table <- hpgl_qshrink(exprs = count_table, groups = design[["condition"]],
+                                  plot = TRUE, refType = "median",
+                                  groupLoc = "median", window = 50)
       norm_performed <- "qshrink_median"
     },
     "quant" = {
@@ -74,7 +79,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_colnames <- colnames(count_table)
       ## 20181210 -- this gives a pthread_create() error 22.
       ##count_table <- preprocessCore::normalize.quantiles(
-      ##                                 as.matrix(count_table), copy=TRUE)
+      ##                                 as.matrix(count_table), copy = TRUE)
       count_table <- preprocessCore::normalize.quantiles.robust(
                                        as.matrix(count_table))
       rownames(count_table) <- count_rownames
@@ -86,15 +91,15 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_rownames <- rownames(count_table)
       count_colnames <- colnames(count_table)
       count_table <- preprocessCore::normalize.quantiles(
-                                       as.matrix(count_table), copy=TRUE)
+                                       as.matrix(count_table), copy = TRUE)
       rownames(count_table) <- count_rownames
       colnames(count_table) <- count_colnames
       norm_performed <- "quant"
     },
     "rle" = {
       ## Get the tmm normalization factors
-      count_table <- edgeR::DGEList(counts=count_table)
-      norms <- edgeR::calcNormFactors(count_table, method="RLE")
+      count_table <- edgeR::DGEList(counts = count_table)
+      norms <- edgeR::calcNormFactors(count_table, method = "RLE")
       ## libsizes = count_table$samples$lib.size
       factors <- norms[["samples"]][["norm.factors"]]
       counts <- norms[["counts"]]
@@ -108,9 +113,9 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       if (is.null(conds)) {
         conds <- original_cols
       }
-      cds <- DESeq::newCountDataSet(count_table, conditions=conds)
+      cds <- DESeq::newCountDataSet(count_table, conditions = conds)
       factors <- BiocGenerics::estimateSizeFactors(cds)
-      count_table <- BiocGenerics::counts(factors, normalized=TRUE)
+      count_table <- BiocGenerics::counts(factors, normalized = TRUE)
       norm_performed <- "sf"
     },
     "sf2" = {
@@ -125,8 +130,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
     "tmm" = {
       ## TMM normalization is documented in edgeR
       ## Set up the edgeR data structure
-      count_table <- edgeR::DGEList(counts=count_table)
-      norms <- edgeR::calcNormFactors(count_table, method="TMM")
+      count_table <- edgeR::DGEList(counts = count_table)
+      norms <- edgeR::calcNormFactors(count_table, method = "TMM")
       ## libsizes = count_table$samples$lib.size
       factors <- norms[["samples"]][["norm.factors"]]
       counts <- norms[["counts"]]
@@ -136,8 +141,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
     },
     "upperquartile" = {
       ## Get the tmm normalization factors
-      count_table <- edgeR::DGEList(counts=count_table)
-      norms <- edgeR::calcNormFactors(count_table, method="upperquartile")
+      count_table <- edgeR::DGEList(counts = count_table)
+      norms <- edgeR::calcNormFactors(count_table, method = "upperquartile")
       ## libsizes = count_table$samples$lib.size
       factors <- norms[["samples"]][["norm.factors"]]
       counts <- norms[["counts"]]
@@ -161,9 +166,9 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       tt <- sm(requireNamespace("locfit"))
       tt <- sm(requireNamespace("DESeq2"))
       cds <- DESeq2::DESeqDataSetFromMatrix(
-                       countData=count_table, colData=design, design=~condition)
+                       countData = count_table, colData = design, design=~condition)
       cds <- DESeq2::estimateSizeFactors(cds)
-      cds <- DESeq2::estimateDispersions(cds, fitType=fit_type)
+      cds <- DESeq2::estimateDispersions(cds, fitType = fit_type)
       count_table <- DESeq2::getVarianceStabilizedData(cds)
       norm_performed <- "vsd"
     },
@@ -174,9 +179,9 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       count_table <- as.matrix(count_table)
     }
   ) ## End of the switch statement.
-  norm_libsize <- colSums(count_table, na.rm=TRUE)
-  norm_counts <- list(count_table=count_table, libsize=norm_libsize,
-                      norm_performed=norm_performed)
+  norm_libsize <- colSums(count_table, na.rm = TRUE)
+  norm_counts <- list(count_table = count_table, libsize = norm_libsize,
+                      norm_performed = norm_performed)
   return(norm_counts)
 }
 
@@ -201,22 +206,22 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #'  df <- hpgl_qshrink(data)
 #' }
 #' @export
-hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
-                         groupLoc="mean", window=99,
-                         groupCol=NULL, plot=TRUE, ...) {
+hpgl_qshrink <- function(data = NULL, groups = NULL, refType = "mean",
+                         groupLoc = "mean", window = 99,
+                         groupCol = NULL, plot = TRUE, ...) {
   data <- as.matrix(data)
   if (is.null(groups)) {
     message("Groups were not provided.  Performing a simple quantile")
     message("normalization. This is probably not what you actually want!")
     count_rownames <- rownames(data)
     count_colnames <- colnames(data)
-    normExprs <- preprocessCore::normalize.quantiles(as.matrix(data), copy=TRUE)
+    normExprs <- preprocessCore::normalize.quantiles(as.matrix(data), copy = TRUE)
     rownames(normExprs) <- count_rownames
     colnames(normExprs) <- count_colnames
     return(normExprs)
   }
-  res <- hpgl_qstats(exprs(data), groups, refType=refType,
-                     groupLoc=groupLoc, window=window)
+  res <- hpgl_qstats(exprs(data), groups, refType = refType,
+                     groupLoc = groupLoc, window = window)
   QBETAS <- res[["QBETAS"]]
   Qref <- res[["Qref"]]
   X <- res[["model"]]
@@ -224,9 +229,9 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
   wQBETAS <- QBETAS * (1 - w)
   wQBETAS <- X %*% t(wQBETAS)
   wQref <- Qref * w
-  wQref <- matrix(rep(1, nrow(X)), ncol=1) %*% t(wQref)
+  wQref <- matrix(rep(1, nrow(X)), ncol = 1) %*% t(wQref)
   normExprs <- t(wQBETAS + wQref)
-  RANKS <- t(matrixStats::colRanks(data, ties.method="average"))
+  RANKS <- t(matrixStats::colRanks(data, ties.method = "average"))
   for (k in 1:ncol(normExprs)) {
     x <- normExprs[, k]
     normExprs[, k] <- x[RANKS[, k]]
@@ -249,18 +254,18 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
   rownames(normExprs) <- rownames(data)
   colnames(normExprs) <- colnames(data)
   if (plot) {
-    oldpar <- par(mar=c(4, 4, 1.5, 0.5))
+    oldpar <- par(mar = c(4, 4, 1.5, 0.5))
     lq <- length(Qref)
     u <- (1:lq - 0.5)/lq
     if (length(u) > 10000) {
       sel <- sample(1:lq, 10000)
-      plot(u[sel], w[sel], pch=".", main="Quantile reference weights",
-           xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
+      plot(u[sel], w[sel], pch = ".", main = "Quantile reference weights",
+           xlab = "u (norm. gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
     } else {
-      plot(u, w, pch=".", main="Quantile reference weights",
-           xlab="u (norm. gene ranks)", ylab="Weight", ylim=c(0, 1), ...)
+      plot(u, w, pch = ".", main = "Quantile reference weights",
+           xlab = "u (norm. gene ranks)", ylab = "Weight", ylim = c(0, 1), ...)
     }
-    abline(h=0.5, v=0.5, col="red", lty=2)
+    abline(h = 0.5, v = 0.5, col = "red", lty = 2)
     newpar <- par(oldpar)
   }
   return(normExprs)
@@ -284,8 +289,8 @@ hpgl_qshrink <- function(data=NULL, groups=NULL, refType="mean",
 #'  qstatted <- hpgl_qstats(data, conditions)
 #' }
 #' @export
-hpgl_qstats <- function(data, groups, refType="mean",
-                        groupLoc="mean", window=99) {
+hpgl_qstats <- function(data, groups, refType = "mean",
+                        groupLoc = "mean", window = 99) {
   Q <- apply(data, 2, sort)
   if (refType == "median") {
     Qref <- matrixStats::rowMedians(Q)
@@ -329,11 +334,11 @@ hpgl_qstats <- function(data, groups, refType="mean",
   roughWeights <- SIGMA / (SIGMA + TAU)
   roughWeights[is.nan(roughWeights)] <- 0 ## is this backward?
   roughWeights[SIGMA < 10 ^ -6 & TAU < 10 ^ -6] <- 1
-  smoothWeights <- stats::runmed(roughWeights, k=window, endrule="constant")
-  qstats_model <- model.matrix(~0 + factor(groups, levels=uGroups))
-  qstats_result <- list(Q=Q, Qref=Qref, QBETAS=QBETAS, TAU=TAU,
-                        SIGMA=SIGMA, roughWeights=roughWeights,
-                        smoothWeights=smoothWeights, model=qstats_model)
+  smoothWeights <- stats::runmed(roughWeights, k = window, endrule = "constant")
+  qstats_model <- model.matrix(~0 + factor(groups, levels = uGroups))
+  qstats_result <- list(Q = Q, Qref = Qref, QBETAS = QBETAS, TAU = TAU,
+                        SIGMA = SIGMA, roughWeights = roughWeights,
+                        smoothWeights = smoothWeights, model = qstats_model)
   return(qstats_result)
 }
 

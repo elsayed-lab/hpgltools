@@ -1,3 +1,6 @@
+## annotation_uniprot.r: Some functions to simplify working with uniprot web
+## services and text files.
+
 #' Download the txt uniprot data for a given accession/species.
 #'
 #' Uniprot is an astonishing resource, but man is it a pain to use.  Hopefully
@@ -12,24 +15,24 @@
 #' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
 #' @examples
-#'  uniprot_sc_downloaded <- download_uniprot_proteome(species="Saccharomyces cerevisiae S288c")
+#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
 #'  uniprot_sc_downloaded$filename
 #'  uniprot_sc_downloaded$species
 #' @export
-download_uniprot_proteome <- function(accession=NULL, species=NULL,
-                                      taxonomy=NULL, all=FALSE, first=FALSE) {
+download_uniprot_proteome <- function(accession = NULL, species = NULL,
+                                      taxonomy = NULL, all = FALSE, first = FALSE) {
   final_species <- ""
   if (!is.null(taxonomy)) {
     request_url <- glue::glue("https://www.uniprot.org/proteomes/?query=taxonomy%3A{xml2::url_escape(taxonomy)}")
     destination <- glue("{taxonomy}.txt.gz")
     ##request <- curl::curl(request_url)
-    tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
+    tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
     result <- xml2::read_html(destination)
     result_html <- rvest::html_nodes(result, "tr")
     accessions_text <- rvest::html_attr(result_html, "id")
     ## The first two elements are headers
     accessions_text <- accessions_text[3:length(accessions_text)]
-    accessions <- gsub(x=accessions_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\1")
+    accessions <- gsub(x = accessions_text, pattern = "^(UP[0-9]+)(.*$)", replacement = "\\1")
     species_text <- rvest::html_nodes(result, "td") %>%
       rvest::html_nodes("span") %>%
       rvest::html_text()
@@ -49,13 +52,13 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
       destination <- glue("{tempfile()}.txt.gz")
       request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
       ##request <- curl::curl(request_url)
-      tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
+      tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
       result <- xml2::read_html(destination)
       result_html <- rvest::html_nodes(result, "tr")
       accessions_text <- rvest::html_attr(result_html, "id")
       ## The first two elements are headers
       accessions_text <- accessions_text[3:length(accessions_text)]
-      accessions <- gsub(x=accessions_text, pattern="^(UP[0-9]+)(.*$)", replacement="\\1")
+      accessions <- gsub(x = accessions_text, pattern = "^(UP[0-9]+)(.*$)", replacement = "\\1")
       species_text <- rvest::html_nodes(result, "td") %>%
         rvest::html_nodes("span") %>%
         rvest::html_text()
@@ -68,14 +71,14 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
           name <- final_species[a]
           accession <- accessions[a]
           message("Downloading the proteome for ", name, ".")
-          tmp <- download_uniprot_proteome(accession=accession)
-          Sys.sleep(time=3)
+          tmp <- download_uniprot_proteome(accession = accession)
+          Sys.sleep(time = 3)
         }
       } else if (isTRUE(first)) {
         accession <- accessions[1]
         name <- final_species[1]
         message("Downloading the proteome for ", name, ".")
-        tmp <- download_uniprot_proteome(accession=accession)
+        tmp <- download_uniprot_proteome(accession = accession)
       } else {
         message("Here are the species found, please choose one and try again.")
         for (a in 1:length(accessions)) {
@@ -89,11 +92,11 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
     }
   }
   request_url <- glue(
-    "https://www.uniprot.org/uniprot/?query=proteome:\\
-     {accession}&compress=yes&force=true&format=txt")
+    "https://www.uniprot.org/uniprot/?query = proteome:\\
+     {accession}&compress = yes&force = true&format = txt")
   destination <- glue("{accession}.txt.gz")
-  ##tt <- curl::curl_fetch_disk(url=request_url, path=destination)
-  tt <- download.file(url=request_url, destfile=destination, method="wget", quiet=TRUE)
+  ##tt <- curl::curl_fetch_disk(url = request_url, path = destination)
+  tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
   retlist <- list(
     "filename" = destination,
     "species" = final_species,
@@ -110,14 +113,14 @@ download_uniprot_proteome <- function(accession=NULL, species=NULL,
 #' @param savefile Do a save?
 #' @return Big dataframe of annotation data.
 #' @examples
-#'  sc_uniprot_annot <- load_uniprot_annotations(file=uniprot_sc_downloaded$filename)
+#'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
 #'  dim(sc_uniprot_annot)
 #' @export
-load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
+load_uniprot_annotations <- function(file = NULL, species = NULL, savefile = TRUE) {
   if (is.null(file) & is.null(species)) {
     stop("This requires either a filename or species name.")
   } else if (is.null(file)) {
-    info <- download_uniprot_proteome(species=species)
+    info <- download_uniprot_proteome(species = species)
     message("Downloaded proteome for: ", info[["species"]], " accession: ",
             info[["accession"]], " to file: ", info[["filename"]], ".")
     file <- info[["filename"]]
@@ -129,14 +132,14 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
   ##if (!is.null(savefile) & savefile != NULL) {
   ##  if (file.exists(savefile)) {
   ##    uniprot_data <- new.env()
-  ##    loaded <- load(savefile, envir=retlist)
+  ##    loaded <- load(savefile, envir = retlist)
   ##    uniprot_data <- uniprot_data[["uniprot_data"]]
   ##    return(retlist)
   ##  }
   ##}
   read_vec <- readr::read_lines(file)
   gene_num <- 0
-  num_genes <- length(grep(pattern="^ID", x=read_vec))
+  num_genes <- length(grep(pattern = "^ID", x = read_vec))
   ## Vectors for those elements which will only have 1 answer
   many_ids <- list()
   id_types <- c(
@@ -157,7 +160,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
     "supfam", "tigrfam",
     ## Final stuff
     "mw", "aa_length", "aa_sequence")
-  uniprot_data <- data.frame(row.names=1:num_genes)
+  uniprot_data <- data.frame(row.names = 1:num_genes)
   for (id in id_types) {
     uniprot_data[[id]] <- ""
   }
@@ -165,7 +168,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
   reading_sequence <- FALSE
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (i in 1:length(read_vec)) {
     if (isTRUE(show_progress)) {
@@ -197,7 +200,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
         ## The master ID:
         ## Example: ID   3MGH_MYCTU              Reviewed;         203 AA.
         gene_num <- gene_num + 1
-        material <- strsplit(x=line, split="\\s+")[[1]]
+        material <- strsplit(x = line, split = "\\s+")[[1]]
         gene_id <- material[2]
         uniprot_data[gene_num, "primary_id"] <- gene_id
         uniprot_data[gene_num, "amino_acids"] <- material[4]
@@ -206,7 +209,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
       "AC" = {
         ## Now pull the primary uniprot accesstions
         ## Example: AC   P9WJP7; L0TAC1; O33190; P65412;
-        tmp_ids <- gsub(pattern=";", replacement="", x=strsplit(x=line, split="\\s+")[[1]])
+        tmp_ids <- gsub(pattern = ";", replacement = "", x = strsplit(x = line, split = "\\s+")[[1]])
         uniprot_data[gene_num, "primary_accession"] <- tmp_ids[2]
         tmp_ids <- toString(tmp_ids[2:length(tmp_ids)])
         uniprot_data[gene_num, "uniprot_accessions"] <- tmp_ids
@@ -215,10 +218,10 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
       "DE" = {
         ## Get the record names if available
         ## Example:
-        ## DE RecName: Full=Putative 3-methyl DNA glycosylase {ECO:0000255|HAMAP-Rule:MF_00527};
-        ##          DE            EC=3.2.2.- {ECO:0000255|HAMAP-Rule:MF_00527};
-        if (grepl(pattern="DE\\s+RecName:", x=line)) {
-          tmp_ids <- gsub(pattern="^.*Full=(.*?);.*$", replacement="\\1", x=line)
+        ## DE RecName: Full = Putative 3-methyl DNA glycosylase {ECO:0000255|HAMAP-Rule:MF_00527};
+        ##          DE            EC = 3.2.2.- {ECO:0000255|HAMAP-Rule:MF_00527};
+        if (grepl(pattern = "DE\\s+RecName:", x = line)) {
+          tmp_ids <- gsub(pattern = "^.*Full=(.*?);.*$", replacement = "\\1", x = line)
           uniprot_data[gene_num, "recnames"] <- tmp_ids
           next
         } else {
@@ -230,29 +233,29 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
         ## makes the primary link between uniprot and the IDs available at genbank,
         ## ensembl, microbesonline, etc. We may find one or more of the above fields
         ## in the GN, so I should take into account the various possible iterations.
-        ## Example: GN   Name=pgl; Synonyms=devB; OrderedLocusNames=Rv1445c;
-        ##          GN   ORFNames=MTCY493.09;
-        if (grepl(pattern="^GN\\s+.*OrderedLocusNames=(.*?);.*$", x=line)) {
+        ## Example: GN   Name = pgl; Synonyms = devB; OrderedLocusNames = Rv1445c;
+        ##          GN   ORFNames = MTCY493.09;
+        if (grepl(pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", x = line)) {
           ## message("Got a locusname on line ", i, " for gene number ", gene_num)
-          ## i=565 is first interesting one.
-          tmp_ids <- gsub(pattern="^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement="\\1", x=line)
-          tmp_ids <- gsub(pattern="^(.*?),.*", replacement="\\1", x=tmp_ids)
+          ## i = 565 is first interesting one.
+          tmp_ids <- gsub(pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement = "\\1", x = line)
+          tmp_ids <- gsub(pattern = "^(.*?),.*", replacement = "\\1", x = tmp_ids)
           uniprot_data[gene_num, "loci"] <- gsub(
-            pattern="^(.*?) \\{.*", replacement="\\1", x=tmp_ids)
+            pattern = "^(.*?) \\{.*", replacement = "\\1", x = tmp_ids)
           next
-        } else if (grepl(pattern="^GN\\s+.*ORFNames=(.*?);.*$", x=line)) {
+        } else if (grepl(pattern = "^GN\\s+.*ORFNames=(.*?);.*$", x = line)) {
           uniprot_data[gene_num, "orfnames"] <- gsub(
-            pattern="^GN\\s+.*ORFNames=(.*?);.*$", replacement="\\1", x=line)
+            pattern = "^GN\\s+.*ORFNames=(.*?);.*$", replacement = "\\1", x = line)
           next
-        } else if (grepl(pattern="^GN\\s+.*Name=(.*?);.*$", x=line)) {
+        } else if (grepl(pattern = "^GN\\s+.*Name=(.*?);.*$", x = line)) {
           tmp_ids <- gsub(
-            pattern="^GN\\s+.*Name=(.*?);.*$", replacement="\\1", x=line)
+            pattern = "^GN\\s+.*Name=(.*?);.*$", replacement = "\\1", x = line)
           uniprot_data[gene_num, "shortnames"] <- gsub(
-            pattern="^(.*?) .*", replacement="\\1", x=tmp_ids)
+            pattern = "^(.*?) .*", replacement = "\\1", x = tmp_ids)
           next
-        } else if (grepl(pattern="^GN\\s+.*Synonyms=(.*?);.*$", x=line)) {
+        } else if (grepl(pattern = "^GN\\s+.*Synonyms=(.*?);.*$", x = line)) {
           uniprot_data[gene_num, "synonyms"] <- gsub(
-            pattern="^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement="\\1", x=line)
+            pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement = "\\1", x = line)
           next
         } else {
           next
@@ -263,10 +266,10 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
         ## Sadly, it too is quite a mess
         ## This stanza looks for EMBL IDs:
         ## Example: DR   EMBL; AL123456; CCP44204.1; -; Genomic_DNA.
-        rest <- substr(x=line, start=6, stop=nchar(line))
+        rest <- substr(x = line, start = 6, stop = nchar(line))
         matches <- stringr::str_match(rest, "^(\\w+);\\s+(.*?)(\\.$|; \\-.$|\\. \\[.*\\]$)")
         intype <- matches[1, 2]
-        information <- gsub(pattern=";", replacement="\\,", x=matches[1, 3])
+        information <- gsub(pattern = ";", replacement = "\\,", x = matches[1, 3])
         inswitchret <- switch(
           intype,
           "EMBL" = {
@@ -425,7 +428,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
           },
           "HOGENOM" = {
             ## HOGENOM: Database of Complete Genome Homologous Gene Families:
-            ## http://doua.prabi.fr/databases/hogenom/home.php?contents=query
+            ## http://doua.prabi.fr/databases/hogenom/home.php?contents = query
             uniprot_data[gene_num, "hogenom"] <- information
           },
           "HOVERGEN" = {
@@ -538,18 +541,18 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
         aa_seq <- ""
         reading_sequence <- TRUE
         mweight <- gsub(
-          pattern="^SQ\\s+SEQUENCE\\s+\\d+\\s+AA;\\s+(\\d+)\\s+MW.*$", replacement="\\1", x=line)
+          pattern = "^SQ\\s+SEQUENCE\\s+\\d+\\s+AA;\\s+(\\d+)\\s+MW.*$", replacement = "\\1", x = line)
         uniprot_data[gene_num, "mw"] <- mweight
         aa_length <- gsub(
-          pattern="^SQ\\s+SEQUENCE\\s+(\\d+)\\s+AA;\\s+\\d+\\s+MW.*$", replacement="\\1", x=line)
+          pattern = "^SQ\\s+SEQUENCE\\s+(\\d+)\\s+AA;\\s+\\d+\\s+MW.*$", replacement = "\\1", x = line)
         uniprot_data[gene_num, "aa_length"] <- aa_length
         if (isTRUE(reading_sequence)) {
-          if (grepl(pattern="^\\s+", x=line)) {
-            aa_line <- gsub(pattern="\\s", replacement="", x=line)
+          if (grepl(pattern = "^\\s+", x = line)) {
+            aa_line <- gsub(pattern = "\\s", replacement = "", x = line)
             aa_seq <- paste0(aa_seq, aa_line)
           }
         }
-        if (grepl(pattern="^\\/\\/", x=line)) {
+        if (grepl(pattern = "^\\/\\/", x = line)) {
           uniprot_data[gene_num, "aa_sequence"] <- aa_seq
           reading_sequence <- FALSE
         }
@@ -562,7 +565,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
 
   if (!is.null(savefile)) {
     if (savefile != FALSE) {
-      saved <- save(list="uniprot_data", file=savefile)
+      saved <- save(list = "uniprot_data", file = savefile)
     }
   }
   return(uniprot_data)
@@ -578,7 +581,7 @@ load_uniprot_annotations <- function(file=NULL, species=NULL, savefile=TRUE) {
 #' @export
 load_uniprot_go <- function(input) {
   if ("character" %in% class(input)) {
-    input <- load_uniprot_annotations(file=input)
+    input <- load_uniprot_annotations(file = input)
   } else if ("data.frame" %in% class(input)) {
     input <- as.data.frame(input)
   }
@@ -587,15 +590,15 @@ load_uniprot_go <- function(input) {
     tidyr::separate_rows("uniprot_accessions")
 
   kept[["go"]] <- kept[["go"]] %>%
-    stringr::str_extract_all(pattern="GO:\\d+")
+    stringr::str_extract_all(pattern = "GO:\\d+")
   kept[["go"]] <- I(kept[["go"]])
   kept[["go"]] <- as.character(kept[["go"]])
   kept <- kept %>%
-    tidyr::separate_rows("go", sep=",")
-  kept[["go"]] <- gsub(pattern='"', replacement="", x=kept[["go"]])
-  kept[["go"]] <- gsub(pattern=")", replacement="", x=kept[["go"]])
-  kept[["go"]] <- gsub(pattern="c\\(", replacement="", x=kept[["go"]])
-  kept[["go"]] <- gsub(pattern="\\s+", replacement="", x=kept[["go"]])
+    tidyr::separate_rows("go", sep = ",")
+  kept[["go"]] <- gsub(pattern='"', replacement = "", x = kept[["go"]])
+  kept[["go"]] <- gsub(pattern = ")", replacement = "", x = kept[["go"]])
+  kept[["go"]] <- gsub(pattern = "c\\(", replacement = "", x = kept[["go"]])
+  kept[["go"]] <- gsub(pattern = "\\s+", replacement = "", x = kept[["go"]])
   colnames(kept) <- c("ID", "GO", "length")
   return(kept)
 }

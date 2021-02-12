@@ -1,3 +1,5 @@
+## normalize_filter.r: Invoke the various expressionset filtering tools.
+
 #' Call various count filters.
 #'
 #' This calls the various filtering functions in genefilter along with
@@ -21,8 +23,8 @@
 #'  new <- filter_counts(old)
 #' }
 #' @export
-filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
-                          cv_min=0.01, cv_max=1000, thresh=2, min_samples=2, ...) {
+filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
+                          cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2, ...) {
   arglist <- list(...)
   if (class(count_table)[1] == "list") {
     count_table <- count_table[["count_table"]]
@@ -43,30 +45,30 @@ filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
   switchret <- switch(
     method,
     "cbcb" = {
-      filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
-                                            min_samples=min_samples)
+      filtered_counts <- cbcb_filter_counts(count_table, threshold = thresh,
+                                            min_samples = min_samples)
     },
     "hpgl" = {
-      filtered_counts <- hpgl_filter_counts(count_table, threshold=thresh,
-                                            min_samples=min_samples)
+      filtered_counts <- hpgl_filter_counts(count_table, threshold = thresh,
+                                            min_samples = min_samples)
     },
     "pofa" = {
-      filtered_counts <- genefilter_pofa_counts(count_table, p=p, A=A)
+      filtered_counts <- genefilter_pofa_counts(count_table, p = p, A = A)
     },
     "kofa" = {
-      filtered_counts <- genefilter_kofa_counts(count_table, k=k, A=A)
+      filtered_counts <- genefilter_kofa_counts(count_table, k = k, A = A)
     },
     "cv" = {
-      filtered_counts <- genefilter_cv_counts(count_table, cv_min=cv_min,
-                                              cv_max=cv_max)
+      filtered_counts <- genefilter_cv_counts(count_table, cv_min = cv_min,
+                                              cv_max = cv_max)
     },
     "simple" = {
-      filtered_counts <- simple_filter_counts(count_table, threshold=thresh)
+      filtered_counts <- simple_filter_counts(count_table, threshold = thresh)
     },
     {
       message("The requested filter did not match anything, defaulting to 'cbcb'.")
-      filtered_counts <- cbcb_filter_counts(count_table, threshold=thresh,
-                                            min_samples=min_samples, ...)
+      filtered_counts <- cbcb_filter_counts(count_table, threshold = thresh,
+                                            min_samples = min_samples, ...)
     }
   ) ## Ending the switch
   return(filtered_counts)
@@ -88,10 +90,10 @@ filter_counts <- function(count_table, method="cbcb", p=0.01, A=1, k=1,
 #'  filtered_table <- cbcb_filter_counts(count_table)
 #' }
 #' @export
-cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=NULL) {
-  log2CPM <- function(qcounts, libsize=NULL) {
+cbcb_filter_counts <- function(count_table, threshold = 1, min_samples = 2, libsize = NULL) {
+  log2CPM <- function(qcounts, libsize = NULL) {
     if (is.null(libsize)) {
-      libsize <- colSums(qcounts, na.rm=TRUE)
+      libsize <- colSums(qcounts, na.rm = TRUE)
     }
     count_table <- t(log2(t(qcounts + 0.5) / (libsize + 1) * 1e+06))
     retlist <- list(
@@ -100,9 +102,9 @@ cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=
     return(retlist)
   }
   ##cpms <- edgeR::cpm(count_table)
-  l2cpm <- log2CPM(count_table, libsize=libsize)
+  l2cpm <- log2CPM(count_table, libsize = libsize)
   cpms <- 2 ^ l2cpm[["count_table"]]
-  keep <- rowSums(cpms > threshold, na.rm=TRUE) >= min_samples
+  keep <- rowSums(cpms > threshold, na.rm = TRUE) >= min_samples
   num_before <- nrow(count_table)
   count_table <- count_table[keep, ]
   message(sprintf("Removing %d low-count genes (%d remaining).",
@@ -133,7 +135,7 @@ cbcb_filter_counts <- function(count_table, threshold=1, min_samples=2, libsize=
 #'  filtered_table <- cbcb_filter_counts(count_table)
 #' }
 #' @export
-hpgl_filter_counts <- function(count_table, threshold=2, min_samples=2, libsize=NULL, ...) {
+hpgl_filter_counts <- function(count_table, threshold = 2, min_samples = 2, libsize = NULL, ...) {
   neg_idx <- count_table < 0
   neg_sum <- sum(neg_idx)
   if (sum(neg_sum) > 0) {
@@ -169,7 +171,7 @@ hpgl_filter_counts <- function(count_table, threshold=2, min_samples=2, libsize=
 #'  filtered_table <- simple_filter_counts(count_table)
 #' }
 #' @export
-simple_filter_counts <- function(count_table, threshold=2) {
+simple_filter_counts <- function(count_table, threshold = 2) {
   num_before <- nrow(count_table)
   sums <- rowSums(count_table)
   keepers <- (sums >= threshold)
@@ -202,7 +204,7 @@ simple_filter_counts <- function(count_table, threshold=2) {
 #'  filtered_table = genefilter_pofa_counts(count_table)
 #' }
 #' @export
-genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
+genefilter_pofa_counts <- function(count_table, p = 0.01, A = 100) {
   ## genefilter has functions to work with expressionsets directly, but I think
   ## I will work merely with tables in this.
   num_before <- nrow(count_table)
@@ -210,7 +212,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
   if ("ExpressionSet" %in% class(count_table)) {
     counts <- exprs(count_table)
   }
-  test <- genefilter::pOverA(p=p, A=A)
+  test <- genefilter::pOverA(p = p, A = A)
   filter_list <- genefilter::filterfun(test)
   answer <- genefilter::genefilter(count_table, filter_list)
   count_table <- count_table[answer, ]
@@ -219,7 +221,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
   message("Removing ", removed, " low-count genes (", nrow(count_table), " remaining).")
 
   libsize <- colSums(count_table)
-  counts <- list(count_table=count_table, libsize=libsize)
+  counts <- list(count_table = count_table, libsize = libsize)
   return(counts)
 }
 
@@ -239,7 +241,7 @@ genefilter_pofa_counts <- function(count_table, p=0.01, A=100) {
 #'  filtered_table = genefilter_kofa_counts(count_table)
 #' }
 #' @export
-genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
+genefilter_cv_counts <- function(count_table, cv_min = 0.01, cv_max = 1000) {
   ## genefilter has functions to work with expressionsets directly, but I think
   ## I will work merely with tables in this.
   num_before <- nrow(count_table)
@@ -255,7 +257,7 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
   message(sprintf("Removing %d low-count genes (%d remaining).",
                   num_before - nrow(count_table), nrow(count_table)))
   libsize <- colSums(count_table)
-  counts <- list(count_table=count_table, libsize=libsize)
+  counts <- list(count_table = count_table, libsize = libsize)
   return(counts)
 }
 
@@ -274,7 +276,7 @@ genefilter_cv_counts <- function(count_table, cv_min=0.01, cv_max=1000) {
 #'  filtered_table = genefilter_kofa_counts(count_table)
 #' }
 #' @export
-genefilter_kofa_counts <- function(count_table, k=1, A=1) {
+genefilter_kofa_counts <- function(count_table, k = 1, A = 1) {
   ## genefilter has functions to work with expressionsets directly, but I think
   ## I will work merely with tables in this.
   num_before <- nrow(count_table)
@@ -282,7 +284,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1) {
   if ("ExpressionSet" %in% class(count_table)) {
     counts <- exprs(count_table)
   }
-  test <- genefilter::kOverA(k=k, A=A)
+  test <- genefilter::kOverA(k = k, A = A)
   filter_list <- genefilter::filterfun(test)
   answer <- genefilter::genefilter(count_table, filter_list)
   count_table <- count_table[answer, ]
@@ -290,7 +292,7 @@ genefilter_kofa_counts <- function(count_table, k=1, A=1) {
   message(sprintf("Removing %d low-count genes (%d remaining).",
                   num_before - nrow(count_table), nrow(count_table)))
   libsize <- colSums(count_table)
-  counts <- list(count_table=count_table, libsize=libsize)
+  counts <- list(count_table = count_table, libsize = libsize)
   return(counts)
 }
 

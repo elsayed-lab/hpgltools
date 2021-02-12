@@ -23,10 +23,10 @@
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containing the various results and plots from proper.
-default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
-                           reps=c(3, 5, 7, 10), de_method="edger", alpha_type="fdr",
-                           alpha=0.1, stratify="expr", target="lfc",
-                           filter="none", delta=0.5) {
+default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
+                           reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
+                           alpha = 0.1, stratify = "expr", target = "lfc",
+                           filter = "none", delta = 0.5) {
   DEmethod <- "edgeR"
   if (de_method == "edger") {
     DEmethod <- "edgeR"
@@ -38,27 +38,27 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   genes <- nrow(de_tables[["data"]][[1]])
   attached <- attachNamespace("PROPER")
   ds <- c(experiment)
-  loaded <- data(list=ds, package="PROPER")
+  loaded <- data(list = ds, package = "PROPER")
   simulation_options <- PROPER::RNAseq.SimOptions.2grp(
-                                    ngenes=genes,
-                                    p.DE=p,
-                                    lOD=experiment,
-                                    lBaselineExpr=experiment)
-  simulation_result <- PROPER::runSims(Nreps=reps,
-                                       sim.opts=simulation_options,
-                                       DEmethod=DEmethod,
-                                       nsims=nsims)
+                                    ngenes = genes,
+                                    p.DE = p,
+                                    lOD = experiment,
+                                    lBaselineExpr = experiment)
+  simulation_result <- PROPER::runSims(Nreps = reps,
+                                       sim.opts = simulation_options,
+                                       DEmethod = DEmethod,
+                                       nsims = nsims)
   ## alpha_types : fdr, pval
   ## stratify types : expr, dispersion
   ## filter types : none, expr
   ## target types : lfc, effectsize
   powers <- PROPER::comparePower(simulation_result,
-                                 alpha.type=alpha_type,
-                                 alpha.nominal=alpha,
-                                 stratify.by=stratify,
-                                 filter.by=filter,
-                                 target.by=target,
-                                 delta=delta)
+                                 alpha.type = alpha_type,
+                                 alpha.nominal = alpha,
+                                 stratify.by = stratify,
+                                 filter.by = filter,
+                                 target.by = target,
+                                 delta = delta)
   PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
   PROPER::plotPowerTD(powers)
@@ -67,11 +67,11 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
   powerfd_plot <- grDevices::recordPlot()
   PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
-  PROPER::plotPowerHist(powerOutput=powers, simResult=simulation_result)
+  PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
   powerhist_plot <- grDevices::recordPlot()
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
-  power_table <- PROPER::power.seqDepth(simResult=simulation_result, powerOutput=powers)
+  power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
   retlist <- list(
       "options" = simulation_options,
       "simulation" = simulation_result,
@@ -114,10 +114,10 @@ default_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return A list containin the various tables and plots returned by PROPER.
 #' @export
-simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
-                          reps=c(3, 5, 7, 10), de_method="edger", alpha_type="fdr",
-                          alpha=0.1, stratify="expr", target="lfc", mean_or_median="mean",
-                          filter="none", delta=0.5) {
+simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
+                          reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
+                          alpha = 0.1, stratify = "expr", target = "lfc", mean_or_median = "mean",
+                          filter = "none", delta = 0.5) {
   DEmethod <- "edgeR"
   if (de_method == "edger") {
     DEmethod <- "edgeR"
@@ -173,36 +173,36 @@ simple_proper <- function(de_tables, p=0.05, experiment="cheung", nsims=20,
         "lfc" = datum[["all_tables"]][[c]][["logFC"]],
         "sim.seed" = 1,
         "design" = "2grp")
-    simulation_result <- my_runsims(Nreps=reps,
-                                    sim.opts=simulation_options,
-                                    DEmethod=DEmethod,
-                                    nsims=nsims)
+    simulation_result <- my_runsims(Nreps = reps,
+                                    sim.opts = simulation_options,
+                                    DEmethod = DEmethod,
+                                    nsims = nsims)
     powers <- PROPER::comparePower(simulation_result,
-                                   alpha.type=alpha_type,
-                                   alpha.nominal=alpha,
-                                   stratify.by=stratify,
-                                   filter.by=filter,
-                                   target.by=target,
-                                   delta=delta)
+                                   alpha.type = alpha_type,
+                                   alpha.nominal = alpha,
+                                   stratify.by = stratify,
+                                   filter.by = filter,
+                                   target.by = target,
+                                   delta = delta)
     PROPER::plotPower(powers)
-    abline(v=x_intercept)
+    abline(v = x_intercept)
     power_plot <- grDevices::recordPlot()
     PROPER::plotPowerTD(powers)
-    abline(v=x_intercept)
+    abline(v = x_intercept)
     powertd_plot <- grDevices::recordPlot()
     PROPER::plotPowerFD(powers)
-    abline(v=x_intercept)
+    abline(v = x_intercept)
     powerfd_plot <- grDevices::recordPlot()
     PROPER::plotFDcost(powers)
-    abline(v=x_intercept)
+    abline(v = x_intercept)
     fdcost_plot <- grDevices::recordPlot()
-    PROPER::plotPowerHist(powerOutput=powers, simResult=simulation_result)
-    abline(v=x_intercept)
+    PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
+    abline(v = x_intercept)
     powerhist_plot <- grDevices::recordPlot()
     PROPER::plotPowerAlpha(powers)
-    abline(v=x_intercept)
+    abline(v = x_intercept)
     poweralpha_plot <- grDevices::recordPlot()
-    power_table <- PROPER::power.seqDepth(simResult=simulation_result, powerOutput=powers)
+    power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
     retlist <- list(
         "options" = simulation_options,
         "simulation" = simulation_result,
@@ -238,8 +238,8 @@ run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 #'   numbers of genes, logFC values, etc.
 #' @param DEmethod I suggest using only either edgeR or DESeq2.
 #' @param verbose Print some information along the way?
-my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
-                        DEmethod=c("edgeR", "DSS", "DESeq", "DESeq2"), verbose=TRUE) {
+my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
+                        DEmethod = c("edgeR", "DSS", "DESeq", "DESeq2"), verbose = TRUE) {
   DEmethod <- match.arg(DEmethod)
   if (missing(Nreps2)) {
     Nreps2 <- Nreps
@@ -252,7 +252,7 @@ my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
   n2 <- max(Nreps2)
   old_seed <- set.seed(sim.opts[["sim.seed"]])
   pvalue <- fdrs <- xbar <- array(NA,
-                                  dim=c(sim.opts[["ngenes"]],
+                                  dim = c(sim.opts[["ngenes"]],
                                         length(Nreps), nsims))
   DEids <- lfcs <- NULL
   for (i in 1:nsims) {
@@ -274,8 +274,8 @@ my_runsims <- function (Nreps=c(3, 5, 7, 10), Nreps2, nsims=100, sim.opts,
         ss[ix_na] <- 0
       }
       ix.valid <- ss > 0
-      this.X.valid <- this.X[ix.valid, , drop=FALSE]
-      data0 <- list(counts=this.X.valid, designs=this.design)
+      this.X.valid <- this.X[ix.valid, , drop = FALSE]
+      data0 <- list(counts = this.X.valid, designs = this.design)
       if (DEmethod == "edgeR") {
         res1 <- run.edgeR(data0)
       }

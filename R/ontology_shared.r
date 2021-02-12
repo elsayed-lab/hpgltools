@@ -8,11 +8,11 @@
 #' @param ...  Arguments passed to the method.
 #' @return  An ontology result
 #' @export
-random_ontology <- function(input, method="goseq", n=200, ...) {
+random_ontology <- function(input, method = "goseq", n = 200, ...) {
   ## Lets assume the result of *_pairwise() or combine_de_tables()
   input_table <- NULL
   if (class(input) == "expt" | class(input) == "ExpressionSet") {
-    input_table <- data.frame(row.names=rownames(exprs(input)))
+    input_table <- data.frame(row.names = rownames(exprs(input)))
     input_table[["ID"]] <- rownames(input_table)
     input_table[["DE"]] <- 1
   } else if (!is.null(input[["data"]])) {
@@ -25,7 +25,7 @@ random_ontology <- function(input, method="goseq", n=200, ...) {
     stop("Not sure what to do with this input.")
   }
 
-  input_idx <- sample(x=nrow(input_table), size=n)
+  input_idx <- sample(x = nrow(input_table), size = n)
   input_table <- input_table[input_idx, ]
   random_result <- NULL
   switchret <- switch(
@@ -69,9 +69,9 @@ random_ontology <- function(input, method="goseq", n=200, ...) {
 #' @return Dataframe containing 2 columns: ID, length
 #' @seealso \pkg{GenomicFeatures}
 #' @export
-extract_lengths <- function(db=NULL, gene_list=NULL,
-                            type = "GenomicFeatures::transcripts", id="TXID",
-                            possible_types=c("GenomicFeatures::genes",
+extract_lengths <- function(db = NULL, gene_list = NULL,
+                            type = "GenomicFeatures::transcripts", id = "TXID",
+                            possible_types = c("GenomicFeatures::genes",
                                              "GenomicFeatures::cds",
                                              "GenomicFeatures::transcripts"), ...) {
   arglist <- list(...)
@@ -105,7 +105,7 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
     ty <- possible_types[c]
     ## make a granges/iranges using the function in possible_types.
     test_string <- glue("testing <- {ty}(tmpdb)")
-    eval(parse(text=test_string))
+    eval(parse(text = test_string))
     ## as.data.frame is not only base, but also biocgenerics!!!
     ## Make a dataframe out of the information above and find the most
     ## likely appropriate ID column
@@ -156,27 +156,27 @@ extract_lengths <- function(db=NULL, gene_list=NULL,
 #' @return Dataframe of 2 columns: geneID and goID.
 #' @seealso \pkg{AnnotationDbi}
 #' @export
-extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
+extract_go <- function(db, metadf = NULL, keytype = "ENTREZID") {
   keytype <- toupper(keytype)
   possible_keytypes <- AnnotationDbi::keytypes(db)
   godf <- data.frame()
   success <- FALSE
-  ids <- AnnotationDbi::keys(x=db, keytype=keytype)
+  ids <- AnnotationDbi::keys(x = db, keytype = keytype)
   if ("GOID" %in% possible_keytypes) {
-    godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype,
-                                     columns=c("GOID")))
+    godf <- sm(AnnotationDbi::select(x = db, keys = ids, keytype = keytype,
+                                     columns = c("GOID")))
     godf[["ID"]] <- godf[[1]]
     godf <- godf[, c("ID", "GOID")]
     colnames(godf) <- c("ID", "GO")
   } else if ("GO" %in% possible_keytypes) {
-    godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype,
-                                     columns=c("GO")))
+    godf <- sm(AnnotationDbi::select(x = db, keys = ids, keytype = keytype,
+                                     columns = c("GO")))
     godf[["ID"]] <- godf[[1]]
     godf <- godf[, c("ID", "GO")]
     colnames(godf) <- c("ID", "GO")
   } else if ("GOALL" %in% possible_keytypes) {
-    godf <- sm(AnnotationDbi::select(x=db, keys=ids, keytype=keytype,
-                                     columns=c("GOALL")))
+    godf <- sm(AnnotationDbi::select(x = db, keys = ids, keytype = keytype,
+                                     columns = c("GOALL")))
     godf[["ID"]] <- godf[[1]]
     godf <- godf[, c("ID", "GO")]
     colnames(godf) <- c("ID", "GO")
@@ -193,7 +193,7 @@ extract_go <- function(db, metadf=NULL, keytype="ENTREZID") {
 #' NULL, "GO:00003") This function will boil that down to 'not found', '',
 #' 'GO:00004', or "GO:0001,  some text, GO:00004"
 #'
-#' @param value Result of try(as.character(somefunction(GOTERM[id])), silent=TRUE).
+#' @param value Result of try(as.character(somefunction(GOTERM[id])), silent = TRUE).
 #'   somefunction would be 'Synonym' 'Secondary' 'Ontology', etc...
 #' @return something more sane (hopefully).
 #' @seealso \pkg{GO.db}
@@ -216,7 +216,7 @@ deparse_go_value <- function(value) {
     } else if (value == "NULL") {
       result <- ""
     } else if (grepl("^c\\(", as.character(value))) {
-      value <- eval(parse(text=as.character(value)))
+      value <- eval(parse(text = as.character(value)))
       if (class(value) == "logical") {
         result <- ""
       } else {
@@ -244,11 +244,11 @@ deparse_go_value <- function(value) {
 #'  ## > "adenyl ribonucleotide binding"
 #' }
 #' @export
-goterm <- function(go="GO:0032559") {
+goterm <- function(go = "GO:0032559") {
   go <- as.character(go)
   term <- function(id) {
     value <- try(as.character(
-      AnnotationDbi::Term(GO.db::GOTERM[id])), silent=TRUE)
+      AnnotationDbi::Term(GO.db::GOTERM[id])), silent = TRUE)
     if (class(value) == "try-error") {
       value <- "not found"
     }
@@ -276,14 +276,14 @@ goterm <- function(go="GO:0032559") {
 #'  ## > "mitochondrial inheritance"
 #' }
 #' @export
-gosyn <- function(go="GO:0000001") {
+gosyn <- function(go = "GO:0000001") {
   go <- as.character(go)
   gosn <- function(go) {
     go <- as.character(go)
     result <- ""
     value <- try(as.character(
-      AnnotationDbi::Synonym(GO.db::GOTERM[go])), silent=TRUE)
-    result <- paste(deparse_go_value(value), collapse="; ")
+      AnnotationDbi::Synonym(GO.db::GOTERM[go])), silent = TRUE)
+    result <- paste(deparse_go_value(value), collapse = "; ")
     return(result)
   }
   go <- mapply(gosn, go)
@@ -306,12 +306,12 @@ gosyn <- function(go="GO:0000001") {
 #'  ## > "GO:0000141" "GO:0030482"
 #' }
 #' @export
-gosec <- function(go="GO:0032432") {
+gosec <- function(go = "GO:0032432") {
   gosc <- function(go) {
     go <- as.character(go)
     result <- ""
     value <- try(as.character(
-      AnnotationDbi::Secondary(GO.db::GOTERM[go])), silent=TRUE)
+      AnnotationDbi::Secondary(GO.db::GOTERM[go])), silent = TRUE)
     result <- deparse_go_value(value)
     return(result)
   }
@@ -335,12 +335,12 @@ gosec <- function(go="GO:0032432") {
 #'  ## > same or opposite polarities and may be packed with different levels of tightness."
 #' }
 #' @export
-godef <- function(go="GO:0032432") {
+godef <- function(go = "GO:0032432") {
   go <- as.character(go)
   def <- function(id) {
     ## This call to AnnotationDbi might be wrong
     value <- try(as.character(
-      AnnotationDbi::Definition(GO.db::GOTERM[id])), silent=TRUE)
+      AnnotationDbi::Definition(GO.db::GOTERM[id])), silent = TRUE)
     if (class(value) == "try-error") {
       value <- "not found"
     }
@@ -362,11 +362,11 @@ godef <- function(go="GO:0032432") {
 #'  ## > "CC" "CC"
 #' }
 #' @export
-goont <- function(go=c("GO:0032432", "GO:0032433")) {
+goont <- function(go = c("GO:0032432", "GO:0032433")) {
   go <- as.character(go)
   ont <- function(id) {
     value <- try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[id])),
-                 silent=TRUE)
+                 silent = TRUE)
     if (class(value) == "try-error") {
       value <- "not found"
     }
@@ -395,7 +395,7 @@ golev <- function(go) {
   level <- 0
   requireNamespace("GO.db")
   while (class(try(as.character(AnnotationDbi::Ontology(GO.db::GOTERM[go])),
-                   silent=TRUE)) != "try-error") {
+                   silent = TRUE)) != "try-error") {
                      term <- GO.db::GOTERM[go]
                      test <- as.character(AnnotationDbi::Ontology(term))
                      if (class(test) == "try-error") {
@@ -435,7 +435,7 @@ golev <- function(go) {
 #'  ## > 3 4
 #' }
 #' @export
-golevel <- function(go=c("GO:0032559", "GO:0000001")) {
+golevel <- function(go = c("GO:0032559", "GO:0000001")) {
   mapply(golev, go)
 }
 
@@ -457,7 +457,7 @@ golevel <- function(go=c("GO:0032559", "GO:0000001")) {
 gotest <- function(go) {
   gotst <- function(go) {
     go <- as.character(go)
-    value <- try(GO.db::GOTERM[go], silent=TRUE)
+    value <- try(GO.db::GOTERM[go], silent = TRUE)
     if (class(value) == "try-error") {
       return(0)
     }
@@ -492,7 +492,7 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
   my_table[["all_ensembl_in_ontology"]] <- ""
   for (count in 1:nrow(my_table)) {
     ont <- my_table[count, "category"]
-    test_map <- try(as.list(orgdb_go[ont]), silent=TRUE)
+    test_map <- try(as.list(orgdb_go[ont]), silent = TRUE)
     if (class(test_map) == "list") {
       ## If it returned as a list, then we should have 1:n entrez gene IDs
       ## Sadly, we do pretty much everything as ensembl, or perhaps geneDb
@@ -546,20 +546,20 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
 #'   \pkg{gProfiler} \pkg{GO.db}
 #' @examples
 #' \dontrun{
-#'  many_comparisons = limma_pairwise(expt=an_expt)
+#'  many_comparisons = limma_pairwise(expt = an_expt)
 #'  tables = many_comparisons$limma
-#'  this_takes_forever = limma_ontology(tables, gene_lengths=lengthdb,
-#'                                      goids=goids_df, z=1.5, gff_file='length_db.gff')
+#'  this_takes_forever = limma_ontology(tables, gene_lengths = lengthdb,
+#'                                      goids = goids_df, z = 1.5, gff_file='length_db.gff')
 #' }
 #' @export
-all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
-                                  z=NULL, lfc=NULL, p=NULL, overwrite=FALSE,
-                                  species="unsupported", orgdb="org.Dm.eg.db",
-                                  goid_map="reference/go/id2go.map",
-                                  gff_file=NULL, gff_type="gene", do_goseq=TRUE,
-                                  do_cluster=TRUE, do_topgo=TRUE,
-                                  do_gostats=TRUE, do_gprofiler=TRUE,
-                                  do_trees=FALSE, ...) {
+all_ontology_searches <- function(de_out, gene_lengths = NULL, goids = NULL, n = NULL,
+                                  z = NULL, lfc = NULL, p = NULL, overwrite = FALSE,
+                                  species = "unsupported", orgdb = "org.Dm.eg.db",
+                                  goid_map = "reference/go/id2go.map",
+                                  gff_file = NULL, gff_type = "gene", do_goseq = TRUE,
+                                  do_cluster = TRUE, do_topgo = TRUE,
+                                  do_gostats = TRUE, do_gprofiler = TRUE,
+                                  do_trees = FALSE, ...) {
   arglist <- list(...)
   message("This function expects a list of contrast tables and annotation information.")
   message("The annotation information would be gene lengths and ontology ids")
@@ -579,7 +579,7 @@ all_ontology_searches <- function(de_out, gene_lengths=NULL, goids=NULL, n=NULL,
   ## Take a moment to detect what the data input looks like
   ## Perhaps a list of tables?
   if (is.null(de_out[["all_tables"]])) {
-    if (sum(grepl(pattern="_vs_", x=names(de_out))) == 0) {
+    if (sum(grepl(pattern = "_vs_", x = names(de_out))) == 0) {
       stop("This assumes you are passing it a limma/deseq/edger output from
 limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
     }
@@ -604,7 +604,7 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
     }
     comparison <- names(de_out[c])
     message("Performing ontology search of:", comparison)
-    updown_genes <- get_sig_genes(datum, n=n, z=z, lfc=lfc, p=p)
+    updown_genes <- get_sig_genes(datum, n = n, z = z, lfc = lfc, p = p)
     up_genes <- updown_genes[["up_genes"]]
     down_genes <- updown_genes[["down_genes"]]
 
@@ -623,30 +623,30 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
       goseq_down_ontology <- try(simple_goseq(down_genes, goids, gene_lengths))
       if (isTRUE(do_trees)) {
         goseq_up_trees <- try(
-          goseq_trees(goseq_up_ontology, goid_map=goid_map))
+          goseq_trees(goseq_up_ontology, goid_map = goid_map))
         goseq_down_trees <- try(
-          goseq_trees(goseq_down_ontology, goid_map=goid_map))
+          goseq_trees(goseq_down_ontology, goid_map = goid_map))
       }
     }
 
     if (isTRUE(do_cluster)) {
       cluster_up_ontology <- try(
-        simple_clusterprofiler(up_genes, datum, orgdb=orgdb, ...))
+        simple_clusterprofiler(up_genes, datum, orgdb = orgdb, ...))
       cluster_down_ontology <- try(
-        simple_clusterprofiler(down_genes, datum, orgdb=orgdb, ...))
+        simple_clusterprofiler(down_genes, datum, orgdb = orgdb, ...))
       if (isTRUE(do_trees)) {
         cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology,
-                                              goid_map=goid_map, go_db=goids))
+                                              goid_map = goid_map, go_db = goids))
         cluster_down_trees <- try(cluster_trees(down_genes, cluster_down_ontology,
-                                                goid_map=goid_map, go_db=goids))
+                                                goid_map = goid_map, go_db = goids))
       }
     }
 
     if (isTRUE(do_topgo)) {
       topgo_up_ontology <- try(
-        simple_topgo(up_genes, goid_map=goid_map, go_db=goids))
+        simple_topgo(up_genes, goid_map = goid_map, go_db = goids))
       topgo_down_ontology <- try(
-        simple_topgo(down_genes, goid_map=goid_map, go_db=goids))
+        simple_topgo(down_genes, goid_map = goid_map, go_db = goids))
       if (isTRUE(do_trees)) {
         topgo_up_trees <- try(topgo_trees(topgo_up_ontology))
         topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
@@ -655,17 +655,17 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
 
     if (isTRUE(do_gostats)) {
       gostats_up_ontology <- try(
-        simple_gostats(up_genes, gff_file, goids, gff_type=gff_type))
+        simple_gostats(up_genes, gff_file, goids, gff_type = gff_type))
       gostats_down_ontology <- try(
-        simple_gostats(down_genes, gff_file, goids, gff_type=gff_type))
+        simple_gostats(down_genes, gff_file, goids, gff_type = gff_type))
       if (isTRUE(do_trees)) {
         message("gostats_trees has never been tested, this is commented out for the moment.")
       }
     }
 
     if (isTRUE(do_gprofiler)) {
-      gprofiler_up_ontology <- try(simple_gprofiler(up_genes, species=species))
-      gprofiler_down_ontology <- try(simple_gprofiler(down_genes, species=species))
+      gprofiler_up_ontology <- try(simple_gprofiler(up_genes, species = species))
+      gprofiler_down_ontology <- try(simple_gprofiler(down_genes, species = species))
     }
     c_data <- list("up_table" = up_genes,
                    "down_table" = down_genes,
@@ -713,9 +713,9 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
 #' @return List of ontology search results, up and down for each contrast.
 #' @seealso \pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler}
 #' @export
-subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
-                                   do_cluster=TRUE, do_topgo=TRUE, do_gostats=TRUE,
-                                   do_gprofiler=TRUE, according_to="limma", ...) {
+subset_ontology_search <- function(changed_counts, doplot = TRUE, do_goseq = TRUE,
+                                   do_cluster = TRUE, do_topgo = TRUE, do_gostats = TRUE,
+                                   do_gprofiler = TRUE, according_to = "limma", ...) {
   arglist <- list(...)
   up_list <- NULL
   down_list <- NULL
@@ -763,8 +763,8 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
     downers <- down_list[[cluster_count]]
     if (isTRUE(do_goseq)) {
       message(cluster_count, "/", names_length, ": Starting goseq")
-      up_goseq[[name]] <- try(simple_goseq(de_genes=uppers, ...))
-      down_goseq[[name]] <- try(simple_goseq(de_genes=downers, ...))
+      up_goseq[[name]] <- try(simple_goseq(de_genes = uppers, ...))
+      down_goseq[[name]] <- try(simple_goseq(de_genes = downers, ...))
     }
     if (isTRUE(do_cluster)) {
       message(cluster_count, "/", names_length, ": Starting clusterprofiler")
@@ -773,8 +773,8 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
     }
     if (isTRUE(do_topgo)) {
       message(cluster_count, "/", names_length, ": Starting topgo")
-      up_topgo[[name]] <- try(simple_topgo(de_genes=uppers, ...))
-      down_topgo[[name]] <- try(simple_topgo(de_genes=downers, ...))
+      up_topgo[[name]] <- try(simple_topgo(de_genes = uppers, ...))
+      down_topgo[[name]] <- try(simple_topgo(de_genes = downers, ...))
     }
     if (isTRUE(do_gostats)) {
       message(cluster_count, "/", names_length, ": Starting gostats")
@@ -802,7 +802,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
   if (!file.exists("savefiles")) {
     dir.create("savefiles")
   }
-  try(save(list=c("ret"), file="savefiles/subset_ontology_search_result.rda"))
+  try(save(list = c("ret"), file = "savefiles/subset_ontology_search_result.rda"))
   return(ret)
 }
 
@@ -817,7 +817,7 @@ subset_ontology_search <- function(changed_counts, doplot=TRUE, do_goseq=TRUE,
 #' @return golevels  a dataframe of goids<->highest level
 #' @seealso \pkg{clusterProfiler}
 #' @export
-golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
+golevel_df <- function(ont = "MF", savefile = "ontlevel.rda") {
   savefile <- glue("{ont}_{savefile}")
   golevels <- NULL
   if (file.exists(savefile)) {
@@ -825,13 +825,13 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
   } else {
     level <- 0
     continue <- 1
-    golevels <- data.frame(GO=NULL, level=NULL)
+    golevels <- data.frame(GO = NULL, level = NULL)
     while (continue == 1) {
       level <- level + 1
-      GO <- try(getGOLevel(ont, level), silent=TRUE)
+      GO <- try(getGOLevel(ont, level), silent = TRUE)
       if (class(GO) != "character") {
         golevels[["level"]] <- as.numeric(golevels[["level"]])
-        save(golevels, file=savefile, compress="xz")
+        save(golevels, file = savefile, compress = "xz")
         return(golevels)
       } else {
         tmpdf <- as.data.frame(cbind(GO, level))
@@ -863,7 +863,7 @@ golevel_df <- function(ont="MF", savefile="ontlevel.rda") {
 #' @return a summary of the similarities of ontology searches
 #' @seealso \pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats}
 #' @export
-compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NULL) {
+compare_go_searches <- function(goseq = NULL, cluster = NULL, topgo = NULL, gostats = NULL) {
   goseq_mf_data <- goseq_bp_data <- goseq_cc_data <- NULL
   if (!is.null(goseq)) {
     goseq_mf_data <- goseq[["mf_subset"]][, c("category", "over_represented_pvalue")]
@@ -905,11 +905,11 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
   }
   ## Now combine them...
   all_mf <- merge(goseq_mf_data, cluster_mf_data,
-                  by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
+                  by.x = "goseq_id", by.y = "cluster_id", all.x = TRUE, all.y = TRUE)
   all_mf <- merge(all_mf, topgo_mf_data,
-                  by.x="goseq_id", by.y="topgo_id", all.x=TRUE, all.y=TRUE)
+                  by.x = "goseq_id", by.y = "topgo_id", all.x = TRUE, all.y = TRUE)
   all_mf <- merge(all_mf, gostats_mf_data,
-                  by.x="goseq_id", by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+                  by.x = "goseq_id", by.y = "gostats_id", all.x = TRUE, all.y = TRUE)
   rownames(all_mf) <- all_mf[["goseq_id"]]
   all_mf <- all_mf[-1]
   all_mf[is.na(all_mf)] <- 1
@@ -926,11 +926,11 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
   message(summary(mf_summary))
 
   all_bp <- merge(goseq_bp_data, cluster_bp_data,
-                  by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
-  all_bp <- merge(all_bp, topgo_bp_data, by.x="goseq_id",
-                  by.y="topgo_id", all.x=TRUE, all.y=TRUE)
-  all_bp <- merge(all_bp, gostats_bp_data, by.x="goseq_id",
-                  by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+                  by.x = "goseq_id", by.y = "cluster_id", all.x = TRUE, all.y = TRUE)
+  all_bp <- merge(all_bp, topgo_bp_data, by.x = "goseq_id",
+                  by.y = "topgo_id", all.x = TRUE, all.y = TRUE)
+  all_bp <- merge(all_bp, gostats_bp_data, by.x = "goseq_id",
+                  by.y = "gostats_id", all.x = TRUE, all.y = TRUE)
   rownames(all_bp) <- all_bp[["goseq_id"]]
   all_bp <- all_bp[-1]
   all_bp[is.na(all_bp)] <- 1
@@ -947,11 +947,11 @@ compare_go_searches <- function(goseq=NULL, cluster=NULL, topgo=NULL, gostats=NU
   message(summary(bp_summary))
 
   all_cc <- merge(goseq_cc_data, cluster_cc_data,
-                  by.x="goseq_id", by.y="cluster_id", all.x=TRUE, all.y=TRUE)
-  all_cc <- merge(all_cc, topgo_cc_data, by.x="goseq_id",
-                  by.y="topgo_id", all.x=TRUE, all.y=TRUE)
-  all_cc <- merge(all_cc, gostats_cc_data, by.x="goseq_id",
-                  by.y="gostats_id", all.x=TRUE, all.y=TRUE)
+                  by.x = "goseq_id", by.y = "cluster_id", all.x = TRUE, all.y = TRUE)
+  all_cc <- merge(all_cc, topgo_cc_data, by.x = "goseq_id",
+                  by.y = "topgo_id", all.x = TRUE, all.y = TRUE)
+  all_cc <- merge(all_cc, gostats_cc_data, by.x = "goseq_id",
+                  by.y = "gostats_id", all.x = TRUE, all.y = TRUE)
   rownames(all_cc) <- all_cc[["goseq_id"]]
   all_cc <- all_cc[-1]
   all_cc[is.na(all_cc)] <- 1

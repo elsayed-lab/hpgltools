@@ -1,3 +1,8 @@
+## annotation_shared.r: Some functions which are hopefully useful across all
+## annotation types/methods.  Ideally, my various load_*_annotations()
+## functions provide outputs which are consistent enough that we can treat them
+## equivalently in at least some contexts.  These functions assume that is true.
+
 #' Grab gene length/width/size from an annotation database.
 #'
 #' This function tries to gather an appropriate gene length column from
@@ -15,14 +20,14 @@
 #' @seealso \pkg{rtracklayer}
 #'  \code{\link{load_gff_annotations}}
 #' @examples
-#'  pa_genesizes <- get_genesizes(gff=gff_file)
+#'  pa_genesizes <- get_genesizes(gff = gff_file)
 #'  head(pa_genesizes)
 #' @export
-get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
-                          type_column="type", key=NULL, length_names=NULL, ...) {
+get_genesizes <- function(annotation = NULL, type = "gff", gene_type = "gene",
+                          type_column = "type", key = NULL, length_names = NULL, ...) {
   annot <- NULL
   if (is.null(annotation)) {
-    annot <- load_annotations(type=type, ...)
+    annot <- load_annotations(type = type, ...)
   } else {
     annot <- annotation
   }
@@ -44,9 +49,9 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
   if (is.null(key)) {
     row_names <- rownames(annot)
   } else {
-    row_names <- make.names(annot[[key]], unique=TRUE)
+    row_names <- make.names(annot[[key]], unique = TRUE)
   }
-  ret <- data.frame(row.names=row_names)
+  ret <- data.frame(row.names = row_names)
   if (!is.null(annot[["ID"]])) {
     ret[["ID"]] <- annot[["ID"]]
   }
@@ -95,10 +100,10 @@ get_genesizes <- function(annotation=NULL, type="gff", gene_type="gene",
 #' @param ... Arguments passed to the other load_*_annotations().
 #' @return Some annotations, hopefully.
 #' @examples
-#'  gff_annotations <- load_annotations(type="gff", gff=gff_file)
+#'  gff_annotations <- load_annotations(type = "gff", gff = gff_file)
 #'  dim(gff_annotations)
 #' @export
-load_annotations <- function(type=NULL, ...) {
+load_annotations <- function(type = NULL, ...) {
   annotations <- NULL
   ## FIXME: Add some logic here to figure out what search to perform.
   switchret <- switch(

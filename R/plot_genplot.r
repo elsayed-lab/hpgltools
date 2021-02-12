@@ -9,8 +9,8 @@
 #' @return Hopefully a pretty plot of a genome
 #' @seealso \pkg{genoPlotR}
 #' @export
-genoplot_chromosome <- function(accession="AE009949", start=NULL, end=NULL,
-                                title="Genome plot") {
+genoplot_chromosome <- function(accession = "AE009949", start = NULL, end = NULL,
+                                title = "Genome plot") {
   tt <- download_gbk(accession)
   segments <- try(genoPlotR::read_dna_seg_from_file(glue("{accession}.gb")))
   if (is.null(start)) {
@@ -23,11 +23,11 @@ genoplot_chromosome <- function(accession="AE009949", start=NULL, end=NULL,
   mid_pos <- genoPlotR::middle(segments)
   xlims <- list(c(Inf, -Inf), c(-Inf, Inf), c(start, end))
   tt <- sm(please_install("genoPlotR"))
-  genoPlotR::plot_gene_map(dna_segs=list(segments),
-                           main=title,
-                           gene_type="side_blocks",
-                           dna_seg_scale=TRUE,
-                           scale=FALSE)
+  genoPlotR::plot_gene_map(dna_segs = list(segments),
+                           main = title,
+                           gene_type = "side_blocks",
+                           dna_seg_scale = TRUE,
+                           scale = FALSE)
 }
 
 ## EOF

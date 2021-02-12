@@ -1,3 +1,8 @@
+## annotation_genbank.r: A group of functions to extract annotations from
+## GenBank. Probably the second most likely annotation source is NCBI, so this
+## file seeks to simplify extracting annotations from genbank flat files and/or
+## the NCBI web interface.
+
 #' Given a genbank accession, make a txDb object along with sequences, etc.
 #'
 #' Let us admit it, sometimes biomart is a pain.  It also does not have easily
@@ -16,10 +21,10 @@
 #' @seealso \pkg{genbankr} \pkg{rentrez}
 #'  \code{\link[genbankr]{import}}
 #' @examples
-#'  sagalacticae_genbank_annot <- load_genbank_annotations(accession="AE009948")
+#'  sagalacticae_genbank_annot <- load_genbank_annotations(accession = "AE009948")
 #'  dim(as.data.frame(sagalacticae_genbank_annot$cds))
 #' @export
-load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb=FALSE) {
+load_genbank_annotations <- function(accession = "AE009949", reread = TRUE, savetxdb = FALSE) {
   gbk <- NULL
   input_file <- glue("{accession}.gb")
   if (!isTRUE(reread) & file.exists(input_file)) {
@@ -29,7 +34,7 @@ load_genbank_annotations <- function(accession="AE009949", reread=TRUE, savetxdb
     ## Note that different versions of genbankr require somewhat different
     ## methods of querying here.
     gba <- genbankr::GBAccession(accession)
-    gbk <- genbankr::readGenBank(gba, partial=TRUE, verbose=TRUE)
+    gbk <- genbankr::readGenBank(gba, partial = TRUE, verbose = TRUE)
   }
   gbr <- genbankr::makeTxDbFromGenBank(gbk)
   seq <- Biostrings::getSeq(gbk)
@@ -74,11 +79,11 @@ gbk_annotations <- function(gbr) {
   ## columns <- AnnotationDbi::columns(gbr)
   lengths <- sm(AnnotationDbi::select(
                                  gbr,
-                                 ## columns=columns,
-                                 columns=c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
+                                 ## columns = columns,
+                                 columns = c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
                                            "CDSSTRAND", "CDSID", "TXNAME"),
-                                 keys=genes, keytype="GENEID"))
-  ## keys=genes, keytype=keytypes))
+                                 keys = genes, keytype = "GENEID"))
+  ## keys = genes, keytype = keytypes))
   lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
   granges <- GenomicFeatures::transcripts(gbr)
   return(granges)
@@ -98,11 +103,11 @@ gbk_annotations <- function(gbr) {
 #'   strings acquired.
 #' @seealso \pkg{ape}
 #' @examples
-#'  written <- download_gbk(accessions="AE009949")
+#'  written <- download_gbk(accessions = "AE009949")
 #'  written$written_file
 #' @author The ape authors with some modifications by atb.
 #' @export
-download_gbk <- function(accessions="AE009949", write=TRUE) {
+download_gbk <- function(accessions = "AE009949", write = TRUE) {
   num_acc <- length(accessions)
   nrequest <- num_acc %/% 400 + as.logical(num_acc %% 400)
   downloaded <- character(0)
@@ -122,10 +127,10 @@ download_gbk <- function(accessions="AE009949", write=TRUE) {
       paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
     dl_file <- glue("{accession}.gb")
-    data <- try(download.file(url=url, destfile=dl_file, method="wget", quiet=TRUE))
+    data <- try(download.file(url = url, destfile = dl_file, method = "wget", quiet = TRUE))
     scanned <- NULL
     if (class(data) != "try-error") {
-      scanned <- try(scan(file=dl_file, what="", sep="\n", quiet=TRUE))
+      scanned <- try(scan(file = dl_file, what = "", sep = "\n", quiet = TRUE))
     }
     if (class(scanned) != "try-error") {
       downloaded <- c(downloaded, scanned)
