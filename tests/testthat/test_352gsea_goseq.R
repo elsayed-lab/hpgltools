@@ -13,19 +13,19 @@ if (file.exists(sig_file)) {
 }
 
 goseq_result <- simple_goseq(fcp_sig_genes,
-                             length_db=dmel_lengths,
-                             go_db=dmel_ontologies)
+                             length_db = dmel_lengths,
+                             go_db = dmel_ontologies)
 
 expected <- 53
 actual <- nrow(goseq_result[["mf_interesting"]])
 test_that("Do we get the expected number of interesting mf categories?", {
-    expect_equal(expected, actual, tolerance=2)
+    expect_equal(expected, actual, tolerance = 2)
 })
 
 expected <- 71
 actual <- nrow(goseq_result[["bp_interesting"]])
 test_that("Do we get the expected number of interesting bp categories?", {
-    expect_equal(expected, actual, tolerance=2)
+    expect_equal(expected, actual, tolerance = 2)
 })
 
 expected <- 5
@@ -82,5 +82,5 @@ test_that("Are the goseq results as expected (bp pvalues)?", {
 ## Keith
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))

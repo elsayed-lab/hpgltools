@@ -24,7 +24,7 @@ This extends the logic of the pattern searching in pattern_count_genome() to
 search on some other attributes.
 }
 \examples{
- pa_attribs <- sequence_attributes(fasta_file, gff=gff_file)
+ pa_attribs <- sequence_attributes(fasta_file, gff = gff_file)
  head(pa_attribs)
 }
 \seealso{

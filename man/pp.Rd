@@ -21,7 +21,7 @@ print it to file and screen.}
 \item{...}{Arguments passed to the image plotters.}
 }
 \value{
-a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
+a png/svg/eps/ps/pdf with height = width=9 inches and a high resolution
 }
 \description{
 This calls svg/png/postscript/etc according to the filename provided.

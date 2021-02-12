@@ -45,7 +45,7 @@ appear to be on both strands (eg. they start and end with 'TA').
 \examples{
  \dontrun{
  input <- "preprocessing/hpgl0837/essentiality/hpgl0837-trimmed_ca_ta-v0M1.wig"
- saturation <- tnseq_saturation(file=input)
+ saturation <- tnseq_saturation(file = input)
 }
 }
 \seealso{

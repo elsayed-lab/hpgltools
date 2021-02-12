@@ -8,7 +8,7 @@ context("030annotation_microbesonline.R
 ## load_microbesonline_go(), load_microbesonline_kegg().
 
 ## ## load_microbesonline_annotations()
-spy_annot <- load_microbesonline_annotations(id=160490)
+spy_annot <- load_microbesonline_annotations(id = 160490)
 actual <- dim(spy_annot)
 expected <- c(1871, 18)
 ## 0102
@@ -18,7 +18,7 @@ test_that("Do we get the expected amount of pyogenes data?", {
 })
 
 ## ## load_microbesonline_go()
-spy_go <- load_microbesonline_go(id=160490)
+spy_go <- load_microbesonline_go(id = 160490)
 actual <- dim(spy_go)
 expected <- c(4594, 2)
 ## 0304
@@ -29,5 +29,5 @@ test_that("Do we get the expected amount of ecoli GO data?", {
 
 ## ## load_microbesonline_kegg()
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 030nnotation_microbesonline.R in ", elapsed,  " seconds."))

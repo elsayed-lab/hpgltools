@@ -33,8 +33,8 @@ test_that("Do we get some granges?", {
   expect_equal("GRanges object with 1857 ranges and 5 metadata columns", genes_data)
 })
 
-txdb_data <- load_orgdb_annotations(testing[["txdb"]], keytype="TXID",
-                                    fields=c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
+txdb_data <- load_orgdb_annotations(testing[["txdb"]], keytype = "TXID",
+                                    fields = c("CDSID", "CDSNAME", "EXONID", "EXONNAME",
                                              "GENEID", "TXID", "TXNAME"))
 txdb_transcripts <- as.data.frame(txdb_data[["transcripts"]])
 ## 05
@@ -69,5 +69,5 @@ test_that("Do we get some transcript txnames?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 015annotation_genbank.R in ", elapsed,  " seconds."))

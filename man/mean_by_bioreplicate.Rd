@@ -33,7 +33,7 @@ This function therefore does the following:
   1.  Backfill all 0s in the matrix to NA.
   2.  Performs a mean across all samples which are known technical replicates
   of the same biological replicate.  This mean is performed using
-  na.rm=TRUE.  Thus the entries which used to be 0 should no longer affect
+  na.rm = TRUE.  Thus the entries which used to be 0 should no longer affect
   the result.
   3.  Recreate the expressionset with the modified set of samples.
 }

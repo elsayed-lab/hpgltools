@@ -25,11 +25,11 @@ library(hpgltools)
 ##     expect_equal(expected, actual)
 ## })
 
-## id_df <- sm(get_microbesonline_ids(name="pyogenes"))
+## id_df <- sm(get_microbesonline_ids(name = "pyogenes"))
 ## my_id <- id_df[["shortName"]] == "Streptococcus pyogenes MGAS5005"
 ## my_id <- id_df[my_id, 1]
 
-## annotations <- sm(load_microbesonline_annotations(id=my_id))
+## annotations <- sm(load_microbesonline_annotations(id = my_id))
 ## annotations <- annotations[[1]]
 ## expected <- c("dnaA", "dnaN", "M5005_Spy_0003",
 ##               "M5005_Spy_0004", "pth", "trcF")
@@ -39,7 +39,7 @@ library(hpgltools)
 ## })
 
 ## ## The default is 160490, an E. coli strain.
-## go_ids <- sm(load_microbesonline_go(name="pyogenes%5005"))
+## go_ids <- sm(load_microbesonline_go(name = "pyogenes%5005"))
 ## actual <- head(sort(unique(go_ids[["acc"]])))
 ## expected <- c("GO:0000015", "GO:0000062", "GO:0000074",
 ##               "GO:0000105", "GO:0000150", "GO:0000154")
@@ -47,5 +47,5 @@ library(hpgltools)
 ##     expect_equal(expected, actual)
 ## })
 ## end <- as.POSIXlt(Sys.time())
-## elapsed <- round(x=as.numeric(end) - as.numeric(start))
+## elapsed <- round(x = as.numeric(end) - as.numeric(start))
 ## message(paste0("\nFinished 42ann_microbes.R in ", elapsed,  " seconds."))

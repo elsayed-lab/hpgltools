@@ -25,7 +25,7 @@ requires ENTREZIDs.  In the mean time, this creates a dataframe of the mapped
 columns for a given set of gene ids using the in a sqlite instance.
 }
 \examples{
- dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto="ensembl", keytype="unigene")
+ dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto = "ensembl", keytype = "unigene")
  head(dm_unigene_to_ensembl)
 }
 \seealso{

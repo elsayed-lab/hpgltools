@@ -58,28 +58,28 @@ actual <- as.numeric(summary(testing[, 1]))
 expected <- c(0.000, 46.000, 306.000, 2225.509, 869.000, 4542884.000)
 ## 13
 test_that("Do we get expression from our expt?", {
-  expect_equal(actual[1], expected[1], tolerance=0.001)
-  expect_equal(actual[2], expected[2], tolerance=0.001)
-  expect_equal(actual[3], expected[3], tolerance=0.001)
-  expect_equal(actual[4], expected[4], tolerance=0.001)
-  expect_equal(actual[5], expected[5], tolerance=0.001)
-  expect_equal(actual[6], expected[6], tolerance=0.001)
+  expect_equal(actual[1], expected[1], tolerance = 0.001)
+  expect_equal(actual[2], expected[2], tolerance = 0.001)
+  expect_equal(actual[3], expected[3], tolerance = 0.001)
+  expect_equal(actual[4], expected[4], tolerance = 0.001)
+  expect_equal(actual[5], expected[5], tolerance = 0.001)
+  expect_equal(actual[6], expected[6], tolerance = 0.001)
 })
 
 ## concatenate_runs()
-test_expt <- concatenate_runs(expt=pombe_expt, column="minute")
+test_expt <- concatenate_runs(expt = pombe_expt, column = "minute")
 actual <- dim(pData(test_expt))
 expected <- c(6, 8)
 ## 1415
 test_that("Do we get a reasonable number of resulting samples if we collapse by time?", {
-  expect_equal(actual[1], expected[1], tolerance=0.001)
-  expect_equal(actual[2], expected[2], tolerance=0.001)
+  expect_equal(actual[1], expected[1], tolerance = 0.001)
+  expect_equal(actual[2], expected[2], tolerance = 0.001)
 })
 
 ## exclude_genes_expt()
 no_rrna <- exclude_genes_expt(pombe_expt,
-                              column="gene_biotype",
-                              patterns=c("ncRNA", "pseudogene"))
+                              column = "gene_biotype",
+                              patterns = c("ncRNA", "pseudogene"))
 expected <- 5778
 actual <- nrow(exprs(no_rrna))
 ## 16
@@ -88,12 +88,12 @@ test_that("Does exclude_genes_expt remove stuff?", {
 })
 
 ## features_greater_than()
-testing_1 <- features_greater_than(pombe_expt, cutoff=1, hard=FALSE)
-testing_10 <- features_greater_than(pombe_expt, cutoff=10, hard=FALSE)
-testing_100 <- features_greater_than(pombe_expt, cutoff=100, hard=FALSE)
-testing_1000 <- features_greater_than(pombe_expt, cutoff=1000, hard=FALSE)
-testing_10000 <- features_greater_than(pombe_expt, cutoff=10000, hard=FALSE)
-testing_100000 <- features_greater_than(pombe_expt, cutoff=100000, hard=FALSE)
+testing_1 <- features_greater_than(pombe_expt, cutoff = 1, hard = FALSE)
+testing_10 <- features_greater_than(pombe_expt, cutoff = 10, hard = FALSE)
+testing_100 <- features_greater_than(pombe_expt, cutoff = 100, hard = FALSE)
+testing_1000 <- features_greater_than(pombe_expt, cutoff = 1000, hard = FALSE)
+testing_10000 <- features_greater_than(pombe_expt, cutoff = 10000, hard = FALSE)
+testing_100000 <- features_greater_than(pombe_expt, cutoff = 100000, hard = FALSE)
 ## 22
 test_that("Do we get expected features greater than some cutoffs?", {
   expect_equal(as.numeric(testing_1[["number"]][1]), 6457)
@@ -125,8 +125,8 @@ test_that("Do we get expected medians?", {
 })
 
 ## set_expt_batches()
-new_batches <- c(rep(x="a", times=12), rep(x="b", times=12), rep(x="c", times=12))
-testing <- set_expt_batches(pombe_expt, fact=new_batches)
+new_batches <- c(rep(x = "a", times = 12), rep(x = "b", times = 12), rep(x = "c", times = 12))
+testing <- set_expt_batches(pombe_expt, fact = new_batches)
 actual <- pData(testing)[["batch"]]
 ## 26
 test_that("Did we change the batches?", {
@@ -134,7 +134,7 @@ test_that("Did we change the batches?", {
 })
 
 ## set_expt_colors()
-testing <- set_expt_colors(pombe_expt, chosen_palette="Accent")
+testing <- set_expt_colors(pombe_expt, chosen_palette = "Accent")
 old_actual <- levels(as.factor(pombe_expt$colors))
 old_expected <- c("#1B9E77", "#666666", "#7D8F31", "#7E6EA2", "#8E7037", "#93752C",
                   "#A0A811", "#B3499C", "#B78415", "#BD6332", "#CF3F76", "#E0A604")
@@ -148,7 +148,7 @@ test_that("Did we get some old/new colors?", {
 })
 
 ## set_expt_conditions()
-testing <- set_expt_conditions(pombe_expt, fact="minute")
+testing <- set_expt_conditions(pombe_expt, fact = "minute")
 expected <- levels(pombe_expt[["design"]][["minute"]])
 actual <- levels(testing[["design"]][["condition"]])
 ## 29
@@ -161,14 +161,14 @@ test_that("Did we get some new conditions?", {
 
 ## set_expt_samplenames()
 newnames <- paste0(sampleNames(pombe_expt), "test")
-testing <- set_expt_samplenames(pombe_expt, newnames=newnames)
+testing <- set_expt_samplenames(pombe_expt, newnames = newnames)
 ## 30
 test_that("Can we change the same names?", {
   expect_equal(newnames, sampleNames(testing))
 })
 
 ## subset_expt()
-testing <- subset_expt(pombe_expt, subset="replicate=='r1'")
+testing <- subset_expt(pombe_expt, subset = "replicate=='r1'")
 actual <- sampleNames(testing)
 expected <- c("GSM1368273", "GSM1368276", "GSM1368279", "GSM1368282",
               "GSM1368285", "GSM1368288", "GSM1368291", "GSM1368294",
@@ -179,8 +179,8 @@ test_that("Can we subset an expt?", {
 })
 
 ## what_happened()
-testing <- normalize_expt(pombe_expt, transform="log2", norm="tmm",
-                          convert="cpm", filter=TRUE, batch="sva")
+testing <- normalize_expt(pombe_expt, transform = "log2", norm = "tmm",
+                          convert = "cpm", filter = TRUE, batch = "sva")
 actual <- what_happened(testing)
 expected <- glue::glue("log2(sva(cpm(tmm(cbcb(data)))))")
 ## 32
@@ -190,7 +190,7 @@ test_that("Will an expt tell us what happened to it?", {
 
 ## write_expt()
 ## I run this on an interactive session and get no warnings...
-testing <- sm(write_expt(pombe_expt, excel="testing_write_expt.xlsx"))
+testing <- sm(write_expt(pombe_expt, excel = "testing_write_expt.xlsx"))
 ## 33
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))
@@ -238,5 +238,5 @@ test_that("Did write_expt() create pictures?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 060expt.R in ", elapsed,  " seconds."))

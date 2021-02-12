@@ -19,7 +19,7 @@ annotations for the trinity contigs.  This function extracts ontology data
 from it.  Keep in mind that this data is primarily from Blast2GO.
 }
 \examples{
- trinotate_go <- load_trinotate_go(trinotate=trinotate)
+ trinotate_go <- load_trinotate_go(trinotate = trinotate)
  dim(trinotate_go$go_data)
  dim(trinotate_go$go_table)
 }

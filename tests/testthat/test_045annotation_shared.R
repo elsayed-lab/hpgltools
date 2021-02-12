@@ -8,10 +8,10 @@ context("045annotation_shared.R:
 
 ## get_gene_size uses load_annotations, and load_annotations just calls one of the others.
 
-pa_gff <- system.file("paeruginosa_pa14.gff", package="hpgltools")
-pa_fasta <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
+pa_gff <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
+pa_fasta <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
 
-testing <- load_annotations(type="gff", gff=pa_gff)
+testing <- load_annotations(type = "gff", gff = pa_gff)
 expected <- 11946
 actual <- nrow(testing)
 ## 01
@@ -19,7 +19,7 @@ test_that("Do we get some data from load_annotations()?", {
   expect_equal(actual, expected)
 })
 
-testing <- get_genesizes(annotation=testing)
+testing <- get_genesizes(annotation = testing)
 actual <- head(testing[["gene_size"]])
 expected <- c(1545, 1104, 1110, 2421, 774, 537)
 ## 02
@@ -28,5 +28,5 @@ test_that("Do we get consistent gene sizes?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 045annotation_shared.R in ", elapsed,  " seconds."))

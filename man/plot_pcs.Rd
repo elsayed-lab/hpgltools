@@ -69,7 +69,7 @@ that process as simple and pretty as possible.
 }
 \examples{
 \dontrun{
- pca_plot = plot_pcs(pca_data, first="PC2", second="PC4", design=expt$design)
+ pca_plot = plot_pcs(pca_data, first = "PC2", second = "PC4", design = expt$design)
 }
 }
 \seealso{

@@ -6,9 +6,9 @@ context("135model_varpartition.R:
 ## 2017-12, exported functions in model_varpartition:
 ## replot_varpart_percent(), varpart(), varpart_summaries()
 
-pombe_expt <- make_pombe_expt(annotation=FALSE)
+pombe_expt <- make_pombe_expt(annotation = FALSE)
 
-pombe_varpart <- simple_varpart(expt=pombe_expt)
+pombe_varpart <- simple_varpart(expt = pombe_expt)
 ## I decided to move away from the mixed models.
 ##expected <- "(1 | condition) + (1 | batch)"
 expected <- "condition + batch"
@@ -39,5 +39,5 @@ test_that("Does the partition plot get generated?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 135model_varpartition.R in ", elapsed,  " seconds."))

@@ -7,8 +7,8 @@ pasilladf_file <- "pasilla_df.rda"
 pasilla_file <- "pasilla.rda"
 pasilla <- new.env()
 if (file.exists(pasilla_file) & file.exists(pasilladf_file)) {
-  load(pasilladf_file, envir=pasilla)
-  load(pasilla_file, envir=pasilla)
+  load(pasilladf_file, envir = pasilla)
+  load(pasilla_file, envir = pasilla)
 } else {
   stop("The pasilla data file does not exist.")
 }
@@ -18,7 +18,7 @@ pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 limma_file <- "320_de_limma.rda"
 if (file.exists(limma_file)) {
-  load(limma_file, envir=limma)
+  load(limma_file, envir = limma)
 } else {
   stop("The pasilla data file does not exist.")
 }
@@ -30,21 +30,21 @@ colnames(metadata) <- c("condition", "batch")
 metadata[["condition"]] <- as.factor(metadata[["condition"]])
 metadata[["batch"]] <- as.factor(metadata[["batch"]])
 ## Performing DESeq2 differential expression analysis as per the DESeq vignette.
-summarized <- DESeq2::DESeqDataSetFromMatrix(countData=counts,
-                                             colData=metadata,
+summarized <- DESeq2::DESeqDataSetFromMatrix(countData = counts,
+                                             colData = metadata,
                                              design=~ 0 + batch + condition)
-dataset <- DESeq2::DESeqDataSet(se=summarized, design=~ 0 + batch + condition)
+dataset <- DESeq2::DESeqDataSet(se = summarized, design=~ 0 + batch + condition)
 deseq_sf <- DESeq2::estimateSizeFactors(dataset)
 deseq_disp <- DESeq2::estimateDispersions(deseq_sf)
-deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior=FALSE)
+deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior = FALSE)
 deseq_result <- as.data.frame(DESeq2::results(deseq_run,
-                                              contrast=c("condition", "treated", "untreated"),
-                                              format="DataFrame"))
+                                              contrast = c("condition", "treated", "untreated"),
+                                              format = "DataFrame"))
 
 ## Performing DESeq2 analysis using hpgltools.
-hpgl_deseq <- deseq2_pairwise(input=pasilla_expt,
-                              model_batch=TRUE,
-                              deseq_excel="deseq_test.xlsx")
+hpgl_deseq <- deseq2_pairwise(input = pasilla_expt,
+                              model_batch = TRUE,
+                              deseq_excel = "deseq_test.xlsx")
 test_that("Can I write a deseq2 table?", {
   expect_true(file.exists("deseq_test.xlsx"))
 })
@@ -75,35 +75,35 @@ deseq_adjpval <- deseq_result_reordered[["adj.P.Val"]]
 hpgl_adjpval <- hpgl_result_reordered[["padj"]]
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): basemean?", {
-  expect_equal(deseq_basemean, hpgl_basemean, tolerance=1)
+  expect_equal(deseq_basemean, hpgl_basemean, tolerance = 1)
 })
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): logfc?", {
-  expect_equal(deseq_logfc, hpgl_logfc, tolerance=0.001)
+  expect_equal(deseq_logfc, hpgl_logfc, tolerance = 0.001)
 })
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): lfcse?", {
-  expect_equal(deseq_lfcse, hpgl_lfcse, tolerance=0.2)
+  expect_equal(deseq_lfcse, hpgl_lfcse, tolerance = 0.2)
 })
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): stat?", {
-  expect_equal(deseq_stat, hpgl_stat, tolerance=0.1)
+  expect_equal(deseq_stat, hpgl_stat, tolerance = 0.1)
 })
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): pval?", {
-  expect_equal(deseq_pval, hpgl_pval, tolerance=0.1)
+  expect_equal(deseq_pval, hpgl_pval, tolerance = 0.1)
 })
 
 test_that("Does the DESeq2 vignette agree with the result from deseq_pairwise(): adjpval?", {
-  expect_equal(deseq_adjpval, hpgl_adjpval, tolerance=0.1)
+  expect_equal(deseq_adjpval, hpgl_adjpval, tolerance = 0.1)
 })
 
 deseq_file <- "324_de_deseq.rda"
-save(list=ls(), file=deseq_file)
+save(list = ls(), file = deseq_file)
 test_that("Did we save the deseq results?", {
   expect_true(file.exists(deseq_file))
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))

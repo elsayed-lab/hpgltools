@@ -8,7 +8,7 @@ context("26de_edger.R: Does hpgltools work with edgeR?\n")
 pasilla <- new.env()
 pasilla_file <- "pasilla.rda"
 if (file.exists(pasilla_file)) {
-  load(pasilla_file, envir=pasilla)
+  load(pasilla_file, envir = pasilla)
 } else {
   stop("The pasilla data file does not exist.")
 }
@@ -17,7 +17,7 @@ pasilla_expt <- pasilla[["expt"]]
 limma <- new.env()
 limma_file <- "320_de_limma.rda"
 if (file.exists(limma_file)) {
-  load(limma_file, envir=limma)
+  load(limma_file, envir = limma)
 } else {
   stop("The pasilla data file does not exist.")
 }
@@ -29,21 +29,21 @@ colnames(metadata) <- c("condition", "batch")
 ## Performing edgeR differential expression analysis as per the edgeR vignette.
 model <- model.matrix(~ 0 + design[["condition"]] + design[["libType"]])
 colnames(model) <- c("treated", "untreated", "libtype")
-raw <- edgeR::DGEList(counts=counts, group=metadata[["condition"]])
+raw <- edgeR::DGEList(counts = counts, group = metadata[["condition"]])
 norm <- edgeR::calcNormFactors(raw)
 disp_norm <- edgeR::estimateCommonDisp(norm)
 tagdispnorm <- edgeR::estimateTagwiseDisp(disp_norm)
 glmnorm <- edgeR::estimateGLMCommonDisp(tagdispnorm, model)
 glmtrend <- edgeR::estimateGLMTrendedDisp(glmnorm, model)
 glmtagged <- edgeR::estimateGLMTagwiseDisp(glmtrend, model)
-glmfit <- edgeR::glmQLFit(glmtagged, design=model, robust=TRUE)
+glmfit <- edgeR::glmQLFit(glmtagged, design = model, robust = TRUE)
 ## This is explicitly in the opposite order as what edger_pairwise will choose in order to
 ## make it necessary to test the columns that change as a result.
 pair <- "treated - untreated"
-contr <- limma::makeContrasts(contrasts=pair, levels=model)
+contr <- limma::makeContrasts(contrasts = pair, levels = model)
 ## Why does this keep failing!?
-glm_result <- edgeR::glmQLFTest(glmfit, contrast=contr)
-glm_table <- as.data.frame(edgeR::topTags(glm_result, n=nrow(raw), sort.by="logFC"))
+glm_result <- edgeR::glmQLFTest(glmfit, contrast = contr)
+glm_table <- as.data.frame(edgeR::topTags(glm_result, n = nrow(raw), sort.by = "logFC"))
 
 ## Create the expt object
 expected <- as.matrix(counts)
@@ -55,7 +55,7 @@ test_that("Does data from an expt equal a raw dataframe?", {
 })
 
 ## Perform the edgeR analysis in hpgltools
-hpgl_edger <- sm(edger_pairwise(pasilla_expt, edger_method="long", edger_test="qlf"))
+hpgl_edger <- sm(edger_pairwise(pasilla_expt, edger_method = "long", edger_test = "qlf"))
 
 hpgl_result <- hpgl_edger[["all_tables"]][["untreated_vs_treated"]]
 hpgl_result[["logFC"]] <- hpgl_result[["logFC"]] * -1
@@ -79,33 +79,33 @@ edger_fdr <- edger_reordered[["FDR"]]
 hpgl_fdr <- hpgl_reordered[["FDR"]]
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (logfc)?", {
-    expect_equal(edger_logfc, hpgl_logfc, tolerance=0.0001)
+    expect_equal(edger_logfc, hpgl_logfc, tolerance = 0.0001)
 })
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (logcpm)?", {
-    expect_equal(edger_logcpm, hpgl_logcpm, tolerance=0.0001)
+    expect_equal(edger_logcpm, hpgl_logcpm, tolerance = 0.0001)
 })
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (F)?", {
-    expect_equal(edger_f, hpgl_f, tolerance=0.0001)
+    expect_equal(edger_f, hpgl_f, tolerance = 0.0001)
 })
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (pval)?", {
-    expect_equal(edger_pval, hpgl_pval, tolerance=0.0001)
+    expect_equal(edger_pval, hpgl_pval, tolerance = 0.0001)
 })
 
 test_that("Is the hpgl pairwise similar to edgeR's default method (fdr)?", {
-    expect_equal(edger_fdr, hpgl_fdr, tolerance=0.0001)
+    expect_equal(edger_fdr, hpgl_fdr, tolerance = 0.0001)
 })
 
-edger_written <- write_edger(hpgl_edger, excel="edger_test.xlsx")
+edger_written <- write_edger(hpgl_edger, excel = "edger_test.xlsx")
 test_that("Can we write the results of an edger pairwise analysis?", {
     expect_true(file.exists("edger_test.xlsx"))
 })
 
 hpgl_edger <- sm(edger_pairwise(pasilla_expt))
-save(list=ls(), file="326_de_edger.rda")
+save(list = ls(), file = "326_de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))

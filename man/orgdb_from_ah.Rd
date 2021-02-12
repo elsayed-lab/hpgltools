@@ -26,7 +26,7 @@ fragile than I would like.
 }
 \examples{
 \dontrun{
- org <- mytaxIdToOrgDb(species="Leishmania", type="TxDb")
+ org <- mytaxIdToOrgDb(species = "Leishmania", type = "TxDb")
 }
 }
 \seealso{

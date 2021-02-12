@@ -4,7 +4,7 @@ library(hpgltools)
 context("01paeruginosa.R: Test some Pseudomonas data.
   1234\n")
 
-pa_gff <- load_gff_annotations(gff=system.file("paeruginosa_pa14.gff", package="hpgltools"))
+pa_gff <- load_gff_annotations(gff = system.file("paeruginosa_pa14.gff", package = "hpgltools"))
 ## This does provide some of what we need:
 ## seqnames, start, end, width, strand, source, type, score, phase, ID(thisone!),
 ## Name, Dbxref, Alias, name, Parent(or this one!), locus
@@ -12,14 +12,14 @@ good_parents <- pa_gff[["Parent"]] != ""
 pa_gff <- pa_gff[good_parents, ]
 pa_gff <- data.table::as.data.table(pa_gff)
 pa_gff[["rownames"]] <- pa_gff[["Parent"]]
-##pa_annotations <- as.data.frame(merge(x=pa_annotations, y=pa_gff, by.x="sysName", by.y="locus"))
+##pa_annotations <- as.data.frame(merge(x = pa_annotations, y = pa_gff, by.x = "sysName", by.y = "locus"))
 ##rownames(pa_annotations) <- pa_annotations[["Parent"]]
 
 pa_expt <- create_expt(
-  metadata=system.file("pa_samples.xlsx", package="hpgltools"),
-  countdir=system.file("counts", package="hpgltools"),
-  gene_info=pa_gff,
-  title="Pseudomonas aeruginosa RNAseq data of two strains and two time points.")
+  metadata = system.file("pa_samples.xlsx", package = "hpgltools"),
+  countdir = system.file("counts", package = "hpgltools"),
+  gene_info = pa_gff,
+  title = "Pseudomonas aeruginosa RNAseq data of two strains and two time points.")
 
 expected <- c(5979, 12)
 actual <- dim(exprs(pa_expt))
@@ -50,5 +50,5 @@ test_that("The expt has a title.", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 01paeruginosa.R in ", elapsed,  " seconds."))

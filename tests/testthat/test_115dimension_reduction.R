@@ -7,11 +7,11 @@ context("115dimension_reduction.R:
 ## pca_information() pca_highscores() pcRes() plot_pca()
 ## plot_pcs() test_pca_methods()
 
-pombe_expt <- make_pombe_expt(annotation=FALSE)
+pombe_expt <- make_pombe_expt(annotation = FALSE)
 
 ## 01 pca_information()
-testing <- pca_information(pombe_expt, plot_pcas=TRUE,
-                           expt_factors=c("strain", "minute", "replicate"))
+testing <- pca_information(pombe_expt, plot_pcas = TRUE,
+                           expt_factors = c("strain", "minute", "replicate"))
 expected <- c(94.15, 4.61, 0.79, 0.12, 0.11, 0.08)
 actual <- head(testing[["rsquared_table"]][["prop_var"]])
 ## 01
@@ -26,7 +26,7 @@ expected <- c(-2.538439, -2.853661, 1.458443, -11.445837, -5.929639, -5.814761)
 actual <- head(as.numeric(testing[["scores"]][, "Comp.1"]))
 ## 02
 test_that("pca_highscores() provides some scores by PC?", {
-  expect_equal(expected, actual, tolerance=0.01)
+  expect_equal(expected, actual, tolerance = 0.01)
 })
 
 ## 03 pcRes()  This is called from plot_pca() and friends, test it there.
@@ -37,7 +37,7 @@ expected <- c(6008536.5, 1329859.1, 550763.0, 214403.7, 203382.4, 176304.0)
 actual <- head(testing[["result"]][["d"]])
 ## 03
 test_that("plot_pca() provides expected SVD data?", {
-  expect_equal(expected, actual, tolerance=1.0)
+  expect_equal(expected, actual, tolerance = 1.0)
 })
 
 test_that("plot_pca() provides a plot!?", {
@@ -66,5 +66,5 @@ test_that("We get variances from pcRes?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 115model_pca.R in ", elapsed,  " seconds."))

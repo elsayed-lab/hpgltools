@@ -5,16 +5,16 @@ context("340ann_biomartgenbank.R: Does biomart function?
   1234567\n")
 
 limma <- new.env()
-load("320_de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir = limma)
 
 limma_result <- limma[["hpgl_limma"]]
 table <- limma_result[["all_tables"]][[1]]
-sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
+sig_genes <- get_sig_genes(table, column = "logFC")[["up_genes"]]
 
 table <- limma_result[["all_tables"]][[1]]
-sig_genes <- get_sig_genes(table, column="logFC")[["up_genes"]]
-dmel_annotations <- load_biomart_annotations(species="dmelanogaster", overwrite=TRUE)[["annotation"]]
-dmel_go <- load_biomart_go(species="dmelanogaster")
+sig_genes <- get_sig_genes(table, column = "logFC")[["up_genes"]]
+dmel_annotations <- load_biomart_annotations(species = "dmelanogaster", overwrite = TRUE)[["annotation"]]
+dmel_go <- load_biomart_go(species = "dmelanogaster")
 
 ## My recent changes inadvertently switched this from gene to transcript.
 ## This makes me think I should consider making that an option...
@@ -46,10 +46,10 @@ test_that("Did the ontologies come out?", {
 
 test_genes <- head(rownames(sig_genes))
 linkage_test <- load_biomart_orthologs(test_genes,
-                                       ## host="useast.ensembl.org",
-                                       first_species="dmelanogaster",
-                                       second_species="mmusculus",
-                                       attributes="ensembl_gene_id")
+                                       ## host = "useast.ensembl.org",
+                                       first_species = "dmelanogaster",
+                                       second_species = "mmusculus",
+                                       attributes = "ensembl_gene_id")
 linked_genes <- linkage_test[["subset_linked_genes"]]
 ## Hard-set the order of the genes to avoid test failures for silly reasons.
 actual_linkage <- sort(linked_genes[["mmusculus"]])
@@ -61,7 +61,7 @@ test_that("Can I link some melanogaster and mouse genes?", {
     expect_equal(expected_linkage, actual_linkage)
 })
 
-gbk2txdb_test <- load_genbank_annotations(accession="AE009949")
+gbk2txdb_test <- load_genbank_annotations(accession = "AE009949")
 expected <- 1895017
 actual <- GenomicRanges::width(gbk2txdb_test[["seq"]])
 ## 05
@@ -95,5 +95,5 @@ test_that("I downloaded an accession using download_gbk()?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 40ann_biomartgenbank.R in ", elapsed,  " seconds."))

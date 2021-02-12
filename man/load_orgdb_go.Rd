@@ -35,7 +35,7 @@ are extremely fast and flexible, thus by changing the keytype argument, one
 may use a lot of different ID types and still score some useful ontology data.
 }
 \examples{
- drosophila_orgdb_go <- load_orgdb_go(orgdb="org.Dm.eg.db")
+ drosophila_orgdb_go <- load_orgdb_go(orgdb = "org.Dm.eg.db")
  head(drosophila_orgdb_go)
 }
 \seealso{

@@ -63,8 +63,8 @@ and potentially save an extra svg-version of each plot inserted.
  \dontrun{
   fun_plot <- plot_pca(stuff)$plot
   df <- some_data_frame
-  wb <- write_xlsx(df, excel="funkytown.xlsx")$workbook
-  try_results <- xlsx_plot_png(fun_plot, wb=wb)
+  wb <- write_xlsx(df, excel = "funkytown.xlsx")$workbook
+  try_results <- xlsx_plot_png(fun_plot, wb = wb)
 }
 }
 \seealso{

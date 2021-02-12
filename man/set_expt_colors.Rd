@@ -39,7 +39,7 @@ chosen_colors <- list(
    "clbr_late" = "#1E7712",
    "cl14_mid" = "#7280FF",
    "clbr_mid" = "#000D7E")
-esmer_expt <- set_expt_colors(expt=esmer_expt, colors=chosen_colors)
+esmer_expt <- set_expt_colors(expt = esmer_expt, colors = chosen_colors)
 }
 }
 \seealso{

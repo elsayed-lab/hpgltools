@@ -27,7 +27,7 @@ deseq2/edger and friends.
 }
 \examples{
 \dontrun{
- norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+ norm_table = normalize_counts(count_table, design = design, norm='qsmooth')
 }
 }
 \seealso{

@@ -72,36 +72,36 @@ data which has been mapped against multiple species.  I can use this function
 and just change the file_column argument to pick up each species' tables.
 }
 \examples{
- load(file=system.file("cdm_expt.rda", package="hpgltools"))
+ load(file = system.file("cdm_expt.rda", package = "hpgltools"))
  head(cdm_counts)
  head(cdm_metadata)
  ## The gff file has differently labeled locus tags than the count tables
  ## The naming standard changed since this experiment was performed and I
  ## downloaded a new gff file.
- rownames(gas_gff_annot) <- make.names(gsub(pattern="(Spy)_", replacement="\\\\1",
-                                            x=gas_gff_annot[["locus_tag"]]), unique=TRUE)
- mgas_expt <- create_expt(metadata=cdm_metadata, gene_info=gas_gff_annot,
-                          count_dataframe=cdm_counts)
+ rownames(gas_gff_annot) <- make.names(gsub(pattern = "(Spy)_", replacement = "\\\\1",
+                                            x = gas_gff_annot[["locus_tag"]]), unique = TRUE)
+ mgas_expt <- create_expt(metadata = cdm_metadata, gene_info = gas_gff_annot,
+                          count_dataframe = cdm_counts)
  head(pData(mgas_expt))
  ## An example using count tables referenced in the metadata.
  sb_annot <- load_trinotate_annotations(
-   trinotate=system.file("sb/trinotate_head.csv.xz", package="hpgltools"))
+   trinotate = system.file("sb/trinotate_head.csv.xz", package = "hpgltools"))
 sb_annot <- as.data.frame(sb_annot)
-  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique=TRUE)
+  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
  sb_annot[["rownames"]] <- NULL
- untarred <- utils::untar(tarfile=system.file("sb/preprocessing.tar.xz",
-                          package="hpgltools"))
- sb_expt <- create_expt(metadata="preprocessing/kept_samples.xlsx",
-                        gene_info=sb_annot)
+ untarred <- utils::untar(tarfile = system.file("sb/preprocessing.tar.xz",
+                          package = "hpgltools"))
+ sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
+                        gene_info = sb_annot)
  dim(exprs(sb_expt))
  dim(fData(sb_expt))
  pData(sb_expt)
  ## There are lots of other ways to use this, for example:
  \dontrun{
-  new_experiment <- create_expt(metadata="some_csv_file.csv", gene_info=gene_df)
+  new_experiment <- create_expt(metadata = "some_csv_file.csv", gene_info = gene_df)
   ## Remember that this depends on an existing data structure of gene annotations.
   meta <- extract_metadata("some_supplementary_materials_xls_file_I_downloaded.xls")
-  another_expt <- create_expt(metadata=meta, gene_info=annotations, count_dataframe=df_I_downloaded)
+  another_expt <- create_expt(metadata = meta, gene_info = annotations, count_dataframe = df_I_downloaded)
  }
 }
 \seealso{

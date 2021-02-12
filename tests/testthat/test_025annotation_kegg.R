@@ -64,5 +64,5 @@ test_that("Do we get the expected db mapping size?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 025annotation_kegg.R in ", elapsed,  " seconds."))

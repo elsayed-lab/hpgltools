@@ -5,9 +5,9 @@ context("066power_estimation.R:
   12\n")
 
 small_combined <- new.env()
-tt <- load(file="065_small_combined.rda", envir=small_combined)
+tt <- load(file = "065_small_combined.rda", envir = small_combined)
 small_combined <- small_combined[["small_combined"]]
-test_proper <- sm(simple_proper(small_combined, reps=c(3,5), nsims=10))
+test_proper <- sm(simple_proper(small_combined, reps = c(3,5), nsims = 10))
 expected <- 6
 actual <- nrow(test_proper[[1]][["power_table"]])
 test_that("Minimal check for proper functionality:", {
@@ -21,5 +21,5 @@ test_that("Minimal check for proper plotting:", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 066power_estimation.R in ", elapsed,  " seconds."))

@@ -9,8 +9,8 @@ context("020annotation_gff.R
 ## I deleted make_tooltips(), that was stupid.
 ## I moved get_gff_gene_lengths() to get_genelengths() and made it less stupid.
 
-pa_gff <- system.file("paeruginosa_pa14.gff", package="hpgltools")
-pa_fasta <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
+pa_gff <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
+pa_fasta <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
 
 ## gff2irange()
 pa_irange <- gff2irange(pa_gff)
@@ -29,7 +29,7 @@ test_that("Do we get some gff data for Pseudomonas?", {
 })
 
 ## pattern_count_genome()
-pa_tas <- sm(pattern_count_genome(pa_fasta, gff=pa_gff))
+pa_tas <- sm(pattern_count_genome(pa_fasta, gff = pa_gff))
 expected <- c(26, 16, 20, 39, 14, 14)
 actual <- head(pa_tas[["number"]])
 ## 04
@@ -38,12 +38,12 @@ test_that("Do we get sensible numbers of TAs in the pseudomonas genome?", {
 })
 
 ## sequence_attributes()
-pa_attribs_genes <- sequence_attributes(pa_fasta, gff=pa_gff)
+pa_attribs_genes <- sequence_attributes(pa_fasta, gff = pa_gff)
 expected <- c(0.62589, 0.37411, 0.4757282, 0.5242718)
 actual <- as.numeric(pa_attribs_genes["gene1650835", ])
 ## 05
 test_that("Do we get sensible gene attributes by gene?", {
-  expect_equal(expected, actual, tolerance=0.001)
+  expect_equal(expected, actual, tolerance = 0.001)
 })
 
 pa_attribs_genome <- sequence_attributes(pa_fasta)
@@ -51,12 +51,12 @@ expected <- c(0.6629220, 0.3370763, 0.4998674, 0.5001309)
 actual <- as.numeric(pa_attribs_genome)
 ## 06
 test_that("Do we get sensible gene attributes by genome?", {
-  expect_equal(expected, actual, tolerance=0.001)
+  expect_equal(expected, actual, tolerance = 0.001)
 })
 
 ## sum_exons()
 ## I need a gff to test this with
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 020annotation_gff.R in ", elapsed,  " seconds."))

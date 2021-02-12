@@ -31,7 +31,7 @@ getSet()  This is another place which should be revisited for improvements
 via mcols().  Check snp.r. for ideas.
 }
 \examples{
- gff_file <- system.file("gas.gff", package="hpgltools")
+ gff_file <- system.file("gas.gff", package = "hpgltools")
  gas_iranges <- gff2irange(gff_file)
  colnames(as.data.frame(gas_iranges))
 }

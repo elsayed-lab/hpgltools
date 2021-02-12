@@ -4,12 +4,14 @@
 \alias{guess_orgdb_keytype}
 \title{Iterate over keytypes looking for matches against a set of IDs.}
 \usage{
-guess_orgdb_keytype(ids, orgdb)
+guess_orgdb_keytype(ids, orgdb = NULL, verbose = FALSE)
 }
 \arguments{
 \item{ids}{Set of gene IDs to seek.}
 
 \item{orgdb}{Orgdb instance to iterate through.}
+
+\item{verbose}{talky talk}
 }
 \value{
 Likely keytype which provides the desired IDs.

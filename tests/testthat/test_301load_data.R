@@ -8,30 +8,30 @@ context("301load_data.R: Does pasilla load into hpgltools?\n")
 ## Try loading some annotation information for this species.
 
 ## This now generates an error on travis, but not on my computer.
-gene_info <- sm(load_biomart_annotations(species="dmelanogaster", overwrite=TRUE))[["annotation"]]
+gene_info <- sm(load_biomart_annotations(species = "dmelanogaster", overwrite = TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
-rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique=TRUE)
+rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique = TRUE)
 
 ## This section is copy/pasted to all of these tests, that is dumb.
-datafile <- system.file("extdata/pasilla_gene_counts.tsv", package="pasilla")
+datafile <- system.file("extdata/pasilla_gene_counts.tsv", package = "pasilla")
 ## Load the counts and drop super-low counts genes
-counts <- read.table(datafile, header=TRUE, row.names=1)
+counts <- read.table(datafile, header = TRUE, row.names = 1)
 counts <- counts[rowSums(counts) > ncol(counts), ]
 ## Set up a quick design to be used by cbcbSEQ and hpgltools
 design <- data.frame(
-  row.names=colnames(counts),
-  condition=c("untreated", "untreated", "untreated",
+  row.names = colnames(counts),
+  condition = c("untreated", "untreated", "untreated",
               "untreated", "treated", "treated", "treated"),
-  libType=c("single_end", "single_end", "paired_end",
+  libType = c("single_end", "single_end", "paired_end",
             "paired_end", "single_end", "paired_end", "paired_end"))
 metadata <- design
 colnames(metadata) <- c("condition", "batch")
-save(list=ls(), file="pasilla_df.rda")
+save(list = ls(), file = "pasilla_df.rda")
 
 ## Make sure it is still possible to create an expt
-pasilla_expt <- create_expt(count_dataframe=counts, metadata=metadata,
-                            savefile="pasilla.rda", gene_info=gene_info)
+pasilla_expt <- create_expt(count_dataframe = counts, metadata = metadata,
+                            savefile = "pasilla.rda", gene_info = gene_info)
 ## Recent changes to how my expressionsets are created mean that the order of
 ## genes is hard-set to the order of annotations in the annotation data and
 ## therefore _not_ the order of genes found in the count tables.
@@ -112,5 +112,5 @@ test_that("Are the library sizes intact?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 02load_data.R in ", elapsed,  " seconds."))

@@ -38,8 +38,8 @@ This is once again a place where mcols() usage might improve the overall
 quality of life.
 }
 \examples{
- fasta_file <- system.file("paeruginosa_pa14.fasta", package="hpgltools")
- gff_file <- system.file("paeruginosa_pa14.gff", package="hpgltools")
+ fasta_file <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
+ gff_file <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
  ta_count <- pattern_count_genome(fasta_file, gff_file)
  head(ta_count)
 }

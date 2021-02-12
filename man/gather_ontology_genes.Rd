@@ -41,7 +41,7 @@ With little work this can be made much more generic, and it probably should.
 }
 \examples{
  \dontrun{
-  data <- simple_goseq(sig_genes=limma_output, lengths=annotation_df, goids=goids_df)
+  data <- simple_goseq(sig_genes = limma_output, lengths = annotation_df, goids = goids_df)
   genes_in_cats <- gather_genes(data, ont='BP')
  }
 }

@@ -20,7 +20,7 @@ Tested in test_26edger.R
 \examples{
 \dontrun{
  finished_comparison <- edger_pairwise(expressionset)
- data_list <- write_edger(finished_comparison, excel="edger_result.xlsx")
+ data_list <- write_edger(finished_comparison, excel = "edger_result.xlsx")
 }
 }
 \seealso{

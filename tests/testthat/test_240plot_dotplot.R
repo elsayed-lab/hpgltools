@@ -1,13 +1,13 @@
 start <- as.POSIXlt(Sys.time())
 context("240plot_dotplot.R:\n")
 
-pombe_expt <- make_pombe_expt(annotation=FALSE)
+pombe_expt <- make_pombe_expt(annotation = FALSE)
 pombe_subset <- subset_expt(
   pombe_expt,
-  subset="minute == 0 | minute == 15 | minute == 30")
-pombe_norm <- normalize_expt(pombe_expt, transform="log2", convert="cpm", filter=TRUE)
+  subset = "minute == 0 | minute == 15 | minute == 30")
+pombe_norm <- normalize_expt(pombe_expt, transform = "log2", convert = "cpm", filter = TRUE)
 
-pombe_estimates <- all_adjusters(pombe_norm, estimate_type="sva")
+pombe_estimates <- all_adjusters(pombe_norm, estimate_type = "sva")
 adjustments <- pombe_estimates[["model_adjust"]]
 
 test <- plot_svfactor(pombe_norm, adjustments)
@@ -42,5 +42,5 @@ test_that("Can we plot standard medians?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
+elapsed <- round(x = as.numeric(end) - as.numeric(start))
 message(paste0("\nFinished 240plot_dotplot.R in ", elapsed,  " seconds."))

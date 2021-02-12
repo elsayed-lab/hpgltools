@@ -37,7 +37,7 @@ write_xlsx(
 }
 \value{
 List containing the sheet and workbook written as well as the
-  bottom-right coordinates of the last row/column written to the worksheet.
+ bottom-right coordinates of the last row/column written to the worksheet.
 }
 \description{
 I like to give folks data in any format they prefer, even though I sort
@@ -47,9 +47,9 @@ then xlsx, and now openxlsx.  Hopefully this will not change again.
 }
 \examples{
  \dontrun{
-  xls_coords <- write_xlsx(dataframe, sheet="hpgl_data", excel="testing.xlsx")
-  xls_coords <- write_xlsx(another_df, wb=xls_coords$workbook,
-                          sheet="hpgl_data", start_row=xls_coords$end_col)
+  xls_coords <- write_xlsx(dataframe, sheet = "hpgl_data", excel = "testing.xlsx")
+  xls_coords <- write_xlsx(another_df, wb = xls_coords$workbook,
+                          sheet = "hpgl_data", start_row = xls_coords$end_col)
  }
 
 }

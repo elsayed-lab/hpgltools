@@ -25,7 +25,7 @@ like ontology categories, definitions, etc.
 \examples{
 \dontrun{
  annotated_go = goseq_table(go_ids)
- head(annotated_go, n=1)
+ head(annotated_go, n = 1)
  ## >        category numDEInCat numInCat over_represented_pvalue
  ## > 571  GO:0006364          9       26            4.655108e-08
  ## >      under_represented_pvalue       qvalue ontology
