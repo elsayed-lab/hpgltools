@@ -43,7 +43,7 @@ chromosome for all the various categories as defined by factor.
   \dontrun{
  expt <- create_expt(metadata, gene_information)
  snp_expt <- count_expt_snps(expt)
- snp_sets <- get_snp_sets(snp_expt, factor="condition")
+ snp_sets <- get_snp_sets(snp_expt, factor = "condition")
  ## This assumes a column in the metadata for the expt named 'condition'.
 }
 }

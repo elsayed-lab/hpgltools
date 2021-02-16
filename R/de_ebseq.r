@@ -1,3 +1,10 @@
+## de_ebseq.r: Simplify the invocation of EBSeq, the Bayesian statistical method
+## of performing differential expression analysis.  EBSeq provides a third
+## family of DE method: DESeq/EdgeR provides explicitly negative binomial
+## distribution aware methods, while limma assumes microarrayish.  Both these
+## families use various statistical models.  In contrast, EBSeq uses prior
+## probabilities and sampling to gather its values for each gene.
+
 #' Set up model matrices contrasts and do pairwise comparisons of all conditions
 #' using EBSeq.
 #'
@@ -27,21 +34,21 @@
 #'  ebseq table of conditions.
 #' @examples
 #'  \dontrun{
-#'   expt <- create_expt(metadata="sample_sheet.xlsx", gene_info=annotations)
-#'   ebseq_de <- ebseq_pairwise(input=expt)
+#'   expt <- create_expt(metadata = "sample_sheet.xlsx", gene_info = annotations)
+#'   ebseq_de <- ebseq_pairwise(input = expt)
 #' }
 #' @export
-ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
-                           batches=NULL, model_cond=NULL, model_intercept=NULL,
-                           alt_model=NULL, model_batch=NULL,
-                           ng_vector=NULL, rounds=10, target_fdr=0.05,
-                           method="pairwise_subset", norm="median",
-                           force=FALSE,
+ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
+                           batches = NULL, model_cond = NULL, model_intercept = NULL,
+                           alt_model = NULL, model_batch = NULL,
+                           ng_vector = NULL, rounds = 10, target_fdr = 0.05,
+                           method = "pairwise_subset", norm = "median",
+                           force = FALSE,
                            ...) {
   arglist <- list(...)
 
   input <- sanitize_expt(input)
-  input_data <- choose_binom_dataset(input, force=force)
+  input_data <- choose_binom_dataset(input, force = force)
   design <- pData(input)
   conditions <- design[["condition"]]
   batches <- design[["batches"]]
@@ -53,8 +60,8 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
 
   if (method == "pairwise_subset") {
     result <- ebseq_pairwise_subset(input,
-                                    ng_vector=ng_vector, rounds=rounds,
-                                    target_fdr=target_fdr, norm=norm, force=force,
+                                    ng_vector = ng_vector, rounds = rounds,
+                                    target_fdr = target_fdr, norm = norm, force = force,
                                     ...)
   } else {
     message("Starting single EBSeq invocation.")
@@ -65,16 +72,16 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
     } else if (length(condition_levels) == 2) {
       message("Invoking ebseq with 2-condition parameters.")
       result <- ebseq_two(input,
-                          ng_vector=ng_vector, rounds=rounds,
-                          target_fdr=target_fdr, norm=norm)
+                          ng_vector = ng_vector, rounds = rounds,
+                          target_fdr = target_fdr, norm = norm)
     } else if (length(condition_levels) > 5) {
       stop("Beyond 5 conditions generates too many patterns, ",
            "please provide a pattern matrix, or 'all_same'.")
     } else {
       message("Invoking ebseq with parameters suitable for a few conditions.")
-      result <- ebseq_few(data, conditions, patterns=patterns,
-                          ng_vector=ng_vector, rounds=rounds,
-                          target_fdr=target_fdr, norm=norm)
+      result <- ebseq_few(data, conditions, patterns = patterns,
+                          ng_vector = ng_vector, rounds = rounds,
+                          target_fdr = target_fdr, norm = norm)
     }
   }
 
@@ -112,10 +119,10 @@ ebseq_pairwise <- function(input=NULL, patterns=NULL, conditions=NULL,
 #' @param force Flag used to force inappropriate data into the various methods.
 #' @param ... Extra arguments passed downstream, noably to choose_model()
 #' @return A pairwise comparison of the various conditions in the data.
-ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0.05,
-                                  model_batch=FALSE, model_cond=TRUE,
-                                  model_intercept=FALSE, alt_model=NULL,
-                                  conditions=NULL, norm="median", force=FALSE, ...) {
+ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_fdr = 0.05,
+                                  model_batch = FALSE, model_cond = TRUE,
+                                  model_intercept = FALSE, alt_model = NULL,
+                                  conditions = NULL, norm = "median", force = FALSE, ...) {
   message("Starting EBSeq pairwise subset.")
   ## Now that I understand pData a bit more, I should probably remove the
   ## conditions/batches slots from my expt classes.
@@ -128,16 +135,16 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
   condition_levels <- levels(as.factor(conditions))
 
   model_choice <- choose_model(
-    input, conditions=conditions, batches=batches,
-    model_batch=FALSE, model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
+    input, conditions = conditions, batches = batches,
+    model_batch = FALSE, model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
     ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, do_extras=FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
                                  ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   retlst <- list()
   for (c in 1:length(apc[["names"]])) {
@@ -146,22 +153,22 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
       utils::setTxtProgressBar(bar, pct_done)
     }
     name  <- apc[["names"]][[c]]
-    a_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
-    b_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
+    a_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\1", x = name)
+    b_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\2", x = name)
     if (! a_name %in% input[["conditions"]]) {
       message("The contrast ", a_name, " is not in the results.")
       message("If this is not an extra contrast, then this is an error.")
       next
     }
     pair <- sm(subset_expt(
-      expt=input,
-      ## subset=paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
-      subset=glue("condition=='{b_name}' | condition=='{a_name}'")))
+      expt = input,
+      ## subset = paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+      subset = glue("condition=='{b_name}' | condition=='{a_name}'")))
     pair_data <- exprs(pair)
     conditions <- pair[["conditions"]]
-    a_result <- ebseq_two(pair_data, conditions, numerator=b_name, denominator=a_name,
-                          ng_vector=ng_vector, rounds=rounds, target_fdr=target_fdr,
-                          norm=norm, force=force)
+    a_result <- ebseq_two(pair_data, conditions, numerator = b_name, denominator = a_name,
+                          ng_vector = ng_vector, rounds = rounds, target_fdr = target_fdr,
+                          norm = norm, force = force)
     retlst[[name]] <- a_result
   }
   if (isTRUE(show_progress)) {
@@ -178,14 +185,14 @@ ebseq_pairwise_subset <- function(input, ng_vector=NULL, rounds=10, target_fdr=0
 #' @param data_mtrx This is exprs(expressionset)
 #' @param norm The method to pass along.
 #' @return a new matrix using the ebseq specific method of choice.
-ebseq_size_factors <- function(data_mtrx, norm=NULL) {
+ebseq_size_factors <- function(data_mtrx, norm = NULL) {
   ## Set up a null normalization vector
-  normalized <- rep(x=1, times=ncol(data_mtrx))
+  normalized <- rep(x = 1, times = ncol(data_mtrx))
   names(normalized) <- colnames(data_mtrx)
   ## If the parameter passed matches an ebseq function, use it, if it doesn't,
   ## we still have the null.
   if (norm == "median") {
-    normalized <- EBSeq::MedianNorm(data_mtrx, alternative=TRUE)
+    normalized <- EBSeq::MedianNorm(data_mtrx, alternative = TRUE)
   } else if (norm == "quantile") {
     normalized <- EBSeq::QuantileNorm(data_mtrx)
   } else if (norm == "rank") {
@@ -209,8 +216,8 @@ ebseq_size_factors <- function(data_mtrx, norm=NULL) {
 #' @param target_fdr Passed to ebseq.
 #' @param norm Normalization method to apply to the data.
 ebseq_few <- function(data, conditions,
-                      patterns=NULL, ng_vector=NULL, rounds=10,
-                      target_fdr=0.05, norm="median") {
+                      patterns = NULL, ng_vector = NULL, rounds = 10,
+                      target_fdr = 0.05, norm = "median") {
 
   ## Reminder about the meanings of 'patterns':
   ## Each row is a set of mean expression levels
@@ -224,7 +231,7 @@ ebseq_few <- function(data, conditions,
   if (is.null(patterns)) {
     patterns <- EBSeq::GetPatterns(conditions)
   } else if (patterns == "all_same") {
-    patterns <- data.frame(row.names="Pattern1")
+    patterns <- data.frame(row.names = "Pattern1")
     for (i in conditions) {
       patterns[1, i] <- 1
     }
@@ -232,9 +239,9 @@ ebseq_few <- function(data, conditions,
 
   normalized <- ebseq_size_factors(data, norm)
   eb_output <- EBSeq::EBMultiTest(
-                        Data=data, NgVector=ng_vector,
-                        Conditions=conditions, AllParti=patterns,
-                        sizeFactors=normalized, maxround=rounds)
+                        Data = data, NgVector = ng_vector,
+                        Conditions = conditions, AllParti = patterns,
+                        sizeFactors = normalized, maxround = rounds)
   posteriors <- EBSeq::GetMultiPP(eb_output)
   fold_changes <- EBSeq::GetMultiFC(eb_output)
 
@@ -245,9 +252,9 @@ ebseq_few <- function(data, conditions,
   table_lst <- list()
   for (i in 1:ncol(fold_changes[["FCMat"]])) {
     column <- colnames(fold_changes[["FCMat"]])[i]
-    contrast <- gsub(pattern="Over", replacement="_vs_", x=column)
-    numerator <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=contrast)
-    denominator <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=contrast)
+    contrast <- gsub(pattern = "Over", replacement = "_vs_", x = column)
+    numerator <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\1", x = contrast)
+    denominator <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\2", x = contrast)
     chosen_pattern_idx <- interesting_patterns[[numerator]] ==
       interesting_patterns[[denominator]]
     ## This should provide the name of the pattern which, when I query the
@@ -255,7 +262,7 @@ ebseq_few <- function(data, conditions,
     ## I can therefore take the 1-that to get a likelihood different.
     chosen_pattern <- rownames(interesting_patterns)[chosen_pattern_idx]
 
-    table <- data.frame(row.names=rownames(fold_changes[["FCMat"]]))
+    table <- data.frame(row.names = rownames(fold_changes[["FCMat"]]))
     table[["ebseq_FC"]] <- fold_changes[["FCMat"]][, i]
     table[["logFC"]] <- fold_changes[["Log2FCMat"]][, i]
     table[["ebseq_postfc"]] <- fold_changes[["Log2PostFCMat"]][, i]
@@ -289,26 +296,26 @@ ebseq_few <- function(data, conditions,
 #' @param force Force inappropriate data into ebseq?
 #' @return EBSeq result table with some extra formatting.
 ebseq_two <- function(pair_data, conditions,
-                      numerator=2, denominator=1,
-                      ng_vector=NULL, rounds=10,
-                      target_fdr=0.05, norm="median",
-                      force=FALSE) {
-  normalized <- ebseq_size_factors(pair_data, norm=norm)
+                      numerator = 2, denominator = 1,
+                      ng_vector = NULL, rounds = 10,
+                      target_fdr = 0.05, norm = "median",
+                      force = FALSE) {
+  normalized <- ebseq_size_factors(pair_data, norm = norm)
   message("Starting EBTest of ", numerator, " vs. ", denominator, ".")
   if (isTRUE(force)) {
     message("Forcing out NA values by putting in the mean of all data.")
     ## Put NA values (proteomics) to the mean of the existing values in the hopes
     ## they will not mess anything up too badly.
     na_idx <- is.na(pair_data)
-    pair_data[na_idx] <- mean(pair_data, na.rm=TRUE)
+    pair_data[na_idx] <- mean(pair_data, na.rm = TRUE)
   }
   eb_output <- sm(EBSeq::EBTest(
-                           Data=pair_data, NgVector=NULL, Conditions=conditions,
-                           sizeFactors=normalized, maxround=rounds))
+                           Data = pair_data, NgVector = NULL, Conditions = conditions,
+                           sizeFactors = normalized, maxround = rounds))
   posteriors <- EBSeq::GetPP(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
-  eb_result <- EBSeq::GetDEResults(eb_output, FDR=target_fdr)
-  table <- data.frame(row.names=names(fold_changes[["PostFC"]]))
+  eb_result <- EBSeq::GetDEResults(eb_output, FDR = target_fdr)
+  table <- data.frame(row.names = names(fold_changes[["PostFC"]]))
   table[["ebseq_FC"]] <- fold_changes[["RealFC"]]
   table[["logFC"]] <- log2(table[["ebseq_FC"]])
   table[["ebseq_c1mean"]] <- as.numeric(eb_output[["C1Mean"]][[1]])
@@ -317,7 +324,7 @@ ebseq_two <- function(pair_data, conditions,
   table[["ebseq_var"]] <- as.numeric(eb_output[["VarList"]][[1]])
   table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
   table <- merge(table, as.data.frame(eb_result[["PPMat"]]),
-                 by="row.names", all.x=TRUE)
+                 by = "row.names", all.x = TRUE)
   rownames(table) <- table[["Row.names"]]
   table <- table[, -1]
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
@@ -327,8 +334,8 @@ ebseq_two <- function(pair_data, conditions,
 
   ## Finally, make sure the 'direction' matches my conception of numerator/denominator.
   eb_direction <- fold_changes[["Direction"]]
-  eb_numerator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\1", x=eb_direction)
-  eb_denominator <- gsub(pattern="^(.*) Over (.*)$", replacement="\\2", x=eb_direction)
+  eb_numerator <- gsub(pattern = "^(.*) Over (.*)$", replacement = "\\1", x = eb_direction)
+  eb_denominator <- gsub(pattern = "^(.*) Over (.*)$", replacement = "\\2", x = eb_direction)
   if (! eb_numerator == denominator) {
     ## message("Flipping the table FC and logFC.")
     table[["ebseq_FC"]] <- 1 / table[["ebseq_FC"]]

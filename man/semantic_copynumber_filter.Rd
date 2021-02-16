@@ -45,7 +45,7 @@ strings.
 }
 \examples{
 \dontrun{
- pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
+ pruned <- semantic_copynumber_filter(table, semantic = c("ribosomal"))
  ## Get rid of all genes with 'ribosomal' in the annotations.
 }
 }

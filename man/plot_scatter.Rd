@@ -41,8 +41,8 @@ describing the relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{
- plot_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-              gvis_filename="html/fun_scatterplot.html")
+ plot_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
+              gvis_filename = "html/fun_scatterplot.html")
 }
 }
 \seealso{

@@ -33,7 +33,7 @@ Finally it will return a list containing a df of gene lengths and summed counts.
 }
 \examples{
 \dontrun{
- summed <- sum_exon_widths(counts, gff="reference/xenopus_laevis.gff.xz")
+ summed <- sum_exon_widths(counts, gff = "reference/xenopus_laevis.gff.xz")
 }
 }
 \seealso{

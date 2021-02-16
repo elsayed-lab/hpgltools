@@ -46,7 +46,7 @@ inputs and eventual output.
 }
 \examples{
 \dontrun{
- corheat_plot <- hpgl_corheat(expt=expt, method="robust")
+ corheat_plot <- hpgl_corheat(expt = expt, method = "robust")
 }
 }
 \seealso{

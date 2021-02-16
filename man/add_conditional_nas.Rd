@@ -33,7 +33,7 @@ So, here is what I am going to do: Iterate through each element of the chosen
 experimental design factor, check if all samples for that condition are 0, if
 so; leave them.  If not all the samples have 0 for the given condition, then
 replace the zero entries with NA.  This should allow for stuff like
-rowMeans(na.rm=TRUE) to provide useful information.
+rowMeans(na.rm = TRUE) to provide useful information.
 
 Finally, this will add columns to the annotations which tell the number of
 observations for each protein after doing this.

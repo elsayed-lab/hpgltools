@@ -35,7 +35,7 @@ is far too big, this should become a template for that.
 \examples{
 \dontrun{
  finished_comparison <- eBayes(deseq_output)
- data_list <- write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
+ data_list <- write_deseq(finished_comparison, workbook = "excel/deseq_output.xls")
 }
 }
 \seealso{

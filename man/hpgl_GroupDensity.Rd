@@ -13,7 +13,7 @@ hpgl_GroupDensity(object, whichGO, ranks = TRUE, rm.one = FALSE)
 
 \item{ranks}{Rank order the set of ontologies?}
 
-\item{rm.one}{Remove pvalue=1 groups?}
+\item{rm.one}{Remove pvalue = 1 groups?}
 }
 \value{
 plot of group densities.

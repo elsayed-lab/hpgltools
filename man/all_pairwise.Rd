@@ -102,7 +102,7 @@ comparisons among them.
 }
 \examples{
 \dontrun{
- lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+ lotsodata <- all_pairwise(input = expt, model_batch = "svaseq")
  summary(lotsodata)
  ## limma, edger, deseq, basic results; plots; and summaries.
 }

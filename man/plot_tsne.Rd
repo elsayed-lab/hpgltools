@@ -2,7 +2,7 @@
 % Please edit documentation in R/dimension_reduction.r
 \name{plot_tsne}
 \alias{plot_tsne}
-\title{Shortcut to plot_pca(pc_method="tsne")}
+\title{Shortcut to plot_pca(pc_method = "tsne")}
 \usage{
 plot_tsne(...)
 }
@@ -10,5 +10,5 @@ plot_tsne(...)
 \item{...}{Arguments for plot_pca()}
 }
 \description{
-Shortcut to plot_pca(pc_method="tsne")
+Shortcut to plot_pca(pc_method = "tsne")
 }

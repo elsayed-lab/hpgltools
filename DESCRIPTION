@@ -25,7 +25,7 @@ Suggests:
   EBSeq, EDASeq, edgeR, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
-  ggrepel, ggstatsplot, ggthemes, goseq, GO.db, googleVis, GOstats,
+  ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2, GSEABase,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
   IHW, inflection, IRanges, isva, iterators,
@@ -108,7 +108,6 @@ Collate:
   'dimension_reduction.r'
   'plot_circos.r'
   'plot_genplot.r'
-  'plot_gvis.r'
   'plot_misc.r'
   'model_testing.r'
   'alt_splicing.r'

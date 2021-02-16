@@ -65,7 +65,7 @@ Invoked by the _pairwise() functions.
 }
 \examples{
 \dontrun{
- a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
+ a_model <- choose_model(expt, model_batch = TRUE, model_intercept = FALSE)
  a_model$chosen_model
  ## ~ 0 + condition + batch
 }

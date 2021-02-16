@@ -10,8 +10,8 @@ if (file.exists(sig_file)) {
   stop("The significance file.")
 }
 
-tp_result <- simple_topgo(fcp_sig_genes, go_db=dmel_ontologies, overwrite=TRUE,
-                          excel="topgo.xlsx", pval_column="adj.P.Val")
+tp_result <- simple_topgo(fcp_sig_genes, go_db = dmel_ontologies, overwrite = TRUE,
+                          excel = "topgo.xlsx", pval_column = "adj.P.Val")
 test_that("Did we get an excel output?", {
   expect_true(file.exists("topgo.xlsx"))
 })
@@ -59,5 +59,5 @@ test_that("Are the topGO interesting results as expected? (MF pval)?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds.")

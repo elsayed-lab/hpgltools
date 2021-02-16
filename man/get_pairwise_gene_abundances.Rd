@@ -23,7 +23,7 @@ variances or stderr.
 }
 \examples{
 \dontrun{
- abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
+ abundance_excel <- get_pairwise_gene_abundances(combined, excel = "abundances.xlsx")
  ## This should provide a set of abundances after voom by condition.
 }
 }

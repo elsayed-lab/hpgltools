@@ -1,3 +1,7 @@
+## de_shared.r: Merge differential expression methods into single invocations.
+## The functionsin this file seek to make it possible to treat all the DE
+## methods identically and/or simultaneously.
+
 #' Perform limma, DESeq2, EdgeR pairwise analyses.
 #'
 #' This takes an expt object, collects the set of all possible pairwise
@@ -48,20 +52,20 @@
 #'  \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
 #' @examples
 #' \dontrun{
-#'  lotsodata <- all_pairwise(input=expt, model_batch="svaseq")
+#'  lotsodata <- all_pairwise(input = expt, model_batch = "svaseq")
 #'  summary(lotsodata)
 #'  ## limma, edger, deseq, basic results; plots; and summaries.
 #' }
 #' @export
-all_pairwise <- function(input=NULL, conditions=NULL,
-                         batches=NULL, model_cond=TRUE,
-                         modify_p=FALSE, model_batch=TRUE, filter=NULL,
-                         model_intercept=FALSE, extra_contrasts=NULL,
-                         alt_model=NULL, libsize=NULL, test_pca=TRUE,
-                         annot_df=NULL, parallel=TRUE,
-                         do_basic=TRUE, do_deseq=TRUE, do_ebseq=NULL,
-                         do_edger=TRUE, do_limma=TRUE,
-                         convert="cpm", norm="quant", verbose=TRUE, ...) {
+all_pairwise <- function(input = NULL, conditions = NULL,
+                         batches = NULL, model_cond = TRUE,
+                         modify_p = FALSE, model_batch = TRUE, filter = NULL,
+                         model_intercept = FALSE, extra_contrasts = NULL,
+                         alt_model = NULL, libsize = NULL, test_pca = TRUE,
+                         annot_df = NULL, parallel = TRUE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
+                         do_edger = TRUE, do_limma = TRUE,
+                         convert = "cpm", norm = "quant", verbose = TRUE, ...) {
   arglist <- list(...)
   surrogates <- "be"
   if (!is.null(arglist[["surrogates"]])) {
@@ -77,14 +81,14 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     model_intercept <- FALSE
   }
   if (!is.null(filter)) {
-    input <- sm(normalize_expt(input, filter=filter))
+    input <- sm(normalize_expt(input, filter = filter))
   }
   null_model <- NULL
   sv_model <- NULL
   model_type <- model_batch
   if (class(model_batch)[1] == "character") {
-    model_params <- all_adjusters(input, estimate_type=model_batch,
-                                  surrogates=surrogates)
+    model_params <- all_adjusters(input, estimate_type = model_batch,
+                                  surrogates = surrogates)
     model_batch <- model_params[["model_adjust"]]
     null_model <- model_params[["null_model"]]
     sv_model <- model_batch
@@ -94,12 +98,12 @@ all_pairwise <- function(input=NULL, conditions=NULL,
   pre_pca <- NULL
   post_pca <- NULL
   if (isTRUE(test_pca)) {
-    pre_batch <- sm(normalize_expt(input, filter=TRUE, batch=FALSE,
-                                   transform="log2", convert=convert, norm=norm))
+    pre_batch <- sm(normalize_expt(input, filter = TRUE, batch = FALSE,
+                                   transform = "log2", convert = convert, norm = norm))
     if (isTRUE(verbose)) {
       message("Plotting a PCA before surrogate/batch inclusion.")
     }
-    pre_pca <- plot_pca(pre_batch, plot_labels=FALSE,
+    pre_pca <- plot_pca(pre_batch, plot_labels = FALSE,
                         ...)
     post_batch <- pre_batch
     if (isTRUE(model_type)) {
@@ -107,7 +111,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
       if (isTRUE(verbose)) {
         message("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
       }
-      post_batch <- sm(normalize_expt(input, filter=TRUE, batch=TRUE, transform="log2"))
+      post_batch <- sm(normalize_expt(input, filter = TRUE, batch = TRUE, transform = "log2"))
     } else if (class(model_type)[1] == "character") {
       if (isTRUE(verbose)) {
         message("Using ", model_type, " to visualize before/after batch inclusion.")
@@ -121,9 +125,9 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         message("Performing a test normalization with: ", test_norm)
       }
       if (!isFALSE(model_batch)) {
-        post_batch <- try(normalize_expt(input, filter=TRUE, batch=model_type,
-                                         transform="log2", convert="cpm",
-                                         norm=test_norm))
+        post_batch <- try(normalize_expt(input, filter = TRUE, batch = model_type,
+                                         transform = "log2", convert = "cpm",
+                                         norm = test_norm))
       } else {
         post_batch <- NULL
       }
@@ -133,7 +137,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         message("Assuming no batch in model for testing pca.")
       }
     }
-    post_pca <- plot_pca(post_batch, plot_labels=FALSE,
+    post_pca <- plot_pca(post_batch, plot_labels = FALSE,
                          ...)
   }
 
@@ -181,13 +185,13 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
     tt <- sm(requireNamespace("foreach"))
-    res <- foreach(c=1:length(names(results)), .packages=c("hpgltools")) %dopar% {
+    res <- foreach(c = 1:length(names(results)), .packages = c("hpgltools")) %dopar% {
       type <- names(results)[c]
       results[[type]] <- do_pairwise(
-        type, input=input, conditions=conditions, batches=batches,
-        model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
-        extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize,
-        annot_df=annot_df,
+        type, input = input, conditions = conditions, batches = batches,
+        model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
+        extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
+        annot_df = annot_df,
         ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
@@ -209,10 +213,10 @@ all_pairwise <- function(input=NULL, conditions=NULL,
         message("Starting ", type, "_pairwise().")
       }
       results[[type]] <- do_pairwise(
-        type, input=input, conditions=conditions, batches=batches,
-        model_cond=model_cond, model_batch=model_batch, model_intercept=model_intercept,
-        extra_contrasts=extra_contrasts, alt_model=alt_model, libsize=libsize,
-        annot_df=annot_df,
+        type, input = input, conditions = conditions, batches = batches,
+        model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
+        extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
+        annot_df = annot_df,
         ...)
     }
   } ## End performing a serial comparison
@@ -231,8 +235,8 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     original_pvalues <- ret[["original_pvalues"]]
   }
 
-  result_comparison <- correlate_de_tables(results, annot_df=annot_df,
-                                           extra_contrasts=extra_contrasts)
+  result_comparison <- correlate_de_tables(results, annot_df = annot_df,
+                                           extra_contrasts = extra_contrasts)
   ## The first few elements of this list are being passed through into the return
   ## So that if I use combine_tables() I can report in the resulting tables
   ## some information about what was performed.
@@ -257,7 +261,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
     if (isTRUE(verbose)) {
       message("Invoking combine_de_tables().")
     }
-    combined <- combine_de_tables(ret, excel=arglist[["combined_excel"]], ...)
+    combined <- combine_de_tables(ret, excel = arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
   }
   return(ret)
@@ -276,7 +280,7 @@ all_pairwise <- function(input=NULL, conditions=NULL,
 #' @param results Table of differential expression results.
 sva_modify_pvalues <- function(results) {
   original_pvalues <- data.table::data.table(
-                                    rownames=rownames(results[["edger"]][["all_tables"]][[1]]))
+                                    rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
   if (isTRUE(verbose)) {
     message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
   }
@@ -285,7 +289,7 @@ sva_modify_pvalues <- function(results) {
     if (isTRUE(verbose)) {
       message("Readjusting the p-values for comparison: ", name)
     }
-    namelst <- strsplit(x=name, split="_vs_")
+    namelst <- strsplit(x = name, split = "_vs_")
     ## something like 'mutant'
     first <- namelst[[1]][[1]]
     ## something like 'wildtype', ergo the contrast was "mutant_vs_wildtype"
@@ -318,8 +322,8 @@ sva_modify_pvalues <- function(results) {
     ## Concatenate the 'mutant' and 'wildtype' samples by column
     included_samples <- cbind(samples_first, samples_second)
     ## Arbitrarily call them 'first' and 'second'
-    colnames(included_samples) <- c(rep("first", times=num_first),
-                                    rep("second", times=num_second))
+    colnames(included_samples) <- c(rep("first", times = num_first),
+                                    rep("second", times = num_second))
     ## Do the same thing, but using the rows of the sva model adjustment
     first_sva <- sv_model[samples_first_idx, ]
     second_sva <- sv_model[samples_second_idx, ]
@@ -337,7 +341,7 @@ sva_modify_pvalues <- function(results) {
     ## And give its columns suitable names
     colnames(new_null) <- c("null", "sv")
     ## Now all the pieces are in place, call f.pvalue().
-    new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent=TRUE)
+    new_pvalues <- try(sva::f.pvalue(included_samples, new_model, new_null), silent = TRUE)
     ## For some things, f.pvalue returns NA, this is unacceptable.
     na_pvalues_idx <- is.na(new_pvalues)
     ## For the NaN pvalues, just set it to 1 under the assumption that
@@ -350,7 +354,7 @@ sva_modify_pvalues <- function(results) {
       warning("If this was not for an extra contrast, then this is a serious problem.")
     } else {
       ## Most of the time it should succeed, so do a BH adjustment of the new values.
-      new_adjp <- p.adjust(new_pvalues, method="BH")
+      new_adjp <- p.adjust(new_pvalues, method = "BH")
       ## Now I need to fill in the tables with these new values.
       ## This section is a little complex.  In brief, it pulls the appropriate
       ## columns from each of the limma, edger, and deseq tables
@@ -367,7 +371,7 @@ sva_modify_pvalues <- function(results) {
       tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
       ## Change the column name of the new data to reflect that it is from limma.
       colnames(tmpdt) <- c(glue("limma_{name}"), "rownames")
-      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by = "rownames")
       ## Swap out the p-values and adjusted p-values.
       results[["limma"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
       results[["limma"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
@@ -380,7 +384,7 @@ sva_modify_pvalues <- function(results) {
                              results[["edger"]][["all_tables"]][[name]][["PValue"]])
       tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
       colnames(tmpdt) <- c(glue("edger_{name}"), "rownames")
-      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by = "rownames")
       results[["edger"]][["all_tables"]][[name]][["PValue"]] <- reordered_pvalues
       results[["edger"]][["all_tables"]][[name]][["FDR"]] <- reordered_adjp
 
@@ -390,7 +394,7 @@ sva_modify_pvalues <- function(results) {
                              results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
       tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
       colnames(tmpdt) <- c(glue("deseq_{name}"), "rownames")
-      original_pvalues <- merge(original_pvalues, tmpdt, by="rownames")
+      original_pvalues <- merge(original_pvalues, tmpdt, by = "rownames")
       results[["deseq"]][["all_tables"]][[name]][["P.Value"]] <- reordered_pvalues
       results[["deseq"]][["all_tables"]][[name]][["adj.P.Val"]] <- reordered_adjp
     } ## End checking that f.pvalue worked.
@@ -415,7 +419,7 @@ sva_modify_pvalues <- function(results) {
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{DESeq2} \pkg{edgeR}
-choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
+choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
   ## I think I would like to make this function smarter so that it will remove
@@ -527,23 +531,23 @@ choose_binom_dataset <- function(input, verbose=TRUE, force=FALSE, ...) {
 #' @examples
 #' \dontrun{
 #'  starting_data <- create_expt(metadata)
-#'  modified_data <- normalize_expt(starting_data, transform="log2", norm="quant")
-#'  a_dataset <- choose_dataset(modified_data, choose_for="deseq")
+#'  modified_data <- normalize_expt(starting_data, transform = "log2", norm = "quant")
+#'  a_dataset <- choose_dataset(modified_data, choose_for = "deseq")
 #'  ## choose_dataset should see that log2 data is inappropriate for DESeq2 and
 #'  ## return it to a base10 state.
 #' }
 #' @export
-choose_dataset <- function(input, choose_for="limma", force=FALSE, verbose=TRUE, ...) {
+choose_dataset <- function(input, choose_for = "limma", force = FALSE, verbose = TRUE, ...) {
   ## arglist <- list(...)
   result <- NULL
   if (choose_for == "limma") {
-    result <- choose_limma_dataset(input, force=force, ...)
+    result <- choose_limma_dataset(input, force = force, ...)
   } else if (choose_for == "basic") {
-    result <- choose_basic_dataset(input, force=force, ...)
+    result <- choose_basic_dataset(input, force = force, ...)
   } else if (choose_for == "edger") {
-    result <- choose_binom_dataset(input, force=force, ...)
+    result <- choose_binom_dataset(input, force = force, ...)
   } else if (choose_for == "deseq") {
-    result <- choose_binom_dataset(input, force=force, ...)
+    result <- choose_binom_dataset(input, force = force, ...)
   } else {
     if (isTRUE(verbose)) {
       message("Unknown tool for which to choose a data set.")
@@ -564,7 +568,7 @@ choose_dataset <- function(input, choose_for="limma", force=FALSE, verbose=TRUE,
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
 #' @seealso \pkg{limma}
-choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose=TRUE, ...) {
+choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", verbose = TRUE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
   data <- NULL
@@ -627,7 +631,7 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose
 
     ## If we are using limma::voom*, then make sure we do things the limma way.
     ## If we use the hpgltools::hpgl_voom*, let the freak flags fly.
-    if (grepl(pattern="limma", x=which_voom)) {
+    if (grepl(pattern = "limma", x = which_voom)) {
       ## Limma's voom requires we return log2(cpm()) to base 10.
       ## Otherwise it should accept pretty much anything.
       if (tran_state == "log2") {
@@ -679,16 +683,16 @@ choose_limma_dataset <- function(input, force=FALSE, which_voom="limma", verbose
 #'  \code{\link[stats]{model.matrix}}
 #' @examples
 #' \dontrun{
-#'  a_model <- choose_model(expt, model_batch=TRUE, model_intercept=FALSE)
+#'  a_model <- choose_model(expt, model_batch = TRUE, model_intercept = FALSE)
 #'  a_model$chosen_model
 #'  ## ~ 0 + condition + batch
 #' }
 #' @export
-choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
-                         model_cond=TRUE, model_intercept=FALSE,
-                         alt_model=NULL, alt_string=NULL,
-                         intercept=0, reverse=FALSE, contr=NULL,
-                         surrogates="be", verbose=TRUE, ...) {
+choose_model <- function(input, conditions = NULL, batches = NULL, model_batch = TRUE,
+                         model_cond = TRUE, model_intercept = FALSE,
+                         alt_model = NULL, alt_string = NULL,
+                         intercept = 0, reverse = FALSE, contr = NULL,
+                         surrogates = "be", verbose = TRUE, ...) {
   arglist <- list(...)
   design <- NULL
   if (class(input)[1] != "matrix" & class(input)[1] != "data.frame") {
@@ -699,7 +703,7 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
     batches <- as.factor(batches)
     design <- data.frame("condition" = conditions,
                          "batch" = batches,
-                         stringsAsFactors=TRUE)
+                         stringsAsFactors = TRUE)
   }
   ## Make a model matrix which will have one entry for
   ## each of the condition/batches
@@ -707,11 +711,11 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   ## But I have it in my head to eventually compare results using different models.
 
   ## The previous iteration of this had an explicit contrasts.arg set, like this:
-  ## contrasts.arg=list(condition="contr.treatment"))
+  ## contrasts.arg = list(condition = "contr.treatment"))
   ## Which looked like this for a full invocation:
   ## condbatch_int_model <- try(stats::model.matrix(~ 0 + conditions + batches,
-  ##                                   contrasts.arg=list(condition="contr.treatment",
-  ##                                                      batch="contr.treatment")),
+  ##                                   contrasts.arg = list(condition = "contr.treatment",
+  ##                                                      batch = "contr.treatment")),
   ## The contrasts.arg has been removed because it seems to result in the same model.
 
   clist <- list("condition" = "contr.treatment")
@@ -731,51 +735,51 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 
   cond_noint_string <- "~ 0 + condition"
   cond_noint_model <- try(stats::model.matrix(
-                                   object=as.formula(cond_noint_string),
-                                   contrasts.arg=clist,
-                                   data=design), silent=TRUE)
+                                   object = as.formula(cond_noint_string),
+                                   contrasts.arg = clist,
+                                   data = design), silent = TRUE)
 
   batch_noint_string <- "~ 0 + batch"
   batch_noint_model <- try(stats::model.matrix(
-                                    object=as.formula(batch_noint_string),
-                                    contrasts.arg=blist,
-                                    data=design), silent=TRUE)
+                                    object = as.formula(batch_noint_string),
+                                    contrasts.arg = blist,
+                                    data = design), silent = TRUE)
 
   condbatch_noint_string <- "~ 0 + condition + batch"
   condbatch_noint_model <- try(stats::model.matrix(
-                                        object=as.formula(condbatch_noint_string),
-                                        contrasts.arg=cblist,
-                                        data=design), silent=TRUE)
+                                        object = as.formula(condbatch_noint_string),
+                                        contrasts.arg = cblist,
+                                        data = design), silent = TRUE)
 
   batchcond_noint_string <- "~ 0 + batch + condition"
   batchcond_noint_model <- try(stats::model.matrix(
-                                        object=as.formula(batchcond_noint_string),
-                                        contrasts.arg=cblist,
-                                        data=design), silent=TRUE)
+                                        object = as.formula(batchcond_noint_string),
+                                        contrasts.arg = cblist,
+                                        data = design), silent = TRUE)
 
   cond_int_string <- "~ condition"
   cond_int_model <- try(stats::model.matrix(
-                                 object=as.formula(cond_int_string),
-                                 contrasts.arg=clist,
-                                 data=design), silent=TRUE)
+                                 object = as.formula(cond_int_string),
+                                 contrasts.arg = clist,
+                                 data = design), silent = TRUE)
 
   batch_int_string <- "~ batch"
   batch_int_model <- try(stats::model.matrix(
-                                  object=as.formula(batch_int_string),
-                                  contrasts.arg=blist,
-                                  data=design), silent=TRUE)
+                                  object = as.formula(batch_int_string),
+                                  contrasts.arg = blist,
+                                  data = design), silent = TRUE)
 
   condbatch_int_string <- "~ condition + batch"
   condbatch_int_model <- try(stats::model.matrix(
-                                      object=as.formula(condbatch_int_string),
-                                      contrasts.arg=cblist,
-                                      data=design), silent=TRUE)
+                                      object = as.formula(condbatch_int_string),
+                                      contrasts.arg = cblist,
+                                      data = design), silent = TRUE)
 
   batchcond_int_string <- "~ batch + condition"
   batchcond_int_model <- try(stats::model.matrix(
-                                      object=as.formula(batchcond_int_string),
-                                      contrasts.arg=cblist,
-                                      data=design), silent=TRUE)
+                                      object = as.formula(batchcond_int_string),
+                                      contrasts.arg = cblist,
+                                      data = design), silent = TRUE)
 
   noint_model <- NULL
   int_model <- NULL
@@ -783,12 +787,12 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   int_string <- NULL
   including <- NULL
   if (!is.null(alt_model)) {
-    chosen_model <- stats::model.matrix(object=as.formula(alt_model),
-                                        data=design)
+    chosen_model <- stats::model.matrix(object = as.formula(alt_model),
+                                        data = design)
     if (!is.null(contr)) {
-      chosen_model <- stats::model.matrix(object=as.formula(alt_model),
-                                          contrasts.arg=contr,
-                                          data=design)
+      chosen_model <- stats::model.matrix(object = as.formula(alt_model),
+                                          contrasts.arg = contr,
+                                          data = design)
     }
     int_model <- chosen_model
     noint_model <- chosen_model
@@ -832,17 +836,17 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
       message("Extracting surrogate estimates from ", model_batch,
               " and adding them to the model.")
     }
-    model_batch_info <- all_adjusters(input, estimate_type=model_batch,
-                                      surrogates=surrogates)
+    model_batch_info <- all_adjusters(input, estimate_type = model_batch,
+                                      surrogates = surrogates)
     ## Changing model_batch from 'sva' to the resulting matrix.
     ## Hopefully this will simplify things later for me.
     model_batch <- model_batch_info[["model_adjust"]]
     int_model <- stats::model.matrix(~ condition + model_batch,
-                                     contrasts.arg=clist,
-                                     data=design)
+                                     contrasts.arg = clist,
+                                     data = design)
     noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
-                                       contrasts.arg=clist,
-                                       data=design)
+                                       contrasts.arg = clist,
+                                       data = design)
     sv_names <- glue("SV{1:ncol(model_batch)}")
     noint_string <- cond_noint_string
     int_string <- cond_int_string
@@ -859,11 +863,11 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
       message("Including batch estimates from sva/ruv/pca in the model.")
     }
     int_model <- stats::model.matrix(~ condition + model_batch,
-                                     contrasts.arg=clist,
-                                     data=design)
+                                     contrasts.arg = clist,
+                                     data = design)
     noint_model <- stats::model.matrix(~ 0 + condition + model_batch,
-                                       contrasts.arg=clist,
-                                       data=design)
+                                       contrasts.arg = clist,
+                                       data = design)
     sv_names <- glue("SV{1:ncol(model_batch)}")
     int_string <- cond_int_string
     noint_string <- cond_noint_string
@@ -897,31 +901,31 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
   }
 
   tmpnames <- colnames(int_model)
-  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
-  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern = "model_batch", replacement = "SV1", x = tmpnames)
+  tmpnames <- gsub(pattern = "data[[:punct:]]", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "-", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "+", replacement = "", x = tmpnames)
   ## The next lines ensure that conditions/batches which are all numeric will
   ## not cause weird errors for contrasts. Ergo, if a condition is something
   ## like '111', now it will be 'c111' Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub(pattern="^condition(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="^batch(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern = "^condition(\\d+)$", replacement = "c\\1", x = tmpnames)
+  tmpnames <- gsub(pattern = "^batch(\\d+)$", replacement = "b\\1", x = tmpnames)
+  tmpnames <- gsub(pattern = "condition", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "batch", replacement = "", x = tmpnames)
   colnames(int_model) <- tmpnames
 
   tmpnames <- colnames(noint_model)
-  tmpnames <- gsub(pattern="model_batch", replacement="SV1", x=tmpnames)
-  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern = "model_batch", replacement = "SV1", x = tmpnames)
+  tmpnames <- gsub(pattern = "data[[:punct:]]", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "-", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "+", replacement = "", x = tmpnames)
   ## The next lines ensure that conditions/batches which are all numeric will
   ## not cause weird errors for contrasts. Ergo, if a condition is something
   ## like '111', now it will be 'c111' Similarly, a batch '01' will be 'b01'
-  tmpnames <- gsub(pattern="condition^(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="batch^(\\d+)$", replacement="b\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="condition", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="batch", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern = "condition^(\\d+)$", replacement = "c\\1", x = tmpnames)
+  tmpnames <- gsub(pattern = "batch^(\\d+)$", replacement = "b\\1", x = tmpnames)
+  tmpnames <- gsub(pattern = "condition", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "batch", replacement = "", x = tmpnames)
   colnames(noint_model) <- tmpnames
 
   chosen_model <- NULL
@@ -967,13 +971,13 @@ choose_model <- function(input, conditions=NULL, batches=NULL, model_batch=TRUE,
 #' @return A list of compared columns, tables, and methods.
 #' @examples
 #' \dontrun{
-#'  first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
-#'  second <- all_pairwise(expt, model_batch="svaseq", excel="second.xlsx")
+#'  first <- all_pairwise(expt, model_batch = FALSE, excel = "first.xlsx")
+#'  second <- all_pairwise(expt, model_batch = "svaseq", excel = "second.xlsx")
 #'  comparison <- compare_de_results(first$combined, second$combined)
 #' }
 #' @export
-compare_de_results <- function(first, second, cor_method="pearson",
-                               try_methods=c("limma", "deseq", "edger")) {
+compare_de_results <- function(first, second, cor_method = "pearson",
+                               try_methods = c("limma", "deseq", "edger")) {
 
   result <- list()
   logfc_result <- list()
@@ -1016,8 +1020,8 @@ compare_de_results <- function(first, second, cor_method="pearson",
         }
         names(f_column) <- rownames(first[["data"]][[table]])
         names(s_column) <- rownames(second[["data"]][[table]])
-        fs <- merge(f_column, s_column, by="row.names")
-        comp <- cor(x=fs[["x"]], y=fs[["y"]], method=cor_method)
+        fs <- merge(f_column, s_column, by = "row.names")
+        comp <- cor(x = fs[["x"]], y = fs[["y"]], method = cor_method)
         result[[method]][[table]][[comparison]] <- comp
         if (comparison == "logfc") {
           logfc_result[table] <- comp
@@ -1038,9 +1042,9 @@ compare_de_results <- function(first, second, cor_method="pearson",
       }
     }
   }
-  comp_df <- data.frame(row.names=names(result[[1]]))
-  p_df <- data.frame(row.names=names(result[[1]]))
-  adjp_df <- data.frame(row.names=names(result[[1]]))
+  comp_df <- data.frame(row.names = names(result[[1]]))
+  p_df <- data.frame(row.names = names(result[[1]]))
+  adjp_df <- data.frame(row.names = names(result[[1]]))
   cols <- names(result)
   rows <- names(result[[1]])
   for (i in 1:length(rows)) {
@@ -1059,37 +1063,37 @@ compare_de_results <- function(first, second, cor_method="pearson",
     }
   }
 
-  original <- par(mar=c(7, 4, 4, 2) + 0.1)
+  original <- par(mar = c(7, 4, 4, 2) + 0.1)
   text_size <- 1.0
   heat_colors <- grDevices::colorRampPalette(c("white", "darkblue"))
-  lfc_heatmap <- try(heatmap.3(as.matrix(comp_df), scale="none",
-                               trace="none", keysize=1.5, linewidth=0.5,
-                               margins=c(12, 8), cexRow=text_size, cexCol=text_size,
-                               col=heat_colors, dendrogram="none",
-                               Rowv=FALSE, Colv=FALSE,
-                               main="Compare lFC results"), silent=TRUE)
+  lfc_heatmap <- try(heatmap.3(as.matrix(comp_df), scale = "none",
+                               trace = "none", keysize = 1.5, linewidth = 0.5,
+                               margins = c(12, 8), cexRow = text_size, cexCol = text_size,
+                               col = heat_colors, dendrogram = "none",
+                               Rowv = FALSE, Colv = FALSE,
+                               main = "Compare lFC results"), silent = TRUE)
   lfc_heat <- NULL
   if (! "try-error" %in% class(lfc_heatmap)) {
     lfc_heat <- recordPlot()
   }
   heat_colors <- grDevices::colorRampPalette(c("white", "darkred"))
-  p_heatmap <- try(heatmap.3(as.matrix(p_df), scale="none",
-                             trace="none", keysize=1.5, linewidth=0.5,
-                             margins=c(12, 8), cexRow=text_size, cexCol=text_size,
-                             col=heat_colors, dendrogram="none",
-                             Rowv=FALSE, Colv=FALSE,
-                             main="Compare p-values"), silent=TRUE)
+  p_heatmap <- try(heatmap.3(as.matrix(p_df), scale = "none",
+                             trace = "none", keysize = 1.5, linewidth = 0.5,
+                             margins = c(12, 8), cexRow = text_size, cexCol = text_size,
+                             col = heat_colors, dendrogram = "none",
+                             Rowv = FALSE, Colv = FALSE,
+                             main = "Compare p-values"), silent = TRUE)
   p_heat <- NULL
   if (! "try-error" %in% class(p_heatmap)) {
     p_heat <- recordPlot()
   }
   heat_colors <- grDevices::colorRampPalette(c("white", "darkgreen"))
-  adjp_heatmap <- try(heatmap.3(as.matrix(adjp_df), scale="none",
-                                trace="none", keysize=1.5, linewidth=0.5,
-                                margins=c(12, 8), cexRow=text_size, cexCol=text_size,
-                                col=heat_colors, dendrogram="none",
-                                Rowv=FALSE, Colv=FALSE,
-                                main="Compare adjp-values"), silent=TRUE)
+  adjp_heatmap <- try(heatmap.3(as.matrix(adjp_df), scale = "none",
+                                trace = "none", keysize = 1.5, linewidth = 0.5,
+                                margins = c(12, 8), cexRow = text_size, cexCol = text_size,
+                                col = heat_colors, dendrogram = "none",
+                                Rowv = FALSE, Colv = FALSE,
+                                main = "Compare adjp-values"), silent = TRUE)
   adjp_heat <- NULL
   if (! "try-error" %in% class(adjp_heatmap)) {
     adjp_heat <- recordPlot()
@@ -1127,10 +1131,10 @@ compare_de_results <- function(first, second, cor_method="pearson",
 #'  l = limma_pairwise(expt)
 #'  d = deseq_pairwise(expt)
 #'  e = edger_pairwise(expt)
-#'  fun = compare_led_tables(limma=l, deseq=d, edger=e)
+#'  fun = compare_led_tables(limma = l, deseq = d, edger = e)
 #' }
 #' @export
-correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
+correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL) {
   ## Fill each column/row of these with the correlation between tools for one
   ## contrast performed
   retlst <- list()
@@ -1162,7 +1166,7 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
-    extra_eval_names <- gsub(pattern="^\\s+", replacement="", x=extra_eval_names, perl=TRUE)
+    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
   }
 
   complst <- list()
@@ -1176,7 +1180,7 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   progress_count <- 0
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (c in 1:lenminus) {
     c_name <- methods[c]
@@ -1198,7 +1202,7 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
 
         ## assume all three have the same names() -- note that limma has more
         ## than the other two though
-        num_den_names <- strsplit(x=contr, split="_vs_")[[1]]
+        num_den_names <- strsplit(x = contr, split = "_vs_")[[1]]
         num_name <- num_den_names[1]
         den_name <- num_den_names[2]
         rev_contr <- glue("{den_name}_vs_{num_name}")
@@ -1222,7 +1226,7 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
           next
         }
         contrast_name_list <- c(contr, contrast_name_list)
-        fs <- merge(fst, scd, by="row.names")
+        fs <- merge(fst, scd, by = "row.names")
         if (nrow(fs) == 0) {
           warning("The merge of ", c_name, ", ", contr, " and ",
                   d_name, ", ", contr, " failed.")
@@ -1230,11 +1234,11 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
         }
         fs <- fs[, c("logFC.x", "logFC.y")]
         colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
-        fs_cor <- stats::cor.test(x=fs[, 1], y=fs[, 2])[["estimate"]]
+        fs_cor <- stats::cor.test(x = fs[, 1], y = fs[, 2])[["estimate"]]
         comparison_df[method_comp_name, contr] <- fs_cor
         fs_plt <- plot_scatter(fs) +
-          ggplot2::labs(title=glue("{contr}: {c_name} vs. {d_name}.")) +
-          ggplot2::geom_abline(intercept=0.0, slope=1.0, colour="blue")
+          ggplot2::labs(title = glue("{contr}: {c_name} vs. {d_name}.")) +
+          ggplot2::geom_abline(intercept = 0.0, slope = 1.0, colour = "blue")
         complst[[method_comp_name]] <- fs_cor
         plotlst[[method_comp_name]] <- fs_plt
       } ## End iterating through the contrasts
@@ -1251,14 +1255,14 @@ correlate_de_tables <- function(results, annot_df=NULL, extra_contrasts=NULL) {
   colnames(comparison_df) <- contrast_name_list
 
   heat_colors <- grDevices::colorRampPalette(c("white", "black"))
-  original <- par(mar=c(7, 4, 4, 2) + 0.1)
-  comparison_heatmap <- try(heatmap.3(comparison_df, scale="none",
-                                      trace="none", keysize=1.5,
-                                      cexCol=1.0, cexRow=1.0,
-                                      linewidth=0.5, margins=c(12, 8),
-                                      col=heat_colors, dendrogram="none",
-                                      Rowv=FALSE, Colv=FALSE,
-                                      main="Compare DE tools"), silent=TRUE)
+  original <- par(mar = c(7, 4, 4, 2) + 0.1)
+  comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
+                                      trace = "none", keysize = 1.5,
+                                      cexCol = 1.0, cexRow = 1.0,
+                                      linewidth = 0.5, margins = c(12, 8),
+                                      col = heat_colors, dendrogram = "none",
+                                      Rowv = FALSE, Colv = FALSE,
+                                      main = "Compare DE tools"), silent = TRUE)
   new <- par(original)
   heat <- NULL
   if (! "try-error" %in% class(comparison_heatmap)) {
@@ -1301,37 +1305,37 @@ compare_logfc_plots <- function(combined_tables) {
     tab <- data[[tname]]
     if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
       le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
-      le <- sm(plot_linear_scatter(le_data, pretty_colors=FALSE)[["scatter"]])
+      le <- sm(plot_linear_scatter(le_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       le <- NULL
     }
     if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
       ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
-      ld <- sm(plot_linear_scatter(ld_data, pretty_colors=FALSE)[["scatter"]])
+      ld <- sm(plot_linear_scatter(ld_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       ld <- NULL
     }
     if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
       de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
-      de <- sm(plot_linear_scatter(de_data, pretty_colors=FALSE)[["scatter"]])
+      de <- sm(plot_linear_scatter(de_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       de <- NULL
     }
     if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
       lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
-      lb <- sm(plot_linear_scatter(lb_data, pretty_colors=FALSE)[["scatter"]])
+      lb <- sm(plot_linear_scatter(lb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       lb <- NULL
     }
     if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
       db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
-      db <- sm(plot_linear_scatter(db_data, pretty_colors=FALSE)[["scatter"]])
+      db <- sm(plot_linear_scatter(db_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       db <- NULL
     }
     if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
       eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
-      eb <- sm(plot_linear_scatter(eb_data, pretty_colors=FALSE)[["scatter"]])
+      eb <- sm(plot_linear_scatter(eb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       db <- NULL
     }
@@ -1355,8 +1359,8 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param weights When printing venn diagrams, weight them?
 #' @param contrasts List of contrasts to compare.
 #' @export
-compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
-                                          weights=FALSE, contrasts=c(1, 2, 3)) {
+compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
+                                          weights = FALSE, contrasts = c(1, 2, 3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
   for (i in 1:length(contrasts)) {
@@ -1376,17 +1380,17 @@ compare_significant_contrasts <- function(sig_tables, compare_by="deseq",
     down_lst[[contr]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
   }
 
-  up_venn <- Vennerable::Venn(Sets=up_lst)
+  up_venn <- Vennerable::Venn(Sets = up_lst)
   up_intersect <- rename_vennerable_intersections(up_venn, up_lst)
-  down_venn <- Vennerable::Venn(Sets=down_lst)
+  down_venn <- Vennerable::Venn(Sets = down_lst)
   down_intersect <- rename_vennerable_intersections(down_venn, down_lst)
 
   up_tables <- get_vennerable_rows(sig_tables[[compare_by]][["ups"]], up_intersect)
   down_tables <- get_vennerable_rows(sig_tables[[compare_by]][["downs"]], down_intersect)
 
-  up_plot <- Vennerable::plot(up_venn, doWeights=weights)
+  up_plot <- Vennerable::plot(up_venn, doWeights = weights)
   up_plot <- grDevices::recordPlot(up_plot)
-  down_plot <- Vennerable::plot(down_venn, doWeights=weights)
+  down_plot <- Vennerable::plot(down_venn, doWeights = weights)
   down_plot <- grDevices::recordPlot(down_plot)
 
   retlst <- list(
@@ -1425,31 +1429,31 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
   levels_to_use <- names(contr_level_counts)[contr_level_counts > 0]
   ## Extract the average counts for each, make into table
   ave_expression_mat <- cellmeans_fit[["coef"]][, levels_to_use]
-  exp_table <- data.frame("ID" = rownames(ave_expression_mat), stringsAsFactors=FALSE)
+  exp_table <- data.frame("ID" = rownames(ave_expression_mat), stringsAsFactors = FALSE)
   exp_table <- cbind(exp_table, as.data.frame(ave_expression_mat))
-  names(exp_table)[-1] <- paste("AveExpr", gsub("condition", "", levels_to_use), sep=":")
+  names(exp_table)[-1] <- paste("AveExpr", gsub("condition", "", levels_to_use), sep = ":")
 
   stat <- BiocGenerics::pmin(abs(contrast_fit[["t"]][, conj_contrasts]))
   pval <- BiocGenerics::pmax(contrast_fit[["p.value"]][, conj_contrasts])
 
-  adj.pval <- p.adjust(pval, method="BH")
+  adj.pval <- p.adjust(pval, method = "BH")
   fcs <- as.data.frame(contrast_fit[["coef"]][, conj_contrasts])
-  names(fcs) <- paste("logFC", names(fcs), sep=":")
+  names(fcs) <- paste("logFC", names(fcs), sep = ":")
   conj_pvals <- as.data.frame(
-    apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method="BH"))
-  names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep=":")
-  conj_table <- data.frame("ID" = rownames(contrast_fit), stringsAsFactors=FALSE)
-  conj_table <- cbind(conj_table, fcs, conj_pvals, stat=stat, adj.P.Value=adj.pval)
+    apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method = "BH"))
+  names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep = ":")
+  conj_table <- data.frame("ID" = rownames(contrast_fit), stringsAsFactors = FALSE)
+  conj_table <- cbind(conj_table, fcs, conj_pvals, stat = stat, adj.P.Value = adj.pval)
   names(conj_table)[seq(2 + 2 * length(conj_contrasts), ncol(conj_table))] <- paste(
-    c("stat", "adj.P.Value"), paste(conj_contrasts, collapse=":"), sep=":")
+    c("stat", "adj.P.Value"), paste(conj_contrasts, collapse = ":"), sep = ":")
 
   ## Make the table for the 'other' test
   disj_table <- data.frame(
     "ID" = rownames(contrast_fit),
     "logFC" = contrast_fit[["coef"]][, disj_contrast],
-    "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method="BH"),
-    stringsAsFactors=FALSE)
-  names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep=":")
+    "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method = "BH"),
+    stringsAsFactors = FALSE)
+  names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep = ":")
   ## Combine tables, making sure all tables are in the same order
   stopifnot(all(exp_table$ID == conj_table[["ID"]] & exp_table[["ID"]] == disj_table[["ID"]]))
   out_table <- cbind(exp_table, conj_table[, -1], disj_table[, -1])
@@ -1507,16 +1511,16 @@ do_pairwise <- function(type, ...) {
 #' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#'  abundant <- get_abundant_genes(all_pairwise_output, type="deseq", n=100)
+#'  abundant <- get_abundant_genes(all_pairwise_output, type = "deseq", n = 100)
 #'  ## Top 100 most abundant genes from deseq
-#'  least <- get_abundant_genes(all_pairwise_output, type="deseq", n=100, least=TRUE)
+#'  least <- get_abundant_genes(all_pairwise_output, type = "deseq", n = 100, least = TRUE)
 #'  ## Top 100 least abundant genes from deseq
-#'  abundant <- get_abundant_genes(all_pairwise_output, type="edger", z=1.5)
+#'  abundant <- get_abundant_genes(all_pairwise_output, type = "edger", z = 1.5)
 #'  ## Get the genes more than 1.5 standard deviations from the mean.
 #' }
 #' @export
-get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
-                               unique=FALSE, least=FALSE) {
+get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
+                               unique = FALSE, least = FALSE) {
   if (is.null(z) & is.null(n)) {
     n <- 100
   }
@@ -1547,7 +1551,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
   } else if (type == "limma") {
     coefficient_df <- datum[["identity_comparisons"]][["coefficients"]]
     all_coefficients <- colnames(coefficient_df)
-    keepers <- !grepl(pattern="_vs_", x=all_coefficients)
+    keepers <- !grepl(pattern = "_vs_", x = all_coefficients)
     coefficient_df <- coefficient_df[, keepers]
   } else if (type == "deseq") {
     coefficient_df <- datum[["coefficients"]]
@@ -1562,10 +1566,10 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
   coef_ordered <- NULL
   for (coef in coefficients) {
     if (isTRUE(least)) {
-      new_order <- order(coefficient_df[[coef]], decreasing=FALSE)
+      new_order <- order(coefficient_df[[coef]], decreasing = FALSE)
       coef_ordered <- coefficient_df[new_order, ][[coef]]
     } else {
-      new_order <- order(coefficient_df[[coef]], decreasing=FALSE)
+      new_order <- order(coefficient_df[[coef]], decreasing = FALSE)
       coef_ordered <- coefficient_df[new_order, ][[coef]]
     }
     names(coef_ordered) <- coefficient_rows
@@ -1573,7 +1577,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
     if (is.null(n)) {
       ## Then do it on a z-score
       tmp_summary <- summary(coef_ordered)
-      tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm=TRUE))
+      tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm = TRUE))
       tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
       tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
       if (isTRUE(least)) {
@@ -1584,7 +1588,7 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
       abundant_list[[coef]] <- kept_rows
     } else {
       ## Then do it in a number of rows
-      abundant_list[[coef]] <- head(coef_ordered, n=n)
+      abundant_list[[coef]] <- head(coef_ordered, n = n)
     }
   }
   class(abundant_list) <- c("abundant_genes", "list")
@@ -1604,11 +1608,11 @@ get_abundant_genes <- function(datum, type="limma", n=NULL, z=NULL,
 #' @seealso \pkg{limma}
 #' @examples
 #' \dontrun{
-#'  abundance_excel <- get_pairwise_gene_abundances(combined, excel="abundances.xlsx")
+#'  abundance_excel <- get_pairwise_gene_abundances(combined, excel = "abundances.xlsx")
 #'  ## This should provide a set of abundances after voom by condition.
 #' }
 #' @export
-get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
+get_pairwise_gene_abundances <- function(datum, type = "limma", excel = NULL) {
   if (type == "limma") {
     ## Make certain we have a consistent set of column and row orders for the
     ## future operations
@@ -1617,11 +1621,11 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     nconds <- length(conds)
     num_rows <- length(row_order)
     ## Pre-allocate and set the row/colnames
-    expression_mtrx <- matrix(ncol=nconds, nrow=num_rows)
-    stdev_mtrx <- matrix(ncol=nconds, nrow=num_rows)
-    sigma_mtrx <- matrix(ncol=nconds, nrow=num_rows)
-    s2post_mtrx <- matrix(ncol=nconds, nrow=num_rows)
-    t_mtrx <- matrix(ncol=nconds, nrow=num_rows)
+    expression_mtrx <- matrix(ncol = nconds, nrow = num_rows)
+    stdev_mtrx <- matrix(ncol = nconds, nrow = num_rows)
+    sigma_mtrx <- matrix(ncol = nconds, nrow = num_rows)
+    s2post_mtrx <- matrix(ncol = nconds, nrow = num_rows)
+    t_mtrx <- matrix(ncol = nconds, nrow = num_rows)
     colnames(expression_mtrx) <- conds
     colnames(stdev_mtrx) <- conds
     colnames(sigma_mtrx) <- conds
@@ -1668,18 +1672,18 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
     colnames(expressions) <- glue("expr_{colnames(expressions)}")
     errors <- retlist[["error_values"]]
     colnames(errors) <- glue("err_{colnames(errors)}")
-    expression_table <- merge(annotations, expressions, by="row.names")
+    expression_table <- merge(annotations, expressions, by = "row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
-    expression_table <- merge(expression_table, errors, by="row.names")
+    expression_table <- merge(expression_table, errors, by = "row.names")
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
     expression_written <- write_xlsx(
-      data=expression_table,
-      sheet="expression_values",
-      title="Values comprising the logFCs and errors (expression / t-statistic)")
-    write_result <- openxlsx::saveWorkbook(wb=expression_written[["workbook"]],
-                                           file=excel, overwrite=TRUE)
+      data = expression_table,
+      sheet = "expression_values",
+      title = "Values comprising the logFCs and errors (expression / t-statistic)")
+    write_result <- openxlsx::saveWorkbook(wb = expression_written[["workbook"]],
+                                           file = excel, overwrite = TRUE)
   }
   return(retlist)
 }
@@ -1702,20 +1706,20 @@ get_pairwise_gene_abundances <- function(datum, type="limma", excel=NULL) {
 #' @param mean_column Name of the column of mean values.
 #' @param significance IHW uses this parameter, I don't know why.
 #' @return weight adjusted p-values.
-ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
-                       mean_column="baseMean", significance=0.05) {
+ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
+                       mean_column = "baseMean", significance = 0.05) {
   ## We need to know the method used, because the values returned are not
   ## necessarily in the scale expected by IHW.
   if (is.null(type)) {
-    if (grepl(pattern="^limma", x=pvalue_column)) {
+    if (grepl(pattern = "^limma", x = pvalue_column)) {
       type <- "limma"
-    } else if (grepl(pattern="^deseq", x=pvalue_column)) {
+    } else if (grepl(pattern = "^deseq", x = pvalue_column)) {
       type <- "deseq"
-    } else if (grepl(pattern="^edger", x=pvalue_column)) {
+    } else if (grepl(pattern = "^edger", x = pvalue_column)) {
       type <- "edger"
-    } else if (grepl(pattern="^basic", x=pvalue_column)) {
+    } else if (grepl(pattern = "^basic", x = pvalue_column)) {
       type <- "basic"
-    } else if (grepl(pattern="^ebseq", x=pvalue_column)) {
+    } else if (grepl(pattern = "^ebseq", x = pvalue_column)) {
       type <- "ebseq"
     } else {
       stop("Unable to determine the type of pvalues in this data.")
@@ -1744,7 +1748,7 @@ ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
 
   ## Finally, invoke IHW and get its interpretation of adjusted p-values.
   formula <- as.formula(glue::glue("{pvalue_column} ~ {mean_column}"))
-  ihw_result <- IHW::ihw(formula, data=tmp_table, alpha=significance)
+  ihw_result <- IHW::ihw(formula, data = tmp_table, alpha = significance)
   adjusted_p_values <- IHW::adj_pvalues(ihw_result)
   return(adjusted_p_values)
 }
@@ -1773,11 +1777,11 @@ ihw_adjust <- function(de_result, pvalue_column="pvalue", type=NULL,
 #' @seealso \code{\link{extract_significant_genes}}
 #' @examples
 #' \dontrun{
-#'  sig_table <- get_sig_genes(table, lfc=1)
+#'  sig_table <- get_sig_genes(table, lfc = 1)
 #' }
 #' @export
-get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
-                          column="logFC", fold="plusminus", p_column="adj.P.Val") {
+get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
+                          column = "logFC", fold = "plusminus", p_column = "adj.P.Val") {
   if (is.null(z) & is.null(n) & is.null(lfc) & is.null(p)) {
     message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
@@ -1839,7 +1843,7 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
     message("Getting the genes >= ", z, " z scores away from the median of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
-    out_mad <- stats::mad(as.numeric(table[[column]]), na.rm=TRUE)
+    out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)
     up_median_dist <- out_summary["Median"] + (out_mad * z)
     down_median_dist <- out_summary["Median"] - (out_mad * z)
     ## But use the (potentially already trimmed) up/down tables for indexing
@@ -1852,13 +1856,13 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
   if (!is.null(n)) {
     ## Take a specific number of genes at the top/bottom of the rank ordered list.
     message("Getting the top and bottom ", n, " genes.")
-    upranked <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
-    up_genes <- head(upranked, n=n)
+    upranked <- up_genes[order(as.numeric(up_genes[[column]]), decreasing = TRUE), ]
+    up_genes <- head(upranked, n = n)
     downranked <- down_genes[order(as.numeric(down_genes[[column]])), ]
-    down_genes <- head(downranked, n=n)
+    down_genes <- head(downranked, n = n)
   }
-  up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing=TRUE), ]
-  down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing=FALSE), ]
+  up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing = TRUE), ]
+  down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing = FALSE), ]
   ret <- list(
     "up_genes" = up_genes,
     "down_genes" = down_genes)
@@ -1896,29 +1900,29 @@ get_sig_genes <- function(table, n=NULL, z=NULL, lfc=NULL, p=NULL,
 #'  pretend <- make_pairwise_contrasts(model, conditions)
 #' }
 #' @export
-make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
-                                    do_extras=TRUE, do_pairwise=TRUE, extra_contrasts=NULL, ...) {
+make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
+                                    do_extras = TRUE, do_pairwise = TRUE, extra_contrasts = NULL, ...) {
   arglist <- list(...)
   tmpnames <- colnames(model)
-  tmpnames <- gsub(pattern="data[[:punct:]]", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="-", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="+", replacement="", x=tmpnames)
-  tmpnames <- gsub(pattern="conditions^(\\d+)$", replacement="c\\1", x=tmpnames)
-  tmpnames <- gsub(pattern="conditions", replacement="", x=tmpnames)
+  tmpnames <- gsub(pattern = "data[[:punct:]]", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "-", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "+", replacement = "", x = tmpnames)
+  tmpnames <- gsub(pattern = "conditions^(\\d+)$", replacement = "c\\1", x = tmpnames)
+  tmpnames <- gsub(pattern = "conditions", replacement = "", x = tmpnames)
   colnames(model) <- tmpnames
-  conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
+  conditions <- gsub(pattern = "^(\\d+)$", replacement = "c\\1", x = conditions)
   condition_table <- table(conditions)
   identities <- list()
   contrast_string <- ""
   eval_strings <- list()
   for (c in 1:length(condition_table)) {
     identity_name <- names(condition_table[c])
-    identity_string <- paste(identity_name, " = ", identity_name, ",", sep="")
+    identity_string <- paste(identity_name, " = ", identity_name, ",", sep = "")
     identities[identity_name] <- identity_string
   }
   ## If I also create a sample condition 'alice', and also perform a subtraction
   ## of 'alice' from 'bob', then the full makeContrasts() will be:
-  ## makeContrasts(bob=bob, alice=alice, bob_vs_alice=(bob)-(alice), levels=design)
+  ## makeContrasts(bob = bob, alice = alice, bob_vs_alice=(bob)-(alice), levels = design)
   ## The parentheses in this case are superfluous, but they remind me that I am
   ## finally doing some match, and also they remind me that we can do much more
   ## complex things like:
@@ -1931,8 +1935,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
     nextc <- c + 1
     for (d in nextc:length(identities)) {
       d_name <- names(identities[d])
-      minus_string <- paste(d_name, "_vs_", c_name, sep="")
-      exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep="")
+      minus_string <- paste(d_name, "_vs_", c_name, sep = "")
+      exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
       all_pairwise[minus_string] <- exprs_string
     }
   }
@@ -1954,11 +1958,11 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
-    extra_eval_names <- gsub(pattern="^\\s+", replacement="", x=extra_eval_names, perl=TRUE)
+    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
     for (i in 1:length(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
       extra_eval_string <- extra_eval_strings[[i]]
-      extra_eval_string <- gsub(pattern="^\\s+", replacement="", x=extra_eval_string, perl=TRUE)
+      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_string, perl = TRUE)
       extra_contrast <- glue("{extra_eval_string}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
@@ -1974,8 +1978,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
     contrast_string <- glue("{contrast_string} {eval_string}")
   }
   ## The final element of makeContrasts() is the design from voom()
-  contrast_string <- glue("{contrast_string} levels=model)")
-  eval(parse(text=contrast_string))
+  contrast_string <- glue("{contrast_string} levels = model)")
+  eval(parse(text = contrast_string))
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
 
@@ -2002,7 +2006,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities=FALSE,
 #' @param contrasts Actual contrast names.
 #' @param levels contrast levels used.
 #' @return Same contrasts as used in makeContrasts, but with unique names.
-mymakeContrasts <- function(..., contrasts=NULL, levels) {
+mymakeContrasts <- function(..., contrasts = NULL, levels) {
   e <- substitute(list(...))
   if (is.factor(levels)) {
     levels <- levels(levels)
@@ -2072,17 +2076,17 @@ mymakeContrasts <- function(..., contrasts=NULL, levels) {
 sanitize_expt <- function(expt) {
   design <- pData(expt)
   conditions <- gsub(
-    pattern="^(\\d+)$", replacement="c\\1", x=as.character(design[["condition"]]))
+    pattern = "^(\\d+)$", replacement = "c\\1", x = as.character(design[["condition"]]))
   batches <- gsub(
-    pattern="^(\\d+)$", replacement="b\\1", x=as.character(design[["batch"]]))
+    pattern = "^(\\d+)$", replacement = "b\\1", x = as.character(design[["batch"]]))
   ## To be honest, there is absolutely no way I would have thought of this
   ## regular expression:
   ## https://stackoverflow.com/questions/30945993
   ## In theory I am pretty good with regexes, but this is devious to me!
-  conditions <- gsub(pattern="[^\\PP_]", replacement="", x=conditions, perl=TRUE)
-  batches <- gsub(pattern="[^\\PP_]", replacement="", x=batches, perl=TRUE)
-  conditions <- gsub(pattern="[[:blank:]]", replacement="", x=conditions)
-  batches <- gsub(pattern="[[:blank:]]", replacement="", x=batches)
+  conditions <- gsub(pattern = "[^\\PP_]", replacement = "", x = conditions, perl = TRUE)
+  batches <- gsub(pattern = "[^\\PP_]", replacement = "", x = batches, perl = TRUE)
+  conditions <- gsub(pattern = "[[:blank:]]", replacement = "", x = conditions)
+  batches <- gsub(pattern = "[[:blank:]]", replacement = "", x = batches)
   conditions <- as.factor(conditions)
   batches <- as.factor(batches)
   expressionset <- expt[["expressionset"]]
@@ -2104,7 +2108,7 @@ sanitize_expt <- function(expt) {
 #' @param ... Arguments for semantic_copynumber_filter()
 #' @export
 semantic_copynumber_extract <- function(...) {
-  ret <- semantic_copynumber_filter(..., invert=TRUE)
+  ret <- semantic_copynumber_filter(..., invert = TRUE)
   return(ret)
 }
 
@@ -2132,17 +2136,17 @@ semantic_copynumber_extract <- function(...) {
 #' @seealso \code{\link{semantic_copynumber_extract}}
 #' @examples
 #' \dontrun{
-#'  pruned <- semantic_copynumber_filter(table, semantic=c("ribosomal"))
+#'  pruned <- semantic_copynumber_filter(table, semantic = c("ribosomal"))
 #'  ## Get rid of all genes with 'ribosomal' in the annotations.
 #' }
 #' @export
-semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, invert=TRUE,
-                                       semantic=c("mucin", "sialidase", "RHS",
+semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE, invert = TRUE,
+                                       semantic = c("mucin", "sialidase", "RHS",
                                                   "MASP", "DGF", "GP63"),
-                                       semantic_column="1.tooltip") {
+                                       semantic_column = "1.tooltip") {
   if ("expt" %in% class(input)) {
-    result <- semantic_expt_filter(input, invert=invert, semantic=semantic,
-                                   semantic_column=semantic_column)
+    result <- semantic_expt_filter(input, invert = invert, semantic = semantic,
+                                   semantic_column = semantic_column)
     return(result)
   }
 
@@ -2181,12 +2185,12 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
         file <- file.path("singletons", "gene_counts",
                           glue("up_{table_name}.fasta.out.count"))
       }
-      tmpdf <- try(read.table(file), silent=TRUE)
+      tmpdf <- try(read.table(file), silent = TRUE)
       if (class(tmpdf)[1] == "data.frame") {
         colnames(tmpdf) <- c("ID", "members")
-        tab <- merge(tab, tmpdf, by.x="row.names", by.y="ID")
+        tab <- merge(tab, tmpdf, by.x = "row.names", by.y = "ID")
         rownames(tab) <- tab[["Row.names"]]
-        tab <- tab[, -1, drop=FALSE]
+        tab <- tab[, -1, drop = FALSE]
         tab <- tab[count <= max_copies, ]
       }
     }  ## End using empirically defined groups of multi-gene families.
@@ -2197,9 +2201,9 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
       pre_remove_size <- nrow(tab)
       idx <- NULL
       if (semantic_column == "rownames") {
-        idx <- grepl(pattern=string, x=rownames(tab))
+        idx <- grepl(pattern = string, x = rownames(tab))
       } else {
-        idx <- grepl(pattern=string, x=tab[, semantic_column])
+        idx <- grepl(pattern = string, x = tab[, semantic_column])
       }
       type <- "Removed"
       if (!isTRUE(invert)) {
@@ -2229,11 +2233,11 @@ semantic_copynumber_filter <- function(input, max_copies=2, use_files=FALSE, inv
       ## Then it is a set of significance tables.
       if (count <= up_to_down) {
         table_name <- names(table_list)[count]
-        if (grep(pattern="^up_", table_name)) {
-          newname <- gsub(pattern="^up_", replacement="", x=table_name)
+        if (grep(pattern = "^up_", table_name)) {
+          newname <- gsub(pattern = "^up_", replacement = "", x = table_name)
           input[["ups"]][[newname]] <- table_list[[count]]
         } else {
-          newname <- gsub(pattern="^down_", replacement="", x=table_name)
+          newname <- gsub(pattern = "^down_", replacement = "", x = table_name)
           input[["downs"]][[newname]] <- table_list[[count]]
         }
       }

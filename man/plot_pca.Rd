@@ -69,7 +69,7 @@ Make a PCA plot describing the samples' clustering.
 }
 \examples{
 \dontrun{
- pca_plot <- plot_pca(expt=expt)
+ pca_plot <- plot_pca(expt = expt)
  pca_plot
 }
 }

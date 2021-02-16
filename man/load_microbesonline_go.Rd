@@ -42,6 +42,6 @@ ontology accessions. At the very least, it does return a large number of
 them, which is a start.
 }
 \examples{
- pa14_microbesonline_go <- load_microbesonline_go(species="PA14")
+ pa14_microbesonline_go <- load_microbesonline_go(species = "PA14")
  head(pa14_microbesonline_go)
 }

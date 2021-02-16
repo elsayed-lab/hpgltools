@@ -8,8 +8,8 @@ goseq_table(df, file = NULL)
 }
 \arguments{
 \item{df}{Dataframe of ontology information.  This is intended to be the
- output from goseq including information like numbers/category, GOids, etc.
- It requires a column 'category'
+output from goseq including information like numbers/category, GOids, etc.
+It requires a column 'category'
 which contains: GO:000001 and such.}
 
 \item{file}{Csv file to which to write the table.}
@@ -25,7 +25,7 @@ like ontology categories, definitions, etc.
 \examples{
 \dontrun{
  annotated_go = goseq_table(go_ids)
- head(annotated_go, n=1)
+ head(annotated_go, n = 1)
  ## >        category numDEInCat numInCat over_represented_pvalue
  ## > 571  GO:0006364          9       26            4.655108e-08
  ## >      under_represented_pvalue       qvalue ontology

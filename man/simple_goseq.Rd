@@ -16,6 +16,7 @@ simple_goseq(
   goseq_method = "Wallenius",
   padjust_method = "BH",
   bioc_length_db = "ensGene",
+  expand_categories = TRUE,
   excel = NULL,
   ...
 )
@@ -42,6 +43,8 @@ simple_goseq(
 \item{padjust_method}{Which method to use to adjust the pvalues.}
 
 \item{bioc_length_db}{Source of gene lengths?}
+
+\item{expand_categories}{Expand the GO categories to make the results more readable?}
 
 \item{excel}{Print the results to an excel file?}
 

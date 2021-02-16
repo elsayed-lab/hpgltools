@@ -12,8 +12,8 @@
 #' @return Two element list containing the venneuler data and the plot.
 #' @seealso \pkg{venneuler}
 #' @export
-plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
-                          fours=c(), fives=c(), factor=0.9) {
+plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
+                          fours = c(), fives = c(), factor = 0.9) {
   venn_sets <- ones
   venn_intersect_label <- ""
   do_doubles <- FALSE
@@ -112,7 +112,7 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
       double <- twos[i]
       double_name <- names(double)
       double_value <- twos[[i]]
-      name_pair <- strsplit(x=double_name, split="&")[[1]]
+      name_pair <- strsplit(x = double_name, split = "&")[[1]]
       first_name <- name_pair[[1]]
       second_name <- name_pair[[2]]
       middle_x <- (edges_x[[first_name]] + edges_x[[second_name]]) / 2.0
@@ -136,7 +136,7 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
       triple <- threes[i]
       triple_name <- names(triple)
       triple_value <- threes[[i]]
-      name_pair <- strsplit(x=triple_name, split="&")[[1]]
+      name_pair <- strsplit(x = triple_name, split = "&")[[1]]
       first_name <- name_pair[[1]]
       third_name <- name_pair[[3]]
       ## this assumes they are given as 1,2,3 where 2 is between 1 and 3 on the circle
@@ -161,7 +161,7 @@ plot_fun_venn <- function(ones=c(), twos=c(), threes=c(),
       quad <- fours[i]
       quad_name <- names(quad)
       quad_value <- fours[[i]]
-      name_pair <- strsplit(x=triple_name, split="&")[[1]]
+      name_pair <- strsplit(x = triple_name, split = "&")[[1]]
       first_name <- name_pair[[1]]
       fourth_name <- name_pair[[4]]
       ## this assumes they are given as 1,2,3,4 where 2,3 is between 1 and 4 on the circle
@@ -190,7 +190,7 @@ rename_vennerable_intersections <- function(venn, lst) {
   list_names <- names(lst)
   for (i in 2:(length(intersects)-1)) {
     characters <- names(intersects)[i]
-    characters <- strsplit(x=characters, split="")[[1]]
+    characters <- strsplit(x = characters, split = "")[[1]]
     new_name <- ""
     for (c in 1:length(characters)) {
       char <- characters[c]
@@ -199,7 +199,7 @@ rename_vennerable_intersections <- function(venn, lst) {
         new_name <- glue("{new_name}{list_name}, ")
       }
     }
-    new_name <- gsub(pattern=", $", replacement="", x=new_name)
+    new_name <- gsub(pattern = ", $", replacement = "", x = new_name)
     names(intersects)[i] <- new_name
   } ## Iterating through every intersection
   names(intersects)[1] <- "none"
@@ -215,7 +215,7 @@ get_vennerable_rows <- function(tables, intersections) {
   ## Skip 'none'
   for (t in 2:length(intersections)) {
     int_name <- int_names[t]
-    chosen_table_name <- strsplit(x=int_name, split=", ")[[1]][1]
+    chosen_table_name <- strsplit(x = int_name, split = ", ")[[1]][1]
     chosen_table <- tables[[chosen_table_name]]
     chosen_rows <- intersections[[t]]
     rows <- chosen_table[chosen_rows, ]

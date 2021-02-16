@@ -29,7 +29,7 @@ Invoked by all_pairwise().
  l = limma_pairwise(expt)
  d = deseq_pairwise(expt)
  e = edger_pairwise(expt)
- fun = compare_led_tables(limma=l, deseq=d, edger=e)
+ fun = compare_led_tables(limma = l, deseq = d, edger = e)
 }
 }
 \seealso{

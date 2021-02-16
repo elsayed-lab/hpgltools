@@ -28,7 +28,7 @@ component by score.
 }
 \examples{
 \dontrun{
- information <- pca_highscores(df=df, conditions=cond, batches=bat)
+ information <- pca_highscores(df = df, conditions = cond, batches = bat)
  information$pca_bitplot  ## oo pretty
 }
 }

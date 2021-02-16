@@ -6,8 +6,8 @@
 \usage{
 batch_counts(
   count_table,
-  design,
-  batch = TRUE,
+  method = TRUE,
+  design = NULL,
   batch1 = "batch",
   current_state = NULL,
   current_design = NULL,
@@ -26,9 +26,6 @@ batch_counts(
 
 \item{design}{Model matrix defining the experimental conditions/batches/etc.}
 
-\item{batch}{String describing the method to try to remove the batch effect
-(or FALSE to leave it alone, TRUE uses limma).}
-
 \item{batch1}{Column in the design table describing the presumed covariant
 to remove.}
 
@@ -42,6 +39,9 @@ remove (only used by limma at the moment).}
 parameter from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
+
+\item{batch}{String describing the method to try to remove the batch effect
+(or FALSE to leave it alone, TRUE uses limma).}
 }
 \value{
 The 'batch corrected' count table and new library size.  Please

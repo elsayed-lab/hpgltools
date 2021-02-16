@@ -10,17 +10,17 @@ context("19varpart.R: Does variancePartition work as expected?\n")
 ## which allows it to call on get_model_adjust() when a batch adjustment method is actually in it.
 ## The result is a more flexible batch method, but sadly one which has/had at least one error.
 pasilla <- new.env()
-load("pasilla.rda", envir=pasilla)
+load("pasilla.rda", envir = pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
-pasilla_norm <- normalize_expt(pasilla_expt, filter=TRUE, transform="log2",
-                               convert="cpm", norm="quant")
+pasilla_norm <- normalize_expt(pasilla_expt, filter = TRUE, transform = "log2",
+                               convert = "cpm", norm = "quant")
 
-pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor=NULL,
-                                     factors=c("condition", "batch")))
+pasilla_varpart <- sm(simple_varpart(pasilla_norm, predictor = NULL,
+                                     factors = c("condition", "batch")))
 
 ## Grab the model and see if it survived.
-expected <- "(1 | condition) + (1 | batch)"
+expected <- "condition + batch"
 actual <- as.character(pasilla_varpart[["model_used"]])[[2]]
 test_that("Does my varpart function return a sane model?", {
   expect_equal(expected, actual)
@@ -32,9 +32,9 @@ test_that("Does my varpart function return a sane model?", {
 expected <-  c(0.9929197, 0.9905977, 0.9900641, 0.9890613, 0.9885474, 0.9867127)
 actual <- head(pasilla_varpart[["sorted_df"]])[["condition"]]
 test_that("Do we get expected values of variance by condition?", {
-  expect_equal(expected, actual, tolerance=0.01)
+  expect_equal(expected, actual, tolerance = 0.01)
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 19varpart.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 19varpart.R in ", elapsed,  " seconds.")

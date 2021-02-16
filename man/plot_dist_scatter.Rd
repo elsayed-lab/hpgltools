@@ -45,8 +45,8 @@ then normalized against the maximum.
 }
 \examples{
 \dontrun{
- dist_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-                   gvis_filename="html/fun_scatterplot.html")
+ dist_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
+                   gvis_filename = "html/fun_scatterplot.html")
 }
 }
 \seealso{

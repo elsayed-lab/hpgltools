@@ -4,7 +4,7 @@ context("225plot_bar.R:
 ## 2017-12, exported functions in plot_bar:
 ## plot_libsize, plot_libsize_prepost, plot_pct_kept, plot_significant_bar
 
-pombe_expt <- make_pombe_expt(annotation=FALSE)
+pombe_expt <- make_pombe_expt(annotation = FALSE)
 
 testing <- plot_libsize(pombe_expt)
 
@@ -44,5 +44,5 @@ test_that("Do we get expected plot_libsize_prepost information?", {
 ## exported functions which will probably not get tested: plot_rpm
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 225plot_bar.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 225plot_bar.R in ", elapsed,  " seconds.")

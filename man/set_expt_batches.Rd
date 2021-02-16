@@ -24,7 +24,7 @@ conditions/batches of the experiment.  Use this to make that easier.
 }
 \examples{
 \dontrun{
- expt = set_expt_batches(big_expt, factor=c(some,stuff,here))
+ expt = set_expt_batches(big_expt, factor = c(some,stuff,here))
 }
 }
 \seealso{

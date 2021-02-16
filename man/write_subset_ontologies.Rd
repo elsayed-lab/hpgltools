@@ -38,12 +38,12 @@ workbook in a consistent and relatively easy-to-read fashion.
 }
 \examples{
 \dontrun{
- all_contrasts <- all_pairwise(expt, model_batch=TRUE)
+ all_contrasts <- all_pairwise(expt, model_batch = TRUE)
  keepers <- list(bob = ('numerator','denominator'))
- kept <- combine_de_tables(all_contrasts, keepers=keepers)
+ kept <- combine_de_tables(all_contrasts, keepers = keepers)
  changed <- extract_significant_genes(kept)
- kept_ontologies <- subset_ontology_search(changed, lengths=gene_lengths,
-                                           goids=goids, gff=gff, gff_type='gene')
+ kept_ontologies <- subset_ontology_search(changed, lengths = gene_lengths,
+                                           goids = goids, gff = gff, gff_type='gene')
  go_writer <- write_subset_ontologies(kept_ontologies)
 }
 }

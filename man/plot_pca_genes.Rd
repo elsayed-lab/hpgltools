@@ -72,7 +72,7 @@ Make a PC plot describing the gene' clustering.
 }
 \examples{
 \dontrun{
- pca_plot <- plot_pca(expt=expt)
+ pca_plot <- plot_pca(expt = expt)
  pca_plot
 }
 }

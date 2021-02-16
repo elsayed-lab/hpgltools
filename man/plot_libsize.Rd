@@ -48,7 +48,7 @@ make it pretty!
 }
 \examples{
 \dontrun{
- libsize_plot <- plot_libsize(expt=expt)
+ libsize_plot <- plot_libsize(expt = expt)
  libsize_plot  ## ooo pretty bargraph
 }
 }

@@ -42,7 +42,7 @@ mean greater/less than 0 followed by 2 fold and 4 fold cutoffs.}
 }
 \value{
 list containing the significance bar plots and some information to
-  hopefully help interpret them.
+ hopefully help interpret them.
 }
 \description{
 These plots are pretty annoying, and I am certain that this function is not
@@ -52,7 +52,7 @@ p-value.
 }
 \examples{
 \dontrun{
- expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+ expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)
  pairwise_result <- all_pairwise(expt)
  combined_result <- combine_de_tables(pairwise_result)
  ## Damn I wish I were smrt enough to make this elegant, but I cannot.

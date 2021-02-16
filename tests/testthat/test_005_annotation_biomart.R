@@ -6,9 +6,9 @@ context("005annotation_biomart.R
 ## 2017-12, exported functions in annotation_biomart:
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 
-if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
+if (Sys.getenv(x = "GITHUB_ACTIONS") != "true") {
   ## load_biomart_annotations()
-  testing <- load_biomart_annotations(species="hsapiens")
+  testing <- load_biomart_annotations(species = "hsapiens")
   annotations <- testing[["annotation"]]
   gene_ids <- head(sort(annotations[["ensembl_transcript_id"]]))
   expected <- c("ENST00000000233", "ENST00000000412", "ENST00000000442",
@@ -27,7 +27,7 @@ if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
   })
 
   ## load_biomart_go()
-  testing <- load_biomart_go(species="hsapiens")
+  testing <- load_biomart_go(species = "hsapiens")
   data <- testing[["go"]]
   expected <- c(318558, 2)
   actual <- dim(data)
@@ -39,8 +39,8 @@ if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
   ## load_biomart_orthologs()
   ## Oh yeah, I moved the default biomart to hg38/90 or 89.  Thus these are unlikely
   ## to be correct.  I should just query the number of orthologs found.
-  testing <- load_biomart_orthologs(gene_ids=gene_ids, first_species="hsapiens",
-                                    second_species="mmusculus")
+  testing <- load_biomart_orthologs(gene_ids = gene_ids, first_species = "hsapiens",
+                                    second_species = "mmusculus")
   data <- testing[["all_linked_genes"]]
   actual <- nrow(data)
   expected <- 26600
@@ -51,5 +51,5 @@ if (Sys.getenv(x="GITHUB_ACTIONS") != "true") {
 }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 005annotation_biomart.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 005annotation_biomart.R in ", elapsed,  " seconds.")

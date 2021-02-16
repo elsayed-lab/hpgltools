@@ -13,7 +13,7 @@ get_kegg_orgn(species = "Leishmania", short = TRUE)
 }
 \value{
 Data frame of possible KEGG identifier codes, genome ID numbers,
-  species, and phylogenetic classifications.
+ species, and phylogenetic classifications.
 }
 \description{
 KEGG identifiers do not always make sense.  For example, how am I supposed to

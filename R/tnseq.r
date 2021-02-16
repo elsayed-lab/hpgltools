@@ -32,13 +32,13 @@
 #' @examples
 #'  \dontrun{
 #'  input <- "preprocessing/hpgl0837/essentiality/hpgl0837-trimmed_ca_ta-v0M1.wig"
-#'  saturation <- tnseq_saturation(file=input)
+#'  saturation <- tnseq_saturation(file = input)
 #' }
 #' @export
-tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
+tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   table <- NULL
   if (class(data) == "character") {
-    table <- read.table(file=data, header=1, comment.char="")
+    table <- read.table(file = data, header = 1, comment.char = "")
     if (colnames(table)[1] == "X.Start") {
       colnames(table)[1] <- "Start"
     }
@@ -47,24 +47,28 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   }
 
   ## wig_comment removal
-  variablestep_idx <- grepl(pattern="^variable", x=table[["Start"]])
+  variablestep_idx <- grepl(pattern = "^variable", x = table[["Start"]])
   table <- table[-variablestep_idx, ]
   table[[column]] <- as.numeric(table[[column]])
   table[["Start"]] <- as.numeric(table[["Start"]])
-  max_reads <- max(table[[column]], na.rm=TRUE)
+  max_reads <- max(table[[column]], na.rm = TRUE)
   table[["l2"]] <- log2(table[[column]] + 1)
-  density_plot <- ggplot2::ggplot(data=table, mapping=aes_string(x="l2")) +
-    ggplot2::geom_density(y="..count..", position="identity", adjust=adjust) +
-    ggplot2::scale_y_continuous(limits=c(0, 0.25)) +
-    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+  table[["sample"]] <- "sample"
+  density_plot <- ggplot2::ggplot(data = table, mapping = aes_string(x = "l2")) +
+    ggplot2::geom_density(y = "..count..", position = "identity", adjust = adjust) +
+    ggplot2::scale_y_continuous(limits = c(0, 0.25)) +
+    ggplot2::labs(x = "log2(Number of reads observed)", y = "Number of TAs")
+
+  violin_plot <- ggplot(data = table, mapping = aes_string(x = "sample", y = "l2")) +
+    ggplot2::geom_violin()
 
   data_list <- as.numeric(table[, column])
-  max_reads <- max(data_list, na.rm=TRUE)
+  max_reads <- max(data_list, na.rm = TRUE)
   log2_data_list <- as.numeric(log2(data_list + 1))
-  data_plot <- plot_histogram(log2_data_list, bins=300, adjust=adjust)
+  data_plot <- plot_histogram(log2_data_list, bins = 300, adjust = adjust)
   data_plot <- data_plot +
-    ggplot2::scale_x_continuous(limits=c(0, 6))
-  ggplot2::scale_y_continuous(limits=c(0, 2))
+    ggplot2::scale_x_continuous(limits = c(0, 6))
+  ggplot2::scale_y_continuous(limits = c(0, 2))
 
   raw <- table(unlist(data_list))
   num_zeros <- raw[as.numeric(names(raw)) == 0]
@@ -81,7 +85,7 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   num_gt_thirtytwos <- raw[as.numeric(names(raw)) >= 32]
   num_gt_thirtytwo <- sum(num_gt_thirtytwos)
 
-  saturation_ratios <- vector(length=6)
+  saturation_ratios <- vector(length = 6)
   saturation_ratios[1] <- sprintf("%.8f", num_gt_one / num_zeros)
   saturation_ratios[2] <- sprintf("%.8f", num_gt_two / num_zeros)
   saturation_ratios[3] <- sprintf("%.8f", num_gt_four / num_zeros)
@@ -96,7 +100,7 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
   hit_positions[[2]] <- as.numeric(hit_positions[[2]])
   hit_idx <- hit_positions[[column]] != 0
   hit_positions <- hit_positions[hit_idx, 1]
-  hit_averages <- vector(length=length(hit_positions - 1))
+  hit_averages <- vector(length = length(hit_positions - 1))
   for (position in 2:length(hit_positions)) {
     last_position <- position - 1
     hit_averages[last_position] <- hit_positions[position] - hit_positions[last_position]
@@ -151,16 +155,16 @@ tnseq_saturation <- function(data, column="Reads", ylimit=100, adjust=2) {
 #' @return A couple of plots
 #' @seealso \pkg{ggplot2}
 #' @export
-plot_essentiality <- function(file, order_by="posterior_zbar", keep_esses=FALSE,
-                              min_sig=0.0371, max_sig=0.9902) {
-  ess <- readr::read_tsv(file=file, comment="#",
-                         col_names=c("gene", "orf_hits", "orf_tas", "max_run",
+plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FALSE,
+                              min_sig = 0.0371, max_sig = 0.9902) {
+  ess <- readr::read_tsv(file = file, comment = "#",
+                         col_names = c("gene", "orf_hits", "orf_tas", "max_run",
                                      "max_run_span", "posterior_zbar", "call"),
-                         col_types=c("gene"="c", "orf_hits"="i", "orf_tas"="i",
+                         col_types = c("gene"="c", "orf_hits"="i", "orf_tas"="i",
                                      "max_run"="i", "max_run_span"="i",
                                      "posterior_zbar"="d", "call"="f"))
   if (!is.null(order_by)) {
-    order_idx <- order(ess[[order_by]], decreasing=FALSE)
+    order_idx <- order(ess[[order_by]], decreasing = FALSE)
     ess <- ess[order_idx, ]
   }
   dropped_esses <- 0
@@ -178,14 +182,14 @@ plot_essentiality <- function(file, order_by="posterior_zbar", keep_esses=FALSE,
   sig_border <- insig_border + num_uncertain
 
   ess[["rank"]] <- 1:nrow(ess)
-  zbar_plot <- ggplot2::ggplot(data=ess,
-                               aes_string(x="rank", y="posterior_zbar", colour="call")) +
-    ggplot2::geom_point(stat="identity", size=2) +
-    ggplot2::geom_hline(color="grey", yintercept=min_sig) +
-    ggplot2::geom_hline(color="grey", yintercept=max_sig) +
-    ggplot2::geom_vline(color="grey", xintercept=insig_border) +
-    ggplot2::geom_vline(color="grey", xintercept=sig_border) +
-    ggplot2::labs(caption=glue("Insufficient evidence: {dropped_esses}
+  zbar_plot <- ggplot2::ggplot(data = ess,
+                               aes_string(x = "rank", y = "posterior_zbar", colour = "call")) +
+    ggplot2::geom_point(stat = "identity", size = 2) +
+    ggplot2::geom_hline(color = "grey", yintercept = min_sig) +
+    ggplot2::geom_hline(color = "grey", yintercept = max_sig) +
+    ggplot2::geom_vline(color = "grey", xintercept = insig_border) +
+    ggplot2::geom_vline(color = "grey", xintercept = sig_border) +
+    ggplot2::labs(caption = glue("Insufficient evidence: {dropped_esses}
 Essential genes: {num_essential}
 Uncertain genes: {num_uncertain}
 Non-Essential genes: {num_insig}")) +
@@ -202,24 +206,31 @@ ggplot2::theme_bw()
   return(retlist)
 }
 
-score_mhess <- function(expt, ess_column="essm1") {
+#' A scoring function for the mh_ess TNSeq method.
+#'
+#' I dunno, I might delete this function, I am not sure if it will ever get use.
+#'
+#' @param expt Input expressionset with a metadata column with the ess output files.
+#' @param ess_column Metadata column containing the mh_ess output files.
+#' @return List containing the scores along with the genes which have changed using it.
+score_mhess <- function(expt, ess_column = "essm1") {
   expr <- expt[["expressionset"]]
   design <- pData(expt)
   file_lst <- design[[ess_column]]
   counts <- exprs(expt)
-  scores <- data.frame(stringsAsFactors=FALSE)
+  scores <- data.frame(stringsAsFactors = FALSE)
   for (f in 1:length(file_lst)) {
     sample <- colnames(counts)[f]
     file <- file_lst[f]
-    ess <- readr::read_tsv(file=file, comment="#",
-                           col_names=c("gene", "orf_hits", "orf_tas", "max_run",
+    ess <- readr::read_tsv(file = file, comment = "#",
+                           col_names = c("gene", "orf_hits", "orf_tas", "max_run",
                                        "max_run_span", "posterior_zbar", "call"),
-                           col_types=c("gene"="c", "orf_hits"="i", "orf_tas"="i",
+                           col_types = c("gene"="c", "orf_hits"="i", "orf_tas"="i",
                                        "max_run"="i", "max_run_span"="i",
                                        "posterior_zbar"="d", "call"="f"))
     ess_df <- as.data.frame(ess[, c("gene", "call")])
-    rownames(ess_df) <- gsub(x=ess_df[["gene"]], pattern="^cds_",
-                             replacement="")
+    rownames(ess_df) <- gsub(x = ess_df[["gene"]], pattern = "^cds_",
+                             replacement = "")
     dropped_idx <- rownames(ess_df) == "unfound"
     ess_df <- ess_df[!dropped_idx, ]
     if (f == 1) {
@@ -245,7 +256,7 @@ score_mhess <- function(expt, ess_column="essm1") {
     scores[[c]] <- as.numeric(scores[[c]])
   }
   exprs(expt[["expressionset"]]) <- as.matrix(scores)
-  cond_scores <- median_by_factor(expt, fun="mean")[["medians"]]
+  cond_scores <- median_by_factor(expt, fun = "mean")[["medians"]]
 
   mscores <- rowMeans(cond_scores)
   changed_idx <- mscores != cond_scores[[1]]
@@ -277,39 +288,42 @@ score_mhess <- function(expt, ess_column="essm1") {
 #' @param ggstatsplot Include pretty ggstatsplot plot?
 #' @return a plot and table of the saturation for all samples.
 #' @export
-tnseq_multi_saturation <- function(meta, meta_column, ylimit=100,
-                                   column="Reads", adjust=1, ggstatsplot=FALSE) {
+tnseq_multi_saturation <- function(meta, meta_column, ylimit = 100,
+                                   column = "Reads", adjust = 1, ggstatsplot = FALSE) {
   table <- NULL
   filenames <- meta[[meta_column]]
   for (f in 1:length(filenames)) {
     file <- filenames[f]
     sample <- rownames(meta)[f]
-    column_data <- read.table(file=file, header=1, comment.char="#")
+    column_data <- read.table(file = file, header = 1, comment.char = "#")
     colnames(column_data) <- c("start", sample)
     column_data <- data.table::as.data.table(column_data)
     if (f == 1) {
       table <- column_data
     } else {
-      table <- merge(table, column_data, by.x="start", by.y="start")
+      table <- merge(table, column_data, by.x = "start", by.y = "start")
     }
   }
 
-  melted <- reshape2::melt(data=table, id.vars="start",
-                           value.name="reads", varnames="sample")
+  melted <- reshape2::melt(data = table, id.vars = "start",
+                           value.name = "reads", varnames = "sample")
   colnames(melted) <- c("start", "sample", "reads")
   melted[["log2"]] <- log2(melted[["reads"]] + 1)
-  plt <- ggplot(data=melted, mapping=aes_string(x="log2", fill="sample")) +
-    ggplot2::geom_density(mapping=aes_string(y="..count.."), position="identity",
-                          adjust=adjust, alpha=0.3) +
-    ggplot2::scale_y_continuous(limits=c(0, ylimit)) +
-    ggplot2::labs(x="log2(Number of reads observed)", y="Number of TAs")
+  plt <- ggplot(data = melted, mapping = aes_string(x = "log2", fill = "sample")) +
+    ggplot2::geom_density(mapping = aes_string(y = "..count.."), position = "identity",
+                          adjust = adjust, alpha = 0.3) +
+    ggplot2::scale_y_continuous(limits = c(0, ylimit)) +
+    ggplot2::labs(x = "log2(Number of reads observed)", y = "Number of TAs")
+
+  violin <- ggplot(data = melted, mapping = aes_string(x = "sample", y = "log2")) +
+    ggplot2::geom_violin()
 
   ggstats <- NULL
   if (isTRUE(ggstatsplot)) {
-    ggstats <- ggstatsplot::ggbetweenstats(data=melted, x=sample, y=log2,
-                                           notch=TRUE, mean.ci=TRUE, k=3, outlier.tagging=FALSE,
-                                           ggtheme=ggthemes::theme_fivethirtyeight(),
-                                           messages=TRUE)
+    ggstats <- ggstatsplot::ggbetweenstats(data = melted, x = sample, y = log2,
+                                           notch = TRUE, mean.ci = TRUE, k = 3, outlier.tagging = FALSE,
+                                           ggtheme = ggthemes::theme_fivethirtyeight(),
+                                           messages = TRUE)
   }
 
   retlist <- list(

@@ -1,3 +1,7 @@
+## model_testing.r: Some functions to get ready to pass models to various
+## DE/test/etc methods.  These functions seek to catch some corner cases when
+## playing with the various model types when using DESeq/etc.
+
 #' Make sure a given experimental factor and design will play together.
 #'
 #' Have you ever wanted to set up a differential expression analysis and after
@@ -11,7 +15,7 @@
 #' @return List of booleans telling if the factors + goal will work.
 #' @seealso \code{\link{model.matrix}} \code{\link{qr}}
 #' @export
-model_test <- function(design, goal="condition", factors=NULL, ...) {
+model_test <- function(design, goal = "condition", factors = NULL, ...) {
   arglist <- list(...)
   ## For testing, use some existing matrices/data
   message("There are ", length(levels(as.factor(design[, goal]))),
@@ -20,7 +24,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
   if (is.null(factors)) {
     message("Testing an experimental design with only ", goal, ".")
     matrix_all_formula <- as.formula(glue("~ 0 + {goal}"))
-    matrix_test <- model.matrix(matrix_all_formula, data=design)
+    matrix_test <- model.matrix(matrix_all_formula, data = design)
     num_columns <- ncol(matrix_test)
     matrix_decomp <- qr(matrix_test)
     message("The model of ", goal, "has ", num_columns,
@@ -43,7 +47,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
         next
       }
       matrix_all_formula <- as.formula(glue("~ 0 + {goal} + {factor}"))
-      matrix_test <- model.matrix(matrix_all_formula, data=design)
+      matrix_test <- model.matrix(matrix_all_formula, data = design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)
       message("The model of ", goal, " and ", factor, " has ", num_columns,
@@ -60,7 +64,7 @@ model_test <- function(design, goal="condition", factors=NULL, ...) {
       matrix_goal <- design[, goal]
       matrix_factor <- design[, factor]
       matrix_all_formula <- as.formula(glue("~ 0 + {goal} + {factor}"))
-      matrix_test <- model.matrix(matrix_all_formula, data=design)
+      matrix_test <- model.matrix(matrix_all_formula, data = design)
       num_columns <- ncol(matrix_test)
       matrix_decomp <- qr(matrix_test)
       message("The model of ", goal, " and ", factor, " has ", num_columns,

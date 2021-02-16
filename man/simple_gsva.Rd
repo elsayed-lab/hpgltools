@@ -6,12 +6,13 @@
 \usage{
 simple_gsva(
   expt,
-  datasets = "c2BroadSets",
+  signatures = "c2BroadSets",
   data_pkg = "GSVAdata",
-  signatures = NULL,
+  signature_category = "c2",
   cores = 1,
   current_id = "ENSEMBL",
   required_id = "ENTREZID",
+  min_catsize = 5,
   orgdb = "org.Hs.eg.db",
   method = "ssgsea",
   kcdf = NULL,
@@ -21,12 +22,9 @@ simple_gsva(
 \arguments{
 \item{expt}{Expt object to be analyzed.}
 
-\item{datasets}{Name of the variable from which to acquire the gsva data, if
-it does not exist, then data() will be called upon it.}
+\item{signatures}{Provide an alternate set of signatures (GeneSetCollections)}
 
 \item{data_pkg}{What package contains the requisite dataset?}
-
-\item{signatures}{Provide an alternate set of signatures (GeneSetCollections)}
 
 \item{cores}{How many CPUs to use?}
 
@@ -34,6 +32,8 @@ it does not exist, then data() will be called upon it.}
 
 \item{required_id}{gsva (I assume) always requires ENTREZ IDs, but just in
 case this is a parameter.}
+
+\item{min_catsize}{This provides the min.sz parameter to gsva().}
 
 \item{orgdb}{What is the data source for the rownames()?}
 
@@ -43,13 +43,16 @@ because it was throwing segmentation faults.}
 \item{kcdf}{Options for the gsva methods.}
 
 \item{ranking}{another gsva option.}
+
+\item{datasets}{Name of the variable from which to acquire the gsva data, if
+it does not exist, then data() will be called upon it.}
 }
 \value{
 List containing three elements: first a modified expressionset using
-  the result of gsva in place of the original expression data; second the
-  result from gsva, and third a data frame of the annotation data for the
-  gene sets in the expressionset.  This seems a bit redundant, perhaps I
-  should revisit it?
+ the result of gsva in place of the original expression data; second the
+ result from gsva, and third a data frame of the annotation data for the
+ gene sets in the expressionset.  This seems a bit redundant, perhaps I
+ should revisit it?
 }
 \description{
 gsva seems to hold a tremendous amount of potential.  Unfortunately, it is

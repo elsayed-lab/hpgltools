@@ -9,6 +9,7 @@ write_goseq_data(
   excel = "excel/goseq.xlsx",
   wb = NULL,
   add_trees = TRUE,
+  gather_genes = TRUE,
   order_by = "qvalue",
   pval = 0.1,
   add_plots = TRUE,
@@ -26,6 +27,8 @@ write_goseq_data(
 \item{wb}{Workbook object to write to.}
 
 \item{add_trees}{Include topgoish ontology trees?}
+
+\item{gather_genes}{Make a table of the genes in each category? (This may be slow)}
 
 \item{order_by}{What column to order the data by?}
 

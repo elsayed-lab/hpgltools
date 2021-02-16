@@ -14,7 +14,7 @@
 #' experimental design factor, check if all samples for that condition are 0, if
 #' so; leave them.  If not all the samples have 0 for the given condition, then
 #' replace the zero entries with NA.  This should allow for stuff like
-#' rowMeans(na.rm=TRUE) to provide useful information.
+#' rowMeans(na.rm = TRUE) to provide useful information.
 #'
 #' Finally, this will add columns to the annotations which tell the number of
 #' observations for each protein after doing this.
@@ -25,7 +25,7 @@
 #'   or replace them with the mean of all non-NA values.
 #' @return New expressionset with some, but not all, 0s replaced with NA.
 #' @export
-add_conditional_nas <- function(expt, fact="condition", method="NA") {
+add_conditional_nas <- function(expt, fact = "condition", method = "NA") {
   exprs_set <- expt[["expressionset"]]
   mtrx <- exprs(expt)
   annotations <- fData(expt)
@@ -36,10 +36,10 @@ add_conditional_nas <- function(expt, fact="condition", method="NA") {
   }
   types <- levels(fact)
   used_columns <- c()
-  observations_df <- data.frame(row.names=rownames(mtrx))
+  observations_df <- data.frame(row.names = rownames(mtrx))
   for (t in 1:length(types)) {
     type <- types[t]
-    used_columns <- grep(pattern=type, x=fact)
+    used_columns <- grep(pattern = type, x = fact)
     if (length(used_columns) < 1) {
       warning("The level ", type, " of the factor has no columns in the data.")
       next
@@ -56,10 +56,10 @@ add_conditional_nas <- function(expt, fact="condition", method="NA") {
     if (method == "NA") {
       sub_mtrx[zero_idx] <- NA
     } else if (method == "mean") {
-      all_mean <- mean(mtrx, na.rm=TRUE)
+      all_mean <- mean(mtrx, na.rm = TRUE)
       sub_mtrx[zero_idx] <- all_mean
     } else if (method == "sub_mean") {
-      sub_mean <- mean(sub_mtrx, na.rm=TRUE)
+      sub_mean <- mean(sub_mtrx, na.rm = TRUE)
       sub_mtrx[zero_idx] <- sub_mean
     }
     sub_mtrx[all_zeros, ] <- 0
@@ -78,7 +78,7 @@ add_conditional_nas <- function(expt, fact="condition", method="NA") {
   ## Now put the pieces back together.
   ## I am choosing not to use cbind to ensure that the orders are not screwed up.
   ## annotations <- cbind(annotations, observations_df)
-  annotations <- merge(annotations, observations_df, by="row.names")
+  annotations <- merge(annotations, observations_df, by = "row.names")
   rownames(annotations) <- annotations[["Row.names"]]
   annotations[["Row.names"]] <- NULL
   exprs(exprs_set) <- mtrx
@@ -94,7 +94,7 @@ add_conditional_nas <- function(expt, fact="condition", method="NA") {
 #' @return List of two elements: the full mayu table sorted by fdr and the number
 #'   corresponding to the chosen fdr value.
 #' @export
-extract_mayu_pps_fdr <- function(file, fdr=0.01) {
+extract_mayu_pps_fdr <- function(file, fdr = 0.01) {
   mayu_df <- readr::read_csv(file)
   fdr_df <- mayu_df[, c("IP/PPs", "protFDR")]
   fdr_idx <- order(fdr_df[["protFDR"]])
@@ -102,7 +102,7 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
   mayu_df <- mayu_df[fdr_idx, ]
   keepers <- fdr_df[["protFDR"]] <= fdr
   fdr_df <- fdr_df[keepers, ]
-  result <- tail(fdr_df, n=1)[[1]]
+  result <- tail(fdr_df, n = 1)[[1]]
   retlist <- list(
     "fdr_number" = result,
     "table" = mayu_df)
@@ -125,14 +125,14 @@ extract_mayu_pps_fdr <- function(file, fdr=0.01) {
 #' @param start_add Add a minute to the start of the windows to avoid overlaps?
 #' @return List containing a table of scan and precursor data.
 #' @export
-extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mzXML",
-                              allow_window_overlap=FALSE, start_add=0) {
+extract_scan_data <- function(file, id = NULL, write_acquisitions = TRUE, format = "mzXML",
+                              allow_window_overlap = FALSE, start_add = 0) {
   if (format == "mzML") {
-    extract_mzML_scans(file, id=id, write_acquisitions=write_acquisitions,
-                       allow_window_overlap=allow_window_overlap, start_add=start_add)
+    extract_mzML_scans(file, id = id, write_acquisitions = write_acquisitions,
+                       allow_window_overlap = allow_window_overlap, start_add = start_add)
   } else {
-    extract_mzXML_scans(file, id=id, write_acquisitions=write_acquisitions,
-                        allow_window_overlap=allow_window_overlap, start_add=start_add)
+    extract_mzXML_scans(file, id = id, write_acquisitions = write_acquisitions,
+                        allow_window_overlap = allow_window_overlap, start_add = start_add)
   }
 }
 
@@ -157,18 +157,18 @@ extract_scan_data <- function(file, id=NULL, write_acquisitions=TRUE, format="mz
 #'  beginning of each window.  Add that here.
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
-extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
-                                allow_window_overlap=FALSE, start_add=0) {
+extract_mzXML_scans <- function(file, id = NULL, write_acquisitions = TRUE,
+                                allow_window_overlap = FALSE, start_add = 0) {
   if (is.null(id)) {
     id <- file
   }
   message("Reading ", file)
-  input <- xml2::read_html(x=file, options="NOBLANKS")
+  input <- xml2::read_html(x = file, options = "NOBLANKS")
   ## peaks <- rvest::xml_nodes(input, "peaks")
 
   message("Extracting instrument information for ", file)
-  instruments <- rvest::xml_nodes(x=input, css="msinstrument")
-  instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors=FALSE)
+  instruments <- rvest::xml_nodes(x = input, css = "msinstrument")
+  instrument_data <- data.frame(row.names=(1:length(instruments)), stringsAsFactors = FALSE)
   instrument_values <- c("msmanufacturer", "msmodel", "msionisation",
                          "msmassanalyzer", "msdetector")
   for (v in instrument_values) {
@@ -182,7 +182,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 
   message("Extracting scan information for ", file)
   scans <- rvest::xml_nodes(input, "scan")
-  scan_data <- data.frame(row.names=(1:length(scans)), stringsAsFactors=FALSE)
+  scan_data <- data.frame(row.names=(1:length(scans)), stringsAsFactors = FALSE)
   scan_wanted <- c("peakscount", "scantype", "centroided", "mslevel", "polarity",
                    "retentiontime", "collisionenergy", "lowmz", "highmz", "basepeakmz",
                    "basepeakintensity", "totioncurrent")
@@ -202,7 +202,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 
   message("Extracting precursor information for ", file)
   precursors <- rvest::xml_nodes(scans, "precursormz")
-  precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors=FALSE)
+  precursor_data <- data.frame(row.names=(1:length(precursors)), stringsAsFactors = FALSE)
   precursor_wanted <- c("precursorintensity", "activationmethod",
                         "windowwideness", "precursorscannum")
   precursor_numeric <- c("precursorintensity", "precursorscannum",
@@ -225,7 +225,7 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 
   message("Coalescing the acquisition windows for ", file)
   acquisition_windows <- precursor_data[, c("window_start", "window_end")]
-  acquisition_unique <- !duplicated(x=acquisition_windows)
+  acquisition_unique <- !duplicated(x = acquisition_windows)
   acquisition_windows <- acquisition_windows[acquisition_unique, ]
   colnames(acquisition_windows) <- c("start", "end")
   if (!isTRUE(allow_window_overlap)) {
@@ -248,13 +248,13 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     acq_dir <- "windows"
     acq_file <- "acquisitions.txt"
     if (isTRUE(write_acquisitions)) {
-      acq_file <- paste0(gsub(pattern="\\.mzXML", replacement="", x=basename(file)), ".txt")
+      acq_file <- paste0(gsub(pattern = "\\.mzXML", replacement = "", x = basename(file)), ".txt")
     } else {
       acq_dir <- dirname(write_acquisitions)
       acq_file <- write_acquisitions
     }
     if (!file.exists(acq_dir)) {
-      dir.create(acq_dir, recursive=TRUE)
+      dir.create(acq_dir, recursive = TRUE)
     }
     ## To any sane person, the following lines must look bizarre.
     ## When performing a swath analysis, one step requires windows with _no_
@@ -263,14 +263,14 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
     ## So, yeah, that is annoying, but whatever.
     pre_file <- file.path(acq_dir, acq_file)
     message("Writing acquisition file to: ", pre_file)
-    no_cols <- write.table(x=acquisition_windows, file=pre_file, sep="\t", quote=FALSE,
-                           row.names=FALSE, col.names=FALSE)
+    no_cols <- write.table(x = acquisition_windows, file = pre_file, sep = "\t", quote = FALSE,
+                           row.names = FALSE, col.names = FALSE)
     osw_file <- file.path(acq_dir, glue("openswath_{acq_file}"))
     ## This is the file for openswathworkflow.
     message("Writing osw acquisitions to: ", osw_file)
-    plus_cols <- write.table(x=acquisition_windows, file=osw_file,
-                             sep="\t", quote=FALSE,
-                             row.names=FALSE, col.names=TRUE)
+    plus_cols <- write.table(x = acquisition_windows, file = osw_file,
+                             sep = "\t", quote = FALSE,
+                             row.names = FALSE, col.names = TRUE)
   }
   retlist <- list(
     "file" = file,
@@ -297,8 +297,8 @@ extract_mzXML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #'  beginning of each window.  Add that here.
 #' @return The list of metadata, scan data, etc from the mzXML file.
 #' @export
-extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
-                               allow_window_overlap=FALSE, start_add=0) {
+extract_mzML_scans <- function(file, id = NULL, write_acquisitions = TRUE,
+                               allow_window_overlap = FALSE, start_add = 0) {
   if (is.null(id)) {
     id <- file
   }
@@ -341,10 +341,10 @@ extract_mzML_scans <- function(file, id=NULL, write_acquisitions=TRUE,
 #'  stuff like that.
 #' @return List of data extracted from every sample in the MS run (DIA or DDA).
 #' @export
-extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid",
-                               file_column="raw_file", allow_window_overlap=FALSE,
-                               start_add=0, format="mzXML",
-                               parallel=TRUE, savefile=NULL, ...) {
+extract_msraw_data <- function(metadata, write_windows = TRUE, id_column = "sampleid",
+                               file_column = "raw_file", allow_window_overlap = FALSE,
+                               start_add = 0, format = "mzXML",
+                               parallel = TRUE, savefile = NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design
@@ -371,7 +371,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
   if (!is.null(arglist[["sample_column"]])) {
     sample_column <- arglist[["sample_column"]]
     sample_column <- tolower(sample_column)
-    sample_column <- gsub(pattern="[[:punct:]]", replacement="", x=sample_column)
+    sample_column <- gsub(pattern = "[[:punct:]]", replacement = "", x = sample_column)
   }
 
   chosen_colors <- generate_expt_colors(sample_definitions, ...)
@@ -393,14 +393,14 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
     tt <- sm(requireNamespace("foreach"))
-    tt <- sm(try(attachNamespace("foreach"), silent=TRUE))
+    tt <- sm(try(attachNamespace("foreach"), silent = TRUE))
     ## cores <- parallel::detectCores() / 2
     cores <- 4
     cl <- parallel::makeCluster(cores)
     doSNOW::registerDoSNOW(cl)
     show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
     if (isTRUE(show_progress)) {
-      bar <- utils::txtProgressBar(max=num_files, style=3)
+      bar <- utils::txtProgressBar(max = num_files, style = 3)
     }
     progress <- function(n) {
       setTxtProgressBar(bar, n)
@@ -410,13 +410,13 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       pb_opts <- list("progress" = progress)
     }
     res_names <- c()
-    res <- foreach(i=1:num_files, .packages=c("hpgltools", "doParallel"),
-                   .options.snow=pb_opts, .export=c("extract_scan_data")) %dopar% {
+    res <- foreach(i = 1:num_files, .packages = c("hpgltools", "doParallel"),
+                   .options.snow = pb_opts, .export = c("extract_scan_data")) %dopar% {
                      file <- meta[i, "file"]
                      id <- meta[i, "id"]
-                     file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
-                                                          allow_window_overlap=allow_window_overlap,
-                                                          format=format, start_add=start_add))
+                     file_result <- try(extract_scan_data(file, id = id, write_acquisitions = write_windows,
+                                                          allow_window_overlap = allow_window_overlap,
+                                                          format = format, start_add = start_add))
                      if (class(file_result)[1] == "try-error") {
                        warning("There was an error reading ", file, ".")
                      } else {
@@ -433,9 +433,9 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     for (i in 1:num_files) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
-      file_result <- try(extract_scan_data(file, id=id, write_acquisitions=write_windows,
-                                           allow_window_overlap=allow_window_overlap,
-                                           format=format, start_add=start_add), silent=TRUE)
+      file_result <- try(extract_scan_data(file, id = id, write_acquisitions = write_windows,
+                                           allow_window_overlap = allow_window_overlap,
+                                           format = format, start_add = start_add), silent = TRUE)
       if (class(file_result)[1] == "try-error") {
         warning("There was an error reading ", file, ".")
       } else {
@@ -444,8 +444,8 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
       }
     }
   }
-  try(names(res) <- res_names, silent=TRUE)
-  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique=TRUE)
+  try(names(res) <- res_names, silent = TRUE)
+  rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique = TRUE)
 
   retlist <- list(
     "colors" = chosen_colors,
@@ -453,7 +453,7 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
     "sample_data" = res)
   if (!is.null(savefile)) {
     mzxml_data <- retlist
-    save_result <- try(save(list = c("mzxml_data"), file=savefile), silent=TRUE)
+    save_result <- try(save(list = c("mzxml_data"), file = savefile), silent = TRUE)
   }
   return(retlist)
 }
@@ -528,13 +528,13 @@ extract_msraw_data <- function(metadata, write_windows=TRUE, id_column="sampleid
 #'   observed.
 #' * static_mods: A comma separated list of the static modifications observed.
 #' @export
-extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
-  input <- xml2::read_html(pepxml, options="NOBLANKS")
+extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
+  input <- xml2::read_html(pepxml, options = "NOBLANKS")
 
   message("Extracting spectrum queries.")
   spectrum_queries <- rvest::xml_nodes(input, "spectrum_query")
   spectra <- spectrum_queries %>% rvest::html_attr("spectrum")
-  query_data <- data.frame(row.names=spectra)
+  query_data <- data.frame(row.names = spectra)
   ## The interesting material at the beginning of a spectrum, these are in the
   ## <spectrum query> tag.
 
@@ -549,7 +549,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   message("Extracting the search_result metadata.")
   search_results <- rvest::xml_nodes(spectrum_queries, "search_result")
   search_hits <- search_results %>%
-    rvest::html_node(xpath="search_hit")
+    rvest::html_node(xpath = "search_hit")
   ## The set of fields which look interesting to me in the search_hit data.
   search_fields <- c("peptide", "peptide_prev_aa", "peptide_next_aa",
                      "protein", "num_tot_proteins",
@@ -562,7 +562,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   }
   query_data[["decoy"]] <- FALSE
   decoy_regex <- glue("^{decoy_string}")
-  decoy_idx <- grepl(pattern=decoy_regex, x=query_data[["protein"]])
+  decoy_idx <- grepl(pattern = decoy_regex, x = query_data[["protein"]])
   query_data[decoy_idx, "decoy"] <- TRUE
   query_data[["matched_ion_ratio"]] <- as.numeric(query_data[["num_matched_ions"]]) /
     as.numeric(query_data[["tot_num_ions"]])
@@ -570,7 +570,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   ## Get modification info
   message("Extracting modification metadata.")
   query_data[["modified_peptides"]] <- search_hits %>%
-    rvest::html_node(xpath="modification_info") %>%
+    rvest::html_node(xpath = "modification_info") %>%
     rvest::html_attr("modified_peptide")
 
   na_idx <- is.na(query_data[["modified_peptides"]])
@@ -578,12 +578,12 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   query_data[["variable_mods"]] <- ""
   query_data[["static_mods"]] <- ""
   modification_test <- search_hits %>%
-    rvest::html_node(xpath="modification_info")
+    rvest::html_node(xpath = "modification_info")
 
   message("Filling in modification information, this is slow.")
   show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (i in 1:length(modification_test)) {
     if (isTRUE(show_progress)) {
@@ -593,16 +593,16 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
     test <- modification_test[[i]]
     if (!is.na(test)) {
       variables <- test %>%
-        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_nodes(xpath = "mod_aminoacid_mass") %>%
         rvest::html_attr("variable")
       statics <- test %>%
-        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_nodes(xpath = "mod_aminoacid_mass") %>%
         rvest::html_attr("static")
       positions <- test %>%
-        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_nodes(xpath = "mod_aminoacid_mass") %>%
         rvest::html_attr("position")
       masses <- test %>%
-        rvest::html_nodes(xpath="mod_aminoacid_mass") %>%
+        rvest::html_nodes(xpath = "mod_aminoacid_mass") %>%
         rvest::html_attr("mass")
       variable_idx <- !is.na(variables)
       if (sum(variable_idx) > 0) {
@@ -681,7 +681,7 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
   query_data <- query_data[, new_order]
   check_masses <- testthat::expect_equal(query_data[["precursor_neutral_mass"]],
                                          query_data[["calc_neutral_pep_mass"]],
-                                         tolerance=0.1)
+                                         tolerance = 0.1)
   result <- data.table::as.data.table(query_data)
   return(result)
 }
@@ -743,8 +743,8 @@ extract_peprophet_data <- function(pepxml, decoy_string="DECOY_", ...) {
 #'   stuff like that.
 #' @return  A list of data from each sample in the pyprophet scored DIA run.
 #' @export
-extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
-                                   savefile=NULL, ...) {
+extract_pyprophet_data <- function(metadata, pyprophet_column = "diascored",
+                                   savefile = NULL, ...) {
   arglist <- list(...)
 
   ## Add a little of the code from create_expt to include some design
@@ -790,13 +790,13 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
-    file_result <- sm(try(readr::read_tsv(file), silent=TRUE))
+    file_result <- sm(try(readr::read_tsv(file), silent = TRUE))
     if (class(file_result)[1] != "try-error") {
       colnames(file_result) <- tolower(colnames(file_result))
       file_result <- file_result %>%
         dplyr::rowwise() %>%
-        dplyr::mutate(mass=gather_masses(sequence)) %>%
-        dplyr::mutate(seqlength=nchar(sequence))
+        dplyr::mutate(mass = gather_masses(sequence)) %>%
+        dplyr::mutate(seqlength = nchar(sequence))
       res[[id]] <- file_result
     } else {
       message("Failed to read: ", id, ".")
@@ -815,7 +815,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
     "sample_data" = res)
   if (!is.null(savefile)) {
     pyprophet_data <- retlist
-    save_result <- try(save(list = c("pyprophet_data"), file=savefile), silent=TRUE)
+    save_result <- try(save(list = c("pyprophet_data"), file = savefile), silent = TRUE)
   }
   class(retlist) <- c("pyprophet_tables", "list")
   return(retlist)
@@ -828,7 +828,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column="diascored",
 #' @param sequence Sequence to count.
 #' @return Rounded average mass.
 gather_masses <- function(sequence) {
-  atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent=TRUE)
+  atoms <- try(BRAIN::getAtomsFromSeq(sequence), silent = TRUE)
   if (class(atoms)[1] != "try-error") {
     d <- BRAIN::useBRAIN(atoms)
     ret <- round(d[["avgMass"]])
@@ -854,8 +854,8 @@ gather_masses <- function(sequence) {
 #'   \code{\link[MSnbase:impute-methods]{impute}}.
 #' @return An imputed expressionset.
 #' @export
-impute_expt <- function(expt, filter=TRUE, p=0.5,
-                        fun=c("bpca", "knn", "QRILC", "MLE",
+impute_expt <- function(expt, filter = TRUE, p = 0.5,
+                        fun = c("bpca", "knn", "QRILC", "MLE",
                               "MinDet", "MinProb", "min", "zero",
                               "mixed", "nbavg"), ...) {
   ## Show error if inputs do not contain required columns
@@ -878,7 +878,7 @@ impute_expt <- function(expt, filter=TRUE, p=0.5,
       message("The data was already filtered with: ", expt[["state"]][["filter"]], ".")
     }
     message("Filtering the data, turn off 'filter' to stop this.")
-    expt <- normalize_expt(expt, filter="pofa", p=p)
+    expt <- normalize_expt(expt, filter = "pofa", p = p)
   }
 
   exprs_set <- expt[["expressionset"]]
@@ -894,7 +894,7 @@ impute_expt <- function(expt, filter=TRUE, p=0.5,
   starting_counts <- exprs(exprs_set)
   message("Invoking impute from MSnbase with the ", fun, " method.")
 
-  imputed_data <- MSnbase::impute(msn_data, method=fun,
+  imputed_data <- MSnbase::impute(msn_data, method = fun,
                                   ...)
   imputed_exprs <- as(imputed_data, "ExpressionSet")
   imputed_counts <- exprs(imputed_exprs)
@@ -924,7 +924,7 @@ impute_expt <- function(expt, filter=TRUE, p=0.5,
 #'   1.  Backfill all 0s in the matrix to NA.
 #'   2.  Performs a mean across all samples which are known technical replicates
 #'   of the same biological replicate.  This mean is performed using
-#'   na.rm=TRUE.  Thus the entries which used to be 0 should no longer affect
+#'   na.rm = TRUE.  Thus the entries which used to be 0 should no longer affect
 #'   the result.
 #'   3.  Recreate the expressionset with the modified set of samples.
 #'
@@ -934,19 +934,19 @@ impute_expt <- function(expt, filter=TRUE, p=0.5,
 #' @param fun Assumed to be mean, but one might want median.
 #' @return new expressionset
 #' @export
-mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
+mean_by_bioreplicate <- function(expt, fact = "bioreplicate", fun = "mean") {
   ## Set all the zeros to NA so that when we do cpm and mean they will get dropped.
   exprs_set <- expt[["expressionset"]]
   mtrx <- exprs(expt)
   zero_idx <- mtrx == 0
   new <- mtrx
   new[zero_idx] <- NA
-  new_libsize <- colSums(new, na.rm=TRUE)
-  new <- edgeR::cpm(new, lib.size=new_libsize)
+  new_libsize <- colSums(new, na.rm = TRUE)
+  new <- edgeR::cpm(new, lib.size = new_libsize)
   exprs(exprs_set) <- new
   expt[["expressionset"]] <- exprs_set
   annot <- fData(expt)
-  final <- median_by_factor(expt, fact=fact, fun=fun)[["medians"]]
+  final <- median_by_factor(expt, fact = fact, fun = fun)[["medians"]]
   current_design <- pData(expt)
   new_design <- data.frame()
   for (c in 1:length(colnames(final))) {
@@ -959,7 +959,7 @@ mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
   rownames(new_design) <- colnames(final)
   new_design[["sampleid"]] <- rownames(new_design)
   new_design[["batch"]] <- "undefined"
-  new_set <- create_expt(count_dataframe=final, metadata=new_design, gene_info=annot)
+  new_set <- create_expt(count_dataframe = final, metadata = new_design, gene_info = annot)
   return(new_set)
 }
 
@@ -974,14 +974,14 @@ mean_by_bioreplicate <- function(expt, fact="bioreplicate", fun="mean") {
 #' @return  List containing the protein names, group data, protein dataframe,
 #'   and peptide dataframe.
 #' @export
-read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
-  old_options <- options(java.parameters="-Xmx20G")
+read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
+  old_options <- options(java.parameters = "-Xmx20G")
   message("Reading ", xlsx_file)
-  result <- readxl::read_xlsx(path=xlsx_file, sheet=1, col_names=FALSE)
+  result <- readxl::read_xlsx(path = xlsx_file, sheet = 1, col_names = FALSE)
   group_data <- list()
   show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (r in 1:nrow(result)) {
     if (isTRUE(show_progress)) {
@@ -994,7 +994,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     ## The first defines the protein group
     if (row[, 1] == "Checked") {
       group_colnames <- as.character(row)
-      group_keepers <- !grepl(pattern="^$", x=group_colnames)
+      group_keepers <- !grepl(pattern = "^$", x = group_colnames)
       group_keepers[1] <- FALSE
       group_colnames <- group_colnames[group_keepers]
       next
@@ -1002,7 +1002,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     ## When the 2nd column is 'Checked', then this defines a new protein in the group.
     if (row[, 2] == "Checked") {
       protein_colnames <- as.character(row)
-      protein_keepers <- !grepl(pattern="^$", x=protein_colnames)
+      protein_keepers <- !grepl(pattern = "^$", x = protein_colnames)
       protein_keepers[2] <- FALSE
       protein_colnames <- protein_colnames[protein_keepers]
       next
@@ -1010,7 +1010,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     ## When the 3rd column is 'Checked', then this starts a peptide definition
     if (row[, 3] == "Checked") {
       peptide_colnames <- as.character(row)
-      peptide_keepers <- !grepl(pattern="^$", x=peptide_colnames)
+      peptide_keepers <- !grepl(pattern = "^$", x = peptide_colnames)
       peptide_keepers[3] <- FALSE
       peptide_colnames <- peptide_colnames[peptide_keepers]
       next
@@ -1020,9 +1020,9 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     if (row[, 1] == FALSE | row[, 1] == TRUE) {
       group_information <- row[group_keepers]
       colnames(group_information) <- group_colnames
-      group_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
-                                       replacement="\\1",
-                                       x=group_information[["Group Description"]])
+      group_information[["ID"]] <- sub(pattern = "^.* GN=(\\w+) .*$",
+                                       replacement = "\\1",
+                                       x = group_information[["Group Description"]])
       group_accession <- group_information[["Protein Group ID"]]
       group_list <- list(
         "summary" = group_information,
@@ -1035,9 +1035,9 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
     if (row[, 2] == FALSE | row[, 2] == TRUE) {
       protein_information <- row[protein_keepers]
       colnames(protein_information) <- protein_colnames
-      protein_information[["ID"]] <- sub(pattern="^.* GN=(\\w+) .*$",
-                                         replacement="\\1",
-                                         x=protein_information[["Description"]])
+      protein_information[["ID"]] <- sub(pattern = "^.* GN=(\\w+) .*$",
+                                         replacement = "\\1",
+                                         x = protein_information[["Description"]])
       protein_accession <- protein_information[["Accession"]]
       protein_list <- list(
         "summary" = protein_information,
@@ -1067,7 +1067,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   message("Starting to iterate over ", length(group_data),  " groups.")
   show_progress <- interactive() & is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (g in 1:length(group_data)) {
     if (isTRUE(show_progress)) {
@@ -1093,33 +1093,33 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
   current_colnames <- tolower(current_colnames)
   ## percent signs are stupid in columns.
   current_colnames <- gsub(
-    pattern="%", replacement="pct", x=current_colnames)
+    pattern = "%", replacement = "pct", x = current_colnames)
   ## as are spaces.
   current_colnames <- gsub(
-    pattern=" ", replacement="_", x=current_colnames)
+    pattern = " ", replacement = "_", x = current_colnames)
   ## A bunch of columns have redundant adjectives.
   current_colnames <- gsub(
-    pattern="_confidence", replacement="", x=current_colnames)
+    pattern = "_confidence", replacement = "", x = current_colnames)
   ## Extra text in a column name is useless
   current_colnames <- gsub(
-    pattern="\\(by_search_engine\\)", replacement="", x=current_colnames)
+    pattern = "\\(by_search_engine\\)", replacement = "", x = current_colnames)
   ## Get rid of a bunch of doofusy punctuation.
   current_colnames <- gsub(
-    pattern="\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement="", x=current_colnames)
+    pattern = "\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement = "", x = current_colnames)
   ## At this point we should not have any leading underscores.
   current_colnames <- gsub(
-    pattern="^_", replacement="", x=current_colnames)
+    pattern = "^_", replacement = "", x = current_colnames)
   ## Now should we have any double underscores.
   current_colnames <- gsub(
-    pattern="__", replacement="_", x=current_colnames)
+    pattern = "__", replacement = "_", x = current_colnames)
   ## Finally, because of the previous removals, there might be some duplicated
   ## terms left behind.
   current_colnames <- gsub(
-    pattern="_ht", replacement="", x=current_colnames)
+    pattern = "_ht", replacement = "", x = current_colnames)
   current_colnames <- gsub(
-    pattern="_mascot_mascot", replacement="_mascot", x=current_colnames)
+    pattern = "_mascot_mascot", replacement = "_mascot", x = current_colnames)
   current_colnames <- gsub(
-    pattern="_sequest_sequest", replacement="_sequest", x=current_colnames)
+    pattern = "_sequest_sequest", replacement = "_sequest", x = current_colnames)
   colnames(protein_df) <- current_colnames
 
   ## Now make sure the columns which should be numeric, are numeric.
@@ -1136,7 +1136,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 
   ## Make sure columns which are 'found_in' are factors
   for (col in colnames(protein_df)) {
-    if (grepl(pattern="^found_in_", x=col)) {
+    if (grepl(pattern = "^found_in_", x = col)) {
       protein_df[[col]] <- as.factor(protein_df[[col]])
     }
   }
@@ -1189,37 +1189,37 @@ read_thermo_xlsx <- function(xlsx_file, test_row=NULL) {
 #' @param ... Other arguments passed down to the filters.
 #' @return Smaller SWATH2stats data set.
 #' @export
-s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpeptidename",
-                            fft=0.7, plot=FALSE, target_fdr=0.02, upper_fdr=0.05,
-                            mscore=0.01, percentage=0.75, remove_decoys=TRUE,
-                            max_peptides=15, min_peptides=2,
-                            do_mscore=TRUE, do_freqobs=TRUE, do_fdr=TRUE,
-                            do_proteotypic=TRUE, do_peptide=TRUE,
-                            do_max=TRUE, do_min=TRUE, ...) {
+s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullpeptidename",
+                            fft = 0.7, plot = FALSE, target_fdr = 0.02, upper_fdr = 0.05,
+                            mscore = 0.01, percentage = 0.75, remove_decoys = TRUE,
+                            max_peptides = 15, min_peptides = 2,
+                            do_mscore = TRUE, do_freqobs = TRUE, do_fdr = TRUE,
+                            do_proteotypic = TRUE, do_peptide = TRUE,
+                            do_max = TRUE, do_min = TRUE, ...) {
   retlist <- list()
   retlist[["decoy_lists"]] <- SWATH2stats::assess_decoy_rate(s2s_exp)
   decoy_ratio <- as.numeric(retlist[["decoy_lists"]][["ratio"]])
-  decoy_number <- grepl(pattern="^DECOY", x=s2s_exp[["proteinname"]])
+  decoy_number <- grepl(pattern = "^DECOY", x = s2s_exp[["proteinname"]])
   message("There were ", sum(!decoy_number),
           " observations and ", sum(decoy_number), " decoy observations.")
   retlist[["fdr_overall"]] <- SWATH2stats::assess_fdr_overall(
                                              s2s_exp,
-                                             output="Rconsole",
-                                             plot=plot)
+                                             output = "Rconsole",
+                                             plot = plot)
   retlist[["byrun_fdr"]] <- SWATH2stats::assess_fdr_byrun(
                                            s2s_exp,
-                                           FFT=fft,
-                                           plot=plot,
-                                           output="Rconsole")
+                                           FFT = fft,
+                                           plot = plot,
+                                           output = "Rconsole")
   retlist[["chosen_mscore"]] <- SWATH2stats::mscore4assayfdr(
                                                s2s_exp,
-                                               FFT=fft,
-                                               fdr_target=target_fdr,
+                                               FFT = fft,
+                                               fdr_target = target_fdr,
                                                ...)
   retlist[["prot_score"]] <- SWATH2stats::mscore4protfdr(
                                             s2s_exp,
-                                            FFT=fft,
-                                            fdr_target=target_fdr,
+                                            FFT = fft,
+                                            fdr_target = target_fdr,
                                             ...)
   message("Starting mscore filter.")
   retlist[["raw"]] <- s2s_exp
@@ -1269,9 +1269,9 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
     ## filter_mscore_fdr should probably be modified for flexibility.
     filt <- try(SWATH2stats::filter_mscore_fdr(
                                filt,
-                               FFT=fft,
-                               overall_protein_fdr_target=retlist[["prot_score"]],
-                               upper_overall_peptide_fdr_limit=upper_fdr,
+                               FFT = fft,
+                               overall_protein_fdr_target = retlist[["prot_score"]],
+                               upper_overall_peptide_fdr_limit = upper_fdr,
                                ...))
     if (class(filt)[1] == "try-error") {
       warning("The fdr filter failed, reverting to the freqobs filtered data.")
@@ -1290,7 +1290,7 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
     message("Starting proteotypic filter.")
     filt <- try(SWATH2stats::filter_proteotypic_peptides(
                                filt,
-                               column=column,
+                               column = column,
                                ...))
     if (class(filt)[1] == "try-error") {
       warning("The proteotypic filter failed, reverting to the fdr filtered data.")
@@ -1311,7 +1311,7 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
     ## That is not a filter!
     filt <- try(SWATH2stats::filter_all_peptides(
                                filt,
-                               column=column))
+                               column = column))
     if (class(filt)[1] == "try-error") {
       warning("The peptide filter failed, reverting to the proteotypic filtered data.")
       filt <- filt_backup
@@ -1328,9 +1328,9 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
   if (isTRUE(do_max)) {
     message("Starting maximum peptide filter.")
     filt <- try(SWATH2stats::filter_on_max_peptides(
-                               data=filt,
-                               column=column,
-                               n_peptides=max_peptides,
+                               data = filt,
+                               column = column,
+                               n_peptides = max_peptides,
                                ...))
     if (class(filt)[1] == "try-error") {
       warning("The maximum peptide filter failed, reverting to the proteotypic filtered data.")
@@ -1347,10 +1347,10 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
   if (isTRUE(do_min)) {
     message("Starting minimum peptide filter.")
     filt <- try(SWATH2stats::filter_on_min_peptides(
-                               data=filt,
-                               n_peptides=min_peptides,
-                               column=column,
-                               rm.decoy=remove_decoys))
+                               data = filt,
+                               n_peptides = min_peptides,
+                               column = column,
+                               rm.decoy = remove_decoys))
     if (class(filt)[1] == "try-error") {
       warning("The minimum peptide filter failed, reverting to the maximum peptide filtered data.")
       filt <- filt_backup
@@ -1373,16 +1373,16 @@ s2s_all_filters <- function(s2s_exp, column="proteinname", pep_column="fullpepti
   return(retlist)
 }
 
-subset_pyprophet_data <- function(lst, subset=NULL, column="protein_id", operator="in") {
+subset_pyprophet_data <- function(lst, subset = NULL, column = "protein_id", operator = "in") {
   data <- lst[["sample_data"]]
   ## First, I want to get the simple Rv ID from the data, this is annoyingly Tb
   ## specific and should be removed or in some way made generic for other data.
   for (c in 1:length(data)) {
     datum <- data[[c]]
-    datum[["protein_id"]] <- gsub(x=datum[["proteinname"]], pattern="^1/",
-                                  replacement="")
-    datum[["protein_id"]] <- gsub(x=datum[["protein_id"]], pattern="_.*$",
-                                  replacement="")
+    datum[["protein_id"]] <- gsub(x = datum[["proteinname"]], pattern = "^1/",
+                                  replacement = "")
+    datum[["protein_id"]] <- gsub(x = datum[["protein_id"]], pattern = "_.*$",
+                                  replacement = "")
     data[[c]] <- datum
   }
 

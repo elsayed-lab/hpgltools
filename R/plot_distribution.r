@@ -32,8 +32,8 @@
 #'  a_boxplot  ## ooo pretty boxplot look at the lines
 #' }
 #' @export
-plot_boxplot <- function(data, colors=NULL, title=NULL,
-                         violin=FALSE, scale=NULL, expt_names=NULL, label_chars=10,
+plot_boxplot <- function(data, colors = NULL, title = NULL,
+                         violin = FALSE, scale = NULL, expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
@@ -65,42 +65,42 @@ plot_boxplot <- function(data, colors=NULL, title=NULL,
 
   if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
-      colnames(data) <- make.names(design[[expt_names]], unique=TRUE)
+      colnames(data) <- make.names(design[[expt_names]], unique = TRUE)
     } else {
       colnames(data) <- expt_names
     }
   }
   if (!is.null(label_chars) & is.numeric(label_chars)) {
-    colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
+    colnames(data) <- abbreviate(colnames(data), minlength = label_chars)
   }
 
   data[["id"]] <- rownames(data)
-  dataframe <- reshape2::melt(data, id=c("id"))
+  dataframe <- reshape2::melt(data, id = c("id"))
   colnames(dataframe) <- c("gene", "variable", "value")
 
   ## The use of data= and aes() leads to no visible binding for global variable warnings
   ## I am not sure what to do about them in this context.
-  boxplot <- ggplot2::ggplot(data=dataframe, aes_string(x="variable", y="value")) +
-    ggplot2::scale_x_discrete(labels=colnames(data))
+  boxplot <- ggplot2::ggplot(data = dataframe, aes_string(x = "variable", y = "value")) +
+    ggplot2::scale_x_discrete(labels = colnames(data))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill="variable"), width=1, scale="area",
-                           show.legend=FALSE) +
-      ggplot2::scale_fill_manual(values=as.character(colors), guide=FALSE) +
-      ggplot2::geom_boxplot(aes_string(fill="variable"), outlier.alpha=0.01,
-                            width=0.1)
+      ggplot2::geom_violin(aes_string(fill = "variable"), width = 1, scale = "area",
+                           show.legend = FALSE) +
+      ggplot2::scale_fill_manual(values = as.character(colors), guide = FALSE) +
+      ggplot2::geom_boxplot(aes_string(fill = "variable"), outlier.alpha = 0.01,
+                            width = 0.1)
   } else {
     boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(aes_string(fill="variable"),
-                               na.rm=TRUE, fill=colors, size=0.5,
-                               outlier.size=1.5,
-                               guide=FALSE,
-                               outlier.colour=ggplot2::alpha("black", 0.2)))
+      sm(ggplot2::geom_boxplot(aes_string(fill = "variable"),
+                               na.rm = TRUE, fill = colors, size = 0.5,
+                               outlier.size = 1.5,
+                               guide = FALSE,
+                               outlier.colour = ggplot2::alpha("black", 0.2)))
   }
   boxplot <- boxplot +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+                   axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
     ggplot2::xlab("Sample") +
     ggplot2::ylab("Per-gene (pseudo)count distribution")
   if (!is.null(title)) {
@@ -109,14 +109,14 @@ plot_boxplot <- function(data, colors=NULL, title=NULL,
 
   if (scale == "log") {
     boxplot <- boxplot +
-      ggplot2::scale_y_continuous(labels=scales::scientific,
-                                  trans=scales::log2_trans())
+      ggplot2::scale_y_continuous(labels = scales::scientific,
+                                  trans = scales::log2_trans())
   } else if (scale == "logdim") {
     boxplot <- boxplot +
-      ggplot2::coord_trans(y="log2", labels=scales::scientific)
+      ggplot2::coord_trans(y = "log2", labels = scales::scientific)
   } else if (isTRUE(scale)) {
     boxplot <- boxplot +
-      ggplot2::scale_y_log10(labels=scales::scientific)
+      ggplot2::scale_y_log10(labels = scales::scientific)
   }
   return(boxplot)
 }
@@ -146,9 +146,9 @@ plot_boxplot <- function(data, colors=NULL, title=NULL,
 #'  funkytown <- plot_density(data)
 #' }
 #' @export
-plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity", direct=TRUE,
-                         fill=NULL, title=NULL, scale=NULL, colors_by="condition",
-                         label_chars=10, ...) {
+plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity", direct = TRUE,
+                         fill = NULL, title = NULL, scale = NULL, colors_by = "condition",
+                         label_chars = 10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
   design <- NULL
@@ -197,7 +197,7 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
     }
   }
   if (!is.null(label_chars) & is.numeric(label_chars)) {
-    colnames(data) <- abbreviate(colnames(data), minlength=label_chars)
+    colnames(data) <- abbreviate(colnames(data), minlength = label_chars)
   }
 
   ## If the columns lose the connectivity between the sample and values, then
@@ -212,39 +212,39 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
   }
   densityplot <- NULL
   if (is.null(fill)) {
-    densityplot <- ggplot2::ggplot(data=melted,
-                                   ggplot2::aes_string(x="counts", colour="sample"))
+    densityplot <- ggplot2::ggplot(data = melted,
+                                   ggplot2::aes_string(x = "counts", colour = "sample"))
   } else {
     fill <- "sample"
-    densityplot <- ggplot2::ggplot(data=melted,
-                                   ggplot2::aes_string(x="counts", colour="sample", fill="fill"))
+    densityplot <- ggplot2::ggplot(data = melted,
+                                   ggplot2::aes_string(x = "counts", colour = "sample", fill = "fill"))
   }
   densityplot <- densityplot +
-    ggplot2::geom_density(ggplot2::aes_string(x="counts", y="..count..", fill="sample"),
-                          position=position, na.rm=TRUE) +
+    ggplot2::geom_density(ggplot2::aes_string(x = "counts", y = "..count..", fill = "sample"),
+                          position = position, na.rm = TRUE) +
     ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   legend.key.size=ggplot2::unit(0.3, "cm"))
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+                   legend.key.size = ggplot2::unit(0.3, "cm"))
   if (!is.null(title)) {
     densityplot <- densityplot + ggplot2::ggtitle(title)
   }
 
   if (scale == "log") {
-    densityplot <- densityplot + ggplot2::scale_x_continuous(trans=scales::log2_trans(),
-                                                             labels=scales::scientific)
+    densityplot <- densityplot + ggplot2::scale_x_continuous(trans = scales::log2_trans(),
+                                                             labels = scales::scientific)
   } else if (scale == "logdim") {
     densityplot <- densityplot +
-      ggplot2::coord_trans(x="log2") +
-      ggplot2::scale_x_continuous(labels=scales::scientific)
+      ggplot2::coord_trans(x = "log2") +
+      ggplot2::scale_x_continuous(labels = scales::scientific)
   } else if (isTRUE(scale)) {
     densityplot <- densityplot +
-      ggplot2::scale_x_log10(labels=scales::scientific)
+      ggplot2::scale_x_log10(labels = scales::scientific)
   }
 
   if (!is.null(colors_by)) {
-    densityplot <- densityplot + ggplot2::scale_colour_manual(values=as.character(colors)) +
-      ggplot2::scale_fill_manual(values=ggplot2::alpha(as.character(colors), 0.1))
+    densityplot <- densityplot + ggplot2::scale_colour_manual(values = as.character(colors)) +
+      ggplot2::scale_fill_manual(values = ggplot2::alpha(as.character(colors), 0.1))
   }
 
   if (isTRUE(direct)) {
@@ -258,32 +258,32 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
     if (!is.null(design[["condition"]])) {
       melted[, "condition" := design[sample, "condition"]]
       condition_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                            "1st"=quantile(x=counts, probs=0.25),
-                                                            "median"=median(x=counts),
+                                                            "1st"=quantile(x = counts, probs = 0.25),
+                                                            "median"=median(x = counts),
                                                             "mean"=mean(counts),
-                                                            "3rd"=quantile(x=counts, probs=0.75),
+                                                            "3rd"=quantile(x = counts, probs = 0.75),
                                                             "max"=max(counts)),
-                                                     by="condition"]
+                                                     by = "condition"]
     }
     if (!is.null(design[["batch"]])) {
       melted[, "batch" := design[sample, "batch"]]
       batch_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                        "1st"=quantile(x=counts, probs=0.25),
-                                                        "median"=median(x=counts),
+                                                        "1st"=quantile(x = counts, probs = 0.25),
+                                                        "median"=median(x = counts),
                                                         "mean"=mean(counts),
-                                                        "3rd"=quantile(x=counts, probs=0.75),
+                                                        "3rd"=quantile(x = counts, probs = 0.75),
                                                         "max"=max(counts)),
-                                                 by="batch"]
+                                                 by = "batch"]
     }
   }
 
   sample_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                     "1st"=quantile(x=counts, probs=0.25),
-                                                     "median"=median(x=counts),
+                                                     "1st"=quantile(x = counts, probs = 0.25),
+                                                     "median"=median(x = counts),
                                                      "mean"=mean(counts),
-                                                     "3rd"=quantile(x=counts, probs=0.75),
+                                                     "3rd"=quantile(x = counts, probs = 0.75),
                                                      "max"=max(counts)),
-                                              by="sample"]
+                                              by = "sample"]
   retlist <- list(
     "plot" = densityplot,
     "condition_summary" = condition_summary,
@@ -308,7 +308,7 @@ plot_density <- function(data, colors=NULL, expt_names=NULL, position="identity"
 #'  means = a table of the median values of all the summaries of the qq plots.
 #' @seealso \pkg{Biobase}
 #' @export
-plot_qq_all <- function(data, labels="short", ...) {
+plot_qq_all <- function(data, labels = "short", ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
   if (data_class == "expt") {
@@ -341,7 +341,7 @@ plot_qq_all <- function(data, labels="short", ...) {
     tmpdf <- data.frame("ith"=data[, i],
                         "mean"=sample_data[["mean"]])
     colnames(tmpdf) <- c(ith, "mean")
-    tmpqq <- plot_single_qq(tmpdf, x=1, y=2, labels=labels)
+    tmpqq <- plot_single_qq(tmpdf, x = 1, y = 2, labels = labels)
     logs[[count]] <- tmpqq[["log"]]
     ratios[[count]] <- tmpqq[["ratio"]]
     means[[count]] <- tmpqq[["summary"]][["Median"]]
@@ -351,7 +351,7 @@ plot_qq_all <- function(data, labels="short", ...) {
   log_plots <- grDevices::recordPlot()
   plot_multiplot(ratios)
   ratio_plots <- grDevices::recordPlot()
-  plots <- list(logs=log_plots, ratios=ratio_plots, medians=means)
+  plots <- list(logs = log_plots, ratios = ratio_plots, medians = means)
   return(plots)
 }
 
@@ -367,7 +367,7 @@ plot_qq_all <- function(data, labels="short", ...) {
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
 #' @seealso \pkg{Biobase}
 #' @export
-plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
+plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   data_class <- class(data)[1]
   if (data_class == "expt") {
     design <- pData(data)
@@ -404,45 +404,45 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
     y_string <- glue("Ratio of sorted {xlabel}  and {ylabel}.")
   }
   ratio_plot <- ggplot2::ggplot(ratio_df,
-                                ggplot2::aes_string(x="increment", y="ratio")) +
-    ggplot2::geom_point(colour=sm(grDevices::densCols(ratio_df[["ratio"]])), stat="identity",
-                        size=1, alpha=0.2, na.rm=TRUE) +
-    ggplot2::scale_y_continuous(limits=c(0, 2))
+                                ggplot2::aes_string(x = "increment", y = "ratio")) +
+    ggplot2::geom_point(colour = sm(grDevices::densCols(ratio_df[["ratio"]])), stat = "identity",
+                        size = 1, alpha = 0.2, na.rm = TRUE) +
+    ggplot2::scale_y_continuous(limits = c(0, 2))
   if (isTRUE(labels)) {
     ratio_plot <- ratio_plot +
       ggplot2::xlab("Sorted gene") +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(legend.position="none")
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(legend.position = "none")
   } else if (labels == "short") {
     ratio_plot <- ratio_plot +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(axis.text.x=ggplot2::element_blank(),
-                     axis.text.y=ggplot2::element_blank(),
-                     axis.ticks=ggplot2::element_blank(),
-                     axis.title.x=ggplot2::element_blank(),
-                     legend.position="none",
-                     panel.background=ggplot2::element_blank(),
-                     panel.border=ggplot2::element_blank(),
-                     panel.grid.major=ggplot2::element_blank(),
-                     panel.grid.minor=ggplot2::element_blank(),
-                     plot.background=ggplot2::element_blank())
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(axis.text.x = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     axis.title.x = ggplot2::element_blank(),
+                     legend.position = "none",
+                     panel.background = ggplot2::element_blank(),
+                     panel.border = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     plot.background = ggplot2::element_blank())
   } else {
     ratio_plot <- ratio_plot +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(axis.line=ggplot2::element_blank(),
-                     axis.text.x=ggplot2::element_blank(),
-                     axis.text.y=ggplot2::element_blank(),
-                     axis.ticks=ggplot2::element_blank(),
-                     axis.title.x=ggplot2::element_blank(),
-                     axis.title.y=ggplot2::element_blank(),
-                     legend.position="none",
-                     panel.background=ggplot2::element_blank(),
-                     panel.border=ggplot2::element_blank(),
-                     panel.grid.major=ggplot2::element_blank(),
-                     panel.grid.minor=ggplot2::element_blank(),
-                     plot.background=ggplot2::element_blank())
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(axis.line = ggplot2::element_blank(),
+                     axis.text.x = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     axis.title.x = ggplot2::element_blank(),
+                     axis.title.y = ggplot2::element_blank(),
+                     legend.position = "none",
+                     panel.background = ggplot2::element_blank(),
+                     panel.border = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     plot.background = ggplot2::element_blank())
   }
 
   log_df <- data.frame(cbind(log(ratio_df[["sorted_x"]] + 1.5),
@@ -452,46 +452,46 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
   log_df[["sub"]] <- log_df[, 1] - log_df[, 2]
   sorted_x <- as.vector(log_df[, 1])
   log_ratio_plot <- ggplot2::ggplot(log_df,
-                                    ggplot2::aes_string(x="get(xlabel)", y="get(ylabel)")) +
-    ggplot2::geom_point(colour=grDevices::densCols(x=sorted_x), stat="identity") +
-    ggplot2::scale_y_continuous(limits=c(0, gg_max)) +
-    ggplot2::scale_x_continuous(limits=c(0, gg_max))
+                                    ggplot2::aes_string(x = "get(xlabel)", y = "get(ylabel)")) +
+    ggplot2::geom_point(colour = grDevices::densCols(x = sorted_x), stat = "identity") +
+    ggplot2::scale_y_continuous(limits = c(0, gg_max)) +
+    ggplot2::scale_x_continuous(limits = c(0, gg_max))
   if (isTRUE(labels)) {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab(glue("log sorted {xlabel}")) +
       ggplot2::ylab(glue("log sorted {ylabel}")) +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(legend.position="none")
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(legend.position = "none")
   } else if (labels == "short") {
     log_ratio_plot <- log_ratio_plot +
       ggplot2::xlab("gene") +
       ggplot2::ylab(y_string) +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(axis.text.x=ggplot2::element_blank(),
-                     axis.text.y=ggplot2::element_blank(),
-                     axis.ticks=ggplot2::element_blank(),
-                     axis.title.x=ggplot2::element_blank(),
-                     legend.position="none",
-                     panel.background=ggplot2::element_blank(),
-                     panel.border=ggplot2::element_blank(),
-                     panel.grid.major=ggplot2::element_blank(),
-                     panel.grid.minor=ggplot2::element_blank(),
-                     plot.background=ggplot2::element_blank())
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(axis.text.x = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     axis.title.x = ggplot2::element_blank(),
+                     legend.position = "none",
+                     panel.background = ggplot2::element_blank(),
+                     panel.border = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     plot.background = ggplot2::element_blank())
   } else {
     log_ratio_plot <- log_ratio_plot +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(axis.line=ggplot2::element_blank(),
-                     axis.text.x=ggplot2::element_blank(),
-                     axis.text.y=ggplot2::element_blank(),
-                     axis.ticks=ggplot2::element_blank(),
-                     axis.title.x=ggplot2::element_blank(),
-                     axis.title.y=ggplot2::element_blank(),
-                     legend.position="none",
-                     panel.background=ggplot2::element_blank(),
-                     panel.border=ggplot2::element_blank(),
-                     panel.grid.major=ggplot2::element_blank(),
-                     panel.grid.minor=ggplot2::element_blank(),
-                     plot.background=ggplot2::element_blank())
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(axis.line = ggplot2::element_blank(),
+                     axis.text.x = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_blank(),
+                     axis.ticks = ggplot2::element_blank(),
+                     axis.title.x = ggplot2::element_blank(),
+                     axis.title.y = ggplot2::element_blank(),
+                     legend.position = "none",
+                     panel.background = ggplot2::element_blank(),
+                     panel.border = ggplot2::element_blank(),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     plot.background = ggplot2::element_blank())
   }
   log_summary <- summary(log_df[["sub"]])
   qq_plots <- list(
@@ -522,8 +522,8 @@ plot_single_qq <- function(data, x=1, y=2, labels=TRUE) {
 #' @param ... Extra arguments, currently unused.
 #' @return List containing the ggplot2
 #' @export
-plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
-                      plot_labels="direct", label_chars=10, plot_legend=FALSE, ...) {
+plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
+                      plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt") {
@@ -541,14 +541,14 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
 
   columns <- colSums(data)
   testing <- data / columns
-  newdf <- data.frame(row.names=1:nrow(testing))
+  newdf <- data.frame(row.names = 1:nrow(testing))
   for (col in colnames(testing)) {
-    ranked <- order(testing[, col], decreasing=TRUE)
+    ranked <- order(testing[, col], decreasing = TRUE)
     newdf[, col] <- testing[ranked, col]
   }
 
   if (num > 0) {
-    newdf <- head(newdf, n=num)
+    newdf <- head(newdf, n = num)
   }
   if (num < 0) {
     newdf <- tail(newdf, n=-1 * num)
@@ -567,25 +567,25 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
 
   if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
-      colnames(newdf) <- make.names(design[[expt_names]], unique=TRUE)
+      colnames(newdf) <- make.names(design[[expt_names]], unique = TRUE)
     } else {
       colnames(newdf) <- expt_names
     }
     colnames(newdf)[ncol(newdf)] <- "rank"
   }
   if (!is.null(label_chars) & is.numeric(label_chars)) {
-    colnames(newdf) <- abbreviate(colnames(newdf), minlength=label_chars)
+    colnames(newdf) <- abbreviate(colnames(newdf), minlength = label_chars)
   }
 
-  tmpdf <- reshape2::melt(newdf, id.vars="rank")
+  tmpdf <- reshape2::melt(newdf, id.vars = "rank")
   colnames(tmpdf) <- c("rank", "sample", "pct")
   tmpdf[["rank"]] <- as.numeric(tmpdf[["rank"]])
   tmpdf[["value"]] <- as.numeric(tmpdf[["pct"]])
   tmpdf[["sample"]] <- as.factor(tmpdf[["sample"]])
 
-  topn_plot <- ggplot(tmpdf, aes_string(x="rank", y="pct", color="sample")) +
-    ggplot2::geom_smooth(method=smoother, level=0.5, na.rm=TRUE) +
-    ggplot2::theme_bw(base_size=base_size)
+  topn_plot <- ggplot(tmpdf, aes_string(x = "rank", y = "pct", color = "sample")) +
+    ggplot2::geom_smooth(method = smoother, level = 0.5, na.rm = TRUE) +
+    ggplot2::theme_bw(base_size = base_size)
 
   if (!is.null(title)) {
     topn_plot <- topn_plot +
@@ -594,11 +594,11 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
 
   if (plot_labels == "direct") {
     topn_plot <- topn_plot +
-      directlabels::geom_dl(aes_string(label="sample"), method="smart.grid")
+      directlabels::geom_dl(aes_string(label = "sample"), method = "smart.grid")
   }
   if (isFALSE(plot_legend)) {
     topn_plot <- topn_plot +
-      ggplot2::theme(legend.position="none")
+      ggplot2::theme(legend.position = "none")
   }
 
   retlist <- list(
@@ -624,8 +624,8 @@ plot_topn <- function(data, title=NULL, num=100, expt_names=NULL,
 #' @param ...  Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
-plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
-                                       title=NULL, ...) {
+plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL,
+                                       title = NULL, ...) {
   arglist <- list(...)
   plot_legend <- FALSE
   if (!is.null(arglist[["plot_legend"]])) {
@@ -662,7 +662,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
       colnames(tmp_df) <- add
       tmp_df[["sample"]] <- rownames(design)
       rownames(tmp_df) <- rownames(design)
-      melted <- merge(melted, tmp_df, by="sample")
+      melted <- merge(melted, tmp_df, by = "sample")
     } else if (add %in% colnames(melted)) {
       message("Skipping variable: ", add, " because it is in the data.")
     } else {
@@ -677,10 +677,10 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   cv_data <- melted %>%
     dplyr::group_by(.data[["gene"]], .data[[x_axis]]) %>%
     dplyr::summarize(
-             "mean_exprs" = mean(.data[["exprs"]], na.rm=TRUE),
-             "sd_exprs" = sd(.data[["exprs"]], na.rm=TRUE),
-             "q1" = quantile(.data[["exprs"]], probs=0.25),
-             "q3" = quantile(.data[["exprs"]], probs=0.75))
+             "mean_exprs" = mean(.data[["exprs"]], na.rm = TRUE),
+             "sd_exprs" = sd(.data[["exprs"]], na.rm = TRUE),
+             "q1" = quantile(.data[["exprs"]], probs = 0.25),
+             "q3" = quantile(.data[["exprs"]], probs = 0.75))
   cv_data[["cv"]] <- cv_data[["sd_exprs"]] / cv_data[["mean_exprs"]]
   cv_data[["disp"]] <- (cv_data[["q3"]] - cv_data[["q1"]]) / (cv_data[["q3"]] + cv_data[["q1"]])
   na_idx <- is.na(cv_data[["cv"]])
@@ -696,8 +696,8 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
   ## what I want.
   ## message("Using edgeR to calculate dispersions with respect to: ", x_axis)
   ## test <- import_edger(data, design[[x_axis]])
-  ## disp_model <- model.matrix(object=as.formula(paste0("~", x_axis)), data=design)
-  ## disp_data <- edgeR::estimateDisp(test, design=disp_model, group=design[[x_axis]])
+  ## disp_model <- model.matrix(object = as.formula(paste0("~", x_axis)), data = design)
+  ## disp_data <- edgeR::estimateDisp(test, design = disp_model, group = design[[x_axis]])
   ## ## The problem here is that the tagwise.dispersions do not have names, I think we
   ## ## we can assume that they are in the same order as the original rownames.
   ## cv_data[["bcv"]] <- disp_data[["tagwise.dispersion"]]
@@ -717,7 +717,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
 
   get_mean_cv <- function(x) {
     data.frame("y" = mean(x),
-               "label" = signif(mean(x, na.rm=TRUE), digits = 2))
+               "label" = signif(mean(x, na.rm = TRUE), digits = 2))
   }
 
   ## Add the number of samples of each type to the top of the plot with this.
@@ -732,17 +732,17 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
     "disp" = "Quartile coefficient of dispersion")
   retlst <- list()
   for (type in c("cv", "disp")) {
-    retlst[[type]] <- ggplot(cv_data, aes_string(x="x_axis", y=type)) +
-      ggplot2::geom_violin(aes_string(fill="x_axis"), width=1, scale="area") +
-      ggplot2::scale_fill_manual(values=color_list, name=x_axis) +
-      ggplot2::stat_summary(fun.data=get_mean_cv, geom="text",
-                            position=ggplot2::position_fill(vjust=-0.1)) +
-      ggplot2::annotate("text", x=1:length(sample_numbers),
-                        y=max(cv_data[[type]] + (0.05 * max(cv_data[[type]]))),
-                        label=as.character(sample_numbers)) +
-      ggplot2::theme_bw(base_size=base_size) +
-      ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                     axis.text.x=ggplot2::element_text(angle=90, hjust=1)) +
+    retlst[[type]] <- ggplot(cv_data, aes_string(x = "x_axis", y = type)) +
+      ggplot2::geom_violin(aes_string(fill = "x_axis"), width = 1, scale = "area") +
+      ggplot2::scale_fill_manual(values = color_list, name = x_axis) +
+      ggplot2::stat_summary(fun.data = get_mean_cv, geom = "text",
+                            position = ggplot2::position_fill(vjust=-0.1)) +
+      ggplot2::annotate("text", x = 1:length(sample_numbers),
+                        y = max(cv_data[[type]] + (0.05 * max(cv_data[[type]]))),
+                        label = as.character(sample_numbers)) +
+      ggplot2::theme_bw(base_size = base_size) +
+      ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+                     axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
       ggplot2::ylab(as.character(y_labels[type])) +
       ggplot2::xlab("")
     if (!is.null(title)) {
@@ -751,7 +751,7 @@ plot_variance_coefficients <- function(data, x_axis="condition", colors=NULL,
     }
     if (isFALSE(plot_legend)) {
       retlst[[type]] <- retlst[[type]] +
-        ggplot2::theme(legend.position="none")
+        ggplot2::theme(legend.position = "none")
     }
   }
   retlst[["data"]] <- cv_data

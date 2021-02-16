@@ -65,10 +65,10 @@ red/green.
 }
 \examples{
 \dontrun{
- expt <- create_expt(metadata="some_metadata.xlsx", gene_info=annotations)
+ expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)
  pairwise_output <- all_pairwise(expt)
  scatter_plot <- extract_coefficient_scatter(pairwise_output,
-                                             type="deseq", x="uninfected", y="infected")
+                                             type = "deseq", x = "uninfected", y = "infected")
 }
 }
 \seealso{

@@ -22,7 +22,7 @@ problematic samples.
 }
 \examples{
 \dontrun{
- ma_plots = plot_pairwise_ma(expt=some_expt)
+ ma_plots = plot_pairwise_ma(expt = some_expt)
 }
 }
 \seealso{
