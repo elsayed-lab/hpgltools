@@ -69,5 +69,5 @@ test_that("Do we get some transcript txnames?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 015annotation_genbank.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 015annotation_genbank.R in ", elapsed,  " seconds.")

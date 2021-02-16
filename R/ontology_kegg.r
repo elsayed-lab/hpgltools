@@ -6,18 +6,18 @@
 #'
 #' @param path_data Some differentially expressed genes.
 #' @param indir Directory into which the unmodified kegg images will be
-#'   downloaded (or already exist).
+#'  downloaded (or already exist).
 #' @param outdir Directory which will contain the colored images.
 #' @param pathway Perform the coloring for a specific pathway?
 #' @param species Kegg identifier for the species of interest.
 #' @param from_list Regex to help in renaming KEGG categories/gene names from
-#'   one format to another.
+#'  one format to another.
 #' @param to_list Regex to help in renaming KEGG categories/gene names from one
-#'   format to another.
+#'  format to another.
 #' @param suffix Add a suffix to the completed, colored files.
 #' @param filenames Name the final files by id or name?
-#' @param fc_column  What is the name of the fold-change column to extract?
-#' @param format  Format of the resulting images, I think only png really works
+#' @param fc_column What is the name of the fold-change column to extract?
+#' @param format Format of the resulting images, I think only png really works
 #'   well.
 #' @param verbose When on, this function is quite chatty.
 #' @return A list of some information for every KEGG pathway
@@ -299,10 +299,10 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
 #' results to kegg_species.rda.  When run interactively, it will give some
 #' information regarding the number of genes observed in each pathway.
 #'
-#' @param pathway  Either a single pathway kegg id or 'all'.
-#' @param abbreviation  Optional 3 letter species kegg id.
-#' @param species  Stringified species name used to extract the 3 letter abbreviation.
-#' @param savefile  Filename to which to save the relevant data.
+#' @param pathway Either a single pathway kegg id or 'all'.
+#' @param abbreviation Optional 3 letter species kegg id.
+#' @param species Stringified species name used to extract the 3 letter abbreviation.
+#' @param savefile Filename to which to save the relevant data.
 #' @return Dataframe of the various kegg data for each pathway, 1 row/gene.
 #' @seealso \pkg{KEGGREST}
 #' @examples
@@ -394,8 +394,8 @@ get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
 #' sequentially, will result in a hopefully coherent set of mapped gene IDs
 #' matching the TriTypDB/KEGG specifications.
 #'
-#' @param species  3 letter abbreviation for a given kegg type
-#' @return  2 character lists containing the patterns and replace arguments for
+#' @param species 3 letter abbreviation for a given kegg type
+#' @return 2 character lists containing the patterns and replace arguments for
 #'   gsub(), order matters!
 #' @seealso \pkg{KEGGREST}
 #' @export
@@ -457,7 +457,7 @@ gostats_kegg <- function(organism = "Homo sapiens",
 #' @param species Search string (Something like 'Homo sapiens').
 #' @param short Only pull the orgid?
 #' @return Data frame of possible KEGG identifier codes, genome ID numbers,
-#'   species, and phylogenetic classifications.
+#'  species, and phylogenetic classifications.
 #' @seealso \pkg{RCurl}
 #' @examples
 #' \dontrun{
@@ -491,10 +491,10 @@ get_kegg_orgn <- function(species = "Leishmania", short = TRUE) {
 #' @param organism KEGG organism identifier.
 #' @param pathways What pathways to look at?
 #' @param pathdir Directory into which to copy downloaded pathway files.
-#' @param verbose  Talky talky?
+#' @param verbose Talky talky?
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Dataframe including the filenames, percentages, nodes included, and
-#'   differential nodes.
+#'  differential nodes.
 #' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
 #' @export
 pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
@@ -749,7 +749,7 @@ myretrieveKGML <- function(pathway, organism, destfile, silent = TRUE,
                            hostname = "http://www.kegg.jp", ...) {
   kgml <- mygetKGMLurl(pathwayid = pathway, organism = organism, hostname = hostname)
   referer <- glue::glue("{hostname}/kegg-bin/show_pathway?org_name={organism}&mapno=\\
-                     {pathway}&mapscale=&show_description = hide")
+                     {pathway}&mapscale=&show_description=hide")
   cmdline <- glue::glue("wget --header={shQuote('Accept: text/html')} \\
 --user-agent={shQuote('Mozilla/5.0 (X11; Linux x86_64; \\
 rv:45.0) Gecko/20100101 Firefox/45.0')} \\
@@ -767,7 +767,7 @@ mygetKGMLurl <- function(pathwayid, organism = "hsa", hostname = "http://www.keg
   if (!is.null(arglist[["hostname"]])) {
     hostname <- arglist[["hostname"]]
   }
-  baseurl <- glue("{hostname}/kegg-bin/download?entry=%s%s&format = kgml")
+  baseurl <- glue("{hostname}/kegg-bin/download?entry=%s%s&format=kgml")
   pathwayid <- gsub("path", "", pathwayid)
   pathwayid <- gsub(":", "", pathwayid)
   pco <- grepl("^[a-z][a-z][a-z]", pathwayid)

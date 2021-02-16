@@ -44,5 +44,5 @@ test_that("Do we get expected plot_libsize_prepost information?", {
 ## exported functions which will probably not get tested: plot_rpm
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 225plot_bar.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 225plot_bar.R in ", elapsed,  " seconds.")

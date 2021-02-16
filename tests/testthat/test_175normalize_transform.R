@@ -60,5 +60,5 @@ test_that("Does weighted voom transformation return expected values?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 175normalize_transform.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 175normalize_transform.R in ", elapsed,  " seconds.")

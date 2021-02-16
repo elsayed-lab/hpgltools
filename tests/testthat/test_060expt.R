@@ -238,5 +238,5 @@ test_that("Did write_expt() create pictures?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 060expt.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 060expt.R in ", elapsed,  " seconds.")

@@ -3,7 +3,7 @@ library(testthat)
 library(hpgltools)
 context("290alt_splicing.R:\n")
 
-mtb_rmats_untarred <- utils::untar(tarfile = system.file("mtb_rmats.tar.xz", package = "hpgltools"))
+mtb_rmats_untarred <- utils::untar(tarfile = system.file("share/mtb_rmats.tar.xz", package = "hpgltools"))
 
 basedir <- "mtb_rmats/rmats_hg38_91"
 ## Define the prefixes
@@ -44,7 +44,7 @@ test_that("We get a plot of some rMATS data?", {
   expect_equal(expected, actual)
 })
 
-suppa_rmats_untarred <- utils::untar(tarfile = system.file("mtb_suppa.tar.xz", package = "hpgltools"))
+suppa_rmats_untarred <- utils::untar(tarfile = system.file("share/mtb_suppa.tar.xz", package = "hpgltools"))
 basedir <- "mtb_suppa/preprocessing/outputs/suppa_hg38_91"
 dpsi_file <- file.path(basedir, "uninf_inf_diffsplice.dpsi")
 tpm_file <- file.path(basedir, "uninf_inf_diffsplice_avglogtpm.tab")
@@ -68,5 +68,5 @@ test_that("Can we write out suppa data?", {
   expect_gt(actual, expected)
 })
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 290alt_splicing.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 290alt_splicing.R in ", elapsed,  " seconds.")

@@ -250,7 +250,9 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #' @param conditions Factor of conditions in the experiment.
 #' @param batches Factor of batches in the experiment.
 #' @param model_cond Include condition in the model?
-#' @param model_batch Include batch in the model? This is hopefully TRUE.
+#' @param model_batch Include batch in the model?  If this is a character
+#'  instead of a logical, then it is passed to all_adjusers() to attempt to find
+#'  model parameters which describe surrogate variables in the data.
 #' @param model_intercept Perform a cell-means or intercept model? A little more
 #'  difficult for me to understand.  I have tested and get the same answer
 #'  either way.
@@ -268,7 +270,7 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it
 #'  macb_model = The result of calling model.matrix(~0 + macb)
-#'  macb_fit =  The result of calling lmFit(data, macb_model)
+#'  macb_fit = The result of calling lmFit(data, macb_model)
 #'  voom_result = The result from voom()
 #'  voom_design = The design from voom (redundant from voom_result, but convenient)
 #'  macb_table = A table of the number of times each condition/batch pairing happens

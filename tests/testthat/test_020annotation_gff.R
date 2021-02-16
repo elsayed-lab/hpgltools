@@ -9,8 +9,8 @@ context("020annotation_gff.R
 ## I deleted make_tooltips(), that was stupid.
 ## I moved get_gff_gene_lengths() to get_genelengths() and made it less stupid.
 
-pa_gff <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
-pa_fasta <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
+pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgltools")
+pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgltools")
 
 ## gff2irange()
 pa_irange <- gff2irange(pa_gff)
@@ -58,5 +58,5 @@ test_that("Do we get sensible gene attributes by genome?", {
 ## I need a gff to test this with
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 020annotation_gff.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 020annotation_gff.R in ", elapsed,  " seconds.")

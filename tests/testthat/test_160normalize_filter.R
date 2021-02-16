@@ -46,5 +46,5 @@ test_that("Does genefilter's cv filtering provide expected values?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 160normalize_filter.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 160normalize_filter.R in ", elapsed,  " seconds.")

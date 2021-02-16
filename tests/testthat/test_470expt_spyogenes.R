@@ -6,7 +6,7 @@ context("70expt_spyogenes.R: Does a small bacterial RNAseq experiment load?
   1234567890123456789012345678901\n")
 
 mgas_data <- new.env()
-cdm_data <- system.file("cdm_expt.rda", package = "hpgltools")
+cdm_data <- system.file("share/cdm_expt.rda", package = "hpgltools")
 load(cdm_data, envir = mgas_data)
 rm(cdm_data)
 
@@ -110,14 +110,17 @@ test_that("Do we get expected gene ontology information?", {
 circos_annot_df <- as.data.frame(mgas_df)
 circos_annot_df <- circos_annot_df[, c("start", "stop", "strand", "COGFun")]
 circos_annot_df[["chromosome"]] <- "chr1"
-rownames(circos_annot_df) <- make.names(gsub(x = mgas_df[["sysName"]], pattern = "Spy_", replacement = "Spy"), unique = TRUE)
+rownames(circos_annot_df) <- make.names(gsub(x = mgas_df[["sysName"]],
+                                             pattern = "Spy_", replacement = "Spy"),
+                                        unique = TRUE)
 
 ## There is no way circos will work on travis, lets be realistic.
 ##if (identical(Sys.getenv("HAS_CIRCOS"), "true")) {
 ## Plot the coefficients of latelog glucose
 glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]
 wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wt_ll_cg_vs_mga1_ll_cg"]]
-relevant_widths <- merge(glucose_table, mgas_df, by.x = "row.names", by.y = "sysName", all.x = TRUE)
+relevant_widths <- merge(glucose_table, mgas_df, by.x = "row.names",
+                         by.y = "sysName", all.x = TRUE)
 ## Since genbankr died, get the gene lengths from microbesonline
 relevant_widths <- suppressWarnings(as.numeric(relevant_widths[["width"]]))
 na_widths <- is.na(relevant_widths)
@@ -141,5 +144,5 @@ circos_made <- sm(circos_make(circos_test, target = "mgas"))
 ##}
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 70expt_spyogenes.R in ", elapsed,  " seconds."))
+elapsed <- round(x = (as.numeric(end - start)))
+message("\nFinished 70expt_spyogenes.R in ", elapsed,  " seconds.")

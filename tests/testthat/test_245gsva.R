@@ -9,7 +9,7 @@ context("245gsva.R:
 
 ## I am not sure what I want to test with this either... hmmm
 hs_envir <- environment()
-hs_file <- system.file("hs_expt.rda", package = "hpgltools")
+hs_file <- system.file("share/hs_expt.rda", package = "hpgltools")
 load(file = hs_file, envir = hs_envir)
 hs_expt <- hs_envir[["expt"]]
 
@@ -36,7 +36,7 @@ test_that("Can we plot a gsva result?", {
   expect_equal("recordedplot", class(gsva_dis))
 })
 
-gsva_sig <- get_sig_gsva_categories(gsva_result, excel = NULL)
+gsva_sig <- get_sig_gsva_categories(gsva_result, excel = NULL, model_batch = FALSE)
 test_that("Can we acquire significant gsva scores?", {
   expect_equal("gg", class(gsva_sig[["score_pca"]])[1])
   expect_equal("recordedplot", class(gsva_sig[["score_plot"]])[1])
@@ -62,5 +62,5 @@ test_that("We get some expected results from xCell?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 180ontology_all.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 180ontology_all.R in ", elapsed,  " seconds.")

@@ -47,5 +47,5 @@ test_that("loge transformation gives expected values (why log10!?)?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 13norm_transform.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 13norm_transform.R in ", elapsed,  " seconds.")

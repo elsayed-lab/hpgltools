@@ -36,5 +36,5 @@ if (isTRUE(website_up)) {
 }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 055annotation_uniprot.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 055annotation_uniprot.R in ", elapsed,  " seconds.")

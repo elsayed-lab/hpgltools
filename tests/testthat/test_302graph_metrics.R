@@ -165,5 +165,5 @@ test_that("Is the tsne r-squared by condition as expected?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 03graph_metrics.R in ", elapsed, " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 03graph_metrics.R in ", elapsed, " seconds.")

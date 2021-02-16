@@ -208,5 +208,5 @@ test_that("Did we save the limma results?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 320de_limma_batch.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 320de_limma_batch.R in ", elapsed,  " seconds.")

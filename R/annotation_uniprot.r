@@ -92,8 +92,8 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
     }
   }
   request_url <- glue(
-    "https://www.uniprot.org/uniprot/?query = proteome:\\
-     {accession}&compress = yes&force = true&format = txt")
+    "https://www.uniprot.org/uniprot/?query=proteome:\\
+     {accession}&compress=yes&force=true&format=txt")
   destination <- glue("{accession}.txt.gz")
   ##tt <- curl::curl_fetch_disk(url = request_url, path = destination)
   tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)

@@ -65,5 +65,5 @@ test_that("We can print them easily to disk?", {
 ## they are pretty specific to their little domains.  I probably therefore will
 ## skip testing some (many) of them.
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 105helpers_misc.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 105helpers_misc.R in ", elapsed,  " seconds.")

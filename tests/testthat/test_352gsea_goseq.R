@@ -82,5 +82,5 @@ test_that("Are the goseq results as expected (bp pvalues)?", {
 ## Keith
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 52gsea_goseq.R in ", elapsed,  " seconds.")

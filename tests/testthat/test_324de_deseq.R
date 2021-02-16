@@ -105,5 +105,5 @@ test_that("Did we save the deseq results?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 24de_deseq.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 24de_deseq.R in ", elapsed,  " seconds.")

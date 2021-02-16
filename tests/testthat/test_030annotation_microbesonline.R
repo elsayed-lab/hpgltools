@@ -29,5 +29,5 @@ test_that("Do we get the expected amount of ecoli GO data?", {
 
 ## ## load_microbesonline_kegg()
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 030nnotation_microbesonline.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 030nnotation_microbesonline.R in ", elapsed,  " seconds.")

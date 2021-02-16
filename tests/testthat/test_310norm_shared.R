@@ -80,5 +80,5 @@ test_that("Does the new normalize() function work like the old normalize_expt()?
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 10norm_shared.R in ", elapsed, " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 10norm_shared.R in ", elapsed, " seconds.")

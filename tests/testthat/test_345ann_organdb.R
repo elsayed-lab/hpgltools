@@ -40,5 +40,5 @@ test_that("Can we extract KEGG data from Orgdb?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 45ann_organdb.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 45ann_organdb.R in ", elapsed,  " seconds.")

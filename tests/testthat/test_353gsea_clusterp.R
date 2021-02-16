@@ -72,5 +72,5 @@ test_that("Does cp find consistent group_go categories in biological processes?"
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 53gsea_clusterp.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 53gsea_clusterp.R in ", elapsed,  " seconds.")

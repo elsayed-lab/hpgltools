@@ -76,5 +76,5 @@ test_that("cp_seq_m works for ATG?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 11norm_convert.R in ", elapsed, " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 11norm_convert.R in ", elapsed, " seconds.")

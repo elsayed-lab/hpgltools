@@ -2,7 +2,8 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("180gene_ontology_enrichment.R:
-  123456789012345678901234567890123456789\n")
+           1         2         3         4
+  1234567890123456789012345678901234567890\n")
 ## 2017-12, exported functions in ontology_cluster_profiler: simple_clusterprofiler
 
 ## hmm I think I should split that up into separate functions for the various things it can do.
@@ -37,7 +38,7 @@ colnames(pombe_lengths) <- c("ID", "length")
 
 pombe_go <- load_biomart_go(species = "spombe", host = "fungi.ensembl.org")[["go"]]
 
-if (! "EupathDB" %in% installed.packages()) {
+if (! "EuPathDB" %in% installed.packages()) {
   devtools::install_github("abelew/EuPathDB", force = TRUE)
 }
 fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice = "fungidb", eu_version = "46")
@@ -267,5 +268,5 @@ test_that("Does gprofiler give some expected GO categories?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 180ontology_all.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 180ontology_all.R in ", elapsed,  " seconds.")

@@ -61,10 +61,8 @@ gather_eupath_utrs_padding <- function(species_name = "Leishmania major", entry 
   att_result <- sm(try(attachNamespace(bsgenome_name), silent = TRUE))
   orgdb <- get0(orgdb_name)
   bsgenome <- get0(bsgenome_name)
-  wanted_fields <- c("annot_gene_location_text",
-                     "annot_gene_name",
-                     "annot_gene_product",
-                     "annot_gene_type")
+  wanted_fields <- c("annot_gene_location_text", "annot_gene_name",
+                     "annot_gene_product", "annot_gene_type")
   annot <- load_orgdb_annotations(orgdb, keytype = "gid", fields = wanted_fields)
   annot <- EuPathDB::extract_gene_locations(annot[["genes"]])
   annot_complete <- complete.cases(annot)
@@ -92,6 +90,8 @@ gather_eupath_utrs_padding <- function(species_name = "Leishmania major", entry 
 #' For some species, we do not have a fully realized set of UTR boundaries, so
 #' it can be useful to query some arbitrary and consistent amount of sequence
 #' before/after every CDS sequence.  This function can provide that information.
+#' Note, I decided to use tibble for this so that if one accidently prints too
+#' much it will not freak out.
 #'
 #' @param bsgenome BSgenome object containing the genome of interest.
 #' @param annot_df Annotation data frame containing all the entries of
@@ -116,7 +116,8 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                 end_column = "end", strand_column = "strand",
                                 type_column = "annot_gene_type",
                                 gene_type = "protein coding", padding = 120, ...) {
-
+  arglist <- list(...)
+  retlist <- list()
   if (!is.null(type_column)) {
     ## Pull the entries which are of the desired type.
     all_gene_idx <- annot_df[[type_column]] == gene_type
@@ -168,9 +169,10 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                    strand = S4Vectors::Rle(plus_entries[[strand_column]]),
                                    name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_fivep))
-  genome_names <- as.character(names(bsg))
+  genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
   pluses_fivep <- pluses_fivep[keep_idx]
+  retlist[["fiveprime_plus_granges"]] <- pluses_fivep
 
   pluses_threep <- GenomicRanges::GRanges(
                                     seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
@@ -180,9 +182,10 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                     strand = S4Vectors::Rle(plus_entries[[strand_column]]),
                                     name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_threep))
-  genome_names <- as.character(names(bsg))
+  genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
   pluses_threep <- pluses_threep[keep_idx]
+  retlist[["threeprime_plus_granges"]] <- pluses_threep
 
   pluses_cds <- GenomicRanges::GRanges(
                                  seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
@@ -192,9 +195,10 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                  strand = S4Vectors::Rle(plus_entries[[strand_column]]),
                                  name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_cds))
-  genome_names <- as.character(names(bsg))
+  genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
   pluses_cds <- pluses_cds[keep_idx]
+  retlist[["cds_plus_granges"]] <- pluses_cds
 
   pluses_all <- GenomicRanges::GRanges(
                                  seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
@@ -204,7 +208,7 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                  strand = S4Vectors::Rle(plus_entries[[strand_column]]),
                                  name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_all))
-  genome_names <- as.character(names(bsg))
+  genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
   pluses_all <- pluses_all[keep_idx]
 
@@ -225,9 +229,10 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
                                     strand = S4Vectors::Rle(minus_entries[[strand_column]]),
                                     name = S4Vectors::Rle(minus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(minuses_fivep))
-  genome_names <- as.character(names(bsg))
+  genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
   minuses_fivep <- minuses_fivep[keep_idx]
+  retlist[["fiveprime_minus_granges"]] <- minuses_fivep
 
   minuses_threep <- GenomicRanges::GRanges(
                                      seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
@@ -239,6 +244,7 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   range_names <- as.character(GenomicRanges::seqnames(minuses_threep))
   keep_idx <- range_names %in% genome_names
   minuses_threep <- minuses_threep[keep_idx]
+  retlist[["threeprime_minus_granges"]] <- minuses_threep
 
   minuses_cds <- GenomicRanges::GRanges(
                                   seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
@@ -250,6 +256,7 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   range_names <- as.character(GenomicRanges::seqnames(minuses_cds))
   keep_idx <- range_names %in% genome_names
   minuses_cds <- minuses_cds[keep_idx]
+  retlist[["cds_minus_granges"]] <- minuses_cds
 
   minuses_all <- GenomicRanges::GRanges(
                                   seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
@@ -272,27 +279,43 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   names(minus_all_seqstrings) <- minuses_all$name
 
   ## These provide data frames of the sequence lexically before/after every gene.
-  plus_seqdf <- as.data.frame(plus_fivep_seqstrings)
-  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_threep_seqstrings))
-  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_cds_seqstrings))
-  plus_seqdf <- cbind(plus_seqdf, as.data.frame(plus_all_seqstrings))
-  colnames(plus_seqdf) <- c("fivep", "threep", "cds", "all")
+  plus_fivep_tbl <- tibble::as_tibble(as.data.frame(plus_fivep_seqstrings))
+  plus_fivep_tbl[["name"]] <- names(plus_fivep_seqstrings)
+  colnames(plus_fivep_tbl) <- c("sequence", "ID")
+  plus_fivep_tbl <- plus_fivep_tbl[, c("ID", "sequence")]
+  retlist[["fiveprime_plus_table"]] <- plus_fivep_tbl
 
-  minus_seqdf <- as.data.frame(minus_fivep_seqstrings)
-  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_threep_seqstrings))
-  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_cds_seqstrings))
-  minus_seqdf <- cbind(minus_seqdf, as.data.frame(minus_all_seqstrings))
-  colnames(minus_seqdf) <- c("fivep", "threep", "cds", "all")
+  plus_threep_tbl <- tibble::as_tibble(as.data.frame(plus_threep_seqstrings))
+  plus_threep_tbl[["name"]] <- names(plus_threep_seqstrings)
+  colnames(plus_threep_tbl) <- c("sequence", "ID")
+  plus_threep_tbl <- plus_threep_tbl[, c("ID", "sequence")]
+  retlist[["threeprime_plus_table"]] <- plus_threep_tbl
 
-  plus_infodf <- merge(plus_entries, plus_seqdf, by = "row.names")
-  rownames(plus_infodf) <- plus_infodf[[1]]
-  plus_infodf[[1]] <- NULL
-  minus_infodf <- merge(minus_entries, minus_seqdf, by = "row.names")
-  rownames(minus_infodf) <- minus_infodf[[1]]
-  minus_infodf[[1]] <- NULL
+  minus_fivep_tbl <- tibble::as_tibble(as.data.frame(minus_fivep_seqstrings))
+  minus_fivep_tbl[["name"]] <- names(minus_fivep_seqstrings)
+  colnames(minus_fivep_tbl) <- c("sequence", "ID")
+  minus_fivep_tbl <- minus_fivep_tbl[, c("ID", "sequence")]
+  retlist[["fiveprime_minus_table"]] <- minus_fivep_tbl
 
-  allinfo_df <- rbind(plus_infodf, minus_infodf)
-  return(allinfo_df)
+  minus_threep_tbl <- tibble::as_tibble(as.data.frame(minus_threep_seqstrings))
+  minus_threep_tbl[["name"]] <- names(minus_threep_seqstrings)
+  colnames(minus_threep_tbl) <- c("sequence", "ID")
+  minus_threep_tbl <- minus_threep_tbl[, c("ID", "sequence")]
+  retlist[["threeprime_minus_table"]] <- minus_threep_tbl
+
+  plus_cds_tbl <- tibble::as_tibble(as.data.frame(plus_cds_seqstrings))
+  plus_cds_tbl[["name"]] <- names(plus_cds_seqstrings)
+  colnames(plus_cds_tbl) <- c("sequence", "ID")
+  plus_cds_tbl <- plus_cds_tbl[, c("ID", "sequence")]
+  retlist[["cds_plus_table"]] <- plus_cds_tbl
+
+  minus_cds_tbl <- tibble::as_tibble(as.data.frame(minus_cds_seqstrings))
+  minus_cds_tbl[["name"]] <- names(minus_cds_seqstrings)
+  colnames(minus_cds_tbl) <- c("sequence", "ID")
+  minus_cds_tbl <- minus_cds_tbl[, c("ID", "sequence")]
+  retlist[["cds_minus_table"]] <- minus_cds_tbl
+
+  return(retlist)
 }
 
 #' Get UTR sequences using information provided by TxDb and fiveUTRsByTranscript

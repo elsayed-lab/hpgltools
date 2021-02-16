@@ -193,5 +193,5 @@ test_that("Do cbcbSEQ and hpgltools agree on the eBayes result? (p.value, untrea
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 21de_limma_combat.R in ", elapsed,  " seconds.")

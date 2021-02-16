@@ -50,9 +50,9 @@ context("250proteomics.R:
 
 ## For most of the above choices, I have functions in the hpgltools to help.
 
-meta <- system.file("mtb_prot/dia_samples.ods", package = "hpgltools")
-untarred <- utils::untar(tarfile = system.file("mtb_prot/sb_prot.tar.xz",
-                                             package = "hpgltools"))
+meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgltools")
+untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
+                                               package = "hpgltools"))
 ##mtb_expt <- create_expt(meta = meta)
 
 ## As the name implies, this function uses the diascored column in the metadata
@@ -128,5 +128,5 @@ test_that("Does plot_pyprophet_protein return a plot?", {
 ## invokes all of the SWATH2stats filters with some hopefully sane defaults.
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 250proteomics.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 250proteomics.R in ", elapsed,  " seconds.")

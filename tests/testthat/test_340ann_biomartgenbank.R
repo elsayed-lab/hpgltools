@@ -95,5 +95,5 @@ test_that("I downloaded an accession using download_gbk()?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 40ann_biomartgenbank.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 40ann_biomartgenbank.R in ", elapsed,  " seconds.")

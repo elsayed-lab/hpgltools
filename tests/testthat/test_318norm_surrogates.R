@@ -102,5 +102,5 @@ test_that("Have the ruv resid empirical adjustments stayed the same?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 18norm_surrogates.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 18norm_surrogates.R in ", elapsed,  " seconds.")

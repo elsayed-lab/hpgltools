@@ -1,4 +1,4 @@
-start <- as.POSIXlt(Sys.time())
+start_time <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
@@ -85,6 +85,7 @@ test_that("Did pathview work? (total mapped nodes)", {
 })
 
 unlink("kegg_pathways", recursive = TRUE)
-end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 357gsea_kegg.R in ", elapsed,  " seconds."))
+
+end_time <- as.POSIXlt(Sys.time())
+elapsed <- round(x = as.numeric(end_time - start_time))
+message("\nFinished 357gsea_kegg.R in ", elapsed,  " seconds.")

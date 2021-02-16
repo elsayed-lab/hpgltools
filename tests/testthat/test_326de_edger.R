@@ -107,5 +107,5 @@ hpgl_edger <- sm(edger_pairwise(pasilla_expt))
 save(list = ls(), file = "326_de_edger.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 26de_edger.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 26de_edger.R in ", elapsed,  " seconds.")

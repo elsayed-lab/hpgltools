@@ -39,5 +39,5 @@ test_that("Does the partition plot get generated?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 135model_varpartition.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 135model_varpartition.R in ", elapsed,  " seconds.")

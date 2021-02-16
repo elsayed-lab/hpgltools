@@ -34,5 +34,5 @@ test_that("Are the GOstats pvalue plots generated?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 55gsea_gostats.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 55gsea_gostats.R in ", elapsed,  " seconds.")

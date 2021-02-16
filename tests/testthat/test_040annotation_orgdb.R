@@ -1,4 +1,4 @@
-start <- as.POSIXlt(Sys.time())
+start_time <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("040annotation_orgdb.R
@@ -21,8 +21,8 @@ test_that("Do we get the expected amount of orgdb gene data?", {
   expect_gt(actual, expected)
 })
 
-start <- testing[["genes"]][["ensembl"]]
-test_ids <- head(unique(start), n = 500)
+start_positions <- testing[["genes"]][["ensembl"]]
+test_ids <- head(unique(start_positions), n = 500)
 guess <- guess_orgdb_keytype(ids = test_ids, orgdb = NULL)
 test_that("Can we guess appropriate keytypes from gene IDs?", {
   expect_equal(guess, "ENSEMBL")
@@ -34,9 +34,6 @@ actual <- nrow(as.data.frame(testing[["transcripts"]]))
 test_that("Do we get the expected amount of orgdb transcript data?", {
   expect_gt(actual, expected)
 })
-
-## Wow, even querying only 1 gene seems to take too long, I must be doing something wrong.
-## testing <- load_orgdb_annotations(fields = "all", gene_ids = test_genes[1])
 
 ## load_orgdb_go()
 ## Interesting, querying homo sapiens reminds me that we need to be more careful about which
@@ -68,6 +65,6 @@ test_that("Do we get the expected ensembl IDs from entrez IDs?", {
   expect_equal(expected, actual)
 })
 
-end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 040annotation_orgdb.R in ", elapsed,  " seconds."))
+end_time <- as.POSIXlt(Sys.time())
+elapsed <- round(x = as.numeric(end_time - start_time))
+message("\nFinished 040annotation_orgdb.R in ", elapsed,  " seconds.")

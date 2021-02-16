@@ -55,7 +55,7 @@ deps:
 
 document: roxygen vignette reference
 
-install: roxygen
+install: roxygen reference
 	@echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 
@@ -75,8 +75,9 @@ push:
 
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
-	@mkdir -p inst/doc
-	R CMD Rd2pdf . -o inst/reference/reference.pdf --no-preview
+	mkdir -p inst/doc
+	rm -f inst/doc/reference.pdf
+	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"

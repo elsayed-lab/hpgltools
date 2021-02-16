@@ -56,4 +56,6 @@ Dataframe of UTR, CDS, and UTR+CDS sequences.
 For some species, we do not have a fully realized set of UTR boundaries, so
 it can be useful to query some arbitrary and consistent amount of sequence
 before/after every CDS sequence.  This function can provide that information.
+Note, I decided to use tibble for this so that if one accidently prints too
+much it will not freak out.
 }

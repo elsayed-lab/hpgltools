@@ -165,5 +165,5 @@ test_that("Do we get to a similar end point from ruv with/without solving?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 120model_surrogates.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 120model_surrogates.R in ", elapsed,  " seconds.")

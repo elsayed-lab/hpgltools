@@ -192,5 +192,5 @@ test_that("Limma results, toptable.", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 05cbcbseq.R in ", elapsed, " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 05cbcbseq.R in ", elapsed, " seconds.")

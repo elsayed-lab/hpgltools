@@ -1001,14 +1001,18 @@ gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor 
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
 #' @param label_size How large to make labels when printing the final heatmap.
+#' @param col_margin Passed to the heatmap.
+#' @param row_margin Passed to the heatmap.
+#' @param ... Arguments passed to limma_pairwise().
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.05, excel = "excel/gsva_subset.xlsx",
-                                    factor_column = "condition", factor = NULL, label_size = NULL) {
-
+                                    factor_column = "condition", factor = NULL, label_size = NULL,
+                                    col_margin = 6, row_margin = 12, ...) {
+  arglist <- list(...)
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
-  gsva_limma <- limma_pairwise(gsva_scores, which_voom = "none")
+  gsva_limma <- limma_pairwise(gsva_scores, which_voom = "none", ...)
 
   expr <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.

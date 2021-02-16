@@ -72,5 +72,5 @@ test_that("Does rle (edgeR) return expected values?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 165normalize_norm.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 165normalize_norm.R in ", elapsed,  " seconds.")

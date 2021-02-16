@@ -72,7 +72,7 @@ data which has been mapped against multiple species.  I can use this function
 and just change the file_column argument to pick up each species' tables.
 }
 \examples{
- load(file = system.file("cdm_expt.rda", package = "hpgltools"))
+ load(file = system.file("share/cdm_expt.rda", package = "hpgltools"))
  head(cdm_counts)
  head(cdm_metadata)
  ## The gff file has differently labeled locus tags than the count tables
@@ -85,7 +85,7 @@ and just change the file_column argument to pick up each species' tables.
  head(pData(mgas_expt))
  ## An example using count tables referenced in the metadata.
  sb_annot <- load_trinotate_annotations(
-   trinotate = system.file("sb/trinotate_head.csv.xz", package = "hpgltools"))
+   trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools"))
 sb_annot <- as.data.frame(sb_annot)
   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
  sb_annot[["rownames"]] <- NULL

@@ -27,7 +27,7 @@
 #' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#'  gff_file <- system.file("gas.gff", package = "hpgltools")
+#'  gff_file <- system.file("share/gas.gff", package = "hpgltools")
 #'  gas_iranges <- gff2irange(gff_file)
 #'  colnames(as.data.frame(gas_iranges))
 #' @export

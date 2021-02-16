@@ -46,5 +46,5 @@ test_that("Can we write a gprofiler xlsx file?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 56gsea_gprofiler.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 56gsea_gprofiler.R in ", elapsed,  " seconds.")

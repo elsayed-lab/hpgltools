@@ -196,7 +196,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
 #'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
 #' @examples
-#'  load(file = system.file("cdm_expt.rda", package = "hpgltools"))
+#'  load(file = system.file("share/cdm_expt.rda", package = "hpgltools"))
 #'  head(cdm_counts)
 #'  head(cdm_metadata)
 #'  ## The gff file has differently labeled locus tags than the count tables
@@ -209,7 +209,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  head(pData(mgas_expt))
 #'  ## An example using count tables referenced in the metadata.
 #'  sb_annot <- load_trinotate_annotations(
-#'    trinotate = system.file("sb/trinotate_head.csv.xz", package = "hpgltools"))
+#'    trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools"))
 #' sb_annot <- as.data.frame(sb_annot)
 #'   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL

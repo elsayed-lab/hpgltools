@@ -66,5 +66,5 @@ test_that("We get variances from pcRes?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 115model_pca.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 115model_pca.R in ", elapsed,  " seconds.")

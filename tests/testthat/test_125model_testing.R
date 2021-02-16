@@ -33,5 +33,5 @@ test_that("Do we get expected rank comparisons for the pombe experiment (~ 0 + s
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 125model_testing.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 125model_testing.R in ", elapsed,  " seconds.")

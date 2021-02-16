@@ -49,3 +49,7 @@ interaction_fit <- limma::lmFit(interaction_voom, interaction_model)
 interaction_eb <- suppressWarnings(limma::eBayes(interaction_fit))
 interaction_table <- limma::topTable(interaction_eb, coef = "conditiontreated", n = Inf, adjust = "BH")
 head(interaction_table)
+
+end <- as.POSIXlt(Sys.time())
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 24de_deseq.R in ", elapsed,  " seconds.")

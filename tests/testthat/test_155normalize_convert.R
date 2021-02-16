@@ -38,5 +38,5 @@ test_that("rpkm modification provides expected values?", {
 ## using pasilla_expt and the method 'cp_seq_m'.
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 155normalize_convert.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 155normalize_convert.R in ", elapsed,  " seconds.")

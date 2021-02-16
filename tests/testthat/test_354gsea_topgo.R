@@ -59,5 +59,5 @@ test_that("Are the topGO interesting results as expected? (MF pval)?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 54gsea_topgo.R in ", elapsed,  " seconds.")

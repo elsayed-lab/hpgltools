@@ -52,5 +52,5 @@ hpgl_basic <- sm(basic_pairwise(pasilla_expt))
 save(list = ls(), file = "327_de_basic.rda")
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 327de_basic.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 327de_basic.R in ", elapsed,  " seconds.")

@@ -140,5 +140,5 @@ if (FALSE) {
 }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 15norm_batch.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 15norm_batch.R in ", elapsed,  " seconds.")

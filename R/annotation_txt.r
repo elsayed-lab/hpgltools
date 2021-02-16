@@ -120,22 +120,22 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
   split_data[dots] <- ""
 
   ## Now recast the numeric elements.
-  split_data[["tmhmm_expaa"]] <- as.numeric(split_data[["tmhmm_expaa"]])
+  split_data[["tmhmm_expaa"]] <- suppressWarnings(as.numeric(split_data[["tmhmm_expaa"]]))
   na_test <- is.na(split_data[["tmhmm_expaa"]])
   split_data[na_test, "tmhmm_expaa"] <- 0
-  split_data[["tmhmm_helices"]] <- as.numeric(split_data[["tmhmm_helices"]])
+  split_data[["tmhmm_helices"]] <- suppressWarnings(as.numeric(split_data[["tmhmm_helices"]]))
   na_test <- is.na(split_data[["tmhmm_helices"]])
   split_data[na_test, "tmhmm_helices"] <- 0
-  split_data[["blastx_identity"]] <- as.numeric(split_data[["blastx_identity"]])
+  split_data[["blastx_identity"]] <- suppressWarnings(as.numeric(split_data[["blastx_identity"]]))
   na_test <- is.na(split_data[["blastx_identity"]])
   split_data[na_test, "blastx_identity"] <- 0
-  split_data[["blastx_evalue"]] <- as.numeric(split_data[["blastx_evalue"]])
+  split_data[["blastx_evalue"]] <- suppressWarnings(as.numeric(split_data[["blastx_evalue"]]))
   na_test <- is.na(split_data[["blastx_evalue"]])
   split_data[na_test, "blastx_evalue"] <- 1
-  split_data[["blastp_identity"]] <- as.numeric(split_data[["blastp_identity"]])
+  split_data[["blastp_identity"]] <- suppressWarnings(as.numeric(split_data[["blastp_identity"]]))
   na_test <- is.na(split_data[["blastp_identity"]])
   split_data[na_test, "blastp_identity"] <- 0
-  split_data[["blastp_evalue"]] <- as.numeric(split_data[["blastp_evalue"]])
+  split_data[["blastp_evalue"]] <- suppressWarnings(as.numeric(split_data[["blastp_evalue"]]))
   na_test <- is.na(split_data[["blastp_evalue"]])
   split_data[na_test, "blastp_evalue"] <- 1
 

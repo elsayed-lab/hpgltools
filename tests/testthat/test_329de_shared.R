@@ -473,5 +473,5 @@ test_that("Do all methods have some genes in common? (down)", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 29de_shared.R in ", elapsed,  " seconds.")

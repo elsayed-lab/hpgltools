@@ -2,7 +2,8 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("065de_all.R:
-  1234567890123456789012345678901234567890123456789012345678901234567\n")
+           1         2         3         4         5         6         7
+  123456789012345678901234567890123456789012345678901234567890123456789\n")
 ## 2017-12, exported functions in de_basic:
 ## basic_pairwise(), write_basic()
 ## 2017-12, exported functions in de_deseq:
@@ -485,5 +486,5 @@ test_that("Did we compare the two de results with a rank order plot?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 065de_all.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 065de_all.R in ", elapsed,  " seconds.")

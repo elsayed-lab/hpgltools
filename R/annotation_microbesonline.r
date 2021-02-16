@@ -53,7 +53,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
   species <- (titles %>% rvest::html_text())[1]
 
   if (isTRUE(gbk)) {
-    gbk_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = gbk")
+    gbk_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=gbk")
     gbk_file <- glue("{id}.gbk")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", gbk_file, ".")
@@ -62,7 +62,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
   }
 
   if (isTRUE(tab)) {
-    tab_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = tab")
+    tab_url <- glue("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
     tab_file <- glue("{id}.tab")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tab_file, ".")
@@ -72,7 +72,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(prot)) {
     prot_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = proteomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
     prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
@@ -82,7 +82,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(tx)) {
     tx_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = transcriptomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
     tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
@@ -92,7 +92,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(genome)) {
     genome_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = genomes")
+      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
     genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")
@@ -114,7 +114,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 #'  head(coli_taxids)
 #' @export
 get_microbesonline_taxid <- function(species = "Acyrthosiphon pisum virus") {
-  id_url <- "http://microbesonline.org/cgi-bin/fetchGenome2.cgi?taxId = g1&byFavorites = 1"
+  id_url <- "http://microbesonline.org/cgi-bin/fetchGenome2.cgi?taxId=g1&byFavorites=1"
   result <- xml2::read_html(id_url)
   id_nodes <- result %>%
     rvest::html_nodes("#GenomeList")
@@ -179,12 +179,12 @@ load_microbesonline_annotations <- function(species = NULL, id = NULL) {
       id <- id[1]
     }
   }
-  prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId = ", id)
+  prelude_url <- paste0("http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId=", id)
   result <- xml2::read_html(prelude_url)
   titles <- rvest::html_nodes(result, "title")
   species <- (titles %>% rvest::html_text())[1]
   message("The species being downloaded is: ", species)
-  url <- glue::glue("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export = tab")
+  url <- glue::glue("http://www.microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=tab")
   message("Downloading: ", url)
   data <- sm(readr::read_tsv(url))
   return(data)
@@ -204,9 +204,9 @@ load_microbesonline_annotations <- function(species = NULL, id = NULL) {
 #' @param id Which species to query.
 #' @param table_df Pre-existing data frame of annotations containing GO stuff.
 #' @param id_column This no longer uses MySQL, so which column from the html
-#'   table to pull?
+#'  table to pull?
 #' @param data_column Similar to above, there are lots of places from which one might
-#'   extract the data.
+#'  extract the data.
 #' @param name Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from www.microbesonline.org
 #' @examples

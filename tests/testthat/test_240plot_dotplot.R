@@ -42,5 +42,5 @@ test_that("Can we plot standard medians?", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 240plot_dotplot.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 240plot_dotplot.R in ", elapsed,  " seconds.")

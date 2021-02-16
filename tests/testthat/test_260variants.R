@@ -15,11 +15,11 @@ context("260variants.R:
 ## hits and 4 agree, that is not sigificant, but 5 of 6 or 5 of 5 are.
 
 ## Therefore, it requires an expressionset to hold the metadata and provide the structure.
-gff_file <- system.file("clbr/clbrener_8.1_complete_genes.gff.gz", package = "hpgltools")
+gff_file <- system.file("share/clbr/clbrener_8.1_complete_genes.gff.gz", package = "hpgltools")
 gff_annotations <- load_gff_annotations(gff_file, type = "gene")
 rownames(gff_annotations) <- gff_annotations[["ID"]]
-meta <- system.file("clbr/clbr_samples_combined.xlsx", package = "hpgltools")
-untarred <- utils::untar(tarfile = system.file("clbr/clbr_counts.tar", package = "hpgltools"))
+meta <- system.file("share/clbr/clbr_samples_combined.xlsx", package = "hpgltools")
+untarred <- utils::untar(tarfile = system.file("share/clbr/clbr_counts.tar", package = "hpgltools"))
 all_expt <- create_expt(metadata = meta, file_column = "clbrenerfile", gene_info = gff_annotations)
 
 expected <- 25100
@@ -30,8 +30,8 @@ test_that("We have a functional expressionset?", {
 ## Given that expressionset, note that there is a metadata column 'bcffile'
 ## This of course refers to the bcf data files, much like 'clbrenerfile' refers
 ## to the count tables for the clbrener haplotype.
-untarred <- utils::untar(tarfile = system.file("clbr/vcfutils_output.tar.xz",
-                                             package = "hpgltools"))
+untarred <- utils::untar(tarfile = system.file("share/clbr/vcfutils_output.tar.xz",
+                                               package = "hpgltools"))
 ## Type in this context may be either percent or counts, this just defines the
 ## column to extract from the bcf file.
 snp_expt <- count_expt_snps(all_expt, type = "percent", annot_column = "bcffile")
@@ -97,5 +97,5 @@ test_that("Do we observe the expected variants in a specific gene under a specif
 ##test2 <- plot_sample_heatmap(snp_norm, Rowv = FALSE)
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x = as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 260variants.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 260variants.R in ", elapsed,  " seconds.")
