@@ -29,7 +29,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
-        sudo apt-get install circos libsvg-perl default-jdk
+        sudo apt-get install circos libsvg-perl default-jdk texlive
     - uses: r-lib/actions/setup-r@master
       with:
         r-version: ${{ matrix.config.r }}
