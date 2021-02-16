@@ -31,12 +31,16 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
     message("Converting the rownames() of the expressionset to ENTREZID.")
     ## tt <- sm(try(do.call("library", as.list(orgdb)), silent=TRUE))
     lib_result <- sm(requireNamespace(orgdb))
-    att_restul <- sm(try(attachNamespace(orgdb), silent=TRUE))
+    att_result <- sm(try(attachNamespace(orgdb), silent=TRUE))
     first_ids <- sm(AnnotationDbi::select(x=get0(orgdb),
                                           keys=first_ids,
                                           keytype=current_id,
                                           columns=c(required_id)))
     first_idx <- complete.cases(first_ids)
+    
+    if(!all(first_idx)){
+      message(paste0(sum(first_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now."))
+    }
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
     if (!is.null(second_ids)) {
@@ -45,6 +49,11 @@ make_gsc_from_ids <- function(first_ids, second_ids=NULL, orgdb="org.Hs.eg.db",
                                              keytype=current_id,
                                              columns=c(required_id)))
       second_idx <- complete.cases(second_ids)
+      
+      if(!all(second_idx)){
+        message(paste0(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now."))
+      }
+      
       second_ids <- second_ids[second_idx, ]
       second <- second_ids[[required_id]]
     } else {
@@ -505,12 +514,12 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
   eset_annotation <- annotation(eset)
   eset_pattern <- grepl(pattern="Fill me in", x=annotation(eset))
   if (length(eset_annotation) == 0 | isTRUE(eset_pattern)) {
-    message("gsva requires the annotation field to be filled in.")
+    message("gsva requires the annotation field to be filled in. Setting it to orgdb given.")
     annotation(eset) <- orgdb
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  if (current_id != required_id) {
+  if (current_id != required_id | !is.integer(grep("ENSG", rownames(exprs(eset))))) {
     message("Converting the rownames() of the expressionset to ENTREZID.")
     ##tt <- sm(library(orgdb, character.only=TRUE))
     lib_result <- sm(requireNamespace(orgdb))
@@ -521,6 +530,11 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
                                         keytype=current_id,
                                         columns=c(required_id)))
     new_idx <- complete.cases(new_ids)
+    
+    if(!all(new_idx)){
+      message(paste0(sum(new_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database. Dropping them now."))
+    }
+    
     new_ids <- new_ids[new_idx, ]
     message("Before conversion, the expressionset has ", length(rownames(eset)),
             " entries.")
@@ -536,7 +550,7 @@ simple_gsva <- function(expt, datasets="c2BroadSets", data_pkg="GSVAdata", signa
   }
 
   gsva_result <- GSVA::gsva(eset, sig_data, verbose=TRUE, method=method,
-                            kcdf=kcdf, abs.ranking=ranking, parallel.sz=cores)
+                            kcdf=kcdf, abs.ranking=ranking) #, parallel.sz=scores).  #scores not defined anywhere before this
   fdata_df <- data.frame(row.names=rownames(exprs(gsva_result)))
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""
