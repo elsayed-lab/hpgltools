@@ -112,30 +112,23 @@ pasilla_expt <- sm(create_expt(count_dataframe = counts, metadata = metadata,
                                savefile = "pasilla", gene_info = gene_info))
 ```
 
-The rest of test_01load_data.R checks the various slots of the resulting expt to ensure that
-important stuff for future analyses are available, primarily: condition/batch, library sizes,
-annotations, counts.
-
 # Graph metrics
 
-The next set of tests seek to ensure that the various plots used to visualize and understand trends
-in the data are maintained over time.
-
-In this first block I will use a single function graph_metrics() to plot them all.
+In this block I will use a single function graph_metrics() to plot them all.
 And then follow up with the one at a time.  Many functions in hpgltools are quite chatty with
-liberal usage of message(), as a result I will sm() this call to shut it up.
+liberal usage of message(), as a result I will sm() this call to silence it.
 
 ```{r graph_metrics, fig.show = "hide"}
 pasilla_metrics <- sm(graph_metrics(pasilla_expt, ma = TRUE, qq = TRUE))
 summary(pasilla_metrics)
 ```
 
-Now let us print the graphs
+Now let us print some plots.
 
 ```{r print_graphs}
 pasilla_metrics$libsize
 ## The library sizes range from 8-21 million reads, this might be a problem for
-## some analyses.
+## some analyses, but it should be ok
 pasilla_metrics$nonzero
 ## Ergo, the lower abundance libraries have more genes of counts == 0 (bottom
 ## left).
@@ -157,7 +150,7 @@ pasilla_metrics$pc_plot
 
 The most common normalization suggested by Najib is a cpm(quantile(filter(data))).
 On top of that we often do log2() and/or a batch adjustment.
-default_norm() quietly does the first and may be supplemented with other arguments.
+default_norm() does the first and may be supplemented with other arguments.
 
 ```{r normalize, fig.show = "hide"}
 norm <- default_norm(pasilla_expt, transform = "log2")
@@ -175,6 +168,10 @@ norm_metrics$pc_plot
 
 # Try a pairwise comparison
 
+With the above metrics in mind, we may perform a pairwise comparison of the data.
+By default, all_pairwise() performs every possible pairwise contrast, which in
+the case is comprised of just treated vs. untreated.
+
 ```{r perform_pairwise, fig.show = "hide"}
 pasilla_pairwise <- sm(all_pairwise(pasilla_expt))
 pasilla_tables <- sm(combine_de_tables(
@@ -189,27 +186,35 @@ pasilla_ab <- sm(extract_abundant_genes(
 ```
 
 ```{r de_pictures}
-pasilla_tables$plots[[1]][["deseq_ma_plots"]]$plot
-pasilla_tables$plots[[1]][["edger_ma_plots"]]$plot
-pasilla_tables$plots[[1]][["limma_ma_plots"]]$plot
+pasilla_tables[["plots"]][["untreated_vs_treated"]][["deseq_ma_plots"]]$plot
+pasilla_tables[["plots"]][["untreated_vs_treated"]][["edger_ma_plots"]]$plot
+pasilla_tables[["plots"]][["untreated_vs_treated"]][["limma_ma_plots"]]$plot
 ```
 
 ```{r goseq_test}
-up_genes <- pasilla_sig[["deseq"]][["ups"]][[1]]
-down_genes <- pasilla_sig[["deseq"]][["downs"]][[1]]
+up_genes <- pasilla_sig[["deseq"]][["ups"]][["untreated_vs_treated"]]
+down_genes <- pasilla_sig[["deseq"]][["downs"]][["untreated_vs_treated"]]
 pasilla_go <- load_biomart_go(species = "dmelanogaster")$go
 pasilla_length <- fData(pasilla_expt)[, c("ensembl_gene_id", "cds_length")]
 colnames(pasilla_length) <- c("ID", "length")
-pasilla_goseq <- simple_goseq(sig_genes = up_genes, go_db = pasilla_go, length_db = pasilla_length)
-pasilla_goseq$pvalue_plots$bpp_plot_over
 
-pasilla_goseq <- simple_goseq(sig_genes = down_genes, go_db = pasilla_go, length_db = pasilla_length)
-pasilla_goseq$pvalue_plots$bpp_plot_over
+pasilla_up_goseq <- simple_goseq(sig_genes = up_genes, go_db = pasilla_go, length_db = pasilla_length)
+pasilla_up_goseq[["pvalue_plots"]][["bpp_plot_over"]]
 
-test <- simple_goseq(sig_genes = names(pasilla_ab$abundances$deseq$treated), go_db = pasilla_go, length_db = pasilla_length)
-test$pvalue_plots$bpp_plot_over
+pasilla_down_goseq <- simple_goseq(sig_genes = down_genes, go_db = pasilla_go,
+                                   length_db = pasilla_length)
+pasilla_down_goseq[["pvalue_plots"]][["bpp_plot_over"]]
+
+pasilla_high_goseq <- simple_goseq(
+    sig_genes = names(pasilla_ab[["abundances"]][["deseq"]][["high"]][["treated"]]),
+    go_db = pasilla_go, length_db = pasilla_length)
+pasilla_high_goseq[["pvalue_plots"]][["bpp_plot_over"]]
+
+pasilla_low_goseq <- simple_goseq(
+    sig_genes = names(pasilla_ab[["abundances"]][["deseq"]][["low"]][["treated"]]),
+    go_db = pasilla_go, length_db = pasilla_length)
+pasilla_low_goseq[["pvalue_plots"]][["bpp_plot_over"]]
 ```
-
 
 ```{r saveme}
 pander::pander(sessionInfo())

@@ -1506,7 +1506,6 @@ do_pairwise <- function(type, ...) {
 #' @param n Perhaps take just the top/bottom n genes.
 #' @param z Or take genes past a given z-score.
 #' @param unique Unimplemented: take only the genes unique among the conditions surveyed.
-#' @param least When true, this finds the least abundant rather than most.
 #' @return List of data frames containing the genes of interest.
 #' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
@@ -1520,7 +1519,7 @@ do_pairwise <- function(type, ...) {
 #' }
 #' @export
 get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
-                               unique = FALSE, least = FALSE) {
+                               unique = FALSE) {
   if (is.null(z) & is.null(n)) {
     n <- 100
   }
@@ -1540,6 +1539,7 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
   if (type == "edger") {
     ## In this case of edger, this can be a little tricky.
     ## I should probably therefore improve the returns from edger_pairwise()
+    ## FIXME: I think this is the wrong way to handle this.
     coefficient_df <- datum[["lrt"]][[1]][["coefficients"]]
     if (max(coefficient_df) <= 0) {
       coefficient_df <- coefficient_df * -1.0
@@ -1559,19 +1559,16 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
     coefficient_df <- datum[["medians"]]
   }
 
-  abundant_list <- list()
+  abundant_list <- list(
+      "high" = list(),
+      "low" = list())
   coefficient_df <- as.data.frame(coefficient_df)
   coefficients <- colnames(coefficient_df)
   coefficient_rows <- rownames(coefficient_df)
   coef_ordered <- NULL
   for (coef in coefficients) {
-    if (isTRUE(least)) {
-      new_order <- order(coefficient_df[[coef]], decreasing = FALSE)
-      coef_ordered <- coefficient_df[new_order, ][[coef]]
-    } else {
-      new_order <- order(coefficient_df[[coef]], decreasing = FALSE)
-      coef_ordered <- coefficient_df[new_order, ][[coef]]
-    }
+    new_order <- order(coefficient_df[[coef]], decreasing = TRUE)
+    coef_ordered <- coefficient_df[new_order, ][[coef]]
     names(coef_ordered) <- coefficient_rows
     kept_rows <- NULL
     if (is.null(n)) {
@@ -1580,15 +1577,16 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
       tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm = TRUE))
       tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
       tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
-      if (isTRUE(least)) {
-        kept_rows <- coef_ordered[coef_ordered <= tmp_down_median_dist]
-      } else {
-        kept_rows <- coef_ordered[coef_ordered >= tmp_up_median_dist]
-      }
-      abundant_list[[coef]] <- kept_rows
+      high_idx <- coef_ordered >= tmp_up_median_dist
+      low_idx <- coef_ordered <= tmp_down_median_dist
+      high_rows <- coef_ordered[high_idx]
+      low_rows <- coef_ordered[low_idx]
+      abundant_list[["high"]][[coef]] <- high_rows
+      abundant_list[["low"]][[coef]] <- low_rows
     } else {
       ## Then do it in a number of rows
-      abundant_list[[coef]] <- head(coef_ordered, n = n)
+      abundant_list[["high"]][[coef]] <- head(coef_ordered, n = n)
+      abundant_list[["low"]][[coef]] <- tail(coef_ordered, n = n)
     }
   }
   class(abundant_list) <- c("abundant_genes", "list")
