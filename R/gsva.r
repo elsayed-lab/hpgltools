@@ -168,29 +168,25 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
 #' @param gsva_result Result from simple_gsva()
 #' @param cutoff Significance cutoff
 #' @param excel Excel file to write the results.
+#' @param model_batch Add batch to limma's model.
 #' @param factor_column When extracting significance information, use this
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
-                                    factor_column = "condition", factor = NULL) {
+                                    model_batch = FALSE, factor_column = "condition", factor = NULL) {
 
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
-  gsva_limma <- limma_pairwise(gsva_scores, which_voom = "none")
+  gsva_limma <- limma_pairwise(gsva_scores, model_batch = model_batch,
+                               which_voom = "none")
 
-  expr <- gsva_scores[["expressionset"]]
+  gsva_eset <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
-  values <- as.data.frame(exprs(expr))
-  expr_order <- order(values[[1]], decreasing = TRUE)
-  exprs(expr) <- exprs(expr)[expr_order, ]
-  fData(expr) <- fData(expr)[expr_order, ]
-
-  ## We will use these later...
-  annot <- fData(expr)
-  meta <- pData(expr)
-  exp <- exprs(expr)
+  values <- as.data.frame(exprs(gsva_eset))
+  annot <- fData(gsva_eset)
+  meta <- pData(gsva_eset)
 
   ## Choose the reference factor
   clevels <- levels(as.factor(meta[[factor_column]]))
@@ -200,43 +196,53 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   }
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
-  subset_mtrx <- expr
-  gl <- gsva_likelihoods(gsva_result, factor = fact)
+  subset_eset <- gsva_eset
+  gl <- score_gsva_likelihoods(gsva_result, factor = fact)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
-  subset_mtrx <- subset_mtrx[keep_idx, ]
-
+  subset_eset <- subset_eset[keep_idx, ]
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
 
   scored_ht <- NULL
   if (is.null(label_size)) {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin))
   } else {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin),
                            cexCol = label_size, cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
 
-  gsva_table <- merge(annot, exp, by = "row.names")
+  order_column <- colnames(values)[1]
+  gsva_table <- merge(annot, values, by = "row.names")
   rownames(gsva_table) <- gsva_table[["Row.names"]]
   gsva_table[["Row.names"]] <- NULL
+  reordered_gsva_idx <- order(gsva_table[[order_column]], decreasing = TRUE)
+  gsva_table <- gsva_table[reordered_gsva_idx, ]
+
   ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
   ## are not the same as the rownames of exprs(subset_mtrx)
   ## which AFAIK should not be possible, but clearly I was wrong.
   ## At least when I create an expressionset, the fData and exprs have the
   ## same rownames from beginning to end.
   ## I guess this does not really matter, since we can use the full annotation table.
-  subset_table <- merge(annot, exprs(subset_mtrx), by = "row.names")
+  subset_tbl <- as.data.frame(exprs(subset_eset))
+  order_column <- colnames(subset_tbl)[1]
+  subset_table <- merge(annot, subset_tbl, by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
   subset_table[["Row.names"]] <- NULL
-  reordered_subset_idx <- order(subset_table[[1]], decreasing = TRUE)
+  reordered_subset_idx <- order(subset_table[[order_column]], decreasing = TRUE)
+  subset_table <- subset_table[reordered_subset_idx, ]
 
-  likelihood_table <- merge(fData(gsva_scores), gl[["likelihoods"]], all.y = TRUE, by = "row.names")
+  gl_tbl <- as.data.frame(gl[["likelihoods"]])
+  order_column <- colnames(gl_tbl)[1]
+  likelihood_table <- merge(annot, gl_tbl, by = "row.names")
   rownames(likelihood_table) <- likelihood_table[["Row.names"]]
   likelihood_table[["Row.names"]] <- NULL
+  likelihood_table_idx <- order(likelihood_table[[order_column]], decreasing = TRUE)
+  likelihood_table <- likelihood_table[likelihood_table_idx, ]
 
   retlist <- list(
       ## Everything provided by simple_gsva()
@@ -937,7 +943,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 
       test_values <- values[, sample_idx]
       against_values <- values[, !sample_idx]
-      population_values <<- against_values
+      population_values <- against_values
       if (method == "mean") {
         if (sum(sample_idx) == 1) {
           tests <- test_values
@@ -964,7 +970,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
                            margins = c(col_margin, row_margin), Colv = FALSE,
-                           cexCol = label_size, cexRow = label_size)
+                           dendrogram = "row", cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
     test_results <- result_df
   } else if (choice == "column") {
