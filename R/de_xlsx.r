@@ -1380,14 +1380,13 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #' @param unique One might want the subset of unique genes in the top-n which
 #'  are unique in the set of available conditions.  This will attempt to
 #'  provide that.
-#' @param least Instead of the most abundant, do the least.
 #' @param excel Excel file to write.
 #' @param ... Arguments passed into arglist.
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
 extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = NULL, unique = FALSE,
-                                   least = FALSE, excel = "excel/abundant_genes.xlsx", ...) {
+                                   excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
@@ -1403,7 +1402,7 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
   for (type in according_to) {
     datum <- pairwise[[type]]
     abundant_lists[[type]] <- get_abundant_genes(datum, type = type, n = n, z = z,
-                                                 unique = unique, least = least)
+                                                 unique = unique)
   }
 
   if (class(excel)[1] == "character") {
@@ -1420,25 +1419,47 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
 
   ## Now make the excel sheet for each method/coefficient
   for (according in names(abundant_lists)) {
-    for (coef in names(abundant_lists[[according]])) {
-      sheetname <- glue::glue("{according}_{coef}")
+    for (coef in names(abundant_lists[[according]][["high"]])) {
+      sheetname <- glue::glue("{according}_high_{coef}")
       annotations <- fData(pairwise[["input"]])
-      abundances <- abundant_lists[[according]][[coef]]
-      kept_annotations <- names(abundances)
+      high_abundances <- abundant_lists[[according]][["high"]][[coef]]
+      kept_annotations <- names(high_abundances)
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
+      high_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        used_data <- merge(data.frame(abundances), annotations, by = "row.names", all.x = TRUE)
-        rownames(used_data) <- used_data[["Row.names"]]
-        used_data <- used_data[, -1]
+        high_data <- merge(data.frame(high_abundances), annotations, by = "row.names", all.x = TRUE)
+        rownames(high_data) <- high_data[["Row.names"]]
+        high_data[["Row.names"]] <- NULL
       } else {
-        used_data <- as.data.frame(abundances)
+        high_data <- as.data.frame(abundances)
+      }
+      start_row <- 1
+      if (class(excel)[1] == "character") {
+        title <- glue::glue("Table SXXX: High abundance genes in {coef} according to {according}.")
+        xls_result <- write_xlsx(data = high_data, wb = wb, sheet = sheetname, title = title)
+        start_row <- start_row + xls_result[["end_row"]] + 2
+      }
+
+      sheetname <- glue::glue("{according}_low_{coef}")
+      low_abundances <- abundant_lists[[according]][["low"]][[coef]]
+      kept_annotations <- names(low_abundances)
+      kept_idx <- rownames(annotations) %in% kept_annotations
+      kept_annotations <- annotations[kept_idx, ]
+      low_data <- data.frame()
+      if (nrow(annotations) > 0 & ncol(annotations) > 0) {
+        low_data <- merge(data.frame(low_abundances), annotations,
+                          by = "row.names", all.x = TRUE)
+        rownames(low_data) <- low_data[["Row.names"]]
+        low_data[["Row.names"]] <- NULL
+      } else {
+        low_data <- as.data.frame(abundances)
       }
       if (class(excel)[1] == "character") {
-        title <- glue::glue("Table SXXX: Abundant genes in {coef} according to {according}.")
-        xls_result <- write_xlsx(data = used_data, wb = wb, sheet = sheetname, title = title)
+        title <- glue::glue("Table SXXX: Low abundance genes in {coef} according to {according}.")
+        xls_result <- write_xlsx(data = low_data, wb = wb, sheet = sheetname, title = title)
       }
-    }
+    } ## End the for loop
   }
 
   if (class(excel)[1] == "character") {

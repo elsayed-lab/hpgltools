@@ -67,7 +67,7 @@ function and the genome annotations were loaded with gff2df().
 
 ```{r loading_data}
 library(hpgltools)
-data_file <- system.file("cdm_expt.rda", package="hpgltools")
+data_file <- system.file("share/cdm_expt.rda", package="hpgltools")
 cdm <- new.env()
 load(data_file, envir=cdm)
 rm(data_file)
