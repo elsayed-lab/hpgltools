@@ -1,4 +1,4 @@
-start <- as.POSIXlt(Sys.time())
+start_time <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("040annotation_orgdb.R
@@ -8,7 +8,7 @@ context("040annotation_orgdb.R
 ## load_orgdb_annotations(), load_orgdb_go(),
 ## take_orgdb_from_ah(), map_orgdb_ids()
 
-## Taken by doing head(keys(Homo.sapiens, keytype="ENSEMBL"))
+## Taken by doing head(keys(Homo.sapiens, keytype = "ENSEMBL"))
 test_genes <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
                 "ENSG00000171428", "ENSG00000156006", "ENSG00000196136")
 
@@ -21,6 +21,13 @@ test_that("Do we get the expected amount of orgdb gene data?", {
   expect_gt(actual, expected)
 })
 
+start_positions <- testing[["genes"]][["ensembl"]]
+test_ids <- head(unique(start_positions), n = 500)
+guess <- guess_orgdb_keytype(ids = test_ids, orgdb = NULL)
+test_that("Can we guess appropriate keytypes from gene IDs?", {
+  expect_equal(guess, "ENSEMBL")
+})
+
 expected <- 82000
 actual <- nrow(as.data.frame(testing[["transcripts"]]))
 ## 0304
@@ -28,13 +35,10 @@ test_that("Do we get the expected amount of orgdb transcript data?", {
   expect_gt(actual, expected)
 })
 
-## Wow, even querying only 1 gene seems to take too long, I must be doing something wrong.
-## testing <- load_orgdb_annotations(fields="all", gene_ids=test_genes[1])
-
 ## load_orgdb_go()
 ## Interesting, querying homo sapiens reminds me that we need to be more careful about which
 ## evidences we accept, as this table is astonishingly redundant.
-testing <- load_orgdb_go(gene_ids=test_genes)
+testing <- load_orgdb_go(gene_ids = test_genes)
 ## Another function on which I get different answers on different hosts.
 expected <- 11500
 actual <- nrow(testing)
@@ -52,7 +56,7 @@ test_that("Do we get the expected keytypes from an ah orgdb?", {
   expect_equal(expected, actual)
 })
 ## map_orgdb_ids()
-testing <- map_orgdb_ids(orgdb=testing, keytype="entrezid")
+testing <- map_orgdb_ids(orgdb = testing, keytype = "entrezid")
 expected <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
               "ENSG00000171428", "ENSG00000156006", NA)
 actual <- head(testing[["ensembl"]])
@@ -61,6 +65,6 @@ test_that("Do we get the expected ensembl IDs from entrez IDs?", {
   expect_equal(expected, actual)
 })
 
-end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 040annotation_orgdb.R in ", elapsed,  " seconds."))
+end_time <- as.POSIXlt(Sys.time())
+elapsed <- round(x = as.numeric(end_time - start_time))
+message("\nFinished 040annotation_orgdb.R in ", elapsed,  " seconds.")

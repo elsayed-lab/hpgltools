@@ -1,3 +1,9 @@
+## de_basic.r: An implementation of a simplified, statistical model unaware
+## differential expression method.  This is intended essentially as a negative
+## control to get a sense of how 'intrusive' other methods need to be in order
+## to get their various results when performing a differential expression
+## analysis.
+
 #' The simplest possible differential expression method.
 #'
 #' Perform a pairwise comparison among conditions which takes
@@ -28,15 +34,15 @@
 #' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
 #' @examples
 #' \dontrun{
-#'  expt <- create_expt(metadata="sample_sheet.xlsx", gene_info="annotations")
+#'  expt <- create_expt(metadata = "sample_sheet.xlsx", gene_info = "annotations")
 #'  basic_de <- basic_pairwise(expt)
 #'  basic_tables <- combine_de_tables(basic_de)
 #' }
 #' @export
-basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
-                           batches=NULL, model_cond=TRUE, model_intercept=FALSE,
-                           alt_model=NULL, model_batch=FALSE, force=FALSE,
-                           fx="mean", ...) {
+basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
+                           batches = NULL, model_cond = TRUE, model_intercept = FALSE,
+                           alt_model = NULL, model_batch = FALSE, force = FALSE,
+                           fx = "mean", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["input"]])) {
     input <- arglist[["input"]]
@@ -49,14 +55,14 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
   }
   message("Starting basic pairwise comparison.")
   input <- sanitize_expt(input)
-  input_data <- choose_basic_dataset(input, force=force)
+  input_data <- choose_basic_dataset(input, force = force)
   design <- pData(input)
   conditions <- input_data[["conditions"]]
   batches <- input_data[["batches"]]
   data <- input_data[["data"]]
 
-  conditions <- gsub(pattern="^(\\d+)$", replacement="c\\1", x=conditions)
-  batches <- gsub(pattern="^(\\d+)$", replacement="b\\1", x=batches)
+  conditions <- gsub(pattern = "^(\\d+)$", replacement = "c\\1", x = conditions)
+  batches <- gsub(pattern = "^(\\d+)$", replacement = "b\\1", x = batches)
   types <- levels(as.factor(conditions))
   num_conds <- length(types)
   ## These will be filled with num_conds columns and numRows(input) rows.
@@ -70,12 +76,12 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     median_colnames <- append(median_colnames, condition_name)
     columns <- which(conditions == condition_name)
     if (length(columns) == 1) {
-      med <- data.frame(data[, columns], stringsAsFactors=FALSE)
-      var <- as.data.frame(matrix(NA, ncol=1, nrow=nrow(med)), stringsAsFactors=FALSE)
+      med <- data.frame(data[, columns], stringsAsFactors = FALSE)
+      var <- as.data.frame(matrix(NA, ncol = 1, nrow = nrow(med)), stringsAsFactors = FALSE)
     } else {
       med_input <- as.matrix(data[, columns])
       if (fx == "mean") {
-        med <- data.frame(matrixStats::rowMeans2(x=med_input, na.rm=TRUE))
+        med <- data.frame(matrixStats::rowMeans2(x = med_input, na.rm = TRUE))
       } else {
         med <- data.frame(Biobase::rowMedians(as.matrix(med_input)))
       }
@@ -107,17 +113,17 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
   message("Basic step 2/3: Performing ", total_contrasts, " comparisons.")
 
   model_choice <- sm(choose_model(
-    input, conditions=conditions, batches=batches, model_batch=FALSE,
-    model_cond=TRUE, model_intercept=FALSE, alt_model=NULL,
+    input, conditions = conditions, batches = batches, model_batch = FALSE,
+    model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
     ...))
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities=FALSE, do_extras=FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
                                  ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style=3)
+    bar <- utils::txtProgressBar(style = 3)
   }
   for (c in 1:length(apc[["names"]])) {
     if (isTRUE(show_progress)) {
@@ -126,8 +132,8 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     }
     num_done <- num_done + 1
     name  <- apc[["names"]][[c]]
-    c_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\1", x=name)
-    d_name <- gsub(pattern="^(.*)_vs_(.*)$", replacement="\\2", x=name)
+    c_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\1", x = name)
+    d_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\2", x = name)
     contrasts_performed <- append(name, contrasts_performed)
     if (! c_name %in% colnames(median_table)) {
       message("The contrast ", name, " is not in the results.")
@@ -147,7 +153,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     t_data <- vector("list", nrow(xdata))
     p_data <- vector("list", nrow(xdata))
     for (j in 1:nrow(xdata)) {
-      test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent=TRUE)
+      test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent = TRUE)
       if (class(test_result) == "htest") {
         t_data[[j]] <- test_result[[1]]
         p_data[[j]] <- test_result[[3]]
@@ -199,7 +205,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     t_column <- as.numeric(tvalues[, e])
     p_column <- as.numeric(pvalues[, e])
     fc_column[mapply(is.infinite, fc_column)] <- 0
-    numer_denom <- strsplit(x=colname, split="_vs_")[[1]]
+    numer_denom <- strsplit(x = colname, split = "_vs_")[[1]]
     numerator <- numer_denom[1]
     denominator <- numer_denom[2]
     num_col <- paste0("numerator_", fx)
@@ -214,16 +220,16 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     fc_table[[den_col]] <- median_table[[denominator]]
     fc_table <- fc_table[, c(num_col, den_col, "numerator_var",
                              "denominator_var", "t", "p", "logFC")]
-    fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method="BH")
+    fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method = "BH")
 
     fc_table[[num_col]] <- signif(
-      x=fc_table[[num_col]], digits=4)
+      x = fc_table[[num_col]], digits = 4)
     fc_table[[den_col]] <- signif(
-      x=fc_table[[den_col]], digits=4)
+      x = fc_table[[den_col]], digits = 4)
     ## I am thinking to change my mind about this formatting, since
     ## it recasts the numbers as characters, and that is dumb.
-    fc_table[["t"]] <- signif(x=fc_table[["t"]], digits=4)
-    fc_table[["logFC"]] <- signif(x=fc_table[["logFC"]], digits=4)
+    fc_table[["t"]] <- signif(x = fc_table[["t"]], digits = 4)
+    fc_table[["logFC"]] <- signif(x = fc_table[["logFC"]], digits = 4)
     rownames(fc_table) <- rownames(data)
     all_tables[[e]] <- fc_table
   }
@@ -242,7 +248,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
     "variances" = variance_table)
   class(retlist) <- c("basic_result", "list")
   if (!is.null(arglist[["basic_excel"]])) {
-    retlist[["basic_excel"]] <- write_basic(retlist, excel=arglist[["basic_excel"]])
+    retlist[["basic_excel"]] <- write_basic(retlist, excel = arglist[["basic_excel"]])
   }
   return(retlist)
 }
@@ -260,7 +266,7 @@ basic_pairwise <- function(input=NULL, design=NULL, conditions=NULL,
 #' \dontrun{
 #'  ready <- choose_basic_dataset(expt)
 #' }
-choose_basic_dataset <- function(input, force=FALSE, ...) {
+choose_basic_dataset <- function(input, force = FALSE, ...) {
   ## arglist <- list(...)
   warn_user <- 0
   conditions <- input[["conditions"]]
@@ -291,22 +297,22 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
   } else {
     if (filt_state == "raw") {
       message("Basic step 0/3: Filtering data.")
-      ready <- sm(normalize_expt(ready, filter=TRUE))
+      ready <- sm(normalize_expt(ready, filter = TRUE))
     }
     if (norm_state == "raw") {
       message("Basic step 0/3: Normalizing data.")
-      ready <- sm(normalize_expt(ready, norm="quant"))
+      ready <- sm(normalize_expt(ready, norm = "quant"))
     }
     if (conv_state == "raw") {
       message("Basic step 0/3: Converting data.")
-      ready <- sm(normalize_expt(ready, convert="cbcbcpm"))
+      ready <- sm(normalize_expt(ready, convert = "cbcbcpm"))
     }
 
   }
   ## No matter what we do, it must be logged.
   if (tran_state == "raw") {
     message("Basic step 0/3: Transforming data.")
-    ready <- sm(normalize_expt(ready, transform="log2"))
+    ready <- sm(normalize_expt(ready, transform = "log2"))
   }
   data <- as.data.frame(exprs(ready))
   libsize <- colSums(data)
@@ -335,7 +341,7 @@ choose_basic_dataset <- function(input, force=FALSE, ...) {
 #' }
 #' @export
 write_basic <- function(data, ...) {
-  result <- write_de_table(data, type="basic", ...)
+  result <- write_de_table(data, type = "basic", ...)
   return(result)
 }
 

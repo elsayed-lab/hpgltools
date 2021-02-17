@@ -20,8 +20,8 @@
 #'  kittytime = plot_histogram(df)
 #' }
 #' @export
-plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, adjust=1,
-                           fillcolor="darkgrey", color="black") {
+plot_histogram <- function(df, binwidth = NULL, log = FALSE, bins = 500, adjust = 1,
+                           fillcolor = "darkgrey", color = "black") {
   if (class(df) == "data.frame") {
     colnames(df) <- c("values")
   } else if (class(df) == "list") {
@@ -32,19 +32,19 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, adjust=1,
     colnames(df) <- c("values")
   }
   if (is.null(binwidth)) {
-    minval <- min(df, na.rm=TRUE)
-    maxval <- max(df, na.rm=TRUE)
+    minval <- min(df, na.rm = TRUE)
+    maxval <- max(df, na.rm = TRUE)
     binwidth <- (maxval - minval) / bins
   }
-  a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x="values")) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."),
-                            binwidth=binwidth,
-                            colour=color, fill=fillcolor, position="identity") +
-    ggplot2::geom_density(alpha=0.4, fill=fillcolor, adjust=adjust) +
-    ggplot2::geom_vline(ggplot2::aes_string(xintercept="mean(values, na.rm=TRUE)"),
-                        color=color, linetype="dashed", size=1) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
+  a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x = "values")) +
+    ggplot2::geom_histogram(ggplot2::aes_string(y = "..density.."),
+                            binwidth = binwidth,
+                            colour = color, fill = fillcolor, position = "identity") +
+    ggplot2::geom_density(alpha = 0.4, fill = fillcolor, adjust = adjust) +
+    ggplot2::geom_vline(ggplot2::aes_string(xintercept = "mean(values, na.rm = TRUE)"),
+                        color = color, linetype = "dashed", size = 1) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
   if (log) {
     log_histogram <- try(a_histogram +
                          ggplot2::scale_x_log10())
@@ -74,14 +74,14 @@ plot_histogram <- function(df, binwidth=NULL, log=FALSE, bins=500, adjust=1,
 #'  kittytime = plot_multihistogram(df)
 #' }
 #' @export
-plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, colors=NULL) {
+plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL, colors = NULL) {
   if (is.data.frame(data)) {
     df <- data
     columns <- colnames(df)
     summary_df <- summary(df)
     play_all <- data.frame()
     for (col in 1:length(colnames(df))) {
-      new_column <- data.frame(expression=df[, col], cond=colnames(df)[col])
+      new_column <- data.frame(expression = df[, col], cond = colnames(df)[col])
       play_all <- BiocGenerics::rbind(play_all, new_column)
     }
   } else if (is.list(data)) {
@@ -94,40 +94,40 @@ plot_multihistogram <- function(data, log=FALSE, binwidth=NULL, bins=NULL, color
   play_all[["expression"]] <- as.numeric(play_all[["expression"]])
   play_all[["cond"]] <- as.factor(play_all[["cond"]])
   play_cdf <- plyr::ddply(play_all, "cond",
-                          plyr::summarise, rating.mean=mean(expression, na.rm=TRUE))
+                          plyr::summarise, rating.mean = mean(expression, na.rm = TRUE))
   uncor_t <- stats::pairwise.t.test(play_all[["expression"]],
-                                    play_all[["cond"]], p.adjust="none")
+                                    play_all[["cond"]], p.adjust = "none")
   bon_t <- try(stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]],
-                                      p.adjust="bon", na.rm=TRUE))
+                                      p.adjust = "bon", na.rm = TRUE))
   if (is.null(bins) & is.null(binwidth)) {
-    ##minval <- min(play_all[["expression"]], na.rm=TRUE)
-    ##maxval <- max(play_all[["expression"]], na.rm=TRUE)
+    ##minval <- min(play_all[["expression"]], na.rm = TRUE)
+    ##maxval <- max(play_all[["expression"]], na.rm = TRUE)
     ##bins <- 500
     ##binwidth <- (maxval - minval) / bins
-    binwidth <- stats::density(play_all[["expression"]], na.rm=TRUE)[["bw"]]
+    binwidth <- stats::density(play_all[["expression"]], na.rm = TRUE)[["bw"]]
   } else if  (is.null(binwidth)) {
-    minval <- min(play_all[["expression"]], na.rm=TRUE)
-    maxval <- max(play_all[["expression"]], na.rm=TRUE)
+    minval <- min(play_all[["expression"]], na.rm = TRUE)
+    maxval <- max(play_all[["expression"]], na.rm = TRUE)
     binwidth <- (maxval - minval) / bins
   } else {
-    message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep="")
+    message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep = "")
   }
   multi <- ggplot2::ggplot(play_all,
-                           ggplot2::aes_string(x="expression", fill="cond")) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y="..density.."), binwidth=binwidth,
-                            alpha=0.4, position="identity") +
-    ggplot2::geom_density(alpha=0.5) +
-    ggplot2::geom_vline(data=play_cdf,
-                        ggplot2::aes_string(xintercept="rating.mean",  colour="cond"),
-                        linetype="dashed", size=0.75) +
+                           ggplot2::aes_string(x = "expression", fill = "cond")) +
+    ggplot2::geom_histogram(ggplot2::aes_string(y = "..density.."), binwidth = binwidth,
+                            alpha = 0.4, position = "identity") +
+    ggplot2::geom_density(alpha = 0.5) +
+    ggplot2::geom_vline(data = play_cdf,
+                        ggplot2::aes_string(xintercept = "rating.mean",  colour = "cond"),
+                        linetype = "dashed", size = 0.75) +
     ggplot2::xlab("Expression") +
     ggplot2::ylab("Observation likelihood") +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"))
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
   if (!is.null(colors)) {
     multi <- multi +
-      ggplot2::scale_fill_manual(values=colors) +
-      ggplot2::scale_color_manual(values=colors)
+      ggplot2::scale_fill_manual(values = colors) +
+      ggplot2::scale_color_manual(values = colors)
   }
   if (log) {
     logged <- try(multi + ggplot2::scale_x_log10())

@@ -1,5 +1,5 @@
 ## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
-## Then cast every column in it explicitly, and only then invoke ggplot(data=df ...)
+## Then cast every column in it explicitly, and only then invoke ggplot(data = df ...)
 
 ## If I see something like:
 ## 'In sample_data$mean = means : Coercing LHS to a list'
@@ -24,7 +24,7 @@
 #'   change.
 #' @param max_data Define the upper limit for the heuristic.
 #' @param min_data Define the lower limit for the heuristic.
-check_plot_scale <- function(data, scale=NULL, max_data=10000, min_data=10) {
+check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10) {
   if (max(data) > max_data & min(data) < min_data) {
     message("This data will benefit from being displayed on the log scale.")
     message("If this is not desired, set scale='raw'")
@@ -66,20 +66,20 @@ check_plot_scale <- function(data, scale=NULL, max_data=10000, min_data=10) {
 #'   nonetheless, options from knitr for htmlwidgets.
 #' @param ... Any remaining elipsis options are passed to ggplotly.
 #' @return The final output filename
-ggplt <- function(gg, filename="ggplot.html",
-                  selfcontained=TRUE, libdir=NULL, background="white",
-                  title=class(gg)[[1]], knitrOptions=list(), ...) {
+ggplt <- function(gg, filename = "ggplot.html",
+                  selfcontained = TRUE, libdir = NULL, background = "white",
+                  title = class(gg)[[1]], knitrOptions = list(), ...) {
   base <- basename(filename)
   dir <- dirname(filename)
   out <- plotly::ggplotly(gg,
                           ...)
   ##widget <- htmlwidgets::saveWidget(
-  ##                         widget=plotly::as_widget(out), file=base, selcontained=selfcontained,
-  ##                         libdir=libdir, background=background, title=title,
-  ##                         knitrOptions=knitrOptions)
+  ##                         widget = plotly::as_widget(out), file = base, selcontained = selfcontained,
+  ##                         libdir = libdir, background = background, title = title,
+  ##                         knitrOptions = knitrOptions)
   widget <- htmlwidgets::saveWidget(
-                           plotly::as_widget(out), base, selfcontained, libdir=libdir,
-                           background=background, title=title, knitrOptions=knitrOptions)
+                           plotly::as_widget(out), base, selfcontained, libdir = libdir,
+                           background = background, title = title, knitrOptions = knitrOptions)
   final <- base
   if (dir != ".") {
     final <- file.path(dir, base)
@@ -131,16 +131,16 @@ ggplt <- function(gg, filename="ggplot.html",
 #' \dontrun{
 #'  toomany_plots <- graph_metrics(expt)
 #'  toomany_plots$pcaplot
-#'  norm <- normalize_expt(expt, convert="cpm", batch=TRUE, filter_low=TRUE,
-#'                         transform="log2", norm="rle")
-#'  holy_asscrackers <- graph_metrics(norm, qq=TRUE, ma=TRUE)
+#'  norm <- normalize_expt(expt, convert = "cpm", batch = TRUE, filter_low = TRUE,
+#'                         transform = "log2", norm = "rle")
+#'  holy_asscrackers <- graph_metrics(norm, qq = TRUE, ma = TRUE)
 #' }
 #' @export
-graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
-                          title_suffix=NULL, qq=FALSE, ma=FALSE, gene_heat=FALSE,
+graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
+                          title_suffix = NULL, qq = FALSE, ma = FALSE, gene_heat = FALSE,
                           ...) {
   arglist <- list(...)
-  if (!exists("expt", inherits=FALSE)) {
+  if (!exists("expt", inherits = FALSE)) {
     stop("The input data does not exist.")
   }
   dev_length <- length(dev.list())
@@ -149,7 +149,7 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
             " plotting devices open, this might be in error.")
   }
   ## First gather the necessary data for the various plots.
-  old_options <- options(scipen=10)
+  old_options <- options(scipen = 10)
   nonzero_title <- "Non zero genes"
   libsize_title <- "Library sizes"
   boxplot_title <- "Boxplot"
@@ -182,80 +182,80 @@ graph_metrics <- function(expt, cormethod="pearson", distmethod="euclidean",
   ## I am putting the ... arguments on a separate line so that I can check that
   ## each of these functions is working properly in an interactive session.
   message("Graphing number of non-zero genes with respect to CPM by library.")
-  nonzero <- try(plot_nonzero(expt, title=nonzero_title,
+  nonzero <- try(plot_nonzero(expt, title = nonzero_title,
                               ...))
   if ("try-error" %in% class(nonzero)) {
     nonzero <- list()
   }
   message("Graphing library sizes.")
-  libsize <- try(plot_libsize(expt, title=libsize_title,
+  libsize <- try(plot_libsize(expt, title = libsize_title,
                               ...))
   if ("try-error" %in% class(libsize)) {
     libsize <- list()
   }
   message("Graphing a boxplot.")
-  boxplot <- try(plot_boxplot(expt, title=boxplot_title,
+  boxplot <- try(plot_boxplot(expt, title = boxplot_title,
                               ...))
   if ("try-error" %in% class(boxplot)) {
     boxplot <- NULL
   }
   message("Graphing a correlation heatmap.")
-  corheat <- try(plot_corheat(expt, method=cormethod, title=corheat_title,
+  corheat <- try(plot_corheat(expt, method = cormethod, title = corheat_title,
                               ...))
   if ("try-error" %in% class(corheat)) {
     corheat <- list()
   }
   message("Graphing a standard median correlation.")
-  smc <- try(plot_sm(expt, method=cormethod, title=smc_title,
+  smc <- try(plot_sm(expt, method = cormethod, title = smc_title,
                      ...))
   if ("try-error" %in% class(smc)) {
     smc <- NULL
   }
   message("Graphing a distance heatmap.")
-  disheat <- try(plot_disheat(expt, method=distmethod, title=disheat_title,
+  disheat <- try(plot_disheat(expt, method = distmethod, title = disheat_title,
                               ...))
   if ("try-error" %in% class(disheat)) {
     disheat <- list()
   }
   message("Graphing a standard median distance.")
-  smd <- try(plot_sm(expt, method=distmethod, title=smd_title,
+  smd <- try(plot_sm(expt, method = distmethod, title = smd_title,
                      ...))
   if ("try-error" %in% class(smd)) {
     smd <- NULL
   }
   message("Graphing a PCA plot.")
-  pca <- try(plot_pca(expt, title=pca_title,
+  pca <- try(plot_pca(expt, title = pca_title,
                       ...))
   if ("try-error" %in% class(pca)) {
     pca <- list()
   }
   message("Graphing a T-SNE plot.")
-  tsne <- try(plot_tsne(expt, title=tsne_title,
+  tsne <- try(plot_tsne(expt, title = tsne_title,
                         ...))
   if ("try-error" %in% class(tsne)) {
     tsne <- list()
   }
   message("Plotting a density plot.")
-  density <- try(plot_density(expt, title=dens_title,
+  density <- try(plot_density(expt, title = dens_title,
                               ...))
   if ("try-error" %in% class(density)) {
     density <- list()
   }
   message("Plotting a CV plot.")
-  cv <- try(plot_variance_coefficients(expt, title=dens_title,
+  cv <- try(plot_variance_coefficients(expt, title = dens_title,
                                        ...))
   if ("try-error" %in% class(cv)) {
     cv <- list()
   }
   message("Plotting the representation of the top-n genes.")
-  topn <- try(plot_topn(expt, title=topn_title,
+  topn <- try(plot_topn(expt, title = topn_title,
                         ...))
   if ("try-error" %in% class(topn)) {
     topn <- list()
   }
-  tmp_expt <- sm(normalize_expt(expt, filter=TRUE))
+  tmp_expt <- sm(normalize_expt(expt, filter = TRUE))
   message("Plotting the expression of the top-n PC loaded genes.")
-  pcload <- try(plot_pcload(tmp_expt, title=pc_loading_title))
+  pcload <- try(plot_pcload(tmp_expt, title = pc_loading_title))
   if ("try-error" %in% class(pcload)) {
     pcload <- list()
   }
@@ -372,7 +372,7 @@ plot_legend <- function(stuff) {
 #' @param layout Set the layout specifically
 #' @return a multiplot!
 #' @export
-plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
+plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
   numPlots <- length(plots)
@@ -385,7 +385,7 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
     ## ncol: Number of columns of plots
     ## nrow: Number of rows needed, calculated from # of cols
     layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
-                     ncol=cols, nrow=ceiling(numPlots / cols))
+                     ncol = cols, nrow = ceiling(numPlots / cols))
   }
 
   if (numPlots==1) {
@@ -394,13 +394,13 @@ plot_multiplot <- function(plots, file, cols=NULL, layout=NULL) {
     ## Set up the page
     grid::grid.newpage()
     grid::pushViewport(grid::viewport(
-                               layout=grid::grid.layout(nrow(layout), ncol(layout))))
+                               layout = grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
     for (i in 1:numPlots) {
       ## Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind=TRUE))
-      print(plots[[i]], vp=grid::viewport(layout.pos.row=matchidx[["row"]],
-                                          layout.pos.col=matchidx[["col"]]))
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx[["row"]],
+                                          layout.pos.col = matchidx[["col"]]))
     }
   }
 }

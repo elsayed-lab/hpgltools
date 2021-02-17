@@ -26,7 +26,7 @@ conditions/batches of the experiment.  Use this to make that easier.
 }
 \examples{
 \dontrun{
- expt = set_expt_factors(big_expt, condition="column", batch="another_column")
+ expt = set_expt_factors(big_expt, condition = "column", batch = "another_column")
 }
 }
 \seealso{

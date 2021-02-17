@@ -9,9 +9,9 @@ rank_order_scatter(
   second = NULL,
   first_type = "limma",
   second_type = "limma",
-  first_table = 1,
+  first_table = NULL,
   alpha = 0.5,
-  second_table = 2,
+  second_table = NULL,
   first_column = "logFC",
   second_column = "logFC",
   first_p_col = "adj.P.Val",
@@ -62,6 +62,6 @@ a list with a plot and a couple summary statistics.
 }
 \description{
 Steve Christensen has some neat plots showing the relationship between two
-tables.  I though they were super-cool, so I co-opted the idea in this
+tables.  I thought they were cool, so I co-opted the idea in this
 function.
 }

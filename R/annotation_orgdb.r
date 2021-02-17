@@ -1,3 +1,7 @@
+## annotation_orgdb.r: Extract annotation from orgdb packages.  OrgDB is the
+## standard SQLite based method for packaging annotation data in R.  These
+## functions seek to make extracting information of interest from them easier.
+
 #' Load organism annotation data from an orgdb sqlite package.
 #'
 #' Creates a dataframe gene and transcript information for a given set of gene
@@ -30,19 +34,19 @@
 #'  hs_orgdb_annot <- load_orgdb_annotations()
 #'  summary(hs_orgdb_annot$genes)
 #' @export
-load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
-                                   keytype="ensembl", strand_column="cdsstrand",
-                                   start_column="cdsstart", end_column="cdsend",
-                                   chromosome_column="cdschrom",
-                                   type_column="gene_type", name_column="cdsname",
-                                   fields=NULL, sum_exon_widths=FALSE) {
+load_orgdb_annotations <- function(orgdb = NULL, gene_ids = NULL, include_go = FALSE,
+                                   keytype = "ensembl", strand_column = "cdsstrand",
+                                   start_column = "cdsstart", end_column = "cdsend",
+                                   chromosome_column = "cdschrom",
+                                   type_column = "gene_type", name_column = "cdsname",
+                                   fields = NULL, sum_exon_widths = FALSE) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   } else if (class(orgdb) == "character") {
     org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   }
   keytype <- toupper(keytype)
   strand_column <- toupper(strand_column)
@@ -57,7 +61,7 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
   chosen_fields <- c()
 
   if (! name_column %in% all_fields) {
-    a_name <- grepl(pattern="NAME", x=all_fields)
+    a_name <- grepl(pattern = "NAME", x = all_fields)
     new_name_column <- all_fields[a_name][1]
     message("Unable to find ", name_column, ", setting it to ", new_name_column, ".")
     name_column <- new_name_column
@@ -108,9 +112,9 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
 
   ## Gene IDs
   if (is.null(gene_ids)) {
-    gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype))
+    gene_ids <- try(AnnotationDbi::keys(orgdb, keytype = keytype))
     if (class(gene_ids) == "try-error") {
-      if (grepl(x=gene_ids[[1]], pattern="Invalid keytype")) {
+      if (grepl(x = gene_ids[[1]], pattern = "Invalid keytype")) {
         valid_keytypes <- AnnotationDbi::keytypes(orgdb)
         stop("Try using valid keytypes: ", toString(valid_keytypes))
       } else {
@@ -123,10 +127,10 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
   ## Note querying by "GENEID" will exclude noncoding RNAs
   message("Attempting to select: ", toString(chosen_fields))
   gene_info <- try(AnnotationDbi::select(
-                                    x=orgdb,
-                                    keys=gene_ids,
-                                    keytype=keytype,
-                                    columns=chosen_fields))
+                                    x = orgdb,
+                                    keys = gene_ids,
+                                    keytype = keytype,
+                                    columns = chosen_fields))
   if (class(gene_info) == "try-error") {
     message("Select statement failed, this is commonly because there is no join",
             " between the transcript table and others.")
@@ -138,19 +142,19 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
 
   ## Compute total transcript lengths (for all exons)
   ## https://www.biostars.org/p/83901/
-  gene_exons <- try(GenomicFeatures::exonsBy(orgdb, by="gene"), silent=TRUE)
+  gene_exons <- try(GenomicFeatures::exonsBy(orgdb, by = "gene"), silent = TRUE)
   if (class(gene_exons) == "try-error") {
     gene_exons <- NULL
   }
-  transcripts <- try(GenomicFeatures::transcripts(orgdb), silent=TRUE)
+  transcripts <- try(GenomicFeatures::transcripts(orgdb), silent = TRUE)
   if (class(transcripts) == "try-error") {
     transcripts <- NULL
   }
-  fivep_utr <- try(GenomicFeatures::fiveUTRsByTranscript(orgdb, use.names=TRUE), silent=TRUE)
+  fivep_utr <- try(GenomicFeatures::fiveUTRsByTranscript(orgdb, use.names = TRUE), silent = TRUE)
   if (class(fivep_utr) == "try-error") {
     fivep_utr <- NULL
   }
-  threep_utr <- try(GenomicFeatures::threeUTRsByTranscript(orgdb, use.names=TRUE), silent=TRUE)
+  threep_utr <- try(GenomicFeatures::threeUTRsByTranscript(orgdb, use.names = TRUE), silent = TRUE)
   if (class(threep_utr) == "try-error") {
     threep_utr <- NULL
   }
@@ -161,11 +165,11 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
       sum(BiocGenerics::width(GenomicRanges::reduce(x)))
     })
     message("Adding exon lengths to the gene_exons.")
-    lengths <- as.data.frame(unlist(lengths), stringsAsFactors=FALSE)
+    lengths <- as.data.frame(unlist(lengths), stringsAsFactors = FALSE)
     colnames(lengths) <- "transcript_length"
-    gene_info <- merge(gene_info, lengths, by.x=keytype, by.y="row.names")
+    gene_info <- merge(gene_info, lengths, by.x = keytype, by.y = "row.names")
   }
-  rownames(gene_info) <- make.names(gene_info[[1]], unique=TRUE)
+  rownames(gene_info) <- make.names(gene_info[[1]], unique = TRUE)
 
   retlist <- list(
     "genes" = gene_info,
@@ -195,37 +199,37 @@ load_orgdb_annotations <- function(orgdb=NULL, gene_ids=NULL, include_go=FALSE,
 #' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
 #'  \code{\link[AnnotationDbi]{select}}
 #' @examples
-#'  drosophila_orgdb_go <- load_orgdb_go(orgdb="org.Dm.eg.db")
+#'  drosophila_orgdb_go <- load_orgdb_go(orgdb = "org.Dm.eg.db")
 #'  head(drosophila_orgdb_go)
 #' @author I think Keith provided the initial implementation of this, but atb
 #'  messed with it pretty extensively.
 #' @export
-load_orgdb_go <- function(orgdb=NULL, gene_ids=NULL, keytype="ensembl",
-                          columns=c("go", "goall", "goid")) {
+load_orgdb_go <- function(orgdb = NULL, gene_ids = NULL, keytype = "ensembl",
+                          columns = c("go", "goall", "goid")) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   } else if ("character" %in% class(orgdb)) {
     org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   }
   tt <- sm(requireNamespace("GO.db"))
   keytype <- toupper(keytype)
   columns <- toupper(columns)
   if (is.null(gene_ids)) {
-    gene_ids <- try(AnnotationDbi::keys(orgdb, keytype=keytype), silent=TRUE)
+    gene_ids <- try(AnnotationDbi::keys(orgdb, keytype = keytype), silent = TRUE)
     if (class(gene_ids) == "try-error") {
       avail_types <- AnnotationDbi::keytypes(orgdb)
       if ("GID" %in% avail_types) {
         message("The chosen keytype was not available.  Using 'GID'.")
         keytype <- "GID"
-        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype = keytype)
       } else {
         keytype <- avail_types[[1]]
         message("Neither the chosen keytype, nor 'GID' was available.
 The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
-        gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+        gene_ids <- AnnotationDbi::keys(orgdb, keytype = keytype)
       }
     }
   }
@@ -247,12 +251,12 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
     stop("Did not find any of: ", toString(columns),
          " in the set of available columns: ", toString(available_columns))
   }
-  go_terms <- try(sm(AnnotationDbi::select(x=orgdb,
-                                           keys=gene_ids,
-                                           keytype=keytype,
-                                           columns=chosen_columns)))
+  go_terms <- try(sm(AnnotationDbi::select(x = orgdb,
+                                           keys = gene_ids,
+                                           keytype = keytype,
+                                           columns = chosen_columns)))
   if (class(go_terms) == "try-error") {
-    if (grep(pattern="Invalid keytype", x=go_terms[[1]])) {
+    if (grep(pattern = "Invalid keytype", x = go_terms[[1]])) {
       message("Here are the possible keytypes:")
       message(toString(AnnotationDbi::keytypes(orgdb)))
       stop()
@@ -262,10 +266,10 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
   go_terms <- go_terms[!duplicated(go_terms), ]
   if ("GO" %in% chosen_columns) {
     go_terms <- go_terms[!is.na(go_terms[["GO"]]), ]
-    go_term_names <- sm(AnnotationDbi::select(x=GO.db::GO.db,
-                                              keys=unique(go_terms[["GO"]]),
-                                              columns=c("TERM", "GOID", "ONTOLOGY")))
-    go_terms <- merge(go_terms, go_term_names, by.x="GO", by.y="GOID")
+    go_term_names <- sm(AnnotationDbi::select(x = GO.db::GO.db,
+                                              keys = unique(go_terms[["GO"]]),
+                                              columns = c("TERM", "GOID", "ONTOLOGY")))
+    go_terms <- merge(go_terms, go_term_names, by.x = "GO", by.y = "GOID")
   }
 
   ## Remove redundant annotations which differ only in source/evidence
@@ -289,18 +293,18 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
 #' @seealso \pkg{AnnotationDbi}
 #'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
 #' @examples
-#'  dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto="ensembl", keytype="unigene")
+#'  dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto = "ensembl", keytype = "unigene")
 #'  head(dm_unigene_to_ensembl)
 #' @author Keith Hughitt with changes by atb.
 #' @export
-map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto="ensembl", keytype="geneid") {
+map_orgdb_ids <- function(orgdb, gene_ids = NULL, mapto = "ensembl", keytype = "geneid") {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
     org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   } else if ("character" %in% class(orgdb)) {
     org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
-    eval(parse(text=org_pkgstring))
+    eval(parse(text = org_pkgstring))
   }
   mapto <- toupper(mapto)
   keytype <- toupper(keytype)
@@ -330,11 +334,11 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto="ensembl", keytype="geneid
 
   ## If no gene ids were chosen, grab them all.
   if (is.null(gene_ids)) {
-    gene_ids <- AnnotationDbi::keys(orgdb, keytype=keytype)
+    gene_ids <- AnnotationDbi::keys(orgdb, keytype = keytype)
   }
   ## Gene info
   ## Note querying by "GENEID" will exclude noncoding RNAs
-  gene_info <- AnnotationDbi::select(x=orgdb, keytype=keytype, keys=gene_ids, columns=mapto)
+  gene_info <- AnnotationDbi::select(x = orgdb, keytype = keytype, keys = gene_ids, columns = mapto)
   colnames(gene_info) <- tolower(colnames(gene_info))
   return(gene_info)
 }
@@ -346,29 +350,35 @@ map_orgdb_ids <- function(orgdb, gene_ids=NULL, mapto="ensembl", keytype="geneid
 #'
 #' @param ids Set of gene IDs to seek.
 #' @param orgdb Orgdb instance to iterate through.
+#' @param verbose talky talk
 #' @return Likely keytype which provides the desired IDs.
 #' @examples
 #'  ids <- c("Dm.9", "Dm.2294", "Dm.4971")
 #'  keytype_guess <- guess_orgdb_keytype(ids, orgdb)
 #'  keytype_guess
 #' @export
-guess_orgdb_keytype <- function(ids, orgdb) {
+guess_orgdb_keytype <- function(ids, orgdb = NULL, verbose = FALSE) {
   if (is.null(orgdb)) {
     message("Assuming Homo.sapiens.")
-    org_pkgstring <- "library(Homo.sapiens); orgdb <- Homo.sapiens"
-    eval(parse(text=org_pkgstring))
+    lib <- do.call(what = "library", args = list("package" = "Homo.sapiens", "character.only" = TRUE))
+    orgdb <- get0("Homo.sapiens")
   } else if ("character" %in% class(orgdb)) {
-    org_pkgstring <- glue("library({orgdb}); orgdb <- {orgdb}")
-    eval(parse(text=org_pkgstring))
+    lib <- do.call(what = "library", args = list("package" = orgdb, "character.only" = TRUE))
+    orgdb <- get0(orgdb)
   }
   found_ids <- 0
   current_type <- NULL
   possible_keytypes <- AnnotationDbi::keytypes(orgdb)
   for (k in 1:length(possible_keytypes)) {
     type <- possible_keytypes[k]
-    possible_keys <- AnnotationDbi::keys(x=orgdb, keytype=type)
+    possible_keys <- try(AnnotationDbi::keys(x = orgdb, keytype = type), silent = TRUE)
+    if (class(possible_keys)[1] == "try-error") {
+      possible_keys <- ""
+    }
     this_type_found <- sum(ids %in% possible_keys)
-    ## message("Keytype: ", type, " has ", this_type_found, " keys.")
+    if (isTRUE(verbose)) {
+      message("Keytype: ", type, " has ", this_type_found, " keys.")
+    }
     if (this_type_found == length(ids)) {
       return(type)
     } else if (this_type_found > found_ids) {
@@ -400,27 +410,27 @@ guess_orgdb_keytype <- function(ids, orgdb) {
 #' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
 #' @examples
 #' \dontrun{
-#'  org <- mytaxIdToOrgDb(species="Leishmania", type="TxDb")
+#'  org <- mytaxIdToOrgDb(species = "Leishmania", type = "TxDb")
 #' }
 #' @export
-orgdb_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
+orgdb_from_ah <- function(ahid = NULL, title = NULL, species = NULL, type = "OrgDb") {
   ## Other available types:
   tt <- sm(loadNamespace("AnnotationHub"))
   ah <- sm(AnnotationHub::AnnotationHub())
   message("Available types: \n", toString(levels(as.factor(ah$rdataclass))))
 
   if (!is.null(type)) {
-    ah <- AnnotationHub::query(x=ah, pattern=type)
+    ah <- AnnotationHub::query(x = ah, pattern = type)
   }
   if (is.null(title) & is.null(species) & is.null(ahid)) {
     message("Going to attempt to find a human database.  I hope this is what you want!")
-    hits <- grepl(pattern="Hs\\.eg\\.db", x=ah$title)
+    hits <- grepl(pattern = "Hs\\.eg\\.db", x = ah$title)
     ahid <- names(ah)[hits]
   } else if (is.null(ahid) & is.null(title) & is.null(species)) {
     ## Then we got a species
     possible <- ah$species
     titles <- ah$title
-    hits_idx <- grepl(pattern=species, x=possible)
+    hits_idx <- grepl(pattern = species, x = possible)
     first_true <- which.max(hits_idx)
     first_true_name <- titles[first_true]
     hits <- names(ah)[hits_idx]
@@ -431,7 +441,7 @@ orgdb_from_ah <- function(ahid=NULL, title=NULL, species=NULL, type="OrgDb") {
   } else if (is.null(ahid) & is.null(species)) {
     ## We got a title
     possible <- ah$title
-    hits_idx <- grepl(pattern=title, x=possible)
+    hits_idx <- grepl(pattern = title, x = possible)
     first_true <- which.max(hits_idx)
     first_true_name <- possible[first_true]
     hits <- names(ah)[hits_idx]

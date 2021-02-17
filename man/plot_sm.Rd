@@ -54,7 +54,7 @@ no longer actually a dotplot, but a point plot, but who is counting?
 }
 \examples{
 \dontrun{
- smc_plot = hpgl_smc(expt=expt)
+ smc_plot = hpgl_smc(expt = expt)
 }
 }
 \seealso{

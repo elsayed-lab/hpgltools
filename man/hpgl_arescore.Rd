@@ -22,21 +22,21 @@ hpgl_arescore(
 
 \item{basal}{I dunno.}
 
-\item{overlapping}{default=1.5}
+\item{overlapping}{default = 1.5}
 
-\item{d1.3}{default=0.75  These parameter names are so stupid, lets be realistic}
+\item{d1.3}{default = 0.75  These parameter names are so stupid, lets be realistic}
 
-\item{d4.6}{default=0.4}
+\item{d4.6}{default = 0.4}
 
-\item{d7.9}{default=0.2}
+\item{d7.9}{default = 0.2}
 
-\item{within.AU}{default=0.3}
+\item{within.AU}{default = 0.3}
 
-\item{aub.min.length}{default=10}
+\item{aub.min.length}{default = 10}
 
-\item{aub.p.to.start}{default=0.8}
+\item{aub.p.to.start}{default = 0.8}
 
-\item{aub.p.to.end}{default=0.55}
+\item{aub.p.to.end}{default = 0.55}
 }
 \value{
 a DataFrame of scores
@@ -59,12 +59,12 @@ parameters or at least make them more transparent.
  ## unfortunate -- but the logic for testing remains the same.
  are_candidates <- hpgl_arescore(genome)
  utr_genes <- subset(lmajor_annotations, type == 'gene')
- threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
-                                  ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
-                                  strand=Rle(utr_genes[,5]),
-                                  name=Rle(utr_genes[,10]))
+ threep <- GenomicRanges::GRanges(seqnames = Rle(utr_genes[,1]),
+                                  ranges = IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+                                  strand = Rle(utr_genes[,5]),
+                                  name = Rle(utr_genes[,10]))
  threep_seqstrings <- Biostrings::getSeq(lm, threep)
- are_test <- hpgltools::hpgl_arescore(x=threep_seqstrings)
+ are_test <- hpgltools::hpgl_arescore(x = threep_seqstrings)
  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 }
 }

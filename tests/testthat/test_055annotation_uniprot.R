@@ -9,8 +9,8 @@ context("055annotation_uniprot.R:
 website_up <- TRUE
 ## download_uniprot_proteome()
 testing <- try(download_uniprot_proteome(
-  species="Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)",
-  first=TRUE))
+  species = "Mycobacterium tuberculosis (strain ATCC 25618 / H37Rv)",
+  first = TRUE))
 if (class(testing)[1] == "try-error") {
   website_up <- FALSE
 }
@@ -25,7 +25,7 @@ if (isTRUE(website_up)) {
   })
 
   ## load_uniprot_annotations()
-  testing <- load_uniprot_annotations(file=expected)
+  testing <- load_uniprot_annotations(file = expected)
   expected <- c(3993, 76)
   actual <- dim(testing)
   ## 0304
@@ -36,5 +36,5 @@ if (isTRUE(website_up)) {
 }
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 055annotation_uniprot.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 055annotation_uniprot.R in ", elapsed,  " seconds.")

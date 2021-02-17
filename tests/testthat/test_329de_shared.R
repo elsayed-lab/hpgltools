@@ -5,26 +5,26 @@ context("29de_shared.R: Do the combined differential expression searches work?
   1234567890123456789012345678901234567890123456789012345678901\n")
 
 pasilla <- new.env()
-load("pasilla.rda", envir=pasilla)
+load("pasilla.rda", envir = pasilla)
 pasilla_expt <- pasilla[["expt"]]
 deseq <- new.env()
-load("324_de_deseq.rda", envir=deseq)
+load("324_de_deseq.rda", envir = deseq)
 edger <- new.env()
-load("326_de_edger.rda", envir=edger)
+load("326_de_edger.rda", envir = edger)
 limma <- new.env()
-load("320_de_limma.rda", envir=limma)
+load("320_de_limma.rda", envir = limma)
 basic <- new.env()
-load("327_de_basic.rda", envir=basic)
+load("327_de_basic.rda", envir = basic)
 
 ## The following lines should not be needed any longer.
-normalized_expt <- normalize_expt(pasilla_expt, transform="log2", norm="quant",
-                                  convert="cbcbcpm", filter="cbcb", thresh=1)
+normalized_expt <- normalize_expt(pasilla_expt, transform = "log2", norm = "quant",
+                                  convert = "cbcbcpm", filter = "cbcb", thresh = 1)
 
 ## Interestingly, doParallel does not work when run from packrat.
 test_keepers <- list("treatment" = c("treated", "untreated"))
 hpgl_all <- all_pairwise(pasilla_expt,
-                         combined_excel="excel_test.xlsx",
-                         keepers=test_keepers)
+                         combined_excel = "excel_test.xlsx",
+                         keepers = test_keepers)
 
 combined_excel <- hpgl_all[["combined"]]
 ## 01
@@ -32,9 +32,9 @@ test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("excel_test.xlsx"))
 })
 
-hpgl_sva_result <- all_pairwise(pasilla_expt, model_batch="sva", which_voom="limma",
-                                limma_method="robust", edger_method="long",
-                                edger_test="qlr")
+hpgl_sva_result <- all_pairwise(pasilla_expt, model_batch = "sva", which_voom = "limma",
+                                limma_method = "robust", edger_method = "long",
+                                edger_test = "qlr")
 
 expected <- deseq[["hpgl_deseq"]][["all_tables"]][["untreated_vs_treated"]]
 table_order <- rownames(expected)
@@ -102,7 +102,7 @@ test_that("Are the comparisons between DE tools sufficiently similar? (edger/bas
 test_that("Are the comparisons between DE tools sufficiently similar? (deseq/basic)", {
     expect_gt(db, 0.92)
 })
-combined_table <- combine_de_tables(hpgl_all, excel=FALSE)
+combined_table <- combine_de_tables(hpgl_all, excel = FALSE)
 
 expected_annotations <- c(
   "ensembltranscriptid", "ensemblgeneid",
@@ -133,8 +133,8 @@ test_that("Has the untreated/treated combined table been filled in?", {
 })
 
 sig_tables <- extract_significant_genes(combined_table,
-                                        according_to="all",
-                                        excel=FALSE)
+                                        according_to = "all",
+                                        excel = FALSE)
 expected <- 123
 actual <- nrow(sig_tables[["limma"]][["ups"]][[1]])
 ## 13
@@ -197,14 +197,14 @@ expected <- c(11.02373, 10.91238, 10.80103, 10.68968, 10.57833, 10.46698)
 actual <- as.numeric(head(funkytown[["up_data"]][[1]]))
 ## 21
 test_that("Can we monitor changing significance (up_fc)?", {
-    expect_equal(expected, actual, tolerance=0.02)
+    expect_equal(expected, actual, tolerance = 0.02)
 })
 
 expected <- c(-7.581495, -7.504914, -7.428333, -7.351752, -7.275172, -7.198591)
 actual <- as.numeric(head(funkytown[["down_data"]][[1]]))
 ## 22
 test_that("Can we monitor changing significance (up_fc)?", {
-    expect_equal(expected, actual, tolerance=0.02)
+    expect_equal(expected, actual, tolerance = 0.02)
 })
 
 ## We previously checked that we can successfully combine tables, let us now ensure that plots get created etc.
@@ -241,7 +241,7 @@ test_that("Do we get expected columns from the excel sheet?", {
 
 ## Test that we can extract the significant genes and get pretty graphs
 significant_excel <- extract_significant_genes(combined_excel,
-                                               excel="excel_test_sig.xlsx")
+                                               excel = "excel_test_sig.xlsx")
 ## 27
 test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("excel_test_sig.xlsx"))
@@ -307,8 +307,8 @@ test_that("Are the significance bar plots generated? (limma)",  {
 ## Check to make sure that if we specify a direction for the comparison, that it is maintained.
 forward_keepers <- list("treatment" = c("treated", "untreated"))
 reverse_keepers <- list("treatment" = c("untreated", "treated"))
-reverse_combined_excel <- combine_de_tables(hpgl_all, keepers=reverse_keepers, excel=FALSE)
-forward_combined_excel <- combine_de_tables(hpgl_all, keepers=forward_keepers, excel=FALSE)
+reverse_combined_excel <- combine_de_tables(hpgl_all, keepers = reverse_keepers, excel = FALSE)
+forward_combined_excel <- combine_de_tables(hpgl_all, keepers = forward_keepers, excel = FALSE)
 forward_fold_changes <- forward_combined_excel[["data"]][[table]][["limma_logfc"]]
 expected <- sort(forward_fold_changes)
 actual <- sort(reverse_combined_excel[["data"]][[table]][["limma_logfc"]] * -1)
@@ -360,8 +360,8 @@ test_that("When we reverse a combined_de_tables(), we get appropriate p-values? 
 })
 
 ## Make sure that MA plots from combined tables are putting the logFCs in the right direction
-forward_plot <- extract_de_plots(forward_combined_excel, type="limma")[["ma"]]
-reverse_plot <- extract_de_plots(reverse_combined_excel, type="limma")[["ma"]]
+forward_plot <- extract_de_plots(forward_combined_excel, type = "limma")[["ma"]]
+reverse_plot <- extract_de_plots(reverse_combined_excel, type = "limma")[["ma"]]
 expected <- sort(forward_plot[["df"]][["logfc"]])
 actual <- sort(reverse_plot[["df"]][["logfc"]] * -1)
 ## 43
@@ -370,7 +370,7 @@ test_that("Plotting an MA plot from a combined DE table provides logFCs in the c
 })
 
 ## See that we can compare different analysis types
-combined_sva <- combine_de_tables(hpgl_sva_result, excel=NULL, keepers=test_keepers)
+combined_sva <- combine_de_tables(hpgl_sva_result, excel = NULL, keepers = test_keepers)
 sva_batch_test <- compare_de_results(combined_excel, combined_sva)
 expected <- 0.71
 actual <- sva_batch_test[["result"]][["limma"]][[table]][["logfc"]]
@@ -394,7 +394,7 @@ test_that("Do edger with combat and sva agree vis a vis logfc?", {
 })
 
 ## See if the intersection between limma, deseq, and edger is decent.
-test_intersect <- intersect_significant(combined_sva, excel=NULL)
+test_intersect <- intersect_significant(combined_sva, excel = NULL)
 expected <- 98
 actual <- nrow(test_intersect[["ups"]][[table]][["data"]][["all"]])
 ## 47
@@ -473,5 +473,5 @@ test_that("Do all methods have some genes in common? (down)", {
 })
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 29de_shared.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 29de_shared.R in ", elapsed,  " seconds.")

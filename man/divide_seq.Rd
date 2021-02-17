@@ -20,7 +20,7 @@ It is essentially fancy pants rpkm.
 }
 \examples{
 \dontrun{
- cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+ cptam <- divide_seq(cont_table, fasta = "mgas_5005.fasta.xz", gff = "mgas_5005.gff.xz")
 }
 }
 \seealso{

@@ -37,7 +37,7 @@ simple_xcell(
 }
 \value{
 Small list providing the output from xCell, the set of signatures,
-  and heatmap.
+ and heatmap.
 }
 \description{
 I initially thought xCell might prove the best tool/method for exploring cell

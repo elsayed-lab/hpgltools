@@ -11,27 +11,27 @@
 #' @param height  How high?
 #' @param res  The chosen resolution.
 #' @param ...  Arguments passed to the image plotters.
-#' @return a png/svg/eps/ps/pdf with height=width=9 inches and a high resolution
+#' @return a png/svg/eps/ps/pdf with height = width=9 inches and a high resolution
 #' @export
-pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
+pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   ext <- tools::file_ext(file)
   start_dev <- dev.list()
   result <- NULL
   if (ext == "png") {
-    result <- png(filename=file, width=width, height=height, units="in", res=res, ...)
+    result <- png(filename = file, width = width, height = height, units = "in", res = res, ...)
   } else if (ext == "svg") {
-    result <- svg(filename=file, ...)
+    result <- svg(filename = file, ...)
   } else if (ext == "ps") {
-    result <- postscript(file=file, width=width, height=height, ...)
+    result <- postscript(file = file, width = width, height = height, ...)
   } else if (ext == "eps") {
-    result <- cairo_ps(filename=file, width=width, height=height, ...)
+    result <- cairo_ps(filename = file, width = width, height = height, ...)
   } else if (ext == "pdf") {
-    result <- cairo_pdf(filename=file, ...)
+    result <- cairo_pdf(filename = file, ...)
   } else if (ext == "tif" | ext == "tiff") {
-    result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
+    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
   } else {
     message("Defaulting to tiff.")
-    result <- tiff(filename=file, width=width, height=height, units="in", res=res, ...)
+    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
   }
   now_dev <- dev.list()
   new_dev <- now_dev[length(now_dev)]
@@ -54,7 +54,7 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
     } else {
       plot(image)
     }
-    dev.off(which=new_dev)
+    dev.off(which = new_dev)
   }
 
   return(image)
@@ -75,9 +75,9 @@ pp <- function(file, image=NULL, width=9, height=9, res=180, ...) {
 #' @param center_a   The position of the center of 'a'.
 #' @return something which I don't yet know.
 #' @export
-plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
-                            revolutions=158, increments=3160, center_a=list(x=0, y=0)) {
-  center_b_start <- list(x=0, y=center_a$y + radius_a + radius_b)
+plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
+                            revolutions = 158, increments = 3160, center_a = list(x = 0, y = 0)) {
+  center_b_start <- list(x = 0, y = center_a$y + radius_a + radius_b)
   angle_a <- seq(0, 2 * pi * revolutions, revolutions * increments)
   circum_a <- 2 * pi * radius_a
   circum_b <- 2 * pi * radius_b
@@ -97,22 +97,22 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
   point_c[["y"]] <- center_b[["y"]] + opposite
   points <- data.frame(point_c)
   points[["counter"]] <- seq(1, nrow(points))
-  spiro <- ggplot2::ggplot(data=points, ggplot2::aes_string(x="x", y="y")) +
-    ggplot2::geom_point(ggplot2::aes_string(colour="counter"), size=0.5) +
+  spiro <- ggplot2::ggplot(data = points, ggplot2::aes_string(x = "x", y = "y")) +
+    ggplot2::geom_point(ggplot2::aes_string(colour = "counter"), size = 0.5) +
     ggplot2::theme_bw() +
-    ggplot2::scale_colour_gradientn(colours=grDevices::rainbow(4)) +
-    ggplot2::theme(axis.line=ggplot2::element_blank(),
-                   axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(),
-                   axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(),
-                   axis.title.y=ggplot2::element_blank(),
-                   legend.position="none",
-                   panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(),
-                   panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(),
-                   plot.background=ggplot2::element_blank())
+    ggplot2::scale_colour_gradientn(colours = grDevices::rainbow(4)) +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank(),
+                   axis.title.x = ggplot2::element_blank(),
+                   axis.title.y = ggplot2::element_blank(),
+                   legend.position = "none",
+                   panel.background = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_blank(),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   plot.background = ggplot2::element_blank())
   return(spiro)
 }
 
@@ -125,8 +125,9 @@ plot_spirograph <- function(radius_a=1, radius_b=-4, dist_bc=-2,
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
-plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
-                              revolutions=7, increments=6480) {
+#' @export
+plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
+                              revolutions = 7, increments = 6480) {
   points <- seq(0, revolutions * increments)
   radians <- points / (2 * pi)
   getx <- function(t) {
@@ -146,20 +147,20 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
   positions <- as.data.frame(positions)
   petals <- dist_b / radius_b
   message("The spirograph will have ", petals, " petals.")
-  image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
-    ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
-    ggplot2::theme(axis.line=ggplot2::element_blank(),
-                   axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(),
-                   axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(),
-                   axis.title.y=ggplot2::element_blank(),
-                   legend.position="none",
-                   panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(),
-                   panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(),
-                   plot.background=ggplot2::element_blank())
+  image <- ggplot2::ggplot(data = positions, ggplot2::aes_string(x = "x_points", y = "y_points")) +
+    ggplot2::geom_point(size = 1) + ggplot2::theme_bw() +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank(),
+                   axis.title.x = ggplot2::element_blank(),
+                   axis.title.y = ggplot2::element_blank(),
+                   legend.position = "none",
+                   panel.background = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_blank(),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   plot.background = ggplot2::element_blank())
   return(image)
 }
 
@@ -172,8 +173,9 @@ plot_hypotrochoid <- function(radius_a=3, radius_b=7, dist_b=1,
 #' @param dist_b between b and the drawing point.
 #' @param revolutions  How many times to revolve through the spirograph.
 #' @param increments  How many dots to lay down while writing.
-plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
-                             revolutions=7, increments=6480) {
+#' @export
+plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
+                             revolutions = 7, increments = 6480) {
   points <- seq(0, revolutions * increments)
   radians <- points / (2 * pi)
   getx <- function(t) {
@@ -191,20 +193,20 @@ plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
   positions <- cbind(points, x_points)
   positions <- cbind(positions, y_points)
   positions <- as.data.frame(positions)
-  image <- ggplot2::ggplot(data=positions, ggplot2::aes_string(x="x_points", y="y_points")) +
-    ggplot2::geom_point(size=1) + ggplot2::theme_bw() +
-    ggplot2::theme(axis.line=ggplot2::element_blank(),
-                   axis.text.x=ggplot2::element_blank(),
-                   axis.text.y=ggplot2::element_blank(),
-                   axis.ticks=ggplot2::element_blank(),
-                   axis.title.x=ggplot2::element_blank(),
-                   axis.title.y=ggplot2::element_blank(),
-                   legend.position="none",
-                   panel.background=ggplot2::element_blank(),
-                   panel.border=ggplot2::element_blank(),
-                   panel.grid.major=ggplot2::element_blank(),
-                   panel.grid.minor=ggplot2::element_blank(),
-                   plot.background=ggplot2::element_blank())
+  image <- ggplot2::ggplot(data = positions, ggplot2::aes_string(x = "x_points", y = "y_points")) +
+    ggplot2::geom_point(size = 1) + ggplot2::theme_bw() +
+    ggplot2::theme(axis.line = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_blank(),
+                   axis.ticks = ggplot2::element_blank(),
+                   axis.title.x = ggplot2::element_blank(),
+                   axis.title.y = ggplot2::element_blank(),
+                   legend.position = "none",
+                   panel.background = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_blank(),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   plot.background = ggplot2::element_blank())
   return(image)
 }
 
@@ -222,9 +224,9 @@ plot_epitrochoid <- function(radius_a=7, radius_b=2, dist_b=6,
 #' @param tooltip Passed to ggplotly().
 #' @return plotly with clicky links.
 #' @export
-ggplotly_url <- function(plot, filename, id_column="id", title=NULL,
-                         url_data=NULL, url_column="url",
-                         tooltip="all") {
+ggplotly_url <- function(plot, filename, id_column = "id", title = NULL,
+                         url_data = NULL, url_column = "url",
+                         tooltip = "all") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
     tooltip_columns <- "label"
@@ -247,7 +249,7 @@ ggplotly_url <- function(plot, filename, id_column="id", title=NULL,
     } else if ("data.frame" %in% class(url_data)) {
       ## This assumes url data has a column named whatever is url_column
       message("Merging the url data with the plot data.")
-      plot[["data"]] <- merge(plot[["data"]], url_data, by="row.names", all.x=TRUE)
+      plot[["data"]] <- merge(plot[["data"]], url_data, by = "row.names", all.x = TRUE)
       rownames(plot[["data"]]) <- plot[["Row.names"]]
       plot[["data"]][["Row.names"]] <- NULL
     }
@@ -256,7 +258,7 @@ ggplotly_url <- function(plot, filename, id_column="id", title=NULL,
   if (is.null(plot[["data"]][[first_tooltip_column]])) {
     plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
   }
-  plotly <- plotly::ggplotly(plot, tooltip=tooltip)
+  plotly <- plotly::ggplotly(plot, tooltip = tooltip)
   for (i in 1:length(plotly[["x"]][["data"]])) {
     plotly[["x"]][["data"]][[i]][["customdata"]] <- plot[["data"]][[url_column]]
   }
@@ -268,7 +270,7 @@ function(el, x) {
     window.open(url);
   });
 }")
-  out <- htmlwidgets::saveWidget(plotly, filename, title=title)
+  out <- htmlwidgets::saveWidget(plotly, filename, title = title)
   retlist <- list(
     "out" = out,
     "plotly" = plotly,

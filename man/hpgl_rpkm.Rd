@@ -21,7 +21,7 @@ that the required gene lengths get sent along.
 }
 \examples{
 \dontrun{
- rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+ rpkm_df = hpgl_rpkm(df, annotations = gene_annotations)
 }
 }
 \seealso{

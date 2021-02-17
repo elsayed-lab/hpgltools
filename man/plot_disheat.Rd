@@ -45,7 +45,7 @@ and eventual output.
 }
 \examples{
 \dontrun{
- disheat_plot = plot_disheat(expt=expt, method="euclidean")
+ disheat_plot = plot_disheat(expt = expt, method = "euclidean")
 }
 }
 \seealso{

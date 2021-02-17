@@ -37,6 +37,6 @@ tximport needs some help.
   ## expressionsets to combine.
   expt1 <- create_expt(first_meta)
   expt2 <- create_expt(second_meta)
-  combined <- combine_expts(expt1, expt2, merge_meta=TRUE)
+  combined <- combine_expts(expt1, expt2, merge_meta = TRUE)
 }
 }

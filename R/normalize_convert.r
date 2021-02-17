@@ -1,3 +1,5 @@
+## normalize_convert.r: Simplify the invocation of cpm/rpkm/etc.
+
 #' Perform a cpm/rpkm/whatever transformation of a count table.
 #'
 #' I should probably tell it to also handle a simple df/vector/list of gene
@@ -9,61 +11,69 @@
 #' example -- if one wanted to do such a thing.
 #'
 #' @param data Matrix of count data.
-#' @param convert Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
+#' @param method Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into
-#'   arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
-#'   match, and annotation type).
+#'  arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
+#'  match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
 #' @seealso \pkg{edgeR} \pkg{Biobase}
 #'  \code{\link[edgeR]{cpm}}
 #' @examples
 #' \dontrun{
-#'  converted_table = convert_counts(count_table, convert='cbcbcpm')
+#'  converted_table = convert_counts(count_table, method='cbcbcpm')
 #' }
 #' @export
-convert_counts <- function(data, convert="raw", ...) {
+convert_counts <- function(count_table, method = "raw", ...) {
   arglist <- list(...)
-  data_class <- class(data)[1]
+  if (!is.null(arglist[["convert"]])) {
+    method <- arglist[["convert"]]
+  }
+  data_class <- class(count_table)[1]
+  if (data_class == "list") {
+    test <- count_table[["count_table"]]
+    count_table <- test
+    data_class <- class(count_table)[1]
+  }
   annotations <- arglist[["annotations"]]
   if (data_class == "expt" | data_class == "ExpressionSet") {
     if (is.null(annotations)) {
-      annotations <- fData(data)
+      annotations <- fData(count_table)
     }
-    count_table <- exprs(data)
+    count_table <- exprs(count_table)
   } else if (data_class == "matrix" | data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
-    count_table <- as.data.frame(data)
+    count_table <- as.data.frame(count_table)
   } else {
     stop("This function currently only types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   switchret <- switch(
-    convert,
+    method,
     "nacpm" = {
       zero_idx <- count_table == 0
       message("Converting ", sum(zero_idx), " zeros to NA.")
       count_table[zero_idx] <- NA
-      na_colsums <- colSums(count_table, na.rm=TRUE)
-      count_table <- edgeR::cpm(count_table, lib.size=na_colsums)
+      na_colsums <- colSums(count_table, na.rm = TRUE)
+      count_table <- edgeR::cpm(count_table, lib.size = na_colsums)
     },
     "cpm" = {
       libsize <- NULL
       na_idx <- is.na(count_table)
       if (sum(na_idx) > 0) {
         warning("There are ", sum(na_idx), " NAs in the expressionset.")
-        libsize <- colSums(count_table, na.rm=TRUE)
+        libsize <- colSums(count_table, na.rm = TRUE)
       }
       neg_idx <- count_table < 0
       neg_sum <- 0
-      neg_sum <- sum(neg_idx, na.rm=TRUE)
+      neg_sum <- sum(neg_idx, na.rm = TRUE)
       if (neg_sum > 0) {
         warning("There are ", neg_sum, " negative values in the expressionset, modifying it.")
         count_table[neg_idx] <- 0
       }
-      count_table <- edgeR::cpm(count_table, lib.size=libsize, na.rm=TRUE)
+      count_table <- edgeR::cpm(count_table, lib.size = libsize, na.rm = TRUE)
     },
     "cbcbcpm" = {
-      lib_size <- colSums(count_table, na.rm=TRUE)
+      lib_size <- colSums(count_table, na.rm = TRUE)
       ## count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
       transposed <- t(count_table + 0.5)
       cp_counts <- transposed / (lib_size + 1)
@@ -71,19 +81,19 @@ convert_counts <- function(data, convert="raw", ...) {
       count_table <- cpm_counts
     },
     "rpkm" = {
-      count_table <- hpgl_rpkm(count_table, annotations=annotations, ...)
+      count_table <- hpgl_rpkm(count_table, annotations = annotations, ...)
     },
     "cp_seq_m" = {
       counts <- edgeR::cpm(count_table)
-      count_table <- divide_seq(counts, annotations=annotations, ...)
-      ## count_table <- divide_seq(counts, annotations=annotations, genome=genome)
+      count_table <- divide_seq(counts, annotations = annotations, ...)
+      ## count_table <- divide_seq(counts, annotations = annotations, genome = genome)
     },
     {
-      message("Not sure what to do with the method: ", convert)
+      message("Not sure what to do with the method: ", method, ".")
     }
   ) ## End of the switch
 
-  libsize <- colSums(count_table, na.rm=TRUE)
+  libsize <- colSums(count_table, na.rm = TRUE)
   counts <- list(
     "count_table" = count_table,
     "libsize" = libsize)
@@ -102,7 +112,7 @@ convert_counts <- function(data, convert="raw", ...) {
 #'  \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
-#'  cptam <- divide_seq(cont_table, fasta="mgas_5005.fasta.xz", gff="mgas_5005.gff.xz")
+#'  cptam <- divide_seq(cont_table, fasta = "mgas_5005.fasta.xz", gff = "mgas_5005.gff.xz")
 #' }
 #' @export
 divide_seq <- function(counts, ...) {
@@ -124,10 +134,10 @@ divide_seq <- function(counts, ...) {
     ## This is presumably a fasta file, then.
     ## Sadly as of the last time I checked, FaFile doesn't handle compressed fasta
     compression <- NULL
-    if (grepl(pattern="gz$", x=genome)) {
+    if (grepl(pattern = "gz$", x = genome)) {
       compression <- "gzip"
       system(glue("gunzip {genome}"))
-    } else if (grepl(pattern="xz$", x=genome)) {
+    } else if (grepl(pattern = "xz$", x = genome)) {
       compression <- "xz"
       system(glue("xz -d {genome}"))
     }
@@ -164,7 +174,7 @@ divide_seq <- function(counts, ...) {
   } else if (annotation_class == "data.frame") {
     annotation_df <- annotations
   } else if (annotation_class == "Granges") {
-    annotation_df <- as.data.frame(annotations, stringsAsFactors=FALSE)
+    annotation_df <- as.data.frame(annotations, stringsAsFactors = FALSE)
     annotation_gr <- annotations
   } else if (annotation_class == "orgDb") {
     ## TODO: Extract the annotation data frame
@@ -205,7 +215,7 @@ divide_seq <- function(counts, ...) {
     annotation_df[["chromosome"]] <- annotation_df[["seqnames"]]
   }
 
-  numberp <- sum(grepl(pattern="1", x=annotation_df[["strand"]]))
+  numberp <- sum(grepl(pattern = "1", x = annotation_df[["strand"]]))
   if (numberp > 0) {
     annotation_df[["strand"]] <- as.numeric(annotation_df[["strand"]])
     annotation_df[["strand"]] <- ifelse(annotation_df[["strand"]] > 0, "+", "-")
@@ -219,7 +229,7 @@ divide_seq <- function(counts, ...) {
     annot_df <- annotation_df
     annotation_gr <- GenomicRanges::makeGRangesFromDataFrame(
                                       annotation_df,
-                                      seqnames.field="chromosome")
+                                      seqnames.field = "chromosome")
   }
 
   ## Test that the annotations and genome have the same seqnames
@@ -239,7 +249,7 @@ divide_seq <- function(counts, ...) {
                     glue("chr{unique(GenomicRanges::seqnames(annotation_gr))}"))
     GenomeInfoDb::seqlevels(annotation_gr) <- new_levels
     GenomicRanges::seqnames(annotation_gr) <- factor(
-                     glue("chr{GenomicRanges::seqnames(annotation_gr)}"), levels=new_levels)
+                     glue("chr{GenomicRanges::seqnames(annotation_gr)}"), levels = new_levels)
   } else if (hits < length(annotation_seqnames)) {
     warning("Not all the annotation sequences were found, this will probably end badly.")
   }
@@ -247,15 +257,15 @@ divide_seq <- function(counts, ...) {
   cds_seq <- Biostrings::getSeq(raw_seq, annotation_gr)
   names(cds_seq) <- rownames(annotation_df)
   ##names(cds_seq) <- annotation_entries[[entry_type]]
-  dict <- Biostrings::PDict(pattern, max.mismatch=0)
+  dict <- Biostrings::PDict(pattern, max.mismatch = 0)
   result <- Biostrings::vcountPDict(dict, cds_seq)
-  num_tas <- data.frame(name=names(cds_seq), tas=as.data.frame(t(result)))
-  rownames(num_tas) <- make.names(num_tas[["name"]], unique=TRUE)
+  num_tas <- data.frame(name = names(cds_seq), tas = as.data.frame(t(result)))
+  rownames(num_tas) <- make.names(num_tas[["name"]], unique = TRUE)
   colnames(num_tas) <- c("name", "pattern")
   num_tas[["pattern"]] <- num_tas[["pattern"]] + 1  ## No division by 0
   factor <- median(num_tas[["pattern"]])
   num_tas[["pattern"]] <- num_tas[["pattern"]] / factor
-  merged_tas <- merge(counts, num_tas, by="row.names", all.x=TRUE)
+  merged_tas <- merge(counts, num_tas, by = "row.names", all.x = TRUE)
   rownames(merged_tas) <- merged_tas[["Row.names"]]
   merged_tas <- merged_tas[, -1]
   merged_tas <- merged_tas[, -which(colnames(merged_tas) %in% c("name"))]
@@ -278,7 +288,7 @@ divide_seq <- function(counts, ...) {
 #'  l2cpm <- hpgl_log2cpm(counts)
 #' }
 #' @export
-hpgl_log2cpm <- function(counts, lib.size=NULL) {
+hpgl_log2cpm <- function(counts, lib.size = NULL) {
   if (is.null(lib.size)) {
     lib.size <- colSums(counts)
   }
@@ -301,35 +311,36 @@ hpgl_log2cpm <- function(counts, lib.size=NULL) {
 #'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
 #' @examples
 #' \dontrun{
-#'  rpkm_df = hpgl_rpkm(df, annotations=gene_annotations)
+#'  rpkm_df = hpgl_rpkm(df, annotations = gene_annotations)
 #' }
 #' @export
 hpgl_rpkm <- function(count_table, ...) {
   arglist <- list(...)
   annotations <- arglist[["annotations"]]
+  chosen_column <- arglist[["column"]]
   ## holy crapola I wrote this when I had no clue what I was doing.
   if (class(count_table)[1] == "edgeR") {
     count_table <- count_table[["counts"]]
   }
-  count_table_in <- as.data.frame(
-    count_table[rownames(count_table) %in% rownames(annotations), ],
-    stringsAsFactors=FALSE)
+  found <- rownames(count_table) %in% rownames(annotations)
+  count_table_in <- as.data.frame(count_table[found, ],
+                                  stringsAsFactors = FALSE)
   if (dim(count_table_in)[1] == 0) {
     message("When the annotations and count_table were checked against each other
   the result was null.  Perhaps your annotation or count_table's rownames are not set?
   Going to attempt to use the column 'ID'.
 ")
-    rownames(annotations) <- make.names(annotations[["ID"]], unique=TRUE)
+    rownames(annotations) <- make.names(annotations[["ID"]], unique = TRUE)
     count_table_in <- as.data.frame(
       count_table[rownames(count_table) %in% rownames(annotations), ],
-      stringsAsFactors=FALSE)
+      stringsAsFactors = FALSE)
     if (dim(count_table_in)[1] == 0) {
       stop("The ID column failed too.")
     }
   }
   colnames(count_table_in) <- colnames(count_table)
   count_table_in[["temporary_id_number"]] <- 1:nrow(count_table_in)
-  merged_annotations <- merge(count_table_in, annotations, by="row.names", all.x=TRUE)
+  merged_annotations <- merge(count_table_in, annotations, by = "row.names", all.x = TRUE)
   rownames(merged_annotations) <- merged_annotations[, "Row.names"]
   merged_annotations <- merged_annotations[-1]
   new_order <- order(merged_annotations[["temporary_id_number"]])
@@ -342,7 +353,7 @@ hpgl_rpkm <- function(count_table, ...) {
   ## rownames(count_table_in) = merged_annotations[,"Row.names"]
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
-  if (is.null(arglist[["column"]]) &
+  if (is.null(chosen_column) &
       is.null(merged_annot[["length"]]) &
       is.null(merged_annot[["width"]])) {
     message("There appears to be no gene length annotation data, here are the possible columns:")
@@ -351,9 +362,8 @@ hpgl_rpkm <- function(count_table, ...) {
     stop("There appears to be no annotation data providing gene length.")
   }
 
-  chosen_column <- "width"
-  if (!is.null(arglist[["column"]])) {
-    chosen_column <- arglist[["column"]]
+  if (is.null(chosen_column)) {
+    chosen_column <- "width"
   }
 
   if (chosen_column == "width" && is.null(merged_annot[[chosen_column]])) {
@@ -375,12 +385,15 @@ hpgl_rpkm <- function(count_table, ...) {
 
   ## Keep in mind that I set missing material to 'undefined'
   ## So lets set those to NA now.
+  na_idx <- is.na(merged_annot[[chosen_column]])
+  merged_annot[na_idx, chosen_column] <- "undefined"
   undef_idx <- merged_annot[[chosen_column]] == "undefined"
   merged_annot[undef_idx, chosen_column] <- NA
   lenvec <- as.vector(as.numeric(merged_annot[[chosen_column]]))
+
   names(lenvec) <- rownames(merged_annot)
   tt <- sm(requireNamespace("edgeR"))
-  rpkm_count_table <- edgeR::rpkm(as.matrix(merged_counts), gene.length=lenvec)
+  rpkm_count_table <- edgeR::rpkm(as.matrix(merged_counts), gene.length = lenvec)
   colnames(rpkm_count_table) <- colnames(count_table)
   return(rpkm_count_table)
 }

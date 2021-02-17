@@ -50,10 +50,10 @@ context("250proteomics.R:
 
 ## For most of the above choices, I have functions in the hpgltools to help.
 
-meta <- system.file("mtb_prot/dia_samples.ods", package="hpgltools")
-untarred <- utils::untar(tarfile=system.file("mtb_prot/sb_prot.tar.xz",
-                                             package="hpgltools"))
-##mtb_expt <- create_expt(meta=meta)
+meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgltools")
+untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
+                                               package = "hpgltools"))
+##mtb_expt <- create_expt(meta = meta)
 
 ## As the name implies, this function uses the diascored column in the metadata
 ## and reads the pyprophet output files indicated therein; it parses them into a
@@ -61,8 +61,8 @@ untarred <- utils::untar(tarfile=system.file("mtb_prot/sb_prot.tar.xz",
 ## In that list is 'failed, colors, metadata, and sample_data'.  Failed is
 ## comprised of the files which failed to read properly, colors are for
 ## plotting, metadata is a copy of the metadata, and sample_data is the fun.
-pyprophet_fun <- extract_pyprophet_data(metadata=meta,
-                                        pyprophet_column="diascored")
+pyprophet_fun <- extract_pyprophet_data(metadata = meta,
+                                        pyprophet_column = "diascored")
 test_that("Did extract_pyprotphet_data have failures?", {
   expect_equal(NULL, pyprophet_fun[["failed"]])
 })
@@ -86,7 +86,7 @@ test_that("Did extract_pyprotphet_data provide the expected columns?", {
 ## above columns, some of them are more useful than others for diagnosing
 ## problems.
 
-mass_plot <- plot_pyprophet_distribution(pyprophet_fun, column="mass")
+mass_plot <- plot_pyprophet_distribution(pyprophet_fun, column = "mass")
 test_that("Does plot_pyprotphet_distribution return some plots?", {
   ## Yeah, so I couldn't decide which type of plot was best for representing this...
   expect_equal(class(mass_plot[["violin"]])[1], "gg")
@@ -100,24 +100,24 @@ test_that("Does plot_pyprotphet_distribution return some plots?", {
 ## were found, 'intensity' which sums the intensities observed, 'count' which
 ## counts how many identifications were observed, otherwise it sums whatever
 ## columnname was provided, assuming it was numeric.
-peptide_identifications <- plot_pyprophet_counts(pyprophet_fun, keep_decoys=FALSE,
-                                                 type="count")
+peptide_identifications <- plot_pyprophet_counts(pyprophet_fun, keep_decoys = FALSE,
+                                                 type = "count")
 test_that("Does plot_pyprophet_counts return some plots?", {
   expect_equal(class(peptide_identifications[["plot"]])[1], "gg")
 })
 
 ## widths with respect to counts are a surprisingly reliable way to find
 ## problematic samples.
-pyprophet_lwidths <- plot_pyprophet_xy(pyprophet_fun, x_type="count", y_type="leftwidth")
+pyprophet_lwidths <- plot_pyprophet_xy(pyprophet_fun, x_type = "count", y_type = "leftwidth")
 test_that("Does plot_pyprophet_xy return a plot?", {
   expect_equal(class(pyprophet_lwidths)[1], "gg")
 })
 
 ## The above are global metrics, we can plot some metrics of individual
 ## proteins.  Any column from above may be used.
-intensities_esxG <- plot_pyprophet_protein(pyprophet_fun, scale="log",
-                                           title="esxG Intensities",
-                                           column="intensity", protein="Rv0287")
+intensities_esxG <- plot_pyprophet_protein(pyprophet_fun, scale = "log",
+                                           title = "esxG Intensities",
+                                           column = "intensity", protein = "Rv0287")
 test_that("Does plot_pyprophet_protein return a plot?", {
   expect_equal(class(intensities_esxG)[1], "gg")
 })
@@ -128,5 +128,5 @@ test_that("Does plot_pyprophet_protein return a plot?", {
 ## invokes all of the SWATH2stats filters with some hopefully sane defaults.
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 250proteomics.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 250proteomics.R in ", elapsed,  " seconds.")

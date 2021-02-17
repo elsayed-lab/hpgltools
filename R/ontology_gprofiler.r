@@ -40,14 +40,14 @@
 #'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
 #' }
 #' @export
-simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
-                              first_col="logFC", second_col="limma_logfc", do_go=TRUE,
-                              do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
-                              do_corum=TRUE, do_hp=TRUE, do_hpa=TRUE, do_wp=TRUE,
-                              significant=FALSE, exclude_iea=FALSE, do_under=FALSE,
-                              evcodes=TRUE, threshold=0.05, adjp="fdr",
-                              domain_scope="annotated", bg=NULL,
-                              pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
+simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
+                              first_col = "logFC", second_col = "limma_logfc", do_go = TRUE,
+                              do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
+                              do_corum = TRUE, do_hp = TRUE, do_hpa = TRUE, do_wp = TRUE,
+                              significant = FALSE, exclude_iea = FALSE, do_under = FALSE,
+                              evcodes = TRUE, threshold = 0.05, adjp = "fdr",
+                              domain_scope = "annotated", bg = NULL,
+                              pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -99,9 +99,9 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
     retlst[["WP"]] <- data.frame()
   }
 
-  if (sum(grepl(pattern="gene:", x=gene_ids)) > 0) {
+  if (sum(grepl(pattern = "gene:", x = gene_ids)) > 0) {
     warning("Hey, it looks like you forgot to strip off the htseq prefix for the gene IDs.")
-    gene_ids <- gsub(x=gene_ids, pattern="gene:", replacement="")
+    gene_ids <- gsub(x = gene_ids, pattern = "gene:", replacement = "")
   }
 
   type_names <- names(retlst)
@@ -114,27 +114,27 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
     ## the vector [1]"
     gene_ids <- as.vector(gene_ids)
     a_result <- try(gprofiler2::gost(
-                                  query=gene_ids,
-                                  organism=species,
-                                  ordered_query=pseudo_gsea,
-                                  multi_query=FALSE,
-                                  significant=significant,
-                                  exclude_iea=exclude_iea,
-                                  measure_underrepresentation=do_under,
-                                  evcodes=evcodes,
-                                  user_threshold=threshold,
-                                  correction_method=adjp,
-                                  domain_scope=domain_scope,
-                                  custom_bg=bg,
-                                  sources=type))
+                                  query = gene_ids,
+                                  organism = species,
+                                  ordered_query = pseudo_gsea,
+                                  multi_query = FALSE,
+                                  significant = significant,
+                                  exclude_iea = exclude_iea,
+                                  measure_underrepresentation = do_under,
+                                  evcodes = evcodes,
+                                  user_threshold = threshold,
+                                  correction_method = adjp,
+                                  domain_scope = domain_scope,
+                                  custom_bg = bg,
+                                  sources = type))
 
     a_result <- try(gprofiler2::gost(
-                                  query=gene_ids,
-                                  organism=species,
-                                  sources="CORUM"))
+                                  query = gene_ids,
+                                  organism = species,
+                                  sources = "CORUM"))
 
     if (class(a_result) == "try-error") {
-      a_result <- data.frame(stringsAsFactors=FALSE)
+      a_result <- data.frame(stringsAsFactors = FALSE)
     } else {
       a_result <- a_result[["result"]]
     }
@@ -146,7 +146,7 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
 
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
-    excel_ret <- sm(try(write_gprofiler_data(retlst, excel=excel)))
+    excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
     retlst[["excel"]] <- excel_ret
     message("Finished writing data.")
   }
@@ -184,11 +184,11 @@ simple_gprofiler2 <- function(sig_genes, species="hsapiens", convert=TRUE,
 #'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
 #' }
 #' @export
-simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
-                             first_col="logFC", second_col="limma_logfc", do_go=TRUE,
-                             do_kegg=TRUE, do_reactome=TRUE, do_mi=TRUE, do_tf=TRUE,
-                             do_corum=TRUE, do_hp=TRUE, significant=TRUE,
-                             pseudo_gsea=TRUE, id_col="row.names", excel=NULL) {
+simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
+                             first_col = "logFC", second_col = "limma_logfc", do_go = TRUE,
+                             do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
+                             do_corum = TRUE, do_hp = TRUE, significant = TRUE,
+                             pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
   gene_list <- NULL
   if (class(sig_genes) == "character") {
     gene_ids <- sig_genes
@@ -231,11 +231,11 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
       Sys.sleep(3)
       a_result <- suppressWarnings(
         try(gProfileR::gprofiler(
-                         query=gene_ids,
-                         organism=species,
-                         significant=significant,
-                         ordered_query=pseudo_gsea,
-                         src_filter=type), silent=TRUE))
+                         query = gene_ids,
+                         organism = species,
+                         significant = significant,
+                         ordered_query = pseudo_gsea,
+                         src_filter = type), silent = TRUE))
       if (class(a_result)[1] != "try-error") {
         retlst[[type]] <- a_result
         message(type, " search found ", nrow(a_result), " hits.")
@@ -246,10 +246,10 @@ simple_gprofiler <- function(sig_genes, species="hsapiens", convert=TRUE,
   }
   names(retlst) <- tolower(names(retlst))
   retlst[["input"]] <- sig_genes
-  retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst), silent=TRUE)
+  retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst), silent = TRUE)
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
-    excel_ret <- sm(try(write_gprofiler_data(retlst, excel=excel)))
+    excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
     retlst[["excel"]] <- excel_ret
     message("Finished writing data.")
   }

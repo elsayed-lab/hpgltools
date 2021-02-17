@@ -1,5 +1,3 @@
-## plot_bar.r: Some useful bar plots, currently only library size
-
 #' Make a ggplot graph of library sizes.
 #'
 #' It is often useful to have a quick view of which samples have more/fewer
@@ -22,13 +20,13 @@
 #'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
 #' @examples
 #' \dontrun{
-#'  libsize_plot <- plot_libsize(expt=expt)
+#'  libsize_plot <- plot_libsize(expt = expt)
 #'  libsize_plot  ## ooo pretty bargraph
 #' }
 #' @export
-plot_libsize <- function(data, condition=NULL, colors=NULL,
-                         text=TRUE, order=NULL, title=NULL,  yscale=NULL,
-                         expt_names=NULL, label_chars=10,
+plot_libsize <- function(data, condition = NULL, colors = NULL,
+                         text = TRUE, order = NULL, title = NULL,  yscale = NULL,
+                         expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
   if (is.null(text)) {
@@ -77,13 +75,13 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
 
   if (!is.null(expt_names) & class(expt_names) == "character") {
     if (length(expt_names) == 1) {
-      colnames(mtrx) <- make.names(design[[expt_names]], unique=TRUE)
+      colnames(mtrx) <- make.names(design[[expt_names]], unique = TRUE)
     } else {
       colnames(mtrx) <- expt_names
     }
   }
   if (!is.null(label_chars) & is.numeric(label_chars)) {
-    colnames(mtrx) <- abbreviate(colnames(mtrx), minlength=label_chars)
+    colnames(mtrx) <- abbreviate(colnames(mtrx), minlength = label_chars)
   }
 
   libsize_df <- data.frame("id" = colnames(mtrx),
@@ -91,18 +89,18 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
                            "condition" = condition,
                            "colors" = as.character(colors))
   summary_df <- data.table::setDT(libsize_df)[, list("min"=min(sum),
-                                                     "1st"=quantile(x=sum, probs=0.25),
-                                                     "median"=median(x=sum),
+                                                     "1st"=quantile(x = sum, probs = 0.25),
+                                                     "median"=median(x = sum),
                                                      "mean"=mean(sum),
-                                                     "3rd"=quantile(x=sum, probs=0.75),
+                                                     "3rd"=quantile(x = sum, probs = 0.75),
                                                      "max"=max(sum)),
-                                              by="condition"]
-  libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
-                                   text=text, order=order, title=title, integerp=integerp,
-                                   yscale=yscale, ...)
-  ##libsize_plot <- plot_sample_bars(libsize_df, condition=condition, colors=colors,
-  ##                                 text=text, order=order, title=title, integerp=integerp,
-  ##                                 yscale=yscale)
+                                              by = "condition"]
+  libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
+                                   text = text, order = order, title = title, integerp = integerp,
+                                   yscale = yscale, ...)
+  ##libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
+  ##                                 text = text, order = order, title = title, integerp = integerp,
+  ##                                 yscale = yscale)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -121,9 +119,9 @@ plot_libsize <- function(data, condition=NULL, colors=NULL,
 #' @return  Bar plot showing the number of genes below the low_limit before and
 #'   after filtering the data.
 #' @export
-plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
-  start <- plot_libsize(expt, text=FALSE)
-  norm <- sm(normalize_expt(expt, filter=filter, ...))
+plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
+  start <- plot_libsize(expt, text = FALSE)
+  norm <- sm(normalize_expt(expt, filter = filter, ...))
   end <- plot_libsize(norm)
 
   lt_min_start <- colSums(exprs(expt) <= low_limit)
@@ -148,28 +146,28 @@ plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
   start_tab[["sub_low"]] <- start_tab[["low"]] - end_tab[["low"]]
   all_tab <- rbind(start_tab, end_tab)
 
-  count_columns <- ggplot(all_tab, aes_string(x="id", y="sum")) +
-    ggplot2::geom_col(position="identity", color="black", aes_string(fill="colors")) +
-    ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
-    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+  count_columns <- ggplot(all_tab, aes_string(x = "id", y = "sum")) +
+    ggplot2::geom_col(position = "identity", color = "black", aes_string(fill = "colors")) +
+    ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
                        aes_string(
-                         x="id",
+                         x = "id",
                          label='as.character(all_tab$subtraction)')) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
-                   legend.position="none")
+    ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
+                   legend.position = "none")
 
-  low_columns <- ggplot(all_tab, aes_string(x="id", y="low")) +
-    ggplot2::geom_col(position="identity", color="black",
-                      aes_string(alpha="alpha", fill="colors")) +
-    ggplot2::scale_fill_manual(values=c(levels(as.factor(all_tab[["colors"]])))) +
-    ggplot2::geom_text(parse=FALSE, angle=90, size=4, color="black", hjust=1.2,
+  low_columns <- ggplot(all_tab, aes_string(x = "id", y = "low")) +
+    ggplot2::geom_col(position = "identity", color = "black",
+                      aes_string(alpha = "alpha", fill = "colors")) +
+    ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
+    ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
                        aes_string(
-                         x="id",
+                         x = "id",
                          label='as.character(all_tab$sub_low)')) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=10, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5),
-                   legend.position="none")
+    ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
+                   legend.position = "none")
 
   retlist <- list(
     "start" = start,
@@ -205,8 +203,8 @@ plot_libsize_prepost <- function(expt, low_limit=2, filter=TRUE, ...) {
 #'  kept_plot  ## ooo pretty bargraph
 #' }
 #' @export
-plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
-                          names=NULL, text=TRUE, title=NULL, yscale=NULL, ...) {
+plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NULL,
+                          names = NULL, text = TRUE, title = NULL, yscale = NULL, ...) {
   arglist <- list(...)
   table <- data
   if (class(data) == "expt") {
@@ -247,14 +245,14 @@ plot_pct_kept <- function(data, row="pct_kept", condition=NULL, colors=NULL,
                         "sum" = table[row, ],
                         "condition" = condition,
                         "colors" = as.character(colors))
-  kept_plot <- plot_sample_bars(kept_df, condition=condition, colors=colors,
-                                names=names, text=text, title=title, yscale=yscale, ...)
+  kept_plot <- plot_sample_bars(kept_df, condition = condition, colors = colors,
+                                names = names, text = text, title = title, yscale = yscale, ...)
   return(kept_plot)
 }
 
-plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
-                             integerp=FALSE, order=NULL,
-                             text=TRUE, title=NULL, yscale=NULL, ...) {
+plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
+                             integerp = FALSE, order = NULL,
+                             text = TRUE, title = NULL, yscale = NULL, ...) {
   arglist <- list(...)
 
   y_label <- "Library size in pseudocounts."
@@ -269,7 +267,7 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
   if (!is.null(order)) {
     new_df <- data.frame()
     for (o in order) {
-      matches <- grep(pattern=o, x=sample_df[["order"]])
+      matches <- grep(pattern = o, x = sample_df[["order"]])
       adders <- sample_df[matches, ]
       new_df <- rbind(new_df, adders)
     }
@@ -282,19 +280,19 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
   color_list <- as.character(color_listing[["colors"]])
   names(color_list) <- as.character(color_listing[["condition"]])
 
-  sample_plot <- ggplot(data=sample_df,
-                        colour=colors,
-                        aes_string(x="order",
-                                   y="sum")) +
-    ggplot2::geom_bar(stat="identity",
-                      colour="black",
-                      fill=sample_df[["colors"]],
-                      aes_string(x="order")) +
+  sample_plot <- ggplot(data = sample_df,
+                        colour = colors,
+                        aes_string(x = "order",
+                                   y = "sum")) +
+    ggplot2::geom_bar(stat = "identity",
+                      colour = "black",
+                      fill = sample_df[["colors"]],
+                      aes_string(x = "order")) +
     ggplot2::xlab("Sample ID") +
     ggplot2::ylab(y_label) +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(axis.text=ggplot2::element_text(size=base_size, colour="black"),
-                   axis.text.x=ggplot2::element_text(angle=90, vjust=0.5))
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
   if (isTRUE(text)) {
     if (!isTRUE(integerp)) {
@@ -302,10 +300,10 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
     }
     sample_plot <- sample_plot +
       ggplot2::geom_text(
-                 parse=FALSE, angle=90, size=4, color="white", hjust=1.2,
+                 parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
                  ggplot2::aes_string(
-                            x="order",
-                            label='prettyNum(as.character(sample_df$sum), big.mark=",")'))
+                            x = "order",
+                            label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))
   }
 
   if (!is.null(title)) {
@@ -316,7 +314,7 @@ plot_sample_bars <- function(sample_df, condition=NULL, colors=NULL,
       min(as.numeric(sample_df[["sum"]]))
     if (scale_difference > 10.0) {
       message("The scale difference between the smallest and largest
-libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
+libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
       scale <- TRUE
     } else {
       scale <- FALSE
@@ -324,10 +322,10 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
   }
   if (isTRUE(scale)) {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_log10(labels=scales::scientific)
+      ggplot2::scale_y_log10(labels = scales::scientific)
   } else {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_continuous(labels=scales::scientific)
+      ggplot2::scale_y_continuous(labels = scales::scientific)
   }
   return(sample_plot)
 }
@@ -349,10 +347,10 @@ libraries is > 10. Assuming a log10 scale is better, set scale=FALSE if not.")
 #' @param padding  How much space to provide on the sides?
 #' @return coverage plot surrounging the ORF of interest
 #' @seealso \pkg{ggplot2}
-plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.0010",
-                     start=1000, end=2000, strand=1, padding=100) {
+plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.01.0010",
+                     start = 1000, end = 2000, strand = 1, padding = 100) {
 
-  mychr <- gsub(pattern="\\.\\d+$", replacement="", x=name, perl=TRUE)
+  mychr <- gsub(pattern = "\\.\\d+$", replacement = "", x = name, perl = TRUE)
   plotted_start <- start - padding
   plotted_end <- end + padding
   my_start <- start
@@ -376,25 +374,25 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
 
   eval(substitute(
     expr = {
-      stupid <- aes(y=0, yend=0, x=my_start, xend=my_end)
+      stupid <- aes(y = 0, yend = 0, x = my_start, xend = my_end)
     },
-    env <- list(my_start=my_start, my_end=my_end)))
+    env <- list(my_start = my_start, my_end = my_end)))
 
   if (strand == "+") {
-    gene_arrow <- grid::arrow(type="closed", ends="last")
+    gene_arrow <- grid::arrow(type = "closed", ends = "last")
   } else {
-    gene_arrow <- grid::arrow(type="closed", ends="first")
+    gene_arrow <- grid::arrow(type = "closed", ends = "first")
   }
   xlabel_string <- glue("{name}: {my_start} to {my_end}")
-  my_plot <- ggplot(rpm_region, aes_string(x="position", y="log")) +
+  my_plot <- ggplot(rpm_region, aes_string(x = "position", y = "log")) +
     ggplot2::xlab(xlabel_string) +
     ggplot2::ylab("Log2(RPM) reads") +
-    ggplot2::geom_bar(data=rpm_region, stat="identity", fill="black", colour="black") +
-    ggplot2::geom_bar(data=pre_start, stat="identity", fill="red", colour="red") +
-    ggplot2::geom_bar(data=post_stop, stat="identity", fill="red", colour="red") +
-    ggplot2::geom_segment(data=rpm_region, mapping=stupid,
-                          arrow=gene_arrow, size=2, color="blue") +
-    ggplot2::theme_bw(base_size=base_size)
+    ggplot2::geom_bar(data = rpm_region, stat = "identity", fill = "black", colour = "black") +
+    ggplot2::geom_bar(data = pre_start, stat = "identity", fill = "red", colour = "red") +
+    ggplot2::geom_bar(data = post_stop, stat = "identity", fill = "red", colour = "red") +
+    ggplot2::geom_segment(data = rpm_region, mapping = stupid,
+                          arrow = gene_arrow, size = 2, color = "blue") +
+    ggplot2::theme_bw(base_size = base_size)
 
   return(my_plot)
 }
@@ -412,10 +410,10 @@ plot_rpm <- function(input, workdir="images", output="01.svg", name="LmjF.01.001
 #' @seealso \pkg{ggplot2}
 #'  \code{\link{extract_significant_genes}}
 #' @export
-plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
-                                 color_list=c("lightcyan", "lightskyblue", "dodgerblue",
+plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
+                                 color_list = c("lightcyan", "lightskyblue", "dodgerblue",
                                               "plum1", "orchid", "purple4"),
-                                 color_names=c("a_up_inner", "b_up_middle", "c_up_outer",
+                                 color_names = c("a_up_inner", "b_up_middle", "c_up_outer",
                                                "a_down_inner", "b_down_middle", "c_down_outer")) {
   choose_max <- function(u, d) {
     ## m is the maximum found in the ups/downs
@@ -434,7 +432,7 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
     ## And the number of zeroes in it.
     num_zeroes <- digits - 1.0
     ## Add 1 to the first digit
-    first_digit <- as.numeric(strsplit(x=as.character(m), split="")[[1]][[1]]) + 1.0
+    first_digit <- as.numeric(strsplit(x = as.character(m), split = "")[[1]][[1]]) + 1.0
     ## And set maximum to that number * 10 to the number of zeroes.
     maximum <- first_digit * (10 ^ num_zeroes)
     return(maximum)
@@ -462,13 +460,13 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
   levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
   levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
   sigbar_plot <- ggplot() +
-    ggplot2::geom_col(data=ups, aes_string(x="comparisons", y="value", fill="variable")) +
-    ggplot2::geom_col(data=downs, aes_string(x="comparisons", y="value", fill="variable")) +
-    ggplot2::scale_fill_manual(values=color_list) +
+    ggplot2::geom_col(data = ups, aes_string(x = "comparisons", y = "value", fill = "variable")) +
+    ggplot2::geom_col(data = downs, aes_string(x = "comparisons", y = "value", fill = "variable")) +
+    ggplot2::scale_fill_manual(values = color_list) +
     ggplot2::coord_flip() +
-    ggplot2::theme_bw(base_size=base_size) +
-    ggplot2::theme(panel.grid.minor=ggplot2::element_blank(),
-                   legend.position="none")
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
+                   legend.position = "none")
 
   if (isTRUE(text)) {
     for (comp in 1:length(comp_names)) {
@@ -476,8 +474,8 @@ plot_significant_bar <- function(ups, downs, maximum=NULL, text=TRUE,
       upstring <- as.character(up_sums[[comp_name]])
       downstring <- as.character(down_sums[[comp_name]])
       sigbar_plot <- sigbar_plot +
-        ggplot2::annotate("text", x=comp, y=maximum, label=upstring, angle=-90) +
-        ggplot2::annotate("text", x=comp, y=maximum * -1, label=downstring, angle=90)
+        ggplot2::annotate("text", x = comp, y = maximum, label = upstring, angle=-90) +
+        ggplot2::annotate("text", x = comp, y = maximum * -1, label = downstring, angle = 90)
     }
   }
   return(sigbar_plot)

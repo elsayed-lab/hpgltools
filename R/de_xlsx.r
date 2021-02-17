@@ -1,3 +1,9 @@
+## de_xlsx.r: Attempt to export DE results to consistent xlsx reports. This is,
+## in effect, a dumping ground for the various metrics which people have asked
+## me to include when attempting to decide if a given DE result is
+## 'significant'.  I therefore try in this file to find an appropriate place to
+## dump each metric into an excel workbook.
+
 #' Combine portions of deseq/limma/edger table output.
 #'
 #' This hopefully makes it easy to compare the outputs from
@@ -30,29 +36,33 @@
 #' @seealso \code{\link{all_pairwise}}
 #' @examples
 #' \dontrun{
-#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
-#'  big_result <- all_pairwise(expt, model_batch=FALSE)
+#'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = funkytown)
+#'  big_result <- all_pairwise(expt, model_batch = FALSE)
 #'  pretty <- combine_de_tables(big_result, table='t12_vs_t0')
 #'  pretty <- combine_de_tables(big_result, table='t12_vs_t0',
-#'                              keepers=list("avsb" = c("a","b")))
+#'                              keepers = list("avsb" = c("a","b")))
 #'  pretty <- combine_de_tables(big_result, table='t12_vs_t0',
-#'                              keepers=list("avsb" = c("a","b")),
-#'                              excludes=list("description" = c("sno","rRNA")))
+#'                              keepers = list("avsb" = c("a","b")),
+#'                              excludes = list("description" = c("sno","rRNA")))
 #' }
 #' @export
-combine_de_tables <- function(apr, extra_annot=NULL,
-                              excel=NULL, sig_excel=NULL, abundant_excel=NULL,
-                              excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
-                              include_deseq=TRUE, include_edger=TRUE, include_ebseq=TRUE,
-                              include_basic=TRUE, rownames=TRUE, add_plots=TRUE, loess=FALSE,
-                              plot_dim=6, compare_plots=TRUE, padj_type="ihw",
-                              lfc_cutoff=1, p_cutoff=0.05, de_types=c("limma", "deseq", "edger"),
+combine_de_tables <- function(apr, extra_annot = NULL,
+                              excel = NULL, sig_excel = NULL, abundant_excel = NULL,
+                              excel_title = "Table SXXX: Combined Differential Expression of YYY",
+                              keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
+                              include_deseq = TRUE, include_edger = TRUE, include_ebseq = TRUE,
+                              include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
+                              plot_dim = 6, compare_plots = TRUE, padj_type = "ihw",
+                              lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
                               ...) {
   arglist <- list(...)
   retlist <- NULL
-  if (isFALSE(excel)) {
-    excel <- NULL
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
+  do_excel <- TRUE
+  if (is.null(wb)) {
+    do_excel <- FALSE
   }
 
   ## Create a list of image files so that they may be properly cleaned up
@@ -96,33 +106,12 @@ combine_de_tables <- function(apr, extra_annot=NULL,
     message("Not adding plots, basic had an error.")
   }
 
-  ## Take a moment to ensure that we can create the excel file without error.
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-  wb <- NULL
-  do_excel <- TRUE
-  if (is.null(excel)) {
-    do_excel <- FALSE
-  } else if (excel == FALSE) {
-    do_excel <- FALSE
-  }
-  if (isTRUE(do_excel)) {
-    excel_dir <- dirname(as.character(excel))
-    if (!file.exists(excel_dir)) {
-      dir.create(excel_dir, recursive=TRUE)
-    }
-    if (file.exists(excel)) {
-      message("Deleting the file ", excel, " before writing the tables.")
-      file.remove(excel)
-    }
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-
   ## A common request is to have the annotation data added to the table.  Do that here.
   annot_df <- fData(apr[["input"]])
   if (!is.null(extra_annot)) {
-    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
+    annot_df <- merge(annot_df, extra_annot, by = "row.names", all.x = TRUE)
     rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop=FALSE]
+    annot_df <- annot_df[, -1, drop = FALSE]
   }
 
   ## Write the legend.
@@ -139,7 +128,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   ## Because we sometimes use different names for tables in the keepers
   ## This is probably not the correct way to handle the list of coefficients.
   ## Instead, we should just grab the conditions list from deseq/edger/etc
-  all_coefficients <- unlist(strsplit(x=table_names, split="_vs_"))
+  all_coefficients <- unlist(strsplit(x = table_names, split = "_vs_"))
   ## But I want to see what happend before I change this.
   ## all_coefficients <- apr[["deseq"]][["conditions"]]
 
@@ -162,7 +151,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                     loess = loess, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -176,7 +165,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                     loess = loess, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -188,7 +177,7 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                         include_deseq, include_edger,
                                         include_ebseq, include_limma,
                                         include_basic, excludes, padj_type,
-                                        loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                        loess = loess, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -217,11 +206,11 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         message("There is no data for ", tab, ", skipping it.")
         next
       }
-      final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
+      final_excel_title <- gsub(pattern = "YYY", replacement = tab, x = excel_title)
       final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  Contrast denominator: {denominators[x]}.")
       ## Dump each table to the appropriate excel sheet
-      xls_result <- write_xlsx(data=written_table, wb=wb, sheet=tab,
-                               title=final_excel_title, rownames=rownames)
+      xls_result <- write_xlsx(data = written_table, wb = wb, sheet = tab,
+                               title = final_excel_title, rownames = rownames)
       ## The function write_xlsx has some logic in it to get around excel name
       ## limitations (30 characters), therefore set the sheetname to what was
       ## returned in case it had to change the sheet's name.
@@ -236,10 +225,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         ## Text on row 1, plots from 2-17 (15 rows)
         message("Adding venn plots for ", tnames[x], ".")
         ## Make some venn diagrams comparing deseq/limma/edger!
-        venn_nop_lfc0 <- try(de_venn(written_table, lfc=0, adjp=FALSE, p=1.0))
-        venn_nop <- try(de_venn(written_table, lfc=1, adjp=FALSE, p=1.0))
-        venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
-        venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
+        venn_nop_lfc0 <- try(de_venn(written_table, lfc = 0, adjp = FALSE, p = 1.0))
+        venn_nop <- try(de_venn(written_table, lfc = 1, adjp = FALSE, p = 1.0))
+        venn_list <- try(de_venn(written_table, lfc = 0, adjp = adjp))
+        venn_sig_list <- try(de_venn(written_table, lfc = 1, adjp = adjp))
         venns[[tab]] <- list(venn_nop_lfc0, venn_nop, venn_list, venn_sig_list)
         names(venns[[tab]]) <- c("nop_lfc0", "nop_lfc1", "p_lfc0", "p_lfc1")
         ## If they worked, add them to the excel sheets after the data,
@@ -247,53 +236,53 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         if (class(venn_list)[1] != "try-error") {
           ## First row of plots all going up
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc > 0.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc > 0.",
+                                   startRow = current_row, startCol = current_column)
           up_plot <- venn_nop_lfc0[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="lfc0upvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+              up_plot, wb = wb, sheet = sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+              start_col = current_column, plotname = "lfc0upvennnop", savedir = excel_basename,
+              start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc > 1.",
-                                   startRow=1, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc > 1.",
+                                   startRow = 1, startCol = current_column)
           up_plot <- venn_nop[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            up_plot, wb = wb, sheet = sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+            start_col = current_column, plotname = "upvennnop", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value up genes, lfc > 0.",
-                                   startRow=1, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value up genes, lfc > 0.",
+                                   startRow = 1, startCol = current_column)
           up_plot <- venn_list[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            up_plot, wb = wb, sheet = sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+            start_col = current_column, plotname = "upvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value up genes, lfc > 1.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value up genes, lfc > 1.",
+                                   startRow = current_row, startCol = current_column)
           sig_up_plot <- venn_sig_list[["up_venn"]]
           try_result <- xlsx_plot_png(
-            sig_up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            sig_up_plot, wb = wb, sheet = sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
+            start_col = current_column, plotname = "upvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -307,31 +296,31 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           if (isTRUE(include_deseq)) {
             sig_methods <- c("deseq", sig_methods)
           }
-          siggene_lst <- try(plot_num_siggenes(written_table, methods=sig_methods))
+          siggene_lst <- try(plot_num_siggenes(written_table, methods = sig_methods))
           current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by fc going up.",
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname,
+                                     x = "Significant genes by fc going up.",
+                                     startRow = current_row, startCol = current_column)
             try_result <- xlsx_plot_png(
-              siggene_lst[["up"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=current_column, plotname="siggenesup",
-              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+              siggene_lst[["up"]], wb = wb, sheet = sheetname,
+              width = plot_dim, height=(plot_dim / 2),
+              start_col = current_column, plotname = "siggenesup",
+              savedir = excel_basename, start_row = current_row + 1, doWeights = FALSE)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
             current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by p going up.",
-                                     startRow=1, startCol=current_column)
+                                     wb = wb, sheet = sheetname,
+                                     x = "Significant genes by p going up.",
+                                     startRow = 1, startCol = current_column)
             try_result <- xlsx_plot_png(
-              siggene_lst[["pup"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=current_column, plotname="siggenespup",
-              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+              siggene_lst[["pup"]], wb = wb, sheet = sheetname,
+              width = plot_dim, height=(plot_dim / 2),
+              start_col = current_column, plotname = "siggenespup",
+              savedir = excel_basename, start_row = current_row + 1, doWeights = FALSE)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
@@ -340,80 +329,80 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           current_column <- xls_result[["end_col"]] + 2
           current_row <- current_row + venn_rows
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc < 0.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc < 0.",
+                                   startRow = current_row, startCol = current_column)
           down_plot <- venn_nop_lfc0[["down_venn"]]
           try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=current_column, plotname="lfc0downvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
+            start_col = current_column, plotname = "lfc0downvennnop", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc < -1.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc < -1.",
+                                   startRow = current_row, startCol = current_column)
           down_plot <- venn_nop[["down_venn"]]
           try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=current_column, plotname="downvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
+            start_col = current_column, plotname = "downvennnop", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value down genes, lfc < 0.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value down genes, lfc < 0.",
+                                   startRow = current_row, startCol = current_column)
           down_plot <- venn_list[["down_venn"]]
           try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=current_column, plotname="downvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
+            start_col = current_column, plotname = "downvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value down genes, lfc < -1.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value down genes, lfc < -1.",
+                                   startRow = current_row, startCol = current_column)
           down_plot <- venn_sig_list[["down_venn"]]
           try_result <- xlsx_plot_png(
-            down_plot, wb=wb, sheet=sheetname, width=plot_dim / 2, height=plot_dim / 2,
-            start_col=current_column, plotname="downvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
+            start_col = current_column, plotname = "downvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by fc going down.",
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname,
+                                     x = "Significant genes by fc going down.",
+                                     startRow = current_row, startCol = current_column)
             try_result <- xlsx_plot_png(
-              siggene_lst[["down"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=current_column, plotname="siggenesup",
-              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+              siggene_lst[["down"]], wb = wb, sheet = sheetname,
+              width = plot_dim, height=(plot_dim / 2),
+              start_col = current_column, plotname = "siggenesup",
+              savedir = excel_basename, start_row = current_row + 1, doWeights = FALSE)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
             current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by p going down.",
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname,
+                                     x = "Significant genes by p going down.",
+                                     startRow = current_row, startCol = current_column)
             try_result <- xlsx_plot_png(
-              siggene_lst[["pdown"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=current_column, plotname="siggenespdown",
-              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+              siggene_lst[["pdown"]], wb = wb, sheet = sheetname,
+              width = plot_dim, height=(plot_dim / 2),
+              start_col = current_column, plotname = "siggenespdown",
+              savedir = excel_basename, start_row = current_row + 1, doWeights = FALSE)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
@@ -439,53 +428,53 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           if (class(plt)[1] != "try-error" & !is.null(plt)) {
             printme <- as.character(
               glue::glue("{cap} expression coefficients for {tnames[x]}; R^2: \\
-                          {signif(x=plt[['lm_rsq']], digits=3)}; equation: \\
+                          {signif(x = plt[['lm_rsq']], digits = 3)}; equation: \\
                           {ymxb_print(plt[['lm_model']])}"))
             message(printme)
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname, x=printme,
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname, x = printme,
+                                     startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "scatter")
             try_result <- xlsx_plot_png(
-              plt[["scatter"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=plot_dim, start_col=current_column,
-              plotname=plotname, savedir=excel_basename, start_row=current_row + 1)
+              plt[["scatter"]], wb = wb, sheet = sheetname,
+              width = plot_dim, height = plot_dim, start_col = current_column,
+              plotname = plotname, savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
             current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname, x=paste0(type, " MA plot"),
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname, x = paste0(type, " MA plot"),
+                                     startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "ma")
             try_ma_result <- xlsx_plot_png(
-              ma_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-              height=plot_dim, start_col=current_column, plotname=plotname,
-              savedir=excel_basename, start_row=current_row + 1)
+              ma_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
+              height = plot_dim, start_col = current_column, plotname = plotname,
+              savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_ma_result)) {
               image_files <- c(image_files, try_ma_result[["filename"]])
             }
             current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname, x=paste0(type, " volcano plot"),
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname, x = paste0(type, " volcano plot"),
+                                     startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "vol")
             try_vol_result <- xlsx_plot_png(
-              vol_plt[["plot"]], wb=wb, sheet=sheetname, width=plot_dim,
-              height=plot_dim, start_col=current_column, pltname=plotname,
-              savedir=excel_basename, start_row=current_row + 1)
+              vol_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
+              height = plot_dim, start_col = current_column, pltname = plotname,
+              savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_vol_result)) {
               image_files <- c(image_files, try_vol_result[["filename"]])
             }
             current_column <- current_column + plot_columns
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname, x=paste0(type, " p-value plot"),
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname, x = paste0(type, " p-value plot"),
+                                     startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "p")
             try_p_result <- xlsx_plot_png(
-              p_plt, wb=wb, sheet=sheetname, width=plot_dim,
-              height=plot_dim, start_col=current_column, pltname=plotname,
-              savedir=excel_basename, start_row=current_row + 1)
+              p_plt, wb = wb, sheet = sheetname, width = plot_dim,
+              height = plot_dim, start_col = current_column, pltname = plotname,
+              savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_p_result)) {
               image_files <- c(image_files, try_p_result[["filename"]])
             }
@@ -497,22 +486,22 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 
     ## Now add some summary data and some plots comparing the tools.
     xls_result <- write_combined_summary(wb, excel_basename, apr, extracted, compare_plots,
-                                         lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                         lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
     image_files <- c(image_files, xls_result[["image_files"]])
 
     ## Finish up.
     if (!is.null(apr[["original_pvalues"]])) {
       message("Appending a data frame of the original pvalues before sva messed with them.")
       xls_result <- write_xlsx(
-        wb, data=apr[["original_pvalues"]], sheet="original_pvalues",
-        title="Original pvalues for all contrasts before sva adjustment.",
-        start_row=1, rownames=rownames)
+        wb, data = apr[["original_pvalues"]], sheet = "original_pvalues",
+        title = "Original pvalues for all contrasts before sva adjustment.",
+        start_row = 1, rownames = rownames)
     }
 
     design_result <- write_sample_design(wb, apr)
 
     message("Performing save of ", excel, ".")
-    save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
     if (class(save_result)[1] == "try-error") {
       message("Saving xlsx failed.")
     }
@@ -541,17 +530,17 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   ## that here.
   if (!is.null(sig_excel)) {
     message("Invoking extract_significant_genes().")
-    significant <- try(extract_significant_genes(ret, excel=sig_excel, ...), silent=TRUE)
+    significant <- try(extract_significant_genes(ret, excel = sig_excel, ...), silent = TRUE)
     ret[["significant"]] <- significant
   }
   if (!is.null(abundant_excel)) {
     message("Invoking extract_abundant_genes().")
-    abundant <- try(extract_abundant_genes(apr, excel=abundant_excel, ...), silent=TRUE)
-    ## abundant <- try(extract_abundant_genes(apr, excel=abundant_excel))
+    abundant <- try(extract_abundant_genes(apr, excel = abundant_excel, ...), silent = TRUE)
+    ## abundant <- try(extract_abundant_genes(apr, excel = abundant_excel))
     ret[["abundant"]] <- abundant
   }
   if (!is.null(arglist[["rda"]])) {
-    saved <- save(list="ret", file=arglist[["rda"]])
+    saved <- save(list = "ret", file = arglist[["rda"]])
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
@@ -580,10 +569,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 #' @param do_inverse Flip the numerator/denominator?
 #' @param found_table The table name actually used.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
-                                    include_basic=TRUE, include_deseq=TRUE,
-                                    include_edger=TRUE, include_limma=TRUE,
-                                    include_ebseq=FALSE, loess=FALSE, logfc=1, p=0.05,
-                                    do_inverse=FALSE, found_table=NULL) {
+                                    include_basic = TRUE, include_deseq = TRUE,
+                                    include_edger = TRUE, include_limma = TRUE,
+                                    include_ebseq = FALSE, loess = FALSE, logfc = 1, p = 0.05,
+                                    do_inverse = FALSE, found_table = NULL) {
   combined_data <- combined[["data"]]
   plots <- list()
   if (isTRUE(include_deseq)) {
@@ -623,18 +612,18 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     if (is.null(sc_name)) {
       message("Skipping scatter plot for ", type, ".")
     } else {
-      x_y <- strsplit(x=found_table, split="_vs_")[[1]]
+      x_y <- strsplit(x = found_table, split = "_vs_")[[1]]
       coef_scatter <- sm(try(extract_coefficient_scatter(
-          plot_inputs[[type]], type=type, invert=do_inverse,
-          x=x_y[1], y=x_y[2])))
+          plot_inputs[[type]], type = type, invert = do_inverse,
+          x = x_y[1], y = x_y[2])))
       plots[[sc_name]] <- coef_scatter
     }
     if (is.null(ma_name)) {
       message("Skipping volcano/MA plot for ", type, ".")
     } else {
       ma_vol <- try(extract_de_plots(
-          plot_inputs[[type]], type=type, invert=do_inverse,
-        logfc=logfc, p=p, table=found_table), silent=TRUE)
+          plot_inputs[[type]], type = type, invert = do_inverse,
+        logfc = logfc, p = p, table = found_table), silent = TRUE)
       if ("try-error" %in% class(ma_vol)) {
         plots[[ma_name]] <- NULL
         plots[[vol_name]] <- NULL
@@ -646,7 +635,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     if (is.null(p_name)) {
       message("Skipping p-value plot for ", t, ".")
     } else {
-      pval_plot <- plot_de_pvals(combined[["data"]], type=type, p_type="all")
+      pval_plot <- plot_de_pvals(combined[["data"]], type = type, p_type = "all")
       plots[[p_name]] <- pval_plot[["plot"]]
     }
   }
@@ -683,21 +672,21 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
 #'  limma/edger/deseq/basic tables, and b) A summary of how many
 #'  genes were observed as up/down by output table.
 #' @seealso \pkg{data.table} \pkg{openxlsx}
-combine_single_de_table <- function(li=NULL, ed=NULL, eb=NULL, de=NULL, ba=NULL,
-                                    table_name="", final_table_names=c(),
-                                    annot_df=NULL, do_inverse=FALSE,
-                                    adjp=TRUE, padj_type="fdr",
-                                    include_deseq=TRUE, include_edger=TRUE,
-                                    include_ebseq=TRUE, include_limma=TRUE,
-                                    include_basic=TRUE, lfc_cutoff=1,
-                                    p_cutoff=0.05, excludes=NULL, sheet_count=0) {
+combine_single_de_table <- function(li = NULL, ed = NULL, eb = NULL, de = NULL, ba = NULL,
+                                    table_name = "", final_table_names = c(),
+                                    annot_df = NULL, do_inverse = FALSE,
+                                    adjp = TRUE, padj_type = "fdr",
+                                    include_deseq = TRUE, include_edger = TRUE,
+                                    include_ebseq = TRUE, include_limma = TRUE,
+                                    include_basic = TRUE, lfc_cutoff = 1,
+                                    p_cutoff = 0.05, excludes = NULL, sheet_count = 0) {
   if (padj_type != "ihw" & !padj_type %in% p.adjust.methods) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
 Defaulting to fdr.")
     padj_type <- "fdr"
   }
 
-  num_den_names <- strsplit(x=table_name, split="_vs_")[[1]]
+  num_den_names <- strsplit(x = table_name, split = "_vs_")[[1]]
   num_name <- num_den_names[[1]]
   den_name <- num_den_names[[2]]
   inverse_name <- glue::glue("{den_name}_vs_{num_name}")
@@ -888,7 +877,7 @@ Defaulting to fdr.")
   if (num_data == 1) {
     if (num_stats == 1) {
       ## Then this is a chunk of data and associated stats.
-      comb <- merge(datalst[[1]], statslst[[1]], by="rownames", all=TRUE)
+      comb <- merge(datalst[[1]], statslst[[1]], by = "rownames", all = TRUE)
     } else {
       ## Then there must only be a chunk of data.
       comb <- datalst[[1]]
@@ -897,11 +886,11 @@ Defaulting to fdr.")
     ## There is more than one set of data to merge.
     comb <- datalst[[1]]
     for (i in 2:length(datalst)) {
-      comb <- merge(comb, datalst[[i]], by="rownames", all=TRUE)
+      comb <- merge(comb, datalst[[i]], by = "rownames", all = TRUE)
     }
     if (length(statslst) > 0) {
       for (j in 1:length(statslst)) {
-        comb <- merge(comb, statslst[[j]], by="rownames", all=TRUE)
+        comb <- merge(comb, statslst[[j]], by = "rownames", all = TRUE)
       }
     }
   }
@@ -915,7 +904,7 @@ Defaulting to fdr.")
   comb <- comb[!dropme, ]
 
   keepers <- colnames(comb) != "rownames"
-  comb <- comb[, keepers, drop=FALSE]
+  comb <- comb[, keepers, drop = FALSE]
   comb[is.na(comb)] <- 0
   if (isTRUE(do_inverse)) {
     if (isTRUE(include_basic)) {
@@ -939,33 +928,33 @@ Defaulting to fdr.")
   ## Add one final p-adjustment to ensure a consistent and user defined value.
   if (!is.null(comb[["limma_p"]])) {
     colname <- glue::glue("limma_adjp_{padj_type}")
-    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="limma_p", mean_column="limma_ave",
-                                    method=padj_type, significance=0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "limma_p", mean_column = "limma_ave",
+                                    method = padj_type, significance = 0.05)
+    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
   }
   if (!is.null(comb[["deseq_p"]])) {
     colname <- glue::glue("deseq_adjp_{padj_type}")
-    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="deseq_p", mean_column="deseq_basemean",
-                                    method=padj_type, significance=0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "deseq_p", mean_column = "deseq_basemean",
+                                    method = padj_type, significance = 0.05)
+    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
   }
   if (!is.null(comb[["edger_p"]])) {
     colname <- glue::glue("edger_adjp_{padj_type}")
-    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="edger_p", mean_column="edger_logcpm",
-                                    method=padj_type, significance=0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "edger_p", mean_column = "edger_logcpm",
+                                    method = padj_type, significance = 0.05)
+    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
   }
   if (!is.null(comb[["ebseq_ppde"]])) {
     colname <- glue::glue("ebseq_adjp_{padj_type}")
-    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="ebseq_ppde", mean_column="ebseq_mean",
-                                    method=padj_type, significance=0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "ebseq_ppde", mean_column = "ebseq_mean",
+                                    method = padj_type, significance = 0.05)
+    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
   }
   if (!is.null(comb[["basic_p"]])) {
     colname <- glue::glue("basic_adjp_{padj_type}")
-    comb[[colname]] <- hpgl_padjust(comb, pvalue_column="basic_p", mean_column="basic_nummed",
-                                    method=padj_type, significance=0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "basic_p", mean_column = "basic_nummed",
+                                    method = padj_type, significance = 0.05)
+    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
   }
 
   ## I made an odd choice in a moment to normalize.quantiles the combined fold changes
@@ -976,28 +965,28 @@ Defaulting to fdr.")
                      as.numeric(comb[["edger_logfc"]]),
                      as.numeric(comb[["deseq_logfc"]]))
     temp_fc <- preprocessCore::normalize.quantiles(as.matrix(temp_fc))
-    comb[["lfc_meta"]] <- rowMeans(temp_fc, na.rm=TRUE)
-    comb[["lfc_var"]] <- genefilter::rowVars(temp_fc, na.rm=TRUE)
+    comb[["lfc_meta"]] <- rowMeans(temp_fc, na.rm = TRUE)
+    comb[["lfc_var"]] <- genefilter::rowVars(temp_fc, na.rm = TRUE)
     comb[["lfc_varbymed"]] <- comb[["lfc_var"]] / comb[["lfc_meta"]]
     temp_p <- cbind(as.numeric(comb[["limma_p"]]),
                     as.numeric(comb[["edger_p"]]),
                     as.numeric(comb[["deseq_p"]]))
-    comb[["p_meta"]] <- rowMeans(temp_p, na.rm=TRUE)
-    comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm=TRUE)
-    comb[["lfc_meta"]] <- signif(x=comb[["lfc_meta"]], digits=4)
-    comb[["lfc_var"]] <- format(x=comb[["lfc_var"]], digits=4, scientific=TRUE, trim=TRUE)
-    comb[["lfc_varbymed"]] <- format(x=comb[["lfc_varbymed"]], digits=4, scientific=TRUE, trim=TRUE)
-    comb[["p_var"]] <- format(x=comb[["p_var"]], digits=4, scientific=TRUE, trim=TRUE)
-    comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits=4, scientific=TRUE, trim=TRUE)
+    comb[["p_meta"]] <- rowMeans(temp_p, na.rm = TRUE)
+    comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm = TRUE)
+    comb[["lfc_meta"]] <- signif(x = comb[["lfc_meta"]], digits = 4)
+    comb[["lfc_var"]] <- format(x = comb[["lfc_var"]], digits = 4, scientific = TRUE, trim = TRUE)
+    comb[["lfc_varbymed"]] <- format(x = comb[["lfc_varbymed"]], digits = 4, scientific = TRUE, trim = TRUE)
+    comb[["p_var"]] <- format(x = comb[["p_var"]], digits = 4, scientific = TRUE, trim = TRUE)
+    comb[["p_meta"]] <- format(x = comb[["p_meta"]], digits = 4, scientific = TRUE, trim = TRUE)
   }
   if (!is.null(annot_df)) {
-    colnames(annot_df) <- gsub(pattern="[[:punct:]]",
-                               replacement="",
-                               x=colnames(annot_df))
-    comb <- merge(annot_df, comb, by="row.names", all.y=TRUE)
+    colnames(annot_df) <- gsub(pattern = "[[:punct:]]",
+                               replacement = "",
+                               x = colnames(annot_df))
+    comb <- merge(annot_df, comb, by = "row.names", all.y = TRUE)
     rownames(comb) <- comb[["Row.names"]]
-    comb <- comb[, -1, drop=FALSE]
-    colnames(comb) <- make.names(tolower(colnames(comb)), unique=TRUE)
+    comb <- comb[, -1, drop = FALSE]
+    colnames(comb) <- make.names(tolower(colnames(comb)), unique = TRUE)
   }
 
   ## Exclude rows based on a list of unwanted columns/strings
@@ -1007,7 +996,7 @@ Defaulting to fdr.")
       for (exclude_num in 1:length(excludes[[col]])) {
         exclude <- excludes[[col]][exclude_num]
         remove_column <- comb[[col]]
-        remove_idx <- grep(pattern=exclude, x=remove_column, perl=TRUE, invert=TRUE)
+        remove_idx <- grep(pattern = exclude, x = remove_column, perl = TRUE, invert = TRUE)
         removed_num <- sum(as.numeric(remove_idx))
         message("Removed ", removed_num, " genes using ",
                 exclude, " as a string against column ", col, ".")
@@ -1083,7 +1072,7 @@ Defaulting to fdr.")
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1105,8 +1094,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 adjp, annot_df,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
-                                include_basic, excludes, padj_type, loess=FALSE,
-                                lfc_cutoff=1, p_cutoff=0.05) {
+                                include_basic, excludes, padj_type, loess = FALSE,
+                                lfc_cutoff = 1, p_cutoff = 0.05) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
@@ -1114,19 +1103,19 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
     name <- table_names[a]
     kept_tables[a] <- name
     message("Working on table ", a, "/", names_length, ": ", name)
-    splitted <- strsplit(x=name, split="_vs_")
+    splitted <- strsplit(x = name, split = "_vs_")
     denominator <- splitted[[1]][2]
     numerator <- splitted[[1]][1]
     numerators[a] <- numerator
     denominators[a] <- denominator
     combined <- combine_single_de_table(
-      li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-      include_basic=include_basic, include_deseq=include_deseq,
-      include_edger=include_edger, include_ebseq=include_ebseq,
-      include_limma=include_limma,
-      table_name=name, adjp=adjp, annot_df=annot_df,
-      excludes=excludes, padj_type=padj_type,
-      lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+      li = limma, ed = edger, eb = ebseq, de = deseq, ba = basic,
+      include_basic = include_basic, include_deseq = include_deseq,
+      include_edger = include_edger, include_ebseq = include_ebseq,
+      include_limma = include_limma,
+      table_name = name, adjp = adjp, annot_df = annot_df,
+      excludes = excludes, padj_type = padj_type,
+      lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
     extracted[["data"]][[name]] <- combined[["data"]]
     extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
     extracted[["kept"]] <- kept_tables
@@ -1139,10 +1128,10 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
         "basic" = basic)
     extracted[["plots"]][[name]] <- combine_extracted_plots(
       name, combined, denominator, numerator, plot_inputs,
-      include_basic=include_basic, include_deseq=include_deseq,
-      include_edger=include_edger, include_limma=include_limma,
-      include_ebseq=include_ebseq, loess=loess, logfc=lfc_cutoff, p=p_cutoff,
-      found_table=name)
+      include_basic = include_basic, include_deseq = include_deseq,
+      include_edger = include_edger, include_limma = include_limma,
+      include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
+      found_table = name)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
     extracted[["numerators"]] <- numerators
@@ -1162,7 +1151,7 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1185,7 +1174,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type,
-                                loess=FALSE, lfc_cutoff=1, p_cutoff=0.05) {
+                                loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   found_keepers <- sum(all_keepers %in% all_coefficients)
@@ -1250,14 +1239,14 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     ## Now make a single table from the limma etc results.
     if (found > 0) {
       combined <- combine_single_de_table(
-        li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-        include_deseq=include_deseq, include_edger=include_edger,
-        include_ebseq=include_ebseq, include_limma=include_limma,
-        include_basic=include_basic,
-        table_name=found_table, do_inverse=do_inverse,
-        adjp=adjp, annot_df=annot_df,
-        excludes=excludes, padj_type=padj_type,
-        lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+        li = limma, ed = edger, eb = ebseq, de = deseq, ba = basic,
+        include_deseq = include_deseq, include_edger = include_edger,
+        include_ebseq = include_ebseq, include_limma = include_limma,
+        include_basic = include_basic,
+        table_name = found_table, do_inverse = do_inverse,
+        adjp = adjp, annot_df = annot_df,
+        excludes = excludes, padj_type = padj_type,
+        lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
       extracted[["data"]][[name]] <- combined[["data"]]
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
@@ -1271,10 +1260,10 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
       ## Changing this to a try() for when we have weirdo extra_contrasts.
       extracted_plots <- try(combine_extracted_plots(
         name, combined, denominator, numerator, plot_inputs,
-        include_basic=include_basic, include_deseq=include_deseq,
-        include_edger=include_edger, include_limma=include_limma,
-        include_ebseq=include_ebseq, loess=loess, logfc=lfc_cutoff, p=p_cutoff,
-        do_inverse=do_inverse, found_table=found_table), silent=TRUE)
+        include_basic = include_basic, include_deseq = include_deseq,
+        include_edger = include_edger, include_limma = include_limma,
+        include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
+        do_inverse = do_inverse, found_table = found_table), silent = TRUE)
       if ("try-error" %in% class(extracted_plots)) {
         extracted[["plots"]][[name]] <- NULL
       } else {
@@ -1301,7 +1290,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
-#'   experimental metadata.
+#'  experimental metadata.
 #' @param limma The limma data from all_pairwise().
 #' @param edger The edger data from all_pairwise().
 #' @param ebseq The ebseq data from all_pairwise().
@@ -1324,8 +1313,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    include_deseq, include_edger,
                                    include_ebseq, include_limma,
                                    include_basic, excludes, padj_type,
-                                   loess=FALSE, lfc_cutoff=1, p_cutoff=0.05) {
-  splitted <- strsplit(x=keepers, split="_vs_")
+                                   loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05) {
+  splitted <- strsplit(x = keepers, split = "_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
   inverse_keeper <- paste0(denominator, "_vs_", numerator)
@@ -1344,14 +1333,14 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
     message("Choosing the first table: ", table)
   }
   combined <- combine_single_de_table(
-    li=limma, ed=edger, eb=ebseq, de=deseq, ba=basic,
-    include_deseq=include_deseq, include_edger=include_edger,
-    include_ebseq=include_ebseq, include_limma=include_limma,
-    include_basic=include_basic,
-    table_name=table,
-    adjp=adjp, annot_df=annot_df,
-    excludes=excludes, padj_type=padj_type,
-    lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+    li = limma, ed = edger, eb = ebseq, de = deseq, ba = basic,
+    include_deseq = include_deseq, include_edger = include_edger,
+    include_ebseq = include_ebseq, include_limma = include_limma,
+    include_basic = include_basic,
+    table_name = table,
+    adjp = adjp, annot_df = annot_df,
+    excludes = excludes, padj_type = padj_type,
+    lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
   extracted[["data"]][[table]] <- combined[["data"]]
   extracted[["table_names"]][[table]] <- combined[["summary"]][["table"]]
   extracted[["kept"]] <- table
@@ -1365,10 +1354,10 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
   extracted[["plots"]][[table]] <- combine_extracted_plots(
     ## vv I changed this from 'name', I think that is correct but am uncertain.
     table, combined, denominator, numerator, plot_inputs,
-    include_basic=include_basic, include_deseq=include_deseq,
-    include_edger=include_edger, include_limma=include_limma,
-    include_ebseq=include_ebseq, loess=loess, found_table=table,
-    logfc=lfc_cutoff, p=p_cutoff, do_inverse=do_inverse)
+    include_basic = include_basic, include_deseq = include_deseq,
+    include_edger = include_edger, include_limma = include_limma,
+    include_ebseq = include_ebseq, loess = loess, found_table = table,
+    logfc = lfc_cutoff, p = p_cutoff, do_inverse = do_inverse)
   extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                     as.data.frame(combined[["summary"]]))
   extracted[["numerators"]] <- numerator
@@ -1384,26 +1373,24 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #'
 #' @param pairwise Output from _pairwise()().
 #' @param according_to What tool(s) define 'most?'  One may use deseq, edger,
-#'   limma, basic, all.
+#'  limma, basic, all.
 #' @param n How many genes to pull?
 #' @param z Instead take the distribution of abundances and pull those past the
-#'   given z score.
+#'  given z score.
 #' @param unique One might want the subset of unique genes in the top-n which
-#'   are unique in the set of available conditions.  This will attempt to
-#'   provide that.
-#' @param least Instead of the most abundant, do the least.
+#'  are unique in the set of available conditions.  This will attempt to
+#'  provide that.
 #' @param excel Excel file to write.
 #' @param ... Arguments passed into arglist.
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, unique=FALSE,
-                                   least=FALSE, excel="excel/abundant_genes.xlsx", ...) {
+extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = NULL, unique = FALSE,
+                                   excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   abundant_lists <- list()
   final_list <- list()
 
@@ -1414,51 +1401,69 @@ extract_abundant_genes <- function(pairwise, according_to="all", n=200, z=NULL, 
 
   for (type in according_to) {
     datum <- pairwise[[type]]
-    abundant_lists[[type]] <- get_abundant_genes(datum, type=type, n=n, z=z,
-                                                 unique=unique, least=least)
+    abundant_lists[[type]] <- get_abundant_genes(datum, type = type, n = n, z = z,
+                                                 unique = unique)
   }
 
-  wb <- NULL
-  excel_basename <- NULL
   if (class(excel)[1] == "character") {
     message("Writing a legend of columns.")
-    excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
     legend <- data.frame(rbind(
       c("The first ~3-10 columns of each sheet:",
         "are annotations provided by our chosen annotation source for this experiment."),
       c("Next column", "The most/least abundant genes.")),
-      stringsAsFactors=FALSE)
+      stringsAsFactors = FALSE)
     colnames(legend) <- c("column name", "column definition")
-    xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
-                             title="Columns used in the following tables.")
+    xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
+                             title = "Columns used in the following tables.")
   }
 
   ## Now make the excel sheet for each method/coefficient
   for (according in names(abundant_lists)) {
-    for (coef in names(abundant_lists[[according]])) {
-      sheetname <- glue::glue("{according}_{coef}")
+    for (coef in names(abundant_lists[[according]][["high"]])) {
+      sheetname <- glue::glue("{according}_high_{coef}")
       annotations <- fData(pairwise[["input"]])
-      abundances <- abundant_lists[[according]][[coef]]
-      kept_annotations <- names(abundances)
+      high_abundances <- abundant_lists[[according]][["high"]][[coef]]
+      kept_annotations <- names(high_abundances)
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
+      high_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        used_data <- merge(data.frame(abundances), annotations, by="row.names", all.x=TRUE)
-        rownames(used_data) <- used_data[["Row.names"]]
-        used_data <- used_data[, -1]
+        high_data <- merge(data.frame(high_abundances), annotations, by = "row.names", all.x = TRUE)
+        rownames(high_data) <- high_data[["Row.names"]]
+        high_data[["Row.names"]] <- NULL
       } else {
-        used_data <- as.data.frame(abundances)
+        high_data <- as.data.frame(abundances)
+      }
+      start_row <- 1
+      if (class(excel)[1] == "character") {
+        title <- glue::glue("Table SXXX: High abundance genes in {coef} according to {according}.")
+        xls_result <- write_xlsx(data = high_data, wb = wb, sheet = sheetname, title = title)
+        start_row <- start_row + xls_result[["end_row"]] + 2
+      }
+
+      sheetname <- glue::glue("{according}_low_{coef}")
+      low_abundances <- abundant_lists[[according]][["low"]][[coef]]
+      kept_annotations <- names(low_abundances)
+      kept_idx <- rownames(annotations) %in% kept_annotations
+      kept_annotations <- annotations[kept_idx, ]
+      low_data <- data.frame()
+      if (nrow(annotations) > 0 & ncol(annotations) > 0) {
+        low_data <- merge(data.frame(low_abundances), annotations,
+                          by = "row.names", all.x = TRUE)
+        rownames(low_data) <- low_data[["Row.names"]]
+        low_data[["Row.names"]] <- NULL
+      } else {
+        low_data <- as.data.frame(abundances)
       }
       if (class(excel)[1] == "character") {
-        title <- glue::glue("Table SXXX: Abundant genes in {coef} according to {according}.")
-        xls_result <- write_xlsx(data=used_data, wb=wb, sheet=sheetname, title=title)
+        title <- glue::glue("Table SXXX: Low abundance genes in {coef} according to {according}.")
+        xls_result <- write_xlsx(data = low_data, wb = wb, sheet = sheetname, title = title)
       }
-    }
+    } ## End the for loop
   }
 
   if (class(excel)[1] == "character") {
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
   ret <- list(
     "with_annotations" = final_list,
@@ -1501,18 +1506,21 @@ extract_siggenes <- function(...) {
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
-                                      p=0.05, sig_bar=TRUE, z=NULL, n=NULL, top_percent=NULL,
-                                      ma=TRUE, p_type="adj", invert_barplots=FALSE,
-                                      excel="excel/significant_genes.xlsx",
-                                      siglfc_cutoffs=c(0, 1, 2), ...) {
+extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
+                                      p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, top_percent = NULL,
+                                      ma = TRUE, p_type = "adj", invert_barplots = FALSE,
+                                      excel = NULL,
+                                      siglfc_cutoffs = c(0, 1, 2), ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
   fc_column <- ""
   if (!is.null(arglist[["fc_column"]])) {
     fc_column <- arglist[["fc_column"]]
   }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   if (is.null(excel)) {
     ma <- FALSE
   }
@@ -1591,11 +1599,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     according_to <- c("limma", "edger", "deseq", "ebseq", "basic")
   }
 
-  wb <- NULL
-  excel_basename <- NULL
   if ("character" %in% class(excel)) {
-    written <- write_sig_legend(excel)
-    wb <- written[["wb"]]
+    written <- write_sig_legend(wb)
     xls_result <- written[["xls_result"]]
   }
 
@@ -1630,11 +1635,19 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     for (table_count in 1:length(table_names)) {
       table_name <- names(table_names)[table_count]
       plot_name <- as.character(table_names)[table_count]
-      plot_name <- gsub(pattern="-inverted", replacement="", x=plot_name)
+      plot_name <- gsub(pattern = "-inverted", replacement = "", x = plot_name)
       ## Extract the MA data if requested.
       if (isTRUE(ma)) {
+        ma_lfc <- lfc
+        ma_p <- p
+        if (is.null(ma_lfc)) {
+          ma_lfc <- 1
+        }
+        if (is.null(ma_p)) {
+          ma_p <- 0.05
+        }
         single_ma <- try(extract_de_plots(
-          combined[["input"]], type=according, table=plot_name, lfc=lfc, p=p), silent=TRUE)
+          combined[["input"]], type = according, table = plot_name, lfc = ma_lfc, p = ma_p), silent = TRUE)
         if ("try-error" %in% single_ma) {
           ma_plots[[table_name]] <- NULL
         } else {
@@ -1662,7 +1675,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       }
 
       trimming <- get_sig_genes(
-          table, lfc=lfc, p=p, z=z, n=n, column=fc_column, p_column=p_column)
+          table, lfc = lfc, p = p, z = z, n = n, column = fc_column, p_column = p_column)
 
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
@@ -1684,9 +1697,9 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     change_counts[] <- lapply(change_counts, as.numeric)
     summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
-    ## xls_result <- write_xlsx(data=change_counts, sheet="number_changed", file=sig_table,
-    ##                         title=summary_title,
-    ##                         overwrite_file=TRUE, newsheet=TRUE)
+    ## xls_result <- write_xlsx(data = change_counts, sheet = "number_changed", file = sig_table,
+    ##                         title = summary_title,
+    ##                         overwrite_file = TRUE, newsheet = TRUE)
 
     ret[[according]] <- list(
       ##"input" = combined,
@@ -1704,8 +1717,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       do_excel <- FALSE
     } else {
       message("Printing significant genes to the file: ", excel)
-      xlsx_ret <- print_ups_downs(ret[[according]], wb=wb, excel=excel, according=according,
-                                  summary_count=summary_count, ma=ma)
+      xlsx_ret <- print_ups_downs(ret[[according]], wb = wb, excel = excel, according = according,
+                                  summary_count = summary_count, ma = ma)
       image_files <- c(xlsx_ret[["images_files"]], image_files)
       ## This is in case writing the sheet resulted in it being shortened.
       ## wb <- xlsx_ret[["workbook"]]
@@ -1714,14 +1727,14 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
 
   ## the extraneous message() statements and instead fill that information into
   ## this data frame.
-  summary_df <- data.frame(rownames=rownames(ret[[1]][["counts"]]))
+  summary_df <- data.frame(rownames = rownames(ret[[1]][["counts"]]))
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
     ## This needs to be changed to get_sig_genes()
     sig_bar_plots <- significant_barplots(
-      combined, lfc_cutoffs=siglfc_cutoffs, invert=invert_barplots, p=p, z=z, p_type=p_type,
-      according_to=according_to)
+      combined, lfc_cutoffs = siglfc_cutoffs, invert = invert_barplots, p = p, z = z, p_type = p_type,
+      according_to = according_to)
     plot_row <- 1
     plot_col <- 1
     message("Adding significance bar plots.")
@@ -1739,7 +1752,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
     ## I messed up something here.  The plots and tables
     ## at this point should start:
     ## 5(blank spaces and titles) + 4(table headings) + 4 * the number of contrasts.
-    ##xls_result <- openxlsx::addWorksheet(wb, "number_changed")
+    checked <- check_xlsx_worksheet(wb, "number_changed")
 
     for (according in according_to) {
       tmp_df <- ret[[according]][["counts"]]
@@ -1747,13 +1760,13 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       summary_df <- cbind(summary_df, tmp_df)
       sig_message <- as.character(glue::glue("Significant {according} genes."))
       xls_result <- openxlsx::writeData(
-                                wb=wb, sheet="number_changed", x=sig_message,
-                                startRow=plot_row, startCol=plot_col)
+                                wb = wb, sheet = "number_changed", x = sig_message,
+                                startRow = plot_row, startCol = plot_col)
       plot_row <- plot_row + 1
       plotname <- glue::glue("sigbar_{according}")
       try_result <- xlsx_plot_png(
-        a_plot=sig_bar_plots[[according]], wb=wb, sheet="number_changed", plotname=plotname,
-        savedir=excel_basename, width=9, height=6, start_row=plot_row, start_col=plot_col)
+        a_plot = sig_bar_plots[[according]], wb = wb, sheet = "number_changed", plotname = plotname,
+        savedir = excel_basename, width = 9, height = 6, start_row = plot_row, start_col = plot_col)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
@@ -1762,8 +1775,8 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
       de_summary <- summarize_ups_downs(sig_bar_plots[["ups"]][[according]],
                                         sig_bar_plots[["downs"]][[according]])
       xls_summary <- write_xlsx(
-        data=de_summary, wb=wb, sheet="number_changed", rownames=TRUE,
-        start_row=summary_row, start_col=summary_col)
+        data = de_summary, wb = wb, sheet = "number_changed", rownames = TRUE,
+        start_row = summary_row, start_col = summary_col)
       plot_row <- plot_row + 30
     } ## End for loop writing out significance bar plots
   } ## End if we want significance bar plots
@@ -1772,7 +1785,7 @@ extract_significant_genes <- function(combined, according_to="all", lfc=1.0,
   ret[["summary_df"]] <- summary_df
 
   if (isTRUE(do_excel)) {
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
 
   for (img in image_files) {
@@ -1809,7 +1822,6 @@ summarize_ups_downs <- function(ups, downs) {
   return(summary_table)
 }
 
-
 #' Find the sets of intersecting significant genes
 #'
 #' Use extract_significant_genes() to find the points of agreement between
@@ -1823,31 +1835,31 @@ summarize_ups_downs <- function(ups, downs) {
 #' @param p_type Use normal or adjusted p-values.
 #' @param selectors List of methods to intersect.
 #' @param order When set to the default 'inverse', go from the set with the most
-#'   least intersection to the most. E.g. Start with abc,bc,ac,c,ab,b,a as
-#'   opposed to a,b,ab,c,ac,bc,abc.
+#' least intersection to the most. E.g. Start with abc,bc,ac,c,ab,b,a as
+#'  opposed to a,b,ab,c,ac,bc,abc.
 #' @param excel An optional excel workbook to which to write.
 #' @param ... Extra arguments for extract_significant_genes() and friends.
 #' @return List containing the intersections between the various DE methods for
-#'   both the up and down sets of genes.  It should also provide some venn
-#'   diagrams showing the degree of similarity between the methods.
+#'  both the up and down sets of genes.  It should also provide some venn
+#'  diagrams showing the degree of similarity between the methods.
 #' @examples
 #'  \dontrun{
-#'  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
-#'  big_result <- all_pairwise(expt, model_batch=FALSE)
-#'  pretty <- combine_de_tables(big_result, excel="excel/combined_expt.xlsx")
-#'  intersect <- intersect_significant(pretty, excel="excel/intersecting_genes.xlsx")
-#' }
+#'   expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = funkytown)
+#'   big_result <- all_pairwise(expt, model_batch = FALSE)
+#'   pretty <- combine_de_tables(big_result, excel = "excel/combined_expt.xlsx")
+#'   intersect <- intersect_significant(pretty, excel = "excel/intersecting_genes.xlsx")
+#'  }
 #' @export
-intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
-                                  z=NULL, p_type="adj", selectors=c("limma", "deseq", "edger"),
-                                  order="inverse", excel="excel/intersect_significant.xlsx",
+intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 2,
+                                  z = NULL, p_type = "adj", selectors = c("limma", "deseq", "edger"),
+                                  order = "inverse", excel = "excel/intersect_significant.xlsx",
                                   ...) {
   ## Check the set of first->sixth and see that they exist in the combined table.
   arglist <- list(...)
   image_files <- c()
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
   chosen_selectors <- c()
   extract_selectors <- c()
   alternate_selectors <- c()
@@ -1874,25 +1886,17 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     stop("This requires more selectors in order to create an intersection.")
   }
 
-  sig_genes <- sm(extract_significant_genes(combined, lfc=lfc, p=p,
-                                            z=z, p_type=p_type, excel=NULL))
+  sig_genes <- sm(extract_significant_genes(combined, lfc = lfc, p = p,
+                                            z = z, p_type = p_type, excel = NULL))
   if (length(alternate_selectors) > 0) {
-    alt_genes <- extract_significant_genes(combined, according_to="alternate", lfc=lfc,
-                                           fc_column=arglist[["fc_column"]],
-                                           p_column=arglist[["p_column"]], ma=FALSE,
-                                           p=p, z=z, p_type=p_type, excel=FALSE)
+    alt_genes <- extract_significant_genes(combined, according_to = "alternate", lfc = lfc,
+                                           fc_column = arglist[["fc_column"]],
+                                           p_column = arglist[["p_column"]], ma = FALSE,
+                                           p = p, z = z, p_type = p_type, excel = FALSE)
     sig_genes[["alternate"]] <- alt_genes[["alternate"]]
   }
 
   xls_result <- NULL
-  if (!is.null(excel)) {
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-    testdir <- dirname(excel)
-    if (!file.exists(testdir)) {
-      dir.create(testdir, recursive=TRUE)
-    }
-  }
-
   ## Set up the base data structure, a list of ups and a list of downs.
   lst <- list("ups" = list(), "downs" = list())
   set_names <- c()
@@ -1909,9 +1913,9 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
         name <- chosen_selectors[i]
         lst[[dir]][[table]][[name]] <- rownames(sig_genes[[name]][[dir]][[table]])
       } ## End pulling the significants by selectors.
-      sets <- Vennerable::Venn(Sets=lst[[dir]][[table]])
+      sets <- Vennerable::Venn(Sets = lst[[dir]][[table]])
       intersections <- sets@IntersectionSets
-      plt <- Vennerable::plot(sets, doWeights=FALSE)
+      plt <- Vennerable::plot(sets, doWeights = FALSE)
       rec <- grDevices::recordPlot()
       lst[[dir]][[table]][["sets"]] <- sets
       lst[[dir]][[table]][["intersections"]] <- intersections
@@ -1956,7 +1960,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
         sname <- set_names[s]
         set_selection_name <- names(sname)
         clean_sname <- sname
-        clean_sname <- gsub(pattern="\\, ", replacement="_", x=sname)
+        clean_sname <- gsub(pattern = "\\, ", replacement = "_", x = sname)
 
         lst[[dir]][[table]][["data"]][[clean_sname]] <- data.frame()
         ## This next operation was previously being done on the list index
@@ -1974,8 +1978,8 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
           xlsx_title <- glue::glue("Genes deemed {text_dir} significant via logFC: {lfc}\\
                              , p-value: {p}; by {clean_sname}.")
           if (!is.null(excel)) {
-            xl_result <- write_xlsx(data=table_subset, wb=wb, sheet=xlsx_table,
-                                    start_row=xlsx_row, title=xlsx_title)
+            xl_result <- write_xlsx(data = table_subset, wb = wb, sheet = xlsx_table,
+                                    start_row = xlsx_row, title = xlsx_title)
             xlsx_row <- xlsx_row + nrow(table_subset) + padding_rows + 2
           } ## End checking to write the excel file.
         }
@@ -1996,21 +2000,21 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
     summary_df <- summary_df[, -1]
     lst[["summary"]] <- summary_df
     if (!is.null(excel)) {
-      xl_result <- write_xlsx(wb=wb,
-                              data=summary_df,
-                              sheet="summary", title=venn_title,
-                              start_row=venn_row, start_col=venn_col)
+      xl_result <- write_xlsx(wb = wb,
+                              data = summary_df,
+                              sheet = "summary", title = venn_title,
+                              start_row = venn_row, start_col = venn_col)
       venn_row <- venn_row + 4
       try_result <- xlsx_plot_png(
-        up_plot, wb=wb, sheet="summary", width=6, height=6,
-        start_col=venn_col, start_row=venn_row)
+        up_plot, wb = wb, sheet = "summary", width = 6, height = 6,
+        start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
       venn_col <- venn_col + 12
       try_result <- xlsx_plot_png(
-        down_plot, wb=wb, sheet="summary", width=6, height=6,
-        start_col=venn_col, start_row=venn_row)
+        down_plot, wb = wb, sheet = "summary", width = 6, height = 6,
+        start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
@@ -2019,7 +2023,7 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
   }  ## End iterating over the tables
 
   if (!is.null(excel)) {
-    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+    excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
   for (img in image_files) {
     removed <- file.remove(img)
@@ -2043,17 +2047,13 @@ intersect_significant <- function(combined, lfc=1.0, p=0.05, padding_rows=2,
 #' @return Return from write_xlsx.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xlsx",
-                            according="limma", summary_count=1, ma=FALSE) {
+print_ups_downs <- function(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
+                            according = "limma", summary_count = 1, ma = FALSE) {
   image_files <- c()
   xls_result <- NULL
-  if (isFALSE(excel)) {
-    excel <- NULL
-  }
-  if (is.null(wb)) {
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basedir"]]
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]
   up_titles <- upsdowns[["up_titles"]]
@@ -2065,8 +2065,8 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
   summary_count <- summary_count - 1
   num_tables <- length(names(ups))
   summary_start <- ((num_tables + 2) * summary_count) + 1
-  xls_summary_result <- write_xlsx(wb=wb, data=summary, start_col=1, start_row=summary_start,
-                                   sheet="number_changed", title=summary_title)
+  xls_summary_result <- write_xlsx(wb = wb, data = summary, start_col = 1, start_row = summary_start,
+                                   sheet = "number_changed", title = summary_title)
   for (table_count in 1:length(names(ups))) {
     base_name <- names(ups)[table_count]
     up_name <- glue::glue("up_{according}_{base_name}")
@@ -2075,7 +2075,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     up_title <- up_titles[[table_count]]
     if (nrow(up_table) > 0) {
       message(table_count, "/", num_tables, ": Creating significant table ", up_name)
-      xls_result <- write_xlsx(data=up_table, wb=wb, sheet=up_name, title=up_title)
+      xls_result <- write_xlsx(data = up_table, wb = wb, sheet = up_name, title = up_title)
       ## This is in case the sheet name is past the 30 character limit.
       sheet_name <- xls_result[["sheet"]]
       if (isTRUE(ma)) {
@@ -2083,9 +2083,9 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
         ma_col <- xls_result[["end_col"]] + 1
         if (!is.null(ma_plots[[base_name]])) {
           plot_name <- glue::glue("ma_{according}_{base_name}")
-          try_result <- xlsx_plot_png(ma_plots[[base_name]], wb=wb, sheet=sheet_name,
-                                      plotname=plot_name, savedir=excel_basename,
-                                      start_row=ma_row, start_col=ma_col)
+          try_result <- xlsx_plot_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
+                                      plotname = plot_name, savedir = excel_basename,
+                                      start_row = ma_row, start_col = ma_col)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2097,7 +2097,7 @@ print_ups_downs <- function(upsdowns, wb=NULL, excel="excel/significant_genes.xl
     down_table <- downs[[table_count]]
     down_title <- down_titles[[table_count]]
     if (nrow(down_table) > 0) {
-      xls_result <- write_xlsx(data=down_table, wb=wb, sheet=down_name, title=down_title)
+      xls_result <- write_xlsx(data = down_table, wb = wb, sheet = down_name, title = down_title)
     } else {
       message("The down table ", base_name, " is empty.")
     }
@@ -2161,7 +2161,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
       "are annotations provided by our chosen annotation source for this experiment."),
     c("Next 6 columns", "The logFC and p-values reported by limma, edger, and deseq2.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
   deseq_legend <- data.frame(rbind(
     c("The next 7 columns", "Statistics generated by DESeq2."),
     c("deseq_logfc_rep", "The log2 fold change reported by DESeq2, again."),
@@ -2173,7 +2173,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
     c(glue::glue("deseq_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
     c("deseq_q", "False-positive corrected p-value.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
   edger_legend <- data.frame(rbind(
     c("The next 7 columns", "Statistics generated by edgeR."),
     c("edger_logfc_rep", "The log2 fold change reported by edgeR, again."),
@@ -2185,7 +2185,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
     c(glue::glue("edger_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
     c("edger_q", "The observed corrected p-value from edgeR.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
   ebseq_legend <- data.frame(rbind(
     c("The next 6 columns", "Statistics generated by EBSeq."),
     c("ebseq_FC", "The fold change reported by EBSeq."),
@@ -2197,7 +2197,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
     c("ebseq_adjp",  "Attempt at FDR correction of the PPEE, this is just copied from PPEE
 and is in _no_ way statistically valid, but added as a plotting conveinence.")
 ),
-stringsAsFactors=FALSE)
+stringsAsFactors = FALSE)
   limma_legend <- data.frame(rbind(
     c("The next 7 columns", "Statistics generated by limma."),
     c("limma_logfc_rep", "The log2 fold change reported by limma, again."),
@@ -2209,7 +2209,7 @@ stringsAsFactors=FALSE)
     c("limma_b", "Bayesian estimate of the log-odds significance."),
     c("limma_q", "A q-value FDR adjustment of the p-value above.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
   basic_legend <- data.frame(rbind(
     c("The next 8 columns", "Statistics generated by the basic analysis."),
     c("basic_nummed", "log2 median values of the numerator for this comparison."),
@@ -2222,7 +2222,7 @@ stringsAsFactors=FALSE)
     c(glue::glue("basic_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
     c("basic_adjp", "BH correction of the p-value.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
   summary_legend <- data.frame(rbind(
     c("The next 5 columns", "Summaries of the limma/deseq/edger results."),
     c("lfc_meta", "The mean fold-change value of limma/deseq/edger."),
@@ -2242,7 +2242,7 @@ stringsAsFactors=FALSE)
       "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
     c("", "If this data was adjusted with sva, check for a sheet 'original_pvalues' at the end.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
 
   ## Here we including only those columns which are relevant to the analysis performed.
   if (isTRUE(include_limma)) {
@@ -2332,8 +2332,8 @@ stringsAsFactors=FALSE)
   }
   colnames(legend) <- c("column name", "column definition")
   xls_result <- write_xlsx(
-    wb, data=legend, sheet="legend", rownames=FALSE,
-    title="Columns used in the following tables.")
+    wb, data = legend, sheet = "legend", rownames = FALSE,
+    title = "Columns used in the following tables.")
 
   ## Some folks have asked for some PCA showing the before/after surrogates.
   ## Put that on the first sheet, then.
@@ -2345,35 +2345,35 @@ stringsAsFactors=FALSE)
     ## Add PCA before/after
     chosen_estimate <- apr[["batch_type"]]
     xl_result <- openxlsx::writeData(
-                             wb=wb, sheet="legend",
-                             x="PCA plot before surrogate estimation.",
-                             startRow=1, startCol=10)
+                             wb = wb, sheet = "legend",
+                             x = "PCA plot before surrogate estimation.",
+                             startRow = 1, startCol = 10)
     try_result <- xlsx_plot_png(
-      apr[["pre_batch"]][["plot"]], wb=wb, sheet="legend", start_row=2,
-      width=(plot_dim * 3/2), height=plot_dim, start_col=10,
-      plotname="pre_pca", savedir=excel_basename)
+      apr[["pre_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 2,
+      width=(plot_dim * 3/2), height = plot_dim, start_col = 10,
+      plotname = "pre_pca", savedir = excel_basename)
     if (! "try-error" %in% class(try_result)) {
       image_files <- c(image_files, try_result[["filename"]])
     }
     xl_result <- openxlsx::writeData(
-                             wb=wb, sheet="legend",
-                             x=as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
-                             startRow=36, startCol=10)
+                             wb = wb, sheet = "legend",
+                             x = as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
+                             startRow = 36, startCol = 10)
     try_result <- xlsx_plot_png(
-      apr[["post_batch"]][["plot"]], wb=wb, sheet="legend", start_row=37,
-      width=(plot_dim * 3/2), height=plot_dim, start_col=10,
-      plotname="pre_pca", savedir=excel_basename)
+      apr[["post_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 37,
+      width=(plot_dim * 3/2), height = plot_dim, start_col = 10,
+      plotname = "pre_pca", savedir = excel_basename)
     if (! "try-error" %in% class(try_result)) {
       image_files <- c(image_files, try_result[["filename"]])
     }
     pre_table <- write_xlsx(
-      wb, data=apr[["pre_batch"]][["table"]],
-      sheet="legend", title="Pre-Batch PCA table.",
-      start_row=66, start_col=10)
+      wb, data = apr[["pre_batch"]][["table"]],
+      sheet = "legend", title = "Pre-Batch PCA table.",
+      start_row = 66, start_col = 10)
     xls_result <- write_xlsx(
-      wb, data=apr[["post_batch"]][["table"]],
-      sheet="legend", title="Pre-Batch PCA table.",
-      start_row=pre_table[["end_row"]] + 2, start_col=10)
+      wb, data = apr[["post_batch"]][["table"]],
+      sheet = "legend", title = "Pre-Batch PCA table.",
+      start_row = pre_table[["end_row"]] + 2, start_col = 10)
   }
   retlist <- list(
     "image_files" = image_files,
@@ -2390,7 +2390,7 @@ stringsAsFactors=FALSE)
 #' @param extracted table extracted from the pairwise result
 #' @param compare_plots series of plots to print out.
 write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
-                                   lfc_cutoff=1, p_cutoff=0.05) {
+                                   lfc_cutoff = 1, p_cutoff = 0.05) {
   message("Writing summary information, compare_plot is: ", compare_plots, ".")
   image_files <- c()
   if (length(apr[["comparison"]]) == 0) {
@@ -2399,22 +2399,22 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
   if (isTRUE(compare_plots)) {
     sheetname <- "pairwise_summary"
     xls_result <- write_xlsx(
-      wb, data=extracted[["summaries"]], sheet=sheetname, title="Summary of contrasts (lfc cutoff:{lfc_cutoff} p cutoff: {p_cutoff}).")
+      wb, data = extracted[["summaries"]], sheet = sheetname, title = "Summary of contrasts (lfc cutoff:{lfc_cutoff} p cutoff: {p_cutoff}).")
     new_row <- xls_result[["end_row"]] + 2
     xls_result <- write_xlsx(
-      wb, data=apr[["comparison"]][["comp"]], sheet=sheetname, start_row=new_row,
-      title="Pairwise correlation coefficients among differential expression tools.")
+      wb, data = apr[["comparison"]][["comp"]], sheet = sheetname, start_row = new_row,
+      title = "Pairwise correlation coefficients among differential expression tools.")
 
     new_row <- xls_result[["end_row"]] + 2
     if (class(apr[["comparison"]][["heat"]])[1] == "recordedplot") {
       try_result <- xlsx_plot_png(
-        apr[["comparison"]][["heat"]], wb=wb, sheet=sheetname, plotname="pairwise_summary",
-        savedir=excel_basename, start_row=new_row + 1, start_col=1)
+        apr[["comparison"]][["heat"]], wb = wb, sheet = sheetname, plotname = "pairwise_summary",
+        savedir = excel_basename, start_row = new_row + 1, start_col = 1)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
     }
-    logfc_comparisons <- try(compare_logfc_plots(extracted), silent=TRUE)
+    logfc_comparisons <- try(compare_logfc_plots(extracted), silent = TRUE)
     if (class(logfc_comparisons) != "try-error") {
       logfc_names <- names(logfc_comparisons)
       new_row <- new_row + 2
@@ -2427,15 +2427,15 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
         tmpcol <- 1
         if (!is.null(le)) {
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname, startRow=new_row - 2, startCol=tmpcol,
-                                   x=glue::glue("Comparing DE tools for the \\
+                                   wb = wb, sheet = sheetname, startRow = new_row - 2, startCol = tmpcol,
+                                   x = glue::glue("Comparing DE tools for the \\
                                           comparison of: {logfc_names[c]}"))
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname, startRow=new_row - 1, startCol=tmpcol,
-                                   x="Log2FC(Limma vs. EdgeR)")
+                                   wb = wb, sheet = sheetname, startRow = new_row - 1, startCol = tmpcol,
+                                   x = "Log2FC(Limma vs. EdgeR)")
           try_result <- xlsx_plot_png(
-            le, wb=wb, sheet="pairwise_summary", plotname="compare_le",
-            savedir=excel_basename, start_row=new_row, start_col=tmpcol)
+            le, wb = wb, sheet = "pairwise_summary", plotname = "compare_le",
+            savedir = excel_basename, start_row = new_row, start_col = tmpcol)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2443,12 +2443,12 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
         }
         if (!is.null(ld)) {
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   startRow=new_row - 1, startCol=tmpcol,
-                                   x="Log2FC(Limma vs. DESeq2)")
+                                   wb = wb, sheet = sheetname,
+                                   startRow = new_row - 1, startCol = tmpcol,
+                                   x = "Log2FC(Limma vs. DESeq2)")
           try_result <- xlsx_plot_png(
-            ld, wb=wb, sheet=sheetname, plotname="compare_ld", savedir=excel_basename,
-            start_row=new_row, start_col=tmpcol)
+            ld, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
+            start_row = new_row, start_col = tmpcol)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2456,12 +2456,12 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
         }
         if (!is.null(de)) {
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   startRow=new_row - 1, startCol=tmpcol,
-                                   x="Log2FC(DESeq2 vs. EdgeR)")
+                                   wb = wb, sheet = sheetname,
+                                   startRow = new_row - 1, startCol = tmpcol,
+                                   x = "Log2FC(DESeq2 vs. EdgeR)")
           try_result <- xlsx_plot_png(
-            de, wb=wb, sheet=sheetname, plotname="compare_ld", savedir=excel_basename,
-            start_row=new_row, start_col=tmpcol)
+            de, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
+            start_row = new_row, start_col = tmpcol)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2498,10 +2498,10 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- eBayes(deseq_output)
-#'  data_list <- write_deseq(finished_comparison, workbook="excel/deseq_output.xls")
+#'  data_list <- write_deseq(finished_comparison, workbook = "excel/deseq_output.xls")
 #' }
 #' @export
-write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
+write_de_table <- function(data, type = "limma", excel = "de_table.xlsx", ...) {
   arglist <- list(...)
   if (!is.null(data[[type]])) {
     data <- data[[type]]
@@ -2522,18 +2522,9 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
     n <- nrow(data[["coefficients"]])
   }
 
-  wb <- NULL
-  if (!is.null(excel) & excel != FALSE) {
-    excel_dir <- dirname(excel)
-    if (!file.exists(excel_dir)) {
-      dir.create(excel_dir, recursive=TRUE)
-    }
-    if (file.exists(excel)) {
-      message("Deleting the file ", excel, " before writing the tables.")
-      file.remove(excel)
-    }
-    wb <- openxlsx::createWorkbook(creator="hpgltools")
-  }
+  xlsx <- init_xlsx(excel)
+  wb <- xlsx[["wb"]]
+  excel_basename <- xlsx[["basename"]]
 
   return_data <- list()
   end <- length(coef)
@@ -2543,22 +2534,18 @@ write_de_table <- function(data, type="limma", excel="de_table.xlsx", ...) {
     table <- data[["all_tables"]][[c]]
 
     written <- try(write_xlsx(
-      data=table, wb=wb, sheet=comparison,
-      title=glue::glue("{type} results for: {comparison}.")))
+      data = table, wb = wb, sheet = comparison,
+      title = glue::glue("{type} results for: {comparison}.")))
   }
 
-  save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite=TRUE))
+  save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   return(save_result)
 }
 
 #' Internal function to write a legend for significant gene tables.
 #'
-#' @param excel xlsx file to which to write.
-write_sig_legend <- function(excel) {
-  excel <- as.character(excel)
-  message("Writing a legend of columns.")
-  excel_basename <- gsub(pattern="\\.xlsx", replacement="", x=excel)
-  wb <- openxlsx::createWorkbook(creator="hpgltools")
+#' @param wb xlsx workbook object from openxlsx.
+write_sig_legend <- function(wb) {
   legend <- data.frame(rbind(
     c("The first ~3-10 columns of each sheet:",
       "are annotations provided by our chosen annotation source for this experiment."),
@@ -2622,11 +2609,11 @@ write_sig_legend <- function(excel) {
       "Scatter plot of the adjusted/normalized counts for each coefficient from DESeq."),
     c("", "If this data was adjusted with sva, look 'original_pvalues' at the end.")
   ),
-  stringsAsFactors=FALSE)
+  stringsAsFactors = FALSE)
 
   colnames(legend) <- c("column name", "column definition")
-  xls_result <- write_xlsx(wb, data=legend, sheet="legend", rownames=FALSE,
-                           title="Columns used in the following tables.")
+  xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
+                           title = "Columns used in the following tables.")
   retlist <- list("wb" = wb, xls_result = xls_result)
   return(retlist)
 }
@@ -2640,8 +2627,8 @@ write_sig_legend <- function(excel) {
 #' @param apr Pairwise result.
 write_sample_design <- function(wb, apr) {
   meta_df <- pData(apr[["input"]])
-  xls_meta_result <- write_xlsx(wb=wb, data=meta_df,
-                                sheet="metadata", title="Experiment metadata.")
+  xls_meta_result <- write_xlsx(wb = wb, data = meta_df,
+                                sheet = "metadata", title = "Experiment metadata.")
   return(xls_meta_result)
 }
 

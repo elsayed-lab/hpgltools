@@ -86,8 +86,8 @@ some supporting statistics.
 }
 \examples{
 \dontrun{
- plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data=tooltip_dataframe,
-                     gvis_filename="html/fun_scatterplot.html")
+ plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
+                     gvis_filename = "html/fun_scatterplot.html")
 }
 }
 \seealso{

@@ -11,7 +11,11 @@ gsva_likelihoods(
   factor = NULL,
   sample = NULL,
   factor_column = "condition",
-  method = "mean"
+  method = "mean",
+  label_size = NULL,
+  col_margin = 6,
+  row_margin = 12,
+  cutoff = 0.05
 )
 }
 \arguments{
@@ -32,7 +36,7 @@ column to use to find it?}
 }
 \value{
 The scores according to the provided category, factor, sample, or
-score(s).
+ score(s).
 }
 \description{
 Yeah, this is a bit meta, but the scores from gsva seem a bit meaningless to

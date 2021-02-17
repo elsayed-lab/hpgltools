@@ -38,7 +38,7 @@ This function tries to gather an appropriate gene length column from
 whatever annotation data source is provided.
 }
 \examples{
- pa_genesizes <- get_genesizes(gff=gff_file)
+ pa_genesizes <- get_genesizes(gff = gff_file)
  head(pa_genesizes)
 }
 \seealso{

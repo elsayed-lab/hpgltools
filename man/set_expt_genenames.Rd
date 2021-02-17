@@ -23,7 +23,7 @@ Ergo this little function.
 }
 \examples{
 \dontrun{
- expt = set_expt_conditions(big_expt, factor=c(some,stuff,here))
+ expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
 }
 }
 \seealso{

@@ -4,7 +4,7 @@
 \alias{normalize_counts}
 \title{Perform a simple normalization of a count table.}
 \usage{
-normalize_counts(data, design = NULL, norm = "raw", ...)
+normalize_counts(data, design = NULL, method = "raw", ...)
 }
 \arguments{
 \item{data}{Matrix of count data.}
@@ -12,11 +12,11 @@ normalize_counts(data, design = NULL, norm = "raw", ...)
 \item{design}{Dataframe describing the experimental
 design. (conditions/batches/etc)}
 
+\item{...}{More arguments might be necessary.}
+
 \item{norm}{Normalization to perform:
 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
 whether design is a required argument.}
-
-\item{...}{More arguments might be necessary.}
 }
 \value{
 Dataframe of normalized(counts)
@@ -27,7 +27,7 @@ deseq2/edger and friends.
 }
 \examples{
 \dontrun{
- norm_table = normalize_counts(count_table, design=design, norm='qsmooth')
+ norm_table = normalize_counts(count_table, design = design, norm='qsmooth')
 }
 }
 \seealso{

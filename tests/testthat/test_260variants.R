@@ -15,12 +15,12 @@ context("260variants.R:
 ## hits and 4 agree, that is not sigificant, but 5 of 6 or 5 of 5 are.
 
 ## Therefore, it requires an expressionset to hold the metadata and provide the structure.
-gff_file <- system.file("clbr/clbrener_8.1_complete_genes.gff.gz", package="hpgltools")
-gff_annotations <- load_gff_annotations(gff_file, type="gene")
+gff_file <- system.file("share/clbr/clbrener_8.1_complete_genes.gff.gz", package = "hpgltools")
+gff_annotations <- load_gff_annotations(gff_file, type = "gene")
 rownames(gff_annotations) <- gff_annotations[["ID"]]
-meta <- system.file("clbr/clbr_samples_combined.xlsx", package="hpgltools")
-untarred <- utils::untar(tarfile=system.file("clbr/clbr_counts.tar", package="hpgltools"))
-all_expt <- create_expt(metadata=meta, file_column="clbrenerfile", gene_info=gff_annotations)
+meta <- system.file("share/clbr/clbr_samples_combined.xlsx", package = "hpgltools")
+untarred <- utils::untar(tarfile = system.file("share/clbr/clbr_counts.tar", package = "hpgltools"))
+all_expt <- create_expt(metadata = meta, file_column = "clbrenerfile", gene_info = gff_annotations)
 
 expected <- 25100
 test_that("We have a functional expressionset?", {
@@ -30,11 +30,11 @@ test_that("We have a functional expressionset?", {
 ## Given that expressionset, note that there is a metadata column 'bcffile'
 ## This of course refers to the bcf data files, much like 'clbrenerfile' refers
 ## to the count tables for the clbrener haplotype.
-untarred <- utils::untar(tarfile=system.file("clbr/vcfutils_output.tar.xz",
-                                             package="hpgltools"))
+untarred <- utils::untar(tarfile = system.file("share/clbr/vcfutils_output.tar.xz",
+                                               package = "hpgltools"))
 ## Type in this context may be either percent or counts, this just defines the
 ## column to extract from the bcf file.
-snp_expt <- count_expt_snps(all_expt, type="percent", annot_column="bcffile")
+snp_expt <- count_expt_snps(all_expt, type = "percent", annot_column = "bcffile")
 expected <- 8295
 test_that("Do we have a decent number of variants?", {
   expect_equal(expected, nrow(exprs(snp_expt)))
@@ -55,7 +55,7 @@ test_that("Do we have sensible pData?", {
 })
 
 ## For complext experimental designs, this can take quite a long time.
-snp_sets <- get_snp_sets(snp_expt, factor="condition")
+snp_sets <- get_snp_sets(snp_expt, factor = "condition")
 actual <- snp_sets[["set_names"]][["0011"]]
 expected <- "CLBr.Tryp, CLBr.Epi"
 test_that("Do we get sensible set names from get_snp_sets?", {
@@ -71,7 +71,7 @@ test_that("Do we get the expected number of variants on chromosome 10 shared amo
   expect_equal(actual, expected)
 })
 
-snp_gene_summary <- sm(snps_vs_genes(all_expt, snp_sets, expt_name_col="seqnames"))
+snp_gene_summary <- sm(snps_vs_genes(all_expt, snp_sets, expt_name_col = "seqnames"))
 expected <- 18
 actual <- snp_gene_summary[["summary_by_gene"]][["TcCLB.507505.10"]]
 test_that("Do we observe the expected variants in a specific gene?", {
@@ -81,7 +81,7 @@ test_that("Do we observe the expected variants in a specific gene?", {
 ## Here we can ask for variants specific to samples with given condition(s)
 ## specific to a gene
 snp_genes <- sm(snps_intersections(all_expt, snp_sets,
-                                   chr_column="seqnames"))
+                                   chr_column = "seqnames"))
 actual <- 11
 ## Thus, we expect 11 variant positions found only in the 3 Tryp samples
 ## in gene TcCLB.510483.360
@@ -92,10 +92,10 @@ test_that("Do we observe the expected variants in a specific gene under a specif
 })
 
 ## The Epis are the pink samples, Tryps are purple, A60 are orange, A96 are green
-##snp_norm <- normalize_expt(snp_expt, filter=TRUE, transform="log2")
+##snp_norm <- normalize_expt(snp_expt, filter = TRUE, transform = "log2")
 ##test <- plot_corheat(snp_norm)
-##test2 <- plot_sample_heatmap(snp_norm, Rowv=FALSE)
+##test2 <- plot_sample_heatmap(snp_norm, Rowv = FALSE)
 
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 260variants.R in ", elapsed,  " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 260variants.R in ", elapsed,  " seconds.")

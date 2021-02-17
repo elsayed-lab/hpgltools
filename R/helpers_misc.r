@@ -1,3 +1,5 @@
+## helpers_misc.r: Some random helper functions.
+
 #' Make a backup of an existing file with n revisions, like VMS!
 #'
 #' Sometimes I just want to kick myself for overwriting important files and then
@@ -5,7 +7,7 @@
 #'
 #' @param backup_file Filename to backup.
 #' @param backups How many revisions?
-backup_file <- function(backup_file, backups=4) {
+backup_file <- function(backup_file, backups = 4) {
   if (file.exists(backup_file)) {
     for (i in backups:01) {
       j <- i + 1
@@ -47,10 +49,10 @@ backup_file <- function(backup_file, backups=4) {
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
 #' }
 #' @export
-bioc_all <- function(release=NULL,
-                     mirror="bioconductor.statistik.tu-dortmund.de",
-                     base="packages", type="software",
-                     suppress_updates=TRUE, suppress_auto=TRUE, force=FALSE) {
+bioc_all <- function(release = NULL,
+                     mirror = "bioconductor.statistik.tu-dortmund.de",
+                     base = "packages", type = "software",
+                     suppress_updates = TRUE, suppress_auto = TRUE, force = FALSE) {
   if (is.null(release)) {
     release <- as.character(BiocManager::version())
   }
@@ -63,29 +65,29 @@ bioc_all <- function(release=NULL,
   fail <- c()
   alr <- c()
   ## Soemthing is weird with the libcurl on the cluster...
-  test <- download.file(url=dl_url, destfile="test.json")
+  test <- download.file(url = dl_url, destfile = "test.json")
   pkg_list <- jsonlite::fromJSON("test.json")
   pkg_names <- pkg_list[["attr"]][["packageList"]]
-  software_names <- strsplit(x=pkg_names[[1]], split=",")[[1]]
-  annotation_names <- strsplit(x=pkg_names[[2]], split=",")[[1]]
-  ## experiment_names <- strsplit(x=pkg_names[[3]], split=",")[[1]]
+  software_names <- strsplit(x = pkg_names[[1]], split = ",")[[1]]
+  annotation_names <- strsplit(x = pkg_names[[2]], split = ",")[[1]]
+  ## experiment_names <- strsplit(x = pkg_names[[3]], split = ",")[[1]]
   ## It appears that with bioconductor release 3.4,
   ## experiment has been folded into annotation.
-  installed <- list(succeeded=c(), failed=c(), already=c())
-  attempt <- function(pkg, update=suppress_updates, auto=suppress_auto,
-                      forceme=force,
-                      state=list(succeeded=c(),
-                                 failed=c(),
-                                 already=c())) {
+  installed <- list(succeeded = c(), failed = c(), already = c())
+  attempt <- function(pkg, update = suppress_updates, auto = suppress_auto,
+                      forceme = force,
+                      state = list(succeeded = c(),
+                                 failed = c(),
+                                 already = c())) {
     sleep <- 10
     suc <- state[["succeeded"]]
     fail <- state[["failed"]]
     alr <- state[["already"]]
     message("Installing: ", pkg)
     if (isTRUE(forceme)) {
-      installedp <- sm(try(BiocManager::install(pkg, ask=FALSE,
-                                                suppressUpdates=update,
-                                                suppressAutoUpdate=auto)))
+      installedp <- sm(try(BiocManager::install(pkg, ask = FALSE,
+                                                suppressUpdates = update,
+                                                suppressAutoUpdate = auto)))
       if (class(installedp) == "try-error") {
         fail <- append(fail, pkg)
       } else {
@@ -97,14 +99,14 @@ bioc_all <- function(release=NULL,
         }
       }
     } else {
-      if (isTRUE(pkg %in% .packages(all.available=TRUE))) {
+      if (isTRUE(pkg %in% .packages(all.available = TRUE))) {
         message("Package ", pkg,  " is already installed.")
         alr <- append(alr, pkg)
         sleep <- 0
       } else {
-        installedp <- try(sm(BiocManager::install(pkg, ask=FALSE,
-                                                  suppressUpdates=update,
-                                                  suppressAutoUpdate=auto)))
+        installedp <- try(sm(BiocManager::install(pkg, ask = FALSE,
+                                                  suppressUpdates = update,
+                                                  suppressAutoUpdate = auto)))
         if (class(installedp) == "try-error") {
           fail <- append(fail, pkg)
         } else {
@@ -126,19 +128,19 @@ bioc_all <- function(release=NULL,
   } ## End attempt
   if (type == "software") {
     for (pkg in software_names) {
-      installed <- attempt(pkg, state=installed)
+      installed <- attempt(pkg, state = installed)
     }
   } else if (type == "annotation") {
     for (pkg in annotation_names) {
-      installed <- attempt(pkg, state=installed)
+      installed <- attempt(pkg, state = installed)
     }
   } else {
-    software_installed <- bioc_all(release=release,
-                                   mirror=mirror, base=base,
-                                   type="software")
-    annotation_installed <- bioc_all(release=release,
-                                     mirror=mirror, base=base,
-                                     type="annotation")
+    software_installed <- bioc_all(release = release,
+                                   mirror = mirror, base = base,
+                                   type = "software")
+    annotation_installed <- bioc_all(release = release,
+                                     mirror = mirror, base = base,
+                                     type = "annotation")
     installed <- list(
       "software" = software_installed,
       "annotation" = annotation_installed)
@@ -153,7 +155,7 @@ bioc_all <- function(release=NULL,
 #'   many tries.
 #' @return A spring-fresh R session, hopefully.
 #' @export
-clear_session <- function(keepers=NULL, depth=10) {
+clear_session <- function(keepers = NULL, depth = 10) {
   ## Partially taken from:
   ## https://stackoverflow.com/questions/7505547/detach-all-packages-while-working-in-r
   basic_packages <- c("package:stats", "package:graphics", "package:grDevices",
@@ -164,10 +166,10 @@ clear_session <- function(keepers=NULL, depth=10) {
   result <- R.utils::gcDLLs()
   if (length(package_list) > 0) {
     for (package in package_list) {
-      detach(package, character.only=TRUE)
+      detach(package, character.only = TRUE)
     }
   }
-  tt <- sm(rm(list=ls(all.names=TRUE), envir=globalenv()))
+  tt <- sm(rm(list = ls(all.names = TRUE), envir = globalenv()))
 }
 
 #' Similarity measure which combines elements from Pearson correlation and
@@ -195,11 +197,11 @@ clear_session <- function(keepers=NULL, depth=10) {
 #' @author Keigth Hughitt
 #' @return Matrix of the correlation-modified distances of the original matrix.
 #' @export
-cordist <- function(data, cor_method="pearson", dist_method="euclidean",
-                    cor_weight=0.5, ...) {
-  cor_matrix  <- hpgl_cor(t(data), method=cor_method, ...)
-  dist_matrix <- as.matrix(dist(data, method=dist_method, diag=TRUE,
-                                upper=TRUE))
+cordist <- function(data, cor_method = "pearson", dist_method = "euclidean",
+                    cor_weight = 0.5, ...) {
+  cor_matrix  <- hpgl_cor(t(data), method = cor_method, ...)
+  dist_matrix <- as.matrix(dist(data, method = dist_method, diag = TRUE,
+                                upper = TRUE))
   dist_matrix <- log1p(dist_matrix)
   dist_matrix <- 1 - (dist_matrix / max(dist_matrix))
 
@@ -220,11 +222,11 @@ cordist <- function(data, cor_method="pearson", dist_method="euclidean",
 #'
 #' @param gitdir Directory containing the git repository.
 #' @export
-get_git_commit <- function(gitdir="~/hpgltools") {
+get_git_commit <- function(gitdir = "~/hpgltools") {
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'commit' | awk '{{print $2}}'")
-  commit_result <- system(cmdline, intern=TRUE)
+  commit_result <- system(cmdline, intern = TRUE)
   cmdline <- glue("cd {gitdir} && git log -1 2>&1 | grep 'Date' | perl -pe 's/^Date:\\s+//g'")
-  date_result <- system(cmdline, intern=TRUE)
+  date_result <- system(cmdline, intern = TRUE)
   result <- glue("{date_result}: {commit_result}")
   message("If you wish to reproduce this exact build of hpgltools, invoke the following:")
   message("> git clone http://github.com/abelew/hpgltools.git")
@@ -254,7 +256,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
     stop("Need a constant number of numerators and denominators.")
   }
   conditions <- unique(c(numerators, denominators))
-  contrasts <- matrix(nrow=length(numerators), ncol=length(conditions))
+  contrasts <- matrix(nrow = length(numerators), ncol = length(conditions))
   colnames(contrasts) <- conditions
   rownames(contrasts) <- numerators
   for (col in (colnames(contrasts))) {
@@ -282,14 +284,14 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #'
 #' @param x DNA/RNA StringSet containing the UTR sequences of interest
 #' @param basal I dunno.
-#' @param overlapping default=1.5
-#' @param d1.3 default=0.75  These parameter names are so stupid, lets be realistic
-#' @param d4.6 default=0.4
-#' @param d7.9 default=0.2
-#' @param within.AU default=0.3
-#' @param aub.min.length default=10
-#' @param aub.p.to.start default=0.8
-#' @param aub.p.to.end default=0.55
+#' @param overlapping default = 1.5
+#' @param d1.3 default = 0.75  These parameter names are so stupid, lets be realistic
+#' @param d4.6 default = 0.4
+#' @param d7.9 default = 0.2
+#' @param within.AU default = 0.3
+#' @param aub.min.length default = 10
+#' @param aub.p.to.start default = 0.8
+#' @param aub.p.to.end default = 0.55
 #' @return a DataFrame of scores
 #' @seealso \pkg{IRanges} \pkg{Biostrings}
 #' @examples
@@ -302,18 +304,18 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #'  ## unfortunate -- but the logic for testing remains the same.
 #'  are_candidates <- hpgl_arescore(genome)
 #'  utr_genes <- subset(lmajor_annotations, type == 'gene')
-#'  threep <- GenomicRanges::GRanges(seqnames=Rle(utr_genes[,1]),
-#'                                   ranges=IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
-#'                                   strand=Rle(utr_genes[,5]),
-#'                                   name=Rle(utr_genes[,10]))
+#'  threep <- GenomicRanges::GRanges(seqnames = Rle(utr_genes[,1]),
+#'                                   ranges = IRanges(utr_genes[,3], end=(utr_genes[,3] + 120)),
+#'                                   strand = Rle(utr_genes[,5]),
+#'                                   name = Rle(utr_genes[,10]))
 #'  threep_seqstrings <- Biostrings::getSeq(lm, threep)
-#'  are_test <- hpgltools::hpgl_arescore(x=threep_seqstrings)
+#'  are_test <- hpgltools::hpgl_arescore(x = threep_seqstrings)
 #'  are_genes <- rownames(are_test[ which(are_test$score > 0), ])
 #' }
 #' @export
-hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
-                          d7.9=0.2, within.AU=0.3, aub.min.length=10, aub.p.to.start=0.8,
-                          aub.p.to.end=0.55) {
+hpgl_arescore <- function(x, basal = 1, overlapping = 1.5, d1.3=0.75, d4.6=0.4,
+                          d7.9=0.2, within.AU = 0.3, aub.min.length = 10, aub.p.to.start = 0.8,
+                          aub.p.to.end = 0.55) {
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
   if (xtype == "DNA") {
     pentamer <- "ATTTA"
@@ -338,15 +340,15 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
   clust <- do.call(rbind, clust)
   dscores <- clust$d1.3 * d1.3 + clust$d4.6 * d4.6 + clust$d7.9 *  d7.9
   ## require.auto("Biostrings")
-  au.blocks <- my_identifyAUBlocks(x, min.length=aub.min.length,
-                                   p.to.start=aub.p.to.start, p.to.end=aub.p.to.end)
+  au.blocks <- my_identifyAUBlocks(x, min.length = aub.min.length,
+                                   p.to.start = aub.p.to.start, p.to.end = aub.p.to.end)
   aub.score <- sum(IRanges::countOverlaps(pmatches, au.blocks) * within.AU)
   score <- basal.score + over.score + dscores + aub.score
-  ans <- S4Vectors::DataFrame(score=score,
-                              n.pentamer=S4Vectors::elementNROWS(pmatches),
-                              n.overmer=S4Vectors::elementNROWS(omatches),
-                              au.blocks=au.blocks,
-                              n.au.blocks=S4Vectors::elementNROWS(au.blocks))
+  ans <- S4Vectors::DataFrame(score = score,
+                              n.pentamer = S4Vectors::elementNROWS(pmatches),
+                              n.overmer = S4Vectors::elementNROWS(omatches),
+                              au.blocks = au.blocks,
+                              n.au.blocks = S4Vectors::elementNROWS(au.blocks))
   cbind(ans, S4Vectors::DataFrame(clust))
 }
 
@@ -364,18 +366,18 @@ hpgl_arescore <- function(x, basal=1, overlapping=1.5, d1.3=0.75, d4.6=0.4,
 #'  \code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
 #' @examples
 #' \dontrun{
-#'  hpgl_cor(df=df)
-#'  hpgl_cor(df=df, method="robust")
+#'  hpgl_cor(df = df)
+#'  hpgl_cor(df = df, method = "robust")
 #' }
 #' @export
-hpgl_cor <- function(df, method="pearson", ...) {
+hpgl_cor <- function(df, method = "pearson", ...) {
   if (method == "robust") {
-    robust_cov <- robust::covRob(df, corr=TRUE)
+    robust_cov <- robust::covRob(df, corr = TRUE)
     correlation <- robust_cov[["cov"]]
   } else if (method == "cordist") {
     correlation <- cordist(df, ...)
   } else {
-    correlation <- stats::cor(df, method=method, ...)
+    correlation <- stats::cor(df, method = method, ...)
   }
   return(correlation)
 }
@@ -393,13 +395,13 @@ hpgl_cor <- function(df, method="pearson", ...) {
 #' @param significance Passed to IHW
 #' @param type Assuming a DE table, what type of DE is this?
 #' @export
-hpgl_padjust <- function(data, pvalue_column="pvalue", mean_column="base_mean",
-                         method="fdr", significance=0.05, type=NULL) {
+hpgl_padjust <- function(data, pvalue_column = "pvalue", mean_column = "base_mean",
+                         method = "fdr", significance = 0.05, type = NULL) {
   if (method == "ihw") {
-    result <- ihw_adjust(data, pvalue_column=pvalue_column, type=type,
-                         mean_column=mean_column, significance=significance)
+    result <- ihw_adjust(data, pvalue_column = pvalue_column, type = type,
+                         mean_column = mean_column, significance = significance)
   } else {
-    result <- p.adjust(data[[pvalue_column]], method=method)
+    result <- p.adjust(data[[pvalue_column]], method = method)
   }
   return(result)
 }
@@ -412,9 +414,9 @@ hpgl_padjust <- function(data, pvalue_column="pvalue", mean_column="base_mean",
 #' @param method Which distance calculation to use?
 #' @param ... Extra arguments for dist.
 #' @export
-hpgl_dist <- function(df, method="euclidean", ...) {
+hpgl_dist <- function(df, method = "euclidean", ...) {
   input <- t(as.matrix(df))
-  result <- as.matrix(dist(input, method=method, ...))
+  result <- as.matrix(dist(input, method = method, ...))
   return(result)
 }
 
@@ -433,12 +435,12 @@ hpgl_dist <- function(df, method="euclidean", ...) {
 #'  loadme()
 #' }
 #' @export
-loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
+loadme <- function(directory = "savefiles", filename = "Rdata.rda.xz") {
   savefile <- glue("{getwd()}/{directory}/{filename}")
   message("Loading the savefile: ", savefile)
-  load_string <- glue("load('{savefile}', envir=globalenv())")
+  load_string <- glue("load('{savefile}', envir = globalenv())")
   message("Command run: ", load_string)
-  eval(parse(text=load_string))
+  eval(parse(text = load_string))
 }
 
 #' Perform a get_value for delimited files
@@ -448,9 +450,9 @@ loadme <- function(directory="savefiles", filename="Rdata.rda.xz") {
 #' @param x Some stuff to split
 #' @param delimiter The tritrypdb uses ': ' ergo the default.
 #' @return A value!
-local_get_value <- function(x, delimiter=": ") {
-  return(gsub(pattern="^ ", replacement="",
-              x=tail(unlist(strsplit(x, delimiter)), n=1), fixed=TRUE))
+local_get_value <- function(x, delimiter = ": ") {
+  return(gsub(pattern = "^ ", replacement = "",
+              x = tail(unlist(strsplit(x, delimiter)), n = 1), fixed = TRUE))
 }
 
 #' copy/paste the function from SeqTools and figure out where it falls on its ass.
@@ -462,7 +464,7 @@ local_get_value <- function(x, delimiter=": ") {
 #' @param p.to.start P to start of course
 #' @param p.to.end The p to end -- wtf who makes names like this?
 #' @return a list of IRanges which contain a bunch of As and Us.
-my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55) {
+my_identifyAUBlocks <- function (x, min.length = 20, p.to.start = 0.8, p.to.end = 0.55) {
   xtype <- match.arg(substr(class(x), 1, 3), c("DNA", "RNA"))
   stopifnot(S4Vectors::isSingleNumber(min.length) & min.length >= 5 &  min.length <= 50)
   stopifnot(S4Vectors::isSingleNumber(p.to.start) & p.to.start >= 0.5 & p.to.start <= 0.95)
@@ -483,18 +485,18 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
     test <- devtools::install_github("lianos/seqtools/R/pkg")
   }
   lib_result <- sm(requireNamespace("SeqTools"))
-  att_result <- sm(try(attachNamespace("SeqTools"), silent=TRUE))
+  att_result <- sm(try(attachNamespace("SeqTools"), silent = TRUE))
   ## library(SeqTools)
   fun <- function(i) {
     one_seq <- x[[i]]
-    au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob=TRUE)
+    au <- Biostrings::letterFrequencyInSlidingView(one_seq, min.length, AU, as.prob = TRUE)
     if (is.null(au) | nrow(au) == 0) {
       return(IRanges::IRanges())
     }
     au <- as.numeric(au)
     can.start <- au >= p.to.start
     can.end <- au <= p.to.end
-    posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE="SeqTools")
+    posts <- .Call("find_au_start_end", au, p.to.start, p.to.end, PACKAGE = "SeqTools")
     blocks <- IRanges::IRanges(posts$start, posts$end + min.length -  1L)
     IRanges::end(blocks) <- ifelse(IRanges::end(blocks) > widths[i],
                                    widths[i],
@@ -524,31 +526,30 @@ my_identifyAUBlocks <- function (x, min.length=20, p.to.start=0.8, p.to.end=0.55
 #'  require.auto("ggplot2")
 #' }
 #' @export
-please_install <- function(lib, update=FALSE) {
+please_install <- function(lib, update = FALSE) {
   count <- 0
   local({
     r <- getOption("repos")
     r["CRAN"] <- "http://cran.r-project.org"
-    options(repos=r)
+    options(repos = r)
   })
   if (isTRUE(update)) {
-    utils::update.packages(ask=FALSE)
+    utils::update.packages(ask = FALSE)
   }
   github_path <- NULL
   ## If there is a / in the library's name, assume it is a github path
-  split_lib <- strsplit(x=lib, split="/")[[1]]
+  split_lib <- strsplit(x = lib, split = "/")[[1]]
   if (length(split_lib) == 2) {
     github_path <- lib
     lib <- split_lib[[2]]
   }
-  if (!isTRUE(lib %in% .packages(all.available=TRUE))) {
+  if (!isTRUE(lib %in% .packages(all.available = TRUE))) {
     if (is.null(github_path)) {
-      ##source("http://bioconductor.org/biocLite.R")
-      ##biocLite(character(), ask=FALSE) # update dependencies, if any.
-      eval(parse(text=paste("BiocManager::install('", lib, "')", sep="")))
+      ##eval(parse(text = paste("BiocManager::install('", lib, "', update = FALSE)", sep = "")))
+      installed <- BiocManager::install(lib, update = FALSE)
       count <- 1
     } else {
-      ret <- try(devtools::install_github(github_path))
+      ret <- try(devtools::install_github(github_path, upgrade = "never"))
       if (class(ret) != "try-error") {
         count <- 1
       }
@@ -565,7 +566,7 @@ please_install <- function(lib, update=FALSE) {
 #' @param display DISPLAY variable to use, if NULL it looks in ~/.displays/$(host).last
 #' @return Fresh plotting window to the display of your choice!
 #' @export
-rex <- function(display=":0") {
+rex <- function(display = ":0") {
   if (!is.null(dev.list())) {
     for (i in 1:length(dev.list())) {
       dev.off()
@@ -579,7 +580,7 @@ rex <- function(display=":0") {
   auth <- file.path(home, ".Xauthority")
   message("Setting display to: ", display)
   result <- Sys.setenv("DISPLAY" = display, "XAUTHORITY" = auth)
-  X11(display=display)
+  X11(display = display)
   return(NULL)
 }
 
@@ -590,9 +591,9 @@ rex <- function(display=":0") {
 #' @param format Chosen file format.
 #' @return Final filename including the prefix rundate.
 #' @export
-renderme <- function(file, format="html_document") {
-  ret <- rmarkdown::render(file, output_format=format, envir=globalenv())
-  rundate <- format(Sys.Date(), format="%Y%m%d")
+renderme <- function(file, format = "html_document") {
+  ret <- rmarkdown::render(file, output_format = format, envir = globalenv())
+  rundate <- format(Sys.Date(), format = "%Y%m%d")
   outdir <- dirname(ret)
   base <- basename(ret)
   b <- tools::file_path_sans_ext(base)
@@ -622,7 +623,7 @@ renderme <- function(file, format="html_document") {
 #'  saveme()
 #' }
 #' @export
-saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda.xz") {
+saveme <- function(directory = "savefiles", backups = 2, cpus = 6, filename = "Rdata.rda.xz") {
   environment()
   if (!file.exists(directory)) {
     dir.create(directory)
@@ -630,15 +631,15 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
   ##savefile <- glue("{getwd()}/{directory}/{filename}")
   savefile <- file.path(getwd(), directory, filename)
   message("The savefile is: ", savefile)
-  backup_file(savefile, backups=backups)
+  backup_file(savefile, backups = backups)
   ## The following save strings work:
   save_string <- glue(
     "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
-    save(list=ls(all.names=TRUE, envir=globalenv()),
-         envir=globalenv(), file=con, compress=FALSE); \\
+    save(list = ls(all.names = TRUE, envir = globalenv()),
+         envir = globalenv(), file = con, compress = FALSE); \\
     close(con)")
   message("The save string is: ", save_string)
-  eval(parse(text=save_string))
+  eval(parse(text = save_string))
 }
 
 #' Calculate a simplistic distance function of a point against two axes.
@@ -657,24 +658,24 @@ saveme <- function(directory="savefiles", backups=2, cpus=6, filename="Rdata.rda
 #' @examples
 #' \dontrun{
 #'  mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-#'  first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x="first", y="second"),
-#'                                     environment=hpgl_env) +
+#'  first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x = "first", y = "second"),
+#'                                     environment = hpgl_env) +
 #'    ggplot2::xlab(paste("Expression of", df_x_axis)) +
 #'    ggplot2::ylab(paste("Expression of", df_y_axis)) +
-#'    ggplot2::geom_vline(color="grey", xintercept=(first_median - first_mad), size=line_size) +
-#'    ggplot2::geom_vline(color="grey", xintercept=(first_median + first_mad), size=line_size) +
-#'    ggplot2::geom_vline(color="darkgrey", xintercept=first_median, size=line_size) +
-#'    ggplot2::geom_hline(color="grey", yintercept=(second_median - second_mad), size=line_size) +
-#'    ggplot2::geom_hline(color="grey", yintercept=(second_median + second_mad), size=line_size) +
-#'    ggplot2::geom_hline(color="darkgrey", yintercept=second_median, size=line_size) +
-#'    ggplot2::geom_point(colour=grDevices::hsv(mydist$dist, 1, mydist$dist),
-#'                        alpha=0.6, size=size) +
-#'    ggplot2::theme(legend.position="none")
+#'    ggplot2::geom_vline(color = "grey", xintercept=(first_median - first_mad), size = line_size) +
+#'    ggplot2::geom_vline(color = "grey", xintercept=(first_median + first_mad), size = line_size) +
+#'    ggplot2::geom_vline(color = "darkgrey", xintercept = first_median, size = line_size) +
+#'    ggplot2::geom_hline(color = "grey", yintercept=(second_median - second_mad), size = line_size) +
+#'    ggplot2::geom_hline(color = "grey", yintercept=(second_median + second_mad), size = line_size) +
+#'    ggplot2::geom_hline(color = "darkgrey", yintercept = second_median, size = line_size) +
+#'    ggplot2::geom_point(colour = grDevices::hsv(mydist$dist, 1, mydist$dist),
+#'                        alpha = 0.6, size = size) +
+#'    ggplot2::theme(legend.position = "none")
 #'  first_vs_second  ## dots get colored according to how far they are from the medians
 #'  ## replace first_median, second_median with 0,0 for the axes
 #' }
 #' @export
-sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
+sillydist <- function(firstterm, secondterm, firstaxis = 0, secondaxis = 0) {
   dataframe <- data.frame(firstterm, secondterm)
   dataframe[["x"]] <- (abs(dataframe[, 1]) - abs(firstaxis)) / abs(firstaxis)
   dataframe[["y"]] <- abs((dataframe[, 2] - secondaxis) / secondaxis)
@@ -694,20 +695,20 @@ sillydist <- function(firstterm, secondterm, firstaxis=0, secondaxis=0) {
 #' @param wrap  Wrap the invocation and try again if it failed?
 #' @return Whatever the code would have returned.
 #' @export
-sm <- function(..., wrap=TRUE) {
+sm <- function(..., wrap = TRUE) {
   ret <- NULL
-  output <- capture.output(type="output", {
+  output <- capture.output(type = "output", {
     if (isTRUE(wrap)) {
-      ret <- try(suppressWarnings(suppressMessages(...)), silent=TRUE)
+      ret <- try(suppressWarnings(suppressMessages(...)), silent = TRUE)
       if (class(ret)[1] == "try-error") {
-        if (grepl(pattern=" there is no package called", x=ret)) {
-          uninstalled <- trimws(gsub(pattern="^.* there is no package called '(.*)'.*$",
-                                     replacement="\\1",
-                                     x=ret, perl=TRUE))
+        if (grepl(pattern = " there is no package called", x = ret)) {
+          uninstalled <- trimws(gsub(pattern = "^.* there is no package called '(.*)'.*$",
+                                     replacement = "\\1",
+                                     x = ret, perl = TRUE))
           message("Going to attempt to install: ", uninstalled)
           tt <- please_install(uninstalled)
         }
-        ret <- sm(..., wrap=FALSE)
+        ret <- sm(..., wrap = FALSE)
       }
     } else {
       ret <- suppressWarnings(suppressMessages(...))
@@ -739,10 +740,10 @@ unAsIs <- function(stuff) {
 #' @param as Type to return.
 #' @return a string representation of that model.
 #' @export
-ymxb_print <- function(lm_model, as="glue") {
+ymxb_print <- function(lm_model, as = "glue") {
   coefficients <- summary(lm_model)[["coefficients"]]
-  int <- signif(x=coefficients["(Intercept)", 1], digits=3)
-  m <- signif(x=coefficients["first", 1], digits=3)
+  int <- signif(x = coefficients["(Intercept)", 1], digits = 3)
+  m <- signif(x = coefficients["first", 1], digits = 3)
   ret <- NULL
   if (as != "glue") {
     retlst <- list(

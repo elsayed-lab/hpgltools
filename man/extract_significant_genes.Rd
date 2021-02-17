@@ -17,7 +17,7 @@ extract_significant_genes(
   ma = TRUE,
   p_type = "adj",
   invert_barplots = FALSE,
-  excel = "excel/significant_genes.xlsx",
+  excel = NULL,
   siglfc_cutoffs = c(0, 1, 2),
   ...
 )

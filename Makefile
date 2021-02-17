@@ -26,7 +26,7 @@ clean:
 			vignettes/*.R vignettes/*.html vignettes/*.gb vignettes/*.gz vignettes/*.Rdata \
 			vignettes/*.xlsx vignettes/*.tex vignettes/*.log vignettes/*.aux vignettes/*.map \
 			vignettes/*.rda
-	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata
+	rm -rf R/.Rhistory vignettes/.Rhistory R/EuPathDB R/*.rda R/*.Rdata R/*.gb R/*.tab
 	rm -rf tests/testthat/circos tests/testthat/EuPathDB tests/testthat/excel tests/testthat/excel_test \
 		tests/testthat/preprocessing tests/testthat/test_gprofiler \
 		tests/testthat/saved_plots tests/testthat/excel_test_sig \
@@ -39,7 +39,8 @@ clean:
 		tests/testthat/.Rhistory
 	rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
 		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
-		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml*
+		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml* \
+		tests/testthat/*.csv
 
 clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
@@ -54,7 +55,7 @@ deps:
 
 document: roxygen vignette reference
 
-install: roxygen
+install: roxygen reference
 	@echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 
@@ -74,8 +75,9 @@ push:
 
 reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
-	@mkdir -p inst/doc
-	R CMD Rd2pdf . -o inst/reference/reference.pdf --no-preview
+	mkdir -p inst/doc
+	rm -f inst/doc/reference.pdf
+	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview 2>/dev/null
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"
@@ -104,7 +106,7 @@ update_bioc:
 vignette:
 	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"
-	R -e "devtools::build_vignettes()"
+	R -e "devtools::build_vignettes(install=FALSE)"
 	mv doc inst/doc
 	cp inst/reference/* inst/doc
 

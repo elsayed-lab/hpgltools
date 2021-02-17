@@ -18,7 +18,7 @@ normalize_expt(
   use_original = FALSE,
   batch1 = "batch",
   batch2 = NULL,
-  batch_step = 5,
+  batch_step = 4,
   low_to_zero = TRUE,
   thresh = 2,
   min_samples = 2,
@@ -84,7 +84,7 @@ I am not sure why, but I think they should be 0.}
 }
 \value{
 Expt object with normalized data and the original data saved as
-  'original_expressionset'
+ 'original_expressionset'
 }
 \description{
 It is the responsibility of normalize_expt() to perform any arbitrary

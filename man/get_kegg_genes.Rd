@@ -31,7 +31,7 @@ information regarding the number of genes observed in each pathway.
 }
 \examples{
 \dontrun{
- kegg_info <- get_kegg_genes(species="Canis familiaris")
+ kegg_info <- get_kegg_genes(species = "Canis familiaris")
 }
 }
 \seealso{

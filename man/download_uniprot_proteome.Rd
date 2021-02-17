@@ -33,7 +33,7 @@ or species name and does its best to find the appropriate uniprot data.  This
 is therefore primarily used by load_uniprot_annotations().
 }
 \examples{
- uniprot_sc_downloaded <- download_uniprot_proteome(species="Saccharomyces cerevisiae S288c")
+ uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
  uniprot_sc_downloaded$filename
  uniprot_sc_downloaded$species
 }

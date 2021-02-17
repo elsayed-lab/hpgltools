@@ -82,7 +82,7 @@ significance of the signal."
 }
 \examples{
 \dontrun{
- plot_volcano_de(table, gvis_filename="html/fun_ma_plot.html")
+ plot_volcano_de(table, gvis_filename = "html/fun_ma_plot.html")
  ## Currently this assumes that a variant of toptable was used which
  ## gives adjusted p-values.  This is not always the case and I should
  ## check for that, but I have not yet.

@@ -23,8 +23,8 @@ S4.
 }
 \examples{
 \dontrun{
- hpgl_cor(df=df)
- hpgl_cor(df=df, method="robust")
+ hpgl_cor(df = df)
+ hpgl_cor(df = df, method = "robust")
 }
 }
 \seealso{

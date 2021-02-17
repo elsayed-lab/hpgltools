@@ -20,6 +20,6 @@ We should be able to have an agnostic annotation loader which can take some
 standard arguments and figure out where to gather data on its own.
 }
 \examples{
- gff_annotations <- load_annotations(type="gff", gff=gff_file)
+ gff_annotations <- load_annotations(type = "gff", gff = gff_file)
  dim(gff_annotations)
 }

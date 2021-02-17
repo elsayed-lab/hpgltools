@@ -11,7 +11,7 @@ context("10norm_shared.R: Are normalizations consistent over time (Shared functi
 load("pasilla_df.rda")
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()
-load("pasilla.rda", envir=pasilla)
+load("pasilla.rda", envir = pasilla)
 pasilla_expt <- pasilla[["expt"]]
 
 test_genes <- c("FBgn0000014","FBgn0000008","FBgn0000017","FBgn0000018", "FBgn0000024")
@@ -71,6 +71,14 @@ test_that("Pasilla (un)normalized libsize?", {
     expect_equal(expected, actual)
 })
 
+## Try out my new normalize function
+norm <- list("filter" = TRUE, "convert"="cpm")
+new <- normalize(pasilla_expt, todo = norm)
+old <- normalize_expt(pasilla_expt, filter = TRUE, convert = "cpm")
+test_that("Does the new normalize() function work like the old normalize_expt()?", {
+  expect_equal(new[["count_table"]], exprs(old))
+})
+
 end <- as.POSIXlt(Sys.time())
-elapsed <- round(x=as.numeric(end) - as.numeric(start))
-message(paste0("\nFinished 10norm_shared.R in ", elapsed, " seconds."))
+elapsed <- round(x = as.numeric(end - start))
+message("\nFinished 10norm_shared.R in ", elapsed, " seconds.")

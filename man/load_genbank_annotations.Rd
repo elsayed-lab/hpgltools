@@ -32,7 +32,7 @@ facilitate downloading genomes from genbank and dumping them into a local
 txdb instance.
 }
 \examples{
- sagalacticae_genbank_annot <- load_genbank_annotations(accession="AE009948")
+ sagalacticae_genbank_annot <- load_genbank_annotations(accession = "AE009948")
  dim(as.data.frame(sagalacticae_genbank_annot$cds))
 }
 \seealso{

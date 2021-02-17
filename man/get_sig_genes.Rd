@@ -49,7 +49,7 @@ Tested in test_29de_shared.R
 }
 \examples{
 \dontrun{
- sig_table <- get_sig_genes(table, lfc=1)
+ sig_table <- get_sig_genes(table, lfc = 1)
 }
 }
 \seealso{

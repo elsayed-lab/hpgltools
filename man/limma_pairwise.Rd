@@ -30,7 +30,9 @@ normalization state, etc.}
 
 \item{model_cond}{Include condition in the model?}
 
-\item{model_batch}{Include batch in the model? This is hopefully TRUE.}
+\item{model_batch}{Include batch in the model?  If this is a character
+instead of a logical, then it is passed to all_adjusers() to attempt to find
+model parameters which describe surrogate variables in the data.}
 
 \item{model_intercept}{Perform a cell-means or intercept model? A little more
 difficult for me to understand.  I have tested and get the same answer
@@ -57,7 +59,7 @@ than I previously realized.  Play with it here.}
 List including the following information:
  macb = the mashing together of condition/batch so you can look at it
  macb_model = The result of calling model.matrix(~0 + macb)
- macb_fit =  The result of calling lmFit(data, macb_model)
+ macb_fit = The result of calling lmFit(data, macb_model)
  voom_result = The result from voom()
  voom_design = The design from voom (redundant from voom_result, but convenient)
  macb_table = A table of the number of times each condition/batch pairing happens

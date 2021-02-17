@@ -46,8 +46,8 @@ query.  I can say with confidence that it works well between mice and
 humans.
 }
 \examples{
- mouse_yeast_orthologs <- load_biomart_orthologs(gene_ids=NULL, first_species="mmusculus",
-                                                 second_species="scerevisiae")
+ mouse_yeast_orthologs <- load_biomart_orthologs(gene_ids = NULL, first_species = "mmusculus",
+                                                 second_species = "scerevisiae")
  head(mouse_yeast_orthologs$all_linked_genes)
 }
 \seealso{

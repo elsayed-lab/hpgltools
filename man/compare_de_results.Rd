@@ -33,8 +33,8 @@ Tested in 29de_shared.R
 }
 \examples{
 \dontrun{
- first <- all_pairwise(expt, model_batch=FALSE, excel="first.xlsx")
- second <- all_pairwise(expt, model_batch="svaseq", excel="second.xlsx")
+ first <- all_pairwise(expt, model_batch = FALSE, excel = "first.xlsx")
+ second <- all_pairwise(expt, model_batch = "svaseq", excel = "second.xlsx")
  comparison <- compare_de_results(first$combined, second$combined)
 }
 }

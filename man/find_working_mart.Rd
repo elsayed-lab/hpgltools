@@ -32,6 +32,6 @@ Either a mart instance or NULL if no love was forthcoming.
 In my experience, the various biomart mirrors are not varyingly likely to be
 functional at any given time.  In addition, I often find it useful to use an
 archive instance rather than the most recent ensembl instance.  This function
-therefore iterates over the various mirrors; or if archive=TRUE it will try a
+therefore iterates over the various mirrors; or if archive = TRUE it will try a
 series of archive servers from 1, 2, and 3 years ago.
 }

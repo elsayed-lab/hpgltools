@@ -40,7 +40,7 @@ However, this will do a couple of things to make one's life easier:
 \examples{
 \dontrun{
  finished_comparison = eBayes(limma_output)
- table = make_limma_tables(finished_comparison, adjust="fdr")
+ table = make_limma_tables(finished_comparison, adjust = "fdr")
 }
 }
 \seealso{

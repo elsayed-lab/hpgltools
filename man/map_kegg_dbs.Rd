@@ -17,7 +17,7 @@ Takes a list of KEGG gene identifiers and returns a list of ENSEMBL
 ids corresponding to those genes.
 }
 \examples{
- kegg_df <- load_kegg_annotations(species="coli")
+ kegg_df <- load_kegg_annotations(species = "coli")
  kegg_ids <- head(kegg_df[["kegg_geneid"]])
  mapped <- map_kegg_dbs(kegg_ids)
  mapped

@@ -29,8 +29,8 @@ Invoked by _pairwise().
 \examples{
 \dontrun{
  starting_data <- create_expt(metadata)
- modified_data <- normalize_expt(starting_data, transform="log2", norm="quant")
- a_dataset <- choose_dataset(modified_data, choose_for="deseq")
+ modified_data <- normalize_expt(starting_data, transform = "log2", norm = "quant")
+ a_dataset <- choose_dataset(modified_data, choose_for = "deseq")
  ## choose_dataset should see that log2 data is inappropriate for DESeq2 and
  ## return it to a base10 state.
 }

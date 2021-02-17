@@ -22,6 +22,6 @@ This seeks to take the peculiar format from KEGGREST for pathway<->genes and
 make it easier to deal with.
 }
 \examples{
- sc_kegg_annot <- load_kegg_annotations(species="cerevisiae")
+ sc_kegg_annot <- load_kegg_annotations(species = "cerevisiae")
  head(sc_kegg_annot)
 }
