@@ -846,7 +846,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
 #' @export
 gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor = NULL,
                              sample = NULL, factor_column = "condition", method = "mean",
-                             label_size = NULL, col_margin = 6, row_margin = 12, cutoff = 0.05) {
+                             label_size = NULL, col_margin = 6, row_margin = 12, cutoff = 0.95) {
   values <- exprs(gsva_result[["expt"]])
   design <- pData(gsva_result[["expt"]])
   gsva_pca <- plot_pca(gsva_result[["expt"]])
@@ -890,13 +890,15 @@ gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor 
   }
 
   population_values <- values
+  ## ok, this function will give 'better' scores for higher
+  ## gsva scores, so that is good, I will therefore just say 'higher is better'.
   cheesy_likelihood <- function(test) {
     gsva_mean <- mean(population_values)
     gsva_sd <- sd(population_values)
     num_values <- length(population_values)
     pop_sd <- gsva_sd * sqrt((num_values - 1) / num_values)
-    z <- (test - gsva_mean) / pop_sd
-    likelihood <- 1 - pnorm(z)
+    notz <- (test - gsva_mean) / pop_sd
+    likelihood <- pnorm(notz)
     return(likelihood)
   }
 
@@ -940,7 +942,7 @@ gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor 
       }
     } ## End iterating over every level in the chosen factor.
     colnames(result_df) <- fact_lvls
-    heat_colors <- grDevices::colorRampPalette(c("black", "white"))
+    heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     ht_result <- heatmap.3(as.matrix(result_df), trace="none", col=heat_colors,
                            margins=c(col_margin, row_margin), Colv=FALSE,
                            cexCol=label_size, cexRow=label_size)
@@ -985,7 +987,7 @@ gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL, factor 
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
 #' @export
-get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_subset.xlsx",
+get_sig_gsva_categories <- function(gsva_result, cutoff=0.95, excel="excel/gsva_subset.xlsx",
                                     factor_column="condition", factor=NULL) {
 
   gsva_scores <- gsva_result[["expt"]]
@@ -1016,7 +1018,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff=0.05, excel="excel/gsva_
   subset_mtrx <- expr
   gl <- gsva_likelihoods(gsva_result, factor=fact)
   likelihoods <- gl[["likelihoods"]]
-  keep_idx <- likelihoods[[fact]] <= cutoff
+  keep_idx <- likelihoods[[fact]] >= cutoff
   subset_mtrx <- subset_mtrx[keep_idx, ]
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
