@@ -59,7 +59,9 @@ jobs:
         Rscript -e "devtools::install_github('js229/Vennerable')"
         Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
         Rscript -e "devtools::install_bioc('RDAVIDWebService')"
+        Rscript -e "devtools::install_github('dviraran/xCell')"
         make deps
+        Rscript -e "print(nrow(installed.packages()))"
 
     - name: Run tests
       run: make test

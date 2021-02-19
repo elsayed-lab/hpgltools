@@ -113,8 +113,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       if (is.null(conds)) {
         conds <- original_cols
       }
-      cds <- DESeq::newCountDataSet(count_table, conditions = conds)
-      factors <- BiocGenerics::estimateSizeFactors(cds)
+      ## cds <- DESeq::newCountDataSet(count_table, conditions = conds)
+      factors <- BiocGenerics::estimateSizeFactors(count_table)
       count_table <- BiocGenerics::counts(factors, normalized = TRUE)
       norm_performed <- "sf"
     },

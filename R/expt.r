@@ -1284,7 +1284,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
                                                                                 q0A[i], q0B[i]),
                                                        size = 1/0.2))))
   rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-  example <- DESeq::newCountDataSet(m, conds)
+  example <- DESeq::DESeqDataSet(m, conds)
   return(example)
 }
 
