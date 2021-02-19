@@ -22,6 +22,7 @@ jobs:
        R_LIBS: /home/runner/R
        R_LIBS_USER: /home/runner/R
        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+       RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
        TMPDIR: /home/runner/tmp
     steps:
 
@@ -36,53 +37,29 @@ jobs:
     - uses: r-lib/actions/setup-pandoc@master
     - uses: actions/checkout@v2
 
-    - name: R java reconf
-      run : |
-        sudo R CMD javareconf
-
-    - name: Set Rprofile
+    - name: Create R environment
       run: |
         echo "options(Ncpus=2)" > ${HOME}/.Rprofile
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
         mkdir -p /home/runner/tmp
-
-    - name: Install R prerequisites
-      run: make prereq
-
-    - name: github R prerequisites
-      run: |
-        devtools::install_github("YuLab-SMU/GOSemSim")
-        devtools::install_github("abelew/EuPathDB")
-        devtools::install_github("js229/Vennerable")
-        devtools::install_github("kokrah/cbcbSEQ")
-        devtools::install_bioc("RDAVIDWebService")
-      shell: Rscript {0}
-
-    - name: Query dependencies
-      run: |
-        install.packages("remotes")
-        saveRDS(remotes::dev_package_deps(dependencies=TRUE), "depends.Rds", version=2)
-      shell: Rscript {0}
-
-    - name: Install system dependencies
-      env:
-        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
-      run: |
+        mkdir -p /home/runner/R
+        Rscript -e "install.packages('remotes')"
+        Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
         Rscript -e "remotes::install_github('r-hub/sysreqs')"
-        sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
-        sudo -s eval "$sysreqs"
-
-    - name: Install dependencies
-      run: |
-        remotes::install_deps(dependencies=TRUE)
-        remotes::install_deps(dependencies="Suggests")
-        remotes::install_cran("lintr")
-      shell: Rscript {0}
-
-    - name: Install hpgltools prerequisites
-      run: make deps
+        sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        sudo R CMD javareconf
+        make prereq
+        Rscript -e "remotes::install_deps(dependencies=TRUE)"
+        Rscript -e "remotes::install_deps(dependencies='Suggests')"
+        Rscript -e "remotes::install_cran('lintr')"
+        Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
+        Rscript -e "devtools::install_github('abelew/EuPathDB')"
+        Rscript -e "devtools::install_github('js229/Vennerable')"
+        Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
+        Rscript -e "devtools::install_bioc('RDAVIDWebService')"
+        make deps
 
     - name: Run tests
       run: make test
