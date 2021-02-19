@@ -30,12 +30,6 @@ test_that("Do we get an expected gsva result?", {
   expect_equal(actual, expected, tolerance = 0.001)
 })
 
-gsva_expt <- gsva_result[["expt"]]
-gsva_dis <- plot_sample_heatmap(gsva_expt)
-test_that("Can we plot a gsva result?", {
-  expect_equal("recordedplot", class(gsva_dis))
-})
-
 gsva_sig <- get_sig_gsva_categories(gsva_result, excel = NULL, model_batch = FALSE)
 test_that("Can we acquire significant gsva scores?", {
   expect_equal("gg", class(gsva_sig[["score_pca"]])[1])

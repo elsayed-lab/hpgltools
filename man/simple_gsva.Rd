@@ -26,6 +26,8 @@ simple_gsva(
 
 \item{data_pkg}{What package contains the requisite dataset?}
 
+\item{signature_category}{Specify a subset category to extract from the signatures database.}
+
 \item{cores}{How many CPUs to use?}
 
 \item{current_id}{Where did the IDs of the genes come from?}
@@ -33,7 +35,7 @@ simple_gsva(
 \item{required_id}{gsva (I assume) always requires ENTREZ IDs, but just in
 case this is a parameter.}
 
-\item{min_catsize}{This provides the min.sz parameter to gsva().}
+\item{min_catsize}{Minimum category size to consider interesting (passed to gsva()).}
 
 \item{orgdb}{What is the data source for the rownames()?}
 
@@ -43,9 +45,6 @@ because it was throwing segmentation faults.}
 \item{kcdf}{Options for the gsva methods.}
 
 \item{ranking}{another gsva option.}
-
-\item{datasets}{Name of the variable from which to acquire the gsva data, if
-it does not exist, then data() will be called upon it.}
 }
 \value{
 List containing three elements: first a modified expressionset using

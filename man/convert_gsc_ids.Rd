@@ -27,6 +27,7 @@ Fresh gene set collection replete with new names.
 \description{
 This is intended to convert all the IDs in a geneSet from one ID type to
 another and giving back the geneSet with the new IDs.
+FIXME: This should use convert_ids() to simplify itself
 }
 \details{
 One caveat: this will collapse redundant IDs via unique().

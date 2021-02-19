@@ -2,26 +2,25 @@
 % Please edit documentation in R/gsva.r
 \name{convert_ids}
 \alias{convert_ids}
-\title{GSVA expects Entrez IDs, but we usually have Ensembl IDs.  Use this to
-convert them.}
+\title{Change gene IDs to the format expected by gsva using an orgdb.}
 \usage{
 convert_ids(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.eg.db")
 }
 \arguments{
-\item{ids}{Set of gene IDs in the 'from' format.}
+\item{ids}{Vector of IDS to modify.}
 
-\item{from}{Name of the ID type as found in the 'orgdb'.}
+\item{from}{Change from this format.}
 
-\item{to}{Format required by GSVA (or other tool/method if so desired).}
+\item{to}{Change to this format.}
 
-\item{orgdb}{AnnotationDBI package containing the various IDs.}
+\item{orgdb}{Using this orgdb instance.}
 }
 \value{
-Spit out a list of new IDs and a message telling how successful we were.
+New vector of ENTREZ IDs.
 }
 \description{
-There is a non-zero chance that I have at least one other similar
-implementation hiding in this package.  This should be made more consistent,
-but this particular function provides a quick and easy way to make sure that
-GSVA has the gene IDs that it wants.
+Though it is possible to use gsva without ENTREZ IDs, it is not trivial.
+This function attempts to ensure that the IDs in one's expressionset are
+therefore entrez IDs. It is possible that this function is at least partially
+redundant with other functions in this package and should be replaced.
 }

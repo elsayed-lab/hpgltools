@@ -172,9 +172,14 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
 #' @param factor_column When extracting significance information, use this
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
+#' @param label_size Used to make the category names easier to read at the expense
+#'  of dropping some.
+#' @param col_margin Attempt to make heatmaps fit better on the screen with this and...
+#' @param row_margin this parameter
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
-                                    model_batch = FALSE, factor_column = "condition", factor = NULL) {
+                                    model_batch = FALSE, factor_column = "condition", factor = NULL,
+                                    label_size = NULL, col_margin = 6, row_margin = 12) {
 
   gsva_scores <- gsva_result[["expt"]]
 
@@ -261,7 +266,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
       "subset_plot" = scored_ht_plot,
       "scores" = gl,
       "score_pca" = gl[["pca"]][["plot"]],
-      "subset_expt" = expr,
+      "subset_expt" = subset_eset,
       "gsva_limma" = gsva_limma)
 
   if (!is.null(excel)) {
@@ -1137,24 +1142,25 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @return Small list providing the output from xCell, the set of signatures,
 #'  and heatmap.
 #' @export
-simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, expected_types = NULL,
-                         label_size = NULL, col_margin = 6, row_margin = 12, ...) {
+simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
+                         expected_types = NULL, label_size = NULL, col_margin = 6,
+                         row_margin = 12, sig_cutoff = 0.2, verbose = TRUE, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
   expt_state <- expt[["state"]][["conversion"]]
-  xcell_input <- NULL
+  xcell_eset <- NULL
   if (expt_state != "rpkm") {
     message("xCell strongly perfers rpkm values, re-normalizing now.")
-    xcell_input <- normalize_expt(expt, convert = "rpkm", ...)
+    xcell_eset <- normalize_expt(expt, convert = "rpkm", ...)
   } else {
-    xcell_input <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
+    xcell_eset <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
                                   filter = arglist[["filter"]], batch = arglist[["batch"]])
   }
-  xcell_input <- exprs(xcell_input)
-  xcell_na <- is.na(xcell_input)
-  xcell_input[xcell_na] <- 0
-  xcell_input <- merge(xcell_input, xref, by.x = "row.names", by.y = "ensembl_gene_id")
+  xcell_mtrx <- exprs(xcell_eset)
+  xcell_na <- is.na(xcell_mtrx)
+  xcell_mtrx[xcell_na] <- 0
+  xcell_input <- merge(xcell_mtrx, xref, by.x = "row.names", by.y = "ensembl_gene_id")
   rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique = TRUE)
   xcell_input[["Row.names"]] <- NULL
   xcell_input[["hgnc_symbol"]] <- NULL
@@ -1171,8 +1177,17 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, ex
   if (is.null(spill)) {
     spill <- xCell.data[["spill"]]
   }
-  xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
-                                          genes = genes, spill = spill, cell.types = expected_types, ...))
+
+  xcell_result <- NULL
+  if (isTRUE(verbose)) {
+    xcell_result <- xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
+                                         genes = genes, spill = spill,
+                                         cell.types = expected_types)
+  } else {
+    xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
+                                            genes = genes, spill = spill,
+                                            cell.types = expected_types))
+  }
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
@@ -1186,10 +1201,25 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, ex
   }
   ht_plot <- grDevices::recordPlot()
 
+  sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
+  sig_result <- xcell_result[sig_idx, ]
+  if (is.null(label_size)) {
+    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin))
+  } else {
+    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin),
+                    cexCol = label_size, cexRow = label_size)
+  }
+  sig_plot <- grDevices::recordPlot()
+
   retlist <- list(
+      "xcell_input" = xcell_input,
       "xcell_result" = xcell_result,
       "signatures" = xCell.data[["signatures"]],
-      "heatmap" = ht_plot)
+      "heatmap" = ht_plot,
+      "sig_result" = sig_result,
+      "sig_plot" = sig_plot)
   return(retlist)
 }
 

@@ -2,7 +2,8 @@
 % Please edit documentation in R/gsva.r
 \name{load_gmt_signatures}
 \alias{load_gmt_signatures}
-\title{Extract particular gene sets from either gmt files or GSVA data.}
+\title{Load signatures from either a gmt file, xml file, or directly from the
+GSVAdata data set in R.}
 \usage{
 load_gmt_signatures(
   signatures = "c2BroadSets",
@@ -11,21 +12,21 @@ load_gmt_signatures(
 )
 }
 \arguments{
-\item{signatures}{Potentially a filename or variable name.  If it is a
-filename, it should be a locally downloaded gmt file, otherwise it should be
-a variable from 'data_pkg'.}
+\item{signatures}{Either the filename downloaded or the variable's name as
+found in the environment created by data_pkg.}
 
-\item{data_pkg}{Most likely GSVAdata, but not necessarily.}
+\item{data_pkg}{Used when signatures is not a filename to load a data
+package, presumably GSVAdata.}
 
-\item{signature_category}{Choose a specific category from the
-gmt/xml/database.}
+\item{signature_category}{Probably not needed unless you download a signature
+file containing lots of different categories.}
 }
 \value{
-gene set collection!
+signature dataset which may be used by gsva()
 }
 \description{
-This could be extended to pull in the XML files from MSigDB as well.  In its
-current form it seeks to fill in the likely corners when looking to extract
-the signatures from either GSVA or manually downloaded gmt files from the
-MSigDB.
+There are a bunch of places from which to acquire signature data.  This
+function attempts to provide a single place to load them.  The easiest way to
+get up to date signatures is to download them from msigdb and set the
+signatures parameter to the downloaded filename.
 }

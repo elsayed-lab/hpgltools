@@ -52,37 +52,37 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
   mart <- NULL
   used_host <- NULL
   used_mart <- NULL
-  for (h in default_hosts) {
-    mart <- try(biomaRt::useMart(biomart = trymart, host = h), silent = TRUE)
+  for (host in default_hosts) {
+    mart <- try(biomaRt::useMart(biomart = trymart, host = host), silent = TRUE)
     cmart <- class(mart)
     if (cmart[1] == "Mart") {
-      message("Using mart: ", trymart, " from host: ", h, ".")
-      used_host <- h
+      message("Using mart: ", trymart, " from host: ", host, ".")
+      used_host <- host
       used_mart <- trymart
       break
     } else if ("try-error" %in% cmart) {
       if (grepl(pattern = "Timeout", x = mart[1])) {
-        message("Timed out when trying ", h, ".")
+        message("Timed out when trying ", host, ".")
         next
       } else if (grepl(pattern = "Unexpected format", x = mart[1])) {
-        message("Got a bad mart type when trying host ", h, " mart ", trymart, ".")
+        message("Got a bad mart type when trying host ", host, " mart ", trymart, ".")
         next
       } else {
         message("Unable to perform useMart, perhaps the host/mart is incorrect: ",
                 host, " ", trymart, ".")
-        marts <- biomaRt::listMarts(host = h)
+        marts <- biomaRt::listMarts(host = host)
         mart_names <- as.character(marts[[1]])
         message("The available marts are: ")
         message(toString(mart_names))
         message("Trying the first one.")
-        mart <- try(biomaRt::useMart(biomart = marts[[1, 1]], host = h))
+        mart <- try(biomaRt::useMart(biomart = marts[[1, 1]], host = host))
         if (! "try-error" %in% class(mart)) {
-          used_host <- h
+          used_host <- host
           used_mart <- marts[[1, 1]]
           break
         } else {
           used_mart <- trymart
-          used_host <- h
+          used_host <- host
           break
         }
       } ## End checking the state of the chosen mart.

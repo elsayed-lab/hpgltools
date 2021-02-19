@@ -37,7 +37,7 @@ make_gsc_from_pairwise(
 
 \item{current_id}{Usually we use ensembl IDs, but that does not _need_ to be the case.}
 
-\item{required_id}{GSVA uses entrezids by default.}
+\item{required_id}{gsva uses entrezids by default.}
 
 \item{...}{Extra arguments for extract_significant_genes().}
 }
