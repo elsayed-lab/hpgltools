@@ -544,7 +544,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img), silent = TRUE))
   }
   return(ret)
 }
@@ -1790,7 +1790,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   }
 
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img), silent=TRUE))
   }
   class(ret) <- c("sig_genes", "list")
   return(ret)
@@ -2027,7 +2027,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
   for (img in image_files) {
-    removed <- try(file.remove(img), silent=TRUE)
+    removed <- try(suppressWarnings(file.remove(img), silent=TRUE))
   }
 
   class(lst) <- c("sig_intersect", "list")
