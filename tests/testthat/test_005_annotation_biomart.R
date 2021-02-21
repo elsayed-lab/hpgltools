@@ -27,7 +27,7 @@ context("005annotation_biomart.R
   })
 
   ## load_biomart_go()
-  testing <- load_biomart_go(species = "hsapiens")
+  testing <- load_biomart_go(species = "hsapiens", overwrite=TRUE)
   data <- testing[["go"]]
   expected <- c(318558, 2)
   actual <- dim(data)

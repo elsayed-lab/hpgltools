@@ -1385,7 +1385,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = NULL, unique = FALSE,
+extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
+                                   z = NULL, unique = FALSE,
                                    excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
@@ -1432,7 +1433,7 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
         rownames(high_data) <- high_data[["Row.names"]]
         high_data[["Row.names"]] <- NULL
       } else {
-        high_data <- as.data.frame(abundances)
+        high_data <- as.data.frame(high_abundances)
       }
       start_row <- 1
       if (class(excel)[1] == "character") {
@@ -1453,7 +1454,7 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
         rownames(low_data) <- low_data[["Row.names"]]
         low_data[["Row.names"]] <- NULL
       } else {
-        low_data <- as.data.frame(abundances)
+        low_data <- as.data.frame(low_abundances)
       }
       if (class(excel)[1] == "character") {
         title <- glue::glue("Table SXXX: Low abundance genes in {coef} according to {according}.")

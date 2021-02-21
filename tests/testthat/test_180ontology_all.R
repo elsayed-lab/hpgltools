@@ -44,12 +44,13 @@ if (! "EuPathDB" %in% installed.packages()) {
 fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice = "fungidb", eu_version = "46")
 pombe_entry <- EuPathDB::get_eupath_entry(species = "pombe", metadata = fungidb_metadata)
 pkgnames <- EuPathDB::get_eupath_pkgnames(entry = pombe_entry)
-if (! pkgnames$orgdb %in% installed.packages()) {
+if (! pkgnames[["orgdb"]] %in% installed.packages()) {
   pombe_org <- EuPathDB::make_eupath_orgdb(entry = pombe_entry, overwrite = TRUE)
 }
 pombe_orgdb <- pkgnames[["orgdb"]]
 
-## Note that I default to using entrez IDs, but the eupathdb does not, so change the orgdb_to argument.
+## Note that I default to using entrez IDs, but the eupathdb does not,
+## so change the orgdb_to argument.
 cp_test <- simple_clusterprofiler(ups, de_table = table, orgdb = pombe_orgdb, orgdb_to = "GID")
 test_that("Did clusterprofiler provide the expected number of entries (MF group)?", {
   actual <- nrow(cp_test[["group_go"]][["MF"]])

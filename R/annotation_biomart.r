@@ -10,7 +10,7 @@
 #' therefore iterates over the various mirrors; or if archive = TRUE it will try a
 #' series of archive servers from 1, 2, and 3 years ago.
 #'
-#' @param default_hosts List of biomart mirrors.
+#' @param default_hosts List of biomart mirrors to try.
 #' @param trymart Specific mart to query.
 #' @param archive Try an archive server instead of a mirror?  If this is a
 #'  character, it will assume it is a specific archive hostname.
@@ -113,11 +113,16 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
 #' @param overwrite Overwite an existing save file?
 #' @param do_save Create a savefile of annotations for future runs?
 #' @param host Ensembl hostname to use.
+#' @param trymart Biomart has become a circular dependency, this makes me sad,
+#'  now to list the marts, you need to have a mart loaded.
+#' @param archive Try an archive server instead of a mirror?  If this is a
+#'  character, it will assume it is a specific archive hostname.
+#' @param default_hosts List of biomart mirrors to try.
+#' @param year Choose specific year(s) for the archive servers?
+#' @param month Choose specific month(s) for the archive server?
 #' @param drop_haplotypes Some chromosomes have stupid names because they are
 #'  from non-standard haplotypes and they should go away.  Setting this to
 #'  false stops that.
-#' @param trymart Biomart has become a circular dependency, this makes me sad,
-#'  now to list the marts, you need to have a mart loaded.
 #' @param trydataset Choose the biomart dataset from which to query.
 #' @param gene_requests Set of columns to query for description-ish annotations.
 #' @param length_requests Set of columns to query for location-ish annotations.
@@ -137,7 +142,7 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
 load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do_save = TRUE,
                                      host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
                                      default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
-                                                     "www.ensembl.org", "asia.ensembl.org"),
+                                                       "www.ensembl.org", "asia.ensembl.org"),
                                      year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
                                      gene_requests = c("ensembl_gene_id",
                                                      "version",
@@ -336,7 +341,16 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #' @param overwrite Overwrite existing savefile?
 #' @param do_save Create a savefile of the annotations? (if not false, then a filename.)
 #' @param host Ensembl hostname to use.
-#' @param trymart Default mart to try, newer marts use a different notation.
+#' @param trymart Biomart has become a circular dependency, this makes me sad,
+#'  now to list the marts, you need to have a mart loaded.
+#' @param archive Try an archive server instead of a mirror?  If this is a
+#'  character, it will assume it is a specific archive hostname.
+#' @param default_hosts List of biomart mirrors to try.
+#' @param year Choose specific year(s) for the archive servers?
+#' @param month Choose specific month(s) for the archive servers?
+#' @param drop_haplotypes Some chromosomes have stupid names because they are
+#'  from non-standard haplotypes and they should go away.  Setting this to
+#'  false stops that.
 #' @param secondtry The newer mart name.
 #' @param dl_rows List of rows from the final biomart object to download.
 #' @param dl_rowsv2 A second list of potential rows.
@@ -353,16 +367,16 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #'  dim(hs_biomart_ontology$go)
 #' @export
 load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = TRUE,
-                            host = "dec2015.archive.ensembl.org", trymart = "ENSEMBL_MART_ENSEMBL",
+                            host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
+                            default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
+                                              "www.ensembl.org", "asia.ensembl.org"),
+                            year = NULL, month = NULL, drop_haplotypes = TRUE,
                             secondtry = "_gene", dl_rows = c("ensembl_gene_id", "go_accession"),
-                            dl_rowsv2=c("ensembl_gene_id", "go_id")) {
-  ## secondtry <- paste0(species, secondtry)
+                            dl_rowsv2 = c("ensembl_gene_id", "go_id")) {
   secondtry <- glue("{species}{secondtry}")
-
-  ## savefile <- paste0(species, "_go_annotations.rda")
   savefile <- glue("{species}_go_annotations.rda")
   if (!identical(FALSE, do_save)) {
-    if (class(do_save) == "character") {
+    if (class(do_save)[1] == "character") {
       savefile <- do_save
       do_save <- TRUE
     }
@@ -385,6 +399,27 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
     )
     return(retlist)
   }
+
+  martlst <- NULL
+  if (is.null(host) & is.null(default_hosts)) {
+    stop("both host and default_hosts are null.")
+  } else if (is.null(host)) {
+    martlst <- find_working_mart(default_hosts = default_hosts, trymart = trymart,
+                                 archive = archive, year = year, month = month)
+  } else {
+    martlst <- find_working_mart(default_hosts = host, trymart = trymart,
+                                 archive = FALSE)
+  }
+  used_mart <- NULL
+  mart <- NULL
+  host <- NULL
+  if (!is.null(martlst)) {
+    used_mart <- martlst[["used_mart"]]
+    host <- martlst[["host"]]
+    mart <- martlst[["mart"]]
+  }
+  chosen_dataset <- NULL
+  dataset <- NULL
 
   used_mart <- NULL
   mart <- try(biomaRt::useMart(biomart = trymart, host = host), silent = TRUE)

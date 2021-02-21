@@ -61,7 +61,8 @@ jobs:
         Rscript -e "devtools::install_bioc('RDAVIDWebService')"
         Rscript -e "devtools::install_github('dviraran/xCell')"
         make deps
-        Rscript -e "print(nrow(installed.packages()))"
 
     - name: Run tests
-      run: make test
+      run: |
+        Rscript -e "print(nrow(installed.packages()))"
+        make test
