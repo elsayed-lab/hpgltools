@@ -108,5 +108,8 @@ vignette:
 	R -e "devtools::build_vignettes(install=FALSE)"
 	mv doc inst/doc
 	cp inst/reference/* inst/doc
+	cp vignettes/*.R inst/doc
+	cp vignettes/*.Rmd inst/doc
+	cp vignettes/*.html inst/doc
 
 vt:	clean_vignette vignette reference install

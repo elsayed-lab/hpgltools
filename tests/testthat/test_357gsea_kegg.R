@@ -3,7 +3,6 @@ library(testthat)
 library(hpgltools)
 library(pasilla)
 library(pathview)
-data(pasillaGenes)
 context("357gsea_kegg.R: Do KEGGREST and pathview work?
   123456\n")
 

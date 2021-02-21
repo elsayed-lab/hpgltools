@@ -10,7 +10,10 @@ get_sig_gsva_categories(
   excel = "excel/gsva_subset.xlsx",
   model_batch = FALSE,
   factor_column = "condition",
-  factor = NULL
+  factor = NULL,
+  label_size = NULL,
+  col_margin = 6,
+  row_margin = 12
 )
 }
 \arguments{
@@ -26,6 +29,13 @@ get_sig_gsva_categories(
 metadata factor.}
 
 \item{factor}{Use this metadata factor as the reference.}
+
+\item{label_size}{Used to make the category names easier to read at the expense
+of dropping some.}
+
+\item{col_margin}{Attempt to make heatmaps fit better on the screen with this and...}
+
+\item{row_margin}{this parameter}
 }
 \description{
 This function uses a couple of methods to try to get an idea of whether the

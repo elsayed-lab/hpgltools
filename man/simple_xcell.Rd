@@ -13,6 +13,8 @@ simple_xcell(
   label_size = NULL,
   col_margin = 6,
   row_margin = 12,
+  sig_cutoff = 0.2,
+  verbose = TRUE,
   ...
 )
 }

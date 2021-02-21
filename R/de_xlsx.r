@@ -2027,7 +2027,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(file.remove(img), silent=TRUE)
   }
 
   class(lst) <- c("sig_intersect", "list")
