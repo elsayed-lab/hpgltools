@@ -426,7 +426,7 @@ orgdb_from_ah <- function(ahid = NULL, title = NULL, species = NULL, type = "Org
     message("Going to attempt to find a human database.  I hope this is what you want!")
     hits <- grepl(pattern = "Hs\\.eg\\.db", x = ah$title)
     ahid <- names(ah)[hits]
-  } else if (is.null(ahid) & is.null(title) & is.null(species)) {
+  } else if (!is.null(species)) {
     ## Then we got a species
     possible <- ah$species
     titles <- ah$title
@@ -438,7 +438,7 @@ orgdb_from_ah <- function(ahid = NULL, title = NULL, species = NULL, type = "Org
             toString(hits), "\nchoosing: ", hits[1],
             "\nwhich is ", first_true_name)
     ahid <- hits[1]
-  } else if (is.null(ahid) & is.null(species)) {
+  } else if (!is.null(title)) {
     ## We got a title
     possible <- ah$title
     hits_idx <- grepl(pattern = title, x = possible)

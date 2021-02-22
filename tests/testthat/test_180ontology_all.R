@@ -21,23 +21,9 @@ table <- combined[["data"]][["data"]]
 ## yet another victim to 2020.
 
 ## Gather the pombe annotation data.
-## tmp <- library(AnnotationHub)
-## ah <- AnnotationHub()
-## orgdbs <- AnnotationHub::query(ah, "OrgDb")
-## sc_orgdb <- query(ah, c("OrgDB", "pombe"))
-## AH67545 | org.Sc.sgd.db.sqlite3
-## sc_orgdb
-## pombe <- sc_orgdb[[1]]
-## pombe <- orgdb_from_ah(species = "^Schizosaccharomyces pombe$")
-
-pombe_expt <- make_pombe_expt()
-pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
-colnames(pombe_lengths) <- c("ID", "length")
-
-pombe_go <- load_biomart_go(species = "spombe", host = "fungi.ensembl.org")[["go"]]
-
-## This works, but causes github actions to over extend and kill my process.
-if (Sys.getenv(x = "GITHUB_ACTIONS") != "true") {
+pombe_orgdb <- orgdb_from_ah(species = "^Schizosaccharomyces pombe$")
+## Here is a fallback for if/when annotationhub is not working:
+if (FALSE) {
   if (! "EuPathDB" %in% installed.packages()) {
     devtools::install_github("abelew/EuPathDB", force = TRUE)
   }
@@ -49,68 +35,75 @@ if (Sys.getenv(x = "GITHUB_ACTIONS") != "true") {
     pombe_org <- sm(EuPathDB::make_eupath_orgdb(entry = pombe_entry))
   }
   pombe_orgdb <- pkgnames[["orgdb"]]
+}
 
-  ## Note that I default to using entrez IDs, but the eupathdb does not,
-  ## so change the orgdb_to argument.
-  cp_test <- simple_clusterprofiler(ups, de_table = table, orgdb = pombe_orgdb, orgdb_to = "GID")
-  test_that("Did clusterprofiler provide the expected number of entries (MF group)?", {
-    actual <- nrow(cp_test[["group_go"]][["MF"]])
-    expected <- 155
-    expect_equal(expected, actual, tolerance = 2)
-  })
+pombe_expt <- make_pombe_expt()
+pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
+colnames(pombe_lengths) <- c("ID", "length")
 
-  test_that("Did clusterprofiler provide the expected number of entries (BP group)?", {
-    actual <- nrow(cp_test[["group_go"]][["BP"]])
-    expected <- 571
-    expect_equal(expected, actual, tolerance = 2)
-  })
+pombe_go <- load_biomart_go(species = "spombe", host = "fungi.ensembl.org")[["go"]]
 
-  test_that("Did clusterprofiler provide the expected number of entries (CC group)?", {
-    actual <- nrow(cp_test[["group_go"]][["CC"]])
-    expected <- 745
-    expect_equal(expected, actual, tolerance = 2)
-  })
+## Note that I default to using entrez IDs, but the eupathdb does not,
+## so change the orgdb_to argument.
+cp_test <- simple_clusterprofiler(ups, de_table = table, orgdb = pombe_orgdb, orgdb_to = "GID")
+test_that("Did clusterprofiler provide the expected number of entries (MF group)?", {
+  actual <- nrow(cp_test[["group_go"]][["MF"]])
+  expected <- 155
+  expect_equal(expected, actual, tolerance = 2)
+})
 
-  test_that("Did clusterprofiler provide the expected number of entries (MF enriched)?", {
-    actual <- nrow(cp_test[["enrich_go"]][["MF_all"]])
-    expected <- 13
-    expect_equal(expected, actual, tolerance = 2)
-  })
+test_that("Did clusterprofiler provide the expected number of entries (BP group)?", {
+  actual <- nrow(cp_test[["group_go"]][["BP"]])
+  expected <- 571
+  expect_equal(expected, actual, tolerance = 2)
+})
 
-  test_that("Did clusterprofiler provide the expected number of entries (BP enriched)?", {
-    actual <- nrow(cp_test[["enrich_go"]][["BP_all"]])
-    expected <- 160
-    expect_equal(expected, actual, tolerance = 2)
-  })
+test_that("Did clusterprofiler provide the expected number of entries (CC group)?", {
+  actual <- nrow(cp_test[["group_go"]][["CC"]])
+  expected <- 745
+  expect_equal(expected, actual, tolerance = 2)
+})
 
-  test_that("Did clusterprofiler provide the expected number of entries (CC enriched)?", {
-    actual <- nrow(cp_test[["enrich_go"]][["CC_all"]])
-    expected <- 3
-    expect_equal(expected, actual, tolerance = 2)
-  })
+test_that("Did clusterprofiler provide the expected number of entries (MF enriched)?", {
+  actual <- nrow(cp_test[["enrich_go"]][["MF_all"]])
+  expected <- 13
+  expect_equal(expected, actual, tolerance = 2)
+})
 
-  test_that("Do we get some plots?", {
-    ## 07 - 15
-    expected <- "gg"
-    actual <- class(cp_test[["plots"]][["ggo_mf_bar"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ggo_bp_bar"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ggo_cc_bar"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_all_mf"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_all_bp"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_all_cc"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_sig_mf"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_sig_bp"]])[1]
-    expect_equal(expected, actual)
-    actual <- class(cp_test[["plots"]][["ego_sig_cc"]])[1]
-    expect_equal(expected, actual)
-  })
+test_that("Did clusterprofiler provide the expected number of entries (BP enriched)?", {
+  actual <- nrow(cp_test[["enrich_go"]][["BP_all"]])
+  expected <- 160
+  expect_equal(expected, actual, tolerance = 2)
+})
+
+test_that("Did clusterprofiler provide the expected number of entries (CC enriched)?", {
+  actual <- nrow(cp_test[["enrich_go"]][["CC_all"]])
+  expected <- 3
+  expect_equal(expected, actual, tolerance = 2)
+})
+
+test_that("Do we get some plots?", {
+  ## 07 - 15
+  expected <- "gg"
+  actual <- class(cp_test[["plots"]][["ggo_mf_bar"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ggo_bp_bar"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ggo_cc_bar"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_all_mf"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_all_bp"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_all_cc"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_sig_mf"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_sig_bp"]])[1]
+  expect_equal(expected, actual)
+  actual <- class(cp_test[["plots"]][["ego_sig_cc"]])[1]
+  expect_equal(expected, actual)
+})
 
 } ## End checking for github actions
 

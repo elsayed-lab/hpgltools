@@ -1138,13 +1138,14 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @param label_size How large to make labels when printing the final heatmap.
 #' @param col_margin Used by par() when printing the final heatmap.
 #' @param row_margin Ibid.
+#' @param cores How many CPUs to use?
 #' @param ... Extra arguments when normalizing the data for use with xCell.
 #' @return Small list providing the output from xCell, the set of signatures,
 #'  and heatmap.
 #' @export
 simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
                          expected_types = NULL, label_size = NULL, col_margin = 6,
-                         row_margin = 12, sig_cutoff = 0.2, verbose = TRUE, ...) {
+                         row_margin = 12, sig_cutoff = 0.2, verbose = TRUE, cores = 4, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
@@ -1182,10 +1183,10 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   if (isTRUE(verbose)) {
     xcell_result <- xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
                                          genes = genes, spill = spill,
-                                         cell.types = expected_types)
+                                         cell.types = expected_types, parallel.sz = cores)
   } else {
     xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
-                                            genes = genes, spill = spill,
+                                            genes = genes, spill = spill, parallel.sz = cores,
                                             cell.types = expected_types))
   }
 
