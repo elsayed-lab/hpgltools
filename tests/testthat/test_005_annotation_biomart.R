@@ -6,8 +6,6 @@ context("005annotation_biomart.R
 ## 2017-12, exported functions in annotation_biomart:
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 
-##if (Sys.getenv(x = "GITHUB_ACTIONS") != "true") {
-## load_biomart_annotations()
 testing <- load_biomart_annotations(species = "hsapiens")
 annotations <- testing[["annotation"]]
 gene_ids <- head(sort(annotations[["ensembl_transcript_id"]]))
@@ -48,7 +46,6 @@ expected <- 26600
 test_that("Do we get expected orthologs from load_biomart_orthologs()?", {
   expect_gt(actual, expected)
 })
-##}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))
