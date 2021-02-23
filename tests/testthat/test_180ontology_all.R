@@ -105,7 +105,7 @@ test_that("Do we get some plots?", {
   expect_equal(expected, actual)
 })
 
-} ## End checking for github actions
+## } ## End checking for github actions
 
 go_test <- simple_goseq(ups, go_db = pombe_go, length_db = pombe_lengths)
 
