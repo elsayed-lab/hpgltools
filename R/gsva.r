@@ -119,13 +119,13 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
-#' @param sig_data GeneSetCollection from the broad msigdb.
-#' @param msig_xml msig XML file downloaded from broad.
 #' @param gsva_result Some data from GSVA to modify.
+#' @param msig_xml msig XML file downloaded from broad.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
 #' @export
-get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", gsva_result = NULL) {
+get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml",
+                                wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
   msig_result <- xml2::read_xml(x = msig_xml)
 
   db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
@@ -143,13 +143,26 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
     all_data[[c_name]] <- c_data
   }
 
-  sig_found_idx <- rownames(all_data) %in% names(sig_data)
-  ret_data <- all_data[sig_found_idx, ]
+  ## all_data is my dataframe of xml annotations, lets extract the wanted columns before
+  ## adding it to the gsva result expressionset.
+  sub_data <- all_data
+  if (!is.null(wanted_meta)) {
+    sub_data <- sub_data[, wanted_meta]
+  }
+  ## The full set of xml annotations has waay more IDs than any single category,
+  ## so this should drop it from 30,000+ to <10,000.
+  found_idx <- rownames(sub_data) %in% rownames(exprs(gsva_result))
+  sub_data <- sub_data[found_idx, ]
+
   retlist <- list(
       "all_data" = all_data,
-      "sub_data" = ret_data)
+      "sub_data" = sub_data)
   if (!is.null(gsva_result)) {
-    fData(gsva_result) <- ret_data
+    current_fdata <- fData(gsva_result)
+    new_fdata <- merge(current_fdata, sub_data, by = "row.names")
+    rownames(new_fdata) <- new_fdata[["Row.names"]]
+    new_fdata[["Row.names"]] <- NULL
+    fData(gsva_result) <- new_fdata
     retlist[["gsva_result"]] <- gsva_result
   }
   return(retlist)
@@ -1029,13 +1042,18 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = 1, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
-                        method = "ssgsea", kcdf = NULL, ranking = FALSE) {
+                        method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
+                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
     } else {
       kcdf <- "Gaussian"
     }
+  }
+
+  if (!is.null(msig_xml) & !file.exists(msig_xml)) {
+    stop("The msig_xml parameter was defined, but the file does not exist.")
   }
 
   ## Make sure some data is loaded.  I will no longer assume anything here.
@@ -1110,6 +1128,12 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   fData(gsva_result) <- fdata_df
   new_expt <- expt
   new_expt[["expressionset"]] <- gsva_result
+  if (!is.null(msig_xml)) {
+    message("Adding annotations from ", msig_xml, ".")
+    improved <- get_msigdb_metadata(msig_xml = msig_xml, wanted_meta = wanted_meta,
+                                    gsva_result = gsva_result)
+    new_expt[["expressionset"]] <- improved[["gsva_result"]]
+  }
 
   retlist <- list(
       "method" = method,

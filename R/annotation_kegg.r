@@ -3,6 +3,25 @@
 ## because is more sparse than I would like, and mostly because the IDs map
 ## nonsensically.
 
+make_kegg_df <- function(org_code) {
+  pathl <- pathfindR::get_gene_sets_list(source = "KEGG", org_code = org_code)
+  genes <- pathl[["gene_sets"]]
+  annot <- pathl[["descriptions"]]
+  pathdf <- data.frame()
+  for (p in 1:length(genes)) {
+    path <- genes[p]
+    tmpdf <- as.data.frame(path)
+    tmpdf[["path"]] <- colnames(tmpdf)[1]
+    annotdf <- as.data.frame(annot[p])
+    colnames(annotdf) <- c("annotation")
+    tmpdf <- merge(tmpdf, annotdf, by.x = "path", by.y="row.names")
+    colnames(tmpdf) <- c("path", "ID", "annotation")
+    pathdf <- rbind(pathdf, tmpdf)
+  }
+  pathdf <- pathdf[, c("ID", "path", "annotation")]
+  return(pathdf)
+}
+
 #' Convert a potentially non-unique vector from kegg into a normalized data
 #' frame.
 #'
