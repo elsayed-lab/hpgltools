@@ -116,6 +116,28 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
   return(remaining)
 }
 
+#' Create dataframe which gets the maximum within group mean gsva score for each gene set
+#' 
+#'
+#' @param gsva_result  Result from simple_gsva()
+#' @param gsva_result 
+#' @return dataframe containing max_gsva_score, and within group means for gsva scores
+#' @export
+get_group_gsva_means <- function(gsva_scores, groups) {
+  start_gsva_result <- exprs(gsva_scores)
+  
+  groupMeans <- data.frame(row.names = rownames(start_gsva_result))
+  groupInd <- list()
+  for (group in groups) {
+    #get columns for that group
+    ind <- pData(gsva_scores)[["condition"]] == group
+    
+    groupMeans[[group]] <- abs(rowMeans(start_gsva_result[, ind]))
+    groupInd[[group]] <- ind
+  }
+  return(list("Means" = groupMeans, "Index" = groupInd))
+}
+  
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
@@ -193,13 +215,34 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
                                     model_batch = FALSE, factor_column = "condition", factor = NULL,
                                     label_size = NULL, col_margin = 6, row_margin = 12) {
-
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
   gsva_limma <- limma_pairwise(gsva_scores, model_batch = model_batch,
                                which_voom = "none")
-
+  
+  ## Combine gsva max(scores) with limma results 
+  ### get gsva within group means
+  groups <- levels(gsva_scores$conditions)
+  gsva_score_means <- get_group_gsva_means(gsva_scores, groups = groups)
+  num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
+  
+  for (t in 1:length(gsva_limma[["all_tables"]])) {
+    table <- gsva_limma[["all_tables"]][[t]]
+    contrasts <- num_den_string[[t]]
+    ## get means from gsva_score_means for each contrast 
+    first <- gsva_score_means[["Index"]][contrasts[1]][[1]] 
+    second <- gsva_score_means[["Index"]][contrasts[2]][[1]]
+    ##get maximum value of group means in each contrast
+    maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
+    table[["gsva_score_max"]] <- maxs
+    varname1 <- paste0("Mean_", contrasts[1])
+    varname2 <- paste0("Mean_", contrasts[2])
+    table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
+    table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    gsva_limma[["all_tables"]][[t]] <- table
+  }
+  
   gsva_eset <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
   values <- as.data.frame(exprs(gsva_eset))
@@ -269,11 +312,11 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
       "gsva_table" = gsva_table,
       ## Heatmap of gsva result.
       "raw_plot" = gl[["raw_plot"]],
-      ## The result from gsva_likelihoods, which compares condition vs. others.
+      ## The result from score_gsva_likelihoods, which compares condition vs. others.
       "likelihood_table" = likelihood_table,
-      ## Corresponding plot from gsva_likelihoods
+      ## Corresponding plot from score_gsva_likelihoods
       "score_plot" = gl[["likelihood_plot"]],
-      ## The subset of gsva scores deemed 'significant' by gsva_likelihoods.
+      ## The subset of gsva scores deemed 'significant' by score_gsva_likelihoods.
       "subset_table" = subset_table,
       ## The corresponding plot for the subset.
       "subset_plot" = scored_ht_plot,
@@ -456,8 +499,9 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
 
     first_idx <- complete.cases(first_ids)
     
-    if(!all(first_idx)){
-      message(paste0(sum(first_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now."))
+    if(!all(first_idx)) {
+      message(sum(first_idx == FALSE),
+              " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now.")
     }
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
@@ -468,8 +512,8 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
                                              columns = c(required_id)))
       second_idx <- complete.cases(second_ids)
       
-      if(!all(second_idx)){
-        message(paste0(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now."))
+      if(!all(second_idx)) {
+        message(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now.")
       }
       
       second_ids <- second_ids[second_idx, ]
@@ -1051,7 +1095,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #'  should revisit it?
 #' @export
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
-                        signature_category = "c2", cores = 1, current_id = "ENSEMBL",
+                        signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
                         method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
                         wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
@@ -1063,6 +1107,10 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     }
   }
 
+  if (is.null(cores)){
+    cores <- min(detectCores(), 8)
+  }
+  
   if (!is.null(msig_xml) & !file.exists(msig_xml)) {
     stop("The msig_xml parameter was defined, but the file does not exist.")
   }
@@ -1129,7 +1177,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   ## possibility of speeding it up, ergo the cores option.
   gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
                             min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                            parallel.sz = cores)
+                            parallel.sz = cores, mx.diff = mx.diff)
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
@@ -1302,7 +1350,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
       c("GSVA method used:", method),
       c("", ""),
       c("Sheet 1: gsva_scores", "All scores as provided by gsva()."),
-      c("Sheet 2: gsva_likelihoods", "All likelihood scores calculated using pnorm() of the values."),
+      c("Sheet 2: score_gsva_likelihoods", "All likelihood scores calculated using pnorm() of the values."),
       c("Sheet 3: factor_likelihoods", "Likelihood values for each experimental factor."),
       c("Sheet 4: subset", "GSVA scores for the categories deemed 'significant' using sheet 2/3."),
       c("Sheet 5 on:", "Limma scoring of differential signatures.")),
