@@ -116,6 +116,35 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
   return(remaining)
 }
 
+
+
+
+#' Create dataframe which gets the maximum within group mean gsva score for each gene set
+#' 
+#'
+#' @param gsva_result  Result from simple_gsva()
+#' @param gsva_result 
+#' @return dataframe containing max_gsva_score, and within group means for gsva scores
+#' @export
+
+get_group_gsva_means <- function(gsva_scores, groups) {
+  start_gsva_result <- exprs(gsva_scores)
+  
+  groupMeans <- data.frame(row.names = rownames(start_gsva_result))
+  groupInd <- list()
+  for (group in groups) {
+    #get columns for that group
+    ind <- pData(gsva_scores)[["condition"]] == group
+    
+    groupMeans[[group]] <- abs(rowMeans(start_gsva_result[, ind]))
+    groupInd[[group]] <- ind
+    
+  }
+  return(list("Means" = groupMeans, "Index" = groupInd))
+}
+  
+
+
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
@@ -168,18 +197,47 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
 #' @param gsva_result Result from simple_gsva()
 #' @param cutoff Significance cutoff
 #' @param excel Excel file to write the results.
+#' @param model_batch Add batch to limma's model.
 #' @param factor_column When extracting significance information, use this
 #'  metadata factor.
 #' @param factor Use this metadata factor as the reference.
+#' @param label_size Used to make the category names easier to read at the expense
+#'  of dropping some.
+#' @param col_margin Attempt to make heatmaps fit better on the screen with this and...
+#' @param row_margin this parameter
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
-                                    factor_column = "condition", factor = NULL) {
-
+                                    model_batch = FALSE, factor_column = "condition", factor = NULL,
+                                    label_size = NULL, col_margin = 6, row_margin = 12) {
+  
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
-  gsva_limma <- limma_pairwise(gsva_scores, which_voom = "none")
-
+  gsva_limma <- limma_pairwise(gsva_scores, model_batch = model_batch,
+                               which_voom = "none")
+  
+  ## Combine gsva max(scores) with limma results 
+  ### get gsva within group means
+  groups <- levels(gsva_scores$conditions)
+  gsva_score_means <- get_group_gsva_means(gsva_scores, groups = groups)
+  num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
+  
+  for (t in 1:length(gsva_limma[["all_tables"]])) {
+    table <- gsva_limma[["all_tables"]][[t]]
+    contrasts <- num_den_string[[t]]
+    ## get means from gsva_score_means for each contrast 
+    first <- gsva_score_means[["Index"]][contrasts[1]][[1]] 
+    second <- gsva_score_means[["Index"]][contrasts[2]][[1]]
+    ##get maximum value of group means in each contrast
+    maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
+    table[["gsva_score_max"]] <- maxs
+    varname1 <- paste0("Mean_", contrasts[1])
+    varname2 <- paste0("Mean_", contrasts[2])
+    table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
+    table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    gsva_limma[["all_tables"]][[t]] <- table
+  }
+  
   expr <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
   values <- as.data.frame(exprs(expr))
@@ -201,7 +259,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
   subset_mtrx <- expr
-  gl <- gsva_likelihoods(gsva_result, factor = fact)
+  gl <- score_gsva_likelihoods(gsva_result, factor = fact)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
   subset_mtrx <- subset_mtrx[keep_idx, ]
@@ -245,11 +303,11 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
       "gsva_table" = gsva_table,
       ## Heatmap of gsva result.
       "raw_plot" = gl[["raw_plot"]],
-      ## The result from gsva_likelihoods, which compares condition vs. others.
+      ## The result from score_gsva_likelihoods, which compares condition vs. others.
       "likelihood_table" = likelihood_table,
-      ## Corresponding plot from gsva_likelihoods
+      ## Corresponding plot from score_gsva_likelihoods
       "score_plot" = gl[["likelihood_plot"]],
-      ## The subset of gsva scores deemed 'significant' by gsva_likelihoods.
+      ## The subset of gsva scores deemed 'significant' by score_gsva_likelihoods.
       "subset_table" = subset_table,
       ## The corresponding plot for the subset.
       "subset_plot" = scored_ht_plot,
@@ -1027,9 +1085,9 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #'  should revisit it?
 #' @export
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
-                        signature_category = "c2", cores = 1, current_id = "ENSEMBL",
+                        signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
-                        method = "ssgsea", kcdf = NULL, ranking = FALSE) {
+                        method = "ssgsea", kcdf = NULL, ranking = FALSE, mx.diff = TRUE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -1038,6 +1096,10 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     }
   }
 
+  if (is.null(cores)){
+    cores <- min(detectCores(),8)
+  }
+  
   ## Make sure some data is loaded.  I will no longer assume anything here.
   ## Here is how I will decide:
   ## 1.  If signatures is a (string)filename ending in '.gmt', then extract the genesetlists and use it.
@@ -1100,7 +1162,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   ## possibility of speeding it up, ergo the cores option.
   gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
                             min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                            parallel.sz = cores)
+                            parallel.sz = cores, mx.diff = mx.diff)
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
@@ -1241,7 +1303,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
       c("GSVA method used:", method),
       c("", ""),
       c("Sheet 1: gsva_scores", "All scores as provided by gsva()."),
-      c("Sheet 2: gsva_likelihoods", "All likelihood scores calculated using pnorm() of the values."),
+      c("Sheet 2: score_gsva_likelihoods", "All likelihood scores calculated using pnorm() of the values."),
       c("Sheet 3: factor_likelihoods", "Likelihood values for each experimental factor."),
       c("Sheet 4: subset", "GSVA scores for the categories deemed 'significant' using sheet 2/3."),
       c("Sheet 5 on:", "Limma scoring of differential signatures.")),
