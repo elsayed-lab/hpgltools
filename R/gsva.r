@@ -116,9 +116,6 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
   return(remaining)
 }
 
-
-
-
 #' Create dataframe which gets the maximum within group mean gsva score for each gene set
 #' 
 #'
@@ -126,7 +123,6 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 #' @param gsva_result 
 #' @return dataframe containing max_gsva_score, and within group means for gsva scores
 #' @export
-
 get_group_gsva_means <- function(gsva_scores, groups) {
   start_gsva_result <- exprs(gsva_scores)
   
@@ -138,23 +134,20 @@ get_group_gsva_means <- function(gsva_scores, groups) {
     
     groupMeans[[group]] <- abs(rowMeans(start_gsva_result[, ind]))
     groupInd[[group]] <- ind
-    
   }
   return(list("Means" = groupMeans, "Index" = groupInd))
 }
   
-
-
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
-#' @param sig_data GeneSetCollection from the broad msigdb.
-#' @param msig_xml msig XML file downloaded from broad.
 #' @param gsva_result Some data from GSVA to modify.
+#' @param msig_xml msig XML file downloaded from broad.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
 #' @export
-get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", gsva_result = NULL) {
+get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml",
+                                wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
   msig_result <- xml2::read_xml(x = msig_xml)
 
   db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
@@ -172,13 +165,26 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
     all_data[[c_name]] <- c_data
   }
 
-  sig_found_idx <- rownames(all_data) %in% names(sig_data)
-  ret_data <- all_data[sig_found_idx, ]
+  ## all_data is my dataframe of xml annotations, lets extract the wanted columns before
+  ## adding it to the gsva result expressionset.
+  sub_data <- all_data
+  if (!is.null(wanted_meta)) {
+    sub_data <- sub_data[, wanted_meta]
+  }
+  ## The full set of xml annotations has waay more IDs than any single category,
+  ## so this should drop it from 30,000+ to <10,000.
+  found_idx <- rownames(sub_data) %in% rownames(exprs(gsva_result))
+  sub_data <- sub_data[found_idx, ]
+
   retlist <- list(
       "all_data" = all_data,
-      "sub_data" = ret_data)
+      "sub_data" = sub_data)
   if (!is.null(gsva_result)) {
-    fData(gsva_result) <- ret_data
+    current_fdata <- fData(gsva_result)
+    new_fdata <- merge(current_fdata, sub_data, by = "row.names")
+    rownames(new_fdata) <- new_fdata[["Row.names"]]
+    new_fdata[["Row.names"]] <- NULL
+    fData(gsva_result) <- new_fdata
     retlist[["gsva_result"]] <- gsva_result
   }
   return(retlist)
@@ -209,7 +215,6 @@ get_msigdb_metadata <- function(sig_data = NULL, msig_xml = "msigdb_v6.2.xml", g
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
                                     model_batch = FALSE, factor_column = "condition", factor = NULL,
                                     label_size = NULL, col_margin = 6, row_margin = 12) {
-  
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
@@ -238,17 +243,11 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     gsva_limma[["all_tables"]][[t]] <- table
   }
   
-  expr <- gsva_scores[["expressionset"]]
+  gsva_eset <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
-  values <- as.data.frame(exprs(expr))
-  expr_order <- order(values[[1]], decreasing = TRUE)
-  exprs(expr) <- exprs(expr)[expr_order, ]
-  fData(expr) <- fData(expr)[expr_order, ]
-
-  ## We will use these later...
-  annot <- fData(expr)
-  meta <- pData(expr)
-  exp <- exprs(expr)
+  values <- as.data.frame(exprs(gsva_eset))
+  annot <- fData(gsva_eset)
+  meta <- pData(gsva_eset)
 
   ## Choose the reference factor
   clevels <- levels(as.factor(meta[[factor_column]]))
@@ -258,43 +257,53 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   }
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
-  subset_mtrx <- expr
+  subset_eset <- gsva_eset
   gl <- score_gsva_likelihoods(gsva_result, factor = fact)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
-  subset_mtrx <- subset_mtrx[keep_idx, ]
-
+  subset_eset <- subset_eset[keep_idx, ]
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
 
   scored_ht <- NULL
   if (is.null(label_size)) {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin))
   } else {
-    scored_ht <- heatmap.3(exprs(subset_mtrx), trace = "none", col = jet_colors,
+    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin),
                            cexCol = label_size, cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
 
-  gsva_table <- merge(annot, exp, by = "row.names")
+  order_column <- colnames(values)[1]
+  gsva_table <- merge(annot, values, by = "row.names")
   rownames(gsva_table) <- gsva_table[["Row.names"]]
   gsva_table[["Row.names"]] <- NULL
+  reordered_gsva_idx <- order(gsva_table[[order_column]], decreasing = TRUE)
+  gsva_table <- gsva_table[reordered_gsva_idx, ]
+
   ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
   ## are not the same as the rownames of exprs(subset_mtrx)
   ## which AFAIK should not be possible, but clearly I was wrong.
   ## At least when I create an expressionset, the fData and exprs have the
   ## same rownames from beginning to end.
   ## I guess this does not really matter, since we can use the full annotation table.
-  subset_table <- merge(annot, exprs(subset_mtrx), by = "row.names")
+  subset_tbl <- as.data.frame(exprs(subset_eset))
+  order_column <- colnames(subset_tbl)[1]
+  subset_table <- merge(annot, subset_tbl, by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
   subset_table[["Row.names"]] <- NULL
-  reordered_subset_idx <- order(subset_table[[1]], decreasing = TRUE)
+  reordered_subset_idx <- order(subset_table[[order_column]], decreasing = TRUE)
+  subset_table <- subset_table[reordered_subset_idx, ]
 
-  likelihood_table <- merge(fData(gsva_scores), gl[["likelihoods"]], all.y = TRUE, by = "row.names")
+  gl_tbl <- as.data.frame(gl[["likelihoods"]])
+  order_column <- colnames(gl_tbl)[1]
+  likelihood_table <- merge(annot, gl_tbl, by = "row.names")
   rownames(likelihood_table) <- likelihood_table[["Row.names"]]
   likelihood_table[["Row.names"]] <- NULL
+  likelihood_table_idx <- order(likelihood_table[[order_column]], decreasing = TRUE)
+  likelihood_table <- likelihood_table[likelihood_table_idx, ]
 
   retlist <- list(
       ## Everything provided by simple_gsva()
@@ -313,7 +322,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
       "subset_plot" = scored_ht_plot,
       "scores" = gl,
       "score_pca" = gl[["pca"]][["plot"]],
-      "subset_expt" = expr,
+      "subset_expt" = subset_eset,
       "gsva_limma" = gsva_limma)
 
   if (!is.null(excel)) {
@@ -490,8 +499,9 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
 
     first_idx <- complete.cases(first_ids)
     
-    if(!all(first_idx)){
-      message(paste0(sum(first_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now."))
+    if(!all(first_idx)) {
+      message(sum(first_idx == FALSE),
+              " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now.")
     }
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
@@ -502,8 +512,8 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
                                              columns = c(required_id)))
       second_idx <- complete.cases(second_ids)
       
-      if(!all(second_idx)){
-        message(paste0(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now."))
+      if(!all(second_idx)) {
+        message(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now.")
       }
       
       second_ids <- second_ids[second_idx, ]
@@ -1006,7 +1016,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 
       test_values <- values[, sample_idx]
       against_values <- values[, !sample_idx]
-      population_values <<- against_values
+      population_values <- against_values
       if (method == "mean") {
         if (sum(sample_idx) == 1) {
           tests <- test_values
@@ -1033,7 +1043,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
                            margins = c(col_margin, row_margin), Colv = FALSE,
-                           cexCol = label_size, cexRow = label_size)
+                           dendrogram = "row", cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
     test_results <- result_df
   } else if (choice == "column") {
@@ -1087,7 +1097,8 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
-                        method = "ssgsea", kcdf = NULL, ranking = FALSE, mx.diff = TRUE) {
+                        method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
+                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -1097,9 +1108,13 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)){
-    cores <- min(detectCores(),8)
+    cores <- min(detectCores(), 8)
   }
   
+  if (!is.null(msig_xml) & !file.exists(msig_xml)) {
+    stop("The msig_xml parameter was defined, but the file does not exist.")
+  }
+
   ## Make sure some data is loaded.  I will no longer assume anything here.
   ## Here is how I will decide:
   ## 1.  If signatures is a (string)filename ending in '.gmt', then extract the genesetlists and use it.
@@ -1175,6 +1190,12 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   fData(gsva_result) <- fdata_df
   new_expt <- expt
   new_expt[["expressionset"]] <- gsva_result
+  if (!is.null(msig_xml)) {
+    message("Adding annotations from ", msig_xml, ".")
+    improved <- get_msigdb_metadata(msig_xml = msig_xml, wanted_meta = wanted_meta,
+                                    gsva_result = gsva_result)
+    new_expt[["expressionset"]] <- improved[["gsva_result"]]
+  }
 
   retlist <- list(
       "method" = method,
@@ -1203,28 +1224,30 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @param label_size How large to make labels when printing the final heatmap.
 #' @param col_margin Used by par() when printing the final heatmap.
 #' @param row_margin Ibid.
+#' @param cores How many CPUs to use?
 #' @param ... Extra arguments when normalizing the data for use with xCell.
 #' @return Small list providing the output from xCell, the set of signatures,
 #'  and heatmap.
 #' @export
-simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, expected_types = NULL,
-                         label_size = NULL, col_margin = 6, row_margin = 12, ...) {
+simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
+                         expected_types = NULL, label_size = NULL, col_margin = 6,
+                         row_margin = 12, sig_cutoff = 0.2, verbose = TRUE, cores = 4, ...) {
   arglist <- list(...)
   xcell_annot <- load_biomart_annotations()
   xref <- xcell_annot[["annotation"]][, c("ensembl_gene_id", "hgnc_symbol")]
   expt_state <- expt[["state"]][["conversion"]]
-  xcell_input <- NULL
+  xcell_eset <- NULL
   if (expt_state != "rpkm") {
     message("xCell strongly perfers rpkm values, re-normalizing now.")
-    xcell_input <- normalize_expt(expt, convert = "rpkm", ...)
+    xcell_eset <- normalize_expt(expt, convert = "rpkm", ...)
   } else {
-    xcell_input <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
+    xcell_eset <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
                                   filter = arglist[["filter"]], batch = arglist[["batch"]])
   }
-  xcell_input <- exprs(xcell_input)
-  xcell_na <- is.na(xcell_input)
-  xcell_input[xcell_na] <- 0
-  xcell_input <- merge(xcell_input, xref, by.x = "row.names", by.y = "ensembl_gene_id")
+  xcell_mtrx <- exprs(xcell_eset)
+  xcell_na <- is.na(xcell_mtrx)
+  xcell_mtrx[xcell_na] <- 0
+  xcell_input <- merge(xcell_mtrx, xref, by.x = "row.names", by.y = "ensembl_gene_id")
   rownames(xcell_input) <- make.names(xcell_input[["hgnc_symbol"]], unique = TRUE)
   xcell_input[["Row.names"]] <- NULL
   xcell_input[["hgnc_symbol"]] <- NULL
@@ -1241,8 +1264,17 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, ex
   if (is.null(spill)) {
     spill <- xCell.data[["spill"]]
   }
-  xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
-                                          genes = genes, spill = spill, cell.types = expected_types, ...))
+
+  xcell_result <- NULL
+  if (isTRUE(verbose)) {
+    xcell_result <- xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
+                                         genes = genes, spill = spill,
+                                         cell.types = expected_types, parallel.sz = cores)
+  } else {
+    xcell_result <- sm(xCell::xCellAnalysis(expr = xcell_input, signatures = signatures,
+                                            genes = genes, spill = spill, parallel.sz = cores,
+                                            cell.types = expected_types))
+  }
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
@@ -1256,10 +1288,25 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL, ex
   }
   ht_plot <- grDevices::recordPlot()
 
+  sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
+  sig_result <- xcell_result[sig_idx, ]
+  if (is.null(label_size)) {
+    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin))
+  } else {
+    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                    margins = c(col_margin, row_margin),
+                    cexCol = label_size, cexRow = label_size)
+  }
+  sig_plot <- grDevices::recordPlot()
+
   retlist <- list(
+      "xcell_input" = xcell_input,
       "xcell_result" = xcell_result,
       "signatures" = xCell.data[["signatures"]],
-      "heatmap" = ht_plot)
+      "heatmap" = ht_plot,
+      "sig_result" = sig_result,
+      "sig_plot" = sig_plot)
   return(retlist)
 }
 

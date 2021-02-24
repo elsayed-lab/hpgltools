@@ -113,7 +113,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       if (is.null(conds)) {
         conds <- original_cols
       }
-      cds <- DESeq::newCountDataSet(count_table, conditions = conds)
+      cds <- DESeq2::DESeqDataSetFromMatrix(countData = count_table,
+                                            colData = design, design = ~condition)
       factors <- BiocGenerics::estimateSizeFactors(cds)
       count_table <- BiocGenerics::counts(factors, normalized = TRUE)
       norm_performed <- "sf"
@@ -165,8 +166,8 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
       }
       tt <- sm(requireNamespace("locfit"))
       tt <- sm(requireNamespace("DESeq2"))
-      cds <- DESeq2::DESeqDataSetFromMatrix(
-                       countData = count_table, colData = design, design=~condition)
+      cds <- DESeq2::DESeqDataSetFromMatrix(countData = count_table,
+                                            colData = design, design = ~condition)
       cds <- DESeq2::estimateSizeFactors(cds)
       cds <- DESeq2::estimateDispersions(cds, fitType = fit_type)
       count_table <- DESeq2::getVarianceStabilizedData(cds)

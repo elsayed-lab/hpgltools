@@ -5,7 +5,7 @@ context("165normalize_norm.R:
   1234567\n")
 ## 2017-12, exported functions in annotation_gff:
 
-pombe_expt <- make_pombe_expt()
+pombe_expt <- make_pombe_expt(annotation = FALSE)
 
 testing <- normalize_expt(pombe_expt, filter = TRUE, norm = "quant")
 test_counts <- exprs(testing)

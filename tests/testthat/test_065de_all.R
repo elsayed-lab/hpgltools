@@ -178,8 +178,6 @@ test_that("all_pairwise() provided results reasonably similar? (svaseq in model)
   expect_gt(actual, expected)
 })
 
-
-
 cond_model <- choose_model(pombe_subset, model_batch = FALSE)
 expected <- "~ 0 + condition"
 actual <- cond_model[["chosen_string"]]
@@ -330,14 +328,14 @@ save(list = "cb_sig", file = "test_065_significant.rda", compress = TRUE)
 ## This is done by a bunch of other functions, I am not testing it.
 
 testing <- get_abundant_genes(test_sva)
-actual <- length(testing)
+actual <- length(testing[["high"]])
 expected <- 6
 ## 34
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
 })
 
-actual <- names(head(testing[[1]]))
+actual <- names(head(testing[["high"]][["mut0"]]))
 expected <- c("SPAC212.09c", "SPAC212.04c", "SPAC977.11",
               "SPAC977.13c", "SPAC977.15", "SPAC977.16c")
 ## 35
@@ -452,11 +450,11 @@ test_that("plot_num_siggenes() gave some plots?", {
 testing <- extract_abundant_genes(test_sva, excel = NULL)
 ## 58
 test_that("extract_abundant_genes() gave some stuff?", {
-  expect_equal(200, length(testing[["abundances"]][["limma"]][[1]]))
+  expect_equal(200, length(testing[["abundances"]][["limma"]][["high"]][["mut0"]]))
 })
 
 testing <- extract_significant_genes(combined = test_condbatch_combined, excel = NULL)
-actual <- dim(testing[["limma"]][["ups"]][[1]])
+actual <- dim(testing[["limma"]][["ups"]][["mut15_vs_mut0"]])
 expected <- c(182, 34)
 ## 60
 test_that("Did extract_significant_genes() get some stuff?", {

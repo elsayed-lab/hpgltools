@@ -8,8 +8,14 @@ load_biomart_go(
   species = "hsapiens",
   overwrite = FALSE,
   do_save = TRUE,
-  host = "dec2015.archive.ensembl.org",
+  host = NULL,
   trymart = "ENSEMBL_MART_ENSEMBL",
+  archive = TRUE,
+  default_hosts = c("useast.ensembl.org", "uswest.ensembl.org", "www.ensembl.org",
+    "asia.ensembl.org"),
+  year = NULL,
+  month = NULL,
+  drop_haplotypes = TRUE,
   secondtry = "_gene",
   dl_rows = c("ensembl_gene_id", "go_accession"),
   dl_rowsv2 = c("ensembl_gene_id", "go_id")
@@ -24,7 +30,21 @@ load_biomart_go(
 
 \item{host}{Ensembl hostname to use.}
 
-\item{trymart}{Default mart to try, newer marts use a different notation.}
+\item{trymart}{Biomart has become a circular dependency, this makes me sad,
+now to list the marts, you need to have a mart loaded.}
+
+\item{archive}{Try an archive server instead of a mirror?  If this is a
+character, it will assume it is a specific archive hostname.}
+
+\item{default_hosts}{List of biomart mirrors to try.}
+
+\item{year}{Choose specific year(s) for the archive servers?}
+
+\item{month}{Choose specific month(s) for the archive servers?}
+
+\item{drop_haplotypes}{Some chromosomes have stupid names because they are
+from non-standard haplotypes and they should go away.  Setting this to
+false stops that.}
 
 \item{secondtry}{The newer mart name.}
 

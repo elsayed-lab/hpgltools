@@ -14,7 +14,7 @@ find_working_mart(
 )
 }
 \arguments{
-\item{default_hosts}{List of biomart mirrors.}
+\item{default_hosts}{List of biomart mirrors to try.}
 
 \item{trymart}{Specific mart to query.}
 

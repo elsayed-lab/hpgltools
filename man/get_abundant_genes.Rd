@@ -5,14 +5,7 @@
 \title{Find the set of most/least abundant genes according to limma and friends
 following a differential expression analysis.}
 \usage{
-get_abundant_genes(
-  datum,
-  type = "limma",
-  n = NULL,
-  z = NULL,
-  unique = FALSE,
-  least = FALSE
-)
+get_abundant_genes(datum, type = "limma", n = NULL, z = NULL, unique = FALSE)
 }
 \arguments{
 \item{datum}{Output from the _pairwise() functions.}
@@ -24,8 +17,6 @@ get_abundant_genes(
 \item{z}{Or take genes past a given z-score.}
 
 \item{unique}{Unimplemented: take only the genes unique among the conditions surveyed.}
-
-\item{least}{When true, this finds the least abundant rather than most.}
 }
 \value{
 List of data frames containing the genes of interest.

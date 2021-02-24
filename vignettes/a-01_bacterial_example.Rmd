@@ -31,20 +31,20 @@ vignette: >
   }
 </style>
 
-```{r options, include=FALSE}
+```{r options, include = FALSE}
 library("hpgltools")
-knitr::opts_knit$set(progress=TRUE,
-                     verbose=TRUE,
-                     width=90,
-                     echo=TRUE)
-knitr::opts_chunk$set(error=TRUE,
-                      fig.width=8,
-                      fig.height=8,
-                      dpi=96)
-old_options <- options(digits=4,
-                       stringsAsFactors=FALSE,
-                       knitr.duplicate.label="allow")
-ggplot2::theme_set(ggplot2::theme_bw(base_size=10))
+knitr::opts_knit$set(progress = TRUE,
+                     verbose = TRUE,
+                     width = 90,
+                     echo = TRUE)
+knitr::opts_chunk$set(error = TRUE,
+                      fig.width = 8,
+                      fig.height = 8,
+                      dpi = 96)
+old_options <- options(digits = 4,
+                       stringsAsFactors = FALSE,
+                       knitr.duplicate.label = "allow")
+ggplot2::theme_set(ggplot2::theme_bw(base_size = 10))
 set.seed(1)
 rmd_file <- "a-01_bacterial_example.Rmd"
 ```
@@ -67,9 +67,9 @@ function and the genome annotations were loaded with gff2df().
 
 ```{r loading_data}
 library(hpgltools)
-data_file <- system.file("share/cdm_expt.rda", package="hpgltools")
+data_file <- system.file("share/cdm_expt.rda", package = "hpgltools")
 cdm <- new.env()
-load(data_file, envir=cdm)
+load(data_file, envir = cdm)
 rm(data_file)
 
 ls()
@@ -80,9 +80,9 @@ including the data required to make an expressionset.  Using this information, I
 expressionset.
 
 ```{r create_expt}
-expt <- create_expt(count_dataframe=cdm$cdm_counts,
-                    metadata=cdm$cdm_metadata,
-                    gene_info=cdm$gene_info)
+expt <- create_expt(count_dataframe = cdm$cdm_counts,
+                    metadata = cdm$cdm_metadata,
+                    gene_info = cdm$gene_info)
 
 knitr::kable(head(expt$design))
 summary(expt)
@@ -132,7 +132,7 @@ exprs_to_se <- function(exset) {
   mtrx <- Biobase::exprs(exset)
   annot <- Biobase::fData(exset)
   meta <- Biobase::pData(exset)
-  se <- SummarizedExperiment(assays=mtrx, colData=meta, rowData=annot)
+  se <- SummarizedExperiment(assays = mtrx, colData = meta, rowData = annot)
   return(se)
 }
 
@@ -182,8 +182,8 @@ mistakes, and some easier ways to extract information like conditions/batches/co
 With the above in mind, once we have the various metadata and count data loaded into memory, a most
 common next step is examine the data before molesting it:
 
-```{r graph_original, fig.show="hide"}
-raw_metrics <- sm(graph_metrics(expt, qq=TRUE, cis=NULL))
+```{r graph_original, fig.show = "hide"}
+raw_metrics <- sm(graph_metrics(expt, qq = TRUE, cis = NULL))
 ```
 
 The function graph_metrics() performs all of the likely plots one might want.  Some of which are not
@@ -242,11 +242,11 @@ the sample separate.
 ```{r subset_data, fig.show='hide'}
 head(expt$design)
 ## elt stands for: "early/late in thy"
-batch_a <- subset_expt(expt, subset="batch=='a'")
-batch_b <- subset_expt(expt, subset="batch=='b'")
+batch_a <- subset_expt(expt, subset = "batch=='a'")
+batch_b <- subset_expt(expt, subset = "batch=='b'")
 
-a_metrics <- sm(graph_metrics(batch_a, cis=NULL))
-b_metrics <- sm(graph_metrics(batch_b, cis=NULL))
+a_metrics <- sm(graph_metrics(batch_a, cis = NULL))
+b_metrics <- sm(graph_metrics(batch_b, cis = NULL))
 ```
 
 PCA plots of these subsetted data are not likely to be very interesting, as it
@@ -267,25 +267,25 @@ suprising since we didn't normalize it at all.  Therefore, in this block I will 
 ways and follow up with some visualizations of showing how the apparent relationships change in the
 data.
 
-```{r normalize_subset, fig.show="hide"}
+```{r normalize_subset, fig.show = "hide"}
 ## doing nothing to the data except log2 transforming it has a surprisingly large effect
-norm_test <- normalize_expt(expt, transform="log2")
-l2_metrics <- sm(graph_metrics(norm_test, cis=NULL))
+norm_test <- normalize_expt(expt, transform = "log2")
+l2_metrics <- sm(graph_metrics(norm_test, cis = NULL))
 ## a quantile normalization alone affect some, but not all of the data
-norm_test <- sm(normalize_expt(expt, norm="quant"))
-q_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## q for quant, who quaffed nightshade.
+norm_test <- sm(normalize_expt(expt, norm = "quant"))
+q_metrics <- sm(graph_metrics(norm_test, cis = NULL))  ## q for quant, who quaffed nightshade.
 ## cpm alone brings out some samples, too
-norm_test <- sm(normalize_expt(expt, convert="cpm"))
-c_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## c for cpm, who could not see the train.
+norm_test <- sm(normalize_expt(expt, convert = "cpm"))
+c_metrics <- sm(graph_metrics(norm_test, cis = NULL))  ## c for cpm, who could not see the train.
 ## low count filtering has some effect, too
-norm_test <- sm(normalize_expt(expt, filter="pofa"))
-f_metrics <- sm(graph_metrics(norm_test, cis=NULL))  ## f for filter, who was hit with a spade.
+norm_test <- sm(normalize_expt(expt, filter = "pofa"))
+f_metrics <- sm(graph_metrics(norm_test, cis = NULL))  ## f for filter, who was hit with a spade.
 ## how about if we mix and match methods?
-norm_test <- sm(normalize_expt(expt, transform="log2", convert="cpm",
-                               norm="quant", batch="combat_scale", filter=TRUE,
-                               batch_step=4, low_to_zero=TRUE))
+norm_test <- sm(normalize_expt(expt, transform = "log2", convert = "cpm",
+                               norm = "quant", batch = "combat_scale", filter = TRUE,
+                               batch_step = 4, low_to_zero = TRUE))
 ## Some metrics are not very useful on (especially quantile) normalized data
-norm_graphs <- sm(graph_metrics(norm_test, cis=NULL))
+norm_graphs <- sm(graph_metrics(norm_test, cis = NULL))
 ```
 
 Now lets see some of the resulting metrics, in this case I will just compare some pca plots, as they
@@ -354,10 +354,10 @@ the resulting table will not have the set of 6 possible comparisons, but instead
 tables named 'wt_media' and 'mga_media', which if printed to excel will be sheets named accordingly.
 
 ```{r combine_test}
-spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE))
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel = FALSE))
 summary(spyogenes_tables)
 ## Try changing the p-adjustment
-spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel=FALSE, padj_type="BH"))
+spyogenes_tables <- sm(combine_de_tables(spyogenes_de, excel = FALSE, padj_type = "BH"))
 knitr::kable(head(spyogenes_tables$data[[1]]))
 ```
 
@@ -365,8 +365,8 @@ Finally, extract_significant_genes() may choose 'significant' genes based upon a
 including z-score vs. the distribution of logFC; a logFC cutoff, (ajusted)p-value cutoff, and/or
 top/bottom n genes.
 
-```{r sig_genes_test, fig.show="hide"}
-spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel=FALSE))
+```{r sig_genes_test, fig.show = "hide"}
+spyogenes_sig <- sm(extract_significant_genes(spyogenes_tables, excel = FALSE))
 knitr::kable(head(spyogenes_sig$limma$ups[[1]]))
 ```
 
@@ -383,16 +383,18 @@ Much(all) of the following is taken from the material in tests/testthat/test_70m
 ## match my old rnaseq analysis!!  Thus I put my old gff file used for mapping into inst/
 ## and will load the annotation data from that; but I will use this data to gather
 ## the COG information.
-mgas_gff_df <- sm(load_gff_annotations(gff=system.file("gas.gff", package="hpgltools")))
+mgas_gff_df <- sm(load_gff_annotations(gff = system.file("share/gas.gff", package = "hpgltools")))
 mgas_gff_df <- mgas_gff_df[-1, ]
-mgas_gff_df[["sysName"]] <- gsub(pattern="Spy_", replacement="Spy", x=mgas_gff_df[["locus_tag"]])
-rownames(mgas_gff_df) <- make.names(mgas_gff_df[["sysName"]], unique=TRUE)
+mgas_gff_df[["sysName"]] <- gsub(pattern = "Spy_", replacement = "Spy",
+                                 x = mgas_gff_df[["locus_tag"]])
+rownames(mgas_gff_df) <- make.names(mgas_gff_df[["sysName"]], unique = TRUE)
 
-mgas_microbes_df <- sm(load_microbesonline_annotations(id=293653))
-mgas_microbes_df$sysName <- gsub(pattern="Spy_", replacement="Spy", x=mgas_microbes_df$sysName)
-rownames(mgas_microbes_df) <- make.names(mgas_microbes_df$sysName, unique=TRUE)
+mgas_microbes_df <- sm(load_microbesonline_annotations(id = 293653))
+mgas_microbes_df$sysName <- gsub(pattern = "Spy_", replacement = "Spy",
+                                 x = mgas_microbes_df$sysName)
+rownames(mgas_microbes_df) <- make.names(mgas_microbes_df$sysName, unique = TRUE)
 
-mgas_df <- merge(x=mgas_gff_df, y=mgas_microbes_df, by="row.names")
+mgas_df <- merge(x = mgas_gff_df, y = mgas_microbes_df, by = "row.names")
 rownames(mgas_df) <- mgas_df[["Row.names"]]
 mgas_df <- mgas_df[, -1]
 colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", "type",
@@ -405,33 +407,31 @@ colnames(mgas_df) <- c("seqnames", "start", "end", "width", "strand", "source", 
                        "GO", "EC", "ECDesc")
 
 ## First make a template configuration
-circos_test <- circos_prefix(annotation=mgas_df)
+circos_test <- circos_prefix(annotation = mgas_df)
 ## Fill it in with the data for s.pyogenes
 lengths <- 1838600
 names(lengths) <- "NC_007297"
-## I need to manually set the ID now, as my SQL-based selections are failing...
-## I need to manually set the ID now, as my SQL-based selections are failing...
 
-circos_kary <- circos_karyotype(cfg=circos_test, lengths=lengths)
+circos_kary <- circos_karyotype(cfg = circos_test, lengths = lengths)
 ## Fill in the gene category annotations by gene-strand
-circos_plus <- circos_plus_minus(cfg=circos_test)
-circos_limma_hist <- circos_hist(cfg=circos_test,
-                                 df=spyogenes_de$limma$all_tables[[1]],
-                                 basename="limma",
-                                 colname="logFC",
-                                 outer=circos_plus)
-circos_deseq_hist <- circos_hist(cfg=circos_test,
-                                 df=spyogenes_de$deseq$all_tables[[1]],
-                                 basename="deseq",
-                                 colname="logFC",
-                                 outer=circos_limma_hist)
-circos_edger_hist <- circos_hist(cfg=circos_test,
-                                 df=spyogenes_de$edger$all_tables[[1]],
-                                 basename="edger",
-                                 colname="logFC",
-                                 outer=circos_deseq_hist)
-circos_suffix(cfg=circos_test)
-circos_made <- sm(circos_make(cfg=circos_test, target="mgas"))
+circos_plus <- circos_plus_minus(cfg = circos_test)
+circos_limma_hist <- circos_hist(cfg = circos_test,
+                                 df = spyogenes_de$limma$all_tables[[1]],
+                                 basename = "limma",
+                                 colname = "logFC",
+                                 outer = circos_plus)
+circos_deseq_hist <- circos_hist(cfg = circos_test,
+                                 df = spyogenes_de$deseq$all_tables[[1]],
+                                 basename = "deseq",
+                                 colname = "logFC",
+                                 outer = circos_limma_hist)
+circos_edger_hist <- circos_hist(cfg = circos_test,
+                                 df = spyogenes_de$edger$all_tables[[1]],
+                                 basename = "edger",
+                                 colname = "logFC",
+                                 outer = circos_deseq_hist)
+circos_suffix(cfg = circos_test)
+circos_made <- sm(circos_make(cfg = circos_test, target = "mgas"))
 getwd()
 ```
 
@@ -448,15 +448,15 @@ genoplot_chromosome()
 Perhaps instead of looking at subsets of the data, we may want to consider wt/mga.
 If so, we can just change the condition to any column in the design matrix.
 
-```{r wt_mga, fig.show="hide"}
-wt_mga_expt <- set_expt_conditions(expt=expt, fact="type")
+```{r wt_mga, fig.show = "hide"}
+wt_mga_expt <- set_expt_conditions(expt = expt, fact = "type")
 wt_mga_plots <- sm(graph_metrics(wt_mga_expt))
-wt_mga_norm <- sm(normalize_expt(wt_mga_expt, transform="log2", convert="raw", filter=TRUE, norm="quant"))
+wt_mga_norm <- sm(normalize_expt(wt_mga_expt, transform = "log2", convert = "raw", filter = TRUE, norm = "quant"))
 wt_mga_nplots <- sm(graph_metrics(wt_mga_norm))
-wt_mga_de <- sm(all_pairwise(input=wt_mga_expt,
-                          combined_excel="wt_mga.xlsx",
-                          sig_excel="wt_mga_sig.xlsx",
-                          abundant_excel="wt_mga_abundant.xlsx"))
+wt_mga_de <- sm(all_pairwise(input = wt_mga_expt,
+                          combined_excel = "wt_mga.xlsx",
+                          sig_excel = "wt_mga_sig.xlsx",
+                          abundant_excel = "wt_mga_abundant.xlsx"))
 ```
 
 ```{r wt_mga_plots}

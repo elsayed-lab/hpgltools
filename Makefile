@@ -66,8 +66,7 @@ prereq:
 	@echo "Checking a few prerequisites."
 	R -e "install.packages('BiocManager', repo='http://cran.rstudio.com/')"
 	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))))) == 'try-error') { BiocManager::install(req) } } \
-## hahaha looks like lisp!"
+for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))), silent=TRUE)) == 'try-error') { BiocManager::install(req) } }"
 
 push:
 	echo "Pushing to github."
@@ -109,5 +108,8 @@ vignette:
 	R -e "devtools::build_vignettes(install=FALSE)"
 	mv doc inst/doc
 	cp inst/reference/* inst/doc
+	cp vignettes/*.R inst/doc
+	cp vignettes/*.Rmd inst/doc
+	cp vignettes/*.html inst/doc
 
 vt:	clean_vignette vignette reference install

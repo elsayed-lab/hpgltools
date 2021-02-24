@@ -10,7 +10,6 @@ extract_abundant_genes(
   n = 200,
   z = NULL,
   unique = FALSE,
-  least = FALSE,
   excel = "excel/abundant_genes.xlsx",
   ...
 )
@@ -29,8 +28,6 @@ given z score.}
 \item{unique}{One might want the subset of unique genes in the top-n which
 are unique in the set of available conditions.  This will attempt to
 provide that.}
-
-\item{least}{Instead of the most abundant, do the least.}
 
 \item{excel}{Excel file to write.}
 
