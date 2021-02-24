@@ -22,18 +22,12 @@ fData(hs_expt[["expressionset"]]) <- hs_annot
 
 hs_filt <- normalize_expt(hs_expt, filter = "cv")
 annotation(hs_filt[["expressionset"]]) <- "org.Hs.eg.db"
-gsva_result <- simple_gsva(hs_filt)
+gsva_result <- simple_gsva(hs_filt, cores = 1)
 
 actual <- head(as.numeric(exprs(gsva_result[["gsva"]])["WINTER_HYPOXIA_UP", ]))
 expected <- c(0.2811093, 0.2914057, 0.2990333, 0.2999755, 0.3044319, 0.2981790)
 test_that("Do we get an expected gsva result?", {
   expect_equal(actual, expected, tolerance = 0.001)
-})
-
-gsva_expt <- gsva_result[["expt"]]
-gsva_dis <- plot_sample_heatmap(gsva_expt)
-test_that("Can we plot a gsva result?", {
-  expect_equal("recordedplot", class(gsva_dis))
 })
 
 gsva_sig <- get_sig_gsva_categories(gsva_result, excel = NULL, model_batch = FALSE)

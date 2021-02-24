@@ -6,14 +6,14 @@
 \usage{
 get_sig_gsva_categories(
   gsva_result,
-  cutoff = 0.05,
+  cutoff = 0.95,
   excel = "excel/gsva_subset.xlsx",
+  model_batch = FALSE,
   factor_column = "condition",
   factor = NULL,
   label_size = NULL,
   col_margin = 6,
-  row_margin = 12,
-  ...
+  row_margin = 12
 )
 }
 \arguments{
@@ -23,18 +23,19 @@ get_sig_gsva_categories(
 
 \item{excel}{Excel file to write the results.}
 
+\item{model_batch}{Add batch to limma's model.}
+
 \item{factor_column}{When extracting significance information, use this
 metadata factor.}
 
 \item{factor}{Use this metadata factor as the reference.}
 
-\item{label_size}{How large to make labels when printing the final heatmap.}
+\item{label_size}{Used to make the category names easier to read at the expense
+of dropping some.}
 
-\item{col_margin}{Passed to the heatmap.}
+\item{col_margin}{Attempt to make heatmaps fit better on the screen with this and...}
 
-\item{row_margin}{Passed to the heatmap.}
-
-\item{...}{Arguments passed to limma_pairwise().}
+\item{row_margin}{this parameter}
 }
 \description{
 This function uses a couple of methods to try to get an idea of whether the

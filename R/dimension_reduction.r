@@ -418,6 +418,11 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
 #' @param file  File to write the created plotly object.
 #' @export
 plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
+  image_dir <- dirname(as.character(file))
+  if (!file.exists(image_dir)) {
+    dir.create(image_dir, recursive = TRUE)
+  }
+
   x_axis <- glue::glue("pc_{components[1]}")
   y_axis <- glue::glue("pc_{components[2]}")
   z_axis <- glue::glue("pc_{components[3]}")

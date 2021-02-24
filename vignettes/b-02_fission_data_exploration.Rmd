@@ -113,7 +113,8 @@ chance to explain the graphs as I generate them.
 ## be maintained throughout this process
 fis_libsize <- plot_libsize(fission_expt)
 fis_libsize$plot
-## Here we see that the wild type replicate 3 sample for 15 minutes has fewer non-zero genes than all its friends.
+## Here we see that the wild type replicate 3 sample for 15 minutes has
+## fewer non-zero genes than all its friends.
 fis_nonzero <- plot_nonzero(fission_expt, labels = "boring", title = "nonzero vs. cpm")
 fis_nonzero$plot
 
@@ -149,7 +150,7 @@ fis_normpca$plot
 
 ```{r test_3d}
 testing <- plot_pca(norm_expt, num_pc = 3)
-silly <- plot_3d_pca(testing)
+silly <- plot_3d_pca(testing, file = "images/3dpca.html")
 silly$plot
 ```
 
@@ -254,12 +255,13 @@ variancePartition may be used to seek out which experimental factors correlate w
 the most variance in the data.
 
 ```{r variancePartition}
-test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("condition","batch"))
+test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("condition", "batch"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 
 ## Here, let us test the variance contributed by strain, time, and replicate.
-test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("condition", "strain", "minute", "replicate"))
+test_varpart <- simple_varpart(fission_expt, predictor = NULL,
+                               factors = c("condition", "strain", "minute", "replicate"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 ```

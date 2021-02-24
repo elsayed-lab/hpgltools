@@ -544,7 +544,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
   return(ret)
 }
@@ -1385,7 +1385,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = NULL, unique = FALSE,
+extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
+                                   z = NULL, unique = FALSE,
                                    excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
@@ -1432,7 +1433,7 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
         rownames(high_data) <- high_data[["Row.names"]]
         high_data[["Row.names"]] <- NULL
       } else {
-        high_data <- as.data.frame(abundances)
+        high_data <- as.data.frame(high_abundances)
       }
       start_row <- 1
       if (class(excel)[1] == "character") {
@@ -1453,7 +1454,7 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200, z = 
         rownames(low_data) <- low_data[["Row.names"]]
         low_data[["Row.names"]] <- NULL
       } else {
-        low_data <- as.data.frame(abundances)
+        low_data <- as.data.frame(low_abundances)
       }
       if (class(excel)[1] == "character") {
         title <- glue::glue("Table SXXX: Low abundance genes in {coef} according to {according}.")
@@ -1789,7 +1790,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   }
 
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
   }
   class(ret) <- c("sig_genes", "list")
   return(ret)
@@ -2026,7 +2027,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
   }
 
   class(lst) <- c("sig_intersect", "list")

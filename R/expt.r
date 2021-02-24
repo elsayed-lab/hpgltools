@@ -1274,8 +1274,6 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
   true_sf <- abs(stats::rnorm(columns, mean = 1, sd = 0.4))
   cond_types <- ceiling(sqrt(columns))
-  ##    conds <- c("A", "A", "B", "B", "B")
-  ##x <- sample( LETTERS[1:4], 10000, replace = TRUE, prob = c(0.1, 0.2, 0.65, 0.05) )
   conds <- sample(LETTERS[1:cond_types], columns, replace = TRUE)
   m <- t(sapply(seq_len(ngenes),
                 function(i) sapply(1:columns,
@@ -1284,7 +1282,16 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
                                                                                 q0A[i], q0B[i]),
                                                        size = 1/0.2))))
   rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-  example <- DESeq::newCountDataSet(m, conds)
+  colnames(m) <- paste0("sample", 1:ncol(m))
+  design <- as.data.frame(conds)
+  rownames(design) <- colnames(m)
+  colnames(design) <- "condition"
+  for (i in 1:ncol(m)) {
+    m[, i] <- as.integer(m[, i])
+  }
+  design[["condition"]] <- as.factor(design[["condition"]])
+  example <- sm(DESeq2::DESeqDataSetFromMatrix(countData = m,
+                                               colData = design, design = ~condition))
   return(example)
 }
 

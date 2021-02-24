@@ -20,7 +20,7 @@ Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   BiocGenerics, BiocManager, biomaRt, Biostrings, BRAIN, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
-  DBI, desc, DESeq, DESeq2, devEMF, devtools, directlabels, doParallel,
+  DBI, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
   DOSE, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
