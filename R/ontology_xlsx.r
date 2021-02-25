@@ -451,7 +451,6 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
     }
   }  ## End making sure that an excel is desired.
 
-  message("TESTME: ", add_trees)
   trees <- NULL
   if (isTRUE(add_trees)) {
     trees <- try(goseq_trees(goseq_result, pval_column = pval_column), silent = TRUE)
