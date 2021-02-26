@@ -9,14 +9,16 @@ simple_gsva(
   signatures = "c2BroadSets",
   data_pkg = "GSVAdata",
   signature_category = "c2",
-  cores = 1,
+  cores = NULL,
   current_id = "ENSEMBL",
   required_id = "ENTREZID",
   min_catsize = 5,
   orgdb = "org.Hs.eg.db",
   method = "ssgsea",
   kcdf = NULL,
-  ranking = FALSE
+  ranking = FALSE,
+  msig_xml = NULL,
+  wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")
 )
 }
 \arguments{
@@ -45,6 +47,10 @@ because it was throwing segmentation faults.}
 \item{kcdf}{Options for the gsva methods.}
 
 \item{ranking}{another gsva option.}
+
+\item{msig_xml}{XML file contining msigdb annotations.}
+
+\item{wanted_meta}{Desired metadata elements from the mxig_xml file.}
 }
 \value{
 List containing three elements: first a modified expressionset using

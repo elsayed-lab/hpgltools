@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 context("245gsva.R:
-")
+  123456\n")
 
 ## In order to test my GSVA functions, I am going to need a rda with some data...
 ## I am thinking to copy some of my human macrophage data.
