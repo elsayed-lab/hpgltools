@@ -7,7 +7,7 @@
 get_group_gsva_means(gsva_scores, groups)
 }
 \arguments{
-\item{gsva_result}{}
+\item{gsva_result}{Result from simple_gsva()}
 }
 \value{
 dataframe containing max_gsva_score, and within group means for gsva scores

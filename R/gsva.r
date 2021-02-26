@@ -118,21 +118,40 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 
 #' Create dataframe which gets the maximum within group mean gsva score for each gene set
 #'
-#'
-#' @param gsva_result  Result from simple_gsva()
-#' @param gsva_result
+#' @param gsva_result Result from simple_gsva()
+#' @param groups list of groups for which to calculate the means
+#' @param keep_single Keep categories with only 1 element.
+#' @param method mean or median?
 #' @return dataframe containing max_gsva_score, and within group means for gsva scores
 #' @export
-get_group_gsva_means <- function(gsva_scores, groups) {
+get_group_gsva_means <- function(gsva_scores, groups, keep_single = TRUE, method = "mean") {
   start_gsva_result <- exprs(gsva_scores)
 
   groupMeans <- data.frame(row.names = rownames(start_gsva_result))
   groupInd <- list()
+  ## Added a little logic in case there are categories with <= 1 column.
   for (group in groups) {
-    #get columns for that group
+    ## get columns for that group
     ind <- pData(gsva_scores)[["condition"]] == group
-
-    groupMeans[[group]] <- abs(rowMeans(start_gsva_result[, ind]))
+    if (sum(ind) < 1) {
+      next
+    } else if (sum(ind) == 1) {
+      if (isTRUE(keep_single)) {
+        groupMeans[[group]] <- as.data.frame(start_gsva_result[, ind])
+        colnames(groupMeans[[group]]) <- colnames(pData(gsva_scores))[ind]
+      } else {
+        next
+      }
+    } else {
+      subset <- start_gsva_result[, ind]
+      if (method == "mean") {
+        groupMeans[[group]] <- abs(rowMeans(subset))
+      } else if (method == "median") {
+        groupMeans[[group]] <- abs(Biobase::rowMedians(subset))
+      } else {
+        stop("I do not know this method: ", method, ".")
+      }
+    }
     groupInd[[group]] <- ind
   }
   return(list("Means" = groupMeans, "Index" = groupInd))
@@ -223,8 +242,8 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
 
   ## Combine gsva max(scores) with limma results
   ### get gsva within group means
-  groups <- levels(gsva_scores$conditions)
-  gsva_score_means <- get_group_gsva_means(gsva_scores, groups = groups)
+  groups <- levels(gsva_scores[["conditions"]])
+  gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
   for (t in 1:length(gsva_limma[["all_tables"]])) {

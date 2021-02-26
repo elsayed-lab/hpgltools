@@ -47,6 +47,10 @@ because it was throwing segmentation faults.}
 \item{kcdf}{Options for the gsva methods.}
 
 \item{ranking}{another gsva option.}
+
+\item{msig_xml}{XML file contining msigdb annotations.}
+
+\item{wanted_meta}{Desired metadata elements from the mxig_xml file.}
 }
 \value{
 List containing three elements: first a modified expressionset using
