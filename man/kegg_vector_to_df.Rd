@@ -24,3 +24,6 @@ rather easier to use.
 \details{
 This could probably benefit from a tidyr-ish revisitation.
 }
+\seealso{
+[KEGGREST] [load_kegg_annotations()]
+}

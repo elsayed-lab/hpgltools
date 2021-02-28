@@ -12,7 +12,7 @@
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'  a scatterplot if it is a range, a dotplot if a factor.
 #' @return surrogate variable plot as per Leek's work
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  estimate_vs_snps <- plot_svfactor(start, surrogate_estimate, "snpcategory")
@@ -59,7 +59,7 @@ plot_svfactor <- function(expt, svest, sv = 1, chosen_factor = "batch", factor_t
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'  a scatterplot if it is a range, a dotplot if a factor.
 #' @return Plot of batch vs surrogate variables as per Leek's work.
-#' @seealso \pkg{sva} \pkg{ggplot2}
+#' @seealso [sva] [ggplot2]
 #' @examples
 #' \dontrun{
 #'  estimate_vs_snps <- plot_batchsv(start, surrogate_estimate, "snpcategory")
@@ -202,7 +202,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
 #' @param exp_factor Experimental factor to compare against.
 #' @param component Which principal component to compare against?
 #' @return Plot of principle component vs factors in the data
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  estimate_vs_pcs <- plot_pcfactor(pcs, times)
@@ -242,11 +242,11 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #' @param data Expt, expressionset, or data frame.
 #' @param colors Color scheme if data is not an expt.
 #' @param method Correlation or distance method to use.
-#' @param plot_legend  Include a legend on the side?
+#' @param plot_legend Include a legend on the side?
 #' @param expt_names Use pretty names for the samples?
 #' @param label_chars Maximum number of characters before abbreviating sample names.
 #' @param title Title for the graph.
-#' @param dot_size  How large should the glyphs be?
+#' @param dot_size How large should the glyphs be?
 #' @param ... More parameters to make you happy!
 #' @return ggplot of the standard median something
 #'  among the samples.  This will also write to an
@@ -255,9 +255,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #'  among the samples and makes a horizontal line at that correlation
 #'  coefficient.  Any sample which falls below this line is considered
 #'  for removal because it is much less similar to all of its peers.
-#' @seealso \pkg{matrixStats} \pkg{grDevices}
-#'  \code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
-#'  \code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
+#' @seealso [matrixStats] [ggplot2]
 #' @examples
 #' \dontrun{
 #'  smc_plot = hpgl_smc(expt = expt)

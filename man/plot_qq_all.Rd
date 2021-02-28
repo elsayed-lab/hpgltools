@@ -25,5 +25,5 @@ all columns of data in order to see if any one is significantly different
 than the cloud.
 }
 \seealso{
-\pkg{Biobase}
+[Biobase]
 }

@@ -21,3 +21,6 @@ A list of variant positions where each element is one chromosome.
 The real worker.  This extracts positions for a single chromosome and puts
 them into a parallelizable data structure.
 }
+\seealso{
+[Vennerable]
+}

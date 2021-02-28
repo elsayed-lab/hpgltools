@@ -23,6 +23,9 @@ get_res(
 
 \item{var_slot}{Where is the var data in the svd result?}
 }
+\value{
+Data frame of rsquared values and cumulative sums.
+}
 \description{
 I strongly suspect that this is not correct, but it is a start.
 }

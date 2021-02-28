@@ -41,3 +41,6 @@ The final output filename
 I am a fan of ggplotly, but its conversion to an html file is not perfect.
 This hopefully will get around the most likely/worst problems.
 }
+\seealso{
+[htmlwidgets] [plotly] [ggplot2]
+}

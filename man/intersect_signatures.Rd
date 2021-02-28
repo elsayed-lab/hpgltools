@@ -31,3 +31,6 @@ Najib is curious about the relationship of genes in sets, the sets, and the
 genes that comprise those sets.  This is pushing gsva towards a oroborous-ish
 state.
 }
+\seealso{
+[Vennerable] [simple_gsva()]
+}

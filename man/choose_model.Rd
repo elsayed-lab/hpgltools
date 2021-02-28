@@ -71,6 +71,5 @@ Invoked by the _pairwise() functions.
 }
 }
 \seealso{
-\pkg{stats}
- \code{\link[stats]{model.matrix}}
+[stats::model.matrix()]
 }

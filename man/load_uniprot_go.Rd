@@ -19,3 +19,6 @@ Extract ontology information from a uniprot dataframe.
  sc_uniprot_go <- load_uniprot_go(sc_uniprot_annot)
  head(sc_uniprot_go)
 }
+\seealso{
+[load_uniprot_annotations()] [stringr] [tidyr]
+}

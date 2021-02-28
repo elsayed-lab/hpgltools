@@ -53,5 +53,5 @@ Tested in test_29de_shared.R
 }
 }
 \seealso{
-\code{\link{extract_significant_genes}}
+[extract_significant_genes()] [get_abundant_genes()]
 }

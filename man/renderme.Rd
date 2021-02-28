@@ -19,3 +19,6 @@ Final filename including the prefix rundate.
 Add a little logic to rmarkdown::render to date the final outputs as per a
 request from Najib.
 }
+\seealso{
+[rmarkdown]
+}

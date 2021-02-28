@@ -46,6 +46,5 @@ With little work this can be made much more generic, and it probably should.
  }
 }
 \seealso{
-\pkg{goseq} \pkg{clusterProfiler}
- \code{\link{simple_goseq}}
+[simple_goseq()]
 }

@@ -47,9 +47,8 @@
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
 #'  write_limma().
 #' @return A list of limma, deseq, edger results.
-#' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
-#'  \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
-#'  \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+#' @seealso [limma_pairwise()] [edger_pairwise()] [deseq_pairwise()] [ebseq_pairwise()]
+#'  [basic_pairwise()]
 #' @examples
 #' \dontrun{
 #'  lotsodata <- all_pairwise(input = expt, model_batch = "svaseq")
@@ -278,6 +277,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' this is great; but when dealing with actual data, it falls a bit short.
 #'
 #' @param results Table of differential expression results.
+#' @seealso [sva]
 sva_modify_pvalues <- function(results) {
   original_pvalues <- data.table::data.table(
                                     rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
@@ -418,7 +418,7 @@ sva_modify_pvalues <- function(results) {
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
-#' @seealso \pkg{DESeq2} \pkg{edgeR}
+#' @seealso [DESeq2] [edgeR] [choose_basic_dataset()] [choose_limma_dataset()]
 choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
@@ -524,10 +524,9 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
 #' @param force Force non-standard data?
 #' @param choose_for One of limma, deseq, edger, or basic.  Defines the
 #'  requested data state.
-#' @param ...  More options for future expansion.
+#' @param ... More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
-#' @seealso \code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
-#'  \code{\link{choose_basic_dataset}}
+#' @seealso [choose_binom_dataset()] [choose_limma_dataset()] [choose_basic_dataset()]
 #' @examples
 #' \dontrun{
 #'  starting_data <- create_expt(metadata)
@@ -567,7 +566,7 @@ choose_dataset <- function(input, choose_for = "limma", force = FALSE, verbose =
 #'  hpgl equivalents.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
-#' @seealso \pkg{limma}
+#' @seealso [limma] [choose_dataset()]
 choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", verbose = TRUE, ...) {
   ## arglist <- list(...)
   input_class <- class(input)
@@ -679,8 +678,7 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
 #' @param ... Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and
 #'  intercept models.
-#' @seealso \pkg{stats}
-#'  \code{\link[stats]{model.matrix}}
+#' @seealso [stats::model.matrix()]
 #' @examples
 #' \dontrun{
 #'  a_model <- choose_model(expt, model_batch = TRUE, model_intercept = FALSE)
@@ -969,6 +967,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
 #' @param cor_method Method to use for cor.test().
 #' @param try_methods List of methods to attempt comparing.
 #' @return A list of compared columns, tables, and methods.
+#' @seealso [all_pairwise()]
 #' @examples
 #' \dontrun{
 #'  first <- all_pairwise(expt, model_batch = FALSE, excel = "first.xlsx")
@@ -1124,8 +1123,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
 #' @param annot_df Include annotation data?
 #' @return Heatmap showing how similar they are along with some
 #'  correlations betwee the three players.
-#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
-#'  \code{\link{deseq2_pairwise}}
+#' @seealso [limma_pairwise()] [edger_pairwise()] [deseq_pairwise()]
 #' @examples
 #' \dontrun{
 #'  l = limma_pairwise(expt)
@@ -1282,7 +1280,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
 #'
 #' @param combined_tables The combined tables from limma et al.
 #' @return Some plots
-#' @seealso \code{\link{plot_linear_scatter}}
+#' @seealso [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
 #'  limma_vs_deseq_vs_edger <- compare_logfc_plots(combined)
@@ -1358,6 +1356,8 @@ compare_logfc_plots <- function(combined_tables) {
 #' @param compare_by Use which program for the comparisons?
 #' @param weights When printing venn diagrams, weight them?
 #' @param contrasts List of contrasts to compare.
+#' @return List containing the intersections of the contrasts and plots describing them.
+#' @seealso [Vennerable]
 #' @export
 compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
                                           weights = FALSE, contrasts = c(1, 2, 3)) {
@@ -1474,8 +1474,7 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #' @param ... Set of arguments intended for limma_pairwise(),
 #'  edger_pairwise(), and friends.
 #' @return Result from limma/deseq/edger/basic
-#' @seealso \code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
-#'   \code{\link{deseq_pairwise}} \code{\link{basic_pairwise}}
+#' @seealso [all_pairwise()]
 #' @export
 do_pairwise <- function(type, ...) {
   res <- NULL
@@ -1507,7 +1506,7 @@ do_pairwise <- function(type, ...) {
 #' @param z Or take genes past a given z-score.
 #' @param unique Unimplemented: take only the genes unique among the conditions surveyed.
 #' @return List of data frames containing the genes of interest.
-#' @seealso \pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+#' @seealso [get_sig_genes()]
 #' @examples
 #' \dontrun{
 #'  abundant <- get_abundant_genes(all_pairwise_output, type = "deseq", n = 100)
@@ -1601,9 +1600,9 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
 #' @param datum Output from _pairwise() functions.
 #' @param type According to deseq/limma/ed ger/basic?
 #' @param excel Print this to an excel file?
-#' @return A list containing the expression values and some metrics of
+#' @return List containing the expression values and some metrics of
 #'  variance/error.
-#' @seealso \pkg{limma}
+#' @seealso [get_abundant_genes()]
 #' @examples
 #' \dontrun{
 #'  abundance_excel <- get_pairwise_gene_abundances(combined, excel = "abundances.xlsx")
@@ -1704,6 +1703,7 @@ get_pairwise_gene_abundances <- function(datum, type = "limma", excel = NULL) {
 #' @param mean_column Name of the column of mean values.
 #' @param significance IHW uses this parameter, I don't know why.
 #' @return weight adjusted p-values.
+#' @seealso [IHW]
 ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
                        mean_column = "baseMean", significance = 0.05) {
   ## We need to know the method used, because the values returned are not
@@ -1772,7 +1772,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
-#' @seealso \code{\link{extract_significant_genes}}
+#' @seealso [extract_significant_genes()] [get_abundant_genes()]
 #' @examples
 #' \dontrun{
 #'  sig_table <- get_sig_genes(table, lfc = 1)
@@ -1891,8 +1891,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #'  \item contrast_string = the string passed to R to call makeContrasts(...)
 #'  \item names = the names given to the identities/contrasts
 #' }
-#' @seealso \pkg{limma}
-#'  \code{\link[limma]{makeContrasts}}
+#' @seealso [limma::makeContrasts()]
 #' @examples
 #' \dontrun{
 #'  pretend <- make_pairwise_contrasts(model, conditions)
@@ -2004,6 +2003,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
 #' @param contrasts Actual contrast names.
 #' @param levels contrast levels used.
 #' @return Same contrasts as used in makeContrasts, but with unique names.
+#' @seealso [limma::makeContrasts()]
 mymakeContrasts <- function(..., contrasts = NULL, levels) {
   e <- substitute(list(...))
   if (is.factor(levels)) {
@@ -2131,7 +2131,7 @@ semantic_copynumber_extract <- function(...) {
 #' @param semantic_column Column in the DE table used to find the
 #'  semantic strings for removal.
 #' @return Smaller list of up/down genes.
-#' @seealso \code{\link{semantic_copynumber_extract}}
+#' @seealso [semantic_copynumber_extract()]
 #' @examples
 #' \dontrun{
 #'  pruned <- semantic_copynumber_filter(table, semantic = c("ribosomal"))

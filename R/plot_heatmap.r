@@ -17,9 +17,7 @@
 #' @param ... More options are wonderful!
 #' @return Gplots heatmap describing describing how the samples are clustering
 #'   vis a vis pairwise correlation.
-#' @seealso \pkg{grDevice}
-#'  \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
-#'   \code{\link[grDevices]{recordPlot}}
+#' @seealso [grDevice] [gplot2::heatmap.2()]
 #' @examples
 #' \dontrun{
 #'  corheat_plot <- hpgl_corheat(expt = expt, method = "robust")
@@ -47,12 +45,10 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param expt_names Alternate names to use for the samples.
 #' @param batch_row Name of the design row used for 'batch' column colors.
 #' @param title Title for the plot.
-#' @param label_chars  Limit on the number of label characters.
+#' @param label_chars Limit on the number of label characters.
 #' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
-#'  \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @examples
 #' \dontrun{
 #'  disheat_plot = plot_disheat(expt = expt, method = "euclidean")
@@ -76,17 +72,16 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param expt_data Dataframe, expt, or expressionset to work with.
 #' @param expt_colors Color scheme for the samples.
 #' @param expt_design Design matrix describing the experiment vis a vis
-#'   conditions and batches.
+#'  conditions and batches.
 #' @param method Distance or correlation metric to use.
 #' @param expt_names Alternate names to use for the samples.
 #' @param type Defines the use of correlation, distance, or sample heatmap.
 #' @param batch_row Name of the design row used for 'batch' column colors.
 #' @param title Title for the plot.
-#' @param label_chars  Limit on the number of label characters.
+#' @param label_chars Limit on the number of label characters.
 #' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @export
 plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "pearson", expt_names = NULL,
@@ -223,18 +218,19 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' Heatplus is an interesting tool, I have a few examples of using it and intend
 #' to include them here.
 #'
-#' @param expt  Experiment to try plotting.
-#' @param type  What comparison method to use on the data (distance or correlation)?
-#' @param method  What distance/correlation method to perform?
-#' @param annot_columns  Set of columns to include as terminal columns next to the heatmap.
-#' @param annot_rows  Set of columns to include as terminal rows below the heatmap.
-#' @param cutoff  Cutoff used to define color changes in the annotated clustering.
-#' @param cluster_colors  Choose colors for the clustering?
-#' @param scale  Scale the heatmap colors?
-#' @param cluster_width  How much space to include between clustering?
-#' @param cluster_function  Choose an alternate clustering function than hclust()?
-#' @param heatmap_colors  Choose your own heatmap cluster palette?
-#' @return  List containing the returned heatmap along with some parameters used to create it.
+#' @param expt Experiment to try plotting.
+#' @param type What comparison method to use on the data (distance or correlation)?
+#' @param method What distance/correlation method to perform?
+#' @param annot_columns Set of columns to include as terminal columns next to the heatmap.
+#' @param annot_rows Set of columns to include as terminal rows below the heatmap.
+#' @param cutoff Cutoff used to define color changes in the annotated clustering.
+#' @param cluster_colors Choose colors for the clustering?
+#' @param scale Scale the heatmap colors?
+#' @param cluster_width How much space to include between clustering?
+#' @param cluster_function Choose an alternate clustering function than hclust()?
+#' @param heatmap_colors Choose your own heatmap cluster palette?
+#' @return List containing the returned heatmap along with some parameters used to create it.
+#' @seealso [Heatplus] [fastcluster]
 #' @export
 plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_columns = "batch",
                           annot_rows = "condition", cutoff = 1.0, cluster_colors = NULL, scale = "none",
@@ -328,8 +324,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @param filter Filter the data before performing this plot?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @export
 plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
                                 expt_names = NULL, dendrogram = "column",

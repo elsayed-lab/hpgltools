@@ -35,5 +35,5 @@ examining the pieces. This attempts to use that in order to evaluate how many
 'significant' genes are in a given pathway.
 }
 \seealso{
-\pkg{KEGGgraph} \pkg{KEGGREST}
+[KEGGgraph] [KEGGREST]
 }

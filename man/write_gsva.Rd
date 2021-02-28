@@ -18,3 +18,6 @@ While I am trying to make sense of gsva, I will use this function to write
 out the results I get so I can pass them to Najib/Maria Adelaida/Theresa to
 see if I am making sense.
 }
+\seealso{
+[simple_gsva()] [score_gsva_likelihoods()] [get_sig_gsva_categories()]
+}

@@ -50,7 +50,7 @@ old, my version of this only accepts deseq or edger.}
 \item{delta}{Not epsilon! (E.g. I forget what this does).}
 }
 \value{
-A list containin the various tables and plots returned by PROPER.
+List containin the various tables and plots returned by PROPER.
 }
 \description{
 Recent reviewers of Najib's grants have taken an increased interest in
@@ -61,4 +61,7 @@ able to examine any dataset.  The workflow in question is particularly odd
 and warrants further discussion/analysis.  This function is a modified
 version of 'default_proper()' above and invokes PROPER after re-formatting a
 given dataset in the way expected by PROPER.
+}
+\seealso{
+[PROPER]
 }

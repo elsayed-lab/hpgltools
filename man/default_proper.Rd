@@ -58,3 +58,6 @@ able to examine any dataset.  The workflow in question is particularly odd
 and warrants further discussion/analysis.  This function invokes PROPER
 exactly as it was performed in their paper.
 }
+\seealso{
+[PROPER]
+}

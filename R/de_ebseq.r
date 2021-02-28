@@ -32,6 +32,7 @@
 #' @param ... Extra arguments currently unused.
 #' @return List containing tables from ebseq, the conditions tested, and the
 #'  ebseq table of conditions.
+#' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 #' @examples
 #'  \dontrun{
 #'   expt <- create_expt(metadata = "sample_sheet.xlsx", gene_info = annotations)
@@ -105,20 +106,21 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
 #' @param input Expressionset/expt to perform de upon.
 #' @param ng_vector Passed on to ebseq, I forget what this does.
 #' @param rounds Passed on to ebseq, I think it defines how many iterations to
-#'   perform before return the de estimates
+#'  perform before return the de estimates
 #' @param target_fdr If we reach this fdr before iterating rounds times, return.
 #' @param model_batch Provided by all_pairwise()  I do not think a Bayesian
-#'   analysis really cares about models, but if one wished to try to add a batch
-#'   factor, this would be the place to do it.  It is currently ignored.
+#'  analysis really cares about models, but if one wished to try to add a batch
+#'  factor, this would be the place to do it.  It is currently ignored.
 #' @param model_cond Provided by all_pairwise(), ibid.
 #' @param model_intercept Ibid.
 #' @param alt_model Ibid.
 #' @param conditions Factor of conditions in the data, used to define the
-#'   contrasts.
+#'  contrasts.
 #' @param norm EBseq normalization method to apply to the data.
 #' @param force Flag used to force inappropriate data into the various methods.
 #' @param ... Extra arguments passed downstream, noably to choose_model()
 #' @return A pairwise comparison of the various conditions in the data.
+#' @seealso [ebseq_pairwise()]
 ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_fdr = 0.05,
                                   model_batch = FALSE, model_cond = TRUE,
                                   model_intercept = FALSE, alt_model = NULL,
@@ -185,6 +187,7 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
 #' @param data_mtrx This is exprs(expressionset)
 #' @param norm The method to pass along.
 #' @return a new matrix using the ebseq specific method of choice.
+#' @seealso [EBSeq]
 ebseq_size_factors <- function(data_mtrx, norm = NULL) {
   ## Set up a null normalization vector
   normalized <- rep(x = 1, times = ncol(data_mtrx))
@@ -215,6 +218,7 @@ ebseq_size_factors <- function(data_mtrx, norm = NULL) {
 #' @param rounds Passed to ebseq.
 #' @param target_fdr Passed to ebseq.
 #' @param norm Normalization method to apply to the data.
+#' @seealso [ebseq_pairwise()]
 ebseq_few <- function(data, conditions,
                       patterns = NULL, ng_vector = NULL, rounds = 10,
                       target_fdr = 0.05, norm = "median") {
@@ -295,6 +299,7 @@ ebseq_few <- function(data, conditions,
 #' @param norm Normalization method of ebseq to apply.
 #' @param force Force inappropriate data into ebseq?
 #' @return EBSeq result table with some extra formatting.
+#' @seealso [ebseq_pairwise()]
 ebseq_two <- function(pair_data, conditions,
                       numerator = 2, denominator = 1,
                       ng_vector = NULL, rounds = 10,

@@ -43,5 +43,5 @@ Gprofiler is pretty awesome.  This function will attempt to write its results
 to an excel file.
 }
 \seealso{
-\pkg{openxlsx} \pkg{gProfiler}
+[openxlsx] [simple_gprofiler()]
 }

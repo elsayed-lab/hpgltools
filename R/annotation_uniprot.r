@@ -14,6 +14,7 @@
 #' @param all If there are more than 1 hit, grab them all?
 #' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
+#' @seealso [xml2] [rvest]
 #' @examples
 #'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
 #'  uniprot_sc_downloaded$filename
@@ -112,6 +113,7 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
 #' @param species Species name to download/load.
 #' @param savefile Do a save?
 #' @return Big dataframe of annotation data.
+#' @seealso [download_uniprot_proteome()]
 #' @examples
 #'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
 #'  dim(sc_uniprot_annot)
@@ -575,6 +577,7 @@ load_uniprot_annotations <- function(file = NULL, species = NULL, savefile = TRU
 #'
 #' @param input uniprot filename or dataframe.
 #' @return Ontology dataframe
+#' @seealso [load_uniprot_annotations()] [stringr] [tidyr]
 #' @examples
 #'  sc_uniprot_go <- load_uniprot_go(sc_uniprot_annot)
 #'  head(sc_uniprot_go)

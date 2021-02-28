@@ -34,5 +34,5 @@ Two element list containing the venneuler data and the plot.
 venneuler makes pretty venn diagrams, but no labels!
 }
 \seealso{
-\pkg{venneuler}
+[venneuler]
 }

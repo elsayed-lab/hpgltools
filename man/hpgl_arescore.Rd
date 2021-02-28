@@ -69,5 +69,5 @@ parameters or at least make them more transparent.
 }
 }
 \seealso{
-\pkg{IRanges} \pkg{Biostrings}
+[IRanges] [Biostrings] [GenomicRanges]
 }

@@ -31,5 +31,5 @@ Used in write_expt() as well as a few random collaborations.
 }
 }
 \seealso{
-\pkg{Biobase} \pkg{matrixStats}
+[Biobase] [matrixStats]
 }

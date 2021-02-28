@@ -16,3 +16,6 @@ Expressionset/expt of fission.
 This just saves some annoying typing if one wishes to make a standard
 expressionset superclass out of the publicly available fission data set.
 }
+\seealso{
+[fission] [create_expt()]
+}

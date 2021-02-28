@@ -22,7 +22,7 @@
 #' @param expt Expressionset to examine.
 #' @param fact Experimental design factor to use.
 #' @param method Specify whether to leave the NAs as NA,
-#'   or replace them with the mean of all non-NA values.
+#'  or replace them with the mean of all non-NA values.
 #' @return New expressionset with some, but not all, 0s replaced with NA.
 #' @export
 add_conditional_nas <- function(expt, fact = "condition", method = "NA") {
@@ -92,7 +92,7 @@ add_conditional_nas <- function(expt, fact = "condition", method = "NA") {
 #' @param file Mayu output file.
 #' @param fdr Chosen fdr value to acquire.
 #' @return List of two elements: the full mayu table sorted by fdr and the number
-#'   corresponding to the chosen fdr value.
+#'  corresponding to the chosen fdr value.
 #' @export
 extract_mayu_pps_fdr <- function(file, fdr = 0.01) {
   mayu_df <- readr::read_csv(file)
@@ -472,61 +472,61 @@ extract_msraw_data <- function(metadata, write_windows = TRUE, id_column = "samp
 #' @param decoy_string  What prefix do decoys have in the data.
 #' @param ... Catch extra arguments passed here, currently unused.
 #' @return data table of all the information I saw fit to extract
-#' The columns are:
-#' * protein: The name of the matching sequence (DECOYs allowed here)
-#' * decoy: TRUE/FALSE, is this one of our decoys?
-#' * peptide: The sequence of the matching spectrum.
-#' * start_scan: The scan in which this peptide was observed
-#' * end scan: Ibid
-#' * index This seems to just increment
-#' * precursor_neutral_mass: Calculated mass of this fragment assuming no
-#'   isotope shenanigans (yeah, looking at you C13).
-#' * assumed_charge: The expected charge state of this peptide.
-#' * retention_time_sec: The time at which this peptide eluted during the run.
-#' * peptide_prev_aa:  The amino acid before the match.
-#' * peptide_next_aa:  and the following amino acid.
-#' * num_tot_proteins: The number of matches not counting decoys.
-#' * num_matched_ions: How many ions for this peptide matched?
-#' * tot_num_ions:  How many theoretical ions are in this fragment?
-#' * matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
-#' * cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
-#'   recalculated by peptideProphet, so if there is a discrepency we should yell
-#'   at someone!
-#' * massdiff How far off is the observed mass vs. the calculated? (also
-#'   redundant with massd later)
-#' * num_tol_term: The number of peptide termini which are consistent with the
-#'   cleavage (hopefully 2), but potentially 1 or even 0 if digestion was
-#'   bad. (redundant with ntt later)
-#' * num_missed_cleavages: How many cleavages must have failed in order for this
-#'   to be a good match?
-#' * num_matched_peptides: Number of alternate possible peptide matches.
-#' * xcorr: cross correlation of the experimental and theoretical spectra (this
-#'   is supposedly only used by sequest, but I seem to have it here...)
-#' * deltacn: The normalized difference between the xcorr values for the best hit and next
-#'   best hit.  Thus higher numbers suggest better matches.
-#' * deltacnstar: Apparently 'important for things like phospho-searches
-#'   containing homologous top-scoring peptides when analyzed by
-#'   peptideprophet...' -- the comet release notes.
-#' * spscore: The raw value of preliminary score from the sequest algorithm.
-#' * sprank: The rank of the match in a preliminary score. 1 is good.
-#' * expect: E-value of the given peptide hit.  Thus how many identifications
-#'   one expect to observe by chance, lower is therefore better
-#' * prophet_probability: The peptide prophet probability score, higher is
+#'  The columns are:
+#'  * protein: The name of the matching sequence (DECOYs allowed here)
+#'  * decoy: TRUE/FALSE, is this one of our decoys?
+#'  * peptide: The sequence of the matching spectrum.
+#'  * start_scan: The scan in which this peptide was observed
+#'  * end scan: Ibid
+#'  * index This seems to just increment
+#'  * precursor_neutral_mass: Calculated mass of this fragment assuming no
+#'    isotope shenanigans (yeah, looking at you C13).
+#'  * assumed_charge: The expected charge state of this peptide.
+#'  * retention_time_sec: The time at which this peptide eluted during the run.
+#'  * peptide_prev_aa:  The amino acid before the match.
+#'  * peptide_next_aa:  and the following amino acid.
+#'  * num_tot_proteins: The number of matches not counting decoys.
+#'  * num_matched_ions: How many ions for this peptide matched?
+#'  * tot_num_ions:  How many theoretical ions are in this fragment?
+#'  * matched_ion_ratio: num_matched_ions / tot_num_ions, bigger is better!
+#'  * cal_neutral_pep_mass: This is redundant with precursor_neutral_mass, but
+#'    recalculated by peptideProphet, so if there is a discrepency we should yell
+#'    at someone!
+#'  * massdiff How far off is the observed mass vs. the calculated? (also
+#'    redundant with massd later)
+#'  * num_tol_term: The number of peptide termini which are consistent with the
+#'    cleavage (hopefully 2), but potentially 1 or even 0 if digestion was
+#'    bad. (redundant with ntt later)
+#'  * num_missed_cleavages: How many cleavages must have failed in order for this
+#'    to be a good match?
+#'  * num_matched_peptides: Number of alternate possible peptide matches.
+#'  * xcorr: cross correlation of the experimental and theoretical spectra (this
+#'    is supposedly only used by sequest, but I seem to have it here...)
+#'  * deltacn: The normalized difference between the xcorr values for the best hit and next
+#'    best hit.  Thus higher numbers suggest better matches.
+#'  * deltacnstar: Apparently 'important for things like phospho-searches
+#'    containing homologous top-scoring peptides when analyzed by
+#'    peptideprophet...' -- the comet release notes.
+#'  * spscore: The raw value of preliminary score from the sequest algorithm.
+#'  * sprank: The rank of the match in a preliminary score. 1 is good.
+#'  * expect: E-value of the given peptide hit.  Thus how many identifications
+#'    one expect to observe by chance, lower is therefore better
+#'  * prophet_probability: The peptide prophet probability score, higher is
 #'   better.
-#' * fval: 0.6(the dot function + 0.4(the delta dot function) - (the dot bias
-#'   penalty function) -- which is to say... well I dunno, but it is supposed to
-#'   provide information about how similar this match is to other potential
-#'   matches, so I presume higher means the match is more ambiguous.
-#' * ntt: Redundant with num_tol_term above, but this time from peptide prophet.
-#' * nmc: Redundant with num_missed_cleavages, except it coalesces them.
-#' * massd: Redundant with massdiff
-#' * isomassd: The mass difference, but taking into account stupid C13.
-#' * RT: Retention time
-#' * RT_score: The score of the retention time!
-#' * modified_peptides: A string describing modifications in the found peptide
-#' * variable_mods: A comma separated list of the variable modifications
-#'   observed.
-#' * static_mods: A comma separated list of the static modifications observed.
+#'  * fval: 0.6(the dot function + 0.4(the delta dot function) - (the dot bias
+#'    penalty function) -- which is to say... well I dunno, but it is supposed to
+#'    provide information about how similar this match is to other potential
+#'    matches, so I presume higher means the match is more ambiguous.
+#'  * ntt: Redundant with num_tol_term above, but this time from peptide prophet.
+#'  * nmc: Redundant with num_missed_cleavages, except it coalesces them.
+#'  * massd: Redundant with massdiff
+#'  * isomassd: The mass difference, but taking into account stupid C13.
+#'  * RT: Retention time
+#'  * RT_score: The score of the retention time!
+#'  * modified_peptides: A string describing modifications in the found peptide
+#'  * variable_mods: A comma separated list of the variable modifications
+#'    observed.
+#'  * static_mods: A comma separated list of the static modifications observed.
 #' @export
 extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
   input <- xml2::read_html(pepxml, options = "NOBLANKS")
@@ -702,26 +702,26 @@ extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
 #' filename:  Which raw mzXML file provides this particular intensity value?
 #' rt: Retention time in seconds for the matching peak group.
 #' assay_rt: The expected retention time after normalization with the iRT. (how
-#'   does the iRT change this value?)
+#'  does the iRT change this value?)
 #' delta_rt:  The difference between rt and assay_rt
 #' irt: (As described in the abstract of Claudia Escher's 2012 paper: "Here we
-#'   present iRT, an empirically derived dimensionless peptide-specific value that
-#'   allows for highly accurate RT prediction. The iRT of a peptide is a fixed
-#'   number relative to a standard set of reference iRT-peptides that can be
-#'   transferred across laboratories and chromatographic systems.")
+#'  present iRT, an empirically derived dimensionless peptide-specific value that
+#'  allows for highly accurate RT prediction. The iRT of a peptide is a fixed
+#'  number relative to a standard set of reference iRT-peptides that can be
+#'  transferred across laboratories and chromatographic systems.")
 #' assay_irt: The iRT observed in the actual chromatographic run.
 #' delta_irt: The difference.  I am seeing that all the delta iRTs are in the
-#'   -4000 range for our actual experiment; since this is in seconds, does that
-#'   mean that it is ok as long as they stay in a similar range?
+#'  -4000 range for our actual experiment; since this is in seconds, does that
+#'  mean that it is ok as long as they stay in a similar range?
 #' id: unique long signed integer for the peak group.
 #' sequence: The sequence of the matched peptide
 #' fullunimodpeptidename: The sequence, but with unimod formatted modifications
-#'   included.
+#'  included.
 #' charge:  The assumed charge of the observed peptide.
 #' mz:  The m/z value of the precursor ion.
 #' intensity:  The sum of all transition intensities in the peak group.
 #' aggr_prec_peak_area:  Semi-colon separated list of intensities (peak areas)
-#'   of the MS traces for this match.
+#'  of the MS traces for this match.
 #' aggr_prec_peak_apex:  Intensity peak apexes of the MS1 traces.
 #' leftwidth: The start of the peak group in seconds.
 #' rightwidth: The end of the peak group in seconds.
@@ -735,13 +735,13 @@ extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
 #' m_score_protein_run_specific: I am guessing the fdr for the pvalue for this run.
 #' mass: Mass of the observed fragment.
 #'
-#' @param metadata  Data frame describing the samples, including the mzXML
-#'   filenames.
+#' @param metadata Data frame describing the samples, including the mzXML
+#'  filenames.
 #' @param pyprophet_column Which column from the metadata provides the requisite filenames?
-#' @param savefile  If not null, save the data from this to the given filename.
+#' @param savefile If not null, save the data from this to the given filename.
 #' @param ... Extra arguments, presumably color palettes and column names and
-#'   stuff like that.
-#' @return  A list of data from each sample in the pyprophet scored DIA run.
+#'  stuff like that.
+#' @return List of data from each sample in the pyprophet scored DIA run.
 #' @export
 extract_pyprophet_data <- function(metadata, pyprophet_column = "diascored",
                                    savefile = NULL, ...) {
@@ -840,19 +840,19 @@ gather_masses <- function(sequence) {
 
 #' Impute missing values using code from DEP reworked for expressionsets.
 #'
-#' \code{impute_expt} imputes missing values in a proteomics dataset.
+#' [impute_expt()] imputes missing values in a proteomics dataset.
 #'
 #' @param expt An ExpressionSet (well, expt), I think it is assumed that this should have
-#'   been normalized and filtered for features which have no values across 'most' samples.
+#'  been normalized and filtered for features which have no values across 'most' samples.
 #' @param filter Use normalize_expt() to filter the data?
 #' @param p When filtering with pofa, use this p parameter.
 #' @param fun "bpca", "knn", "QRILC", "MLE", "MinDet",
-#'   "MinProb", "man", "min", "zero", "mixed" or "nbavg",
-#'   Function used for data imputation based on
-#'   \code{\link[MSnbase:impute-methods]{impute}}.
-#' @param ... Additional arguments for imputation functions as depicted in
-#'   \code{\link[MSnbase:impute-methods]{impute}}.
+#'  "MinProb", "man", "min", "zero", "mixed" or "nbavg",
+#'  Function used for data imputation based on
+#'  [MSnbase::impute-methods()]
+#' @param ... Additional arguments for imputation functions.
 #' @return An imputed expressionset.
+#' @seealso [MSnbase]
 #' @export
 impute_expt <- function(expt, filter = TRUE, p = 0.5,
                         fun = c("bpca", "knn", "QRILC", "MLE",
@@ -930,7 +930,7 @@ impute_expt <- function(expt, filter = TRUE, p = 0.5,
 #'
 #' @param expt Starting expressionset to mangle.
 #' @param fact Metadata factor to use when taking the mean of biological
-#'   replicates.
+#'  replicates.
 #' @param fun Assumed to be mean, but one might want median.
 #' @return new expressionset
 #' @export
@@ -968,11 +968,11 @@ mean_by_bioreplicate <- function(expt, fact = "bioreplicate", fun = "mean") {
 #' The Thermo(TM) workflow has as its default a fascinatingly horrible excel
 #' output.  This function parses that into a series of data frames.
 #'
-#' @param xlsx_file  The input xlsx file
-#' @param test_row  A single row in the xlsx file to use for testing, as I have
-#'   not yet seen two of these accursed files which had the same headers.
-#' @return  List containing the protein names, group data, protein dataframe,
-#'   and peptide dataframe.
+#' @param xlsx_file The input xlsx file
+#' @param test_row A single row in the xlsx file to use for testing, as I have
+#'  not yet seen two of these accursed files which had the same headers.
+#' @return List containing the protein names, group data, protein dataframe,
+#'  and peptide dataframe.
 #' @export
 read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
   old_options <- options(java.parameters = "-Xmx20G")
@@ -1188,6 +1188,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
 #'  SWATH2stats::filter_min_peptides()
 #' @param ... Other arguments passed down to the filters.
 #' @return Smaller SWATH2stats data set.
+#' @seealso [SWATH2stats]
 #' @export
 s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullpeptidename",
                             fft = 0.7, plot = FALSE, target_fdr = 0.02, upper_fdr = 0.05,

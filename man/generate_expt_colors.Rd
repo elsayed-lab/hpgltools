@@ -31,3 +31,6 @@ of metadata and wants to have a set of colors.  Since my taste is utterly
 terrible, I rely entirely upon RColorBrewer, but also allow one to choose
 his/her own colors.
 }
+\seealso{
+[create_expt()]
+}

@@ -19,9 +19,12 @@ dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
 }
 \description{
 This seeks to take the peculiar format from KEGGREST for pathway<->genes and
-make it easier to deal with.
+make it easier to deal with.  Sadly, this only works for a subset of species now.
 }
 \examples{
  sc_kegg_annot <- load_kegg_annotations(species = "cerevisiae")
  head(sc_kegg_annot)
+}
+\seealso{
+[KEGGREST]
 }

@@ -34,3 +34,6 @@ The assumption of this plot is that the adjustment will significantly
 decrease the representation of genes in the 'highly significant' range of
 p-values.  However, it is hoped that it will not utterly remove them.
 }
+\seealso{
+[plot_histogram()]
+}

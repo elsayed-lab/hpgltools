@@ -11,6 +11,7 @@
 #' @param wb Workbook to modify
 #' @param sheet Sheet to check/create.
 #' @return The workbook object hopefully with a new worksheet.
+#' @seealso [openxlsx::addWorksheet()]
 check_xlsx_worksheet <- function(wb, sheet) {
   newsheet <- NULL
   current_sheets <- wb@.xData[[".->sheet_names"]]
@@ -40,6 +41,9 @@ check_xlsx_worksheet <- function(wb, sheet) {
 #' annoying downstream errors.
 #'
 #' @param excel Excel file to create.
+#' @return List containing the basename of the excel file along with the
+#'  openxlsx workbook data structure.
+#' @seealso [openxlsx::createWorkbook()]
 #' @export
 init_xlsx <- function(excel = "excel/something.xlsx") {
   if (isFALSE(excel)) {
@@ -82,7 +86,8 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #' @param ... Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the
 #'  bottom-right coordinates of the last row/column written to the worksheet.
-#' @seealso \pkg{openxlsx}
+#' @seealso [openxlsx] [openxlsx::createWorkbook()] [openxlsx::writeData()]
+#'  [openxlsx::writeDataTable()] [openxlsx::saveWorkbook()]
 #' @examples
 #'  \dontrun{
 #'   xls_coords <- write_xlsx(dataframe, sheet = "hpgl_data", excel = "testing.xlsx")
@@ -230,8 +235,8 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
 #' @param units Units for the png plotter.
 #' @param ... Extra arguments are passed to arglist (Primarily for vennerable
 #'  plots which are odd)
-#' @return A list containing the result of the tryCatch{} used to invoke the plot prints.
-#' @seealso \pkg{openxlsx}
+#' @return List containing the result of the tryCatch{} used to invoke the plot prints.
+#' @seealso [openxlsx::insertImage()]
 #' @examples
 #'  \dontrun{
 #'   fun_plot <- plot_pca(stuff)$plot

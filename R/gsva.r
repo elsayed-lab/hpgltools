@@ -7,11 +7,12 @@
 #' One caveat: this will collapse redundant IDs via unique().
 #'
 #' @param gsc geneSetCollection with IDs of a type one wishes to change.
-#' @param orgdb  Annotation object containing the various IDs.
-#' @param from_type  Name of the ID which your gsc is using.  This can probably
-#'   be automagically detected...
-#' @param to_type  Name of the ID you wish to use.
+#' @param orgdb Annotation object containing the various IDs.
+#' @param from_type Name of the ID which your gsc is using.  This can probably
+#'  be automagically detected...
+#' @param to_type Name of the ID you wish to use.
 #' @return Fresh gene set collection replete with new names.
+#' @seealso [AnnotationDbi] [guess_orgdb_keytypes()] [convert_ids()] [GSEABase]
 #' @export
 convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_type = "ENTREZID") {
   message("Converting the rownames() of the expressionset to ", to_type, ".")
@@ -35,11 +36,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
     if (is.null(from_type)) {
       from_type <- guess_orgdb_keytype(old_ids, orgdb)
     }
-    new_ids <- sm(AnnotationDbi::select(x = orgdb,
-                                        keys = old_ids,
-                                        keytype = from_type,
-                                        columns = c(to_type)))
-    new_ids <- new_ids[[to_type]]
+    new_ids <- convert_ids(old_ids, from = from_type, to = to_type, orgdb = orgdb)
     GSEABase::geneIds(gs) <- unique(new_ids)
     ## gsc_lst[[g]] <- gs
     new_gsc[[g]] <- gs
@@ -63,6 +60,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
 #' @param to Change to this format.
 #' @param orgdb Using this orgdb instance.
 #' @return New vector of ENTREZ IDs.
+#' @seealso [AnnotationDbi]
 convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.eg.db") {
   lib_result <- sm(requireNamespace(orgdb))
   att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
@@ -85,9 +83,9 @@ convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.
 #' Many of the likely GSCs contain far more gene sets than one actually wants to
 #' deal with.  This will subset them according to a the desired 'requests'.
 #'
-#' @param sig_data  The pile of GeneSets, probably from GSVAdata.
-#' @param requests  Character list of sources to keep.
-#' @return  Whatever GeneSets remain.
+#' @param sig_data The pile of GeneSets, probably from GSVAdata.
+#' @param requests Character list of sources to keep.
+#' @return Whatever GeneSets remain.
 #' @export
 get_gsvadb_names <- function(sig_data, requests = NULL) {
   requests <- toupper(requests)
@@ -123,6 +121,7 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 #' @param keep_single Keep categories with only 1 element.
 #' @param method mean or median?
 #' @return dataframe containing max_gsva_score, and within group means for gsva scores
+#' @seealso [simple_gsva()]
 #' @export
 get_group_gsva_means <- function(gsva_scores, groups, keep_single = TRUE, method = "mean") {
   start_gsva_result <- exprs(gsva_scores)
@@ -164,6 +163,7 @@ get_group_gsva_means <- function(gsva_scores, groups, keep_single = TRUE, method
 #' @param msig_xml msig XML file downloaded from broad.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
+#' @seealso [xml2] [rvest]
 #' @export
 get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml",
                                 wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
@@ -230,6 +230,9 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 #'  of dropping some.
 #' @param col_margin Attempt to make heatmaps fit better on the screen with this and...
 #' @param row_margin this parameter
+#' @return List containing the gsva results, limma results, scores, some plots, etc.
+#' @seealso [score_gsva_likelihoods()] [get_group_gsva_means()] [limma_pairwise()]
+#'  [simple_gsva()]
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
                                     model_batch = FALSE, factor_column = "condition", factor = NULL,
@@ -356,12 +359,13 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
 #' genes that comprise those sets.  This is pushing gsva towards a oroborous-ish
 #' state.
 #'
-#' @param gsva_result  Result from simple_gsva().
-#' @param lst  List of genes of interest.
-#' @param freq_cutoff  Minimum number of observations to be counted.
-#' @param sig_weights  When making venn diagrams, weight them?
-#' @param gene_weights  When venning genes, weight them?
-#' @return  List containing some venns, lists, and such.
+#' @param gsva_result Result from simple_gsva().
+#' @param lst List of genes of interest.
+#' @param freq_cutoff Minimum number of observations to be counted.
+#' @param sig_weights When making venn diagrams, weight them?
+#' @param gene_weights When venning genes, weight them?
+#' @return List containing some venns, lists, and such.
+#' @seealso [Vennerable] [simple_gsva()]
 #' @export
 intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
                                  sig_weights = TRUE, gene_weights = TRUE) {
@@ -444,6 +448,7 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
 #' @param signature_category Probably not needed unless you download a signature
 #'  file containing lots of different categories.
 #' @return signature dataset which may be used by gsva()
+#' @seealso [GSEABase]
 #' @export
 load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata",
                                 signature_category = "c2") {
@@ -489,6 +494,7 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @param current_id What type of ID is the data currently using?
 #' @param required_id What type of ID should the use?
 #' @return Small list comprised of the created gene set collection(s).
+#' @seealso [GSEABase]
 #' @export
 make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
                               researcher_name = "elsayed", study_name = "macrophage",
@@ -614,6 +620,8 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
 #' @param ... Extra arguments for extract_significant_genes().
 #' @return List containing 3 GSCs, one containing both the ups/downs called
 #'  'colored', one of the ups, and one of the downs.
+#' @seealso [combine_de_tables()] [extract_significant_genes()] [make_gsc_from_ids()]
+#'  [GSEABase]
 #' @export
 make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
                                    pair_names = c("ups", "downs"), category_name = "infection",
@@ -628,17 +636,16 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     message("Invoking combine_de_tables().")
     combined <- sm(combine_de_tables(pairwise, ...))
     message("Invoking extract_significant_genes().")
-    updown <- sm(extract_significant_genes(
-        combined,
-        according_to = according_to, ...)[[according_to]])
+    updown <- sm(extract_significant_genes(combined,
+                                           according_to = according_to,
+                                           ...)[[according_to]])
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "combined_de") {
     message("Invoking extract_significant_genes().")
-    updown <- sm(extract_significant_genes(
-        pairwise,
-        according_to = according_to,
-        ...)[[according_to]])
+    updown <- sm(extract_significant_genes(pairwise,
+                                           according_to = according_to,
+                                           ...)[[according_to]])
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "sig_genes") {
@@ -784,6 +791,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
 #' @param ... Extra arguments for extract_abundant_genes().
 #' @return List containing 3 GSCs, one containing both the highs/lows called
 #'  'colored', one of the highs, and one of the lows.
+#' @seealso [extract_abundant_genes()] [make_gsc_from_ids()] [GSEABase]
 #' @export
 make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
                                    researcher_name = "elsayed", study_name = "macrophage",
@@ -959,6 +967,7 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
 #' @param cutoff Highlight only the categories deemed more significant than this.
 #' @return The scores according to the provided category, factor, sample, or
 #'  score(s).
+#' @seealso [simple_gsva()]
 #' @export
 score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                                    factor = NULL, sample = NULL, factor_column = "condition",
@@ -1114,6 +1123,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #'  result from gsva, and third a data frame of the annotation data for the
 #'  gene sets in the expressionset.  This seems a bit redundant, perhaps I
 #'  should revisit it?
+#' @seealso [GSEABase] [load_gmt_signatures()] [create_expt()] [GSVA]
 #' @export
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
@@ -1251,6 +1261,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @param ... Extra arguments when normalizing the data for use with xCell.
 #' @return Small list providing the output from xCell, the set of signatures,
 #'  and heatmap.
+#' @seealso [xCell]
 #' @export
 simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
                          expected_types = NULL, label_size = NULL, col_margin = 6,
@@ -1342,6 +1353,7 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
 #' @param retlist Result from running get_sig_gsva
 #' @param excel Excel file to write
 #' @param plot_dim Plot dimensions, likely needs adjustment.
+#' @seealso [simple_gsva()] [score_gsva_likelihoods()] [get_sig_gsva_categories()]
 #' @export
 write_gsva <- function(retlist, excel, plot_dim = 6) {
   xlsx <- init_xlsx(excel)

@@ -15,6 +15,8 @@
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
+#' @seealso [set_expt_batches()] [set_expt_conditions()] [set_expt_colors()]
+#'  [set_expt_genenames()] [set_expt_samplenames()] [subset_expt()] [create_expt()]
 #' @examples
 #'  \dontrun{
 #'   ## I am trying to get rid of all my dontrun sections, but I don't have two
@@ -109,8 +111,7 @@ combine_expts <- function(expt1, expt2, condition = "condition",
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
+#' @seealso [Biobase] [exprs()] [fData()] [pData()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  compressed <- concatenate_runs(expt)
@@ -192,29 +193,28 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  filesystem?
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
-#'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
+#' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
+#'  [set_expt_conditions()] [set_expt_batches()] [set_expt_samplenames()] [subset_expt()]
+#'  [set_expt_colors()] [set_expt_genenames()] [tximport] [load_annotations()]
 #' @examples
-#'  load(file = system.file("share/cdm_expt.rda", package = "hpgltools"))
+#'  load(file = cdm_expt_rda)
 #'  head(cdm_counts)
 #'  head(cdm_metadata)
-#'  ## The gff file has differently labeled locus tags than the count tables
-#'  ## The naming standard changed since this experiment was performed and I
+#'  ## The gff file has differently labeled locus tags than the count tables, also
+#'  ## the naming standard changed since this experiment was performed, therefore I
 #'  ## downloaded a new gff file.
+#'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  rownames(gas_gff_annot) <- make.names(gsub(pattern = "(Spy)_", replacement = "\\1",
 #'                                             x = gas_gff_annot[["locus_tag"]]), unique = TRUE)
 #'  mgas_expt <- create_expt(metadata = cdm_metadata, gene_info = gas_gff_annot,
 #'                           count_dataframe = cdm_counts)
 #'  head(pData(mgas_expt))
 #'  ## An example using count tables referenced in the metadata.
-#'  sb_annot <- load_trinotate_annotations(
-#'    trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools"))
-#' sb_annot <- as.data.frame(sb_annot)
+#'  sb_annot <- load_trinotate_annotations(trinotate = sb_annot)
+#'  sb_annot <- as.data.frame(sb_annot)
 #'   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL
-#'  untarred <- utils::untar(tarfile = system.file("sb/preprocessing.tar.xz",
-#'                           package = "hpgltools"))
+#'  untarred <- utils::untar(tarfile = sb_data)
 #'  sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
 #'                         gene_info = sb_annot)
 #'  dim(exprs(sb_expt))
@@ -772,7 +772,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' @param patterns Character list of patterns to remove/keep
 #' @param ... Extra arguments are passed to arglist, currently unused.
 #' @return A smaller expt
-#' @seealso \code{\link{create_expt}}
+#' @seealso [create_expt()] [Biobase]
 #' @examples
 #'  \dontrun{
 #'   all_expt <- create_expt(metadata)
@@ -1052,7 +1052,7 @@ analyses more difficult/impossible.")
 #' @param  ... Arguments passed to features_greather_than()
 #' @return The set of features less than whatever you would have done with
 #'   features_greater_than().
-#' @seealso \code{\link{features_greater_than}}
+#' @seealso [features_greater_than()]
 #' @export
 features_less_than <- function(...) {
   features_greater_than(..., inverse = TRUE)
@@ -1071,7 +1071,7 @@ features_less_than <- function(...) {
 #' @param inverse when inverted, this provides features less than the cutoff.
 #' @return A list of two elements, the first comprised of the number of genes
 #'   greater than the cutoff, the second with the identities of said genes.
-#' @seealso \pkg{Biobase}
+#' @seealso [Biobase]
 #' @examples
 #' \dontrun{
 #'  features <- features_greater_than(expt)
@@ -1122,10 +1122,11 @@ features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE
 #'
 #' @param expt An experiment to query.
 #' @param cutoff What is the minimum number of counts required to define
-#'   'included.'
+#'  'included.'
 #' @param factor What metadata factor to query?
 #' @param chosen Either choose a subset or all conditions to query.
 #' @return A set of features.
+#' @seealso [subset_expt()]
 #' @examples
 #'  \dontrun{
 #'   unique_genes
@@ -1196,12 +1197,13 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
 #' his/her own colors.
 #'
 #' @param sample_definitions Metadata, presumably containing a 'condition'
-#'   column.
+#'  column.
 #' @param cond_column Which column in the sample data provides the set of
-#'   'conditions' used to define the colors?
+#'  'conditions' used to define the colors?
 #' @param by Name the factor of colors according to this column.
 #' @param ... Other arguments like a color palette, etc.
 #' @return  Colors!
+#' @seealso [create_expt()]
 generate_expt_colors <- function(sample_definitions, cond_column = "condition",
                                  by = "sampleid", ...) {
   arglist <- list(...)
@@ -1259,7 +1261,7 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
 #' @param ngenes How many genes in the fictional data set?
 #' @param columns How many samples in this data set?
 #' @return Matrix of pretend counts.
-#' @seealso \pkg{limma} \pkg{stats} \pkg{DESeq}
+#' @seealso [limma] [DESeq2] [stats]
 #' @examples
 #' \dontrun{
 #'  pretend = make_exampledata()
@@ -1308,7 +1310,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
 #' @param fact Factor describing the columns in the data.
 #' @param fun Optionally choose mean or another function.
 #' @return Data frame of the medians.
-#' @seealso \pkg{Biobase} \pkg{matrixStats}
+#' @seealso [Biobase] [matrixStats]
 #' @examples
 #' \dontrun{
 #'  compressed = median_by_factor(data, experiment$condition)
@@ -1324,8 +1326,8 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
     data <- exprs(data)
   }
 
-  medians <- data.frame("ID"=rownames(data), stringsAsFactors = FALSE)
-  cvs <- data.frame("ID"=rownames(data), stringsAsFactors = FALSE)
+  medians <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  cvs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
   rownames(cvs) <- rownames(data)
@@ -1383,8 +1385,9 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
 #' This just saves some annoying typing if one wishes to make a standard
 #' expressionset superclass out of the publicly available fission data set.
 #'
-#' @param annotation  Add annotation data?
+#' @param annotation Add annotation data?
 #' @return Expressionset/expt of fission.
+#' @seealso [fission] [create_expt()]
 #' @export
 make_pombe_expt <- function(annotation = TRUE) {
   fission <- new.env()
@@ -1444,8 +1447,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param countdir Optional count directory to read from.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
-#' @seealso \pkg{data.table}
-#'  \code{\link{create_expt}}
+#' @seealso [data.table] [create_expt()] [tximport]
 #' @examples
 #' \dontrun{
 #'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
@@ -1667,9 +1669,9 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
 #'
 #' @param file Csv/xls file to read.
 #' @param ... Arguments for arglist, used by sep, header and similar
-#'   read_csv/read.table parameters.
+#'  read_csv/read.table parameters.
 #' @return Df of metadata.
-#' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
+#' @seealso [openxlsx] [readODS]
 #' @export
 read_metadata <- function(file, ...) {
   arglist <- list(...)
@@ -1721,12 +1723,13 @@ read_metadata <- function(file, ...) {
 #'
 #' @param input Expt to filter.
 #' @param invert The default is to remove the genes with the semantic strings.
-#'   Keep them when inverted.
+#'  Keep them when inverted.
 #' @param topn Take the topn most abundant genes rather than a text based heuristic.
 #' @param semantic Character list of strings to search for in the annotation
-#'   data.
+#'  data.
 #' @param semantic_column Column in the annotations to search.
 #' @return A presumably smaller expt.
+#' @seealso [Biobase]
 #' @export
 semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
                                  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
@@ -1805,7 +1808,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
 #' @param ids Specific samples to change.
 #' @param ... Extra options are like spinach.
 #' @return The original expt with some new metadata.
-#' @seealso \code{\link{create_expt}} \code{\link{set_expt_conditions}}
+#' @seealso [create_expt()] [set_expt_conditions()] [Biobase]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_batches(big_expt, factor = c(some,stuff,here))
@@ -1843,7 +1846,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' @param chosen_palette I usually use Dark2 as the RColorBrewer palette.
 #' @param change_by Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()] [RColorBrewer]
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
@@ -1981,7 +1984,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
 #' @param null_cell How to fill elements of the design which are null?
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @seealso [set_expt_batches()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
@@ -2049,7 +2052,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
 #' @param ids Specific sample IDs to change.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition = "column", batch = "another_column")
@@ -2076,7 +2079,7 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL, .
 #' @param ids Specific sample IDs to change.
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @seealso [set_expt_conditions()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
@@ -2158,7 +2161,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' @param expt Expt to modify
 #' @param newnames New names, currently only a character vector.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
@@ -2199,8 +2202,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #' @param ids List of sample IDs to extract.
 #' @param coverage Request a minimum coverage/sample rather than text-based subset.
 #' @return metadata Expt class which contains the smaller set of data.
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
+#' @seealso [Biobase] [pData()] [exprs()] [fData()]
 #' @examples
 #' \dontrun{
 #'  smaller_expt <- expt_subset(big_expt, "condition=='control'")
@@ -2338,7 +2340,7 @@ sum_eupath_exon_counts <- function(counts) {
 #' @param filter How was it filtered?
 #' @param batch How was it batch-corrected?
 #' @return An expression describing what has been done to this data.
-#' @seealso \code{\link{create_expt}}
+#' @seealso [create_expt()] [normalize_expt()]
 #' @export
 what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
                           norm = "raw", filter = "raw", batch = "raw") {
@@ -2439,8 +2441,7 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @param med_or_mean When printing mean by condition, one may want median.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).
 #' @return A big honking excel file and a list including the dataframes and images created.
-#' @seealso \pkg{openxlsx} \pkg{Biobase}
-#'  \code{\link{normalize_expt}} \code{\link{graph_metrics}}
+#' @seealso [openxlsx] [Biobase] [normalize_expt()] [graph_metrics()]
 #' @examples
 #' \dontrun{
 #'  excel_sucks <- write_expt(expt)
@@ -3170,7 +3171,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 #' @slot annotation Gene annotations (redundant with fData()).
 #' @slot gff_file filename of a gff file which feeds this data.
 #' @slot state What is the state of the data vis a vis normalization,
-#'   conversion, etc.
+#'  conversion, etc.
 #' @slot conditions Usually the condition column from pData.
 #' @slot batches Usually the batch column from pData.
 #' @slot libsize Library sizes of the data in its current state.

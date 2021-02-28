@@ -40,3 +40,7 @@ tximport needs some help.
   combined <- combine_expts(expt1, expt2, merge_meta = TRUE)
 }
 }
+\seealso{
+[set_expt_batches()] [set_expt_conditions()] [set_expt_colors()]
+ [set_expt_genenames()] [set_expt_samplenames()] [subset_expt()] [create_expt()]
+}

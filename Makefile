@@ -46,8 +46,8 @@ clean_vignette:
 	rm -f vignettes/*.rda vignettes/*.map vignettes/*.Rdata inst/reference/reference.pdf
 
 covr: install
-	@echo "Invoking covr::codecov()"
-	R -e "x <- covr::package_coverage('.'); covr::report(x, file='hpgltools-report.html')"
+	@echo "Invoking covr"
+	R -e "x <- covr::package_coverage('.', type='all', quiet=FALSE); covr::report(x, file='hpgltools-report.html')"
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
@@ -57,7 +57,7 @@ document: roxygen vignette reference
 
 install: roxygen reference
 	@echo "Performing R CMD INSTALL hpgltools."
-	R CMD INSTALL --install-tests .
+	R CMD INSTALL --no-staged-install --install-tests .
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"

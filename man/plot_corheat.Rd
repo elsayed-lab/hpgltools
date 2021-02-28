@@ -50,7 +50,5 @@ inputs and eventual output.
 }
 }
 \seealso{
-\pkg{grDevice}
- \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
-  \code{\link[grDevices]{recordPlot}}
+[grDevice] [gplot2::heatmap.2()]
 }

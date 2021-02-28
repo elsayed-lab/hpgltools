@@ -24,5 +24,5 @@ Tested in test_26basic.R
 }
 }
 \seealso{
-\code{\link{write_de_table}}
+[basic_pairwise()] [write_de_table()]
 }

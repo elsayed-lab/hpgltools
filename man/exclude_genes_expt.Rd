@@ -46,5 +46,5 @@ what happened to the data over the course of the subset.
 }
 }
 \seealso{
-\code{\link{create_expt}}
+[create_expt()] [Biobase]
 }

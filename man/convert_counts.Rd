@@ -33,6 +33,5 @@ example -- if one wanted to do such a thing.
 }
 }
 \seealso{
-\pkg{edgeR} \pkg{Biobase}
- \code{\link[edgeR]{cpm}}
+[edgeR] [Biobase]
 }

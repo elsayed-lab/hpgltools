@@ -58,14 +58,15 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
 #' @param gg Plot from ggplot2.
 #' @param filename Output filename.
 #' @param selfcontained htmlwidgets: Return the plot as a self-contained file
-#'   with images re-encoded base64.
+#'  with images re-encoded base64.
 #' @param libdir htmlwidgets: Directory into which to put dependencies.
 #' @param background htmlwidgets: String for the background of the image.
 #' @param title htmlwidgets: Title of the page!
 #' @param knitrOptions htmlwidgets: I am not a fan of camelCase, but
-#'   nonetheless, options from knitr for htmlwidgets.
+#'  nonetheless, options from knitr for htmlwidgets.
 #' @param ... Any remaining elipsis options are passed to ggplotly.
 #' @return The final output filename
+#' @seealso [htmlwidgets] [plotly] [ggplot2]
 ggplt <- function(gg, filename = "ggplot.html",
                   selfcontained = TRUE, libdir = NULL, background = "white",
                   title = class(gg)[[1]], knitrOptions = list(), ...) {
@@ -121,12 +122,8 @@ ggplt <- function(gg, filename = "ggplot.html",
 #'   \item density = a ggplot2 view of the density of each raw sample (this is
 #'      complementary but more fun than a boxplot)
 #' }
-#' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#'   \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
-#'   \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
-#'   \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
-#'   \code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
-#'   \code{\link{plot_pairwise_ma}}
+#' @seealso [plot_nonzero()] [plot_legend()] [plot_libsize()] [plot_disheat()]
+#'  [plot_corheat()] [plot_topn()] [plot_pca()] [plot_sm()] [plot_boxplot()]
 #' @examples
 #' \dontrun{
 #'  toomany_plots <- graph_metrics(expt)

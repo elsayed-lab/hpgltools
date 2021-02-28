@@ -16,7 +16,7 @@
 #' @param label_type Choose a type of event to label.
 #' @param alpha How see-through should the points be in the plot?
 #' @return List containing the plot and some of the requisite data.
-#' @seealso \code{\link{plot_rmats}}
+#' @seealso [plot_rmats()]
 #' @examples
 #'  \dontrun{
 #'  suppa_plot <- plot_suppa(dpsi_file, tmp_file)
@@ -209,12 +209,13 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
 #' @param table Result table from suppa.
 #' @param annotations Set of annotation data to include with the suppa result.
 #' @param by_table Use this column to merge the annotations and data tables from
-#'   the perspective of the data table.
+#'  the perspective of the data table.
 #' @param by_annot Use this column to merge the annotations and data tables
-#'   from the perspective of the annotations.
+#'  from the perspective of the annotations.
 #' @param columns Choose a subset of columns to include, or leave the defaults.
 #' @param excel Provide an excel file to write.
 #' @return Data frame of the merged data.
+#' @seealso [write_xlsx()]
 #' @examples
 #'  \dontrun{
 #'  prettier_table <- write_suppa_table(suppa_result_file,
@@ -261,7 +262,7 @@ write_suppa_table <- function(table, annotations = NULL, by_table = "gene_name",
 #' @param label_type Choose a type of event to label.
 #' @param alpha How see-through should the points be in the plot?
 #' @return List containing the plot and some of the requisite data.
-#' @seealso \code{\link{plot_suppa}}
+#' @seealso [plot_supps()]
 #' @examples
 #'  \dontrun{
 #'  rmats_plot <- plot_rmats(se_table, a5_table, a3_table)

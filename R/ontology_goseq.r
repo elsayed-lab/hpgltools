@@ -31,6 +31,7 @@
 #' @param bioc_length_db passed to simple_goseq()
 #' @param excel passed to simple_goseq()
 #' @return Some goseq data!
+#' @seealso [gsva] [goseq]
 #' @export
 goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                          signature_category = "c2", current_id = "ENSEMBL", required_id = "ENTREZID",
@@ -87,7 +88,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
 #'  which contains: GO:000001 and such.
 #' @param file Csv file to which to write the table.
 #' @return Ontology table with annotation information included.
-#' @seealso \pkg{goseq}
+#' @seealso [goseq] [GO.db]
 #' @examples
 #' \dontrun{
 #'  annotated_go = goseq_table(go_ids)
@@ -163,7 +164,7 @@ goseq_table <- function(df, file = NULL) {
 #'  bpp_plot,
 #'  cc_subset,
 #'  and ccp_plot
-#' @seealso \pkg{goseq} \pkg{GO.db}
+#' @seealso [goseq] [GO.db] [GenomicFeatures] [stats::p.adjust()]
 #' @examples
 #' \dontrun{
 #'  lotsotables <- simple_goseq(gene_list, godb, lengthdb)

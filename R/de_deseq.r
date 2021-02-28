@@ -9,7 +9,7 @@
 #'
 #' @param ... I like cats.
 #' @return stuff deseq2_pairwise results.
-#' @seealso \code{\link{deseq2_pairwise}}
+#' @seealso [deseq2_pairwise()]
 #' @export
 deseq_pairwise <- function(...) {
   message("Hey you, use deseq2 pairwise.")
@@ -54,7 +54,7 @@ deseq_pairwise <- function(...) {
 #'  conditions = the list of conditions in the experiment
 #'  coefficients = list of coefficients making the contrasts
 #'  all_tables = list of DE tables
-#' @seealso \pkg{DESeq2} \pkg{Biobase} \pkg{stats}
+#' @seealso [DESeq2] [basic_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
 #' @examples
 #' \dontrun{
 #'  pretend = deseq2_pairwise(data, conditions, batches)
@@ -427,6 +427,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
 #' @param svs Surrogates from sva and friends to test out.
 #' @param num_sv Optionally, provide the number of SVs, primarily used if
 #'  recursing in the hunt for a valid number of surrogates.
+#' @seealso [sva] [RUVSeq] [all_adjusters()] [normalize_batch()]
 #' @return DESeqDataSet with at least some of the SVs appended to the model.
 deseq_try_sv <- function(data, summarized, svs, num_sv = NULL) {
   counts <- DESeq2::counts(data)
@@ -474,6 +475,7 @@ surrogates explicitly stated with the option surrogates = number.")
 #' @param column_data I think this is the sample names, I forget.
 #' @param model_string Model describing the data by sample names.
 #' @param tximport Where is this data coming from?
+#' @seealso [DESeq2::DESeqDataSetFromMatrix]
 import_deseq <- function(data, column_data, model_string,
                          tximport = NULL) {
   summarized <- NULL
@@ -542,7 +544,7 @@ import_deseq <- function(data, column_data, model_string,
 #'
 #' @param data Output from deseq_pairwise()
 #' @param ... Options for writing the xlsx file.
-#' @seealso \pkg{DESeq2} \link{write_xlsx}
+#' @seealso [write_de_table()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- deseq2_pairwise(expressionset)

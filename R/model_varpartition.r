@@ -13,8 +13,7 @@
 #' @param column The df column to use for sorting.
 #' @param decreasing high->low or vice versa?
 #' @return The percent variance bar plots from variancePartition!
-#' @seealso \pkg{variancePartition}
-#'  \code{\link[variancePartition]{plotPercentBars}}
+#' @seealso [variancePartition]
 #' @export
 replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decreasing = TRUE) {
   sorted <- varpart_output[["sorted_df"]]
@@ -53,7 +52,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @param parallel Use doParallel?
 #' @param modify_expt Add annotation columns with the variance/factor?
 #' @return List of plots and variance data frames
-#' @seealso \pkg{doParallel} \pkg{variancePartition}
+#' @seealso [variancePartition]
 #' @export
 simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "batch"),
                            chosen_factor = "batch", do_fit = FALSE, cor_gene = 1,
@@ -200,7 +199,7 @@ which are shared among multiple samples.")
 #' @param cpus Number of cpus to use in doParallel.
 #' @return Summaries of the new model,  in theory this would be a nicely
 #'  batch-corrected data set.
-#' @seealso \pkg{variancePartition}
+#' @seealso [variancePartition]
 varpart_summaries <- function(expt, factors = c("condition", "batch"), cpus = 6) {
   cl <- parallel::makeCluster(cpus)
   doParallel::registerDoParallel(cl)

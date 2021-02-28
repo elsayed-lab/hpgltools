@@ -37,5 +37,5 @@ This should make a quick df of the factors and surrogates and plot them.
 }
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

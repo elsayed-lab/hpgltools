@@ -21,7 +21,13 @@ compare_significant_contrasts(
 
 \item{contrasts}{List of contrasts to compare.}
 }
+\value{
+List containing the intersections of the contrasts and plots describing them.
+}
 \description{
 This should provide nice venn diagrams and some statistics to compare 2 or 3
 contrasts in a differential expression analysis.
+}
+\seealso{
+[Vennerable]
 }

@@ -50,3 +50,6 @@ If I want to play with gsva and friends, then I need GeneSetCollections!
 Much like make_gsc_from_significant(), this function extract the genes deemed
 'abundant' and generates gene sets accordingly.
 }
+\seealso{
+[extract_abundant_genes()] [make_gsc_from_ids()] [GSEABase]
+}

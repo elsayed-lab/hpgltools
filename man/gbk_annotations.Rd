@@ -28,6 +28,5 @@ have better metadata columns via the mcols() function.  For examples of some
 useful tasks one can do here, check out snp.r.
 }
 \seealso{
-\pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
- \code{\link[AnnotationDbi]{select}}
+[AnnotationDbi] [GenomicFeatures]
 }

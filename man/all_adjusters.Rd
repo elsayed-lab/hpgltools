@@ -59,3 +59,7 @@ modified counts and view the changes (with PCA or heatmaps or whatever).
 Finally, it prints a couple of the plots shown by Leek in his document. In
 other words, this is entirely derivative of someone much smarter than me.
 }
+\seealso{
+[all_adjuster()] [isva] [sva] [limma::removeBatchEffect()]
+ [corpcor] [edgeR] [RUVSeq] [SmartSVA] [variancePartition] [counts_from_surrogates()]
+}

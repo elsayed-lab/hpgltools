@@ -45,5 +45,5 @@ the result, and normalizes against the max of all point.
 }
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

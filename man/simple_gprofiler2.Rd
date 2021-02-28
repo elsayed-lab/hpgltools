@@ -101,5 +101,5 @@ data.
 }
 }
 \seealso{
-\pkg{gProfiler}
+[gProfiler]
 }

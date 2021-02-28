@@ -28,6 +28,5 @@ and initially provided by Ramzi Temanni.
 }
 }
 \seealso{
-\pkg{BiocManager}
- \code{\link[BiocManager]{install}} \code{\link{install.packages}}
+[BiocManager] [install.packages()]
 }

@@ -73,6 +73,5 @@ that process as simple and pretty as possible.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[directlabels]{geom_dl}}
+[directlabels] [ggplot2] [plot_pca] [pca_information]
 }

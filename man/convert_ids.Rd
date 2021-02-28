@@ -24,3 +24,6 @@ This function attempts to ensure that the IDs in one's expressionset are
 therefore entrez IDs. It is possible that this function is at least partially
 redundant with other functions in this package and should be replaced.
 }
+\seealso{
+[AnnotationDbi]
+}

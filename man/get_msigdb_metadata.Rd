@@ -24,3 +24,6 @@ list containing 2 data frames: all metadata from broad, and the set
 Create a metadata dataframe of msigdb data, this hopefully will be usable to
 fill the fData slot of a gsva returned expressionset.
 }
+\seealso{
+[xml2] [rvest]
+}

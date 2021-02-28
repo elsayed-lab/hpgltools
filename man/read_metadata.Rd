@@ -20,5 +20,5 @@ Reads an experimental design in a few different formats in preparation for
 creating an expt.
 }
 \seealso{
-\pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
+[openxlsx] [readODS]
 }

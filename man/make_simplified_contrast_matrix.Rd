@@ -27,3 +27,6 @@ Feed make_simplified_contrast_matrix() a series of numerators and denominators n
 after the conditions of interest in an experiment and it returns a contrast
 matrix in a format acceptable to MSstats.
 }
+\seealso{
+[MSstats]
+}

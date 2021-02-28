@@ -44,10 +44,9 @@ import.gff/import.gff3/import.gff2 calls in try() because sometimes those
 functions fail in unpredictable ways.
 }
 \examples{
- gas_gff_annot <- load_gff_annotations(gff_file)
+ gas_gff_annot <- load_gff_annotations(example_gff)
  dim(gas_gff_annot)
 }
 \seealso{
-\pkg{rtracklayer} \pkg{GenomicRanges}
- \code{\link[rtracklayer]{import.gff}}
+[rtracklayer] [GenomicRanges]
 }

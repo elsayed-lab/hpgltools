@@ -24,8 +24,7 @@
 #' box which shows 1.5x the inner quartile range (a common metric of
 #' the non-outliers), and single dots for each gene which is outside
 #' that range.  A single dot is transparent.
-#' @seealso \pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
-#'  \code{\link[reshape2]{melt}} \code{\link[ggplot2]{scale_x_discrete}}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  a_boxplot <- plot_boxplot(expt)
@@ -139,8 +138,7 @@ plot_boxplot <- function(data, colors = NULL, title = NULL,
 #' @param label_chars Maximum number of characters in sample names before abbreviation.
 #' @param ... sometimes extra arguments might come from graph_metrics()
 #' @return ggplot2 density plot!
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_density}}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  funkytown <- plot_density(data)
@@ -306,7 +304,7 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
 #'  logs = a recordPlot() of the pairwise log qq plots.
 #'  ratios = a recordPlot() of the pairwise ratio qq plots.
 #'  means = a table of the median values of all the summaries of the qq plots.
-#' @seealso \pkg{Biobase}
+#' @seealso [Biobase]
 #' @export
 plot_qq_all <- function(data, labels = "short", ...) {
   arglist <- list(...)
@@ -365,7 +363,7 @@ plot_qq_all <- function(data, labels = "short", ...) {
 #' @param y Second column to compare.
 #' @param labels Include the lables?
 #' @return a list of the logs, ratios, and mean between the plots as ggplots.
-#' @seealso \pkg{Biobase}
+#' @seealso [Biobase]
 #' @export
 plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   data_class <- class(data)[1]
@@ -616,12 +614,12 @@ plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
 #' as calculated by DESeq2/EdgeR; but the metrics I am currently taking are the
 #' simpler and less appropriate CV(sd/mean) and QCD(q3-q1/q3+q1).
 #'
-#' @param data  Expressionset/epxt to poke at.
-#' @param x_axis  Factor in the experimental design we may use to group the data
-#'   and calculate the dispersion metrics.
-#' @param colors  Set of colors to use when making the violins
+#' @param data Expressionset/epxt to poke at.
+#' @param x_axis Factor in the experimental design we may use to group the data
+#'  and calculate the dispersion metrics.
+#' @param colors Set of colors to use when making the violins
 #' @param title Optional title to include with the plot.
-#' @param ...  Extra arguments to pass along.
+#' @param ... Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
 plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL,

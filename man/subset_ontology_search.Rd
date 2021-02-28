@@ -46,5 +46,5 @@ expressed data and pass them to goseq, clusterProfiler, topGO, GOstats, and
 gProfiler.
 }
 \seealso{
-\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats} \pkg{gProfiler}
+[goseq] [clusterProfiler] [topGO] [goStats] [gProfiler]
 }

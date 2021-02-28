@@ -5,7 +5,7 @@
 #' data.
 #'
 #' @param sig_genes Guess!  The set of differentially expressed/interesting
-#'   genes.
+#'  genes.
 #' @param species Organism supported by gprofiler.
 #' @param convert Use gProfileR's conversion utility?
 #' @param first_col First place used to define the order of 'significant'.
@@ -23,18 +23,18 @@
 #' @param exclude_iea Passed directly to gprofiler2.
 #' @param do_under Perform under-representation search?
 #' @param evcodes Get the set of evcodes in the data?  This makes it take
-#'   longer.
+#'  longer.
 #' @param threshold p-value 'significance' threshold.
 #' @param adjp Method to adjust p-values.
 #' @param domain_scope Passed to gprofiler2.
 #' @param bg Background genes.
 #' @param pseudo_gsea Is the data in a ranked order by significance?
 #' @param id_col Which column in the table should be used for gene ID
-#'   crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
-#'   entrez or whatever, translate it!
+#'  crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
+#'  entrez or whatever, translate it!
 #' @param excel Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
-#' @seealso \pkg{gProfiler}
+#' @seealso [gProfiler]
 #' @examples
 #' \dontrun{
 #'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
@@ -159,26 +159,26 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
 #' Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 #'
 #' @param sig_genes Guess!  The set of differentially expressed/interesting
-#'   genes.
-#' @param species  Organism supported by gprofiler.
-#' @param convert  Use gProfileR's conversion utility?
-#' @param first_col  First place used to define the order of 'significant'.
-#' @param second_col  If that fails, try a second column.
-#' @param do_go  Perform GO search?
-#' @param do_kegg  Perform KEGG search?
-#' @param do_reactome  Perform reactome search?
-#' @param do_mi  Do miRNA search?
-#' @param do_tf  Search for transcription factors?
-#' @param do_corum  Do corum search?
-#' @param do_hp  Do the hp search?
-#' @param significant  Only return the statistically significant hits?
-#' @param pseudo_gsea  Is the data in a ranked order by significance?
-#' @param id_col  Which column in the table should be used for gene ID
-#'   crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
-#'   entrez or whatever, translate it!
-#' @param excel  Print the results to an excel file?
-#' @return a list of results for go, kegg, reactome, and a few more.
-#' @seealso \pkg{gProfiler}
+#'  genes.
+#' @param species Organism supported by gprofiler.
+#' @param convert Use gProfileR's conversion utility?
+#' @param first_col First place used to define the order of 'significant'.
+#' @param second_col If that fails, try a second column.
+#' @param do_go Perform GO search?
+#' @param do_kegg Perform KEGG search?
+#' @param do_reactome Perform reactome search?
+#' @param do_mi Do miRNA search?
+#' @param do_tf Search for transcription factors?
+#' @param do_corum Do corum search?
+#' @param do_hp Do the hp search?
+#' @param significant Only return the statistically significant hits?
+#' @param pseudo_gsea Is the data in a ranked order by significance?
+#' @param id_col Which column in the table should be used for gene ID
+#'  crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
+#'  entrez or whatever, translate it!
+#' @param excel Print the results to an excel file?
+#' @return List of results for go, kegg, reactome, and a few more.
+#' @seealso [gProfiler]
 #' @examples
 #' \dontrun{
 #'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')

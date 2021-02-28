@@ -24,5 +24,5 @@ This just wraps gotst in mapply.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[GO.db]
 }

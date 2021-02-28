@@ -51,5 +51,5 @@ Topgo plot!
 This allows me to change the line widths from the default.
 }
 \seealso{
-\pkg{topGO}
+[topGO]
 }

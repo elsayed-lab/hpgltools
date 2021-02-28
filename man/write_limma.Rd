@@ -21,5 +21,5 @@ Looking to provide a single interface for writing tables from limma and friends.
 }
 }
 \seealso{
-\code{\link{write_de_table}}
+[write_de_table()]
 }

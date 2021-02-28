@@ -48,5 +48,5 @@ workbook in a consistent and relatively easy-to-read fashion.
 }
 }
 \seealso{
-\pkg{openxlsx}
+[openxlsx]
 }

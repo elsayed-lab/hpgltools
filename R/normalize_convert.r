@@ -16,8 +16,7 @@
 #'  arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
 #'  match, and annotation type).
 #' @return Dataframe of cpm/rpkm/whatever(counts)
-#' @seealso \pkg{edgeR} \pkg{Biobase}
-#'  \code{\link[edgeR]{cpm}}
+#' @seealso [edgeR] [Biobase]
 #' @examples
 #' \dontrun{
 #'  converted_table = convert_counts(count_table, method='cbcbcpm')
@@ -108,8 +107,8 @@ convert_counts <- function(count_table, method = "raw", ...) {
 #' @param counts Read count matrix.
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return The RPseqM counts
-#' @seealso \pkg{edgeR} \pkg{Rsamtools}
-#'  \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
+#' @seealso [edgeR] [Rsamtools::FaFile()] [Biostrings::PDict()]
+#'   [Biostrings::vcountPDict()] [GenomeInfoDb] [GenomicRanges]
 #' @examples
 #' \dontrun{
 #'  cptam <- divide_seq(cont_table, fasta = "mgas_5005.fasta.xz", gff = "mgas_5005.gff.xz")
@@ -282,7 +281,7 @@ divide_seq <- function(counts, ...) {
 #' @param counts Read count matrix.
 #' @param lib.size Library size.
 #' @return log2-CPM read count matrix.
-#' @seealso \pkg{edgeR}
+#' @seealso [edgeR]
 #' @examples
 #' \dontrun{
 #'  l2cpm <- hpgl_log2cpm(counts)
@@ -307,8 +306,7 @@ hpgl_log2cpm <- function(counts, lib.size = NULL) {
 #' @param count_table Data frame of counts, alternately an edgeR DGEList.
 #' @param ... extra options including annotations for defining gene lengths.
 #' @return Data frame of counts expressed as rpkm.
-#' @seealso \pkg{edgeR}
-#'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+#' @seealso [edgeR::rpkm()]
 #' @examples
 #' \dontrun{
 #'  rpkm_df = hpgl_rpkm(df, annotations = gene_annotations)

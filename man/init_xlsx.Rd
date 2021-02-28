@@ -10,7 +10,14 @@ init_xlsx(excel = "excel/something.xlsx")
 \arguments{
 \item{excel}{Excel file to create.}
 }
+\value{
+List containing the basename of the excel file along with the
+ openxlsx workbook data structure.
+}
 \description{
 Initialize an xlsx file with a little bit of logic to make sure there are no
 annoying downstream errors.
+}
+\seealso{
+[openxlsx::createWorkbook()]
 }

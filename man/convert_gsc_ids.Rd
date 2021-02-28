@@ -32,3 +32,6 @@ FIXME: This should use convert_ids() to simplify itself
 \details{
 One caveat: this will collapse redundant IDs via unique().
 }
+\seealso{
+[AnnotationDbi] [guess_orgdb_keytypes()] [convert_ids()] [GSEABase]
+}

@@ -30,5 +30,5 @@ conditions/batches of the experiment.  Use this to make that easier.
 }
 }
 \seealso{
-\code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+[set_expt_conditions()] [set_expt_batches()]
 }

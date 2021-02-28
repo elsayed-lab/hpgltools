@@ -74,6 +74,5 @@ Make a PCA plot describing the samples' clustering.
 }
 }
 \seealso{
-\pkg{directlabels}
- \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+[corpcor] [Rtsne] [uwot] [fastICA] [pcaMethods] [plot_pcs()]
 }

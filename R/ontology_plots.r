@@ -5,7 +5,7 @@
 #' @param godata Result from topgo.
 #' @param table  Table of genes.
 #' @return density plot as per topgo
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 plot_topgo_densities <- function(godata, table) {
   ret <- list()
@@ -23,14 +23,13 @@ plot_topgo_densities <- function(godata, table) {
 #' This function seeks to make generating pretty pvalue plots as shown by
 #' clusterprofiler easier.
 #'
-#' @param df  Some data from topgo/goseq/clusterprofiler.
-#' @param ontology  Ontology to plot (MF,BP,CC).
-#' @param fontsize  Fiddling with the font size may make some plots more readable.
-#' @param numerator  Column used for printing a ratio of genes/category.
-#' @param denominator  Column used for printing a ratio of genes/category.
+#' @param df Some data from topgo/goseq/clusterprofiler.
+#' @param ontology Ontology to plot (MF,BP,CC).
+#' @param fontsize Fiddling with the font size may make some plots more readable.
+#' @param numerator Column used for printing a ratio of genes/category.
+#' @param denominator Column used for printing a ratio of genes/category.
 #' @return Ggplot2 plot of pvalues vs. ontology.
-#' @seealso \pkg{goseq} \pkg{ggplot2}
-#'  \code{\link[goseq]{goseq}}
+#' @seealso [ggplot2]
 #' @export
 plot_ontpval <- function(df, ontology = "MF", fontsize = 14, numerator = NULL, denominator = NULL) {
   if (nrow(df) == 0) {
@@ -99,8 +98,7 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, numerator = NULL, d
 #' @param level Levels of the ontology tree to use.
 #' @param ... Arguments passed from simple_goseq()
 #' @return Plots!
-#' @seealso \pkg{goseq} \pkg{clusterProfiler}
-#'  \code{\link[goseq]{goseq}} \code{\link{plot_ontpval}}
+#' @seealso [ggplot2]
 #' @export
 plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
                             n = 30, mincat = 5, level = NULL, ...) {
@@ -223,7 +221,7 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
 #' @param type Type of score to use.
 #' @param ... arguments passed through presumably from simple_topgo()
 #' @return List of MF/BP/CC pvalue plots.
-#' @seealso \pkg{topgo} \pkg{clusterProfiler}
+#' @seealso [ggplot2]
 #' @export
 plot_topgo_pval <- function(topgo, wrapped_width = 20, cutoff = 0.1,
                             n = 30, type = "fisher", ...) {
@@ -300,8 +298,7 @@ plot_topgo_pval <- function(topgo, wrapped_width = 20, cutoff = 0.1,
 #' @param n How many groups to include in the plot?
 #' @param group_minsize Minimum group size before inclusion.
 #' @return Plots!
-#' @seealso \pkg{clusterProfiler}
-#'  \code{\link{plot_ontpval}}
+#' @seealso [ggplot2]
 #' @export
 plot_gostats_pval <- function(gs_result, wrapped_width = 20, cutoff = 0.1,
                               n = 30, group_minsize = 5) {
@@ -360,15 +357,15 @@ plot_gostats_pval <- function(gs_result, wrapped_width = 20, cutoff = 0.1,
 #' data into a format suitable for plotting in that fashion and returns the
 #' resulting plots of significant ontologies.
 #'
-#' @param gp_result  Some data from gProfiler.
-#' @param wrapped_width  Maximum width of the text names.
-#' @param cutoff  P-value cutoff for the plots.
-#' @param n  Maximum number of ontologies to include.
-#' @param group_minsize  Minimum ontology group size to include.
-#' @param scorer  Which column to use for scoring the data.
-#' @param ...  Options I might pass from other functions are dropped into arglist.
+#' @param gp_result Some data from gProfiler.
+#' @param wrapped_width Maximum width of the text names.
+#' @param cutoff P-value cutoff for the plots.
+#' @param n Maximum number of ontologies to include.
+#' @param group_minsize Minimum ontology group size to include.
+#' @param scorer Which column to use for scoring the data.
+#' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return List of MF/BP/CC pvalue plots.
-#' @seealso \pkg{topgo} \pkg{clusterProfiler}
+#' @seealso [ggplot2]
 #' @export
 plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
                                 cutoff = 0.1, n = 30,
@@ -581,7 +578,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 #' @param selector Function for choosing genes.
 #' @param pval_column Column to acquire pvalues.
 #' @return A plot!
-#' @seealso \pkg{Ramigo}
+#' @seealso [Ramigo]
 #' @export
 goseq_trees <- function(goseq, goid_map = "id2go.map",
                         score_limit = 0.01, overwrite = FALSE,
@@ -699,8 +696,7 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
 #' @param selector Name of a function for applying scores to the trees.
 #' @param pval_column Name of the column in the GO table from which to extract scores.
 #' @return plots! Trees! oh my!
-#' @seealso \pkg{Ramigo}
-#'  \code{\link[topGO]{showSigOfNodes}}
+#' @seealso [Ramigo] [topGO::showSigOfNotes()]
 #' @examples
 #' \dontrun{
 #'  cluster_data <- simple_clusterprofiler(genes, stuff)
@@ -816,7 +812,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
 #' @param do_cc_weight_tree  Add the guess
 #' @param parallel  Perform operations in parallel to speed this up?
 #' @return Big list including the various outputs from topgo.
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
                         do_mf_fisher_tree = TRUE, do_bp_fisher_tree = TRUE,

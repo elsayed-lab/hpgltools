@@ -23,6 +23,5 @@ ids corresponding to those genes.
  mapped
 }
 \seealso{
-\pkg{KEGGREST}
- \code{\link[KEGGREST]{keggGet}}
+[KEGGREST::keggGet()]
 }

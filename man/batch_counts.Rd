@@ -45,9 +45,9 @@ parameter from the invocation of the modified combat.}
 }
 \value{
 The 'batch corrected' count table and new library size.  Please
-  remember that the library size which comes out of this may not be what you
-  want for voom/limma and would therefore lead to spurious differential
-  expression values.
+ remember that the library size which comes out of this may not be what you
+ want for voom/limma and would therefore lead to spurious differential
+ expression values.
 }
 \description{
 I found this note which is the clearest explanation of what happens with
@@ -76,5 +76,5 @@ couldn't tell you how to properly use the two methods together.
 }
 }
 \seealso{
-\pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
+[limma] [edgeR] [RUVSeq] [sva]
 }

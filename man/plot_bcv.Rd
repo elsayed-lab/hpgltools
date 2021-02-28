@@ -7,10 +7,10 @@
 plot_bcv(data)
 }
 \arguments{
-\item{data}{A dataframe/expt/exprs with count data}
+\item{data}{Dataframe/expt/exprs with count data}
 }
 \value{
-a plot! of the BCV a la ggplot2.
+Plot of the BCV a la ggplot2.
 }
 \description{
 This was written primarily to understand what that function is doing in edgeR.
@@ -23,6 +23,5 @@ This was written primarily to understand what that function is doing in edgeR.
 }
 }
 \seealso{
-\pkg{edgeR}
- \code{\link[edgeR]{plotBCV}}
+[edgeR::plotBCV()] [ggplot2]
 }

@@ -30,6 +30,8 @@
 #' @param ... Extra arguments passed along to other methods.
 #' @return List containing surrogate estimates, new counts, the models, and
 #'   some plots, as available.
+#' @seealso [all_adjuster()] [isva] [sva] [limma::removeBatchEffect()]
+#'  [corpcor] [edgeR] [RUVSeq] [SmartSVA] [variancePartition] [counts_from_surrogates()]
 #' @export
 all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1="batch",
                           batch2=NULL, surrogates = "be", low_to_zero = FALSE, cpus = 4,
@@ -604,24 +606,24 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1="b
 #' log-transformed CPM values, while DESeq2 expects raw counts as input. I
 #' couldn't tell you how to properly use the two methods together.
 #'
-#' @param count_table  Matrix of (pseudo)counts.
-#' @param design  Model matrix defining the experimental conditions/batches/etc.
-#' @param batch  String describing the method to try to remove the batch effect
+#' @param count_table Matrix of (pseudo)counts.
+#' @param design Model matrix defining the experimental conditions/batches/etc.
+#' @param batch String describing the method to try to remove the batch effect
 #'  (or FALSE to leave it alone, TRUE uses limma).
-#' @param expt_state  Current state of the expt in an attempt to avoid
-#'   double-normalization.
-#' @param batch1  Column in the design table describing the presumed covariant
-#'   to remove.
-#' @param batch2  Column in the design table describing the second covariant to
-#'   remove (only used by limma at the moment).
-#' @param noscale  Used for combatmod, when true it removes the scaling
-#'   parameter from the invocation of the modified combat.
-#' @param ...  More options for you!
+#' @param expt_state Current state of the expt in an attempt to avoid
+#'  double-normalization.
+#' @param batch1 Column in the design table describing the presumed covariant
+#'  to remove.
+#' @param batch2 Column in the design table describing the second covariant to
+#'  remove (only used by limma at the moment).
+#' @param noscale Used for combatmod, when true it removes the scaling
+#'  parameter from the invocation of the modified combat.
+#' @param ... More options for you!
 #' @return The 'batch corrected' count table and new library size.  Please
-#'   remember that the library size which comes out of this may not be what you
-#'   want for voom/limma and would therefore lead to spurious differential
-#'   expression values.
-#' @seealso \pkg{limma} \pkg{edgeR} \pkg{RUVSeq} \pkg{sva} \pkg{cbcbSEQ}
+#'  remember that the library size which comes out of this may not be what you
+#'  want for voom/limma and would therefore lead to spurious differential
+#'  expression values.
+#' @seealso [limma] [edgeR] [RUVSeq] [sva]
 #' @examples
 #' \dontrun{
 #'  limma_batch <- batch_counts(table, design, batch1='batch', batch2='strain')
@@ -743,17 +745,16 @@ batch_counts <- function(count_table, method = TRUE, design = NULL, batch1="batc
 #'
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch
-#'   factors.
+#'  factors.
 #' @param batch1 Column containing the first batch's metadata in the experimental design.
 #' @param condition Column containing the condition information in the metadata.
 #' @param matrix_scale Is the data on a linear or log scale?
 #' @param return_scale Do you want the data returned on the linear or log scale?
 #' @param method I found a couple ways to apply the surrogates to the data.  One
-#'   method subtracts the residuals of a batch model, the other adds the
-#'   conditional.
+#'  method subtracts the residuals of a batch model, the other adds the
+#'  conditional.
 #' @return Dataframe of residuals after subtracting batch from the model.
-#' @seealso \pkg{limma}
-#'  \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+#' @seealso [limma::voom()] [limma::lmFit()]
 #' @examples
 #' \dontrun{
 #'  newdata <- cbcb_batch_effect(counts, expt_model)
@@ -870,16 +871,17 @@ compare_batches <- function(expt = NULL, methods = NULL) {
 #'
 #' @param expt Experiment containing a design and other information.
 #' @param extra_factors Character list of extra factors which may be included in
-#'   the final plot of the data.
-#' @param filter_it  Most of the time these surrogate methods get mad if there
-#'   are 0s in the data.  Filter it?
-#' @param filter_type  Type of filter to use when filtering the input data.
+#'  the final plot of the data.
+#' @param filter_it Most of the time these surrogate methods get mad if there
+#'  are 0s in the data.  Filter it?
+#' @param filter_type Type of filter to use when filtering the input data.
 #' @param do_catplots Include the catplots?  They don't make a lot of sense yet,
-#'   so probably no.
-#' @param surrogates  Use 'be' or 'leek' surrogate estimates, or choose a
-#'   number.
-#' @param ...  Extra arguments when filtering.
+#'  so probably no.
+#' @param surrogates Use 'be' or 'leek' surrogate estimates, or choose a
+#'  number.
+#' @param ... Extra arguments when filtering.
 #' @return List of the results.
+#' @seealso [normalize_expt()] [plot_pca()] [all_adjuster()] [corrplot] [ffpe]
 #' @export
 compare_surrogate_estimates <- function(expt, extra_factors = NULL,
                                         filter_it = TRUE, filter_type = TRUE,
@@ -990,7 +992,6 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
     pattern = "^.*adjustments\\$(.*)$", replacement = "\\1", x = adjustments)
   starter <- edgeR::DGEList(counts = exprs(expt))
   norm_start <- edgeR::calcNormFactors(starter)
-
 
   ## Create a baseline to compare against.
   null_formula <- as.formula("~ condition ")
@@ -1109,7 +1110,7 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
 #' @param return_scale Does one want the output linear or log?
 #' @param ... Arguments passed to downstream functions.
 #' @return A data frame of adjusted counts.
-#' @seealso \pkg{sva} \pkg{RUVSeq}
+#' @seealso [sva] [RUVSeq] [crossprod()] [tcrossprod()] [solve()]
 #' @export
 counts_from_surrogates <- function(data, adjust = NULL, design = NULL, method = "ruv",
                                    cond_column = "condition", matrix_scale = "linear",
@@ -1262,8 +1263,7 @@ counts_from_surrogates <- function(data, adjust = NULL, design = NULL, method = 
 #' @param prior.plots Print out prior plots?
 #' @param ... Extra options are passed to arglist
 #' @return Df of batch corrected data
-#' @seealso \pkg{sva}
-#'  \code{\link[sva]{ComBat}}
+#' @seealso [sva] [sva::ComBat()]
 #' @examples
 #' \dontrun{
 #'  df_new = cbcb_combat(df, batches, model)
@@ -1431,6 +1431,7 @@ I set it to 1 not knowing what its purpose is.")
 #' @param th threshold for inclusion.
 #' @param ncomp Number of SVA components to estimate.
 #' @param icamethod Which ICA implementation to use?
+#' @seealso [isva]
 my_isva <- function(data.m, pheno.v, cf.m = NULL, factor.log = FALSE, pvthCF = 0.01,
                       th = 0.05, ncomp = NULL, icamethod = "fastICA") {
   isva.o <- isva::isvaFn(data.m, pheno.v, ncomp, icamethod)

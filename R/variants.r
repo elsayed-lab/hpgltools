@@ -13,6 +13,7 @@
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
 #' @return A new expt object
+#' @seealso [Biobase]
 #' @examples
 #'   \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -122,7 +123,7 @@ get_individual_snps <- function(retlist) {
 #' @param snp_expt The result of count_expt_snps()
 #' @param factor Experimental factor to use for cutting and splicing the data.
 #' @param limit Minimum median number of hits / factor to define a position as
-#'   a hit.
+#'  a hit.
 #' @param do_save Save the result?
 #' @param savefile Prefix for a savefile if one chooses to save the result.
 #' @return A funky list by chromosome containing:  'medians', the median number
@@ -134,6 +135,7 @@ get_individual_snps <- function(retlist) {
 #'  of snp densities with respect to chromosomes.  Note that this last one is
 #'  approximate as I just calculate with the largest chromosome position
 #'  number, not the explicit number of nucleotides in the chromosome.
+#' @seealso [medians_by_factor()]
 #' @examples
 #'   \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -271,6 +273,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
 #' @param samples Sample names to read.
 #' @param file_lst Set of files to read.
 #' @param column Column from the bcf file to read.
+#' @seealso [readr]
 #' @return A big honking data table.
 read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   ## Read the first file
@@ -325,6 +328,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
 #' @param tolower lowercase the sample names?
 #' @param bam_suffix In case the data came from sam.
 #' @return It is so slow I no longer know if it works.
+#' @seealso [count_expt_snps()] [Rsamtools] [GenomicRanges]
 samtools_snp_coverage <- function(expt, type = "counts", input_dir = "preprocessing/outputs",
                                   tolower = TRUE, bam_suffix = ".bam", annot_column = annot_column) {
   snp_counts <- count_expt_snps(expt, type = type, tolower = tolower)
@@ -430,6 +434,7 @@ samtools_snp_coverage <- function(expt, type = "counts", input_dir = "preprocess
 #' @param chr_name Chromosome name to search
 #' @param limit Minimum number of median hits/position to count as a snp.
 #' @return A list of variant positions where each element is one chromosome.
+#' @seealso [Vennerable]
 snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
   set_names <- list()
   possibilities <- c()
@@ -496,7 +501,8 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
 #' @return List containing the set of intersections in the conditions contained
 #'  in snp_result, the summary of numbers of variants per chromosome, and
 #   summary of numbers per gene.
-#' @seealso \code{\link{snps_vs_genes}}
+#' @seealso [snps_vs_genes()] [GenomicRanges::makeGRangesFromDataFrame()]
+#'  [IRanges::subsetByOverlaps()] [IRanges::countOverlaps()]
 #' @examples
 #'  \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -592,6 +598,7 @@ snps_intersections <- function(expt, snp_result,
 #' @param expt_gid_column ID column for the genes.
 #' @param genes Set of genes to cross reference.
 #' @return New expressionset with only the variants for the genes of interest.
+#' @seealso [GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
 #' @export
 snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end",
                              expt_name_col = "chromosome", snp_name_col = "chromosome",
@@ -659,6 +666,8 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
 #' @param snp_name_col Name of the column in the metadata with the sequence names.
 #' @param expt_name_col Name of the metadata column with the chromosome names.
 #' @return List with some information by gene.
+#' @seealso [GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
+#'  [IRanges::mergeByOverlaps()] [IRanges::countOverlaps()]
 #' @examples
 #'  \dontrun{
 #'  expt <- create_expt(metadata, gene_information)

@@ -31,7 +31,7 @@
 #' @param fx What function to use for mean/median?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
-#' @seealso \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+#' @seealso [deseq_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "sample_sheet.xlsx", gene_info = "annotations")
@@ -261,7 +261,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
 #' @param force If we want to try out other distributed data sets, force it in using me.
 #' @param ... future options, I think currently unused.
 #' @return data ready for basic_pairwise()
-#' @seealso \pkg{Biobase}
+#' @seealso [Biobase] [choose_dataset()] [normalize_expt()]
 #' @examples
 #' \dontrun{
 #'  ready <- choose_basic_dataset(expt)
@@ -333,7 +333,7 @@ choose_basic_dataset <- function(input, force = FALSE, ...) {
 #'
 #' @param data Output from basic_pairwise()
 #' @param ... Options for writing the xlsx file.
-#' @seealso \code{\link{write_de_table}}
+#' @seealso [basic_pairwise()] [write_de_table()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- basic_pairwise(expressionset)

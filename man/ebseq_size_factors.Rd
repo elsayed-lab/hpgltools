@@ -18,3 +18,6 @@ a new matrix using the ebseq specific method of choice.
 EBSeq provides three normaliation methods.  Median, Quantile, and Rank.
 Choose among them here.
 }
+\seealso{
+[EBSeq]
+}

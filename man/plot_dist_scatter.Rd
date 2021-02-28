@@ -29,13 +29,13 @@ plot_dist_scatter(
 }
 \value{
 Ggplot2 scatter plot.  This plot provides a "bird's eye"
-view of two data sets.  This plot assumes the two data structures
-are not correlated, and so it calculates the median/mad of each
-axis and uses these to calculate a stupid, home-grown distance
-metric away from both medians.  This distance metric is used to
-color dots which are presumed the therefore be interesting because
-they are far from 'normal.'  This will make a fun clicky googleVis
-graph if requested.
+ view of two data sets.  This plot assumes the two data structures
+ are not correlated, and so it calculates the median/mad of each
+ axis and uses these to calculate a stupid, home-grown distance
+ metric away from both medians.  This distance metric is used to
+ color dots which are presumed the therefore be interesting because
+ they are far from 'normal.'  This will make a fun clicky googleVis
+ graph if requested.
 }
 \description{
 The distance metric should be codified and made more intelligent.
@@ -50,7 +50,5 @@ then normalized against the maximum.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
- \code{\link{plot_linear_scatter}}
+[ggplot2::geom_point()] [plot_linear_scatter()]
 }

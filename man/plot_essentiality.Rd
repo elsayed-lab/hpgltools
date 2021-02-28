@@ -45,5 +45,5 @@ heuristic to choose the m, but I am not sure what it would be, perhaps the
 median of the hits summary?
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

@@ -47,5 +47,5 @@ It is certainly possible to make the logic here much simpler now.
 }
 }
 \seealso{
-\code{\link{plot_ma_de}}
+[plot_ma_de()] [plot_volcano_de()]
 }

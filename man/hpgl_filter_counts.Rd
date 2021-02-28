@@ -37,5 +37,5 @@ basically the same result, but without the shenanigans.
 }
 }
 \seealso{
-\pkg{edgeR}
+[edgeR]
 }

@@ -25,9 +25,12 @@ flanking_sequence(
 existing annotations.}
 }
 \value{
-A list of sequences before and after each sequence.
+List of sequences before and after each sequence.
 }
 \description{
 Given a set of annotations and genome, one might want to get the set of
 adjacent sequences.
+}
+\seealso{
+[load_gff_annotations()] [GenomicRanges] [IRanges]
 }

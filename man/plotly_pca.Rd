@@ -62,8 +62,11 @@ rows in the metadata.}
 }
 \value{
 This passes directly to plot_pca(), so its returns should be
-  applicable along with the result from ggplotly.
+ applicable along with the result from ggplotly.
 }
 \description{
 Plot a PC plot with options suitable for ggplotly.
+}
+\seealso{
+[plotly]
 }

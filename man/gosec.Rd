@@ -25,5 +25,5 @@ function has to have a whole bunch of logic to handle the various outputs.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[AnnotationDbi] [GO.db]
 }

@@ -61,7 +61,7 @@ biocViews: DifferentialExpression
 Encoding: UTF-8
 RoxygenNote: 7.1.1
 Collate:
-  'hpgltools.r'
+  '01_hpgltools.r'
   'annotation_biomart.r'
   'annotation_genbank.r'
   'annotation_gff.r'

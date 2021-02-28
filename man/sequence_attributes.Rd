@@ -24,10 +24,9 @@ This extends the logic of the pattern searching in pattern_count_genome() to
 search on some other attributes.
 }
 \examples{
- pa_attribs <- sequence_attributes(fasta_file, gff = gff_file)
+ pa_attribs <- sequence_attributes(pa_fasta, gff = pa_gff)
  head(pa_attribs)
 }
 \seealso{
-\pkg{Biostrings} \pkg{Rsamtools}
- \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+[Biostrings] [Rsamtools]
 }

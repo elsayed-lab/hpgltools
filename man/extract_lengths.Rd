@@ -37,5 +37,5 @@ and lengths. This function is resposible for pulling that data from either a
 gff, or TxDb/OrganismDbi.
 }
 \seealso{
-\pkg{GenomicFeatures}
+[GenomicFeatures]
 }

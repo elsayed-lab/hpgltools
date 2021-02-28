@@ -40,7 +40,7 @@ graphed point.}
 }
 \value{
 a ggplot2 plot of the number of non-zero genes with respect to each
-  library's CPM.
+ library's CPM.
 }
 \description{
 This puts the number of genes with > 0 hits on the y-axis and CPM on the
@@ -52,6 +52,5 @@ x-axis. Made by Ramzi Temanni <temanni at umd dot edu>.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
+[ggplot2]
 }

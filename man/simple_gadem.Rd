@@ -21,9 +21,12 @@ simple_gadem(
 }
 \value{
 A list containing slots for plots, the stdout output from gadem, the
-  gadem result, set of occurences of motif, and the returned set of motifs.
+ gadem result, set of occurences of motif, and the returned set of motifs.
 }
 \description{
 This should provide a set of rGADEM results given an input file of sequences
 and a genome.
+}
+\seealso{
+[IRanges] [Biostrings] [rGADEM]
 }

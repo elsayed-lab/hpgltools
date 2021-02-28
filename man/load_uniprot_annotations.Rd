@@ -23,3 +23,6 @@ I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote th
  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
  dim(sc_uniprot_annot)
 }
+\seealso{
+[download_uniprot_proteome()]
+}

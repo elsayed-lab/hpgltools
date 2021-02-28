@@ -50,5 +50,5 @@ strings.
 }
 }
 \seealso{
-\code{\link{semantic_copynumber_extract}}
+[semantic_copynumber_extract()]
 }

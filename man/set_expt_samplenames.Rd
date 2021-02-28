@@ -24,5 +24,5 @@ them on-the-fly.
 }
 }
 \seealso{
-\code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+[set_expt_conditions()] [set_expt_batches()]
 }

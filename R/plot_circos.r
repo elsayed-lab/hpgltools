@@ -112,8 +112,8 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' @param max_value Maximum value for the data.
 #' @param basename Make sure the written configuration files get different names with this.
 #' @param colors Colors of the heat map.
-#' @param color_choice  Name of the heatmap to use, I forget how this interacts with color...
-#' @param scale_log_base  Defines how the range of colors will be ranged with
+#' @param color_choice Name of the heatmap to use, I forget how this interacts with color...
+#' @param scale_log_base Defines how the range of colors will be ranged with
 #'  respect to the values in the data.
 #' @param outer Floating point radius of the circle into which to place the heatmap.
 #' @param rules some extra rules?
@@ -566,7 +566,7 @@ clean:
 #'
 #' @param cfg Result from circos_prefix().
 #' @param outer Floating point radius of the circle into which to place the
-#'   plus-strand data.
+#'  plus-strand data.
 #' @param width Radial width of each tile.
 #' @param thickness How wide to make the bars.
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
@@ -1042,7 +1042,7 @@ chromosomes_display_default = yes
 #' circos configuration files need an ending.  This writes it.
 #'
 #' @param cfg Result from circos_prefix()
-#' @return The filename of the configuration.
+#' @return Filename of the configuration.
 #' @export
 circos_suffix <- function(cfg) {
   cfgout <- cfg[["cfg_file"]]
@@ -1072,34 +1072,34 @@ circos_suffix <- function(cfg) {
 #' @param label_offset The offset for the labels.
 #' @param label_size Top-level label size.
 #' @param multiplier When writing the position, by what factor to lower the numbers?
-                                                                              #' @param main_color Color for top-level labels?
-                                                                                                                       #' @param main_thickness Top-level thickness of lines etc.
+#' @param main_color Color for top-level labels?
+#' @param main_thickness Top-level thickness of lines etc.
 #' @param main_size Top-level size of text.
 #' @param first_size Second level size of text.
 #' @param first_spacing Second level spacing of ticks.
 #' @param first_color Second-level text color.
 #' @param first_show_label Show a label for the second level ticks?
-                                                               #' @param first_label_size Text size for second level labels?
-                                                                                                                     #' @param second_size Size of ticks for the third level.
+#' @param first_label_size Text size for second level labels?
+#' @param second_size Size of ticks for the third level.
 #' @param second_spacing third-level spacing
 #' @param second_color Text color for the third level.
 #' @param second_show_label Give them a label?
-                                          #' @param second_label_size And a size.
+#' @param second_label_size And a size.
 #' @param third_size Now for the size of the almost-largest ticks
 #' @param third_spacing How far apart?
-                                  #' @param third_color and their color
+#' @param third_color and their color
 #' @param third_show_label give a label?
-                                    #' @param third_label_size and a size.
+#' @param third_label_size and a size.
 #' @param fourth_spacing The largest ticks!
-                                       #' @param fourth_color The largest color.
+#' @param fourth_color The largest color.
 #' @param fourth_show_label Provide a label?
-                                        #' @param suffix String for printing chromosome distances.
+#' @param suffix String for printing chromosome distances.
 #' @param fourth_label_size They are big!
-                                       #' @param include_first_label Provide the smallest labels?
-                                                                                          #' @param include_second_label Second smallest labels?
-                                                                                                                                         #' @param include_third_label Second biggest labels?
-                                                                                                                                                                                      #' @param include_fourth_label Largest labels?
-                                                                                                                                                                                                                             #' @param ... Extra arguments from circos_prefix().
+#' @param include_first_label Provide the smallest labels?
+#' @param include_second_label Second smallest labels?
+#' @param include_third_label Second biggest labels?
+#' @param include_fourth_label Largest labels?
+#' @param ... Extra arguments from circos_prefix().
 #' @return The file to which the ideogram configuration was written.
 #' @export
 circos_ticks <- function(name = "default", conf_dir = "circos/conf",
@@ -1240,19 +1240,19 @@ grid_end = dims(ideogram,radius_inner)
 #' @param cfg Result from circos_prefix().
 #' @param df Dataframe with starts/ends and the floating point information.
 #' @param colname Name of the column with the data of interest.
-#'   chromosome)
-#' @param basename  Used to make unique filenames for the data/conf files.
+#'  chromosome)
+#' @param basename Used to make unique filenames for the data/conf files.
 #' @param colors Colors of the data.
 #' @param thickness How thick to make the tiles in radial units.
 #' @param margin How much space between other rings and the tiles?
-                                                              #' @param stroke_thickness Size of the tile outlines.
+#' @param stroke_thickness Size of the tile outlines.
 #' @param padding Space between tiles.
 #' @param orientation Facing in or out.
 #' @param outer Floating point radius of the circle into which to place the
-#'   categorical data.
+#'  categorical data.
 #' @param width Width of each tile.
 #' @param spacing Radial distance between outer, inner, and inner to whatever
-#'   follows.
+#'  follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
 circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL,

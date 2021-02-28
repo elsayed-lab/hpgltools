@@ -23,3 +23,6 @@ and if a model has first:second, make.names() turns the ':' to a '.'
 and then the equivalence test fails, causing makeContrasts() to error
 spuriously (I think).
 }
+\seealso{
+[limma::makeContrasts()]
+}

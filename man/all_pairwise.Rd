@@ -108,7 +108,6 @@ comparisons among them.
 }
 }
 \seealso{
-\pkg{limma} \pkg{DESeq2} \pkg{edgeR}
- \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
- \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+[limma_pairwise()] [edger_pairwise()] [deseq_pairwise()] [ebseq_pairwise()]
+ [basic_pairwise()]
 }

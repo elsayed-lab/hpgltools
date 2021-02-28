@@ -22,6 +22,9 @@ IDs.  This will hopefully find them.
 }
 \examples{
  ids <- c("Dm.9", "Dm.2294", "Dm.4971")
- keytype_guess <- guess_orgdb_keytype(ids, orgdb)
+ keytype_guess <- guess_orgdb_keytype(ids, dm_orgdb)
  keytype_guess
+}
+\seealso{
+[org.Dm.eg.db]
 }

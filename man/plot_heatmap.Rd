@@ -48,6 +48,5 @@ distance heatmaps, handles the calculation of the relevant metrics, and plots
 the heatmap.
 }
 \seealso{
-\pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+[gplots::heatmap.2()]
 }

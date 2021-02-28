@@ -27,7 +27,13 @@ values to weight.}
 
 \item{type}{Assuming a DE table, what type of DE is this?}
 }
+\value{
+Newly adjusted p-values using either p.adjust() or IHW.
+}
 \description{
 IHW and apeglm are the two new toys I found, this adds the former as a way to
 adjust p-values.
+}
+\seealso{
+[IHW]
 }

@@ -24,6 +24,5 @@ Tested in test_26edger.R
 }
 }
 \seealso{
-\pkg{limma}
- \code{\link[limma]{toptable}} \code{\link{write_xlsx}}
+[write_de_Table()]
 }

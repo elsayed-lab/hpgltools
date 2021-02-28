@@ -43,5 +43,5 @@ diffSplice with --save_tpm_events)
 }
 }
 \seealso{
-\code{\link{plot_rmats}}
+[plot_rmats()]
 }

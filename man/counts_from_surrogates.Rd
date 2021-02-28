@@ -41,5 +41,5 @@ resulting count table look like? Hopefully this function answers that
 question.
 }
 \seealso{
-\pkg{sva} \pkg{RUVSeq}
+[sva] [RUVSeq] [crossprod()] [tcrossprod()] [solve()]
 }

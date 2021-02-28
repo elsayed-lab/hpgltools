@@ -89,8 +89,5 @@ significance of the signal."
 }
 }
 \seealso{
-\pkg{limma}
- \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
- \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
- \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
+[all_pairwise()]
 }

@@ -28,5 +28,5 @@ genes.  It drops genes based on a cpm threshold and number of samples.
 }
 }
 \seealso{
-\pkg{edgeR}
+[edgeR]
 }

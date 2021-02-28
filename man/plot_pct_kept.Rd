@@ -21,7 +21,7 @@ plot_pct_kept(
 
 \item{row}{Row name to plot.}
 
-\item{condition}{vector of sample condition names.}
+\item{condition}{Vector of sample condition names.}
 
 \item{colors}{Color scheme if the data is not an expt.}
 
@@ -49,7 +49,5 @@ This function will make it possible to see what is left.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
- \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+[plot_sample_bars()]
 }

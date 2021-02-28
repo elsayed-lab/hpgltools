@@ -88,3 +88,6 @@ documentation, it seems at least possible, if not appropriate, to use them
 together when filtering DIA data before passing it to MSstats/etc.  This
 function attempts to formalize and simplify that process.
 }
+\seealso{
+[SWATH2stats]
+}

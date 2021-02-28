@@ -46,5 +46,5 @@ checked to see if it was useful yet.
 }
 }
 \seealso{
-\pkg{qsmooth}
+[qsmooth]
 }

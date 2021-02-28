@@ -19,3 +19,6 @@ Hopefully valid DGEList for edgeR.
 \description{
 This was taken from the tximport manual with minor modifications.
 }
+\seealso{
+[import_deseq()]
+}
