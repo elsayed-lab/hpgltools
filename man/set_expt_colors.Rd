@@ -43,5 +43,5 @@ esmer_expt <- set_expt_colors(expt = esmer_expt, colors = chosen_colors)
 }
 }
 \seealso{
-\code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+[set_expt_conditions()] [set_expt_batches()] [RColorBrewer]
 }

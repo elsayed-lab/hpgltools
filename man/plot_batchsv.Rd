@@ -40,5 +40,5 @@ write this and see if it is better.
 }
 }
 \seealso{
-\pkg{sva} \pkg{ggplot2}
+[sva] [ggplot2]
 }

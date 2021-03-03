@@ -7,16 +7,16 @@
 compare_go_searches(goseq = NULL, cluster = NULL, topgo = NULL, gostats = NULL)
 }
 \arguments{
-\item{goseq}{The goseq result from simple_goseq()}
+\item{goseq}{Result from simple_goseq()}
 
-\item{cluster}{The result from simple_clusterprofiler()}
+\item{cluster}{Result from simple_clusterprofiler()}
 
-\item{topgo}{Guess}
+\item{topgo}{Result from topGO}
 
-\item{gostats}{Yep, ditto}
+\item{gostats}{Result from GOstats}
 }
 \value{
-a summary of the similarities of ontology searches
+Summary of the similarities of ontology searches
 }
 \description{
 Combine the results from goseq, cluster profiler, topgo, and gostats; poke at
@@ -29,5 +29,5 @@ the tools.  Since topgo has 4 tools, the total possible is 7 if everything
 has a p-value equal to 0.
 }
 \seealso{
-\pkg{goseq} \pkg{clusterProfiler} \pkg{topGO} \pkg{goStats}
+[goseq] [clusterProfiler] [topGO] [goStats]
 }

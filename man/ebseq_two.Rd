@@ -42,3 +42,6 @@ EBSeq result table with some extra formatting.
 \description{
 Most of the time, my invocation of ebseq will fall into this function.
 }
+\seealso{
+[ebseq_pairwise()]
+}

@@ -11,7 +11,7 @@
 #' @param expt An expressionset containing expt object
 #' @param ... More options to pass to normalize_expt()
 #' @return The normalized expt
-#' @seealso \code{\link{normalize_expt}}
+#' @seealso [normalize_expt()]
 #' @export
 default_norm <- function(expt, ...) {
   arglist <- list(...)
@@ -70,7 +70,8 @@ default_norm <- function(expt, ...) {
 #' @param ... more options
 #' @return Expt object with normalized data and the original data saved as
 #'  'original_expressionset'
-#' @seealso \pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
+#' @seealso [convert_counts()] [normalize_counts()] [batch_counts()]
+#'  [filter_counts()] [transform_counts()]
 #' @examples
 #' \dontrun{
 #'  normed <- normalize_expt(exp, transform='log2', norm='rle', convert='cpm',
@@ -331,11 +332,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 #' @param ... I should put all those other options here
 #' @return edgeR's DGEList expression of a count table.  This seems to
 #'  me to be the easiest to deal with.
-#' @seealso \pkg{edgeR} \pkg{DESeq2}
-#'  \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
-#'  \code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
-#'  \code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
-#'  \code{\link[edgeR]{calcNormFactors}}
+#' @seealso [edgeR] [DESeq2] [edgeR::cpm()] [filter_counts()] [batch_counts()]
+#'  [convert_counts()] [transform_counts()]
 #' @export
 #' @examples
 #' \dontrun{

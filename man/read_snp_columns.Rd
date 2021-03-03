@@ -26,3 +26,6 @@ either a column name or index -- which when you think about it is pretty much
 always true, but in this context is particularly interesting since I changed
 the names of all the columns when I rewrote this functionality.
 }
+\seealso{
+[readr]
+}

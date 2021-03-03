@@ -38,3 +38,6 @@ Tested in 29de_shared.R
  comparison <- compare_de_results(first$combined, second$combined)
 }
 }
+\seealso{
+[all_pairwise()]
+}

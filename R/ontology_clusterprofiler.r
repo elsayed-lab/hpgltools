@@ -38,7 +38,7 @@
 #' @param david_id Which column to use for cross-referencing to DAVID?
 #' @param david_user Default registered username to use.
 #' @return a list
-#' @seealso \pkg{clusterProfiler}
+#' @seealso [clusterProfiler] [AnnotationDbi] [KEGGREST]
 #' @examples
 #' \dontrun{
 #'  holyasscrackers <- simple_clusterprofiler(gene_list, all_genes, "org.Dm.eg.db")

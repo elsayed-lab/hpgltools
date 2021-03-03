@@ -37,5 +37,6 @@ sequence (currently this is limited to CDS, but that is negotiable).
 }
 }
 \seealso{
-\code{\link{snps_vs_genes}}
+[snps_vs_genes()] [GenomicRanges::makeGRangesFromDataFrame()]
+ [IRanges::subsetByOverlaps()] [IRanges::countOverlaps()]
 }

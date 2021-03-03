@@ -51,6 +51,5 @@ humans.
  head(mouse_yeast_orthologs$all_linked_genes)
 }
 \seealso{
-\pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
- \code{\link[biomaRt]{useMart}}
+[biomaRt::getLDS()]
 }

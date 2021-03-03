@@ -5,14 +5,14 @@
 #' the add argument is only important if the data was previously cpm'd because
 #' that does a +1, thus this will avoid a double+1 on the data.
 #'
-#' @param count_table A matrix of count data
+#' @param count_table Matrix of count data
 #' @param design Sometimes the experimental design is also required.
-#' @param method A type of transformation to perform: log2/log10/log.
+#' @param method Type of transformation to perform: log2/log10/log.
 #' @param base Other log scales?
-#' @param ...  Options I might pass from other functions are dropped into
+#' @param ... Options I might pass from other functions are dropped into
 #'  arglist.
 #' @return dataframe of transformed counts.
-#' @seealso \pkg{limma}
+#' @seealso [limma]
 #' @examples
 #' \dontrun{
 #'  filtered_table = transform_counts(count_table, transform='log2', converted='cpm')

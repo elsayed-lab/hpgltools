@@ -52,7 +52,7 @@ xlsx_plot_png(
 plots which are odd)}
 }
 \value{
-A list containing the result of the tryCatch{} used to invoke the plot prints.
+List containing the result of the tryCatch{} used to invoke the plot prints.
 }
 \description{
 The functions provided by openxlsx for adding plots to xlsx files are quite
@@ -68,5 +68,5 @@ and potentially save an extra svg-version of each plot inserted.
 }
 }
 \seealso{
-\pkg{openxlsx}
+[openxlsx::insertImage()]
 }

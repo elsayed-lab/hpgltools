@@ -6,33 +6,62 @@
 #'
 #' @param file Filename to write
 #' @param image Optionally, add the image you wish to plot and this will both
-#'   print it to file and screen.
-#' @param width  How wide?
-#' @param height  How high?
-#' @param res  The chosen resolution.
-#' @param ...  Arguments passed to the image plotters.
+#'  print it to file and screen.
+#' @param width How wide?
+#' @param height How high?
+#' @param res The chosen resolution.
+#' @param ... Arguments passed to the image plotters.
 #' @return a png/svg/eps/ps/pdf with height = width=9 inches and a high resolution
+#' @seealso [png()] [svg()] [postscript()] [cairo_ps()] [cairo_pdf()] [tiff()] [devEMF::emf()]
+#'  [jpg()] [bmp()]
 #' @export
 pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
-  ext <- tools::file_ext(file)
+  ext <- tolower(tools::file_ext(file))
   start_dev <- dev.list()
   result <- NULL
-  if (ext == "png") {
-    result <- png(filename = file, width = width, height = height, units = "in", res = res, ...)
-  } else if (ext == "svg") {
-    result <- svg(filename = file, ...)
-  } else if (ext == "ps") {
-    result <- postscript(file = file, width = width, height = height, ...)
-  } else if (ext == "eps") {
-    result <- cairo_ps(filename = file, width = width, height = height, ...)
-  } else if (ext == "pdf") {
-    result <- cairo_pdf(filename = file, ...)
-  } else if (ext == "tif" | ext == "tiff") {
-    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
-  } else {
-    message("Defaulting to tiff.")
-    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
-  }
+  switchret <- switch(
+      ext,
+      "png" = {
+        result <- png(filename = file, width = width, height = height,
+                      units = "in", res = res, ...)
+      },
+      "bmp" = {
+        result <- bmp(filename = file, ...)
+      },
+      "jpg" = {
+        result <- jpeg(filename = file, ...)
+      },
+      "webp" = {
+        result <- webp::write_webp(target = file, ...)
+      },
+      "svg" = {
+        result <- svg(filename = file, ...)
+      },
+      "ps" = {
+        result <- postscript(file = file, width = width, height = height, ...)
+      },
+      "eps" = {
+        result <- cairo_ps(filename = file, width = width, height = height, ...)
+      },
+      "pdf" = {
+        result <- cairo_pdf(filename = file, ...)
+      },
+      "tif" = {
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      },
+      "tiff" = {
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      },
+      "emf" = {
+        result <- devEMF::emf(file = file, width = width, height = height, ...)
+      },
+      {
+        message("Defaulting to tiff.")
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      }) ## End of the switch
   now_dev <- dev.list()
   new_dev <- now_dev[length(now_dev)]
 
@@ -67,12 +96,12 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' A positive value for 'B' will result in a epitrochoid, while a negative value
 #' will result in a hypotrochoid.
 #'
-#' @param radius_a   The radius of the primary circle.
-#' @param radius_b   The radius of the circle travelling around a.
-#' @param dist_bc   A point relative to the center of 'b' which rotates with the turning of 'b'.
-#' @param revolutions   How many revolutions to perform in the plot
-#' @param increments   The number of radial increments to be calculated per revolution
-#' @param center_a   The position of the center of 'a'.
+#' @param radius_a The radius of the primary circle.
+#' @param radius_b The radius of the circle travelling around a.
+#' @param dist_bc A point relative to the center of 'b' which rotates with the turning of 'b'.
+#' @param revolutions How many revolutions to perform in the plot
+#' @param increments The number of radial increments to be calculated per revolution
+#' @param center_a The position of the center of 'a'.
 #' @return something which I don't yet know.
 #' @export
 plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
@@ -120,11 +149,11 @@ plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
 #'
 #' 3,7,1 should give the classic 7 leaf clover
 #'
-#' @param radius_a  Radius of the major circle
-#' @param radius_b  And the smaller circle.
+#' @param radius_a Radius of the major circle
+#' @param radius_b And the smaller circle.
 #' @param dist_b between b and the drawing point.
-#' @param revolutions  How many times to revolve through the spirograph.
-#' @param increments  How many dots to lay down while writing.
+#' @param revolutions How many times to revolve through the spirograph.
+#' @param increments How many dots to lay down while writing.
 #' @export
 plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
                               revolutions = 7, increments = 6480) {
@@ -168,11 +197,11 @@ plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
 #'
 #' 7, 2, 6, 7 should give a pretty result.
 #'
-#' @param radius_a  Radius of the major circle
-#' @param radius_b  And the smaller circle.
+#' @param radius_a Radius of the major circle
+#' @param radius_b And the smaller circle.
 #' @param dist_b between b and the drawing point.
-#' @param revolutions  How many times to revolve through the spirograph.
-#' @param increments  How many dots to lay down while writing.
+#' @param revolutions How many times to revolve through the spirograph.
+#' @param increments How many dots to lay down while writing.
 #' @export
 plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
                              revolutions = 7, increments = 6480) {

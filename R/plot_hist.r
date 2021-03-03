@@ -13,8 +13,7 @@
 #' @param fillcolor Change the fill colors of the plotted elements?
 #' @param color Change the color of the lines of the plotted elements?
 #' @return Ggplot histogram.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_histogram}} \code{\link[ggplot2]{geom_density}}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  kittytime = plot_histogram(df)
@@ -67,8 +66,7 @@ plot_histogram <- function(df, binwidth = NULL, log = FALSE, bins = 500, adjust 
 #' @param bins Set a static # of bins of an unknown width?
 #' @param colors Change the default colors of the densities?
 #' @return List of the ggplot histogram and some statistics describing the distributions.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[stats]{pairwise.t.test}} \code{\link[plyr]{ddply}}
+#' @seealso [stats::pairwise.t.test()] [ggplot2]
 #' @examples
 #' \dontrun{
 #'  kittytime = plot_multihistogram(df)

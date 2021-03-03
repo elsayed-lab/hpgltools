@@ -79,5 +79,6 @@ tools and formalizes some column names to make them a little more
 consistent.
 }
 \seealso{
-\pkg{data.table} \pkg{openxlsx}
+[data.table] [hpgl_padjust()] [extract_keepers_all()] [extract_keepers_lst()]
+ [extract_keepers_single()]
 }

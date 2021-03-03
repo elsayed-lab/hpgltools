@@ -36,6 +36,5 @@ Invoked by _pairwise().
 }
 }
 \seealso{
-\code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
- \code{\link{choose_basic_dataset}}
+[choose_binom_dataset()] [choose_limma_dataset()] [choose_basic_dataset()]
 }

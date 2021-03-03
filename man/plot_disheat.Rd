@@ -49,7 +49,5 @@ and eventual output.
 }
 }
 \seealso{
-\pkg{RColorBrewer}
- \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
- \code{\link[grDevices]{recordPlot}}
+[gplots::heatmap.2()]
 }

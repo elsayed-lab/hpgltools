@@ -31,6 +31,5 @@ This function seeks to make generating pretty pvalue plots as shown by
 clusterprofiler easier.
 }
 \seealso{
-\pkg{goseq} \pkg{ggplot2}
- \code{\link[goseq]{goseq}}
+[ggplot2]
 }

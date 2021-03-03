@@ -40,5 +40,5 @@ constant, as well as number when fold-change is held constant.
 }
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

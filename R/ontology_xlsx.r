@@ -29,8 +29,7 @@ gather_cp_genes <- function(table, mappings, new = "ORF") {
 #' @param include_all Include all genes in the ontology search?
 #' @param ... Extra options without a purpose just yet.
 #' @return Data frame of categories/genes.
-#' @seealso \pkg{goseq} \pkg{clusterProfiler}
-#'  \code{\link{simple_goseq}}
+#' @seealso [simple_goseq()]
 #' @examples
 #'  \dontrun{
 #'   data <- simple_goseq(sig_genes = limma_output, lengths = annotation_df, goids = goids_df)
@@ -157,7 +156,7 @@ gather_ontology_genes <- function(result, ontology = NULL,
 #' @param decreasing which direction?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
-#' @seealso \pkg{openxlsx} \pkg{goseq}
+#' @seealso [openxlsx]
 #' @export
 write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx", wb = NULL,
                           add_trees = TRUE, order_by = "qvalue", pval = 0.1, add_plots = TRUE,
@@ -382,7 +381,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx", wb = 
 #' @param decreasing In forward or reverse order?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
-#' @seealso \pkg{openxlsx} \pkg{goseq}
+#' @seealso [openxlsx] [simple_goseq()]
 #' @export
 write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL,
                              add_trees = TRUE, gather_genes = TRUE, order_by = "qvalue", pval = 0.1,
@@ -547,7 +546,7 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
 #' @param decreasing Which order?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
-#' @seealso \pkg{openxlsx} \pkg{gostats}
+#' @seealso [openxlsx] [simple_gostats()]
 #' @export
 write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx", wb = NULL,
                                add_trees = TRUE, order_by = "qvalue", pval = 0.1, add_plots = TRUE,
@@ -692,6 +691,8 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx", wb 
 #' @param type Which specific ontology search to use?
 #' @param ... Arguments passed to the various simple_ontology() function.
 #' @return A list of the up/down results of the ontology searches.
+#' @seealso [openxlsx] [simple_goseq()] [simple_clusterprofiler()] [simple_topgo()]
+#'  [simple_gprofiler()] [simple_topgo()] [simple_gostats()]
 sig_ontologies <- function(significant_result,
                            excel_prefix = "excel/sig_ontologies",
                            search_by = "deseq",
@@ -769,7 +770,7 @@ sig_ontologies <- function(significant_result,
 #' @param decreasing Which order?
 #' @param ... More options, not currently used I think.
 #' @return A prettyified table in an xlsx document.
-#' @seealso \pkg{openxlsx} \pkg{gProfiler}
+#' @seealso [openxlsx] [simple_gprofiler()]
 #' @export
 write_gprofiler_data <- function(gprofiler_result, wb = NULL,
                                  excel = "excel/gprofiler_result.xlsx",
@@ -1088,7 +1089,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
 #' @param decreasing In forward or reverse order?
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
-#' @seealso \pkg{openxlsx} \pkg{topgo}
+#' @seealso [openxlsx] [simple_topgo()]
 #' @export
 write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
                              order_by = "fisher", decreasing = FALSE,
@@ -1267,7 +1268,7 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
 #' @param add_plots Add the various p-value plots to the end of each sheet?
 #' @param ... some extra parameters
 #' @return a set of excel sheet/coordinates
-#' @seealso \pkg{openxlsx}
+#' @seealso [openxlsx]
 #' @examples
 #' \dontrun{
 #'  all_contrasts <- all_pairwise(expt, model_batch = TRUE)
@@ -2101,8 +2102,8 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
 #' @param n the number of ontology categories to include in each table.
 #' @param overwritefile overwrite an existing excel file
 #' @return the list of ontology information
-#' @seealso \pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats}
-#'   \pkg{topGO} \pkg{gProfiler}
+#' @seealso [openxlsx] [simple_goseq()] [simple_clusterprofiler()] [simple_gostats()]
+#'  [simple_topgo()] [simple_gprofiler()]
 #' @export
 write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
                          file = "excel/merged_go",

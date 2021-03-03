@@ -37,8 +37,7 @@ Finally it will return a list containing a df of gene lengths and summed counts.
 }
 }
 \seealso{
-\pkg{rtracklayer}
- \code{\link{load_gff_annotations}}
+[rtracklayer] [load_gff_annotations()]
 }
 \author{
 Keith Hughitt with some modifications by atb.

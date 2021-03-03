@@ -26,6 +26,5 @@ is not therefore a low-count filter per se.
 }
 }
 \seealso{
-\pkg{genefilter}
- \code{\link[genefilter]{kOverA}}
+[genefilter::kOverA()]
 }

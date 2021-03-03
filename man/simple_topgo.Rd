@@ -66,5 +66,5 @@ Big list including the various outputs from topgo
 This will attempt to make it easier to run topgo on a set of genes.
 }
 \seealso{
-\pkg{topGO}
+[topGO]
 }

@@ -17,10 +17,10 @@
 #' @param length_names Provide some column names which give gene length information?
 #' @param ... Extra arguments likely for load_annotations()
 #' @return Data frame of gene IDs and widths.
-#' @seealso \pkg{rtracklayer}
-#'  \code{\link{load_gff_annotations}}
+#' @seealso [rtracklayer] [load_gff_annotations()]
 #' @examples
-#'  pa_genesizes <- get_genesizes(gff = gff_file)
+#'  pa_gff <- system.file("share", "paeruginosa_pa14.gff", package = "hpgltools")
+#'  pa_genesizes <- get_genesizes(gff = pa_gff)
 #'  head(pa_genesizes)
 #' @export
 get_genesizes <- function(annotation = NULL, type = "gff", gene_type = "gene",
@@ -99,8 +99,12 @@ get_genesizes <- function(annotation = NULL, type = "gff", gene_type = "gene",
 #'  provided, try to figure it out automagically.
 #' @param ... Arguments passed to the other load_*_annotations().
 #' @return Some annotations, hopefully.
+#' @seealso [load_biomart_annotations()] [load_gff_annotations()] [load_genbank_annotations()]
+#'  [load_kegg_annotations()] [load_trinotate_annotations()] [load_microbesonline_annotations()]
+#'  [load_uniprot_annotations()]
 #' @examples
-#'  gff_annotations <- load_annotations(type = "gff", gff = gff_file)
+#'  example_gff <- get_paeruginosa_data()[["gff"]]
+#'  gff_annotations <- load_annotations(type = "gff", gff = example_gff)
 #'  dim(gff_annotations)
 #' @export
 load_annotations <- function(type = NULL, ...) {

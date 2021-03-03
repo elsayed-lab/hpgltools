@@ -49,6 +49,5 @@ speed things along.
 }
 }
 \seealso{
-\pkg{data.table}
- \code{\link{create_expt}}
+[data.table] [create_expt()] [tximport]
 }

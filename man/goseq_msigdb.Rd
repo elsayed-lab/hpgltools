@@ -70,3 +70,6 @@ goseq is probably the easiest method to push varying data types into.  Thus
 it was the first thing I thought of when looking to push MSigDB data into a
 GSEA method.
 }
+\seealso{
+[gsva] [goseq]
+}

@@ -28,6 +28,5 @@ counts/samples and make sure it is >= a score.
 }
 }
 \seealso{
-\pkg{genefilter}
- \code{\link[genefilter]{pOverA}}
+[genefilter::pOverA()]
 }

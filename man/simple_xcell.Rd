@@ -50,3 +50,6 @@ deconvolution.  I slowly figured out its limitations, but still think it
 seems pretty nifty for its use case.  Thus this function is intended to make
 invoking it easier/faster.
 }
+\seealso{
+[xCell]
+}

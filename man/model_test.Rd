@@ -24,5 +24,5 @@ minutes of the computer churning away it errors out with some weird error
 about rank?  Then this is the function for you!
 }
 \seealso{
-\code{\link{model.matrix}} \code{\link{qr}}
+[model.matrix()] [qr()]
 }

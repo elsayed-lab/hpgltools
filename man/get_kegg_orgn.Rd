@@ -28,5 +28,5 @@ and finds the KEGG identifiers that match it.
 }
 }
 \seealso{
-\pkg{RCurl}
+[RCurl]
 }

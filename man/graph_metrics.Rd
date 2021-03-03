@@ -68,10 +68,6 @@ qq plots.
 }
 }
 \seealso{
-\pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-  \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
-  \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
-  \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
-  \code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
-  \code{\link{plot_pairwise_ma}}
+[plot_nonzero()] [plot_legend()] [plot_libsize()] [plot_disheat()]
+ [plot_corheat()] [plot_topn()] [plot_pca()] [plot_sm()] [plot_boxplot()]
 }

@@ -42,3 +42,7 @@ gene.  This function attempts to answer that question.
  gene_intersections <- snps_vs_genes(expt, snp_result)
 }
 }
+\seealso{
+[GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
+ [IRanges::mergeByOverlaps()] [IRanges::countOverlaps()]
+}

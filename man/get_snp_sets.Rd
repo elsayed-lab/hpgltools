@@ -47,3 +47,6 @@ chromosome for all the various categories as defined by factor.
  ## This assumes a column in the metadata for the expt named 'condition'.
 }
 }
+\seealso{
+[medians_by_factor()]
+}

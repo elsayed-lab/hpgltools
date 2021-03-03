@@ -35,3 +35,6 @@ archive instance rather than the most recent ensembl instance.  This function
 therefore iterates over the various mirrors; or if archive = TRUE it will try a
 series of archive servers from 1, 2, and 3 years ago.
 }
+\seealso{
+[biomaRt::useMart()] [biomaRt::listMarts()]
+}

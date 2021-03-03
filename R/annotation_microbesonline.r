@@ -109,6 +109,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 #'
 #' @param species String to search the set of microbesonline taxa.
 #' @return NULL or 1 or more taxon ids.
+#' @seealso [xml2]
 #' @examples
 #'  coli_taxids <- get_microbesonline_taxid(species = "coli S88")
 #'  head(coli_taxids)
@@ -162,7 +163,7 @@ get_microbesonline_taxid <- function(species = "Acyrthosiphon pisum virus") {
 #' @param species Microbesonline species.
 #' @param id Microbesonline ID to query.
 #' @return Dataframe containing the annotation information.
-#' @seealso \pkg{rvest}
+#' @seealso [rvest] [xml2] [readr]
 #' @examples
 #'  pa14_microbesonline_annot <- load_microbesonline_annotations(species = "PA14")
 #'  colnames(pa14_microbesonline_annot)
@@ -209,6 +210,7 @@ load_microbesonline_annotations <- function(species = NULL, id = NULL) {
 #'  extract the data.
 #' @param name Allowing for non-specific searches by species name.
 #' @return data frame of GO terms from www.microbesonline.org
+#' @seealso [tidyr]
 #' @examples
 #'  pa14_microbesonline_go <- load_microbesonline_go(species = "PA14")
 #'  head(pa14_microbesonline_go)

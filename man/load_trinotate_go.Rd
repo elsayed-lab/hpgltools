@@ -11,7 +11,7 @@ load_trinotate_go(trinotate = "reference/trinotate.csv")
 }
 \value{
 List of the extracted GO data, a table of it, length data, and the
-  resulting length table.
+ resulting length table.
 }
 \description{
 Trinotate performs some neat sequence searches in order to seek out likely
@@ -19,7 +19,11 @@ annotations for the trinity contigs.  This function extracts ontology data
 from it.  Keep in mind that this data is primarily from Blast2GO.
 }
 \examples{
- trinotate_go <- load_trinotate_go(trinotate = trinotate)
+ sb_annot <- get_sbetaceum_data()[["annot"]]
+ trinotate_go <- load_trinotate_go(trinotate = sb_annot)
  dim(trinotate_go$go_data)
  dim(trinotate_go$go_table)
+}
+\seealso{
+[load_trinotate_annotations()]
 }

@@ -36,6 +36,5 @@ txdb instance.
  dim(as.data.frame(sagalacticae_genbank_annot$cds))
 }
 \seealso{
-\pkg{genbankr} \pkg{rentrez}
- \code{\link[genbankr]{import}}
+[Biostrings] [GenomicFeatures] [genbankr::import()] [genbankr::readGenBank()]
 }

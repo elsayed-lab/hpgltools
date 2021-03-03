@@ -35,5 +35,5 @@ This assumes you have pxz installed and >= 4 CPUs.
 }
 }
 \seealso{
-\code{\link{save}} \code{\link{pipe}}
+[loadme()]
 }

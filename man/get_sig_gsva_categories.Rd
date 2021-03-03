@@ -37,6 +37,9 @@ of dropping some.}
 
 \item{row_margin}{this parameter}
 }
+\value{
+List containing the gsva results, limma results, scores, some plots, etc.
+}
 \description{
 This function uses a couple of methods to try to get an idea of whether the
 results from gsva are actually interesting.  It does so via the following
@@ -45,4 +48,8 @@ methods:
 provide an idea of if there are changing signatures among the sample types.
   2.  Perform a simplified likelihood estimate to get a sense of the
 significant categories.
+}
+\seealso{
+[score_gsva_likelihoods()] [get_group_gsva_means()] [limma_pairwise()]
+ [simple_gsva()]
 }

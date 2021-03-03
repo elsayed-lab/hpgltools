@@ -18,8 +18,7 @@
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
 #'  haven't yet finalized.
-#' @seealso \pkg{genbankr} \pkg{rentrez}
-#'  \code{\link[genbankr]{import}}
+#' @seealso [Biostrings] [GenomicFeatures] [genbankr::import()] [genbankr::readGenBank()]
 #' @examples
 #'  sagalacticae_genbank_annot <- load_genbank_annotations(accession = "AE009948")
 #'  dim(as.data.frame(sagalacticae_genbank_annot$cds))
@@ -69,8 +68,7 @@ load_genbank_annotations <- function(accession = "AE009949", reread = TRUE, save
 #'
 #' @param gbr TxDb object to poke at.
 #' @return Granges data
-#' @seealso \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
-#'  \code{\link[AnnotationDbi]{select}}
+#' @seealso [AnnotationDbi] [GenomicFeatures]
 #' @export
 gbk_annotations <- function(gbr) {
   ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
@@ -101,7 +99,7 @@ gbk_annotations <- function(gbr) {
 #' @param write Write the files?  Otherwise return a list of the strings
 #' @return A list containing the number of files downloaded and the character
 #'   strings acquired.
-#' @seealso \pkg{ape}
+#' @seealso [ape]
 #' @examples
 #'  written <- download_gbk(accessions = "AE009949")
 #'  written$written_file

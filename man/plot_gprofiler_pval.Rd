@@ -38,5 +38,5 @@ data into a format suitable for plotting in that fashion and returns the
 resulting plots of significant ontologies.
 }
 \seealso{
-\pkg{topgo} \pkg{clusterProfiler}
+[ggplot2]
 }

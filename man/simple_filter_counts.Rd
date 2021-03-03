@@ -24,5 +24,5 @@ genes.  It drops genes based on a threshold and number of samples.
 }
 }
 \seealso{
-\pkg{edgeR}
+[edgeR]
 }

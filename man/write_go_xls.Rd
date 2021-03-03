@@ -43,6 +43,6 @@ Combine the results from goseq, cluster profiler, topgo, and gostats and drop
 them into excel. Hopefully with a relatively consistent look.
 }
 \seealso{
-\pkg{openxlsx} \pkg{goseq} \pkg{clusterProfiler} \pkg{goStats}
-  \pkg{topGO} \pkg{gProfiler}
+[openxlsx] [simple_goseq()] [simple_clusterprofiler()] [simple_gostats()]
+ [simple_topgo()] [simple_gprofiler()]
 }

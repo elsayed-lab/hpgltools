@@ -19,7 +19,10 @@ peculiar fashion, so this function attempts to make it easier to read and put
 them into a format usable in an expressionset.
 }
 \examples{
- trinotate <- system.file("sb/trinotate_head.csv.xz", package = "hpgltools")
- a_few_trinotate <- load_trinotate_annotations(trinotate = trinotate)
+ sb_annot <- get_sbetaceum_data()[["annot"]]
+ a_few_trinotate <- load_trinotate_annotations(trinotate = sb_annot)
  dim(a_few_trinotate)
+}
+\seealso{
+[tidyr] [readr]
 }

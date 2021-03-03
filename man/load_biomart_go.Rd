@@ -77,7 +77,5 @@ keep the annotation sets relatively consistent.
  dim(hs_biomart_ontology$go)
 }
 \seealso{
-\pkg{biomaRt}
- \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
- \code{\link[biomaRt]{getBM}}
+[biomaRt::listMarts()] [biomaRt::useDatasets()] [biomaRt::getBM()]
 }

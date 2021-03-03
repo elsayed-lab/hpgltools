@@ -25,5 +25,5 @@ Sometimes it is nice to be able to read the full definition of some GO terms.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[AnnotationDbi] [GO.db]
 }

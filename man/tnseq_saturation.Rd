@@ -49,5 +49,5 @@ appear to be on both strands (eg. they start and end with 'TA').
 }
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

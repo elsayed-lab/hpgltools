@@ -72,6 +72,5 @@ red/green.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link{plot_linear_scatter}}
+[plot_linear_scatter()]
 }

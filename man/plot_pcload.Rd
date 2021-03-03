@@ -20,9 +20,12 @@ so set this to low.}
 }
 \value{
 List containing an expressionset of the subset and a plot of their
-  expression.
+ expression.
 }
 \description{
 Sometimes it is nice to know what is happening with the genes which have the
 greatest effect on a given principal component.  This function provides that.
+}
+\seealso{
+[plot_sample_heatmap()]
 }

@@ -28,7 +28,7 @@ a few defaults so that it hopefully fails less often.
  written$written_file
 }
 \seealso{
-\pkg{ape}
+[ape]
 }
 \author{
 The ape authors with some modifications by atb.

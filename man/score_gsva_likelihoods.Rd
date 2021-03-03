@@ -62,3 +62,6 @@ according to a few different possibilities, including:
   * A single score against all scores.
   * Rows (gene sets) against the set of all gene sets.
 }
+\seealso{
+[simple_gsva()]
+}

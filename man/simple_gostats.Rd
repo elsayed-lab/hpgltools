@@ -65,5 +65,5 @@ gff file in order to get the go ids and gene ids on the same page.
 }
 }
 \seealso{
-\pkg{GSEABase} \pkg{Category}
+[GSEABase] [Category] [load_gff_annotations()] [GOstats]
 }

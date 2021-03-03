@@ -28,7 +28,7 @@
 #'   \item hits_summary = summary(hit_positions)
 #'   \item plot = Histogram of the number of hits observed.
 #'  }
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @examples
 #'  \dontrun{
 #'  input <- "preprocessing/hpgl0837/essentiality/hpgl0837-trimmed_ca_ta-v0M1.wig"
@@ -153,7 +153,7 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
 #' @param max_sig Maximum value above which a gene is deemed essential and below
 #'   which it is uncertain.
 #' @return A couple of plots
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @export
 plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FALSE,
                               min_sig = 0.0371, max_sig = 0.9902) {

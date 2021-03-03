@@ -53,6 +53,5 @@ Invoked by the _pairwise() functions.
 }
 }
 \seealso{
-\pkg{limma}
- \code{\link[limma]{makeContrasts}}
+[limma::makeContrasts()]
 }

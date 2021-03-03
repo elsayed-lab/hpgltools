@@ -32,5 +32,5 @@ least.
  colnames(pa14_microbesonline_annot)
 }
 \seealso{
-\pkg{rvest}
+[rvest] [xml2] [readr]
 }

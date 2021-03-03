@@ -96,5 +96,5 @@ limma/DESeq2/EdgeR on a table-by-table basis.
 }
 }
 \seealso{
-\code{\link{all_pairwise}}
+[all_pairwise()] [extract_significant_genes()]
 }

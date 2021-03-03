@@ -7,12 +7,12 @@
 golevel_df(ont = "MF", savefile = "ontlevel.rda")
 }
 \arguments{
-\item{ont}{the ontology to recurse.}
+\item{ont}{Ontology to recurse.}
 
-\item{savefile}{a file to save the results for future lookups.}
+\item{savefile}{File to save the results for future lookups.}
 }
 \value{
-golevels  a dataframe of goids<->highest level
+Dataframe of goids<->highest level
 }
 \description{
 This function is way faster than my previous iterative golevel function.
@@ -20,5 +20,5 @@ That is not to say it is very fast, so it saves the result to ontlevel.rda
 for future lookups.
 }
 \seealso{
-\pkg{clusterProfiler}
+[clusterProfiler]
 }

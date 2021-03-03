@@ -29,8 +29,7 @@ columns for a given set of gene ids using the in a sqlite instance.
  head(dm_unigene_to_ensembl)
 }
 \seealso{
-\pkg{AnnotationDbi}
- \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
+[AnnotationDbi]
 }
 \author{
 Keith Hughitt with changes by atb.

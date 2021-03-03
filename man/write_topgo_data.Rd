@@ -46,5 +46,5 @@ It is my intention to make a function like this for each ontology tool in my
 repetoire
 }
 \seealso{
-\pkg{openxlsx} \pkg{topgo}
+[openxlsx] [simple_topgo()]
 }

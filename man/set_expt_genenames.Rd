@@ -27,5 +27,5 @@ Ergo this little function.
 }
 }
 \seealso{
-\code{\link{set_expt_batches}} \code{\link{create_expt}}
+[set_expt_conditions()] [create_expt()]
 }

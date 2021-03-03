@@ -64,7 +64,5 @@ or pathological can pass it 'all'.
  summary(hs_orgdb_annot$genes)
 }
 \seealso{
-\pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
- \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
- \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
+[AnnotationDbi] [AnnotationDbi::select()] [GenomicFeatures]
 }

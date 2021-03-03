@@ -14,12 +14,12 @@ gather_genes_orgdb(goseq_data, orgdb_go, orgdb_ensembl)
 \item{orgdb_ensembl}{The orgDb instance with ensembl data.}
 }
 \value{
-a go mapping
+GO mapping
 }
 \description{
 Since clusterprofiler no longer builds gomaps, I need to start understanding
 how to properly get information from orgDBs.
 }
 \seealso{
-\pkg{clusterProfiler}
+[goseq]
 }

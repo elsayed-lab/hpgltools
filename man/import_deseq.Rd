@@ -20,3 +20,6 @@ import_deseq(data, column_data, model_string, tximport = NULL)
 This will hopefully make adding counts to a DESeq data set easier, as it
 tries to handle the various arguments with minimal fuss.
 }
+\seealso{
+[DESeq2::DESeqDataSetFromMatrix]
+}

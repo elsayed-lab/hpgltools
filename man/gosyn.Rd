@@ -27,5 +27,5 @@ This function just goes a mapply(gosn, go).
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[AnnotationDbi] [GO.db]
 }

@@ -33,3 +33,6 @@ ebseq_few(
 Starting at approximately 5 conditions, ebseq becomes too unwieldy to use
 effectively. But, its results until then are pretty neat.
 }
+\seealso{
+[ebseq_pairwise()]
+}

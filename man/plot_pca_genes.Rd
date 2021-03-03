@@ -77,6 +77,5 @@ Make a PC plot describing the gene' clustering.
 }
 }
 \seealso{
-\pkg{directlabels}
- \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+[plot_pcs()]
 }

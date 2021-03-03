@@ -55,6 +55,5 @@ shifted is an outlier.
 }
 }
 \seealso{
-\pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
- \code{\link[reshape2]{melt}} \code{\link[ggplot2]{scale_x_discrete}}
+[ggplot2]
 }

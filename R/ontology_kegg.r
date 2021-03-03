@@ -18,15 +18,15 @@
 #' @param filenames Name the final files by id or name?
 #' @param fc_column What is the name of the fold-change column to extract?
 #' @param format Format of the resulting images, I think only png really works
-#'   well.
+#'  well.
 #' @param verbose When on, this function is quite chatty.
 #' @return A list of some information for every KEGG pathway
-#'   downloaded/examined.  This information includes:
-#'  a. The filename of the final image for each pathway.
-#'  b. The number of genes which were found in each pathway image.
-#'  c. The number of genes in the 'up' category
-#'  d. The number of genes in the 'down' category
-#' @seealso \pkg{Ramigo} \pkg{pathview}
+#'  downloaded/examined.  This information includes:
+#'   a. The filename of the final image for each pathway.
+#'   b. The number of genes which were found in each pathway image.
+#'   c. The number of genes in the 'up' category
+#'   d. The number of genes in the 'down' category
+#' @seealso [pathview] [KEGGREST]
 #' @examples
 #' \dontrun{
 #'  thy_el_comp2_path = hpgl_pathview(thy_el_comp2_kegg, species = "spz", indir = "pathview_in",
@@ -90,7 +90,7 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
   if (!file.exists(indir)) {
     dir.create(indir)
   }
-  if (!file.exists(outdir)){
+  if (!file.exists(outdir)) {
     dir.create(outdir)
   }
   paths <- list()
@@ -304,7 +304,7 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
 #' @param species Stringified species name used to extract the 3 letter abbreviation.
 #' @param savefile Filename to which to save the relevant data.
 #' @return Dataframe of the various kegg data for each pathway, 1 row/gene.
-#' @seealso \pkg{KEGGREST}
+#' @seealso [KEGGREST]
 #' @examples
 #' \dontrun{
 #'  kegg_info <- get_kegg_genes(species = "Canis familiaris")
@@ -396,8 +396,8 @@ get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
 #'
 #' @param species 3 letter abbreviation for a given kegg type
 #' @return 2 character lists containing the patterns and replace arguments for
-#'   gsub(), order matters!
-#' @seealso \pkg{KEGGREST}
+#'  gsub(), order matters!
+#' @seealso [KEGGREST]
 #' @export
 get_kegg_sub <- function(species = "lma") {
   patterns <- c()
@@ -426,7 +426,7 @@ get_kegg_sub <- function(species = "lma") {
 #' @param pathdb Name of the pathway database for this organism.
 #' @param godb Name of the ontology database for this organism.
 #' @return Results from hyperGTest using the KEGG pathways.
-#' @seealso \pkg{AnnotationDbi} \pkg{GSEABase} \pkg{Category}
+#' @seealso [AnnotationDbi] [GSEABase] [Category]
 #' @export
 gostats_kegg <- function(organism = "Homo sapiens",
                          pathdb = "org.Hs.egPATH", godb = "org.Hs.egGO") {
@@ -458,7 +458,7 @@ gostats_kegg <- function(organism = "Homo sapiens",
 #' @param short Only pull the orgid?
 #' @return Data frame of possible KEGG identifier codes, genome ID numbers,
 #'  species, and phylogenetic classifications.
-#' @seealso \pkg{RCurl}
+#' @seealso [RCurl]
 #' @examples
 #' \dontrun{
 #'  fun = get_kegg_orgn('Canis')
@@ -495,7 +495,7 @@ get_kegg_orgn <- function(species = "Leishmania", short = TRUE) {
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Dataframe including the filenames, percentages, nodes included, and
 #'  differential nodes.
-#' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
+#' @seealso [KEGGgraph] [KEGGREST]
 #' @export
 pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
                          pathdir = "kegg_pathways", verbose = FALSE, ...) {
@@ -633,7 +633,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
 #' @param pathdir Directory into which to copy downloaded pathway files.
 #' @param ... Options I might pass from other functions are dropped into arglist.
 #' @return Percent genes/pathway deemed significant.
-#' @seealso \pkg{KEGGgraph} \pkg{KEGGREST}
+#' @seealso [KEGGgraph] [KEGGREST]
 #' @export
 pct_kegg_diff <- function(all_ids, sig_ids, pathway = "00500",
                           organism = "dme", pathdir = "kegg_pathways", ...) {

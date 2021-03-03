@@ -48,3 +48,6 @@ making use of the extracted estimators against condition/batch/whatever
 else. Finally, it does the same ranking plot against a linear fitting Leek
 performed and returns the whole pile of information as a list.
 }
+\seealso{
+[normalize_expt()] [plot_pca()] [all_adjuster()] [corrplot] [ffpe]
+}

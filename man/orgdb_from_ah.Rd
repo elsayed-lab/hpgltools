@@ -30,5 +30,5 @@ fragile than I would like.
 }
 }
 \seealso{
-\pkg{AnnotationHub} \pkg{S4Vectors}
+[AnnotationHub] [S4Vectors]
 }

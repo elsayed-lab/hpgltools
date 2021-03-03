@@ -43,3 +43,6 @@ cyoa.
  ## be the source of the numbers found when doing exprs(snp_expt).
 }
 }
+\seealso{
+[Biobase]
+}

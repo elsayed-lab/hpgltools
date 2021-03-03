@@ -104,5 +104,6 @@ transformation, and batch correction.
 }
 }
 \seealso{
-\pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
+[convert_counts()] [normalize_counts()] [batch_counts()]
+ [filter_counts()] [transform_counts()]
 }

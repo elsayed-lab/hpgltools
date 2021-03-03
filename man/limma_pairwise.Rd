@@ -82,6 +82,5 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 }
 \seealso{
-\pkg{limma} \pkg{Biobase}
- \code{\link{write_limma}}
+[limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 }

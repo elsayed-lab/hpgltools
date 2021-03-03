@@ -49,6 +49,5 @@ get a new data set.
 }
 }
 \seealso{
-\pkg{limma}
- \code{\link[limma]{voom}} \code{\link[limma]{lmFit}}
+[limma::voom()] [limma::lmFit()]
 }

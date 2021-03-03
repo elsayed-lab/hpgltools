@@ -15,7 +15,7 @@
 #' @param nsims Number of simulations to perform.
 #' @param reps Simulate these number of experimental replicates.
 #' @param de_method There are a couple choices here for tools which are pretty
-#'   old, my version of this only accepts deseq or edger.
+#'  old, my version of this only accepts deseq or edger.
 #' @param alpha_type I assume p-adjust type.
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
@@ -23,6 +23,7 @@
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containing the various results and plots from proper.
+#' @seealso [PROPER]
 default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                            reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
                            alpha = 0.1, stratify = "expr", target = "lfc",
@@ -104,7 +105,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
 #' @param nsims Number of simulations to perform.
 #' @param reps Simulate these number of experimental replicates.
 #' @param de_method There are a couple choices here for tools which are pretty
-#'   old, my version of this only accepts deseq or edger.
+#'  old, my version of this only accepts deseq or edger.
 #' @param alpha_type I assume p-adjust type.
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
@@ -112,7 +113,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
 #' @param mean_or_median Use mean or median values?
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
-#' @return A list containin the various tables and plots returned by PROPER.
+#' @return List containin the various tables and plots returned by PROPER.
+#' @seealso [PROPER]
 #' @export
 simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                           reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
@@ -235,9 +237,10 @@ run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 #' @param Nreps2 Second vector of replicates.
 #' @param nsims How many simulations to perform?
 #' @param sim.opts Options provided in a list which include information about the expression,
-#'   numbers of genes, logFC values, etc.
+#'  numbers of genes, logFC values, etc.
 #' @param DEmethod I suggest using only either edgeR or DESeq2.
 #' @param verbose Print some information along the way?
+#' @seealso [PROPER]
 my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
                         DEmethod = c("edgeR", "DSS", "DESeq", "DESeq2"), verbose = TRUE) {
   DEmethod <- match.arg(DEmethod)

@@ -25,5 +25,5 @@ results.
 Invoked by deseq_pairwise() and edger_pairwise().
 }
 \seealso{
-\pkg{DESeq2} \pkg{edgeR}
+[DESeq2] [edgeR] [choose_basic_dataset()] [choose_limma_dataset()]
 }

@@ -76,5 +76,5 @@ clusterprofiler/topgo/gostats/gprofiler.
 }
 }
 \seealso{
-\pkg{goseq} \pkg{GO.db}
+[goseq] [GO.db] [GenomicFeatures] [stats::p.adjust()]
 }

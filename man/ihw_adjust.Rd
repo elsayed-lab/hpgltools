@@ -38,3 +38,6 @@ function.
 \details{
 https://bioconductor.org/packages/release/bioc/vignettes/IHW/inst/doc/introduction_to_ihw.html
 }
+\seealso{
+[IHW]
+}

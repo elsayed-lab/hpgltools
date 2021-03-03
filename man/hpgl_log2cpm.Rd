@@ -24,5 +24,5 @@ paper.
 }
 }
 \seealso{
-\pkg{edgeR}
+[edgeR]
 }

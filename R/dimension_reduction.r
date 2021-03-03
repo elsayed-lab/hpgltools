@@ -9,8 +9,7 @@
 #' @param fact Experimental factor from the original data.
 #' @param type Make this categorical or continuous with factor/continuous.
 #' @return The r^2 values of the linear model as a percentage.
-#' @seealso \pkg{corpcor}
-#'  \code{\link[corpcor]{fast.svd}}
+#' @seealso [corpcor] [stats::lm()]
 #' @export
 factor_rsquared <- function(datum, fact, type = "factor") {
   if (type == "factor") {
@@ -49,6 +48,7 @@ factor_rsquared <- function(datum, fact, type = "factor") {
 #' @param factors Set of experimental factors for which to calculate rsquared values.
 #' @param res_slot Where is the res data in the svd result?
 #' @param var_slot Where is the var data in the svd result?
+#' @return Data frame of rsquared values and cumulative sums.
 get_res <- function(svd_result, design, factors = c("condition", "batch"),
                     res_slot = "v", var_slot = "d") {
   retlst <- list()
@@ -91,15 +91,15 @@ get_res <- function(svd_result, design, factors = c("condition", "batch"),
 #'
 #' @param expt Data to analyze (usually exprs(somedataset)).
 #' @param expt_design Dataframe describing the experimental design, containing
-#'   columns with useful information like the conditions, batches, number of
-#'   cells, whatever...
+#'  columns with useful information like the conditions, batches, number of
+#'  cells, whatever...
 #' @param expt_factors Character list of experimental conditions to query for
-#'   R^2 against the fast.svd of the data.
+#'  R^2 against the fast.svd of the data.
 #' @param num_components Number of principle components to compare the design
-#'   factors against. If left null, it will query the same number of components
-#'   as factors asked for.
+#'  factors against. If left null, it will query the same number of components
+#'  as factors asked for.
 #' @param plot_pcas Plot the set of PCA plots for every pair of PCs queried.
-#' @param ...  Extra arguments for the pca plotter
+#' @param ... Extra arguments for the pca plotter
 #' @return a list of fun pca information:
 #'  svd_u/d/v: The u/d/v parameters from fast.svd
 #'  rsquared_table: A table of the rsquared values between each factor and principle component
@@ -111,8 +111,7 @@ get_res <- function(svd_result, design, factors = c("condition", "batch"),
 #'  anova_p: The p-value calculated from the anova() call
 #'  anova_sums: The RSS value from the above anova() call
 #'  cor_heatmap: A heatmap from recordPlot() describing pca_cor.
-#' @seealso \pkg{corpcor} \pkg{stats}
-#'  \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
+#' @seealso [corpcor] [plot_pca()] [plot_pcs()] [stats::lm()]
 #' @examples
 #' \dontrun{
 #'  pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
@@ -352,8 +351,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
 #' @param logged  Check for the log state of the data and adjust as deemed necessary?
 #' @return a list including the princomp biplot, histogram, and tables
 #'  of top/bottom n scored genes with their scores by component.
-#' @seealso \pkg{stats}
-#'  \code{\link[stats]{princomp}}
+#' @seealso [stats] [stats::princomp]
 #' @examples
 #' \dontrun{
 #'  information <- pca_highscores(df = df, conditions = cond, batches = bat)
@@ -416,6 +414,8 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
 #' @param pc_result  The result from plot_pca()
 #' @param components  List of three axes by component.
 #' @param file  File to write the created plotly object.
+#' @return List containing the plotly data and filename for the html widget.
+#' @seealso [plotly] [htmlwidgets]
 #' @export
 plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
   image_dir <- dirname(as.character(file))
@@ -467,8 +467,7 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #'  \item  res = a table of the PCA res data
 #'  \item  variance = a table of the PCA plot variance
 #' }
-#' @seealso \pkg{directlabels}
-#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @seealso [corpcor] [Rtsne] [uwot] [fastICA] [pcaMethods] [plot_pcs()]
 #' @examples
 #' \dontrun{
 #'  pca_plot <- plot_pca(expt = expt)
@@ -964,8 +963,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 #'  \item  res = a table of the PCA res data
 #'  \item  variance = a table of the PCA plot variance
 #' }
-#' @seealso \pkg{directlabels}
-#'  \code{\link[directlabels]{geom_dl}} \code{\link{plot_pcs}}
+#' @seealso [plot_pcs()]
 #' @examples
 #' \dontrun{
 #'  pca_plot <- plot_pca(expt = expt)
@@ -1439,10 +1437,11 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
 #' @param genes How many genes to observe?
 #' @param desired_pc Which component to examine?
 #' @param which_scores Perhaps one wishes to see the least-important genes, if
-#'   so set this to low.
+#'  so set this to low.
 #' @param ... Extra arguments passed, currently to nothing.
 #' @return List containing an expressionset of the subset and a plot of their
-#'   expression.
+#'  expression.
+#' @seealso [plot_sample_heatmap()]
 #' @export
 plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
                         ...) {
@@ -1479,7 +1478,7 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' that process as simple and pretty as possible.
 #'
 #' @param pca_data Dataframe of principle components PC1 .. PCN with any other
-#'   arbitrary information.
+#'  arbitrary information.
 #' @param first Principle component PCx to put on the x axis.
 #' @param second Principle component PCy to put on the y axis.
 #' @param variances List of the percent variance explained by each component.
@@ -1495,9 +1494,8 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' @param rug Include the rugs on the sides of the plot?
 #' @param cis What (if any) confidence intervals to include.
 #' @param ... Extra arguments dropped into arglist
-#' @return  gplot2 PCA plot
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[directlabels]{geom_dl}}
+#' @return gplot2 PCA plot
+#' @seealso [directlabels] [ggplot2] [plot_pca] [pca_information]
 #' @examples
 #' \dontrun{
 #'  pca_plot = plot_pcs(pca_data, first = "PC2", second = "PC4", design = expt$design)
@@ -1779,13 +1777,14 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
 #' @param y_pc Component to put on the y axis.
 #' @param outlines Include black outlines around glyphs?
 #' @param num_pc How many components to calculate, default to the number of
-#'   rows in the metadata.
+#'  rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
 #' @param tooltip Which columns to include in the tooltip.
-#' @param ...  Arguments passed through to the pca implementations and plotter.
+#' @param ... Arguments passed through to the pca implementations and plotter.
 #' @return This passes directly to plot_pca(), so its returns should be
-#'   applicable along with the result from ggplotly.
+#'  applicable along with the result from ggplotly.
+#' @seealso [plotly]
 #' @export
 plotly_pca <-  function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
                         plot_size = 5, plot_alpha = NULL, plot_labels = NULL, size_column = NULL,
@@ -1861,6 +1860,5 @@ u_plot <- function(plotted_us) {
   u_plot <- grDevices::recordPlot()
   return(u_plot)
 }
-
 
 ## EOF

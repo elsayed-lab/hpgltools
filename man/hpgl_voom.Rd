@@ -60,5 +60,5 @@ it.
 }
 }
 \seealso{
-\pkg{limma} \pkg{ggplot2}
+[limma::voom()]
 }

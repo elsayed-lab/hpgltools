@@ -33,7 +33,7 @@
 #' @param padj_type Add a consistent p adjustment of this type.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
-#' @seealso \code{\link{all_pairwise}}
+#' @seealso [all_pairwise()] [extract_significant_genes()]
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = funkytown)
@@ -671,7 +671,8 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
 #' @return List containing a) Dataframe containing the merged
 #'  limma/edger/deseq/basic tables, and b) A summary of how many
 #'  genes were observed as up/down by output table.
-#' @seealso \pkg{data.table} \pkg{openxlsx}
+#' @seealso [data.table] [hpgl_padjust()] [extract_keepers_all()] [extract_keepers_lst()]
+#'  [extract_keepers_single()]
 combine_single_de_table <- function(li = NULL, ed = NULL, eb = NULL, de = NULL, ba = NULL,
                                     table_name = "", final_table_names = c(),
                                     annot_df = NULL, do_inverse = FALSE,

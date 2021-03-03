@@ -46,7 +46,5 @@ describing the relationship between the columns of data plotted.
 }
 }
 \seealso{
-\pkg{ggplot2} \pkg{googleVis}
- \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
- \code{\link{plot_linear_scatter}}
+[plot_linear_scatter()] [all_pairwise()]
 }

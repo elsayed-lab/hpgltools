@@ -18,3 +18,6 @@ A spring-fresh R session, hopefully.
 \description{
 Clear an R session, this is probably unwise given what I have read about R.
 }
+\seealso{
+[R.utils]
+}

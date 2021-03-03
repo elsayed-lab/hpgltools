@@ -31,5 +31,5 @@ deseq2/edger and friends.
 }
 }
 \seealso{
-\pkg{edgeR} \pkg{limma} \pkg{DESeq2}
+[edgeR] [limma] [DESeq2] [preprocessCore] [BiocGenerics]
 }

@@ -4,10 +4,9 @@
 #'
 #' This was written primarily to understand what that function is doing in edgeR.
 #'
-#' @param data  A dataframe/expt/exprs with count data
-#' @return a plot! of the BCV a la ggplot2.
-#' @seealso \pkg{edgeR}
-#'  \code{\link[edgeR]{plotBCV}}
+#' @param data Dataframe/expt/exprs with count data
+#' @return Plot of the BCV a la ggplot2.
+#' @seealso [edgeR::plotBCV()] [ggplot2]
 #' @examples
 #' \dontrun{
 #'  bcv <- plot_bcv(expt)
@@ -77,16 +76,14 @@ plot_bcv <- function(data) {
 #' @param xlab x-axis label.
 #' @param ylab y-axis label.
 #' @return Ggplot2 scatter plot.  This plot provides a "bird's eye"
-#' view of two data sets.  This plot assumes the two data structures
-#' are not correlated, and so it calculates the median/mad of each
-#' axis and uses these to calculate a stupid, home-grown distance
-#' metric away from both medians.  This distance metric is used to
-#' color dots which are presumed the therefore be interesting because
-#' they are far from 'normal.'  This will make a fun clicky googleVis
-#' graph if requested.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
-#'  \code{\link{plot_linear_scatter}}
+#'  view of two data sets.  This plot assumes the two data structures
+#'  are not correlated, and so it calculates the median/mad of each
+#'  axis and uses these to calculate a stupid, home-grown distance
+#'  metric away from both medians.  This distance metric is used to
+#'  color dots which are presumed the therefore be interesting because
+#'  they are far from 'normal.'  This will make a fun clicky googleVis
+#'  graph if requested.
+#' @seealso [ggplot2::geom_point()] [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
 #'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
@@ -157,7 +154,7 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' @param identity Add the identity line?
 #' @param loess Add a loess estimation?
 #' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple
-#'   possible types, I think linear is the most common.
+#'  possible types, I think linear is the most common.
 #' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.
@@ -167,21 +164,20 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' @param ylab Alternate x-axis label.
 #' @param color_high Chosen color for points significantly above the mean.
 #' @param color_low Chosen color for points significantly below the mean.
-#' @param alpha  Choose an alpha channel to define how see-through the dots are.
+#' @param alpha Choose an alpha channel to define how see-through the dots are.
 #' @param ... Extra args likely used for choosing significant genes.
 #' @return List including a ggplot2 scatter plot and some histograms.  This plot
-#'   provides a "bird's eye" view of two data sets.  This plot assumes a
-#'   (potential) linear correlation between the data, so it calculates the
-#'   correlation between them.  It then calculates and plots a robust linear
-#'   model of the data using an 'SMDM' estimator (which I don't remember how to
-#'   describe, just that the document I was reading said it is good).  The
-#'   median/mad of each axis is calculated and plotted as well.  The distance
-#'   from the linear model is finally used to color the dots on the plot.
-#'   Histograms of each axis are plotted separately and then together under a
-#'   single cdf to allow tests of distribution similarity.  This will make a fun
-#'   clicky googleVis graph if requested.
-#' @seealso \pkg{robust} \pkg{stats} \pkg{ggplot2}
-#'  \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
+#'  provides a "bird's eye" view of two data sets.  This plot assumes a
+#'  (potential) linear correlation between the data, so it calculates the
+#'  correlation between them.  It then calculates and plots a robust linear
+#'  model of the data using an 'SMDM' estimator (which I don't remember how to
+#'  describe, just that the document I was reading said it is good).  The
+#'  median/mad of each axis is calculated and plotted as well.  The distance
+#'  from the linear model is finally used to color the dots on the plot.
+#'  Histograms of each axis are plotted separately and then together under a
+#'  single cdf to allow tests of distribution similarity.  This will make a fun
+#'  clicky googleVis graph if requested.
+#' @seealso [robust] [stats] [ggplot2] [robust::lmRob] [stats::weights] [plot_histogram()]
 #' @examples
 #' \dontrun{
 #'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
@@ -405,15 +401,11 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @param label Label the top/bottom n logFC values?
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
-#'   normalized counts by type across all sample types on the x axis, and the
-#'   log fold change between conditions on the y-axis. Dots are colored
-#'   depending on if they are 'significant.'  This will make a fun clicky
-#'   googleVis graph if requested.
-#' @seealso \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
-#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
-#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
-#'  \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
-#'  \code{\link[limma]{contrasts.fit}}
+#'  normalized counts by type across all sample types on the x axis, and the
+#'  log fold change between conditions on the y-axis. Dots are colored
+#'  depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 #' @examples
 #'  \dontrun{
 #'   plot_ma(voomed_data, table, gvis_filename = "html/fun_ma_plot.html")
@@ -609,11 +601,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
 #' This function should make it easy to color a family of genes in any of the
 #' point plots.
 #'
-#' @param plot  Geom_point based plot
-#' @param df  Data frame used to create the plot
-#' @param ids  Set of ids which must be in the rownames of df to recolor
-#' @param color  Chosen color for the new points.
-#' @param ...  Extra arguments are passed to arglist.
+#' @param plot Geom_point based plot
+#' @param df Data frame used to create the plot
+#' @param ids Set of ids which must be in the rownames of df to recolor
+#' @param color Chosen color for the new points.
+#' @param ... Extra arguments are passed to arglist.
 #' @return prettier plot.
 recolor_points <- function(plot, df, ids, color = "red", ...) {
   arglist <- list(...)
@@ -638,18 +630,17 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @param design Eesign matrix.
 #' @param colors Color scheme.
 #' @param plot_labels How do you want to label the graph? 'fancy' will use
-#'   directlabels() to try to match the labels with the positions without
-#'   overlapping anything else will just stick them on a 45' offset next to the
-#'   graphed point.
-#' @param expt_names  Column or character list of preferred sample names.
-#' @param label_chars  How many characters for sample names before abbreviation.
-#' @param plot_legend  Print a legend for this plot?
+#'  directlabels() to try to match the labels with the positions without
+#'  overlapping anything else will just stick them on a 45' offset next to the
+#'  graphed point.
+#' @param expt_names Column or character list of preferred sample names.
+#' @param label_chars How many characters for sample names before abbreviation.
+#' @param plot_legend Print a legend for this plot?
 #' @param title Add a title?
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each
-#'   library's CPM.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
+#'  library's CPM.
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  nonzero_plot <- plot_nonzero(expt = expt)
@@ -771,8 +762,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
 #' @param log Is the data in log format?
 #' @param ... Options are good and passed to arglist().
 #' @return List of affy::maplots
-#' @seealso \pkg{affy}
-#'  \code{\link[affy]{ma.plot}}
+#' @seealso [affy::ma.plot()]
 #' @examples
 #' \dontrun{
 #'  ma_plots = plot_pairwise_ma(expt = some_expt)
@@ -845,9 +835,7 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
 #' @param ylab Alternate x-axis label.
 #' @param alpha Define how see-through the dots are.
 #' @return Ggplot2 scatter plot.
-#' @seealso \pkg{ggplot2} \pkg{googleVis}
-#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
-#'  \code{\link{plot_linear_scatter}}
+#' @seealso [plot_linear_scatter()] [all_pairwise()]
 #' @examples
 #' \dontrun{
 #'  plot_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
@@ -895,7 +883,7 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' significance of the signal."
 #'
 #' @param table Dataframe from limma's toptable which includes log(fold change) and an
-#'     adjusted p-value.
+#'  adjusted p-value.
 #' @param alpha How transparent to make the dots.
 #' @param color_by By p-value something else?
 #' @param color_list List of colors for significance.
@@ -905,7 +893,7 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' @param line_color What color for the significance lines?
 #' @param line_position Put the significance lines above or below the dots?
 #' @param logfc Cutoff defining the minimum/maximum fold change for
-#'   interesting.
+#'  interesting.
 #' @param p_col Which column contains the p-value data?
 #' @param p_name Name of the p-value to put on the plot.
 #' @param p Cutoff defining significant from not.
@@ -918,10 +906,7 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #'   with respect to log(fold change).  The cutoff values are delineated with
 #'   lines and mark the boundaries between 'significant' and not.  This will
 #'   make a fun clicky googleVis graph if requested.
-#' @seealso \pkg{limma}
-#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
-#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
-#'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
+#' @seealso [all_pairwise()]
 #' @examples
 #' \dontrun{
 #'  plot_volcano_de(table, gvis_filename = "html/fun_ma_plot.html")

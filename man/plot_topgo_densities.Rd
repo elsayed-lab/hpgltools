@@ -18,5 +18,5 @@ density plot as per topgo
 This can make a large number of plots.
 }
 \seealso{
-\pkg{topGO}
+[topGO]
 }

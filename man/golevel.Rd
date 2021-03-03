@@ -22,5 +22,5 @@ This just wraps golev() in mapply.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[golev()]
 }

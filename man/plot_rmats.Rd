@@ -48,5 +48,5 @@ This was mostly copy/pasted from plot_suppa().
 }
 }
 \seealso{
-\code{\link{plot_suppa}}
+[plot_supps()]
 }
