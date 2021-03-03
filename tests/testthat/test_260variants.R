@@ -19,7 +19,7 @@ gff_file <- system.file("share/clbr/clbrener_8.1_complete_genes.gff.gz", package
 gff_annotations <- load_gff_annotations(gff_file, type = "gene")
 rownames(gff_annotations) <- gff_annotations[["ID"]]
 meta <- system.file("share/clbr/clbr_samples_combined.xlsx", package = "hpgltools")
-untarred <- utils::untar(tarfile = system.file("share/clbr/clbr_counts.tar", package = "hpgltools"))
+untarred <- utils::untar(tarfile = system.file("share/clbr/clbr_counts.tar.xz", package = "hpgltools"))
 all_expt <- create_expt(metadata = meta, file_column = "clbrenerfile", gene_info = gff_annotations)
 
 expected <- 25100

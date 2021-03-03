@@ -51,7 +51,7 @@ context("250proteomics.R:
 ## For most of the above choices, I have functions in the hpgltools to help.
 
 meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgltools")
-untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar",
+untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
                                                package = "hpgltools"))
 ##mtb_expt <- create_expt(meta = meta)
 

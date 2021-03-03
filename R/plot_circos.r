@@ -957,7 +957,7 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
     dir.create(ideogram_dir, recursive = TRUE)
   }
 
-  etc_file <- file.path(path.package('hpgltools'), "circos", "circos_etc.tar")
+  etc_file <- file.path(path.package('hpgltools'), "share", "circos", "circos_etc.tar.xz")
   etc_cmd <- glue::glue("tar -C {dirname(conf_dir)} -xavf {etc_file} 2>/dev/null 1>&2")
   system(command = etc_cmd)
 

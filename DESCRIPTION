@@ -119,5 +119,4 @@ Collate:
   'sequence.r'
   'power_estimation.r'
   'xlsx.r'
-  'mlseq.r'
   'motif.r'

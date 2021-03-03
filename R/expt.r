@@ -217,7 +217,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  sb_annot <- as.data.frame(sb_annot)
 #'  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL
-#'  sb_data <- system.file("share", "sb", "preprocessing.tar", package = "hpgltools")
+#'  sb_data <- system.file("share", "sb", "preprocessing.tar.xz", package = "hpgltools")
 #'  untarred <- utils::untar(tarfile = sb_data)
 #'  sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
 #'                         gene_info = sb_annot)
