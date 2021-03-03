@@ -38,6 +38,9 @@ This is once again a place where mcols() usage might improve the overall
 quality of life.
 }
 \examples{
+ pa_data <- get_paeruginosa_data()
+ pa_fasta <- pa_data[["fasta"]]
+ pa_gff <- pa_data[["gff"]]
  ta_count <- pattern_count_genome(pa_fasta, pa_gff)
  head(ta_count)
 }

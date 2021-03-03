@@ -19,6 +19,7 @@
 #' @return Data frame of gene IDs and widths.
 #' @seealso [rtracklayer] [load_gff_annotations()]
 #' @examples
+#'  pa_gff <- system.file("share", "paeruginosa_pa14.gff", package = "hpgltools")
 #'  pa_genesizes <- get_genesizes(gff = pa_gff)
 #'  head(pa_genesizes)
 #' @export
@@ -102,6 +103,7 @@ get_genesizes <- function(annotation = NULL, type = "gff", gene_type = "gene",
 #'  [load_kegg_annotations()] [load_trinotate_annotations()] [load_microbesonline_annotations()]
 #'  [load_uniprot_annotations()]
 #' @examples
+#'  example_gff <- get_paeruginosa_data()[["gff"]]
 #'  gff_annotations <- load_annotations(type = "gff", gff = example_gff)
 #'  dim(gff_annotations)
 #' @export

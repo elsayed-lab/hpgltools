@@ -1,4 +1,4 @@
-VERSION=2017.10
+VERSION=2021.03
 export _R_CHECK_FORCE_SUGGESTS_=FALSE
 
 all: clean roxygen reference check build test
@@ -47,7 +47,8 @@ clean_vignette:
 
 covr: install
 	@echo "Invoking covr"
-	R -e "x <- covr::package_coverage('.', type='all', quiet=FALSE); covr::report(x, file='hpgltools-report.html')"
+	R -e "x <- covr::package_coverage('.', quiet=FALSE); covr::report(x, file='hpgltools-report.html')"
+##	R -e "x <- covr::package_coverage('.', type='all', quiet=FALSE); covr::report(x, file='hpgltools-report.html')"
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
@@ -55,18 +56,18 @@ deps:
 
 document: roxygen vignette reference
 
-install: roxygen reference
-	@echo "Performing R CMD INSTALL hpgltools."
-	R CMD INSTALL --no-staged-install --install-tests .
+install: reference roxygen
+	echo "Performing R CMD INSTALL hpgltools."
+	R CMD INSTALL --install-tests .
 
 install_bioconductor:
 	R -e "library(hpgltools); bioc_all()"
 
 prereq:
-	@echo "Checking a few prerequisites."
-	R -e "install.packages('BiocManager', repo='http://cran.rstudio.com/')"
+	@echo "Checking a few prerequisites that seem to fall between the cracks sometimes."
+	R -e "if (! 'BiocManager' %in% installed.packages()) { install.packages('BiocManager', repo='http://cran.rstudio.com/') }"
 	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-for (req in bioc_prereq) { if (class(try(suppressMessages(eval(parse(text=paste0('library(', req, ')')))), silent=TRUE)) == 'try-error') { BiocManager::install(req) } }"
+for (req in bioc_prereq) { if (! req %in% installed.packages()) { BiocManager::install(req) } }"
 
 push:
 	echo "Pushing to github."
@@ -76,31 +77,15 @@ reference:
 	@echo "Generating reference manual with R CMD Rd2pdf"
 	mkdir -p inst/doc
 	rm -f inst/doc/reference.pdf
-	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview 2>/dev/null
+	R CMD Rd2pdf . -o inst/doc/reference.pdf --no-preview 2>/dev/null &
 
 roxygen:
 	@echo "Generating documentation with devtools::document()"
 	R -e "suppressPackageStartupMessages(devtools::document())"
 
-suggests:
-	@echo "Installing suggested packages."
-	R -e "source('http://bioconductor.org/biocLite.R');\
-library(desc);\
-d = description\$$new(); suggests = d\$$get('Suggests');\
- suggests = gsub(pattern='\\n', replacement='', x=suggests);\
- suggests = gsub(pattern=' ', replacement='', x=suggests);\
- suggests = strsplit(x=suggests, split=',');\
- for (pkg in suggests[[1]]) { if (! pkg %in% installed.packages()) { biocLite(pkg); } else { message(paste0(pkg, ' is already installed.')) } };"
-
 test: install
 	@echo "Running run_tests.R"
-	tests/testthat.R
-
-update:
-	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); library(BiocInstaller); biocValid()"
-
-update_bioc:
-	R -e "source('http://bioconductor.org/biocLite.R'); biocLite(); biocLite('BiocUpgrade');"
+	R -e "library(hpgltools); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
 
 vignette:
 	@mkdir -p doc

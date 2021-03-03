@@ -27,6 +27,7 @@
 #' @seealso [rtracklayer] [load_gff_annotations()]
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
 #'  gas_iranges <- gff2irange(example_gff)
 #'  colnames(as.data.frame(gas_iranges))
 #' @export
@@ -74,6 +75,7 @@ gff2irange <- function(gff, type = NULL) {
 #' @return Dataframe of the annotation information found in the gff file.
 #' @seealso [rtracklayer] [GenomicRanges]
 #' @examples
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
 #'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  dim(gas_gff_annot)
 #' @export
@@ -170,6 +172,9 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #' @return Data frame of gene names and number of times the pattern appears/gene.
 #' @seealso [Biostrings] [Rsamtools::FaFile()] [Biostrings::PDict()]
 #' @examples
+#'  pa_data <- get_paeruginosa_data()
+#'  pa_fasta <- pa_data[["fasta"]]
+#'  pa_gff <- pa_data[["gff"]]
 #'  ta_count <- pattern_count_genome(pa_fasta, pa_gff)
 #'  head(ta_count)
 #' @export
@@ -220,6 +225,9 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
 #' @return List of data frames containing gc/at/gt/ac contents.
 #' @seealso [Biostrings] [Rsamtools]
 #' @examples
+#'  pa_data <- get_paeruginosa_data()
+#'  pa_fasta <- pa_data[["fasta"]]
+#'  pa_gff <- pa_data[["gff"]]
 #'  pa_attribs <- sequence_attributes(pa_fasta, gff = pa_gff)
 #'  head(pa_attribs)
 #' @export

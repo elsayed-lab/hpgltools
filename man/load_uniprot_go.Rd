@@ -16,8 +16,12 @@ Ontology dataframe
 Extract ontology information from a uniprot dataframe.
 }
 \examples{
+\dontrun{
+ uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
+ sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
  sc_uniprot_go <- load_uniprot_go(sc_uniprot_annot)
  head(sc_uniprot_go)
+}
 }
 \seealso{
 [load_uniprot_annotations()] [stringr] [tidyr]

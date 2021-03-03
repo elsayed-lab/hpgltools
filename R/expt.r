@@ -197,12 +197,14 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  [set_expt_conditions()] [set_expt_batches()] [set_expt_samplenames()] [subset_expt()]
 #'  [set_expt_colors()] [set_expt_genenames()] [tximport] [load_annotations()]
 #' @examples
+#'  cdm_expt_rda <- system.file("share", "cdm_expt.rda", package = "hpgltools")
 #'  load(file = cdm_expt_rda)
 #'  head(cdm_counts)
 #'  head(cdm_metadata)
 #'  ## The gff file has differently labeled locus tags than the count tables, also
 #'  ## the naming standard changed since this experiment was performed, therefore I
 #'  ## downloaded a new gff file.
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
 #'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  rownames(gas_gff_annot) <- make.names(gsub(pattern = "(Spy)_", replacement = "\\1",
 #'                                             x = gas_gff_annot[["locus_tag"]]), unique = TRUE)
@@ -210,10 +212,12 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'                           count_dataframe = cdm_counts)
 #'  head(pData(mgas_expt))
 #'  ## An example using count tables referenced in the metadata.
+#'  sb_annot <- system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgltools")
 #'  sb_annot <- load_trinotate_annotations(trinotate = sb_annot)
 #'  sb_annot <- as.data.frame(sb_annot)
-#'   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
+#'  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL
+#'  sb_data <- system.file("share", "sb", "preprocessing.tar", package = "hpgltools")
 #'  untarred <- utils::untar(tarfile = sb_data)
 #'  sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
 #'                         gene_info = sb_annot)

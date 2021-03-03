@@ -20,6 +20,7 @@ We should be able to have an agnostic annotation loader which can take some
 standard arguments and figure out where to gather data on its own.
 }
 \examples{
+ example_gff <- get_paeruginosa_data()[["gff"]]
  gff_annotations <- load_annotations(type = "gff", gff = example_gff)
  dim(gff_annotations)
 }

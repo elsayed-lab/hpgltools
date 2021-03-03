@@ -19,6 +19,7 @@ peculiar fashion, so this function attempts to make it easier to read and put
 them into a format usable in an expressionset.
 }
 \examples{
+ sb_annot <- get_sbetaceum_data()[["annot"]]
  a_few_trinotate <- load_trinotate_annotations(trinotate = sb_annot)
  dim(a_few_trinotate)
 }

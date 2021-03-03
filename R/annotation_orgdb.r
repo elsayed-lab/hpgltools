@@ -351,6 +351,7 @@ map_orgdb_ids <- function(orgdb, gene_ids = NULL, mapto = "ensembl", keytype = "
 #' @seealso [org.Dm.eg.db]
 #' @examples
 #'  ids <- c("Dm.9", "Dm.2294", "Dm.4971")
+#'  dm_orgdb <- "org.Dm.eg.db"
 #'  keytype_guess <- guess_orgdb_keytype(ids, dm_orgdb)
 #'  keytype_guess
 #' @export

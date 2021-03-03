@@ -24,6 +24,9 @@ This extends the logic of the pattern searching in pattern_count_genome() to
 search on some other attributes.
 }
 \examples{
+ pa_data <- get_paeruginosa_data()
+ pa_fasta <- pa_data[["fasta"]]
+ pa_gff <- pa_data[["gff"]]
  pa_attribs <- sequence_attributes(pa_fasta, gff = pa_gff)
  head(pa_attribs)
 }

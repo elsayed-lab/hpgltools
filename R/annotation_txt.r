@@ -14,6 +14,7 @@
 #' @return Dataframe of fun data.
 #' @seealso [tidyr] [readr]
 #' @examples
+#'  sb_annot <- get_sbetaceum_data()[["annot"]]
 #'  a_few_trinotate <- load_trinotate_annotations(trinotate = sb_annot)
 #'  dim(a_few_trinotate)
 #' @export
@@ -160,9 +161,10 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
 #'
 #' @param trinotate CSV of trinotate annotation data.
 #' @return List of the extracted GO data, a table of it, length data, and the
-#'   resulting length table.
+#'  resulting length table.
 #' @seealso [load_trinotate_annotations()]
 #' @examples
+#'  sb_annot <- get_sbetaceum_data()[["annot"]]
 #'  trinotate_go <- load_trinotate_go(trinotate = sb_annot)
 #'  dim(trinotate_go$go_data)
 #'  dim(trinotate_go$go_table)
