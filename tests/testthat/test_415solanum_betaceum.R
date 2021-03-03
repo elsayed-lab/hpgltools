@@ -13,7 +13,7 @@ test_that("Do we get the expected trinotate annotation data?", {
 })
 
 ## Try loading some data generated with Sandra and make sure it still works.
-untarred <- utils::untar(tarfile = system.file("share/sb/preprocessing.tar",
+untarred <- utils::untar(tarfile = system.file("share/sb/preprocessing.tar.xz",
                                                package = "hpgltools"))
 
 ## A little context: Sandra is working with an organism with no genome and no love.
