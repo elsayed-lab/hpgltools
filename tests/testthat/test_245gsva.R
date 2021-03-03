@@ -12,6 +12,7 @@ hs_envir <- environment()
 hs_file <- system.file("share/hs_expt.rda", package = "hpgltools")
 load(file = hs_file, envir = hs_envir)
 hs_expt <- hs_envir[["expt"]]
+hs_expt <- subset_expt(hs_expt, subset="condition=='sh'|condition=='chr'")
 
 hs_annot <- load_biomart_annotations()[["annotation"]]
 rownames(hs_annot) <- make.names(hs_annot[["ensembl_gene_id"]], unique = TRUE)
@@ -50,7 +51,7 @@ test_that("We can make gene set collections from DE outputs?", {
   expect_gt(length(GSEABase::geneIds(sig_gsc[[1]])), 500)
 })
 
-xcell_result <- simple_xcell(expt = hs_filt, column = "cds_length")
+xcell_result <- simple_xcell(expt = hs_filt, column = "cds_length", cores = 1)
 test_that("We get some expected results from xCell?", {
   expect_equal("recordedplot", class(xcell_result[["heatmap"]])[1])
 })

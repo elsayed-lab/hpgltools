@@ -1139,7 +1139,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)) {
-    cores <- min(detectCores(), 8)
+    cores <- min(detectCores() - 1, 8)
   }
 
   if (!is.null(msig_xml)) {
