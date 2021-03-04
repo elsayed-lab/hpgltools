@@ -236,7 +236,8 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
                                     model_batch = FALSE, factor_column = "condition", factor = NULL,
-                                    label_size = NULL, col_margin = 6, row_margin = 12) {
+                                    label_size = NULL, col_margin = 6, row_margin = 12,
+                                    type = "mean") {
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
@@ -246,22 +247,30 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## Combine gsva max(scores) with limma results
   ### get gsva within group means
   groups <- levels(gsva_scores[["conditions"]])
-  gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
+  gsva_score_means <- median_by_factor(data = gsva_scores, fact = factor_column, fun = type)
+  ## gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
   for (t in 1:length(gsva_limma[["all_tables"]])) {
     table <- gsva_limma[["all_tables"]][[t]]
-    contrasts <- num_den_string[[t]]
+    contrast <- num_den_string[[t]]
     ## get means from gsva_score_means for each contrast
-    first <- gsva_score_means[["Index"]][contrasts[1]][[1]]
-    second <- gsva_score_means[["Index"]][contrasts[2]][[1]]
-    ##get maximum value of group means in each contrast
-    maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
-    table[["gsva_score_max"]] <- maxs
+    numerator <- contrasts[1]
+    denominator <- contrasts[2]
+    ## first <- gsva_score_means[["Index"]][numerator][[1]]
+    ## second <- gsva_score_means[["Index"]][denominator][[1]]
+    numerator_samples <- gsva_score_means_old[["indexes"]][[numerator]]
+    denominator_samples <- gsva_score_means_old[["indexes"]][[denominator]]
+    ## get maximum value of group means in each contrast
+    ## maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
+    max_values <- apply(exprs(gsva_scores)[, numerator_samples | denominator_samples], 1, max)
+    table[["gsva_score_max"]] <- max_values
     varname1 <- paste0("Mean_", contrasts[1])
     varname2 <- paste0("Mean_", contrasts[2])
-    table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
-    table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    ## table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
+    table[[varname1]] <- gsva_score_means_old[["medians"]][[contrasts[1]]]
+    ## table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    table[[varname2]] <- gsva_score_means_old[["medians"]][[contrasts[2]]]
     gsva_limma[["all_tables"]][[t]] <- table
   }
 

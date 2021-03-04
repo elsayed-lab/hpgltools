@@ -1337,21 +1337,24 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   rownames(cvs) <- rownames(data)
   fact <- as.factor(fact)
   used_columns <- c()
+  group_indexes <- list()
   for (type in levels(fact)) {
-    columns <- grep(pattern = type, x = fact)
+    ## columns <- grep(pattern = type, x = fact)
+    columns <- as.character(fact) == type
+    group_indexes[[type]] <- columns
     med <- NULL
-    if (length(columns) < 1) {
+    if (sum(columns) < 1) {
       warning("The level ", type, " of the factor has no columns.")
       next
     }
     used_columns <- c(used_columns, type)
-    if (length(columns) == 1) {
+    if (sum(columns) == 1) {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
       cv <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
     } else {
       if (fun == "median") {
-        message("The factor ", type, " has ", length(columns), " rows.")
+        message("The factor ", type, " has ", sum(columns), " rows.")
         med <- matrixStats::rowMedians(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowMads(data[, columns], na.rm = TRUE)
         cv <- cv / med
@@ -1359,7 +1362,7 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
         nan_idx <- is.nan(cv)
         cv[nan_idx] <- 0
       } else if (fun == "mean") {
-        message("The factor ", type, " has ", length(columns), " rows.")
+        message("The factor ", type, " has ", sum(columns), " rows.")
         med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowSds(data[, columns], na.rm = TRUE)
         cv <- cv / med
@@ -1379,8 +1382,10 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   colnames(medians) <- used_columns
   colnames(cvs) <- used_columns
   retlist <- list(
+      "method" = fun,
       "medians" = medians,
-      "cvs" = cvs)
+      "cvs" = cvs,
+      "indexes" = group_indexes)
   return(retlist)
 }
 

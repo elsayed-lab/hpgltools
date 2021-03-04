@@ -110,7 +110,7 @@ test_that("Do we get some plots?", {
 go_test <- simple_goseq(ups, go_db = pombe_go, length_db = pombe_lengths)
 
 actual <- nrow(go_test[["bp_interesting"]])
-expected <- 97
+expected <- 90
 ## 16 and 17
 test_that("Does goseq provide a few biological processes?", {
   expect_gt(actual, expected)
