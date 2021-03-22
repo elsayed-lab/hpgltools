@@ -252,25 +252,26 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
   for (t in 1:length(gsva_limma[["all_tables"]])) {
+    table_name <- names(gsva_limma[["all_table"]])[t]
     table <- gsva_limma[["all_tables"]][[t]]
     contrast <- num_den_string[[t]]
     ## get means from gsva_score_means for each contrast
-    numerator <- contrasts[1]
-    denominator <- contrasts[2]
+    numerator <- contrast[1]
+    denominator <- contrast[2]
     ## first <- gsva_score_means[["Index"]][numerator][[1]]
     ## second <- gsva_score_means[["Index"]][denominator][[1]]
-    numerator_samples <- gsva_score_means_old[["indexes"]][[numerator]]
-    denominator_samples <- gsva_score_means_old[["indexes"]][[denominator]]
+    numerator_samples <- gsva_score_means[["indexes"]][[numerator]]
+    denominator_samples <- gsva_score_means[["indexes"]][[denominator]]
     ## get maximum value of group means in each contrast
     ## maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
     max_values <- apply(exprs(gsva_scores)[, numerator_samples | denominator_samples], 1, max)
     table[["gsva_score_max"]] <- max_values
-    varname1 <- paste0("Mean_", contrasts[1])
-    varname2 <- paste0("Mean_", contrasts[2])
+    varname1 <- paste0("Mean_", numerator)
+    varname2 <- paste0("Mean_", denominator)
     ## table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
-    table[[varname1]] <- gsva_score_means_old[["medians"]][[contrasts[1]]]
+    table[[varname1]] <- gsva_score_means[["medians"]][[numerator]]
     ## table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
-    table[[varname2]] <- gsva_score_means_old[["medians"]][[contrasts[2]]]
+    table[[varname2]] <- gsva_score_means[["medians"]][[denominator]]
     gsva_limma[["all_tables"]][[t]] <- table
   }
 
@@ -289,7 +290,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
   subset_eset <- gsva_eset
-  gl <- score_gsva_likelihoods(gsva_result, factor = fact)
+  gl <- score_gsva_likelihoods(gsva_result, factor = fact, label_size = label_size)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
   subset_eset <- subset_eset[keep_idx, ]
@@ -303,9 +304,11 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   } else {
     scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin),
-                           cexCol = label_size, cexRow = label_size)
+                           cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
+  subset_order <- rev(scored_ht[["rowInd"]])
+  subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
   order_column <- colnames(values)[1]
   gsva_table <- merge(annot, values, by = "row.names")
@@ -320,13 +323,13 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## At least when I create an expressionset, the fData and exprs have the
   ## same rownames from beginning to end.
   ## I guess this does not really matter, since we can use the full annotation table.
-  subset_tbl <- as.data.frame(exprs(subset_eset))
+  subset_tbl <- as.data.frame(subset_table)
   order_column <- colnames(subset_tbl)[1]
   subset_table <- merge(annot, subset_tbl, by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
   subset_table[["Row.names"]] <- NULL
-  reordered_subset_idx <- order(subset_table[[order_column]], decreasing = TRUE)
-  subset_table <- subset_table[reordered_subset_idx, ]
+  ## Set the table row order to the same as the hclust from the heatmap.
+  subset_table <- subset_table[subset_rownames, ]
 
   gl_tbl <- as.data.frame(gl[["likelihoods"]])
   order_column <- colnames(gl_tbl)[1]
@@ -1282,7 +1285,8 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   xcell_eset <- NULL
   if (expt_state != "rpkm") {
     message("xCell strongly perfers rpkm values, re-normalizing now.")
-    xcell_eset <- normalize_expt(expt, convert = "rpkm", ...)
+    xcell_eset <- normalize_expt(expt, convert = "rpkm",
+                                 ...)
   } else {
     xcell_eset <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
                                   filter = arglist[["filter"]], batch = arglist[["batch"]])
@@ -1332,16 +1336,20 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   ht_plot <- grDevices::recordPlot()
 
   sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
-  sig_result <- xcell_result[sig_idx, ]
-  if (is.null(label_size)) {
-    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
-                    margins = c(col_margin, row_margin))
-  } else {
-    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
-                    margins = c(col_margin, row_margin),
-                    cexCol = label_size, cexRow = label_size)
+  sig_plot <- NULL
+  sig_result <- NULL
+  if (sum(sig_idx) > 1) {
+    sig_result <- as.matrix(xcell_result[sig_idx, ])
+    if (is.null(label_size)) {
+      ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                      margins = c(col_margin, row_margin))
+    } else {
+      ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                      margins = c(col_margin, row_margin),
+                      cexCol = label_size, cexRow = label_size)
+    }
+    sig_plot <- grDevices::recordPlot()
   }
-  sig_plot <- grDevices::recordPlot()
 
   retlist <- list(
       "xcell_input" = xcell_input,

@@ -15,6 +15,7 @@ write_expt(
   batch = "sva",
   filter = TRUE,
   med_or_mean = "mean",
+  color_na = "#DD0000",
   ...
 )
 }

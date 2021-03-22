@@ -1512,7 +1512,8 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                       p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, top_percent = NULL,
                                       ma = TRUE, p_type = "adj", invert_barplots = FALSE,
                                       excel = NULL,
-                                      siglfc_cutoffs = c(0, 1, 2), ...) {
+                                      siglfc_cutoffs = c(0, 1, 2),
+                                      ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
   fc_column <- ""
@@ -1619,7 +1620,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       chosen_column <- fc_column
     } else if (test_column %in% colnames(combined[["data"]][[1]])) {
       skip <- FALSE
-      chosen_column <- fc_column
+      chosen_column <- test_column
     }
     if (isTRUE(skip)) {
       message("Did not find the ", test_column, ", skipping ", according, ".")
@@ -1661,6 +1662,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       ##message("Writing excel data according to ", according, " for ", table_name, ": ",
       ##        table_count, "/", num_tables * factor, ".")
 
+      ## FIXME: hmm this looks redundant redundant, reconcile this with the section ~ line 1615 above.
       table <- all_tables[[table_name]]
       if (is.null(arglist[["fc_column"]])) {
         fc_column <- glue::glue("{according}{logfc_suffix}")
@@ -1715,11 +1717,12 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     do_excel <- TRUE
     if (is.null(excel)) {
       do_excel <- FALSE
-    } else if (isFALSE(excel)) {
+    }
+    if (isFALSE(excel)) {
       do_excel <- FALSE
     } else {
       message("Printing significant genes to the file: ", excel)
-      xlsx_ret <- print_ups_downs(ret[[according]], wb = wb, excel = excel, according = according,
+      xlsx_ret <- print_ups_downs(ret[[according]], wb, excel_basename, according = according,
                                   summary_count = summary_count, ma = ma)
       image_files <- c(xlsx_ret[["images_files"]], image_files)
       ## This is in case writing the sheet resulted in it being shortened.
@@ -2042,20 +2045,15 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
 #'
 #' @param upsdowns Output from extract_significant_genes().
 #' @param wb Workbook object to use for writing, or start a new one.
-#' @param excel Filename for writing the data.
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @param ma Include ma plots?
 #' @return Return from write_xlsx.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
-print_ups_downs <- function(upsdowns, wb = NULL, excel = "excel/significant_genes.xlsx",
-                            according = "limma", summary_count = 1, ma = FALSE) {
+print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
+                            summary_count = 1, ma = FALSE) {
   image_files <- c()
-  xls_result <- NULL
-  xlsx <- init_xlsx(excel)
-  wb <- xlsx[["wb"]]
-  excel_basename <- xlsx[["basedir"]]
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]
   up_titles <- upsdowns[["up_titles"]]

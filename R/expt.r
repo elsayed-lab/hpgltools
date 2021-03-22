@@ -2314,6 +2314,90 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
   return(new_expt)
 }
 
+#' Try a very literal subtraction
+#'
+#' @param expt Input expressionset.
+#' @param new_meta dataframe containing the new metadata.
+#' @param sample_column Column in the sample sheet to use to acquire the sample IDs given the
+#'  subtractions.
+#' @param convert_state Expected state of the input data vis a vis conversion (rpkm/cpm).
+#' @param transform_state Expected state of the input data vis a vis transformation (log/linear).
+#' @param negative_to_zero Set negative subtracted values to zero?
+#' @param savefile Save the new expt data to this file.
+#' @param ... Parameters to pass to normalize_expt()
+#' @return New expt
+#' @export
+subtract_expt <- function(expt, new_meta, sample_column = "sample",
+                          convert_state = "cpm", transform_state = "raw",
+                          handle_negative = "zero", savefile = "subtracted.rda",
+                          ...) {
+  arglist <- list(...)
+  if (expt[["state"]][["conversion"]] != convert_state) {
+    expt <- normalize_expt(expt, convert = convert_state)
+  }
+  if (expt[["state"]][["transform"]] != transform_state) {
+    expt <- normalize_expt(expt, transform = transform_state)
+  }
+
+  meta <- pData(expt)
+  mtrx <- as.data.frame(exprs(expt))
+  samples <- colnames(mtrx)
+  new_exprs <- data.frame(row.names = rownames(mtrx))
+  new_pdata <- data.frame()
+  sub_names <- rownames(new_meta)
+  for (s in 1:nrow(new_meta)) {
+    sub_name <- sub_names[s]
+    numerator <- new_meta[sub_name, "numerator"]
+    denominator <- new_meta[sub_name, "denominator"]
+    s1_idx <- meta[[sample_column]] == numerator
+    s1 <- samples[s1_idx]
+    s2_idx <- meta[[sample_column]] == denominator
+    s2 <- samples[s2_idx]
+    if (sum(s1_idx) != 1) {
+      stop("Do not have 1 sample for subtraction: ", sub_name, ", ", numerator, "." )
+    }
+    if (sum(s2_idx) != 1) {
+      stop("Do not have 1 sample for subtraction: ", sub_name, ", ", denominator, ".")
+    }
+    new_exprs[[sub_name]] <- mtrx[[s1]] - mtrx[[s2]]
+    new_pdatum <- meta[s1, ]
+    new_pdatum[["condition"]] <- new_meta[s, "condition"]
+    new_pdatum[["batch"]] <- new_meta[s, "batch"]
+    new_pdatum[["numerator"]] <- numerator
+    new_pdatum[["denominator"]] <- denominator
+    new_pdata <- rbind(new_pdata, new_pdatum)
+  }
+  rownames(new_pdata) <- sub_names
+  colnames(new_exprs) <- sub_names
+
+  negative_idx <- new_exprs < 0
+  negative_pct <- (sum(negative_idx) / (nrow(new_exprs) * ncol(new_exprs))) * 100.0
+  message("There are ", sum(negative_idx), " elements which are less than 0, (",
+          signif(negative_pct, 3), "%)")
+  if (is.null(handle_negative)) {
+    message("Leaving negative values alone.")
+  } else if (handle_negative[1] == "zero") {
+    message("Setting negative values to zero.")
+    new_exprs[negative_idx] <- 0
+  } else if (handle_negative[1] == "na") {
+    message("Setting negative values to NA.")
+    new_exprs[negative_idx] <- NA
+  } else {
+    message("I do not understand this option, leaving negative values alone.")
+  }
+
+  new_pdata[["subtracted_samplenames"]] <- sub_names
+  ## Now add the number of negative values observed.
+  new_pdata[["negative_values"]] <- colSums(negative_idx)
+  new_expt <- sm(create_expt(metadata = as.data.frame(new_pdata),
+                             gene_info = fData(expt),
+                             count_dataframe = as.matrix(new_exprs),
+                             savefile = savefile,
+                             id_column = "subtracted_samplenames"))
+  new_expt[["na_values"]] <- as.data.frame(negative_idx)
+  return(new_expt)
+}
+
 #' I want an easy way to sum counts in eupathdb-derived data sets.
 #' These have a few things which should make this relatively easy.
 #' Notably: The gene IDs look like: "exon_ID-1 exon_ID-2 exon_ID-3"
@@ -2458,7 +2542,8 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @export
 write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                        violin = TRUE, sample_heat = TRUE, convert = "cpm", transform = "log2",
-                       batch = "sva", filter = TRUE, med_or_mean = "mean", ...) {
+                       batch = "sva", filter = TRUE, med_or_mean = "mean",
+                       color_na = "#DD0000", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
@@ -2538,6 +2623,19 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   read_info <- merge(info, reads, by = "row.names")
   xls_result <- write_xlsx(data = read_info, wb = wb, sheet = sheet, rownames = FALSE,
                            start_row = new_row, start_col = new_col, title = "Raw Reads.")
+
+  ## Potentially useful for proteomics data and subtracted data.
+  if (!is.null(color_na)) {
+    na_style <- openxlsx::createStyle(fontColour = color_na)
+    nas <- expt[["na_values"]]
+    for (col in colnames(nas)) {
+      row_definition <- which(nas[[col]]) + 2
+      col_idx <- colnames(read_info) == col
+      col_definition <- which(col_idx)
+      colored <- openxlsx::addStyle(wb, sheet = sheet, na_style,
+                                    rows = row_definition, cols = col_definition)
+    }
+  }
 
   ## Write some graphs for the raw data
   message("Graphing the raw reads.")
@@ -2830,6 +2928,20 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   title <- what_happened(norm_data)
   xls_result <- write_xlsx(wb = wb, data = read_info, rownames = FALSE,
                            start_row = new_row, start_col = new_col, sheet = sheet, title = title)
+
+  ## Potentially useful for proteomics data and subtracted data.
+  if (!is.null(color_na)) {
+    na_style <- openxlsx::createStyle(fontColour = color_na)
+    nas <- expt[["na_values"]]
+    for (col in colnames(nas)) {
+      row_definition <- which(nas[[col]]) + 2
+      col_idx <- colnames(read_info) == col
+      col_definition <- which(col_idx)
+      colored <- openxlsx::addStyle(wb, sheet = sheet, na_style,
+                                    rows = row_definition, cols = col_definition)
+    }
+  }
+
 
   ## Graphs of the normalized data
   message("Graphing the normalized reads.")
@@ -3145,7 +3257,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
     "medians" = median_data
   )
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
   }
   return(retlist)
 }

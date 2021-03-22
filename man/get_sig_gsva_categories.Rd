@@ -13,7 +13,8 @@ get_sig_gsva_categories(
   factor = NULL,
   label_size = NULL,
   col_margin = 6,
-  row_margin = 12
+  row_margin = 12,
+  type = "mean"
 )
 }
 \arguments{

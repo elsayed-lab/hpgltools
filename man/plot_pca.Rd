@@ -16,6 +16,7 @@ plot_pca(
   pc_method = "fast_svd",
   x_pc = 1,
   y_pc = 2,
+  max_overlaps = 20,
   num_pc = NULL,
   expt_names = NULL,
   label_chars = 10,
@@ -44,6 +45,8 @@ plot_pca(
 \item{x_pc}{Component to put on the x axis.}
 
 \item{y_pc}{Component to put on the y axis.}
+
+\item{max_overlaps}{Passed to ggrepel.}
 
 \item{num_pc}{How many components to calculate, default to the number of
 rows in the metadata.}

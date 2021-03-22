@@ -454,6 +454,7 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #' @param pc_method how to extract the components? (svd
 #' @param x_pc Component to put on the x axis.
 #' @param y_pc Component to put on the y axis.
+#' @param max_overlaps Passed to ggrepel.
 #' @param num_pc How many components to calculate, default to the number of
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
@@ -476,7 +477,7 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #' @export
 plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
                      plot_size = 5, plot_alpha = NULL, plot_labels = NULL, size_column = NULL,
-                     pc_method = "fast_svd", x_pc = 1, y_pc = 2,
+                     pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
                      ...) {
   arglist <- list(...)
@@ -742,6 +743,9 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
       included_batch <- as.factor(as.character(design[[batch_column]]))
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
+    "ida" = {
+      svd_result <- iDA::iDA(mtrx, var.Features = "all")
+    },
     "fast_ica" = {
       ## Fill in the defaults from the ica package.
       alg_type <- "parallel"  ## alg.typ is how they name this argument, which is just too
@@ -905,7 +909,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 
   ## The plot_pcs() function gives a decent starting plot
   comp_plot <- plot_pcs(
-    comp_data, first = x_name, second = y_name, design = design,
+    comp_data, first = x_name, second = y_name, design = design, max_overlaps = max_overlaps,
     plot_labels = plot_labels, x_label = x_label, y_label = y_label,
     plot_title = plot_title, plot_size = plot_size, size_column = size_column,
     plot_alpha = plot_alpha,
@@ -1504,7 +1508,7 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                      design = NULL, plot_title = TRUE, plot_labels = NULL,
                      x_label = NULL, y_label = NULL, plot_size = 5, outlines = TRUE,
-                     plot_alpha = NULL, size_column = NULL, rug = TRUE,
+                     plot_alpha = NULL, size_column = NULL, rug = TRUE, max_overlaps = 20,
                      cis = c(0.95, 0.9), ...) {
   arglist <- list(...)
   batches <- as.factor(pca_data[["batch"]])
@@ -1657,9 +1661,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
         ggplot2::geom_point(alpha = plot_alpha, colour = "black", show.legend = FALSE,
                             aes_string(size = "size", shape = "batches", fill = "condition"))
 
-      ##size = plot_size, alpha = plot_alpha, colour = "black", show.legend = FALSE,
-      ##aes_string(shape = "batches",
-      ##fill = "condition"))
     }
     pca_plot <- pca_plot +
       ggplot2::geom_point(colour = "black", alpha = plot_alpha, show.legend = FALSE,
@@ -1684,7 +1685,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha = plot_alpha,
                           aes_string(shape = "batches",
-                                     colour = "pca_data[['condition']]",
+                                     colour = ".data[['condition']]",
                                      size = "size")) +
       ggplot2::scale_shape_manual(name = "Batch",
                                   labels = levels(as.factor(pca_data[["batch"]])),
@@ -1693,9 +1694,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_color_manual(name = "Condition",
                                   guide = "legend",
                                   values = color_list) +
-      ##ggplot2::scale_color_identity(name = "Condition",
-      ##                              guide = "legend",
-      ##                              values = color_list) +
       ggplot2::scale_size_manual(name = size_column,
                                  labels = levels(pca_data[[size_column]]),
                                  values = as.numeric(levels(pca_data[["size"]])))
@@ -1735,7 +1733,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                                     angle = 45, size = label_size, vjust = 2))
   } else if (plot_labels == "repel") {
     pca_plot <- pca_plot +
-      ggrepel::geom_text_repel(aes_string(label = "labels"),
+      ggrepel::geom_text_repel(aes_string(label = "labels"), max.overlaps = max_overlaps,
                                size = label_size, box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))

@@ -19,6 +19,7 @@ plot_pcs(
   plot_alpha = NULL,
   size_column = NULL,
   rug = TRUE,
+  max_overlaps = 20,
   cis = c(0.95, 0.9),
   ...
 )

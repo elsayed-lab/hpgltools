@@ -126,7 +126,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
   } else if (de_method == "deseq") {
     DEmethod <- "DESeq2"
   } else {
-      stop("This accepts only 'edger' or 'deseq'.")
+    stop("This accepts only 'edger' or 'deseq'.")
   }
   exprs_mtrx <- exprs(de_tables[["input"]][["input"]])
   genes <- nrow(de_tables[["data"]][[1]])
