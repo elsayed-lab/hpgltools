@@ -166,18 +166,18 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
 
   if (is.null(scale)) {
     if (max(data) > 10000) {
-      message("This data will benefit from being displayed on the log scale.")
-      message("If this is not desired, set scale='raw'")
+      mesg("This data will benefit from being displayed on the log scale.")
+      mesg("If this is not desired, set scale='raw'")
       scale <- "log"
       negative_idx <- data < 0
       if (sum(negative_idx) > 0) {
-        message("Some data are negative.  We are on log scale, setting them to 0.5.")
+        mesg("Some data are negative.  We are on a log scale, setting them to 0.5.")
         data[negative_idx] <- 0.5
         message("Changed ", sum(negative_idx), " negative features.")
       }
       zero_idx <- data == 0
       if (sum(zero_idx) > 0) {
-        message("Some entries are 0.  We are on log scale, setting them to 0.5.")
+        mesg("Some entries are 0.  We are on a log scale, setting them to 0.5.")
         data[zero_idx] <- 0.5
         message("Changed ", sum(zero_idx), " zero count features.")
       }

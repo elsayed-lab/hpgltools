@@ -8,6 +8,8 @@ removal.}
 cbcb_batch(
   normalized_counts,
   model,
+  conditional_model = NULL,
+  batch_model = NULL,
   batch1 = "batch",
   condition = "condition",
   matrix_scale = "linear",

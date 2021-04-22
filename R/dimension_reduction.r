@@ -475,7 +475,7 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #'  pca_plot
 #' }
 #' @export
-plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
+plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
                      plot_size = 5, plot_alpha = NULL, plot_labels = NULL, size_column = NULL,
                      pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
@@ -744,7 +744,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "ida" = {
-      svd_result <- iDA::iDA(mtrx, var.Features = "all")
+      svd_result <- iDA::iDA(mtrx)
     },
     "fast_ica" = {
       ## Fill in the defaults from the ica package.
@@ -890,10 +890,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
     }
     ## Just forcing the size to be numeric non-zero.
     comp_data[["size"]] <- as.factor(as.integer(comp_data[[size_column]]) + 1)
-  }
-
-  if (isTRUE(plot_title)) {
-    plot_title <- what_happened(expt = data)
   }
 
   ## Perform a check of the PC table.
@@ -1726,7 +1722,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     plot_labels <- "repel"
   }
   if (isFALSE(plot_labels)) {
-    message("Not putting labels on the PC plot.")
+    mesg("Not putting labels on the PC plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
       ggplot2::geom_text(aes_string(x = "PC1", y = "PC2", label = "labels",

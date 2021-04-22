@@ -76,12 +76,14 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
     message("transform_counts: Found ", less_zero, " values less than 0.")
   }
 
-  num_zero_counts <- count_table == 0
-  num_zero <- sum(num_zero_counts, na.rm = TRUE)
-  if (num_zero > 0) {
-    message("transform_counts: Found ", num_zero,
-            " values equal to 0, adding 1 to the matrix.")
-    count_table <- count_table + 1
+  if (method != "expt2") {
+    num_zero_counts <- count_table == 0
+    num_zero <- sum(num_zero_counts, na.rm = TRUE)
+    if (num_zero > 0) {
+      message("transform_counts: Found ", num_zero,
+              " values equal to 0, adding 1 to the matrix.")
+      count_table <- count_table + 1
+    }
   }
 
   if (!is.null(base)) {
@@ -93,6 +95,8 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
   } else if (method == "log") {
     ## Natural log
     count_table <- log(count_table)  ## Apparently log1p does this.
+  } else if (method == "expt2") {
+    count_table <- 2 ^ count_table
   } else {
     message("Did not recognize the transformation, leaving the table.
  Recognized transformations include: 'log2', 'log10', 'log'

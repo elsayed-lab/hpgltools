@@ -789,6 +789,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' }
 #' @export
 exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids = NULL,
+                               warning_cutoff = 90,
                                patterns = c("snRNA", "tRNA", "rRNA"), ...) {
   arglist <- list(...)
   ex <- expt[["expressionset"]]
@@ -854,8 +855,8 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
     }
   }
 
-  message("Before removal, there were ", nrow(Biobase::fData(ex)), " entries.")
-  message("Now there are ", nrow(Biobase::fData(kept)), " entries.")
+  message("Before removal, there were ", nrow(Biobase::fData(ex)), " genes, now there are ",
+          nrow(Biobase::fData(kept)), ".")
   all_tables <- Biobase::exprs(ex)
   all_sums <- colSums(all_tables)
   kept_tables <- Biobase::exprs(kept)
@@ -863,15 +864,22 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   removed_tables <- Biobase::exprs(removed)
   removed_sums <- colSums(removed_tables)
   pct_kept <- (kept_sums / all_sums) * 100.0
+
   pct_removed <- (removed_sums / all_sums) * 100.0
   summary_table <- rbind(kept_sums, removed_sums, all_sums,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
                                "pct_kept", "pct_removed")
-  message("Percent kept: ", toString(sprintf(fmt = "%.3f", pct_kept)))
-  message("Percent removed: ", toString(sprintf(fmt = "%.3f", pct_removed)))
+  mesg("Percent of the counts kept after filtering: ", toString(sprintf(fmt = "%.3f", pct_kept)))
+
   expt[["expressionset"]] <- kept
   expt[["summary_table"]] <- summary_table
+  warning_idx <- summary_table["pct_kept", ] < warning_cutoff
+  if (sum(warning_idx) > 0) {
+    message("There are ", sum(warning_idx), " samples which kept less than ",
+            warning_cutoff, " percent counts.")
+    print(summary_table["pct_kept", warning_idx])
+  }
   return(expt)
 }
 
@@ -1324,6 +1332,10 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   if (length(fact) == 1) {
     design <- pData(data)
     fact <- design[[fact]]
+    na_idx <- is.na(fact)
+    if (sum(na_idx) > 0) {
+      fact[na_idx] <- "unknown"
+    }
     names(fact) <- rownames(design)
   }
   if (class(data) == "expt" | class(data) == "ExpressionSet") {
@@ -1825,11 +1837,11 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
 #' @export
 set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   arglist <- list(...)
-  original_batches <- expt[["batches"]]
+  original_batches <- pData(expt)[["batch"]]
   original_length <- length(original_batches)
   if (length(fact) == 1) {
     ## Assume it is a column in the design
-    if (fact %in% colnames(expt[["design"]])) {
+    if (fact %in% colnames(pData(expt))) {
       fact <- expt[["design"]][[fact]]
     } else {
       stop("The provided factor is not in the design matrix.")
@@ -1887,13 +1899,13 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_colors <- mapping[chosen_colors]
   } else if (class(colors) == "factor") {
     if (change_by == "condition") {
-      message("The new colors are a factor, changing according to condition.")
+      mesg("The new colors are a factor, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
-      message("The new colors are a factor, changing according to sampleID.")
+      mesg("The new colors are a factor, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1910,13 +1922,13 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       names(colors) <- levels(as.factor(expt[["conditions"]]))
     }
     if (change_by == "condition") {
-      message("The new colors are a character, changing according to condition.")
+      mesg("The new colors are a character, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
-      message("The new colors are a character, changing according to sampleID.")
+      mesg("The new colors are a character, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1930,13 +1942,13 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (class(colors) == "list") {
     if (change_by == "condition") {
-      message("The new colors are a list, changing according to condition.")
+      mesg("The new colors are a list, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- as.character(colors)
       names(mapping) <- names(colors)
       chosen_colors <- mapping[chosen_colors]
     } else if (change_by == "sample") {
-      message("The new colors are a list, changing according to sampleID.")
+      mesg("The new colors are a list, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1959,7 +1971,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_idx <- complete.cases(chosen_colors)
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (is.null(colors)) {
-    message("Setting colors according to a color ramp.")
+    mesg("Setting colors according to a color ramp.")
     colors <- sm(
       grDevices::colorRampPalette(
                    RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
@@ -2218,7 +2230,8 @@ set_expt_samplenames <- function(expt, newnames) {
 #'  all_expt <- expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
-subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
+subset_expt <- function(expt, subset = NULL, ids = NULL,
+                        nonzero = NULL, coverage = NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
@@ -2243,11 +2256,11 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
 
   note_appended <- NULL
   subset_design <- NULL
-  if (is.null(coverage)) {
+  if (is.null(coverage) & is.null(nonzero)) {
     if (is.null(subset)) {
       subset_design <- starting_metadata
     } else {
-      message("Using a subset expression.")
+      mesg("Using a subset expression.")
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text = r_expression))
       note_appended <- glue::glue("Subsetted with {subset} on {date()}.
@@ -2257,7 +2270,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
       stop("When the subset was taken, the resulting design has 0 members.")
     }
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
-  } else {
+  } else if (is.null(nonzero)) {
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
     ## standard deviation or somesuch...
@@ -2266,6 +2279,20 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples removed (and read coverage) when filtering samples with less than ",
+            coverage, " reads are: ")
+    print(colSums(exprs(expt))[!subset_idx])
+  } else if (is.null(coverage)) {
+    ## Remove samples with less than this number of non-zero genes.
+    nonzero_idx <- exprs(expt) != 0
+    remove_idx <- colSums(nonzero_idx) < nonzero
+    subset_design <- starting_metadata[!remove_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples (and read coverage) removed when filtering ",
+            nonzero, " non-zero genes are: ")
+    print(colSums(exprs(expt))[remove_idx])
+  } else {
+    stop("Unable to determine what is being subset.")
   }
 
   ## This is to get around stupidity with respect to needing all factors to be
@@ -2274,7 +2301,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
   subset_ids <- rownames(subset_design)
   subset_positions <- starting_ids %in% subset_ids
   starting_colors <- expt[["colors"]]
-  subset_colors <- starting_colors[subset_positions]
+  subset_colors <- starting_colors[subset_positions, drop = TRUE]
   starting_conditions <- expt[["conditions"]]
   subset_conditions <- starting_conditions[subset_positions, drop = TRUE]
   starting_batches <- expt[["batches"]]
@@ -2532,6 +2559,8 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @param batch Batch correction applied.
 #' @param filter Filtering method used.
 #' @param med_or_mean When printing mean by condition, one may want median.
+#' @param merge_order Used to decide whether to put the counts or annotations first when
+#'  printing count tables.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).
 #' @return A big honking excel file and a list including the dataframes and images created.
 #' @seealso [openxlsx] [Biobase] [normalize_expt()] [graph_metrics()]
@@ -2542,8 +2571,8 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @export
 write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                        violin = TRUE, sample_heat = TRUE, convert = "cpm", transform = "log2",
-                       batch = "sva", filter = TRUE, med_or_mean = "mean",
-                       color_na = "#DD0000", ...) {
+                       batch = "svaseq", filter = TRUE, med_or_mean = "mean",
+                       color_na = "#DD0000", merge_order = "counts_first", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
@@ -2553,12 +2582,6 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
   ## Set up a vector of images to clean up when finished.
   image_files <- c()
-
-  ## For medians_by_condition, put the counts or annotations first?
-  merge_order <- "counts_first"
-  if (!is.null(arglist[["merge_order"]])) {
-    merge_order <- arglist[["merge_order"]]
-  }
 
   ## I think the plot dimensions should increase as the number of samples increase
   plot_dim <- 6
@@ -2648,9 +2671,11 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Start with library sizes.
   openxlsx::writeData(wb, sheet = sheet, x = "Legend.", startRow = new_row, startCol = new_col)
   new_col <- new_col + plot_cols + 1
-  openxlsx::writeData(wb, sheet = sheet, x = "Raw library sizes.", startRow = new_row, startCol = new_col)
+  openxlsx::writeData(wb, sheet = sheet, x = "Raw library sizes.",
+                      startRow = new_row, startCol = new_col)
   new_col <- new_col + plot_cols + 1
-  openxlsx::writeData(wb, sheet = sheet, x = "Non-zero genes.", startRow = new_row, startCol = new_col)
+  openxlsx::writeData(wb, sheet = sheet, x = "Non-zero genes.",
+                      startRow = new_row, startCol = new_col)
   new_row <- new_row + 1
   new_col <- 1
   legend_plot <- metrics[["legend"]]
@@ -2662,7 +2687,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   libsize_plot <- metrics[["libsize"]]
-  try_result <- xlsx_plot_png(libsize_plot, wb = wb, sheet = sheet, width = plot_dim, height = plot_dim,
+  try_result <- xlsx_plot_png(libsize_plot, wb = wb, sheet = sheet,
+                              width = plot_dim, height = plot_dim,
                               start_col = new_col, start_row = new_row,
                               plotname = "02_libsize", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {

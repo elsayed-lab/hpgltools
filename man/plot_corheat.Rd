@@ -11,7 +11,7 @@ plot_corheat(
   method = "pearson",
   expt_names = NULL,
   batch_row = "batch",
-  title = NULL,
+  plot_title = NULL,
   label_chars = 10,
   ...
 )
@@ -29,11 +29,11 @@ plot_corheat(
 
 \item{batch_row}{Name of the design row used for 'batch' column colors.}
 
-\item{title}{Title for the plot.}
-
 \item{label_chars}{Limit on the number of label characters.}
 
 \item{...}{More options are wonderful!}
+
+\item{title}{Title for the plot.}
 }
 \value{
 Gplots heatmap describing describing how the samples are clustering

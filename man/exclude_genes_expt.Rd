@@ -9,6 +9,7 @@ exclude_genes_expt(
   column = "txtype",
   method = "remove",
   ids = NULL,
+  warning_cutoff = 90,
   patterns = c("snRNA", "tRNA", "rRNA"),
   ...
 )

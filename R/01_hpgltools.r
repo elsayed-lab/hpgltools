@@ -76,6 +76,23 @@ NULL
 #' The following sets the ggplot2 default text size.
 base_size <- 16
 
+#' Set a default verbosity, for now this just queries if this is an interactive session.
+verbose <- interactive() && is.null(getOption("knitr.in.progress"))
+
+#' message() but with a verbose flag.
+#'
+#' @param ... parameters for message()
+#' @param verbose actually print the message?
+#' @export
+mesg <- function(..., verbosity = NULL) {
+  if (is.null(verbosity)) {
+    verbosity <- verbose
+  }
+  if (isTRUE(verbose)) {
+    message(...)
+  }
+}
+
 #' Set the xlsx table style
 table_style <- "TableStyleMedium9"
 

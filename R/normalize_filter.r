@@ -26,6 +26,7 @@
 filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
                           cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2, ...) {
   arglist <- list(...)
+  start <- count_table
   if (class(count_table)[1] == "list") {
     count_table <- count_table[["count_table"]]
   }
@@ -39,6 +40,10 @@ filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
   }
   if (isTRUE(method)) {
     method <<- "cbcb"
+  }
+  if (isFALSE(method)) {
+    message("Filtering method was FALSE, returning the original table.")
+    return(start)
   }
 
   filtered_counts <- NULL
@@ -97,8 +102,8 @@ cbcb_filter_counts <- function(count_table, threshold = 1, min_samples = 2, libs
     }
     count_table <- t(log2(t(qcounts + 0.5) / (libsize + 1) * 1e+06))
     retlist <- list(
-      "count_table" = count_table,
-      "libsize" = libsize)
+        "count_table" = count_table,
+        "libsize" = libsize)
     return(retlist)
   }
   ##cpms <- edgeR::cpm(count_table)

@@ -38,10 +38,10 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                          length_db = NULL, doplot = TRUE, adjust = 0.1, pvalue = 0.1,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
-                         bioc_length_db = "ensGene", excel = NULL) {
+                         bioc_length_db = "ensGene", excel = NULL, orgdb = "org.Hs.eg.db") {
   sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
                                   signature_category = signature_category)
-  message("Starting to coerce the msig data to the ontology format.")
+  mesg("Starting to coerce the msig data to the ontology format.")
   go_db <- data.table::data.table()
   for (i in 1:length(sig_data)) {
     gsc <- sig_data[[i]]
@@ -50,7 +50,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
     tmp_db <- data.table::data.table("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
     go_db <- rbind(go_db, tmp_db)
   }
-  message("Finished coercing the msig data.")
+  mesg("Finished coercing the msig data.")
 
   new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
   new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
@@ -71,6 +71,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                             doplot = TRUE, adjust = 0.1, pvalue = 0.1,
                             length_keytype = "transcripts", go_keytype = "entrezid",
                             goseq_method = "Wallenius", padjust_method = "BH",
+                            plot_title = "Enriched MSIG categories",
                             bioc_length_db = "ensGene", expand_categories = FALSE,
                             excel = excel, add_trees = FALSE, gather_genes = FALSE, width = 20)
   return(go_result)
@@ -171,7 +172,7 @@ goseq_table <- function(df, file = NULL) {
 #' }
 #' @export
 simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
-                         adjust = 0.1, pvalue = 0.1,
+                         adjust = 0.1, pvalue = 0.1, plot_title = NULL,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
                          bioc_length_db = "ensGene", expand_categories = TRUE, excel = NULL,
@@ -387,7 +388,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   }
 
   message("simple_goseq(): Making pvalue plots for the ontologies.")
-  pvalue_plots <- plot_goseq_pval(godata,
+  pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
                                   ...)
   na_idx <- is.na(godata[["ontology"]])
   godata <- godata[!na_idx, ]

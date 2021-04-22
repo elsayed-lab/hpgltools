@@ -1175,9 +1175,8 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
   total_comparisons <- lenminus * (length(methods) - 1) * len
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   progress_count <- 0
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (c in 1:lenminus) {
@@ -1189,7 +1188,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       contrast_name_list <- c()
       for (l in 1:len) {
         progress_count <- progress_count + 1
-        if (isTRUE(show_progress)) {
+        if (isTRUE(verbose)) {
           pct_done <- progress_count / total_comparisons
           utils::setTxtProgressBar(bar, pct_done)
         }
@@ -1242,7 +1241,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       } ## End iterating through the contrasts
     } ## End the second method loop
   } ## End the first method loop
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
 

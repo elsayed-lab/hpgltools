@@ -25,10 +25,10 @@
 #' @export
 plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "pearson", expt_names = NULL,
-                         batch_row = "batch", title = NULL, label_chars = 10, ...) {
+                         batch_row = "batch", plot_title = NULL, label_chars = 10, ...) {
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "correlation",
-                           batch_row = batch_row, title = title, label_chars = label_chars, ...)
+                           batch_row = batch_row, plot_title = plot_title, label_chars = label_chars, ...)
   return(map_list)
 }
 
@@ -56,10 +56,11 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @export
 plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "euclidean", expt_names = NULL,
-                         batch_row = "batch",  title = NULL, label_chars = 10, ...) {
+                         batch_row = "batch",  plot_title = NULL, label_chars = 10, ...) {
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "distance",
-                           batch_row = batch_row, title = title, label_chars = label_chars, ...)
+                           batch_row = batch_row, plot_title = plot_title,
+                           label_chars = label_chars, ...)
   return(map_list)
 }
 
@@ -85,7 +86,7 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @export
 plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "pearson", expt_names = NULL,
-                         type = "correlation", batch_row = "batch", title = NULL,
+                         type = "correlation", batch_row = "batch", plot_title = NULL,
                          label_chars = 10, ...) {
   arglist <- list(...)
   margin_list <- c(12, 9)
@@ -103,6 +104,19 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   remove_equal <- FALSE
   if (!is.null(arglist[["remove_equal"]])) {
     remove_equal <- arglist[["remove_equal"]]
+  }
+
+  ## If plot_title is NULL, print nothing, if it is TRUE
+  ## Then give some information about what happened to the data to make the plot.
+  ## I tried foolishly to put this in plot_pcs(), but there is no way that receives
+  ## my expt containing the normalization state of the data.
+  if (isTRUE(plot_title)) {
+    plot_title <- what_happened(expt_data)
+  } else if (!is.null(plot_title)) {
+    data_title <- what_happened(expt_data)
+    plot_title <- glue::glue("{plot_title}; {data_title}")
+  } else {
+    ## Leave the title blank.
   }
 
   data_class <- class(expt_data)[1]
@@ -197,13 +211,13 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
-                     linewidth = 0.5, main = title)
+                     linewidth = 0.5, main = plot_title)
   } else {
     map <- heatmap.3(heatmap_data, keysize = keysize, labRow = expt_names,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
-                     linewidth = 0.5, main = title,
+                     linewidth = 0.5, main = plot_title,
                      col = rev(heatmap_colors))
   }
   recorded_heatmap_plot <- grDevices::recordPlot()

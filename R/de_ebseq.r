@@ -144,13 +144,12 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
                                  ...)
   contrasts_performed <- c()
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   retlst <- list()
   for (c in 1:length(apc[["names"]])) {
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- c / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
     }
@@ -173,7 +172,7 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
                           norm = norm, force = force)
     retlst[[name]] <- a_result
   }
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
   return(retlst)

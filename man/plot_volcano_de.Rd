@@ -8,7 +8,7 @@ plot_volcano_de(
   table,
   alpha = 0.6,
   color_by = "p",
-  color_list = c(`FALSE` = "darkred", `TRUE` = "darkblue"),
+  color_list = c(`FALSE` = "darkblue", `TRUE` = "darkred"),
   fc_col = "logFC",
   fc_name = "log2 fold change",
   gvis_filename = NULL,

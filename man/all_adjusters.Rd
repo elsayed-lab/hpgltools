@@ -17,6 +17,7 @@ all_adjusters(
   expt_state = NULL,
   confounders = NULL,
   chosen_surrogates = NULL,
+  adjust_method = "ruv",
   ...
 )
 }

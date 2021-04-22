@@ -11,6 +11,7 @@ simple_goseq(
   doplot = TRUE,
   adjust = 0.1,
   pvalue = 0.1,
+  plot_title = NULL,
   length_keytype = "transcripts",
   go_keytype = "entrezid",
   goseq_method = "Wallenius",

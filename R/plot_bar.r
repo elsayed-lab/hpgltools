@@ -11,7 +11,7 @@
 #' @param order Explicitly set the order of samples in the plot?
 #' @param title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
-#' @param expt_names  Design column or manually selected names for printing sample names.
+#' @param expt_names Design column or manually selected names for printing sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
@@ -86,19 +86,16 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                            "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))
-  summary_df <- data.table::setDT(libsize_df)[, list("min"=min(sum),
-                                                     "1st"=quantile(x = sum, probs = 0.25),
-                                                     "median"=median(x = sum),
-                                                     "mean"=mean(sum),
-                                                     "3rd"=quantile(x = sum, probs = 0.75),
-                                                     "max"=max(sum)),
+  summary_df <- data.table::setDT(libsize_df)[, list("min" = min(sum),
+                                                     "1st" = quantile(x = sum, probs = 0.25),
+                                                     "median" = median(x = sum),
+                                                     "mean" = mean(sum),
+                                                     "3rd" = quantile(x = sum, probs = 0.75),
+                                                     "max" = max(sum)),
                                               by = "condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
                                    text = text, order = order, title = title, integerp = integerp,
                                    yscale = yscale, ...)
-  ##libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
-  ##                                 text = text, order = order, title = title, integerp = integerp,
-  ##                                 yscale = yscale)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -324,7 +321,7 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
     scale_difference <- max(as.numeric(sample_df[["sum"]])) /
       min(as.numeric(sample_df[["sum"]]))
     if (scale_difference > 10.0) {
-      message("The scale difference between the smallest and largest
+      mesg("The scale difference between the smallest and largest
 libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
       scale <- TRUE
     } else {

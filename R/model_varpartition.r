@@ -93,25 +93,25 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
       model_string <- glue::glue("{model_string}{predictor} +")
     }
     for (fact in factors) {
-      model_string <- glue::glue("{model_string} (1|{fact}) +")
+      model_string <- glue::glue("{model_string}(1|{fact}) +")
     }
   } else {
     for (fact in factors) {
-      model_string <- glue::glue("{model_string} {fact} +")
+      model_string <- glue::glue("{model_string}{fact} +")
     }
   }
   model_string <- gsub(pattern = "\\+$", replacement = "", x = model_string)
-  message("Attempting mixed linear model with: ", model_string)
+  mesg("Attempting mixed linear model with: ", model_string)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = "simple"))
   data <- exprs(norm)
 
   design_sub <- design[, factors]
-  message("Fitting the expressionset to the model, this is slow.")
+  mesg("Fitting the expressionset to the model, this is slow.")
   my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
   ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
   if (class(my_extract) == "try-error") {
-    message("A couple of common errors:
+    mesg("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
 An error like 'number of levels of each grouping factor must be < number of observations' means
 that the factor used is not appropriate for the analysis - it really only works for factors
@@ -127,7 +127,7 @@ which are shared among multiple samples.")
   chosen_column <- predictor
   if (is.null(predictor)) {
     chosen_column <- factors[[1]]
-    message("Placing factor: ", chosen_column, " at the beginning of the model.")
+    mesg("Placing factor: ", chosen_column, " at the beginning of the model.")
   }
 
   my_sorted <- sortCols(my_extract)

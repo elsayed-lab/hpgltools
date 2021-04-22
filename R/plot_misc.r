@@ -58,10 +58,11 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
         result <- devEMF::emf(file = file, width = width, height = height, ...)
       },
       {
-        message("Defaulting to tiff.")
+        mesg("Defaulting to tiff.")
         result <- tiff(filename = file, width = width, height = height,
                        units = "in", res = res, ...)
       }) ## End of the switch
+  ## Find the new device for closing later.
   now_dev <- dev.list()
   new_dev <- now_dev[length(now_dev)]
 
@@ -74,10 +75,10 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   }
 
   if (is.null(image)) {
-    message("Going to write the image to: ", file, " when dev.off() is called.")
+    mesg("Going to write the image to: ", file, " when dev.off() is called.")
     return(invisible(image))
   } else {
-    message("Writing the image to: ", file, " and calling dev.off().")
+    mesg("Writing the image to: ", file, " and calling dev.off().")
     if (class(image)[[1]] == "recordedplot") {
       print(image)
     } else {

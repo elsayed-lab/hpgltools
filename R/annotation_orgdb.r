@@ -12,17 +12,17 @@
 #' or pathological can pass it 'all'.
 #'
 #' @param orgdb OrganismDb instance.
-#' @param gene_ids  Search for a specific set of genes?
-#' @param include_go  Ask the Dbi for gene ontology information?
+#' @param gene_ids Search for a specific set of genes?
+#' @param include_go Ask the Dbi for gene ontology information?
 #' @param keytype mmm the key type used?
-#' @param strand_column  There are a few fields I want to gather by default:
+#' @param strand_column There are a few fields I want to gather by default:
 #'  start, end, strand, chromosome, type, and name; but these do not
 #'  necessarily have consistent names, use this column for the chromosome
 #'  strand.
-#' @param start_column  Use this column for the gene start.
-#' @param end_column  Use this column for the gene end.
-#' @param chromosome_column  Use this column to identify the chromosome.
-#' @param type_column  Use this column to identify the gene type.
+#' @param start_column Use this column for the gene start.
+#' @param end_column Use this column for the gene end.
+#' @param chromosome_column Use this column to identify the chromosome.
+#' @param type_column Use this column to identify the gene type.
 #' @param name_column Use this column to identify the gene name.
 #' @param fields Columns included in the output.
 #' @param sum_exon_widths Perform a sum of the exons in the data set?
@@ -191,8 +191,8 @@ load_orgdb_annotations <- function(orgdb = NULL, gene_ids = NULL, include_go = F
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype  The mysterious keytype returns yet again to haunt my dreams.
-#' @param columns  The set of columns to request.
+#' @param keytype The mysterious keytype returns yet again to haunt my dreams.
+#' @param columns The set of columns to request.
 #' @return Data frame of gene IDs, go terms, and names.
 #' @seealso [AnnotationDbi] [GO.db]
 #' @examples

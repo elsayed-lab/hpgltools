@@ -251,14 +251,13 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ##total_contrasts <- length(condition_levels)
   ##total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   total_contrasts <- length(contrast_order)
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (i in 1:length(contrast_order)) {
     contrast_name <- contrast_order[[i]]
     contrast_string <- contrast_strings[[i]]
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- i / length(contrast_order)
       utils::setTxtProgressBar(bar, pct_done)
     }
@@ -301,7 +300,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
     }
     result_list[[contrast_name]] <- result
   }
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
   ## The logic here is a little tortuous.

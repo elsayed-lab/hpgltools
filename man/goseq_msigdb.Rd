@@ -20,7 +20,8 @@ goseq_msigdb(
   goseq_method = "Wallenius",
   padjust_method = "BH",
   bioc_length_db = "ensGene",
-  excel = NULL
+  excel = NULL,
+  orgdb = "org.Hs.eg.db"
 )
 }
 \arguments{

@@ -31,11 +31,17 @@ plot_topgo_densities <- function(godata, table) {
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso [ggplot2]
 #' @export
-plot_ontpval <- function(df, ontology = "MF", fontsize = 14, numerator = NULL, denominator = NULL) {
+plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
+                         numerator = NULL, denominator = NULL) {
   if (nrow(df) == 0) {
     return(NULL)
   }
-  y_name <- paste("Enriched ", ontology, " categories.", sep = "")
+  y_name <- ""
+  if (is.null(plot_title)) {
+    y_name <- paste("Enriched ", ontology, " categories.", sep = "")
+  } else {
+    y_name <- plot_title
+  }
   ## This is very confusing, see the end of: http://docs.ggplot2.org/current/geom_bar.html
   ## for the implementation.
   reorder_size <- function(x) {

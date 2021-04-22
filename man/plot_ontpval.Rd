@@ -8,6 +8,7 @@ plot_ontpval(
   df,
   ontology = "MF",
   fontsize = 14,
+  plot_title = NULL,
   numerator = NULL,
   denominator = NULL
 )

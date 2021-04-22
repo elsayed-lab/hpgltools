@@ -5,7 +5,7 @@
 \title{Extract a subset of samples following some rule(s) from an
 experiment class.}
 \usage{
-subset_expt(expt, subset = NULL, ids = NULL, coverage = NULL)
+subset_expt(expt, subset = NULL, ids = NULL, nonzero = NULL, coverage = NULL)
 }
 \arguments{
 \item{expt}{Expt chosen to extract a subset of data.}

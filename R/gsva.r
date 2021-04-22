@@ -22,12 +22,11 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
   orgdb <- get0(orgdb)
   gsc_lst <- as.list(gsc)
   new_gsc <- list()
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (g in 1:length(gsc)) {
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- g / length(gsc_lst)
       setTxtProgressBar(bar, pct_done)
     }
@@ -41,7 +40,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
     ## gsc_lst[[g]] <- gs
     new_gsc[[g]] <- gs
   }
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
   gsc <- GSEABase::GeneSetCollection(new_gsc)
@@ -66,8 +65,8 @@ convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.
   att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
   new_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
                                       keys = ids,
-                                      keytype = current_id,
-                                      columns = c(required_id)))
+                                      keytype = from,
+                                      columns = to))
   new_idx <- complete.cases(new_ids)
   new_ids <- new_ids[new_idx, ]
   message("Before conversion, the expressionset has ", length(ids),
@@ -323,7 +322,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## At least when I create an expressionset, the fData and exprs have the
   ## same rownames from beginning to end.
   ## I guess this does not really matter, since we can use the full annotation table.
-  subset_tbl <- as.data.frame(subset_table)
+  subset_tbl <- as.data.frame(exprs(subset_eset))
   order_column <- colnames(subset_tbl)[1]
   subset_table <- merge(annot, subset_tbl, by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
@@ -1220,9 +1219,9 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   ## Sadly, some versions of gsva crash if one sets it to > 1, so for the moment
   ## it is set to 1 and gsva is not running in parallel, but I wanted to keep the
   ## possibility of speeding it up, ergo the cores option.
-  gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                            min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                            parallel.sz = cores, mx.diff = mx.diff)
+  gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                               min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                               parallel.sz = cores, mx.diff = mx.diff))
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""

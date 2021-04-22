@@ -422,11 +422,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
   ## Others may disagree and change that with sig_color, insig_color.
-  sig_color <- "darkblue"
+  sig_color <- "darkred"
   if (!is.null(arglist[["sig_color"]])) {
     sig_color <- arglist[["sig_color"]]
   }
-  insig_color <- "darkred"
+  insig_color <- "darkblue"
   if (!is.null(arglist[["insig_color"]])) {
     insig_color <- arglist[["insig_color"]]
   }
@@ -916,7 +916,7 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' }
 #' @export
 plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE"="darkred", "TRUE"="darkblue"),
+                            color_list = c("FALSE"="darkblue", "TRUE"="darkred"),
                             fc_col = "logFC", fc_name = "log2 fold change", gvis_filename = NULL,
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
