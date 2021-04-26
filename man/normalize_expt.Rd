@@ -28,6 +28,7 @@ normalize_expt(
   cv_min = 0.01,
   cv_max = 1000,
   na_to_zero = FALSE,
+  adjust_method = "ruv",
   verbose = TRUE,
   ...
 )

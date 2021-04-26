@@ -13,7 +13,7 @@ batch_counts(
   current_design = NULL,
   expt_state = NULL,
   surrogate_method = NULL,
-  num_surrogates = NULL,
+  surrogates = NULL,
   low_to_zero = FALSE,
   cpus = 4,
   batch2 = NULL,
