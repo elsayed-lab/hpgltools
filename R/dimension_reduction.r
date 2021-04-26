@@ -417,7 +417,8 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
 #' @return List containing the plotly data and filename for the html widget.
 #' @seealso [plotly] [htmlwidgets]
 #' @export
-plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
+plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
+                        file = "3dpca.html") {
   image_dir <- dirname(as.character(file))
   if (!file.exists(image_dir)) {
     dir.create(image_dir, recursive = TRUE)
@@ -428,11 +429,15 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
   z_axis <- glue::glue("pc_{components[3]}")
   table <- pc_result[["table"]]
   color_levels <- levels(as.factor(table[["colors"]]))
-  silly_plot <- plotly::plot_ly(table, x = as.formula(glue::glue("~{x_axis}")),
-                                y = as.formula(glue::glue("~{y_axis}")), z = as.formula(glue::glue("~{z_axis}")),
+  silly_plot <- plotly::plot_ly(table,
+                                x = as.formula(glue::glue("~{x_axis}")),
+                                y = as.formula(glue::glue("~{y_axis}")),
+                                z = as.formula(glue::glue("~{z_axis}")),
                                 color = as.formula("~condition"), colors = color_levels,
+                                stroke = I("black"),
                                 text=~paste0('condition: ', condition, ' batch: ', batch)) %>%
-    plotly::add_markers()
+    plotly::add_markers() %>%
+    plotly::layout(title = pc_result[["plot"]][["labels"]][["title"]])
   widget <- htmlwidgets::saveWidget(
                            plotly::as_widget(silly_plot), file = file, selfcontained = TRUE)
   retlist <- list(
@@ -744,7 +749,22 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "ida" = {
-      svd_result <- iDA::iDA(mtrx)
+      svd_result <- iDA::iDA_core(data.use = mtrx, NormCounts = mtrx)
+
+      ## svd_result <- corpcor::fast.svd(mtrx - rowMeans(mtrx))
+      ## rownames(svd_result[["v"]]) <- rownames(design)
+      ## colnames(svd_result[["v"]]) <- glue::glue("PC{1:ncol(svd_result[['v']])}")
+      ## pc_table <- svd_result[["v"]]
+      ## x_name <- glue::glue("PC{x_pc}")
+      ## y_name <- glue::glue("PC{y_pc}")
+      ## Depending on how much batch/condition information is available, invoke
+      ## pcRes() to get some idea of how much variance in a batch model is
+      ## accounted for with each PC.
+      ## residual_df <- get_res(svd_result, design)
+      ## prop_lst <- residual_df[["prop_var"]]
+      ## get the percentage of variance accounted for in each PC
+      ## x_label <- sprintf("%s: %.2f%% variance", x_name, prop_lst[x_pc])
+      ## y_label <- sprintf("%s: %.2f%% variance", y_name, prop_lst[y_pc])
     },
     "fast_ica" = {
       ## Fill in the defaults from the ica package.

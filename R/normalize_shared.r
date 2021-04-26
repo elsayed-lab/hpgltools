@@ -92,7 +92,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                            low_to_zero = TRUE, ## extra parameters for batch correction
                            thresh = 2, min_samples = 2, p = 0.01, A = 1, k = 1,
                            cv_min = 0.01, cv_max = 1000,  ## extra parameters for low-count filtering
-                           na_to_zero = FALSE, verbose = TRUE,
+                           na_to_zero = FALSE, adjust_method = "ruv", verbose = TRUE,
                            ...) {
   arglist <- list(...)
   expt_state <- expt[["state"]]
@@ -217,6 +217,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                             fasta = fasta, thresh = thresh, batch_step = batch_step,
                             min_samples = min_samples, p = p, A = A, k = k,
                             cv_min = cv_min, cv_max = cv_max, entry_type = entry_type,
+                            adjust_method = adjust_method,
                             ...)
   } else {
     normalized <- sm(hpgl_norm(data, expt_state = expt_state, design = design, transform = transform,
@@ -226,6 +227,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
                                fasta = fasta, thresh = thresh, batch_step = batch_step,
                                min_samples = min_samples, p = p, A = A, k = k,
                                cv_min = cv_min, cv_max = cv_max, entry_type = entry_type,
+                               adjust_method = adjust_method,
                                ...))
   }
 
@@ -351,12 +353,14 @@ hpgl_norm <- function(data, ...) {
   convert_performed <- "raw"
   transform_performed <- "raw"
   batch_performed <- "raw"
+  adjust_performed <- "none"
   expt_state <- list(
-    "low_filter" = "raw",
-    "normalization" = "raw",
-    "conversion" = "raw",
-    "batch" = "raw",
-    "transform" = "raw")
+    "low_filter" = filter_performed,
+    "normalization" = norm_performed,
+    "conversion" = convert_performed,
+    "batch" = batch_performed,
+    "adjust" = adjust_performed,
+    "transform" = transform_performed)
   data_class <- class(data)[1]
   original_counts <- NULL
   original_libsize <- NULL
@@ -436,7 +440,8 @@ hpgl_norm <- function(data, ...) {
   }
 
   do_batch <- function(count_table, method = "raw", expt_design = expt_design,
-                       current_state = current_state, ...) {
+                       current_state = current_state, adjust_method = adjust_method,
+                       ...) {
     ##batch <- method
     ##if (!is.null(arglist[["batch"]])) {
     ##  batch <- arglist[["batch"]]
@@ -451,17 +456,21 @@ hpgl_norm <- function(data, ...) {
     } else {
       mesg("Step ", arglist[["batch_step"]], ": doing batch correction with ",
            arglist[["batch"]], ".")
-      tmp_counts <- try(batch_counts(count_table, method = method, expt_design = expt_design,
-                                     current_state = current_state, ...))
+      tmp_counts <- try(batch_counts(count_table, method = method,
+                                     expt_design = expt_design,
+                                     current_state = current_state,
+                                     ...))
       ##tmp_counts <- batch_counts(count_table, method = method, expt_design = expt_design,
-      ##                           current_state = current_state)
+      ##                           adjust_method = adjust_method, current_state = current_state)
       if (class(tmp_counts) == "try-error") {
         warning("The batch_counts call failed.  Returning non-batch reduced data.")
         batched_counts <<- NULL
         batch_performed <- "raw"
+        adjust_performed <- "none"
       } else {
         batched_counts <- tmp_counts
         batch_performed <<- batch
+        adjust_performed <- adjust_method
         count_table <- batched_counts[["count_table"]]
       }
     }
@@ -469,7 +478,9 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 1) {
-    count_table <- do_batch(count_table, method = batch, current_design = expt_design, ...)
+    count_table <- do_batch(count_table, method = batch,
+                            current_design = expt_design,
+                            ...)
   }
 
   ## Step 1: count filtering
@@ -495,7 +506,9 @@ hpgl_norm <- function(data, ...) {
 
   if (batch_step == 2) {
     count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design, current_state = current_state, ...)
+                            expt_design = expt_design,
+                            current_state = current_state,
+                            ...)
   }
   ## Step 2: Normalization
   ## This section handles the various normalization strategies
@@ -525,7 +538,9 @@ hpgl_norm <- function(data, ...) {
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
     count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design, current_state = current_state, ...)
+                            expt_design = expt_design,
+                            current_state = current_state,
+                            ...)
   }
   converted_counts <- NULL
   convert <- "raw"
@@ -548,7 +563,9 @@ hpgl_norm <- function(data, ...) {
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
     count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design, current_state = current_state, ...)
+                            expt_design = expt_design,
+                            current_state = current_state,
+                            ...)
     ## count_table <- do_batch(count_table, method = batch,
     ##                         expt_design = expt_design, current_state = current_state)
   }
@@ -576,7 +593,8 @@ hpgl_norm <- function(data, ...) {
 
   if (batch_step == 5) {
     count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design, current_state = current_state,
+                            expt_design = expt_design,
+                            current_state = current_state,
                             ...)
     ## count_table <- do_batch(count_table, arglist)
   }
@@ -588,6 +606,7 @@ hpgl_norm <- function(data, ...) {
     "normalization" = norm_performed,
     "conversion" = convert_performed,
     "batch" = batch_performed,
+    "adjust" = adjust_performed,
     "transform" = transform_performed)
   ## This list contains the intermediate count tables generated at each step
   ## This may be useful if there is a problem in this process.

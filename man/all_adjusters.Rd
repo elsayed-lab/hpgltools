@@ -18,7 +18,10 @@ all_adjusters(
   confounders = NULL,
   chosen_surrogates = NULL,
   adjust_method = "ruv",
-  ...
+  filter = "raw",
+  thresh = 1,
+  noscale = FALSE,
+  prior_plots = FALSE
 )
 }
 \arguments{

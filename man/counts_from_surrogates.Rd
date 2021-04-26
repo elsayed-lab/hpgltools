@@ -10,6 +10,7 @@ counts_from_surrogates(
   design = NULL,
   method = "ruv",
   cond_column = "condition",
+  batch_column = "batch",
   matrix_scale = "linear",
   return_scale = "linear",
   ...

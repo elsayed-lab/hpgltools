@@ -40,6 +40,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
                           filter = "raw", thresh = 1, noscale = FALSE, prior_plots = FALSE) {
   my_design <- NULL
   my_data <- NULL
+
   ## Gather all the likely pieces we can use
   ## Without the following requireNamespace(ruv)
   ## we get an error 'unable to find an inherited method for function RUVr'
@@ -543,6 +544,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
   }
   ## Only use counts_from_surrogates if the method does not provide counts on its own
   if (is.null(new_counts)) {
+    mesg("Adjusting counts with method: ", adjust_method, ".")
     new_counts <- counts_from_surrogates(data = surrogate_input, adjust = model_adjust,
                                          method = adjust_method, design = my_design)
     if (output_scale == "log2") {
@@ -609,20 +611,22 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
 #' @export
 batch_counts <- function(count_table, method = TRUE, expt_design = NULL, batch1 = "batch",
                          current_state = NULL, current_design = NULL, expt_state = NULL,
-                         surrogate_method = NULL, num_surrogates = NULL, low_to_zero = FALSE,
+                         surrogate_method = NULL, surrogates = NULL, low_to_zero = FALSE,
                          cpus = 4, batch2 = NULL, noscale = TRUE, ...) {
   arglist <- list(...)
   if (!is.null(arglist[["batch"]])) {
     method <- arglist[["batch"]]
   }
   chosen_surrogates <- NULL
-  if (is.null(num_surrogates) & is.null(surrogate_method)) {
+  if (is.null(surrogates) & is.null(surrogate_method)) {
     chosen_surrogates <- "be"
-  } else if (!is.null(num_surrogates)) {
-    chosen_surrogates <- num_surrogates
+  } else if (!is.null(surrogates)) {
+    chosen_surrogates <- surrogates
   } else {
     chosen_surrogates <- surrogate_method
   }
+  message("surrogate arguments: chosen_surrogates ",
+          chosen_surrogates, " surrogates ", surrogates, ".")
 
   if (is.null(cpus)) {
     cpus <- parallel::detectCores() - 2
@@ -685,6 +689,7 @@ batch_counts <- function(count_table, method = TRUE, expt_design = NULL, batch1 
                                 cpus = cpus, batch1 = batch1, batch2 = batch2,
                                 expt_state = used_state, noscale = noscale,
                                 chosen_surrogates = chosen_surrogates,
+                                surrogates = surrogates,
                                 low_to_zero = low_to_zero)
   count_table <- new_material[["new_counts"]]
 

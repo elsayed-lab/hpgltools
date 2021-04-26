@@ -206,10 +206,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       ## Use a column named 'ID' first because a bunch of annotation databases
       ## use ENTREZ IDs which are just integers, which of course is not allowed
       ## by data frame row names.
-      message("Using the ID column from your table rather than the row names.")
+      mesg("Using the ID column from your table rather than the row names.")
       gene_list <- sig_genes[["ID"]]
     } else if (!is.null(rownames(sig_genes))) {
-      message("Using the row names of your table.")
+      mesg("Using the row names of your table.")
       gene_list <- rownames(sig_genes)
     } else {
       gene_list <- sig_genes[["ID"]]
@@ -291,10 +291,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       godf <- godf[, c("GID", "GO")]
       colnames(godf) <- c("ID", "GO")
     } else {
-      stop("Unable to read the gene ID/ GO columns from the go data frame.")
+      stop("Unable to read the gene ID/ GO columns from the go dataframe.")
     }
   } else {
-    message("Not sure what to do here.")
+    stop("Unable to determine the input for creating a go dataframe.")
   }
 
   ## entrez IDs are numeric.  This is a problem when doing the pwf function
@@ -309,12 +309,9 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
-          " from the sig_genes in the go_db.")
-  id_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
-          " from the sig_genes in the length_db.")
-
+  meta_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
+  message("Found ", sum(id_xref), " go_db genes and ", sum(meta_xref),
+          " length_db genes out of ", nrow(de_genelist), ".")
   ## So lets merge the de genes and gene lengths to ensure that they are
   ## consistent. Then make the vectors expected by goseq.
   merged_ids_lengths <- metadf
@@ -336,19 +333,18 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
-  pwf <- suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
-                                       plot.fit = doplot))
+  pwf <- sm(suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
+                                          plot.fit = doplot)))
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
-  godata <- goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
-                         method = goseq_method)
+  godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
+                            method = goseq_method))
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
   goseq_y_limit <- goseq_p_nearzero * 2
   goseq_p <- goseq_p +
     ggplot2::scale_y_continuous(limits = c(0, goseq_y_limit))
-  message("simple_goseq(): Calculating q-values")
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
                                         method = padjust_method)
 
@@ -361,7 +357,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   godata_interesting <- godata
   if (isTRUE(expand_categories)) {
-    message("simple_goseq(): Filling godata with terms, this is slow.")
+    mesg("simple_goseq(): Filling godata with terms, this is slow.")
     godata_interesting <- goseq_table(godata)
   } else {
     ## Set the 'term' category for plotting.
@@ -387,7 +383,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     }
   }
 
-  message("simple_goseq(): Making pvalue plots for the ontologies.")
+  mesg("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
                                   ...)
   na_idx <- is.na(godata[["ontology"]])
@@ -444,7 +440,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     "cc_subset" = cc_subset)
   class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
-    message("Writing data to: ", excel, ".")
+    mesg("Writing data to: ", excel, ".")
     excel_ret <- try(write_goseq_data(retlist, excel = excel,
                                       ...))
   }

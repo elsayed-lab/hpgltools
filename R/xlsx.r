@@ -207,7 +207,7 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
     "end_row" = new_row,
     "end_col" = end_col)
   if (!is.null(excel)) {
-    message("Saving to: ", excel)
+    mesg("Saving to: ", excel)
     save_result <- openxlsx::saveWorkbook(wb, excel, overwrite = TRUE)
     ret[["save_result"]] <- save_result
   }

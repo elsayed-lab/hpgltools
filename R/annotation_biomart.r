@@ -38,6 +38,8 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
     if (is.null(year)) {
       year_numeric <- lubridate::year(lubridate::date(lubridate::now()))
       year_strings <- as.character(c(year_numeric - 1, year_numeric - 2, year_numeric - 3))
+    } else {
+      year_strings <- as.character(year)
     }
     archives <- c()
     for (y in year_strings) {

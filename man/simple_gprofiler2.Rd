@@ -9,7 +9,7 @@ simple_gprofiler2(
   species = "hsapiens",
   convert = TRUE,
   first_col = "logFC",
-  second_col = "limma_logfc",
+  second_col = "deseq_logfc",
   do_go = TRUE,
   do_kegg = TRUE,
   do_reactome = TRUE,

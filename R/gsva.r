@@ -69,11 +69,8 @@ convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.
                                       columns = to))
   new_idx <- complete.cases(new_ids)
   new_ids <- new_ids[new_idx, ]
-  message("Before conversion, the expressionset has ", length(ids),
-          " entries.")
-  message("After conversion, the expressionset has ",
-          length(rownames(new_ids)),
-          " entries.")
+  message("Before conversion: ", length(ids),
+          ", after conversion: ", length(rownames(new_ids)), ".")
   return(new_ids)
 }
 

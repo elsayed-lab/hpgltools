@@ -7,7 +7,7 @@
 batch_counts(
   count_table,
   method = TRUE,
-  design = NULL,
+  expt_design = NULL,
   batch1 = "batch",
   current_state = NULL,
   current_design = NULL,
@@ -24,8 +24,6 @@ batch_counts(
 \arguments{
 \item{count_table}{Matrix of (pseudo)counts.}
 
-\item{design}{Model matrix defining the experimental conditions/batches/etc.}
-
 \item{batch1}{Column in the design table describing the presumed covariant
 to remove.}
 
@@ -39,6 +37,8 @@ remove (only used by limma at the moment).}
 parameter from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
+
+\item{design}{Model matrix defining the experimental conditions/batches/etc.}
 
 \item{batch}{String describing the method to try to remove the batch effect
 (or FALSE to leave it alone, TRUE uses limma).}
