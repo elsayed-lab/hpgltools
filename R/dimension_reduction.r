@@ -749,17 +749,14 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "ida" = {
-      svd_result <- iDA::iDA_core(data.use = mtrx, NormCounts = mtrx)
-
-      ## svd_result <- corpcor::fast.svd(mtrx - rowMeans(mtrx))
-      ## rownames(svd_result[["v"]]) <- rownames(design)
-      ## colnames(svd_result[["v"]]) <- glue::glue("PC{1:ncol(svd_result[['v']])}")
-      ## pc_table <- svd_result[["v"]]
-      ## x_name <- glue::glue("PC{x_pc}")
-      ## y_name <- glue::glue("PC{y_pc}")
-      ## Depending on how much batch/condition information is available, invoke
-      ## pcRes() to get some idea of how much variance in a batch model is
-      ## accounted for with each PC.
+      svd_result <- iDA_core(data.use = mtrx, NormCounts = mtrx)
+      pc_table <- scale(svd_result[[2]])
+      x_name <- glue::glue("LD{x_pc}")
+      y_name <- glue::glue("LD{y_pc}")
+      x_label <- x_name
+      y_label <- y_name
+      included_batch <- as.factor(as.character(design[[batch_column]]))
+      included_conditions <- as.factor(as.character(design[[cond_column]]))
       ## residual_df <- get_res(svd_result, design)
       ## prop_lst <- residual_df[["prop_var"]]
       ## get the percentage of variance accounted for in each PC
