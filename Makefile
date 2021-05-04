@@ -91,7 +91,7 @@ vignette:
 	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes(install=FALSE)"
-	mv doc inst/doc
+	mv doc/* inst/doc/
 	cp inst/reference/* inst/doc
 	cp vignettes/*.R inst/doc
 	cp vignettes/*.Rmd inst/doc
