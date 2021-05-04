@@ -3,6 +3,36 @@
 ## This seeks to simplify these invocations and ensure that it will work under
 ## most likely use-case scenarios.
 
+## The function is just written as a reminder that LRT may prove
+## useful/important for some of our data, most notably the comparisons
+## of visit number in the Leishmania panamensis data.
+deseq_lrt <- function(expt, test_factor = "status",
+                      interacting_factors = c("donor", "visit")) {
+  full_model_string <- "~"
+  reduced_model_string <- "~"
+  for (m in test_factors) {
+    full_model_string <- glue::glue("{full_model_string} + {m}")
+  }
+  full_model_string <- glue::glue("{full_model_string} + {interacting_factors[1]} + \\
+ {interacting_factors[2]")
+  reduced_model_string <- full_model_string
+  full_model_string <- glue::glue("{full_model_string} + \\
+ {interacting_factors[1]}:{interacting_factors[2]}")
+  full_model <- as.formula(full_model_string)
+  reduced_model <- as.formula(reduced_model_string)
+
+  deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
+                                                colData = pData(expt),
+                                                design = full_model)
+  rld_mat <- DESeq2::rlog(deseq_input)
+  deseq_lrt <- DESeq2::DESeq(dds, test="LRT", reduced = reduced_model)
+  deseq_lrt_table <- results(dds_lrt_time)
+  retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = deseq_lrt_table)
+  return(retlist)
+}
+
 #' deseq_pairwise()  Because I can't be trusted to remember '2'.
 #'
 #' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2.

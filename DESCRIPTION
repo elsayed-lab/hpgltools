@@ -54,7 +54,7 @@ Imports:
   sva,
   variancePartition
 Depends:
-  Biobase, R6
+  Biobase, SummarizedExperiment
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
@@ -116,6 +116,7 @@ Collate:
   'proteomics.r'
   'plot_proteomics.r'
   'variants.r'
+  'se.r'
   'sequence.r'
   'power_estimation.r'
   'xlsx.r'

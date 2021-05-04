@@ -625,8 +625,6 @@ batch_counts <- function(count_table, method = TRUE, expt_design = NULL, batch1 
   } else {
     chosen_surrogates <- surrogate_method
   }
-  message("surrogate arguments: chosen_surrogates ",
-          chosen_surrogates, " surrogates ", surrogates, ".")
 
   if (is.null(cpus)) {
     cpus <- parallel::detectCores() - 2

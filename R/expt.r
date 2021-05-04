@@ -235,8 +235,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @export
 create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                         sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
-                        notes = NULL, countdir = NULL, include_type = "all", include_gff = NULL,
-                        file_column = "file", id_column = NULL, savefile = NULL, low_files = FALSE, ...) {
+                        notes = NULL, countdir = NULL, include_type = "all",
+                        include_gff = NULL, file_column = "file", id_column = NULL,
+                        savefile = NULL, low_files = FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -2464,6 +2465,9 @@ sum_eupath_exon_counts <- function(counts) {
 #' @export
 what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
                           norm = "raw", filter = "raw", batch = "raw") {
+  if (! "expt" %in% class(expt)) {
+    return("")
+  }
   if (!is.null(expt)) {
     transform <- expt[["state"]][["transform"]]
     if (is.null(transform)) {
@@ -3329,25 +3333,104 @@ expt <- function(...) {
   create_expt(...)
 }
 expt_set <- setOldClass("expt")
+
+## > showMethods("assay")
+## Function: assay (package SummarizedExperiment)
+## x="SummarizedExperiment", i="character"
+## x="SummarizedExperiment", i="missing"
+## x="SummarizedExperiment", i="numeric"
+
+#' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
+#' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
+setMethod("assay", signature = "expt",
+          function(x, withDimnames = TRUE, ...) {
+            mtrx <- Biobase::exprs(x[["expressionset"]])
+            return(mtrx)
+          })
+setMethod("assay", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::exprs(object)
+          })
+setMethod("assay<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("assay<-", signature = "ExpressionSet",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x) <- value
+            return(x)
+          })
+setMethod("colData", "expt",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x[["expressionset"]])
+          })
+setMethod("colData", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x)
+          })
+setMethod("colData<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("colData<-", signature = "ExpressionSet",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x) <- value
+            return(x)
+          })
 setMethod("exprs", signature = "expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
+          })
+setMethod("exprs<-", signature = "expt",
+          function(object, value) {
+            exprs(object[["expressionset"]]) <- value
+            return(object)
           })
 setMethod("fData", signature = "expt",
           function(object) {
             Biobase::fData(object[["expressionset"]])
           })
-setMethod("pData", signature = "expt",
-          function(object) {
-            Biobase::pData(object[["expressionset"]])
-          })
-setMethod("sampleNames", signature = "expt",
-          function(object) {
-            Biobase::sampleNames(object[["expressionset"]])
+setMethod("fData<-", signature = "expt",
+          function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
           })
 setMethod("notes", signature = "expt",
           function(object) {
             Biobase::notes(object[["expressionset"]])
+          })
+setMethod("pData", signature = "expt",
+          function(object) {
+            Biobase::pData(object[["expressionset"]])
+          })
+setMethod("pData<-", signature = "expt",
+          function(object, value) {
+            pData(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("rowData", "expt",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x[["expressionset"]])
+          })
+setMethod("rowData", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x)
+          })
+setMethod("rowData<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::fData(x[["expressionset"]]) <- value
+            return(x)
+          })
+##setMethod("rowData<-", signature = "Expressionset",
+##          function(x, i, withDimnames = TRUE, ..., value) {
+##            Biobase::fData(x) <- value
+##            return(x)
+##          })
+setMethod("sampleNames", signature = "expt",
+          function(object) {
+            Biobase::sampleNames(object[["expressionset"]])
           })
 setMethod("sampleNames<-", signature = "expt",
           function(object, value) {

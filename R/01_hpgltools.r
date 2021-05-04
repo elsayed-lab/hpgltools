@@ -54,6 +54,7 @@ NULL
 #' @docType package
 #' @name hpgltools
 #' @importFrom Biobase exprs pData fData notes sampleNames
+#' @importFrom SummarizedExperiment assay colData rowData
 #' @importFrom data.table data.table
 #' @importFrom dplyr filter group_by n summarise
 #' @importFrom foreach foreach
