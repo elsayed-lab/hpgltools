@@ -54,7 +54,9 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
 
   new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
   new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
-  rownames(new_sig) <- new_sig[[required_id]]
+  ## We cannot guarantee that the IDs acquired in this fashion are unique.
+  ## rownames(new_sig) <- new_sig[[required_id]]
+  new_sig[["ID"]] <- new_sig[[required_id]]
 
   new_lids <- convert_ids(rownames(length_db), from = current_id, to = required_id, orgdb = orgdb)
   new_length <- merge(new_lids, length_db, by.x = current_id, by.y = "row.names")
@@ -333,11 +335,17 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
+  tmp_file <- tempfile(pattern = "goseq", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   pwf <- sm(suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
                                           plot.fit = doplot)))
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
+  dev.off()
+  file.remove(tmp_file)
+
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))

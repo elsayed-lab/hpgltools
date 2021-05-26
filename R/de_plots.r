@@ -447,10 +447,18 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
+  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
   up_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   down_res <- Vennerable::plot(down_venn, doWeights = FALSE)
   down_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
 
   retlist <- list(
     "up_venn" = up_venn,

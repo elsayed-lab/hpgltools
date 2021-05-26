@@ -119,42 +119,63 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
 #' @export
 plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   start <- plot_libsize(expt, text = FALSE)
-  norm <- sm(normalize_expt(expt, filter = filter, ...))
+  norm <- sm(normalize_expt(expt, filter = filter,
+                            ...))
   end <- plot_libsize(norm)
 
+  ## Gather the number of genes which are <= the low limit, before and after filtering
   lt_min_start <- colSums(exprs(expt) <= low_limit)
   lt_min_end <- colSums(exprs(norm) <= low_limit)
 
   start_tab <- as.data.frame(start[["table"]])
   end_tab <- as.data.frame(end[["table"]])
 
+  ## Get the number of counts in each samples.
   start_tab[["sum"]] <- as.numeric(start_tab[["sum"]])
   start_tab[["colors"]] <- as.character(start_tab[["colors"]])
   start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
+  ## Get the number of low genes in each sample.
   start_tab[["low"]] <- lt_min_start
+  start_tab[["sub_low"]] <- ""
   start_tab[["subtraction"]] <- ""
+  start_tab[["subtraction_string"]] <- ""
 
+  ## Get the number of counts after filtering.
   end_tab[["sum"]] <- as.numeric(end_tab[["sum"]])
   end_tab[["colors"]] <- as.character(end_tab[["colors"]])
   end_tab[["alpha"]] <- ggplot2::alpha(end_tab[["colors"]], 1.0)
-  end_tab[["subtraction"]] <- start_tab[["sum"]] - end_tab[["sum"]]
+  ## Find how many counts were lost from filtering.
+  subtract_count_sums <- start_tab[["sum"]] - end_tab[["sum"]]
+  end_tab[["subtraction"]] <- subtract_count_sums
+  ## Get the number of genes after filtering.
   end_tab[["low"]] <- lt_min_end
   end_tab[["sub_low"]] <- ""
+  end_tab[["subtraction_string"]] <- ""
 
-  start_tab[["sub_low"]] <- start_tab[["low"]] - end_tab[["low"]]
+  ## Get the number of genes lost from filtering.
+  subtract_gene_sums <- start_tab[["low"]] - end_tab[["low"]]
+  start_tab[["sub_low"]] <- subtract_gene_sums
+  start_tab[["subtraction_string"]] <- paste0(subtract_count_sums, " counts from ",
+                                              subtract_gene_sums, " genes.")
   all_tab <- rbind(start_tab, end_tab)
 
+  count_title <- glue::glue("Counts remaining after filtering less than {low_limit} reads,
+labeled by counts/genes removed.")
   count_columns <- ggplot(all_tab, aes_string(x = "id", y = "sum")) +
     ggplot2::geom_col(position = "identity", color = "black", aes_string(fill = "colors")) +
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
                        aes_string(
                          x = "id",
-                         label='as.character(all_tab$subtraction)')) +
+                         ## label='as.character(all_tab$subtraction)')) +
+                         label="subtraction_string")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
-                   legend.position = "none")
+                   legend.position = "none") +
+    ggplot2::scale_y_log10(labels = scales::scientific) +
+    ggplot2::ggtitle(count_title)
 
+  low_title <- glue::glue("Genes with less than {low_limit} reads before/after filtering, labeled by delta.")
   low_columns <- ggplot(all_tab, aes_string(x = "id", y = "low")) +
     ggplot2::geom_col(position = "identity", color = "black",
                       aes_string(alpha = "alpha", fill = "colors")) +
@@ -162,10 +183,12 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
                        aes_string(
                          x = "id",
-                         label='as.character(all_tab$sub_low)')) +
+                         ## label='as.character(all_tab$sub_low)')) +
+                         label="sub_low")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
-                   legend.position = "none")
+                   legend.position = "none") +
+    ggplot2::ggtitle(low_title)
 
   retlist <- list(
     "start" = start,

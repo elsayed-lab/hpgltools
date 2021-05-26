@@ -6,30 +6,52 @@
 ## The function is just written as a reminder that LRT may prove
 ## useful/important for some of our data, most notably the comparisons
 ## of visit number in the Leishmania panamensis data.
-deseq_lrt <- function(expt, test_factor = "status",
-                      interacting_factors = c("donor", "visit")) {
-  full_model_string <- "~"
-  reduced_model_string <- "~"
-  for (m in test_factors) {
-    full_model_string <- glue::glue("{full_model_string} + {m}")
+deseq_lrt <- function(expt,
+                      full_string = "~ clinicaloutcome + visitnumber + clinicaloutcome:visitnumber",
+                      reduced_string = "~ clinicaloutcome + visitnumber",
+                      time = "visitnumber", col = "clinicaloutcome",
+                      factors = NULL, cutoff = 0.05, minc = 3) {
+  full_model <- as.formula(full_string)
+  reduced_model <- as.formula(reduced_string)
+  col_data <- pData(expt)
+  if (!is.null(factors)) {
+    for (f in factors) {
+      col_data[[f]] <- as.factor(col_data[[f]])
+    }
   }
-  full_model_string <- glue::glue("{full_model_string} + {interacting_factors[1]} + \\
- {interacting_factors[2]")
-  reduced_model_string <- full_model_string
-  full_model_string <- glue::glue("{full_model_string} + \\
- {interacting_factors[1]}:{interacting_factors[2]}")
-  full_model <- as.formula(full_model_string)
-  reduced_model <- as.formula(reduced_model_string)
-
   deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
-                                                colData = pData(expt),
+                                                colData = col_data,
                                                 design = full_model)
-  rld_mat <- DESeq2::rlog(deseq_input)
-  deseq_lrt <- DESeq2::DESeq(dds, test="LRT", reduced = reduced_model)
-  deseq_lrt_table <- results(dds_lrt_time)
+  deseq_lrt <- DESeq2::DESeq(deseq_input, test="LRT", reduced = reduced_model)
+  deseq_lrt_table <- DESeq2::results(deseq_lrt)
+
+  ## Copy-pasting from:
+  ## https://hbctraining.github.io/DGE_workshop/lessons/08_DGE_LRT.html
+  ## Subset the LRT results to return genes with padj < 0.05
+  lrt_significant <- deseq_lrt_table %>%
+    data.frame() %>%
+    tibble::rownames_to_column(var = "gene") %>%
+    tibble::as_tibble() %>%
+    filter(padj <= cutoff)
+
+  rlog_matrix <- DESeq2::rlog(deseq_input)
+  clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
+
+  cluster_data <- DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
+                                         time = time, col = col, minc = minc)
+  cluster_df <- cluster_data[["df"]]
+  cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
+  group_lst <- list()
+  for (c in levels(cluster_df[["cluster"]])) {
+    group_idx <- cluster_df[["cluster"]] == c
+    group_lst[[c]] <- cluster_df[group_idx, ]
+  }
   retlist <- list(
       "deseq_result" = deseq_lrt,
-      "deseq_table" = deseq_lrt_table)
+      "deseq_table" = deseq_lrt_table,
+      "cluster_data" = cluster_data,
+      "group_list" = group_lst
+      )
   return(retlist)
 }
 

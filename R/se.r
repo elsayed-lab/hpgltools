@@ -1,3 +1,27 @@
+#' Create a SummarizedExperiment given some metadata
+#'
+#' This function was taken from create_expt() and repurposed to create SummarizedExperiments.
+#'
+#' @param metadata Filename or table of metadata about the samples of interest.
+#' @param gene_info Annotations for the genes in the count data.
+#' @param count_dataframe Optional table of counts.
+#' @param sanitize_rownames Clean up unruly gene IDs?
+#' @param sample_colors Specify the colors for the samples?
+#' @param title Provide a title for the experiment.
+#' @param notes Provide arbitrary notes.
+#' @param countdir (deprecated) Directory containing count tables.
+#' @param include_type Used to specify types of genes/annotations to use.
+#' @param include_gff Keep a copy of the gff with the data?
+#' @param file_column Metadata column containing the counts for each sample.
+#' @param id_column Non-default column containing the sample IDs.
+#' @param savefile Filename to which to save a rda file of the data structure.
+#' @param low_files I don't remember this, I bet it is deprecated.
+#' @param annotation orgDB associated with this, primarily used with gsva-like tools.
+#' @param palette Color palette when auto-choosing colors for the samples.
+#' @param round Round the data if/when it is not integer?
+#' @param tx_gene_map When using tximport, use this to convert from transcripts to genes.
+#' @param ... Extra options.
+#' @export
 create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                       sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
                       notes = NULL, countdir = NULL, include_type = "all",
@@ -450,6 +474,9 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   return(se)
 }
 
+#' Analagous function to make_pombe_expt()
+#'
+#' @export
 make_pombe_se <- function(annotation = TRUE) {
   fission <- new.env()
   tt <- sm(please_install("fission"))

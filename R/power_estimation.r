@@ -60,18 +60,55 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
                                  filter.by = filter,
                                  target.by = target,
                                  delta = delta)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerTD(powers)
   powertd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerFD(powers)
   powerfd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
   powerhist_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
   power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
   retlist <- list(
       "options" = simulation_options,
@@ -186,24 +223,61 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
                                    filter.by = filter,
                                    target.by = target,
                                    delta = delta)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPower(powers)
     abline(v = x_intercept)
     power_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerTD(powers)
     abline(v = x_intercept)
     powertd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerFD(powers)
     abline(v = x_intercept)
     powerfd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotFDcost(powers)
     abline(v = x_intercept)
     fdcost_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
     abline(v = x_intercept)
     powerhist_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerAlpha(powers)
     abline(v = x_intercept)
     poweralpha_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
     power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
     retlist <- list(
         "options" = simulation_options,

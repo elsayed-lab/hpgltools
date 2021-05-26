@@ -1916,8 +1916,13 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
       } ## End pulling the significants by selectors.
       sets <- Vennerable::Venn(Sets = lst[[dir]][[table]])
       intersections <- sets@IntersectionSets
+      tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+      this_plot <- png(filename = tmp_file)
+      controlled <- dev.control("enable")
       plt <- Vennerable::plot(sets, doWeights = FALSE)
       rec <- grDevices::recordPlot()
+      dev.off()
+      removed <- file.remove(tmp_file)
       lst[[dir]][[table]][["sets"]] <- sets
       lst[[dir]][[table]][["intersections"]] <- intersections
       lst[[dir]][[table]][["plot"]] <- rec
@@ -2387,7 +2392,6 @@ stringsAsFactors = FALSE)
 #' @param compare_plots series of plots to print out.
 write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
                                    lfc_cutoff = 1, p_cutoff = 0.05) {
-  mesg("Writing summary information, compare_plot is: ", compare_plots, ".")
   image_files <- c()
   if (length(apr[["comparison"]]) == 0) {
     compare_plots <- FALSE

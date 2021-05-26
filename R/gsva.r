@@ -294,6 +294,9 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
 
   scored_ht <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin))
@@ -303,6 +306,8 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
                            cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
   subset_order <- rev(scored_ht[["rowInd"]])
   subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
@@ -990,6 +995,9 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                    "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000")
   jet_colors <- grDevices::colorRampPalette(color_range)
   starting_ht <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     starting_ht <- heatmap.3(values, trace = "none", col = jet_colors,
                              margins = c(col_margin, row_margin))
@@ -999,7 +1007,8 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                              cexCol = label_size, cexRow = label_size)
   }
   starting_ht_plot <- grDevices::recordPlot()
-
+  dev.off()
+  file.remove(tmp_file)
   tests <- test_values <- against_values <- NULL
   choice <- NULL
   if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
@@ -1077,10 +1086,15 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     } ## End iterating over every level in the chosen factor.
     colnames(result_df) <- fact_lvls
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
+    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
                            margins = c(col_margin, row_margin), Colv = FALSE,
                            dendrogram = "row", cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
     test_results <- result_df
   } else if (choice == "column") {
     test_results <- sapply(X = tests, FUN = cheesy_likelihood)
@@ -1321,6 +1335,9 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     ht <- heatmap.3(xcell_result, trace = "none", col = jet_colors,
                     margins = c(col_margin, row_margin))
@@ -1330,10 +1347,15 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
                     cexCol = label_size, cexRow = label_size)
   }
   ht_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
 
   sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
   sig_plot <- NULL
   sig_result <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (sum(sig_idx) > 1) {
     sig_result <- as.matrix(xcell_result[sig_idx, ])
     if (is.null(label_size)) {
@@ -1346,6 +1368,8 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
     }
     sig_plot <- grDevices::recordPlot()
   }
+  dev.off()
+  file.remove(tmp_file)
 
   retlist <- list(
       "xcell_input" = xcell_input,

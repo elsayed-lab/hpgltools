@@ -139,8 +139,8 @@ concatenate_runs <- function(expt, column = "replicate") {
     final_design <- rbind(final_design, tmp_design)
     column_names[[rep]] <- as.character(tmp_design[, "sampleid"])
     colors[[rep]] <- as.character(tmp_expt[["colors"]][1])
-    batches[[rep]] <- as.character(tmp_expt[["batches"]][1])
-    conditions[[rep]] <- as.character(tmp_expt[["conditions"]][1])
+    batches[[rep]] <- as.character(pData(tmp_expt)[["batch"]][1])
+    conditions[[rep]] <- as.character(pData(tmp_expt)[["condition"]][1])
     samplenames[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep = "-")
     colnames(final_data) <- column_names
   }
@@ -774,6 +774,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' @param column fData column to use for subsetting.
 #' @param method Either remove explicit rows, or keep them.
 #' @param ids Specific IDs to exclude.
+#' @param meta_column Save the amount of data lost to this metadata column when not null.
 #' @param patterns Character list of patterns to remove/keep
 #' @param ... Extra arguments are passed to arglist, currently unused.
 #' @return A smaller expt
@@ -790,7 +791,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' }
 #' @export
 exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids = NULL,
-                               warning_cutoff = 90,
+                               warning_cutoff = 90, meta_column = NULL,
                                patterns = c("snRNA", "tRNA", "rRNA"), ...) {
   arglist <- list(...)
   ex <- expt[["expressionset"]]
@@ -875,6 +876,10 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
 
   expt[["expressionset"]] <- kept
   expt[["summary_table"]] <- summary_table
+  if (!is.null(meta_column)) {
+    pData(expt[["expressionset"]])[meta_column] <- summary_table["pct_removed", ]
+  }
+
   warning_idx <- summary_table["pct_kept", ] < warning_cutoff
   if (sum(warning_idx) > 0) {
     message("There are ", sum(warning_idx), " samples which kept less than ",
@@ -1528,16 +1533,16 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   ## Otherwise, tximport requires a tx2gene data frame with 2 columns, TXNAME and GENEID.
   ## These columns should be definition be available in my fData annotation.
   ## Therefore, I will set the flags tx2gene and txOut accordingly.
-  message("Reading count tables.")
+  mesg("Reading count tables.")
   txout <- TRUE
   tx_gene_map <- NULL
   if (!is.null(arglist[["tx_gene_map"]])) {
-    message("Using the transcript to gene mapping.")
+    mesg("Using the transcript to gene mapping.")
     txout <- FALSE
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
-    message("Reading kallisto data with tximport.")
+    mesg("Reading kallisto data with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1564,7 +1569,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern = "\\.genes\\.results", x = files[1])) {
-    message("Reading rsem data with tximport.")
+    mesg("Reading rsem data with tximport.")
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -1583,7 +1588,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern = "\\.sf", x = files[1])) {
-    message("Reading salmon data with tximport.")
+    mesg("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
     missing_idx <-!file.exists(files)
@@ -1611,7 +1616,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
-    message("Reading count files with read.table().")
+    mesg("Reading count files with read.table().")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header = header, stringsAsFactors = FALSE)
     colnames(count_table) <- c("rownames", ids[1])
@@ -1632,7 +1637,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     if (class(count_table)[1] == "try-error") {
       stop("There was an error reading: ", files[1])
     }
-    message(files[1], " contains ", length(rownames(count_table)), " rows.")
+    mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique = TRUE)
     ## count_table <- count_table[, -1, drop = FALSE]
@@ -1661,8 +1666,8 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       ## count_table <- count_table[, -1, drop = FALSE]
       ## post_merge <- length(rownames(count_table))
       post_merge <- nrow(count_table)
-      message(files[table], " contains ", pre_merge,
-              " rows and merges to ", post_merge, " rows.")
+      mesg(files[table], " contains ", pre_merge,
+           " rows and merges to ", post_merge, " rows.")
     }
 
     ## remove summary fields added by HTSeq
@@ -1680,7 +1685,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     } ## End the difference between tximport and reading tables.
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
-  message("Finished reading count data.")
+  mesg("Finished reading count data.")
   return(retlist)
 }
 
@@ -1765,7 +1770,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
     new_annots <- annots
     new_mtrx <- mtrx
   }
-
+  start_rows <- nrow(mtrx)
   numbers_removed <- 0
   if (is.null(topn)) {
     for (string in semantic) {
@@ -1794,14 +1799,16 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
         } else {
           idx <- grepl(pattern = string, x = new_annots[, semantic_column])
         }
-        message("Hit ", sum(idx), " genes for term ", string, ".")
+        mesg("Hit ", sum(idx), " genes for term ", string, ".")
         idx <- ! idx
         ## So, we take the index of stuff to keep, and just subset on that index.
         new_annots <- new_annots[idx, ]
         new_mtrx <- new_mtrx[idx, ]
-        message("Now the matrix has ", nrow(new_mtrx), " elements.")
       }
-    }
+    } ## End for loop
+    end_rows <- nrow(new_mtrx)
+    lost_rows <- start_rows - end_rows
+    message("semantic_expt_filter(): Removed ", lost_rows, " genes.")
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
     medians <- rowMedians(mtrx)
@@ -1889,7 +1896,8 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
-  chosen_colors <- expt[["conditions"]]
+  ## chosen_colors <- expt[["conditions"]]
+  chosen_colors <- condition_factor
   chosen_names <- names(chosen_colors)
   sample_colors <- NULL
   if (is.null(colors) | isTRUE(colors)) {
@@ -2022,7 +2030,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
   ## the conditions and I do not know why.
   if (!is.null(ids)) {
     ## Change specific id(s) to given condition(s).
-    message("Setting condition for ids ", toString(ids), " to ", fact, ".")
+    mesg("Setting condition for ids ", toString(ids), " to ", fact, ".")
     old_pdata <- pData(expt)
     old_cond <- as.character(old_pdata[["condition"]])
     names(old_cond) <- rownames(old_pdata)
@@ -2080,13 +2088,30 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
 #'  expt = set_expt_factors(big_expt, condition = "column", batch = "another_column")
 #' }
 #' @export
-set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL, ...) {
+set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
+                             class = "factor", columns = NULL, ...) {
   arglist <- list(...)
   if (!is.null(condition)) {
     expt <- set_expt_conditions(expt, fact = condition, ...)
   }
   if (!is.null(batch)) {
     expt <- set_expt_batches(expt, fact = batch, ...)
+  }
+  if (!is.null(columns)) {
+    if (is.null(class)) {
+      stop("If columns is set, then this assumes you want to set those columns to a given class.")
+    }
+    for (col in columns) {
+      if (class == "factor") {
+        pData(expt[["expressionset"]])[[col]] <- as.factor(pData(expt[["expressionset"]])[[col]])
+      } else if (class == "character") {
+        pData(expt[["expressionset"]])[[col]] <- as.character(pData(expt[["expressionset"]])[[col]])
+      } else if (class == "numeric") {
+        pData(expt[["expressionset"]])[[col]] <- as.numeric(pData(expt[["expressionset"]])[[col]])
+      } else {
+        stop("I do not know this class.")
+      }
+    }
   }
   return(expt)
 }
@@ -2131,7 +2156,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     } else {
       stop("Unable to match the IDs.")
     }
-    message("Our column is: ", our_column, ", their column is: ", their_column, ".")
+    mesg("Our column is: ", our_column, ", their column is: ", their_column, ".")
     ## Now the job is to ensure that the ordering is maintained.
     ## We need therefore to merge the rownames of the current IDs into the
     ## data frame of the ID mapping between our species.
@@ -2157,7 +2182,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     ## I will make.names() them and report how many there are, this might not be the correct way
     ## to handle this scenario!
     dup_ids <- sum(duplicated(reordered[[their_column]]))
-    message("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
+    mesg("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
     ids <- make.names(reordered[[their_column]], unique = TRUE)
   }
 
@@ -2275,7 +2300,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
     ## standard deviation or somesuch...
-    message("Subsetting given a minimal number of counts/sample.")
+    mesg("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
@@ -2337,7 +2362,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
-  message("There were ", length(starting_samples), ", now there are ",
+  message("subset_expt(): There were ", length(starting_samples), ", now there are ",
           length(final_samples), " samples.")
   return(new_expt)
 }
@@ -2635,7 +2660,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            title = "Library size summary.")
 
   ## Write the raw read data and gene annotations
-  message("Writing the raw reads.")
+  mesg("Writing the raw reads.")
   sheet <- "raw_reads"
   new_row <- 1
   new_col <- 1
@@ -2665,7 +2690,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
 
   ## Write some graphs for the raw data
-  message("Graphing the raw reads.")
+  mesg("Graphing the raw reads.")
   sheet <- "raw_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet))
   if (class(newsheet) == "try-error") {
@@ -2945,7 +2970,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            sheet = sheet, start_row = new_row, start_col = new_col)
 
   ## Move on to the next sheet, normalized data
-  message("Writing the normalized reads.")
+  mesg("Writing the normalized reads.")
   sheet <- "norm_data"
   new_col <- 1
   new_row <- 1
@@ -2974,7 +2999,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
 
   ## Graphs of the normalized data
-  message("Graphing the normalized reads.")
+  mesg("Graphing the normalized reads.")
   sheet <- "norm_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet))
   norm_metrics <- sm(graph_metrics(norm_data, qq = TRUE,
@@ -3213,7 +3238,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
 
   ## Give a median-by-factor accounting of the data
-  message("Writing the median reads by factor.")
+  mesg("Writing the median reads by factor.")
   sheet <- "median_data"
   new_col <- 1
   new_row <- 1

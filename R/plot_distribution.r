@@ -345,10 +345,23 @@ plot_qq_all <- function(data, labels = "short", ...) {
     means[[count]] <- tmpqq[["summary"]][["Median"]]
     count <- count + 1
   }
+
+  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   result <- plot_multiplot(logs)
   log_plots <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   plot_multiplot(ratios)
   ratio_plots <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
   plots <- list(logs = log_plots, ratios = ratio_plots, medians = means)
   return(plots)
 }

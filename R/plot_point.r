@@ -812,10 +812,16 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       }
       m <- first - second
       a <- (first + second) / 2
+
+      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      this_plot <- png(filename = tmp_file)
+      controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",
                     show.statistics = TRUE, add.loess = TRUE)
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
+      dev.off()
+      file.remove(tmp_file)
     }
   }
   return(plot_list)

@@ -783,4 +783,19 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   return(retlist)
 }
 
+write_snps <- function(expt, output_file = "funky.aln") {
+  start_mtrx <- exprs(expt)
+  samples <- colnames(start_mtrx)
+  aln_string <- ""
+  for (r in 1:ncol(start_mtrx)) {
+    aln_string <- glue::glue("{aln_string}{samples[r]}     {start_mtrx[[r]]}
+")
+  }
+
+  write_output <- file(output_file, open = "a+")
+  cat(aln_string, file = write_output, sep = "")
+  close(write_output)
+  return(output_file)
+}
+
 ## EOF

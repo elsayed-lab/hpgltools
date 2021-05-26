@@ -286,32 +286,54 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   ## Finally, plot them.
   silly_colors <- grDevices::colorRampPalette(c("purple", "black", "yellow"))(100)
   cor_df <- cor_df[complete.cases(cor_df), ]
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   pc_factor_corheat <- heatmap.3(as.matrix(cor_df), scale = "none", trace = "none",
                                  linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                  col = silly_colors, dendrogram = "none", Rowv = FALSE,
                                  Colv = FALSE, main = "cor(factor, PC)")
   pc_factor_corheat <- grDevices::recordPlot()
+  dev.off()
+
   anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_f_heat <- heatmap.3(as.matrix(anova_f), scale = "none", trace = "none",
                             linewidth = 0.5, keysize = 2, margins = c(8, 8),
                             col = anova_f_colors, dendrogram = "none", Rowv = FALSE,
                             Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_f_heat <- grDevices::recordPlot()
+  dev.off()
+
   anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale = "none", trace = "none",
                                 linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                 col = anova_fstat_colors, dendrogram = "none", Rowv = FALSE,
                                 Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_fstat_heat <- grDevices::recordPlot()
+  dev.off()
+
   ## I had this as log(anova_p + 1) !! I am a doofus; too many times I have been log2-ing counts.
   ## The messed up part is that I did not notice this for multiple years.
   neglog_p <- -1 * log(as.matrix(anova_p) + 0.00001)
   anova_neglogp_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale = "none", trace = "none",
                                   linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                   col = anova_f_colors, dendrogram = "none", Rowv = FALSE,
                                   Colv = FALSE, main = "-log(anova_p values)")
   anova_neglogp_heat <- grDevices::recordPlot()
+  dev.off()
+
   ## Another option: -log10 p-value of the ftest for this heatmap.
   ## covariate vs PC score
   ## Analagously: boxplot(PCn ~ batch)
@@ -375,11 +397,22 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
       data <- as.matrix(data) - rowMedians(as.matrix(data))
     }
   }
+
+  tmp_file <- tempfile(pattern = "princomp", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   another_pca <- try(princomp(x = data, cor = cor))
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
+  dev.off()
+
+  tmp_file <- tempfile(pattern = "biplot", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   biplot(another_pca)
   pca_biplot <- grDevices::recordPlot()
+  dev.off()
+
   highest <- NULL
   lowest <- NULL
   for (pc in 1:length(colnames(another_pca[["scores"]]))) {
@@ -435,7 +468,7 @@ plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
                                 z = as.formula(glue::glue("~{z_axis}")),
                                 color = as.formula("~condition"), colors = color_levels,
                                 stroke = I("black"),
-                                text=~paste0('condition: ', condition, ' batch: ', batch)) %>%
+                                text=~paste0("sample: ", sampleid, "condition: ", condition, " batch: ", batch)) %>%
     plotly::add_markers() %>%
     plotly::layout(title = pc_result[["plot"]][["labels"]][["title"]])
   widget <- htmlwidgets::saveWidget(
@@ -937,7 +970,8 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
     comp_plot <- comp_plot + ggplot2::ggtitle(data_title)
   } else if (!is.null(plot_title)) {
     data_title <- what_happened(expt = data)
-    plot_title <- glue::glue("{plot_title}; {data_title}")
+    plot_title <- glue::glue("{plot_title}
+{data_title}")
     comp_plot <- comp_plot + ggplot2::ggtitle(plot_title)
   } else {
     ## Leave the title blank.
@@ -1478,7 +1512,7 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
   comp_genes <- gsub(pattern = "^\\d+\\.\\d+:", replacement = "", x = comp_genes)
   comp_genes_subset <- sm(exclude_genes_expt(expt, ids = comp_genes, method = "keep"))
   samples <- plot_sample_heatmap(comp_genes_subset, row_label = NULL)
-  sample_plot <- grDevices::recordPlot()
+  sample_plot <- samples[["plot"]]
 
   retlist <- list(
     "comp_genes_expt" = comp_genes_subset,
@@ -1866,9 +1900,15 @@ u_plot <- function(plotted_us) {
   ## top_threePC = head(plotted_us, n = 20)
   plotted_us <- plotted_us[, c("PC1", "PC2", "PC3")]
   plotted_us[, "ID"] <- rownames(plotted_us)
-  message("More shallow curves in these plots suggest more genes in this principle component.")
+  mesg("More shallow curves in these plots suggest more genes in this principle component.")
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   plot(plotted_us)
   u_plot <- grDevices::recordPlot()
+  dev.off()
+
   return(u_plot)
 }
 

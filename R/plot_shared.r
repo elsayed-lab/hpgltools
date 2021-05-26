@@ -1,4 +1,4 @@
-## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
+# Note to self, I think for future ggplot2 plots, I must start by creating the data frame
 ## Then cast every column in it explicitly, and only then invoke ggplot(data = df ...)
 
 ## If I see something like:
@@ -346,9 +346,14 @@ plot_legend <- function(stuff) {
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
   leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
   legend <- tmp[["grobs"]][[leg]]
+  tmp_file <- tempfile(pattern = "legend", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   grid::grid.newpage()
   grid::grid.draw(legend)
   legend_plot <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
   ret <- list(
     colors = plot[["data"]][, c("condition", "batch", "colors")],
     plot = legend_plot)
