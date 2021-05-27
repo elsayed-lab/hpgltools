@@ -1743,6 +1743,37 @@ read_metadata <- function(file, ...) {
   return(definitions)
 }
 
+sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable") {
+  pd <- pData(expt)
+  if (is.null(columns)) {
+    columns <- colnames(pd)
+  }
+  for (col in 1:length(columns)) {
+    todo <- columns[col]
+    mesg("Sanitizing metadata column: ", todo, ".")
+    if (! todo %in% colnames(pd)) {
+      mesg("The column ", todo, " is missing, skipping it (also warning this).")
+      warning("The column ", todo, " is missing, skipping it.")
+      next
+    }
+      
+    ## First get rid of trailing/leading spaces, those anger me and are crazy hard to find
+    pd[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = pd[[todo]])
+    pd[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = pd[[todo]])
+    ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet columns.
+    pd[[todo]] <- tolower(pd[[todo]])
+    ## I think punctuation needs to go
+    pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
+
+    ## Set NAs to "NotApplicable"
+    na_idx <- is.na(pd[[todo]])
+    pd[na_idx, todo] <- na_string
+  }
+  pData(expt[["expressionset"]]) <- pd
+  expt[["design"]] <- pd
+  return(expt)
+}
+
 #' Remove/keep specifically named genes from an expt.
 #'
 #' I find subsetting weirdly confusing.  Hopefully this function will allow one
@@ -2089,7 +2120,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
 #' }
 #' @export
 set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
-                             class = "factor", columns = NULL, ...) {
+                             table = "metadata", class = "factor", columns = NULL, ...) {
   arglist <- list(...)
   if (!is.null(condition)) {
     expt <- set_expt_conditions(expt, fact = condition, ...)
@@ -2097,22 +2128,39 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
   if (!is.null(batch)) {
     expt <- set_expt_batches(expt, fact = batch, ...)
   }
+  fd <- fData(expt)
+  pd <- pData(expt)
   if (!is.null(columns)) {
     if (is.null(class)) {
       stop("If columns is set, then this assumes you want to set those columns to a given class.")
     }
     for (col in columns) {
+      mesg("Setting ", col, " to type ", class, ".")
       if (class == "factor") {
-        pData(expt[["expressionset"]])[[col]] <- as.factor(pData(expt[["expressionset"]])[[col]])
+        if (table == "metadata") {
+          pd[[col]] <- as.factor(pd[[col]])
+        } else {
+          fd[[col]] <- as.factor(fd[[col]])
+        }
       } else if (class == "character") {
-        pData(expt[["expressionset"]])[[col]] <- as.character(pData(expt[["expressionset"]])[[col]])
+        if (table == "metadata") {
+          pd[[col]] <- as.character(pd[[col]])
+        } else {
+          fd[[col]] <- as.character(fd[[col]])
+        }
       } else if (class == "numeric") {
-        pData(expt[["expressionset"]])[[col]] <- as.numeric(pData(expt[["expressionset"]])[[col]])
+        if (table == "metadata") {
+          pd[[col]] <- as.numeric(pd[[col]])
+        } else {
+          fd[[col]] <- as.numeric(fd[[col]])
+        }
       } else {
         stop("I do not know this class.")
       }
     }
   }
+  pData(expt[["expressionset"]]) <- pd
+  fData(expt[["expressionset"]]) <- fd
   return(expt)
 }
 

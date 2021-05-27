@@ -6,11 +6,12 @@
 ## The function is just written as a reminder that LRT may prove
 ## useful/important for some of our data, most notably the comparisons
 ## of visit number in the Leishmania panamensis data.
-deseq_lrt <- function(expt,
-                      full_string = "~ clinicaloutcome + visitnumber + clinicaloutcome:visitnumber",
-                      reduced_string = "~ clinicaloutcome + visitnumber",
-                      time = "visitnumber", col = "clinicaloutcome",
+deseq_lrt <- function(expt, interactor_column = "visitnumber",
+                      interest_column = "clinicaloutcome", transform = "rlog",
                       factors = NULL, cutoff = 0.05, minc = 3) {
+  full_string <- glue::glue("~ {interactor_column} + {interest_column} + \\
+ {interactor_column}:{interest_column}")
+  reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
   full_model <- as.formula(full_string)
   reduced_model <- as.formula(reduced_string)
   col_data <- pData(expt)
@@ -19,10 +20,25 @@ deseq_lrt <- function(expt,
       col_data[[f]] <- as.factor(col_data[[f]])
     }
   }
+  if (is.null(col_data[[interactor_column]])) {
+    stop("There is no ", interactor_column, " column in the experiment metadata.")
+  }
+  if (class(col_data[[interactor_column]]) != "factor") {
+    warning("The ", interactor_column,
+            " should probably be a factor, set it with the 'factors' arg.")
+  }
+  if (is.null(col_data[[interest_column]])) {
+    stop("There is no ", interest_column, " column in the experiment metadata.")
+  }
+  if (class(col_data[[interest_column]]) != "factor") {
+    warning("The ", interest_column,
+            " should probably be a factor, set it with the 'factors' arg.")
+  }
+
   deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
                                                 colData = col_data,
                                                 design = full_model)
-  deseq_lrt <- DESeq2::DESeq(deseq_input, test="LRT", reduced = reduced_model)
+  deseq_lrt <- DESeq2::DESeq(deseq_input, test = "LRT", reduced = reduced_model)
   deseq_lrt_table <- DESeq2::results(deseq_lrt)
 
   ## Copy-pasting from:
@@ -34,11 +50,17 @@ deseq_lrt <- function(expt,
     tibble::as_tibble() %>%
     filter(padj <= cutoff)
 
-  rlog_matrix <- DESeq2::rlog(deseq_input)
+  rlog_matrix <- matrix()
+  if (transform == "vst") {
+    rlog_matrix <- DESeq2::vst(deseq_input)
+  } else {
+    rlog_matrix <- DESeq2::rlog(deseq_input)
+  }
   clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
 
   cluster_data <- DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
-                                         time = time, col = col, minc = minc)
+                                         time = interactor_column, col = interest_column,
+                                         minc = minc)
   cluster_df <- cluster_data[["df"]]
   cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
   group_lst <- list()
@@ -50,7 +72,8 @@ deseq_lrt <- function(expt,
       "deseq_result" = deseq_lrt,
       "deseq_table" = deseq_lrt_table,
       "cluster_data" = cluster_data,
-      "group_list" = group_lst
+      "group_list" = group_lst,
+      "favorite_genes" = cluster_data[["df"]]
       )
   return(retlist)
 }
