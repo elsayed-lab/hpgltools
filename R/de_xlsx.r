@@ -1688,13 +1688,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                          {table_name} with {title_append} according to {according}.")
       down_titles[[table_name]] <- down_title
     } ## End extracting significant genes for loop
-
-    change_counts <- as.data.frame(cbind(change_counts_up, change_counts_down))
-    ## Found on
-    ## http://stackoverflow.com/questions/2851015
-    ## A quick and somewhat dirty way to coerce columns to a given type from lists etc.
-    ## I am not sure I am a fan, but it certainly is concise.
-    change_counts[] <- lapply(change_counts, as.numeric)
+    
+    change_counts <- as.data.frame(cbind(as.numeric(change_counts_up),
+                                         as.numeric(change_counts_down)))
     summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
     ## xls_result <- write_xlsx(data = change_counts, sheet = "number_changed", file = sig_table,
@@ -2095,6 +2091,8 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
     } else {
       mesg("The up table ", base_name, " is empty.")
     }
+
+
     down_table <- downs[[table_count]]
     down_title <- down_titles[[table_count]]
     if (nrow(down_table) > 0) {

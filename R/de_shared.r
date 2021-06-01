@@ -1745,7 +1745,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 
   ## Finally, invoke IHW and get its interpretation of adjusted p-values.
   formula <- as.formula(glue::glue("{pvalue_column} ~ {mean_column}"))
-  ihw_result <- IHW::ihw(formula, data = tmp_table, alpha = significance)
+  ihw_result <- sm(IHW::ihw(formula, data = tmp_table, alpha = significance))
   adjusted_p_values <- IHW::adj_pvalues(ihw_result)
   return(adjusted_p_values)
 }

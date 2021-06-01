@@ -4,7 +4,16 @@
 \alias{set_expt_factors}
 \title{Change the factors (condition and batch) of an expt}
 \usage{
-set_expt_factors(expt, condition = NULL, batch = NULL, ids = NULL, ...)
+set_expt_factors(
+  expt,
+  condition = NULL,
+  batch = NULL,
+  ids = NULL,
+  table = "metadata",
+  class = "factor",
+  columns = NULL,
+  ...
+)
 }
 \arguments{
 \item{expt}{Expt to modify}

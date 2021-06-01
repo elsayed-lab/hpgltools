@@ -646,8 +646,8 @@ circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
   if (sum(minus_drop_idx) > 0) {
     minus_df <- minus_df[!minus_drop_idx, ]
   }
-  if (!is.null(id_column)) {
-    tmpdf <- as.data.frame(annotation[[id_column]])
+  if (!is.null(label_column)) {
+    tmpdf <- as.data.frame(annotation[[label_column]])
     rownames(tmpdf) <- rownames(annotation)
     colnames(tmpdf) <- "id"
     plus_df <- merge(plus_df, tmpdf, by = "row.names", all.x = TRUE)

@@ -10,6 +10,7 @@ exclude_genes_expt(
   method = "remove",
   ids = NULL,
   warning_cutoff = 90,
+  meta_column = NULL,
   patterns = c("snRNA", "tRNA", "rRNA"),
   ...
 )
@@ -22,6 +23,8 @@ exclude_genes_expt(
 \item{method}{Either remove explicit rows, or keep them.}
 
 \item{ids}{Specific IDs to exclude.}
+
+\item{meta_column}{Save the amount of data lost to this metadata column when not null.}
 
 \item{patterns}{Character list of patterns to remove/keep}
 

@@ -42,7 +42,10 @@ circos_plus_minus(
   wcol = "vvdppurple",
   xcol = "black",
   ycol = "lred",
-  zcol = "vlpblue"
+  zcol = "vlpblue",
+  max = NULL,
+  label_column = NULL,
+  url_string = ""
 )
 }
 \arguments{
@@ -69,57 +72,59 @@ plus-strand data.}
 
 \item{layers_overflow}{How to handle too many layers.}
 
-\item{acol}{A color: RNA processing and modification.}
+\item{acol}{A color: RNA processing and modification. (orange)}
 
-\item{bcol}{B color: Chromatin structure and dynamics.}
+\item{bcol}{B color: Chromatin structure and dynamics. (red-9)}
 
-\item{ccol}{C color: Energy production conversion.}
+\item{ccol}{C color: Energy production conversion. (yellow)}
 
-\item{dcol}{D color: Cell cycle control, mitosis and meiosis.}
+\item{dcol}{D color: Cell cycle control, mitosis and meiosis. (very light purple)}
 
-\item{ecol}{E color: Amino acid transport metabolism.}
+\item{ecol}{E color: Amino acid transport metabolism. (very light green)}
 
-\item{fcol}{F color: Nucleotide transport and metabolism.}
+\item{fcol}{F color: Nucleotide transport and metabolism. (deep blue)}
 
-\item{gcol}{G color: Carbohydrate transport and metabolism.}
+\item{gcol}{G color: Carbohydrate transport and metabolism. (very light green)}
 
-\item{hcol}{H color: Coenzyme transport and metabolism.}
+\item{hcol}{H color: Coenzyme transport and metabolism. (very light purple blue)}
 
-\item{icol}{I color: Lipid transport and metabolism.}
+\item{icol}{I color: Lipid transport and metabolism. (very very deep green)}
 
-\item{jcol}{J color: Translation, ribosome structure and biogenesis.}
+\item{jcol}{J color: Translation, ribosome structure and biogenesis. (deep red)}
 
-\item{kcol}{K color: Transcription.}
+\item{kcol}{K color: Transcription. (orange)}
 
-\item{lcol}{L color: Replication, recombination, and repair.}
+\item{lcol}{L color: Replication, recombination, and repair. (very very light orange)}
 
-\item{mcol}{M color: Cell wall/membrane biogenesis.}
+\item{mcol}{M color: Cell wall/membrane biogenesis. (deep green)}
 
-\item{ncol}{N color: Cell motility}
+\item{ncol}{N color: Cell motility (very very light purple blue)}
 
-\item{ocol}{O color: Posttranslational modification, protein turnover, chaperones.}
+\item{ocol}{O color: Posttranslational modification, protein turnover, chaperones. (very very light green)}
 
-\item{pcol}{P color: Inorganic ion transport and metabolism.}
+\item{pcol}{P color: Inorganic ion transport and metabolism. (very very deep red)}
 
-\item{qcol}{Q color: Secondary metabolite biosynthesis, transport, and catabolism.}
+\item{qcol}{Q color: Secondary metabolite biosynthesis, transport, and catabolism. (very light green 3)}
 
-\item{rcol}{R color: General function prediction only.}
+\item{rcol}{R color: General function prediction only. (very light grey)}
 
-\item{scol}{S color: Function unknown.}
+\item{scol}{S color: Function unknown. (grey)}
 
-\item{tcol}{T color: Signal transduction mechanisms.}
+\item{tcol}{T color: Signal transduction mechanisms. (very light purple)}
 
-\item{ucol}{U color: Intracellular trafficking(sp?) and secretion.}
+\item{ucol}{U color: Intracellular trafficking(sp?) and secretion. (green 3)}
 
-\item{vcol}{V color: Defense mechanisms.}
+\item{vcol}{V color: Defense mechanisms. (very light red)}
 
-\item{wcol}{W color: Extracellular structures.}
+\item{wcol}{W color: Extracellular structures. (very very deep purple)}
 
-\item{xcol}{X color: Not in COG.}
+\item{xcol}{X color: Not in COG. (black)}
 
-\item{ycol}{Y color: Nuclear structure.}
+\item{ycol}{Y color: Nuclear structure. (light red)}
 
-\item{zcol}{Z color: Cytoskeleton.}
+\item{zcol}{Z color: Cytoskeleton. (very light purple blue)}
+
+\item{max}{Maximum length for chromosomal lengths}
 }
 \value{
 Radius after adding the plus/minus information and the spacing between them.
