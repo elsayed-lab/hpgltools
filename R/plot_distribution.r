@@ -31,7 +31,7 @@
 #'  a_boxplot  ## ooo pretty boxplot look at the lines
 #' }
 #' @export
-plot_boxplot <- function(data, colors = NULL, title = NULL,
+plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
                          violin = FALSE, scale = NULL, expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
@@ -75,22 +75,38 @@ plot_boxplot <- function(data, colors = NULL, title = NULL,
 
   data[["id"]] <- rownames(data)
   dataframe <- reshape2::melt(data, id = c("id"))
-  colnames(dataframe) <- c("gene", "variable", "value")
+  colnames(dataframe) <- c("gene", "sample", "reads")
+
+  dataframe[["sample"]] <- factor(dataframe[["sample"]])
+  if (is.null(order)) {
+    ## Order it by sample names lexically
+    lexical <- order(levels(dataframe[["sample"]]))
+    new_levels <- levels(dataframe[["sample"]])[lexical]
+    levels(dataframe[["sample"]]) <- new_levels
+  } else {
+    new_df <- data.frame()
+    for (o in order) {
+      matches <- grep(pattern = o, x = dataframe[["sample"]])
+      adders <- dataframe[matches, ]
+      new_df <- rbind(new_df, adders)
+    }
+    dataframe <- new_df
+    dataframe[["sample"]] <- factor(dataframe[["sample"]], order)
+  }
 
   ## The use of data= and aes() leads to no visible binding for global variable warnings
   ## I am not sure what to do about them in this context.
-  boxplot <- ggplot2::ggplot(data = dataframe, aes_string(x = "variable", y = "value")) +
-    ggplot2::scale_x_discrete(labels = colnames(data))
+  boxplot <- ggplot2::ggplot(data = dataframe, aes_string(x = "sample", y = "reads"))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill = "variable"), width = 1, scale = "area",
+      ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area",
                            show.legend = FALSE) +
       ggplot2::scale_fill_manual(values = as.character(colors), guide = FALSE) +
-      ggplot2::geom_boxplot(aes_string(fill = "variable"), outlier.alpha = 0.01,
+      ggplot2::geom_boxplot(aes_string(fill = "sample"), outlier.alpha = 0.01,
                             width = 0.1)
   } else {
     boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(aes_string(fill = "variable"),
+      sm(ggplot2::geom_boxplot(aes_string(fill = "sample"),
                                na.rm = TRUE, fill = colors, size = 0.5,
                                outlier.size = 1.5,
                                guide = FALSE,

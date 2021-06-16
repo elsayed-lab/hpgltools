@@ -1924,6 +1924,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' @export
 set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", change_by = "condition") {
   condition_factor <- as.factor(pData(expt)[["condition"]])
+  
   num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
@@ -1941,6 +1942,25 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     if (change_by == "condition") {
       mesg("The new colors are a factor, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
+      colors_allocated <- names(colors) %in% levels(pData(expt)[["condition"]])
+      if (sum(colors_allocated) < length(colors)) {
+        missing_colors <- colors[!colors_allocated]
+        warning("Colors for the following categories are not being used: ",
+                names(missing_colors), ".")
+      }
+      possible_conditions <- levels(pData(expt)[["condition"]])
+      conditions_allocated <- possible_conditions %in% names(colors)
+      if (sum(conditions_allocated) < length(possible_conditions)) {
+        missing_conditions <- possible_conditions[!conditions_allocated]
+        missing_samples <- c()
+        for (cond in missing_conditions) {
+          missing_by_condition <- pData(expt)[["condition"]] == cond
+          missing_samples_by_cond <- rownames(pData(expt))[missing_by_condition]
+          missing_samples <- c(missing_samples, missing_samples_by_cond)
+        }
+        warning("Some conditions do not have a color: ", missing_conditions, ".")
+        warning("These samples are: ", missing_samples, ".")
+      }
       mapping <- colors
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
@@ -1965,6 +1985,25 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       mesg("The new colors are a character, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
+      colors_allocated <- names(colors) %in% levels(pData(expt)[["condition"]])
+      if (sum(colors_allocated) < length(colors)) {
+        missing_colors <- colors[!colors_allocated]
+        warning("Colors for the following categories are not being used: ",
+                names(missing_colors), ".")
+      }
+      possible_conditions <- levels(pData(expt)[["condition"]])
+      conditions_allocated <- possible_conditions %in% names(colors)
+      if (sum(conditions_allocated) < length(possible_conditions)) {
+        missing_conditions <- possible_conditions[!conditions_allocated]
+        missing_samples <- c()
+        for (cond in missing_conditions) {
+          missing_by_condition <- pData(expt)[["condition"]] == cond
+          missing_samples_by_cond <- rownames(pData(expt))[missing_by_condition]
+          missing_samples <- c(missing_samples, missing_samples_by_cond)
+        }
+        warning("Some conditions do not have a color: ", missing_conditions, ".")
+        warning("These samples are: ", missing_samples, ".")
+      }
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
@@ -2931,7 +2970,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
-  tmp_data <- sm(normalize_expt(expt, transform = "log2", convert = "cpm",
+  tmp_data <- sm(normalize_expt(expt, transform = "log2", convert = "cpm", filter = TRUE,
                                 ...))
   rpca <- plot_pca(tmp_data,
                    ...)
@@ -2977,8 +3016,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
+    filt <- sm(normalize_expt(expt, filter = "simple"))
     varpart_raw <- suppressWarnings(try(simple_varpart(
-      expt, predictor = NULL, factors = c("condition", "batch"))))
+        filt, predictor = NULL, factors = c("condition", "batch"))))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2

@@ -90,17 +90,17 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
   model_string <- "~ "
   if (isTRUE(mixed)) {
     if (!is.null(predictor)) {
-      model_string <- glue::glue("{model_string}{predictor} +")
+      model_string <- glue::glue("{model_string}{predictor} + ")
     }
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}(1|{fact}) +")
+      model_string <- glue::glue("{model_string}(1|{fact}) + ")
     }
   } else {
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}{fact} +")
+      model_string <- glue::glue("{model_string}{fact} + ")
     }
   }
-  model_string <- gsub(pattern = "\\+$", replacement = "", x = model_string)
+  model_string <- gsub(pattern = "\\+ $", replacement = "", x = model_string)
   mesg("Attempting mixed linear model with: ", model_string)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = "simple"))
@@ -133,6 +133,12 @@ which are shared among multiple samples.")
   my_sorted <- sortCols(my_extract)
   order_idx <- order(my_sorted[[chosen_column]], decreasing = TRUE)
   my_sorted <- my_sorted[order_idx, ]
+  ## Recent error noticed when checking that variances sum to 1
+  ## This is because sometimes we have smaller data sets
+  if (genes > ncol(my_sorted)) {
+    genes <- ncol(my_sorted)
+  }
+  
   percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
   partition_plot <- variancePartition::plotVarPart(my_sorted)
 

@@ -65,6 +65,7 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
 #' @param ... Any remaining elipsis options are passed to ggplotly.
 #' @return The final output filename
 #' @seealso [htmlwidgets] [plotly] [ggplot2]
+#' @export
 ggplt <- function(gg, filename = "ggplot.html",
                   selfcontained = TRUE, libdir = NULL, background = "white",
                   title = class(gg)[[1]], knitrOptions = list(), ...) {

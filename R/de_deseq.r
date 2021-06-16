@@ -34,6 +34,8 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
     warning("The ", interest_column,
             " should probably be a factor, set it with the 'factors' arg.")
   }
+  mesg("The full model is: ", as.character(full_model), ".")
+  mesg("The truncated model is: ", as.character(reduced_model), ".")
 
   deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
                                                 colData = col_data,
@@ -49,6 +51,18 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
     tibble::rownames_to_column(var = "gene") %>%
     tibble::as_tibble() %>%
     filter(padj <= cutoff)
+  if (nrow(lrg_significant) == 0) {
+    warning("There are no significant differences given the ", cutoff, " adjusted p-value.")
+    lrt_significant <- deseq_lrt_table %>%
+      data.frame() %>%
+      tibble::rownames_to_column(var = "gene") %>%
+      tibble::as_tibble()
+    message("Returning the full LRT table just so that you have something to look at.")
+    retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = lrt_significant)
+    return(retlist)
+  }
 
   rlog_matrix <- matrix()
   if (transform == "vst") {
