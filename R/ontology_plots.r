@@ -165,6 +165,7 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
   plotting_mf <- tail(plotting_mf, n = n)
   plotting_mf <- plotting_mf[, c("term", "over_represented_pvalue", "score",
                                  "numDEInCat", "numInCat")]
+  plotting_mf[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_mf[["term"]])
   plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]],
                                                        wrapped_width,
                                                        simplify = FALSE), paste, collapse = "\n"))
@@ -184,6 +185,7 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
   plotting_bp <- plotting_bp[, c("term", "over_represented_pvalue", "score",
                                  "numDEInCat", "numInCat")]
   colnames(plotting_bp) <- c("term", "pvalue", "score", "num_de", "num_cat")
+  plotting_bp[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_bp[["term"]])
   plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]],
                                                        wrapped_width,
                                                        simplify = FALSE), paste, collapse = "\n"))
@@ -202,6 +204,7 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
   plotting_cc <- plotting_cc[, c("term", "over_represented_pvalue", "score",
                                  "numDEInCat", "numInCat")]
   colnames(plotting_cc) <- c("term", "pvalue", "score", "num_de", "num_cat")
+  plotting_cc[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_cc[["term"]])
   plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]],
                                                        wrapped_width,
                                                        simplify = FALSE), paste, collapse = "\n"))
