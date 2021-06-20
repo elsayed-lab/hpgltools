@@ -18,7 +18,8 @@ check_xlsx_worksheet <- function(wb, sheet) {
   found_sheets <- 0
   if (sheet %in% current_sheets) {
     found_sheets <- found_sheets + 1
-    return(sheet)
+    retlist <- list("wb" = wb, "sheet" = sheet)
+    return(retlist)
   }
 
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet), silent = TRUE)
@@ -34,7 +35,8 @@ check_xlsx_worksheet <- function(wb, sheet) {
       message("Unknown error: ", newsheet)
     }
   }
-  return(wb)
+  retlist <- list("wb" = wb, sheet = sheet)
+  return(retlist)
 }
 
 #' Initialize an xlsx file with a little bit of logic to make sure there are no
@@ -121,7 +123,9 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
                                border = "Bottom", fontSize = "30")
 
   ## Create the new worksheet.
-  checked <- check_xlsx_worksheet(wb, sheet)
+  wb_sheet <- check_xlsx_worksheet(wb, sheet)
+  wb <- wb_sheet[["wb"]]
+  sheet <- wb_sheet[["sheet"]]
 
   new_row <- start_row
   new_col <- start_col
@@ -316,7 +320,9 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   dev.off()
 
   ## Check that the worksheet exists and add the plot.
-  checked <- check_xlsx_worksheet(wb, sheet)
+  wb_sheet <- check_xlsx_worksheet(wb, sheet)
+  wb <- wb_sheet[["wb"]]
+  sheet <- wb_sheet[["sheet"]]
 
   if (file.exists(png_name)) {
     insert_ret <- try(openxlsx::insertImage(wb = wb, sheet = sheet, file = png_name,

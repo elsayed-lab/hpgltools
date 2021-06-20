@@ -95,7 +95,8 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                                               by = "condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
                                    text = text, order = order, title = title, integerp = integerp,
-                                   yscale = yscale, ...)
+                                   yscale = yscale,
+                                   ...)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -295,7 +296,12 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
   }
 
   sample_df[["order"]] <- factor(sample_df[["id"]], as.character(sample_df[["id"]]))
-  if (!is.null(order)) {
+  if (is.null(order)) {
+    ## Order it by sample names lexically
+    lexical <- order(levels(sample_df[["order"]]))
+    new_levels <- levels(sample_df[["order"]])[lexical]
+    levels(sample_df[["order"]]) <- new_levels
+  } else {
     new_df <- data.frame()
     for (o in order) {
       matches <- grep(pattern = o, x = sample_df[["order"]])
