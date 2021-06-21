@@ -173,7 +173,69 @@ analyses more difficult/impossible.")
   return(sample_definitions)
 }
 
+#' Gather metadata for trimomatic.
+#'
+#' Simplify the specification for extracting trimomatic data.
+#'
+#' @param metadata Starting metadata
+#' @param file_spec Filename containing the information of interest.
+#' @param columns Arbitrarily set the column names
+#' @param new_metadata Filename for the new metadata.
+#' @param ... extra stuff for glue.
+gather_trimomatic_metadata <- function(metadata,
+                                       file_spec = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out",
+                                       columns = NULL, new_metadata = NULL, ...) {
+  specification <- list(
+      "trimomatic_input" = list(
+          "file" = file_spec),
+      "trimomatic_output" = list(
+          "file" = file_spec),
+      "trimomatic_ratio" = list(
+          "column" = "trimomatic_percent"))
+  if (!is.null(columns)) {
+    for (d in 1:length(columns)) {
+      element_name <- names(columns)[d]
+      element_value <- columns[[element_name]]
+      specification[[element_name]][["column"]] <- element_value
+    }
+  }
+  result <- gather_preprocessing_metadata(starting_metadata = metadata,
+                                          specification = specification,
+                                          new_metadata = new_metadata, ...)
+  return(result)
+}
 
+#' Automagically fill in a sample sheet with the results of the
+#' various preprocessing tools.
+#'
+#' I am hoping to fill this little function out with a bunch of useful
+#' file specifications and regular expressions.  If I do a good job,
+#' then it should become trivial to fill in a sample sheet with lots
+#' of fun useful numbers in preparations for creating a nice table
+#' S1.  I am thinking to split this up into sections for
+#' trimming/mapping/etc.  But for the moment I just want to add some
+#' specifications/regexes and see if it proves itself robust.  If
+#' Theresa reads this, I think this is another good candidate for a
+#' true OO implmentation.  E.g. make a base-class for the metadata and
+#' use S4 multi-dispatch to pick up different log files.  I wrote the
+#' downstream functions with this in mind already, but I am too
+#' stupid/lazy to do the full implementation until I am confident that
+#' these functions/ideas actually have merit.
+#'
+#' @param starting_metadata Already existing sample sheet.
+#' @param specification List containing one element for each new
+#'  column to append to the sample sheet.  Each element in turn is a
+#'  list containing column names and/or input filenames (and
+#' presumably other stuff as I think of it).
+#' @param new_metadata Filename to which to write the new metadata
+#' @param verbose Currently just used to debug the regexes.
+#' @param ... This is one of the few instances where I used
+#' ... intelligently.  Pass extra variables to the file specification
+#' and glue will pick them up (note the {species} entries in the
+#' example specifications.
+#' @return For the moment it just returns the modified metadata, I
+#'  suspect there is something more useful it should do.
+#' @export
 gather_preprocessing_metadata <- function(starting_metadata, specification = NULL,
                                           new_metadata = NULL, verbose = FALSE, ...) {
   if (is.null(specification)) {
@@ -195,10 +257,10 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "hisat_singlecon_ratio" = list(
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
-            "column" = "hisat_single_all_percent"
-        )        
+            "column" = "hisat_single_all_percent"),
+        "salmon_mapped" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/salmon_{species}/salmon.err")        
     )
-    
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -227,6 +289,29 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   return(new_metadata)
 }
 
+
+#' This is basically just a switch and set of regexes for finding the
+#' numbers of interest in the various log files.
+#'
+#' When I initially wrote this, it made sense to me to have it
+#' separate from the top-level function.  I am not sure that is true
+#' now, having slept on it.
+#'
+#' @param meta Starting metadata
+#' @param entry_type String which defines the type of log entry to
+#'  hunt down.  If the specification does not include a column, this
+#'  will be used as the column name to write to the metadata.
+#' @param input_file_spec Glue specification defining the log file for
+#'  each sample to hunt down.
+#' @param specification This is the reason I am thinking having this
+#'  as a separate function might be stupid.  I added it to make it
+#'  easier to calculate ratios of column_x/column_y; but it is a
+#'  def-facto argument to either get rid of input_file_spec as an arg
+#'  or to just get rid of this function.
+#' @param verbose used for testing regexes.
+#' @param ... passed to glue to add more variables to the file spec.
+#' @return Vector of entries which will be used to populate the new
+#'  column in the metadata.
 dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       specification, verbose = FALSE, ...) {
   switchret <- switch(
@@ -302,14 +387,31 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
+      "salmon_mapped" = {
+        search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
+        replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
+  entries <- gsub(pattern = ",", replacement = "", x = entries)
   return(entries)
 }
 
+
+#' Given two metadata columns, print a ratio.
+#'
+#' @param starting metadata, contains the column names!
+#' @param numerator_column what it says on the tin.
+#' @param denominator_column what it says on the tin.
+#' @param digits Number of significant digits to keep in the output.
+#' @param verbose unsed for the moment.
 dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
-                                    denominator_column = NULL, verbose = FALSE) {
+                                    denominator_column = NULL, digits = 3,
+                                    verbose = FALSE) {
   column_number <- ncol(meta)
   if (is.null(numerator_column)) {
     numerator_column <- colnames(meta)[ncol(meta)]
@@ -320,11 +422,32 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
   message("The numerator column is: ", numerator_column, ".")
   message("The denominator column is: ", denominator_column, ".")
   entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
+  if (!is.null(digits)) {
+    entries <- signif(entries, digits)
+  }
   return(entries)
 }
 
-dispatch_regex_search <- function(meta, search, replace,
-                                  input_file_spec, verbose = FALSE,
+
+#' Generic dispatcher to hunt down useful information from logs.
+#'
+#' Given the metadata, a couple of regular expressions, and a filename
+#' specification, this should be able to pull out the interesting
+#' number(s) from one logfile per sample from the metadata.
+#'
+#' @param meta Input metadata.
+#' @param search regex used to go hunting for the line of interest.
+#' @param replace probably the same regex with parentheses in place
+#'  for gsub().
+#' @param input_file_spec filename extractor expression.
+#' @param extraction the replacement portion of gsub(). I am thinking
+#'  to make it possible to have this function return more interesting
+#'  outputs if this changes, but for the moment I am sort of assuming
+#'  \\1 will always suffice.
+#' @param verbose For testing regexes.
+#' @param ... Used to pass extra variables to glue for finding files.
+dispatch_regex_search <- function(meta, search, replace, input_file_spec,
+                                  extraction = "\\1", verbose = FALSE,
                                   ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
@@ -346,7 +469,7 @@ dispatch_regex_search <- function(meta, search, replace,
         }                  
         output_entries[row] <- gsub(x = input_line,
                                     pattern = replace,
-                                    replacement = "\\1")
+                                    replacement = extraction)
       } else {
         next
       }
@@ -356,7 +479,26 @@ dispatch_regex_search <- function(meta, search, replace,
   return(output_entries)
 }
 
-sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable") {
+
+#' Given an expressionset, sanitize pData columns of interest.
+#'
+#' I wrote this function after spending a couple of hours confused
+#' because one cell in my metadata said 'cure ' instead of 'cure' and
+#' I could not figure out why chaos reigned in my analyses.  There is
+#' a sister to this somewhere else which checks that the expected
+#' levels of a metadata factor are consistent; this is because in
+#' another analysis we essentially had a cell which said 'cyre' and a
+#' similar data explosion occurred.
+#'
+#' @param expt Input expressionset
+#' @param columns Set of columns to check, if left NULL, all columns
+#'  will be molested.
+#' @param na_string Fill NA values with a string.
+#' @param lower Set everything to lowercase?
+#' @param punct Remove punctuation?
+#' @export
+sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable",
+                                   lower = TRUE, punct = TRUE) {
   pd <- pData(expt)
   if (is.null(columns)) {
     columns <- colnames(pd)
@@ -369,19 +511,24 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
       warning("The column ", todo, " is missing, skipping it.")
       next
     }
-      
     ## First get rid of trailing/leading spaces, those anger me and are crazy hard to find
     pd[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = pd[[todo]])
     pd[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = pd[[todo]])
-    ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet columns.
-    pd[[todo]] <- tolower(pd[[todo]])
+    ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet data.
+    if (isTRUE(lower)) {
+      pd[[todo]] <- tolower(pd[[todo]])
+    }
     ## I think punctuation needs to go
-    pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
-
-    ## Set NAs to "NotApplicable"
-    na_idx <- is.na(pd[[todo]])
-    pd[na_idx, todo] <- na_string
-  }
+    if (isTRUE(punct)) {
+      pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
+    }
+    if (!is.null(na_string)) {
+      ## Set NAs to "NotApplicable"
+      na_idx <- is.na(pd[[todo]])
+      pd[na_idx, todo] <- na_string
+    }
+  } ## End iterating over the columns of interest
+  
   pData(expt[["expressionset"]]) <- pd
   expt[["design"]] <- pd
   return(expt)
