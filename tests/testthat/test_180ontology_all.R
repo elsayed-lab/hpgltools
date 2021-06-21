@@ -105,6 +105,15 @@ test_that("Do we get some plots?", {
   expect_equal(expected, actual)
 })
 
+cp_written <- write_cp_data(cp_test, excel = "test_cp_write.xlsx")
+test_that("Were we able to write clusterprofiler data?", {
+  expect_true(file.exists("test_cp_write.xlsx"))
+})
+if (file.exists("test_cp_write.xlsx")) {
+  removed <- file.remove("test_cp_write.xlsx")
+  removed <- unlink("test_cp_write", recursive = TRUE)
+}
+
 ## } ## End checking for github actions
 
 go_test <- simple_goseq(ups, go_db = pombe_go, length_db = pombe_lengths)
@@ -149,6 +158,15 @@ test_that("Did the table of all results include the expected material?", {
   expect_equal(6, sum(cat_expected %in% cat_actual))
 })
 
+go_written <- write_goseq_data(go_test, excel = "test_go_write.xlsx")
+test_that("Were we able to write goseq data?", {
+  expect_true(file.exists("test_go_write.xlsx"))
+})
+if (file.exists("test_go_write.xlsx")) {
+  removed <- file.remove("test_go_write.xlsx")
+  removed <- unlink("test_go_write", recursive = TRUE)
+}
+
 top_test <- simple_topgo(ups, go_db = pombe_go, overwrite = TRUE)
 cat_expected <- c("GO:0016491", "GO:0016614", "GO:0016616",
                   "GO:0004032", "GO:0008106", "GO:0010844")
@@ -156,6 +174,15 @@ cat_actual <- rownames(top_test[["tables"]][["mf_subset"]])
 test_that("Do we get expected catalogs from topgo?", {
   expect_equal(6, sum(cat_expected %in% cat_actual))
 })
+
+top_written <- write_topgo_data(top_test, excel = "test_topgo_write.xlsx")
+test_that("Were we able to write topgo data?", {
+  expect_true(file.exists("test_topgo_write.xlsx"))
+})
+if (file.exists("test_topgo_write.xlsx")) {
+  removed <- file.remove("test_topgo_write.xlsx")
+  removed <- unlink("test_topgo_write", recursive = TRUE)
+}
 
 ## I think it would not be difficult for me to add a little logic to make gostats smarter
 ## with respect to how it finds the correct annotations.
@@ -169,6 +196,15 @@ cat_expected <- c("GO:0016491", "GO:0016616", "GO:0016614",
 test_that("Do we get expected stuff from gostats? (cat)", {
   expect_equal(6, sum(cat_expected %in% cat_actual))
 })
+
+gos_written <- write_gostats_data(gos_test, excel = "test_gostats_write.xlsx")
+test_that("Were we able to write gostats data?", {
+  expect_true(file.exists("test_gostats_write.xlsx"))
+})
+if (file.exists("test_gostats_write.xlsx")) {
+  removed <- file.remove("test_gostats_write.xlsx")
+  removed <- unlink("test_gostats_write", recursive = TRUE)
+}
 
 gprof_test <- simple_gprofiler(sig_genes = ups, species = "spombe")
 gprof_table <- gprof_test[["go"]]
@@ -184,6 +220,15 @@ expected_go <- c("GO:0001678", "GO:0006884", "GO:0007186",
 test_that("Does gprofiler give some expected GO categories?", {
   expect_equal(6, sum(actual_go %in% expected_go))
 })
+
+gp_written <- write_gprofiler_data(gprof_test, excel = "test_gp_write.xlsx")
+test_that("Were we able to write gprofiler data?", {
+  expect_true(file.exists("test_gp_write.xlsx"))
+})
+if (file.exists("test_gp_write.xlsx")) {
+  removed <- file.remove("test_gp_write.xlsx")
+  removed <- unlink("test_gp_write", recursive = TRUE)
+}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))
