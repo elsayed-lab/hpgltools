@@ -3,6 +3,7 @@
 ## because I was having annoying problems creating expressionSets.  Thus, >90%
 ## of the logic here is intended to simplify and standardize that process.
 
+
 #' Take two expressionsets and smoosh them together.
 #'
 #' Because of the extra sugar I added to expressionSets, the combine() function
@@ -160,6 +161,7 @@ concatenate_runs <- function(expt, column = "replicate") {
   message("The final expressionset has ", nrow(pData(final_expt)), " samples.")
   return(final_expt)
 }
+
 
 #' Wrap bioconductor's expressionset to include some extra information.
 #'
@@ -764,6 +766,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   return(expt)
 }
 
+
 #' Exclude some genes given a pattern match
 #'
 #' Because I am too lazy to remember that expressionsets use matrix subsets for
@@ -889,181 +892,6 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   return(expt)
 }
 
-#' Pull metadata from a table (xlsx/xls/csv/whatever)
-#'
-#' I find that when I acquire metadata from a paper or collaborator, annoyingly
-#' often there are many special characters or other shenanigans in the column
-#' names.  This function performs some simple sanitizations.  In addition, if I
-#' give it a filename it calls my generic 'read_metadata()' function before
-#' sanitizing.
-#'
-#' @param metadata file or df of metadata
-#' @param id_column Column in the metadat containing the sample names.
-#' @param ... Arguments to pass to the child functions (read_csv etc).
-#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
-#' @examples
-#'  \dontrun{
-#'   sanitized <- extract_metadata("some_random_supplemental.xls")
-#'   saniclean <- extract_metadata(some_goofy_df)
-#' }
-#' @export
-extract_metadata <- function(metadata, id_column = "sampleid", ...) {
-  arglist <- list(...)
-  ## FIXME: Now that this has been yanked into its own function,
-  ## Make sure it sets good, standard rownames.
-  file <- NULL
-
-  meta_dataframe <- NULL
-  meta_file <- NULL
-  if ("character" %in% class(metadata)) {
-    ## This is a filename containing the metadata
-    meta_file <- metadata
-  } else if ("data.frame" %in% class(metadata)) {
-    ## A data frame of metadata was passed.
-    meta_dataframe <- metadata
-  } else {
-    stop("This requires either a file or meta data.frame.")
-  }
-
-  ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
-  if (is.null(meta_dataframe) & is.null(meta_file)) {
-    stop("This requires either a csv file or dataframe of metadata describing the samples.")
-  } else if (is.null(meta_file)) {
-    ## punctuation is the devil
-    sample_definitions <- meta_dataframe
-  }  else {
-    sample_definitions <- read_metadata(meta_file,
-                                        ...)
-    ## sample_definitions <- read_metadata(meta_file)
-  }
-
-  colnames(sample_definitions) <- gsub(pattern = "[[:punct:]]",
-                                       replacement = "",
-                                       x = colnames(sample_definitions))
-  id_column <- tolower(id_column)
-  id_column <- gsub(pattern = "[[:punct:]]",
-                    replacement = "",
-                    x = id_column)
-
-  ## Get appropriate row and column names.
-  current_rownames <- rownames(sample_definitions)
-  bad_rownames <- as.character(1:nrow(sample_definitions))
-  ## Try to ensure that we have a useful ID column by:
-  ## 1. Look for data in the id_column column.
-  ##  a.  If it is null, look at the rownames
-  ##    i.  If they are 1...n, arbitrarily grab the first column.
-  ##    ii. If not, use the rownames.
-  if (is.null(sample_definitions[[id_column]])) {
-    if (identical(current_rownames, bad_rownames)) {
-      id_column <- colnames(sample_definitions)[1]
-    } else {
-      sample_definitions[[id_column]] <- rownames(sample_definitions)
-    }
-  }
-
-  ## Drop empty rows in the sample sheet
-  empty_samples <- which(sample_definitions[, id_column] == "" |
-                         grepl(x = sample_definitions[, id_column], pattern = "^undef") |
-                         is.na(sample_definitions[, id_column]) |
-                         grepl(pattern = "^#", x = sample_definitions[, id_column]))
-  if (length(empty_samples) > 0) {
-    message("Dropped ", length(empty_samples),
-            " rows from the sample metadata because they were blank.")
-    sample_definitions <- sample_definitions[-empty_samples, ]
-  }
-
-  ## Drop duplicated elements.
-  num_duplicated <- sum(duplicated(sample_definitions[[id_column]]))
-  if (num_duplicated > 0) {
-    message("There are ", num_duplicated,
-            " duplicate rows in the sample ID column.")
-    sample_definitions[[id_column]] <- make.names(sample_definitions[[id_column]],
-                                                  unique = TRUE)
-  }
-
-  ## Now we should have consistent sample IDs, set the rownames.
-  rownames(sample_definitions) <- sample_definitions[[id_column]]
-  ## Check that condition and batch have been filled in.
-  sample_columns <- colnames(sample_definitions)
-
-  ## The various proteomics data I am looking at annoyingly starts with a number
-  ## So make.names() prefixes it with X which is ok as far as it goes, but
-  ## since it is a 's'amplename, I prefer an 's'.
-  rownames(sample_definitions) <- gsub(pattern = "^X([[:digit:]])",
-                                       replacement = "s\\1",
-                                       x = rownames(sample_definitions))
-
-  sample_columns_to_remove <- NULL
-  for (col in 1:length(colnames(sample_definitions))) {
-    sum_na <- sum(is.na(sample_definitions[[col]]))
-    sum_null <- sum(is.null(sample_definitions[[col]]))
-    sum_empty <- sum_na + sum_null
-    if (sum_empty ==  nrow(sample_definitions)) {
-      ## This column is empty.
-      sample_columns_to_remove <- append(sample_columns_to_remove, col)
-    }
-  }
-  if (length(sample_columns_to_remove) > 0) {
-    sample_definitions <- sample_definitions[-sample_columns_to_remove]
-  }
-
-  ## Now check for columns named condition and batch
-  found_condition <- "condition" %in% sample_columns
-  if (!isTRUE(found_condition)) {
-    message("Did not find the condition column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["condition"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
-    na_idx <- is.na(sample_definitions[["condition"]])
-    sample_definitions[na_idx, "condition"] <- "undefined"
-  }
-  found_batch <- "batch" %in% sample_columns
-  if (!isTRUE(found_batch)) {
-    message("Did not find the batch column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["batch"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
-    na_idx <- is.na(sample_definitions[["batch"]])
-    sample_definitions[na_idx, "batch"] <- "undefined"
-  }
-
-  ## Double-check that there is a usable condition column
-  ## This is also an instance of simplifying subsetting, identical to
-  ## sample_definitions[["condition"]] I don't think I care one way or the other which I use in
-  ## this case, just so long as I am consistent -- I think because I have trouble remembering the
-  ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
-  ## [row, ] method to reinforce my weak neurons.
-  if (is.null(sample_definitions[["condition"]])) {
-    ## type and stage are commonly used, and before I was consistent about always having
-    ## condition, they were a proxy for it.
-    sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
-                                                       sample_definitions[["stage"]], sep = "_"))
-  }
-  ## Extract out the condition names as a factor
-  condition_names <- unique(sample_definitions[["condition"]])
-  if (is.null(condition_names)) {
-    warning("There is no 'condition' field in the definitions, this will make many
-analyses more difficult/impossible.")
-  }
-  ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
-  ## prefix them with 'c' and 'b' respectively.
-  pre_condition <- unique(sample_definitions[["condition"]])
-  pre_batch <- unique(sample_definitions[["batch"]])
-  sample_definitions[["condition"]] <- gsub(pattern = "^(\\d+)$", replacement = "c\\1",
-                                            x = sample_definitions[["condition"]])
-  sample_definitions[["batch"]] <- gsub(pattern = "^(\\d+)$", replacement = "b\\1",
-                                        x = sample_definitions[["batch"]])
-  sample_definitions[["condition"]] <- factor(sample_definitions[["condition"]],
-                                              levels = unique(sample_definitions[["condition"]]),
-                                              labels = pre_condition)
-  sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
-                                          levels = unique(sample_definitions[["batch"]]),
-                                          labels = pre_batch)
-
-  return(sample_definitions)
-}
 
 #' Do features_greater_than() inverted!
 #'
@@ -1207,6 +1035,7 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
   return(retlist)
 }
 
+
 #' Set up default colors for a data structure containing usable metadata
 #'
 #' In theory this function should be useful in any context when one has a blob
@@ -1315,6 +1144,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   return(example)
 }
 
+
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns
@@ -1407,6 +1237,7 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   return(retlist)
 }
 
+
 #' Create a Schizosaccharomyces cerevisiae expt.
 #'
 #' This just saves some annoying typing if one wishes to make a standard
@@ -1454,6 +1285,7 @@ make_pombe_expt <- function(annotation = TRUE) {
   detach("package:fission")
   return(pombe_expt)
 }
+
 
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
@@ -1689,6 +1521,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   return(retlist)
 }
 
+
 #' Given a table of meta data, read it in for use by create_expt().
 #'
 #' Reads an experimental design in a few different formats in preparation for
@@ -1743,36 +1576,6 @@ read_metadata <- function(file, ...) {
   return(definitions)
 }
 
-sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable") {
-  pd <- pData(expt)
-  if (is.null(columns)) {
-    columns <- colnames(pd)
-  }
-  for (col in 1:length(columns)) {
-    todo <- columns[col]
-    mesg("Sanitizing metadata column: ", todo, ".")
-    if (! todo %in% colnames(pd)) {
-      mesg("The column ", todo, " is missing, skipping it (also warning this).")
-      warning("The column ", todo, " is missing, skipping it.")
-      next
-    }
-      
-    ## First get rid of trailing/leading spaces, those anger me and are crazy hard to find
-    pd[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = pd[[todo]])
-    pd[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = pd[[todo]])
-    ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet columns.
-    pd[[todo]] <- tolower(pd[[todo]])
-    ## I think punctuation needs to go
-    pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
-
-    ## Set NAs to "NotApplicable"
-    na_idx <- is.na(pd[[todo]])
-    pd[na_idx, todo] <- na_string
-  }
-  pData(expt[["expressionset"]]) <- pd
-  expt[["design"]] <- pd
-  return(expt)
-}
 
 #' Remove/keep specifically named genes from an expt.
 #'
@@ -1858,6 +1661,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
   return(input)
 }
 
+
 #' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1895,6 +1699,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["design"]][["batch"]] <- fact
   return(expt)
 }
+
 
 #' Change the colors of an expt
 #'
@@ -2073,6 +1878,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   return(expt)
 }
 
+
 #' Change the condition of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -2141,6 +1947,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
   return(new_expt)
 }
 
+
 #' Change the factors (condition and batch) of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -2202,6 +2009,7 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
   fData(expt[["expressionset"]]) <- fd
   return(expt)
 }
+
 
 #' Change the gene names of an expt.
 #'
@@ -2287,6 +2095,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
   return(expt)
 }
 
+
 #' Change the sample names of an expt.
 #'
 #' Sometimes one does not like the hpgl identifiers, so provide a way to change
@@ -2324,6 +2133,7 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt[["samplenames"]] <- newnames
   return(new_expt)
 }
+
 
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
@@ -2454,6 +2264,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   return(new_expt)
 }
 
+
 #' Try a very literal subtraction
 #'
 #' @param expt Input expressionset.
@@ -2538,6 +2349,7 @@ subtract_expt <- function(expt, new_meta, sample_column = "sample",
   return(new_expt)
 }
 
+
 #' I want an easy way to sum counts in eupathdb-derived data sets.
 #' These have a few things which should make this relatively easy.
 #' Notably: The gene IDs look like: "exon_ID-1 exon_ID-2 exon_ID-3"
@@ -2560,6 +2372,7 @@ sum_eupath_exon_counts <- function(counts) {
   counts <- as.matrix(counts)
   return(counts)
 }
+
 
 #' Print a string describing what happened to this data.
 #'
@@ -2649,6 +2462,7 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 
   return(what)
 }
+
 
 #' Make pretty xlsx files of count data.
 #'
@@ -3415,6 +3229,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 ## ...) you must already have created the foo generic and the two classes. By
 ## default, R code is loaded in alphabetical order, but that won’t always work
 ## for your situation.
+
 
 #' An expt is an ExpressionSet superclass with a shorter name.
 #'

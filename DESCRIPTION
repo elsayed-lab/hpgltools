@@ -80,6 +80,7 @@ Collate:
   'de_limma.r'
   'de_plots.r'
   'de_xlsx.r'
+  'metadata.r'
   'normalize_shared.r'
   'normalize_filter.r'
   'normalize_convert.r'
