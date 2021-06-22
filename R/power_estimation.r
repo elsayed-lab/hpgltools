@@ -298,7 +298,6 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
 ## Use my cheater infix ::: to handle some unexported stuff from PROPER.
 update.RNAseq.SimOptions.2grp <- "PROPER" %:::% "update.RNAseq.SimOptions.2grp"
 run.edgeR <- "PROPER" %:::% "run.edgeR"
-run.DESeq <- "PROPER" %:::% "run.DESeq"
 run.DSS <- "PROPER" %:::% "run.DSS"
 run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 
