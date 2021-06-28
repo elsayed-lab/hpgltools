@@ -84,6 +84,23 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!file.exists(gff)) {
     stop("Unable to find the gff file: ", gff)
   }
+  compressed <- FALSE
+  newfile <- NULL
+  original <- gff
+  ext <- "gz"
+  fun <- gzfile
+  if (grepl(pattern = "\\.[x|g]z$", x = gff)) {
+    compressed <- TRUE
+    newfile <- gsub(pattern = "\\.[x|g]z$", replacement = "", x = gff)
+    ext <- gsub(pattern = ".*\\.([x|g]z)$", replacement = "\\1", x = gff)
+    if (grepl(x = ext, pattern = "^x")) {
+      fun <- xzfile
+    }
+    uncomp <- R.utils::decompressFile(filename = gff, destname = newfile, ext = ext,
+                                      FUN = fun, remove = FALSE)
+    gff <- newfile
+  }
+
   ret <- NULL
   attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = TRUE)",
                 "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = FALSE)",
@@ -150,6 +167,11 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!is.null(row.names)) {
     rownames(ret) <- ret[[row.names]]
   }
+
+  if (isTRUE(compressed)) {
+    removed <- file.remove(gff)
+  }
+  
   return(ret)
 }
 
