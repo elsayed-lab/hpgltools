@@ -240,12 +240,17 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
                                           new_metadata = NULL, verbose = FALSE, ...) {
   if (is.null(specification)) {
     specification <- list(
+        ## First task performed is pretty much always trimming
         "trimomatic_input" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out"),
         "trimomatic_output" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out"),
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
+        ## Second task is likely error correction
+        "racer_changed" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/racer.out"),
+        ## After those, things can get pretty arbitrary...
         "hisat_single_concordant" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/hisat2_{species}/hisat2_*.err"),
         "hisat_multi_concordant" = list(
@@ -258,8 +263,26 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
             "column" = "hisat_single_all_percent"),
+        "kraken_classified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_out.txt"),
+        "kraken_unclassified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_out.txt"),
+        "kraken_first_species" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_report.txt"),
+        "kraken_first_species_reads" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_report.txt"),
         "salmon_mapped" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/salmon_{species}/salmon.err")        
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/salmon_{species}/salmon.err"),
+        "shovill_contigs" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+        "shovill_length" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+        "shovill_estlength" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+        "shovill_minlength" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+        "unicycler_lengths" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/unicycler_*/assembly.fasta")
     )
   }
   if (is.null(new_metadata)) {
@@ -270,6 +293,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   meta <- extract_metadata(starting_metadata)
   for (entry in 1:length(specification)) {
     entry_type <- names(specification[entry])
+    message("Starting ", entry_type, ".")
     new_column <- entry_type
     if (!is.null(specification[[entry_type]][["column"]])) {
       new_column <- specification[[entry_type]][["column"]]
@@ -278,11 +302,16 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       warning("Column: ", new_column, " already exists, replacing it.")
     }
     input_file_spec <- specification[[entry_type]][["file"]]
-    meta[[new_column]] <- dispatch_metadata_extract(meta, entry_type,
-                                                    input_file_spec,
-                                                    specification,
-                                                    verbose = verbose,
-                                                    ...)
+    new_entries <- dispatch_metadata_extract(meta, entry_type,
+                                             input_file_spec,
+                                             specification,
+                                             verbose = verbose,
+                                             ...)
+    if (is.null(new_entries)) {
+      message("Not including new entries for: ", new_column, ".")
+    } else {
+      meta[[new_column]] <- new_entries
+    }
   }
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
@@ -316,33 +345,6 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       specification, verbose = FALSE, ...) {
   switchret <- switch(
       entry_type,
-      "trimomatic_input" = {
-        search <- "^Input Read Pairs: \\d+ .*$"
-        replace <- "^Input Read Pairs: (\\d+) .*$"
-        entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
-                                         ...)
-      },
-      "trimomatic_output" = {
-        search <- "^Input Read Pairs: \\d+ Both Surviving: \\d+ .*$"
-        replace <- "^Input Read Pairs: \\d+ Both Surviving: (\\d+) .*$"
-        entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
-                                         ...)
-      },
-      "trimomatic_ratio" = {
-        ## I think we can assume that the trimomatic ratio will come immediately after input/output
-        numerator_column <- "trimomatic_output"
-        if (!is.null(specification[["trimomatic_output"]][["column"]])) {
-          numerator_column <- specification[["trimomatic_output"]][["column"]]
-        }
-        denominator_column <- "trimomatic_input"
-        if (!is.null(specification[["trimomatic_input"]][["column"]])) {
-          denominator_column <- specification[["trimomatic_input"]][["column"]]
-        }
-        entries <- dispatch_metadata_ratio(meta, numerator_column,
-                                           denominator_column, verbose = verbose)
-      },
       "hisat_single_concordant" = {
         search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time" 
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
@@ -387,6 +389,42 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
+      "kraken_classified" = {
+        search <- "^\\s+\\d+ sequences classified.*$"
+        replace <- "^\\s+(\\d+) sequences classified.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_unclassified" = {
+        search <- "^\\s+\\d+ sequences unclassified.*$"
+        replace <- "^\\s+(\\d+) sequences unclassified.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_first_species" = {
+        search <- "^.*s__.*\\t\\d+$"
+        replace <- "^.*s__(.*)\\t\\d+$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_first_species_reads" = {
+        search <- "^.*s__.*\\t\\d+$"
+        replace <- "^.*s__.*\\t(\\d)+$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "racer_changed" = {
+        search <- "^Number of changed positions"
+        replace <- "^Number of changed positions\\s+(\\d+)$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "first",
+                                         ...)
+      },
       "salmon_mapped" = {
         search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
         replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
@@ -394,10 +432,84 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          input_file_spec, verbose = verbose,
                                          ...)
       },
+      "shovill_contigs" = {
+        ## [shovill] It contains 1 (min=131) contigs totalling 40874 bp.
+        search <- "^\\[shovill\\] It contains \\d+ .*$"
+        replace <- "^\\[shovill\\] It contains (\\d+) .*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "last",
+                                         ...)
+      },
+      "shovill_length" = {
+        ## [shovill] It contains 1 (min=131) contigs totalling 40874 bp.
+        search <- "^\\[shovill\\] It contains \\d+ .* contigs totalling \\d+ bp\\.$"
+        replace <- "^\\[shovill\\] It contains \\d+ .* contigs totalling (\\d+) bp\\.$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "last",
+                                         ...)
+      },
+      "shovill_estlength" = {
+        ## [shovill] Assembly is 109877, estimated genome size was 117464 (-6.46%)
+        search <- "^\\[shovill\\] Assembly is \\d+\\, estimated genome size was \\d+.*$"
+        replace <- "^\\[shovill\\] Assembly is \\d+\\, estimated genome size was (\\d+).*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "last",
+                                         ...)
+      },
+      "shovill_minlength" = {
+        ## [shovill] It contains 1 (min=145) contigs totalling 109877 bp.
+        search <- "^\\[shovill\\] It contains \\d+ \\(min=\\d+\\).*$"
+        replace <- "^\\[shovill\\] It contains \\d+ \\(min=(\\d+)\\).*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "last",
+                                         ...)
+      },
+      "trimomatic_input" = {
+        search <- "^Input Read Pairs: \\d+ .*$"
+        replace <- "^Input Read Pairs: (\\d+) .*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "trimomatic_output" = {
+        search <- "^Input Read Pairs: \\d+ Both Surviving: \\d+ .*$"
+        replace <- "^Input Read Pairs: \\d+ Both Surviving: (\\d+) .*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "trimomatic_ratio" = {
+        ## I think we can assume that the trimomatic ratio will come immediately after input/output
+        numerator_column <- "trimomatic_output"
+        if (!is.null(specification[["trimomatic_output"]][["column"]])) {
+          numerator_column <- specification[["trimomatic_output"]][["column"]]
+        }
+        denominator_column <- "trimomatic_input"
+        if (!is.null(specification[["trimomatic_input"]][["column"]])) {
+          denominator_column <- specification[["trimomatic_input"]][["column"]]
+        }
+        entries <- dispatch_metadata_ratio(meta, numerator_column,
+                                           denominator_column, verbose = verbose)
+      },
+      "unicycler_lengths" = {
+        ## >1 length=40747 depth=1.00x circular=true
+        search <- "^>\\d+ length=\\d+ depth.*$"
+        replace <- "^>\\d+ length=(\\d+) depth.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all",
+                                         ...)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
-  entries <- gsub(pattern = ",", replacement = "", x = entries)
+  if (!is.null(entries)) {
+    entries <- gsub(pattern = ",", replacement = "", x = entries)
+  }
   return(entries)
 }
 
@@ -419,11 +531,18 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
   if (is.null(denominator_column)) {
     denominator_column <- colnames(meta)[ncol(meta) - 1]
   }
-  message("The numerator column is: ", numerator_column, ".")
-  message("The denominator column is: ", denominator_column, ".")
-  entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
-  if (!is.null(digits)) {
-    entries <- signif(entries, digits)
+
+  entries <- NULL
+  if (is.null(meta[[numerator_column]]) | is.null(meta[[denominator_column]])) {
+    message("Missing data to calculate the ratio between: ", numerator_column,
+            " and ", denominator_column, ".")
+  } else {
+    message("The numerator column is: ", numerator_column, ".")
+    message("The denominator column is: ", denominator_column, ".")
+    entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
+    if (!is.null(digits)) {
+      entries <- signif(entries, digits)
+    }
   }
   return(entries)
 }
@@ -447,34 +566,63 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
 dispatch_regex_search <- function(meta, search, replace, input_file_spec,
-                                  extraction = "\\1", verbose = FALSE,
+                                  extraction = "\\1", which = "first", verbose = FALSE,
                                   ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
   ##  
   ##}
-  filenames_with_wildcards <- glue::glue(input_file_spec, ...)
+  filenames_with_wildcards <- glue::glue(input_file_spec,
+                                         ...)
   message("Example filename: ", filenames_with_wildcards[1], ".")
+  test_file <- Sys.glob(filenames_with_wildcards[1])
+  if (length(test_file) == 0) {
+    message("The first filename does not exist, assuming this method was not performed.")
+    return(NULL)
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in 1:nrow(meta)) {
+    found <- 0
     input_file <- Sys.glob(filenames_with_wildcards[row])
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      next
+    }
     input_handle <- file(input_file, "r", blocking = FALSE)
     input_vector <- readLines(input_handle)
+    last_found <- NULL
+    this_found <- NULL
+    all_found <- c()
     for (i in 1:length(input_vector)) {
+      if (which == "first" & found == 1) {
+        output_entries[row] <- last_found
+        next
+      }
       input_line <- input_vector[i]
       if (grepl(x = input_line, pattern = search)) {
         if (isTRUE(verbose)) {
           message("Found the correct line: ")
           message(input_line)
         }                  
-        output_entries[row] <- gsub(x = input_line,
-                                    pattern = replace,
-                                    replacement = extraction)
+        this_found <- gsub(x = input_line,
+                           pattern = replace,
+                           replacement = extraction)
+        found <- found + 1
       } else {
         next
       }
+      last_found <- this_found
+      all_found <- c(all_found, this_found)
     } ## End looking at every line of the log file specified by the input file spec for this row
     close(input_handle)
+    ## Handle cases where one might want to pull only the last entry in a log, or all of them.
+    if (which == "last") {
+      message("TESTING: ", last_found)
+      output_entries[row] <- last_found
+    } else if (which == "all") {
+      output_entries[row] <- toString(all_found)
+    }
   } ## End looking at every row of the metadata
   return(output_entries)
 }
