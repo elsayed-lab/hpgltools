@@ -112,7 +112,7 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 
 #' Create dataframe which gets the maximum within group mean gsva score for each gene set
 #'
-#' @param gsva_result Result from simple_gsva()
+#' @param gsva_scores Result from simple_gsva()
 #' @param groups list of groups for which to calculate the means
 #' @param keep_single Keep categories with only 1 element.
 #' @param method mean or median?
@@ -157,6 +157,7 @@ get_group_gsva_means <- function(gsva_scores, groups, keep_single = TRUE, method
 #'
 #' @param gsva_result Some data from GSVA to modify.
 #' @param msig_xml msig XML file downloaded from broad.
+#' @param wanted_meta Choose metadata columns of interest.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
 #' @seealso [xml2] [rvest]
@@ -226,6 +227,7 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 #'  of dropping some.
 #' @param col_margin Attempt to make heatmaps fit better on the screen with this and...
 #' @param row_margin this parameter
+#' @param type Either mean or median of the scores to return.
 #' @return List containing the gsva results, limma results, scores, some plots, etc.
 #' @seealso [score_gsva_likelihoods()] [get_group_gsva_means()] [limma_pairwise()]
 #'  [simple_gsva()]
@@ -1140,6 +1142,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #' @param ranking another gsva option.
 #' @param msig_xml XML file contining msigdb annotations.
 #' @param wanted_meta Desired metadata elements from the mxig_xml file.
+#' @param mx_diff Passed to gsva(), I do not remember what it does.
 #' @return List containing three elements: first a modified expressionset using
 #'  the result of gsva in place of the original expression data; second the
 #'  result from gsva, and third a data frame of the annotation data for the
@@ -1151,7 +1154,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
                         method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
-                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
+                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+                        mx_diff = TRUE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -1161,7 +1165,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)) {
-    cores <- min(detectCores() - 1, 8)
+    cores <- min(parallel::detectCores() - 1, 8)
   }
 
   if (!is.null(msig_xml)) {
@@ -1232,7 +1236,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   ## possibility of speeding it up, ergo the cores option.
   gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
                                min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                               parallel.sz = cores, mx.diff = mx.diff))
+                               parallel.sz = cores, mx.diff = mx_diff))
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
@@ -1279,6 +1283,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @param label_size How large to make labels when printing the final heatmap.
 #' @param col_margin Used by par() when printing the final heatmap.
 #' @param row_margin Ibid.
+#' @param sig_cutoff Only keep celltypes with a significance better than this.
+#' @param verbose Print some extra information during runtime.
 #' @param cores How many CPUs to use?
 #' @param ... Extra arguments when normalizing the data for use with xCell.
 #' @return Small list providing the output from xCell, the set of signatures,
@@ -1398,7 +1404,9 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   excel_basename <- xlsx[["basename"]]
 
   methods <- list(
-      "gsva" = "Hänzelmann et al, 2013",
+      ## Using the correct character results in a warning from R CMD check... what to do?
+      ## "gsva" = "Hänzelmann et al, 2013",
+      "gsva" = "Hanzelmann et al, 2013",
       "ssgsea" = "Barbie et al, 2009",
       "zscore" = "Lee et al, 2008",
       "plage" = "Tomfohr et al, 2005")

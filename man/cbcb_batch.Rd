@@ -23,6 +23,10 @@ cbcb_batch(
 \item{model}{Balanced experimental model containing condition and batch
 factors.}
 
+\item{conditional_model}{Experimental model with the conditional factor.}
+
+\item{batch_model}{Experimental model with the batch factor.}
+
 \item{batch1}{Column containing the first batch's metadata in the experimental design.}
 
 \item{condition}{Column containing the condition information in the metadata.}

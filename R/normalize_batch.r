@@ -24,10 +24,22 @@
 #' @param estimate_type Name of the estimator.
 #' @param batch1 Column in the experimental design for the first known batch.
 #' @param batch2 Only used by the limma method, a second batch column.
-#' @param surrogates Either a number of surrogates or a method to search for them.
+#' @param surrogates Either a number of surrogates or a method to
+#'  search for them.
+#' @param low_to_zero Move elements which are <0 to 0?
+#' @param cpus Use parallel and split intensive operations?
+#' @param na_to_zero Set any NA entries to 0?
 #' @param expt_state If this is not an expt, provide the state of the data here.
 #' @param confounders List of confounded factors for smartSVA/iSVA.
-#' @param ... Extra arguments passed along to other methods.
+#' @param chosen_surrogates Somewhat redundant with surrogates above,
+#'  but provides a second place to enter because of the way I use
+#'  ... in normalize_expt().
+#' @param adjust_method Choose the method for applying the estimates
+#'  to the data.
+#' @param filter Filter the data?
+#' @param thresh If filtering, use this threshold.
+#' @param noscale If using combat, scale the data?
+#' @param prior_plots Plot the priors?
 #' @return List containing surrogate estimates, new counts, the models, and
 #'   some plots, as available.
 #' @seealso [all_adjuster()] [isva] [sva] [limma::removeBatchEffect()]
@@ -586,13 +598,19 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
 #' couldn't tell you how to properly use the two methods together.
 #'
 #' @param count_table Matrix of (pseudo)counts.
-#' @param design Model matrix defining the experimental conditions/batches/etc.
-#' @param batch String describing the method to try to remove the batch effect
+#' @param method Choose the method for batch/surrogate estimation.
+#' @param expt_design Model matrix defining the experimental conditions/batches/etc.
+#' @param batch1 String describing the method to try to remove the batch effect
 #'  (or FALSE to leave it alone, TRUE uses limma).
-#' @param expt_state Current state of the expt in an attempt to avoid
+#' @param current_state Current state of the expt in an attempt to avoid
 #'  double-normalization.
-#' @param batch1 Column in the design table describing the presumed covariant
-#'  to remove.
+#' @param current_design Redundant with expt_design above, but
+#'  provides another place for normalize_expt() to send data.
+#' @param expt_state Current state of the data
+#' @param surrogate_method Also redundant for normalize_expt()
+#' @param surrogates Number of surrogates or method to estimate them.
+#' @param low_to_zero Send <0 entries to 0 to avoid shenanigans.
+#' @param cpus Parallelize intensive operations.
 #' @param batch2 Column in the design table describing the second covariant to
 #'  remove (only used by limma at the moment).
 #' @param noscale Used for combatmod, when true it removes the scaling
@@ -729,6 +747,8 @@ batch_counts <- function(count_table, method = TRUE, expt_design = NULL, batch1 
 #' @param normalized_counts Data frame of log2cpm counts.
 #' @param model Balanced experimental model containing condition and batch
 #'  factors.
+#' @param conditional_model Experimental model with the conditional factor.
+#' @param batch_model Experimental model with the batch factor.
 #' @param batch1 Column containing the first batch's metadata in the experimental design.
 #' @param condition Column containing the condition information in the metadata.
 #' @param matrix_scale Is the data on a linear or log scale?
@@ -773,7 +793,9 @@ cbcb_batch <- function(normalized_counts, model,
   } else if (method == "add") {
     fit <- limma::lmFit(normal_voom)
     ## I got confusered here, this might be incorrect.
-    new_data <- tcrossprod(normal_voom[["coefficient"]], cond_modified_model) +
+    ##new_data <- tcrossprod(normal_voom[["coefficient"]], cond_modified_model) +
+    ##  residuals(normal_voom, normalized_counts)
+    new_data <- tcrossprod(normal_voom[["coefficient"]], conditional_model) +
       residuals(normal_voom, normalized_counts)
   } else {
     stop("This currently only understands 'add' or 'subtract'.")
@@ -788,6 +810,14 @@ cbcb_batch <- function(normalized_counts, model,
   return(new_data)
 }
 
+
+#' Attempt to compare the results from the various batch/sv methods.
+#'
+#' Given an expressionset and list of methods, try to find out how
+#' well the various methods agree via correlation.
+#'
+#' @param expt Input expressionset
+#' @param methods Set of methods to try out.
 compare_batches <- function(expt = NULL, methods = NULL) {
   if (is.null(methods)) {
     ## writing this oddly until I work out which ones to include
@@ -1095,6 +1125,8 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
 #' @param design Experimental design if it is not included in the expressionset.
 #' @param method Which methodology to follow, ideally these agree but that seems untrue.
 #' @param cond_column design column containing the condition data.
+#' @param batch_column design column with the batch data, used for
+#'  subtractive methods.
 #' @param matrix_scale Was the input for the surrogate estimator on a log or linear scale?
 #' @param return_scale Does one want the output linear or log?
 #' @param ... Arguments passed to downstream functions.

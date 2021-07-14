@@ -27,6 +27,9 @@ counts_from_surrogates(
 
 \item{cond_column}{design column containing the condition data.}
 
+\item{batch_column}{design column with the batch data, used for
+subtractive methods.}
+
 \item{matrix_scale}{Was the input for the surrogate estimator on a log or linear scale?}
 
 \item{return_scale}{Does one want the output linear or log?}

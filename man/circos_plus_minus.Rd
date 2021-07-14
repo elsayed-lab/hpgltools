@@ -125,6 +125,10 @@ plus-strand data.}
 \item{zcol}{Z color: Cytoskeleton. (very light purple blue)}
 
 \item{max}{Maximum length for chromosomal lengths}
+
+\item{label_column}{Use this column for labelling interactive svg outptus.}
+
+\item{url_string}{printf formatting string for interactive svg outputs.}
 }
 \value{
 Radius after adding the plus/minus information and the spacing between them.

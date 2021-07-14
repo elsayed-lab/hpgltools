@@ -782,7 +782,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
     "ida" = {
-      svd_result <- iDA_core(data.use = mtrx, NormCounts = mtrx)
+      svd_result <- iDA::iDA_core(data.use = mtrx, NormCounts = mtrx)
       pc_table <- scale(svd_result[[2]])
       x_name <- glue::glue("LD{x_pc}")
       y_name <- glue::glue("LD{y_pc}")
@@ -1543,7 +1543,9 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' @param plot_alpha Add an alpha channel to the dots?
 #' @param size_column Experimental factor to use for sizing the glyphs
 #' @param rug Include the rugs on the sides of the plot?
+#' @param max_overlaps Increase overlapping label tolerance.
 #' @param cis What (if any) confidence intervals to include.
+#' @param label_size The text size of the labels.
 #' @param ... Extra arguments dropped into arglist
 #' @return gplot2 PCA plot
 #' @seealso [directlabels] [ggplot2] [plot_pca] [pca_information]
@@ -1556,7 +1558,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                      design = NULL, plot_title = TRUE, plot_labels = NULL,
                      x_label = NULL, y_label = NULL, plot_size = 5, outlines = TRUE,
                      plot_alpha = NULL, size_column = NULL, rug = TRUE, max_overlaps = 20,
-                     cis = c(0.95, 0.9), ...) {
+                     cis = c(0.95, 0.9), label_size = 4, ...) {
   arglist <- list(...)
   batches <- as.factor(pca_data[["batch"]])
   label_column <- "condition"
@@ -1573,10 +1575,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   num_batches <- length(unique(batches))
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
-  }
-  label_size <- 4
-  if (!is.null(arglist[["label_size"]])) {
-    label_size <<- arglist[["label_size"]]
   }
   ci_group <- "condition"
   if (!is.null(arglist[["ci_group"]])) {

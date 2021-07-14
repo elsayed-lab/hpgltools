@@ -54,6 +54,8 @@ arbitrary information.}
 
 \item{rug}{Include the rugs on the sides of the plot?}
 
+\item{max_overlaps}{Increase overlapping label tolerance.}
+
 \item{cis}{What (if any) confidence intervals to include.}
 
 \item{...}{Extra arguments dropped into arglist}

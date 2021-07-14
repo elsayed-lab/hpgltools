@@ -497,6 +497,8 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
 #'
 #' @param expt The original expressionset.  This provides the annotation data.
 #' @param snp_result The result from get_snp_sets or count_expt_snps.
+#' @param start_column Metadata column with the start position of each ORF.
+#' @param end_column Metadata column with the end position of each ORF.
 #' @param chr_column Column in the annotation with the chromosome names.
 #' @return List containing the set of intersections in the conditions contained
 #'  in snp_result, the summary of numbers of variants per chromosome, and
@@ -796,6 +798,220 @@ write_snps <- function(expt, output_file = "funky.aln") {
   cat(aln_string, file = write_output, sep = "")
   close(write_output)
   return(output_file)
+}
+
+#' Create a density function given a variant output and some metadata
+#' In this case I will take it as the result of:
+#'   snp_count <- count_expt_snps(pheno, annot_column = "bcftable")
+snp_density_primers <- function(snp_count, pdata_column = "condition",
+                                condition = "z2.3", cutoff = 20, bin_size = 600,
+                                divide = FALSE, topn = 200,
+                                target_temp = 53, max_primer_length = 45,
+                                bsgenome = "BSGenome.Leishmania.panamensis.MHOMCOL81L13.v52") {
+                                
+
+  ## Start out by loading the bsgenome data
+  genome <- NULL
+  if (!is.null(bsgenome)) {
+    library(bsgenome, character.only=TRUE)
+    genome <- get0(bsgenome)
+  }  
+    
+  samples_by_condition <- pData(snp_count)[[pdata_column]]
+  ## Keep only those samples of the condition of interest for now,
+  ## maybe make it a loop to iterate over conditions later.
+  interest_idx <- samples_by_condition == condition
+  snp_table <- exprs(snp_count)[, interest_idx]
+  start_rows <- nrow(snp_table)
+  interest_rows <- rowMeans(snp_table) >= cutoff
+  snp_table <- snp_table[interest_rows, ]
+  message("Started with ", start_rows, ", after cutoff there are ",
+          sum(interest_rows), " rows left.")
+  position_table <- data.frame(row.names = rownames(snp_table))
+  position_table[["chromosome"]] <- gsub(x = rownames(position_table),
+                                         pattern = "chr_(.*)_pos_.*",
+                                         replacement = "\\1")
+  position_table[["position"]] <- gsub(x = rownames(position_table),
+                                       pattern = ".*_pos_(\\d+)_.*",
+                                       replacement = "\\1")
+  position_table[["chromosome"]] <- gsub(pattern = "-", replacement = "_",
+                                         x = position_table[["chromosome"]])
+  position_table[["ref"]] <- gsub(x = rownames(position_table),
+                                  pattern = ".*_pos_\\d+_ref_(\\w).*",
+                                  replacement = "\\1")
+  position_table[["alt"]] <- gsub(x = rownames(position_table),
+                                  pattern = ".*_pos_\\d+_ref_.+_alt_(\\w)$",
+                                  replacement = "\\1")
+  ## Lets make a dataframe of chromosomes, their lengths, and number of variants/chromosome
+  chromosomes <- levels(as.factor(position_table[["chromosome"]]))
+
+  chromosome_df <- data.frame(row.names = chromosomes)
+  chromosome_df[["length"]] <- 0
+  chromosome_df[["variants"]] <- 0
+  density_lst <- list()
+  variant_lst <- list()
+  ## This was written in an attempt to make it work if one does or does not
+  ## have a BSgenome from which to get the actual chromosome lengths.
+  for (ch in 1:length(chromosomes)) {
+    chr <- chromosomes[ch]
+    message("Starting chromosome: ", chr, ".")
+    chr_idx <- position_table[["chromosome"]] == chr
+    chr_data <- position_table[chr_idx, ]    
+    if (is.null(genome)) {
+      chromosome_df[chr, "length"] <- max(chr_data[["position"]])
+    } else {
+      this_length <- length(genome[[chr]])
+      chromosome_df[chr, "length"] <- this_length
+    }
+    chromosome_df[chr, "variants"] <- nrow(chr_data)
+    
+    ## Stop scientific notation for this operation
+    current_options <- options(scipen = 999)
+    density_vector <- rep(0, ceiling(this_length / bin_size))
+    variant_vector <- rep('', ceiling(this_length / bin_size))
+    density_name <- 0
+    for (i in 1:length(density_vector)) {
+      range_min <- density_name
+      range_max <- (density_name + bin_size) - 1
+      ## We want to subtract the maximum primer length from the position
+      ## and have each extension reaction start near/at the bin.
+      chr_data[["position"]] <- as.numeric(chr_data[["position"]])
+      density_idx <- chr_data[["position"]] >= range_min &
+        chr_data[["position"]] <= range_max
+      ## Note that if I want to completely correct in how I do this
+      ## it should not be blindly bin_size, but should be the smaller of
+      ## bin_size or the remainder of the chromosome.  Leaving it at bin_size
+      ## will under-represent the end of each chromosome/contig, but I don't think
+      ## I mind that at all.
+      if (isTRUE(divide)) {
+        density_vector[i] <- sum(density_idx) / bin_size
+      } else {
+        density_vector[i] <- sum(density_idx)
+      }
+      names(density_vector)[i] <- as.character(density_name)
+      ## Add the observed variants to the variant_vector
+      ## variant_set <- chr_data[density_idx, "mutation"]
+      variant_relative_positions <- chr_data[density_idx, "position"] - range_min
+      variant_set <- paste0(chr_data[density_idx, "ref"],
+                            variant_relative_positions,
+                            chr_data[density_idx, "alt"])
+      variant_vector[i] <- toString(variant_set)
+      names(variant_vector)[i] <- as.character(density_name)
+      
+      density_name <- density_name + bin_size
+    }
+    density_lst[[chr]] <- density_vector
+    variant_lst[[chr]] <- variant_vector
+  }
+  new_options <- options(current_options)
+  
+  long_density_vector <- vector()
+  long_variant_vector <- vector()
+  for (ch in 1:length(density_lst)) {
+    chr <- names(density_lst)[ch]
+    density_vec <- density_lst[[chr]]
+    variant_vec <- variant_lst[[chr]]
+    vecnames <- paste0(chr, "_start_", names(density_vec))
+    names(density_vec) <- vecnames
+    names(variant_vec) <- vecnames
+    long_density_vector <- c(long_density_vector, density_vec)
+    long_variant_vector <- c(long_variant_vector, variant_vec)
+  }
+  most_idx <- order(long_density_vector, decreasing = TRUE)
+  long_density_vector <- long_density_vector[most_idx]
+  long_variant_vector <- long_variant_vector[most_idx]
+  
+  ## Now get the nucleotides of the first 30 nt of each window
+  sequence_df <- as.data.frame(head(long_variant_vector, n = topn))
+  colnames(sequence_df) <- "variants"
+  sequence_df[["chr"]] <- gsub(x = rownames(sequence_df), pattern = "^(.*)_start_.*$",
+                               replacement = "\\1")
+  sequence_df[["pos"]] <- gsub(x = rownames(sequence_df), pattern = "^(.*)_start_(.*)$",
+                               replacement = "\\2")
+  sequence_df[["fivep_seq"]] <- ""
+  sequence_df[["threep_seq"]] <- ""
+  sequence_df[["fivep_primer"]] <- ""
+  sequence_df[["threep_primer"]] <- ""
+  for (i in 1:nrow(sequence_df)) {
+    chr <- sequence_df[i, "chr"]
+    region_start <- as.numeric(sequence_df[i, "pos"])
+    ## If anyone actually reads this code, s/he will almost certainly think, 'what a nutter,
+    ## both precedence and commutativity make it parentheses irrelevant here.
+    ## I add them in here so that I will add them when it really matters.
+    ## Minus 1 because the next bin starts at the next base.
+    region_end <- (region_start + bin_size) - 1  
+    ## I have been zero-indexing, this is 1 indexed...
+    start_sequence <- try(subseq(genome[[chr]], region_start + 1, region_start + max_primer_length + 1),
+                          silent = TRUE)
+    if ("try-error" %in% class(start_sequence)) {
+      start_sequence <- "Ran over chromosome end"
+    } else {
+      sequence_df[i, "fivep_seq"] <- as.character(start_sequence)
+    }
+    end_sequence <- try(subseq(genome[[chr]], region_end - (max_primer_length + 1), region_end),
+                        silent = TRUE)
+    if ("try-error" %in% class(end_sequence)) {
+      end_sequence <- "Ran over chromosome end"
+    } else {
+      end_sequence <- spgs::reverseComplement(end_sequence)
+      sequence_df[i, "threep_seq"] <- as.character(end_sequence)
+    }
+
+    fivep_primer <- try(find_subseq_target_temp(
+        as.character(start_sequence), target = target_temp))
+    threep_primer <- try(find_subseq_target_temp(
+        as.character(end_sequence), target = target_temp))
+    if ("try-error" %in% class(fivep_primer)) {
+      fivep_primer <- "bad sequence for priming"
+    }
+    sequence_df[i, "fivep_primer"] <- fivep_primer
+    if ("try-error" %in% class(threep_primer)) {
+      threep_primer <- "bad sequence for priming"
+    }
+    sequence_df[i, "threep_primer"] <- threep_primer
+  } ## End iterating over sequence_df
+
+  retlist <- list(
+      "density_vector" = long_density_vector,
+      "variant_vector" = long_variant_vector,
+      "favorites" = sequence_df)
+  return(retlist)
+}
+
+find_subseq_target_temp <- function(sequence, target=53) {
+  cheapo <- cheap_tm(sequence)
+  if (nchar(sequence) < 1) {
+    stop("Failed.")
+  }
+  if (cheapo[["tm"]] > target) {
+    subseq <- stringr::str_sub(sequence, 1, nchar(sequence) - 1)
+    result <- find_subseq_target_temp(subseq, target)
+  } else {
+    message("Final tm is: ", cheapo[["tm"]], " from sequence: ", sequence, ".")
+    return(sequence)
+  }
+}
+
+
+cheap_tm <- function(sequence) {
+  ## Taken from: https://www.biostars.org/p/58437/
+  n <- nchar(sequence)
+  ng <- stringr::str_count(toupper(sequence), "G")
+  nc <- stringr::str_count(toupper(sequence), "C")
+  n_gc <- ng + nc
+  n_at <- n - n_gc
+  tm <- 0
+  if (n_gc < 18) {
+    method <- "2*AT + 4*GC"
+    tm <- ((2 * n_at) + (4 * n_gc)) - 7
+  } else {
+    method <- "64.9 + (41*(GC-16.4)/n)"
+    tm <- 64.9 + (41 * ((n_gc - 16.4) / n))
+  }
+  ret <- list(
+      "method" = method,
+      "tm" = tm)
+  return(ret)
 }
 
 ## EOF

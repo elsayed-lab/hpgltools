@@ -30,6 +30,7 @@
 #' @param padjust_method passed to simple_goseq()
 #' @param bioc_length_db passed to simple_goseq()
 #' @param excel passed to simple_goseq()
+#' @param orgdb Ideally used to help goseq collect lengths.
 #' @return Some goseq data!
 #' @seealso [gsva] [goseq]
 #' @export
@@ -147,6 +148,7 @@ goseq_table <- function(df, file = NULL) {
 #' @param doplot Include pwf plots?
 #' @param adjust Minimum adjusted pvalue for 'significant.'
 #' @param pvalue Minimum pvalue for 'significant.'
+#' @param plot_title Set a title for the pvalue plots.
 #' @param length_keytype Keytype to provide to extract lengths
 #' @param go_keytype Keytype to provide to extract go IDs
 #' @param goseq_method Statistical test for goseq to use.

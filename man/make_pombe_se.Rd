@@ -6,6 +6,9 @@
 \usage{
 make_pombe_se(annotation = TRUE)
 }
+\arguments{
+\item{annotation}{Include annotations?}
+}
 \description{
 Analagous function to make_pombe_expt()
 }

@@ -15,6 +15,8 @@ get_msigdb_metadata(
 \item{gsva_result}{Some data from GSVA to modify.}
 
 \item{msig_xml}{msig XML file downloaded from broad.}
+
+\item{wanted_meta}{Choose metadata columns of interest.}
 }
 \value{
 list containing 2 data frames: all metadata from broad, and the set

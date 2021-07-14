@@ -46,12 +46,13 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
   ## Copy-pasting from:
   ## https://hbctraining.github.io/DGE_workshop/lessons/08_DGE_LRT.html
   ## Subset the LRT results to return genes with padj < 0.05
+  padj <- NULL ## R CMD check
   lrt_significant <- deseq_lrt_table %>%
     data.frame() %>%
     tibble::rownames_to_column(var = "gene") %>%
     tibble::as_tibble() %>%
     filter(padj <= cutoff)
-  if (nrow(lrg_significant) == 0) {
+  if (nrow(lrt_significant) == 0) {
     warning("There are no significant differences given the ", cutoff, " adjusted p-value.")
     lrt_significant <- deseq_lrt_table %>%
       data.frame() %>%

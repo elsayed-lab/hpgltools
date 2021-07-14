@@ -23,7 +23,7 @@
 #' }
 #' @export
 plot_libsize <- function(data, condition = NULL, colors = NULL,
-                         text = TRUE, order = NULL, title = NULL,  yscale = NULL,
+                         text = TRUE, order = NULL, title = NULL, yscale = NULL,
                          expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
@@ -282,6 +282,7 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
 #' @param text Add the numeric values inside the top of the bars of the plot?
 #' @param title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
+#' @param ... Used to catch random arguments which are unused here.
 plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
                              integerp = FALSE, order = NULL,
                              text = TRUE, title = NULL, yscale = NULL, ...) {
@@ -299,8 +300,11 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
   if (is.null(order)) {
     ## Order it by sample names lexically
     lexical <- order(levels(sample_df[["order"]]))
-    new_levels <- levels(sample_df[["order"]])[lexical]
-    levels(sample_df[["order"]]) <- new_levels
+    sample_df <- sample_df[lexical, ]
+    ## The next two lines are an attempt to ensure that the factor
+    ## levels make sense and are in the same order as the samples.
+    new_order <- as.character(sample_df[["order"]])
+    sample_df[["order"]] <- as.factor(new_order)
   } else {
     new_df <- data.frame()
     for (o in order) {

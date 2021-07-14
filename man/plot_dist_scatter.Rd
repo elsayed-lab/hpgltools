@@ -5,21 +5,10 @@
 \title{Make a scatter plot between two sets of numbers with a cheesy distance metric
 and some statistics of the two sets.}
 \usage{
-plot_dist_scatter(
-  df,
-  tooltip_data = NULL,
-  gvis_filename = NULL,
-  size = 2,
-  xlab = NULL,
-  ylab = NULL
-)
+plot_dist_scatter(df, size = 2, xlab = NULL, ylab = NULL)
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
-
-\item{tooltip_data}{Df of tooltip information for gvis graphs.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
 
 \item{size}{Size of the dots.}
 
@@ -45,8 +34,7 @@ then normalized against the maximum.
 }
 \examples{
 \dontrun{
- dist_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-                   gvis_filename = "html/fun_scatterplot.html")
+ dist_scatter(lotsofnumbers_intwo_columns)
 }
 }
 \seealso{

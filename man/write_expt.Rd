@@ -41,6 +41,8 @@ write_expt(
 
 \item{med_or_mean}{When printing mean by condition, one may want median.}
 
+\item{color_na}{Color cells which were NA before imputation this color.}
+
 \item{merge_order}{Used to decide whether to put the counts or annotations first when
 printing count tables.}
 

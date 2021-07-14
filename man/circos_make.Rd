@@ -12,9 +12,11 @@ circos_make(cfg, target = "", circos = "circos", verbose = FALSE)
 \item{target}{Default make target.}
 
 \item{circos}{Location of circos.  I have a copy in home/bin/circos and use that sometimes.}
+
+\item{verbose}{Print some information from make?}
 }
 \value{
-a kitten
+a kitten, or you know, a plot.
 }
 \description{
 I regenerate all my circos pictures with make(1).  This is my makefile.

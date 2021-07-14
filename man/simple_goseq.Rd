@@ -35,6 +35,8 @@ simple_goseq(
 
 \item{pvalue}{Minimum pvalue for 'significant.'}
 
+\item{plot_title}{Set a title for the pvalue plots.}
+
 \item{length_keytype}{Keytype to provide to extract lengths}
 
 \item{go_keytype}{Keytype to provide to extract go IDs}

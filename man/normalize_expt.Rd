@@ -78,6 +78,8 @@ normalize_expt(
 
 \item{na_to_zero}{Sometimes rpkm gives some NA values for very low numbers.}
 
+\item{adjust_method}{Given a set of sv estimates, change the counts with this method.}
+
 \item{verbose}{Print what is happening while the normalization is performed?
 I am not sure why, but I think they should be 0.}
 

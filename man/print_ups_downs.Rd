@@ -18,6 +18,8 @@ print_ups_downs(
 
 \item{wb}{Workbook object to use for writing, or start a new one.}
 
+\item{excel_basename}{Used when including plots in the xlsx sheet.}
+
 \item{according}{Use limma, deseq, or edger for defining 'significant'.}
 
 \item{summary_count}{For spacing sequential tables one after another.}

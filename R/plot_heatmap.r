@@ -12,7 +12,7 @@
 #' @param method Correlation statistic to use. (pearson, spearman, kendall, robust).
 #' @param expt_names Alternate names to use for the samples.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param label_chars  Limit on the number of label characters.
 #' @param ... More options are wonderful!
 #' @return Gplots heatmap describing describing how the samples are clustering
@@ -44,7 +44,7 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param method Distance metric to use.
 #' @param expt_names Alternate names to use for the samples.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param label_chars Limit on the number of label characters.
 #' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
@@ -78,7 +78,7 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param expt_names Alternate names to use for the samples.
 #' @param type Defines the use of correlation, distance, or sample heatmap.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param label_chars Limit on the number of label characters.
 #' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
@@ -214,14 +214,14 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
-                     linewidth = 0.5, main = plot_title)
+                     linewidth = 0.5, main = plot_title, ...)
   } else {
     map <- heatmap.3(heatmap_data, keysize = keysize, labRow = expt_names,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
                      linewidth = 0.5, main = plot_title,
-                     col = rev(heatmap_colors))
+                     col = rev(heatmap_colors), ...)
   }
   recorded_heatmap_plot <- grDevices::recordPlot()
   dev.off()
@@ -418,6 +418,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
 #' @param min_delta Minimum delta value for filtering
 #' @param x_factor When plotting two factors against each other, which is x?
 #' @param y_factor When plotting two factors against each other, which is y?
+#' @param min_cvsd Include only those with a minimal CV?
 #' @param cv_min Minimum cv to examine (I think this should be slightly lower)
 #' @param cv_max Maximum cV to examine (I think this should be limited to ~ 0.7?)
 #' @param remove_equal Filter uninteresting genes.

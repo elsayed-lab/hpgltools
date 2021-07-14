@@ -11,7 +11,7 @@
 #' @param data Matrix of count data.
 #' @param design Dataframe describing the experimental
 #'  design. (conditions/batches/etc)
-#' @param norm Normalization to perform:
+#' @param method Normalization to perform:
 #'  'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
 #'  whether design is a required argument.
 #' @param ... More arguments might be necessary.

@@ -14,6 +14,8 @@ requested data state.}
 
 \item{force}{Force non-standard data?}
 
+\item{verbose}{Print some information about what is happening?}
+
 \item{...}{More options for future expansion.}
 }
 \value{

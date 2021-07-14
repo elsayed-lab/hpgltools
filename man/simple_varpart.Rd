@@ -40,6 +40,8 @@ to the first gene.}
 
 \item{parallel}{Use doParallel?}
 
+\item{mixed}{Used a mixed model?}
+
 \item{modify_expt}{Add annotation columns with the variance/factor?}
 }
 \value{

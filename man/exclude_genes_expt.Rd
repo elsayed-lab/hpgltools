@@ -24,6 +24,8 @@ exclude_genes_expt(
 
 \item{ids}{Specific IDs to exclude.}
 
+\item{warning_cutoff}{Print the sample IDs for anything which has less than this percent left.}
+
 \item{meta_column}{Save the amount of data lost to this metadata column when not null.}
 
 \item{patterns}{Character list of patterns to remove/keep}

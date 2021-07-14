@@ -24,6 +24,12 @@ set_expt_factors(
 
 \item{ids}{Specific sample IDs to change.}
 
+\item{table}{When set to 'metadata', use pData, otherwise fData.}
+
+\item{class}{Set the data to this class by default.}
+
+\item{columns}{Change these columns.}
+
 \item{...}{Arguments passed along (likely colors)}
 }
 \value{

@@ -21,6 +21,7 @@
 #' @param round Round the data if/when it is not integer?
 #' @param tx_gene_map When using tximport, use this to convert from transcripts to genes.
 #' @param ... Extra options.
+#' @importFrom SummarizedExperiment SummarizedExperiment metadata<- assays
 #' @export
 create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                       sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
@@ -476,6 +477,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
 
 #' Analagous function to make_pombe_expt()
 #'
+#' @param annotation Include annotations?
 #' @export
 make_pombe_se <- function(annotation = TRUE) {
   fission <- new.env()

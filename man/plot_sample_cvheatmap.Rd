@@ -48,6 +48,8 @@ plot_sample_cvheatmap(
 
 \item{y_factor}{When plotting two factors against each other, which is y?}
 
+\item{min_cvsd}{Include only those with a minimal CV?}
+
 \item{cv_min}{Minimum cv to examine (I think this should be slightly lower)}
 
 \item{cv_max}{Maximum cV to examine (I think this should be limited to ~ 0.7?)}

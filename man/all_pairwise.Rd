@@ -83,6 +83,8 @@ so it can choose).}
 
 \item{norm}{Modify the data with a 'normalization' method for PCA?}
 
+\item{verbose}{Print extra information while running?}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to
 write_limma().}
 }

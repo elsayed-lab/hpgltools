@@ -31,6 +31,9 @@
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @param compare_plots Add some plots comparing the results.
 #' @param padj_type Add a consistent p adjustment of this type.
+#' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
+#' @param p_cutoff In this context, used for volcano/MA plots.
+#' @param de_types Used for plotting pvalue/logFC cutoffs.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
@@ -565,6 +568,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
 #' @param include_limma Add limma data?
 #' @param include_ebseq Add ebseq data?
 #' @param loess Add a loess estimation?
+#' @param logfc For Volcano/MA plot lines.
+#' @param p For Volcano/MA plot lines.
 #' @param do_inverse Flip the numerator/denominator?
 #' @param found_table The table name actually used.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
@@ -1088,6 +1093,8 @@ Defaulting to fdr.")
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
 #' @param loess Include a loess estimator in the plots?
+#' @param lfc_cutoff Passed for plotting volcano/MA plots.
+#' @param p_cutoff Passed for volcano/MA plots.
 extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1146,7 +1153,6 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' that the numerators and denominators match the desired contrast and flip the
 #' signs in the logFCs when appropriate.
 #'
-#' @param apr Result from all_pairwise()
 #' @param extracted Tables extracted from the all_pairwise data.
 #' @param keepers In this case, one may assume either NULL or 'all'.
 #' @param table_names The set of tables produced by all_pairwise().
@@ -1167,6 +1173,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
 #' @param loess Add a loess to plots?
+#' @param lfc_cutoff Passed for volcano/MA plots.
+#' @param p_cutoff Passed for volcano/MA plots.
 extract_keepers_lst <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1306,6 +1314,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
 #' @param loess Add a loess to plots?
+#' @param lfc_cutoff Passed for volcano/MA plots.
+#' @param p_cutoff Passed for volcano/MA plots.
 extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -2042,6 +2052,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
 #'
 #' @param upsdowns Output from extract_significant_genes().
 #' @param wb Workbook object to use for writing, or start a new one.
+#' @param excel_basename Used when including plots in the xlsx sheet.
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @param ma Include ma plots?
@@ -2388,6 +2399,8 @@ stringsAsFactors = FALSE)
 #' @param apr a pairwise result
 #' @param extracted table extracted from the pairwise result
 #' @param compare_plots series of plots to print out.
+#' @param lfc_cutoff Used for volcano/MA plots.
+#' @param p_cutoff Used for volcano/MA plots.
 write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
                                    lfc_cutoff = 1, p_cutoff = 0.05) {
   image_files <- c()

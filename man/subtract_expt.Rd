@@ -27,11 +27,11 @@ subtractions.}
 
 \item{transform_state}{Expected state of the input data vis a vis transformation (log/linear).}
 
+\item{handle_negative}{Set negative subtracted values to zero?}
+
 \item{savefile}{Save the new expt data to this file.}
 
 \item{...}{Parameters to pass to normalize_expt()}
-
-\item{negative_to_zero}{Set negative subtracted values to zero?}
 }
 \value{
 New expt

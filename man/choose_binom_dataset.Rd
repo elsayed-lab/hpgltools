@@ -10,6 +10,8 @@ choose_binom_dataset(input, verbose = TRUE, force = FALSE, ...)
 \arguments{
 \item{input}{Expressionset containing expt object.}
 
+\item{verbose}{Print some information about what is happening?}
+
 \item{force}{Ignore every warning and just use this data.}
 
 \item{...}{Extra arguments passed to arglist.}

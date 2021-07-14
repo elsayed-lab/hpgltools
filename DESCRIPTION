@@ -20,8 +20,8 @@ Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
   BiocGenerics, BiocManager, biomaRt, Biostrings, BRAIN, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
-  DBI, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
-  DOSE, doSNOW, DSS,
+  DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
+  dorothea, DOSE, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
@@ -31,17 +31,17 @@ Suggests:
   IHW, inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph,
-  lattice, limma, locfit,
+  lattice, limma, locfit, lubridate,
   matrixStats, miscTools, MLSeq, motifRG, MSnbase, mygene, mzR,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathview, pcaMethods, plotly, plyr, preprocessCore, PROPER,
+  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, plotly, plyr, preprocessCore, PROPER,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats,
-  taxize, testthat, tidyr, topGO, tximport,
-  UniProt.ws, uwot,
+  taxize, testthat, tibble, tidyr, topGO, tximport,
+  UniProt.ws, uwot, webp,
   xCell, xml2,
   Vennerable, venneuler
 Imports:
@@ -122,3 +122,4 @@ Collate:
   'power_estimation.r'
   'xlsx.r'
   'motif.r'
+  'tf.r'

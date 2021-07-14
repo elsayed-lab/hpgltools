@@ -50,6 +50,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @param cpus Number cpus to use
 #' @param genes Number of genes to count.
 #' @param parallel Use doParallel?
+#' @param mixed Used a mixed model?
 #' @param modify_expt Add annotation columns with the variance/factor?
 #' @return List of plots and variance data frames
 #' @seealso [variancePartition]

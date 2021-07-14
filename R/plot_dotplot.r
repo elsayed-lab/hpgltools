@@ -58,6 +58,7 @@ plot_svfactor <- function(expt, svest, sv = 1, chosen_factor = "batch", factor_t
 #' @param batch_column Which experimental design column to use?
 #' @param factor_type This may be a factor or range, it is intended to plot
 #'  a scatterplot if it is a range, a dotplot if a factor.
+#' @param id_column Use this column for the sample IDs.
 #' @return Plot of batch vs surrogate variables as per Leek's work.
 #' @seealso [sva] [ggplot2]
 #' @examples

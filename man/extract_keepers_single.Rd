@@ -70,6 +70,10 @@ experimental metadata.}
 \item{padj_type}{Choose a specific p adjustment.}
 
 \item{loess}{Add a loess to plots?}
+
+\item{lfc_cutoff}{Passed for volcano/MA plots.}
+
+\item{p_cutoff}{Passed for volcano/MA plots.}
 }
 \description{
 When a single 'keeper' contrast is specified, find and extract it.

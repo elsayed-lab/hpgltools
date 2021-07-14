@@ -777,6 +777,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' @param column fData column to use for subsetting.
 #' @param method Either remove explicit rows, or keep them.
 #' @param ids Specific IDs to exclude.
+#' @param warning_cutoff Print the sample IDs for anything which has less than this percent left.
 #' @param meta_column Save the amount of data lost to this metadata column when not null.
 #' @param patterns Character list of patterns to remove/keep
 #' @param ... Extra arguments are passed to arglist, currently unused.
@@ -925,7 +926,8 @@ features_less_than <- function(...) {
 #' }
 #' @export
 features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE) {
-  if (class(data) == "expt" | class(data) == "ExpressionSet") {
+  if ("expt" %in% class(data) | "ExpressionSet" %in% class(data) |
+      "SummarizedExperiment" %in% class(data)) {
     data <- as.data.frame(exprs(data))
   } else {
     data <- as.data.frame(data)
@@ -1174,7 +1176,8 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
     }
     names(fact) <- rownames(design)
   }
-  if (class(data) == "expt" | class(data) == "ExpressionSet") {
+  if ("expt" %in% class(data) | "ExpressionSet" %in% class(data) |
+      "SummarizedExperiment" %in% class(data)) {
     data <- exprs(data)
   }
 
@@ -1957,6 +1960,9 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
 #' @param condition New condition factor
 #' @param batch New batch factor
 #' @param ids Specific sample IDs to change.
+#' @param table When set to 'metadata', use pData, otherwise fData.
+#' @param class Set the data to this class by default.
+#' @param columns Change these columns.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
 #' @seealso [set_expt_conditions()] [set_expt_batches()]
@@ -2112,7 +2118,8 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' @export
 set_expt_samplenames <- function(expt, newnames) {
   new_expt <- expt
-  oldnames <- rownames(new_expt[["design"]])
+  ## oldnames <- rownames(new_expt[["design"]])
+  oldnames <- sampleNames(new_expt)
   newnames <- make.unique(newnames)
   newnote <- glue::glue("Sample names changed from: {toString(oldnames)} \\
                    to: {toString(newnames)} at: {date()}
@@ -2128,6 +2135,7 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt[["design"]] <- newdesign
   new_expressionset <- new_expt[["expressionset"]]
   Biobase::sampleNames(new_expressionset) <- newnames
+  pData(new_expressionset)[["sampleid"]] <- newnames
   new_expt[["expressionset"]] <- new_expressionset
   names(new_expt[["libsize"]]) <- newnames
   new_expt[["samplenames"]] <- newnames
@@ -2143,6 +2151,7 @@ set_expt_samplenames <- function(expt, newnames) {
 #'
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
+#' @param nonzero Look for a minimal number of nonzero genes.
 #' @param ids List of sample IDs to extract.
 #' @param coverage Request a minimum coverage/sample rather than text-based subset.
 #' @return metadata Expt class which contains the smaller set of data.
@@ -2273,7 +2282,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
 #'  subtractions.
 #' @param convert_state Expected state of the input data vis a vis conversion (rpkm/cpm).
 #' @param transform_state Expected state of the input data vis a vis transformation (log/linear).
-#' @param negative_to_zero Set negative subtracted values to zero?
+#' @param handle_negative Set negative subtracted values to zero?
 #' @param savefile Save the new expt data to this file.
 #' @param ... Parameters to pass to normalize_expt()
 #' @return New expt
@@ -2489,6 +2498,7 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @param batch Batch correction applied.
 #' @param filter Filtering method used.
 #' @param med_or_mean When printing mean by condition, one may want median.
+#' @param color_na Color cells which were NA before imputation this color.
 #' @param merge_order Used to decide whether to put the counts or annotations first when
 #'  printing count tables.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).

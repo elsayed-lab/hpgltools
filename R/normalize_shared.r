@@ -65,6 +65,7 @@ default_norm <- function(expt, ...) {
 #' @param cv_min Used by genefilter's cv().
 #' @param cv_max Also used by genefilter's cv().
 #' @param na_to_zero Sometimes rpkm gives some NA values for very low numbers.
+#' @param adjust_method Given a set of sv estimates, change the counts with this method.
 #' @param verbose Print what is happening while the normalization is performed?
 #'  I am not sure why, but I think they should be 0.
 #' @param ... more options

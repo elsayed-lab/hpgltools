@@ -36,7 +36,7 @@ clean:
 		tests/testthat/BSgenome* tests/testthat/testing_write_expt \
 		tests/testthat/a909_sig	tests/testthat/a909_tables \
 		tests/testthat/mtb_rmats tests/testthat/mtb_suppa \
-		tests/testthat/.Rhistory
+		tests/testthat/.Rhistory tests/testthat/parasite
 	rm -f tests/testthat/*.pdf tests/testthat/*.png tests/testthat/*.xlsx tests/testthat/*.rda \
 		tests/testthat/*.gff tests/testthat/*.gb tests/testthat/*.map tests/testthat/*.xml \
 		tests/testthat/*.Rdata tests/testthat/*.json tests/testthat/*.tab tests/testthat/*kgml* \

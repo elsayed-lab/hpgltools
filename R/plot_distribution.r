@@ -11,6 +11,7 @@
 #' @param data Expt or data frame set of samples.
 #' @param colors Color scheme, if not provided will make its own.
 #' @param title A title!
+#' @param order Set the order of boxen.
 #' @param violin  Print this as a violin rather than a just box/whiskers?
 #' @param scale Whether to log scale the y-axis.
 #' @param expt_names Another version of the sample names for printing.

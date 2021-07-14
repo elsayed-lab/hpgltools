@@ -24,6 +24,10 @@ write_combined_summary(
 \item{extracted}{table extracted from the pairwise result}
 
 \item{compare_plots}{series of plots to print out.}
+
+\item{lfc_cutoff}{Used for volcano/MA plots.}
+
+\item{p_cutoff}{Used for volcano/MA plots.}
 }
 \description{
 Internal function to write a summary of some combined data

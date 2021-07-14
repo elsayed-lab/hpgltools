@@ -33,11 +33,11 @@ conditions and batches.}
 
 \item{batch_row}{Name of the design row used for 'batch' column colors.}
 
+\item{plot_title}{Title for the plot.}
+
 \item{label_chars}{Limit on the number of label characters.}
 
 \item{...}{I like elipses!}
-
-\item{title}{Title for the plot.}
 }
 \value{
 a recordPlot() heatmap describing the distance between samples.

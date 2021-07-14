@@ -20,6 +20,8 @@ choose_limma_dataset(
 \item{which_voom}{Choose between limma'svoom, voomWithQualityWeights, or the
 hpgl equivalents.}
 
+\item{verbose}{Print some information about what is happening?}
+
 \item{...}{Extra arguments passed to arglist.}
 }
 \value{

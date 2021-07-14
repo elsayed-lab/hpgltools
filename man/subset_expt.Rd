@@ -14,6 +14,8 @@ subset_expt(expt, subset = NULL, ids = NULL, nonzero = NULL, coverage = NULL)
 
 \item{ids}{List of sample IDs to extract.}
 
+\item{nonzero}{Look for a minimal number of nonzero genes.}
+
 \item{coverage}{Request a minimum coverage/sample rather than text-based subset.}
 }
 \value{

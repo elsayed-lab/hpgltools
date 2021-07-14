@@ -516,7 +516,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 
 #' Given two metadata columns, print a ratio.
 #'
-#' @param starting metadata, contains the column names!
+#' @param meta metadata, contains the column names!
 #' @param numerator_column what it says on the tin.
 #' @param denominator_column what it says on the tin.
 #' @param digits Number of significant digits to keep in the output.
@@ -563,6 +563,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #'  to make it possible to have this function return more interesting
 #'  outputs if this changes, but for the moment I am sort of assuming
 #'  \\1 will always suffice.
+#' @param which Usually 'first', which means grab the first match and get out.
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
 dispatch_regex_search <- function(meta, search, replace, input_file_spec,

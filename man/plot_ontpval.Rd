@@ -20,6 +20,8 @@ plot_ontpval(
 
 \item{fontsize}{Fiddling with the font size may make some plots more readable.}
 
+\item{plot_title}{Set an explicit plot title.}
+
 \item{numerator}{Column used for printing a ratio of genes/category.}
 
 \item{denominator}{Column used for printing a ratio of genes/category.}

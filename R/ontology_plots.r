@@ -32,6 +32,7 @@ plot_topgo_densities <- function(godata, table) {
 #' @param df Some data from topgo/goseq/clusterprofiler.
 #' @param ontology Ontology to plot (MF,BP,CC).
 #' @param fontsize Fiddling with the font size may make some plots more readable.
+#' @param plot_title Set an explicit plot title.
 #' @param numerator Column used for printing a ratio of genes/category.
 #' @param denominator Column used for printing a ratio of genes/category.
 #' @return Ggplot2 plot of pvalues vs. ontology.

@@ -18,7 +18,8 @@ simple_gsva(
   kcdf = NULL,
   ranking = FALSE,
   msig_xml = NULL,
-  wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")
+  wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+  mx_diff = TRUE
 )
 }
 \arguments{
@@ -51,6 +52,8 @@ because it was throwing segmentation faults.}
 \item{msig_xml}{XML file contining msigdb annotations.}
 
 \item{wanted_meta}{Desired metadata elements from the mxig_xml file.}
+
+\item{mx_diff}{Passed to gsva(), I do not remember what it does.}
 }
 \value{
 List containing three elements: first a modified expressionset using

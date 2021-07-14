@@ -9,7 +9,7 @@ mesg(..., verbosity = NULL)
 \arguments{
 \item{...}{parameters for message()}
 
-\item{verbose}{actually print the message?}
+\item{verbosity}{actually print the message?}
 }
 \description{
 message() but with a verbose flag.

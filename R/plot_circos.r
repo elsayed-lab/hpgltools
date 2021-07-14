@@ -511,7 +511,8 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
 #' @param cfg Configuration from circos_prefix().
 #' @param target Default make target.
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
-#' @return a kitten
+#' @param verbose Print some information from make?
+#' @return a kitten, or you know, a plot.
 #' @export
 circos_make <- function(cfg, target = "", circos = "circos", verbose = FALSE) {
   circos_dir <- cfg[["basedir"]]
@@ -612,6 +613,8 @@ clean:
 #' @param ycol Y color: Nuclear structure. (light red)
 #' @param zcol Z color: Cytoskeleton. (very light purple blue)
 #' @param max Maximum length for chromosomal lengths
+#' @param label_column Use this column for labelling interactive svg outptus.
+#' @param url_string printf formatting string for interactive svg outputs.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
 circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
