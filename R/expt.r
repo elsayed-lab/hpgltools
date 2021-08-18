@@ -1735,6 +1735,13 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' @export
 set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", change_by = "condition") {
   condition_factor <- as.factor(pData(expt)[["condition"]])
+
+  ## Since I already have logic for named characters, just convert a list to one...
+  if ("list" %in% class(colors)) {
+    new_colors <- as.character(colors)
+    names(new_colors) <- names(colors)
+    colors <- new_colors
+  }
   
   num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
@@ -1796,13 +1803,14 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       mesg("The new colors are a character, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
-      colors_allocated <- names(colors) %in% levels(pData(expt)[["condition"]])
+      pd_factor <- as.factor(pData(expt)[["condition"]])
+      possible_conditions <- levels(pd_factor)
+      colors_allocated <- names(colors) %in% possible_conditions
       if (sum(colors_allocated) < length(colors)) {
         missing_colors <- colors[!colors_allocated]
         warning("Colors for the following categories are not being used: ",
                 names(missing_colors), ".")
       }
-      possible_conditions <- levels(pData(expt)[["condition"]])
       conditions_allocated <- possible_conditions %in% names(colors)
       if (sum(conditions_allocated) < length(possible_conditions)) {
         missing_conditions <- possible_conditions[!conditions_allocated]
