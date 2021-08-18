@@ -528,10 +528,10 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
     ## Set the colors of the significant/insignificant points.
     ggplot2::scale_fill_manual(name = "as.factor(pcut)",
                                values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = "as.factor(pcut)",
                                 values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
     ggplot2::xlab("Average log2(Counts)") +
@@ -981,9 +981,9 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   ## Now set the colors and axis labels
   plt <- plt +
     ggplot2::scale_fill_manual(name = color_column, values = color_list,
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = color_column, values = color_list,
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +
     ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +

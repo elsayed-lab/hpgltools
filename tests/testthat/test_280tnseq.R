@@ -121,7 +121,7 @@ test_that("all_pairwise returned?", {
 a909_sig <- extract_significant_genes(
     a909_tables, excel = "a909_sig.xlsx")
 expected <- 29
-actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_change_counts_up"]
+actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_up"]
 ## 13
 test_that("Did we get the expected number of up genes between low Ca+ and control according to EdgeR?", {
   expect_equal(expected, actual)

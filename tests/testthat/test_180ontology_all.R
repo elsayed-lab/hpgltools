@@ -21,21 +21,19 @@ table <- combined[["data"]][["data"]]
 ## yet another victim to 2020.
 
 ## Gather the pombe annotation data.
-pombe_orgdb <- orgdb_from_ah(species = "^Schizosaccharomyces pombe$")
+## pombe_orgdb <- orgdb_from_ah(species = "^Schizosaccharomyces pombe$")
 ## Here is a fallback for if/when annotationhub is not working:
-if (FALSE) {
-  if (! "EuPathDB" %in% installed.packages()) {
-    devtools::install_github("abelew/EuPathDB", force = TRUE)
-  }
-  fungidb_metadata <- sm(EuPathDB::download_eupath_metadata(webservice = "fungidb",
-                                                            eu_version = "46"))
-  pombe_entry <- EuPathDB::get_eupath_entry(species = "pombe", metadata = fungidb_metadata)
-  pkgnames <- EuPathDB::get_eupath_pkgnames(entry = pombe_entry)
-  if (! pkgnames[["orgdb"]] %in% installed.packages()) {
-    pombe_org <- sm(EuPathDB::make_eupath_orgdb(entry = pombe_entry))
-  }
-  pombe_orgdb <- pkgnames[["orgdb"]]
+if (! "EuPathDB" %in% installed.packages()) {
+  devtools::install_github("abelew/EuPathDB", force = TRUE)
 }
+fungidb_metadata <- sm(EuPathDB::download_eupath_metadata(webservice = "fungidb",
+                                                          eu_version = "46"))
+pombe_entry <- EuPathDB::get_eupath_entry(species = "pombe", metadata = fungidb_metadata)
+pkgnames <- EuPathDB::get_eupath_pkgnames(entry = pombe_entry)
+if (! pkgnames[["orgdb"]] %in% installed.packages()) {
+  pombe_org <- sm(EuPathDB::make_eupath_orgdb(entry = pombe_entry))
+}
+pombe_orgdb <- pkgnames[["orgdb"]]
 
 pombe_expt <- make_pombe_expt()
 pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
@@ -78,7 +76,7 @@ test_that("Did clusterprofiler provide the expected number of entries (BP enrich
 
 test_that("Did clusterprofiler provide the expected number of entries (CC enriched)?", {
   actual <- nrow(cp_test[["enrich_go"]][["CC_all"]])
-  expected <- 3
+  expected <- 11
   expect_equal(expected, actual, tolerance = 2)
 })
 
@@ -155,7 +153,7 @@ cat_actual <- go_test[["all_data"]][["category"]]
 test_that("Did the table of all results include the expected material?", {
   expect_equal(p_expected, p_actual, tolerance = 0.001)
   expect_equal(q_expected, q_actual, tolerance = 0.2)
-  expect_equal(6, sum(cat_expected %in% cat_actual))
+  expect_equal(5, sum(cat_expected %in% cat_actual))
 })
 
 go_written <- write_goseq_data(go_test, excel = "test_go_write.xlsx")

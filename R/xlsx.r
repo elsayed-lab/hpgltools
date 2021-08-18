@@ -295,10 +295,10 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
     if (class(a_plot)[1] == "Venn") {
       fancy_ret <- try(Vennerable::plot(a_plot, doWeights = FALSE))
     } else {
-      fancy_ret <- try(print(a_plot))
+      fancy_ret <- try(suppressWarnings(print(a_plot)))
     }
     if (class(fancy_ret)[1] == "try-error") {
-      fancy_ret <- try(plot(a_plot, ...))
+      fancy_ret <- try(suppressWarnings(plot(a_plot, ...)))
     }
     dev.off()
   }
@@ -312,10 +312,10 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   if (class(a_plot)[1] == "Venn") {
     print_ret <- try(Vennerable::plot(a_plot, doWeights = FALSE))
   } else {
-    print_ret <- try(print(a_plot))
+    print_ret <- try(suppressWarnings(print(a_plot)))
   }
   if (class(print_ret)[1] == "try-error") {
-    print_ret <- try(plot(a_plot, ...))
+    print_ret <- try(suppressWarnings(plot(a_plot, ...)))
   }
   dev.off()
 

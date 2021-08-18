@@ -47,7 +47,7 @@ test_that("Histogram data is as expected?", {
 })
 
 box_plot <- sm(plot_boxplot(pasilla_expt))
-actual <- head(box_plot[["data"]][["value"]])
+actual <- head(box_plot[["data"]][["reads"]])
 ## 05
 test_that("Box plot data is as expected?", {
     expect_equal(expected, actual, tolerance = 1)

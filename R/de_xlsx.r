@@ -1701,6 +1701,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     
     change_counts <- as.data.frame(cbind(as.numeric(change_counts_up),
                                          as.numeric(change_counts_down)))
+    colnames(change_counts) <- c("up", "down")
+    rownames(change_counts)[table_count] <- table_name
+      
     summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
     ## xls_result <- write_xlsx(data = change_counts, sheet = "number_changed", file = sig_table,
@@ -1734,7 +1737,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
   ## the extraneous message() statements and instead fill that information into
   ## this data frame.
-  summary_df <- data.frame(rownames = rownames(ret[[1]][["counts"]]))
+  summary_df <- data.frame(row.names = names(ret[["limma"]][["ups"]]))
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
@@ -1763,6 +1766,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
     for (according in according_to) {
       tmp_df <- ret[[according]][["counts"]]
+      rownames(tmp_df) <- names(ret[[according]][["ups"]])
       colnames(tmp_df) <- paste0(according, "_", colnames(tmp_df))
       summary_df <- cbind(summary_df, tmp_df)
       sig_message <- as.character(glue::glue("Significant {according} genes."))

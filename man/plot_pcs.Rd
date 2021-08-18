@@ -21,6 +21,7 @@ plot_pcs(
   rug = TRUE,
   max_overlaps = 20,
   cis = c(0.95, 0.9),
+  label_size = 4,
   ...
 )
 }
@@ -57,6 +58,8 @@ arbitrary information.}
 \item{max_overlaps}{Increase overlapping label tolerance.}
 
 \item{cis}{What (if any) confidence intervals to include.}
+
+\item{label_size}{The text size of the labels.}
 
 \item{...}{Extra arguments dropped into arglist}
 }

@@ -1058,7 +1058,10 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
   arglist <- list(...)
   ## First figure out how many conditions we have
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+  ## If there is no condition to start, then it may be NA
   chosen_colors <- as.character(sample_definitions[[cond_column]])
+  na_idx <- is.na(chosen_colors)
+  chosen_colors[na_idx] <- "undefined"
   num_conditions <- length(levels(as.factor(chosen_colors)))
 
   chosen_palette <- "Dark2"

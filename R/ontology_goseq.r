@@ -350,6 +350,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))
+  ## I want to limit the y-axis, but I think this is not the best way.
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
   goseq_y_limit <- goseq_p_nearzero * 2

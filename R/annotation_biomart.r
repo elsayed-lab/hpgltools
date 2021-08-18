@@ -156,6 +156,12 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                        "strand", "start_position",
                                                        "end_position"),
                                      include_lengths = TRUE) {
+
+  ## An attempt to get around 'unable to get local issuer certificate':
+  ## As per: https://github.com/grimbough/biomaRt/issues/39
+  new_config <- httr::config(ssl_verifypeer = FALSE)
+  httr::set_config(new_config, override = FALSE)
+  
   savefile <- glue("{species}_biomart_annotations.rda")
   biomart_annotations <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {

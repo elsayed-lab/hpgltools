@@ -804,10 +804,16 @@ write_snps <- function(expt, output_file = "funky.aln") {
 #' In this case I will take it as the result of:
 #'   snp_count <- count_expt_snps(pheno, annot_column = "bcftable")
 snp_density_primers <- function(snp_count, pdata_column = "condition",
-                                condition = "z2.3", cutoff = 20, bin_size = 600,
-                                divide = FALSE, topn = 200,
-                                target_temp = 53, max_primer_length = 45,
-                                bsgenome = "BSGenome.Leishmania.panamensis.MHOMCOL81L13.v52") {
+                                condition = "z2.3", cutoff = 20, bin_width = 600,
+                                divide = FALSE, topn = 400,
+                                target_temp = 53, max_primer_length = 50,
+                                bsgenome = "BSGenome.Leishmania.panamensis.MHOMCOL81L13.v52",
+                                gff = "reference/lpanamensis_col_v46.gff",
+                                feature_type = "protein_coding_gene", feature_start = "start",
+                                feature_end = "end", feature_strand = "strand",
+                                feature_chr = "seqnames", feature_type_column = "type",
+                                feature_id = "ID", feature_name = "description",
+                                truncate = TRUE) {
                                 
   ## Start out by loading the bsgenome data
   genome <- NULL
@@ -867,24 +873,24 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     
     ## Stop scientific notation for this operation
     current_options <- options(scipen = 999)
-    density_vector <- rep(0, ceiling(this_length / bin_size))
-    variant_vector <- rep('', ceiling(this_length / bin_size))
+    density_vector <- rep(0, ceiling(this_length / bin_width))
+    variant_vector <- rep('', ceiling(this_length / bin_width))
     density_name <- 0
     for (i in 1:length(density_vector)) {
       range_min <- density_name
-      range_max <- (density_name + bin_size) - 1
+      range_max <- (density_name + bin_width) - 1
       ## We want to subtract the maximum primer length from the position
       ## and have each extension reaction start near/at the bin.
       chr_data[["position"]] <- as.numeric(chr_data[["position"]])
       density_idx <- chr_data[["position"]] >= range_min &
         chr_data[["position"]] <= range_max
       ## Note that if I want to completely correct in how I do this
-      ## it should not be blindly bin_size, but should be the smaller of
-      ## bin_size or the remainder of the chromosome.  Leaving it at bin_size
+      ## it should not be blindly bin_width, but should be the smaller of
+      ## bin_width or the remainder of the chromosome.  Leaving it at bin_width
       ## will under-represent the end of each chromosome/contig, but I don't think
       ## I mind that at all.
       if (isTRUE(divide)) {
-        density_vector[i] <- sum(density_idx) / bin_size
+        density_vector[i] <- sum(density_idx) / bin_width
       } else {
         density_vector[i] <- sum(density_idx)
       }
@@ -898,7 +904,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
       variant_vector[i] <- toString(variant_set)
       names(variant_vector)[i] <- as.character(density_name)
       
-      density_name <- density_name + bin_size
+      density_name <- density_name + bin_width
     }
     density_lst[[chr]] <- density_vector
     variant_lst[[chr]] <- variant_vector
@@ -921,8 +927,30 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   long_density_vector <- long_density_vector[most_idx]
   long_variant_vector <- long_variant_vector[most_idx]
 
-  sequence_df <- choose_sequence_regions(long_variant_vector, topn = topn,
-                                         max_primer_length = max_primer_length)
+  message("Extracting primer regions.")
+  sequence_df <- sm(choose_sequence_regions(long_variant_vector, topn = topn,
+                                            max_primer_length = max_primer_length))
+  message("Searching for overlapping/closest genes.")
+  sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
+                              feature_type = feature_type, feature_start = feature_start,
+                              feature_end = feature_end, feature_strand = feature_strand,
+                              feature_chr = feature_chr, feature_type_column = feature_type_column,
+                              feature_id = feature_id, feature_name = feature_name)
+  ## Get rid of any regions with 'N' in them
+
+  dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "N")
+  message("Dropped ", sum(dropme), " regions with Ns in the 5' region.")
+  sequence_df <- sequence_df[!dropme, ]
+  dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "N")
+  message("Dropped ", sum(dropme), " regions with Ns in the 3' region.")
+  sequence_df <- sequence_df[!dropme, ]
+
+  keepers <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
+               "fivep_primer", "threep_primer", "overlap_gene_id", "overlap_gene_description",
+               "closest_gene_before_id", "closest_gene_before_description")
+  if (isTRUE(truncate)) {
+    sequence_df <- sequence_df[, keepers]
+  }
   
   retlist <- list(
       "density_vector" = long_density_vector,
@@ -1014,12 +1042,15 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   for (i in 1:nrow(sequence_df)) {
     chr <- sequence_df[i, "chr"]
 
-    silence = FALSE
+    silence = TRUE
     fivep_superprimer <- try(subseq(genome[[chr]],
                                     sequence_df[i, "fivep_superprimer_start"],
                                     sequence_df[i, "fivep_superprimer_end"]),
                              silent = silence)
     if ("try-error" %in% class(fivep_superprimer)) {
+      sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
+    } else if (sequence_df[i, "fivep_superprimer_start"] < 0) {
+      ## Added this because subseq will assume a negative value means a circular chromosome.
       sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
     } else {
       fivep_superprimer <- as.character(fivep_superprimer)
@@ -1055,7 +1086,158 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
     sequence_df[i, "threep_primer"] <- threep_primer
   } ## End iterating over sequence_df
 
+  ## Drop anything which is definitely useless
+  dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "Ran")
+  sequence_df <- sequence_df[!dropme, ]
+  dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "Ran")
+  sequence_df <- sequence_df[!dropme, ]
+
+  wanted_columns <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
+                      "fivep_primer", "threep_primer", "overlap_gene_description",
+                      "overlap_gene_start", "overlap_gene_end", "closest_gene_before_description",
+                      "closest_gene_before_start", "closest_gene_before_end",
+                      "closest_gene_after_id", "closest_gene_after_description",
+                      "closest_gene_after_start", "closest_gene_after_end",
+                      "chr", "bin_start", "fivep_references", "fivep_positions",
+                      "fivep_alternates", "threep_references", "threep_positions",
+                      "threep_alternates")
+  ## sequence_df <- sequence_df[, wanted_columns]
   return(sequence_df)  
+}
+
+#' If I were smart I would use an I/GRanges for this.
+#'
+#' But I was asked to get the closest feature if it is not inside one.
+#' I am not sure how to do that with a ranges. Sadly, I think it will
+#' be easier for me to just iterate over the sequence_df and query
+#' each feature on that chromosome/scaffold.
+xref_regions <- function(sequence_df, gff, bin_width = 600,
+                         feature_type = "protein_coding_gene", feature_start = "start",
+                         feature_end = "end", feature_strand = "strand",
+                         feature_chr = "seqnames", feature_type_column = "type",
+                         feature_id = "ID", feature_name = "description") {
+  annotation <- load_gff_annotations(gff)
+  wanted_columns <- c(feature_id, feature_name, feature_chr,
+                      feature_start, feature_end, feature_strand)
+  wanted_rows <- annotation[[feature_type_column]] == feature_type
+  annotation <- annotation[wanted_rows, wanted_columns]
+  colnames(annotation) <- c("id", "name", "chr", "start", "end", "strand")
+  message("Now the annotation has ", nrow(annotation),  " rows.")
+
+  sequence_df[["overlap_gene_id"]] <- ""
+  sequence_df[["overlap_gene_description"]] <- ""
+  sequence_df[["overlap_gene_start"]] <- ""
+  sequence_df[["overlap_gene_end"]] <- ""
+  sequence_df[["closest_gene_before_id"]] <- ""
+  sequence_df[["closest_gene_before_description"]] <- ""
+  sequence_df[["closest_gene_before_start"]] <- ""
+  sequence_df[["closest_gene_before_end"]] <- ""
+  sequence_df[["closest_gene_after_id"]] <- ""
+  sequence_df[["closest_gene_after_description"]] <- ""
+  sequence_df[["closest_gene_after_start"]] <- ""
+  sequence_df[["closest_gene_after_end"]] <- ""
+  for (r in 1:nrow(sequence_df)) {
+    entry <- sequence_df[r, ]
+    amplicon_chr <- entry[["chr"]]
+    amplicon_start <- as.numeric(entry[["bin_start"]])
+    amplicon_end <- amplicon_start + bin_width
+    annot_idx <- annotation[["chr"]] == amplicon_chr
+    xref_features <- annotation[annot_idx, ]
+    if (nrow(xref_features) == 0) {
+      next
+    }
+
+    ## Amplicon:           ------->
+    ##                  ############# fs < qs && fe > qe
+    ## Features:  ##     ### query_start > feature_start &&
+    ##                               query_start < feature end
+    ##                       ##  qstart < fstart && fend > qend
+    ##                            ### qend > fstart && qend < fend
+
+    ## So there are 4 obvious scenarios we want to collect
+    ## When the feature is surrounding the amplicon
+    ## The feature overlaps the 5' of the amplicon watson
+    ## The feature overlaps the 3' of the amplicon watson
+    ## The feature is entirely inside the amplicon
+
+    ## If all those fail, we want to find the closest feature.
+    ## Amplicon:             ------->
+    ## Get the left one:  ##                ##
+
+    hits <- 0
+    hit_df <- data.frame()
+    primer_inside_feature <- xref_features[["start"]] <= amplicon_start &
+      xref_features[["end"]] >= amplicon_end
+    if (sum(primer_inside_feature) > 0) {
+      hits <- hits + sum(primer_inside_feature)
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_inside_feature, "id"]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_inside_feature, "name"]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_inside_feature, "start"]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_inside_feature, "end"]
+    }
+
+    ##     ### amplicon_start > feature_start &&
+    primer_overlap_fivep <- xref_features[["start"]] <= amplicon_start &
+      xref_features[["end"]] >= amplicon_start
+    if (sum(primer_overlap_fivep) > 0) {
+      hits <- hits + sum(primer_overlap_fivep)
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_fivep, "id"]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_fivep, "name"]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_fivep, "start"]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_fivep, "end"]
+    }
+
+    ##  Amplicon:           ------->
+    ##                           ##### qend > fstart && qend < fend
+    primer_overlap_threep <- xref_features[["start"]] <= amplicon_end &
+      xref_features[["end"]] >= amplicon_end
+    if (sum(primer_overlap_threep) > 0) {
+      hits <- hits + sum(primer_overlap_threep)
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_threep, "id"]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_threep, "name"]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_threep, "start"]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_threep, "end"]
+    }
+
+    ##  Amplicon:           ------->
+    ##                        ##   qstart < fstart & qend > fend
+    primer_overlap_surround <- xref_features[["start"]] >= amplicon_end &
+      xref_features[["end"]] <= amplicon_end
+    if (sum(primer_overlap_surround) > 0) {
+      hits <- hits + sum(primer_overlap_surround)
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "name"]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"]
+    }
+
+    ## Now report the closest genes before/after the amplicon
+    xref_features[["fivep_dist"]] <- amplicon_start - xref_features[["end"]]
+    fivep_wanted_idx <- xref_features[["fivep_dist"]] > 0
+    if (sum(fivep_wanted_idx) > 0) {
+      fivep_candidates <- xref_features[fivep_wanted_idx, ]
+      fivep_min_idx <- fivep_candidates[["fivep_dist"]] == min(fivep_candidates[["fivep_dist"]])
+      fivep_candidate <- fivep_candidates[fivep_min_idx, ]
+      sequence_df[r, "closest_gene_before_id"] <- fivep_candidate["id"]
+      sequence_df[r, "closest_gene_before_description"] <- fivep_candidate["name"]
+      sequence_df[r, "closest_gene_before_start"] <- fivep_candidate["start"]
+      sequence_df[r, "closest_gene_before_end"] <- fivep_candidate["end"]
+    }
+    
+    xref_features[["threep_dist"]] <- xref_features[["start"]] - amplicon_end
+    threep_wanted_idx <- xref_features[["threep_dist"]] > 0
+    if (sum(threep_wanted_idx) > 0) {
+      threep_candidates <- xref_features[threep_wanted_idx, ]
+      threep_min_idx <- threep_candidates[["threep_dist"]] == min(threep_candidates[["threep_dist"]])
+      threep_candidate <- threep_candidates[threep_min_idx, ]
+      sequence_df[r, "closest_gene_after_id"] <- threep_candidate["id"]
+      sequence_df[r, "closest_gene_after_description"] <- threep_candidate["name"]
+      sequence_df[r, "closest_gene_after_start"] <- threep_candidate["start"]
+      sequence_df[r, "closest_gene_after_end"] <- threep_candidate["end"]
+    }
+
+  } ## End iterating over every row of the sequence df.
+  return(sequence_df)
 }
 
 find_subseq_target_temp <- function(sequence, target=53, direction="forward", verbose=FALSE) {

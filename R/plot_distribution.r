@@ -102,7 +102,7 @@ plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
     boxplot <- boxplot +
       ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area",
                            show.legend = FALSE) +
-      ggplot2::scale_fill_manual(values = as.character(colors), guide = FALSE) +
+      ggplot2::scale_fill_manual(values = as.character(colors), guide = "none") +
       ggplot2::geom_boxplot(aes_string(fill = "sample"), outlier.alpha = 0.01,
                             width = 0.1)
   } else {
@@ -110,7 +110,7 @@ plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
       sm(ggplot2::geom_boxplot(aes_string(fill = "sample"),
                                na.rm = TRUE, fill = colors, size = 0.5,
                                outlier.size = 1.5,
-                               guide = FALSE,
+                               guide = "none",
                                outlier.colour = ggplot2::alpha("black", 0.2)))
   }
   boxplot <- boxplot +
