@@ -241,49 +241,65 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   if (is.null(specification)) {
     specification <- list(
         ## First task performed is pretty much always trimming
+        "input_r1" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+        "input_r2" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "trimomatic_input" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
         "trimomatic_output" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
         "racer_changed" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/racer.out"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
         ## After those, things can get pretty arbitrary...
         "hisat_single_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
         "hisat_multi_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
         "hisat_single_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
         "hisat_multi_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
         "hisat_singlecon_ratio" = list(
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
             "column" = "hisat_single_all_percent"),
-        "kraken_classified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_out.txt"),
-        "kraken_unclassified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_out.txt"),
-        "kraken_first_species" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_report.txt"),
-        "kraken_first_species_reads" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/kraken_*/kraken_report.txt"),
+        "kraken_viral_classified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+        "kraken_viral_unclassified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+        "kraken_first_viral_species" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+        "kraken_first_viral_species_reads" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+        "kraken_standard_classified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+        "kraken_standard_unclassified" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+        "kraken_first_standard_species" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+        "kraken_first_standard_species_reads" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "salmon_mapped" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/salmon_{species}/salmon.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon.err"),
         "shovill_contigs" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_length" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_estlength" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_minlength" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/shovill_*/shovill.log"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "unicycler_lengths" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/unicycler_*/assembly.fasta")
-    )
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "unicycler_relative_coverage" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "phageterm_dtr_length" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta")
+        )
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -389,30 +405,72 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
-      "kraken_classified" = {
+      "input_r1" = {
+        search <- "^\\s+<\\(less .+\\).*$"
+        replace <- "^\\s+<\\(less (.+?)\\).*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "input_r2" = {
+        search <- "^\\s+<\\(less .+\\) <\\(less .+\\).*$"
+        replace <- "^\\s+<\\(less .+\\) <\\(less (.+)\\).*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_viral_classified" = {
         search <- "^\\s+\\d+ sequences classified.*$"
         replace <- "^\\s+(\\d+) sequences classified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
       },
-      "kraken_unclassified" = {
+      "kraken_viral_unclassified" = {
         search <- "^\\s+\\d+ sequences unclassified.*$"
         replace <- "^\\s+(\\d+) sequences unclassified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
       },
-      "kraken_first_species" = {
+      "kraken_first_viral_species" = {
         search <- "^.*s__.*\\t\\d+$"
         replace <- "^.*s__(.*)\\t\\d+$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
       },
-      "kraken_first_species_reads" = {
+      "kraken_first_viral_species_reads" = {
         search <- "^.*s__.*\\t\\d+$"
-        replace <- "^.*s__.*\\t(\\d)+$"
+        replace <- "^.*s__.*\\t(\\d+)$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_standard_classified" = {
+        search <- "^\\s+\\d+ sequences classified.*$"
+        replace <- "^\\s+(\\d+) sequences classified.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_standard_unclassified" = {
+        search <- "^\\s+\\d+ sequences unclassified.*$"
+        replace <- "^\\s+(\\d+) sequences unclassified.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_first_standard_species" = {
+        search <- "^.*s__.*\\t\\d+$"
+        replace <- "^.*s__(.*)\\t\\d+$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         ...)
+      },
+      "kraken_first_standard_species_reads" = {
+        search <- "^.*s__.*\\t\\d+$"
+        replace <- "^.*s__.*\\t(\\d+)$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
@@ -504,6 +562,18 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          which = "all",
                                          ...)
       },
+      "unicycler_relative_coverage" = {
+        ## >1 length=40747 depth=1.00x circular=true
+        search <- "^>\\d+ length=\\d+ depth=.*x.*$"
+        replace <- "^>\\d+ length=\\d+ depth=(.*)x.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all",
+                                         ...)
+      },
+      "phageterm_dtr_length" = {
+        entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -513,6 +583,29 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
   return(entries)
 }
 
+dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
+  filenames_with_wildcards <- glue::glue(input_file_spec)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      next
+    }
+    if (is.na(input_file)) {
+      warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      next
+    }
+
+    dtrs <- Biostrings::readBStringSet(input_file)
+    output_entries[row] <- width(dtrs[1])
+  } ## End looking at every row of the metadata
+  return(output_entries)
+}
 
 #' Given two metadata columns, print a ratio.
 #'
@@ -584,12 +677,18 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in 1:nrow(meta)) {
     found <- 0
-    input_file <- Sys.glob(filenames_with_wildcards[row])
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (is.na(input_file)) {
+      ## The file did not exist.
+      next
+    }
     if (length(input_file) == 0) {
       warning("There is no file matching: ", filenames_with_wildcards[row],
               ".")
       next
     }
+
     input_handle <- file(input_file, "r", blocking = FALSE)
     input_vector <- readLines(input_handle)
     last_found <- NULL
