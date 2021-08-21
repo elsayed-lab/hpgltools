@@ -254,9 +254,8 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
 #' @param tooltip Passed to ggplotly().
 #' @return plotly with clicky links.
 #' @export
-ggplotly_url <- function(plot, filename, id_column = "id", title = NULL,
-                         url_data = NULL, url_column = "url",
-                         tooltip = "all") {
+ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", title = NULL,
+                         url_info = NULL, tooltip = "all") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
     tooltip_columns <- "label"
@@ -267,24 +266,25 @@ ggplotly_url <- function(plot, filename, id_column = "id", title = NULL,
   if (is.null(plot[["data"]][[id_column]])) {
     plot[["data"]][[id_column]] <- rownames(plot[["data"]])
   }
-  if (is.null(url_data) & is.null(plot[["data"]][[url_column]])) {
+  if (is.null(url_info)) {
     warning("No url df was provided, nor is there a column: ", url_column, ", not much to do.")
-  } else if (is.null(plot[["data"]][[url_column]])) {
-    ## We have some url information, this may either be a df of rownames and URLs, or
-    ## a glue description string.
-    if ("character" %in% class(url_data)) {
-      ids <- plot[["data"]][[id_column]]
-      ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
-      plot[["data"]][[url_column]] <- glue::glue(url_data)
-    } else if ("data.frame" %in% class(url_data)) {
-      ## This assumes url data has a column named whatever is url_column
-      message("Merging the url data with the plot data.")
-      plot[["data"]] <- merge(plot[["data"]], url_data, by = "row.names", all.x = TRUE)
-      rownames(plot[["data"]]) <- plot[["Row.names"]]
-      plot[["data"]][["Row.names"]] <- NULL
-    }
+  } else if ("character" %in% url_info & length(url_info) > 1) {
+    message("url_info has multiple entries, assuming it is a character vector with 1 url/entry.")
+    ## Then this should contain all the URLs
+    plot[["data"]][[url_column]] <- url_info
+  } else if ("glue" %in% url_info & length(url_info) == 1) {
+    message("url_info has length 1, assuming it is a glue specification including {ids}.")
+    ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
+    ids <- plot[["data"]][[id_column]]
+    plot[["data"]][[url_column]] <- glue::glue(url_info)
+  } else if ("data.frame" %in% class(url_info)) {
+    ## This assumes url data has a column named whatever is url_column
+    message("Merging the url data with the plot data.")
+    plot[["data"]] <- merge(plot[["data"]], url_info, by = "row.names", all.x = TRUE)
+    rownames(plot[["data"]]) <- plot[["Row.names"]]
+    plot[["data"]][["Row.names"]] <- NULL
   }
-
+  
   if (is.null(plot[["data"]][[first_tooltip_column]])) {
     plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
   }
