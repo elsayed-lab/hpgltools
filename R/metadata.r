@@ -238,6 +238,9 @@ gather_trimomatic_metadata <- function(metadata,
 #' @export
 gather_preprocessing_metadata <- function(starting_metadata, specification = NULL,
                                           new_metadata = NULL, verbose = FALSE, ...) {
+  ## I want to create a set of specifications for different tasks:
+  ## tnseq/rnaseq/assembly/phage/phylogenetics/etc.
+  ## For the moment, the following is specific for phage assembly.
   if (is.null(specification)) {
     specification <- list(
         ## First task performed is pretty much always trimming
@@ -254,15 +257,17 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         ## Second task is likely error correction
         "racer_changed" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
+        "host_filter_species" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
         "hisat_single_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_multi_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_single_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_multi_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_singlecon_ratio" = list(
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
@@ -284,7 +289,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "kraken_first_standard_species_reads" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "salmon_mapped" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon.err"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
         "shovill_contigs" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_length" = list(
@@ -298,7 +303,11 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "unicycler_relative_coverage" = list(
             file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
         "phageterm_dtr_length" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta")
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+        "prodigal_positive_strand" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "prodigal_negative_strand" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         )
   }
   if (is.null(new_metadata)) {
@@ -404,6 +413,12 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
           denominator_column <- specification[["trimomatic_input"]][["column"]]
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
+      },
+      "host_filter_species" = {
+        search <- "^.*$"
+        replace <- "(.*)"
+        entries <- dispatch_regex_search(meta, search, replace, which = "all",
+                                         input_file_spec, verbose = verbose)
       },
       "input_r1" = {
         search <- "^\\s+<\\(less .+\\).*$"
@@ -574,6 +589,14 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       "phageterm_dtr_length" = {
         entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
       },
+      "prodigal_positive_strand" = {
+        search <- "\\t\\+\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "prodigal_negative_strand" = {
+        search <- "\\t-\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -581,6 +604,36 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
     entries <- gsub(pattern = ",", replacement = "", x = entries)
   }
   return(entries)
+}
+
+dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose) {
+  filenames_with_wildcards <- glue::glue(input_file_spec)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      next
+    }
+    if (is.na(input_file)) {
+      warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      next
+    }
+
+    input_handle <- file(input_file, "r", blocking = FALSE)
+    input_vector <- readLines(input_handle)
+    last_found <- NULL
+    this_found <- NULL
+    all_found <- c()
+    num_hits <- sum(grepl(x = input_vector, pattern = search))
+    close(input_handle)
+    output_entries[row] <- num_hits
+  } ## End looking at every row of the metadata
+  return(output_entries)
 }
 
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
