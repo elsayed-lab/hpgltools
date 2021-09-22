@@ -7,7 +7,6 @@
 write_cp_data(
   cp_result,
   excel = "excel/clusterprofiler.xlsx",
-  wb = NULL,
   add_trees = TRUE,
   order_by = "qvalue",
   pval = 0.1,
@@ -15,6 +14,7 @@ write_cp_data(
   height = 15,
   width = 10,
   decreasing = FALSE,
+  primary_key = 1,
   ...
 )
 }
@@ -22,8 +22,6 @@ write_cp_data(
 \item{cp_result}{A set of results from simple_clusterprofiler().}
 
 \item{excel}{An excel file to which to write some pretty results.}
-
-\item{wb}{Workbook object to write to.}
 
 \item{add_trees}{Include topgoish ontology trees?}
 

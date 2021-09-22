@@ -60,18 +60,55 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
                                  filter.by = filter,
                                  target.by = target,
                                  delta = delta)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerTD(powers)
   powertd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerFD(powers)
   powerfd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
   powerhist_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
   power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
   retlist <- list(
       "options" = simulation_options,
@@ -126,7 +163,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
   } else if (de_method == "deseq") {
     DEmethod <- "DESeq2"
   } else {
-      stop("This accepts only 'edger' or 'deseq'.")
+    stop("This accepts only 'edger' or 'deseq'.")
   }
   exprs_mtrx <- exprs(de_tables[["input"]][["input"]])
   genes <- nrow(de_tables[["data"]][[1]])
@@ -186,24 +223,61 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
                                    filter.by = filter,
                                    target.by = target,
                                    delta = delta)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPower(powers)
     abline(v = x_intercept)
     power_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerTD(powers)
     abline(v = x_intercept)
     powertd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerFD(powers)
     abline(v = x_intercept)
     powerfd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotFDcost(powers)
     abline(v = x_intercept)
     fdcost_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
     abline(v = x_intercept)
     powerhist_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerAlpha(powers)
     abline(v = x_intercept)
     poweralpha_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
     power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
     retlist <- list(
         "options" = simulation_options,
@@ -224,7 +298,6 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
 ## Use my cheater infix ::: to handle some unexported stuff from PROPER.
 update.RNAseq.SimOptions.2grp <- "PROPER" %:::% "update.RNAseq.SimOptions.2grp"
 run.edgeR <- "PROPER" %:::% "run.edgeR"
-run.DESeq <- "PROPER" %:::% "run.DESeq"
 run.DSS <- "PROPER" %:::% "run.DSS"
 run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 
@@ -281,9 +354,6 @@ my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
       data0 <- list(counts = this.X.valid, designs = this.design)
       if (DEmethod == "edgeR") {
         res1 <- run.edgeR(data0)
-      }
-      if (DEmethod == "DESeq") {
-        res1 <- run.DESeq(data0)
       }
       if (DEmethod == "DSS") {
         res1 <- run.DSS(data0)

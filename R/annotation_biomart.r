@@ -38,6 +38,8 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
     if (is.null(year)) {
       year_numeric <- lubridate::year(lubridate::date(lubridate::now()))
       year_strings <- as.character(c(year_numeric - 1, year_numeric - 2, year_numeric - 3))
+    } else {
+      year_strings <- as.character(year)
     }
     archives <- c()
     for (y in year_strings) {
@@ -154,6 +156,12 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                        "strand", "start_position",
                                                        "end_position"),
                                      include_lengths = TRUE) {
+
+  ## An attempt to get around 'unable to get local issuer certificate':
+  ## As per: https://github.com/grimbough/biomaRt/issues/39
+  new_config <- httr::config(ssl_verifypeer = FALSE)
+  httr::set_config(new_config, override = FALSE)
+  
   savefile <- glue("{species}_biomart_annotations.rda")
   biomart_annotations <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {

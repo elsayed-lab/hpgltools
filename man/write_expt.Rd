@@ -12,9 +12,11 @@ write_expt(
   sample_heat = TRUE,
   convert = "cpm",
   transform = "log2",
-  batch = "sva",
+  batch = "svaseq",
   filter = TRUE,
   med_or_mean = "mean",
+  color_na = "#DD0000",
+  merge_order = "counts_first",
   ...
 )
 }
@@ -38,6 +40,11 @@ write_expt(
 \item{filter}{Filtering method used.}
 
 \item{med_or_mean}{When printing mean by condition, one may want median.}
+
+\item{color_na}{Color cells which were NA before imputation this color.}
+
+\item{merge_order}{Used to decide whether to put the counts or annotations first when
+printing count tables.}
 
 \item{...}{Parameters passed down to methods called here (graph_metrics, etc).}
 }

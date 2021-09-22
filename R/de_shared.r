@@ -44,6 +44,7 @@
 #' @param do_limma Perform limma?
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
+#' @param verbose Print extra information while running?
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
 #'  write_limma().
 #' @return A list of limma, deseq, edger results.
@@ -318,15 +319,15 @@ sva_modify_pvalues <- function(results) {
     ## 'wildtype'
     samples_second_idx <- results[["limma"]][["conditions"]] == second
     num_second <- sum(samples_second_idx)
-    samples_second <- exprs(input)[, samples_second_idx]
+    samples_second <- exprs(results[["input"]])[, samples_second_idx]
     ## Concatenate the 'mutant' and 'wildtype' samples by column
     included_samples <- cbind(samples_first, samples_second)
     ## Arbitrarily call them 'first' and 'second'
     colnames(included_samples) <- c(rep("first", times = num_first),
                                     rep("second", times = num_second))
     ## Do the same thing, but using the rows of the sva model adjustment
-    first_sva <- sv_model[samples_first_idx, ]
-    second_sva <- sv_model[samples_second_idx, ]
+    first_sva <- results[["limma"]][["sv_model"]][samples_first_idx, ]
+    second_sva <- results[["limma"]][["sv_model"]][samples_second_idx, ]
     ## But instead of just appending them, I need a matrix of 0s and 1s
     ## identifying which sv rows correspond to 'wildtype' and 'mutant'
     first_model <- append(rep(1, num_first), rep(0, num_second))
@@ -415,6 +416,7 @@ sva_modify_pvalues <- function(results) {
 #' Invoked by deseq_pairwise() and edger_pairwise().
 #'
 #' @param input Expressionset containing expt object.
+#' @param verbose Print some information about what is happening?
 #' @param force Ignore every warning and just use this data.
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
@@ -521,9 +523,10 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
 #' Invoked by _pairwise().
 #'
 #' @param input Expt input.
-#' @param force Force non-standard data?
 #' @param choose_for One of limma, deseq, edger, or basic.  Defines the
 #'  requested data state.
+#' @param force Force non-standard data?
+#' @param verbose Print some information about what is happening?
 #' @param ... More options for future expansion.
 #' @return List the data, conditions, and batches in the data.
 #' @seealso [choose_binom_dataset()] [choose_limma_dataset()] [choose_basic_dataset()]
@@ -564,6 +567,7 @@ choose_dataset <- function(input, choose_for = "limma", force = FALSE, verbose =
 #' @param force Ingore warnings and use the provided data asis.
 #' @param which_voom Choose between limma'svoom, voomWithQualityWeights, or the
 #'  hpgl equivalents.
+#' @param verbose Print some information about what is happening?
 #' @param ... Extra arguments passed to arglist.
 #' @return dataset suitable for limma analysis
 #' @seealso [limma] [choose_dataset()]
@@ -675,6 +679,7 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
 #' @param contr List of contrasts.arg possibilities.
 #' @param surrogates Number of or method used to choose the number of surrogate
 #'  variables.
+#' @param verbose Print some information about what is happening?
 #' @param ... Further options are passed to arglist.
 #' @return List including a model matrix and strings describing cell-means and
 #'  intercept models.
@@ -1123,6 +1128,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
 #' @param annot_df Include annotation data?
 #' @return Heatmap showing how similar they are along with some
 #'  correlations betwee the three players.
+#' @param extra_contrasts include some extra contrasts when comparing results.
 #' @seealso [limma_pairwise()] [edger_pairwise()] [deseq_pairwise()]
 #' @examples
 #' \dontrun{
@@ -1175,9 +1181,8 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
   total_comparisons <- lenminus * (length(methods) - 1) * len
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   progress_count <- 0
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (c in 1:lenminus) {
@@ -1189,7 +1194,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       contrast_name_list <- c()
       for (l in 1:len) {
         progress_count <- progress_count + 1
-        if (isTRUE(show_progress)) {
+        if (isTRUE(verbose)) {
           pct_done <- progress_count / total_comparisons
           utils::setTxtProgressBar(bar, pct_done)
         }
@@ -1242,7 +1247,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       } ## End iterating through the contrasts
     } ## End the second method loop
   } ## End the first method loop
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
 
@@ -1746,7 +1751,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 
   ## Finally, invoke IHW and get its interpretation of adjusted p-values.
   formula <- as.formula(glue::glue("{pvalue_column} ~ {mean_column}"))
-  ihw_result <- IHW::ihw(formula, data = tmp_table, alpha = significance)
+  ihw_result <- sm(IHW::ihw(formula, data = tmp_table, alpha = significance))
   adjusted_p_values <- IHW::adj_pvalues(ihw_result)
   return(adjusted_p_values)
 }
@@ -1879,6 +1884,8 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #' @param conditions Factor of conditions in the experiment.
 #' @param do_identities Include all the identity strings? Limma can
 #'  use this information while edgeR can not.
+#' @param do_extras Include extra contrasts?  This seems redundant with extra_contrasts
+#'  below, but there is a reason for it.
 #' @param do_pairwise Include all pairwise strings? This shouldn't
 #'  need to be set to FALSE, but just in case.
 #' @param extra_contrasts Optional string of extra contrasts to include.
@@ -2141,7 +2148,7 @@ semantic_copynumber_extract <- function(...) {
 semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE, invert = TRUE,
                                        semantic = c("mucin", "sialidase", "RHS",
                                                   "MASP", "DGF", "GP63"),
-                                       semantic_column = "1.tooltip") {
+                                       semantic_column = "product") {
   if ("expt" %in% class(input)) {
     result <- semantic_expt_filter(input, invert = invert, semantic = semantic,
                                    semantic_column = semantic_column)

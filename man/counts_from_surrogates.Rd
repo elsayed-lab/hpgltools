@@ -10,6 +10,7 @@ counts_from_surrogates(
   design = NULL,
   method = "ruv",
   cond_column = "condition",
+  batch_column = "batch",
   matrix_scale = "linear",
   return_scale = "linear",
   ...
@@ -25,6 +26,9 @@ counts_from_surrogates(
 \item{method}{Which methodology to follow, ideally these agree but that seems untrue.}
 
 \item{cond_column}{design column containing the condition data.}
+
+\item{batch_column}{design column with the batch data, used for
+subtractive methods.}
 
 \item{matrix_scale}{Was the input for the surrogate estimator on a log or linear scale?}
 

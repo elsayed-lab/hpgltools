@@ -449,12 +449,13 @@ circos_ideogram <- function(name = "default", conf_dir = "circos/conf", band_url
 #' @param lengths If no sequence file is provided, use a named numeric vector to provide them.
 #' @return The output filename.
 #' @export
-circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL, lengths = NULL) {
+circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
+                             lengths = NULL) {
   conf_dir <- cfg[["conf_dir"]]
   name <- cfg[["name"]]
   ## genome_length <- 0
   chr_df <- data.frame()
-  if (is.null(length) & is.null(fasta)) {
+  if (is.null(lengths) & is.null(fasta)) {
     stop("circos_karyotype() requires chromosome length or fasta file.")
   } else if (!is.null(lengths)) {
     ## genome_length <- sum(lengths)
@@ -473,6 +474,10 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL, l
   ## First write the summary line
   for (ch in 1:chr_num) {
     chr_name <- chr_df[ch, "names"]
+    ## chr_name <- gsub(pattern = "^(\\w+)(.*)$", replacement = "\\1", x = chr_name)
+    chr_name <- stringi::stri_extract_first_words(chr_name)
+    ##chr_name <- gsub(pattern = "[[:punct:]]", replacement = "", x = chr_name)
+    ##chr_name <- gsub(pattern = " ", replacement = "_", x = chr_name)
     chr_width <- chr_df[ch, "width"]
     start_string <- glue::glue("chr - {chr_name} {chr_num} 0 {chr_width} {color}")
     cat(start_string, file = out, sep = "\n")
@@ -492,7 +497,11 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL, l
   close(out)
   message("Wrote karyotype to ", outfile)
   message("This should match the karyotype= line in ", name, ".conf")
-  return(outfile)
+  retlist <- list(
+      "outfile" = outfile,
+      "size_df" = chr_df
+  )
+  return(retlist)
 }
 
 #' Write a simple makefile for circos.
@@ -502,7 +511,8 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL, l
 #' @param cfg Configuration from circos_prefix().
 #' @param target Default make target.
 #' @param circos Location of circos.  I have a copy in home/bin/circos and use that sometimes.
-#' @return a kitten
+#' @param verbose Print some information from make?
+#' @return a kitten, or you know, a plot.
 #' @export
 circos_make <- function(cfg, target = "", circos = "circos", verbose = FALSE) {
   circos_dir <- cfg[["basedir"]]
@@ -529,7 +539,7 @@ clean:
 \t$(CIRCOS) -conf $< -outputfile $*.svg
 
 %%:\t%%.conf
-\t$(CIRCOS) -conf $< -outputfile $*.png
+\t$(CIRCOS) -conf $< -outputfile $*.png & 2>/dev/null 1>&2
 \t$(CIRCOS) -conf $< -outputfile $*.svg
 \techo '<img src=\"$*.svg\" usemap=\"#$*\">' > map.html
 \tcat $*.html >> map.html
@@ -576,32 +586,35 @@ clean:
 #' @param minus_orientation Orientation of the minus pieces.
 #' @param layers How many layers to use
 #' @param layers_overflow How to handle too many layers.
-#' @param acol A color: RNA processing and modification.
-#' @param bcol B color: Chromatin structure and dynamics.
-#' @param ccol C color: Energy production conversion.
-#' @param dcol D color: Cell cycle control, mitosis and meiosis.
-#' @param ecol E color: Amino acid transport metabolism.
-#' @param fcol F color: Nucleotide transport and metabolism.
-#' @param gcol G color: Carbohydrate transport and metabolism.
-#' @param hcol H color: Coenzyme transport and metabolism.
-#' @param icol I color: Lipid transport and metabolism.
-#' @param jcol J color: Translation, ribosome structure and biogenesis.
-#' @param kcol K color: Transcription.
-#' @param lcol L color: Replication, recombination, and repair.
-#' @param mcol M color: Cell wall/membrane biogenesis.
-#' @param ncol N color: Cell motility
-#' @param ocol O color: Posttranslational modification, protein turnover, chaperones.
-#' @param pcol P color: Inorganic ion transport and metabolism.
-#' @param qcol Q color: Secondary metabolite biosynthesis, transport, and catabolism.
-#' @param rcol R color: General function prediction only.
-#' @param scol S color: Function unknown.
-#' @param tcol T color: Signal transduction mechanisms.
-#' @param ucol U color: Intracellular trafficking(sp?) and secretion.
-#' @param vcol V color: Defense mechanisms.
-#' @param wcol W color: Extracellular structures.
-#' @param xcol X color: Not in COG.
-#' @param ycol Y color: Nuclear structure.
-#' @param zcol Z color: Cytoskeleton.
+#' @param acol A color: RNA processing and modification. (orange)
+#' @param bcol B color: Chromatin structure and dynamics. (red-9)
+#' @param ccol C color: Energy production conversion. (yellow)
+#' @param dcol D color: Cell cycle control, mitosis and meiosis. (very light purple)
+#' @param ecol E color: Amino acid transport metabolism. (very light green)
+#' @param fcol F color: Nucleotide transport and metabolism. (deep blue)
+#' @param gcol G color: Carbohydrate transport and metabolism. (very light green)
+#' @param hcol H color: Coenzyme transport and metabolism. (very light purple blue)
+#' @param icol I color: Lipid transport and metabolism. (very very deep green)
+#' @param jcol J color: Translation, ribosome structure and biogenesis. (deep red)
+#' @param kcol K color: Transcription. (orange)
+#' @param lcol L color: Replication, recombination, and repair. (very very light orange)
+#' @param mcol M color: Cell wall/membrane biogenesis. (deep green)
+#' @param ncol N color: Cell motility (very very light purple blue)
+#' @param ocol O color: Posttranslational modification, protein turnover, chaperones. (very very light green)
+#' @param pcol P color: Inorganic ion transport and metabolism. (very very deep red)
+#' @param qcol Q color: Secondary metabolite biosynthesis, transport, and catabolism. (very light green 3)
+#' @param rcol R color: General function prediction only. (very light grey)
+#' @param scol S color: Function unknown. (grey)
+#' @param tcol T color: Signal transduction mechanisms. (very light purple)
+#' @param ucol U color: Intracellular trafficking(sp?) and secretion. (green 3)
+#' @param vcol V color: Defense mechanisms. (very light red)
+#' @param wcol W color: Extracellular structures. (very very deep purple)
+#' @param xcol X color: Not in COG. (black)
+#' @param ycol Y color: Nuclear structure. (light red)
+#' @param zcol Z color: Cytoskeleton. (very light purple blue)
+#' @param max Maximum length for chromosomal lengths
+#' @param label_column Use this column for labelling interactive svg outptus.
+#' @param url_string printf formatting string for interactive svg outputs.
 #' @return Radius after adding the plus/minus information and the spacing between them.
 #' @export
 circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
@@ -616,13 +629,52 @@ circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
                               pcol = "vvdpred", qcol = "ylgn-3-seq", rcol = "vlgrey",
                               scol = "grey", tcol = "vlpurple", ucol = "greens-3-seq",
                               vcol = "vlred", wcol = "vvdppurple", xcol = "black",
-                              ycol = "lred", zcol = "vlpblue") {
+                              ycol = "lred", zcol = "vlpblue", max = NULL,
+                              label_column = NULL, url_string = "") {
 
+  ## Add a filter to make sure there are no features which span the entire chromosome
+  ## These happen when using genbank genomes.
+  if (is.null(max)) {
+    max <- 1000000
+  }
+  plus_df <- cfg[["plus_df"]]
+  minus_df <- cfg[["minus_df"]]
+  annotation <- cfg[["annotation"]]
+
+  plus_drop_idx <- (plus_df[["stop"]] - plus_df[["start"]]) > max
+  if (sum(plus_drop_idx) > 0) {
+    plus_df <- plus_df[!plus_drop_idx, ]
+  }
+  minus_drop_idx <- (minus_df[["stop"]] - minus_df[["start"]]) > max
+  if (sum(minus_drop_idx) > 0) {
+    minus_df <- minus_df[!minus_drop_idx, ]
+  }
+  if (!is.null(label_column)) {
+    tmpdf <- as.data.frame(annotation[[label_column]])
+    rownames(tmpdf) <- rownames(annotation)
+    colnames(tmpdf) <- "id"
+    plus_df <- merge(plus_df, tmpdf, by = "row.names", all.x = TRUE)
+    rownames(plus_df) <- plus_df[["Row.names"]]
+    plus_df[["Row.names"]] <- NULL
+    plus_df[["value"]] <- paste0(plus_df[["value"]], ",id=", plus_df[["id"]])
+    plus_df[["value"]] <- gsub(pattern = "[[:space:]]", replacement = "",
+                               x = plus_df[["value"]])
+    plus_df[["id"]] <- NULL
+    minus_df <- merge(minus_df, tmpdf, by = "row.names", all.x = TRUE)
+    minus_df[["value"]] <- paste0(minus_df[["value"]], ",id=", minus_df[["id"]])
+    minus_df[["value"]] <- gsub(pattern = "[[:space:]]", replacement = "", x = minus_df[["value"]])
+    print(head(minus_df))
+    print(head(plus_df))
+    minus_df[["id"]] <- NULL
+    rownames(minus_df) <- minus_df[["Row.names"]]
+    minus_df[["Row.names"]] <- NULL
+  }
+  
   message("Writing data file: ", cfg[["plus_data_file"]], " with the + strand GO data.")
-  write.table(cfg[["plus_df"]], file = cfg[["plus_data_file"]], quote = FALSE,
+  write.table(plus_df, file = cfg[["plus_data_file"]], quote = FALSE,
               row.names = FALSE, col.names = FALSE, na = "no_go")
   message("Writing data file: ", cfg[["minus_data_file"]], " with the - strand GO data.")
-  write.table(cfg[["minus_df"]], file = cfg[["minus_data_file"]], quote = FALSE,
+  write.table(minus_df, file = cfg[["minus_data_file"]], quote = FALSE,
               row.names = FALSE, col.names = FALSE, na = "no_go")
 
   first_outer <- outer
@@ -782,7 +834,7 @@ circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
   color = green
   r1 = {first_outer}r
   r0 = {first_inner}r
-  url = script?type = label&value=[id]&color=[color]
+  url = {url_string}
 {rules_string}
  </plot>
 
@@ -813,7 +865,8 @@ circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
   color = green
   r1 = {second_outer}r
   r0 = {second_inner}r
-  url = script?type = label&value=[id]&color=[color]
+##  url = script?type = label&value=[id]&color=[color]
+  url = {url_string}
 {rules_string}
  </plot>
 
@@ -884,7 +937,7 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
   data_dir <- file.path(basedir, "data")
   cfgout <- paste0(file.path(conf_dir, name), ".conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
-
+   
   if (!file.exists(data_dir)) {
     message("Creating the data directory: ", data_dir)
     dir.create(data_dir, recursive = TRUE)
@@ -894,6 +947,8 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
     dir.create(conf_dir, recursive = TRUE)
   }
 
+  
+  
   ## Set up some data which will be shared by all the other functions.
   number_pluses <- sum(annotation[[strand_column]] == "+")
   number_ones <- sum(annotation[[strand_column]] == 1)
@@ -1263,6 +1318,9 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
   full_table <- merge(df, annot, by = "row.names")
   if (nrow(full_table) == 0) {
     stop("Merging the annotations and data failed.")
+  }
+  if (! colname %in% colnames(df)) {
+    stop("The column: ", colname, " is missing from the input dataframe.")
   }
   start_colnames <- colnames(full_table)
   new_colnames <- gsub(x = start_colnames, pattern = "\\.x$", replacement = "")

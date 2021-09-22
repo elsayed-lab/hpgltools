@@ -14,8 +14,6 @@ plot_ma_de(
   logfc = 1,
   label_numbers = TRUE,
   size = 2,
-  tooltip_data = NULL,
-  gvis_filename = NULL,
   shapes = TRUE,
   invert = FALSE,
   label = NULL,
@@ -41,10 +39,6 @@ plot_ma_de(
 
 \item{size}{How big are the dots?}
 
-\item{tooltip_data}{Df of tooltip information for gvis.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
-
 \item{shapes}{Provide different shapes for up/down/etc?}
 
 \item{invert}{Invert the ma plot?}
@@ -68,7 +62,7 @@ DNA microarray gene expression data which has been transformed onto the M
 }
 \examples{
  \dontrun{
-  plot_ma(voomed_data, table, gvis_filename = "html/fun_ma_plot.html")
+  plot_ma(voomed_data, table)
   ## Currently this assumes that a variant of toptable was used which
   ## gives adjusted p-values.  This is not always the case and I should
   ## check for that, but I have not yet.

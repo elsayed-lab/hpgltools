@@ -8,10 +8,9 @@ plot_volcano_de(
   table,
   alpha = 0.6,
   color_by = "p",
-  color_list = c(`FALSE` = "darkred", `TRUE` = "darkblue"),
+  color_list = c(`FALSE` = "darkblue", `TRUE` = "darkred"),
   fc_col = "logFC",
   fc_name = "log2 fold change",
-  gvis_filename = NULL,
   line_color = "black",
   line_position = "bottom",
   logfc = 1,
@@ -20,7 +19,6 @@ plot_volcano_de(
   p = 0.05,
   shapes_by_state = TRUE,
   size = 2,
-  tooltip_data = NULL,
   label = NULL,
   ...
 )
@@ -39,8 +37,6 @@ adjusted p-value.}
 
 \item{fc_name}{Name of the fold-change to put on the plot.}
 
-\item{gvis_filename}{Filename to write a fancy html graph.}
-
 \item{line_color}{What color for the significance lines?}
 
 \item{line_position}{Put the significance lines above or below the dots?}
@@ -57,8 +53,6 @@ interesting.}
 \item{shapes_by_state}{Add fun shapes for the various significance states?}
 
 \item{size}{How big are the dots?}
-
-\item{tooltip_data}{Df of tooltip information for gvis.}
 
 \item{label}{Label the top/bottom n logFC values?}
 
@@ -82,7 +76,7 @@ significance of the signal."
 }
 \examples{
 \dontrun{
- plot_volcano_de(table, gvis_filename = "html/fun_ma_plot.html")
+ plot_volcano_de(table)
  ## Currently this assumes that a variant of toptable was used which
  ## gives adjusted p-values.  This is not always the case and I should
  ## check for that, but I have not yet.

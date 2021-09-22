@@ -8,6 +8,8 @@ removal.}
 cbcb_batch(
   normalized_counts,
   model,
+  conditional_model = NULL,
+  batch_model = NULL,
   batch1 = "batch",
   condition = "condition",
   matrix_scale = "linear",
@@ -20,6 +22,10 @@ cbcb_batch(
 
 \item{model}{Balanced experimental model containing condition and batch
 factors.}
+
+\item{conditional_model}{Experimental model with the conditional factor.}
+
+\item{batch_model}{Experimental model with the batch factor.}
 
 \item{batch1}{Column containing the first batch's metadata in the experimental design.}
 

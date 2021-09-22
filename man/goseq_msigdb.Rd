@@ -20,7 +20,8 @@ goseq_msigdb(
   goseq_method = "Wallenius",
   padjust_method = "BH",
   bioc_length_db = "ensGene",
-  excel = NULL
+  excel = NULL,
+  orgdb = "org.Hs.eg.db"
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ this parameter, everything is just passed directly to simple_goseq()}
 \item{bioc_length_db}{passed to simple_goseq()}
 
 \item{excel}{passed to simple_goseq()}
+
+\item{orgdb}{Ideally used to help goseq collect lengths.}
 }
 \value{
 Some goseq data!

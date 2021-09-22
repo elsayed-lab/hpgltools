@@ -7,13 +7,13 @@
 convert_counts(count_table, method = "raw", ...)
 }
 \arguments{
+\item{count_table}{Matrix of count data.}
+
 \item{method}{Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.}
 
 \item{...}{Options I might pass from other functions are dropped into
 arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
 match, and annotation type).}
-
-\item{data}{Matrix of count data.}
 }
 \value{
 Dataframe of cpm/rpkm/whatever(counts)

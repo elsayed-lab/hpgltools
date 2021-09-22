@@ -41,7 +41,7 @@
 #' }
 #' @export
 simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
-                              first_col = "logFC", second_col = "limma_logfc", do_go = TRUE,
+                              first_col = "logFC", second_col = "deseq_logfc", do_go = TRUE,
                               do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
                               do_corum = TRUE, do_hp = TRUE, do_hpa = TRUE, do_wp = TRUE,
                               significant = FALSE, exclude_iea = FALSE, do_under = FALSE,
@@ -127,11 +127,6 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                                   domain_scope = domain_scope,
                                   custom_bg = bg,
                                   sources = type))
-
-    a_result <- try(gprofiler2::gost(
-                                  query = gene_ids,
-                                  organism = species,
-                                  sources = "CORUM"))
 
     if (class(a_result) == "try-error") {
       a_result <- data.frame(stringsAsFactors = FALSE)

@@ -59,7 +59,8 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
                                "prot_coords", "Pfam", "SignalP",
                                "tmhmm_expaa", "tmhmm_predicted_helices", "tmhmm_topology",
                                "eggnog_id", "eggnog_description", "Kegg",
-                               "gene_ontology_blast", "gene_ontology_pfam", "transcript",
+                               ##"gene_ontology_blast", "gene_ontology_pfam", "transcript",
+                               "transcript",
                                "peptide")]
 
   colnames(split_data) <- c("gene_id", "transcript_id",

@@ -286,32 +286,54 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   ## Finally, plot them.
   silly_colors <- grDevices::colorRampPalette(c("purple", "black", "yellow"))(100)
   cor_df <- cor_df[complete.cases(cor_df), ]
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   pc_factor_corheat <- heatmap.3(as.matrix(cor_df), scale = "none", trace = "none",
                                  linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                  col = silly_colors, dendrogram = "none", Rowv = FALSE,
                                  Colv = FALSE, main = "cor(factor, PC)")
   pc_factor_corheat <- grDevices::recordPlot()
+  dev.off()
+
   anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_f_heat <- heatmap.3(as.matrix(anova_f), scale = "none", trace = "none",
                             linewidth = 0.5, keysize = 2, margins = c(8, 8),
                             col = anova_f_colors, dendrogram = "none", Rowv = FALSE,
                             Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_f_heat <- grDevices::recordPlot()
+  dev.off()
+
   anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale = "none", trace = "none",
                                 linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                 col = anova_fstat_colors, dendrogram = "none", Rowv = FALSE,
                                 Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_fstat_heat <- grDevices::recordPlot()
+  dev.off()
+
   ## I had this as log(anova_p + 1) !! I am a doofus; too many times I have been log2-ing counts.
   ## The messed up part is that I did not notice this for multiple years.
   neglog_p <- -1 * log(as.matrix(anova_p) + 0.00001)
   anova_neglogp_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale = "none", trace = "none",
                                   linewidth = 0.5, keysize = 2, margins = c(8, 8),
                                   col = anova_f_colors, dendrogram = "none", Rowv = FALSE,
                                   Colv = FALSE, main = "-log(anova_p values)")
   anova_neglogp_heat <- grDevices::recordPlot()
+  dev.off()
+
   ## Another option: -log10 p-value of the ftest for this heatmap.
   ## covariate vs PC score
   ## Analagously: boxplot(PCn ~ batch)
@@ -375,11 +397,22 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
       data <- as.matrix(data) - rowMedians(as.matrix(data))
     }
   }
+
+  tmp_file <- tempfile(pattern = "princomp", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   another_pca <- try(princomp(x = data, cor = cor))
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
+  dev.off()
+
+  tmp_file <- tempfile(pattern = "biplot", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   biplot(another_pca)
   pca_biplot <- grDevices::recordPlot()
+  dev.off()
+
   highest <- NULL
   lowest <- NULL
   for (pc in 1:length(colnames(another_pca[["scores"]]))) {
@@ -417,7 +450,8 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
 #' @return List containing the plotly data and filename for the html widget.
 #' @seealso [plotly] [htmlwidgets]
 #' @export
-plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
+plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
+                        file = "3dpca.html") {
   image_dir <- dirname(as.character(file))
   if (!file.exists(image_dir)) {
     dir.create(image_dir, recursive = TRUE)
@@ -428,11 +462,15 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
   z_axis <- glue::glue("pc_{components[3]}")
   table <- pc_result[["table"]]
   color_levels <- levels(as.factor(table[["colors"]]))
-  silly_plot <- plotly::plot_ly(table, x = as.formula(glue::glue("~{x_axis}")),
-                                y = as.formula(glue::glue("~{y_axis}")), z = as.formula(glue::glue("~{z_axis}")),
+  silly_plot <- plotly::plot_ly(table,
+                                x = as.formula(glue::glue("~{x_axis}")),
+                                y = as.formula(glue::glue("~{y_axis}")),
+                                z = as.formula(glue::glue("~{z_axis}")),
                                 color = as.formula("~condition"), colors = color_levels,
-                                text=~paste0('condition: ', condition, ' batch: ', batch)) %>%
-    plotly::add_markers()
+                                stroke = I("black"),
+                                text=~paste0("sample: ", sampleid, "condition: ", condition, " batch: ", batch)) %>%
+    plotly::add_markers() %>%
+    plotly::layout(title = pc_result[["plot"]][["labels"]][["title"]])
   widget <- htmlwidgets::saveWidget(
                            plotly::as_widget(silly_plot), file = file, selfcontained = TRUE)
   retlist <- list(
@@ -454,6 +492,7 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #' @param pc_method how to extract the components? (svd
 #' @param x_pc Component to put on the x axis.
 #' @param y_pc Component to put on the y axis.
+#' @param max_overlaps Passed to ggrepel.
 #' @param num_pc How many components to calculate, default to the number of
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
@@ -474,9 +513,9 @@ plot_3d_pca <- function(pc_result, components = c(1,2,3), file = "3dpca.html") {
 #'  pca_plot
 #' }
 #' @export
-plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
+plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
                      plot_size = 5, plot_alpha = NULL, plot_labels = NULL, size_column = NULL,
-                     pc_method = "fast_svd", x_pc = 1, y_pc = 2,
+                     pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
                      ...) {
   arglist <- list(...)
@@ -742,6 +781,21 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
       included_batch <- as.factor(as.character(design[[batch_column]]))
       included_conditions <- as.factor(as.character(design[[cond_column]]))
     },
+    "ida" = {
+      svd_result <- iDA::iDA_core(data.use = mtrx, NormCounts = mtrx)
+      pc_table <- scale(svd_result[[2]])
+      x_name <- glue::glue("LD{x_pc}")
+      y_name <- glue::glue("LD{y_pc}")
+      x_label <- x_name
+      y_label <- y_name
+      included_batch <- as.factor(as.character(design[[batch_column]]))
+      included_conditions <- as.factor(as.character(design[[cond_column]]))
+      ## residual_df <- get_res(svd_result, design)
+      ## prop_lst <- residual_df[["prop_var"]]
+      ## get the percentage of variance accounted for in each PC
+      ## x_label <- sprintf("%s: %.2f%% variance", x_name, prop_lst[x_pc])
+      ## y_label <- sprintf("%s: %.2f%% variance", y_name, prop_lst[y_pc])
+    },
     "fast_ica" = {
       ## Fill in the defaults from the ica package.
       alg_type <- "parallel"  ## alg.typ is how they name this argument, which is just too
@@ -888,10 +942,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
     comp_data[["size"]] <- as.factor(as.integer(comp_data[[size_column]]) + 1)
   }
 
-  if (isTRUE(plot_title)) {
-    plot_title <- what_happened(expt = data)
-  }
-
   ## Perform a check of the PC table.
   if (sum(is.na(comp_data)) > 0) {
     message("Potentially check over the experimental design, there appear to be missing values.")
@@ -905,7 +955,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
 
   ## The plot_pcs() function gives a decent starting plot
   comp_plot <- plot_pcs(
-    comp_data, first = x_name, second = y_name, design = design,
+    comp_data, first = x_name, second = y_name, design = design, max_overlaps = max_overlaps,
     plot_labels = plot_labels, x_label = x_label, y_label = y_label,
     plot_title = plot_title, plot_size = plot_size, size_column = size_column,
     plot_alpha = plot_alpha,
@@ -920,7 +970,8 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = NULL,
     comp_plot <- comp_plot + ggplot2::ggtitle(data_title)
   } else if (!is.null(plot_title)) {
     data_title <- what_happened(expt = data)
-    plot_title <- glue::glue("{plot_title}; {data_title}")
+    plot_title <- glue::glue("{plot_title}
+{data_title}")
     comp_plot <- comp_plot + ggplot2::ggtitle(plot_title)
   } else {
     ## Leave the title blank.
@@ -1461,7 +1512,7 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
   comp_genes <- gsub(pattern = "^\\d+\\.\\d+:", replacement = "", x = comp_genes)
   comp_genes_subset <- sm(exclude_genes_expt(expt, ids = comp_genes, method = "keep"))
   samples <- plot_sample_heatmap(comp_genes_subset, row_label = NULL)
-  sample_plot <- grDevices::recordPlot()
+  sample_plot <- samples[["plot"]]
 
   retlist <- list(
     "comp_genes_expt" = comp_genes_subset,
@@ -1492,7 +1543,9 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' @param plot_alpha Add an alpha channel to the dots?
 #' @param size_column Experimental factor to use for sizing the glyphs
 #' @param rug Include the rugs on the sides of the plot?
+#' @param max_overlaps Increase overlapping label tolerance.
 #' @param cis What (if any) confidence intervals to include.
+#' @param label_size The text size of the labels.
 #' @param ... Extra arguments dropped into arglist
 #' @return gplot2 PCA plot
 #' @seealso [directlabels] [ggplot2] [plot_pca] [pca_information]
@@ -1504,8 +1557,8 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                      design = NULL, plot_title = TRUE, plot_labels = NULL,
                      x_label = NULL, y_label = NULL, plot_size = 5, outlines = TRUE,
-                     plot_alpha = NULL, size_column = NULL, rug = TRUE,
-                     cis = c(0.95, 0.9), ...) {
+                     plot_alpha = NULL, size_column = NULL, rug = TRUE, max_overlaps = 20,
+                     cis = c(0.95, 0.9), label_size = 4, ...) {
   arglist <- list(...)
   batches <- as.factor(pca_data[["batch"]])
   label_column <- "condition"
@@ -1522,10 +1575,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   num_batches <- length(unique(batches))
   if (!is.null(arglist[["base_size"]])) {
     base_size <<- arglist[["base_size"]]
-  }
-  label_size <- 4
-  if (!is.null(arglist[["label_size"]])) {
-    label_size <<- arglist[["label_size"]]
   }
   ci_group <- "condition"
   if (!is.null(arglist[["ci_group"]])) {
@@ -1657,9 +1706,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
         ggplot2::geom_point(alpha = plot_alpha, colour = "black", show.legend = FALSE,
                             aes_string(size = "size", shape = "batches", fill = "condition"))
 
-      ##size = plot_size, alpha = plot_alpha, colour = "black", show.legend = FALSE,
-      ##aes_string(shape = "batches",
-      ##fill = "condition"))
     }
     pca_plot <- pca_plot +
       ggplot2::geom_point(colour = "black", alpha = plot_alpha, show.legend = FALSE,
@@ -1684,7 +1730,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha = plot_alpha,
                           aes_string(shape = "batches",
-                                     colour = "pca_data[['condition']]",
+                                     colour = ".data[['condition']]",
                                      size = "size")) +
       ggplot2::scale_shape_manual(name = "Batch",
                                   labels = levels(as.factor(pca_data[["batch"]])),
@@ -1693,9 +1739,6 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_color_manual(name = "Condition",
                                   guide = "legend",
                                   values = color_list) +
-      ##ggplot2::scale_color_identity(name = "Condition",
-      ##                              guide = "legend",
-      ##                              values = color_list) +
       ggplot2::scale_size_manual(name = size_column,
                                  labels = levels(pca_data[[size_column]]),
                                  values = as.numeric(levels(pca_data[["size"]])))
@@ -1728,14 +1771,14 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     plot_labels <- "repel"
   }
   if (isFALSE(plot_labels)) {
-    message("Not putting labels on the PC plot.")
+    mesg("Not putting labels on the PC plot.")
   } else if (plot_labels == "normal") {
     pca_plot <- pca_plot +
       ggplot2::geom_text(aes_string(x = "PC1", y = "PC2", label = "labels",
                                     angle = 45, size = label_size, vjust = 2))
   } else if (plot_labels == "repel") {
     pca_plot <- pca_plot +
-      ggrepel::geom_text_repel(aes_string(label = "labels"),
+      ggrepel::geom_text_repel(aes_string(label = "labels"), max.overlaps = max_overlaps,
                                size = label_size, box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -1855,9 +1898,15 @@ u_plot <- function(plotted_us) {
   ## top_threePC = head(plotted_us, n = 20)
   plotted_us <- plotted_us[, c("PC1", "PC2", "PC3")]
   plotted_us[, "ID"] <- rownames(plotted_us)
-  message("More shallow curves in these plots suggest more genes in this principle component.")
+  mesg("More shallow curves in these plots suggest more genes in this principle component.")
+
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   plot(plotted_us)
   u_plot <- grDevices::recordPlot()
+  dev.off()
+
   return(u_plot)
 }
 

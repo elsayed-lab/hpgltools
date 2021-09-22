@@ -99,6 +99,7 @@ test_that("tnseq_multi_saturation returns some fun?", {
 })
 
 ## Perform my 'fitness' analysis; which is just a normal differential expression analysis
+a909_norm <- normalize_expt(a909_expt, convert = "cpm", transform = "log2")
 a909_de <- all_pairwise(a909_expt, model_batch = FALSE)
 ## 11
 test_that("all_pairwise returned?", {
@@ -120,7 +121,7 @@ test_that("all_pairwise returned?", {
 a909_sig <- extract_significant_genes(
     a909_tables, excel = "a909_sig.xlsx")
 expected <- 29
-actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_change_counts_up"]
+actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_up"]
 ## 13
 test_that("Did we get the expected number of up genes between low Ca+ and control according to EdgeR?", {
   expect_equal(expected, actual)
@@ -130,15 +131,18 @@ colors <- c("990000", "008800", "000000", "0000AA")
 names(colors) <- c("E", "NE", "S", "U")
 low_df <- a909_tables[["data"]][["low_vs_control"]]
 high_df <- a909_tables[["data"]][["high_vs_control"]]
+counts_df <- as.data.frame(exprs(a909_norm))
 
 circos_cfg <- circos_prefix(annotation = a909_annot, name = "a909")
 a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgltools")
 a909_kary <- circos_karyotype(circos_cfg, fasta = a909_fasta)
 a909_plus_minus <- circos_plus_minus(circos_cfg, width = 0.06, thickness = 40)
 a909_low <- circos_hist(circos_cfg, low_df, colname = "deseq_logfc", basename = "low",
-                        outer = a909_plus_minus, fill_color = "vvdpgreen", width = 0.06, thickness = 0.1)
+                        outer = a909_plus_minus, fill_color = "vvdpgreen", width = 0.12, thickness = 0.1)
+a909_heat <- circos_heatmap(circos_cfg, counts_df, colname = "LRB01", basename = "control_exprs",
+                            outer = a909_low)
 a909_suffix <- circos_suffix(circos_cfg)
-made <- sm(circos_make(circos_cfg, target = "a909"))
+made <- circos_make(circos_cfg, target = "a909")
 
 ## 14
 test_that("circos provided an imagemap output?", {

@@ -7,13 +7,10 @@ some supporting statistics.}
 \usage{
 plot_linear_scatter(
   df,
-  tooltip_data = NULL,
-  gvis_filename = NULL,
   cormethod = "pearson",
   size = 2,
   loess = FALSE,
   identity = FALSE,
-  gvis_trendline = NULL,
   z_lines = FALSE,
   first = NULL,
   second = NULL,
@@ -30,10 +27,6 @@ plot_linear_scatter(
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
 
-\item{tooltip_data}{Df of tooltip information for gvis graphs.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
-
 \item{cormethod}{What type of correlation to check?}
 
 \item{size}{Size of the dots on the plot.}
@@ -41,9 +34,6 @@ plot_linear_scatter(
 \item{loess}{Add a loess estimation?}
 
 \item{identity}{Add the identity line?}
-
-\item{gvis_trendline}{Add a trendline to the gvis plot?  There are a couple
-possible types, I think linear is the most common.}
 
 \item{z_lines}{Include lines defining the z-score boundaries.}
 
@@ -86,8 +76,7 @@ some supporting statistics.
 }
 \examples{
 \dontrun{
- plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-                     gvis_filename = "html/fun_scatterplot.html")
+ plot_linear_scatter(lotsofnumbers_intwo_columns)
 }
 }
 \seealso{

@@ -7,13 +7,13 @@
 batch_counts(
   count_table,
   method = TRUE,
-  design = NULL,
+  expt_design = NULL,
   batch1 = "batch",
   current_state = NULL,
   current_design = NULL,
   expt_state = NULL,
   surrogate_method = NULL,
-  num_surrogates = NULL,
+  surrogates = NULL,
   low_to_zero = FALSE,
   cpus = 4,
   batch2 = NULL,
@@ -24,13 +24,28 @@ batch_counts(
 \arguments{
 \item{count_table}{Matrix of (pseudo)counts.}
 
-\item{design}{Model matrix defining the experimental conditions/batches/etc.}
+\item{method}{Choose the method for batch/surrogate estimation.}
 
-\item{batch1}{Column in the design table describing the presumed covariant
-to remove.}
+\item{expt_design}{Model matrix defining the experimental conditions/batches/etc.}
 
-\item{expt_state}{Current state of the expt in an attempt to avoid
+\item{batch1}{String describing the method to try to remove the batch effect
+(or FALSE to leave it alone, TRUE uses limma).}
+
+\item{current_state}{Current state of the expt in an attempt to avoid
 double-normalization.}
+
+\item{current_design}{Redundant with expt_design above, but
+provides another place for normalize_expt() to send data.}
+
+\item{expt_state}{Current state of the data}
+
+\item{surrogate_method}{Also redundant for normalize_expt()}
+
+\item{surrogates}{Number of surrogates or method to estimate them.}
+
+\item{low_to_zero}{Send <0 entries to 0 to avoid shenanigans.}
+
+\item{cpus}{Parallelize intensive operations.}
 
 \item{batch2}{Column in the design table describing the second covariant to
 remove (only used by limma at the moment).}
@@ -39,9 +54,6 @@ remove (only used by limma at the moment).}
 parameter from the invocation of the modified combat.}
 
 \item{...}{More options for you!}
-
-\item{batch}{String describing the method to try to remove the batch effect
-(or FALSE to leave it alone, TRUE uses limma).}
 }
 \value{
 The 'batch corrected' count table and new library size.  Please

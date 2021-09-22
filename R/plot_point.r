@@ -70,8 +70,6 @@ plot_bcv <- function(data) {
 #' then normalized against the maximum.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param tooltip_data Df of tooltip information for gvis graphs.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param size Size of the dots.
 #' @param xlab x-axis label.
 #' @param ylab y-axis label.
@@ -86,12 +84,10 @@ plot_bcv <- function(data) {
 #' @seealso [ggplot2::geom_point()] [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
-#'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'                    gvis_filename = "html/fun_scatterplot.html")
+#'  dist_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, size = 2,
-                              xlab = NULL, ylab = NULL) {
+plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -137,9 +133,6 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename)
-  }
   return(first_vs_second)
 }
 
@@ -147,14 +140,10 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' some supporting statistics.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param tooltip_data Df of tooltip information for gvis graphs.
-#' @param gvis_filename  Filename to write a fancy html graph.
 #' @param cormethod What type of correlation to check?
 #' @param size Size of the dots on the plot.
 #' @param identity Add the identity line?
 #' @param loess Add a loess estimation?
-#' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple
-#'  possible types, I think linear is the most common.
 #' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.
@@ -180,16 +169,12 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' @seealso [robust] [stats] [ggplot2] [robust::lmRob] [stats::weights] [plot_histogram()]
 #' @examples
 #' \dontrun{
-#'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'                      gvis_filename = "html/fun_scatterplot.html")
+#'  plot_linear_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
-                                cormethod = "pearson", size = 2, loess = FALSE,
-                                identity = FALSE, gvis_trendline = NULL,
-                                z_lines = FALSE, first = NULL, second = NULL,
-                                base_url = NULL, pretty_colors = TRUE,
-                                xlab = NULL, ylab = NULL,
+plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FALSE,
+                                identity = FALSE, z_lines = FALSE, first = NULL, second = NULL,
+                                base_url = NULL, pretty_colors = TRUE, xlab = NULL, ylab = NULL,
                                 color_high = NULL, color_low = NULL, alpha = 0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
@@ -346,10 +331,6 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
 
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename,
-                      trendline = gvis_trendline, base_url = base_url)
-  }
   if (!is.null(first) & !is.null(second)) {
     colnames(df) <- c(first, second)
   } else if (!is.null(first)) {
@@ -394,8 +375,6 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @param logfc Fold change cutoff.
 #' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
 #' @param size How big are the dots?
-#' @param tooltip_data Df of tooltip information for gvis.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
@@ -408,7 +387,7 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 #' @examples
 #'  \dontrun{
-#'   plot_ma(voomed_data, table, gvis_filename = "html/fun_ma_plot.html")
+#'   plot_ma(voomed_data, table)
 #'   ## Currently this assumes that a variant of toptable was used which
 #'   ## gives adjusted p-values.  This is not always the case and I should
 #'   ## check for that, but I have not yet.
@@ -416,17 +395,16 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @export
 plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
                        p = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
-                       size = 2, tooltip_data = NULL, gvis_filename = NULL,
-                       shapes = TRUE, invert = FALSE, label = NULL, ...) {
+                       size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
   ## Others may disagree and change that with sig_color, insig_color.
-  sig_color <- "darkblue"
+  sig_color <- "darkred"
   if (!is.null(arglist[["sig_color"]])) {
     sig_color <- arglist[["sig_color"]]
   }
-  insig_color <- "darkred"
+  insig_color <- "darkblue"
   if (!is.null(arglist[["insig_color"]])) {
     insig_color <- arglist[["insig_color"]]
   }
@@ -550,19 +528,14 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
     ## Set the colors of the significant/insignificant points.
     ggplot2::scale_fill_manual(name = "as.factor(pcut)",
                                values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = "as.factor(pcut)",
                                 values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
-
-  ## Make a gvis plot if requested.
-  if (!is.null(gvis_filename)) {
-    plot_gvis_ma(df, tooltip_data = tooltip_data, filename = gvis_filename, ...)
-  }
 
   ## Recolor a family of genes if requested.
   if (!is.null(family)) {
@@ -812,10 +785,16 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       }
       m <- first - second
       a <- (first + second) / 2
+
+      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      this_plot <- png(filename = tmp_file)
+      controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",
                     show.statistics = TRUE, add.loess = TRUE)
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
+      dev.off()
+      file.remove(tmp_file)
     }
   }
   return(plot_list)
@@ -827,8 +806,6 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
 #' describing the relationship between the columns of data plotted.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param gvis_filename Filename to write a fancy html graph.
-#' @param tooltip_data Df of tooltip information for gvis.
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
 #' @param xlab Alternate x-axis label.
@@ -838,13 +815,11 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
 #' @seealso [plot_linear_scatter()] [all_pairwise()]
 #' @examples
 #' \dontrun{
-#'  plot_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'               gvis_filename = "html/fun_scatterplot.html")
+#'  plot_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_scatter <- function(df, tooltip_data = NULL, color = "black",
-                         xlab = NULL, ylab = NULL, alpha = 0.6,
-                         gvis_filename = NULL, size = 2) {
+plot_scatter <- function(df, color = "black", xlab = NULL,
+                         ylab = NULL, alpha = 0.6, size = 2) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -865,9 +840,6 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
     ggplot2::geom_point(colour = color, alpha = alpha, size = size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = 10, colour = "black"))
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename)
-  }
   return(first_vs_second)
 }
 
@@ -889,7 +861,6 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' @param color_list List of colors for significance.
 #' @param fc_col Which column contains the fc data?
 #' @param fc_name Name of the fold-change to put on the plot.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param line_color What color for the significance lines?
 #' @param line_position Put the significance lines above or below the dots?
 #' @param logfc Cutoff defining the minimum/maximum fold change for
@@ -899,7 +870,6 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' @param p Cutoff defining significant from not.
 #' @param shapes_by_state Add fun shapes for the various significance states?
 #' @param size How big are the dots?
-#' @param tooltip_data Df of tooltip information for gvis.
 #' @param label Label the top/bottom n logFC values?
 #' @param ... I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
@@ -909,18 +879,18 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' @seealso [all_pairwise()]
 #' @examples
 #' \dontrun{
-#'  plot_volcano_de(table, gvis_filename = "html/fun_ma_plot.html")
+#'  plot_volcano_de(table)
 #'  ## Currently this assumes that a variant of toptable was used which
 #'  ## gives adjusted p-values.  This is not always the case and I should
 #'  ## check for that, but I have not yet.
 #' }
 #' @export
 plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE"="darkred", "TRUE"="darkblue"),
-                            fc_col = "logFC", fc_name = "log2 fold change", gvis_filename = NULL,
+                            color_list = c("FALSE"="darkblue", "TRUE"="darkred"),
+                            fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = TRUE, size = 2, tooltip_data = NULL,
+                            shapes_by_state = TRUE, size = 2,
                             label = NULL, ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
@@ -1011,9 +981,9 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   ## Now set the colors and axis labels
   plt <- plt +
     ggplot2::scale_fill_manual(name = color_column, values = color_list,
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = color_column, values = color_list,
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +
     ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
@@ -1037,15 +1007,8 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
   }
 
-  gvis_result <- NULL
-  if (!is.null(gvis_filename)) {
-    gvis_result <- plot_gvis_volcano(table, fc_col = fc_col, p_col = p_col,
-                                     logfc = logfc, p = p, tooltip_data = tooltip_data,
-                                     filename = gvis_filename)
-  }
   retlist <- list("plot" = plt,
-                  "df" = df,
-                  "gvis" = gvis_result)
+                  "df" = df)
   return(retlist)
 }
 

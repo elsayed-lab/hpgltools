@@ -7,6 +7,8 @@
 #'
 #' @param inputfile Fasta or bed file containing sequences to search.
 #' @param genome BSgenome to read.
+#' @param p pvalue cutoff
+#' @param e evalue cutoff
 #' @param ... Parameters for plotting the gadem result.
 #' @return A list containing slots for plots, the stdout output from gadem, the
 #'  gadem result, set of occurences of motif, and the returned set of motifs.
@@ -22,8 +24,14 @@ simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
     bed <- data.frame("chr" = as.factor(bed[, 1]),
                       "start" = as.numeric(bed[, 2]),
                       "end" = as.numeric(bed[, 3]))
-    rg_bed <- IRanges::IRanges(start = bed[, 2], end = bed[, 3])
-    sequences <- IRanges::RangedData(rg_bed, space = bed[, 1])
+    ## RangedData has been deprecated in favor of GRanges
+    ## The following is unlikely to work, but since I never use this
+    ## I am not certain how much I care at the moment.
+    rg_bed <- GenomicRanges::GRanges(start = bed[, 2], end = bed[, 3])
+    sequences <- GenomicRanges::GRangesList(rg_bed, space = bed[, 1])
+    ## Here are the previous invocations:
+    ## rg_bed <- IRanges::IRanges(start = bed[, 2], end = bed[, 3])
+    ## sequences <- IRanges::RangedData(rg_bed, space = bed[, 1])
   } else if (ext == "fasta") {
     sequences <- Biostrings::readDNAStringSet(inputfile, "fasta")
   } else {

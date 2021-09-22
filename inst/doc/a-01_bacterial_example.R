@@ -194,8 +194,6 @@ circos_test <- circos_prefix(annotation = mgas_df)
 ## Fill it in with the data for s.pyogenes
 lengths <- 1838600
 names(lengths) <- "NC_007297"
-## I need to manually set the ID now, as my SQL-based selections are failing...
-## I need to manually set the ID now, as my SQL-based selections are failing...
 
 circos_kary <- circos_karyotype(cfg = circos_test, lengths = lengths)
 ## Fill in the gene category annotations by gene-strand

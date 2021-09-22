@@ -30,6 +30,7 @@
 #' @param padjust_method passed to simple_goseq()
 #' @param bioc_length_db passed to simple_goseq()
 #' @param excel passed to simple_goseq()
+#' @param orgdb Ideally used to help goseq collect lengths.
 #' @return Some goseq data!
 #' @seealso [gsva] [goseq]
 #' @export
@@ -38,10 +39,10 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                          length_db = NULL, doplot = TRUE, adjust = 0.1, pvalue = 0.1,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
-                         bioc_length_db = "ensGene", excel = NULL) {
+                         bioc_length_db = "ensGene", excel = NULL, orgdb = "org.Hs.eg.db") {
   sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
                                   signature_category = signature_category)
-  message("Starting to coerce the msig data to the ontology format.")
+  mesg("Starting to coerce the msig data to the ontology format.")
   go_db <- data.table::data.table()
   for (i in 1:length(sig_data)) {
     gsc <- sig_data[[i]]
@@ -50,11 +51,13 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
     tmp_db <- data.table::data.table("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
     go_db <- rbind(go_db, tmp_db)
   }
-  message("Finished coercing the msig data.")
+  mesg("Finished coercing the msig data.")
 
   new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
   new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
-  rownames(new_sig) <- new_sig[[required_id]]
+  ## We cannot guarantee that the IDs acquired in this fashion are unique.
+  ## rownames(new_sig) <- new_sig[[required_id]]
+  new_sig[["ID"]] <- new_sig[[required_id]]
 
   new_lids <- convert_ids(rownames(length_db), from = current_id, to = required_id, orgdb = orgdb)
   new_length <- merge(new_lids, length_db, by.x = current_id, by.y = "row.names")
@@ -71,6 +74,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                             doplot = TRUE, adjust = 0.1, pvalue = 0.1,
                             length_keytype = "transcripts", go_keytype = "entrezid",
                             goseq_method = "Wallenius", padjust_method = "BH",
+                            plot_title = "Enriched MSIG categories",
                             bioc_length_db = "ensGene", expand_categories = FALSE,
                             excel = excel, add_trees = FALSE, gather_genes = FALSE, width = 20)
   return(go_result)
@@ -144,6 +148,7 @@ goseq_table <- function(df, file = NULL) {
 #' @param doplot Include pwf plots?
 #' @param adjust Minimum adjusted pvalue for 'significant.'
 #' @param pvalue Minimum pvalue for 'significant.'
+#' @param plot_title Set a title for the pvalue plots.
 #' @param length_keytype Keytype to provide to extract lengths
 #' @param go_keytype Keytype to provide to extract go IDs
 #' @param goseq_method Statistical test for goseq to use.
@@ -171,7 +176,7 @@ goseq_table <- function(df, file = NULL) {
 #' }
 #' @export
 simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
-                         adjust = 0.1, pvalue = 0.1,
+                         adjust = 0.1, pvalue = 0.1, plot_title = NULL,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
                          bioc_length_db = "ensGene", expand_categories = TRUE, excel = NULL,
@@ -205,10 +210,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       ## Use a column named 'ID' first because a bunch of annotation databases
       ## use ENTREZ IDs which are just integers, which of course is not allowed
       ## by data frame row names.
-      message("Using the ID column from your table rather than the row names.")
+      mesg("Using the ID column from your table rather than the row names.")
       gene_list <- sig_genes[["ID"]]
     } else if (!is.null(rownames(sig_genes))) {
-      message("Using the row names of your table.")
+      mesg("Using the row names of your table.")
       gene_list <- rownames(sig_genes)
     } else {
       gene_list <- sig_genes[["ID"]]
@@ -290,10 +295,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       godf <- godf[, c("GID", "GO")]
       colnames(godf) <- c("ID", "GO")
     } else {
-      stop("Unable to read the gene ID/ GO columns from the go data frame.")
+      stop("Unable to read the gene ID/ GO columns from the go dataframe.")
     }
   } else {
-    message("Not sure what to do here.")
+    stop("Unable to determine the input for creating a go dataframe.")
   }
 
   ## entrez IDs are numeric.  This is a problem when doing the pwf function
@@ -308,12 +313,9 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   ## See how many entries from the godb are in the list of genes.
   id_xref <- de_genelist[["ID"]] %in% godf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
-          " from the sig_genes in the go_db.")
-  id_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
-  message("Found ", sum(id_xref), " genes out of ", nrow(de_genelist),
-          " from the sig_genes in the length_db.")
-
+  meta_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
+  message("Found ", sum(id_xref), " go_db genes and ", sum(meta_xref),
+          " length_db genes out of ", nrow(de_genelist), ".")
   ## So lets merge the de genes and gene lengths to ensure that they are
   ## consistent. Then make the vectors expected by goseq.
   merged_ids_lengths <- metadf
@@ -335,19 +337,25 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
-  pwf <- suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
-                                       plot.fit = doplot))
+  tmp_file <- tempfile(pattern = "goseq", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
+  pwf <- sm(suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
+                                          plot.fit = doplot)))
   if (isTRUE(doplot)) {
     pwf_plot <- recordPlot()
   }
-  godata <- goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
-                         method = goseq_method)
+  dev.off()
+  file.remove(tmp_file)
+
+  godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
+                            method = goseq_method))
+  ## I want to limit the y-axis, but I think this is not the best way.
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
   goseq_y_limit <- goseq_p_nearzero * 2
   goseq_p <- goseq_p +
     ggplot2::scale_y_continuous(limits = c(0, goseq_y_limit))
-  message("simple_goseq(): Calculating q-values")
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
                                         method = padjust_method)
 
@@ -360,7 +368,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   godata_interesting <- godata
   if (isTRUE(expand_categories)) {
-    message("simple_goseq(): Filling godata with terms, this is slow.")
+    mesg("simple_goseq(): Filling godata with terms, this is slow.")
     godata_interesting <- goseq_table(godata)
   } else {
     ## Set the 'term' category for plotting.
@@ -386,8 +394,8 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     }
   }
 
-  message("simple_goseq(): Making pvalue plots for the ontologies.")
-  pvalue_plots <- plot_goseq_pval(godata,
+  mesg("simple_goseq(): Making pvalue plots for the ontologies.")
+  pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
                                   ...)
   na_idx <- is.na(godata[["ontology"]])
   godata <- godata[!na_idx, ]
@@ -443,7 +451,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     "cc_subset" = cc_subset)
   class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
-    message("Writing data to: ", excel, ".")
+    mesg("Writing data to: ", excel, ".")
     excel_ret <- try(write_goseq_data(retlist, excel = excel,
                                       ...))
   }

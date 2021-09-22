@@ -57,7 +57,8 @@ test_that("Was the annotation information imported into the expressionset? (stat
 
 ## Then lengths of features should therefore remain consistent.
 ##expected <- c(1521, 192, 1344, 1428, 1428, 1428)
-##expected <- c(3987, 990, 4860, 1617, 1947, 1314)
+## 202107: It switched again!
+## expected <- c(3987, 990, 4860, 1617, 1947, 1314)
 ## This is a weird thing to change!
 expected <- c(3990, 993, 4863, 1620, 1950, 1317)
 actual <- as.numeric(hpgl_annotations[chosen_genes, "cds_length"])

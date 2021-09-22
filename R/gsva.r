@@ -22,12 +22,11 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
   orgdb <- get0(orgdb)
   gsc_lst <- as.list(gsc)
   new_gsc <- list()
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (g in 1:length(gsc)) {
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- g / length(gsc_lst)
       setTxtProgressBar(bar, pct_done)
     }
@@ -41,7 +40,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
     ## gsc_lst[[g]] <- gs
     new_gsc[[g]] <- gs
   }
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
   gsc <- GSEABase::GeneSetCollection(new_gsc)
@@ -66,15 +65,12 @@ convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.
   att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
   new_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
                                       keys = ids,
-                                      keytype = current_id,
-                                      columns = c(required_id)))
+                                      keytype = from,
+                                      columns = to))
   new_idx <- complete.cases(new_ids)
   new_ids <- new_ids[new_idx, ]
-  message("Before conversion, the expressionset has ", length(ids),
-          " entries.")
-  message("After conversion, the expressionset has ",
-          length(rownames(new_ids)),
-          " entries.")
+  message("Before conversion: ", length(ids),
+          ", after conversion: ", length(rownames(new_ids)), ".")
   return(new_ids)
 }
 
@@ -116,7 +112,7 @@ get_gsvadb_names <- function(sig_data, requests = NULL) {
 
 #' Create dataframe which gets the maximum within group mean gsva score for each gene set
 #'
-#' @param gsva_result Result from simple_gsva()
+#' @param gsva_scores Result from simple_gsva()
 #' @param groups list of groups for which to calculate the means
 #' @param keep_single Keep categories with only 1 element.
 #' @param method mean or median?
@@ -161,6 +157,7 @@ get_group_gsva_means <- function(gsva_scores, groups, keep_single = TRUE, method
 #'
 #' @param gsva_result Some data from GSVA to modify.
 #' @param msig_xml msig XML file downloaded from broad.
+#' @param wanted_meta Choose metadata columns of interest.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
 #' @seealso [xml2] [rvest]
@@ -230,13 +227,15 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 #'  of dropping some.
 #' @param col_margin Attempt to make heatmaps fit better on the screen with this and...
 #' @param row_margin this parameter
+#' @param type Either mean or median of the scores to return.
 #' @return List containing the gsva results, limma results, scores, some plots, etc.
 #' @seealso [score_gsva_likelihoods()] [get_group_gsva_means()] [limma_pairwise()]
 #'  [simple_gsva()]
 #' @export
 get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/gsva_subset.xlsx",
                                     model_batch = FALSE, factor_column = "condition", factor = NULL,
-                                    label_size = NULL, col_margin = 6, row_margin = 12) {
+                                    label_size = NULL, col_margin = 6, row_margin = 12,
+                                    type = "mean") {
   gsva_scores <- gsva_result[["expt"]]
 
   ## Use limma on the gsva result
@@ -246,22 +245,31 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## Combine gsva max(scores) with limma results
   ### get gsva within group means
   groups <- levels(gsva_scores[["conditions"]])
-  gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
+  gsva_score_means <- median_by_factor(data = gsva_scores, fact = factor_column, fun = type)
+  ## gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
   for (t in 1:length(gsva_limma[["all_tables"]])) {
+    table_name <- names(gsva_limma[["all_table"]])[t]
     table <- gsva_limma[["all_tables"]][[t]]
-    contrasts <- num_den_string[[t]]
+    contrast <- num_den_string[[t]]
     ## get means from gsva_score_means for each contrast
-    first <- gsva_score_means[["Index"]][contrasts[1]][[1]]
-    second <- gsva_score_means[["Index"]][contrasts[2]][[1]]
-    ##get maximum value of group means in each contrast
-    maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
-    table[["gsva_score_max"]] <- maxs
-    varname1 <- paste0("Mean_", contrasts[1])
-    varname2 <- paste0("Mean_", contrasts[2])
-    table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
-    table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    numerator <- contrast[1]
+    denominator <- contrast[2]
+    ## first <- gsva_score_means[["Index"]][numerator][[1]]
+    ## second <- gsva_score_means[["Index"]][denominator][[1]]
+    numerator_samples <- gsva_score_means[["indexes"]][[numerator]]
+    denominator_samples <- gsva_score_means[["indexes"]][[denominator]]
+    ## get maximum value of group means in each contrast
+    ## maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
+    max_values <- apply(exprs(gsva_scores)[, numerator_samples | denominator_samples], 1, max)
+    table[["gsva_score_max"]] <- max_values
+    varname1 <- paste0("Mean_", numerator)
+    varname2 <- paste0("Mean_", denominator)
+    ## table[[varname1]] <- gsva_score_means[["Means"]][[contrasts[1]]]
+    table[[varname1]] <- gsva_score_means[["medians"]][[numerator]]
+    ## table[[varname2]] <- gsva_score_means[["Means"]][[contrasts[2]]]
+    table[[varname2]] <- gsva_score_means[["medians"]][[denominator]]
     gsva_limma[["all_tables"]][[t]] <- table
   }
 
@@ -280,7 +288,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
 
   ## Copy the gsva expressionset and use that to pull the 'significant' entries.
   subset_eset <- gsva_eset
-  gl <- score_gsva_likelihoods(gsva_result, factor = fact)
+  gl <- score_gsva_likelihoods(gsva_result, factor = fact, label_size = label_size)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
   subset_eset <- subset_eset[keep_idx, ]
@@ -288,15 +296,22 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
 
   scored_ht <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin))
   } else {
     scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
                            margins = c(col_margin, row_margin),
-                           cexCol = label_size, cexRow = label_size)
+                           cexRow = label_size)
   }
   scored_ht_plot <- grDevices::recordPlot()
+  dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
+  subset_order <- rev(scored_ht[["rowInd"]])
+  subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
   order_column <- colnames(values)[1]
   gsva_table <- merge(annot, values, by = "row.names")
@@ -316,8 +331,8 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   subset_table <- merge(annot, subset_tbl, by = "row.names")
   rownames(subset_table) <- subset_table[["Row.names"]]
   subset_table[["Row.names"]] <- NULL
-  reordered_subset_idx <- order(subset_table[[order_column]], decreasing = TRUE)
-  subset_table <- subset_table[reordered_subset_idx, ]
+  ## Set the table row order to the same as the hclust from the heatmap.
+  subset_table <- subset_table[subset_rownames, ]
 
   gl_tbl <- as.data.frame(gl[["likelihoods"]])
   order_column <- colnames(gl_tbl)[1]
@@ -982,6 +997,9 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                    "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000")
   jet_colors <- grDevices::colorRampPalette(color_range)
   starting_ht <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     starting_ht <- heatmap.3(values, trace = "none", col = jet_colors,
                              margins = c(col_margin, row_margin))
@@ -991,7 +1009,8 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                              cexCol = label_size, cexRow = label_size)
   }
   starting_ht_plot <- grDevices::recordPlot()
-
+  dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
   tests <- test_values <- against_values <- NULL
   choice <- NULL
   if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
@@ -1069,10 +1088,15 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     } ## End iterating over every level in the chosen factor.
     colnames(result_df) <- fact_lvls
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
+    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
                            margins = c(col_margin, row_margin), Colv = FALSE,
                            dendrogram = "row", cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
+    dev.off()
+    removed <- suppressWarnings(file.remove(tmp_file))
     test_results <- result_df
   } else if (choice == "column") {
     test_results <- sapply(X = tests, FUN = cheesy_likelihood)
@@ -1118,6 +1142,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #' @param ranking another gsva option.
 #' @param msig_xml XML file contining msigdb annotations.
 #' @param wanted_meta Desired metadata elements from the mxig_xml file.
+#' @param mx_diff Passed to gsva(), I do not remember what it does.
 #' @return List containing three elements: first a modified expressionset using
 #'  the result of gsva in place of the original expression data; second the
 #'  result from gsva, and third a data frame of the annotation data for the
@@ -1129,7 +1154,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
                         method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
-                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
+                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+                        mx_diff = TRUE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -1139,7 +1165,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)) {
-    cores <- min(detectCores(), 8)
+    cores <- min(parallel::detectCores() - 1, 8)
   }
 
   if (!is.null(msig_xml)) {
@@ -1208,9 +1234,9 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   ## Sadly, some versions of gsva crash if one sets it to > 1, so for the moment
   ## it is set to 1 and gsva is not running in parallel, but I wanted to keep the
   ## possibility of speeding it up, ergo the cores option.
-  gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                            min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                            parallel.sz = cores, mx.diff = mx.diff)
+  gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                               min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                               parallel.sz = cores, mx.diff = mx_diff))
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
@@ -1257,6 +1283,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 #' @param label_size How large to make labels when printing the final heatmap.
 #' @param col_margin Used by par() when printing the final heatmap.
 #' @param row_margin Ibid.
+#' @param sig_cutoff Only keep celltypes with a significance better than this.
+#' @param verbose Print some extra information during runtime.
 #' @param cores How many CPUs to use?
 #' @param ... Extra arguments when normalizing the data for use with xCell.
 #' @return Small list providing the output from xCell, the set of signatures,
@@ -1273,7 +1301,8 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   xcell_eset <- NULL
   if (expt_state != "rpkm") {
     message("xCell strongly perfers rpkm values, re-normalizing now.")
-    xcell_eset <- normalize_expt(expt, convert = "rpkm", ...)
+    xcell_eset <- normalize_expt(expt, convert = "rpkm",
+                                 ...)
   } else {
     xcell_eset <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
                                   filter = arglist[["filter"]], batch = arglist[["batch"]])
@@ -1312,6 +1341,9 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (is.null(label_size)) {
     ht <- heatmap.3(xcell_result, trace = "none", col = jet_colors,
                     margins = c(col_margin, row_margin))
@@ -1321,18 +1353,30 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
                     cexCol = label_size, cexRow = label_size)
   }
   ht_plot <- grDevices::recordPlot()
+  dev.off()
+  ## sometimes the file does not get created.
+  removed <- suppressWarnings(file.remove(tmp_file))
 
   sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
-  sig_result <- xcell_result[sig_idx, ]
-  if (is.null(label_size)) {
-    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
-                    margins = c(col_margin, row_margin))
-  } else {
-    ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
-                    margins = c(col_margin, row_margin),
-                    cexCol = label_size, cexRow = label_size)
+  sig_plot <- NULL
+  sig_result <- NULL
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
+  if (sum(sig_idx) > 1) {
+    sig_result <- as.matrix(xcell_result[sig_idx, ])
+    if (is.null(label_size)) {
+      ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                      margins = c(col_margin, row_margin))
+    } else {
+      ht <- heatmap.3(sig_result, trace = "none", col = jet_colors,
+                      margins = c(col_margin, row_margin),
+                      cexCol = label_size, cexRow = label_size)
+    }
+    sig_plot <- grDevices::recordPlot()
   }
-  sig_plot <- grDevices::recordPlot()
+  dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
 
   retlist <- list(
       "xcell_input" = xcell_input,
@@ -1361,7 +1405,9 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   excel_basename <- xlsx[["basename"]]
 
   methods <- list(
-      "gsva" = "Hänzelmann et al, 2013",
+      ## Using the correct character results in a warning from R CMD check... what to do?
+      ## "gsva" = "Hänzelmann et al, 2013",
+      "gsva" = "Hanzelmann et al, 2013",
       "ssgsea" = "Barbie et al, 2009",
       "zscore" = "Lee et al, 2008",
       "plage" = "Tomfohr et al, 2005")

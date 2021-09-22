@@ -45,6 +45,10 @@ combine_extracted_plots(
 
 \item{loess}{Add a loess estimation?}
 
+\item{logfc}{For Volcano/MA plot lines.}
+
+\item{p}{For Volcano/MA plot lines.}
+
 \item{do_inverse}{Flip the numerator/denominator?}
 
 \item{found_table}{The table name actually used.}

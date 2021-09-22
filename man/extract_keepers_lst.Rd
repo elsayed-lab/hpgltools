@@ -68,7 +68,9 @@ experimental metadata.}
 
 \item{loess}{Add a loess to plots?}
 
-\item{apr}{Result from all_pairwise()}
+\item{lfc_cutoff}{Passed for volcano/MA plots.}
+
+\item{p_cutoff}{Passed for volcano/MA plots.}
 }
 \description{
 This is the most interesting of the extract_keeper functions.  It must check

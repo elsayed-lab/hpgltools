@@ -6,8 +6,8 @@
 \usage{
 print_ups_downs(
   upsdowns,
-  wb = NULL,
-  excel = "excel/significant_genes.xlsx",
+  wb,
+  excel_basename,
   according = "limma",
   summary_count = 1,
   ma = FALSE
@@ -18,7 +18,7 @@ print_ups_downs(
 
 \item{wb}{Workbook object to use for writing, or start a new one.}
 
-\item{excel}{Filename for writing the data.}
+\item{excel_basename}{Used when including plots in the xlsx sheet.}
 
 \item{according}{Use limma, deseq, or edger for defining 'significant'.}
 

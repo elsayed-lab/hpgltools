@@ -17,7 +17,11 @@ all_adjusters(
   expt_state = NULL,
   confounders = NULL,
   chosen_surrogates = NULL,
-  ...
+  adjust_method = "ruv",
+  filter = "raw",
+  thresh = 1,
+  noscale = FALSE,
+  prior_plots = FALSE
 )
 }
 \arguments{
@@ -31,13 +35,33 @@ all_adjusters(
 
 \item{batch2}{Only used by the limma method, a second batch column.}
 
-\item{surrogates}{Either a number of surrogates or a method to search for them.}
+\item{surrogates}{Either a number of surrogates or a method to
+search for them.}
+
+\item{low_to_zero}{Move elements which are <0 to 0?}
+
+\item{cpus}{Use parallel and split intensive operations?}
+
+\item{na_to_zero}{Set any NA entries to 0?}
 
 \item{expt_state}{If this is not an expt, provide the state of the data here.}
 
 \item{confounders}{List of confounded factors for smartSVA/iSVA.}
 
-\item{...}{Extra arguments passed along to other methods.}
+\item{chosen_surrogates}{Somewhat redundant with surrogates above,
+but provides a second place to enter because of the way I use
+... in normalize_expt().}
+
+\item{adjust_method}{Choose the method for applying the estimates
+to the data.}
+
+\item{filter}{Filter the data?}
+
+\item{thresh}{If filtering, use this threshold.}
+
+\item{noscale}{If using combat, scale the data?}
+
+\item{prior_plots}{Plot the priors?}
 }
 \value{
 List containing surrogate estimates, new counts, the models, and

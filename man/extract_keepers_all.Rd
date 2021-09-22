@@ -70,6 +70,10 @@ experimental metadata.}
 \item{padj_type}{Choose a specific p adjustment.}
 
 \item{loess}{Include a loess estimator in the plots?}
+
+\item{lfc_cutoff}{Passed for plotting volcano/MA plots.}
+
+\item{p_cutoff}{Passed for volcano/MA plots.}
 }
 \description{
 This has a couple of cousin functions, extract_keepers_list and _single.

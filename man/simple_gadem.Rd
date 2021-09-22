@@ -17,6 +17,10 @@ simple_gadem(
 
 \item{genome}{BSgenome to read.}
 
+\item{p}{pvalue cutoff}
+
+\item{e}{evalue cutoff}
+
 \item{...}{Parameters for plotting the gadem result.}
 }
 \value{

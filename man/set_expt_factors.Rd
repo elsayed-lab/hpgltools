@@ -4,7 +4,16 @@
 \alias{set_expt_factors}
 \title{Change the factors (condition and batch) of an expt}
 \usage{
-set_expt_factors(expt, condition = NULL, batch = NULL, ids = NULL, ...)
+set_expt_factors(
+  expt,
+  condition = NULL,
+  batch = NULL,
+  ids = NULL,
+  table = "metadata",
+  class = "factor",
+  columns = NULL,
+  ...
+)
 }
 \arguments{
 \item{expt}{Expt to modify}
@@ -14,6 +23,12 @@ set_expt_factors(expt, condition = NULL, batch = NULL, ids = NULL, ...)
 \item{batch}{New batch factor}
 
 \item{ids}{Specific sample IDs to change.}
+
+\item{table}{When set to 'metadata', use pData, otherwise fData.}
+
+\item{class}{Set the data to this class by default.}
+
+\item{columns}{Change these columns.}
 
 \item{...}{Arguments passed along (likely colors)}
 }

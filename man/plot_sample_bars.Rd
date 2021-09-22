@@ -32,6 +32,8 @@ plot_sample_bars(
 \item{title}{Title for the plot.}
 
 \item{yscale}{Whether or not to log10 the y-axis.}
+
+\item{...}{Used to catch random arguments which are unused here.}
 }
 \description{
 This makes a ggplot2 plot of library sizes.

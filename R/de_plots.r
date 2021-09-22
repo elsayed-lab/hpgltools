@@ -275,23 +275,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     output <- output[[type]]
   }
 
-  gvis_filename <- NULL
-  gvis_trendline <- TRUE
-  tooltip_data <- NULL
-  base_url <- NULL
-  if (!is.null(arglist[["gvis_filename"]])) {
-    gvis_filename <- arglist[["gvis_filename"]]
-  }
-  if (!is.null(arglist[["gvis_trendline"]])) {
-    gvis_trendline <- arglist[["gvis_trendline"]]
-  }
-  if (!is.null(arglist[["tooltip_data"]])) {
-    tooltip_data <- arglist[["tooltip_data"]]
-  }
-  if (!is.null(arglist[["base_url"]])) {
-    base_url <- arglist[["base_url"]]
-  }
-
   ## Extract the set of available names -- FIXME this should be standardized!!
   coefficients <- data.frame()
   thenames <- NULL
@@ -381,10 +364,9 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
 
   maxvalue <- max(coefficient_df) + 1.0
   minvalue <- min(coefficient_df) - 1.0
-  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, gvis_filename = gvis_filename,
-                                 gvis_trendline = gvis_trendline, first = xname, second = yname,
-                                 tooltip_data = tooltip_data, base_url = base_url, alpha = alpha,
-                                 pretty_colors = FALSE, color_low = color_low, color_high = color_high,
+  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
+                                 alpha = alpha, pretty_colors = FALSE,
+                                 color_low = color_low, color_high = color_high,
                                  p = p, lfc = lfc, n = n, z = z, z_lines = z_lines))
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits = c(minvalue, maxvalue)) +
@@ -447,10 +429,18 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
+  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
   up_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   down_res <- Vennerable::plot(down_venn, doWeights = FALSE)
   down_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
 
   retlist <- list(
     "up_venn" = up_venn,

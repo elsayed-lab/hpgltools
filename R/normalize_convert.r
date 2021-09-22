@@ -10,7 +10,7 @@
 #' could, however, be used to normalize by the number of methionines, for
 #' example -- if one wanted to do such a thing.
 #'
-#' @param data Matrix of count data.
+#' @param count_table Matrix of count data.
 #' @param method Type of conversion to perform: edgecpm/cpm/rpkm/cp_seq_m.
 #' @param ... Options I might pass from other functions are dropped into
 #'  arglist, used by rpkm (gene lengths) and divide_seq (genome, pattern to
