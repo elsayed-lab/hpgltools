@@ -309,7 +309,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   }
   scored_ht_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
   subset_order <- rev(scored_ht[["rowInd"]])
   subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
@@ -1010,7 +1010,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
   }
   starting_ht_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
   tests <- test_values <- against_values <- NULL
   choice <- NULL
   if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
@@ -1096,7 +1096,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                            dendrogram = "row", cexCol = label_size, cexRow = label_size)
     score_plot <- grDevices::recordPlot()
     dev.off()
-    file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
     test_results <- result_df
   } else if (choice == "column") {
     test_results <- sapply(X = tests, FUN = cheesy_likelihood)
@@ -1354,7 +1354,8 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   }
   ht_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  ## sometimes the file does not get created.
+  removed <- suppressWarnings(file.remove(tmp_file))
 
   sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
   sig_plot <- NULL
@@ -1375,7 +1376,7 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
     sig_plot <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
 
   retlist <- list(
       "xcell_input" = xcell_input,
