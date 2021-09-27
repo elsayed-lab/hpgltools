@@ -308,6 +308,26 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "prodigal_negative_strand" = list(
             file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "interpro_signalp_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_phobius_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_pfam_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_tmhmm_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_cdd_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_smart_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_gene3d_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_superfamily_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "tRNA_hits" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+        "notes" = list(
+            file = "preprocessing/{meta[['sampleid']]}/notes.txt")        
         )
   }
   if (is.null(new_metadata)) {
@@ -490,6 +510,13 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          input_file_spec, verbose = verbose,
                                          ...)
       },
+      "notes" = {
+        search <- "^.*$"
+        replace <- "^(.*)$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all")
+      },
       "racer_changed" = {
         search <- "^Number of changed positions"
         replace <- "^Number of changed positions\\s+(\\d+)$"
@@ -586,6 +613,13 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          which = "all",
                                          ...)
       },
+      "tRNA_hits" = {
+        ## >1 length=40747 depth=1.00x circular=true
+        search <- "^.*Found \\d+ tRNAs"
+        replace <- "^.*Found (\\d+) tRNAs"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose)
+      },
       "phageterm_dtr_length" = {
         entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
       },
@@ -595,6 +629,38 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       },
       "prodigal_negative_strand" = {
         search <- "\\t-\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_signalp_hits" = {
+        search <- "\\tSiglapP.*\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_phobius_hits" = {
+        search <- "\\tPhobius\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_pfam_hits" = {
+        search <- "\\tPfam\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_tmhmm_hits" = {
+        search <- "\\tTMHMM\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_cdd_hits" = {
+        search <- "\\tCDD\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_smart_hits" = {
+        search <- "\\tSMART\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_gene3d_hits" = {
+        search <- "\\tGene3D\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_superfamily_hits" = {
+        search <- "\\tSUPERFAMILY\\t"
         entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
       },
       {
