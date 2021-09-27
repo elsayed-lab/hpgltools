@@ -326,6 +326,10 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "tRNA_hits" = list(
             file = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+        "ictv_taxonomy" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_accession" = list(
+            file = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
             file = "preprocessing/{meta[['sampleid']]}/notes.txt")        
         )
@@ -437,8 +441,20 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       "host_filter_species" = {
         search <- "^.*$"
         replace <- "(.*)"
-        entries <- dispatch_regex_search(meta, search, replace, which = "all",
-                                         input_file_spec, verbose = verbose)
+        entries <- dispatch_regex_search(meta, search, replace, input_file_spec, 
+                                         which = "all", verbose = verbose)
+      },
+      "ictv_taxonomy" = {
+        column <- "taxon"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "all", verbose = verbose,
+                                       ...)
+      },
+      "ictv_accession" = {
+        column <- "hit_acc"
+        entries <- dispatch_tsv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "all", verbose = verbose,
+                                       ...)
       },
       "input_r1" = {
         search <- "^\\s+<\\(less .+\\).*$"
@@ -759,7 +775,6 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
   return(entries)
 }
 
-
 #' Generic dispatcher to hunt down useful information from logs.
 #'
 #' Given the metadata, a couple of regular expressions, and a filename
@@ -846,6 +861,57 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
   return(output_entries)
 }
 
+dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
+                                which = "first", verbose = FALSE,
+                                ...) {
+  arglist <- list(...)
+  ##if (length(arglist) > 0) {
+  ##  
+  ##}
+  filenames_with_wildcards <- glue::glue(input_file_spec,
+                                         ...)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  test_file <- Sys.glob(filenames_with_wildcards[1])
+  if (length(test_file) == 0) {
+    message("The first filename does not exist, assuming this method was not performed.")
+    return(NULL)
+  }
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (is.na(input_file)) {
+      ## The file did not exist.
+      next
+    }
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      next
+    }
+
+    if (type == 'csv') {
+      input_df <- readr::read_csv(input_file)
+    } else if (type == 'tsv') {
+      input_df <- readr::read_tsv(input_file)
+    } else {
+      message("Assuming csv input.")
+      input_df <- readr::read_csv(input_file)
+    }
+
+    if (which == "first") {
+      output_entries[row] <- input_df[1, column]
+    } else if (which == "all") {
+      stringified <- toString(input_df[[column]])
+      output_entries[row] <- stringified
+    } else {
+      ## Assume a number was provided for the desired row
+      output_entries[row] <- input_df[which, column]
+    }
+
+  return(output_entries)
+}
 
 #' Given an expressionset, sanitize pData columns of interest.
 #'
