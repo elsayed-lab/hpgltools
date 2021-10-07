@@ -339,7 +339,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "ictv_genus" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/notes.txt"))       
+            "file" = "preprocessing/{meta[['sampleid']]}/notes.txt"))
+  }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
                          replacement = "_modified.xlsx")
@@ -367,7 +368,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     } else {
       meta[[new_column]] <- new_entries
     }
-  }
+  } ## End iterating over every metadatum
 
   ## Drop useless columns
   meta[["condition"]] <- NULL
@@ -925,7 +926,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       warning("There is no file matching: ", filenames_with_wildcards[row], ".")
       next
     }
-    
+
     if (type == 'csv') {
       input_df <- readr::read_csv(input_file)
     } else if (type == 'tsv') {
@@ -944,7 +945,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       ## Assume a number was provided for the desired row
       output_entries[row] <- input_df[which, column]
     }
-  }
+  } ## End for loop
   return(output_entries)
 }
 
