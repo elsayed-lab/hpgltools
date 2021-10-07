@@ -255,8 +255,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
-        "racer_changed" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
+        ##"racer_changed" = list(
+        ##    "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
         "host_filter_species" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
@@ -299,40 +299,48 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "shovill_minlength" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "unicycler_lengths" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
         "unicycler_relative_coverage" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "filtered_relative_coverage" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*filter_depth/final_assembly.fasta"),
+        "phastaf_num_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
         "phageterm_dtr_length" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
         "prodigal_positive_strand" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "prodigal_negative_strand" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "interpro_signalp_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_phobius_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_pfam_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_tmhmm_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_cdd_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_smart_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_gene3d_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_superfamily_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "tRNA_hits" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
         "ictv_taxonomy" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_accession" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_family" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_genus" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
-            file = "preprocessing/{meta[['sampleid']]}/notes.txt")        
-        )
+            "file" = "preprocessing/{meta[['sampleid']]}/notes.txt")        
+    )
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -362,11 +370,16 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       meta[[new_column]] <- new_entries
     }
   }
+
+  ## Drop useless columns
+  meta[["condition"]] <- NULL
+  meta[["batch"]] <- NULL
+  meta[["sampleid"]] <- NULL
+
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
   return(new_metadata)
 }
-
 
 #' This is basically just a switch and set of regexes for finding the
 #' numbers of interest in the various log files.
@@ -445,15 +458,30 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          which = "all", verbose = verbose)
       },
       "ictv_taxonomy" = {
-        column <- "taxon"
+        ## column <- "taxon"
+        column <- "name"
         entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
                                        which = "all", verbose = verbose,
                                        ...)
       },
       "ictv_accession" = {
-        column <- "hit_acc"
-        entries <- dispatch_tsv_search(meta, column, input_file_spec, type = 'tsv',
+        column <- "hit_accession"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
                                        which = "all", verbose = verbose,
+                                       ...)
+      },
+      "ictv_family" = {
+        ## column <- "taxon"
+        column <- "hit_family"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "first", verbose = verbose,
+                                       ...)
+      },
+      "ictv_genus" = {
+        ## column <- "taxon"
+        column <- "hit_genus"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "first", verbose = verbose,
                                        ...)
       },
       "input_r1" = {
@@ -629,6 +657,15 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          which = "all",
                                          ...)
       },
+      "filtered_relative_coverage" = {
+        ## >1 length=40747 depth=1.00x circular=true
+        search <- "^>\\d+ length=\\d+ depth=.*x.*$"
+        replace <- "^>\\d+ length=\\d+ depth=(.*)x.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all",
+                                         ...)
+      },
       "tRNA_hits" = {
         ## >1 length=40747 depth=1.00x circular=true
         search <- "^.*Found \\d+ tRNAs"
@@ -638,6 +675,10 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       },
       "phageterm_dtr_length" = {
         entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
+      },
+      "phastaf_num_hits" = {
+        search <- "^.*$"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose)
       },
       "prodigal_positive_strand" = {
         search <- "\\t\\+\\t"
@@ -852,10 +893,10 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
     close(input_handle)
     ## Handle cases where one might want to pull only the last entry in a log, or all of them.
     if (which == "last") {
-      message("TESTING: ", last_found)
       output_entries[row] <- last_found
     } else if (which == "all") {
-      output_entries[row] <- toString(all_found)
+      initial_string <- toString(all_found)
+      output_entries[row] <- gsub(x=initial_string, pattern=",", replacement=";")
     }
   } ## End looking at every row of the metadata
   return(output_entries)
@@ -865,9 +906,6 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
                                 which = "first", verbose = FALSE,
                                 ...) {
   arglist <- list(...)
-  ##if (length(arglist) > 0) {
-  ##  
-  ##}
   filenames_with_wildcards <- glue::glue(input_file_spec,
                                          ...)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -886,11 +924,10 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       next
     }
     if (length(input_file) == 0) {
-      warning("There is no file matching: ", filenames_with_wildcards[row],
-              ".")
+      warning("There is no file matching: ", filenames_with_wildcards[row], ".")
       next
     }
-
+    
     if (type == 'csv') {
       input_df <- readr::read_csv(input_file)
     } else if (type == 'tsv') {
@@ -903,13 +940,14 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
     if (which == "first") {
       output_entries[row] <- input_df[1, column]
     } else if (which == "all") {
-      stringified <- toString(input_df[[column]])
+      stringified <- gsub(x=toString(input_df[[column]]), pattern = ",", replacement = ";")
       output_entries[row] <- stringified
     } else {
       ## Assume a number was provided for the desired row
       output_entries[row] <- input_df[which, column]
     }
-
+  }
+  
   return(output_entries)
 }
 
