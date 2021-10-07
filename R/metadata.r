@@ -331,7 +331,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "ictv_accession" = list(
             file = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
-            file = "preprocessing/{meta[['sampleid']]}/notes.txt")        
+            file = "preprocessing/{meta[['sampleid']]}/notes.txt")
         )
   }
   if (is.null(new_metadata)) {
@@ -395,7 +395,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
   switchret <- switch(
       entry_type,
       "hisat_single_concordant" = {
-        search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time" 
+        search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
@@ -441,7 +441,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       "host_filter_species" = {
         search <- "^.*$"
         replace <- "(.*)"
-        entries <- dispatch_regex_search(meta, search, replace, input_file_spec, 
+        entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
                                          which = "all", verbose = verbose)
       },
       "ictv_taxonomy" = {
@@ -798,7 +798,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
                                   ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
-  ##  
+  ##
   ##}
   filenames_with_wildcards <- glue::glue(input_file_spec,
                                          ...)
@@ -838,7 +838,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
         if (isTRUE(verbose)) {
           message("Found the correct line: ")
           message(input_line)
-        }                  
+        }
         this_found <- gsub(x = input_line,
                            pattern = replace,
                            replacement = extraction)
@@ -866,7 +866,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
                                 ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
-  ##  
+  ##
   ##}
   filenames_with_wildcards <- glue::glue(input_file_spec,
                                          ...)
@@ -909,7 +909,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       ## Assume a number was provided for the desired row
       output_entries[row] <- input_df[which, column]
     }
-
+  }
   return(output_entries)
 }
 
@@ -961,7 +961,7 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
       pd[na_idx, todo] <- na_string
     }
   } ## End iterating over the columns of interest
-  
+
   pData(expt[["expressionset"]]) <- pd
   expt[["design"]] <- pd
   return(expt)
