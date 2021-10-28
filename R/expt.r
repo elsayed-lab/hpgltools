@@ -239,7 +239,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
                         notes = NULL, countdir = NULL, include_type = "all",
                         include_gff = NULL, file_column = "file", id_column = NULL,
-                        savefile = NULL, low_files = FALSE, ...) {
+                        savefile = NULL, low_files = FALSE, handle_na = "drop", ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -425,7 +425,13 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## While we are removing stuff...
   ## I have had a couple data sets with incomplete counts, get rid of those rows
   ## before moving on.
-  all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+
+  if (handle_na == "drop") {
+    all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
+  } else {
+    na_idx <- is.na(all_count_tables)
+    all_count_tables[na_idx] <- 0
+  }
 
   numeric_columns <- colnames(all_count_tables) != "rownames"
   for (col in colnames(all_count_tables)[numeric_columns]) {
@@ -1319,7 +1325,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' }
 #' @export
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
-                             suffix = NULL, countdir = NULL, ...) {
+                             all.x = TRUE, all.y = FALSE, merge_type = "merge", suffix = NULL, countdir = NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
@@ -1499,7 +1505,11 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       colnames(tmp_count) <- c("rownames", ids[table])
       tmp_count <- data.table::as.data.table(tmp_count)
       pre_merge <- nrow(tmp_count)
-      count_table <- merge(count_table, tmp_count, by = "rownames", all.x = TRUE)
+      if (merge_type == "merge") {
+        count_table <- merge(count_table, tmp_count, by = "rownames", all.x = all.x, all.y = all.y)
+      } else {
+        count_table <- plyr::join(count_table, tmp_count)
+      }
       ## rownames(count_table) <- count_table[, "Row.names"]
       ## count_table <- count_table[, -1, drop = FALSE]
       ## post_merge <- length(rownames(count_table))
