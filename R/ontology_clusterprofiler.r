@@ -121,6 +121,11 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
             " out of ", length(all_genenames), " genes.")
     message("Chose keytype: ", orgdb_sig_from, " for sig genes because it had ", num_sig,
             " out of ", length(sig_genenames), " genes.")
+  } else { ## If we do have a column for the OrgDB
+    de_table_namedf <- sm(try(clusterProfiler::bitr(all_genenames, fromType = orgdb_from,
+                                                    toType = orgdb_to, OrgDb = org), silent = TRUE))
+    sig_genes_namedf <- sm(try(clusterProfiler::bitr(sig_genenames, fromType = orgdb_from,
+                                                     toType = orgdb_to, OrgDb = org), silent = TRUE))
   }
 
   if (is.null(sig_genes[[fc_column]]) & is.null(sig_genes[[second_fc_column]])) {
@@ -239,6 +244,9 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
                                      minGSSize = min_groupsize))
     gse_go <- as.data.frame(gse)
     message("Found ", nrow(gse_go), " enriched hits.")
+  } else {
+    genelist <- as.vector(sig_genes[[fc_column]])
+    names(genelist) <- rownames(sig_genes)
   }
 
   ## Now extract the kegg organism/gene IDs.

@@ -4,7 +4,7 @@
 \alias{mesg}
 \title{message() but with a verbose flag.}
 \usage{
-mesg(..., verbosity = NULL)
+mesg(..., verbosity = NULL, warn = FALSE)
 }
 \arguments{
 \item{...}{parameters for message()}
