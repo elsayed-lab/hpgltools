@@ -937,6 +937,7 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
   data_dir <- file.path(basedir, "data")
   cfgout <- paste0(file.path(conf_dir, name), ".conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
+
    
   if (!file.exists(data_dir)) {
     message("Creating the data directory: ", data_dir)
@@ -946,6 +947,7 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
     message("The circos directory does not exist, creating: ", conf_dir)
     dir.create(conf_dir, recursive = TRUE)
   }
+
 
   
   
@@ -1002,15 +1004,15 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
   colnames(annot) <- c("chr", "start", "stop", "strand")
 
   karyotype_dir <- file.path(conf_dir, "karyotypes")
-  if (!file.exists(karyotype_dir)) {
-    message("The karyotype directory does not exist, creating: ", karyotype_dir)
-    dir.create(karyotype_dir, recursive = TRUE)
-  }
+#  if (!file.exists(karyotype_dir)) {
+#    message("The karyotype directory does not exist, creating: ", karyotype_dir)
+#    dir.create(karyotype_dir, recursive = TRUE)
+#  }
   ideogram_dir <- file.path(conf_dir, "ideograms")
-  if (!file.exists(ideogram_dir)) {
-    message("The ideogram directory does not exist, creating: ", ideogram_dir)
-    dir.create(ideogram_dir, recursive = TRUE)
-  }
+#  if (!file.exists(ideogram_dir)) {
+#    message("The ideogram directory does not exist, creating: ", ideogram_dir)
+#    dir.create(ideogram_dir, recursive = TRUE)
+#  }
 
   etc_file <- file.path(path.package('hpgltools'), "share", "circos", "circos_etc.tar.xz")
   etc_cmd <- glue::glue("tar -C {dirname(conf_dir)} -xavf {etc_file} 2>/dev/null 1>&2")
@@ -1072,7 +1074,7 @@ chromosomes_display_default = yes
     setwd(wd)
   }
 
-  retlist <- list(
+  retcircosprefix <- new("circos_prefix",
     "name" = name,
     "basedir" = basedir,
     "cfg_file" = cfgout,
@@ -1089,7 +1091,7 @@ chromosomes_display_default = yes
     "minus_df" = minus_df,
     "minus_cfg_file" = minus_cfg_file,
     "minus_data_file" = minus_data_file)
-  return(retlist)
+  return(retcircosprefix)
 }
 
 #' Write the end of a circos master configuration.
