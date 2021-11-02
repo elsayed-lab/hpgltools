@@ -383,4 +383,58 @@ gather_utrs_txdb <- function(bsgenome, fivep_utr = NULL, threep_utr = NULL,
   return(retlist)
 }
 
+#' Gather some simple sequence attributes.
+#'
+#' This extends the logic of the pattern searching in pattern_count_genome() to
+#' search on some other attributes.
+#'
+#' @param fasta Genome encoded as a fasta file.
+#' @param gff Optional gff of annotations (if not provided it will just ask the
+#'  whole genome).
+#' @param type Column of the gff file to use.
+#' @param key What type of entry of the gff file to key from?
+#' @return List of data frames containing gc/at/gt/ac contents.
+#' @seealso [Biostrings] [Rsamtools]
+#' @examples
+#'  pa_data <- get_paeruginosa_data()
+#'  pa_fasta <- pa_data[["fasta"]]
+#'  pa_gff <- pa_data[["gff"]]
+#'  pa_attribs <- sequence_attributes(pa_fasta, gff = pa_gff)
+#'  head(pa_attribs)
+#' @export
+sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
+  rawseq <- Rsamtools::FaFile(fasta)
+  if (is.null(key)) {
+    key <- c("ID", "locus_tag")
+  }
+  if (is.null(gff)) {
+    entry_sequences <- Biostrings::getSeq(rawseq)
+  } else {
+    ## entries <- rtracklayer::import.gff3(gff, asRangedData = FALSE)
+    entries <- rtracklayer::import.gff(gff)
+    ## keep only the ones of the type of interest (gene).
+    type_entries <- entries[entries$type == type, ]
+    ## Set some hopefully sensible names.
+    names(type_entries) <- rownames(type_entries)
+    ## Get the sequence from the genome for them.
+    entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
+    tmp_entries <- as.data.frame(type_entries)
+    ## Give them some sensible names
+    for (k in key) {
+      if (!is.null(tmp_entries[[k]])) {
+        names(entry_sequences) <- tmp_entries[[k]]
+      }
+    }
+  }
+  attribs <- data.frame(
+    "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob = TRUE),
+    "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob = TRUE),
+    "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob = TRUE),
+    "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob = TRUE),
+    stringsAsFactors = FALSE)
+  rownames(attribs) <- names(entry_sequences)
+  colnames(attribs) <- c("gc", "at", "gt", "ac")
+  return(attribs)
+}
+
 ## EOF

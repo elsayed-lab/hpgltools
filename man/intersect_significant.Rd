@@ -51,9 +51,9 @@ limma/deseq/edger.
 }
 \examples{
  \dontrun{
-  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = funkytown)
-  big_result <- all_pairwise(expt, model_batch = FALSE)
-  pretty <- combine_de_tables(big_result, excel = "excel/combined_expt.xlsx")
-  intersect <- intersect_significant(pretty, excel = "excel/intersecting_genes.xlsx")
+  expt <- create_expt(metadata="some_metadata.xlsx", gene_info=funkytown)
+  big_result <- all_pairwise(expt, model_batch=FALSE)
+  pretty <- combine_de_tables(big_result, excel="excel/combined_expt.xlsx")
+  intersect <- intersect_significant(pretty, excel="excel/intersecting_genes.xlsx")
  }
 }

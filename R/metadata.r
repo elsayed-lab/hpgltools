@@ -255,8 +255,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
-        "racer_changed" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
+        ##"racer_changed" = list(
+        ##    "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
         "host_filter_species" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
@@ -272,6 +272,12 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
             "column" = "hisat_single_all_percent"),
+        "hisat_count_table" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/*.count.xz"),
+        "jellyfish_count_table" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
+        "jellyfish_observed" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
         "kraken_viral_classified" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
         "kraken_viral_unclassified" = list(
@@ -299,16 +305,49 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "shovill_minlength" = list(
             "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "unicycler_lengths" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
         "unicycler_relative_coverage" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "filtered_relative_coverage" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/??filter_depth/final_assembly.fasta"),
+        "phastaf_num_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
         "phageterm_dtr_length" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
         "prodigal_positive_strand" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "prodigal_negative_strand" = list(
-            file = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
-        )
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "final_gc_content" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
+        "interpro_signalp_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_phobius_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_pfam_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_tmhmm_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_cdd_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_smart_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_gene3d_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_superfamily_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "tRNA_hits" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+        "ictv_taxonomy" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_accession" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_family" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_genus" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "notes" = list(
+            "file" = "preprocessing/{meta[['sampleid']]}/notes.txt"))
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -337,12 +376,17 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     } else {
       meta[[new_column]] <- new_entries
     }
-  }
+  } ## End iterating over every metadatum
+
+  ## Drop useless columns
+  meta[["condition"]] <- NULL
+  meta[["batch"]] <- NULL
+  meta[["sampleid"]] <- NULL
+
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
   return(new_metadata)
 }
-
 
 #' This is basically just a switch and set of regexes for finding the
 #' numbers of interest in the various log files.
@@ -370,8 +414,11 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       specification, verbose = FALSE, ...) {
   switchret <- switch(
       entry_type,
+      "final_gc_content" = {
+        entries <- dispatch_gc(meta, input_file_spec, verbose = verbose)
+      },
       "hisat_single_concordant" = {
-        search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time" 
+        search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
@@ -414,11 +461,41 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
+      "hisat_count_table" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose)
+      },
       "host_filter_species" = {
         search <- "^.*$"
         replace <- "(.*)"
-        entries <- dispatch_regex_search(meta, search, replace, which = "all",
-                                         input_file_spec, verbose = verbose)
+        entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
+                                         which = "all", verbose = verbose)
+      },
+      "ictv_taxonomy" = {
+        ## column <- "taxon"
+        column <- "name"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "all", verbose = verbose,
+                                       ...)
+      },
+      "ictv_accession" = {
+        column <- "hit_accession"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "all", verbose = verbose,
+                                       ...)
+      },
+      "ictv_family" = {
+        ## column <- "taxon"
+        column <- "hit_family"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "first", verbose = verbose,
+                                       ...)
+      },
+      "ictv_genus" = {
+        ## column <- "taxon"
+        column <- "hit_genus"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+                                       which = "first", verbose = verbose,
+                                       ...)
       },
       "input_r1" = {
         search <- "^\\s+<\\(less .+\\).*$"
@@ -433,6 +510,13 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
+      },
+      "jellyfish_count_table" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose)
+      },
+      "jellyfish_observed" = {
+        search <- "^.*$"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose)
       },
       "kraken_viral_classified" = {
         search <- "^\\s+\\d+ sequences classified.*$"
@@ -489,6 +573,13 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose,
                                          ...)
+      },
+      "notes" = {
+        search <- "^.*$"
+        replace <- "^(.*)$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all")
       },
       "racer_changed" = {
         search <- "^Number of changed positions"
@@ -586,8 +677,28 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                          which = "all",
                                          ...)
       },
+      "filtered_relative_coverage" = {
+        ## >1 length=40747 coverage=1.00x circular=true
+        search <- "^>\\d+ length=\\d+ coverage=.*x.*$"
+        replace <- "^>\\d+ length=\\d+ coverage=(.*)x.*$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         which = "all",
+                                         ...)
+      },
+      "tRNA_hits" = {
+        ## >1 length=40747 depth=1.00x circular=true
+        search <- "^.*Found \\d+ tRNAs"
+        replace <- "^.*Found (\\d+) tRNAs"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose)
+      },
       "phageterm_dtr_length" = {
         entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
+      },
+      "phastaf_num_hits" = {
+        search <- "^.*$"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose)
       },
       "prodigal_positive_strand" = {
         search <- "\\t\\+\\t"
@@ -595,6 +706,38 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       },
       "prodigal_negative_strand" = {
         search <- "\\t-\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_signalp_hits" = {
+        search <- "\\tSiglapP.*\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_phobius_hits" = {
+        search <- "\\tPhobius\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_pfam_hits" = {
+        search <- "\\tPfam\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_tmhmm_hits" = {
+        search <- "\\tTMHMM\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_cdd_hits" = {
+        search <- "\\tCDD\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_smart_hits" = {
+        search <- "\\tSMART\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_gene3d_hits" = {
+        search <- "\\tGene3D\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+      },
+      "interpro_superfamily_hits" = {
+        search <- "\\tSUPERFAMILY\\t"
         entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
       },
       {
@@ -606,6 +749,18 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
   return(entries)
 }
 
+#' Count the number of lines in an input file spec and add it to the metadata.
+#'
+#' Sometimes the number of lines of a file is a good proxy for some
+#' aspect of a sample. For example, jellyfish provides 1 line for
+#' every kmer observed in a sample.  This function extracts that
+#' number and puts it into each cell of a sample sheet.
+#'
+#' @param meta Input metadata
+#' @param search Probably not needed
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -636,6 +791,7 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
   return(output_entries)
 }
 
+#' Get the lengths of sequences from a fasta file.
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -656,6 +812,58 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
 
     dtrs <- Biostrings::readBStringSet(input_file)
     output_entries[row] <- width(dtrs[1])
+  } ## End looking at every row of the metadata
+  return(output_entries)
+}
+
+#' Pull out the filename matching an input spec
+#'
+#' This is useful for putting the count table name into a metadata file.
+dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
+  filenames_with_wildcards <- glue::glue(input_file_spec)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      output_entries[row] <- ''
+      next
+    }
+    if (is.na(input_file)) {
+      warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      output_entries[row] <- ''
+      next
+    }
+    output_entries[row] <- input_file
+  }
+  return(output_entries)
+}
+
+#' Pull GC content into the metadata sheet.
+dispatch_gc <- function(meta, input_file_spec, verbose = FALSE) {
+  filenames_with_wildcards <- glue::glue(input_file_spec)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row],
+              ".")
+      next
+    }
+    if (is.na(input_file)) {
+      warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      next
+    }
+
+    attribs <- sequence_attributes(input_file)
+    output_entries[row] <- signif(x=attribs[["gc"]], digits=3)
   } ## End looking at every row of the metadata
   return(output_entries)
 }
@@ -693,7 +901,6 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
   return(entries)
 }
 
-
 #' Generic dispatcher to hunt down useful information from logs.
 #'
 #' Given the metadata, a couple of regular expressions, and a filename
@@ -717,7 +924,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
                                   ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
-  ##  
+  ##
   ##}
   filenames_with_wildcards <- glue::glue(input_file_spec,
                                          ...)
@@ -744,6 +951,10 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 
     input_handle <- file(input_file, "r", blocking = FALSE)
     input_vector <- readLines(input_handle)
+    if (length(input_vector) == 0) {
+      ## Empty file, move on.
+      next
+    }
     last_found <- NULL
     this_found <- NULL
     all_found <- c()
@@ -757,7 +968,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
         if (isTRUE(verbose)) {
           message("Found the correct line: ")
           message(input_line)
-        }                  
+        }
         this_found <- gsub(x = input_line,
                            pattern = replace,
                            replacement = extraction)
@@ -771,15 +982,63 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
     close(input_handle)
     ## Handle cases where one might want to pull only the last entry in a log, or all of them.
     if (which == "last") {
-      message("TESTING: ", last_found)
       output_entries[row] <- last_found
     } else if (which == "all") {
-      output_entries[row] <- toString(all_found)
+      initial_string <- toString(all_found)
+      output_entries[row] <- gsub(x=initial_string, pattern=",", replacement=";")
     }
   } ## End looking at every row of the metadata
   return(output_entries)
 }
 
+#' Pull some information from a csv/tsv file.
+dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
+                                which = "first", verbose = FALSE,
+                                ...) {
+  arglist <- list(...)
+  filenames_with_wildcards <- glue::glue(input_file_spec,
+                                         ...)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
+  test_file <- Sys.glob(filenames_with_wildcards[1])
+  if (length(test_file) == 0) {
+    message("The first filename does not exist, assuming this method was not performed.")
+    return(NULL)
+  }
+  output_entries <- rep(0, length(filenames_with_wildcards))
+  for (row in 1:nrow(meta)) {
+    found <- 0
+    ## Just in case there are multiple matches
+    input_file <- Sys.glob(filenames_with_wildcards[row])[1]
+    if (is.na(input_file)) {
+      ## The file did not exist.
+      next
+    }
+    if (length(input_file) == 0) {
+      warning("There is no file matching: ", filenames_with_wildcards[row], ".")
+      next
+    }
+
+    if (type == 'csv') {
+      input_df <- readr::read_csv(input_file)
+    } else if (type == 'tsv') {
+      input_df <- readr::read_tsv(input_file)
+    } else {
+      message("Assuming csv input.")
+      input_df <- readr::read_csv(input_file)
+    }
+
+    if (which == "first") {
+      output_entries[row] <- input_df[1, column]
+    } else if (which == "all") {
+      stringified <- gsub(x=toString(input_df[[column]]), pattern = ",", replacement = ";")
+      output_entries[row] <- stringified
+    } else {
+      ## Assume a number was provided for the desired row
+      output_entries[row] <- input_df[which, column]
+    }
+  } ## End for loop
+  return(output_entries)
+}
 
 #' Given an expressionset, sanitize pData columns of interest.
 #'
@@ -829,7 +1088,7 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
       pd[na_idx, todo] <- na_string
     }
   } ## End iterating over the columns of interest
-  
+
   pData(expt[["expressionset"]]) <- pd
   expt[["design"]] <- pd
   return(expt)

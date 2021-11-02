@@ -27,6 +27,7 @@ all_pairwise(
   convert = "cpm",
   norm = "quant",
   verbose = TRUE,
+  surrogates = "be",
   ...
 )
 }
