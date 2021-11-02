@@ -28,6 +28,5 @@ In case I wish to look at different numbers of genes from variancePartition
 and/or different columns to sort from.
 }
 \seealso{
-\pkg{variancePartition}
- \code{\link[variancePartition]{plotPercentBars}}
+[variancePartition]
 }

@@ -27,5 +27,5 @@ Hopefully a pretty plot of a genome
 genoplotr is cool, I don't yet understand it though
 }
 \seealso{
-\pkg{genoPlotR}
+[genoPlotR]
 }

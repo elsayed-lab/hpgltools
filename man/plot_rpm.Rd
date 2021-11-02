@@ -42,5 +42,5 @@ also written when I was first learning R and when I look at it now I see a
 few obvious places which can use improvement.
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

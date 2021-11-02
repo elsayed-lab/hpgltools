@@ -28,6 +28,7 @@ normalize_expt(
   cv_min = 0.01,
   cv_max = 1000,
   na_to_zero = FALSE,
+  adjust_method = "ruv",
   verbose = TRUE,
   ...
 )
@@ -77,6 +78,8 @@ normalize_expt(
 
 \item{na_to_zero}{Sometimes rpkm gives some NA values for very low numbers.}
 
+\item{adjust_method}{Given a set of sv estimates, change the counts with this method.}
+
 \item{verbose}{Print what is happening while the normalization is performed?
 I am not sure why, but I think they should be 0.}
 
@@ -104,5 +107,6 @@ transformation, and batch correction.
 }
 }
 \seealso{
-\pkg{genefilter} \pkg{limma} \pkg{sva} \pkg{edgeR} \pkg{DESeq2}
+[convert_counts()] [normalize_counts()] [batch_counts()]
+ [filter_counts()] [transform_counts()]
 }

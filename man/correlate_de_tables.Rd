@@ -10,6 +10,8 @@ correlate_de_tables(results, annot_df = NULL, extra_contrasts = NULL)
 \item{results}{Data from do_pairwise()}
 
 \item{annot_df}{Include annotation data?}
+
+\item{extra_contrasts}{include some extra contrasts when comparing results.}
 }
 \value{
 Heatmap showing how similar they are along with some
@@ -33,6 +35,5 @@ Invoked by all_pairwise().
 }
 }
 \seealso{
-\code{\link{limma_pairwise}} \code{\link{edger_pairwise}}
- \code{\link{deseq2_pairwise}}
+[limma_pairwise()] [edger_pairwise()] [deseq_pairwise()]
 }

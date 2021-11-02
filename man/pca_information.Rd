@@ -68,6 +68,5 @@ set of all PCA plots with respect to one another. (PCx vs. PCy)
 }
 }
 \seealso{
-\pkg{corpcor} \pkg{stats}
- \code{\link[corpcor]{fast.svd}}, \code{\link[stats]{lm}}
+[corpcor] [plot_pca()] [plot_pcs()] [stats::lm()]
 }

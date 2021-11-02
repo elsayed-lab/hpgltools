@@ -83,6 +83,8 @@ so it can choose).}
 
 \item{norm}{Modify the data with a 'normalization' method for PCA?}
 
+\item{verbose}{Print extra information while running?}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to
 write_limma().}
 }
@@ -108,7 +110,6 @@ comparisons among them.
 }
 }
 \seealso{
-\pkg{limma} \pkg{DESeq2} \pkg{edgeR}
- \code{link{limma_pairwise}} \code{\link{deseq_pairwise}}
- \code{\link{edger_pairwise}} \code{\link{basic_pairwise}}
+[limma_pairwise()] [edger_pairwise()] [deseq_pairwise()] [ebseq_pairwise()]
+ [basic_pairwise()]
 }

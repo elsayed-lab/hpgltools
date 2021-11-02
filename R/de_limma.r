@@ -23,7 +23,7 @@
 #' @param col yay columns!
 #' @param ... more arguments!
 #' @return a voom return
-#' @seealso \pkg{limma}
+#' @seealso [limma::voom()]
 #' @examples
 #' \dontrun{
 #' ## No seriously, dont run this, I think it is wiser to use the functions
@@ -99,7 +99,7 @@ hpgl_voomweighted <- function(data, fun_model, libsize = NULL, normalize.method 
 #'  design = The resulting design
 #'  lib.size = The size in pseudocounts of the library
 #'  plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso \pkg{limma} \pkg{ggplot2}
+#' @seealso [limma::voom()]
 #' @examples
 #' \dontrun{
 #'  funkytown = hpgl_voom(samples, model)
@@ -283,8 +283,7 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  pairwise_fits = The result from calling contrasts.fit()
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
-#' @seealso \pkg{limma} \pkg{Biobase}
-#'  \code{\link{write_limma}}
+#' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)
@@ -613,8 +612,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
 #' @param intercept Intercept model?
 #' @return List of data frames comprising the toptable output for each
 #'  coefficient, I also added a qvalue entry to these toptable() outputs.
-#' @seealso \pkg{limma} \pkg{qvalue}
-#'  \code{\link{write_xlsx}} \code{\link[limma]{topTable}}
+#' @seealso [limma] [write_xlsx()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison = eBayes(limma_output)
@@ -709,7 +707,7 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 #'
 #' @param data Output from limma_pairwise()
 #' @param ... Options for writing the xlsx file.
-#' @seealso \code{\link{write_de_table}}
+#' @seealso [write_de_table()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison = limma_pairwise(expressionset)

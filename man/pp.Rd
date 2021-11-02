@@ -26,3 +26,7 @@ a png/svg/eps/ps/pdf with height = width=9 inches and a high resolution
 \description{
 This calls svg/png/postscript/etc according to the filename provided.
 }
+\seealso{
+[png()] [svg()] [postscript()] [cairo_ps()] [cairo_pdf()] [tiff()] [devEMF::emf()]
+ [jpg()] [bmp()]
+}

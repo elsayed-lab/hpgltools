@@ -12,14 +12,12 @@
 #' @param method Correlation statistic to use. (pearson, spearman, kendall, robust).
 #' @param expt_names Alternate names to use for the samples.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param label_chars  Limit on the number of label characters.
 #' @param ... More options are wonderful!
 #' @return Gplots heatmap describing describing how the samples are clustering
 #'   vis a vis pairwise correlation.
-#' @seealso \pkg{grDevice}
-#'  \code{\link{hpgl_cor}} \code{\link[RColorBrewer]{brewer.pal}}
-#'   \code{\link[grDevices]{recordPlot}}
+#' @seealso [grDevice] [gplot2::heatmap.2()]
 #' @examples
 #' \dontrun{
 #'  corheat_plot <- hpgl_corheat(expt = expt, method = "robust")
@@ -27,10 +25,10 @@
 #' @export
 plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "pearson", expt_names = NULL,
-                         batch_row = "batch", title = NULL, label_chars = 10, ...) {
+                         batch_row = "batch", plot_title = NULL, label_chars = 10, ...) {
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "correlation",
-                           batch_row = batch_row, title = title, label_chars = label_chars, ...)
+                           batch_row = batch_row, plot_title = plot_title, label_chars = label_chars, ...)
   return(map_list)
 }
 
@@ -46,13 +44,11 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param method Distance metric to use.
 #' @param expt_names Alternate names to use for the samples.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
-#' @param label_chars  Limit on the number of label characters.
+#' @param plot_title Title for the plot.
+#' @param label_chars Limit on the number of label characters.
 #' @param ... More parameters!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[gplots]{heatmap.2}}
-#'  \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @examples
 #' \dontrun{
 #'  disheat_plot = plot_disheat(expt = expt, method = "euclidean")
@@ -60,10 +56,11 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @export
 plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "euclidean", expt_names = NULL,
-                         batch_row = "batch",  title = NULL, label_chars = 10, ...) {
+                         batch_row = "batch",  plot_title = NULL, label_chars = 10, ...) {
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "distance",
-                           batch_row = batch_row, title = title, label_chars = label_chars, ...)
+                           batch_row = batch_row, plot_title = plot_title,
+                           label_chars = label_chars, ...)
   return(map_list)
 }
 
@@ -76,21 +73,20 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @param expt_data Dataframe, expt, or expressionset to work with.
 #' @param expt_colors Color scheme for the samples.
 #' @param expt_design Design matrix describing the experiment vis a vis
-#'   conditions and batches.
+#'  conditions and batches.
 #' @param method Distance or correlation metric to use.
 #' @param expt_names Alternate names to use for the samples.
 #' @param type Defines the use of correlation, distance, or sample heatmap.
 #' @param batch_row Name of the design row used for 'batch' column colors.
-#' @param title Title for the plot.
-#' @param label_chars  Limit on the number of label characters.
+#' @param plot_title Title for the plot.
+#' @param label_chars Limit on the number of label characters.
 #' @param ... I like elipses!
 #' @return a recordPlot() heatmap describing the distance between samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @export
 plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          method = "pearson", expt_names = NULL,
-                         type = "correlation", batch_row = "batch", title = NULL,
+                         type = "correlation", batch_row = "batch", plot_title = NULL,
                          label_chars = 10, ...) {
   arglist <- list(...)
   margin_list <- c(12, 9)
@@ -108,6 +104,19 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   remove_equal <- FALSE
   if (!is.null(arglist[["remove_equal"]])) {
     remove_equal <- arglist[["remove_equal"]]
+  }
+
+  ## If plot_title is NULL, print nothing, if it is TRUE
+  ## Then give some information about what happened to the data to make the plot.
+  ## I tried foolishly to put this in plot_pcs(), but there is no way that receives
+  ## my expt containing the normalization state of the data.
+  if (isTRUE(plot_title)) {
+    plot_title <- what_happened(expt_data)
+  } else if (!is.null(plot_title)) {
+    data_title <- what_happened(expt_data)
+    plot_title <- glue::glue("{plot_title}; {data_title}")
+  } else {
+    ## Leave the title blank.
   }
 
   data_class <- class(expt_data)[1]
@@ -130,8 +139,8 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   if (is.null(expt_colors)) {
     num_cols <- ncol(expt_data)
     expt_colors <- sm(grDevices::colorRampPalette(
-                                   RColorBrewer::brewer.pal(
-                                                   num_cols, chosen_palette))(num_cols))
+                                     RColorBrewer::brewer.pal(
+                                                       num_cols, chosen_palette))(num_cols))
   }
   expt_colors <- as.character(expt_colors)
 
@@ -148,18 +157,18 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   }
 
   if (isTRUE(remove_equal)) {
-      cv_min <- 1
-      if (!is.null(arglist[["cv_min"]])) {
-          cv_min <- arglist[["cv_min"]]
-      }
-      cv_max <- Inf
-      if (!is.null(arglist[["cv_max"]])) {
-          cv_min <- arglist[["cv_max"]]
-      }
-      test <- genefilter::cv(cv_min, cv_max)
-      filter_list <- genefilter::filterfun(test)
-      answer <- genefilter::genefilter(expt_data, filter_list)
-      expt_data <- expt_data[answer, ]
+    cv_min <- 1
+    if (!is.null(arglist[["cv_min"]])) {
+      cv_min <- arglist[["cv_min"]]
+    }
+    cv_max <- Inf
+    if (!is.null(arglist[["cv_max"]])) {
+      cv_min <- arglist[["cv_max"]]
+    }
+    test <- genefilter::cv(cv_min, cv_max)
+    filter_list <- genefilter::filterfun(test)
+    answer <- genefilter::genefilter(expt_data, filter_list)
+    expt_data <- expt_data[answer, ]
   }
 
   heatmap_data <- NULL
@@ -169,8 +178,8 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     if (method == "cordist") {
       heatmap_colors <- grDevices::colorRampPalette(
-                                     c("yellow2", "goldenrod", "darkred"),
-                                     bias = 0.5)(100)
+                                       c("yellow2", "goldenrod", "darkred"),
+                                       bias = 0.5)(100)
     }
   } else if (type == "distance") {
     heatmap_data <- as.matrix(dist(t(expt_data)), method = method)
@@ -197,21 +206,26 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map <- NULL
   na_idx <- is.na(heatmap_data)
   heatmap_data[na_idx] <- 0
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   if (type == "correlation") {
     map <- heatmap.3(heatmap_data, keysize = keysize, labRow = expt_names,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
-                     linewidth = 0.5, main = title)
+                     linewidth = 0.5, main = plot_title, ...)
   } else {
     map <- heatmap.3(heatmap_data, keysize = keysize, labRow = expt_names,
                      labCol = expt_names, ColSideColors = expt_colors,
                      RowSideColors = row_colors, margins = margin_list,
                      scale = "none", trace = "none",
-                     linewidth = 0.5, main = title,
-                     col = rev(heatmap_colors))
+                     linewidth = 0.5, main = plot_title,
+                     col = rev(heatmap_colors), ...)
   }
   recorded_heatmap_plot <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
   retlist <- list("map" = map,
                   "plot" = recorded_heatmap_plot,
                   "data" = heatmap_data)
@@ -223,18 +237,19 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' Heatplus is an interesting tool, I have a few examples of using it and intend
 #' to include them here.
 #'
-#' @param expt  Experiment to try plotting.
-#' @param type  What comparison method to use on the data (distance or correlation)?
-#' @param method  What distance/correlation method to perform?
-#' @param annot_columns  Set of columns to include as terminal columns next to the heatmap.
-#' @param annot_rows  Set of columns to include as terminal rows below the heatmap.
-#' @param cutoff  Cutoff used to define color changes in the annotated clustering.
-#' @param cluster_colors  Choose colors for the clustering?
-#' @param scale  Scale the heatmap colors?
-#' @param cluster_width  How much space to include between clustering?
-#' @param cluster_function  Choose an alternate clustering function than hclust()?
-#' @param heatmap_colors  Choose your own heatmap cluster palette?
-#' @return  List containing the returned heatmap along with some parameters used to create it.
+#' @param expt Experiment to try plotting.
+#' @param type What comparison method to use on the data (distance or correlation)?
+#' @param method What distance/correlation method to perform?
+#' @param annot_columns Set of columns to include as terminal columns next to the heatmap.
+#' @param annot_rows Set of columns to include as terminal rows below the heatmap.
+#' @param cutoff Cutoff used to define color changes in the annotated clustering.
+#' @param cluster_colors Choose colors for the clustering?
+#' @param scale Scale the heatmap colors?
+#' @param cluster_width How much space to include between clustering?
+#' @param cluster_function Choose an alternate clustering function than hclust()?
+#' @param heatmap_colors Choose your own heatmap cluster palette?
+#' @return List containing the returned heatmap along with some parameters used to create it.
+#' @seealso [Heatplus] [fastcluster]
 #' @export
 plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_columns = "batch",
                           annot_rows = "condition", cutoff = 1.0, cluster_colors = NULL, scale = "none",
@@ -251,8 +266,8 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   }
 
   mydendro <- list(
-    "clustfun" = cluster_function,
-    "lwd" = cluster_width)
+      "clustfun" = cluster_function,
+      "lwd" = cluster_width)
   des <- pData(expt)
   col_data <- as.data.frame(des[, annot_columns])
   colnames(col_data) <- annot_columns
@@ -260,9 +275,9 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   colnames(row_data) <- annot_rows
 
   myannot <- list(
-    "inclRef" = FALSE,
-    "Col" = list("data" = col_data),
-    "Row" = list("data" = row_data))
+      "inclRef" = FALSE,
+      "Col" = list("data" = col_data),
+      "Row" = list("data" = row_data))
 
   if (is.null(cluster_colors)) {
     cluster_colors <- Heatplus::BrewerClusterCol
@@ -270,8 +285,8 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   myclust <- list("cuth" = cutoff,
                   "col" = cluster_colors)
   mylabs <- list(
-    "Row" = list("nrow" = 4),
-    "Col" = list("nrow" = 4))
+      "Row" = list("nrow" = 4),
+      "Col" = list("nrow" = 4))
 
   first_map <- Heatplus::annHeatmap2(data, dendrogram = mydendro, annotation = myannot,
                                      cluster = myclust, labels = mylabs)
@@ -285,26 +300,31 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
     num_clusters <- max(first_map[["cluster"]][["Row"]][["grp"]])
     chosen_palette <- "Dark2"
     new_colors <- sm(grDevices::colorRampPalette(
-                                  RColorBrewer::brewer.pal(
-                                                  num_clusters, chosen_palette))(num_clusters))
+                                    RColorBrewer::brewer.pal(
+                                                      num_clusters, chosen_palette))(num_clusters))
   }
   myclust <- list("cuth" = 1.0,
                   "col" = new_colors)
 
   final_map <- Heatplus::annHeatmap2(
-                           data, dendrogram = mydendro, annotation = myannot,
-                           cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
+                             data, dendrogram = mydendro, annotation = myannot,
+                             cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
 
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   plot(final_map)
   rec_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
   retlist <- list(
-    "annotations" = myannot,
-    "clusters" = myclust,
-    "labels" = mylabs,
-    "colors" = heatmap_colors,
-    "first_map" = first_map,
-    "map" = final_map,
-    "plot" = rec_plot)
+      "annotations" = myannot,
+      "clusters" = myclust,
+      "labels" = mylabs,
+      "colors" = heatmap_colors,
+      "first_map" = first_map,
+      "map" = final_map,
+      "plot" = rec_plot)
   return(retlist)
 }
 
@@ -328,8 +348,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @param filter Filter the data before performing this plot?
 #' @param ... More parameters for a good time!
 #' @return a recordPlot() heatmap describing the samples.
-#' @seealso \pkg{RColorBrewer}
-#'  \code{\link[RColorBrewer]{brewer.pal}} \code{\link[grDevices]{recordPlot}}
+#' @seealso [gplots::heatmap.2()]
 #' @export
 plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
                                 expt_names = NULL, dendrogram = "column",
@@ -373,10 +392,15 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
   na_idx <- is.na(data)
   data[na_idx] <- -20
 
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   heatmap.3(data, keysize = 0.8, labRow = row_label, col = heatmap_colors, dendrogram = dendrogram,
             labCol = expt_names, margins = c(12, 8), trace = "none", ColSideColors = colors,
             linewidth = 0.5, main = title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
   return(hpgl_heatmap_plot)
 }
 
@@ -394,6 +418,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
 #' @param min_delta Minimum delta value for filtering
 #' @param x_factor When plotting two factors against each other, which is x?
 #' @param y_factor When plotting two factors against each other, which is y?
+#' @param min_cvsd Include only those with a minimal CV?
 #' @param cv_min Minimum cv to examine (I think this should be slightly lower)
 #' @param cv_max Maximum cV to examine (I think this should be limited to ~ 0.7?)
 #' @param remove_equal Filter uninteresting genes.
@@ -405,47 +430,51 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
                                   cv_min = 1, cv_max = Inf, remove_equal = TRUE) {
 
 
-    ## I am certain there is a better way to do this, but I am tired and not thinking well.
-    colors <- c()
-    expt_colors <- expt[["colors"]]
-    fact_info <- pData(expt)[[fact]]
-    names(expt_colors) <- fact_info
-    for (i in 1:length(expt_colors)) {
-        name <- names(expt_colors)[i]
-        this_color <- as.character(expt_colors[i])
-        colors[name] <- this_color
-    }
+  ## I am certain there is a better way to do this, but I am tired and not thinking well.
+  colors <- c()
+  expt_colors <- expt[["colors"]]
+  fact_info <- pData(expt)[[fact]]
+  names(expt_colors) <- fact_info
+  for (i in 1:length(expt_colors)) {
+    name <- names(expt_colors)[i]
+    this_color <- as.character(expt_colors[i])
+    colors[name] <- this_color
+  }
 
-    if (isTRUE(remove_equal)) {
-        expt <- normalize_expt(expt, filter = "cv", cv_min = 1, cv_max = Inf)
-    }
-    cvs <- as.matrix(median_by_factor(expt, fun = fun, fact = fact)[["cvs"]])
+  if (isTRUE(remove_equal)) {
+    expt <- normalize_expt(expt, filter = "cv", cv_min = 1, cv_max = Inf)
+  }
+  cvs <- as.matrix(median_by_factor(expt, fun = fun, fact = fact)[["cvs"]])
 
-    if (!is.null(min_cvsd)) {
-        cv_sds <- matrixStats::rowSds(cvs)
-        if (is.numeric(min_cvsd)) {
-            keepers <- cv_sds >= min_cvsd
-        } else if (is.character(min_cvsd)) {
-            ## Min. 1st Qu. Median ...
-            min_cvsd <- summary(cv_sds)[[min_cvsd]]
-            keepers <- cv_sds >= min_cvsd
-        } else {
-            keepers <- cv_sds >= summary(cv_sds)[5]
-        }
-        cvs <- cvs[keepers, ]
+  if (!is.null(min_cvsd)) {
+    cv_sds <- matrixStats::rowSds(cvs)
+    if (is.numeric(min_cvsd)) {
+      keepers <- cv_sds >= min_cvsd
+    } else if (is.character(min_cvsd)) {
+      ## Min. 1st Qu. Median ...
+      min_cvsd <- summary(cv_sds)[[min_cvsd]]
+      keepers <- cv_sds >= min_cvsd
+    } else {
+      keepers <- cv_sds >= summary(cv_sds)[5]
     }
+    cvs <- cvs[keepers, ]
+  }
 
-    heatmap_colors <- gplots::redgreen(75)
-    if (is.null(names)) {
-        names <- colnames(data)
-    }
+  heatmap_colors <- gplots::redgreen(75)
+  if (is.null(names)) {
+    names <- colnames(data)
+  }
 
-    heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,
+  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
+  heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,
             margins = c(12, 8), trace = "none", ColSideColors = colors,
             linewidth = 0.5, main = title, Rowv = Rowv, Colv = Colv)
-    cv_heatmap_plot <- grDevices::recordPlot()
+  cv_heatmap_plot <- grDevices::recordPlot()
+  dev.off()
 
-    point_df <- cvs[, c(x_factor, y_factor)]
+  point_df <- cvs[, c(x_factor, y_factor)]
 
   return(cv_heatmap_plot)
 }

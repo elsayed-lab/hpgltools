@@ -24,11 +24,11 @@
 #' @param gff Gff filename.
 #' @param type Subset to extract.
 #' @return Iranges! (useful for getSeq().)
-#' @seealso \pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
+#' @seealso [rtracklayer] [load_gff_annotations()]
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#'  gff_file <- system.file("share/gas.gff", package = "hpgltools")
-#'  gas_iranges <- gff2irange(gff_file)
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  gas_iranges <- gff2irange(example_gff)
 #'  colnames(as.data.frame(gas_iranges))
 #' @export
 gff2irange <- function(gff, type = NULL) {
@@ -73,10 +73,10 @@ gff2irange <- function(gff, type = NULL) {
 #' @param try Give your own function call to use for importing.
 #' @param row.names Choose another column for setting the rownames of the data frame.
 #' @return Dataframe of the annotation information found in the gff file.
-#' @seealso \pkg{rtracklayer} \pkg{GenomicRanges}
-#'  \code{\link[rtracklayer]{import.gff}}
+#' @seealso [rtracklayer] [GenomicRanges]
 #' @examples
-#'  gas_gff_annot <- load_gff_annotations(gff_file)
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  dim(gas_gff_annot)
 #' @export
 load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "data.frame",
@@ -84,6 +84,23 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!file.exists(gff)) {
     stop("Unable to find the gff file: ", gff)
   }
+  compressed <- FALSE
+  newfile <- NULL
+  original <- gff
+  ext <- "gz"
+  fun <- gzfile
+  if (grepl(pattern = "\\.[x|g]z$", x = gff)) {
+    compressed <- TRUE
+    newfile <- gsub(pattern = "\\.[x|g]z$", replacement = "", x = gff)
+    ext <- gsub(pattern = ".*\\.([x|g]z)$", replacement = "\\1", x = gff)
+    if (grepl(x = ext, pattern = "^x")) {
+      fun <- xzfile
+    }
+    uncomp <- R.utils::decompressFile(filename = gff, destname = newfile, ext = ext,
+                                      FUN = fun, remove = FALSE)
+    gff <- newfile
+  }
+
   ret <- NULL
   attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = TRUE)",
                 "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = FALSE)",
@@ -150,6 +167,11 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!is.null(row.names)) {
     rownames(ret) <- ret[[row.names]]
   }
+
+  if (isTRUE(compressed)) {
+    removed <- file.remove(gff)
+  }
+  
   return(ret)
 }
 
@@ -170,13 +192,12 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #' @param type Column to use in the gff file.
 #' @param key What type of entry of the gff file to key from?
 #' @return Data frame of gene names and number of times the pattern appears/gene.
-#' @seealso \pkg{Biostrings} \pkg{Rsamtools} \pkg{Rsamtools}
-#'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
-#'  \code{\link[Biostrings]{PDict}} \code{\link[Biostrings]{vcountPDict}}
+#' @seealso [Biostrings] [Rsamtools::FaFile()] [Biostrings::PDict()]
 #' @examples
-#'  fasta_file <- system.file("paeruginosa_pa14.fasta", package = "hpgltools")
-#'  gff_file <- system.file("paeruginosa_pa14.gff", package = "hpgltools")
-#'  ta_count <- pattern_count_genome(fasta_file, gff_file)
+#'  pa_data <- get_paeruginosa_data()
+#'  pa_fasta <- pa_data[["fasta"]]
+#'  pa_gff <- pa_data[["gff"]]
+#'  ta_count <- pattern_count_genome(pa_fasta, pa_gff)
 #'  head(ta_count)
 #' @export
 pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene", key = NULL) {
@@ -224,10 +245,12 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
 #' @param type Column of the gff file to use.
 #' @param key What type of entry of the gff file to key from?
 #' @return List of data frames containing gc/at/gt/ac contents.
-#' @seealso \pkg{Biostrings} \pkg{Rsamtools}
-#'  \code{\link[Rsamtools]{FaFile}} \code{\link[Biostrings]{getSeq}}
+#' @seealso [Biostrings] [Rsamtools]
 #' @examples
-#'  pa_attribs <- sequence_attributes(fasta_file, gff = gff_file)
+#'  pa_data <- get_paeruginosa_data()
+#'  pa_fasta <- pa_data[["fasta"]]
+#'  pa_gff <- pa_data[["gff"]]
+#'  pa_attribs <- sequence_attributes(pa_fasta, gff = pa_gff)
 #'  head(pa_attribs)
 #' @export
 sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
@@ -277,8 +300,7 @@ sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
 #' @param parent Column from the annotations with the gene names.
 #' @param child Column from the annotations with the exon names.
 #' @return List of 2 data frames, counts and lengths by summed exons.
-#' @seealso \pkg{rtracklayer}
-#'  \code{\link{load_gff_annotations}}
+#' @seealso [rtracklayer] [load_gff_annotations()]
 #' @examples
 #' \dontrun{
 #'  summed <- sum_exon_widths(counts, gff = "reference/xenopus_laevis.gff.xz")

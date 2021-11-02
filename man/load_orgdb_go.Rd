@@ -39,8 +39,7 @@ may use a lot of different ID types and still score some useful ontology data.
  head(drosophila_orgdb_go)
 }
 \seealso{
-\pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
- \code{\link[AnnotationDbi]{select}}
+[AnnotationDbi] [GO.db]
 }
 \author{
 I think Keith provided the initial implementation of this, but atb

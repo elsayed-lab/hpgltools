@@ -29,9 +29,6 @@ for a more complete list.
 }
 }
 \seealso{
-\pkg{edgeR} \pkg{DESeq2}
- \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
- \code{\link{hpgl_rpkm}} \code{\link[DESeq2]{DESeqDataSetFromMatrix}}
- \code{\link[DESeq]{estimateSizeFactors}} \code{\link[edgeR]{DGEList}}
- \code{\link[edgeR]{calcNormFactors}}
+[edgeR] [DESeq2] [edgeR::cpm()] [filter_counts()] [batch_counts()]
+ [convert_counts()] [transform_counts()]
 }

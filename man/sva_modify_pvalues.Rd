@@ -18,3 +18,6 @@ factors. As a way to provide an example of _how_ to calculate
 appropriately corrected p-values for surrogate factor adjusted models,
 this is great; but when dealing with actual data, it falls a bit short.
 }
+\seealso{
+[sva]
+}

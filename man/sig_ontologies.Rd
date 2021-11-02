@@ -33,3 +33,7 @@ A list of the up/down results of the ontology searches.
 It can be annoying/confusing to extract individual sets of 'significant' genes from a
 differential expression analysis.  This function should make that process easier.
 }
+\seealso{
+[openxlsx] [simple_goseq()] [simple_clusterprofiler()] [simple_topgo()]
+ [simple_gprofiler()] [simple_topgo()] [simple_gostats()]
+}

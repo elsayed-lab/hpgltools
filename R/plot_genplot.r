@@ -3,11 +3,11 @@
 #' genoplotr is cool, I don't yet understand it though
 #'
 #' @param accession An accession to plot, this will download it.
-#' @param start  First segment to plot (doesn't quite work yet).
-#' @param end  Final segment to plot (doesn't quite work yet).
-#' @param title  Put a title on the resulting plot.
+#' @param start First segment to plot (doesn't quite work yet).
+#' @param end Final segment to plot (doesn't quite work yet).
+#' @param title Put a title on the resulting plot.
 #' @return Hopefully a pretty plot of a genome
-#' @seealso \pkg{genoPlotR}
+#' @seealso [genoPlotR]
 #' @export
 genoplot_chromosome <- function(accession = "AE009949", start = NULL, end = NULL,
                                 title = "Genome plot") {

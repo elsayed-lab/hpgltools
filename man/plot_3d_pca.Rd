@@ -13,6 +13,12 @@ plot_3d_pca(pc_result, components = c(1, 2, 3), file = "3dpca.html")
 
 \item{file}{File to write the created plotly object.}
 }
+\value{
+List containing the plotly data and filename for the html widget.
+}
 \description{
 This will make him very happy, but I remain skeptical.
+}
+\seealso{
+[plotly] [htmlwidgets]
 }

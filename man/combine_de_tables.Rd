@@ -74,6 +74,12 @@ certain contrasts in specific orders and orientations.}
 
 \item{padj_type}{Add a consistent p adjustment of this type.}
 
+\item{lfc_cutoff}{In this context, only used for plotting volcano/MA plots.}
+
+\item{p_cutoff}{In this context, used for volcano/MA plots.}
+
+\item{de_types}{Used for plotting pvalue/logFC cutoffs.}
+
 \item{...}{Arguments passed to significance and abundance tables.}
 }
 \value{
@@ -96,5 +102,5 @@ limma/DESeq2/EdgeR on a table-by-table basis.
 }
 }
 \seealso{
-\code{\link{all_pairwise}}
+[all_pairwise()] [extract_significant_genes()]
 }

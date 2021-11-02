@@ -8,6 +8,7 @@ plot_boxplot(
   data,
   colors = NULL,
   title = NULL,
+  order = NULL,
   violin = FALSE,
   scale = NULL,
   expt_names = NULL,
@@ -21,6 +22,8 @@ plot_boxplot(
 \item{colors}{Color scheme, if not provided will make its own.}
 
 \item{title}{A title!}
+
+\item{order}{Set the order of boxen.}
 
 \item{violin}{Print this as a violin rather than a just box/whiskers?}
 
@@ -55,6 +58,5 @@ shifted is an outlier.
 }
 }
 \seealso{
-\pkg{ggplot2} \pkg{reshape2} \link[ggplot2]{geom_boxplot}
- \code{\link[reshape2]{melt}} \code{\link[ggplot2]{scale_x_discrete}}
+[ggplot2]
 }

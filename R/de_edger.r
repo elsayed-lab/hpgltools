@@ -44,7 +44,7 @@
 #'  contrast_list = The list of each call to makeContrasts()
 #'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'  all_tables = a list of tables for the contrasts performed.
-#' @seealso \pkg{edgeR}
+#' @seealso [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "metadata.xlsx", gene_info = annotations)
@@ -179,13 +179,12 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   lrt_list <- list()
   sc <- vector("list", length(apc[["names"]]))
   end <- length(apc[["names"]])
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (con in 1:length(apc[["names"]])) {
     name <- apc[["names"]][[con]]
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- con / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
     }
@@ -216,7 +215,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
     res[["FDR"]] <- signif(x = as.numeric(res[["FDR"]]), digits = 4)
     result_list[[name]] <- res
   } ## End for loop
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
 
@@ -257,6 +256,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
 #' @param conditions Set of conditions used to make the DGEList.
 #' @param tximport Tell this if the data is actually coming from tximport.
 #' @return Hopefully valid DGEList for edgeR.
+#' @seealso [import_deseq()]
 import_edger <- function(data, conditions, tximport = NULL) {
   if (is.null(tximport)) {
     raw <- edgeR::DGEList(counts = data, group = conditions)
@@ -280,8 +280,7 @@ import_edger <- function(data, conditions, tximport = NULL) {
 #'
 #' @param data Output from deseq_pairwise()
 #' @param ... Options for writing the xlsx file.
-#' @seealso \pkg{limma}
-#'  \code{\link[limma]{toptable}} \code{\link{write_xlsx}}
+#' @seealso [write_de_Table()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- edger_pairwise(expressionset)

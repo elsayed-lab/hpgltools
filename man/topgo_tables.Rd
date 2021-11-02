@@ -34,5 +34,5 @@ The topgo function GenTable is neat, but it needs some simplification to not
 be obnoxious.
 }
 \seealso{
-\pkg{topGO}
+[topGO]
 }

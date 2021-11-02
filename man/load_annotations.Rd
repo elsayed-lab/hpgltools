@@ -20,6 +20,12 @@ We should be able to have an agnostic annotation loader which can take some
 standard arguments and figure out where to gather data on its own.
 }
 \examples{
- gff_annotations <- load_annotations(type = "gff", gff = gff_file)
+ example_gff <- get_paeruginosa_data()[["gff"]]
+ gff_annotations <- load_annotations(type = "gff", gff = example_gff)
  dim(gff_annotations)
+}
+\seealso{
+[load_biomart_annotations()] [load_gff_annotations()] [load_genbank_annotations()]
+ [load_kegg_annotations()] [load_trinotate_annotations()] [load_microbesonline_annotations()]
+ [load_uniprot_annotations()]
 }

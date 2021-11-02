@@ -32,3 +32,6 @@ It is so slow I no longer know if it works.
 \description{
 This is horrifyingly slow.  I think I might remove this function.
 }
+\seealso{
+[count_expt_snps()] [Rsamtools] [GenomicRanges]
+}

@@ -33,3 +33,6 @@ features_greater_than().
   unique_genes
 }
 }
+\seealso{
+[subset_expt()]
+}

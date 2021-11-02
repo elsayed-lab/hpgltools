@@ -255,6 +255,14 @@ test_that("Did we save the result of combine_de_tables?", {
   expect_true(file.exists("065_small_combined.rda"))
 })
 
+## Test my plotly writer on the MA plot from deseq.
+ggplt_test <- ggplt(small_combined[["plots"]][["first"]][["deseq_ma_plots"]][["plot"]])
+expected <- "ggplot.html"
+actual <- basename(ggplt_test)
+test_that("ggplt() returned the filename of a clicky plot?", {
+  expect_equal(expected, actual)
+})
+
 expected <- 2
 actual <- length(small_combined[["data"]])
 test_that("combine_de_tables() with keepers worked?", {

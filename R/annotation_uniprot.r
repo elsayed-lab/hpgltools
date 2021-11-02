@@ -14,6 +14,7 @@
 #' @param all If there are more than 1 hit, grab them all?
 #' @param first Or perhaps just grab the first hit?
 #' @return A filename/accession tuple.
+#' @seealso [xml2] [rvest]
 #' @examples
 #'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
 #'  uniprot_sc_downloaded$filename
@@ -25,8 +26,9 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
   if (!is.null(taxonomy)) {
     request_url <- glue::glue("https://www.uniprot.org/proteomes/?query=taxonomy%3A{xml2::url_escape(taxonomy)}")
     destination <- glue("{taxonomy}.txt.gz")
-    ##request <- curl::curl(request_url)
-    tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+    if (!file.exists(destination)) {
+      tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+    }
     result <- xml2::read_html(destination)
     result_html <- rvest::html_nodes(result, "tr")
     accessions_text <- rvest::html_attr(result_html, "id")
@@ -51,8 +53,9 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
       message("Querying uniprot for the accession matching: ", species, ".")
       destination <- glue("{tempfile()}.txt.gz")
       request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
-      ##request <- curl::curl(request_url)
-      tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+      if (!file.exists(destination)) {
+        tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+      }
       result <- xml2::read_html(destination)
       result_html <- rvest::html_nodes(result, "tr")
       accessions_text <- rvest::html_attr(result_html, "id")
@@ -95,8 +98,9 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
     "https://www.uniprot.org/uniprot/?query=proteome:\\
      {accession}&compress=yes&force=true&format=txt")
   destination <- glue("{accession}.txt.gz")
-  ##tt <- curl::curl_fetch_disk(url = request_url, path = destination)
-  tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+  if (!file.exists(destination)) {
+    tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+  }
   retlist <- list(
     "filename" = destination,
     "species" = final_species,
@@ -112,7 +116,9 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
 #' @param species Species name to download/load.
 #' @param savefile Do a save?
 #' @return Big dataframe of annotation data.
+#' @seealso [download_uniprot_proteome()]
 #' @examples
+#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
 #'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
 #'  dim(sc_uniprot_annot)
 #' @export
@@ -575,9 +581,14 @@ load_uniprot_annotations <- function(file = NULL, species = NULL, savefile = TRU
 #'
 #' @param input uniprot filename or dataframe.
 #' @return Ontology dataframe
+#' @seealso [load_uniprot_annotations()] [stringr] [tidyr]
 #' @examples
+#' \dontrun{
+#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
+#'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
 #'  sc_uniprot_go <- load_uniprot_go(sc_uniprot_annot)
 #'  head(sc_uniprot_go)
+#' }
 #' @export
 load_uniprot_go <- function(input) {
   if ("character" %in% class(input)) {

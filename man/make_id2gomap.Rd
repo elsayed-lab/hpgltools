@@ -26,5 +26,5 @@ format expected by topgo.  This handles that process and gives a summary of
 the new table.
 }
 \seealso{
-\pkg{topGO}
+[topGO]
 }

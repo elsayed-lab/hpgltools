@@ -12,11 +12,11 @@ normalize_counts(data, design = NULL, method = "raw", ...)
 \item{design}{Dataframe describing the experimental
 design. (conditions/batches/etc)}
 
-\item{...}{More arguments might be necessary.}
-
-\item{norm}{Normalization to perform:
+\item{method}{Normalization to perform:
 'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
 whether design is a required argument.}
+
+\item{...}{More arguments might be necessary.}
 }
 \value{
 Dataframe of normalized(counts)
@@ -31,5 +31,5 @@ deseq2/edger and friends.
 }
 }
 \seealso{
-\pkg{edgeR} \pkg{limma} \pkg{DESeq2}
+[edgeR] [limma] [DESeq2] [preprocessCore] [BiocGenerics]
 }

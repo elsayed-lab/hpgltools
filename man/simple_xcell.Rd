@@ -36,6 +36,10 @@ simple_xcell(
 
 \item{row_margin}{Ibid.}
 
+\item{sig_cutoff}{Only keep celltypes with a significance better than this.}
+
+\item{verbose}{Print some extra information during runtime.}
+
 \item{cores}{How many CPUs to use?}
 
 \item{...}{Extra arguments when normalizing the data for use with xCell.}
@@ -49,4 +53,7 @@ I initially thought xCell might prove the best tool/method for exploring cell
 deconvolution.  I slowly figured out its limitations, but still think it
 seems pretty nifty for its use case.  Thus this function is intended to make
 invoking it easier/faster.
+}
+\seealso{
+[xCell]
 }

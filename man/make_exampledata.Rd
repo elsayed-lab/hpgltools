@@ -25,5 +25,5 @@ relaxes that restriction.
 }
 }
 \seealso{
-\pkg{limma} \pkg{stats} \pkg{DESeq}
+[limma] [DESeq2] [stats]
 }

@@ -9,14 +9,17 @@ simple_gsva(
   signatures = "c2BroadSets",
   data_pkg = "GSVAdata",
   signature_category = "c2",
-  cores = 1,
+  cores = NULL,
   current_id = "ENSEMBL",
   required_id = "ENTREZID",
   min_catsize = 5,
   orgdb = "org.Hs.eg.db",
   method = "ssgsea",
   kcdf = NULL,
-  ranking = FALSE
+  ranking = FALSE,
+  msig_xml = NULL,
+  wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+  mx_diff = TRUE
 )
 }
 \arguments{
@@ -45,6 +48,12 @@ because it was throwing segmentation faults.}
 \item{kcdf}{Options for the gsva methods.}
 
 \item{ranking}{another gsva option.}
+
+\item{msig_xml}{XML file contining msigdb annotations.}
+
+\item{wanted_meta}{Desired metadata elements from the mxig_xml file.}
+
+\item{mx_diff}{Passed to gsva(), I do not remember what it does.}
 }
 \value{
 List containing three elements: first a modified expressionset using
@@ -58,4 +67,7 @@ gsva seems to hold a tremendous amount of potential.  Unfortunately, it is
 somewhat opaque and its requirements are difficult to pin down.  This
 function will hopefully provide some of the requisite defaults and do some
 sanity checking to make it more likely that a gsva analysis will succeed.
+}
+\seealso{
+[GSEABase] [load_gmt_signatures()] [create_expt()] [GSVA]
 }

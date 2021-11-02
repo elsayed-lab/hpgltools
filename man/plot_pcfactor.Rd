@@ -27,5 +27,5 @@ This should make a quick df of the factors and PCs and plot them.
 }
 }
 \seealso{
-\pkg{ggplot2}
+[ggplot2]
 }

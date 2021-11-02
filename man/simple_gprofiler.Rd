@@ -60,7 +60,7 @@ entrez or whatever, translate it!}
 \item{excel}{Print the results to an excel file?}
 }
 \value{
-a list of results for go, kegg, reactome, and a few more.
+List of results for go, kegg, reactome, and a few more.
 }
 \description{
 Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
@@ -71,5 +71,5 @@ Thank you Ginger for showing me your thesis, gProfiler is pretty cool!
 }
 }
 \seealso{
-\pkg{gProfiler}
+[gProfiler]
 }

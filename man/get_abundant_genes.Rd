@@ -37,5 +37,5 @@ find the most significantly different genes for each contrast.
 }
 }
 \seealso{
-\pkg{stats} \pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+[get_sig_genes()]
 }

@@ -38,10 +38,10 @@ This function tries to gather an appropriate gene length column from
 whatever annotation data source is provided.
 }
 \examples{
- pa_genesizes <- get_genesizes(gff = gff_file)
+ pa_gff <- system.file("share", "paeruginosa_pa14.gff", package = "hpgltools")
+ pa_genesizes <- get_genesizes(gff = pa_gff)
  head(pa_genesizes)
 }
 \seealso{
-\pkg{rtracklayer}
- \code{\link{load_gff_annotations}}
+[rtracklayer] [load_gff_annotations()]
 }

@@ -58,7 +58,5 @@ no longer actually a dotplot, but a point plot, but who is counting?
 }
 }
 \seealso{
-\pkg{matrixStats} \pkg{grDevices}
- \code{\link{hpgl_cor}} \code{\link[matrixStats]{rowMedians}}
- \code{\link[stats]{quantile}} \code{\link{diff}} \code{\link[grDevices]{recordPlot}}
+[matrixStats] [ggplot2]
 }

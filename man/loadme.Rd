@@ -25,5 +25,5 @@ this function uses my backup directory to load its R environment.
 }
 }
 \seealso{
-\code{\link{saveme}} \code{\link{load}} \code{\link{save}}
+[saveme()]
 }

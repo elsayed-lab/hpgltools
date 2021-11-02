@@ -67,5 +67,5 @@ those, it is purposefully stupid.
 }
 }
 \seealso{
-\pkg{limma} \pkg{DESeq2} \pkg{edgeR}
+[deseq_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
 }

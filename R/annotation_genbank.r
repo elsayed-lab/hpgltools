@@ -18,8 +18,7 @@
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
 #'  haven't yet finalized.
-#' @seealso \pkg{genbankr} \pkg{rentrez}
-#'  \code{\link[genbankr]{import}}
+#' @seealso [Biostrings] [GenomicFeatures] [genbankr::import()] [genbankr::readGenBank()]
 #' @examples
 #'  sagalacticae_genbank_annot <- load_genbank_annotations(accession = "AE009948")
 #'  dim(as.data.frame(sagalacticae_genbank_annot$cds))
@@ -52,43 +51,6 @@ load_genbank_annotations <- function(accession = "AE009949", reread = TRUE, save
   return(ret)
 }
 
-#' Extract some useful information from a gbk imported as a txDb.
-#'
-#' This function no longer really stands on its own, but is more accessible
-#' from load_genbank_annotations().
-#'
-#' Tested in test_40ann_biomartgenbank.R
-#' This function should provide a quick reminder of how to use the AnnotationDbi
-#' select function if it does nothing else.  It also (hopefully helpfully)
-#' returns a granges object containing the essential information one might want
-#' for printing out a gff or whatever.
-#'
-#' I should revisit this function and improve the generated ranges objects to
-#' have better metadata columns via the mcols() function.  For examples of some
-#' useful tasks one can do here, check out snp.r.
-#'
-#' @param gbr TxDb object to poke at.
-#' @return Granges data
-#' @seealso \pkg{AnnotationDbi} \pkg{GenomeInfoDb} \pkg{GenomicFeatures}
-#'  \code{\link[AnnotationDbi]{select}}
-#' @export
-gbk_annotations <- function(gbr) {
-  ## chromosomes <- GenomeInfoDb::seqlevels(gbr)
-  genes <- AnnotationDbi::keys(gbr)
-  ## keytypes <- AnnotationDbi::keytypes(gbr)
-  ## columns <- AnnotationDbi::columns(gbr)
-  lengths <- sm(AnnotationDbi::select(
-                                 gbr,
-                                 ## columns = columns,
-                                 columns = c("CDSNAME", "CDSCHROM", "CDSEND", "CDSSTART",
-                                           "CDSSTRAND", "CDSID", "TXNAME"),
-                                 keys = genes, keytype = "GENEID"))
-  ## keys = genes, keytype = keytypes))
-  lengths[["length"]] <- abs(lengths[["CDSSTART"]] - lengths[["CDSEND"]])
-  granges <- GenomicFeatures::transcripts(gbr)
-  return(granges)
-}
-
 #' A genbank accession downloader scurrilously stolen from ape.
 #'
 #' This takes and downloads genbank accessions.
@@ -101,7 +63,7 @@ gbk_annotations <- function(gbr) {
 #' @param write Write the files?  Otherwise return a list of the strings
 #' @return A list containing the number of files downloaded and the character
 #'   strings acquired.
-#' @seealso \pkg{ape}
+#' @seealso [ape]
 #' @examples
 #'  written <- download_gbk(accessions = "AE009949")
 #'  written$written_file

@@ -35,3 +35,6 @@ my_isva(
 \description{
 Thus I copy/pasted the function and attempted to address them here.
 }
+\seealso{
+[isva]
+}

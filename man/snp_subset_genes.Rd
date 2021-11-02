@@ -43,3 +43,6 @@ New expressionset with only the variants for the genes of interest.
 This was written in response to a query from Nancy and Maria Adelaida who
 wanted to look only at the variant positions in a few specific genes.
 }
+\seealso{
+[GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
+}

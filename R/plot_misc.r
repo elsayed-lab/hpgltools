@@ -6,33 +6,63 @@
 #'
 #' @param file Filename to write
 #' @param image Optionally, add the image you wish to plot and this will both
-#'   print it to file and screen.
-#' @param width  How wide?
-#' @param height  How high?
-#' @param res  The chosen resolution.
-#' @param ...  Arguments passed to the image plotters.
+#'  print it to file and screen.
+#' @param width How wide?
+#' @param height How high?
+#' @param res The chosen resolution.
+#' @param ... Arguments passed to the image plotters.
 #' @return a png/svg/eps/ps/pdf with height = width=9 inches and a high resolution
+#' @seealso [png()] [svg()] [postscript()] [cairo_ps()] [cairo_pdf()] [tiff()] [devEMF::emf()]
+#'  [jpg()] [bmp()]
 #' @export
 pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
-  ext <- tools::file_ext(file)
+  ext <- tolower(tools::file_ext(file))
   start_dev <- dev.list()
   result <- NULL
-  if (ext == "png") {
-    result <- png(filename = file, width = width, height = height, units = "in", res = res, ...)
-  } else if (ext == "svg") {
-    result <- svg(filename = file, ...)
-  } else if (ext == "ps") {
-    result <- postscript(file = file, width = width, height = height, ...)
-  } else if (ext == "eps") {
-    result <- cairo_ps(filename = file, width = width, height = height, ...)
-  } else if (ext == "pdf") {
-    result <- cairo_pdf(filename = file, ...)
-  } else if (ext == "tif" | ext == "tiff") {
-    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
-  } else {
-    message("Defaulting to tiff.")
-    result <- tiff(filename = file, width = width, height = height, units = "in", res = res, ...)
-  }
+  switchret <- switch(
+      ext,
+      "png" = {
+        result <- png(filename = file, width = width, height = height,
+                      units = "in", res = res, ...)
+      },
+      "bmp" = {
+        result <- bmp(filename = file, ...)
+      },
+      "jpg" = {
+        result <- jpeg(filename = file, ...)
+      },
+      "webp" = {
+        result <- webp::write_webp(target = file, ...)
+      },
+      "svg" = {
+        result <- svg(filename = file, ...)
+      },
+      "ps" = {
+        result <- postscript(file = file, width = width, height = height, ...)
+      },
+      "eps" = {
+        result <- cairo_ps(filename = file, width = width, height = height, ...)
+      },
+      "pdf" = {
+        result <- cairo_pdf(filename = file, ...)
+      },
+      "tif" = {
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      },
+      "tiff" = {
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      },
+      "emf" = {
+        result <- devEMF::emf(file = file, width = width, height = height, ...)
+      },
+      {
+        mesg("Defaulting to tiff.")
+        result <- tiff(filename = file, width = width, height = height,
+                       units = "in", res = res, ...)
+      }) ## End of the switch
+  ## Find the new device for closing later.
   now_dev <- dev.list()
   new_dev <- now_dev[length(now_dev)]
 
@@ -45,10 +75,10 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   }
 
   if (is.null(image)) {
-    message("Going to write the image to: ", file, " when dev.off() is called.")
+    mesg("Going to write the image to: ", file, " when dev.off() is called.")
     return(invisible(image))
   } else {
-    message("Writing the image to: ", file, " and calling dev.off().")
+    mesg("Writing the image to: ", file, " and calling dev.off().")
     if (class(image)[[1]] == "recordedplot") {
       print(image)
     } else {
@@ -67,12 +97,12 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' A positive value for 'B' will result in a epitrochoid, while a negative value
 #' will result in a hypotrochoid.
 #'
-#' @param radius_a   The radius of the primary circle.
-#' @param radius_b   The radius of the circle travelling around a.
-#' @param dist_bc   A point relative to the center of 'b' which rotates with the turning of 'b'.
-#' @param revolutions   How many revolutions to perform in the plot
-#' @param increments   The number of radial increments to be calculated per revolution
-#' @param center_a   The position of the center of 'a'.
+#' @param radius_a The radius of the primary circle.
+#' @param radius_b The radius of the circle travelling around a.
+#' @param dist_bc A point relative to the center of 'b' which rotates with the turning of 'b'.
+#' @param revolutions How many revolutions to perform in the plot
+#' @param increments The number of radial increments to be calculated per revolution
+#' @param center_a The position of the center of 'a'.
 #' @return something which I don't yet know.
 #' @export
 plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
@@ -120,11 +150,11 @@ plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
 #'
 #' 3,7,1 should give the classic 7 leaf clover
 #'
-#' @param radius_a  Radius of the major circle
-#' @param radius_b  And the smaller circle.
+#' @param radius_a Radius of the major circle
+#' @param radius_b And the smaller circle.
 #' @param dist_b between b and the drawing point.
-#' @param revolutions  How many times to revolve through the spirograph.
-#' @param increments  How many dots to lay down while writing.
+#' @param revolutions How many times to revolve through the spirograph.
+#' @param increments How many dots to lay down while writing.
 #' @export
 plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
                               revolutions = 7, increments = 6480) {
@@ -168,11 +198,11 @@ plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
 #'
 #' 7, 2, 6, 7 should give a pretty result.
 #'
-#' @param radius_a  Radius of the major circle
-#' @param radius_b  And the smaller circle.
+#' @param radius_a Radius of the major circle
+#' @param radius_b And the smaller circle.
 #' @param dist_b between b and the drawing point.
-#' @param revolutions  How many times to revolve through the spirograph.
-#' @param increments  How many dots to lay down while writing.
+#' @param revolutions How many times to revolve through the spirograph.
+#' @param increments How many dots to lay down while writing.
 #' @export
 plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
                              revolutions = 7, increments = 6480) {
@@ -224,9 +254,8 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
 #' @param tooltip Passed to ggplotly().
 #' @return plotly with clicky links.
 #' @export
-ggplotly_url <- function(plot, filename, id_column = "id", title = NULL,
-                         url_data = NULL, url_column = "url",
-                         tooltip = "all") {
+ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", title = NULL,
+                         url_info = NULL, tooltip = "all") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
     tooltip_columns <- "label"
@@ -237,24 +266,25 @@ ggplotly_url <- function(plot, filename, id_column = "id", title = NULL,
   if (is.null(plot[["data"]][[id_column]])) {
     plot[["data"]][[id_column]] <- rownames(plot[["data"]])
   }
-  if (is.null(url_data) & is.null(plot[["data"]][[url_column]])) {
+  if (is.null(url_info)) {
     warning("No url df was provided, nor is there a column: ", url_column, ", not much to do.")
-  } else if (is.null(plot[["data"]][[url_column]])) {
-    ## We have some url information, this may either be a df of rownames and URLs, or
-    ## a glue description string.
-    if ("character" %in% class(url_data)) {
-      ids <- plot[["data"]][[id_column]]
-      ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
-      plot[["data"]][[url_column]] <- glue::glue(url_data)
-    } else if ("data.frame" %in% class(url_data)) {
-      ## This assumes url data has a column named whatever is url_column
-      message("Merging the url data with the plot data.")
-      plot[["data"]] <- merge(plot[["data"]], url_data, by = "row.names", all.x = TRUE)
-      rownames(plot[["data"]]) <- plot[["Row.names"]]
-      plot[["data"]][["Row.names"]] <- NULL
-    }
+  } else if ("character" %in% url_info & length(url_info) > 1) {
+    message("url_info has multiple entries, assuming it is a character vector with 1 url/entry.")
+    ## Then this should contain all the URLs
+    plot[["data"]][[url_column]] <- url_info
+  } else if ("glue" %in% url_info & length(url_info) == 1) {
+    message("url_info has length 1, assuming it is a glue specification including {ids}.")
+    ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
+    ids <- plot[["data"]][[id_column]]
+    plot[["data"]][[url_column]] <- glue::glue(url_info)
+  } else if ("data.frame" %in% class(url_info)) {
+    ## This assumes url data has a column named whatever is url_column
+    message("Merging the url data with the plot data.")
+    plot[["data"]] <- merge(plot[["data"]], url_info, by = "row.names", all.x = TRUE)
+    rownames(plot[["data"]]) <- plot[["Row.names"]]
+    plot[["data"]][["Row.names"]] <- NULL
   }
-
+  
   if (is.null(plot[["data"]][[first_tooltip_column]])) {
     plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
   }

@@ -35,7 +35,7 @@ backup_file <- function(backup_file, backups = 4) {
 #' obnoxious.  As a result, it will of a necessity take forever.
 #'
 #' @param release Bioconductor release to use, should probably be adjusted to
-#'   automatically find it.
+#'  automatically find it.
 #' @param mirror Bioconductor mirror to use.
 #' @param base Base directory on the mirror to download from.
 #' @param type Type in the tree to use (software or annotation)
@@ -43,7 +43,7 @@ backup_file <- function(backup_file, backups = 4) {
 #' @param suppress_auto For BiocLite(), don't update?
 #' @param force Install if already installed?
 #' @return a number of packages installed
-#' @seealso \pkg{BiocManager}
+#' @seealso [BiocManager] [jsonlite]
 #' @examples
 #' \dontrun{
 #'  go_get_some_coffee_this_will_take_a_while <- bioc_all()
@@ -152,8 +152,9 @@ bioc_all <- function(release = NULL,
 #'
 #' @param keepers List of namespaces to leave alone (unimplemented).
 #' @param depth Cheesy forloop of attempts to remove packages stops after this
-#'   many tries.
+#'  many tries.
 #' @return A spring-fresh R session, hopefully.
+#' @seealso [R.utils]
 #' @export
 clear_session <- function(keepers = NULL, depth = 10) {
   ## Partially taken from:
@@ -246,10 +247,11 @@ get_git_commit <- function(gitdir = "~/hpgltools") {
 #' matrix in a format acceptable to MSstats.
 #'
 #' @param numerators Character list of conditions which are the numerators of a
-#'   series of a/b comparisons.
+#'  series of a/b comparisons.
 #' @param denominators Character list of conditions which are the denominators of a
-#'   series of a/b comparisons.
+#'  series of a/b comparisons.
 #' @return Contrast matrix suitable for use in tools like MSstats.
+#' @seealso [MSstats]
 #' @export
 make_simplified_contrast_matrix <- function(numerators, denominators) {
   if (length(numerators) != length(denominators)) {
@@ -293,7 +295,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
 #' @param aub.p.to.start default = 0.8
 #' @param aub.p.to.end default = 0.55
 #' @return a DataFrame of scores
-#' @seealso \pkg{IRanges} \pkg{Biostrings}
+#' @seealso [IRanges] [Biostrings] [GenomicRanges]
 #' @examples
 #' \dontrun{
 #'  ## Extract all the genes from my genome, pull a static region 120nt following the stop
@@ -362,8 +364,7 @@ hpgl_arescore <- function(x, basal = 1, overlapping = 1.5, d1.3=0.75, d4.6=0.4,
 #' @param method Correlation method to use. Includes pearson, spearman, kendal, robust.
 #' @param ... Other options to pass to stats::cor().
 #' @return Some fun correlation statistics.
-#' @seealso \pkg{robust}
-#'  \code{\link{cor}} \code{\link{cov}} \code{\link[robust]{covRob}}
+#' @seealso [robust]
 #' @examples
 #' \dontrun{
 #'  hpgl_cor(df = df)
@@ -394,6 +395,8 @@ hpgl_cor <- function(df, method = "pearson", ...) {
 #' @param method p adjustment method to apply.
 #' @param significance Passed to IHW
 #' @param type Assuming a DE table, what type of DE is this?
+#' @return Newly adjusted p-values using either p.adjust() or IHW.
+#' @seealso [IHW]
 #' @export
 hpgl_padjust <- function(data, pvalue_column = "pvalue", mean_column = "base_mean",
                          method = "fdr", significance = 0.05, type = NULL) {
@@ -429,7 +432,7 @@ hpgl_dist <- function(df, method = "euclidean", ...) {
 #' @param directory Directory containing the RData.rda.xz file.
 #' @param filename Filename to which to save.
 #' @return a bigger global environment
-#' @seealso \code{\link{saveme}} \code{\link{load}} \code{\link{save}}
+#' @seealso [saveme()]
 #' @examples
 #' \dontrun{
 #'  loadme()
@@ -519,8 +522,7 @@ my_identifyAUBlocks <- function (x, min.length = 20, p.to.start = 0.8, p.to.end 
 #' @param lib String name of a library to check/install.
 #' @param update Update packages?
 #' @return 0 or 1, whether a package was installed or not.
-#' @seealso \pkg{BiocManager}
-#'  \code{\link[BiocManager]{install}} \code{\link{install.packages}}
+#' @seealso [BiocManager] [install.packages()]
 #' @examples
 #' \dontrun{
 #'  require.auto("ggplot2")
@@ -590,6 +592,7 @@ rex <- function(display = ":0") {
 #' @param file Rmd file to render.
 #' @param format Chosen file format.
 #' @return Final filename including the prefix rundate.
+#' @seealso [rmarkdown]
 #' @export
 renderme <- function(file, format = "html_document") {
   ret <- rmarkdown::render(file, output_format = format, envir = globalenv())
@@ -617,7 +620,7 @@ renderme <- function(file, format = "html_document") {
 #' @param cpus  How many cpus to use for the xz call
 #' @param filename  Choose a filename.
 #' @return Command string used to save the global environment.
-#' @seealso \code{\link{save}} \code{\link{pipe}}
+#' @seealso [loadme()]
 #' @examples
 #' \dontrun{
 #'  saveme()
@@ -654,7 +657,7 @@ saveme <- function(directory = "savefiles", backups = 2, cpus = 6, filename = "R
 #' @param firstaxis X-value of the vertical axis.
 #' @param secondaxis Y-value of the second axis.
 #' @return Dataframe of the distances.
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  mydist <- sillydist(df[,1], df[,2], first_median, second_median)

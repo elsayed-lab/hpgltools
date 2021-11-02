@@ -35,5 +35,5 @@ information regarding the number of genes observed in each pathway.
 }
 }
 \seealso{
-\pkg{KEGGREST}
+[KEGGREST]
 }

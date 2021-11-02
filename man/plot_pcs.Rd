@@ -19,7 +19,9 @@ plot_pcs(
   plot_alpha = NULL,
   size_column = NULL,
   rug = TRUE,
+  max_overlaps = 20,
   cis = c(0.95, 0.9),
+  label_size = 4,
   ...
 )
 }
@@ -53,7 +55,11 @@ arbitrary information.}
 
 \item{rug}{Include the rugs on the sides of the plot?}
 
+\item{max_overlaps}{Increase overlapping label tolerance.}
+
 \item{cis}{What (if any) confidence intervals to include.}
+
+\item{label_size}{The text size of the labels.}
 
 \item{...}{Extra arguments dropped into arglist}
 }
@@ -73,6 +79,5 @@ that process as simple and pretty as possible.
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[directlabels]{geom_dl}}
+[directlabels] [ggplot2] [plot_pca] [pca_information]
 }

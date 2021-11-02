@@ -21,5 +21,5 @@ feel bad.  Indeed, it will allow you to overwrite any arguments if you wish.
 In our work, the most common normalization is: quantile(cpm(low-filter(data))).
 }
 \seealso{
-\code{\link{normalize_expt}}
+[normalize_expt()]
 }

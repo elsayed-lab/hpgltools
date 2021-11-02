@@ -48,3 +48,6 @@ GeneSet.  Some important caveats when working with gsva, notably the gene IDs
 we use are not usually compatible with the gene IDs used by gsva, thus the
 primary logic in this function is intended to bridge these IDs.
 }
+\seealso{
+[GSEABase]
+}

@@ -3,6 +3,7 @@
 ## because I was having annoying problems creating expressionSets.  Thus, >90%
 ## of the logic here is intended to simplify and standardize that process.
 
+
 #' Take two expressionsets and smoosh them together.
 #'
 #' Because of the extra sugar I added to expressionSets, the combine() function
@@ -15,6 +16,8 @@
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
+#' @seealso [set_expt_batches()] [set_expt_conditions()] [set_expt_colors()]
+#'  [set_expt_genenames()] [set_expt_samplenames()] [subset_expt()] [create_expt()]
 #' @examples
 #'  \dontrun{
 #'   ## I am trying to get rid of all my dontrun sections, but I don't have two
@@ -109,8 +112,7 @@ combine_expts <- function(expt1, expt2, condition = "condition",
 #' @param expt Experiment class containing the requisite metadata and count tables.
 #' @param column Column of the design matrix used to specify which samples are replicates.
 #' @return Expt with the concatenated counts, new design matrix, batches, conditions, etc.
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}} \code{\link[Biobase]{pData}}
+#' @seealso [Biobase] [exprs()] [fData()] [pData()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  compressed <- concatenate_runs(expt)
@@ -138,8 +140,8 @@ concatenate_runs <- function(expt, column = "replicate") {
     final_design <- rbind(final_design, tmp_design)
     column_names[[rep]] <- as.character(tmp_design[, "sampleid"])
     colors[[rep]] <- as.character(tmp_expt[["colors"]][1])
-    batches[[rep]] <- as.character(tmp_expt[["batches"]][1])
-    conditions[[rep]] <- as.character(tmp_expt[["conditions"]][1])
+    batches[[rep]] <- as.character(pData(tmp_expt)[["batch"]][1])
+    conditions[[rep]] <- as.character(pData(tmp_expt)[["condition"]][1])
     samplenames[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep = "-")
     colnames(final_data) <- column_names
   }
@@ -159,6 +161,7 @@ concatenate_runs <- function(expt, column = "replicate") {
   message("The final expressionset has ", nrow(pData(final_expt)), " samples.")
   return(final_expt)
 }
+
 
 #' Wrap bioconductor's expressionset to include some extra information.
 #'
@@ -192,29 +195,32 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  filesystem?
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{fData}}
-#'  \code{\link[Biobase]{exprs}} \code{\link{read_counts_expt}}
+#' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
+#'  [set_expt_conditions()] [set_expt_batches()] [set_expt_samplenames()] [subset_expt()]
+#'  [set_expt_colors()] [set_expt_genenames()] [tximport] [load_annotations()]
 #' @examples
-#'  load(file = system.file("share/cdm_expt.rda", package = "hpgltools"))
+#'  cdm_expt_rda <- system.file("share", "cdm_expt.rda", package = "hpgltools")
+#'  load(file = cdm_expt_rda)
 #'  head(cdm_counts)
 #'  head(cdm_metadata)
-#'  ## The gff file has differently labeled locus tags than the count tables
-#'  ## The naming standard changed since this experiment was performed and I
+#'  ## The gff file has differently labeled locus tags than the count tables, also
+#'  ## the naming standard changed since this experiment was performed, therefore I
 #'  ## downloaded a new gff file.
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  rownames(gas_gff_annot) <- make.names(gsub(pattern = "(Spy)_", replacement = "\\1",
 #'                                             x = gas_gff_annot[["locus_tag"]]), unique = TRUE)
 #'  mgas_expt <- create_expt(metadata = cdm_metadata, gene_info = gas_gff_annot,
 #'                           count_dataframe = cdm_counts)
 #'  head(pData(mgas_expt))
 #'  ## An example using count tables referenced in the metadata.
-#'  sb_annot <- load_trinotate_annotations(
-#'    trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools"))
-#' sb_annot <- as.data.frame(sb_annot)
-#'   rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
+#'  sb_annot <- system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgltools")
+#'  sb_annot <- load_trinotate_annotations(trinotate = sb_annot)
+#'  sb_annot <- as.data.frame(sb_annot)
+#'  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL
-#'  untarred <- utils::untar(tarfile = system.file("sb/preprocessing.tar.xz",
-#'                           package = "hpgltools"))
+#'  sb_data <- system.file("share", "sb", "preprocessing.tar.xz", package = "hpgltools")
+#'  untarred <- utils::untar(tarfile = sb_data)
 #'  sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
 #'                         gene_info = sb_annot)
 #'  dim(exprs(sb_expt))
@@ -231,8 +237,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @export
 create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                         sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
-                        notes = NULL, countdir = NULL, include_type = "all", include_gff = NULL,
-                        file_column = "file", id_column = NULL, savefile = NULL, low_files = FALSE, ...) {
+                        notes = NULL, countdir = NULL, include_type = "all",
+                        include_gff = NULL, file_column = "file", id_column = NULL,
+                        savefile = NULL, low_files = FALSE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -759,6 +766,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   return(expt)
 }
 
+
 #' Exclude some genes given a pattern match
 #'
 #' Because I am too lazy to remember that expressionsets use matrix subsets for
@@ -769,10 +777,12 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' @param column fData column to use for subsetting.
 #' @param method Either remove explicit rows, or keep them.
 #' @param ids Specific IDs to exclude.
+#' @param warning_cutoff Print the sample IDs for anything which has less than this percent left.
+#' @param meta_column Save the amount of data lost to this metadata column when not null.
 #' @param patterns Character list of patterns to remove/keep
 #' @param ... Extra arguments are passed to arglist, currently unused.
 #' @return A smaller expt
-#' @seealso \code{\link{create_expt}}
+#' @seealso [create_expt()] [Biobase]
 #' @examples
 #'  \dontrun{
 #'   all_expt <- create_expt(metadata)
@@ -785,6 +795,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #' }
 #' @export
 exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids = NULL,
+                               warning_cutoff = 90, meta_column = NULL,
                                patterns = c("snRNA", "tRNA", "rRNA"), ...) {
   arglist <- list(...)
   ex <- expt[["expressionset"]]
@@ -850,8 +861,8 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
     }
   }
 
-  message("Before removal, there were ", nrow(Biobase::fData(ex)), " entries.")
-  message("Now there are ", nrow(Biobase::fData(kept)), " entries.")
+  message("Before removal, there were ", nrow(Biobase::fData(ex)), " genes, now there are ",
+          nrow(Biobase::fData(kept)), ".")
   all_tables <- Biobase::exprs(ex)
   all_sums <- colSums(all_tables)
   kept_tables <- Biobase::exprs(kept)
@@ -859,200 +870,36 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   removed_tables <- Biobase::exprs(removed)
   removed_sums <- colSums(removed_tables)
   pct_kept <- (kept_sums / all_sums) * 100.0
+
   pct_removed <- (removed_sums / all_sums) * 100.0
   summary_table <- rbind(kept_sums, removed_sums, all_sums,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
                                "pct_kept", "pct_removed")
-  message("Percent kept: ", toString(sprintf(fmt = "%.3f", pct_kept)))
-  message("Percent removed: ", toString(sprintf(fmt = "%.3f", pct_removed)))
+  mesg("Percent of the counts kept after filtering: ", toString(sprintf(fmt = "%.3f", pct_kept)))
+
   expt[["expressionset"]] <- kept
   expt[["summary_table"]] <- summary_table
+  if (!is.null(meta_column)) {
+    pData(expt[["expressionset"]])[meta_column] <- summary_table["pct_removed", ]
+  }
+
+  warning_idx <- summary_table["pct_kept", ] < warning_cutoff
+  if (sum(warning_idx) > 0) {
+    message("There are ", sum(warning_idx), " samples which kept less than ",
+            warning_cutoff, " percent counts.")
+    print(summary_table["pct_kept", warning_idx])
+  }
   return(expt)
 }
 
-#' Pull metadata from a table (xlsx/xls/csv/whatever)
-#'
-#' I find that when I acquire metadata from a paper or collaborator, annoyingly
-#' often there are many special characters or other shenanigans in the column
-#' names.  This function performs some simple sanitizations.  In addition, if I
-#' give it a filename it calls my generic 'read_metadata()' function before
-#' sanitizing.
-#'
-#' @param metadata file or df of metadata
-#' @param id_column Column in the metadat containing the sample names.
-#' @param ... Arguments to pass to the child functions (read_csv etc).
-#' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
-#' @examples
-#'  \dontrun{
-#'   sanitized <- extract_metadata("some_random_supplemental.xls")
-#'   saniclean <- extract_metadata(some_goofy_df)
-#' }
-#' @export
-extract_metadata <- function(metadata, id_column = "sampleid", ...) {
-  arglist <- list(...)
-  ## FIXME: Now that this has been yanked into its own function,
-  ## Make sure it sets good, standard rownames.
-  file <- NULL
-
-  meta_dataframe <- NULL
-  meta_file <- NULL
-  if ("character" %in% class(metadata)) {
-    ## This is a filename containing the metadata
-    meta_file <- metadata
-  } else if ("data.frame" %in% class(metadata)) {
-    ## A data frame of metadata was passed.
-    meta_dataframe <- metadata
-  } else {
-    stop("This requires either a file or meta data.frame.")
-  }
-
-  ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
-  if (is.null(meta_dataframe) & is.null(meta_file)) {
-    stop("This requires either a csv file or dataframe of metadata describing the samples.")
-  } else if (is.null(meta_file)) {
-    ## punctuation is the devil
-    sample_definitions <- meta_dataframe
-  }  else {
-    sample_definitions <- read_metadata(meta_file,
-                                        ...)
-    ## sample_definitions <- read_metadata(meta_file)
-  }
-
-  colnames(sample_definitions) <- gsub(pattern = "[[:punct:]]",
-                                       replacement = "",
-                                       x = colnames(sample_definitions))
-  id_column <- tolower(id_column)
-  id_column <- gsub(pattern = "[[:punct:]]",
-                    replacement = "",
-                    x = id_column)
-
-  ## Get appropriate row and column names.
-  current_rownames <- rownames(sample_definitions)
-  bad_rownames <- as.character(1:nrow(sample_definitions))
-  ## Try to ensure that we have a useful ID column by:
-  ## 1. Look for data in the id_column column.
-  ##  a.  If it is null, look at the rownames
-  ##    i.  If they are 1...n, arbitrarily grab the first column.
-  ##    ii. If not, use the rownames.
-  if (is.null(sample_definitions[[id_column]])) {
-    if (identical(current_rownames, bad_rownames)) {
-      id_column <- colnames(sample_definitions)[1]
-    } else {
-      sample_definitions[[id_column]] <- rownames(sample_definitions)
-    }
-  }
-
-  ## Drop empty rows in the sample sheet
-  empty_samples <- which(sample_definitions[, id_column] == "" |
-                         grepl(x = sample_definitions[, id_column], pattern = "^undef") |
-                         is.na(sample_definitions[, id_column]) |
-                         grepl(pattern = "^#", x = sample_definitions[, id_column]))
-  if (length(empty_samples) > 0) {
-    message("Dropped ", length(empty_samples),
-            " rows from the sample metadata because they were blank.")
-    sample_definitions <- sample_definitions[-empty_samples, ]
-  }
-
-  ## Drop duplicated elements.
-  num_duplicated <- sum(duplicated(sample_definitions[[id_column]]))
-  if (num_duplicated > 0) {
-    message("There are ", num_duplicated,
-            " duplicate rows in the sample ID column.")
-    sample_definitions[[id_column]] <- make.names(sample_definitions[[id_column]],
-                                                  unique = TRUE)
-  }
-
-  ## Now we should have consistent sample IDs, set the rownames.
-  rownames(sample_definitions) <- sample_definitions[[id_column]]
-  ## Check that condition and batch have been filled in.
-  sample_columns <- colnames(sample_definitions)
-
-  ## The various proteomics data I am looking at annoyingly starts with a number
-  ## So make.names() prefixes it with X which is ok as far as it goes, but
-  ## since it is a 's'amplename, I prefer an 's'.
-  rownames(sample_definitions) <- gsub(pattern = "^X([[:digit:]])",
-                                       replacement = "s\\1",
-                                       x = rownames(sample_definitions))
-
-  sample_columns_to_remove <- NULL
-  for (col in 1:length(colnames(sample_definitions))) {
-    sum_na <- sum(is.na(sample_definitions[[col]]))
-    sum_null <- sum(is.null(sample_definitions[[col]]))
-    sum_empty <- sum_na + sum_null
-    if (sum_empty ==  nrow(sample_definitions)) {
-      ## This column is empty.
-      sample_columns_to_remove <- append(sample_columns_to_remove, col)
-    }
-  }
-  if (length(sample_columns_to_remove) > 0) {
-    sample_definitions <- sample_definitions[-sample_columns_to_remove]
-  }
-
-  ## Now check for columns named condition and batch
-  found_condition <- "condition" %in% sample_columns
-  if (!isTRUE(found_condition)) {
-    message("Did not find the condition column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["condition"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
-    na_idx <- is.na(sample_definitions[["condition"]])
-    sample_definitions[na_idx, "condition"] <- "undefined"
-  }
-  found_batch <- "batch" %in% sample_columns
-  if (!isTRUE(found_batch)) {
-    message("Did not find the batch column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["batch"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
-    na_idx <- is.na(sample_definitions[["batch"]])
-    sample_definitions[na_idx, "batch"] <- "undefined"
-  }
-
-  ## Double-check that there is a usable condition column
-  ## This is also an instance of simplifying subsetting, identical to
-  ## sample_definitions[["condition"]] I don't think I care one way or the other which I use in
-  ## this case, just so long as I am consistent -- I think because I have trouble remembering the
-  ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
-  ## [row, ] method to reinforce my weak neurons.
-  if (is.null(sample_definitions[["condition"]])) {
-    ## type and stage are commonly used, and before I was consistent about always having
-    ## condition, they were a proxy for it.
-    sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
-                                                       sample_definitions[["stage"]], sep = "_"))
-  }
-  ## Extract out the condition names as a factor
-  condition_names <- unique(sample_definitions[["condition"]])
-  if (is.null(condition_names)) {
-    warning("There is no 'condition' field in the definitions, this will make many
-analyses more difficult/impossible.")
-  }
-  ## Condition and Batch are not allowed to be numeric, so if they are just numbers,
-  ## prefix them with 'c' and 'b' respectively.
-  pre_condition <- unique(sample_definitions[["condition"]])
-  pre_batch <- unique(sample_definitions[["batch"]])
-  sample_definitions[["condition"]] <- gsub(pattern = "^(\\d+)$", replacement = "c\\1",
-                                            x = sample_definitions[["condition"]])
-  sample_definitions[["batch"]] <- gsub(pattern = "^(\\d+)$", replacement = "b\\1",
-                                        x = sample_definitions[["batch"]])
-  sample_definitions[["condition"]] <- factor(sample_definitions[["condition"]],
-                                              levels = unique(sample_definitions[["condition"]]),
-                                              labels = pre_condition)
-  sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
-                                          levels = unique(sample_definitions[["batch"]]),
-                                          labels = pre_batch)
-
-  return(sample_definitions)
-}
 
 #' Do features_greater_than() inverted!
 #'
 #' @param  ... Arguments passed to features_greather_than()
 #' @return The set of features less than whatever you would have done with
 #'   features_greater_than().
-#' @seealso \code{\link{features_greater_than}}
+#' @seealso [features_greater_than()]
 #' @export
 features_less_than <- function(...) {
   features_greater_than(..., inverse = TRUE)
@@ -1071,7 +918,7 @@ features_less_than <- function(...) {
 #' @param inverse when inverted, this provides features less than the cutoff.
 #' @return A list of two elements, the first comprised of the number of genes
 #'   greater than the cutoff, the second with the identities of said genes.
-#' @seealso \pkg{Biobase}
+#' @seealso [Biobase]
 #' @examples
 #' \dontrun{
 #'  features <- features_greater_than(expt)
@@ -1079,7 +926,8 @@ features_less_than <- function(...) {
 #' }
 #' @export
 features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE) {
-  if (class(data) == "expt" | class(data) == "ExpressionSet") {
+  if ("expt" %in% class(data) | "ExpressionSet" %in% class(data) |
+      "SummarizedExperiment" %in% class(data)) {
     data <- as.data.frame(exprs(data))
   } else {
     data <- as.data.frame(data)
@@ -1122,10 +970,11 @@ features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE
 #'
 #' @param expt An experiment to query.
 #' @param cutoff What is the minimum number of counts required to define
-#'   'included.'
+#'  'included.'
 #' @param factor What metadata factor to query?
 #' @param chosen Either choose a subset or all conditions to query.
 #' @return A set of features.
+#' @seealso [subset_expt()]
 #' @examples
 #'  \dontrun{
 #'   unique_genes
@@ -1188,6 +1037,7 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
   return(retlist)
 }
 
+
 #' Set up default colors for a data structure containing usable metadata
 #'
 #' In theory this function should be useful in any context when one has a blob
@@ -1196,18 +1046,22 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
 #' his/her own colors.
 #'
 #' @param sample_definitions Metadata, presumably containing a 'condition'
-#'   column.
+#'  column.
 #' @param cond_column Which column in the sample data provides the set of
-#'   'conditions' used to define the colors?
+#'  'conditions' used to define the colors?
 #' @param by Name the factor of colors according to this column.
 #' @param ... Other arguments like a color palette, etc.
 #' @return  Colors!
+#' @seealso [create_expt()]
 generate_expt_colors <- function(sample_definitions, cond_column = "condition",
                                  by = "sampleid", ...) {
   arglist <- list(...)
   ## First figure out how many conditions we have
   colnames(sample_definitions) <- tolower(colnames(sample_definitions))
+  ## If there is no condition to start, then it may be NA
   chosen_colors <- as.character(sample_definitions[[cond_column]])
+  na_idx <- is.na(chosen_colors)
+  chosen_colors[na_idx] <- "undefined"
   num_conditions <- length(levels(as.factor(chosen_colors)))
 
   chosen_palette <- "Dark2"
@@ -1259,7 +1113,7 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
 #' @param ngenes How many genes in the fictional data set?
 #' @param columns How many samples in this data set?
 #' @return Matrix of pretend counts.
-#' @seealso \pkg{limma} \pkg{stats} \pkg{DESeq}
+#' @seealso [limma] [DESeq2] [stats]
 #' @examples
 #' \dontrun{
 #'  pretend = make_exampledata()
@@ -1295,6 +1149,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   return(example)
 }
 
+
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns
@@ -1308,7 +1163,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
 #' @param fact Factor describing the columns in the data.
 #' @param fun Optionally choose mean or another function.
 #' @return Data frame of the medians.
-#' @seealso \pkg{Biobase} \pkg{matrixStats}
+#' @seealso [Biobase] [matrixStats]
 #' @examples
 #' \dontrun{
 #'  compressed = median_by_factor(data, experiment$condition)
@@ -1318,34 +1173,42 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   if (length(fact) == 1) {
     design <- pData(data)
     fact <- design[[fact]]
+    na_idx <- is.na(fact)
+    if (sum(na_idx) > 0) {
+      fact[na_idx] <- "unknown"
+    }
     names(fact) <- rownames(design)
   }
-  if (class(data) == "expt" | class(data) == "ExpressionSet") {
+  if ("expt" %in% class(data) | "ExpressionSet" %in% class(data) |
+      "SummarizedExperiment" %in% class(data)) {
     data <- exprs(data)
   }
 
-  medians <- data.frame("ID"=rownames(data), stringsAsFactors = FALSE)
-  cvs <- data.frame("ID"=rownames(data), stringsAsFactors = FALSE)
+  medians <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  cvs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
   rownames(cvs) <- rownames(data)
   fact <- as.factor(fact)
   used_columns <- c()
+  group_indexes <- list()
   for (type in levels(fact)) {
-    columns <- grep(pattern = type, x = fact)
+    ## columns <- grep(pattern = type, x = fact)
+    columns <- as.character(fact) == type
+    group_indexes[[type]] <- columns
     med <- NULL
-    if (length(columns) < 1) {
+    if (sum(columns) < 1) {
       warning("The level ", type, " of the factor has no columns.")
       next
     }
     used_columns <- c(used_columns, type)
-    if (length(columns) == 1) {
+    if (sum(columns) == 1) {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
       cv <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
     } else {
       if (fun == "median") {
-        message("The factor ", type, " has ", length(columns), " rows.")
+        message("The factor ", type, " has ", sum(columns), " rows.")
         med <- matrixStats::rowMedians(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowMads(data[, columns], na.rm = TRUE)
         cv <- cv / med
@@ -1353,7 +1216,7 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
         nan_idx <- is.nan(cv)
         cv[nan_idx] <- 0
       } else if (fun == "mean") {
-        message("The factor ", type, " has ", length(columns), " rows.")
+        message("The factor ", type, " has ", sum(columns), " rows.")
         med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowSds(data[, columns], na.rm = TRUE)
         cv <- cv / med
@@ -1373,18 +1236,22 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   colnames(medians) <- used_columns
   colnames(cvs) <- used_columns
   retlist <- list(
+      "method" = fun,
       "medians" = medians,
-      "cvs" = cvs)
+      "cvs" = cvs,
+      "indexes" = group_indexes)
   return(retlist)
 }
+
 
 #' Create a Schizosaccharomyces cerevisiae expt.
 #'
 #' This just saves some annoying typing if one wishes to make a standard
 #' expressionset superclass out of the publicly available fission data set.
 #'
-#' @param annotation  Add annotation data?
+#' @param annotation Add annotation data?
 #' @return Expressionset/expt of fission.
+#' @seealso [fission] [create_expt()]
 #' @export
 make_pombe_expt <- function(annotation = TRUE) {
   fission <- new.env()
@@ -1425,6 +1292,7 @@ make_pombe_expt <- function(annotation = TRUE) {
   return(pombe_expt)
 }
 
+
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
 #' It is worth noting that this function has some logic intended for the elsayed
@@ -1444,8 +1312,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param countdir Optional count directory to read from.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
-#' @seealso \pkg{data.table}
-#'  \code{\link{create_expt}}
+#' @seealso [data.table] [create_expt()] [tximport]
 #' @examples
 #' \dontrun{
 #'  count_tables <- hpgl_read_files(as.character(sample_ids), as.character(count_filenames))
@@ -1504,16 +1371,16 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   ## Otherwise, tximport requires a tx2gene data frame with 2 columns, TXNAME and GENEID.
   ## These columns should be definition be available in my fData annotation.
   ## Therefore, I will set the flags tx2gene and txOut accordingly.
-  message("Reading count tables.")
+  mesg("Reading count tables.")
   txout <- TRUE
   tx_gene_map <- NULL
   if (!is.null(arglist[["tx_gene_map"]])) {
-    message("Using the transcript to gene mapping.")
+    mesg("Using the transcript to gene mapping.")
     txout <- FALSE
     tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
-    message("Reading kallisto data with tximport.")
+    mesg("Reading kallisto data with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
     if (!all(file.exists(files))) {
@@ -1540,7 +1407,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern = "\\.genes\\.results", x = files[1])) {
-    message("Reading rsem data with tximport.")
+    mesg("Reading rsem data with tximport.")
     names(files) <- ids
     import <- NULL
     import_scaled <- NULL
@@ -1559,7 +1426,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else if (grepl(pattern = "\\.sf", x = files[1])) {
-    message("Reading salmon data with tximport.")
+    mesg("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
     missing_idx <-!file.exists(files)
@@ -1587,7 +1454,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
   } else {
-    message("Reading count files with read.table().")
+    mesg("Reading count files with read.table().")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header = header, stringsAsFactors = FALSE)
     colnames(count_table) <- c("rownames", ids[1])
@@ -1608,7 +1475,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     if (class(count_table)[1] == "try-error") {
       stop("There was an error reading: ", files[1])
     }
-    message(files[1], " contains ", length(rownames(count_table)), " rows.")
+    mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## Following lines not needed for data.table
     ## rownames(count_table) <- make.names(count_table[, "ID"], unique = TRUE)
     ## count_table <- count_table[, -1, drop = FALSE]
@@ -1637,8 +1504,8 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       ## count_table <- count_table[, -1, drop = FALSE]
       ## post_merge <- length(rownames(count_table))
       post_merge <- nrow(count_table)
-      message(files[table], " contains ", pre_merge,
-              " rows and merges to ", post_merge, " rows.")
+      mesg(files[table], " contains ", pre_merge,
+           " rows and merges to ", post_merge, " rows.")
     }
 
     ## remove summary fields added by HTSeq
@@ -1656,9 +1523,10 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     } ## End the difference between tximport and reading tables.
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
   }
-  message("Finished reading count data.")
+  mesg("Finished reading count data.")
   return(retlist)
 }
+
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -1667,9 +1535,9 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
 #'
 #' @param file Csv/xls file to read.
 #' @param ... Arguments for arglist, used by sep, header and similar
-#'   read_csv/read.table parameters.
+#'  read_csv/read.table parameters.
 #' @return Df of metadata.
-#' @seealso \pkg{tools} \pkg{openxlsx} \pkg{XLConnect}
+#' @seealso [openxlsx] [readODS]
 #' @export
 read_metadata <- function(file, ...) {
   arglist <- list(...)
@@ -1714,6 +1582,7 @@ read_metadata <- function(file, ...) {
   return(definitions)
 }
 
+
 #' Remove/keep specifically named genes from an expt.
 #'
 #' I find subsetting weirdly confusing.  Hopefully this function will allow one
@@ -1721,12 +1590,13 @@ read_metadata <- function(file, ...) {
 #'
 #' @param input Expt to filter.
 #' @param invert The default is to remove the genes with the semantic strings.
-#'   Keep them when inverted.
+#'  Keep them when inverted.
 #' @param topn Take the topn most abundant genes rather than a text based heuristic.
 #' @param semantic Character list of strings to search for in the annotation
-#'   data.
+#'  data.
 #' @param semantic_column Column in the annotations to search.
 #' @return A presumably smaller expt.
+#' @seealso [Biobase]
 #' @export
 semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
                                  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
@@ -1740,7 +1610,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
     new_annots <- annots
     new_mtrx <- mtrx
   }
-
+  start_rows <- nrow(mtrx)
   numbers_removed <- 0
   if (is.null(topn)) {
     for (string in semantic) {
@@ -1769,14 +1639,16 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
         } else {
           idx <- grepl(pattern = string, x = new_annots[, semantic_column])
         }
-        message("Hit ", sum(idx), " genes for term ", string, ".")
+        mesg("Hit ", sum(idx), " genes for term ", string, ".")
         idx <- ! idx
         ## So, we take the index of stuff to keep, and just subset on that index.
         new_annots <- new_annots[idx, ]
         new_mtrx <- new_mtrx[idx, ]
-        message("Now the matrix has ", nrow(new_mtrx), " elements.")
       }
-    }
+    } ## End for loop
+    end_rows <- nrow(new_mtrx)
+    lost_rows <- start_rows - end_rows
+    message("semantic_expt_filter(): Removed ", lost_rows, " genes.")
   } else {
     ## Instead of a string based sematic filter, take the topn most abundant
     medians <- rowMedians(mtrx)
@@ -1795,6 +1667,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
   return(input)
 }
 
+
 #' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1805,7 +1678,7 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
 #' @param ids Specific samples to change.
 #' @param ... Extra options are like spinach.
 #' @return The original expt with some new metadata.
-#' @seealso \code{\link{create_expt}} \code{\link{set_expt_conditions}}
+#' @seealso [create_expt()] [set_expt_conditions()] [Biobase]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_batches(big_expt, factor = c(some,stuff,here))
@@ -1813,11 +1686,11 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
 #' @export
 set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   arglist <- list(...)
-  original_batches <- expt[["batches"]]
+  original_batches <- pData(expt)[["batch"]]
   original_length <- length(original_batches)
   if (length(fact) == 1) {
     ## Assume it is a column in the design
-    if (fact %in% colnames(expt[["design"]])) {
+    if (fact %in% colnames(pData(expt))) {
       fact <- expt[["design"]][[fact]]
     } else {
       stop("The provided factor is not in the design matrix.")
@@ -1833,6 +1706,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   return(expt)
 }
 
+
 #' Change the colors of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1843,7 +1717,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' @param chosen_palette I usually use Dark2 as the RColorBrewer palette.
 #' @param change_by Assuming a list is passed, cross reference by condition or sample?
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()] [RColorBrewer]
 #' @examples
 #' \dontrun{
 #' unique(esmer_expt$design$conditions)
@@ -1861,10 +1735,19 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' @export
 set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", change_by = "condition") {
   condition_factor <- as.factor(pData(expt)[["condition"]])
+
+  ## Since I already have logic for named characters, just convert a list to one...
+  if ("list" %in% class(colors)) {
+    new_colors <- as.character(colors)
+    names(new_colors) <- names(colors)
+    colors <- new_colors
+  }
+  
   num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
-  chosen_colors <- expt[["conditions"]]
+  ## chosen_colors <- expt[["conditions"]]
+  chosen_colors <- condition_factor
   chosen_names <- names(chosen_colors)
   sample_colors <- NULL
   if (is.null(colors) | isTRUE(colors)) {
@@ -1875,13 +1758,32 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_colors <- mapping[chosen_colors]
   } else if (class(colors) == "factor") {
     if (change_by == "condition") {
-      message("The new colors are a factor, changing according to condition.")
+      mesg("The new colors are a factor, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
+      colors_allocated <- names(colors) %in% levels(pData(expt)[["condition"]])
+      if (sum(colors_allocated) < length(colors)) {
+        missing_colors <- colors[!colors_allocated]
+        warning("Colors for the following categories are not being used: ",
+                names(missing_colors), ".")
+      }
+      possible_conditions <- levels(pData(expt)[["condition"]])
+      conditions_allocated <- possible_conditions %in% names(colors)
+      if (sum(conditions_allocated) < length(possible_conditions)) {
+        missing_conditions <- possible_conditions[!conditions_allocated]
+        missing_samples <- c()
+        for (cond in missing_conditions) {
+          missing_by_condition <- pData(expt)[["condition"]] == cond
+          missing_samples_by_cond <- rownames(pData(expt))[missing_by_condition]
+          missing_samples <- c(missing_samples, missing_samples_by_cond)
+        }
+        warning("Some conditions do not have a color: ", missing_conditions, ".")
+        warning("These samples are: ", missing_samples, ".")
+      }
       mapping <- colors
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
-      message("The new colors are a factor, changing according to sampleID.")
+      mesg("The new colors are a factor, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1898,13 +1800,33 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       names(colors) <- levels(as.factor(expt[["conditions"]]))
     }
     if (change_by == "condition") {
-      message("The new colors are a character, changing according to condition.")
+      mesg("The new colors are a character, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- colors
+      pd_factor <- as.factor(pData(expt)[["condition"]])
+      possible_conditions <- levels(pd_factor)
+      colors_allocated <- names(colors) %in% possible_conditions
+      if (sum(colors_allocated) < length(colors)) {
+        missing_colors <- colors[!colors_allocated]
+        warning("Colors for the following categories are not being used: ",
+                names(missing_colors), ".")
+      }
+      conditions_allocated <- possible_conditions %in% names(colors)
+      if (sum(conditions_allocated) < length(possible_conditions)) {
+        missing_conditions <- possible_conditions[!conditions_allocated]
+        missing_samples <- c()
+        for (cond in missing_conditions) {
+          missing_by_condition <- pData(expt)[["condition"]] == cond
+          missing_samples_by_cond <- rownames(pData(expt))[missing_by_condition]
+          missing_samples <- c(missing_samples, missing_samples_by_cond)
+        }
+        warning("Some conditions do not have a color: ", missing_conditions, ".")
+        warning("These samples are: ", missing_samples, ".")
+      }
       chosen_colors <- mapping[as.character(chosen_colors)]
       names(chosen_colors) <- chosen_names
     } else if (change_by == "sample") {
-      message("The new colors are a character, changing according to sampleID.")
+      mesg("The new colors are a character, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1918,13 +1840,13 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (class(colors) == "list") {
     if (change_by == "condition") {
-      message("The new colors are a list, changing according to condition.")
+      mesg("The new colors are a list, changing according to condition.")
       ## In this case, we have every color accounted for in the set of conditions.
       mapping <- as.character(colors)
       names(mapping) <- names(colors)
       chosen_colors <- mapping[chosen_colors]
     } else if (change_by == "sample") {
-      message("The new colors are a list, changing according to sampleID.")
+      mesg("The new colors are a list, changing according to sampleID.")
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
@@ -1947,7 +1869,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     chosen_idx <- complete.cases(chosen_colors)
     chosen_colors <- chosen_colors[chosen_idx]
   } else if (is.null(colors)) {
-    message("Setting colors according to a color ramp.")
+    mesg("Setting colors according to a color ramp.")
     colors <- sm(
       grDevices::colorRampPalette(
                    RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
@@ -1970,6 +1892,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   return(expt)
 }
 
+
 #' Change the condition of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1981,7 +1904,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
 #' @param null_cell How to fill elements of the design which are null?
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @seealso [set_expt_batches()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
@@ -1997,7 +1920,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
   ## the conditions and I do not know why.
   if (!is.null(ids)) {
     ## Change specific id(s) to given condition(s).
-    message("Setting condition for ids ", toString(ids), " to ", fact, ".")
+    mesg("Setting condition for ids ", toString(ids), " to ", fact, ".")
     old_pdata <- pData(expt)
     old_cond <- as.character(old_pdata[["condition"]])
     names(old_cond) <- rownames(old_pdata)
@@ -2038,6 +1961,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
   return(new_expt)
 }
 
+
 #' Change the factors (condition and batch) of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -2047,15 +1971,19 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
 #' @param condition New condition factor
 #' @param batch New batch factor
 #' @param ids Specific sample IDs to change.
+#' @param table When set to 'metadata', use pData, otherwise fData.
+#' @param class Set the data to this class by default.
+#' @param columns Change these columns.
 #' @param ... Arguments passed along (likely colors)
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_factors(big_expt, condition = "column", batch = "another_column")
 #' }
 #' @export
-set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL, ...) {
+set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
+                             table = "metadata", class = "factor", columns = NULL, ...) {
   arglist <- list(...)
   if (!is.null(condition)) {
     expt <- set_expt_conditions(expt, fact = condition, ...)
@@ -2063,8 +1991,42 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL, .
   if (!is.null(batch)) {
     expt <- set_expt_batches(expt, fact = batch, ...)
   }
+  fd <- fData(expt)
+  pd <- pData(expt)
+  if (!is.null(columns)) {
+    if (is.null(class)) {
+      stop("If columns is set, then this assumes you want to set those columns to a given class.")
+    }
+    for (col in columns) {
+      mesg("Setting ", col, " to type ", class, ".")
+      if (class == "factor") {
+        if (table == "metadata") {
+          pd[[col]] <- as.factor(pd[[col]])
+        } else {
+          fd[[col]] <- as.factor(fd[[col]])
+        }
+      } else if (class == "character") {
+        if (table == "metadata") {
+          pd[[col]] <- as.character(pd[[col]])
+        } else {
+          fd[[col]] <- as.character(fd[[col]])
+        }
+      } else if (class == "numeric") {
+        if (table == "metadata") {
+          pd[[col]] <- as.numeric(pd[[col]])
+        } else {
+          fd[[col]] <- as.numeric(fd[[col]])
+        }
+      } else {
+        stop("I do not know this class.")
+      }
+    }
+  }
+  pData(expt[["expressionset"]]) <- pd
+  fData(expt[["expressionset"]]) <- fd
   return(expt)
 }
+
 
 #' Change the gene names of an expt.
 #'
@@ -2076,7 +2038,7 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL, .
 #' @param ids Specific sample IDs to change.
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_batches}} \code{\link{create_expt}}
+#' @seealso [set_expt_conditions()] [create_expt()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
@@ -2106,7 +2068,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     } else {
       stop("Unable to match the IDs.")
     }
-    message("Our column is: ", our_column, ", their column is: ", their_column, ".")
+    mesg("Our column is: ", our_column, ", their column is: ", their_column, ".")
     ## Now the job is to ensure that the ordering is maintained.
     ## We need therefore to merge the rownames of the current IDs into the
     ## data frame of the ID mapping between our species.
@@ -2132,7 +2094,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     ## I will make.names() them and report how many there are, this might not be the correct way
     ## to handle this scenario!
     dup_ids <- sum(duplicated(reordered[[their_column]]))
-    message("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
+    mesg("There are ", dup_ids, " duplicated IDs in the ", colnames(reordered)[2], " column.")
     ids <- make.names(reordered[[their_column]], unique = TRUE)
   }
 
@@ -2150,6 +2112,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
   return(expt)
 }
 
+
 #' Change the sample names of an expt.
 #'
 #' Sometimes one does not like the hpgl identifiers, so provide a way to change
@@ -2158,7 +2121,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' @param expt Expt to modify
 #' @param newnames New names, currently only a character vector.
 #' @return expt Send back the expt with some new metadata
-#' @seealso \code{\link{set_expt_conditions}} \code{\link{set_expt_batches}}
+#' @seealso [set_expt_conditions()] [set_expt_batches()]
 #' @examples
 #' \dontrun{
 #'  expt = set_expt_samplenames(expt, c("a","b","c","d","e","f"))
@@ -2166,7 +2129,8 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' @export
 set_expt_samplenames <- function(expt, newnames) {
   new_expt <- expt
-  oldnames <- rownames(new_expt[["design"]])
+  ## oldnames <- rownames(new_expt[["design"]])
+  oldnames <- sampleNames(new_expt)
   newnames <- make.unique(newnames)
   newnote <- glue::glue("Sample names changed from: {toString(oldnames)} \\
                    to: {toString(newnames)} at: {date()}
@@ -2182,11 +2146,13 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt[["design"]] <- newdesign
   new_expressionset <- new_expt[["expressionset"]]
   Biobase::sampleNames(new_expressionset) <- newnames
+  pData(new_expressionset)[["sampleid"]] <- newnames
   new_expt[["expressionset"]] <- new_expressionset
   names(new_expt[["libsize"]]) <- newnames
   new_expt[["samplenames"]] <- newnames
   return(new_expt)
 }
+
 
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
@@ -2196,18 +2162,19 @@ set_expt_samplenames <- function(expt, newnames) {
 #'
 #' @param expt Expt chosen to extract a subset of data.
 #' @param subset Valid R expression which defines a subset of the design to keep.
+#' @param nonzero Look for a minimal number of nonzero genes.
 #' @param ids List of sample IDs to extract.
 #' @param coverage Request a minimum coverage/sample rather than text-based subset.
 #' @return metadata Expt class which contains the smaller set of data.
-#' @seealso \pkg{Biobase}
-#'  \code{\link[Biobase]{pData}} \code{\link[Biobase]{exprs}} \code{\link[Biobase]{fData}}
+#' @seealso [Biobase] [pData()] [exprs()] [fData()]
 #' @examples
 #' \dontrun{
 #'  smaller_expt <- expt_subset(big_expt, "condition=='control'")
 #'  all_expt <- expt_subset(expressionset, "")  ## extracts everything
 #' }
 #' @export
-subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
+subset_expt <- function(expt, subset = NULL, ids = NULL,
+                        nonzero = NULL, coverage = NULL) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
@@ -2232,11 +2199,11 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
 
   note_appended <- NULL
   subset_design <- NULL
-  if (is.null(coverage)) {
+  if (is.null(coverage) & is.null(nonzero)) {
     if (is.null(subset)) {
       subset_design <- starting_metadata
     } else {
-      message("Using a subset expression.")
+      mesg("Using a subset expression.")
       r_expression <- paste("subset(starting_metadata,", subset, ")")
       subset_design <- eval(parse(text = r_expression))
       note_appended <- glue::glue("Subsetted with {subset} on {date()}.
@@ -2246,15 +2213,29 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
       stop("When the subset was taken, the resulting design has 0 members.")
     }
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
-  } else {
+  } else if (is.null(nonzero)) {
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
     ## standard deviation or somesuch...
-    message("Subsetting given a minimal number of counts/sample.")
+    mesg("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples removed (and read coverage) when filtering samples with less than ",
+            coverage, " reads are: ")
+    print(colSums(exprs(expt))[!subset_idx])
+  } else if (is.null(coverage)) {
+    ## Remove samples with less than this number of non-zero genes.
+    nonzero_idx <- exprs(expt) != 0
+    remove_idx <- colSums(nonzero_idx) < nonzero
+    subset_design <- starting_metadata[!remove_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples (and read coverage) removed when filtering ",
+            nonzero, " non-zero genes are: ")
+    print(colSums(exprs(expt))[remove_idx])
+  } else {
+    stop("Unable to determine what is being subset.")
   }
 
   ## This is to get around stupidity with respect to needing all factors to be
@@ -2263,7 +2244,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
   subset_ids <- rownames(subset_design)
   subset_positions <- starting_ids %in% subset_ids
   starting_colors <- expt[["colors"]]
-  subset_colors <- starting_colors[subset_positions]
+  subset_colors <- starting_colors[subset_positions, drop = TRUE]
   starting_conditions <- expt[["conditions"]]
   subset_conditions <- starting_conditions[subset_positions, drop = TRUE]
   starting_batches <- expt[["batches"]]
@@ -2298,10 +2279,96 @@ subset_expt <- function(expt, subset = NULL, ids = NULL, coverage = NULL) {
     "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
-  message("There were ", length(starting_samples), ", now there are ",
+  message("subset_expt(): There were ", length(starting_samples), ", now there are ",
           length(final_samples), " samples.")
   return(new_expt)
 }
+
+
+#' Try a very literal subtraction
+#'
+#' @param expt Input expressionset.
+#' @param new_meta dataframe containing the new metadata.
+#' @param sample_column Column in the sample sheet to use to acquire the sample IDs given the
+#'  subtractions.
+#' @param convert_state Expected state of the input data vis a vis conversion (rpkm/cpm).
+#' @param transform_state Expected state of the input data vis a vis transformation (log/linear).
+#' @param handle_negative Set negative subtracted values to zero?
+#' @param savefile Save the new expt data to this file.
+#' @param ... Parameters to pass to normalize_expt()
+#' @return New expt
+#' @export
+subtract_expt <- function(expt, new_meta, sample_column = "sample",
+                          convert_state = "cpm", transform_state = "raw",
+                          handle_negative = "zero", savefile = "subtracted.rda",
+                          ...) {
+  arglist <- list(...)
+  if (expt[["state"]][["conversion"]] != convert_state) {
+    expt <- normalize_expt(expt, convert = convert_state)
+  }
+  if (expt[["state"]][["transform"]] != transform_state) {
+    expt <- normalize_expt(expt, transform = transform_state)
+  }
+
+  meta <- pData(expt)
+  mtrx <- as.data.frame(exprs(expt))
+  samples <- colnames(mtrx)
+  new_exprs <- data.frame(row.names = rownames(mtrx))
+  new_pdata <- data.frame()
+  sub_names <- rownames(new_meta)
+  for (s in 1:nrow(new_meta)) {
+    sub_name <- sub_names[s]
+    numerator <- new_meta[sub_name, "numerator"]
+    denominator <- new_meta[sub_name, "denominator"]
+    s1_idx <- meta[[sample_column]] == numerator
+    s1 <- samples[s1_idx]
+    s2_idx <- meta[[sample_column]] == denominator
+    s2 <- samples[s2_idx]
+    if (sum(s1_idx) != 1) {
+      stop("Do not have 1 sample for subtraction: ", sub_name, ", ", numerator, "." )
+    }
+    if (sum(s2_idx) != 1) {
+      stop("Do not have 1 sample for subtraction: ", sub_name, ", ", denominator, ".")
+    }
+    new_exprs[[sub_name]] <- mtrx[[s1]] - mtrx[[s2]]
+    new_pdatum <- meta[s1, ]
+    new_pdatum[["condition"]] <- new_meta[s, "condition"]
+    new_pdatum[["batch"]] <- new_meta[s, "batch"]
+    new_pdatum[["numerator"]] <- numerator
+    new_pdatum[["denominator"]] <- denominator
+    new_pdata <- rbind(new_pdata, new_pdatum)
+  }
+  rownames(new_pdata) <- sub_names
+  colnames(new_exprs) <- sub_names
+
+  negative_idx <- new_exprs < 0
+  negative_pct <- (sum(negative_idx) / (nrow(new_exprs) * ncol(new_exprs))) * 100.0
+  message("There are ", sum(negative_idx), " elements which are less than 0, (",
+          signif(negative_pct, 3), "%)")
+  if (is.null(handle_negative)) {
+    message("Leaving negative values alone.")
+  } else if (handle_negative[1] == "zero") {
+    message("Setting negative values to zero.")
+    new_exprs[negative_idx] <- 0
+  } else if (handle_negative[1] == "na") {
+    message("Setting negative values to NA.")
+    new_exprs[negative_idx] <- NA
+  } else {
+    message("I do not understand this option, leaving negative values alone.")
+  }
+
+  new_pdata[["subtracted_samplenames"]] <- sub_names
+  ## Now add the number of negative values observed.
+  new_pdata[["negative_values"]] <- colSums(negative_idx)
+  new_expt <- sm(create_expt(metadata = as.data.frame(new_pdata),
+                             gene_info = fData(expt),
+                             count_dataframe = as.matrix(new_exprs),
+                             savefile = savefile,
+                             id_column = "subtracted_samplenames"))
+  new_expt[["na_values"]] <- as.data.frame(negative_idx)
+  return(new_expt)
+}
+
 
 #' I want an easy way to sum counts in eupathdb-derived data sets.
 #' These have a few things which should make this relatively easy.
@@ -2326,6 +2393,7 @@ sum_eupath_exon_counts <- function(counts) {
   return(counts)
 }
 
+
 #' Print a string describing what happened to this data.
 #'
 #' Sometimes it is nice to have a string like: log2(cpm(data)) describing what
@@ -2338,10 +2406,13 @@ sum_eupath_exon_counts <- function(counts) {
 #' @param filter How was it filtered?
 #' @param batch How was it batch-corrected?
 #' @return An expression describing what has been done to this data.
-#' @seealso \code{\link{create_expt}}
+#' @seealso [create_expt()] [normalize_expt()]
 #' @export
 what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
                           norm = "raw", filter = "raw", batch = "raw") {
+  if (! "expt" %in% class(expt)) {
+    return("")
+  }
   if (!is.null(expt)) {
     transform <- expt[["state"]][["transform"]]
     if (is.null(transform)) {
@@ -2412,6 +2483,7 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
   return(what)
 }
 
+
 #' Make pretty xlsx files of count data.
 #'
 #' Some folks love excel for looking at this data.  ok.
@@ -2437,10 +2509,12 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @param batch Batch correction applied.
 #' @param filter Filtering method used.
 #' @param med_or_mean When printing mean by condition, one may want median.
+#' @param color_na Color cells which were NA before imputation this color.
+#' @param merge_order Used to decide whether to put the counts or annotations first when
+#'  printing count tables.
 #' @param ... Parameters passed down to methods called here (graph_metrics, etc).
 #' @return A big honking excel file and a list including the dataframes and images created.
-#' @seealso \pkg{openxlsx} \pkg{Biobase}
-#'  \code{\link{normalize_expt}} \code{\link{graph_metrics}}
+#' @seealso [openxlsx] [Biobase] [normalize_expt()] [graph_metrics()]
 #' @examples
 #' \dontrun{
 #'  excel_sucks <- write_expt(expt)
@@ -2448,7 +2522,8 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' @export
 write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                        violin = TRUE, sample_heat = TRUE, convert = "cpm", transform = "log2",
-                       batch = "sva", filter = TRUE, med_or_mean = "mean", ...) {
+                       batch = "svaseq", filter = TRUE, med_or_mean = "mean",
+                       color_na = "#DD0000", merge_order = "counts_first", ...) {
   arglist <- list(...)
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
@@ -2458,12 +2533,6 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
   ## Set up a vector of images to clean up when finished.
   image_files <- c()
-
-  ## For medians_by_condition, put the counts or annotations first?
-  merge_order <- "counts_first"
-  if (!is.null(arglist[["merge_order"]])) {
-    merge_order <- arglist[["merge_order"]]
-  }
 
   ## I think the plot dimensions should increase as the number of samples increase
   plot_dim <- 6
@@ -2513,7 +2582,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            title = "Library size summary.")
 
   ## Write the raw read data and gene annotations
-  message("Writing the raw reads.")
+  mesg("Writing the raw reads.")
   sheet <- "raw_reads"
   new_row <- 1
   new_col <- 1
@@ -2529,8 +2598,21 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   xls_result <- write_xlsx(data = read_info, wb = wb, sheet = sheet, rownames = FALSE,
                            start_row = new_row, start_col = new_col, title = "Raw Reads.")
 
+  ## Potentially useful for proteomics data and subtracted data.
+  if (!is.null(color_na)) {
+    na_style <- openxlsx::createStyle(fontColour = color_na)
+    nas <- expt[["na_values"]]
+    for (col in colnames(nas)) {
+      row_definition <- which(nas[[col]]) + 2
+      col_idx <- colnames(read_info) == col
+      col_definition <- which(col_idx)
+      colored <- openxlsx::addStyle(wb, sheet = sheet, na_style,
+                                    rows = row_definition, cols = col_definition)
+    }
+  }
+
   ## Write some graphs for the raw data
-  message("Graphing the raw reads.")
+  mesg("Graphing the raw reads.")
   sheet <- "raw_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet))
   if (class(newsheet) == "try-error") {
@@ -2540,9 +2622,11 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Start with library sizes.
   openxlsx::writeData(wb, sheet = sheet, x = "Legend.", startRow = new_row, startCol = new_col)
   new_col <- new_col + plot_cols + 1
-  openxlsx::writeData(wb, sheet = sheet, x = "Raw library sizes.", startRow = new_row, startCol = new_col)
+  openxlsx::writeData(wb, sheet = sheet, x = "Raw library sizes.",
+                      startRow = new_row, startCol = new_col)
   new_col <- new_col + plot_cols + 1
-  openxlsx::writeData(wb, sheet = sheet, x = "Non-zero genes.", startRow = new_row, startCol = new_col)
+  openxlsx::writeData(wb, sheet = sheet, x = "Non-zero genes.",
+                      startRow = new_row, startCol = new_col)
   new_row <- new_row + 1
   new_col <- 1
   legend_plot <- metrics[["legend"]]
@@ -2554,7 +2638,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   libsize_plot <- metrics[["libsize"]]
-  try_result <- xlsx_plot_png(libsize_plot, wb = wb, sheet = sheet, width = plot_dim, height = plot_dim,
+  try_result <- xlsx_plot_png(libsize_plot, wb = wb, sheet = sheet,
+                              width = plot_dim, height = plot_dim,
                               start_col = new_col, start_row = new_row,
                               plotname = "02_libsize", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2720,7 +2805,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
-  tmp_data <- sm(normalize_expt(expt, transform = "log2", convert = "cpm",
+  tmp_data <- sm(normalize_expt(expt, transform = "log2", convert = "cpm", filter = TRUE,
                                 ...))
   rpca <- plot_pca(tmp_data,
                    ...)
@@ -2766,8 +2851,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   pct_plot <- NULL
   ## Violin plots
   if (isTRUE(violin)) {
+    filt <- sm(normalize_expt(expt, filter = "simple"))
     varpart_raw <- suppressWarnings(try(simple_varpart(
-      expt, predictor = NULL, factors = c("condition", "batch"))))
+        filt, predictor = NULL, factors = c("condition", "batch"))))
     if (class(varpart_raw) != "try-error") {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
@@ -2807,7 +2893,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            sheet = sheet, start_row = new_row, start_col = new_col)
 
   ## Move on to the next sheet, normalized data
-  message("Writing the normalized reads.")
+  mesg("Writing the normalized reads.")
   sheet <- "norm_data"
   new_col <- 1
   new_row <- 1
@@ -2821,8 +2907,22 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   xls_result <- write_xlsx(wb = wb, data = read_info, rownames = FALSE,
                            start_row = new_row, start_col = new_col, sheet = sheet, title = title)
 
+  ## Potentially useful for proteomics data and subtracted data.
+  if (!is.null(color_na)) {
+    na_style <- openxlsx::createStyle(fontColour = color_na)
+    nas <- expt[["na_values"]]
+    for (col in colnames(nas)) {
+      row_definition <- which(nas[[col]]) + 2
+      col_idx <- colnames(read_info) == col
+      col_definition <- which(col_idx)
+      colored <- openxlsx::addStyle(wb, sheet = sheet, na_style,
+                                    rows = row_definition, cols = col_definition)
+    }
+  }
+
+
   ## Graphs of the normalized data
-  message("Graphing the normalized reads.")
+  mesg("Graphing the normalized reads.")
   sheet <- "norm_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet))
   norm_metrics <- sm(graph_metrics(norm_data, qq = TRUE,
@@ -3061,7 +3161,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 
 
   ## Give a median-by-factor accounting of the data
-  message("Writing the median reads by factor.")
+  mesg("Writing the median reads by factor.")
   sheet <- "median_data"
   new_col <- 1
   new_row <- 1
@@ -3135,7 +3235,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
     "medians" = median_data
   )
   for (img in image_files) {
-    removed <- file.remove(img)
+    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
   }
   return(retlist)
 }
@@ -3150,6 +3250,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 ## ...) you must already have created the foo generic and the two classes. By
 ## default, R code is loaded in alphabetical order, but that won’t always work
 ## for your situation.
+
 
 #' An expt is an ExpressionSet superclass with a shorter name.
 #'
@@ -3170,7 +3271,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 #' @slot annotation Gene annotations (redundant with fData()).
 #' @slot gff_file filename of a gff file which feeds this data.
 #' @slot state What is the state of the data vis a vis normalization,
-#'   conversion, etc.
+#'  conversion, etc.
 #' @slot conditions Usually the condition column from pData.
 #' @slot batches Usually the batch column from pData.
 #' @slot libsize Library sizes of the data in its current state.
@@ -3181,25 +3282,104 @@ expt <- function(...) {
   create_expt(...)
 }
 expt_set <- setOldClass("expt")
+
+## > showMethods("assay")
+## Function: assay (package SummarizedExperiment)
+## x="SummarizedExperiment", i="character"
+## x="SummarizedExperiment", i="missing"
+## x="SummarizedExperiment", i="numeric"
+
+#' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
+#' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
+setMethod("assay", signature = "expt",
+          function(x, withDimnames = TRUE, ...) {
+            mtrx <- Biobase::exprs(x[["expressionset"]])
+            return(mtrx)
+          })
+setMethod("assay", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::exprs(object)
+          })
+setMethod("assay<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("assay<-", signature = "ExpressionSet",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x) <- value
+            return(x)
+          })
+setMethod("colData", "expt",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x[["expressionset"]])
+          })
+setMethod("colData", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x)
+          })
+setMethod("colData<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("colData<-", signature = "ExpressionSet",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x) <- value
+            return(x)
+          })
 setMethod("exprs", signature = "expt",
           function(object) {
             Biobase::exprs(object[["expressionset"]])
+          })
+setMethod("exprs<-", signature = "expt",
+          function(object, value) {
+            exprs(object[["expressionset"]]) <- value
+            return(object)
           })
 setMethod("fData", signature = "expt",
           function(object) {
             Biobase::fData(object[["expressionset"]])
           })
-setMethod("pData", signature = "expt",
-          function(object) {
-            Biobase::pData(object[["expressionset"]])
-          })
-setMethod("sampleNames", signature = "expt",
-          function(object) {
-            Biobase::sampleNames(object[["expressionset"]])
+setMethod("fData<-", signature = "expt",
+          function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
           })
 setMethod("notes", signature = "expt",
           function(object) {
             Biobase::notes(object[["expressionset"]])
+          })
+setMethod("pData", signature = "expt",
+          function(object) {
+            Biobase::pData(object[["expressionset"]])
+          })
+setMethod("pData<-", signature = "expt",
+          function(object, value) {
+            pData(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("rowData", "expt",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x[["expressionset"]])
+          })
+setMethod("rowData", "ExpressionSet",
+          function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x)
+          })
+setMethod("rowData<-", signature = "expt",
+          function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::fData(x[["expressionset"]]) <- value
+            return(x)
+          })
+##setMethod("rowData<-", signature = "Expressionset",
+##          function(x, i, withDimnames = TRUE, ..., value) {
+##            Biobase::fData(x) <- value
+##            return(x)
+##          })
+setMethod("sampleNames", signature = "expt",
+          function(object) {
+            Biobase::sampleNames(object[["expressionset"]])
           })
 setMethod("sampleNames<-", signature = "expt",
           function(object, value) {

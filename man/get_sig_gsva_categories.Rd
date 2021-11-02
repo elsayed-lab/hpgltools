@@ -13,7 +13,8 @@ get_sig_gsva_categories(
   factor = NULL,
   label_size = NULL,
   col_margin = 6,
-  row_margin = 12
+  row_margin = 12,
+  type = "mean"
 )
 }
 \arguments{
@@ -36,6 +37,11 @@ of dropping some.}
 \item{col_margin}{Attempt to make heatmaps fit better on the screen with this and...}
 
 \item{row_margin}{this parameter}
+
+\item{type}{Either mean or median of the scores to return.}
+}
+\value{
+List containing the gsva results, limma results, scores, some plots, etc.
 }
 \description{
 This function uses a couple of methods to try to get an idea of whether the
@@ -45,4 +51,8 @@ methods:
 provide an idea of if there are changing signatures among the sample types.
   2.  Perform a simplified likelihood estimate to get a sense of the
 significant categories.
+}
+\seealso{
+[score_gsva_likelihoods()] [get_group_gsva_means()] [limma_pairwise()]
+ [simple_gsva()]
 }

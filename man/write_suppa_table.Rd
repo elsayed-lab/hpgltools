@@ -42,3 +42,6 @@ those results and print them to an excel sheet.
                                      excel = "excel/pretty_suppa_table.xlsx")
 }
 }
+\seealso{
+[write_xlsx()]
+}

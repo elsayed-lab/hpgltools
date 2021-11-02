@@ -51,3 +51,7 @@ that end, this function uses extract_significant_genes() in order to gather
 sets of genes deemed 'significant'.  It then passes these sets to
 make_gsc_from_ids().
 }
+\seealso{
+[combine_de_tables()] [extract_significant_genes()] [make_gsc_from_ids()]
+ [GSEABase]
+}

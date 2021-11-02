@@ -17,7 +17,7 @@
 #' @param min_samples Minimum number of samples for cbcb.
 #' @param ... More options might be needed, especially if I fold cv/p/etc into ...
 #' @return Data frame of filtered counts.
-#' @seealso \pkg{genefilter}
+#' @seealso [genefilter]
 #' @examples
 #' \dontrun{
 #'  new <- filter_counts(old)
@@ -26,6 +26,7 @@
 filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
                           cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2, ...) {
   arglist <- list(...)
+  start <- count_table
   if (class(count_table)[1] == "list") {
     count_table <- count_table[["count_table"]]
   }
@@ -39,6 +40,10 @@ filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
   }
   if (isTRUE(method)) {
     method <<- "cbcb"
+  }
+  if (isFALSE(method)) {
+    message("Filtering method was FALSE, returning the original table.")
+    return(start)
   }
 
   filtered_counts <- NULL
@@ -84,7 +89,7 @@ filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
 #' @param min_samples Minimum number of samples.
 #' @param libsize  Table of library sizes.
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{edgeR}
+#' @seealso [edgeR]
 #' @examples
 #' \dontrun{
 #'  filtered_table <- cbcb_filter_counts(count_table)
@@ -97,8 +102,8 @@ cbcb_filter_counts <- function(count_table, threshold = 1, min_samples = 2, libs
     }
     count_table <- t(log2(t(qcounts + 0.5) / (libsize + 1) * 1e+06))
     retlist <- list(
-      "count_table" = count_table,
-      "libsize" = libsize)
+        "count_table" = count_table,
+        "libsize" = libsize)
     return(retlist)
   }
   ##cpms <- edgeR::cpm(count_table)
@@ -129,7 +134,7 @@ cbcb_filter_counts <- function(count_table, threshold = 1, min_samples = 2, libs
 #' @param libsize  Table of library sizes.
 #' @param ...  Arguments passed to cpm and friends.
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{edgeR}
+#' @seealso [edgeR]
 #' @examples
 #' \dontrun{
 #'  filtered_table <- cbcb_filter_counts(count_table)
@@ -165,7 +170,7 @@ hpgl_filter_counts <- function(count_table, threshold = 2, min_samples = 2, libs
 #' @param count_table Data frame of (pseudo)counts by sample.
 #' @param threshold Lower threshold of counts for each gene.
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{edgeR}
+#' @seealso [edgeR]
 #' @examples
 #' \dontrun{
 #'  filtered_table <- simple_filter_counts(count_table)
@@ -197,8 +202,7 @@ simple_filter_counts <- function(count_table, threshold = 2) {
 #'   minimum(A).
 #' @param A Minimum number of counts in the above proportion.
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{genefilter}
-#'  \code{\link[genefilter]{pOverA}}
+#' @seealso [genefilter::pOverA()]
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_pofa_counts(count_table)
@@ -234,8 +238,7 @@ genefilter_pofa_counts <- function(count_table, p = 0.01, A = 100) {
 #' @param cv_min Minimum coefficient of variance.
 #' @param cv_max Maximum coefficient of variance.
 #' @return Dataframe of counts without the high/low variance genes.
-#' @seealso \pkg{genefilter}
-#'  \code{\link[genefilter]{kOverA}}
+#' @seealso [genefilter::kOverA()]
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_kofa_counts(count_table)
@@ -269,8 +272,7 @@ genefilter_cv_counts <- function(count_table, cv_min = 0.01, cv_max = 1000) {
 #' @param k Minimum number of samples to have >A counts.
 #' @param A Minimum number of counts for each gene's sample in kOverA().
 #' @return Dataframe of counts without the low-count genes.
-#' @seealso \pkg{genefilter}
-#'  \code{\link[genefilter]{kOverA}}
+#' @seealso [genefilter::kOverA()]
 #' @examples
 #' \dontrun{
 #'  filtered_table = genefilter_kofa_counts(count_table)

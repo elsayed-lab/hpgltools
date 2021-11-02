@@ -28,5 +28,5 @@ NULL, "GO:00003") This function will boil that down to 'not found', '',
 }
 }
 \seealso{
-\pkg{GO.db}
+[GO.db]
 }

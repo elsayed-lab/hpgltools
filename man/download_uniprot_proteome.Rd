@@ -37,3 +37,6 @@ is therefore primarily used by load_uniprot_annotations().
  uniprot_sc_downloaded$filename
  uniprot_sc_downloaded$species
 }
+\seealso{
+[xml2] [rvest]
+}

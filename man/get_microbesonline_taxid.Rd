@@ -20,3 +20,6 @@ This should simplify getting material from microbesonline.
  coli_taxids <- get_microbesonline_taxid(species = "coli S88")
  head(coli_taxids)
 }
+\seealso{
+[xml2]
+}

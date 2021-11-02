@@ -7,13 +7,10 @@ some supporting statistics.}
 \usage{
 plot_linear_scatter(
   df,
-  tooltip_data = NULL,
-  gvis_filename = NULL,
   cormethod = "pearson",
   size = 2,
   loess = FALSE,
   identity = FALSE,
-  gvis_trendline = NULL,
   z_lines = FALSE,
   first = NULL,
   second = NULL,
@@ -30,10 +27,6 @@ plot_linear_scatter(
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
 
-\item{tooltip_data}{Df of tooltip information for gvis graphs.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
-
 \item{cormethod}{What type of correlation to check?}
 
 \item{size}{Size of the dots on the plot.}
@@ -41,9 +34,6 @@ plot_linear_scatter(
 \item{loess}{Add a loess estimation?}
 
 \item{identity}{Add the identity line?}
-
-\item{gvis_trendline}{Add a trendline to the gvis plot?  There are a couple
-possible types, I think linear is the most common.}
 
 \item{z_lines}{Include lines defining the z-score boundaries.}
 
@@ -69,16 +59,16 @@ possible types, I think linear is the most common.}
 }
 \value{
 List including a ggplot2 scatter plot and some histograms.  This plot
-  provides a "bird's eye" view of two data sets.  This plot assumes a
-  (potential) linear correlation between the data, so it calculates the
-  correlation between them.  It then calculates and plots a robust linear
-  model of the data using an 'SMDM' estimator (which I don't remember how to
-  describe, just that the document I was reading said it is good).  The
-  median/mad of each axis is calculated and plotted as well.  The distance
-  from the linear model is finally used to color the dots on the plot.
-  Histograms of each axis are plotted separately and then together under a
-  single cdf to allow tests of distribution similarity.  This will make a fun
-  clicky googleVis graph if requested.
+ provides a "bird's eye" view of two data sets.  This plot assumes a
+ (potential) linear correlation between the data, so it calculates the
+ correlation between them.  It then calculates and plots a robust linear
+ model of the data using an 'SMDM' estimator (which I don't remember how to
+ describe, just that the document I was reading said it is good).  The
+ median/mad of each axis is calculated and plotted as well.  The distance
+ from the linear model is finally used to color the dots on the plot.
+ Histograms of each axis are plotted separately and then together under a
+ single cdf to allow tests of distribution similarity.  This will make a fun
+ clicky googleVis graph if requested.
 }
 \description{
 Make a scatter plot between two groups with a linear model superimposed and
@@ -86,11 +76,9 @@ some supporting statistics.
 }
 \examples{
 \dontrun{
- plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-                     gvis_filename = "html/fun_scatterplot.html")
+ plot_linear_scatter(lotsofnumbers_intwo_columns)
 }
 }
 \seealso{
-\pkg{robust} \pkg{stats} \pkg{ggplot2}
- \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
+[robust] [stats] [ggplot2] [robust::lmRob] [stats::weights] [plot_histogram()]
 }

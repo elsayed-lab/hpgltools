@@ -11,12 +11,12 @@
 #' @param data Matrix of count data.
 #' @param design Dataframe describing the experimental
 #'  design. (conditions/batches/etc)
-#' @param norm Normalization to perform:
+#' @param method Normalization to perform:
 #'  'sf|quant|qsmooth|tmm|upperquartile|tmm|rle' I keep wishy-washing on
 #'  whether design is a required argument.
 #' @param ... More arguments might be necessary.
 #' @return Dataframe of normalized(counts)
-#' @seealso \pkg{edgeR} \pkg{limma} \pkg{DESeq2}
+#' @seealso [edgeR] [limma] [DESeq2] [preprocessCore] [BiocGenerics]
 #' @examples
 #' \dontrun{
 #'  norm_table = normalize_counts(count_table, design = design, norm='qsmooth')
@@ -201,7 +201,7 @@ This works with: expt, ExpressionSet, data.frame, and matrices.
 #' @param plot Plot the quantiles?
 #' @param ... More options
 #' @return New data frame of normalized counts
-#' @seealso \pkg{qsmooth}
+#' @seealso [qsmooth]
 #' @examples
 #' \dontrun{
 #'  df <- hpgl_qshrink(data)
@@ -284,7 +284,7 @@ hpgl_qshrink <- function(data = NULL, groups = NULL, refType = "mean",
 #' @param groupLoc I don't remember what this is for.
 #' @param window Window for basking!
 #' @return Some new data.
-#' @seealso \pkg{matrixStats}
+#' @seealso [matrixStats]
 #' @examples
 #' \dontrun{
 #'  qstatted <- hpgl_qstats(data, conditions)

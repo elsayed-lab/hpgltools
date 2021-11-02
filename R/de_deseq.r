@@ -3,13 +3,103 @@
 ## This seeks to simplify these invocations and ensure that it will work under
 ## most likely use-case scenarios.
 
+## The function is just written as a reminder that LRT may prove
+## useful/important for some of our data, most notably the comparisons
+## of visit number in the Leishmania panamensis data.
+deseq_lrt <- function(expt, interactor_column = "visitnumber",
+                      interest_column = "clinicaloutcome", transform = "rlog",
+                      factors = NULL, cutoff = 0.05, minc = 3) {
+  full_string <- glue::glue("~ {interactor_column} + {interest_column} + \\
+ {interactor_column}:{interest_column}")
+  reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
+  full_model <- as.formula(full_string)
+  reduced_model <- as.formula(reduced_string)
+  col_data <- pData(expt)
+  if (!is.null(factors)) {
+    for (f in factors) {
+      col_data[[f]] <- as.factor(col_data[[f]])
+    }
+  }
+  if (is.null(col_data[[interactor_column]])) {
+    stop("There is no ", interactor_column, " column in the experiment metadata.")
+  }
+  if (class(col_data[[interactor_column]]) != "factor") {
+    warning("The ", interactor_column,
+            " should probably be a factor, set it with the 'factors' arg.")
+  }
+  if (is.null(col_data[[interest_column]])) {
+    stop("There is no ", interest_column, " column in the experiment metadata.")
+  }
+  if (class(col_data[[interest_column]]) != "factor") {
+    warning("The ", interest_column,
+            " should probably be a factor, set it with the 'factors' arg.")
+  }
+  mesg("The full model is: ", as.character(full_model), ".")
+  mesg("The truncated model is: ", as.character(reduced_model), ".")
+
+  deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
+                                                colData = col_data,
+                                                design = full_model)
+  deseq_lrt <- DESeq2::DESeq(deseq_input, test = "LRT", reduced = reduced_model)
+  deseq_lrt_table <- DESeq2::results(deseq_lrt)
+
+  ## Copy-pasting from:
+  ## https://hbctraining.github.io/DGE_workshop/lessons/08_DGE_LRT.html
+  ## Subset the LRT results to return genes with padj < 0.05
+  padj <- NULL ## R CMD check
+  lrt_significant <- deseq_lrt_table %>%
+    data.frame() %>%
+    tibble::rownames_to_column(var = "gene") %>%
+    tibble::as_tibble() %>%
+    filter(padj <= cutoff)
+  if (nrow(lrt_significant) == 0) {
+    warning("There are no significant differences given the ", cutoff, " adjusted p-value.")
+    lrt_significant <- deseq_lrt_table %>%
+      data.frame() %>%
+      tibble::rownames_to_column(var = "gene") %>%
+      tibble::as_tibble()
+    message("Returning the full LRT table just so that you have something to look at.")
+    retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = lrt_significant)
+    return(retlist)
+  }
+
+  rlog_matrix <- matrix()
+  if (transform == "vst") {
+    rlog_matrix <- DESeq2::vst(deseq_input)
+  } else {
+    rlog_matrix <- DESeq2::rlog(deseq_input)
+  }
+  clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
+
+  cluster_data <- DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
+                                         time = interactor_column, col = interest_column,
+                                         minc = minc)
+  cluster_df <- cluster_data[["df"]]
+  cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
+  group_lst <- list()
+  for (c in levels(cluster_df[["cluster"]])) {
+    group_idx <- cluster_df[["cluster"]] == c
+    group_lst[[c]] <- cluster_df[group_idx, ]
+  }
+  retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = deseq_lrt_table,
+      "cluster_data" = cluster_data,
+      "group_list" = group_lst,
+      "favorite_genes" = cluster_data[["df"]]
+      )
+  return(retlist)
+}
+
 #' deseq_pairwise()  Because I can't be trusted to remember '2'.
 #'
 #' This calls deseq2_pairwise(...) because I am determined to forget typing deseq2.
 #'
 #' @param ... I like cats.
 #' @return stuff deseq2_pairwise results.
-#' @seealso \code{\link{deseq2_pairwise}}
+#' @seealso [deseq2_pairwise()]
 #' @export
 deseq_pairwise <- function(...) {
   message("Hey you, use deseq2 pairwise.")
@@ -54,7 +144,7 @@ deseq_pairwise <- function(...) {
 #'  conditions = the list of conditions in the experiment
 #'  coefficients = list of coefficients making the contrasts
 #'  all_tables = list of DE tables
-#' @seealso \pkg{DESeq2} \pkg{Biobase} \pkg{stats}
+#' @seealso [DESeq2] [basic_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
 #' @examples
 #' \dontrun{
 #'  pretend = deseq2_pairwise(data, conditions, batches)
@@ -251,14 +341,13 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ##total_contrasts <- length(condition_levels)
   ##total_contrasts <- (total_contrasts * (total_contrasts + 1)) / 2
   total_contrasts <- length(contrast_order)
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
   for (i in 1:length(contrast_order)) {
     contrast_name <- contrast_order[[i]]
     contrast_string <- contrast_strings[[i]]
-    if (isTRUE(show_progress)) {
+    if (isTRUE(verbose)) {
       pct_done <- i / length(contrast_order)
       utils::setTxtProgressBar(bar, pct_done)
     }
@@ -301,7 +390,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
     }
     result_list[[contrast_name]] <- result
   }
-  if (isTRUE(show_progress)) {
+  if (isTRUE(verbose)) {
     close(bar)
   }
   ## The logic here is a little tortuous.
@@ -427,6 +516,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
 #' @param svs Surrogates from sva and friends to test out.
 #' @param num_sv Optionally, provide the number of SVs, primarily used if
 #'  recursing in the hunt for a valid number of surrogates.
+#' @seealso [sva] [RUVSeq] [all_adjusters()] [normalize_batch()]
 #' @return DESeqDataSet with at least some of the SVs appended to the model.
 deseq_try_sv <- function(data, summarized, svs, num_sv = NULL) {
   counts <- DESeq2::counts(data)
@@ -474,6 +564,7 @@ surrogates explicitly stated with the option surrogates = number.")
 #' @param column_data I think this is the sample names, I forget.
 #' @param model_string Model describing the data by sample names.
 #' @param tximport Where is this data coming from?
+#' @seealso [DESeq2::DESeqDataSetFromMatrix]
 import_deseq <- function(data, column_data, model_string,
                          tximport = NULL) {
   summarized <- NULL
@@ -542,7 +633,7 @@ import_deseq <- function(data, column_data, model_string,
 #'
 #' @param data Output from deseq_pairwise()
 #' @param ... Options for writing the xlsx file.
-#' @seealso \pkg{DESeq2} \link{write_xlsx}
+#' @seealso [write_de_table()]
 #' @examples
 #' \dontrun{
 #'  finished_comparison <- deseq2_pairwise(expressionset)

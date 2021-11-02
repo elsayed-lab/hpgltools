@@ -20,7 +20,8 @@ goseq_msigdb(
   goseq_method = "Wallenius",
   padjust_method = "BH",
   bioc_length_db = "ensGene",
-  excel = NULL
+  excel = NULL,
+  orgdb = "org.Hs.eg.db"
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ this parameter, everything is just passed directly to simple_goseq()}
 \item{bioc_length_db}{passed to simple_goseq()}
 
 \item{excel}{passed to simple_goseq()}
+
+\item{orgdb}{Ideally used to help goseq collect lengths.}
 }
 \value{
 Some goseq data!
@@ -69,4 +72,7 @@ Some goseq data!
 goseq is probably the easiest method to push varying data types into.  Thus
 it was the first thing I thought of when looking to push MSigDB data into a
 GSEA method.
+}
+\seealso{
+[gsva] [goseq]
 }

@@ -24,5 +24,5 @@ Get a go term from ID.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[AnnotationDbi] [GO.db]
 }

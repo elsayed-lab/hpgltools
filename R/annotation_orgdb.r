@@ -12,24 +12,22 @@
 #' or pathological can pass it 'all'.
 #'
 #' @param orgdb OrganismDb instance.
-#' @param gene_ids  Search for a specific set of genes?
-#' @param include_go  Ask the Dbi for gene ontology information?
+#' @param gene_ids Search for a specific set of genes?
+#' @param include_go Ask the Dbi for gene ontology information?
 #' @param keytype mmm the key type used?
-#' @param strand_column  There are a few fields I want to gather by default:
+#' @param strand_column There are a few fields I want to gather by default:
 #'  start, end, strand, chromosome, type, and name; but these do not
 #'  necessarily have consistent names, use this column for the chromosome
 #'  strand.
-#' @param start_column  Use this column for the gene start.
-#' @param end_column  Use this column for the gene end.
-#' @param chromosome_column  Use this column to identify the chromosome.
-#' @param type_column  Use this column to identify the gene type.
+#' @param start_column Use this column for the gene start.
+#' @param end_column Use this column for the gene end.
+#' @param chromosome_column Use this column to identify the chromosome.
+#' @param type_column Use this column to identify the gene type.
 #' @param name_column Use this column to identify the gene name.
 #' @param fields Columns included in the output.
 #' @param sum_exon_widths Perform a sum of the exons in the data set?
 #' @return Table of geneids, chromosomes, descriptions, strands, types, and lengths.
-#' @seealso \pkg{AnnotationDbi} \pkg{GenomicFeatures} \pkg{BiocGenerics}
-#'  \code{\link[AnnotationDbi]{columns}} \code{\link[AnnotationDbi]{keytypes}}
-#'  \code{\link[AnnotationDbi]{select}} \code{\link[GenomicFeatures]{exonsBy}}
+#' @seealso [AnnotationDbi] [AnnotationDbi::select()] [GenomicFeatures]
 #' @examples
 #'  hs_orgdb_annot <- load_orgdb_annotations()
 #'  summary(hs_orgdb_annot$genes)
@@ -193,11 +191,10 @@ load_orgdb_annotations <- function(orgdb = NULL, gene_ids = NULL, include_go = F
 #'
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Identifiers of the genes to retrieve annotations.
-#' @param keytype  The mysterious keytype returns yet again to haunt my dreams.
-#' @param columns  The set of columns to request.
+#' @param keytype The mysterious keytype returns yet again to haunt my dreams.
+#' @param columns The set of columns to request.
 #' @return Data frame of gene IDs, go terms, and names.
-#' @seealso \pkg{AnnotationDbi} \pkg{GO.db} \pkg{magrittr}
-#'  \code{\link[AnnotationDbi]{select}}
+#' @seealso [AnnotationDbi] [GO.db]
 #' @examples
 #'  drosophila_orgdb_go <- load_orgdb_go(orgdb = "org.Dm.eg.db")
 #'  head(drosophila_orgdb_go)
@@ -288,10 +285,9 @@ The available keytypes are: ", toString(avail_types), "choosing ", keytype, ".")
 #' @param orgdb OrganismDb instance.
 #' @param gene_ids Gene identifiers for retrieving annotations.
 #' @param mapto Key to map the IDs against.
-#' @param keytype  Choose a keytype, this will yell if it doesn't like your choice.
+#' @param keytype Choose a keytype, this will yell if it doesn't like your choice.
 #' @return a table of gene information
-#' @seealso \pkg{AnnotationDbi}
-#'  \code{\link[AnnotationDbi]{select}} \code{\link[AnnotationDbi]{keytypes}}
+#' @seealso [AnnotationDbi]
 #' @examples
 #'  dm_unigene_to_ensembl <- map_orgdb_ids("org.Dm.eg.db", mapto = "ensembl", keytype = "unigene")
 #'  head(dm_unigene_to_ensembl)
@@ -352,9 +348,11 @@ map_orgdb_ids <- function(orgdb, gene_ids = NULL, mapto = "ensembl", keytype = "
 #' @param orgdb Orgdb instance to iterate through.
 #' @param verbose talky talk
 #' @return Likely keytype which provides the desired IDs.
+#' @seealso [org.Dm.eg.db]
 #' @examples
 #'  ids <- c("Dm.9", "Dm.2294", "Dm.4971")
-#'  keytype_guess <- guess_orgdb_keytype(ids, orgdb)
+#'  dm_orgdb <- "org.Dm.eg.db"
+#'  keytype_guess <- guess_orgdb_keytype(ids, dm_orgdb)
 #'  keytype_guess
 #' @export
 guess_orgdb_keytype <- function(ids, orgdb = NULL, verbose = FALSE) {
@@ -407,7 +405,7 @@ guess_orgdb_keytype <- function(ids, orgdb = NULL, verbose = FALSE) {
 #' @param species Species to download
 #' @param type Datatype to download
 #' @return An Orgdb instance
-#' @seealso \pkg{AnnotationHub} \pkg{S4Vectors}
+#' @seealso [AnnotationHub] [S4Vectors]
 #' @examples
 #' \dontrun{
 #'  org <- mytaxIdToOrgDb(species = "Leishmania", type = "TxDb")

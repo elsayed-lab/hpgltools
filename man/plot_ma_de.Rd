@@ -14,8 +14,6 @@ plot_ma_de(
   logfc = 1,
   label_numbers = TRUE,
   size = 2,
-  tooltip_data = NULL,
-  gvis_filename = NULL,
   shapes = TRUE,
   invert = FALSE,
   label = NULL,
@@ -41,10 +39,6 @@ plot_ma_de(
 
 \item{size}{How big are the dots?}
 
-\item{tooltip_data}{Df of tooltip information for gvis.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
-
 \item{shapes}{Provide different shapes for up/down/etc?}
 
 \item{invert}{Invert the ma plot?}
@@ -55,10 +49,10 @@ plot_ma_de(
 }
 \value{
 ggplot2 MA scatter plot.  This is defined as the rowmeans of the
-  normalized counts by type across all sample types on the x axis, and the
-  log fold change between conditions on the y-axis. Dots are colored
-  depending on if they are 'significant.'  This will make a fun clicky
-  googleVis graph if requested.
+ normalized counts by type across all sample types on the x axis, and the
+ log fold change between conditions on the y-axis. Dots are colored
+ depending on if they are 'significant.'  This will make a fun clicky
+ googleVis graph if requested.
 }
 \description{
 Because I can never remember, the following from wikipedia: "An MA plot is an
@@ -68,16 +62,12 @@ DNA microarray gene expression data which has been transformed onto the M
 }
 \examples{
  \dontrun{
-  plot_ma(voomed_data, table, gvis_filename = "html/fun_ma_plot.html")
+  plot_ma(voomed_data, table)
   ## Currently this assumes that a variant of toptable was used which
   ## gives adjusted p-values.  This is not always the case and I should
   ## check for that, but I have not yet.
  }
 }
 \seealso{
-\pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
- \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
- \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
- \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
- \code{\link[limma]{contrasts.fit}}
+[limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 }

@@ -25,3 +25,6 @@ models which are invalid according to DESeq2.  This function will try before
 buying and tell the user if the sva model additions are valid according to
 DESeq.
 }
+\seealso{
+[sva] [RUVSeq] [all_adjusters()] [normalize_batch()]
+}

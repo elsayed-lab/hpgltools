@@ -22,5 +22,5 @@ Note the word 'attempt'.  This function is so ungodly slow that it probably
 will never be used.
 }
 \seealso{
-\pkg{variancePartition}
+[variancePartition]
 }

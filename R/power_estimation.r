@@ -15,7 +15,7 @@
 #' @param nsims Number of simulations to perform.
 #' @param reps Simulate these number of experimental replicates.
 #' @param de_method There are a couple choices here for tools which are pretty
-#'   old, my version of this only accepts deseq or edger.
+#'  old, my version of this only accepts deseq or edger.
 #' @param alpha_type I assume p-adjust type.
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
@@ -23,6 +23,7 @@
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containing the various results and plots from proper.
+#' @seealso [PROPER]
 default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                            reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
                            alpha = 0.1, stratify = "expr", target = "lfc",
@@ -59,18 +60,55 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
                                  filter.by = filter,
                                  target.by = target,
                                  delta = delta)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerTD(powers)
   powertd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerFD(powers)
   powerfd_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
   powerhist_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
+  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
+  dev.off()
+  file.remove(tmp_file)
+
   power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
   retlist <- list(
       "options" = simulation_options,
@@ -104,7 +142,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
 #' @param nsims Number of simulations to perform.
 #' @param reps Simulate these number of experimental replicates.
 #' @param de_method There are a couple choices here for tools which are pretty
-#'   old, my version of this only accepts deseq or edger.
+#'  old, my version of this only accepts deseq or edger.
 #' @param alpha_type I assume p-adjust type.
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
@@ -112,7 +150,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
 #' @param mean_or_median Use mean or median values?
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
-#' @return A list containin the various tables and plots returned by PROPER.
+#' @return List containin the various tables and plots returned by PROPER.
+#' @seealso [PROPER]
 #' @export
 simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                           reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
@@ -124,7 +163,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
   } else if (de_method == "deseq") {
     DEmethod <- "DESeq2"
   } else {
-      stop("This accepts only 'edger' or 'deseq'.")
+    stop("This accepts only 'edger' or 'deseq'.")
   }
   exprs_mtrx <- exprs(de_tables[["input"]][["input"]])
   genes <- nrow(de_tables[["data"]][[1]])
@@ -184,24 +223,61 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
                                    filter.by = filter,
                                    target.by = target,
                                    delta = delta)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPower(powers)
     abline(v = x_intercept)
     power_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerTD(powers)
     abline(v = x_intercept)
     powertd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerFD(powers)
     abline(v = x_intercept)
     powerfd_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotFDcost(powers)
     abline(v = x_intercept)
     fdcost_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
     abline(v = x_intercept)
     powerhist_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
+    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
     PROPER::plotPowerAlpha(powers)
     abline(v = x_intercept)
     poweralpha_plot <- grDevices::recordPlot()
+    dev.off()
+    file.remove(tmp_file)
+
     power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
     retlist <- list(
         "options" = simulation_options,
@@ -222,7 +298,6 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
 ## Use my cheater infix ::: to handle some unexported stuff from PROPER.
 update.RNAseq.SimOptions.2grp <- "PROPER" %:::% "update.RNAseq.SimOptions.2grp"
 run.edgeR <- "PROPER" %:::% "run.edgeR"
-run.DESeq <- "PROPER" %:::% "run.DESeq"
 run.DSS <- "PROPER" %:::% "run.DSS"
 run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 
@@ -235,9 +310,10 @@ run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 #' @param Nreps2 Second vector of replicates.
 #' @param nsims How many simulations to perform?
 #' @param sim.opts Options provided in a list which include information about the expression,
-#'   numbers of genes, logFC values, etc.
+#'  numbers of genes, logFC values, etc.
 #' @param DEmethod I suggest using only either edgeR or DESeq2.
 #' @param verbose Print some information along the way?
+#' @seealso [PROPER]
 my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
                         DEmethod = c("edgeR", "DSS", "DESeq", "DESeq2"), verbose = TRUE) {
   DEmethod <- match.arg(DEmethod)
@@ -278,9 +354,6 @@ my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
       data0 <- list(counts = this.X.valid, designs = this.design)
       if (DEmethod == "edgeR") {
         res1 <- run.edgeR(data0)
-      }
-      if (DEmethod == "DESeq") {
-        res1 <- run.DESeq(data0)
       }
       if (DEmethod == "DSS") {
         res1 <- run.DSS(data0)

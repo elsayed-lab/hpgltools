@@ -3,12 +3,12 @@
 #' This will attempt to make it easier to run topgo on a set of genes.
 #'
 #' @param sig_genes Data frame of differentially expressed genes, containing IDs
-#'   any other columns.
+#'  any other columns.
 #' @param goid_map File containing mappings of genes to goids in the format
-#'   expected by topgo.
+#'  expected by topgo.
 #' @param go_db Data frame of the goids which may be used to make the goid_map.
 #' @param pvals Set of pvalues in the DE data which may be used to improve the
-#'   topgo results.
+#'  topgo results.
 #' @param limitby Test to index the results by.
 #' @param limit Ontology pvalue to use as the lower limit.
 #' @param signodes I don't remember right now.
@@ -22,7 +22,7 @@
 #' @param excel  Print the results to an excel file?
 #' @param ... Other options which I do not remember right now!
 #' @return Big list including the various outputs from topgo
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                          pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
@@ -218,24 +218,25 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
 #' An attempt to make topgo invocations a bit more standard.
 #'
 #' My function 'simple_topgo()' was excessively long and a morass of copy/pasted
-#'   fragments.  This attempts to simplify that and converge on a single piece
-#'   of code for all the methodologies provided by topgo.
+#' fragments.  This attempts to simplify that and converge on a single piece
+#' of code for all the methodologies provided by topgo.
 #'
-#' @param type  Type of topgo search to perform: fisher, KS, EL, or weight.
-#' @param go_map  Mappings of gene and GO IDs.
-#' @param fisher_genes  List of genes used for fisher analyses.
-#' @param ks_genes  List of genes used for KS analyses.
-#' @param selector  Function to use when selecting genes.
-#' @param sigforall  Provide significance metrics for all ontologies observed,
-#'   not only the ones deemed statistically significant.
+#' @param type Type of topgo search to perform: fisher, KS, EL, or weight.
+#' @param go_map Mappings of gene and GO IDs.
+#' @param fisher_genes List of genes used for fisher analyses.
+#' @param ks_genes List of genes used for KS analyses.
+#' @param selector Function to use when selecting genes.
+#' @param sigforall Provide significance metrics for all ontologies observed,
+#'  not only the ones deemed statistically significant.
 #' @param numchar A limit on characters printed when printing topgo tables
-#'   (used?)
-#' @param pval_column  Column from which to extract DE p-values.
-#' @param overwrite  Overwrite an existing gene ID/GO mapping?
-#' @param cutoff  Define 'significant'?
-#' @param densities  Perform gene density plots by ontology?
-#' @param pval_plots  Print p-values plots as per clusterProfiler?
-#' @return A list of results from the various tests in topGO.
+#'  (used?)
+#' @param pval_column Column from which to extract DE p-values.
+#' @param overwrite Overwrite an existing gene ID/GO mapping?
+#' @param cutoff Define 'significant'?
+#' @param densities Perform gene density plots by ontology?
+#' @param pval_plots Print p-values plots as per clusterProfiler?
+#' @return List of results from the various tests in topGO.
+#' @seealso [topGO]
 #' @export
 do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
                      selector = "topDiffGenes", sigforall = TRUE, numchar = 300,
@@ -344,7 +345,7 @@ do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
 #' @param orderby Which of the available columns to order the table by?
 #' @param ranksof Which of the available columns are used to rank the data?
 #' @return prettier tables
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
                          numchar = 300, orderby = "fisher", ranksof = "fisher") {
@@ -447,7 +448,7 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
 #' @param go_db If there is no goid_map, create it with this data frame.
 #' @param overwrite Rewrite the mapping file?
 #' @return Summary of the new goid table.
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 make_id2gomap <- function(goid_map = "reference/go/id2go.map", go_db = NULL,
                           overwrite = FALSE) {
@@ -558,7 +559,7 @@ getEdgeWeights <- function(graph) {
 #' @param nodeInfo Hmm.
 #' @param maxchars Maximum characters per line inside the shapes.
 #' @return Topgo plot!
-#' @seealso \pkg{topGO}
+#' @seealso [topGO]
 #' @export
 hpgl_GOplot <- function(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
                         nodeShape.type = c("box", "circle", "ellipse", "plaintext")[3],

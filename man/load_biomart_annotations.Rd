@@ -81,6 +81,5 @@ download.
  dim(hs_biomart_annot$annotation)
 }
 \seealso{
-\pkg{biomaRt}
- \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+[biomaRt::listDatasets()] [biomaRt::getBM()] [find_working_mart()]
 }

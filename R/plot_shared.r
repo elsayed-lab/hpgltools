@@ -1,4 +1,4 @@
-## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
+# Note to self, I think for future ggplot2 plots, I must start by creating the data frame
 ## Then cast every column in it explicitly, and only then invoke ggplot(data = df ...)
 
 ## If I see something like:
@@ -26,20 +26,18 @@
 #' @param min_data Define the lower limit for the heuristic.
 check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10) {
   if (max(data) > max_data & min(data) < min_data) {
-    message("This data will benefit from being displayed on the log scale.")
-    message("If this is not desired, set scale='raw'")
+    mesg("This data will benefit from being displayed on the log scale.")
+    mesg("If this is not desired, set scale='raw'")
     scale <- "log"
     negative_idx <- data < 0
     if (sum(negative_idx) > 0) {
-      message("Some data are negative.  We are on log scale, setting them to 0.")
       data[negative_idx] <- 0
-      message("Changed ", sum(negative_idx), " negative features.")
+      message("Changed ", sum(negative_idx), " negative features to 0.")
     }
     zero_idx <- data == 0
     if (sum(zero_idx) > 0) {
-      message("Some entries are 0.  We are on log scale, adding 1 to the data.")
+      message(sum(zero_idx), " entries are 0.  We are on a log scale, adding 1 to the data.")
       data <- data + 1
-      message("Changed ", sum(zero_idx), " zero count features.")
     }
   } else {
     scale <- "raw"
@@ -58,14 +56,16 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
 #' @param gg Plot from ggplot2.
 #' @param filename Output filename.
 #' @param selfcontained htmlwidgets: Return the plot as a self-contained file
-#'   with images re-encoded base64.
+#'  with images re-encoded base64.
 #' @param libdir htmlwidgets: Directory into which to put dependencies.
 #' @param background htmlwidgets: String for the background of the image.
 #' @param title htmlwidgets: Title of the page!
 #' @param knitrOptions htmlwidgets: I am not a fan of camelCase, but
-#'   nonetheless, options from knitr for htmlwidgets.
+#'  nonetheless, options from knitr for htmlwidgets.
 #' @param ... Any remaining elipsis options are passed to ggplotly.
 #' @return The final output filename
+#' @seealso [htmlwidgets] [plotly] [ggplot2]
+#' @export
 ggplt <- function(gg, filename = "ggplot.html",
                   selfcontained = TRUE, libdir = NULL, background = "white",
                   title = class(gg)[[1]], knitrOptions = list(), ...) {
@@ -121,12 +121,8 @@ ggplt <- function(gg, filename = "ggplot.html",
 #'   \item density = a ggplot2 view of the density of each raw sample (this is
 #'      complementary but more fun than a boxplot)
 #' }
-#' @seealso \pkg{Biobase} \pkg{ggplot2} \pkg{grDevices} \pkg{gplots}
-#'   \code{\link[Biobase]{exprs}} \code{\link{hpgl_norm}}
-#'   \code{\link{plot_nonzero}} \code{\link{plot_libsize}}
-#'   \code{\link{plot_boxplot}} \code{\link{plot_corheat}} \code{\link{plot_sm}}
-#'   \code{\link{plot_disheat}} \code{\link{plot_pca}} \code{\link{plot_qq_all}}
-#'   \code{\link{plot_pairwise_ma}}
+#' @seealso [plot_nonzero()] [plot_legend()] [plot_libsize()] [plot_disheat()]
+#'  [plot_corheat()] [plot_topn()] [plot_pca()] [plot_sm()] [plot_boxplot()]
 #' @examples
 #' \dontrun{
 #'  toomany_plots <- graph_metrics(expt)
@@ -181,85 +177,89 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
 
   ## I am putting the ... arguments on a separate line so that I can check that
   ## each of these functions is working properly in an interactive session.
-  message("Graphing number of non-zero genes with respect to CPM by library.")
+  mesg("Graphing number of non-zero genes with respect to CPM by library.")
   nonzero <- try(plot_nonzero(expt, title = nonzero_title,
                               ...))
   if ("try-error" %in% class(nonzero)) {
     nonzero <- list()
   }
-  message("Graphing library sizes.")
+  mesg("Graphing library sizes.")
   libsize <- try(plot_libsize(expt, title = libsize_title,
                               ...))
   if ("try-error" %in% class(libsize)) {
     libsize <- list()
   }
-  message("Graphing a boxplot.")
+  mesg("Graphing a boxplot.")
   boxplot <- try(plot_boxplot(expt, title = boxplot_title,
                               ...))
   if ("try-error" %in% class(boxplot)) {
     boxplot <- NULL
   }
-  message("Graphing a correlation heatmap.")
+  mesg("Graphing a correlation heatmap.")
   corheat <- try(plot_corheat(expt, method = cormethod, title = corheat_title,
                               ...))
   if ("try-error" %in% class(corheat)) {
     corheat <- list()
   }
-  message("Graphing a standard median correlation.")
+  mesg("Graphing a standard median correlation.")
   smc <- try(plot_sm(expt, method = cormethod, title = smc_title,
                      ...))
   if ("try-error" %in% class(smc)) {
     smc <- NULL
   }
-  message("Graphing a distance heatmap.")
+  mesg("Graphing a distance heatmap.")
   disheat <- try(plot_disheat(expt, method = distmethod, title = disheat_title,
                               ...))
   if ("try-error" %in% class(disheat)) {
     disheat <- list()
   }
-  message("Graphing a standard median distance.")
+  mesg("Graphing a standard median distance.")
   smd <- try(plot_sm(expt, method = distmethod, title = smd_title,
                      ...))
   if ("try-error" %in% class(smd)) {
     smd <- NULL
   }
-  message("Graphing a PCA plot.")
+  mesg("Graphing a PCA plot.")
   pca <- try(plot_pca(expt, title = pca_title,
                       ...))
   if ("try-error" %in% class(pca)) {
     pca <- list()
   }
-  message("Graphing a T-SNE plot.")
+  mesg("Graphing a T-SNE plot.")
   tsne <- try(plot_tsne(expt, title = tsne_title,
                         ...))
   if ("try-error" %in% class(tsne)) {
     tsne <- list()
   }
-  message("Plotting a density plot.")
+  mesg("Plotting a density plot.")
   density <- try(plot_density(expt, title = dens_title,
                               ...))
   if ("try-error" %in% class(density)) {
     density <- list()
   }
-  message("Plotting a CV plot.")
+  mesg("Plotting a CV plot.")
   cv <- try(plot_variance_coefficients(expt, title = dens_title,
                                        ...))
   if ("try-error" %in% class(cv)) {
     cv <- list()
   }
-  message("Plotting the representation of the top-n genes.")
+  mesg("Plotting the representation of the top-n genes.")
   topn <- try(plot_topn(expt, title = topn_title,
                         ...))
   if ("try-error" %in% class(topn)) {
     topn <- list()
   }
   tmp_expt <- sm(normalize_expt(expt, filter = TRUE))
-  message("Plotting the expression of the top-n PC loaded genes.")
-  pcload <- try(plot_pcload(tmp_expt, title = pc_loading_title))
-  if ("try-error" %in% class(pcload)) {
-    pcload <- list()
+  pcload <- list()
+  if (nrow(exprs(tmp_expt)) > ncol(exprs(tmp_expt))) {
+    mesg("Plotting the expression of the top-n PC loaded genes.")
+    pcload <- try(plot_pcload(tmp_expt, title = pc_loading_title))
+    if ("try-error" %in% class(pcload)) {
+      pcload <- list()
+    }
   }
-  message("Printing a color to condition legend.")
+  
+  mesg("Printing a color to condition legend.")
   legend <- try(plot_legend(expt))
   if ("try-error" %in% class(legend)) {
     legend <- list()
@@ -267,7 +267,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   qq_logs <- NULL
   qq_ratios <- NULL
   if (isTRUE(qq)) {
-    message("QQ plotting!")
+    mesg("QQ plotting!")
     qq_plots <- try(sm(suppressWarnings(plot_qq_all(tmp_expt,
                                                  ...))))
     if ("try-error" %in% class(qq_plots)) {
@@ -279,7 +279,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
 
   ma_plots <- NULL
   if (isTRUE(ma)) {
-    message("Many MA plots!")
+    mesg("Many MA plots!")
     ma_plots <- try(suppressWarnings(plot_pairwise_ma(expt,
                                                       ...)))
     if ("try-error" %in% class(ma_plots)) {
@@ -289,7 +289,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
 
   gene_heatmap <- NULL
   if (isTRUE(gene_heat)) {
-    message("gene heatmap!")
+    mesg("gene heatmap!")
     gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(tmp_expt,
                                                              ...)))
     if ("try-error" %in% class(gene_heatmap)) {
@@ -351,9 +351,14 @@ plot_legend <- function(stuff) {
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
   leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
   legend <- tmp[["grobs"]][[leg]]
+  tmp_file <- tempfile(pattern = "legend", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   grid::grid.newpage()
   grid::grid.draw(legend)
   legend_plot <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
   ret <- list(
     colors = plot[["data"]][, c("condition", "batch", "colors")],
     plot = legend_plot)

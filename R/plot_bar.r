@@ -5,19 +5,17 @@
 #' make it pretty!
 #'
 #' @param data Expt, dataframe, or expressionset of samples.
-#' @param condition vector of sample condition names.
+#' @param condition Vector of sample condition names.
 #' @param colors Color scheme if the data is not an expt.
 #' @param text Add the numeric values inside the top of the bars of the plot?
-#' @param order  Explicitly set the order of samples in the plot?
+#' @param order Explicitly set the order of samples in the plot?
 #' @param title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
-#' @param expt_names  Design column or manually selected names for printing sample names.
+#' @param expt_names Design column or manually selected names for printing sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
-#'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+#' @seealso [ggplot2] [prettyNum] [plot_sample_bars()]
 #' @examples
 #' \dontrun{
 #'  libsize_plot <- plot_libsize(expt = expt)
@@ -25,7 +23,7 @@
 #' }
 #' @export
 plot_libsize <- function(data, condition = NULL, colors = NULL,
-                         text = TRUE, order = NULL, title = NULL,  yscale = NULL,
+                         text = TRUE, order = NULL, title = NULL, yscale = NULL,
                          expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
@@ -88,19 +86,17 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                            "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))
-  summary_df <- data.table::setDT(libsize_df)[, list("min"=min(sum),
-                                                     "1st"=quantile(x = sum, probs = 0.25),
-                                                     "median"=median(x = sum),
-                                                     "mean"=mean(sum),
-                                                     "3rd"=quantile(x = sum, probs = 0.75),
-                                                     "max"=max(sum)),
+  summary_df <- data.table::setDT(libsize_df)[, list("min" = min(sum),
+                                                     "1st" = quantile(x = sum, probs = 0.25),
+                                                     "median" = median(x = sum),
+                                                     "mean" = mean(sum),
+                                                     "3rd" = quantile(x = sum, probs = 0.75),
+                                                     "max" = max(sum)),
                                               by = "condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
                                    text = text, order = order, title = title, integerp = integerp,
-                                   yscale = yscale, ...)
-  ##libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
-  ##                                 text = text, order = order, title = title, integerp = integerp,
-  ##                                 yscale = yscale)
+                                   yscale = yscale,
+                                   ...)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -108,55 +104,79 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
   return(retlist)
 }
 
+#' Visualize genes observed before/after filtering.
+#'
 #' Thanks to Sandra Correia for this!  This function attempts to represent the
 #' change in the number of genes which are well/poorly represented in the data
 #' before and after performing a low-count filter.
 #'
 #' @param expt Input expressionset.
-#' @param low_limit  A threshold to define 'low-representation.'
-#' @param filter  Method used to low-count filter the data.
-#' @param ...  Extra arbitrary arguments to pass to normalize_expt()
-#' @return  Bar plot showing the number of genes below the low_limit before and
-#'   after filtering the data.
+#' @param low_limit Threshold to define 'low-representation.'
+#' @param filter Method used to low-count filter the data.
+#' @param ... Extra arbitrary arguments to pass to normalize_expt()
+#' @return Bar plot showing the number of genes below the low_limit before and
+#'  after filtering the data.
+#' @seealso [plot_libsize()] [filter_counts()]
 #' @export
 plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   start <- plot_libsize(expt, text = FALSE)
-  norm <- sm(normalize_expt(expt, filter = filter, ...))
+  norm <- sm(normalize_expt(expt, filter = filter,
+                            ...))
   end <- plot_libsize(norm)
 
+  ## Gather the number of genes which are <= the low limit, before and after filtering
   lt_min_start <- colSums(exprs(expt) <= low_limit)
   lt_min_end <- colSums(exprs(norm) <= low_limit)
 
   start_tab <- as.data.frame(start[["table"]])
   end_tab <- as.data.frame(end[["table"]])
 
+  ## Get the number of counts in each samples.
   start_tab[["sum"]] <- as.numeric(start_tab[["sum"]])
   start_tab[["colors"]] <- as.character(start_tab[["colors"]])
   start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
+  ## Get the number of low genes in each sample.
   start_tab[["low"]] <- lt_min_start
+  start_tab[["sub_low"]] <- ""
   start_tab[["subtraction"]] <- ""
+  start_tab[["subtraction_string"]] <- ""
 
+  ## Get the number of counts after filtering.
   end_tab[["sum"]] <- as.numeric(end_tab[["sum"]])
   end_tab[["colors"]] <- as.character(end_tab[["colors"]])
   end_tab[["alpha"]] <- ggplot2::alpha(end_tab[["colors"]], 1.0)
-  end_tab[["subtraction"]] <- start_tab[["sum"]] - end_tab[["sum"]]
+  ## Find how many counts were lost from filtering.
+  subtract_count_sums <- start_tab[["sum"]] - end_tab[["sum"]]
+  end_tab[["subtraction"]] <- subtract_count_sums
+  ## Get the number of genes after filtering.
   end_tab[["low"]] <- lt_min_end
   end_tab[["sub_low"]] <- ""
+  end_tab[["subtraction_string"]] <- ""
 
-  start_tab[["sub_low"]] <- start_tab[["low"]] - end_tab[["low"]]
+  ## Get the number of genes lost from filtering.
+  subtract_gene_sums <- start_tab[["low"]] - end_tab[["low"]]
+  start_tab[["sub_low"]] <- subtract_gene_sums
+  start_tab[["subtraction_string"]] <- paste0(subtract_count_sums, " counts from ",
+                                              subtract_gene_sums, " genes.")
   all_tab <- rbind(start_tab, end_tab)
 
+  count_title <- glue::glue("Counts remaining after filtering less than {low_limit} reads,
+labeled by counts/genes removed.")
   count_columns <- ggplot(all_tab, aes_string(x = "id", y = "sum")) +
     ggplot2::geom_col(position = "identity", color = "black", aes_string(fill = "colors")) +
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
                        aes_string(
                          x = "id",
-                         label='as.character(all_tab$subtraction)')) +
+                         ## label='as.character(all_tab$subtraction)')) +
+                         label="subtraction_string")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
-                   legend.position = "none")
+                   legend.position = "none") +
+    ggplot2::scale_y_log10(labels = scales::scientific) +
+    ggplot2::ggtitle(count_title)
 
+  low_title <- glue::glue("Genes with less than {low_limit} reads before/after filtering, labeled by delta.")
   low_columns <- ggplot(all_tab, aes_string(x = "id", y = "low")) +
     ggplot2::geom_col(position = "identity", color = "black",
                       aes_string(alpha = "alpha", fill = "colors")) +
@@ -164,10 +184,12 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
                        aes_string(
                          x = "id",
-                         label='as.character(all_tab$sub_low)')) +
+                         ## label='as.character(all_tab$sub_low)')) +
+                         label="sub_low")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
-                   legend.position = "none")
+                   legend.position = "none") +
+    ggplot2::ggtitle(low_title)
 
   retlist <- list(
     "start" = start,
@@ -185,8 +207,8 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
 #' This function will make it possible to see what is left.
 #'
 #' @param data Dataframe of the material remaining, usually expt$summary_table
-#' @param row  Row name to plot.
-#' @param condition vector of sample condition names.
+#' @param row Row name to plot.
+#' @param condition Vector of sample condition names.
 #' @param colors Color scheme if the data is not an expt.
 #' @param names Alternate names for the x-axis.
 #' @param text Add the numeric values inside the top of the bars of the plot?
@@ -194,9 +216,7 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
-#'  \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+#' @seealso [plot_sample_bars()]
 #' @examples
 #' \dontrun{
 #'  kept_plot <- plot_pct_kept(expt_removed)
@@ -250,6 +270,19 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
   return(kept_plot)
 }
 
+#' The actual library size plotter.
+#'
+#' This makes a ggplot2 plot of library sizes.
+#'
+#' @param sample_df Expt, dataframe, or expressionset of samples.
+#' @param condition Vector of sample condition names.
+#' @param colors Color scheme if the data is not an expt.
+#' @param integerp Is this comprised of integer values?
+#' @param order Explicitly set the order of samples in the plot?
+#' @param text Add the numeric values inside the top of the bars of the plot?
+#' @param title Title for the plot.
+#' @param yscale Whether or not to log10 the y-axis.
+#' @param ... Used to catch random arguments which are unused here.
 plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
                              integerp = FALSE, order = NULL,
                              text = TRUE, title = NULL, yscale = NULL, ...) {
@@ -264,7 +297,15 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
   }
 
   sample_df[["order"]] <- factor(sample_df[["id"]], as.character(sample_df[["id"]]))
-  if (!is.null(order)) {
+  if (is.null(order)) {
+    ## Order it by sample names lexically
+    lexical <- order(levels(sample_df[["order"]]))
+    sample_df <- sample_df[lexical, ]
+    ## The next two lines are an attempt to ensure that the factor
+    ## levels make sense and are in the same order as the samples.
+    new_order <- as.character(sample_df[["order"]])
+    sample_df[["order"]] <- as.factor(new_order)
+  } else {
     new_df <- data.frame()
     for (o in order) {
       matches <- grep(pattern = o, x = sample_df[["order"]])
@@ -313,7 +354,7 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
     scale_difference <- max(as.numeric(sample_df[["sum"]])) /
       min(as.numeric(sample_df[["sum"]]))
     if (scale_difference > 10.0) {
-      message("The scale difference between the smallest and largest
+      mesg("The scale difference between the smallest and largest
 libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
       scale <- TRUE
     } else {
@@ -337,16 +378,16 @@ libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
 #' also written when I was first learning R and when I look at it now I see a
 #' few obvious places which can use improvement.
 #'
-#' @param input  Coverage / position filename.
-#' @param workdir  Where to put the resulting images.
-#' @param output  Output image filename.
-#' @param name  Gene name to print at the bottom of the plot.
-#' @param start  Relative to 0, where is the gene's start codon.
-#' @param end  Relative to 0, where is the gene's stop codon.
-#' @param strand  Is this on the + or - strand? (+1/-1)
-#' @param padding  How much space to provide on the sides?
+#' @param input Coverage / position filename.
+#' @param workdir Where to put the resulting images.
+#' @param output Output image filename.
+#' @param name Gene name to print at the bottom of the plot.
+#' @param start Relative to 0, where is the gene's start codon.
+#' @param end Relative to 0, where is the gene's stop codon.
+#' @param strand Is this on the + or - strand? (+1/-1)
+#' @param padding How much space to provide on the sides?
 #' @return coverage plot surrounging the ORF of interest
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.01.0010",
                      start = 1000, end = 2000, strand = 1, padding = 100) {
 
@@ -397,18 +438,21 @@ plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.
   return(my_plot)
 }
 
-#' Make a bar plot of the numbers of significant genes by contrast.
-#' These plots are quite difficult to describe.
+#' Plot significant genes by contrast with different colors for significance levels.
 #'
-#' @param ups  Set of up-regulated genes.
-#' @param downs  Set of down-regulated genes.
-#' @param maximum  Maximum/minimum number of genes to display.
-#' @param text  Add text at the ends of the bars describing the number of genes >/< 0 fc.
-#' @param color_list  Set of colors to use for the bars.
-#' @param color_names  Categories associated with aforementioned colors.
+#' This is my attempt to recapitulate some plots made in Laura and Najib's mbio
+#' paper.  The goal of the plot is to show a few ranges of significance as
+#' differently colored and stacked bars.  The colors are nice because Najib and
+#' Laura chose them.
+#'
+#' @param ups Set of up-regulated genes.
+#' @param downs Set of down-regulated genes.
+#' @param maximum Maximum/minimum number of genes to display.
+#' @param text Add text at the ends of the bars describing the number of genes >/< 0 fc.
+#' @param color_list Set of colors to use for the bars.
+#' @param color_names Categories associated with aforementioned colors.
 #' @return weird significance bar plots
-#' @seealso \pkg{ggplot2}
-#'  \code{\link{extract_significant_genes}}
+#' @seealso [ggplot2] [extract_significant_genes()]
 #' @export
 plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
                                  color_list = c("lightcyan", "lightskyblue", "dodgerblue",
@@ -481,4 +525,4 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
   return(sigbar_plot)
 }
 
-## EOF  Damners I don't have many bar plots, do I?
+## EOF

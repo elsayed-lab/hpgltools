@@ -10,7 +10,7 @@ semantic_copynumber_filter(
   use_files = FALSE,
   invert = TRUE,
   semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
-  semantic_column = "1.tooltip"
+  semantic_column = "product"
 )
 }
 \arguments{
@@ -50,5 +50,5 @@ strings.
 }
 }
 \seealso{
-\code{\link{semantic_copynumber_extract}}
+[semantic_copynumber_extract()]
 }

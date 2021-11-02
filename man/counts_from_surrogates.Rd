@@ -10,6 +10,7 @@ counts_from_surrogates(
   design = NULL,
   method = "ruv",
   cond_column = "condition",
+  batch_column = "batch",
   matrix_scale = "linear",
   return_scale = "linear",
   ...
@@ -26,6 +27,9 @@ counts_from_surrogates(
 
 \item{cond_column}{design column containing the condition data.}
 
+\item{batch_column}{design column with the batch data, used for
+subtractive methods.}
+
 \item{matrix_scale}{Was the input for the surrogate estimator on a log or linear scale?}
 
 \item{return_scale}{Does one want the output linear or log?}
@@ -41,5 +45,5 @@ resulting count table look like? Hopefully this function answers that
 question.
 }
 \seealso{
-\pkg{sva} \pkg{RUVSeq}
+[sva] [RUVSeq] [crossprod()] [tcrossprod()] [solve()]
 }

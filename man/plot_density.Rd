@@ -55,6 +55,5 @@ colorful and fun!
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[ggplot2]{geom_density}}
+[ggplot2]
 }

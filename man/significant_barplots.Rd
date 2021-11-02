@@ -59,6 +59,3 @@ p-value.
  barplots <- significant_barplots(combined_result)
 }
 }
-\seealso{
-\pkg{ggplot2}
-}

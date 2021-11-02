@@ -79,7 +79,7 @@ fis_normpca$plot
 
 ## ----test_3d------------------------------------------------------------------
 testing <- plot_pca(norm_expt, num_pc = 3)
-silly <- plot_3d_pca(testing)
+silly <- plot_3d_pca(testing, file = "images/3dpca.html")
 silly$plot
 
 ## ----normalized_pca-----------------------------------------------------------
@@ -148,4 +148,18 @@ fission_dis <- plot_disheat(norm_expt)
 fission_dis$plot
 fission_dis <- plot_disheat(batchnorm_expt)
 fission_dis$plot
+
+## ----variancePartition--------------------------------------------------------
+test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("condition", "batch"))
+test_varpart$percent_plot
+test_varpart$partition_plot
+
+## Here, let us test the variance contributed by strain, time, and replicate.
+test_varpart <- simple_varpart(fission_expt, predictor = NULL,
+                               factors = c("condition", "strain", "minute", "replicate"))
+test_varpart$percent_plot
+test_varpart$partition_plot
+
+## ----sysinfo, results='asis'--------------------------------------------------
+pander::pander(sessionInfo())
 

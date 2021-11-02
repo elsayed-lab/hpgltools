@@ -3,6 +3,14 @@
 ## because is more sparse than I would like, and mostly because the IDs map
 ## nonsensically.
 
+#' Use pathfindR to get a dataframe of KEGG IDs.
+#'
+#' The various KEGG conversion methods from KEGGREST appear to only work
+#' for a small subset of species now.  This uses a differnt query format to get
+#' a less flexible version of the same information. But at least it works.
+#'
+#' @param org_code Organism code from KEGG.
+#' @return Dataframe of gene IDs to KEGG IDs.
 make_kegg_df <- function(org_code) {
   pathl <- pathfindR::get_gene_sets_list(source = "KEGG", org_code = org_code)
   genes <- pathl[["gene_sets"]]
@@ -34,6 +42,7 @@ make_kegg_df <- function(org_code) {
 #' @param final_colname Column name for the new information
 #' @param flatten Flatten nested data?
 #' @return A normalized data frame of gene IDs to whatever.
+#' @seealso [KEGGREST] [load_kegg_annotations()]
 kegg_vector_to_df <- function(vector, final_colname = "first", flatten = TRUE) {
   final_df <- data.frame(stringsAsFactors = FALSE)
   if (isTRUE(flatten)) {
@@ -74,13 +83,14 @@ kegg_vector_to_df <- function(vector, final_colname = "first", flatten = TRUE) {
 #' Create a data frame of pathways to gene IDs from KEGGREST
 #'
 #' This seeks to take the peculiar format from KEGGREST for pathway<->genes and
-#' make it easier to deal with.
+#' make it easier to deal with.  Sadly, this only works for a subset of species now.
 #'
 #' @param species String to use to query KEGG abbreviation.
 #' @param abbreviation If you already know the abbreviation, use it.
 #' @param flatten Flatten nested tables?
 #' @return dataframe with rows of KEGG gene IDs and columns of NCBI gene IDs
 #'  and KEGG paths.
+#' @seealso [KEGGREST]
 #' @examples
 #'  sc_kegg_annot <- load_kegg_annotations(species = "cerevisiae")
 #'  head(sc_kegg_annot)
@@ -158,8 +168,7 @@ load_kegg_annotations <- function(species = "coli", abbreviation = NULL, flatten
 #'
 #' @param kegg_ids List of KEGG identifiers to be mapped.
 #' @return Ensembl IDs as a character list.
-#' @seealso \pkg{KEGGREST}
-#'  \code{\link[KEGGREST]{keggGet}}
+#' @seealso [KEGGREST::keggGet()]
 #' @examples
 #'  kegg_df <- load_kegg_annotations(species = "coli")
 #'  kegg_ids <- head(kegg_df[["kegg_geneid"]])

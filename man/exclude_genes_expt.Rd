@@ -9,6 +9,8 @@ exclude_genes_expt(
   column = "txtype",
   method = "remove",
   ids = NULL,
+  warning_cutoff = 90,
+  meta_column = NULL,
   patterns = c("snRNA", "tRNA", "rRNA"),
   ...
 )
@@ -21,6 +23,10 @@ exclude_genes_expt(
 \item{method}{Either remove explicit rows, or keep them.}
 
 \item{ids}{Specific IDs to exclude.}
+
+\item{warning_cutoff}{Print the sample IDs for anything which has less than this percent left.}
+
+\item{meta_column}{Save the amount of data lost to this metadata column when not null.}
 
 \item{patterns}{Character list of patterns to remove/keep}
 
@@ -46,5 +52,5 @@ what happened to the data over the course of the subset.
 }
 }
 \seealso{
-\code{\link{create_expt}}
+[create_expt()] [Biobase]
 }

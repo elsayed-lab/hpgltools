@@ -2,8 +2,7 @@
 % Please edit documentation in R/plot_bar.r
 \name{plot_significant_bar}
 \alias{plot_significant_bar}
-\title{Make a bar plot of the numbers of significant genes by contrast.
-These plots are quite difficult to describe.}
+\title{Plot significant genes by contrast with different colors for significance levels.}
 \usage{
 plot_significant_bar(
   ups,
@@ -33,10 +32,11 @@ plot_significant_bar(
 weird significance bar plots
 }
 \description{
-Make a bar plot of the numbers of significant genes by contrast.
-These plots are quite difficult to describe.
+This is my attempt to recapitulate some plots made in Laura and Najib's mbio
+paper.  The goal of the plot is to show a few ranges of significance as
+differently colored and stacked bars.  The colors are nice because Najib and
+Laura chose them.
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link{extract_significant_genes}}
+[ggplot2] [extract_significant_genes()]
 }

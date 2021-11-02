@@ -20,6 +20,8 @@ choose_limma_dataset(
 \item{which_voom}{Choose between limma'svoom, voomWithQualityWeights, or the
 hpgl equivalents.}
 
+\item{verbose}{Print some information about what is happening?}
+
 \item{...}{Extra arguments passed to arglist.}
 }
 \value{
@@ -30,5 +32,5 @@ Take an expt and poke at it to ensure that it will not result in troubled
 limma results.
 }
 \seealso{
-\pkg{limma}
+[limma] [choose_dataset()]
 }

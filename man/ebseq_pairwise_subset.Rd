@@ -57,3 +57,6 @@ the 'normal' ebseq pairwise comparison for each pair of conditions in an
 expressionset.  It therefore avoids the strange logic inherent in the ebseq
 multitest function.
 }
+\seealso{
+[ebseq_pairwise()]
+}

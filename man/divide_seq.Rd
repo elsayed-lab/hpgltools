@@ -24,6 +24,6 @@ It is essentially fancy pants rpkm.
 }
 }
 \seealso{
-\pkg{edgeR} \pkg{Rsamtools}
- \code{\link[Rsamtools]{FaFile}} \code{\link[edgeR]{rpkm}}
+[edgeR] [Rsamtools::FaFile()] [Biostrings::PDict()]
+  [Biostrings::vcountPDict()] [GenomeInfoDb] [GenomicRanges]
 }

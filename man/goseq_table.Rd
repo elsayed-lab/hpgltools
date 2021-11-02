@@ -40,5 +40,5 @@ like ontology categories, definitions, etc.
 }
 }
 \seealso{
-\pkg{goseq}
+[goseq] [GO.db]
 }

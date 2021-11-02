@@ -48,3 +48,6 @@ List containing the returned heatmap along with some parameters used to create i
 Heatplus is an interesting tool, I have a few examples of using it and intend
 to include them here.
 }
+\seealso{
+[Heatplus] [fastcluster]
+}

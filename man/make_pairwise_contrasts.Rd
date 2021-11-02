@@ -22,6 +22,9 @@ make_pairwise_contrasts(
 \item{do_identities}{Include all the identity strings? Limma can
 use this information while edgeR can not.}
 
+\item{do_extras}{Include extra contrasts?  This seems redundant with extra_contrasts
+below, but there is a reason for it.}
+
 \item{do_pairwise}{Include all pairwise strings? This shouldn't
 need to be set to FALSE, but just in case.}
 
@@ -53,6 +56,5 @@ Invoked by the _pairwise() functions.
 }
 }
 \seealso{
-\pkg{limma}
- \code{\link[limma]{makeContrasts}}
+[limma::makeContrasts()]
 }

@@ -26,5 +26,5 @@ Invoked by combine_de_tables() in order to compare the results.
 }
 }
 \seealso{
-\code{\link{plot_linear_scatter}}
+[plot_linear_scatter()]
 }

@@ -7,7 +7,6 @@
 write_gostats_data(
   gostats_result,
   excel = "excel/gostats.xlsx",
-  wb = NULL,
   add_trees = TRUE,
   order_by = "qvalue",
   pval = 0.1,
@@ -22,8 +21,6 @@ write_gostats_data(
 \item{gostats_result}{A set of results from simple_gostats().}
 
 \item{excel}{An excel file to which to write some pretty results.}
-
-\item{wb}{Workbook object to write to.}
 
 \item{add_trees}{Include topgoish ontology trees?}
 
@@ -48,5 +45,5 @@ The result from openxlsx in a prettyified xlsx file.
 It is my intention to make a function like this for each ontology tool in my repetoire
 }
 \seealso{
-\pkg{openxlsx} \pkg{gostats}
+[openxlsx] [simple_gostats()]
 }

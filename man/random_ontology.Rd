@@ -21,3 +21,6 @@ An ontology result
 \description{
 At the very least, the result should be less significant than the actual data!
 }
+\seealso{
+[simple_goseq()] [simple_clusterprofiler()] [simple_topgo()] [simple_gostats()]
+}

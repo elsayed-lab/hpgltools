@@ -4,10 +4,9 @@
 #'
 #' This was written primarily to understand what that function is doing in edgeR.
 #'
-#' @param data  A dataframe/expt/exprs with count data
-#' @return a plot! of the BCV a la ggplot2.
-#' @seealso \pkg{edgeR}
-#'  \code{\link[edgeR]{plotBCV}}
+#' @param data Dataframe/expt/exprs with count data
+#' @return Plot of the BCV a la ggplot2.
+#' @seealso [edgeR::plotBCV()] [ggplot2]
 #' @examples
 #' \dontrun{
 #'  bcv <- plot_bcv(expt)
@@ -71,30 +70,24 @@ plot_bcv <- function(data) {
 #' then normalized against the maximum.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param tooltip_data Df of tooltip information for gvis graphs.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param size Size of the dots.
 #' @param xlab x-axis label.
 #' @param ylab y-axis label.
 #' @return Ggplot2 scatter plot.  This plot provides a "bird's eye"
-#' view of two data sets.  This plot assumes the two data structures
-#' are not correlated, and so it calculates the median/mad of each
-#' axis and uses these to calculate a stupid, home-grown distance
-#' metric away from both medians.  This distance metric is used to
-#' color dots which are presumed the therefore be interesting because
-#' they are far from 'normal.'  This will make a fun clicky googleVis
-#' graph if requested.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
-#'  \code{\link{plot_linear_scatter}}
+#'  view of two data sets.  This plot assumes the two data structures
+#'  are not correlated, and so it calculates the median/mad of each
+#'  axis and uses these to calculate a stupid, home-grown distance
+#'  metric away from both medians.  This distance metric is used to
+#'  color dots which are presumed the therefore be interesting because
+#'  they are far from 'normal.'  This will make a fun clicky googleVis
+#'  graph if requested.
+#' @seealso [ggplot2::geom_point()] [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
-#'  dist_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'                    gvis_filename = "html/fun_scatterplot.html")
+#'  dist_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, size = 2,
-                              xlab = NULL, ylab = NULL) {
+plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -140,9 +133,6 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename)
-  }
   return(first_vs_second)
 }
 
@@ -150,14 +140,10 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' some supporting statistics.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param tooltip_data Df of tooltip information for gvis graphs.
-#' @param gvis_filename  Filename to write a fancy html graph.
 #' @param cormethod What type of correlation to check?
 #' @param size Size of the dots on the plot.
 #' @param identity Add the identity line?
 #' @param loess Add a loess estimation?
-#' @param gvis_trendline Add a trendline to the gvis plot?  There are a couple
-#'   possible types, I think linear is the most common.
 #' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.
@@ -167,33 +153,28 @@ plot_dist_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL, siz
 #' @param ylab Alternate x-axis label.
 #' @param color_high Chosen color for points significantly above the mean.
 #' @param color_low Chosen color for points significantly below the mean.
-#' @param alpha  Choose an alpha channel to define how see-through the dots are.
+#' @param alpha Choose an alpha channel to define how see-through the dots are.
 #' @param ... Extra args likely used for choosing significant genes.
 #' @return List including a ggplot2 scatter plot and some histograms.  This plot
-#'   provides a "bird's eye" view of two data sets.  This plot assumes a
-#'   (potential) linear correlation between the data, so it calculates the
-#'   correlation between them.  It then calculates and plots a robust linear
-#'   model of the data using an 'SMDM' estimator (which I don't remember how to
-#'   describe, just that the document I was reading said it is good).  The
-#'   median/mad of each axis is calculated and plotted as well.  The distance
-#'   from the linear model is finally used to color the dots on the plot.
-#'   Histograms of each axis are plotted separately and then together under a
-#'   single cdf to allow tests of distribution similarity.  This will make a fun
-#'   clicky googleVis graph if requested.
-#' @seealso \pkg{robust} \pkg{stats} \pkg{ggplot2}
-#'  \code{\link[robust]{lmRob}} \code{\link[stats]{weights}} \code{\link{plot_histogram}}
+#'  provides a "bird's eye" view of two data sets.  This plot assumes a
+#'  (potential) linear correlation between the data, so it calculates the
+#'  correlation between them.  It then calculates and plots a robust linear
+#'  model of the data using an 'SMDM' estimator (which I don't remember how to
+#'  describe, just that the document I was reading said it is good).  The
+#'  median/mad of each axis is calculated and plotted as well.  The distance
+#'  from the linear model is finally used to color the dots on the plot.
+#'  Histograms of each axis are plotted separately and then together under a
+#'  single cdf to allow tests of distribution similarity.  This will make a fun
+#'  clicky googleVis graph if requested.
+#' @seealso [robust] [stats] [ggplot2] [robust::lmRob] [stats::weights] [plot_histogram()]
 #' @examples
 #' \dontrun{
-#'  plot_linear_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'                      gvis_filename = "html/fun_scatterplot.html")
+#'  plot_linear_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
-                                cormethod = "pearson", size = 2, loess = FALSE,
-                                identity = FALSE, gvis_trendline = NULL,
-                                z_lines = FALSE, first = NULL, second = NULL,
-                                base_url = NULL, pretty_colors = TRUE,
-                                xlab = NULL, ylab = NULL,
+plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FALSE,
+                                identity = FALSE, z_lines = FALSE, first = NULL, second = NULL,
+                                base_url = NULL, pretty_colors = TRUE, xlab = NULL, ylab = NULL,
                                 color_high = NULL, color_low = NULL, alpha = 0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
@@ -350,10 +331,6 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
 
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename,
-                      trendline = gvis_trendline, base_url = base_url)
-  }
   if (!is.null(first) & !is.null(second)) {
     colnames(df) <- c(first, second)
   } else if (!is.null(first)) {
@@ -398,25 +375,19 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @param logfc Fold change cutoff.
 #' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
 #' @param size How big are the dots?
-#' @param tooltip_data Df of tooltip information for gvis.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
-#'   normalized counts by type across all sample types on the x axis, and the
-#'   log fold change between conditions on the y-axis. Dots are colored
-#'   depending on if they are 'significant.'  This will make a fun clicky
-#'   googleVis graph if requested.
-#' @seealso \pkg{limma} \pkg{googleVis} \pkg{DESeq2} \pkg{edgeR}
-#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
-#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}}
-#'  \code{\link[limma]{lmFit}} \code{\link[limma]{makeContrasts}}
-#'  \code{\link[limma]{contrasts.fit}}
+#'  normalized counts by type across all sample types on the x axis, and the
+#'  log fold change between conditions on the y-axis. Dots are colored
+#'  depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
 #' @examples
 #'  \dontrun{
-#'   plot_ma(voomed_data, table, gvis_filename = "html/fun_ma_plot.html")
+#'   plot_ma(voomed_data, table)
 #'   ## Currently this assumes that a variant of toptable was used which
 #'   ## gives adjusted p-values.  This is not always the case and I should
 #'   ## check for that, but I have not yet.
@@ -424,17 +395,16 @@ plot_linear_scatter <- function(df, tooltip_data = NULL, gvis_filename = NULL,
 #' @export
 plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
                        p = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
-                       size = 2, tooltip_data = NULL, gvis_filename = NULL,
-                       shapes = TRUE, invert = FALSE, label = NULL, ...) {
+                       size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
   ## Others may disagree and change that with sig_color, insig_color.
-  sig_color <- "darkblue"
+  sig_color <- "darkred"
   if (!is.null(arglist[["sig_color"]])) {
     sig_color <- arglist[["sig_color"]]
   }
-  insig_color <- "darkred"
+  insig_color <- "darkblue"
   if (!is.null(arglist[["insig_color"]])) {
     insig_color <- arglist[["insig_color"]]
   }
@@ -558,19 +528,14 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
     ## Set the colors of the significant/insignificant points.
     ggplot2::scale_fill_manual(name = "as.factor(pcut)",
                                values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = "as.factor(pcut)",
                                 values = c("FALSE"=insig_color, "TRUE"=sig_color),
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
     ggplot2::xlab("Average log2(Counts)") +
     ggplot2::ylab("log2(fold change)")
-
-  ## Make a gvis plot if requested.
-  if (!is.null(gvis_filename)) {
-    plot_gvis_ma(df, tooltip_data = tooltip_data, filename = gvis_filename, ...)
-  }
 
   ## Recolor a family of genes if requested.
   if (!is.null(family)) {
@@ -609,11 +574,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
 #' This function should make it easy to color a family of genes in any of the
 #' point plots.
 #'
-#' @param plot  Geom_point based plot
-#' @param df  Data frame used to create the plot
-#' @param ids  Set of ids which must be in the rownames of df to recolor
-#' @param color  Chosen color for the new points.
-#' @param ...  Extra arguments are passed to arglist.
+#' @param plot Geom_point based plot
+#' @param df Data frame used to create the plot
+#' @param ids Set of ids which must be in the rownames of df to recolor
+#' @param color Chosen color for the new points.
+#' @param ... Extra arguments are passed to arglist.
 #' @return prettier plot.
 recolor_points <- function(plot, df, ids, color = "red", ...) {
   arglist <- list(...)
@@ -638,18 +603,17 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @param design Eesign matrix.
 #' @param colors Color scheme.
 #' @param plot_labels How do you want to label the graph? 'fancy' will use
-#'   directlabels() to try to match the labels with the positions without
-#'   overlapping anything else will just stick them on a 45' offset next to the
-#'   graphed point.
-#' @param expt_names  Column or character list of preferred sample names.
-#' @param label_chars  How many characters for sample names before abbreviation.
-#' @param plot_legend  Print a legend for this plot?
+#'  directlabels() to try to match the labels with the positions without
+#'  overlapping anything else will just stick them on a 45' offset next to the
+#'  graphed point.
+#' @param expt_names Column or character list of preferred sample names.
+#' @param label_chars How many characters for sample names before abbreviation.
+#' @param plot_legend Print a legend for this plot?
 #' @param title Add a title?
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each
-#'   library's CPM.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link[ggplot2]{geom_point}} \code{\link[directlabels]{geom_dl}}
+#'  library's CPM.
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  nonzero_plot <- plot_nonzero(expt = expt)
@@ -771,8 +735,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
 #' @param log Is the data in log format?
 #' @param ... Options are good and passed to arglist().
 #' @return List of affy::maplots
-#' @seealso \pkg{affy}
-#'  \code{\link[affy]{ma.plot}}
+#' @seealso [affy::ma.plot()]
 #' @examples
 #' \dontrun{
 #'  ma_plots = plot_pairwise_ma(expt = some_expt)
@@ -822,10 +785,16 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       }
       m <- first - second
       a <- (first + second) / 2
+
+      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      this_plot <- png(filename = tmp_file)
+      controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",
                     show.statistics = TRUE, add.loess = TRUE)
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
+      dev.off()
+      file.remove(tmp_file)
     }
   }
   return(plot_list)
@@ -837,26 +806,20 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
 #' describing the relationship between the columns of data plotted.
 #'
 #' @param df Dataframe likely containing two columns.
-#' @param gvis_filename Filename to write a fancy html graph.
-#' @param tooltip_data Df of tooltip information for gvis.
 #' @param size Size of the dots on the graph.
 #' @param color Color of the dots on the graph.
 #' @param xlab Alternate x-axis label.
 #' @param ylab Alternate x-axis label.
 #' @param alpha Define how see-through the dots are.
 #' @return Ggplot2 scatter plot.
-#' @seealso \pkg{ggplot2} \pkg{googleVis}
-#'  \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
-#'  \code{\link{plot_linear_scatter}}
+#' @seealso [plot_linear_scatter()] [all_pairwise()]
 #' @examples
 #' \dontrun{
-#'  plot_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-#'               gvis_filename = "html/fun_scatterplot.html")
+#'  plot_scatter(lotsofnumbers_intwo_columns)
 #' }
 #' @export
-plot_scatter <- function(df, tooltip_data = NULL, color = "black",
-                         xlab = NULL, ylab = NULL, alpha = 0.6,
-                         gvis_filename = NULL, size = 2) {
+plot_scatter <- function(df, color = "black", xlab = NULL,
+                         ylab = NULL, alpha = 0.6, size = 2) {
   df <- data.frame(df[, c(1, 2)])
   df <- df[complete.cases(df), ]
   df_columns <- colnames(df)
@@ -877,9 +840,6 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
     ggplot2::geom_point(colour = color, alpha = alpha, size = size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = 10, colour = "black"))
-  if (!is.null(gvis_filename)) {
-    plot_gvis_scatter(df, tooltip_data = tooltip_data, filename = gvis_filename)
-  }
   return(first_vs_second)
 }
 
@@ -895,47 +855,42 @@ plot_scatter <- function(df, tooltip_data = NULL, color = "black",
 #' significance of the signal."
 #'
 #' @param table Dataframe from limma's toptable which includes log(fold change) and an
-#'     adjusted p-value.
+#'  adjusted p-value.
 #' @param alpha How transparent to make the dots.
 #' @param color_by By p-value something else?
 #' @param color_list List of colors for significance.
 #' @param fc_col Which column contains the fc data?
 #' @param fc_name Name of the fold-change to put on the plot.
-#' @param gvis_filename Filename to write a fancy html graph.
 #' @param line_color What color for the significance lines?
 #' @param line_position Put the significance lines above or below the dots?
 #' @param logfc Cutoff defining the minimum/maximum fold change for
-#'   interesting.
+#'  interesting.
 #' @param p_col Which column contains the p-value data?
 #' @param p_name Name of the p-value to put on the plot.
 #' @param p Cutoff defining significant from not.
 #' @param shapes_by_state Add fun shapes for the various significance states?
 #' @param size How big are the dots?
-#' @param tooltip_data Df of tooltip information for gvis.
 #' @param label Label the top/bottom n logFC values?
 #' @param ... I love parameters!
 #' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
 #'   with respect to log(fold change).  The cutoff values are delineated with
 #'   lines and mark the boundaries between 'significant' and not.  This will
 #'   make a fun clicky googleVis graph if requested.
-#' @seealso \pkg{limma}
-#'  \code{\link{plot_gvis_ma}} \code{\link[limma]{toptable}}
-#'  \code{\link[limma]{voom}} \code{\link{hpgl_voom}} \code{\link[limma]{lmFit}}
-#'  \code{\link[limma]{makeContrasts}} \code{\link[limma]{contrasts.fit}}
+#' @seealso [all_pairwise()]
 #' @examples
 #' \dontrun{
-#'  plot_volcano_de(table, gvis_filename = "html/fun_ma_plot.html")
+#'  plot_volcano_de(table)
 #'  ## Currently this assumes that a variant of toptable was used which
 #'  ## gives adjusted p-values.  This is not always the case and I should
 #'  ## check for that, but I have not yet.
 #' }
 #' @export
 plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE"="darkred", "TRUE"="darkblue"),
-                            fc_col = "logFC", fc_name = "log2 fold change", gvis_filename = NULL,
+                            color_list = c("FALSE"="darkblue", "TRUE"="darkred"),
+                            fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = TRUE, size = 2, tooltip_data = NULL,
+                            shapes_by_state = TRUE, size = 2,
                             label = NULL, ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
@@ -1026,9 +981,9 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   ## Now set the colors and axis labels
   plt <- plt +
     ggplot2::scale_fill_manual(name = color_column, values = color_list,
-                               guide = FALSE) +
+                               guide = "none") +
     ggplot2::scale_color_manual(name = color_column, values = color_list,
-                                guide = FALSE) +
+                                guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +
     ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
@@ -1052,15 +1007,8 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
   }
 
-  gvis_result <- NULL
-  if (!is.null(gvis_filename)) {
-    gvis_result <- plot_gvis_volcano(table, fc_col = fc_col, p_col = p_col,
-                                     logfc = logfc, p = p, tooltip_data = tooltip_data,
-                                     filename = gvis_filename)
-  }
   retlist <- list("plot" = plt,
-                  "df" = df,
-                  "gvis" = gvis_result)
+                  "df" = df)
   return(retlist)
 }
 

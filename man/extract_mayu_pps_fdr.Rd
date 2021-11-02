@@ -13,7 +13,7 @@ extract_mayu_pps_fdr(file, fdr = 0.01)
 }
 \value{
 List of two elements: the full mayu table sorted by fdr and the number
-  corresponding to the chosen fdr value.
+ corresponding to the chosen fdr value.
 }
 \description{
 Read output from mayu to get the IP/PP number corresponding to a given FDR value.

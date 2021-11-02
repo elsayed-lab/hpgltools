@@ -28,5 +28,5 @@ conditions/batches of the experiment.  Use this to make that easier.
 }
 }
 \seealso{
-\code{\link{create_expt}} \code{\link{set_expt_conditions}}
+[create_expt()] [set_expt_conditions()] [Biobase]
 }

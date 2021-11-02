@@ -78,5 +78,5 @@ data, the force argument will round the data and shoe-horn it into DESeq2.
 }
 }
 \seealso{
-\pkg{DESeq2} \pkg{Biobase} \pkg{stats}
+[DESeq2] [basic_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
 }

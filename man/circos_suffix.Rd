@@ -10,7 +10,7 @@ circos_suffix(cfg)
 \item{cfg}{Result from circos_prefix()}
 }
 \value{
-The filename of the configuration.
+Filename of the configuration.
 }
 \description{
 circos configuration files need an ending.  This writes it.

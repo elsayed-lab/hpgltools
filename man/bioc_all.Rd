@@ -45,5 +45,5 @@ obnoxious.  As a result, it will of a necessity take forever.
 }
 }
 \seealso{
-\pkg{BiocManager}
+[BiocManager] [jsonlite]
 }

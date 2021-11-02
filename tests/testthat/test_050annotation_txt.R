@@ -9,7 +9,8 @@ context("050annotation_txt.R:
 tmp <- system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools")
 testing <- load_trinotate_annotations(trinotate = tmp)
 ## Moved rownames to a column for tibble, ergo 1 more column
-expected <- c(49999, 34)
+## I recently changed this to drop columns which have no information, losing 3.
+expected <- c(49999, 31)
 actual <- dim(testing)
 ## 0102
 test_that("Do we get expected trinotate data?", {

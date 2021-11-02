@@ -25,6 +25,8 @@ or batch estimates.}
 
 \item{factor_type}{This may be a factor or range, it is intended to plot
 a scatterplot if it is a range, a dotplot if a factor.}
+
+\item{id_column}{Use this column for the sample IDs.}
 }
 \value{
 Plot of batch vs surrogate variables as per Leek's work.
@@ -40,5 +42,5 @@ write this and see if it is better.
 }
 }
 \seealso{
-\pkg{sva} \pkg{ggplot2}
+[sva] [ggplot2]
 }

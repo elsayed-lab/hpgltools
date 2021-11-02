@@ -6,11 +6,10 @@
 \usage{
 ggplotly_url(
   plot,
-  filename,
+  filename = "ggplotly_url.html",
   id_column = "id",
   title = NULL,
-  url_data = NULL,
-  url_column = "url",
+  url_info = NULL,
   tooltip = "all"
 )
 }
@@ -23,11 +22,11 @@ ggplotly_url(
 
 \item{title}{Provide a title for the generated html file.}
 
+\item{tooltip}{Passed to ggplotly().}
+
 \item{url_data}{Either a glue() string or column of urls.}
 
 \item{url_column}{Name of the column in the ggplot data containing the URLs.}
-
-\item{tooltip}{Passed to ggplotly().}
 }
 \value{
 plotly with clicky links.

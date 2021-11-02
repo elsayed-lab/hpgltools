@@ -17,6 +17,7 @@
 #' @param year Choose specific year(s) for the archive servers?
 #' @param month Choose specific month(s) for the archive servers?
 #' @return Either a mart instance or NULL if no love was forthcoming.
+#' @seealso [biomaRt::useMart()] [biomaRt::listMarts()]
 #' @export
 find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
                                               "www.ensembl.org", "asia.ensembl.org"),
@@ -37,6 +38,8 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
     if (is.null(year)) {
       year_numeric <- lubridate::year(lubridate::date(lubridate::now()))
       year_strings <- as.character(c(year_numeric - 1, year_numeric - 2, year_numeric - 3))
+    } else {
+      year_strings <- as.character(year)
     }
     archives <- c()
     for (y in year_strings) {
@@ -131,8 +134,7 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
 #'  The mart instance to help with finding problems, the hostname queried, the
 #'  name of the mart queried, a vector of rows queried, vector of the available
 #'  attributes, and the ensembl dataset queried.
-#' @seealso \pkg{biomaRt}
-#'  \code{\link[biomaRt]{listDatasets}} \code{\link[biomaRt]{getBM}}
+#' @seealso [biomaRt::listDatasets()] [biomaRt::getBM()] [find_working_mart()]
 #' @examples
 #'  ## This downloads the hsapiens annotations by default.
 #'  hs_biomart_annot <- load_biomart_annotations()
@@ -154,6 +156,12 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                        "strand", "start_position",
                                                        "end_position"),
                                      include_lengths = TRUE) {
+
+  ## An attempt to get around 'unable to get local issuer certificate':
+  ## As per: https://github.com/grimbough/biomaRt/issues/39
+  new_config <- httr::config(ssl_verifypeer = FALSE)
+  httr::set_config(new_config, override = FALSE)
+  
   savefile <- glue("{species}_biomart_annotations.rda")
   biomart_annotations <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {
@@ -358,9 +366,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #'  of the biomart instance for further querying, the host queried, the biomart
 #'  queried, a vector providing the attributes queried, and the ensembl dataset
 #'  queried.
-#' @seealso \pkg{biomaRt}
-#'  \code{\link[biomaRt]{listMarts}} \code{\link[biomaRt]{useDataset}}
-#'  \code{\link[biomaRt]{getBM}}
+#' @seealso [biomaRt::listMarts()] [biomaRt::useDatasets()] [biomaRt::getBM()]
 #' @examples
 #'  hs_biomart_ontology <-load_biomart_go()
 #'  summary(hs_biomart_ontology)
@@ -515,8 +521,7 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
 #' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
 #'  to always send them all; the second is the subset corresponding to the
 #'  actual ids of interest, and the 3rd/4th are other, optional ids from other datasets.
-#' @seealso \pkg{biomaRt} \code{\link[biomaRt]{getLDS}}
-#'  \code{\link[biomaRt]{useMart}}
+#' @seealso [biomaRt::getLDS()]
 #' @examples
 #'  mouse_yeast_orthologs <- load_biomart_orthologs(gene_ids = NULL, first_species = "mmusculus",
 #'                                                  second_species = "scerevisiae")

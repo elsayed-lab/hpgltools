@@ -7,11 +7,11 @@
 transform_counts(count_table, design = NULL, method = "raw", base = NULL, ...)
 }
 \arguments{
-\item{count_table}{A matrix of count data}
+\item{count_table}{Matrix of count data}
 
 \item{design}{Sometimes the experimental design is also required.}
 
-\item{method}{A type of transformation to perform: log2/log10/log.}
+\item{method}{Type of transformation to perform: log2/log10/log.}
 
 \item{base}{Other log scales?}
 
@@ -31,5 +31,5 @@ that does a +1, thus this will avoid a double+1 on the data.
 }
 }
 \seealso{
-\pkg{limma}
+[limma]
 }

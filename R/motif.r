@@ -7,9 +7,12 @@
 #'
 #' @param inputfile Fasta or bed file containing sequences to search.
 #' @param genome BSgenome to read.
+#' @param p pvalue cutoff
+#' @param e evalue cutoff
 #' @param ... Parameters for plotting the gadem result.
 #' @return A list containing slots for plots, the stdout output from gadem, the
-#'   gadem result, set of occurences of motif, and the returned set of motifs.
+#'  gadem result, set of occurences of motif, and the returned set of motifs.
+#' @seealso [IRanges] [Biostrings] [rGADEM]
 #' @export
 simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
                          p = 0.1, e = 0.0, ...) {
@@ -21,8 +24,14 @@ simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
     bed <- data.frame("chr" = as.factor(bed[, 1]),
                       "start" = as.numeric(bed[, 2]),
                       "end" = as.numeric(bed[, 3]))
-    rg_bed <- IRanges::IRanges(start = bed[, 2], end = bed[, 3])
-    sequences <- IRanges::RangedData(rg_bed, space = bed[, 1])
+    ## RangedData has been deprecated in favor of GRanges
+    ## The following is unlikely to work, but since I never use this
+    ## I am not certain how much I care at the moment.
+    rg_bed <- GenomicRanges::GRanges(start = bed[, 2], end = bed[, 3])
+    sequences <- GenomicRanges::GRangesList(rg_bed, space = bed[, 1])
+    ## Here are the previous invocations:
+    ## rg_bed <- IRanges::IRanges(start = bed[, 2], end = bed[, 3])
+    ## sequences <- IRanges::RangedData(rg_bed, space = bed[, 1])
   } else if (ext == "fasta") {
     sequences <- Biostrings::readDNAStringSet(inputfile, "fasta")
   } else {
@@ -60,6 +69,15 @@ simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
   return(retlist)
 }
 
+#' Run motifRG on a fasta file.
+#'
+#' @param input_fasta Input file.
+#' @param control_fasta control file.
+#' @param maximum 3
+#' @param title Output image title.
+#' @param prefix Prefix for the output files.
+#' @param genome Package containing the full genome.
+#' @seealso [motifRG]
 simple_motifRG <- function(input_fasta, control_fasta, maximum = 3,
                            title = "Motifs of XXX", prefix = "motif",
                            genome = "BSgenome.Hsapiens.UCSC.hg19") {
@@ -77,13 +95,14 @@ simple_motifRG <- function(input_fasta, control_fasta, maximum = 3,
 #' Given a set of annotations and genome, one might want to get the set of
 #' adjacent sequences.
 #'
-#' @param bsgenome  Genome sequence
-#' @param annotation  Set of annotations
-#' @param distance  How far from each annotation is desired?
-#' @param type  What type of annotation is desired?
-#' @param prefix  Provide a prefix to the names to distinguish them from the
-#'   existing annotations.
-#' @return  A list of sequences before and after each sequence.
+#' @param bsgenome Genome sequence
+#' @param annotation Set of annotations
+#' @param distance How far from each annotation is desired?
+#' @param type What type of annotation is desired?
+#' @param prefix Provide a prefix to the names to distinguish them from the
+#'  existing annotations.
+#' @return List of sequences before and after each sequence.
+#' @seealso [load_gff_annotations()] [GenomicRanges] [IRanges]
 flanking_sequence <- function(bsgenome, annotation, distance = 200,
                               type = "gene", prefix = "") {
   if (class(annotation) == "character") {

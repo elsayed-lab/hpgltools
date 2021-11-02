@@ -64,5 +64,5 @@ This copies the logic employed in hpgl_voom().  I suspect one should not use it.
 }
 }
 \seealso{
-\pkg{limma}
+[limma::voom()]
 }

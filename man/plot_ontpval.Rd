@@ -8,6 +8,7 @@ plot_ontpval(
   df,
   ontology = "MF",
   fontsize = 14,
+  plot_title = NULL,
   numerator = NULL,
   denominator = NULL
 )
@@ -18,6 +19,8 @@ plot_ontpval(
 \item{ontology}{Ontology to plot (MF,BP,CC).}
 
 \item{fontsize}{Fiddling with the font size may make some plots more readable.}
+
+\item{plot_title}{Set an explicit plot title.}
 
 \item{numerator}{Column used for printing a ratio of genes/category.}
 
@@ -31,6 +34,5 @@ This function seeks to make generating pretty pvalue plots as shown by
 clusterprofiler easier.
 }
 \seealso{
-\pkg{goseq} \pkg{ggplot2}
- \code{\link[goseq]{goseq}}
+[ggplot2]
 }

@@ -52,5 +52,5 @@ filter suggested by Hector.
 }
 }
 \seealso{
-\pkg{genefilter}
+[genefilter]
 }

@@ -54,5 +54,6 @@ then xlsx, and now openxlsx.  Hopefully this will not change again.
 
 }
 \seealso{
-\pkg{openxlsx}
+[openxlsx] [openxlsx::createWorkbook()] [openxlsx::writeData()]
+ [openxlsx::writeDataTable()] [openxlsx::saveWorkbook()]
 }

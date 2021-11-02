@@ -20,6 +20,10 @@ Big dataframe of annotation data.
 I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
 }
 \examples{
+ uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
  dim(sc_uniprot_annot)
+}
+\seealso{
+[download_uniprot_proteome()]
 }

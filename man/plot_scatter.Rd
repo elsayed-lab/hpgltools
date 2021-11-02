@@ -6,19 +6,15 @@
 \usage{
 plot_scatter(
   df,
-  tooltip_data = NULL,
   color = "black",
   xlab = NULL,
   ylab = NULL,
   alpha = 0.6,
-  gvis_filename = NULL,
   size = 2
 )
 }
 \arguments{
 \item{df}{Dataframe likely containing two columns.}
-
-\item{tooltip_data}{Df of tooltip information for gvis.}
 
 \item{color}{Color of the dots on the graph.}
 
@@ -27,8 +23,6 @@ plot_scatter(
 \item{ylab}{Alternate x-axis label.}
 
 \item{alpha}{Define how see-through the dots are.}
-
-\item{gvis_filename}{Filename to write a fancy html graph.}
 
 \item{size}{Size of the dots on the graph.}
 }
@@ -41,12 +35,9 @@ describing the relationship between the columns of data plotted.
 }
 \examples{
 \dontrun{
- plot_scatter(lotsofnumbers_intwo_columns, tooltip_data = tooltip_dataframe,
-              gvis_filename = "html/fun_scatterplot.html")
+ plot_scatter(lotsofnumbers_intwo_columns)
 }
 }
 \seealso{
-\pkg{ggplot2} \pkg{googleVis}
- \code{\link{plot_gvis_scatter}} \code{\link[ggplot2]{geom_point}}
- \code{\link{plot_linear_scatter}}
+[plot_linear_scatter()] [all_pairwise()]
 }

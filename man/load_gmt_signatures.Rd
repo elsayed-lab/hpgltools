@@ -30,3 +30,6 @@ function attempts to provide a single place to load them.  The easiest way to
 get up to date signatures is to download them from msigdb and set the
 signatures parameter to the downloaded filename.
 }
+\seealso{
+[GSEABase]
+}

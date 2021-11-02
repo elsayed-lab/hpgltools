@@ -33,6 +33,5 @@ component by score.
 }
 }
 \seealso{
-\pkg{stats}
- \code{\link[stats]{princomp}}
+[stats] [stats::princomp]
 }

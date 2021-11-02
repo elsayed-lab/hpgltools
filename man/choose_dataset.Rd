@@ -14,6 +14,8 @@ requested data state.}
 
 \item{force}{Force non-standard data?}
 
+\item{verbose}{Print some information about what is happening?}
+
 \item{...}{More options for future expansion.}
 }
 \value{
@@ -36,6 +38,5 @@ Invoked by _pairwise().
 }
 }
 \seealso{
-\code{\link{choose_binom_dataset}} \code{\link{choose_limma_dataset}}
- \code{\link{choose_basic_dataset}}
+[choose_binom_dataset()] [choose_limma_dataset()] [choose_basic_dataset()]
 }

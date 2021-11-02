@@ -25,6 +25,5 @@ that the required gene lengths get sent along.
 }
 }
 \seealso{
-\pkg{edgeR}
- \code{\link[edgeR]{cpm}} \code{\link[edgeR]{rpkm}}
+[edgeR::rpkm()]
 }

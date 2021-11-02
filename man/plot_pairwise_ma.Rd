@@ -26,6 +26,5 @@ problematic samples.
 }
 }
 \seealso{
-\pkg{affy}
- \code{\link[affy]{ma.plot}}
+[affy::ma.plot()]
 }

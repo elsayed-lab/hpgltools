@@ -72,3 +72,6 @@ Invoking EBSeq is confusing, this should help.
   ebseq_de <- ebseq_pairwise(input = expt)
 }
 }
+\seealso{
+[limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+}

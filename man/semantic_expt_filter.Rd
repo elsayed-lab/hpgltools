@@ -32,3 +32,6 @@ A presumably smaller expt.
 I find subsetting weirdly confusing.  Hopefully this function will allow one
 to include/exclude specific genes/families based on string comparisons.
 }
+\seealso{
+[Biobase]
+}

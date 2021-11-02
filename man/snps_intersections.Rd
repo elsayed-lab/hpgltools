@@ -17,6 +17,10 @@ snps_intersections(
 
 \item{snp_result}{The result from get_snp_sets or count_expt_snps.}
 
+\item{start_column}{Metadata column with the start position of each ORF.}
+
+\item{end_column}{Metadata column with the end position of each ORF.}
+
 \item{chr_column}{Column in the annotation with the chromosome names.}
 }
 \value{
@@ -37,5 +41,6 @@ sequence (currently this is limited to CDS, but that is negotiable).
 }
 }
 \seealso{
-\code{\link{snps_vs_genes}}
+[snps_vs_genes()] [GenomicRanges::makeGRangesFromDataFrame()]
+ [IRanges::subsetByOverlaps()] [IRanges::countOverlaps()]
 }

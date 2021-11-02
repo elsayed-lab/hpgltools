@@ -45,3 +45,6 @@ them, which is a start.
  pa14_microbesonline_go <- load_microbesonline_go(species = "PA14")
  head(pa14_microbesonline_go)
 }
+\seealso{
+[tidyr]
+}

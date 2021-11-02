@@ -5,14 +5,14 @@
 #' the add argument is only important if the data was previously cpm'd because
 #' that does a +1, thus this will avoid a double+1 on the data.
 #'
-#' @param count_table A matrix of count data
+#' @param count_table Matrix of count data
 #' @param design Sometimes the experimental design is also required.
-#' @param method A type of transformation to perform: log2/log10/log.
+#' @param method Type of transformation to perform: log2/log10/log.
 #' @param base Other log scales?
-#' @param ...  Options I might pass from other functions are dropped into
+#' @param ... Options I might pass from other functions are dropped into
 #'  arglist.
 #' @return dataframe of transformed counts.
-#' @seealso \pkg{limma}
+#' @seealso [limma]
 #' @examples
 #' \dontrun{
 #'  filtered_table = transform_counts(count_table, transform='log2', converted='cpm')
@@ -76,12 +76,14 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
     message("transform_counts: Found ", less_zero, " values less than 0.")
   }
 
-  num_zero_counts <- count_table == 0
-  num_zero <- sum(num_zero_counts, na.rm = TRUE)
-  if (num_zero > 0) {
-    message("transform_counts: Found ", num_zero,
-            " values equal to 0, adding 1 to the matrix.")
-    count_table <- count_table + 1
+  if (method != "expt2") {
+    num_zero_counts <- count_table == 0
+    num_zero <- sum(num_zero_counts, na.rm = TRUE)
+    if (num_zero > 0) {
+      message("transform_counts: Found ", num_zero,
+              " values equal to 0, adding 1 to the matrix.")
+      count_table <- count_table + 1
+    }
   }
 
   if (!is.null(base)) {
@@ -93,6 +95,8 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
   } else if (method == "log") {
     ## Natural log
     count_table <- log(count_table)  ## Apparently log1p does this.
+  } else if (method == "expt2") {
+    count_table <- 2 ^ count_table
   } else {
     message("Did not recognize the transformation, leaving the table.
  Recognized transformations include: 'log2', 'log10', 'log'

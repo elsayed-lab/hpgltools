@@ -16,7 +16,7 @@
 #' @param invert Invert the plot?
 #' @param ... Extra arguments are passed to arglist.
 #' @return a plot!
-#' @seealso \code{\link{plot_ma_de}}
+#' @seealso [plot_ma_de()] [plot_volcano_de()]
 #' @examples
 #' \dontrun{
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
@@ -256,8 +256,7 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
 #' @param color_high Color for the genes greater than the mean.
 #' @param z_lines Add lines to show the z-score demarcations.
 #' @param ... More arguments are passed to arglist.
-#' @seealso \pkg{ggplot2}
-#'  \code{\link{plot_linear_scatter}}
+#' @seealso [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)
@@ -274,23 +273,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
   ## This is an explicit test against all_pairwise() and reduces it to result from type.
   if (!is.null(output[[type]])) {
     output <- output[[type]]
-  }
-
-  gvis_filename <- NULL
-  gvis_trendline <- TRUE
-  tooltip_data <- NULL
-  base_url <- NULL
-  if (!is.null(arglist[["gvis_filename"]])) {
-    gvis_filename <- arglist[["gvis_filename"]]
-  }
-  if (!is.null(arglist[["gvis_trendline"]])) {
-    gvis_trendline <- arglist[["gvis_trendline"]]
-  }
-  if (!is.null(arglist[["tooltip_data"]])) {
-    tooltip_data <- arglist[["tooltip_data"]]
-  }
-  if (!is.null(arglist[["base_url"]])) {
-    base_url <- arglist[["base_url"]]
   }
 
   ## Extract the set of available names -- FIXME this should be standardized!!
@@ -382,10 +364,9 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
 
   maxvalue <- max(coefficient_df) + 1.0
   minvalue <- min(coefficient_df) - 1.0
-  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, gvis_filename = gvis_filename,
-                                 gvis_trendline = gvis_trendline, first = xname, second = yname,
-                                 tooltip_data = tooltip_data, base_url = base_url, alpha = alpha,
-                                 pretty_colors = FALSE, color_low = color_low, color_high = color_high,
+  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
+                                 alpha = alpha, pretty_colors = FALSE,
+                                 color_low = color_low, color_high = color_high,
                                  p = p, lfc = lfc, n = n, z = z, z_lines = z_lines))
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits = c(minvalue, maxvalue)) +
@@ -405,7 +386,7 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
 #' @param lfc What fold-change cutoff to include?
 #' @param ... More arguments are passed to arglist.
 #' @return A list of venn plots
-#' @seealso \pkg{venneuler} \pkg{Vennerable}
+#' @seealso [Vennerable] [get_sig_genes()]
 #' @examples
 #' \dontrun{
 #'  bunchovenns <- de_venn(pairwise_result)
@@ -448,10 +429,18 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
+  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
   up_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
   down_res <- Vennerable::plot(down_venn, doWeights = FALSE)
   down_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
 
   retlist <- list(
     "up_venn" = up_venn,
@@ -475,6 +464,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' @param columns Otherwise, extract whatever columns are provided.
 #' @param ... Arguments passed through to the histogram plotter
 #' @return Multihistogram of the result.
+#' @seealso [plot_histogram()]
 plot_de_pvals <- function(combined_data, type = "limma", p_type = "both", columns = NULL, ...) {
   if (is.null(type) & is.null(columns)) {
     stop("Some columns are required to extract p-values.")
@@ -516,7 +506,7 @@ plot_de_pvals <- function(combined_data, type = "limma", p_type = "both", column
 #' @param constant_p When plotting changing FC, where should the p-value be held?
 #' @param constant_fc When plotting changing p, where should the FC be held?
 #' @return Plots and dataframes describing the changing definition of 'significant.'
-#' @seealso \pkg{ggplot2}
+#' @seealso [ggplot2]
 #' @examples
 #' \dontrun{
 #'  pairwise_result <- all_pairwise(expt)
@@ -808,7 +798,6 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
 #' @param ... More arguments are passed to arglist.
 #' @return list containing the significance bar plots and some information to
 #'  hopefully help interpret them.
-#' @seealso \pkg{ggplot2}
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)

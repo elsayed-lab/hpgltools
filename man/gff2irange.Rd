@@ -31,11 +31,11 @@ getSet()  This is another place which should be revisited for improvements
 via mcols().  Check snp.r. for ideas.
 }
 \examples{
- gff_file <- system.file("share/gas.gff", package = "hpgltools")
- gas_iranges <- gff2irange(gff_file)
+ example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+ gas_iranges <- gff2irange(example_gff)
  colnames(as.data.frame(gas_iranges))
 }
 \seealso{
-\pkg{rtracklayer} \link{load_gff_annotations} \pkg{Biostrings}
+[rtracklayer] [load_gff_annotations()]
  \code{\link[rtracklayer]{import.gff}}
 }

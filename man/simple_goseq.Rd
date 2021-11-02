@@ -11,6 +11,7 @@ simple_goseq(
   doplot = TRUE,
   adjust = 0.1,
   pvalue = 0.1,
+  plot_title = NULL,
   length_keytype = "transcripts",
   go_keytype = "entrezid",
   goseq_method = "Wallenius",
@@ -33,6 +34,8 @@ simple_goseq(
 \item{adjust}{Minimum adjusted pvalue for 'significant.'}
 
 \item{pvalue}{Minimum pvalue for 'significant.'}
+
+\item{plot_title}{Set a title for the pvalue plots.}
 
 \item{length_keytype}{Keytype to provide to extract lengths}
 
@@ -76,5 +79,5 @@ clusterprofiler/topgo/gostats/gprofiler.
 }
 }
 \seealso{
-\pkg{goseq} \pkg{GO.db}
+[goseq] [GO.db] [GenomicFeatures] [stats::p.adjust()]
 }

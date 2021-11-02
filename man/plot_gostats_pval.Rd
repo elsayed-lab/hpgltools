@@ -35,6 +35,5 @@ how the ontology trees work better, this should take advantage of that, but
 currently does not.
 }
 \seealso{
-\pkg{clusterProfiler}
- \code{\link{plot_ontpval}}
+[ggplot2]
 }

@@ -20,7 +20,7 @@ plot_libsize(
 \arguments{
 \item{data}{Expt, dataframe, or expressionset of samples.}
 
-\item{condition}{vector of sample condition names.}
+\item{condition}{Vector of sample condition names.}
 
 \item{colors}{Color scheme if the data is not an expt.}
 
@@ -53,7 +53,5 @@ make it pretty!
 }
 }
 \seealso{
-\pkg{ggplot2}
- \code{\link[ggplot2]{geom_bar}} \code{\link[ggplot2]{geom_text}}
- \code{\link{prettyNum}} \code{\link[ggplot2]{scale_y_log10}}
+[ggplot2] [prettyNum] [plot_sample_bars()]
 }

@@ -92,5 +92,5 @@ previous 'simple_clusterprofiler()' but using these new toys.
 }
 }
 \seealso{
-\pkg{clusterProfiler}
+[clusterProfiler] [AnnotationDbi] [KEGGREST]
 }

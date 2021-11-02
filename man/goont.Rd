@@ -23,5 +23,5 @@ Get a go ontology name from an ID.
 }
 }
 \seealso{
-\pkg{GOTermsAnnDbBimap}
+[AnnotationDbi] [GO.db]
 }

@@ -40,6 +40,8 @@ to the first gene.}
 
 \item{parallel}{Use doParallel?}
 
+\item{mixed}{Used a mixed model?}
+
 \item{modify_expt}{Add annotation columns with the variance/factor?}
 }
 \value{
@@ -50,5 +52,5 @@ The arguments and usage of variancePartition are a bit opaque.  This function
 attempts to fill in reasonable values and simplify its invocation.
 }
 \seealso{
-\pkg{doParallel} \pkg{variancePartition}
+[variancePartition]
 }
