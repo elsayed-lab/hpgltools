@@ -17,6 +17,7 @@ jobs:
        AUTHOR_TESTING: 1
        AUTOMATED_TESTING: 1
        RELEASE_TESTING: 1
+         B
        R_MAX_NUM_DLLS: 256
        R_LIBS_SITE: /home/runner/R
        R_LIBS: /home/runner/R
@@ -46,7 +47,7 @@ jobs:
         mkdir -p /home/runner/tmp
         mkdir -p /home/runner/R
         Rscript -e "install.packages('remotes')"
-        Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
+        # Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
         Rscript -e "remotes::install_github('r-hub/sysreqs')"
         sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo R CMD javareconf
