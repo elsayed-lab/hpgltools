@@ -19,6 +19,7 @@ create_expt(
   id_column = NULL,
   savefile = NULL,
   low_files = FALSE,
+  handle_na = "drop",
   ...
 )
 }

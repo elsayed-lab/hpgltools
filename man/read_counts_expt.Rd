@@ -9,6 +9,9 @@ read_counts_expt(
   files,
   header = FALSE,
   include_summary_rows = FALSE,
+  all.x = TRUE,
+  all.y = FALSE,
+  merge_type = "merge",
   suffix = NULL,
   countdir = NULL,
   ...
