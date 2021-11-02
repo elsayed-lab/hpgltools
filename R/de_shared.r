@@ -2046,7 +2046,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     eval_name = names(eval_strings[f])
     ## Get a little defensive to make sure I do not have contrasts which start with
     ## silly things like numbers of punctuation.
-    if (grep(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
+    if (grepl(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
       stop("This function requires contrast names to start with a letter.")
     }
     eval_string <- eval_strings[f]
