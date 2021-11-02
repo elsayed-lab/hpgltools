@@ -44,13 +44,13 @@ jobs:
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
-        mkdir -p /home/runner/tmp
-        mkdir -p /home/runner/R
+        mkdir -p ${HOME}/tmp
+        mkdir -p ${HOME}/R
         Rscript -e "install.packages('remotes')"
-        # Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
-        Rscript -e "remotes::install_github('r-hub/sysreqs')"
-        sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
-        sudo R CMD javareconf
+         Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
+         Rscript -e "remotes::install_github('r-hub/sysreqs')"
+        # sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        # sudo R CMD javareconf
         make prereq
         Rscript -e "remotes::install_deps(dependencies=TRUE)"
         Rscript -e "remotes::install_deps(dependencies='Suggests')"
