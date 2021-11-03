@@ -42,16 +42,16 @@ jobs:
         sudo R CMD javareconf
         make prereq
         Rscript -e "devtools::install_github('abelew/EuPathDB')"
-        #Rscript -e "remotes::install_deps(dependencies=TRUE)"
-        #Rscript -e "remotes::install_deps(dependencies='Suggests')"
+        Rscript -e "remotes::install_deps(dependencies=TRUE)"
+        Rscript -e "remotes::install_deps(dependencies='Suggests')"
         #Rscript -e "remotes::install_cran('lintr')"
         #Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
 
-        #Rscript -e "devtools::install_github('js229/Vennerable')"
+        Rscript -e "devtools::install_github('js229/Vennerable')"
         #Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
         #Rscript -e "devtools::install_bioc('RDAVIDWebService')"
         #Rscript -e "devtools::install_github('dviraran/xCell')"
-        #make deps
+        make deps
 
     - name: Run tests
       run: |

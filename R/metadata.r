@@ -1,3 +1,47 @@
+#' Figure out when mappings were performed by their timestamp
+#'
+#' I got bit in the butt by mismatching ensembl IDs from some older
+#' count tables and newer annotations.  Happily my biomart annotation
+#' gatherer is smart enough to collect from the archive servers, so it
+#' should not be difficult for me to ensure that they match in the
+#' future.
+#'
+#' With that in mind, provide this function with the filename of some
+#' metadata and the file column in it, and it will look at the first
+#' file and return the year and month it was created.  Therefore, you
+#' may ask ensembl for the appropriately dated gene annotations.
+#'
+#' @param metadata File containing the metadata for this experiment.
+#'  If none is provided, this function will just give the current
+#'  year, which is only what you want if this is brand new data.
+#' @param column Sanitized column name in the metadata containing the
+#'  count tables of interest.  If this is not provided, it will return
+#'  the month/year of the timestamp for the metadata.  This has a
+#'  reasonable chance of giving correct information.
+#' @export
+check_metadata_year <- function(metadata = NULL, column = NULL) {
+  retlist <- list(
+      "year" = format(Sys.time(), "%Y"),
+      "month" = format(Sys.time(), "%m"))
+  if (is.null(metadata)) {
+    message("No metadata provided, assuming now is sufficient.")
+  } else if (is.null(column)) {
+    message("No file column was requested, assuming the metadata creation time is sufficient.")
+
+    retlist[["year"]] <- format(info[["ctime"]], "%Y")
+    retlist[["month"]] <- format(info[["ctime"]], "%m")
+  } else {
+    message("Checking the creation time on the first count table.")
+    meta <- extract_metadata(metadata)
+    files <- meta[[column]]
+    first_file <- files[1]
+    info <- file.info(first_file)
+    retlist[["year"]] <- format(info[["ctime"]], "%Y")
+    retlist[["month"]] <- format(info[["ctime"]], "%m")
+  }
+  return(retlist)
+}
+
 #' Pull metadata from a table (xlsx/xls/csv/whatever)
 #'
 #' I find that when I acquire metadata from a paper or collaborator, annoyingly
