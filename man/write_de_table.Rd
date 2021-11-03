@@ -18,7 +18,7 @@ notably the number of genes (n), the coefficient column (coef)}
 }
 \value{
 List of data frames comprising the toptable output for each
-  coefficient, I also added a qvalue entry to these toptable() outputs.
+ coefficient, I also added a qvalue entry to these toptable() outputs.
 }
 \description{
 However, this will do a couple of things to make one's life easier:

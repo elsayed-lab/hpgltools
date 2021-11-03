@@ -18,6 +18,29 @@ xref_regions(
   feature_name = "description"
 )
 }
+\arguments{
+\item{sequence_df}{dataframe of sequence regions of interest.}
+
+\item{gff}{gff annotations against which to hunt.}
+
+\item{bin_width}{size of the regions of interest (e.g. the amplicon size)}
+
+\item{feature_type}{What feature type to hunt for?}
+
+\item{feature_start}{Column containing the starts.}
+
+\item{feature_end}{Column containing the ends.}
+
+\item{feature_strand}{Column containing strand information.}
+
+\item{feature_chr}{Column containing the chromosome names.}
+
+\item{feature_type_column}{Column containing the feature types.}
+
+\item{feature_id}{Column with the IDs (coming from the gff tags).}
+
+\item{feature_name}{Column with the descriptive name.}
+}
 \description{
 But I was asked to get the closest feature if it is not inside one.
 I am not sure how to do that with a ranges. Sadly, I think it will

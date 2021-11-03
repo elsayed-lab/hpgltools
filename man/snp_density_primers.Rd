@@ -2,9 +2,7 @@
 % Please edit documentation in R/variants.r
 \name{snp_density_primers}
 \alias{snp_density_primers}
-\title{Create a density function given a variant output and some metadata
-In this case I will take it as the result of:
-  snp_count <- count_expt_snps(pheno, annot_column = "bcftable")}
+\title{Create a density function given a variant output and some metadata}
 \usage{
 snp_density_primers(
   snp_count,
@@ -29,8 +27,51 @@ snp_density_primers(
   truncate = TRUE
 )
 }
+\arguments{
+\item{snp_count}{Result from count_expt_snps()}
+
+\item{pdata_column}{Metadata column containing the condition of
+interest.}
+
+\item{condition}{Chosen condition to search for variants.}
+
+\item{cutoff}{Minimum number of variants in a region.}
+
+\item{bin_width}{Bin size/region of genome to consider.}
+
+\item{divide}{Normalize by bin width?}
+
+\item{topn}{Keep only this number of candidates.}
+
+\item{target_temp}{Try to get primers with this Tm.}
+
+\item{max_primer_length}{Keep primers at or less than this length.}
+
+\item{bsgenome}{Genome package containing the sequence of interest.}
+
+\item{gff}{GFF to define regions of interest.}
+
+\item{feature_type}{GFF feature type to search against.}
+
+\item{feature_start}{GFF column with the starts (needed?)}
+
+\item{feature_end}{GFF column with the ends (needed?)}
+
+\item{feature_strand}{GFF column with strand information (needed?)}
+
+\item{feature_chr}{GFF column with chromosome information.}
+
+\item{feature_type_column}{GFF column with type information.}
+
+\item{feature_id}{GFF tag with the ID information.}
+
+\item{feature_name}{GFF tag with the names.}
+
+\item{truncate}{Truncate the results to just the columns I think
+are useful.}
+}
 \description{
-Create a density function given a variant output and some metadata
-In this case I will take it as the result of:
-  snp_count <- count_expt_snps(pheno, annot_column = "bcftable")
+It is hoped that this will point out regions of a genome which
+might prove useful when designing PCR primers for a specific
+condition in a dataset of variants.
 }

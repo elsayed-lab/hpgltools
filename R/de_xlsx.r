@@ -2382,7 +2382,7 @@ and is in _no_ way statistically valid, but added as a plotting conveinence.")
       !isTRUE(include_basic) & !isTRUE(include_ebseq)) {
     stop("None of the DE tools appear to have worked.")
   }
-  if (found_names == 0) {
+  if (table_names == 0) {
     stop("Could not find the set of tables names.")
   }
 
@@ -2552,9 +2552,9 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
 #' @param type Which DE tool to write.
 #' @param excel Filename into which to save the xlsx data.
 #' @param ... Parameters passed downstream, dumped into arglist and passed,
-#'   notably the number of genes (n), the coefficient column (coef)
+#'  notably the number of genes (n), the coefficient column (coef)
 #' @return List of data frames comprising the toptable output for each
-#'   coefficient, I also added a qvalue entry to these toptable() outputs.
+#'  coefficient, I also added a qvalue entry to these toptable() outputs.
 #' @seealso \code{\link{write_xlsx}}
 #' @examples
 #' \dontrun{

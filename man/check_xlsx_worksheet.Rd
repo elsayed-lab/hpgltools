@@ -16,7 +16,7 @@ The workbook object hopefully with a new worksheet.
 }
 \description{
 This tries to make sure that some of the problems of creating new worksheets
-do not occur.  E.g. Names must be less than something and must not exist.
+do not occur.  E.g. Names must be less than something and must be unique.
 }
 \seealso{
 [openxlsx::addWorksheet()]

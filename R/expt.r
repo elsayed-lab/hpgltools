@@ -193,6 +193,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  expt.
 #' @param low_files Explicitly lowercase the filenames when searching the
 #'  filesystem?
+#' @param handle_na How does one wish to deal with NA values in the data?
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
@@ -1314,6 +1315,9 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param files List of files to read.
 #' @param header Whether or not the count tables include a header row.
 #' @param include_summary_rows Whether HTSeq summary rows should be included.
+#' @param all.x When merging (as opposed to join), choose the x data column.
+#' @param all.y When merging (as opposed to join), choose the y data column.
+#' @param merge_type Choose one, merge or join.
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param countdir Optional count directory to read from.
 #' @param ... More options for happy time!
@@ -1325,7 +1329,8 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' }
 #' @export
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
-                             all.x = TRUE, all.y = FALSE, merge_type = "merge", suffix = NULL, countdir = NULL, ...) {
+                             all.x = TRUE, all.y = FALSE, merge_type = "merge",
+                             suffix = NULL, countdir = NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()

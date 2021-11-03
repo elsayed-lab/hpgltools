@@ -1,3 +1,47 @@
+#' Figure out when mappings were performed by their timestamp
+#'
+#' I got bit in the butt by mismatching ensembl IDs from some older
+#' count tables and newer annotations.  Happily my biomart annotation
+#' gatherer is smart enough to collect from the archive servers, so it
+#' should not be difficult for me to ensure that they match in the
+#' future.
+#'
+#' With that in mind, provide this function with the filename of some
+#' metadata and the file column in it, and it will look at the first
+#' file and return the year and month it was created.  Therefore, you
+#' may ask ensembl for the appropriately dated gene annotations.
+#'
+#' @param metadata File containing the metadata for this experiment.
+#'  If none is provided, this function will just give the current
+#'  year, which is only what you want if this is brand new data.
+#' @param column Sanitized column name in the metadata containing the
+#'  count tables of interest.  If this is not provided, it will return
+#'  the month/year of the timestamp for the metadata.  This has a
+#'  reasonable chance of giving correct information.
+#' @export
+check_metadata_year <- function(metadata = NULL, column = NULL) {
+  retlist <- list(
+      "year" = format(Sys.time(), "%Y"),
+      "month" = format(Sys.time(), "%m"))
+  if (is.null(metadata)) {
+    message("No metadata provided, assuming now is sufficient.")
+  } else if (is.null(column)) {
+    message("No file column was requested, assuming the metadata creation time is sufficient.")
+
+    retlist[["year"]] <- format(info[["ctime"]], "%Y")
+    retlist[["month"]] <- format(info[["ctime"]], "%m")
+  } else {
+    message("Checking the creation time on the first count table.")
+    meta <- extract_metadata(metadata)
+    files <- meta[[column]]
+    first_file <- files[1]
+    info <- file.info(first_file)
+    retlist[["year"]] <- format(info[["ctime"]], "%Y")
+    retlist[["month"]] <- format(info[["ctime"]], "%m")
+  }
+  return(retlist)
+}
+
 #' Pull metadata from a table (xlsx/xls/csv/whatever)
 #'
 #' I find that when I acquire metadata from a paper or collaborator, annoyingly
@@ -792,6 +836,11 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 }
 
 #' Get the lengths of sequences from a fasta file.
+#'
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -811,7 +860,7 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
     }
 
     dtrs <- Biostrings::readBStringSet(input_file)
-    output_entries[row] <- width(dtrs[1])
+    output_entries[row] <- Biostrings::width(dtrs[1])
   } ## End looking at every row of the metadata
   return(output_entries)
 }
@@ -819,6 +868,10 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
 #' Pull out the filename matching an input spec
 #'
 #' This is useful for putting the count table name into a metadata file.
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -844,6 +897,13 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
 }
 
 #' Pull GC content into the metadata sheet.
+#'
+#' As the name suggests, this only works for fasta files.
+#'
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_gc <- function(meta, input_file_spec, verbose = FALSE) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -992,6 +1052,18 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 }
 
 #' Pull some information from a csv/tsv file.
+#'
+#' This function is a bit more generic than the others, but it grabs from a
+#' column of a csv/tsv file.
+#'
+#' @param meta Input metadata
+#' @param column Column to yank from
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param type csv or tsv?
+#' @param which Take the first entry, or some subset.
+#' @param verbose Print diagnostic information while running?
+#' @param ... Other arguments for glue.
 dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
                                 which = "first", verbose = FALSE,
                                 ...) {

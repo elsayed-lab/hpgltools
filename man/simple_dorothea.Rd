@@ -31,6 +31,10 @@ this)}
 
 \item{dorothea_options}{Optional configuration list.}
 
+\item{lfc}{Fold-change cutoff.}
+
+\item{p}{P-value cutoff.}
+
 \item{species}{Either human or mouse.}
 }
 \value{

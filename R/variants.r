@@ -801,8 +801,34 @@ write_snps <- function(expt, output_file = "funky.aln") {
 }
 
 #' Create a density function given a variant output and some metadata
-#' In this case I will take it as the result of:
-#'   snp_count <- count_expt_snps(pheno, annot_column = "bcftable")
+#'
+#' It is hoped that this will point out regions of a genome which
+#' might prove useful when designing PCR primers for a specific
+#' condition in a dataset of variants.
+#'
+#' @param snp_count Result from count_expt_snps()
+#' @param pdata_column Metadata column containing the condition of
+#'  interest.
+#' @param condition Chosen condition to search for variants.
+#' @param cutoff Minimum number of variants in a region.
+#' @param bin_width Bin size/region of genome to consider.
+#' @param divide Normalize by bin width?
+#' @param topn Keep only this number of candidates.
+#' @param target_temp Try to get primers with this Tm.
+#' @param max_primer_length Keep primers at or less than this length.
+#' @param bsgenome Genome package containing the sequence of interest.
+#' @param gff GFF to define regions of interest.
+#' @param feature_type GFF feature type to search against.
+#' @param feature_start GFF column with the starts (needed?)
+#' @param feature_end GFF column with the ends (needed?)
+#' @param feature_strand GFF column with strand information (needed?)
+#' @param feature_chr GFF column with chromosome information.
+#' @param feature_type_column GFF column with type information.
+#' @param feature_id GFF tag with the ID information.
+#' @param feature_name GFF tag with the names.
+#' @param truncate Truncate the results to just the columns I think
+#'  are useful.
+#' @export
 snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 condition = "z2.3", cutoff = 20, bin_width = 600,
                                 divide = FALSE, topn = 400,
@@ -814,14 +840,14 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 feature_chr = "seqnames", feature_type_column = "type",
                                 feature_id = "ID", feature_name = "description",
                                 truncate = TRUE) {
-                                
+
   ## Start out by loading the bsgenome data
   genome <- NULL
   if (!is.null(bsgenome)) {
     library(bsgenome, character.only=TRUE)
     genome <- get0(bsgenome)
-  }  
-    
+  }
+
   samples_by_condition <- pData(snp_count)[[pdata_column]]
   ## Keep only those samples of the condition of interest for now,
   ## maybe make it a loop to iterate over conditions later.
@@ -862,7 +888,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     chr <- chromosomes[ch]
     message("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
-    chr_data <- position_table[chr_idx, ]    
+    chr_data <- position_table[chr_idx, ]
     if (is.null(genome)) {
       chromosome_df[chr, "length"] <- max(chr_data[["position"]])
     } else {
@@ -870,7 +896,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
       chromosome_df[chr, "length"] <- this_length
     }
     chromosome_df[chr, "variants"] <- nrow(chr_data)
-    
+
     ## Stop scientific notation for this operation
     current_options <- options(scipen = 999)
     density_vector <- rep(0, ceiling(this_length / bin_width))
@@ -903,14 +929,14 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
                             chr_data[density_idx, "alt"])
       variant_vector[i] <- toString(variant_set)
       names(variant_vector)[i] <- as.character(density_name)
-      
+
       density_name <- density_name + bin_width
     }
     density_lst[[chr]] <- density_vector
     variant_lst[[chr]] <- variant_vector
   }
   new_options <- options(current_options)
-  
+
   long_density_vector <- vector()
   long_variant_vector <- vector()
   for (ch in 1:length(density_lst)) {
@@ -929,7 +955,8 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 
   message("Extracting primer regions.")
   sequence_df <- sm(choose_sequence_regions(long_variant_vector, topn = topn,
-                                            max_primer_length = max_primer_length))
+                                            max_primer_length = max_primer_length,
+                                            genome = genome))
   message("Searching for overlapping/closest genes.")
   sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
                               feature_type = feature_type, feature_start = feature_start,
@@ -951,7 +978,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   if (isTRUE(truncate)) {
     sequence_df <- sequence_df[, keepers]
   }
-  
+
   retlist <- list(
       "density_vector" = long_density_vector,
       "variant_vector" = long_variant_vector,
@@ -963,14 +990,32 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   ## 2. Report closest CDS regions and be able to filter on multicopies
   ## 3. Report if in CDS or not
   ## 4. Extra credit: report polyN runs in the putative amplicon
-  
+
 }
 
-
 #' Given a named vector of fun regions, make a dataframe which
-#' includes putative primers and the spec strings for expected variants.
+#' includes putative primers and the spec strings for expected
+#' variants.
+#'
+#' This function came out of our TMRC2 work and seeks to provide an
+#' initial set of potential PCR primers which are able to distinguish
+#' between different aspects of the data.  In the actual data, we were
+#' looking for differences between the zymodemes 2.2 and 2.3.
+#'
+#' @param vector variant-based set of putative regions with variants
+#'  between conditions of interest.
+#' @param max_primer_length given this length as a start, whittle down
+#'  to a hopefully usable primer size.
+#' @param topn Choose this number of variant regions from the rather
+#'  larger set of possibilities..
+#' @param bin_size Separate the genome into chunks of this size when
+#'  hunting for primers, this size will therefore be the approximate
+#'  PCR amplicon length.
+#' @param genome (BS)Genome to search.
+#' @param target_temp PCR temperature to attempt to match.
 choose_sequence_regions <- function(vector, max_primer_length = 45,
-                                    topn = 200, bin_size = 600) {
+                                    topn = 200, bin_size = 600,
+                                    genome = NULL, target_temp = 58) {
   ## Now get the nucleotides of the first 30 nt of each window
   sequence_df <- as.data.frame(head(vector, n = topn))
   colnames(sequence_df) <- "variants"
@@ -987,7 +1032,7 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
                                            replacement = "\\1")
   sequence_df[["threep_references"]] <- chartr("ATGC", "TACG", sequence_df[["fivep_references"]])
-  
+
   sequence_df[["fivep_positions"]] <- gsub(x = sequence_df[["variants"]],
                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
                                            replacement = "\\2")
@@ -999,11 +1044,11 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
     positions <- gsub(x = positions, pattern = " ", replacement = "")
     positions <- as.numeric(positions)
     new_positions <- toString(as.character(bin_width - positions))
-    return(new_positions)  
+    return(new_positions)
   }
   sequence_df[["threep_positions"]] <- mapply(FUN = recount_positions,
                                               sequence_df[["fivep_positions"]])
-    
+
   sequence_df[["fivep_alternates"]] <- gsub(x = sequence_df[["variants"]],
                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
                                            replacement = "\\3")
@@ -1043,9 +1088,9 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
     chr <- sequence_df[i, "chr"]
 
     silence = TRUE
-    fivep_superprimer <- try(subseq(genome[[chr]],
-                                    sequence_df[i, "fivep_superprimer_start"],
-                                    sequence_df[i, "fivep_superprimer_end"]),
+    fivep_superprimer <- try(Biostrings::subseq(genome[[chr]],
+                                                sequence_df[i, "fivep_superprimer_start"],
+                                                sequence_df[i, "fivep_superprimer_end"]),
                              silent = silence)
     if ("try-error" %in% class(fivep_superprimer)) {
       sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
@@ -1056,9 +1101,9 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
       fivep_superprimer <- as.character(fivep_superprimer)
       sequence_df[i, "fivep_superprimer"] <- fivep_superprimer
     }
-    threep_superprimer <- try(subseq(genome[[chr]],
-                                     sequence_df[i, "threep_superprimer_end"],
-                                     sequence_df[i, "threep_superprimer_start"]),
+    threep_superprimer <- try(Biostrings::subseq(genome[[chr]],
+                                                 sequence_df[i, "threep_superprimer_end"],
+                                                 sequence_df[i, "threep_superprimer_start"]),
                               silent = silence)
     if ("try-error" %in% class(threep_superprimer)) {
       sequence_df[i, "threep_superprimer"] <- "Ran over chromosome end"
@@ -1102,7 +1147,7 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
                       "fivep_alternates", "threep_references", "threep_positions",
                       "threep_alternates")
   ## sequence_df <- sequence_df[, wanted_columns]
-  return(sequence_df)  
+  return(sequence_df)
 }
 
 #' If I were smart I would use an I/GRanges for this.
@@ -1111,6 +1156,18 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
 #' I am not sure how to do that with a ranges. Sadly, I think it will
 #' be easier for me to just iterate over the sequence_df and query
 #' each feature on that chromosome/scaffold.
+#'
+#' @param sequence_df dataframe of sequence regions of interest.
+#' @param gff gff annotations against which to hunt.
+#' @param bin_width size of the regions of interest (e.g. the amplicon size)
+#' @param feature_type What feature type to hunt for?
+#' @param feature_start Column containing the starts.
+#' @param feature_end Column containing the ends.
+#' @param feature_strand Column containing strand information.
+#' @param feature_chr Column containing the chromosome names.
+#' @param feature_type_column Column containing the feature types.
+#' @param feature_id Column with the IDs (coming from the gff tags).
+#' @param feature_name Column with the descriptive name.
 xref_regions <- function(sequence_df, gff, bin_width = 600,
                          feature_type = "protein_coding_gene", feature_start = "start",
                          feature_end = "end", feature_strand = "strand",
@@ -1223,7 +1280,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
       sequence_df[r, "closest_gene_before_start"] <- fivep_candidate["start"]
       sequence_df[r, "closest_gene_before_end"] <- fivep_candidate["end"]
     }
-    
+
     xref_features[["threep_dist"]] <- xref_features[["start"]] - amplicon_end
     threep_wanted_idx <- xref_features[["threep_dist"]] > 0
     if (sum(threep_wanted_idx) > 0) {

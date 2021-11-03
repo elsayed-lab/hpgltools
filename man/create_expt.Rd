@@ -19,6 +19,7 @@ create_expt(
   id_column = NULL,
   savefile = NULL,
   low_files = FALSE,
+  handle_na = "drop",
   ...
 )
 }
@@ -58,6 +59,8 @@ expt.}
 
 \item{low_files}{Explicitly lowercase the filenames when searching the
 filesystem?}
+
+\item{handle_na}{How does one wish to deal with NA values in the data?}
 
 \item{...}{More parameters are fun!}
 }
