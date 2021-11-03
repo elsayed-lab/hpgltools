@@ -184,8 +184,7 @@ labeled by counts/genes removed.")
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
                        aes_string(
                          x = "id",
-                         ## label='as.character(all_tab$sub_low)')) +
-                         label="sub_low")) +
+                         label = "sub_low")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
@@ -196,8 +195,7 @@ labeled by counts/genes removed.")
     "end" = end,
     "table" = all_tab,
     "count_plot" = count_columns,
-    "lowgene_plot" = low_columns
-  )
+    "lowgene_plot" = low_columns)
   return(retlist)
 }
 

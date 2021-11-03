@@ -65,12 +65,9 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          annot_df = NULL, parallel = TRUE,
                          do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
                          do_edger = TRUE, do_limma = TRUE,
-                         convert = "cpm", norm = "quant", verbose = TRUE, ...) {
+                         convert = "cpm", norm = "quant", verbose = TRUE,
+                         surrogates = "be", ...) {
   arglist <- list(...)
-  surrogates <- "be"
-  if (!is.null(arglist[["surrogates"]])) {
-    surrogates <- arglist[["surrogates"]]
-  }
   if (is.null(model_cond)) {
     model_cond <- TRUE
   }
@@ -160,6 +157,9 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     }
   }
 
+  ## Put a series of empty lists in the final results data structure
+  ## so that later I will know to perform each of these analyses without
+  ## having to query do_method.
   results <- list()
   if (isTRUE(do_basic)) {
     results[["basic"]] <- list()
@@ -265,6 +265,72 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     ret[["combined"]] <- combined
   }
   return(ret)
+}
+
+#' Calculate the Area under the Concordance Curve.
+#'
+#' This is taken verbatim from a recent paper sent to me by Julie
+#' Cridland.  I will put the link in shortly, I need to go.
+#'
+#' @param tbl DE table
+#' @param px first set of p-values column
+#' @param py second set
+#' @param lx first set of logFCs column
+#' @param ly second set
+#' @param topn Number of genes to consider (or percentage of the
+#'  whole).
+#' @export
+calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
+                           lx="deseq_logfc", ly="edger_logfc",
+                           topn=0.1) {
+  ## If the topn argument is an integer, the just ask for that number.
+  ## If it is a floating point 0<x<1, then set topn to that proportion
+  ## of the number of genes.
+  if (topn <= 0) {
+    stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
+  } else if (topn > 1 & topn <= 100) {
+    stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
+  } else if (topn < 1) {
+    topn <- ceiling(nrow(tbl) * topn)
+  }
+
+  x_df <- tbl[, c(px, lx)]
+  y_df <- tbl[, c(py, ly)]
+  ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
+  ## descending order by the statistical significance of their differential expression.
+  x_idx <- order(x_df[[1]], decreasing=FALSE)
+  x_df <- x_df[x_idx, ]
+  y_idx <- order(y_df[[1]], decreasing=FALSE)
+  y_df <- y_df[y_idx, ]
+
+  ## Then, we created lists of the top-ranked genes in each dataset of
+  ## matching size, up to some maximum size k. For each of these lists
+  ## (that is, for the top-1 genes, top-2 genes, top-3 genes, and so
+  ## on), we computed the size of the intersection between the
+  ## single-cell and bulk DE genes. This procedure yielded a curve
+  ## relating the number of shared genes between datasets to the
+  ## number of top-ranked genes considered.
+
+  intersections <- rep(0, topn)
+  for (i in 1:topn) {
+    if (i == 1) {
+      x_intersections[i] <- rownames(x_df)[i] == rownames(y_df)[i]
+    } else {
+      x_set <- rownames(x_df)[1:i]
+      y_set <- rownames(y_df)[1:i]
+      intersections[i] <- sum(x_set %in% y_set)
+    }
+  }
+
+  ## The area under this curve was computed by summing the size of all
+  ## intersections, and normalized to the range [0, 1] by dividing it
+  ## by its maximum possible value, k × ( k +1) / 2. To evaluate the
+  ## concordance of DE analysis, we used k =500 except where otherwise
+  ## noted, but found our results were insensitive to the
+  sumint <- sum(intersections)
+  norm <- (topn * (topn + 1)) /2
+  aucc <- sumint / norm
+  return(aucc)
 }
 
 #' Use sva's f.pvalue to adjust p-values for data adjusted by combat.
@@ -1977,8 +2043,14 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## Add them to makeContrasts()
   contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
   for (f in 1:length(eval_strings)) {
-    ## eval_name = names(eval_strings[f])
+    eval_name = names(eval_strings[f])
+    ## Get a little defensive to make sure I do not have contrasts which start with
+    ## silly things like numbers of punctuation.
+    if (grep(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
+      stop("This function requires contrast names to start with a letter.")
+    }
     eval_string <- eval_strings[f]
+
     contrast_string <- glue("{contrast_string} {eval_string}")
   }
   ## The final element of makeContrasts() is the design from voom()
