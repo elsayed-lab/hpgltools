@@ -6,18 +6,11 @@ on:
 name: CI
 jobs:
   build:
-    runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.R }})
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {os: ubuntu-latest, R: '4.0.2'}
+    runs-on: ubuntu-latest
     env:
        AUTHOR_TESTING: 1
        AUTOMATED_TESTING: 1
        RELEASE_TESTING: 1
-         B
        R_MAX_NUM_DLLS: 256
        R_LIBS_SITE: /home/runner/R
        R_LIBS: /home/runner/R
@@ -26,26 +19,18 @@ jobs:
        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
        TMPDIR: /home/runner/tmp
     steps:
+    - uses: actions/checkout@v2
+    - uses: r-lib/actions/setup-pandoc@v1
+    - uses: r-lib/actions/setup-r@v1
+    - uses: r-lib/actions/setup-renv@v1
+
     - name: Install packages
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
         sudo apt-get install circos libsvg-perl default-jdk texlive texlive-fonts-extra
-    - uses: actions/checkout@master
-    - uses: r-lib/actions/setup-r@v1
-      with:
-        r-version: ${{ matrix.config.r }}
-    - uses: r-lib/actions/setup-pandoc@v1
-    - uses: r-lib/actions/setup-tinytex@v1
-    - uses: r-lib/actions/set-r-dependencies@v1
-      with:
-        cache-version: 2
-        extra-packages: |
-          rcmdcheck
-        needs: |
-          coverage
 
-    - name: Create R environment
+    - name: Setup R environment
       run: |
         echo "options(Ncpus=2)" > ${HOME}/.Rprofile
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
@@ -53,17 +38,14 @@ jobs:
         echo "options(repos=r)" >> ${HOME}/.Rprofile
         mkdir -p ${HOME}/tmp
         mkdir -p ${HOME}/R
-        Rscript -e "install.packages('remotes')"
-        # Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
-        # Rscript -e "remotes::install_github('r-hub/sysreqs')"
-        # sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
-        # sudo R CMD javareconf
-        #make prereq
+        sudo R CMD javareconf
+        make prereq
+        Rscript -e "devtools::install_github('abelew/EuPathDB')"
         #Rscript -e "remotes::install_deps(dependencies=TRUE)"
         #Rscript -e "remotes::install_deps(dependencies='Suggests')"
         #Rscript -e "remotes::install_cran('lintr')"
         #Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
-        #Rscript -e "devtools::install_github('abelew/EuPathDB')"
+
         #Rscript -e "devtools::install_github('js229/Vennerable')"
         #Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
         #Rscript -e "devtools::install_bioc('RDAVIDWebService')"
