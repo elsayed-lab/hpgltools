@@ -1,3 +1,4 @@
+
 check_circos_prefix <- function(object, data_dir = "data", conf_dir = "conf",
                                 karyotype_dir = "conf/karyotypes") {
   errors <- character()
@@ -67,7 +68,6 @@ setGeneric("iDA", signature=c("object"),
 #' @param ... Additonal arguments passed to object constructors
 #' @return iDA output with clustering, gene weights, and cell weights
 #' @export
-#'
 setMethod("iDA", "matrix",
           function(object, ...) {
             iDAoutput <- iDA_core(object, ...)

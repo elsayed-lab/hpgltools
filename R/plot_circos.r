@@ -937,6 +937,7 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
   data_dir <- file.path(basedir, "data")
   cfgout <- paste0(file.path(conf_dir, name), ".conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
+
   if (!file.exists(data_dir)) {
     message("Creating the data directory: ", data_dir)
     dir.create(data_dir, recursive = TRUE)

@@ -24,9 +24,7 @@ get_annots <- function(annots = "TMRC2", orgdb = "org.Lpanamensis.MHOMCOL81L13.v
     hs_annot[["transcript"]] <- paste0(rownames(hs_annot), ".", hs_annot[["version"]])
     rownames(hs_annot) <- make.names(hs_annot[["ensembl_gene_id"]], unique=TRUE)
     tx_gene_map <- hs_annot[, c("transcript", "ensembl_gene_id")]
-
     return(hs_annot)
-  }
 }
 
 
