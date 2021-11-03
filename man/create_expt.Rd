@@ -60,6 +60,8 @@ expt.}
 \item{low_files}{Explicitly lowercase the filenames when searching the
 filesystem?}
 
+\item{handle_na}{How does one wish to deal with NA values in the data?}
+
 \item{...}{More parameters are fun!}
 }
 \value{

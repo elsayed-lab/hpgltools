@@ -26,6 +26,12 @@ read_counts_expt(
 
 \item{include_summary_rows}{Whether HTSeq summary rows should be included.}
 
+\item{all.x}{When merging (as opposed to join), choose the x data column.}
+
+\item{all.y}{When merging (as opposed to join), choose the y data column.}
+
+\item{merge_type}{Choose one, merge or join.}
+
 \item{suffix}{Optional suffix to add to the filenames when reading them.}
 
 \item{countdir}{Optional count directory to read from.}

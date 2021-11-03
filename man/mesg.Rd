@@ -10,6 +10,8 @@ mesg(..., verbosity = NULL, warn = FALSE)
 \item{...}{parameters for message()}
 
 \item{verbosity}{actually print the message?}
+
+\item{warn}{Also print a warning?}
 }
 \description{
 message() but with a verbose flag.

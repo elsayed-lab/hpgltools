@@ -14,6 +14,23 @@ dispatch_csv_search(
   ...
 )
 }
+\arguments{
+\item{meta}{Input metadata}
+
+\item{column}{Column to yank from}
+
+\item{input_file_spec}{Input file specification to hunt down the
+file of interest.}
+
+\item{type}{csv or tsv?}
+
+\item{which}{Take the first entry, or some subset.}
+
+\item{verbose}{Print diagnostic information while running?}
+
+\item{...}{Other arguments for glue.}
+}
 \description{
-Pull some information from a csv/tsv file.
+This function is a bit more generic than the others, but it grabs from a
+column of a csv/tsv file.
 }

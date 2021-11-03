@@ -6,6 +6,14 @@
 \usage{
 dispatch_gc(meta, input_file_spec, verbose = FALSE)
 }
+\arguments{
+\item{meta}{Input metadata}
+
+\item{input_file_spec}{Input file specification to hunt down the
+file of interest.}
+
+\item{verbose}{Print diagnostic information while running?}
+}
 \description{
-Pull GC content into the metadata sheet.
+As the name suggests, this only works for fasta files.
 }

@@ -84,6 +84,7 @@ verbose <- interactive() && is.null(getOption("knitr.in.progress"))
 #'
 #' @param ... parameters for message()
 #' @param verbosity actually print the message?
+#' @param warn Also print a warning?
 #' @export
 mesg <- function(..., verbosity = NULL, warn = FALSE) {
   if (is.null(verbosity)) {

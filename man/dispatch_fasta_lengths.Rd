@@ -6,6 +6,14 @@
 \usage{
 dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
 }
+\arguments{
+\item{meta}{Input metadata}
+
+\item{input_file_spec}{Input file specification to hunt down the
+file of interest.}
+
+\item{verbose}{Print diagnostic information while running?}
+}
 \description{
 Get the lengths of sequences from a fasta file.
 }

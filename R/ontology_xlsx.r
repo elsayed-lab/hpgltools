@@ -162,6 +162,7 @@ gather_ontology_genes <- function(result, ontology = NULL,
 #' @param height Height of included plots.
 #' @param width and their width.
 #' @param decreasing which direction?
+#' @param primary_key Use this annotation column to keep track of annotation IDs.
 #' @param ... Extra arguments are passed to arglist.
 #' @return The result from openxlsx in a prettyified xlsx file.
 #' @seealso [openxlsx]

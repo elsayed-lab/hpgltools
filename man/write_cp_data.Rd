@@ -37,6 +37,8 @@ write_cp_data(
 
 \item{decreasing}{which direction?}
 
+\item{primary_key}{Use this annotation column to keep track of annotation IDs.}
+
 \item{...}{Extra arguments are passed to arglist.}
 }
 \value{

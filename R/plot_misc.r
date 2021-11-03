@@ -249,13 +249,12 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
 #' @param filename filename to save the output html plot.
 #' @param id_column Column containing the gene IDs.
 #' @param title Provide a title for the generated html file.
-#' @param url_data Either a glue() string or column of urls.
-#' @param url_column Name of the column in the ggplot data containing the URLs.
+#' @param url_info Either a glue() string or column of urls.
 #' @param tooltip Passed to ggplotly().
 #' @return plotly with clicky links.
 #' @export
 ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", title = NULL,
-                         url_info = NULL, tooltip = "all") {
+                         url_info = NULL, tooltip = "all", url_column = "url") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
     tooltip_columns <- "label"
@@ -266,13 +265,13 @@ ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id",
   if (is.null(plot[["data"]][[id_column]])) {
     plot[["data"]][[id_column]] <- rownames(plot[["data"]])
   }
-  if (is.null(url_info)) {
-    warning("No url df was provided, nor is there a column: ", url_column, ", not much to do.")
-  } else if ("character" %in% url_info & length(url_info) > 1) {
+  if (is.null(url_info) & is.null(url_column)) {
+    warning("No url information was provided.")
+  } else if ("character" %in% class(url_info) & length(url_info) > 1) {
     message("url_info has multiple entries, assuming it is a character vector with 1 url/entry.")
     ## Then this should contain all the URLs
     plot[["data"]][[url_column]] <- url_info
-  } else if ("glue" %in% url_info & length(url_info) == 1) {
+  } else if ("glue" %in% class(url_info) & length(url_info) == 1) {
     message("url_info has length 1, assuming it is a glue specification including {ids}.")
     ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
     ids <- plot[["data"]][[id_column]]
@@ -284,7 +283,7 @@ ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id",
     rownames(plot[["data"]]) <- plot[["Row.names"]]
     plot[["data"]][["Row.names"]] <- NULL
   }
-  
+
   if (is.null(plot[["data"]][[first_tooltip_column]])) {
     plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
   }

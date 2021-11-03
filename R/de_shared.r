@@ -45,6 +45,7 @@
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param verbose Print extra information while running?
+#' @param surrogates Either a number of surrogates or method to estimate it.
 #' @param ...  Picks up extra arguments into arglist, currently only passed to
 #'  write_limma().
 #' @return A list of limma, deseq, edger results.
@@ -346,6 +347,7 @@ calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
 #' @param results Table of differential expression results.
 #' @seealso [sva]
 sva_modify_pvalues <- function(results) {
+  input <- result[["input"]]
   original_pvalues <- data.table::data.table(
                                     rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
   if (isTRUE(verbose)) {

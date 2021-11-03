@@ -836,6 +836,11 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 }
 
 #' Get the lengths of sequences from a fasta file.
+#'
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -855,7 +860,7 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
     }
 
     dtrs <- Biostrings::readBStringSet(input_file)
-    output_entries[row] <- width(dtrs[1])
+    output_entries[row] <- Biostrings::width(dtrs[1])
   } ## End looking at every row of the metadata
   return(output_entries)
 }
@@ -863,6 +868,10 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
 #' Pull out the filename matching an input spec
 #'
 #' This is useful for putting the count table name into a metadata file.
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -888,6 +897,13 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
 }
 
 #' Pull GC content into the metadata sheet.
+#'
+#' As the name suggests, this only works for fasta files.
+#'
+#' @param meta Input metadata
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param verbose Print diagnostic information while running?
 dispatch_gc <- function(meta, input_file_spec, verbose = FALSE) {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
@@ -1036,6 +1052,18 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 }
 
 #' Pull some information from a csv/tsv file.
+#'
+#' This function is a bit more generic than the others, but it grabs from a
+#' column of a csv/tsv file.
+#'
+#' @param meta Input metadata
+#' @param column Column to yank from
+#' @param input_file_spec Input file specification to hunt down the
+#'  file of interest.
+#' @param type csv or tsv?
+#' @param which Take the first entry, or some subset.
+#' @param verbose Print diagnostic information while running?
+#' @param ... Other arguments for glue.
 dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
                                 which = "first", verbose = FALSE,
                                 ...) {
