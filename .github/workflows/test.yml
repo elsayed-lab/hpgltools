@@ -47,21 +47,21 @@ jobs:
         mkdir -p ${HOME}/tmp
         mkdir -p ${HOME}/R
         Rscript -e "install.packages('remotes')"
-         Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
-         Rscript -e "remotes::install_github('r-hub/sysreqs')"
+        # Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
+        # Rscript -e "remotes::install_github('r-hub/sysreqs')"
         # sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         # sudo R CMD javareconf
-        make prereq
-        Rscript -e "remotes::install_deps(dependencies=TRUE)"
-        Rscript -e "remotes::install_deps(dependencies='Suggests')"
-        Rscript -e "remotes::install_cran('lintr')"
-        Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
-        Rscript -e "devtools::install_github('abelew/EuPathDB')"
-        Rscript -e "devtools::install_github('js229/Vennerable')"
-        Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
-        Rscript -e "devtools::install_bioc('RDAVIDWebService')"
-        Rscript -e "devtools::install_github('dviraran/xCell')"
-        make deps
+        #make prereq
+        #Rscript -e "remotes::install_deps(dependencies=TRUE)"
+        #Rscript -e "remotes::install_deps(dependencies='Suggests')"
+        #Rscript -e "remotes::install_cran('lintr')"
+        #Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
+        #Rscript -e "devtools::install_github('abelew/EuPathDB')"
+        #Rscript -e "devtools::install_github('js229/Vennerable')"
+        #Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
+        #Rscript -e "devtools::install_bioc('RDAVIDWebService')"
+        #Rscript -e "devtools::install_github('dviraran/xCell')"
+        #make deps
 
     - name: Run tests
       run: |
