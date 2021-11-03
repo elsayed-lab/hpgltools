@@ -26,18 +26,18 @@ jobs:
        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
        TMPDIR: /home/runner/tmp
     steps:
-
     - name: Install packages
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
         sudo apt-get install circos libsvg-perl default-jdk texlive texlive-fonts-extra
-    - uses: r-lib/actions/setup-r@master
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-r@v1
       with:
         r-version: ${{ matrix.config.r }}
-    - uses: r-lib/actions/setup-pandoc@master
-    - uses: r-lib/actions/checkout@master
-    - uses: r-lib/actions/set-r-dependencies@master
+    - uses: r-lib/actions/setup-pandoc@v1
+    - uses: r-lib/actions/setup-tinytex@v1
+    - uses: r-lib/actions/set-r-dependencies@v1
       with:
         cache-version: 2
         extra-packages: |
