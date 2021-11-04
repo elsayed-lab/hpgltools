@@ -49,14 +49,14 @@
 #'                              excludes=list("description"=c("sno","rRNA")))
 #' }
 #' @export
-combine_de_tables <- function(apr, extra_annot=NULL,
-                              excel=NULL, sig_excel=NULL, abundant_excel=NULL,
-                              excel_title="Table SXXX: Combined Differential Expression of YYY",
-                              keepers="all", excludes=NULL, adjp=TRUE, include_limma=TRUE,
-                              include_deseq=TRUE, include_edger=TRUE, include_ebseq=TRUE,
-                              include_basic=TRUE, rownames=TRUE, add_plots=TRUE, loess=FALSE,
-                              plot_dim=6, compare_plots=TRUE, padj_type="ihw",
-                              lfc_cutoff=1, p_cutoff=0.05, de_types=c("limma", "deseq", "edger"),
+combine_de_tables <- function(apr, extra_annot = NULL,
+                              excel = NULL, sig_excel = NULL, abundant_excel = NULL,
+                              excel_title = "Table SXXX: Combined Differential Expression of YYY",
+                              keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
+                              include_deseq = TRUE, include_edger = TRUE, include_ebseq = TRUE,
+                              include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
+                              plot_dim = 6, compare_plots = TRUE, padj_type = "ihw",
+                              lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
                               ...) {
   arglist <- list(...)
   retlist <- NULL
@@ -112,9 +112,9 @@ combine_de_tables <- function(apr, extra_annot=NULL,
   ## A common request is to have the annotation data added to the table.  Do that here.
   annot_df <- fData(apr[["input"]])
   if (!is.null(extra_annot)) {
-    annot_df <- merge(annot_df, extra_annot, by="row.names", all.x=TRUE)
+    annot_df <- merge(annot_df, extra_annot, by = "row.names", all.x = TRUE)
     rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop=FALSE]
+    annot_df <- annot_df[, -1, drop = FALSE]
   }
 
   ## Write the legend.
@@ -137,10 +137,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
 
   ## Extract and write the data tables.
   extracted <- list(
-    "data"=list(),
-    "table_names"=list(),
-    "plots"=list(),
-    "summaries"=data.frame()
+    "data" = list(),
+    "table_names" = list(),
+    "plots" = list(),
+    "summaries" = data.frame()
   )
   if (class(keepers)[1] == "list") {
     ## Here, we will look for only those elements in the keepers list.
@@ -154,7 +154,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                     loess =  loess, lfc_cutoff = lfc_cutoff,
+                                     p_cutoff =  p_cutoff)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -168,7 +169,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                      include_deseq, include_edger,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
-                                     loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                     loess = loess, lfc_cutoff = lfc_cutoff,
+                                     p_cutoff =  p_cutoff)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -180,7 +182,8 @@ combine_de_tables <- function(apr, extra_annot=NULL,
                                         include_deseq, include_edger,
                                         include_ebseq, include_limma,
                                         include_basic, excludes, padj_type,
-                                        loess=loess, lfc_cutoff=lfc_cutoff, p_cutoff=p_cutoff)
+                                        loess =  loess, lfc_cutoff = lfc_cutoff,
+                                        p_cutoff = p_cutoff)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -209,11 +212,11 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         message("There is no data for ", tab, ", skipping it.")
         next
       }
-      final_excel_title <- gsub(pattern="YYY", replacement=tab, x=excel_title)
+      final_excel_title <- gsub(pattern = "YYY", replacement =  tab, x =  excel_title)
       final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  Contrast denominator: {denominators[x]}.")
       ## Dump each table to the appropriate excel sheet
-      xls_result <- write_xlsx(data=written_table, wb=wb, sheet=tab,
-                               title=final_excel_title, rownames=rownames)
+      xls_result <- write_xlsx(data =   written_table, wb = wb, sheet = tab,
+                               title = final_excel_title, rownames = rownames)
       ## The function write_xlsx has some logic in it to get around excel name
       ## limitations (30 characters), therefore set the sheetname to what was
       ## returned in case it had to change the sheet's name.
@@ -228,10 +231,10 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         ## Text on row 1, plots from 2-17 (15 rows)
         mesg("Adding venn plots for ", tnames[x], ".")
         ## Make some venn diagrams comparing deseq/limma/edger!
-        venn_nop_lfc0 <- try(de_venn(written_table, lfc=0, adjp=FALSE, p=1.0))
-        venn_nop <- try(de_venn(written_table, lfc=1, adjp=FALSE, p=1.0))
-        venn_list <- try(de_venn(written_table, lfc=0, adjp=adjp))
-        venn_sig_list <- try(de_venn(written_table, lfc=1, adjp=adjp))
+        venn_nop_lfc0 <- try(de_venn(written_table, lfc = 0, adjp = FALSE, p = 1.0))
+        venn_nop <- try(de_venn(written_table, lfc = 1, adjp = FALSE, p = 1.0))
+        venn_list <- try(de_venn(written_table, lfc = 0, adjp = adjp))
+        venn_sig_list <- try(de_venn(written_table, lfc = 1, adjp = adjp))
         venns[[tab]] <- list(venn_nop_lfc0, venn_nop, venn_list, venn_sig_list)
         names(venns[[tab]]) <- c("nop_lfc0", "nop_lfc1", "p_lfc0", "p_lfc1")
         ## If they worked, add them to the excel sheets after the data,
@@ -239,53 +242,53 @@ combine_de_tables <- function(apr, extra_annot=NULL,
         if (class(venn_list)[1] != "try-error") {
           ## First row of plots all going up
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc > 0.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc > 0.",
+                                   startRow = current_row, startCol = current_column)
           up_plot <- venn_nop_lfc0[["up_venn"]]
           try_result <- xlsx_plot_png(
-              up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-              start_col=current_column, plotname="lfc0upvennnop", savedir=excel_basename,
-              start_row=current_row + 1, doWeights=FALSE)
+              up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
+              start_col = current_column, plotname = "lfc0upvennnop", savedir = excel_basename,
+              start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of all genes, lfc > 1.",
-                                   startRow=1, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of all genes, lfc > 1.",
+                                   startRow = 1, startCol = current_column)
           up_plot <- venn_nop[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvennnop", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
+            start_col = current_column, plotname = "upvennnop", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value up genes, lfc > 0.",
-                                   startRow=1, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value up genes, lfc > 0.",
+                                   startRow = 1, startCol = current_column)
           up_plot <- venn_list[["up_venn"]]
           try_result <- xlsx_plot_png(
-            up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
+            start_col = current_column, plotname = "upvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
           current_column <- current_column + venn_columns
           xl_result <- openxlsx::writeData(
-                                   wb=wb, sheet=sheetname,
-                                   x="Venn of p-value up genes, lfc > 1.",
-                                   startRow=current_row, startCol=current_column)
+                                   wb = wb, sheet = sheetname,
+                                   x = "Venn of p-value up genes, lfc > 1.",
+                                   startRow = current_row, startCol = current_column)
           sig_up_plot <- venn_sig_list[["up_venn"]]
           try_result <- xlsx_plot_png(
-            sig_up_plot, wb=wb, sheet=sheetname, width=(plot_dim / 2), height=(plot_dim / 2),
-            start_col=current_column, plotname="upvenn", savedir=excel_basename,
-            start_row=current_row + 1, doWeights=FALSE)
+            sig_up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height =  (plot_dim / 2),
+            start_col = current_column, plotname = "upvenn", savedir = excel_basename,
+            start_row = current_row + 1, doWeights = FALSE)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -299,18 +302,18 @@ combine_de_tables <- function(apr, extra_annot=NULL,
           if (isTRUE(include_deseq)) {
             sig_methods <- c("deseq", sig_methods)
           }
-          siggene_lst <- try(plot_num_siggenes(written_table, methods=sig_methods))
+          siggene_lst <- try(plot_num_siggenes(written_table, methods =  sig_methods))
           current_column <- current_column + venn_columns
           if (class(siggene_lst)[1] != "try-error") {
             xl_result <- openxlsx::writeData(
-                                     wb=wb, sheet=sheetname,
-                                     x="Significant genes by fc going up.",
-                                     startRow=current_row, startCol=current_column)
+                                     wb = wb, sheet = sheetname,
+                                     x = "Significant genes by fc going up.",
+                                     startRow = current_row, startCol = current_column)
             try_result <- xlsx_plot_png(
-              siggene_lst[["up"]], wb=wb, sheet=sheetname,
-              width=plot_dim, height=(plot_dim / 2),
-              start_col=current_column, plotname="siggenesup",
-              savedir=excel_basename, start_row=current_row + 1, doWeights=FALSE)
+              siggene_lst[["up"]], wb = wb, sheet =  sheetname,
+              width = plot_dim, height = (plot_dim / 2),
+              start_col =  current_column, plotname =  "siggenesup",
+              savedir = excel_basename, start_row = current_row + 1, doWeights = FALSE)
             if (! "try-error" %in% class(try_result)) {
               image_files <- c(image_files, try_result[["filename"]])
             }
