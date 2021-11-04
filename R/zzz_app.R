@@ -1,18 +1,9 @@
-library(shiny)
-## library(hpgltools)
-library(ggplot2)
-library(plotly)
-library(dplyr)
-library(RColorBrewer)
-library(stringr)
-
 dataset <- get_data(data = "TMRC3")
 
 ui <- fluidPage(
     # App title ----
     headerPanel("TMRC3 Plots"),
     h4(paste("Notes:" , dataset$notes)),
-
     br(),
 
     # Sidebar panel for inputs ----
@@ -65,7 +56,7 @@ ui <- fluidPage(
                                          names(dataset[["initial_metadata"]]), multiple = TRUE),
                              verbatimTextOutput("dfStr"),
                              br(),
-                             dataTableOutput('table')),
+                             dataTableOutput("table")),
                     tabPanel("2D PCA Plots",
                              br(),
                              fluidRow(
@@ -96,11 +87,11 @@ ui <- fluidPage(
                                                          label = "Y-Axis",
                                                          c(paste("PC", 1:10)),
                                                          selected = "PC 3"))),
-
                              br(),
 
                              fluidRow(
-                                 splitLayout(cellWidths = c("48%", "52%"), plotOutput("PCA1"), plotOutput("PCA2"))),
+                                 splitLayout(cellWidths = c("48%", "52%"),
+                                             plotOutput("PCA1"), plotOutput("PCA2"))),
                              br(),
                              br(),
                              ),
@@ -117,7 +108,6 @@ ui <- fluidPage(
 server <- function(input, output) {
   output$table <- renderDataTable({
     dataset[["initial_metadata"]][, input$columns]
-
   })
 
   pca <- reactive({
@@ -138,9 +128,10 @@ server <- function(input, output) {
                      z = ~ pc_3)
 
       fig <- fig %>% add_markers()
-      fig <- fig %>% layout(scene = list(xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
-                                         yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
-                                         zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
+      fig <- fig %>% layout(scene = list(
+                                xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
+                                yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
+                                zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
       fig
 
     } else {
@@ -152,9 +143,10 @@ server <- function(input, output) {
                      colors = brewer.pal(length(unique(dataset[["initial_metadata"]][, input$pca_plotting_color])), "RdYlBu"))
 
       fig <- fig %>% add_markers()
-      fig <- fig %>% layout(scene = list(xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
-                                         yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
-                                         zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
+      fig <- fig %>% layout(scene = list(
+                                xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
+                                yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
+                                zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
       fig
     }
   })
@@ -162,26 +154,24 @@ server <- function(input, output) {
   output$PCA1 <- renderPlot({
     if (input$pca_plotting_color == "Default") {
       fig <- ggplot(data = pca()$table,
-                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))],
-                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))])) +
+                    aes(x = pca()$table[, paste0("pc_", substrRight(input$xaxis1, 1))],
+                        y = pca()$table[, paste0("pc_", substrRight(input$yaxis1, 1))])) +
         geom_point(color = "Blue") +
         theme_classic() +
         xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
         ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
         theme(legend.position="none")
-
       fig
     } else {
       fig <- ggplot(data = pca()$table,
-                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))],
-                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))],
-                        color = as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color]))) +
+                    aes(x = pca()$table[, paste0("pc_", substrRight(input$xaxis1, 1))],
+                        y = pca()$table[, paste0("pc_", substrRight(input$yaxis1, 1))],
+                        color = as.factor(dataset[["initial_metadata"]][, input$pca_plotting_color]))) +
         geom_point() +
         theme_classic() +
         xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
         ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
-        theme(legend.position="none")
-
+        theme(legend.position = "none")
       fig
     }
   })
@@ -189,8 +179,8 @@ server <- function(input, output) {
   output$PCA2 <- renderPlot({
     if (input$pca_plotting_color == "Default") {
       fig <- ggplot(data = pca()$table,
-                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis2, 1))],
-                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))])) +
+                    aes(x = pca()$table[, paste0("pc_", substrRight(input$xaxis2, 1))],
+                        y = pca()$table[, paste0("pc_", substrRight(input$yaxis2, 1))])) +
         geom_point(color = "Blue") +
         theme_classic() +
         xlab(paste0(input$xaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis2, 1))], "% variance")) +
@@ -199,9 +189,9 @@ server <- function(input, output) {
       fig
     } else {
       fig <- ggplot(data = pca()$table,
-                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis2, 1))],
-                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))],
-                        color = as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color]))) +
+                    aes(x = pca()$table[, paste0("pc_", substrRight(input$xaxis2, 1))],
+                        y = pca()$table[, paste0("pc_", substrRight(input$yaxis2, 1))],
+                        color = as.factor(dataset[["initial_metadata"]][, input$pca_plotting_color]))) +
         geom_point() +
         theme_classic() +
         xlab(paste0(input$xaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis2, 1))], "% variance")) +
@@ -212,4 +202,4 @@ server <- function(input, output) {
   })
 }
 
-shinyApp(ui = ui, server = server)
+# EOF
