@@ -7,7 +7,7 @@
 circos_prefix(
   annotation,
   name = "mgas",
-  basedir = "circos",
+  base_dir = "circos",
   chr_column = "seqnames",
   cog_column = "COGFun",
   start_column = "start",
@@ -26,7 +26,7 @@ circos_prefix(
 
 \item{name}{Name of the map, called with 'make name'.}
 
-\item{basedir}{Base directory for writing the data.}
+\item{base_dir}{Base directory for writing the data.}
 
 \item{chr_column}{Name of the column containing the chromosome names in the annotations.}
 
