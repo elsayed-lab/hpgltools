@@ -30,43 +30,49 @@ ui <- fluidPage(
   sidebarPanel(
     width = 2,
     # Input: Selector for variable to plot against mpg ----
-   # selectInput(inputId = "data", 
+    # selectInput(inputId = "data", 
     #            label = "Dataset:",
-     #           c("TMRC3" = "TMRC3",
-      #            "TMRC2" = "TMRC2"
-       #            )),
-   
-   
-   
-  h5("Normalization Options"),
-  
-  selectInput(inputId = "convert", 
-              label = "Convert:",
-              c("FALSE" = "none",
-                "cpm" = "cpm",
-                "rpkm" = "rpkm",
-                "cbcb" = "cbcb"
-              )),
-  selectInput(inputId = "normalization", 
-              label = "Normalization:",
-              c("FALSE" = "FALSE",
-                "quant" = "quant",
-                "cbcb" = "cbcb"
-              )),
-  selectInput(inputId = "transform", 
-              label = "Transform:",
-              c("FALSE" = "FALSE",
-                "log2" = "log2"
-              )),
-  
-  checkboxInput(inputId = "filter", 
-                label = "Filter", 
-                TRUE),
-  br(),
-  h5("Plotting Options"),
-  selectInput(inputId = "pca_plotting_color", 
-              label = "Plotting Color Labels",
-              c("Default",names(dataset[["initial_metadata"]])))
+    #           c("TMRC3" = "TMRC3",
+    #            "TMRC2" = "TMRC2"
+    #            )),
+    
+    
+    
+    h5("Normalization Options"),
+    
+    selectInput(inputId = "convert", 
+                label = "Convert:",
+                c("FALSE" = "none",
+                  "cpm" = "cpm",
+                  "rpkm" = "rpkm",
+                  "cbcb" = "cbcb"
+                )),
+    selectInput(inputId = "normalization", 
+                label = "Normalization:",
+                c("FALSE" = "FALSE",
+                  "quant" = "quant",
+                  "cbcb" = "cbcb"
+                )),
+    selectInput(inputId = "transform", 
+                label = "Transform:",
+                c("FALSE" = "FALSE",
+                  "log2" = "log2"
+                )),
+    
+    checkboxInput(inputId = "filter", 
+                  label = "Filter", 
+                  TRUE),
+    br(),
+    h5("Plotting Options"),
+    selectInput(inputId = "pca_plotting_color", 
+                label = "Plotting Color Factor",
+                c("Default",
+                  names(dataset[["initial_metadata"]])),
+                multiple = TRUE,
+                selected = "Default_Color"),
+    sliderInput("size", "Plot Point Size:",
+                min = 1, max = 10, value = 3
+    )
   ),
   
   mainPanel(
@@ -110,27 +116,29 @@ ui <- fluidPage(
                                                    label = "Y-Axis",
                                                    c(paste("PC", 1:10)),
                                                    selected = "PC 3"))),
-                        
+                         
                          br(),
-
+                         
                          fluidRow(
                            splitLayout(cellWidths = c("48%", "52%"), plotOutput("PCA1"), plotOutput("PCA2"))),
                          br(),
                          br(),
-                         ),
-                         
+                ),
+                
                 tabPanel("FOR NAJIB: 3D PCA Plot", 
-                        # selectInput(inputId = "plotting_color", 
+                         # selectInput(inputId = "plotting_color", 
                          #            label = "Plotting Color Labels",
-                          #           names(dataset[["initial_metadata"]]),
-                           #          selected = "typeofcells"),
-                                     br(),
-                         plotlyOutput("PCA"))
+                         #           names(dataset[["initial_metadata"]]),
+                         #          selected = "typeofcells"),
+                         br(),
+                         plotlyOutput("PCA")
                 )
-                )
+    )
   )
+)
 
-  
+
+
 
 
 
@@ -138,19 +146,19 @@ server <- function(input, output) {
   
   
   # This returns the correct dataset
- # dataset <- 
-    #reactive({
-    #if (input$data == "TMRC2"){
-      #annotation <- get_annots("TMRC2")
-    #  dataset <- get_data(data = "TMRC2") #, annot = annotation)
-    
-    #} else if (input$data == "TMRC3"){
-    #  dataset <- get_data(data = "TMRC3")
-    #}
-    #return(dataset)
-#  })
+  # dataset <- 
+  #reactive({
+  #if (input$data == "TMRC2"){
+  #annotation <- get_annots("TMRC2")
+  #  dataset <- get_data(data = "TMRC2") #, annot = annotation)
   
-
+  #} else if (input$data == "TMRC3"){
+  #  dataset <- get_data(data = "TMRC3")
+  #}
+  #return(dataset)
+  #  })
+  
+  
   output$table <- renderDataTable({
     dataset[["initial_metadata"]][,input$columns]
     
@@ -158,18 +166,17 @@ server <- function(input, output) {
   
   pca <- reactive({
     all_norm <- sm(normalize_expt(dataset, 
-                                transform = input$transform, 
-                                norm = input$normalization,
-                                convert = input$convert, 
-                                filter = input$filter))
+                                  transform = input$transform, 
+                                  norm = input$normalization,
+                                  convert = input$convert, 
+                                  filter = input$filter))
     pca <- plot_pca(all_norm, 
-                  plot_labels=FALSE)
+                    plot_labels=FALSE)
     return(pca)
-  }
-  )
+  })
   
   output$PCA <- renderPlotly({
-    if(input$pca_plotting_color == "Default"){
+    if(length(input$pca_plotting_color) == 1 & input$pca_plotting_color == "Default_Color"){
       fig <- plot_ly(data = pca()$table, 
                      x = ~ pc_1, 
                      y = ~ pc_2, 
@@ -180,15 +187,16 @@ server <- function(input, output) {
                                          yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
                                          zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
       fig
-    
       
-    } else {
+      
+    } else if(length(input$pca_plotting_color) == 1) {
+      cat_plotting_colors <- as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color])
       fig <- plot_ly(data = pca()$table, 
                      x = ~ pc_1, 
                      y = ~ pc_2, 
                      z = ~ pc_3,
-                     color = ~ as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color]),
-                     colors = brewer.pal(length(unique(dataset[["initial_metadata"]][,input$pca_plotting_color])), "RdYlBu"))
+                     color = ~ cat_plotting_colors,
+                     colors = brewer.pal(length(unique(cat_plotting_colors)), "RdYlBu"))
       
       fig <- fig %>% add_markers()
       fig <- fig %>% layout(scene = list(xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
@@ -196,61 +204,108 @@ server <- function(input, output) {
                                          zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
       fig
       
-    }
-    
-  })
+    } else if(length(input$pca_plotting_color) == 2) {
+      cat_plotting_colors <- as.factor(paste0(dataset[["initial_metadata"]][,input$pca_plotting_color[1]], "_",
+                                              dataset[["initial_metadata"]][,input$pca_plotting_color[2]]))
+      fig <- plot_ly(data = pca()$table, 
+                     x = ~ pc_1, 
+                     y = ~ pc_2, 
+                     z = ~ pc_3,
+                     color = ~ cat_plotting_colors,
+                     colors = brewer.pal(length(unique(cat_plotting_colors)), "RdYlBu"))
+      
+      fig <- fig %>% add_markers()
+      fig <- fig %>% layout(scene = list(xaxis = list(title = paste0('PC1: ', pca()$prop_var[1], "% variance")),
+                                         yaxis = list(title = paste0('PC2: ', pca()$prop_var[2], "% variance")),
+                                         zaxis = list(title = paste0('PC3: ', pca()$prop_var[3], "% variance"))))
+      fig
+    } 
+  } )
+  
+  
   
   
   output$PCA1 <- renderPlot({
-  if (input$pca_plotting_color == "Default"){
-    fig <- ggplot(data = pca()$table, 
-                  aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))], 
-                      y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))])) +
-      geom_point(color = "Blue") +
-      theme_classic() + 
-      xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
-      ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
-      theme(legend.position="none")
-    
-    fig
-  } else {
-    fig <- ggplot(data = pca()$table, 
-                   aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))], 
-                   y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))], 
-                   color = as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color]))) +
-      geom_point() +
-      theme_classic() + 
-      xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
-      ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
-      theme(legend.position="none")
-  
-    fig
-  }
+    if(length(input$pca_plotting_color) == 1 & input$pca_plotting_color == "Default_Color") {
+      fig <- ggplot(data = pca()$table, 
+                    aes(x = pca()$table[ ,paste0("pc_", substrRight(input$xaxis1, 1))], 
+                        y = pca()$table[ ,paste0("pc_", substrRight(input$yaxis1, 1))])) +
+        geom_point(color = "Blue", size = input$size) +
+        theme_classic() + 
+        xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
+        ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
+        theme(legend.position="none")
+      
+      fig
+    } else if(length(input$pca_plotting_color) == 1){
+      cat_plotting_colors <- as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color])
+      fig <- ggplot(data = pca()$table, 
+                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))], 
+                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))], 
+                        color = cat_plotting_colors)) +
+        geom_point(size = input$size) +
+        theme_classic() + 
+        xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
+        ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
+        theme(legend.position="none")
+      
+      fig
+    } else if (length(input$pca_plotting_color == 2)) {
+      cat_plotting_colors <- as.factor(paste0(dataset[["initial_metadata"]][,input$pca_plotting_color[1]], "_",
+                                              dataset[["initial_metadata"]][,input$pca_plotting_color[2]]))
+      
+      fig <- ggplot(data = pca()$table, 
+                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis1, 1))], 
+                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis1, 1))], 
+                        color = cat_plotting_colors)) +
+        geom_point(size = input$size) +
+        theme_classic() + 
+        xlab(paste0(input$xaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis1, 1))], "% variance")) +
+        ylab(paste0(input$yaxis1, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis1, 1))], "% variance")) +
+        theme(legend.position="none")
+      
+      fig
+    }
   })
   
   
   
   output$PCA2 <- renderPlot({
-    if (input$pca_plotting_color == "Default"){
+    if(length(input$pca_plotting_color) == 1 & input$pca_plotting_color == "Default_Color") {
       fig <- ggplot(data = pca()$table, 
                     aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis2, 1))], 
-                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))])) +
-        geom_point(color = "Blue") +
+                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))]
+                       
+                        )) +
+        geom_point(color = "Blue", size = input$size) +
+        theme_classic() + 
+        xlab(paste0(input$xaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis2, 1))], "% variance")) +
+        ylab(paste0(input$yaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis2, 1))], "% variance"))
+      fig
+    } else if(length(input$pca_plotting_color) == 1) {
+      cat_plotting_colors <- as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color])
+      fig <- ggplot(data = pca()$table, 
+                    aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis2, 1))], 
+                        y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))], 
+                        color = cat_plotting_colors)) +
+        geom_point(size = input$size) +
         theme_classic() + 
         xlab(paste0(input$xaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis2, 1))], "% variance")) +
         ylab(paste0(input$yaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis2, 1))], "% variance")) +
         labs(colour = input$pca_plotting_color)
       fig
-    } else {
+    } else if (length(input$pca_plotting_color == 2)) {
+      cat_plotting_colors <- as.factor(paste0(dataset[["initial_metadata"]][,input$pca_plotting_color[1]], "_",
+                                              dataset[["initial_metadata"]][,input$pca_plotting_color[2]]))
       fig <- ggplot(data = pca()$table, 
                     aes(x = pca()$table[,paste0("pc_", substrRight(input$xaxis2, 1))], 
                         y = pca()$table[,paste0("pc_", substrRight(input$yaxis2, 1))], 
-                        color = as.factor(dataset[["initial_metadata"]][,input$pca_plotting_color]))) +
-        geom_point() +
+                        color = cat_plotting_colors)) +
+        geom_point(size = input$size) +
         theme_classic() + 
         xlab(paste0(input$xaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$xaxis2, 1))], "% variance")) +
         ylab(paste0(input$yaxis2, ": ", pca()$prop_var[as.numeric(substrRight(input$yaxis2, 1))], "% variance")) +
-        labs(colour = input$pca_plotting_color)
+        labs(colour = paste(input$pca_plotting_color[1], "_", input$pca_plotting_color[2]))
       fig
     }
   })
