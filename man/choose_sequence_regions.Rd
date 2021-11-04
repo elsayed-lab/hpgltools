@@ -3,16 +3,39 @@
 \name{choose_sequence_regions}
 \alias{choose_sequence_regions}
 \title{Given a named vector of fun regions, make a dataframe which
-includes putative primers and the spec strings for expected variants.}
+includes putative primers and the spec strings for expected
+variants.}
 \usage{
 choose_sequence_regions(
   vector,
   max_primer_length = 45,
   topn = 200,
-  bin_size = 600
+  bin_size = 600,
+  genome = NULL,
+  target_temp = 58
 )
 }
+\arguments{
+\item{vector}{variant-based set of putative regions with variants
+between conditions of interest.}
+
+\item{max_primer_length}{given this length as a start, whittle down
+to a hopefully usable primer size.}
+
+\item{topn}{Choose this number of variant regions from the rather
+larger set of possibilities..}
+
+\item{bin_size}{Separate the genome into chunks of this size when
+hunting for primers, this size will therefore be the approximate
+PCR amplicon length.}
+
+\item{genome}{(BS)Genome to search.}
+
+\item{target_temp}{PCR temperature to attempt to match.}
+}
 \description{
-Given a named vector of fun regions, make a dataframe which
-includes putative primers and the spec strings for expected variants.
+This function came out of our TMRC2 work and seeks to provide an
+initial set of potential PCR primers which are able to distinguish
+between different aspects of the data.  In the actual data, we were
+looking for differences between the zymodemes 2.2 and 2.3.
 }

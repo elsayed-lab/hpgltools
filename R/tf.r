@@ -15,6 +15,8 @@
 #'  this)
 #' @param conf Vector of confidence scores to filter the data.
 #' @param dorothea_options Optional configuration list.
+#' @param lfc Fold-change cutoff.
+#' @param p P-value cutoff.
 #' @param species Either human or mouse.
 #' @return list containing some information from dorothea and limma.
 #' @export

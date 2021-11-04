@@ -938,7 +938,6 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
   cfgout <- paste0(file.path(conf_dir, name), ".conf")
   message("It will write ", cfgout, " with a reasonable first approximation config file.")
 
-   
   if (!file.exists(data_dir)) {
     message("Creating the data directory: ", data_dir)
     dir.create(data_dir, recursive = TRUE)
@@ -948,9 +947,6 @@ circos_prefix <- function(annotation, name = "mgas", basedir = "circos",
     dir.create(conf_dir, recursive = TRUE)
   }
 
-
-  
-  
   ## Set up some data which will be shared by all the other functions.
   number_pluses <- sum(annotation[[strand_column]] == "+")
   number_ones <- sum(annotation[[strand_column]] == 1)

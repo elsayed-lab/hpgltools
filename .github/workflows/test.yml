@@ -6,13 +6,7 @@ on:
 name: CI
 jobs:
   build:
-    runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.R }})
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {os: ubuntu-latest, R: '4.0.2'}
+    runs-on: ubuntu-latest
     env:
        AUTHOR_TESTING: 1
        AUTOMATED_TESTING: 1
@@ -24,42 +18,39 @@ jobs:
        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
        TMPDIR: /home/runner/tmp
+       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
+    - uses: actions/checkout@v2
+    - uses: r-lib/actions/setup-pandoc@v1
+    - uses: r-lib/actions/setup-r@v1
+    - uses: r-lib/actions/setup-renv@v1
 
     - name: Install packages
       run: |
         sudo apt-get update
         sudo apt-get install libcurl4-openssl-dev libcurl4 curl libnetcdf-dev
         sudo apt-get install circos libsvg-perl default-jdk texlive texlive-fonts-extra
-    - uses: r-lib/actions/setup-r@master
-      with:
-        r-version: ${{ matrix.config.r }}
-    - uses: r-lib/actions/setup-pandoc@master
-    - uses: actions/checkout@v2
 
-    - name: Create R environment
+    - name: Setup R environment
       run: |
         echo "options(Ncpus=2)" > ${HOME}/.Rprofile
         echo "r <- getOption('repos')" >> ${HOME}/.Rprofile
         echo 'r["CRAN"] <- "https://cloud.r-project.org"' >> ${HOME}/.Rprofile
         echo "options(repos=r)" >> ${HOME}/.Rprofile
-        mkdir -p /home/runner/tmp
-        mkdir -p /home/runner/R
-        Rscript -e "install.packages('remotes')"
-        Rscript -e "saveRDS(remotes::dev_package_deps(dependencies=TRUE), 'depends.Rds', version=2)"
-        Rscript -e "remotes::install_github('r-hub/sysreqs')"
-        sudo -s eval $(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        mkdir -p ${HOME}/tmp
+        mkdir -p ${HOME}/R
         sudo R CMD javareconf
         make prereq
+        Rscript -e "devtools::install_github('abelew/EuPathDB')"
         Rscript -e "remotes::install_deps(dependencies=TRUE)"
         Rscript -e "remotes::install_deps(dependencies='Suggests')"
-        Rscript -e "remotes::install_cran('lintr')"
-        Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
-        Rscript -e "devtools::install_github('abelew/EuPathDB')"
+        #Rscript -e "remotes::install_cran('lintr')"
+        #Rscript -e "devtools::install_github('YuLab-SMU/GOSemSim')"
+
         Rscript -e "devtools::install_github('js229/Vennerable')"
-        Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
-        Rscript -e "devtools::install_bioc('RDAVIDWebService')"
-        Rscript -e "devtools::install_github('dviraran/xCell')"
+        #Rscript -e "devtools::install_github('kokrah/cbcbSEQ')"
+        #Rscript -e "devtools::install_bioc('RDAVIDWebService')"
+        #Rscript -e "devtools::install_github('dviraran/xCell')"
         make deps
 
     - name: Run tests

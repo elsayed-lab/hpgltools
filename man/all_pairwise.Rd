@@ -86,6 +86,8 @@ so it can choose).}
 
 \item{verbose}{Print extra information while running?}
 
+\item{surrogates}{Either a number of surrogates or method to estimate it.}
+
 \item{...}{Picks up extra arguments into arglist, currently only passed to
 write_limma().}
 }

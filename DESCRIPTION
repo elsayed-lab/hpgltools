@@ -123,3 +123,6 @@ Collate:
   'xlsx.r'
   'motif.r'
   'tf.r'
+  'expt_app_helpers.R'
+  'set_methods.R'
+  'zzz_app.R'

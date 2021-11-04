@@ -9,6 +9,9 @@ read_counts_expt(
   files,
   header = FALSE,
   include_summary_rows = FALSE,
+  all.x = TRUE,
+  all.y = FALSE,
+  merge_type = "merge",
   suffix = NULL,
   countdir = NULL,
   ...
@@ -22,6 +25,12 @@ read_counts_expt(
 \item{header}{Whether or not the count tables include a header row.}
 
 \item{include_summary_rows}{Whether HTSeq summary rows should be included.}
+
+\item{all.x}{When merging (as opposed to join), choose the x data column.}
+
+\item{all.y}{When merging (as opposed to join), choose the y data column.}
+
+\item{merge_type}{Choose one, merge or join.}
 
 \item{suffix}{Optional suffix to add to the filenames when reading them.}
 
