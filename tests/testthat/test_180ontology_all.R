@@ -207,7 +207,8 @@ if (file.exists("test_gostats_write.xlsx")) {
 gprof_test <- simple_gprofiler(sig_genes = ups, species = "spombe")
 gprof_table <- gprof_test[["go"]]
 actual_dim <- dim(gprof_table)
-expected_dim <- c(67, 14)
+## expected_dim <- c(67, 14)
+expected_dim <- c(35, 14)
 test_that("Does gprofiler provide some expected tables?", {
   expect_equal(actual_dim, expected_dim)
 })
@@ -216,7 +217,7 @@ actual_go <- head(sort(gprof_table[["term.id"]]))
 expected_go <- c("GO:0001678", "GO:0006884", "GO:0007186",
                  "GO:0007187", "GO:0007188", "GO:0007189")
 test_that("Does gprofiler give some expected GO categories?", {
-  expect_equal(1, sum(actual_go %in% expected_go))
+  expect_gt(sum(actual_go %in% expected_go), 1)
 })
 
 gp_written <- write_gprofiler_data(gprof_test, excel = "test_gp_write.xlsx")

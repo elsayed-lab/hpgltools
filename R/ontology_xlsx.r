@@ -904,12 +904,12 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
           image_files <- c(image_files, plot_try[["filename"]])
         }
       }
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
       new_row <- new_row + nrow(bp_data) + 2
     }
 
     new_row <- 1
     sheet <- "GO_MF"
-
     if (nrow(mf_data) > 0) {
       dfwrite <- write_xlsx(data = mf_data, wb = wb, sheet = sheet,
                             title = glue("MF Results from {sheet}."), start_row = new_row)
@@ -924,12 +924,12 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
           image_files <- c(image_files, plot_try[["filename"]])
         }
       }
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
       new_row <- new_row + nrow(mf_data) + 2
     }
 
     new_row <- 1
     sheet <- "GO_CC"
-
     if (nrow(cc_data) > 0) {
       dfwrite <- write_xlsx(data = cc_data, wb = wb, sheet = sheet,
                             title = glue("CC Results from {sheet}."),
@@ -946,10 +946,10 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
         }
       }
       new_row <- new_row + nrow(cc_data) + 2
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
     }
-    openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
   } ## End checking if go data is null
-    
+
   do_kegg <- TRUE
   if (is.null(gprofiler_result[["kegg"]])) {
     do_kegg <- FALSE

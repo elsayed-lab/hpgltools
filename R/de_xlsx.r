@@ -208,7 +208,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
     for (x in 1:length(tnames)) {
       tab <- tnames[x]
       written_table <- extracted[["data"]][[tab]]
-      if (class(written_table) != "data.frame") {
+      if (! "data.frame" %in% class(written_table)) {
         message("There is no data for ", tab, ", skipping it.")
         next
       }

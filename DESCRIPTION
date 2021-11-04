@@ -50,8 +50,9 @@ Imports:
   ggplot2, GenomicFeatures, glue,
   knitr,
   magrittr, methods,
+  plotly,
   rlang,
-  sva,
+  shiny, sva,
   variancePartition
 Depends:
   Biobase, SummarizedExperiment
