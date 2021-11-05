@@ -171,7 +171,7 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (isTRUE(compressed)) {
     removed <- file.remove(gff)
   }
-  
+
   return(ret)
 }
 
@@ -227,9 +227,9 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
   dict <- Biostrings::PDict(pattern, max.mismatch = 0)
   result <- Biostrings::vcountPDict(dict, entry_sequences)
   num_pattern <- data.frame(
-    "name" = names(entry_sequences),
-    "num" = as.data.frame(t(result)),
-    stringsAsFactors = FALSE)
+      "name" = names(entry_sequences),
+      "num" = as.data.frame(t(result)),
+      stringsAsFactors = FALSE)
   colnames(num_pattern) <- c("name", "number")
   return(num_pattern)
 }
@@ -284,8 +284,8 @@ sum_exon_widths <- function(data = NULL, gff = NULL, annotdf = NULL,
   colnames(new_data) <- colnames(data)
   rownames(new_data) <- rownames(column)
   ret <- list(
-    "width" = width_df,
-    "counts" = new_data)
+      "width" = width_df,
+      "counts" = new_data)
   return(ret)
 }
 

@@ -66,8 +66,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
     }
   }
   colnames(psi_data) <- c(
-    "denominator1", "denominator2", "denominator3",
-    "numerator1", "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
+      "denominator1", "denominator2", "denominator3",
+      "numerator1", "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
 
   plotting_data <- merge(dpsi_data, tpm_data, by.x = "row.names", by.y = "event")
   rownames(plotting_data) <- plotting_data[["Row.names"]]
@@ -89,25 +89,25 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
                                          replacement = "\\3")
   plotting_data[["plot_cat"]] <- plotting_data[["category"]]
   plotting_data[["plot_cat"]] <- ifelse(
-    test = plotting_data[["plot_cat"]] == "SE",
-    yes = "Skipping exon",
-    no = ifelse(
-      test = plotting_data[["plot_cat"]] == "MX",
-      yes = "Mutually exclusive exons",
+      test = plotting_data[["plot_cat"]] == "SE",
+      yes = "Skipping exon",
       no = ifelse(
-        test = plotting_data[["plot_cat"]] == "A5",
-        yes = "Alternate 5 prime",
-        no = ifelse(
-          test = plotting_data[["plot_cat"]] == "A3",
-          yes = "Alternate 3 prime",
+          test = plotting_data[["plot_cat"]] == "MX",
+          yes = "Mutually exclusive exons",
           no = ifelse(
-            test = plotting_data[["plot_cat"]] == "RI",
-            yes = "Retained intron",
-            no = ifelse(plotting_data[["plot_cat"]] == "AF",
-                      yes = "Alternate first exon",
-                      no = ifelse(plotting_data[["plot_cat"]] == "AL",
-                                yes = "Alternate last exon",
-                                no = "Unknown")))))))
+              test = plotting_data[["plot_cat"]] == "A5",
+              yes = "Alternate 5 prime",
+              no = ifelse(
+                  test = plotting_data[["plot_cat"]] == "A3",
+                  yes = "Alternate 3 prime",
+                  no = ifelse(
+                      test = plotting_data[["plot_cat"]] == "RI",
+                      yes = "Retained intron",
+                      no = ifelse(plotting_data[["plot_cat"]] == "AF",
+                                  yes = "Alternate first exon",
+                                  no = ifelse(plotting_data[["plot_cat"]] == "AL",
+                                              yes = "Alternate last exon",
+                                              no = "Unknown")))))))
   plotting_data[["category"]] <- plotting_data[["plot_cat"]]
   insig_idx <- plotting_data[["pvalue"]] > 0.05
   plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
@@ -195,9 +195,9 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
   }
 
   retlist <- list(
-    "volcano" = sig_splicing_volplot,
-    "ma" = sig_splicing_maplot,
-    "data" = plotting_data)
+      "volcano" = sig_splicing_volplot,
+      "ma" = sig_splicing_maplot,
+      "data" = plotting_data)
   return(retlist)
 }
 
@@ -381,25 +381,25 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
 
   plotting_data[["plot_cat"]] <- plotting_data[["event"]]
   plotting_data[["plot_cat"]] <- ifelse(
-    test = plotting_data[["plot_cat"]] == "SE",
-    yes = "Skipping exon",
-    no = ifelse(
-      test = plotting_data[["plot_cat"]] == "MX",
-      yes = "Mutually exclusive exons",
+      test = plotting_data[["plot_cat"]] == "SE",
+      yes = "Skipping exon",
       no = ifelse(
-        test = plotting_data[["plot_cat"]] == "A5",
-        yes = "Alternate 5 prime",
-        no = ifelse(
-          test = plotting_data[["plot_cat"]] == "A3",
-          yes = "Alternate 3 prime",
+          test = plotting_data[["plot_cat"]] == "MX",
+          yes = "Mutually exclusive exons",
           no = ifelse(
-            test = plotting_data[["plot_cat"]] == "RI",
-            yes = "Retained intron",
-            no = ifelse(plotting_data[["plot_cat"]] == "AF",
-                      yes = "Alternate first exon",
-                      no = ifelse(plotting_data[["plot_cat"]] == "AL",
-                                yes = "Alternate last exon",
-                                no = "Unknown")))))))
+              test = plotting_data[["plot_cat"]] == "A5",
+              yes = "Alternate 5 prime",
+              no = ifelse(
+                  test = plotting_data[["plot_cat"]] == "A3",
+                  yes = "Alternate 3 prime",
+                  no = ifelse(
+                      test = plotting_data[["plot_cat"]] == "RI",
+                      yes = "Retained intron",
+                      no = ifelse(plotting_data[["plot_cat"]] == "AF",
+                                  yes = "Alternate first exon",
+                                  no = ifelse(plotting_data[["plot_cat"]] == "AL",
+                                              yes = "Alternate last exon",
+                                              no = "Unknown")))))))
   plotting_data[["category"]] <- plotting_data[["plot_cat"]]
   insig_idx <- plotting_data[["adjp"]] > sig_threshold
   plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
@@ -471,9 +471,9 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
     ggplot2::theme_bw(base_size = base_size)
 
   retlist <- list(
-    "volcano" = sig_splicing_volplot,
-    "ma" = sig_splicing_maplot,
-    "data" = plotting_data)
+      "volcano" = sig_splicing_volplot,
+      "ma" = sig_splicing_maplot,
+      "data" = plotting_data)
   return(retlist)
 }
 

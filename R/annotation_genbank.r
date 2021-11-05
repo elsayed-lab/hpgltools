@@ -42,12 +42,12 @@ load_genbank_annotations <- function(accession = "AE009949", reread = TRUE, save
   exons <- GenomicFeatures::exons(gbk)
   cds <- GenomicFeatures::cds(gbk)
   ret <- list(
-    "others" = others,
-    "exons" = exons,
-    "cds" = cds,
-    "genes" = genes,
-    "txdb" = gbr,
-    "seq" = seq)
+      "others" = others,
+      "exons" = exons,
+      "cds" = cds,
+      "genes" = genes,
+      "txdb" = gbr,
+      "seq" = seq)
   return(ret)
 }
 
@@ -85,8 +85,8 @@ download_gbk <- function(accessions = "AE009949", write = TRUE) {
     accession <- accessions[i]
 
     url <- paste0(
-      "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
-      paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
+        "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=",
+        paste(accessions[a:b], collapse = ","), "&rettype=gb&retmode=text&report=gbwithparts")
 
     dl_file <- glue("{accession}.gb")
     data <- try(download.file(url = url, destfile = dl_file, method = "wget", quiet = TRUE))
@@ -107,9 +107,9 @@ download_gbk <- function(accessions = "AE009949", write = TRUE) {
     }
   } ## End of for loop
   retlist <- list(
-    "written_file" = written_file,
-    "num_success" = num_downloaded,
-    "strings" = strings)
+      "written_file" = written_file,
+      "num_success" = num_downloaded,
+      "strings" = strings)
   return(retlist)
 }
 

@@ -139,7 +139,7 @@ which are shared among multiple samples.")
   if (genes > ncol(my_sorted)) {
     genes <- ncol(my_sorted)
   }
-  
+
   percent_plot <- variancePartition::plotPercentBars(my_sorted[1:genes, ])
   partition_plot <- variancePartition::plotVarPart(my_sorted)
 
@@ -167,14 +167,14 @@ which are shared among multiple samples.")
   }
 
   ret <- list(
-    "model_used" = my_model,
-    "percent_plot" = percent_plot,
-    "partition_plot" = partition_plot,
-    "sorted_df" = my_sorted,
-    "fitted_df" = my_extract,
-    "fitting" = fitting,
-    "stratify_batch_plot" = stratify_batch_plot,
-    "stratify_condition_plot" = stratify_condition_plot)
+      "model_used" = my_model,
+      "percent_plot" = percent_plot,
+      "partition_plot" = partition_plot,
+      "sorted_df" = my_sorted,
+      "fitted_df" = my_extract,
+      "fitting" = fitting,
+      "stratify_batch_plot" = stratify_batch_plot,
+      "stratify_condition_plot" = stratify_condition_plot)
   if (isTRUE(modify_expt)) {
     new_expt <- expt
     tmp_annot <- fData(new_expt)

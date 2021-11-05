@@ -180,8 +180,8 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
     }
   }
   retlist <- list(
-    "venn_data" = all_venn,
-    "plot" = grDevices::recordPlot())
+      "venn_data" = all_venn,
+      "plot" = grDevices::recordPlot())
   return(retlist)
 }
 

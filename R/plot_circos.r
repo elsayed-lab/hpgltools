@@ -162,7 +162,7 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
     colors <- sm(grDevices::colorRampPalette(
-                              RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+                                RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(conditions)
@@ -1073,20 +1073,20 @@ chromosomes_display_default = yes
   }
 
   circos_data <- new("circos",
-    "name" = name,
-    "data_dir" = data_dir,
-    "cfg_file" = cfgout,
-    "karyotype_cfg_file" = karyotype_cfg_file,
-    "ideogram_cfg_file" = ideogram_cfg_file,
-    "tick_cfg_file" = tick_cfg_file,
-    "plus_cfg_file" = plus_cfg_file,
-    "plus_data_file" = plus_data_file,
-    "minus_cfg_file" = minus_cfg_file,
-    "minus_data_file" = minus_data_file,
-    "annotation" = annotation,
-    "annot" = annot,
-    "plus_df" = plus_df,
-    "minus_df" = minus_df)
+                     "name" = name,
+                     "data_dir" = data_dir,
+                     "cfg_file" = cfgout,
+                     "karyotype_cfg_file" = karyotype_cfg_file,
+                     "ideogram_cfg_file" = ideogram_cfg_file,
+                     "tick_cfg_file" = tick_cfg_file,
+                     "plus_cfg_file" = plus_cfg_file,
+                     "plus_data_file" = plus_data_file,
+                     "minus_cfg_file" = minus_cfg_file,
+                     "minus_data_file" = minus_data_file,
+                     "annotation" = annotation,
+                     "annot" = annot,
+                     "plus_df" = plus_df,
+                     "minus_df" = minus_df)
   return(circos_data)
 }
 
@@ -1351,7 +1351,7 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
     colors <- sm(grDevices::colorRampPalette(
-                              RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+                                RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(colors)

@@ -26,46 +26,46 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
   }
   ## Short circuit this if we are going with raw data.
   switchret <- switch(
-    method,
-    "raw" = {
-      libsize <- colSums(count_table)
-      counts <- list(count_table = count_table, libsize = libsize)
-      return(counts)
-    },
-    "round" = {
-      ## Also short-circuit it if we are asked to round the data.
-      count_table <- round(count_table)
-      less_than <- count_table < 0
-      count_table[less_than] <- 0
-      libsize <- colSums(count_table)
-      counts <- list(count_table = count_table, libsize = libsize)
-      return(counts)
-    },
-    "voom" = {
-      libsize <- colSums(count_table)
-      model_choice <- choose_model(count_table,
-                                   conditions = design[["condition"]],
-                                   batches = design[["batch"]], ...)
-      fun_model <- model_choice[["chosen_model"]]
-      voomed <- limma::voom(counts = count_table, design = fun_model)
-      counts <- list(count_table = voomed[["E"]], libsize = libsize)
-      return(counts)
-    },
-    "voomweight" = {
-      libsize <- colSums(count_table)
-      model_choice <- choose_model(count_table, design[["condition"]],
-                                   design[["batch"]])
-      fun_model <- model_choice[["chosen_model"]]
-      voomed <- try(limma::voomWithQualityWeights(counts = count_table, design = fun_model))
-      if (class(voomed) == "try-error") {
-        warning("voomwithqualityweights failed.  Falling back to voom.")
+      method,
+      "raw" = {
+        libsize <- colSums(count_table)
+        counts <- list(count_table = count_table, libsize = libsize)
+        return(counts)
+      },
+      "round" = {
+        ## Also short-circuit it if we are asked to round the data.
+        count_table <- round(count_table)
+        less_than <- count_table < 0
+        count_table[less_than] <- 0
+        libsize <- colSums(count_table)
+        counts <- list(count_table = count_table, libsize = libsize)
+        return(counts)
+      },
+      "voom" = {
+        libsize <- colSums(count_table)
+        model_choice <- choose_model(count_table,
+                                     conditions = design[["condition"]],
+                                     batches = design[["batch"]], ...)
+        fun_model <- model_choice[["chosen_model"]]
         voomed <- limma::voom(counts = count_table, design = fun_model)
+        counts <- list(count_table = voomed[["E"]], libsize = libsize)
+        return(counts)
+      },
+      "voomweight" = {
+        libsize <- colSums(count_table)
+        model_choice <- choose_model(count_table, design[["condition"]],
+                                     design[["batch"]])
+        fun_model <- model_choice[["chosen_model"]]
+        voomed <- try(limma::voomWithQualityWeights(counts = count_table, design = fun_model))
+        if (class(voomed) == "try-error") {
+          warning("voomwithqualityweights failed.  Falling back to voom.")
+          voomed <- limma::voom(counts = count_table, design = fun_model)
+        }
+        counts <- list(count_table = voomed[["E"]], libsize = libsize)
+        return(counts)
+      },
+      {
       }
-      counts <- list(count_table = voomed[["E"]], libsize = libsize)
-      return(counts)
-    },
-    {
-    }
   ) ## Ending the switch statement
 
   ## If we are performing a transformation, then the minimum value I want is 1
@@ -121,8 +121,8 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
 
   libsize <- colSums(count_table)
   counts <- list(
-    "count_table" = count_table,
-    "libsize" = libsize)
+      "count_table" = count_table,
+      "libsize" = libsize)
   return(counts)
 }
 

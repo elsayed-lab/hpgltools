@@ -301,9 +301,9 @@ function(el, x) {
 }")
   out <- htmlwidgets::saveWidget(plotly, filename, title = title)
   retlist <- list(
-    "out" = out,
-    "plotly" = plotly,
-    "modified_df" = plot[["data"]])
+      "out" = out,
+      "plotly" = plotly,
+      "modified_df" = plot[["data"]])
   return(retlist)
 }
 

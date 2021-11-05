@@ -342,9 +342,9 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     ## checks for both in case I forgot to put a file column in the metadata.
     ## Look for files organized by sample
     test_filenames <- file.path(
-      "preprocessing", "count_tables",
-      rownames(sample_definitions),
-      glue::glue("{file_prefix}{rownames(sample_definitions)}{file_suffix}"))
+        "preprocessing", "count_tables",
+        rownames(sample_definitions),
+        glue::glue("{file_prefix}{rownames(sample_definitions)}{file_suffix}"))
     num_found <- sum(file.exists(test_filenames))
     if (num_found == num_samples) {
       success <- success + 1
@@ -360,10 +360,10 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     if (success == 0) {
       ## Did not find samples by id, try them by type
       test_filenames <- file.path(
-        "preprocessing", "count_tables",
-        tolower(as.character(sample_definitions[["type"]])),
-        tolower(as.character(sample_definitions[["stage"]])),
-        glue::glue("{rownames(sample_definitions)}{file_suffix}"))
+          "preprocessing", "count_tables",
+          tolower(as.character(sample_definitions[["type"]])),
+          tolower(as.character(sample_definitions[["stage"]])),
+          glue::glue("{rownames(sample_definitions)}{file_suffix}"))
       num_found <- sum(file.exists(test_filenames))
       if (num_found == num_samples) {
         success <- success + 1
@@ -407,9 +407,9 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     ## if all_count_tables _did_ exist, then we already had the count tables and so
     ## count_data should have them and all ids as 'kept'.
     count_data <- list(
-      "source" = "dataframe",
-      "raw" = all_count_tables,
-      "kept_ids" = rownames(sample_definitions))
+        "source" = "dataframe",
+        "raw" = all_count_tables,
+        "kept_ids" = rownames(sample_definitions))
     ## Remember that R does not like rownames to start with a number, and if they do
     ## I already changed the count table rownames to begin with 's'.
     count_data[["kept_ids"]] <- gsub(pattern = "^([[:digit:]])",
@@ -420,7 +420,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## when reading in the count tables.
   kept_definitions_idx <- rownames(sample_definitions) %in% count_data[["kept_ids"]]
   if (sum(kept_definitions_idx) < length(kept_definitions_idx)) {
-      warning("Some samples were removed when cross referencing the samples against the count data.")
+    warning("Some samples were removed when cross referencing the samples against the count data.")
   }
   sample_definitions <- sample_definitions[kept_definitions_idx, ]
   ## While we are removing stuff...
@@ -441,11 +441,11 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   }
   ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
   if (isTRUE(sanitize_rownames)) {
-      all_count_tables[["rownames"]] <- gsub(pattern = "^exon:", replacement = "",
-                                             x = all_count_tables[["rownames"]])
-      all_count_tables[["rownames"]] <- make.names(gsub(pattern = ":\\d+", replacement = "",
-                                                        x = all_count_tables[["rownames"]]),
-                                                   unique = TRUE)
+    all_count_tables[["rownames"]] <- gsub(pattern = "^exon:", replacement = "",
+                                           x = all_count_tables[["rownames"]])
+    all_count_tables[["rownames"]] <- make.names(gsub(pattern = ":\\d+", replacement = "",
+                                                      x = all_count_tables[["rownames"]]),
+                                                 unique = TRUE)
   }
 
   ## There is an important caveat here!!
@@ -467,25 +467,25 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## as.data.table().
   if (!is.null(tximport_data[["raw"]])) {
     rownames(tximport_data[["raw"]][["abundance"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["abundance"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["abundance"]]))
     rownames(tximport_data[["raw"]][["counts"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["counts"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["counts"]]))
     rownames(tximport_data[["raw"]][["length"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["length"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["length"]]))
   }
   if (!is.null(tximport_data[["scaled"]])) {
     rownames(tximport_data[["scaled"]][["abundance"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["abundance"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["abundance"]]))
     rownames(tximport_data[["scaled"]][["counts"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["counts"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["counts"]]))
     rownames(tximport_data[["scaled"]][["length"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["length"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["length"]]))
   }
 
   ## Try a couple different ways of getting gene-level annotations into the expressionset.
@@ -599,7 +599,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## Set an incrementing id number to make absolutely paranoidly certain the
   ## order stays constant.
   counts_and_annotations <- counts_and_annotations[
-    order(counts_and_annotations[["temporary_id_number"]]), ]
+      order(counts_and_annotations[["temporary_id_number"]]), ]
   ## Pull out the annotation data and convert to data frame.
   kept_columns <- colnames(counts_and_annotations) %in% colnames(gene_info)
   final_annotations <- counts_and_annotations[, kept_columns, with = FALSE]
@@ -724,11 +724,11 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   expt[["gff_file"]] <- include_gff
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
-    "filter" = "raw",
-    "normalization" = "raw",
-    "conversion" = "raw",
-    "batch" = "raw",
-    "transform" = "raw")
+      "filter" = "raw",
+      "normalization" = "raw",
+      "conversion" = "raw",
+      "batch" = "raw",
+      "transform" = "raw")
   expt[["state"]] <- starting_state
   ## Just in case there are condition names which are not used.
   ## Ditto here, this should not be needed.
@@ -965,8 +965,8 @@ features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE
     feature_tables[[column_name]] <- passed_filter
   }
   result <- list(
-    "number" = number_table,
-    "features" = feature_tables)
+      "number" = number_table,
+      "features" = feature_tables)
   return(result)
 }
 
@@ -1036,10 +1036,10 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
     neither_list[[cond]] <- neither_set_this
   }
   retlist <- list(
-    "shared" = shared_list,
-    "solo_this" = solo_this_list,
-    "solo_other" = solo_other_list,
-    "neither" = neither_list
+      "shared" = shared_list,
+      "solo_this" = solo_this_list,
+      "solo_other" = solo_other_list,
+      "neither" = neither_list
   )
   return(retlist)
 }
@@ -1092,8 +1092,8 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
   } else if (is.null(sample_colors)) {
     ## If nothing is provided, let RColorBrewer do it.
     sample_colors <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
   } else {
@@ -1101,8 +1101,8 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
     warning("The number of colors provided does not match the number of conditions nor samples.")
     warning("Unsure of what to do, so choosing colors with RColorBrewer.")
     sample_colors <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
   }
@@ -1284,7 +1284,7 @@ make_pombe_expt <- function(annotation = TRUE) {
         host = "fungi.ensembl.org", trymart = "fungi_mart",
         trydataset = "spombe_eg_gene",
         gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                        "hgnc_symbol", "description", "gene_biotype"),
+                          "hgnc_symbol", "description", "gene_biotype"),
         species = "spombe", overwrite = TRUE)
     pombe_mart <- pombe_annotations[["mart"]]
     annotations <- pombe_annotations[["annotation"]]
@@ -1402,17 +1402,17 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     if (is.null(tx_gene_map)) {
       import <- sm(tximport::tximport(files = files, type = "kallisto", txOut = txout))
       import_scaled <- sm(tximport::tximport(
-                                      files = files, type = "kallisto",
-                                      txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+                                        files = files, type = "kallisto",
+                                        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     } else {
       import <- sm(tximport::tximport(
-                               files = files, type = "kallisto", tx2gene = tx_gene_map, txOut = txout))
+                                 files = files, type = "kallisto", tx2gene = tx_gene_map, txOut = txout))
       import_scaled <- sm(tximport::tximport(
-                                      files = files, type = "kallisto", tx2gene = tx_gene_map,
-                                      txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+                                        files = files, type = "kallisto", tx2gene = tx_gene_map,
+                                        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     }
     retlist[["count_table"]] <- data.table::as.data.table(
-                                              import[["counts"]], keep.rownames = "rownames")
+                                                import[["counts"]], keep.rownames = "rownames")
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
@@ -1450,16 +1450,16 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     if (is.null(tx_gene_map)) {
       import <- sm(tximport::tximport(files = files, type = "salmon", txOut = txout))
       import_scaled <- sm(tximport::tximport(
-                                      files = files, type = "salmon",
-                                      txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+                                        files = files, type = "salmon",
+                                        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     } else {
       import <- sm(tximport::tximport(
-                               files = files, type = "salmon", tx2gene = tx_gene_map, txOut = txout))
+                                 files = files, type = "salmon", tx2gene = tx_gene_map, txOut = txout))
       import_scaled <- sm(tximport::tximport(files = files, type = "salmon", tx2gene = tx_gene_map,
                                              txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     }
     retlist[["count_table"]] <- data.table::as.data.table(
-                                              import[["counts"]], keep.rownames = "rownames")
+                                                import[["counts"]], keep.rownames = "rownames")
     retlist[["count_table"]] <- data.table::setkey(retlist[["count_table"]], rownames)
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
@@ -1757,7 +1757,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     names(new_colors) <- names(colors)
     colors <- new_colors
   }
-  
+
   num_conditions <- length(levels(condition_factor))
   num_samples <- nrow(expt[["design"]])
   sample_ids <- expt[["design"]][["sampleid"]]
@@ -1767,8 +1767,8 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   sample_colors <- NULL
   if (is.null(colors) | isTRUE(colors)) {
     sample_colors <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
   } else if (class(colors) == "factor") {
@@ -1886,8 +1886,8 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   } else if (is.null(colors)) {
     mesg("Setting colors according to a color ramp.")
     colors <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     ## Check that all conditions are named in the color list:
     mapping <- setNames(colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
@@ -1895,8 +1895,8 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
     warning("Number of colors provided does not match the number of conditions nor samples.")
     warning("Unsure of what to do, so choosing colors with RColorBrewer.")
     sample_colors <- suppressWarnings(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_conditions, chosen_palette))(num_conditions))
     mapping <- setNames(sample_colors, unique(chosen_colors))
     chosen_colors <- mapping[chosen_colors]
   }
@@ -2281,17 +2281,17 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   pData(subset_expressionset) <- subset_design
 
   new_expt <- list(
-    "title" = expt[["title"]],
-    "notes" = toString(notes),
-    "initial_metadata" = subset_design,
-    "expressionset" = subset_expressionset,
-    "design" = subset_design,
-    "conditions" = subset_conditions,
-    "batches" = subset_batches,
-    "samplenames" = subset_ids,
-    "colors" = subset_colors,
-    "state" = expt[["state"]],
-    "libsize" = subset_current_libsize)
+      "title" = expt[["title"]],
+      "notes" = toString(notes),
+      "initial_metadata" = subset_design,
+      "expressionset" = subset_expressionset,
+      "design" = subset_design,
+      "conditions" = subset_conditions,
+      "batches" = subset_batches,
+      "samplenames" = subset_ids,
+      "colors" = subset_colors,
+      "state" = expt[["state"]],
+      "libsize" = subset_current_libsize)
   class(new_expt) <- "expt"
   final_samples <- sampleNames(new_expt)
   message("subset_expt(): There were ", length(starting_samples), ", now there are ",
@@ -2563,15 +2563,15 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   sheet <- "legend"
   norm_state <- glue::glue("{transform}({convert}({norm}({batch}({filter}(counts)))))")
   legend <- data.frame(
-    "sheet" = c("1.", "2.", "3.", "4.", "5.", "6."),
-    "sheet_definition" = c(
-      "This sheet, including the experimental design.",
-      "The raw counts and annotation data on worksheet 'raw_data'.",
-      "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
-      glue::glue("The counts normalized with: {norm_state}"),
-      "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
-      "The median normalized counts by condition factor on 'median_data'."),
-    stringsAsFactors = FALSE)
+      "sheet" = c("1.", "2.", "3.", "4.", "5.", "6."),
+      "sheet_definition" = c(
+          "This sheet, including the experimental design.",
+          "The raw counts and annotation data on worksheet 'raw_data'.",
+          "Some graphs describing the distribution of raw data in worksheet 'raw_plots'.",
+          glue::glue("The counts normalized with: {norm_state}"),
+          "Some graphs describing the distribution of the normalized data on 'norm_plots'.",
+          "The median normalized counts by condition factor on 'median_data'."),
+      stringsAsFactors = FALSE)
   colnames(legend) <- c("Worksheets", "Contents")
   xls_result <- write_xlsx(data = legend, wb = wb, sheet = sheet, rownames = FALSE,
                            title = "Columns used in the following tables.")
@@ -3203,51 +3203,51 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Save the result
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   retlist <- list(
-    "save" = save_result,
-    "legend" = legend,
-    "annotations" = info,
-    "raw_reads" = reads,
-    "design" = annot,
-    "legend_plot" = legend_plot,
-    "raw_libsize" = libsize_plot,
-    "raw_nonzero" = nonzero_plot,
-    "raw_density" = density_plot,
-    "raw_cv" = cv_plot,
-    "raw_boxplot" = boxplot_plot,
-    "raw_corheat" = corheat_plot,
-    "raw_disheat" = disheat_plot,
-    "raw_smc" = smc_plot,
-    "raw_smd" = smd_plot,
-    "raw_pctopn" = pca_topn,
-    "raw_pca" = pca_plot,
-    "raw_pca_table" = pca_table,
-    "raw_tsne" = tsne_plot,
-    "raw_tsne_table" = tsne_table,
-    "raw_scaled_pca" = rspca_plot,
-    "raw_scaled_pca_table" = rpca_table,
-    "raw_scaled_tsne" = rtsne_plot,
-    "raw_scaled_tsne_table" = rtsne_table,
-    "raw_qq" = qq_plot,
-    "raw_violin" = violin_plot,
-    "raw_percent" = pct_plot,
-    "norm_reads" = norm_reads,
-    "norm_libsize" = nlibsize_plot,
-    "norm_nonzero" = nnzero_plot,
-    "norm_density" = ndensity_plot,
-    "norm_boxplot" = nboxplot_plot,
-    "norm_corheat" = ncorheat_plot,
-    "norm_disheat" = ndisheat_plot,
-    "norm_smc" = nsmc_plot,
-    "norm_smd" = nsmd_plot,
-    "norm_pca" = npca_plot,
-    "norm_pctopn" = npc_topnplot,
-    "norm_pca_table" = npca_table,
-    "norm_tsne" = ntsne_plot,
-    "norm_tsne_table" = ntsne_table,
-    "norm_qq" = nqq_plot,
-    "norm_violin" = nvarpart_plot,
-    "norm_pct" = npct_plot,
-    "medians" = median_data
+      "save" = save_result,
+      "legend" = legend,
+      "annotations" = info,
+      "raw_reads" = reads,
+      "design" = annot,
+      "legend_plot" = legend_plot,
+      "raw_libsize" = libsize_plot,
+      "raw_nonzero" = nonzero_plot,
+      "raw_density" = density_plot,
+      "raw_cv" = cv_plot,
+      "raw_boxplot" = boxplot_plot,
+      "raw_corheat" = corheat_plot,
+      "raw_disheat" = disheat_plot,
+      "raw_smc" = smc_plot,
+      "raw_smd" = smd_plot,
+      "raw_pctopn" = pca_topn,
+      "raw_pca" = pca_plot,
+      "raw_pca_table" = pca_table,
+      "raw_tsne" = tsne_plot,
+      "raw_tsne_table" = tsne_table,
+      "raw_scaled_pca" = rspca_plot,
+      "raw_scaled_pca_table" = rpca_table,
+      "raw_scaled_tsne" = rtsne_plot,
+      "raw_scaled_tsne_table" = rtsne_table,
+      "raw_qq" = qq_plot,
+      "raw_violin" = violin_plot,
+      "raw_percent" = pct_plot,
+      "norm_reads" = norm_reads,
+      "norm_libsize" = nlibsize_plot,
+      "norm_nonzero" = nnzero_plot,
+      "norm_density" = ndensity_plot,
+      "norm_boxplot" = nboxplot_plot,
+      "norm_corheat" = ncorheat_plot,
+      "norm_disheat" = ndisheat_plot,
+      "norm_smc" = nsmc_plot,
+      "norm_smd" = nsmd_plot,
+      "norm_pca" = npca_plot,
+      "norm_pctopn" = npc_topnplot,
+      "norm_pca_table" = npca_table,
+      "norm_tsne" = ntsne_plot,
+      "norm_tsne_table" = ntsne_table,
+      "norm_qq" = nqq_plot,
+      "norm_violin" = nvarpart_plot,
+      "norm_pct" = npct_plot,
+      "medians" = median_data
   )
   for (img in image_files) {
     removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)

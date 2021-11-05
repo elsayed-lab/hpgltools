@@ -21,7 +21,7 @@
 #' @return list containing some information from dorothea and limma.
 #' @export
 simple_dorothea <- function(expt, gene_column="ensembl_gene_id",
-                            hgnc_column="hgnc_symbol", transform="log2", 
+                            hgnc_column="hgnc_symbol", transform="log2",
                             conf=c("A", "B", "C"), dorothea_options=NULL,
                             lfc = 1, p = 0.05, species="hsapiens") {
   ## dorothea requires hgnc_symbols, my expressionsets are ensembl gene IDs in general...
@@ -110,5 +110,5 @@ simple_dorothea <- function(expt, gene_column="ensembl_gene_id",
       "limma_result" = delta_tf,
       "dorothea_sig" = sig_tf_lst,
       "dorothea_result" = new_expt)
-  return(retlist)  
+  return(retlist)
 }

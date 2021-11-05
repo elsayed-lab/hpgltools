@@ -51,7 +51,7 @@ plot_bcv <- function(data) {
     ggplot2::stat_density2d(geom = "tile", aes_string(fill = "..density..^0.25"),
                             contour = FALSE, show.legend = FALSE) +
     ggplot2::scale_fill_gradientn(
-               colours = grDevices::colorRampPalette(c("white", "black"))(256)) +
+                 colours = grDevices::colorRampPalette(c("white", "black"))(256)) +
     ggplot2::geom_smooth(method = "loess") +
     ggplot2::stat_function(fun = f, colour = "red") +
     ggplot2::theme_bw(base_size = base_size) +
@@ -94,10 +94,10 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-      xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue::glue("Expression of {df_x_axis}")
   }
   if (is.null(ylab)) {
-      ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue::glue("Expression of {df_y_axis}")
   }
   colnames(df) <- c("first", "second")
   first_median <- summary(df[, 1])["Median"]
@@ -115,21 +115,21 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
   df[["label"]] <- rownames(df)
   first_vs_second <- ggplot(df, aes_string(x = "first", y = "second", label = "label")) +
     ggplot2::xlab(xlab)
-    ggplot2::ylab(ylab)
-    ggplot2::geom_vline(
+  ggplot2::ylab(ylab)
+  ggplot2::geom_vline(
                color = "grey", xintercept=(first_median - first_mad), size = line_size) +
     ggplot2::geom_vline(
-               color = "grey", xintercept=(first_median + first_mad), size = line_size) +
+                 color = "grey", xintercept=(first_median + first_mad), size = line_size) +
     ggplot2::geom_vline(
-               color = "darkgrey", xintercept = first_median, size = line_size) +
+                 color = "darkgrey", xintercept = first_median, size = line_size) +
     ggplot2::geom_hline(
-               color = "grey", yintercept=(second_median - second_mad), size = line_size) +
+                 color = "grey", yintercept=(second_median - second_mad), size = line_size) +
     ggplot2::geom_hline(
-               color = "grey", yintercept=(second_median + second_mad), size = line_size) +
+                 color = "grey", yintercept=(second_median + second_mad), size = line_size) +
     ggplot2::geom_hline(color = "darkgrey", yintercept = second_median, size = line_size) +
     ggplot2::geom_point(
-               colour = grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]),
-               alpha = 0.6, size = size) +
+                 colour = grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]),
+                 alpha = 0.6, size = size) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
@@ -196,10 +196,10 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-      xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue::glue("Expression of {df_x_axis}")
   }
   if (is.null(ylab)) {
-      ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue::glue("Expression of {df_y_axis}")
   }
   colnames(df) <- c("first", "second")
   model_test <- try(robustbase::lmrob(formula = second ~ first,
@@ -249,20 +249,20 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     ggplot2::xlab(xlab) +
     ggplot2::ylab(ylab) +
     ggplot2::geom_vline(
-               color = "grey", xintercept=(first_median - first_mad), size = line_size) +
+                 color = "grey", xintercept=(first_median - first_mad), size = line_size) +
     ggplot2::geom_vline(
-               color = "grey", xintercept=(first_median + first_mad), size = line_size) +
+                 color = "grey", xintercept=(first_median + first_mad), size = line_size) +
     ggplot2::geom_hline(
-               color = "grey", yintercept=(second_median - second_mad), size = line_size) +
+                 color = "grey", yintercept=(second_median - second_mad), size = line_size) +
     ggplot2::geom_hline(
-               color = "grey", yintercept=(second_median + second_mad), size = line_size) +
+                 color = "grey", yintercept=(second_median + second_mad), size = line_size) +
     ggplot2::geom_hline(
-               color = "darkgrey", yintercept = second_median, size = line_size) +
+                 color = "darkgrey", yintercept = second_median, size = line_size) +
     ggplot2::geom_vline(
-               color = "darkgrey", xintercept = first_median, size = line_size) +
+                 color = "darkgrey", xintercept = first_median, size = line_size) +
     ggplot2::geom_abline(
-               colour = "grey", slope = linear_model_slope,
-               intercept = linear_model_intercept, size = line_size)
+                 colour = "grey", slope = linear_model_slope,
+                 intercept = linear_model_intercept, size = line_size)
   ## The axes and guide-lines are set up, now add the points
 
   low_df <- high_df <- NULL
@@ -309,8 +309,8 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     first_vs_second <- first_vs_second +
       ggplot2::geom_point(size = size, alpha = alpha,
                           colour = grDevices::hsv(linear_model_weights * 9/20,
-                                                linear_model_weights/20 + 19/20,
-                                                (1.0 - linear_model_weights)))
+                                                  linear_model_weights/20 + 19/20,
+                                                  (1.0 - linear_model_weights)))
   } else {
     first_vs_second <- first_vs_second +
       ggplot2::geom_point(colour = "black", size = size, alpha = alpha)
@@ -342,20 +342,20 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   y_histogram <- plot_histogram(data.frame(df[, 2]), fillcolor = "pink", color = "red")
   both_histogram <- plot_multihistogram(df)
   plots <- list(
-    "data" = df,
-    "scatter" = first_vs_second,
-    "x_histogram" = x_histogram,
-    "y_histogram" = y_histogram,
-    "both_histogram" = both_histogram,
-    "correlation" = correlation,
-    "lm_model" = linear_model,
-    "lm_summary" = linear_model_summary,
-    "lm_weights" = linear_model_weights,
-    "lm_rsq" = linear_model_rsq,
-    "first_median" = first_median,
-    "first_mad" = first_mad,
-    "second_median" = second_median,
-    "second_mad" = second_mad)
+      "data" = df,
+      "scatter" = first_vs_second,
+      "x_histogram" = x_histogram,
+      "y_histogram" = y_histogram,
+      "both_histogram" = both_histogram,
+      "correlation" = correlation,
+      "lm_model" = linear_model,
+      "lm_summary" = linear_model_summary,
+      "lm_weights" = linear_model_weights,
+      "lm_rsq" = linear_model_rsq,
+      "first_median" = first_median,
+      "first_mad" = first_mad,
+      "second_median" = second_median,
+      "second_mad" = second_mad)
   return(plots)
 }
 
@@ -429,11 +429,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   ## to make absolutely certain that ggplot will not re-order my damn
   ## categories.
   df <- data.frame(
-    "avg" = c(0, 0, 0),
-    "logfc" = c(0, 0, 0),
-    "pval" = c(0, 0, 0),
-    "pcut" = c(FALSE, FALSE, FALSE),
-    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
+      "avg" = c(0, 0, 0),
+      "logfc" = c(0, 0, 0),
+      "pval" = c(0, 0, 0),
+      "pcut" = c(FALSE, FALSE, FALSE),
+      "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
 
   ## Get rid of rows which will be annoying.
   ## If somehow a list got into the data table, this will fail, lets fix that now.
@@ -513,11 +513,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
       ## The following scale_shape_manual() sets the labels of the legend on the right side.
       ggplot2::scale_shape_manual(name = "State", values = state_shapes,
                                   labels = c(
-                                    glue("Up Sig.: {num_upsig}"),
-                                    glue("Down Sig.: {num_downsig}"),
-                                    glue("Insig.: {num_insig}")),
+                                      glue("Up Sig.: {num_upsig}"),
+                                      glue("Down Sig.: {num_downsig}"),
+                                      glue("Insig.: {num_insig}")),
                                   guide = ggplot2::guide_legend(override.aes = aes(size = 3,
-                                                                               fill = "grey")))
+                                                                                   fill = "grey")))
   } else {
     plt <- plt +
       ggplot2::scale_shape_manual(name = "State", values = state_shapes,
@@ -560,11 +560,11 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   ## Return the plot, some numbers, and the data frame used to make the plot so
   ## that I may check my work.
   retlist <- list(
-    "num_upsig" = num_upsig,
-    "num_downsig" = num_downsig,
-    "num_insig" = num_insig,
-    "plot" = plt,
-    "df" = df)
+      "num_upsig" = num_upsig,
+      "num_downsig" = num_downsig,
+      "num_insig" = num_insig,
+      "plot" = plt,
+      "df" = df)
   return(retlist)
 }
 
@@ -655,12 +655,12 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
     colnames(data) <- abbreviate(colnames(data), minlength = label_chars)
   }
   nz_df <- data.frame(
-    "id" = colnames(data),
-    "nonzero_genes" = colSums(data >= 1),
-    "cpm" = colSums(data) * 1e-6,
-    "condition" = condition,
-    "batch" = batch,
-    "color" = as.character(colors))
+      "id" = colnames(data),
+      "nonzero_genes" = colSums(data >= 1),
+      "cpm" = colSums(data) * 1e-6,
+      "condition" = condition,
+      "batch" = batch,
+      "color" = as.character(colors))
 
   color_listing <- nz_df[, c("condition", "color")]
   color_listing <- unique(color_listing)
@@ -721,8 +721,8 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   }
 
   retlist <- list(
-    "plot" = non_zero_plot,
-    "table" = nz_df)
+      "plot" = non_zero_plot,
+      "table" = nz_df)
   return(retlist)
 }
 
@@ -826,10 +826,10 @@ plot_scatter <- function(df, color = "black", xlab = NULL,
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-      xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue::glue("Expression of {df_x_axis}")
   }
   if (is.null(ylab)) {
-      ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue::glue("Expression of {df_y_axis}")
   }
   colnames(df) <- c("first", "second")
   df[["label"]] <- rownames(df)
@@ -969,13 +969,13 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   if (isTRUE(shapes_by_state)) {
     plt <- plt +
       ggplot2::scale_shape_manual(
-                 name = "state", values = state_shapes,
-                 labels = c(
-                   glue("Down Sig.: {num_downsig}"),
-                   glue("FC Insig.: {num_fcinsig}"),
-                   glue("P Insig.: {num_pinsig}"),
-                   glue("Up Sig.: {num_upsig}")),
-                 guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
+                   name = "state", values = state_shapes,
+                   labels = c(
+                       glue("Down Sig.: {num_downsig}"),
+                       glue("FC Insig.: {num_fcinsig}"),
+                       glue("P Insig.: {num_pinsig}"),
+                       glue("Up Sig.: {num_upsig}")),
+                   guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
   }
 
   ## Now set the colors and axis labels

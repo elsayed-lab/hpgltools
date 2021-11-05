@@ -140,10 +140,10 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
   ##  }
 
   returns <- list(
-    "plot" = multi,
-    "data_summary" = summary_df,
-    "uncor_t" = uncor_t,
-    "bon_t" = bon_t)
+      "plot" = multi,
+      "data_summary" = summary_df,
+      "uncor_t" = uncor_t,
+      "bon_t" = bon_t)
   return(returns)
 }
 

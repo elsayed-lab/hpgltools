@@ -56,8 +56,8 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(
-                           RColorBrewer::brewer.pal(ncol(mtrx),
-                                                    chosen_palette))(ncol(mtrx))
+                             RColorBrewer::brewer.pal(ncol(mtrx),
+                                                      chosen_palette))(ncol(mtrx))
   }
 
   ## Get conditions
@@ -98,9 +98,9 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                                    yscale = yscale,
                                    ...)
   retlist <- list(
-    "plot" = libsize_plot,
-    "table" = libsize_df,
-    "summary" = summary_df)
+      "plot" = libsize_plot,
+      "table" = libsize_df,
+      "summary" = summary_df)
   return(retlist)
 }
 
@@ -167,9 +167,9 @@ labeled by counts/genes removed.")
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
                        aes_string(
-                         x = "id",
-                         ## label='as.character(all_tab$subtraction)')) +
-                         label="subtraction_string")) +
+                           x = "id",
+                           ## label='as.character(all_tab$subtraction)')) +
+                           label="subtraction_string")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
@@ -183,19 +183,19 @@ labeled by counts/genes removed.")
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
                        aes_string(
-                         x = "id",
-                         label = "sub_low")) +
+                           x = "id",
+                           label = "sub_low")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
     ggplot2::ggtitle(low_title)
 
   retlist <- list(
-    "start" = start,
-    "end" = end,
-    "table" = all_tab,
-    "count_plot" = count_columns,
-    "lowgene_plot" = low_columns)
+      "start" = start,
+      "end" = end,
+      "table" = all_tab,
+      "count_plot" = count_columns,
+      "lowgene_plot" = low_columns)
   return(retlist)
 }
 
@@ -252,8 +252,8 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(
-                           RColorBrewer::brewer.pal(ncol(data),
-                                                    chosen_palette))(ncol(data))
+                             RColorBrewer::brewer.pal(ncol(data),
+                                                      chosen_palette))(ncol(data))
   }
   if (is.null(condition)) {
     stop("Missing condition label vector.")
@@ -339,10 +339,10 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
     }
     sample_plot <- sample_plot +
       ggplot2::geom_text(
-                 parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
-                 ggplot2::aes_string(
-                            x = "order",
-                            label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))
+                   parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
+                   ggplot2::aes_string(
+                                x = "order",
+                                label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))
   }
 
   if (!is.null(title)) {
@@ -412,10 +412,10 @@ plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.
   cds <- rpm_region[cds_idx, ]
 
   eval(substitute(
-    expr = {
-      stupid <- aes(y = 0, yend = 0, x = my_start, xend = my_end)
-    },
-    env <- list(my_start = my_start, my_end = my_end)))
+      expr = {
+        stupid <- aes(y = 0, yend = 0, x = my_start, xend = my_end)
+      },
+      env <- list(my_start = my_start, my_end = my_end)))
 
   if (strand == "+") {
     gene_arrow <- grid::arrow(type = "closed", ends = "last")
@@ -454,9 +454,9 @@ plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.
 #' @export
 plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
                                  color_list = c("lightcyan", "lightskyblue", "dodgerblue",
-                                              "plum1", "orchid", "purple4"),
+                                                "plum1", "orchid", "purple4"),
                                  color_names = c("a_up_inner", "b_up_middle", "c_up_outer",
-                                               "a_down_inner", "b_down_middle", "c_down_outer")) {
+                                                 "a_down_inner", "b_down_middle", "c_down_outer")) {
   choose_max <- function(u, d) {
     ## m is the maximum found in the ups/downs
     m <- 0

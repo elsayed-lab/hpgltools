@@ -47,55 +47,55 @@ convert_counts <- function(count_table, method = "raw", ...) {
   }
 
   switchret <- switch(
-    method,
-    "nacpm" = {
-      zero_idx <- count_table == 0
-      message("Converting ", sum(zero_idx), " zeros to NA.")
-      count_table[zero_idx] <- NA
-      na_colsums <- colSums(count_table, na.rm = TRUE)
-      count_table <- edgeR::cpm(count_table, lib.size = na_colsums)
-    },
-    "cpm" = {
-      libsize <- NULL
-      na_idx <- is.na(count_table)
-      if (sum(na_idx) > 0) {
-        warning("There are ", sum(na_idx), " NAs in the expressionset.")
-        libsize <- colSums(count_table, na.rm = TRUE)
+      method,
+      "nacpm" = {
+        zero_idx <- count_table == 0
+        message("Converting ", sum(zero_idx), " zeros to NA.")
+        count_table[zero_idx] <- NA
+        na_colsums <- colSums(count_table, na.rm = TRUE)
+        count_table <- edgeR::cpm(count_table, lib.size = na_colsums)
+      },
+      "cpm" = {
+        libsize <- NULL
+        na_idx <- is.na(count_table)
+        if (sum(na_idx) > 0) {
+          warning("There are ", sum(na_idx), " NAs in the expressionset.")
+          libsize <- colSums(count_table, na.rm = TRUE)
+        }
+        neg_idx <- count_table < 0
+        neg_sum <- 0
+        neg_sum <- sum(neg_idx, na.rm = TRUE)
+        if (neg_sum > 0) {
+          warning("There are ", neg_sum, " negative values in the expressionset, modifying it.")
+          count_table[neg_idx] <- 0
+        }
+        count_table <- edgeR::cpm(count_table, lib.size = libsize, na.rm = TRUE)
+      },
+      "cbcbcpm" = {
+        lib_size <- colSums(count_table, na.rm = TRUE)
+        ## count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
+        transposed <- t(count_table + 0.5)
+        cp_counts <- transposed / (lib_size + 1)
+        cpm_counts <- t(cp_counts * 1e+06)
+        count_table <- cpm_counts
+      },
+      "rpkm" = {
+        count_table <- hpgl_rpkm(count_table, annotations = annotations, ...)
+      },
+      "cp_seq_m" = {
+        counts <- edgeR::cpm(count_table)
+        count_table <- divide_seq(counts, annotations = annotations, ...)
+        ## count_table <- divide_seq(counts, annotations = annotations, genome = genome)
+      },
+      {
+        message("Not sure what to do with the method: ", method, ".")
       }
-      neg_idx <- count_table < 0
-      neg_sum <- 0
-      neg_sum <- sum(neg_idx, na.rm = TRUE)
-      if (neg_sum > 0) {
-        warning("There are ", neg_sum, " negative values in the expressionset, modifying it.")
-        count_table[neg_idx] <- 0
-      }
-      count_table <- edgeR::cpm(count_table, lib.size = libsize, na.rm = TRUE)
-    },
-    "cbcbcpm" = {
-      lib_size <- colSums(count_table, na.rm = TRUE)
-      ## count_table = t(t((count_table$counts + 0.5) / (lib_size + 1)) * 1e+06)
-      transposed <- t(count_table + 0.5)
-      cp_counts <- transposed / (lib_size + 1)
-      cpm_counts <- t(cp_counts * 1e+06)
-      count_table <- cpm_counts
-    },
-    "rpkm" = {
-      count_table <- hpgl_rpkm(count_table, annotations = annotations, ...)
-    },
-    "cp_seq_m" = {
-      counts <- edgeR::cpm(count_table)
-      count_table <- divide_seq(counts, annotations = annotations, ...)
-      ## count_table <- divide_seq(counts, annotations = annotations, genome = genome)
-    },
-    {
-      message("Not sure what to do with the method: ", method, ".")
-    }
   ) ## End of the switch
 
   libsize <- colSums(count_table, na.rm = TRUE)
   counts <- list(
-    "count_table" = count_table,
-    "libsize" = libsize)
+      "count_table" = count_table,
+      "libsize" = libsize)
   return(counts)
 }
 
@@ -227,8 +227,8 @@ divide_seq <- function(counts, ...) {
   if (is.null(annotation_gr)) {
     annot_df <- annotation_df
     annotation_gr <- GenomicRanges::makeGRangesFromDataFrame(
-                                      annotation_df,
-                                      seqnames.field = "chromosome")
+                                        annotation_df,
+                                        seqnames.field = "chromosome")
   }
 
   ## Test that the annotations and genome have the same seqnames
@@ -248,7 +248,7 @@ divide_seq <- function(counts, ...) {
                     glue("chr{unique(GenomicRanges::seqnames(annotation_gr))}"))
     GenomeInfoDb::seqlevels(annotation_gr) <- new_levels
     GenomicRanges::seqnames(annotation_gr) <- factor(
-                     glue("chr{GenomicRanges::seqnames(annotation_gr)}"), levels = new_levels)
+        glue("chr{GenomicRanges::seqnames(annotation_gr)}"), levels = new_levels)
   } else if (hits < length(annotation_seqnames)) {
     warning("Not all the annotation sequences were found, this will probably end badly.")
   }
@@ -330,8 +330,8 @@ hpgl_rpkm <- function(count_table, ...) {
 ")
     rownames(annotations) <- make.names(annotations[["ID"]], unique = TRUE)
     count_table_in <- as.data.frame(
-      count_table[rownames(count_table) %in% rownames(annotations), ],
-      stringsAsFactors = FALSE)
+        count_table[rownames(count_table) %in% rownames(annotations), ],
+        stringsAsFactors = FALSE)
     if (dim(count_table_in)[1] == 0) {
       stop("The ID column failed too.")
     }

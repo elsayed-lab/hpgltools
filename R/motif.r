@@ -60,12 +60,12 @@ simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
     pvals[[name]] <- gadem_out[[m]]@alignList[[1]]@pval
   }
   retlist <- list(
-    "plots" = plots,
-    "result" = gadem_out,
-    "occurences" = gadem_occurences,
-    "consensus" = gadem_consensus,
-    "motifs" = gadem_motifs,
-    "pvals" = pvals)
+      "plots" = plots,
+      "result" = gadem_out,
+      "occurences" = gadem_occurences,
+      "consensus" = gadem_consensus,
+      "motifs" = gadem_motifs,
+      "pvals" = pvals)
   return(retlist)
 }
 
@@ -121,24 +121,24 @@ flanking_sequence <- function(bsgenome, annotation, distance = 200,
   annotations <- merge(annotations, seqinfo, by.x = "seqnames", by.y = "row.names", all.x = TRUE)
 
   before <- GenomicRanges::GRanges(
-                             seqnames = S4Vectors::Rle(annotations[, "seqnames"]),
-                             ranges = IRanges::IRanges(ifelse(annotations[, "start"] <= distance,
-                                                            1,
-                                                            annotations[, "start"] - distance),
-                                                     end=(annotations[, "start"] + 2)),
-                             strand = S4Vectors::Rle(annotations[, "strand"]),
-                             name = S4Vectors::Rle(annotations[, name_key]))
+                               seqnames = S4Vectors::Rle(annotations[, "seqnames"]),
+                               ranges = IRanges::IRanges(ifelse(annotations[, "start"] <= distance,
+                                                                1,
+                                                                annotations[, "start"] - distance),
+                                                         end=(annotations[, "start"] + 2)),
+                               strand = S4Vectors::Rle(annotations[, "strand"]),
+                               name = S4Vectors::Rle(annotations[, name_key]))
 
   after <- GenomicRanges::GRanges(
-                            seqnames = S4Vectors::Rle(annotations[, "seqnames"]),
-                            ranges = IRanges::IRanges(
-                                              annotations[, "end"],
-                                              end = ifelse(annotations[, "seqlengths"] <=
-                                                         (annotations[, "end"] + distance),
-                                                         annotations[, "seqlengths"],
-                                                         annotations[, "end"] + distance)),
-                            strand = S4Vectors::Rle(annotations[, "strand"]),
-                            name = S4Vectors::Rle(annotations[, name_key]))
+                              seqnames = S4Vectors::Rle(annotations[, "seqnames"]),
+                              ranges = IRanges::IRanges(
+                                                    annotations[, "end"],
+                                                    end = ifelse(annotations[, "seqlengths"] <=
+                                                                 (annotations[, "end"] + distance),
+                                                                 annotations[, "seqlengths"],
+                                                                 annotations[, "end"] + distance)),
+                              strand = S4Vectors::Rle(annotations[, "strand"]),
+                              name = S4Vectors::Rle(annotations[, name_key]))
   before_seq <- Biostrings::getSeq(bsgenome, before)
   after_seq <- Biostrings::getSeq(bsgenome, after)
   retlist <- list("before" = before_seq,

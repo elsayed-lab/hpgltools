@@ -1305,7 +1305,7 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
                                  ...)
   } else {
     xcell_eset <- normalize_expt(expt, norm = arglist[["norm"]], convert = arglist[["convert"]],
-                                  filter = arglist[["filter"]], batch = arglist[["batch"]])
+                                 filter = arglist[["filter"]], batch = arglist[["batch"]])
   }
   xcell_mtrx <- exprs(xcell_eset)
   xcell_na <- is.na(xcell_mtrx)

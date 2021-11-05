@@ -113,9 +113,9 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   message("Basic step 2/3: Performing ", total_contrasts, " comparisons.")
 
   model_choice <- sm(choose_model(
-    input, conditions = conditions, batches = batches, model_batch = FALSE,
-    model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
-    ...))
+      input, conditions = conditions, batches = batches, model_batch = FALSE,
+      model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
+      ...))
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
@@ -141,7 +141,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
       next
     }
     division <- data.frame(
-      median_table[, c_name] - median_table[, d_name])
+        median_table[, c_name] - median_table[, d_name])
     column_list <- append(column_list, name)
     colnames(division) <- name
     ## Lets see if I can make a dirty p-value
@@ -211,11 +211,11 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
     num_col <- paste0("numerator_", fx)
     den_col <- paste0("denominator_", fx)
     fc_table <- data.frame(
-      "numerator_var" = variance_table[[numerator]],
-      "denominator_var" = variance_table[[denominator]],
-      "t" = t_column,
-      "p" = p_column,
-      "logFC" = fc_column)
+        "numerator_var" = variance_table[[numerator]],
+        "denominator_var" = variance_table[[denominator]],
+        "t" = t_column,
+        "p" = p_column,
+        "logFC" = fc_column)
     fc_table[[num_col]] <- median_table[[numerator]]
     fc_table[[den_col]] <- median_table[[denominator]]
     fc_table <- fc_table[, c(num_col, den_col, "numerator_var",
@@ -223,9 +223,9 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
     fc_table[["adjp"]] <- stats::p.adjust(as.numeric(fc_table[["p"]]), method = "BH")
 
     fc_table[[num_col]] <- signif(
-      x = fc_table[[num_col]], digits = 4)
+        x = fc_table[[num_col]], digits = 4)
     fc_table[[den_col]] <- signif(
-      x = fc_table[[den_col]], digits = 4)
+        x = fc_table[[den_col]], digits = 4)
     ## I am thinking to change my mind about this formatting, since
     ## it recasts the numbers as characters, and that is dumb.
     fc_table[["t"]] <- signif(x = fc_table[["t"]], digits = 4)
@@ -237,15 +237,15 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   names(all_tables) <- colnames(comparisons)
 
   retlist <- list(
-    "all_pairwise" = comparisons,
-    "all_tables" = all_tables,
-    "conditions_table" = table(conditions),
-    "conditions" = conditions,
-    "contrasts_performed" = contrasts_performed,
-    "input_data" = data,
-    "medians" = median_table,
-    "method" = "basic",
-    "variances" = variance_table)
+      "all_pairwise" = comparisons,
+      "all_tables" = all_tables,
+      "conditions_table" = table(conditions),
+      "conditions" = conditions,
+      "contrasts_performed" = contrasts_performed,
+      "input_data" = data,
+      "medians" = median_table,
+      "method" = "basic",
+      "variances" = variance_table)
   class(retlist) <- c("basic_result", "list")
   if (!is.null(arglist[["basic_excel"]])) {
     retlist[["basic_excel"]] <- write_basic(retlist, excel = arglist[["basic_excel"]])
@@ -318,10 +318,10 @@ choose_basic_dataset <- function(input, force = FALSE, ...) {
   libsize <- colSums(data)
   rm(ready)
   retlist <- list(
-    "libsize" = libsize,
-    "conditions" = conditions,
-    "batches" = batches,
-    "data" = data)
+      "libsize" = libsize,
+      "conditions" = conditions,
+      "batches" = batches,
+      "data" = data)
   return(retlist)
 }
 

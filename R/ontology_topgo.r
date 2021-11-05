@@ -59,7 +59,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     sig_genes[["ID"]] <- make.names(rownames(sig_genes), unique = TRUE)
   }
   fisher_interesting_genes <- as.factor(
-    as.integer(annotated_genes %in% sig_genes[["ID"]]))
+      as.integer(annotated_genes %in% sig_genes[["ID"]]))
   names(fisher_interesting_genes) <- annotated_genes
   ks_interesting_genes <- as.integer(!annotated_genes %in% sig_genes[["ID"]])
   if (!is.null(sig_genes[[pval_column]])) {
@@ -82,9 +82,9 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   ## Ergo, requireNamespace() is insufficient!
 
   ontology_result <- list(
-    "BP" = list(),
-    "MF" = list(),
-    "CC" = list())
+      "BP" = list(),
+      "MF" = list(),
+      "CC" = list())
   returns <- list()
   methods <- c("fisher", "KS", "EL", "weight")
   cl <- parallel::makeCluster(5)
@@ -99,7 +99,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                    returns[[type]] <- do_topgo(type, go_map = geneID2GO,
                                                fisher_genes = fisher_interesting_genes,
                                                ks_genes = ks_interesting_genes)
-  }
+                 }
   stopped <- parallel::stopCluster(cl)
   if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")
@@ -117,38 +117,38 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     for (m in methods) {
       name <- glue::glue("{tolower(o)}_{m}")
       p_dists[[name]] <- try(plot_histogram(
-        ontology_result[[o]][[m]][["test_result"]]@score,
-        bins = 20))
+          ontology_result[[o]][[m]][["test_result"]]@score,
+          bins = 20))
     }
   }
 
   results <- list(
-    ## The godata
-    "fbp_godata" = ontology_result[["BP"]][["fisher"]][["godata"]],
-    "fmf_godata" = ontology_result[["MF"]][["fisher"]][["godata"]],
-    "fcc_godata" = ontology_result[["CC"]][["fisher"]][["godata"]],
-    "kbp_godata" = ontology_result[["BP"]][["KS"]][["godata"]],
-    "kmf_godata" = ontology_result[["MF"]][["KS"]][["godata"]],
-    "kcc_godata" = ontology_result[["CC"]][["KS"]][["godata"]],
-    "ebp_godata" = ontology_result[["BP"]][["EL"]][["godata"]],
-    "emf_godata" = ontology_result[["MF"]][["EL"]][["godata"]],
-    "ecc_godata" = ontology_result[["CC"]][["EL"]][["godata"]],
-    "wbp_godata" = ontology_result[["BP"]][["weight"]][["godata"]],
-    "wmf_godata" = ontology_result[["MF"]][["weight"]][["godata"]],
-    "wcc_godata" = ontology_result[["CC"]][["weight"]][["godata"]],
-    ## The test results
-    "bp_fisher" = ontology_result[["BP"]][["fisher"]][["test_result"]],
-    "mf_fisher" = ontology_result[["MF"]][["fisher"]][["test_result"]],
-    "cc_fisher" = ontology_result[["CC"]][["fisher"]][["test_result"]],
-    "bp_ks" = ontology_result[["BP"]][["KS"]][["test_result"]],
-    "mf_ks" = ontology_result[["MF"]][["KS"]][["test_result"]],
-    "cc_ks" = ontology_result[["CC"]][["KS"]][["test_result"]],
-    "bp_el" = ontology_result[["BP"]][["EL"]][["test_result"]],
-    "mf_el" = ontology_result[["MF"]][["EL"]][["test_result"]],
-    "cc_el" = ontology_result[["CC"]][["EL"]][["test_result"]],
-    "bp_weight" = ontology_result[["BP"]][["weight"]][["test_result"]],
-    "mf_weight" = ontology_result[["MF"]][["weight"]][["test_result"]],
-    "cc_weight" = ontology_result[["CC"]][["weight"]][["test_result"]])
+      ## The godata
+      "fbp_godata" = ontology_result[["BP"]][["fisher"]][["godata"]],
+      "fmf_godata" = ontology_result[["MF"]][["fisher"]][["godata"]],
+      "fcc_godata" = ontology_result[["CC"]][["fisher"]][["godata"]],
+      "kbp_godata" = ontology_result[["BP"]][["KS"]][["godata"]],
+      "kmf_godata" = ontology_result[["MF"]][["KS"]][["godata"]],
+      "kcc_godata" = ontology_result[["CC"]][["KS"]][["godata"]],
+      "ebp_godata" = ontology_result[["BP"]][["EL"]][["godata"]],
+      "emf_godata" = ontology_result[["MF"]][["EL"]][["godata"]],
+      "ecc_godata" = ontology_result[["CC"]][["EL"]][["godata"]],
+      "wbp_godata" = ontology_result[["BP"]][["weight"]][["godata"]],
+      "wmf_godata" = ontology_result[["MF"]][["weight"]][["godata"]],
+      "wcc_godata" = ontology_result[["CC"]][["weight"]][["godata"]],
+      ## The test results
+      "bp_fisher" = ontology_result[["BP"]][["fisher"]][["test_result"]],
+      "mf_fisher" = ontology_result[["MF"]][["fisher"]][["test_result"]],
+      "cc_fisher" = ontology_result[["CC"]][["fisher"]][["test_result"]],
+      "bp_ks" = ontology_result[["BP"]][["KS"]][["test_result"]],
+      "mf_ks" = ontology_result[["MF"]][["KS"]][["test_result"]],
+      "cc_ks" = ontology_result[["CC"]][["KS"]][["test_result"]],
+      "bp_el" = ontology_result[["BP"]][["EL"]][["test_result"]],
+      "mf_el" = ontology_result[["MF"]][["EL"]][["test_result"]],
+      "cc_el" = ontology_result[["CC"]][["EL"]][["test_result"]],
+      "bp_weight" = ontology_result[["BP"]][["weight"]][["test_result"]],
+      "mf_weight" = ontology_result[["MF"]][["weight"]][["test_result"]],
+      "cc_weight" = ontology_result[["CC"]][["weight"]][["test_result"]])
 
   tables <- try(topgo_tables(results, limitby = limitby, limit = limit))
   if (class(tables)[1] == "try-error") {
@@ -158,24 +158,24 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   mf_densities <- bp_densities <- cc_densities <- list()
   if (isTRUE(densities)) {
     bp_densities <- sm(
-      plot_topgo_densities(results[["fbp_godata"]], tables[["bp_interesting"]]))
+        plot_topgo_densities(results[["fbp_godata"]], tables[["bp_interesting"]]))
     mf_densities <- sm(
-      plot_topgo_densities(results[["fmf_godata"]], tables[["mf_interesting"]]))
+        plot_topgo_densities(results[["fmf_godata"]], tables[["mf_interesting"]]))
     cc_densities <- sm(
-      plot_topgo_densities(results[["fcc_godata"]], tables[["cc_interesting"]]))
+        plot_topgo_densities(results[["fcc_godata"]], tables[["cc_interesting"]]))
   } else {
     message("simple_topgo(): Set densities = TRUE for ontology density plots.")
   }
 
   retlist <- list(
-    "go_db" = go_db,
-    "input" = sig_genes,
-    "results" = results,
-    "tables" = tables,
-    "mf_densities" = mf_densities,
-    "bp_densities" = bp_densities,
-    "cc_densities" = cc_densities,
-    "pdists" = p_dists)
+      "go_db" = go_db,
+      "input" = sig_genes,
+      "results" = results,
+      "tables" = tables,
+      "mf_densities" = mf_densities,
+      "bp_densities" = bp_densities,
+      "cc_densities" = cc_densities,
+      "pdists" = p_dists)
   pval_plots <- plot_topgo_pval(retlist,
                                 ...)
   retlist[["pvalue_plots"]] <- pval_plots
@@ -245,87 +245,87 @@ do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
   tt <- try(sm(requireNamespace("topGO")), silent = TRUE)
   tt <- try(sm(attachNamespace("topGO")), silent = TRUE)
   retlist <- list(
-    "BP" = list(),
-    "MF" = list(),
-    "CC" = list())
+      "BP" = list(),
+      "MF" = list(),
+      "CC" = list())
   for (ont in names(retlist)) {
     switchret <- switch(
-      type,
-      "fisher" = {
-        retlist[[ont]][["type"]] <- "fisher"
-        retlist[[ont]][["godata"]] <- new(
-          "topGOdata",
-          description = ont,
-          ontology = ont,
-          allGenes = fisher_genes,
-          annot = topGO::annFUN.gene2GO,
-          gene2GO = go_map)
-        retlist[[ont]][["test_stat"]] <- new(
-          "classicCount",
-          testStatistic = topGO::GOFisherTest,
-          name = "Fisher test")
-        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
-                                                    retlist[[ont]][["godata"]],
-                                                    retlist[[ont]][["test_stat"]])
-      },
-      "KS" = {
-        retlist[[ont]][["type"]] <- "KS"
-        retlist[[ont]][["godata"]] <- new(
-          "topGOdata",
-          description = ont,
-          ontology = ont,
-          allGenes = ks_genes,
-          geneSel = get(selector),
-          annot = topGO::annFUN.gene2GO,
-          gene2GO = go_map)
-        retlist[[ont]][["test_stat"]] <- new(
-          "classicScore",
-          testStatistic = topGO::GOKSTest,
-          name = "KS test")
-        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
-                                                    retlist[[ont]][["godata"]],
-                                                    retlist[[ont]][["test_stat"]])
-      },
-      "EL" = {
-        retlist[[ont]][["type"]] <- "EL"
-        retlist[[ont]][["godata"]] <- new(
-          "topGOdata",
-          description = ont,
-          ontology = ont,
-          allGenes = ks_genes,
-          geneSel = get(selector),
-          annot = topGO::annFUN.gene2GO,
-          gene2GO = go_map)
-        retlist[[ont]][["test_stat"]] <- new(
-          "elimScore",
-          testStatistic = topGO::GOKSTest,
-          name = "KS test",
-          cutOff = cutoff)
-        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
-                                                    retlist[[ont]][["godata"]],
-                                                    retlist[[ont]][["test_stat"]])
-      },
-      "weight" = {
-        retlist[[ont]][["type"]] <- "weight"
-        retlist[[ont]][["godata"]] <- new(
-          "topGOdata",
-          description = ont,
-          ontology = ont,
-          allGenes = fisher_genes,
-          annot = topGO::annFUN.gene2GO,
-          gene2GO = go_map)
-        retlist[[ont]][["test_stat"]] <- new(
-          "weightCount",
-          testStatistic = topGO::GOFisherTest,
-          name = "Fisher test",
-          sigRatio = "ratio")
-        retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
-                                                    retlist[[ont]][["godata"]],
-                                                    retlist[[ont]][["test_stat"]])
-      },
-      {
-        message("I do not know that type.")
-      }
+        type,
+        "fisher" = {
+          retlist[[ont]][["type"]] <- "fisher"
+          retlist[[ont]][["godata"]] <- new(
+              "topGOdata",
+              description = ont,
+              ontology = ont,
+              allGenes = fisher_genes,
+              annot = topGO::annFUN.gene2GO,
+              gene2GO = go_map)
+          retlist[[ont]][["test_stat"]] <- new(
+              "classicCount",
+              testStatistic = topGO::GOFisherTest,
+              name = "Fisher test")
+          retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                        retlist[[ont]][["godata"]],
+                                                        retlist[[ont]][["test_stat"]])
+        },
+        "KS" = {
+          retlist[[ont]][["type"]] <- "KS"
+          retlist[[ont]][["godata"]] <- new(
+              "topGOdata",
+              description = ont,
+              ontology = ont,
+              allGenes = ks_genes,
+              geneSel = get(selector),
+              annot = topGO::annFUN.gene2GO,
+              gene2GO = go_map)
+          retlist[[ont]][["test_stat"]] <- new(
+              "classicScore",
+              testStatistic = topGO::GOKSTest,
+              name = "KS test")
+          retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                        retlist[[ont]][["godata"]],
+                                                        retlist[[ont]][["test_stat"]])
+        },
+        "EL" = {
+          retlist[[ont]][["type"]] <- "EL"
+          retlist[[ont]][["godata"]] <- new(
+              "topGOdata",
+              description = ont,
+              ontology = ont,
+              allGenes = ks_genes,
+              geneSel = get(selector),
+              annot = topGO::annFUN.gene2GO,
+              gene2GO = go_map)
+          retlist[[ont]][["test_stat"]] <- new(
+              "elimScore",
+              testStatistic = topGO::GOKSTest,
+              name = "KS test",
+              cutOff = cutoff)
+          retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                        retlist[[ont]][["godata"]],
+                                                        retlist[[ont]][["test_stat"]])
+        },
+        "weight" = {
+          retlist[[ont]][["type"]] <- "weight"
+          retlist[[ont]][["godata"]] <- new(
+              "topGOdata",
+              description = ont,
+              ontology = ont,
+              allGenes = fisher_genes,
+              annot = topGO::annFUN.gene2GO,
+              gene2GO = go_map)
+          retlist[[ont]][["test_stat"]] <- new(
+              "weightCount",
+              testStatistic = topGO::GOFisherTest,
+              name = "Fisher test",
+              sigRatio = "ratio")
+          retlist[[ont]][["test_result"]] <- topGO::getSigGroups(
+                                                        retlist[[ont]][["godata"]],
+                                                        retlist[[ont]][["test_stat"]])
+        },
+        {
+          message("I do not know that type.")
+        }
     ) ## End of the switch
   }  ## End of for BP/MF/CC
   ##retlist[["pdists"]] <- try(plot_histogram(retlist[["test_result"]]@score, bins = 20))
@@ -371,13 +371,13 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
     stop("I can only limit by: fisher, KS, EL, or weight.")
   }
   siglist <- list(
-    "mf" = mf_siglist,
-    "bp" = bp_siglist,
-    "cc" = cc_siglist)
+      "mf" = mf_siglist,
+      "bp" = bp_siglist,
+      "cc" = cc_siglist)
   topnode_list <- list(
-    "mf" = length(siglist[["mf"]]),
-    "bp" = length(siglist[["bp"]]),
-    "cc" = length(siglist[["cc"]]))
+      "mf" = length(siglist[["mf"]]),
+      "bp" = length(siglist[["bp"]]),
+      "cc" = length(siglist[["cc"]]))
   interest_lst <- list()
   allres_lst <- list()
   for (ont in c("mf", "bp", "cc")) {
@@ -388,12 +388,12 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
     weight_name <- glue::glue("{ont}_weight")
     if (topnode_list[[ont]] > 0) {
       allres <- try(topGO::GenTable(
-                             result[[godata_name]], fisher = result[[fisher_name]],
-                             KS = result[[ks_name]], EL = result[[el_name]],
-                             weight = result[[weight_name]], orderBy = orderby,
-                             ranksOf = ranksof, topNodes = topnode_list[[ont]], numChar = numchar))
+                               result[[godata_name]], fisher = result[[fisher_name]],
+                               KS = result[[ks_name]], EL = result[[el_name]],
+                               weight = result[[weight_name]], orderBy = orderby,
+                               ranksOf = ranksof, topNodes = topnode_list[[ont]], numChar = numchar))
       allres[["GO.ID"]] <- gsub(
-        pattern = "GO\\.", replacement = "GO:", x = allres[["GO.ID"]])
+          pattern = "GO\\.", replacement = "GO:", x = allres[["GO.ID"]])
       rownames(allres) <- allres[["GO.ID"]]
       allres[["fisher"]] <- gsub(x = allres[["fisher"]], pattern = "^< ", replacement = "")
       allres[["fisher"]] <- as.numeric(allres[["fisher"]])
@@ -407,7 +407,7 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
 
       if (class(allres) != "try-error") {
         qvalues <- as.data.frame(
-          qvalue::qvalue(topGO::score(result[[fisher_name]]))[["qvalues"]])
+            qvalue::qvalue(topGO::score(result[[fisher_name]]))[["qvalues"]])
         ## qvalue::qvalue returns the adjusted pvalues out of order.
         ## Perhaps I should stop with stupid qvalue::qvalue() and just use p.adjust!!
         allres <- merge(allres, qvalues, by.x = "GO.ID", by.y = "row.names")
@@ -421,7 +421,7 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
                                        "Expected", "fisher", "qvalue", "KS", "EL",
                                        "weight", "Term")]
         interesting[["GO.ID"]] <- gsub(
-          pattern = "GO\\.", replacement = "GO:", x = interesting[["GO.ID"]])
+            pattern = "GO\\.", replacement = "GO:", x = interesting[["GO.ID"]])
         rownames(interesting) <- interesting[["GO.ID"]]
         interest_lst[[ont]] <- interesting
       }
@@ -429,12 +429,12 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
   } ## End for mf/bp/cc
 
   tables <- list(
-    "mf_subset" = allres_lst[["mf"]],
-    "bp_subset" = allres_lst[["bp"]],
-    "cc_subset" = allres_lst[["cc"]],
-    "mf_interesting" = interest_lst[["mf"]],
-    "bp_interesting" = interest_lst[["bp"]],
-    "cc_interesting" = interest_lst[["cc"]])
+      "mf_subset" = allres_lst[["mf"]],
+      "bp_subset" = allres_lst[["bp"]],
+      "cc_subset" = allres_lst[["cc"]],
+      "mf_interesting" = interest_lst[["mf"]],
+      "bp_interesting" = interest_lst[["bp"]],
+      "cc_interesting" = interest_lst[["cc"]])
   return(tables)
 }
 
@@ -671,7 +671,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
 
     colorMap <- heat.colors(mm)
     nodeAttrs[["fillcolor"]] <- unlist(
-      lapply(sigColor, function(x) return(colorMap[x])))
+        lapply(sigColor, function(x) return(colorMap[x])))
   }
 
   if(!showEdges) {
@@ -682,7 +682,7 @@ hpgl_GOplot <- function(dag, sigNodes, dag.name = "GO terms", edgeTypes = TRUE,
       ## 0 for a is_a relation,  1 for a part_of relation
       ## edgeAttrs[["color"]] <- ifelse(getEdgeWeights(dag) == 0, 'black', 'red')
       edgeAttrs[["color"]] <- ifelse(
-        hpgltools::getEdgeWeights(dag) == 0, "black", "black")
+          hpgltools::getEdgeWeights(dag) == 0, "black", "black")
     }
   }
 
@@ -716,11 +716,11 @@ hpgl_GroupDensity <- function(object, whichGO, ranks = TRUE, rm.one = FALSE) {
   }
   group <- as.integer(names(allS) %in% groupMembers)
   xx <- data.frame(
-    "score" = allS,
-    "group" = factor(
-      group, labels = paste0(c('complementary', whichGO), "  (", table(group), ")")))
+      "score" = allS,
+      "group" = factor(
+          group, labels = paste0(c('complementary', whichGO), "  (", table(group), ")")))
   plot <- lattice::densityplot(
-                     ~ score | group, data = xx, layout = c(1, 2), xlab = xlab)
+                       ~ score | group, data = xx, layout = c(1, 2), xlab = xlab)
   return(plot)
 }
 

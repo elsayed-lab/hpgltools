@@ -114,19 +114,19 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     ## the vector [1]"
     gene_ids <- as.vector(gene_ids)
     a_result <- try(gprofiler2::gost(
-                                  query = gene_ids,
-                                  organism = species,
-                                  ordered_query = pseudo_gsea,
-                                  multi_query = FALSE,
-                                  significant = significant,
-                                  exclude_iea = exclude_iea,
-                                  measure_underrepresentation = do_under,
-                                  evcodes = evcodes,
-                                  user_threshold = threshold,
-                                  correction_method = adjp,
-                                  domain_scope = domain_scope,
-                                  custom_bg = bg,
-                                  sources = type))
+                                    query = gene_ids,
+                                    organism = species,
+                                    ordered_query = pseudo_gsea,
+                                    multi_query = FALSE,
+                                    significant = significant,
+                                    exclude_iea = exclude_iea,
+                                    measure_underrepresentation = do_under,
+                                    evcodes = evcodes,
+                                    user_threshold = threshold,
+                                    correction_method = adjp,
+                                    domain_scope = domain_scope,
+                                    custom_bg = bg,
+                                    sources = type))
 
     if (class(a_result) == "try-error") {
       a_result <- data.frame(stringsAsFactors = FALSE)
@@ -209,13 +209,13 @@ simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
   }
 
   retlst <- list(
-    "GO" = do_go,
-    "KEGG" = do_kegg,
-    "REAC" = do_reactome,
-    "MI" = do_mi,
-    "TF" = do_tf,
-    "CORUM" = do_corum,
-    "HP" = do_hp)
+      "GO" = do_go,
+      "KEGG" = do_kegg,
+      "REAC" = do_reactome,
+      "MI" = do_mi,
+      "TF" = do_tf,
+      "CORUM" = do_corum,
+      "HP" = do_hp)
   type_names <- names(retlst)
   gene_ids <- as.vector(gene_ids)
   for (t in 1:length(type_names)) {
@@ -225,12 +225,12 @@ simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
               length(gene_ids), " genes against ", species, ".")
       Sys.sleep(3)
       a_result <- suppressWarnings(
-        try(gProfileR::gprofiler(
-                         query = gene_ids,
-                         organism = species,
-                         significant = significant,
-                         ordered_query = pseudo_gsea,
-                         src_filter = type), silent = TRUE))
+          try(gProfileR::gprofiler(
+                             query = gene_ids,
+                             organism = species,
+                             significant = significant,
+                             ordered_query = pseudo_gsea,
+                             src_filter = type), silent = TRUE))
       if (class(a_result)[1] != "try-error") {
         retlst[[type]] <- a_result
         message(type, " search found ", nrow(a_result), " hits.")

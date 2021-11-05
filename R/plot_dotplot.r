@@ -21,9 +21,9 @@
 plot_svfactor <- function(expt, svest, sv = 1, chosen_factor = "batch", factor_type = "factor") {
   chosen <- expt[["design"]][[chosen_factor]]
   sv_df <- data.frame(
-    "adjust" = svest[, sv],  ## Take a single estimate from compare_estimates()
-    "factors" = chosen,
-    "samplenames" = rownames(expt[["design"]])
+      "adjust" = svest[, sv],  ## Take a single estimate from compare_estimates()
+      "factors" = chosen,
+      "samplenames" = rownames(expt[["design"]])
   )
   samplenames <- rownames(expt[["design"]])
   my_colors <- expt[["colors"]]
@@ -78,13 +78,13 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
   }
 
   factor_df <- data.frame(
-    "sample" = samples,
-    "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
-    "fill" = expt[["colors"]],
-    "condition" = expt[["conditions"]],
-    "batch" = expt[["batches"]],
-    "color" = "black",
-    "svs" = svs[, sv])
+      "sample" = samples,
+      "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
+      "fill" = expt[["colors"]],
+      "condition" = expt[["conditions"]],
+      "batch" = expt[["batches"]],
+      "color" = "black",
+      "svs" = svs[, sv])
   if (num_batches <= 5) {
     factor_df[["shape"]] <- 20 + as.numeric(as.factor(factor_df[["batch"]]))
   } else {
@@ -112,7 +112,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
     ggplot2::scale_shape_manual(name = "Batch",
                                 labels = levels(as.factor(factor_df[["batch"]])),
                                 guide = ggplot2::guide_legend(
-                                                 override.aes = list(size = 5, fill = "grey")),
+                                                     override.aes = list(size = 5, fill = "grey")),
                                 values = 21:25) +
     ggplot2::scale_color_manual(name = "Condition",
                                 guide = "legend",
@@ -143,7 +143,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
     ggplot2::scale_shape_manual(name = "Batch",
                                 labels = levels(as.factor(factor_df[["batch"]])),
                                 guide = ggplot2::guide_legend(
-                                                 override.aes = list(size = 5, fill = "grey")),
+                                                     override.aes = list(size = 5, fill = "grey")),
                                 values = 21:25) +
     ggplot2::scale_color_manual(name = "Condition",
                                 guide = "legend",
@@ -174,7 +174,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
     ggplot2::scale_shape_manual(name = "Batch",
                                 labels = levels(as.factor(factor_df[["batch"]])),
                                 guide = ggplot2::guide_legend(
-                                                 override.aes = list(size = 5, fill = "grey")),
+                                                     override.aes = list(size = 5, fill = "grey")),
                                 values = 21:25) +
     ggplot2::scale_color_manual(name = "Condition",
                                 guide = "legend",
@@ -188,9 +188,9 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
   ## An alternate possibility:  hjust = 1.5, vjust = 0.5))
 
   plots <- list(
-    "sample_factor" = sample_factor,
-    "factor_svs" = factor_svs,
-    "svs_sample" = svs_sample)
+      "sample_factor" = sample_factor,
+      "factor_svs" = factor_svs,
+      "svs_sample" = svs_sample)
   return(plots)
 }
 
@@ -292,7 +292,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(
-                           RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
+                             RColorBrewer::brewer.pal(ncol(data), chosen_palette))(ncol(data))
   }
   colors <- as.character(colors)
 
@@ -331,10 +331,10 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   }
 
   sm_df <- data.frame(
-    "sample" = rownames(properties),
-    "sm" = prop_median,
-    "condition" = conditions,
-    "color" = colors)
+      "sample" = rownames(properties),
+      "sm" = prop_median,
+      "condition" = conditions,
+      "color" = colors)
   color_listing <- sm_df[, c("condition", "color")]
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["color"]])
@@ -365,7 +365,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   my_binwidth <- (maxval - minval) / 40
   if (num_batches <= 5) {
     sm_plot <- ggplot(sm_df, aes_string(
-                               x = "num", y = "sm", shape = "batch", fill = "condition")) +
+                                 x = "num", y = "sm", shape = "batch", fill = "condition")) +
       ggplot2::geom_hline(colour = "red", yintercept = ylimit, size = 1) +
       ggplot2::geom_point(size = dot_size,
                           aes_string(shape = "batch",
@@ -382,7 +382,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
       ggplot2::scale_shape_manual(name = "Batch",
                                   labels = levels(as.factor(sm_df[["batch"]])),
                                   guide = ggplot2::guide_legend(
-                                                   override.aes = list(size = 5, fill = "grey")),
+                                                       override.aes = list(size = 5, fill = "grey")),
                                   values = 21:25) +
       ggplot2::scale_x_continuous(labels = sm_df[["sample"]],
                                   breaks = 1:nrow(sm_df),
@@ -398,8 +398,8 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
 
   } else {
     sm_plot <- ggplot2::ggplot(
-                          sm_df,
-                          aes_string(x = "sample", y = "sm", shape = "batch", fill = "condition")) +
+                            sm_df,
+                            aes_string(x = "sample", y = "sm", shape = "batch", fill = "condition")) +
       ggplot2::geom_hline(color = "red", yintercept = ylimit, size = 1) +
       ggplot2::geom_dotplot(binwidth = my_binwidth,
                             binaxis = "y",
@@ -413,9 +413,9 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
       ggplot2::ggtitle(title) +
       ggplot2::theme_bw(base_size = base_size) +
       ggplot2::theme(
-                 legend.position = legend_position,
-                 axis.text.x = ggplot2::element_text(size = base_size, colour = "black",
-                                                   angle = 90, hjust = 1))
+                   legend.position = legend_position,
+                   axis.text.x = ggplot2::element_text(size = base_size, colour = "black",
+                                                       angle = 90, hjust = 1))
 
   }
   if (type == "distance") {
@@ -428,7 +428,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
       "medians" = prop_median,
       "quantile" = prop_spread,
       "plot" = sm_plot
-      )
+  )
   return(retlist)
 }
 

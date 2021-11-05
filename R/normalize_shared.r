@@ -151,8 +151,8 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   }
 
   mesg("This function will replace the expt$expressionset slot with:")
-    operations <- what_happened(transform = transform, batch = batch, convert = convert,
-                                norm = norm, filter = filter)
+  operations <- what_happened(transform = transform, batch = batch, convert = convert,
+                              norm = norm, filter = filter)
   mesg(operations)
   mesg("It will save copies of each step along the way
  in expt$normalized with the corresponding libsizes. Keep libsizes in mind
@@ -262,11 +262,11 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## I am hoping this will prove a more direct place to access it and provide a
   ## chance to double-check that things match
   new_state <- list(
-    "filter" = normalized[["actions"]][["filter"]],
-    "normalization" = normalized[["actions"]][["normalization"]],
-    "conversion" = normalized[["actions"]][["conversion"]],
-    "batch" = normalized[["actions"]][["batch"]],
-    "transform" = normalized[["actions"]][["transform"]])
+      "filter" = normalized[["actions"]][["filter"]],
+      "normalization" = normalized[["actions"]][["normalization"]],
+      "conversion" = normalized[["actions"]][["conversion"]],
+      "batch" = normalized[["actions"]][["batch"]],
+      "transform" = normalized[["actions"]][["transform"]])
 
   ## Keep in mind that low_to_zero should be ignored if transform_state is not raw.
   if (new_state[["transform"]] == "raw" & isTRUE(low_to_zero)) {
@@ -356,12 +356,12 @@ hpgl_norm <- function(data, ...) {
   batch_performed <- "raw"
   adjust_performed <- "none"
   expt_state <- list(
-    "low_filter" = filter_performed,
-    "normalization" = norm_performed,
-    "conversion" = convert_performed,
-    "batch" = batch_performed,
-    "adjust" = adjust_performed,
-    "transform" = transform_performed)
+      "low_filter" = filter_performed,
+      "normalization" = norm_performed,
+      "conversion" = convert_performed,
+      "batch" = batch_performed,
+      "adjust" = adjust_performed,
+      "transform" = transform_performed)
   data_class <- class(data)[1]
   original_counts <- NULL
   original_libsize <- NULL
@@ -603,32 +603,32 @@ hpgl_norm <- function(data, ...) {
   ## This list provides the list of operations performed on the data in order
   ## they were done.
   actions <- list(
-    "filter" = filter_performed,
-    "normalization" = norm_performed,
-    "conversion" = convert_performed,
-    "batch" = batch_performed,
-    "adjust" = adjust_performed,
-    "transform" = transform_performed)
+      "filter" = filter_performed,
+      "normalization" = norm_performed,
+      "conversion" = convert_performed,
+      "batch" = batch_performed,
+      "adjust" = adjust_performed,
+      "transform" = transform_performed)
   ## This list contains the intermediate count tables generated at each step
   ## This may be useful if there is a problem in this process.
   ## Each of them also contains the libsize at that point in the process.
   intermediate_counts <- list(
-    "original" = original_counts, ## The original count table, should never
-    ## change from iteration to iteration
-    "input" = as.matrix(data),  ## The input provided to this function, this may
-    ## diverge from original
-    "filter" = filtered_counts,  ## After filtering
-    "normalization" = normalized_counts,  ## and normalization
-    "conversion" = converted_counts,  ## and conversion
-    "batch" = batched_counts,  ## and batch correction
-    "transform" = transformed_counts)  ## and finally, transformation.
+      "original" = original_counts, ## The original count table, should never
+      ## change from iteration to iteration
+      "input" = as.matrix(data),  ## The input provided to this function, this may
+      ## diverge from original
+      "filter" = filtered_counts,  ## After filtering
+      "normalization" = normalized_counts,  ## and normalization
+      "conversion" = converted_counts,  ## and conversion
+      "batch" = batched_counts,  ## and batch correction
+      "transform" = transformed_counts)  ## and finally, transformation.
 
   ret_list <- list(
-    "actions" = actions,
-    "intermediate_counts" = intermediate_counts,
-    "count_table" = count_table,  ## The final count table
-    "final_state" = current_state,
-    "libsize" = colSums(count_table, na.rm = TRUE)  ## The final libsizes
+      "actions" = actions,
+      "intermediate_counts" = intermediate_counts,
+      "count_table" = count_table,  ## The final count table
+      "final_state" = current_state,
+      "libsize" = colSums(count_table, na.rm = TRUE)  ## The final libsizes
   )
   return(ret_list)
 }
@@ -637,12 +637,12 @@ normalize <- function(expt, todo = list()) {
   ## This expects a list like:
   ## list("norm" = "quant", "filter" = c(pofa, "A" = 1))
   possible_methods <- list(
-    "transform" = "transform_counts",
-    "norm" = "normalize_counts",
-    "convert" = "convert_counts",
-    "filter" = "filter_counts",
-    "batch" = "batch_counts",
-    "impute" = "impute_counts")
+      "transform" = "transform_counts",
+      "norm" = "normalize_counts",
+      "convert" = "convert_counts",
+      "filter" = "filter_counts",
+      "batch" = "batch_counts",
+      "impute" = "impute_counts")
   annot <- fData(expt)
   counts <- exprs(expt)
   design <- pData(expt)
@@ -654,7 +654,7 @@ normalize <- function(expt, todo = list()) {
     method <- operation[[1]]
     args <- c()
     if (length(operation) > 1) {
-       args <- operation[2:length(operation)]
+      args <- operation[2:length(operation)]
     }
     if (! type %in% names(possible_methods)) {
       stop("This type of todo is not known: ", type, ".")
