@@ -230,8 +230,8 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
     ##last_position <- max(as.numeric(gsub(pattern = "^.+_.+_(.+)_.+_.+$",
     ##                                     replacement = "\\1", x = snps)))
     last_position <- max(
-      as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
-                      replacement = "\\1", x = snps)))
+        as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                        replacement = "\\1", x = snps)))
     snp_density <- num_snps / as.numeric(last_position)
     density_by_chr[[chr]] <- snp_density
     for (inter in names(data_by_chr[[chr]][["intersections"]])) {
@@ -246,13 +246,13 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
   density_by_chr <- unlist(density_by_chr)
 
   retlist <- list(
-    "medians" = medians,
-    "possibilities" = possibilities,
-    "intersections" = all_intersections,
-    "chr_data" = data_by_chr,
-    "set_names" = set_names,
-    "invert_names" = invert_names,
-    "density" = density_by_chr)
+      "medians" = medians,
+      "possibilities" = possibilities,
+      "intersections" = all_intersections,
+      "chr_data" = data_by_chr,
+      "set_names" = set_names,
+      "invert_names" = invert_names,
+      "density" = density_by_chr)
   if (isTRUE(do_save)) {
     saved <- save(list = "retlist", file = savefile)
   }
@@ -386,9 +386,9 @@ samtools_snp_coverage <- function(expt, type = "counts", input_dir = "preprocess
       return(retlist)
     }
     coverage_result <- Rsamtools::applyPileups(
-                                    pileup_info,
-                                    snp_calc_coverage,
-                                    param = chr_param)
+                                      pileup_info,
+                                      snp_calc_coverage,
+                                      param = chr_param)
     result_list[[c]] <- coverage_result
   }
   stopped <- parallel::stopCluster(cl)
@@ -579,9 +579,9 @@ snps_intersections <- function(expt, snp_result,
   }
 
   retlist <- list(
-    "inters" = inters,
-    "chr_summaries" = chr_summaries,
-    "gene_summaries" = gene_summaries)
+      "inters" = inters,
+      "chr_summaries" = chr_summaries,
+      "gene_summaries" = gene_summaries)
   return(retlist)
 }
 
@@ -606,7 +606,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
                              expt_name_col = "chromosome", snp_name_col = "chromosome",
                              snp_start_col = "position", expt_gid_column = "gid",
                              genes = c("LPAL13_120010900", "LPAL13_340013000", "LPAL13_000054100",
-                                     "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
+                                       "LPAL13_140006100", "LPAL13_180018500", "LPAL13_320022300")) {
   features <- fData(expt)
   if (is.null(features[[start_col]])) {
     stop("Unable to find the ", start_col, " column in the annotation data.")
@@ -723,13 +723,13 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   ##                                    replacement = "\\1",
   ##                                    x = rownames(snp_positions))
   snp_positions[[snp_name_col]] <- gsub(
-    pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
-    replacement = "\\1",
-    x = rownames(snp_positions))
+      pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
+      replacement = "\\1",
+      x = rownames(snp_positions))
   snp_positions[[start_col]] <- as.numeric(
-    gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
-         replacement = "\\1",
-         x = rownames(snp_positions)))
+      gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
+           replacement = "\\1",
+           x = rownames(snp_positions)))
   snp_positions[[end_col]] <- snp_positions[[start_col]] + 1
   snp_positions[["strand"]] <- "+"
   snp_positions <- snp_positions[, c(snp_name_col, start_col, end_col, "strand")]
@@ -776,12 +776,12 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   summarized_idx <- order(summarized_by_gene, decreasing = TRUE)
   summarized_by_gene <- summarized_by_gene[summarized_idx]
   retlist <- list(
-    "expt_granges" = expt_granges,
-    "snp_granges" = snp_granges,
-    "snps_by_chr" = snps_by_chr,
-    "merged_by_gene" = merged_grange,
-    "summary_by_gene" = summarized_by_gene,
-    "summary" = summarized_by_chr)
+      "expt_granges" = expt_granges,
+      "snp_granges" = snp_granges,
+      "snps_by_chr" = snps_by_chr,
+      "merged_by_gene" = merged_grange,
+      "summary_by_gene" = summarized_by_gene,
+      "summary" = summarized_by_chr)
   return(retlist)
 }
 
@@ -1029,8 +1029,8 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I think it would be nice to have spec strings which count from right->left to make
   ## reading off a 3' primer easier.
   sequence_df[["fivep_references"]] <- gsub(x = sequence_df[["variants"]],
-                                           pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
-                                           replacement = "\\1")
+                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
+                                            replacement = "\\1")
   sequence_df[["threep_references"]] <- chartr("ATGC", "TACG", sequence_df[["fivep_references"]])
 
   sequence_df[["fivep_positions"]] <- gsub(x = sequence_df[["variants"]],
@@ -1050,8 +1050,8 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
                                               sequence_df[["fivep_positions"]])
 
   sequence_df[["fivep_alternates"]] <- gsub(x = sequence_df[["variants"]],
-                                           pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
-                                           replacement = "\\3")
+                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
+                                            replacement = "\\3")
   sequence_df[["threep_alternates"]] <- chartr("ATGC", "TACG", sequence_df[["fivep_alternates"]])
   ## Now lets rewrite the variants as the combinations of threep_reference/position/alternate
   threep_variants <- function(ref_string, position_string, alt_string) {
@@ -1122,8 +1122,8 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
     sequence_df[i, "fivep_primer"] <- fivep_primer
 
     threep_primer <- try(find_subseq_target_temp(threep_superprimer,
-                                                target = target_temp,
-                                                direction = "reverse"),
+                                                 target = target_temp,
+                                                 direction = "reverse"),
                          silent = silence)
     if ("try-error" %in% class(threep_primer)) {
       threep_primer <- "bad sequence for priming"

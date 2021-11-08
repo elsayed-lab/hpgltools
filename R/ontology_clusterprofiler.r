@@ -169,21 +169,21 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
                                         ont = "CC", level = go_level))
 
   group_go <- list(
-    "MF" = as.data.frame(ggo_mf, stringsAsFactors = FALSE),
-    "BP" = as.data.frame(ggo_bp, stringsAsFactors = FALSE),
-    "CC" = as.data.frame(ggo_cc, stringsAsFactors = FALSE))
+      "MF" = as.data.frame(ggo_mf, stringsAsFactors = FALSE),
+      "BP" = as.data.frame(ggo_bp, stringsAsFactors = FALSE),
+      "CC" = as.data.frame(ggo_cc, stringsAsFactors = FALSE))
   message("Found ", nrow(group_go[["MF"]]),
           " MF, ", nrow(group_go[["BP"]]),
           " BP, and ", nrow(group_go[["CC"]]), " CC hits.")
 
   message("Calculating enriched GO groups.")
   enrich_results <- list(
-    "all_mf" = NULL,
-    "sig_mf" = NULL,
-    "all_bp" = NULL,
-    "sig_bp" = NULL,
-    "all_cc" = NULL,
-    "sig_cc" = NULL)
+      "all_mf" = NULL,
+      "sig_mf" = NULL,
+      "all_bp" = NULL,
+      "sig_bp" = NULL,
+      "all_cc" = NULL,
+      "sig_cc" = NULL)
   ego_all_mf <- clusterProfiler::enrichGO(gene = sig_gene_list, universe = universe_to,
                                           OrgDb = org, ont = "MF", keyType = orgdb_to,
                                           minGSSize = min_groupsize, pAdjustMethod = "BH",
@@ -209,12 +209,12 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
                                           minGSSize = min_groupsize, pAdjustMethod = "BH",
                                           pvalueCutoff = pcutoff)
   enrich_go <- list(
-    "MF_all" = as.data.frame(ego_all_mf, stringsAsFactors = FALSE),
-    "MF_sig" = as.data.frame(ego_sig_mf, stringsAsFactors = FALSE),
-    "BP_all" = as.data.frame(ego_all_bp, stringsAsFactors = FALSE),
-    "BP_sig" = as.data.frame(ego_sig_bp, stringsAsFactors = FALSE),
-    "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors = FALSE),
-    "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors = FALSE))
+      "MF_all" = as.data.frame(ego_all_mf, stringsAsFactors = FALSE),
+      "MF_sig" = as.data.frame(ego_sig_mf, stringsAsFactors = FALSE),
+      "BP_all" = as.data.frame(ego_all_bp, stringsAsFactors = FALSE),
+      "BP_sig" = as.data.frame(ego_sig_bp, stringsAsFactors = FALSE),
+      "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors = FALSE),
+      "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors = FALSE))
   message("Found ", nrow(enrich_go[["MF_sig"]]),
           " MF, ", nrow(enrich_go[["BP_sig"]]),
           " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
@@ -317,20 +317,20 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
 
     internal <- FALSE
     gse_all_kegg <- sm(
-      clusterProfiler::gseKEGG(geneList = kegg_genelist, organism = kegg_organism,
-                               nPerm = permutations, minGSSize = min_groupsize,
-                               pvalueCutoff = 1.0, use_internal_data = internal))
+        clusterProfiler::gseKEGG(geneList = kegg_genelist, organism = kegg_organism,
+                                 nPerm = permutations, minGSSize = min_groupsize,
+                                 pvalueCutoff = 1.0, use_internal_data = internal))
     gse_sig_kegg <- sm(
-      clusterProfiler::gseKEGG(geneList = kegg_genelist, organism = kegg_organism,
-                               nPerm = permutations, minGSSize = min_groupsize,
-                               pvalueCutoff = pcutoff, use_internal_data = internal))
+        clusterProfiler::gseKEGG(geneList = kegg_genelist, organism = kegg_organism,
+                                 nPerm = permutations, minGSSize = min_groupsize,
+                                 pvalueCutoff = pcutoff, use_internal_data = internal))
   }
 
   kegg_data <- list(
-    "kegg_all" = as.data.frame(all_kegg, stringsAsFactors = FALSE),
-    "kegg_sig" = as.data.frame(enrich_kegg, stringsAsFactors = FALSE),
-    "kegg_gse_all" = as.data.frame(gse_all_kegg, stringsAsFactors = FALSE),
-    "kegg_gse_sig" = as.data.frame(gse_sig_kegg, stringsAsFactors = FALSE))
+      "kegg_all" = as.data.frame(all_kegg, stringsAsFactors = FALSE),
+      "kegg_sig" = as.data.frame(enrich_kegg, stringsAsFactors = FALSE),
+      "kegg_gse_all" = as.data.frame(gse_all_kegg, stringsAsFactors = FALSE),
+      "kegg_gse_sig" = as.data.frame(gse_sig_kegg, stringsAsFactors = FALSE))
   message("Found ", nrow(kegg_data[["kegg_sig"]]), " KEGG enriched hits.")
 
   david_data <- NULL
@@ -338,10 +338,10 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   if (isTRUE(do_david)) {
     message("Attempting DAVID search.")
     david_search <- try(clusterProfiler::enrichDAVID(
-                                           gene = sig_gene_list,
-                                           minGSSize = min_groupsize,
-                                           idType = david_id,
-                                           david.user = david_user), silent = TRUE)
+                                             gene = sig_gene_list,
+                                             minGSSize = min_groupsize,
+                                             idType = david_id,
+                                             david.user = david_user), silent = TRUE)
     if (class(david_search)[[1]] == "try-error") {
       david_data <- NULL
     } else {
@@ -357,14 +357,14 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   map_sig_bp <- try(clusterProfiler::emapplot(ego_sig_bp), silent = TRUE)
   map_sig_cc <- try(clusterProfiler::emapplot(ego_sig_cc), silent = TRUE)
   net_sig_mf <- try(
-    clusterProfiler::cnetplot(ego_sig_mf, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+      clusterProfiler::cnetplot(ego_sig_mf, categorySize = "pvalue",
+                                foldChange = genelist), silent = TRUE)
   net_sig_bp <- try(
-    clusterProfiler::cnetplot(ego_sig_bp, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+      clusterProfiler::cnetplot(ego_sig_bp, categorySize = "pvalue",
+                                foldChange = genelist), silent = TRUE)
   net_sig_cc <- try(
-    clusterProfiler::cnetplot(ego_sig_cc, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+      clusterProfiler::cnetplot(ego_sig_cc, categorySize = "pvalue",
+                                foldChange = genelist), silent = TRUE)
 
   tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
   tree_mf <- sm(try(clusterProfiler::plotGOgraph(ego_sig_mf), silent = TRUE))
@@ -381,7 +381,7 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   }
 
   pvalue_plotlist <- list(
-    ## I want to split the following list, but I am not sure which belong here.
+      ## I want to split the following list, but I am not sure which belong here.
   )
   ggo_mf_bar <- try(barplot(ggo_mf, drop = TRUE,
                             showCategory = categories), silent = TRUE)
@@ -454,41 +454,41 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   }
 
   plotlist <- list(
-    "ggo_mf_bar" = ggo_mf_bar,
-    "ggo_bp_bar" = ggo_bp_bar,
-    "ggo_cc_bar" = ggo_cc_bar,
-    "ego_all_mf" = ego_all_mf_bar,
-    "ego_all_bp" = ego_all_bp_bar,
-    "ego_all_cc" = ego_all_cc_bar,
-    "ego_sig_mf" = ego_sig_mf_bar,
-    "ego_sig_bp" = ego_sig_bp_bar,
-    "ego_sig_cc" = ego_sig_cc_bar,
-    "dot_all_mf" = dot_all_mf,
-    "dot_all_bp" = dot_all_bp,
-    "dot_all_cc" = dot_all_cc,
-    "dot_sig_mf" = dot_sig_mf,
-    "dot_sig_bp" = dot_sig_bp,
-    "dot_sig_cc" = dot_sig_cc,
-    "map_sig_mf" = map_sig_mf,
-    "map_sig_bp" = map_sig_bp,
-    "map_sig_cc" = map_sig_cc,
-    "net_sig_mf" = net_sig_mf,
-    "net_sig_bp" = net_sig_bp,
-    "net_sig_cc" = net_sig_cc,
-    "tree_sig_mf" = tree_sig_mf,
-    "tree_sig_bp" = tree_sig_bp,
-    "tree_sig_cc" = tree_sig_cc)
+      "ggo_mf_bar" = ggo_mf_bar,
+      "ggo_bp_bar" = ggo_bp_bar,
+      "ggo_cc_bar" = ggo_cc_bar,
+      "ego_all_mf" = ego_all_mf_bar,
+      "ego_all_bp" = ego_all_bp_bar,
+      "ego_all_cc" = ego_all_cc_bar,
+      "ego_sig_mf" = ego_sig_mf_bar,
+      "ego_sig_bp" = ego_sig_bp_bar,
+      "ego_sig_cc" = ego_sig_cc_bar,
+      "dot_all_mf" = dot_all_mf,
+      "dot_all_bp" = dot_all_bp,
+      "dot_all_cc" = dot_all_cc,
+      "dot_sig_mf" = dot_sig_mf,
+      "dot_sig_bp" = dot_sig_bp,
+      "dot_sig_cc" = dot_sig_cc,
+      "map_sig_mf" = map_sig_mf,
+      "map_sig_bp" = map_sig_bp,
+      "map_sig_cc" = map_sig_cc,
+      "net_sig_mf" = net_sig_mf,
+      "net_sig_bp" = net_sig_bp,
+      "net_sig_cc" = net_sig_cc,
+      "tree_sig_mf" = tree_sig_mf,
+      "tree_sig_bp" = tree_sig_bp,
+      "tree_sig_cc" = tree_sig_cc)
 
   retlist <- list(
-    "all_mappings" = de_table_namedf,
-    "sig_mappings" = sig_genes_namedf,
-    "group_go" = group_go,
-    "enrich_go" = enrich_go,
-    "gse_go" = gse_go,
-    "kegg_data" = kegg_data,
-    "david_data" = david_data,
-    "plots" = plotlist,
-    "pvalue_plots" = plotlist)
+      "all_mappings" = de_table_namedf,
+      "sig_mappings" = sig_genes_namedf,
+      "group_go" = group_go,
+      "enrich_go" = enrich_go,
+      "gse_go" = gse_go,
+      "kegg_data" = kegg_data,
+      "david_data" = david_data,
+      "plots" = plotlist,
+      "pvalue_plots" = plotlist)
   class(retlist) <- c("clusterprofiler_result", "list")
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
@@ -509,20 +509,20 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
 cp_options <- function(species) {
   if (species == "dmelanogaster") {
     options <- list(
-      orgdb = "org.Dm.eg.db",
-      orgdb_from = "FLYBASE",
-      orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
-      kegg_prefix = "Dmel_",
-      kegg_organism = "dme",
-      kegg_id_column = "FLYBASECG")
+        orgdb = "org.Dm.eg.db",
+        orgdb_from = "FLYBASE",
+        orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+        kegg_prefix = "Dmel_",
+        kegg_organism = "dme",
+        kegg_id_column = "FLYBASECG")
   } else if (species == "hsapiens") {
     options <- list(
-      orgdb = "org.Hs.eg.db",
-      orgdb_from = "ENSEMBL",
-      orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
-      kegg_prefix = "Hsa_",
-      kegg_organism = "hsa",
-      kegg_id_column = "")
+        orgdb = "org.Hs.eg.db",
+        orgdb_from = "ENSEMBL",
+        orgdb_to = c("ENSEMBL", "SYMBOL", "ENTREZID"),
+        kegg_prefix = "Hsa_",
+        kegg_organism = "hsa",
+        kegg_id_column = "")
   }
   return(options)
 }
@@ -543,7 +543,7 @@ simple_cp_enricher <- function(sig_genes, de_table, go_db = NULL) {
   sig_genenames <- rownames(sig_genes)
   enriched <- clusterProfiler::enricher(sig_genenames, TERM2GENE = go_db)
   retlist <- list(
-    "enriched" = as.data.frame(enriched, stringsAsFactors = FALSE))
+      "enriched" = as.data.frame(enriched, stringsAsFactors = FALSE))
   return(retlist)
 }
 

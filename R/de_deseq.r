@@ -60,8 +60,8 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
       tibble::as_tibble()
     message("Returning the full LRT table just so that you have something to look at.")
     retlist <- list(
-      "deseq_result" = deseq_lrt,
-      "deseq_table" = lrt_significant)
+        "deseq_result" = deseq_lrt,
+        "deseq_table" = lrt_significant)
     return(retlist)
   }
 
@@ -89,7 +89,7 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
       "cluster_data" = cluster_data,
       "group_list" = group_lst,
       "favorite_genes" = cluster_data[["df"]]
-      )
+  )
   return(retlist)
 }
 
@@ -404,11 +404,11 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   coefficient_df <- coef(deseq_run)
   ## Here I will just simplify the column names.
   colnames(coefficient_df) <- gsub(
-    pattern = "^condition", replacement = "", x = colnames(coefficient_df))
+      pattern = "^condition", replacement = "", x = colnames(coefficient_df))
   colnames(coefficient_df) <- gsub(
-    pattern = "^batch", replacement = "", x = colnames(coefficient_df))
+      pattern = "^batch", replacement = "", x = colnames(coefficient_df))
   colnames(coefficient_df) <- gsub(
-    pattern = "^_", replacement = "", x = colnames(coefficient_df))
+      pattern = "^_", replacement = "", x = colnames(coefficient_df))
   remaining_list <- colnames(coefficient_df)
 
   ## Create a list of all the likely column names, depending on how deseq was
@@ -478,24 +478,24 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   retlist <- list(
-    "all_tables" = result_list,
-    "batches" = batches,
-    "batches_table" = batches_table,
-    "coefficients" = coefficient_df,
-    "conditions" = conditions,
-    "conditions_table" = conditions_table,
-    "contrasts_full" = contrasts_full,
-    "contrasts_performed" = contrasts,
-    "denominators" = denominators,
-    "dispersion_plot" = dispersion_plot,
-    "input_data" = input,
-    "method" = "deseq",
-    "model" = model_data,
-    "model_string" = model_string,
-    "normalized_counts" = normalized_counts,
-    "numerators" = numerators,
-    "deseq_dataset" = dataset,
-    "run" = deseq_run
+      "all_tables" = result_list,
+      "batches" = batches,
+      "batches_table" = batches_table,
+      "coefficients" = coefficient_df,
+      "conditions" = conditions,
+      "conditions_table" = conditions_table,
+      "contrasts_full" = contrasts_full,
+      "contrasts_performed" = contrasts,
+      "denominators" = denominators,
+      "dispersion_plot" = dispersion_plot,
+      "input_data" = input,
+      "method" = "deseq",
+      "model" = model_data,
+      "model_string" = model_string,
+      "normalized_counts" = normalized_counts,
+      "numerators" = numerators,
+      "deseq_dataset" = dataset,
+      "run" = deseq_run
   )
   class(retlist) <- c("deseq_result", "list")
   if (!is.null(arglist[["deseq_excel"]])) {

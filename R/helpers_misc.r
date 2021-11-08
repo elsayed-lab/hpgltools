@@ -77,8 +77,8 @@ bioc_all <- function(release = NULL,
   attempt <- function(pkg, update = suppress_updates, auto = suppress_auto,
                       forceme = force,
                       state = list(succeeded = c(),
-                                 failed = c(),
-                                 already = c())) {
+                                   failed = c(),
+                                   already = c())) {
     sleep <- 10
     suc <- state[["succeeded"]]
     fail <- state[["failed"]]
@@ -121,9 +121,9 @@ bioc_all <- function(release = NULL,
     }
     Sys.sleep(sleep)
     ret <- list(
-      "succeeded" = suc,
-      "failed" = fail,
-      "already" = alr)
+        "succeeded" = suc,
+        "failed" = fail,
+        "already" = alr)
     return(ret)
   } ## End attempt
   if (type == "software") {
@@ -142,8 +142,8 @@ bioc_all <- function(release = NULL,
                                      mirror = mirror, base = base,
                                      type = "annotation")
     installed <- list(
-      "software" = software_installed,
-      "annotation" = annotation_installed)
+        "software" = software_installed,
+        "annotation" = annotation_installed)
   }
   return(installed)
 }
@@ -637,7 +637,7 @@ saveme <- function(directory = "savefiles", backups = 2, cpus = 6, filename = "R
   backup_file(savefile, backups = backups)
   ## The following save strings work:
   save_string <- glue(
-    "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
+      "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
     save(list = ls(all.names = TRUE, envir = globalenv()),
          envir = globalenv(), file = con, compress = FALSE); \\
     close(con)")
@@ -750,8 +750,8 @@ ymxb_print <- function(lm_model, as = "glue") {
   ret <- NULL
   if (as != "glue") {
     retlst <- list(
-      "m" = m,
-      "int" = int)
+        "m" = m,
+        "int" = int)
     return(retlst)
   }
   if (as.numeric(int) >= 0) {

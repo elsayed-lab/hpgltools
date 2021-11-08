@@ -111,32 +111,32 @@ load_annotations <- function(type = NULL, ...) {
   annotations <- NULL
   ## FIXME: Add some logic here to figure out what search to perform.
   switchret <- switch(
-    type,
-    "biomart" = {
-      annotations <- load_biomart_annotations(...)
-    },
-    "gff" = {
-      annotations <- load_gff_annotations(...)
-    },
-    "genbank" = {
-      annotations <- load_genbank_annotations(...)
-    },
-    "kegg" = {
-      annotations <- load_kegg_annotations(...)
-    },
-    "microbesonline" = {
-      annotations <- load_microbesonline_annotations(...)
-    },
-    "trinotate" = {
-      annotations <- load_trinotate_annotations(...)
-    },
-    "uniprot" = {
-      annotations <- load_uniprot_annotations(...)
-    },
-    {
-      message("Not sure what type you chose, defaulting to biomart.")
-      annotations <- load_biomart_annotations(...)
-    })
+      type,
+      "biomart" = {
+        annotations <- load_biomart_annotations(...)
+      },
+      "gff" = {
+        annotations <- load_gff_annotations(...)
+      },
+      "genbank" = {
+        annotations <- load_genbank_annotations(...)
+      },
+      "kegg" = {
+        annotations <- load_kegg_annotations(...)
+      },
+      "microbesonline" = {
+        annotations <- load_microbesonline_annotations(...)
+      },
+      "trinotate" = {
+        annotations <- load_trinotate_annotations(...)
+      },
+      "uniprot" = {
+        annotations <- load_uniprot_annotations(...)
+      },
+      {
+        message("Not sure what type you chose, defaulting to biomart.")
+        annotations <- load_biomart_annotations(...)
+      })
   return(annotations)
 }
 

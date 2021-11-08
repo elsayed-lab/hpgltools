@@ -104,8 +104,8 @@ extract_mayu_pps_fdr <- function(file, fdr = 0.01) {
   fdr_df <- fdr_df[keepers, ]
   result <- tail(fdr_df, n = 1)[[1]]
   retlist <- list(
-    "fdr_number" = result,
-    "table" = mayu_df)
+      "fdr_number" = result,
+      "table" = mayu_df)
   return(retlist)
 }
 
@@ -273,11 +273,11 @@ extract_mzXML_scans <- function(file, id = NULL, write_acquisitions = TRUE,
                              row.names = FALSE, col.names = TRUE)
   }
   retlist <- list(
-    "file" = file,
-    "instrument" = instrument_data,
-    "scans" = scan_data,
-    "precursors" = precursor_data,
-    "acquisitions" = acquisition_windows)
+      "file" = file,
+      "instrument" = instrument_data,
+      "scans" = scan_data,
+      "precursors" = precursor_data,
+      "acquisitions" = acquisition_windows)
   return(retlist)
 }
 
@@ -309,9 +309,9 @@ extract_mzML_scans <- function(file, id = NULL, write_acquisitions = TRUE,
   scan_data <- mzR::header(input)
   closed <- mzR::close(input)
   retlist <- list(
-    "instrument" = instrument,
-    "info" = info,
-    "scan" = scan_data)
+      "instrument" = instrument,
+      "info" = info,
+      "scan" = scan_data)
   return(retlist)
 }
 
@@ -448,9 +448,9 @@ extract_msraw_data <- function(metadata, write_windows = TRUE, id_column = "samp
   rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique = TRUE)
 
   retlist <- list(
-    "colors" = chosen_colors,
-    "metadata" = sample_definitions,
-    "sample_data" = res)
+      "colors" = chosen_colors,
+      "metadata" = sample_definitions,
+      "sample_data" = res)
   if (!is.null(savefile)) {
     mzxml_data <- retlist
     save_result <- try(save(list = c("mzxml_data"), file = savefile), silent = TRUE)
@@ -607,14 +607,14 @@ extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
       variable_idx <- !is.na(variables)
       if (sum(variable_idx) > 0) {
         variable_string <- toString(
-          glue("position: {positions[variable_idx]} mass: {masses[variable_idx]}\\
+            glue("position: {positions[variable_idx]} mass: {masses[variable_idx]}\\
                 mod: {variables[variable_idx]}"))
         query_data[i, "variable_mods"] <- variable_string
       }
       static_idx <- !is.na(statics)
       if (sum(static_idx) > 0) {
         static_string <- toString(
-          glue("position: {positions[static_idx]} mass: {masses[static_idx]}\\
+            glue("position: {positions[static_idx]} mass: {masses[static_idx]}\\
                 mod: {statics[static_idx]}"))
         query_data[i, "static_mods"] <- static_string
       }
@@ -809,10 +809,10 @@ extract_pyprophet_data <- function(metadata, pyprophet_column = "diascored",
   sample_definitions <- sample_definitions[sample_idx, ]
 
   retlist <- list(
-    "failed" = failed_files,
-    "colors" = chosen_colors,
-    "metadata" = sample_definitions,
-    "sample_data" = res)
+      "failed" = failed_files,
+      "colors" = chosen_colors,
+      "metadata" = sample_definitions,
+      "sample_data" = res)
   if (!is.null(savefile)) {
     pyprophet_data <- retlist
     save_result <- try(save(list = c("pyprophet_data"), file = savefile), silent = TRUE)
@@ -856,8 +856,8 @@ gather_masses <- function(sequence) {
 #' @export
 impute_expt <- function(expt, filter = TRUE, p = 0.5,
                         fun = c("bpca", "knn", "QRILC", "MLE",
-                              "MinDet", "MinProb", "min", "zero",
-                              "mixed", "nbavg"), ...) {
+                                "MinDet", "MinProb", "min", "zero",
+                                "mixed", "nbavg"), ...) {
   ## Show error if inputs do not contain required columns
   fun <- match.arg(fun)
 
@@ -1025,8 +1025,8 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
                                        x = group_information[["Group Description"]])
       group_accession <- group_information[["Protein Group ID"]]
       group_list <- list(
-        "summary" = group_information,
-        "data" = list())
+          "summary" = group_information,
+          "data" = list())
       group_data[[group_accession]] <- group_list
       next
     }
@@ -1040,8 +1040,8 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
                                          x = protein_information[["Description"]])
       protein_accession <- protein_information[["Accession"]]
       protein_list <- list(
-        "summary" = protein_information,
-        "data" = data.frame())
+          "summary" = protein_information,
+          "data" = data.frame())
       group_data[[group_accession]][["data"]][[protein_accession]] <- protein_list
       next
     }
@@ -1093,41 +1093,41 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
   current_colnames <- tolower(current_colnames)
   ## percent signs are stupid in columns.
   current_colnames <- gsub(
-    pattern = "%", replacement = "pct", x = current_colnames)
+      pattern = "%", replacement = "pct", x = current_colnames)
   ## as are spaces.
   current_colnames <- gsub(
-    pattern = " ", replacement = "_", x = current_colnames)
+      pattern = " ", replacement = "_", x = current_colnames)
   ## A bunch of columns have redundant adjectives.
   current_colnames <- gsub(
-    pattern = "_confidence", replacement = "", x = current_colnames)
+      pattern = "_confidence", replacement = "", x = current_colnames)
   ## Extra text in a column name is useless
   current_colnames <- gsub(
-    pattern = "\\(by_search_engine\\)", replacement = "", x = current_colnames)
+      pattern = "\\(by_search_engine\\)", replacement = "", x = current_colnames)
   ## Get rid of a bunch of doofusy punctuation.
   current_colnames <- gsub(
-    pattern = "\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement = "", x = current_colnames)
+      pattern = "\\[|\\]|#|:|\\.|\\/|\\,|\\-", replacement = "", x = current_colnames)
   ## At this point we should not have any leading underscores.
   current_colnames <- gsub(
-    pattern = "^_", replacement = "", x = current_colnames)
+      pattern = "^_", replacement = "", x = current_colnames)
   ## Now should we have any double underscores.
   current_colnames <- gsub(
-    pattern = "__", replacement = "_", x = current_colnames)
+      pattern = "__", replacement = "_", x = current_colnames)
   ## Finally, because of the previous removals, there might be some duplicated
   ## terms left behind.
   current_colnames <- gsub(
-    pattern = "_ht", replacement = "", x = current_colnames)
+      pattern = "_ht", replacement = "", x = current_colnames)
   current_colnames <- gsub(
-    pattern = "_mascot_mascot", replacement = "_mascot", x = current_colnames)
+      pattern = "_mascot_mascot", replacement = "_mascot", x = current_colnames)
   current_colnames <- gsub(
-    pattern = "_sequest_sequest", replacement = "_sequest", x = current_colnames)
+      pattern = "_sequest_sequest", replacement = "_sequest", x = current_colnames)
   colnames(protein_df) <- current_colnames
 
   ## Now make sure the columns which should be numeric, are numeric.
   numeric_cols <- c(
-    "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot",
-    "expt_qvalue_sequest", "coverage_pct", "unique_peptides", "aas", "mw_kda",
-    "calc_pi", "score_mascot", "score_sequest", "peptides_mascot",
-    "peptides_sequest")
+      "protein_fdr_mascot", "protein_fdr_sequest", "exp_qvalue_mascot",
+      "expt_qvalue_sequest", "coverage_pct", "unique_peptides", "aas", "mw_kda",
+      "calc_pi", "score_mascot", "score_sequest", "peptides_mascot",
+      "peptides_sequest")
   for (col in numeric_cols) {
     if (!is.null(protein_df[[col]])) {
       protein_df[[col]] <- as.numeric(protein_df[[col]])
@@ -1142,10 +1142,10 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
   }
 
   retlist <- list(
-    "names" = protein_names,
-    "group_data" = group_data,
-    "protein_data" = protein_df,
-    "peptide_data" = peptide_df)
+      "names" = protein_names,
+      "group_data" = group_data,
+      "protein_data" = protein_df,
+      "peptide_data" = peptide_df)
   return(retlist)
 }
 
@@ -1204,24 +1204,24 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   message("There were ", sum(!decoy_number),
           " observations and ", sum(decoy_number), " decoy observations.")
   retlist[["fdr_overall"]] <- SWATH2stats::assess_fdr_overall(
-                                             s2s_exp,
-                                             output = "Rconsole",
-                                             plot = plot)
-  retlist[["byrun_fdr"]] <- SWATH2stats::assess_fdr_byrun(
-                                           s2s_exp,
-                                           FFT = fft,
-                                           plot = plot,
-                                           output = "Rconsole")
-  retlist[["chosen_mscore"]] <- SWATH2stats::mscore4assayfdr(
                                                s2s_exp,
-                                               FFT = fft,
-                                               fdr_target = target_fdr,
-                                               ...)
+                                               output = "Rconsole",
+                                               plot = plot)
+  retlist[["byrun_fdr"]] <- SWATH2stats::assess_fdr_byrun(
+                                             s2s_exp,
+                                             FFT = fft,
+                                             plot = plot,
+                                             output = "Rconsole")
+  retlist[["chosen_mscore"]] <- SWATH2stats::mscore4assayfdr(
+                                                 s2s_exp,
+                                                 FFT = fft,
+                                                 fdr_target = target_fdr,
+                                                 ...)
   retlist[["prot_score"]] <- SWATH2stats::mscore4protfdr(
-                                            s2s_exp,
-                                            FFT = fft,
-                                            fdr_target = target_fdr,
-                                            ...)
+                                              s2s_exp,
+                                              FFT = fft,
+                                              fdr_target = target_fdr,
+                                              ...)
   message("Starting mscore filter.")
   retlist[["raw"]] <- s2s_exp
   filt <- s2s_exp
@@ -1229,9 +1229,9 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   if (isTRUE(do_mscore)) {
     message("Starting mscore filter.")
     filt <- try(SWATH2stats::filter_mscore(
-                               s2s_exp,
-                               retlist[["chosen_mscore"]],
-                               ...))
+                                 s2s_exp,
+                                 retlist[["chosen_mscore"]],
+                                 ...))
     if (class(filt)[1] == "try-error") {
       warning("The mscore filter failed, reverting to the raw data.")
       filt <- s2s_exp
@@ -1248,10 +1248,10 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   if (isTRUE(do_freqobs)) {
     message("Starting freqobs filter.")
     filt <- try(SWATH2stats::filter_mscore_freqobs(
-                               filt,
-                               mscore,
-                               percentage,
-                               ...))
+                                 filt,
+                                 mscore,
+                                 percentage,
+                                 ...))
     if (class(filt)[1] == "try-error") {
       warning("The mscore filter failed, reverting to the mscore filtered data.")
       filt <- filt_backup
@@ -1269,11 +1269,11 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
     message("Starting fdr filter.")
     ## filter_mscore_fdr should probably be modified for flexibility.
     filt <- try(SWATH2stats::filter_mscore_fdr(
-                               filt,
-                               FFT = fft,
-                               overall_protein_fdr_target = retlist[["prot_score"]],
-                               upper_overall_peptide_fdr_limit = upper_fdr,
-                               ...))
+                                 filt,
+                                 FFT = fft,
+                                 overall_protein_fdr_target = retlist[["prot_score"]],
+                                 upper_overall_peptide_fdr_limit = upper_fdr,
+                                 ...))
     if (class(filt)[1] == "try-error") {
       warning("The fdr filter failed, reverting to the freqobs filtered data.")
       filt <- filt_backup
@@ -1290,9 +1290,9 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   if (isTRUE(do_proteotypic)) {
     message("Starting proteotypic filter.")
     filt <- try(SWATH2stats::filter_proteotypic_peptides(
-                               filt,
-                               column = column,
-                               ...))
+                                 filt,
+                                 column = column,
+                                 ...))
     if (class(filt)[1] == "try-error") {
       warning("The proteotypic filter failed, reverting to the fdr filtered data.")
       filt <- filt_backup
@@ -1311,8 +1311,8 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
     ## Looking at this function, it just renames the peptides to remove the 1/!
     ## That is not a filter!
     filt <- try(SWATH2stats::filter_all_peptides(
-                               filt,
-                               column = column))
+                                 filt,
+                                 column = column))
     if (class(filt)[1] == "try-error") {
       warning("The peptide filter failed, reverting to the proteotypic filtered data.")
       filt <- filt_backup
@@ -1329,10 +1329,10 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   if (isTRUE(do_max)) {
     message("Starting maximum peptide filter.")
     filt <- try(SWATH2stats::filter_on_max_peptides(
-                               data = filt,
-                               column = column,
-                               n_peptides = max_peptides,
-                               ...))
+                                 data = filt,
+                                 column = column,
+                                 n_peptides = max_peptides,
+                                 ...))
     if (class(filt)[1] == "try-error") {
       warning("The maximum peptide filter failed, reverting to the proteotypic filtered data.")
       filt <- filt_backup
@@ -1348,10 +1348,10 @@ s2s_all_filters <- function(s2s_exp, column = "proteinname", pep_column = "fullp
   if (isTRUE(do_min)) {
     message("Starting minimum peptide filter.")
     filt <- try(SWATH2stats::filter_on_min_peptides(
-                               data = filt,
-                               n_peptides = min_peptides,
-                               column = column,
-                               rm.decoy = remove_decoys))
+                                 data = filt,
+                                 n_peptides = min_peptides,
+                                 column = column,
+                                 rm.decoy = remove_decoys))
     if (class(filt)[1] == "try-error") {
       warning("The minimum peptide filter failed, reverting to the maximum peptide filtered data.")
       filt <- filt_backup

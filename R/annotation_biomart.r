@@ -20,7 +20,7 @@
 #' @seealso [biomaRt::useMart()] [biomaRt::listMarts()]
 #' @export
 find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
-                                              "www.ensembl.org", "asia.ensembl.org"),
+                                                "www.ensembl.org", "asia.ensembl.org"),
                               trymart = "ENSEMBL_MART_ENSEMBL", archive = FALSE,
                               year = NULL, month = NULL) {
   if (isTRUE(archive)) {
@@ -147,21 +147,21 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                        "www.ensembl.org", "asia.ensembl.org"),
                                      year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
                                      gene_requests = c("ensembl_gene_id",
-                                                     "version",
-                                                     "ensembl_transcript_id",
-                                                     "transcript_version", "hgnc_symbol",
-                                                     "description", "gene_biotype"),
+                                                       "version",
+                                                       "ensembl_transcript_id",
+                                                       "transcript_version", "hgnc_symbol",
+                                                       "description", "gene_biotype"),
                                      length_requests = c("ensembl_transcript_id",
-                                                       "cds_length", "chromosome_name",
-                                                       "strand", "start_position",
-                                                       "end_position"),
+                                                         "cds_length", "chromosome_name",
+                                                         "strand", "start_position",
+                                                         "end_position"),
                                      include_lengths = TRUE) {
 
   ## An attempt to get around 'unable to get local issuer certificate':
   ## As per: https://github.com/grimbough/biomaRt/issues/39
   new_config <- httr::config(ssl_verifypeer = FALSE)
   httr::set_config(new_config, override = FALSE)
-  
+
   savefile <- glue("{species}_biomart_annotations.rda")
   biomart_annotations <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {
@@ -172,12 +172,12 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     eval(parse(text = load_string))
     biomart_annotations <- fresh[["biomart_annotations"]]
     retlist <- list(
-      "annotation" = biomart_annotations,
-      "mart" = "savefile",
-      "host" = "savefile",
-      "mart_name" = "savefile",
-      "rows" = "savefile",
-      "dataset" = "savefile"
+        "annotation" = biomart_annotations,
+        "mart" = "savefile",
+        "host" = "savefile",
+        "mart_name" = "savefile",
+        "rows" = "savefile",
+        "dataset" = "savefile"
     )
     return(retlist)
   }
@@ -321,13 +321,13 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     message("Finished save().")
   }
   retlist <- list(
-    "annotation" = biomart_annotations,
-    "mart" = ensembl,
-    "host" = host,
-    "mart_name" = used_mart,
-    "columns" = chosen_annotations,
-    "possible_attribs" = available_attribs,
-    "dataset" = chosen_dataset
+      "annotation" = biomart_annotations,
+      "mart" = ensembl,
+      "host" = host,
+      "mart_name" = used_mart,
+      "columns" = chosen_annotations,
+      "possible_attribs" = available_attribs,
+      "dataset" = chosen_dataset
   )
   return(retlist)
 }
@@ -396,12 +396,12 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
     eval(parse(text = load_string))
     biomart_go <- fresh[["biomart_go"]]
     retlist <- list(
-      "go" = biomart_go,
-      "mart" = "savefile",
-      "host" = "savefile",
-      "mart_name" = "savefile",
-      "rows" = "savefile",
-      "dataset" = "savefile"
+        "go" = biomart_go,
+        "mart" = "savefile",
+        "host" = "savefile",
+        "mart_name" = "savefile",
+        "rows" = "savefile",
+        "dataset" = "savefile"
     )
     return(retlist)
   }
@@ -488,12 +488,12 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
   }
 
   retlist <- list(
-    "go" = biomart_go,
-    "mart" = ensembl,
-    "host" = host,
-    "mart_name" = used_mart,
-    "attributes" = dl_rows,
-    "dataset" = chosen_dataset
+      "go" = biomart_go,
+      "mart" = ensembl,
+      "host" = host,
+      "mart_name" = used_mart,
+      "attributes" = dl_rows,
+      "dataset" = chosen_dataset
   )
   return(retlist)
 }
@@ -608,10 +608,10 @@ load_biomart_orthologs <- function(gene_ids = NULL, first_species = "hsapiens",
   colnames(linked_genes) <- new_colnames
 
   linked_genes <- list(
-    "all_linked_genes" = linked_genes,
-    "subset_linked_genes" = kept_genes,
-    "first_attribs" = possible_first_attributes,
-    "second_attribs" = possible_second_attributes)
+      "all_linked_genes" = linked_genes,
+      "subset_linked_genes" = kept_genes,
+      "first_attribs" = possible_first_attributes,
+      "second_attribs" = possible_second_attributes)
   return(linked_genes)
 }
 

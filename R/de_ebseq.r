@@ -87,10 +87,10 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
   }
 
   retlist <- list(
-    "all_tables" = result,
-    "conditions" = conditions,
-    "conditions_table" = conditions_table,
-    "method" = "ebseq"
+      "all_tables" = result,
+      "conditions" = conditions,
+      "conditions_table" = conditions_table,
+      "method" = "ebseq"
   )
   class(retlist) <- c("ebseq_result", "list")
   return(retlist)
@@ -137,9 +137,9 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
   condition_levels <- levels(as.factor(conditions))
 
   model_choice <- choose_model(
-    input, conditions = conditions, batches = batches,
-    model_batch = FALSE, model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
-    ...)
+      input, conditions = conditions, batches = batches,
+      model_batch = FALSE, model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
+      ...)
   model_data <- model_choice[["chosen_model"]]
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
                                  ...)
@@ -162,9 +162,9 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
       next
     }
     pair <- sm(subset_expt(
-      expt = input,
-      ## subset = paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
-      subset = glue("condition=='{b_name}' | condition=='{a_name}'")))
+        expt = input,
+        ## subset = paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
+        subset = glue("condition=='{b_name}' | condition=='{a_name}'")))
     pair_data <- exprs(pair)
     conditions <- pair[["conditions"]]
     a_result <- ebseq_two(pair_data, conditions, numerator = b_name, denominator = a_name,
@@ -242,9 +242,9 @@ ebseq_few <- function(data, conditions,
 
   normalized <- ebseq_size_factors(data, norm)
   eb_output <- EBSeq::EBMultiTest(
-                        Data = data, NgVector = ng_vector,
-                        Conditions = conditions, AllParti = patterns,
-                        sizeFactors = normalized, maxround = rounds)
+                          Data = data, NgVector = ng_vector,
+                          Conditions = conditions, AllParti = patterns,
+                          sizeFactors = normalized, maxround = rounds)
   posteriors <- EBSeq::GetMultiPP(eb_output)
   fold_changes <- EBSeq::GetMultiFC(eb_output)
 
@@ -277,9 +277,9 @@ ebseq_few <- function(data, conditions,
   }
 
   retlst <- list(
-    "all_tables" = table_lst,
-    "conditions" = conditions,
-    "method" = "ebseq")
+      "all_tables" = table_lst,
+      "conditions" = conditions,
+      "method" = "ebseq")
   return(retlst)
 }
 
@@ -314,8 +314,8 @@ ebseq_two <- function(pair_data, conditions,
     pair_data[na_idx] <- mean(pair_data, na.rm = TRUE)
   }
   eb_output <- sm(EBSeq::EBTest(
-                           Data = pair_data, NgVector = NULL, Conditions = conditions,
-                           sizeFactors = normalized, maxround = rounds))
+                             Data = pair_data, NgVector = NULL, Conditions = conditions,
+                             sizeFactors = normalized, maxround = rounds))
   posteriors <- EBSeq::GetPP(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
   eb_result <- EBSeq::GetDEResults(eb_output, FDR = target_fdr)

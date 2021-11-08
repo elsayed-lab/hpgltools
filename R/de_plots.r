@@ -215,18 +215,18 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
       !is.null(the_table[[fc_col]]) &
       !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
-      table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
-      logfc = logfc, p = p, invert = invert,
-      ...)
+        table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+        logfc = logfc, p = p, invert = invert,
+        ...)
     vol_material <- plot_volcano_de(
-      table = the_table, fc_col = fc_col, p_col = p_col,
-      logfc = logfc, p = p,
-      ...)
+        table = the_table, fc_col = fc_col, p_col = p_col,
+        logfc = logfc, p = p,
+        ...)
   }
 
   retlist <- list(
-    "ma" = ma_material,
-    "volcano" = vol_material)
+      "ma" = ma_material,
+      "volcano" = vol_material)
   return(retlist)
 }
 
@@ -419,13 +419,13 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
                                 column = "deseq_logfc", p_column = deseq_p, p = p))
   up_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["up_genes"]]),
-    "edger" = rownames(edger_sig[["up_genes"]]),
-    "limma" = rownames(limma_sig[["up_genes"]]))
+      "deseq" = rownames(deseq_sig[["up_genes"]]),
+      "edger" = rownames(edger_sig[["up_genes"]]),
+      "limma" = rownames(limma_sig[["up_genes"]]))
   down_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["down_genes"]]),
-    "edger" = rownames(edger_sig[["down_genes"]]),
-    "limma" = rownames(limma_sig[["down_genes"]]))
+      "deseq" = rownames(deseq_sig[["down_genes"]]),
+      "edger" = rownames(edger_sig[["down_genes"]]),
+      "limma" = rownames(limma_sig[["down_genes"]]))
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
@@ -443,10 +443,10 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   removed <- file.remove(tmp_file)
 
   retlist <- list(
-    "up_venn" = up_venn,
-    "up_noweight" = up_venn_noweight,
-    "down_venn" = down_venn,
-    "down_noweight" = down_venn_noweight)
+      "up_venn" = up_venn,
+      "up_noweight" = up_venn_noweight,
+      "down_venn" = down_venn,
+      "down_noweight" = down_venn_noweight)
   return(retlist)
 }
 
@@ -629,14 +629,14 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::theme_bw(base_size = base_size)
 
   retlist <- list(
-    "up" = up_plot,
-    "down" = down_plot,
-    "pup" = pup_plot,
-    "pdown" = pdown_plot,
-    "up_data" = up_nums,
-    "down_data" = down_nums,
-    "pup_data" = pup_nums,
-    "pdown_data" = pdown_nums)
+      "up" = up_plot,
+      "down" = down_plot,
+      "pup" = pup_plot,
+      "pdown" = pdown_plot,
+      "up_data" = up_nums,
+      "down_data" = down_nums,
+      "pup_data" = pup_nums,
+      "pdown_data" = pdown_nums)
   return(retlist)
 }
 
@@ -745,9 +745,9 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged[["state"]] <- as.factor(merged[["state"]])
 
   first_table_colname <- glue::glue(
-                                 "Table: {first_table}, Type: {first_type}, column: {first_column}")
+                                   "Table: {first_table}, Type: {first_type}, column: {first_column}")
   second_table_colname <- glue::glue(
-                                  "Table: {second_table}, Type: {second_type}, column: {second_column}")
+                                    "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data = merged,
                 aes_string(color = "state", fill = "state",
@@ -755,9 +755,9 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
     ggplot2::geom_point(size = 1, alpha = alpha) +
     ggplot2::scale_color_manual(name = "state",
                                 values = c("both"=both_color,
-                                         "first"=first_color,
-                                         "second"=second_color,
-                                         "neither"=no_color)) +
+                                           "first"=first_color,
+                                           "second"=second_color,
+                                           "neither"=no_color)) +
     ggplot2::geom_smooth(method = "loess", color = "lightblue") +
     ggplot2::ylab(glue::glue("Rank order of {second_table_colname}")) +
     ggplot2::xlab(glue::glue("Rank order of {first_table_colname}")) +
@@ -769,10 +769,10 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   model_summary <- summary(model_test)
   cor <- cor.test(merged[[c1]], merged[[c2]], method = "pearson")
   retlist <- list(
-    "plot" = plt,
-    "model" = model_test,
-    "summary" = model_summary,
-    "correlation" = cor)
+      "plot" = plt,
+      "model" = model_test,
+      "summary" = model_summary,
+      "correlation" = cor)
 
   return(retlist)
 }
@@ -812,35 +812,35 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
                                  according_to = "all", order = NULL, maximum = NULL, ...) {
   arglist <- list(...)
   sig_lists_up <- list(
-    "limma" = list(),
-    "edger" = list(),
-    "deseq" = list(),
-    "ebseq" = list(),
-    "basic" = list())
+      "limma" = list(),
+      "edger" = list(),
+      "deseq" = list(),
+      "ebseq" = list(),
+      "basic" = list())
   sig_lists_down <- list(
-    "limma" = list(),
-    "edger" = list(),
-    "deseq" = list(),
-    "ebseq" = list(),
-    "basic" = list())
+      "limma" = list(),
+      "edger" = list(),
+      "deseq" = list(),
+      "ebseq" = list(),
+      "basic" = list())
   plots <- list(
-    "limma" = NULL,
-    "edger" = NULL,
-    "deseq" = NULL,
-    "ebseq" = NULL,
-    "basic" = NULL)
+      "limma" = NULL,
+      "edger" = NULL,
+      "deseq" = NULL,
+      "ebseq" = NULL,
+      "basic" = NULL)
   tables_up <- list(
-    "limma" = NULL,
-    "edger" = NULL,
-    "deseq" = NULL,
-    "ebseq" = NULL,
-    "basic" = NULL)
+      "limma" = NULL,
+      "edger" = NULL,
+      "deseq" = NULL,
+      "ebseq" = NULL,
+      "basic" = NULL)
   tables_down <- list(
-    "limma" = NULL,
-    "edger" = NULL,
-    "deseq" = NULL,
-    "ebseq" = NULL,
-    "basic" = NULL)
+      "limma" = NULL,
+      "edger" = NULL,
+      "deseq" = NULL,
+      "ebseq" = NULL,
+      "basic" = NULL)
   table_length <- 0
   fc_names <- c()
 
@@ -1004,23 +1004,23 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
     ## plots[[type]] <- plot_significant_bar(up, down, maximum = maximum) #, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
   retlist <- list(
-    "ups" = uplist,
-    "downs" = downlist,
-    "limma_up_table" = tables_up[["limma"]],
-    "limma_down_table"= tables_down[["limma"]],
-    "limma" = plots[["limma"]],
-    "deseq_up_table" = tables_up[["deseq"]],
-    "deseq_down_table"= tables_down[["deseq"]],
-    "deseq" = plots[["deseq"]],
-    "edger_up_table" = tables_up[["edger"]],
-    "edger_down_table"= tables_down[["edger"]],
-    "edger" = plots[["edger"]],
-    "ebseq_up_table" = tables_up[["ebseq"]],
-    "ebseq_down_table"= tables_down[["ebseq"]],
-    "ebseq" = plots[["ebseq"]],
-    "basic_up_table" = tables_up[["basic"]],
-    "basic_down_table"= tables_down[["basic"]],
-    "basic" = plots[["basic"]]
+      "ups" = uplist,
+      "downs" = downlist,
+      "limma_up_table" = tables_up[["limma"]],
+      "limma_down_table"= tables_down[["limma"]],
+      "limma" = plots[["limma"]],
+      "deseq_up_table" = tables_up[["deseq"]],
+      "deseq_down_table"= tables_down[["deseq"]],
+      "deseq" = plots[["deseq"]],
+      "edger_up_table" = tables_up[["edger"]],
+      "edger_down_table"= tables_down[["edger"]],
+      "edger" = plots[["edger"]],
+      "ebseq_up_table" = tables_up[["ebseq"]],
+      "ebseq_down_table"= tables_down[["ebseq"]],
+      "ebseq" = plots[["ebseq"]],
+      "basic_up_table" = tables_up[["basic"]],
+      "basic_down_table"= tables_down[["basic"]],
+      "basic" = plots[["basic"]]
   )
   return(retlist)
 }

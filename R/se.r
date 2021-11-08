@@ -143,9 +143,9 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     ## if all_count_tables _did_ exist, then we already had the count tables and so
     ## count_data should have them and all ids as 'kept'.
     count_data <- list(
-      "source" = "dataframe",
-      "raw" = all_count_tables,
-      "kept_ids" = rownames(sample_definitions))
+        "source" = "dataframe",
+        "raw" = all_count_tables,
+        "kept_ids" = rownames(sample_definitions))
     ## Remember that R does not like rownames to start with a number, and if they do
     ## I already changed the count table rownames to begin with 's'.
     count_data[["kept_ids"]] <- gsub(pattern = "^([[:digit:]])",
@@ -156,7 +156,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## when reading in the count tables.
   kept_definitions_idx <- rownames(sample_definitions) %in% count_data[["kept_ids"]]
   if (sum(kept_definitions_idx) < length(kept_definitions_idx)) {
-      warning("Some samples were removed when cross referencing the samples against the count data.")
+    warning("Some samples were removed when cross referencing the samples against the count data.")
   }
   sample_definitions <- sample_definitions[kept_definitions_idx, ]
   ## While we are removing stuff...
@@ -171,11 +171,11 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   }
   ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
   if (isTRUE(sanitize_rownames)) {
-      all_count_tables[["rownames"]] <- gsub(pattern = "^exon:", replacement = "",
-                                             x = all_count_tables[["rownames"]])
-      all_count_tables[["rownames"]] <- make.names(gsub(pattern = ":\\d+", replacement = "",
-                                                        x = all_count_tables[["rownames"]]),
-                                                   unique = TRUE)
+    all_count_tables[["rownames"]] <- gsub(pattern = "^exon:", replacement = "",
+                                           x = all_count_tables[["rownames"]])
+    all_count_tables[["rownames"]] <- make.names(gsub(pattern = ":\\d+", replacement = "",
+                                                      x = all_count_tables[["rownames"]]),
+                                                 unique = TRUE)
   }
 
   ## There is an important caveat here!!
@@ -197,25 +197,25 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## as.data.table().
   if (!is.null(tximport_data[["raw"]])) {
     rownames(tximport_data[["raw"]][["abundance"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["abundance"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["abundance"]]))
     rownames(tximport_data[["raw"]][["counts"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["counts"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["counts"]]))
     rownames(tximport_data[["raw"]][["length"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["raw"]][["length"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["raw"]][["length"]]))
   }
   if (!is.null(tximport_data[["scaled"]])) {
     rownames(tximport_data[["scaled"]][["abundance"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["abundance"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["abundance"]]))
     rownames(tximport_data[["scaled"]][["counts"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["counts"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["counts"]]))
     rownames(tximport_data[["scaled"]][["length"]]) <- gsub(
-      pattern = ":", replacement = "\\.",
-      x = rownames(tximport_data[["scaled"]][["length"]]))
+        pattern = ":", replacement = "\\.",
+        x = rownames(tximport_data[["scaled"]][["length"]]))
   }
 
   ## Try a couple different ways of getting gene-level annotations into the expressionset.
@@ -329,7 +329,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## Set an incrementing id number to make absolutely paranoidly certain the
   ## order stays constant.
   counts_and_annotations <- counts_and_annotations[
-    order(counts_and_annotations[["temporary_id_number"]]), ]
+      order(counts_and_annotations[["temporary_id_number"]]), ]
   ## Pull out the annotation data and convert to data frame.
   kept_columns <- colnames(counts_and_annotations) %in% colnames(gene_info)
   final_annotations <- counts_and_annotations[, kept_columns, with = FALSE]
@@ -430,11 +430,11 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   metadata(se)[["gff_file"]] <- include_gff
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
-    "filter" = "raw",
-    "normalization" = "raw",
-    "conversion" = "raw",
-    "batch" = "raw",
-    "transform" = "raw")
+      "filter" = "raw",
+      "normalization" = "raw",
+      "conversion" = "raw",
+      "batch" = "raw",
+      "transform" = "raw")
   metadata(se)[["state"]] <- starting_state
   se_conditions <- sample_definitions[["condition"]]
   names(se_conditions) <- rownames(sample_definitions)
@@ -503,7 +503,7 @@ make_pombe_se <- function(annotation = TRUE) {
         host = "fungi.ensembl.org", trymart = "fungi_mart",
         trydataset = "spombe_eg_gene",
         gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                        "hgnc_symbol", "description", "gene_biotype"),
+                          "hgnc_symbol", "description", "gene_biotype"),
         species = "spombe", overwrite = TRUE)
     pombe_mart <- pombe_annotations[["mart"]]
     annotations <- pombe_annotations[["annotation"]]

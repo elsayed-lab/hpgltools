@@ -1,5 +1,9 @@
 dataset <- get_data(data = "TMRC3")
 
+#' Set up the Main siny page.
+#'
+#' @import shiny
+#' @import plotly
 ui <- fluidPage(
     # App title ----
     headerPanel("TMRC3 Plots"),

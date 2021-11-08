@@ -325,16 +325,16 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   merged_ids_lengths <- merge(merged_ids_lengths,
                               de_genelist, by.x = "ID", by.y = "ID", all.x = TRUE)
   merged_ids_lengths[["length"]] <- suppressWarnings(
-    as.numeric(merged_ids_lengths[["length"]]))
+      as.numeric(merged_ids_lengths[["length"]]))
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
   ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
   ## must be the same length as the vector
   de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
   names(de_vector) <- make.names(as.character(
-    merged_ids_lengths[["ID"]]), unique = TRUE)
+      merged_ids_lengths[["ID"]]), unique = TRUE)
   length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
   names(length_vector) <- make.names(as.character(
-    merged_ids_lengths[["ID"]]), unique = TRUE)
+      merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
   tmp_file <- tempfile(pattern = "goseq", fileext = ".png")
@@ -428,27 +428,27 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                                        "over_represented_pvalue", "qvalue", "term")]
 
   pval_plots <- list(
-    "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
-    "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
-    "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
+      "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
+      "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
+      "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
 
   retlist <- list(
-    "input" = sig_genes,
-    "pwf" = pwf,
-    "pwf_plot" = pwf_plot,
-    "all_data" = godata,
-    "go_db" = godf,
-    "pvalue_histogram" = goseq_p,
-    "godata_interesting" = godata_interesting,
-    "mf_interesting" = mf_interesting,
-    "bp_interesting" = bp_interesting,
-    "cc_interesting" = cc_interesting,
-    "goadjust_method" = goseq_method,
-    "adjust_method" = padjust_method,
-    "mf_subset" = mf_subset,
-    "pvalue_plots" = pval_plots,
-    "bp_subset" = bp_subset,
-    "cc_subset" = cc_subset)
+      "input" = sig_genes,
+      "pwf" = pwf,
+      "pwf_plot" = pwf_plot,
+      "all_data" = godata,
+      "go_db" = godf,
+      "pvalue_histogram" = goseq_p,
+      "godata_interesting" = godata_interesting,
+      "mf_interesting" = mf_interesting,
+      "bp_interesting" = bp_interesting,
+      "cc_interesting" = cc_interesting,
+      "goadjust_method" = goseq_method,
+      "adjust_method" = padjust_method,
+      "mf_subset" = mf_subset,
+      "pvalue_plots" = pval_plots,
+      "bp_subset" = bp_subset,
+      "cc_subset" = cc_subset)
   class(retlist) <- c("goseq_result", "list")
   if (!is.null(excel)) {
     mesg("Writing data to: ", excel, ".")

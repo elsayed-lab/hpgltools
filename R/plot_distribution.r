@@ -300,11 +300,11 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
                                                      "max"=max(counts)),
                                               by = "sample"]
   retlist <- list(
-    "plot" = densityplot,
-    "condition_summary" = condition_summary,
-    "batch_summary" = batch_summary,
-    "sample_summary" = sample_summary,
-    "table" = melted)
+      "plot" = densityplot,
+      "condition_summary" = condition_summary,
+      "batch_summary" = batch_summary,
+      "sample_summary" = sample_summary,
+      "table" = melted)
   return(retlist)
 }
 
@@ -523,9 +523,9 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   }
   log_summary <- summary(log_df[["sub"]])
   qq_plots <- list(
-    "ratio" = ratio_plot,
-    "log" = log_ratio_plot,
-    "summary" = log_summary)
+      "ratio" = ratio_plot,
+      "log" = log_ratio_plot,
+      "summary" = log_summary)
   return(qq_plots)
 }
 
@@ -630,8 +630,8 @@ plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
   }
 
   retlist <- list(
-    "plot" = topn_plot,
-    "table" = tmpdf)
+      "plot" = topn_plot,
+      "table" = tmpdf)
   return(retlist)
 }
 
@@ -705,10 +705,10 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   cv_data <- melted %>%
     dplyr::group_by(.data[["gene"]], .data[[x_axis]]) %>%
     dplyr::summarize(
-             "mean_exprs" = mean(.data[["exprs"]], na.rm = TRUE),
-             "sd_exprs" = sd(.data[["exprs"]], na.rm = TRUE),
-             "q1" = quantile(.data[["exprs"]], probs = 0.25),
-             "q3" = quantile(.data[["exprs"]], probs = 0.75))
+               "mean_exprs" = mean(.data[["exprs"]], na.rm = TRUE),
+               "sd_exprs" = sd(.data[["exprs"]], na.rm = TRUE),
+               "q1" = quantile(.data[["exprs"]], probs = 0.25),
+               "q3" = quantile(.data[["exprs"]], probs = 0.75))
   cv_data[["cv"]] <- cv_data[["sd_exprs"]] / cv_data[["mean_exprs"]]
   cv_data[["disp"]] <- (cv_data[["q3"]] - cv_data[["q1"]]) / (cv_data[["q3"]] + cv_data[["q1"]])
   na_idx <- is.na(cv_data[["cv"]])
@@ -755,9 +755,9 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
   cv_data[["x_axis"]] <- cv_data[[x_axis]]
   y_labels <- list(
-    "bcv" = "Biological coefficient of variation",
-    "cv" = "Coefficient of variation",
-    "disp" = "Quartile coefficient of dispersion")
+      "bcv" = "Biological coefficient of variation",
+      "cv" = "Coefficient of variation",
+      "disp" = "Quartile coefficient of dispersion")
   retlst <- list()
   for (type in c("cv", "disp")) {
     retlst[[type]] <- ggplot(cv_data, aes_string(x = "x_axis", y = type)) +

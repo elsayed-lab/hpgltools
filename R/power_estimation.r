@@ -329,7 +329,7 @@ my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
   old_seed <- set.seed(sim.opts[["sim.seed"]])
   pvalue <- fdrs <- xbar <- array(NA,
                                   dim = c(sim.opts[["ngenes"]],
-                                        length(Nreps), nsims))
+                                          length(Nreps), nsims))
   DEids <- lfcs <- NULL
   for (i in 1:nsims) {
     sim.opts[["sim.seed"]] <- sim.opts[["sim.seed"]] + 1

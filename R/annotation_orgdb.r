@@ -125,10 +125,10 @@ load_orgdb_annotations <- function(orgdb = NULL, gene_ids = NULL, include_go = F
   ## Note querying by "GENEID" will exclude noncoding RNAs
   message("Attempting to select: ", toString(chosen_fields))
   gene_info <- try(AnnotationDbi::select(
-                                    x = orgdb,
-                                    keys = gene_ids,
-                                    keytype = keytype,
-                                    columns = chosen_fields))
+                                      x = orgdb,
+                                      keys = gene_ids,
+                                      keytype = keytype,
+                                      columns = chosen_fields))
   if (class(gene_info) == "try-error") {
     message("Select statement failed, this is commonly because there is no join",
             " between the transcript table and others.")
@@ -170,11 +170,11 @@ load_orgdb_annotations <- function(orgdb = NULL, gene_ids = NULL, include_go = F
   rownames(gene_info) <- make.names(gene_info[[1]], unique = TRUE)
 
   retlist <- list(
-    "genes" = gene_info,
-    "gene_exons" = gene_exons,
-    "transcripts" = transcripts,
-    "fivep_utr" = fivep_utr,
-    "threep_utr" = threep_utr)
+      "genes" = gene_info,
+      "gene_exons" = gene_exons,
+      "transcripts" = transcripts,
+      "fivep_utr" = fivep_utr,
+      "threep_utr" = threep_utr)
   return(retlist)
 }
 

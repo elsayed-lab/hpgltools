@@ -46,7 +46,7 @@ gather_eupath_utrs_padding <- function(species_name = "Leishmania major", entry 
   orgdb_name <- pkg_names[["orgdb"]]
   if (!isTRUE(pkg_names[["bsgenome_installed"]])) {
     genome_installedp <- EuPathDB::make_eupath_bsgenome(species = species_name, entry = entry,
-                                                          ...)
+                                                        ...)
   }
   if (!isTRUE(pkg_names[["orgdb_installed"]])) {
     orgdb_installedp <- EuPathDB::make_eupath_orgdb(entry = entry,
@@ -162,12 +162,12 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   minus_entries <- annot_df[minus_idx, ]
 
   pluses_fivep <- GenomicRanges::GRanges(
-                                   seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
-                                   ranges = IRanges::IRanges(
-                                                     start = plus_entries[["low_boundary"]],
-                                                     end = plus_entries[[start_column]]),
-                                   strand = S4Vectors::Rle(plus_entries[[strand_column]]),
-                                   name = S4Vectors::Rle(plus_entries[[name_column]]))
+                                     seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
+                                     ranges = IRanges::IRanges(
+                                                           start = plus_entries[["low_boundary"]],
+                                                           end = plus_entries[[start_column]]),
+                                     strand = S4Vectors::Rle(plus_entries[[strand_column]]),
+                                     name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_fivep))
   genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
@@ -175,12 +175,12 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   retlist[["fiveprime_plus_granges"]] <- pluses_fivep
 
   pluses_threep <- GenomicRanges::GRanges(
-                                    seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
-                                    ranges = IRanges::IRanges(
-                                                      start = plus_entries[[end_column]],
-                                                      end = plus_entries[["high_boundary"]]),
-                                    strand = S4Vectors::Rle(plus_entries[[strand_column]]),
-                                    name = S4Vectors::Rle(plus_entries[[name_column]]))
+                                      seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
+                                      ranges = IRanges::IRanges(
+                                                            start = plus_entries[[end_column]],
+                                                            end = plus_entries[["high_boundary"]]),
+                                      strand = S4Vectors::Rle(plus_entries[[strand_column]]),
+                                      name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_threep))
   genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
@@ -188,12 +188,12 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   retlist[["threeprime_plus_granges"]] <- pluses_threep
 
   pluses_cds <- GenomicRanges::GRanges(
-                                 seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
-                                 ranges = IRanges::IRanges(
-                                                   start = plus_entries[[start_column]],
-                                                   end = plus_entries[[end_column]]),
-                                 strand = S4Vectors::Rle(plus_entries[[strand_column]]),
-                                 name = S4Vectors::Rle(plus_entries[[name_column]]))
+                                   seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
+                                   ranges = IRanges::IRanges(
+                                                         start = plus_entries[[start_column]],
+                                                         end = plus_entries[[end_column]]),
+                                   strand = S4Vectors::Rle(plus_entries[[strand_column]]),
+                                   name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_cds))
   genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
@@ -201,12 +201,12 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   retlist[["cds_plus_granges"]] <- pluses_cds
 
   pluses_all <- GenomicRanges::GRanges(
-                                 seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
-                                 ranges = IRanges::IRanges(
-                                                   start = plus_entries[["low_boundary"]],
-                                                   end = plus_entries[["high_boundary"]]),
-                                 strand = S4Vectors::Rle(plus_entries[[strand_column]]),
-                                 name = S4Vectors::Rle(plus_entries[[name_column]]))
+                                   seqnames = S4Vectors::Rle(plus_entries[[chr_column]]),
+                                   ranges = IRanges::IRanges(
+                                                         start = plus_entries[["low_boundary"]],
+                                                         end = plus_entries[["high_boundary"]]),
+                                   strand = S4Vectors::Rle(plus_entries[[strand_column]]),
+                                   name = S4Vectors::Rle(plus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(pluses_all))
   genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
@@ -222,12 +222,12 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   names(plus_all_seqstrings) <- pluses_all$name
 
   minuses_fivep <- GenomicRanges::GRanges(
-                                    seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
-                                    ranges = IRanges::IRanges(
-                                                      start = minus_entries[[end_column]],
-                                                      end = minus_entries[["high_boundary"]]),
-                                    strand = S4Vectors::Rle(minus_entries[[strand_column]]),
-                                    name = S4Vectors::Rle(minus_entries[[name_column]]))
+                                      seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
+                                      ranges = IRanges::IRanges(
+                                                            start = minus_entries[[end_column]],
+                                                            end = minus_entries[["high_boundary"]]),
+                                      strand = S4Vectors::Rle(minus_entries[[strand_column]]),
+                                      name = S4Vectors::Rle(minus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(minuses_fivep))
   genome_names <- as.character(names(bsgenome))
   keep_idx <- range_names %in% genome_names
@@ -235,36 +235,36 @@ gather_utrs_padding <- function(bsgenome, annot_df, gid = NULL, name_column = "g
   retlist[["fiveprime_minus_granges"]] <- minuses_fivep
 
   minuses_threep <- GenomicRanges::GRanges(
-                                     seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
-                                     ranges = IRanges::IRanges(
-                                                       start = minus_entries[["low_boundary"]],
-                                                       end = minus_entries[[start_column]]),
-                                     strand = S4Vectors::Rle(minus_entries[[strand_column]]),
-                                     name = S4Vectors::Rle(minus_entries[[name_column]]))
+                                       seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
+                                       ranges = IRanges::IRanges(
+                                                             start = minus_entries[["low_boundary"]],
+                                                             end = minus_entries[[start_column]]),
+                                       strand = S4Vectors::Rle(minus_entries[[strand_column]]),
+                                       name = S4Vectors::Rle(minus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(minuses_threep))
   keep_idx <- range_names %in% genome_names
   minuses_threep <- minuses_threep[keep_idx]
   retlist[["threeprime_minus_granges"]] <- minuses_threep
 
   minuses_cds <- GenomicRanges::GRanges(
-                                  seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
-                                  ranges = IRanges::IRanges(
-                                                    start = minus_entries[[start_column]],
-                                                    end = minus_entries[[end_column]]),
-                                  strand = S4Vectors::Rle(minus_entries[[strand_column]]),
-                                  name = S4Vectors::Rle(minus_entries[[name_column]]))
+                                    seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
+                                    ranges = IRanges::IRanges(
+                                                          start = minus_entries[[start_column]],
+                                                          end = minus_entries[[end_column]]),
+                                    strand = S4Vectors::Rle(minus_entries[[strand_column]]),
+                                    name = S4Vectors::Rle(minus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(minuses_cds))
   keep_idx <- range_names %in% genome_names
   minuses_cds <- minuses_cds[keep_idx]
   retlist[["cds_minus_granges"]] <- minuses_cds
 
   minuses_all <- GenomicRanges::GRanges(
-                                  seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
-                                  ranges = IRanges::IRanges(
-                                                    start = minus_entries[["low_boundary"]],
-                                                    end = minus_entries[["high_boundary"]]),
-                                  strand = S4Vectors::Rle(minus_entries[[strand_column]]),
-                                  name = S4Vectors::Rle(minus_entries[[name_column]]))
+                                    seqnames = S4Vectors::Rle(minus_entries[[chr_column]]),
+                                    ranges = IRanges::IRanges(
+                                                          start = minus_entries[["low_boundary"]],
+                                                          end = minus_entries[["high_boundary"]]),
+                                    strand = S4Vectors::Rle(minus_entries[[strand_column]]),
+                                    name = S4Vectors::Rle(minus_entries[[name_column]]))
   range_names <- as.character(GenomicRanges::seqnames(minuses_all))
   keep_idx <- range_names %in% genome_names
   minuses_all <- minuses_all[keep_idx]
@@ -345,19 +345,19 @@ gather_utrs_txdb <- function(bsgenome, fivep_utr = NULL, threep_utr = NULL,
   ## which are numerically smaller/larger than the CDS entry, not 5'/3' because
   ## this does not yet take into account the strand information.
   fivep_ranges <- GenomicRanges::GRanges(
-                                   seqnames = S4Vectors::Rle(fivep_df[[chr_column]]),
-                                   ranges = IRanges::IRanges(
-                                                     start = fivep_df[[start_column]],
-                                                     end = fivep_df[[end_column]] + 2),
-                                   strand = S4Vectors::Rle(fivep_df[[strand_column]]),
-                                   name = S4Vectors::Rle(fivep_df[[name_column]]))
+                                     seqnames = S4Vectors::Rle(fivep_df[[chr_column]]),
+                                     ranges = IRanges::IRanges(
+                                                           start = fivep_df[[start_column]],
+                                                           end = fivep_df[[end_column]] + 2),
+                                     strand = S4Vectors::Rle(fivep_df[[strand_column]]),
+                                     name = S4Vectors::Rle(fivep_df[[name_column]]))
   threep_ranges <- GenomicRanges::GRanges(
-                                    seqnames = S4Vectors::Rle(threep_df[[chr_column]]),
-                                    ranges = IRanges::IRanges(
-                                                      start = threep_df[[start_column]],
-                                                      end = threep_df[[end_column]] + 2),
-                                    strand = S4Vectors::Rle(threep_df[[strand_column]]),
-                                    name = S4Vectors::Rle(threep_df[[name_column]]))
+                                      seqnames = S4Vectors::Rle(threep_df[[chr_column]]),
+                                      ranges = IRanges::IRanges(
+                                                            start = threep_df[[start_column]],
+                                                            end = threep_df[[end_column]] + 2),
+                                      strand = S4Vectors::Rle(threep_df[[strand_column]]),
+                                      name = S4Vectors::Rle(threep_df[[name_column]]))
   fivep_seqstrings <- BSgenome::getSeq(bsgenome, fivep_ranges)
   threep_seqstrings <- BSgenome::getSeq(bsgenome, threep_ranges)
   names(fivep_seqstrings) <- fivep_ranges$name
@@ -378,8 +378,8 @@ gather_utrs_txdb <- function(bsgenome, fivep_utr = NULL, threep_utr = NULL,
   all_threep <- cbind(threep_infodt, threep_seqdt)
 
   retlist <- list(
-    "five_prime" = all_fivep,
-    "three_prime" = all_threep)
+      "five_prime" = all_fivep,
+      "three_prime" = all_threep)
   return(retlist)
 }
 
@@ -427,11 +427,11 @@ sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
     }
   }
   attribs <- data.frame(
-    "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob = TRUE),
-    "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob = TRUE),
-    "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob = TRUE),
-    "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob = TRUE),
-    stringsAsFactors = FALSE)
+      "gc" = Biostrings::letterFrequency(entry_sequences, "CG", as.prob = TRUE),
+      "at" = Biostrings::letterFrequency(entry_sequences, "AT", as.prob = TRUE),
+      "gt" = Biostrings::letterFrequency(entry_sequences, "GT", as.prob = TRUE),
+      "ac" = Biostrings::letterFrequency(entry_sequences, "AC", as.prob = TRUE),
+      stringsAsFactors = FALSE)
   rownames(attribs) <- names(entry_sequences)
   colnames(attribs) <- c("gc", "at", "gt", "ac")
   return(attribs)

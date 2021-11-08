@@ -108,21 +108,21 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   hits_summary <- summary(hit_averages)
 
   retlist <- list(
-    "maximum_reads" = max_reads,
-    "hits_by_position" = table,
-    "num_hit_table" = raw,
-    "eq_0" = num_zeros,
-    "gt_1" = num_gt_one,
-    "gt_2" = num_gt_two,
-    "gt_4" = num_gt_four,
-    "gt_8" = num_gt_eight,
-    "gt_16" = num_gt_sixteen,
-    "gt_32" = num_gt_thirtytwo,
-    "ratios" = saturation_ratios,
-    "hit_positions" = hit_positions,
-    "hits_summary" = hits_summary,
-    "density" = density_plot,
-    "plot" = data_plot
+      "maximum_reads" = max_reads,
+      "hits_by_position" = table,
+      "num_hit_table" = raw,
+      "eq_0" = num_zeros,
+      "gt_1" = num_gt_one,
+      "gt_2" = num_gt_two,
+      "gt_4" = num_gt_four,
+      "gt_8" = num_gt_eight,
+      "gt_16" = num_gt_sixteen,
+      "gt_32" = num_gt_thirtytwo,
+      "ratios" = saturation_ratios,
+      "hit_positions" = hit_positions,
+      "hits_summary" = hits_summary,
+      "density" = density_plot,
+      "plot" = data_plot
   )
 
   return(retlist)
@@ -159,10 +159,10 @@ plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FA
                               min_sig = 0.0371, max_sig = 0.9902) {
   ess <- readr::read_tsv(file = file, comment = "#",
                          col_names = c("gene", "orf_hits", "orf_tas", "max_run",
-                                     "max_run_span", "posterior_zbar", "call"),
+                                       "max_run_span", "posterior_zbar", "call"),
                          col_types = c("gene"="c", "orf_hits"="i", "orf_tas"="i",
-                                     "max_run"="i", "max_run_span"="i",
-                                     "posterior_zbar"="d", "call"="f"))
+                                       "max_run"="i", "max_run_span"="i",
+                                       "posterior_zbar"="d", "call"="f"))
   if (!is.null(order_by)) {
     order_idx <- order(ess[[order_by]], decreasing = FALSE)
     ess <- ess[order_idx, ]
@@ -193,16 +193,16 @@ plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FA
 Essential genes: {num_essential}
 Uncertain genes: {num_uncertain}
 Non-Essential genes: {num_insig}")) +
-ggplot2::theme_bw()
+  ggplot2::theme_bw()
 
   span_df <- ess[, c("max_run", "max_run_span")]
   span <- plot_linear_scatter(span_df)
   retlist <- list(
-    "zbar" = zbar_plot,
-    "span_plot" = span[["scatter"]],
-    "span_cor" = span[["correlation"]],
-    "span_hist" = span[["both_histogram"]],
-    "span_model" = span[["lm_model"]])
+      "zbar" = zbar_plot,
+      "span_plot" = span[["scatter"]],
+      "span_cor" = span[["correlation"]],
+      "span_hist" = span[["both_histogram"]],
+      "span_model" = span[["lm_model"]])
   return(retlist)
 }
 
@@ -224,10 +224,10 @@ score_mhess <- function(expt, ess_column = "essm1") {
     file <- file_lst[f]
     ess <- readr::read_tsv(file = file, comment = "#",
                            col_names = c("gene", "orf_hits", "orf_tas", "max_run",
-                                       "max_run_span", "posterior_zbar", "call"),
+                                         "max_run_span", "posterior_zbar", "call"),
                            col_types = c("gene"="c", "orf_hits"="i", "orf_tas"="i",
-                                       "max_run"="i", "max_run_span"="i",
-                                       "posterior_zbar"="d", "call"="f"))
+                                         "max_run"="i", "max_run_span"="i",
+                                         "posterior_zbar"="d", "call"="f"))
     ess_df <- as.data.frame(ess[, c("gene", "call")])
     rownames(ess_df) <- gsub(x = ess_df[["gene"]], pattern = "^cds_",
                              replacement = "")
@@ -272,9 +272,9 @@ score_mhess <- function(expt, ess_column = "essm1") {
   changed_df[hun_idx] <- "E"
 
   retlist <- list(
-    "score_df" = scores,
-    "changed_genes" = changed_genes,
-    "changed_state" = changed_df)
+      "score_df" = scores,
+      "changed_genes" = changed_genes,
+      "changed_state" = changed_df)
   return(retlist)
 }
 
@@ -327,9 +327,9 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit = 100,
   }
 
   retlist <- list(
-    "table" = table,
-    "plot" = plt,
-    "ggstats" = ggstats)
+      "table" = table,
+      "plot" = plt,
+      "ggstats" = ggstats)
   return(retlist)
 }
 

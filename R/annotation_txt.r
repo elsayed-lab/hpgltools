@@ -210,10 +210,10 @@ load_trinotate_go <- function(trinotate = "reference/trinotate.csv") {
   names(length_table) <- c("ID", "length")
 
   retlist <- list(
-    "go_data" = go_data,
-    "go_table" = go_table,
-    "length_data" = length_data,
-    "length_table" = length_table)
+      "go_data" = go_data,
+      "go_table" = go_table,
+      "length_data" = length_data,
+      "length_table" = length_table)
   return(retlist)
 }
 

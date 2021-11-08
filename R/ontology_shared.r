@@ -30,26 +30,26 @@ random_ontology <- function(input, method = "goseq", n = 200, ...) {
   input_table <- input_table[input_idx, ]
   random_result <- NULL
   switchret <- switch(
-    method,
-    "goseq" = {
-      random_result <- simple_goseq(input_table, ...)
-    },
-    "clusterp" = {
-      random_result <- simple_clusterprofiler(input_table, ...)
-    },
-    "topgo" = {
-      random_result <- simple_topgo(input_table, ...)
-    },
-    "gostats" = {
-      random_result <- simple_gostats(input_table, ...)
-    },
-    "gprofiler" = {
-      random_result <- simple_gprofiler(input_table, ...)
-    },
-    {
-      message("Not sure what to do with this method.")
-      random_result <- NULL
-    })
+      method,
+      "goseq" = {
+        random_result <- simple_goseq(input_table, ...)
+      },
+      "clusterp" = {
+        random_result <- simple_clusterprofiler(input_table, ...)
+      },
+      "topgo" = {
+        random_result <- simple_topgo(input_table, ...)
+      },
+      "gostats" = {
+        random_result <- simple_gostats(input_table, ...)
+      },
+      "gprofiler" = {
+        random_result <- simple_gprofiler(input_table, ...)
+      },
+      {
+        message("Not sure what to do with this method.")
+        random_result <- NULL
+      })
 
   return(random_result)
 }
@@ -73,8 +73,8 @@ random_ontology <- function(input, method = "goseq", n = 200, ...) {
 extract_lengths <- function(db = NULL, gene_list = NULL,
                             type = "GenomicFeatures::transcripts", id = "TXID",
                             possible_types = c("GenomicFeatures::genes",
-                                             "GenomicFeatures::cds",
-                                             "GenomicFeatures::transcripts"), ...) {
+                                               "GenomicFeatures::cds",
+                                               "GenomicFeatures::transcripts"), ...) {
   arglist <- list(...)
   ## The 3 ids correspond to the columns produced by genes/cds/transcripts
   ## respectively which contain the IDs. If one is overwritten, the other
@@ -249,7 +249,7 @@ goterm <- function(go = "GO:0032559") {
   go <- as.character(go)
   term <- function(id) {
     value <- try(as.character(
-      AnnotationDbi::Term(GO.db::GOTERM[id])), silent = TRUE)
+        AnnotationDbi::Term(GO.db::GOTERM[id])), silent = TRUE)
     if (class(value) == "try-error") {
       value <- "not found"
     }
@@ -283,7 +283,7 @@ gosyn <- function(go = "GO:0000001") {
     go <- as.character(go)
     result <- ""
     value <- try(as.character(
-      AnnotationDbi::Synonym(GO.db::GOTERM[go])), silent = TRUE)
+        AnnotationDbi::Synonym(GO.db::GOTERM[go])), silent = TRUE)
     result <- paste(deparse_go_value(value), collapse = "; ")
     return(result)
   }
@@ -312,7 +312,7 @@ gosec <- function(go = "GO:0032432") {
     go <- as.character(go)
     result <- ""
     value <- try(as.character(
-      AnnotationDbi::Secondary(GO.db::GOTERM[go])), silent = TRUE)
+        AnnotationDbi::Secondary(GO.db::GOTERM[go])), silent = TRUE)
     result <- deparse_go_value(value)
     return(result)
   }
@@ -341,7 +341,7 @@ godef <- function(go = "GO:0032432") {
   def <- function(id) {
     ## This call to AnnotationDbi might be wrong
     value <- try(as.character(
-      AnnotationDbi::Definition(GO.db::GOTERM[id])), silent = TRUE)
+        AnnotationDbi::Definition(GO.db::GOTERM[id])), silent = TRUE)
     if (class(value) == "try-error") {
       value <- "not found"
     }
@@ -426,7 +426,7 @@ golev <- function(go) {
 #' Get a go level approximation from a set of IDs.
 #'
 #' This just wraps golev() in mapply.
-                                        #
+#
 #' @param go Character list of IDs.
 #' @return Set pf approximate levels within the onlogy.
 #' @seealso [golev()]
@@ -623,17 +623,17 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
       goseq_down_ontology <- try(simple_goseq(down_genes, goids, gene_lengths))
       if (isTRUE(do_trees)) {
         goseq_up_trees <- try(
-          goseq_trees(goseq_up_ontology, goid_map = goid_map))
+            goseq_trees(goseq_up_ontology, goid_map = goid_map))
         goseq_down_trees <- try(
-          goseq_trees(goseq_down_ontology, goid_map = goid_map))
+            goseq_trees(goseq_down_ontology, goid_map = goid_map))
       }
     }
 
     if (isTRUE(do_cluster)) {
       cluster_up_ontology <- try(
-        simple_clusterprofiler(up_genes, datum, orgdb = orgdb, ...))
+          simple_clusterprofiler(up_genes, datum, orgdb = orgdb, ...))
       cluster_down_ontology <- try(
-        simple_clusterprofiler(down_genes, datum, orgdb = orgdb, ...))
+          simple_clusterprofiler(down_genes, datum, orgdb = orgdb, ...))
       if (isTRUE(do_trees)) {
         cluster_up_trees <- try(cluster_trees(up_genes, cluster_up_ontology,
                                               goid_map = goid_map, go_db = goids))
@@ -644,9 +644,9 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
 
     if (isTRUE(do_topgo)) {
       topgo_up_ontology <- try(
-        simple_topgo(up_genes, goid_map = goid_map, go_db = goids))
+          simple_topgo(up_genes, goid_map = goid_map, go_db = goids))
       topgo_down_ontology <- try(
-        simple_topgo(down_genes, goid_map = goid_map, go_db = goids))
+          simple_topgo(down_genes, goid_map = goid_map, go_db = goids))
       if (isTRUE(do_trees)) {
         topgo_up_trees <- try(topgo_trees(topgo_up_ontology))
         topgo_down_trees <- try(topgo_trees(topgo_down_ontology))
@@ -655,9 +655,9 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
 
     if (isTRUE(do_gostats)) {
       gostats_up_ontology <- try(
-        simple_gostats(up_genes, gff_file, goids, gff_type = gff_type))
+          simple_gostats(up_genes, gff_file, goids, gff_type = gff_type))
       gostats_down_ontology <- try(
-        simple_gostats(down_genes, gff_file, goids, gff_type = gff_type))
+          simple_gostats(down_genes, gff_file, goids, gff_type = gff_type))
       if (isTRUE(do_trees)) {
         message("gostats_trees has never been tested, this is commented out for the moment.")
       }
@@ -789,16 +789,16 @@ subset_ontology_search <- function(changed_counts, doplot = TRUE, do_goseq = TRU
   }
 
   ret <- list(
-    "up_goseq" = up_goseq,
-    "down_goseq" = down_goseq,
-    "up_cluster" = up_cluster,
-    "down_cluster" = down_cluster,
-    "up_topgo" = up_topgo,
-    "down_topgo" = down_topgo,
-    "up_gostats" = up_gostats,
-    "down_gostats" = down_gostats,
-    "up_gprofiler" = up_gprofiler,
-    "down_gprofiler" = down_gprofiler)
+      "up_goseq" = up_goseq,
+      "down_goseq" = down_goseq,
+      "up_cluster" = up_cluster,
+      "down_cluster" = down_cluster,
+      "up_topgo" = up_topgo,
+      "down_topgo" = down_topgo,
+      "up_gostats" = up_gostats,
+      "down_gostats" = down_gostats,
+      "up_gprofiler" = up_gprofiler,
+      "down_gprofiler" = down_gprofiler)
   if (!file.exists("savefiles")) {
     dir.create("savefiles")
   }

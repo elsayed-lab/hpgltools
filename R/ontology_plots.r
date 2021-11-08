@@ -215,12 +215,12 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
                                denominator = "num_cat")
 
   pval_plots <- list(
-    "mfp_plot_over" = mf_pval_plot,
-    "bpp_plot_over" = bp_pval_plot,
-    "ccp_plot_over" = cc_pval_plot,
-    "mf_subset_over" = plotting_mf,
-    "bp_subset_over" = plotting_bp,
-    "cc_subset_over" = plotting_cc)
+      "mfp_plot_over" = mf_pval_plot,
+      "bpp_plot_over" = bp_pval_plot,
+      "ccp_plot_over" = cc_pval_plot,
+      "mf_subset_over" = plotting_mf,
+      "bp_subset_over" = plotting_bp,
+      "cc_subset_over" = plotting_cc)
   return(pval_plots)
 }
 
@@ -293,9 +293,9 @@ plot_topgo_pval <- function(topgo, wrapped_width = 20, cutoff = 0.1,
   cc_pval_plot <- plot_ontpval(cc_newdf, ontology = "CC")
 
   pval_plots <- list(
-    "mfp_plot_over" = mf_pval_plot,
-    "bpp_plot_over" = bp_pval_plot,
-    "ccp_plot_over" = cc_pval_plot)
+      "mfp_plot_over" = mf_pval_plot,
+      "bpp_plot_over" = bp_pval_plot,
+      "ccp_plot_over" = cc_pval_plot)
   return(pval_plots)
 }
 
@@ -321,12 +321,12 @@ plot_gostats_pval <- function(gs_result, wrapped_width = 20, cutoff = 0.1,
   ## TODO: replace the subset calls
   plot_list <- list()
   table_list <- list(
-    "mf_over" = gs_result[["tables"]][["mf_over_enriched"]],
-    "mf_under" = gs_result[["tables"]][["mf_under_enriched"]],
-    "bp_over" = gs_result[["tables"]][["bp_over_enriched"]],
-    "bp_under" = gs_result[["tables"]][["bp_under_enriched"]],
-    "cc_over" = gs_result[["tables"]][["cc_over_enriched"]],
-    "cc_under" = gs_result[["tables"]][["cc_under_enriched"]]
+      "mf_over" = gs_result[["tables"]][["mf_over_enriched"]],
+      "mf_under" = gs_result[["tables"]][["mf_under_enriched"]],
+      "bp_over" = gs_result[["tables"]][["bp_over_enriched"]],
+      "bp_under" = gs_result[["tables"]][["bp_under_enriched"]],
+      "cc_over" = gs_result[["tables"]][["cc_over_enriched"]],
+      "cc_under" = gs_result[["tables"]][["cc_under_enriched"]]
   )
 
   table_names <- names(table_list)
@@ -434,9 +434,9 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
     plotting_df <- plotting_df[, c("term.name", "p.value", "score")]
     colnames(plotting_df) <- c("term", "pvalue", "score")
     plotting_df[["term"]] <- as.character(
-      lapply(strwrap(plotting_df[["term"]],
-                     wrapped_width, simplify = FALSE),
-             paste, collapse = "\n"))
+        lapply(strwrap(plotting_df[["term"]],
+                       wrapped_width, simplify = FALSE),
+               paste, collapse = "\n"))
     return(plotting_df)
   }
 
@@ -558,24 +558,24 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   }
 
   pval_plots <- list(
-    "mfp_plot_over" = mf_pval_plot_over,
-    "bpp_plot_over" = bp_pval_plot_over,
-    "ccp_plot_over" = cc_pval_plot_over,
-    "kegg_plot_over" = kegg_pval_plot_over,
-    "reactome_plot_over" = reactome_pval_plot_over,
-    "mi_plot_over" = mi_pval_plot_over,
-    "tf_plot_over" = tf_pval_plot_over,
-    "corum_plot_over" = corum_pval_plot_over,
-    "hp_plot_over" = hp_pval_plot_over,
-    "mf_subset_over" = plotting_mf_over,
-    "bp_subset_over" = plotting_bp_over,
-    "cc_subset_over" = plotting_cc_over,
-    "kegg_subset" = plotting_kegg_over,
-    "reactome_subset" = plotting_reactome_over,
-    "mi_subset" = plotting_mi_over,
-    "tf_subset" = plotting_tf_over,
-    "corum_subset" = plotting_corum_over,
-    "hp_subset" = plotting_hp_over
+      "mfp_plot_over" = mf_pval_plot_over,
+      "bpp_plot_over" = bp_pval_plot_over,
+      "ccp_plot_over" = cc_pval_plot_over,
+      "kegg_plot_over" = kegg_pval_plot_over,
+      "reactome_plot_over" = reactome_pval_plot_over,
+      "mi_plot_over" = mi_pval_plot_over,
+      "tf_plot_over" = tf_pval_plot_over,
+      "corum_plot_over" = corum_pval_plot_over,
+      "hp_plot_over" = hp_pval_plot_over,
+      "mf_subset_over" = plotting_mf_over,
+      "bp_subset_over" = plotting_bp_over,
+      "cc_subset_over" = plotting_cc_over,
+      "kegg_subset" = plotting_kegg_over,
+      "reactome_subset" = plotting_reactome_over,
+      "mi_subset" = plotting_mi_over,
+      "tf_subset" = plotting_tf_over,
+      "corum_subset" = plotting_corum_over,
+      "hp_subset" = plotting_hp_over
   )
   new_options <- options(old_options)
   return(pval_plots)
@@ -623,14 +623,14 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     tt <- try(sm(requireNamespace("topGO")), silent = TRUE)
     tt <- try(sm(attachNamespace("topGO")), silent = TRUE)
     mf_GOdata <- sm(new(
-      "topGOdata", description = "MF", ontology = "MF", allGenes = pvals,
-      geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
+        "topGOdata", description = "MF", ontology = "MF", allGenes = pvals,
+        geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
     bp_GOdata <- sm(new(
-      "topGOdata", description = "BP", ontology = "BP", allGenes = pvals,
-      geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
+        "topGOdata", description = "BP", ontology = "BP", allGenes = pvals,
+        geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
     cc_GOdata <- sm(new(
-      "topGOdata", description = "CC", ontology = "CC", allGenes = pvals,
-      geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
+        "topGOdata", description = "CC", ontology = "CC", allGenes = pvals,
+        geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO))
   }
 
   enriched_ids <- goseq[["all_data"]][["category"]]
@@ -647,9 +647,9 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_tree_data <- try(sm(topGO::showSigOfNodes(
-                                  mf_GOdata, mf_nodes, useInfo = "all",
-                                  sigForAll = TRUE, firstSigNodes = mf_included,
-                                  useFullNames = TRUE, plotFunction = hpgl_GOplot)),
+                                    mf_GOdata, mf_nodes, useInfo = "all",
+                                    sigForAll = TRUE, firstSigNodes = mf_included,
+                                    useFullNames = TRUE, plotFunction = hpgl_GOplot)),
                       silent = TRUE)
   if (class(mf_tree_data) == "try-error") {
     message("There was an error generating the MF tree.")
@@ -670,9 +670,9 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_tree_data <- try(sm(topGO::showSigOfNodes(
-                                  bp_GOdata, bp_nodes, useInfo = "all",
-                                  sigForAll = TRUE, firstSigNodes = bp_included,
-                                  useFullNames = TRUE, plotFunction = hpgl_GOplot)),
+                                    bp_GOdata, bp_nodes, useInfo = "all",
+                                    sigForAll = TRUE, firstSigNodes = bp_included,
+                                    useFullNames = TRUE, plotFunction = hpgl_GOplot)),
                       silent = TRUE)
   if (class(bp_tree_data) == "try-error") {
     message("There was an error generating the BP tree.")
@@ -693,9 +693,9 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_tree_data <- try(sm(topGO::showSigOfNodes(
-                                  cc_GOdata, cc_nodes, useInfo = "all",
-                                  sigForAll = TRUE, firstSigNodes = cc_included,
-                                  useFullNames = TRUE, plotFunction = hpgl_GOplot)),
+                                    cc_GOdata, cc_nodes, useInfo = "all",
+                                    sigForAll = TRUE, firstSigNodes = cc_included,
+                                    useFullNames = TRUE, plotFunction = hpgl_GOplot)),
                       silent = TRUE)
   if (class(cc_tree_data) == "try-error") {
     message("There was an error generating the CC tree.")
@@ -707,12 +707,12 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   file.remove(tmp_file)
 
   trees <- list(
-    "MF_over" = mf_tree,
-    "BP_over" = bp_tree,
-    "CC_over" = cc_tree,
-    "MF_overdata" = mf_tree_data,
-    "BP_overdata" = bp_tree_data,
-    "CC_overdata" = cc_tree_data)
+      "MF_over" = mf_tree,
+      "BP_over" = bp_tree,
+      "CC_over" = cc_tree,
+      "MF_overdata" = mf_tree_data,
+      "BP_overdata" = bp_tree_data,
+      "CC_overdata" = cc_tree_data)
   return(trees)
 }
 
@@ -791,9 +791,9 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = floor(mf_included * 1.5),
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(mf_GOdata, mf_all_scores, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = floor(mf_included * 1.5),
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(mf_tree_data)[1] == "try-error") {
     mf_tree <- NULL
   } else {
@@ -808,9 +808,9 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = bp_included,
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(bp_GOdata, bp_all_scores, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = bp_included,
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(bp_tree_data)[1] == "try-error") {
     bp_tree <- NULL
   } else {
@@ -825,9 +825,9 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = cc_included,
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(cc_GOdata, cc_all_scores, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = cc_included,
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(cc_tree_data)[1] == "try-error") {
     cc_tree <- NULL
   } else {
@@ -837,12 +837,12 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   file.remove(tmp_file)
 
   trees <- list(
-    "MF_over" = mf_tree,
-    "BP_over" = bp_tree,
-    "CC_over" = cc_tree,
-    "MF_overdata" = mf_tree_data,
-    "BP_overdata" = bp_tree_data,
-    "CC_overdata" = cc_tree_data)
+      "MF_over" = mf_tree,
+      "BP_over" = bp_tree,
+      "CC_over" = cc_tree,
+      "MF_overdata" = mf_tree_data,
+      "BP_overdata" = bp_tree_data,
+      "CC_overdata" = cc_tree_data)
   return(trees)
 }
 
@@ -886,13 +886,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     mf_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fmf_godata"]],
-                                       topGO::score(tg[["results"]][["mf_fisher"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fmf_godata"]],
+                                         topGO::score(tg[["results"]][["mf_fisher"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(mf_fisher_nodes)[1] != "try-error") {
       mf_fisher_tree <- try(grDevices::recordPlot())
     }
@@ -907,13 +907,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     bp_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fbp_godata"]],
-                                       topGO::score(tg[["results"]][["bp_fisher"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fbp_godata"]],
+                                         topGO::score(tg[["results"]][["bp_fisher"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(bp_fisher_nodes)[1] != "try-error") {
       bp_fisher_tree <- try(grDevices::recordPlot())
     }
@@ -928,13 +928,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     cc_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fcc_godata"]],
-                                       topGO::score(tg[["results"]][["cc_fisher"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fcc_godata"]],
+                                         topGO::score(tg[["results"]][["cc_fisher"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(cc_fisher_nodes)[1] != "try-error") {
       cc_fisher_tree <- try(grDevices::recordPlot())
     }
@@ -949,13 +949,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     mf_ks_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["kmf_godata"]],
-                                   topGO::score(tg[["results"]][["mf_ks"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["kmf_godata"]],
+                                     topGO::score(tg[["results"]][["mf_ks"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(mf_ks_nodes)[1] != "try-error") {
       mf_ks_tree <- try(grDevices::recordPlot())
     }
@@ -970,13 +970,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     bp_ks_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["kbp_godata"]],
-                                   topGO::score(tg[["results"]][["bp_ks"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["kbp_godata"]],
+                                     topGO::score(tg[["results"]][["bp_ks"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(bp_ks_nodes)[1] != "try-error") {
       bp_ks_tree <- try(grDevices::recordPlot())
     }
@@ -991,13 +991,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     cc_ks_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["kcc_godata"]],
-                                   topGO::score(tg[["results"]][["cc_ks"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["kcc_godata"]],
+                                     topGO::score(tg[["results"]][["cc_ks"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(cc_ks_nodes)[1] != "try-error") {
       cc_ks_tree <- try(grDevices::recordPlot())
     }
@@ -1012,13 +1012,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     mf_el_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["fmf_godata"]],
-                                   topGO::score(tg[["results"]][["mf_el"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["fmf_godata"]],
+                                     topGO::score(tg[["results"]][["mf_el"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(mf_el_nodes)[1] != "try-error") {
       mf_el_tree <- try(grDevices::recordPlot())
     }
@@ -1033,13 +1033,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     bp_el_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["fbp_godata"]],
-                                   topGO::score(tg[["results"]][["bp_el"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["fbp_godata"]],
+                                     topGO::score(tg[["results"]][["bp_el"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(bp_el_nodes)[1] != "try-error") {
       bp_el_tree <- try(grDevices::recordPlot())
     }
@@ -1054,13 +1054,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     cc_el_nodes <- try(sm(topGO::showSigOfNodes(
-                                   tg[["results"]][["kcc_godata"]],
-                                   topGO::score(tg[["results"]][["cc_el"]]),
-                                   useInfo = "all",
-                                   sigForAll = sigforall,
-                                   firstSigNodes = included,
-                                   useFullNames = TRUE,
-                                   plotFunction = hpgl_GOplot)))
+                                     tg[["results"]][["kcc_godata"]],
+                                     topGO::score(tg[["results"]][["cc_el"]]),
+                                     useInfo = "all",
+                                     sigForAll = sigforall,
+                                     firstSigNodes = included,
+                                     useFullNames = TRUE,
+                                     plotFunction = hpgl_GOplot)))
     if (class(cc_el_nodes)[1] != "try-error") {
       cc_el_tree <- try(grDevices::recordPlot())
     }
@@ -1075,13 +1075,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     mf_weight_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fmf_godata"]],
-                                       topGO::score(tg[["results"]][["mf_weight"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fmf_godata"]],
+                                         topGO::score(tg[["results"]][["mf_weight"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(mf_weight_nodes)[1] != "try-error") {
       mf_weight_tree <- try(grDevices::recordPlot())
     }
@@ -1096,13 +1096,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     bp_weight_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fbp_godata"]],
-                                       topGO::score(tg[["results"]][["bp_weight"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fbp_godata"]],
+                                         topGO::score(tg[["results"]][["bp_weight"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(bp_weight_nodes)[1] != "try-error") {
       bp_weight_tree <- try(grDevices::recordPlot())
     }
@@ -1117,13 +1117,13 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     cc_weight_nodes <- try(sm(topGO::showSigOfNodes(
-                                       tg[["results"]][["fcc_godata"]],
-                                       topGO::score(tg[["results"]][["cc_weight"]]),
-                                       useInfo = "all",
-                                       sigForAll = sigforall,
-                                       firstSigNodes = included,
-                                       useFullNames = TRUE,
-                                       plotFunction = hpgl_GOplot)))
+                                         tg[["results"]][["fcc_godata"]],
+                                         topGO::score(tg[["results"]][["cc_weight"]]),
+                                         useInfo = "all",
+                                         sigForAll = sigforall,
+                                         firstSigNodes = included,
+                                         useFullNames = TRUE,
+                                         plotFunction = hpgl_GOplot)))
     if (class(cc_weight_nodes)[1] != "try-error") {
       cc_weight_tree <- try(grDevices::recordPlot())
     }
@@ -1132,34 +1132,34 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
   }
 
   trees <- list(
-    "mf_fisher_nodes" = mf_fisher_nodes,
-    "bp_fisher_nodes" = bp_fisher_nodes,
-    "cc_fisher_nodes" = cc_fisher_nodes,
-    "mf_ks_nodes" = mf_ks_nodes,
-    "bp_ks_nodes" = bp_ks_nodes,
-    "cc_ks_nodes" = cc_ks_nodes,
-    "mf_el_nodes" = mf_el_nodes,
-    "bp_el_nodes" = bp_el_nodes,
-    "cc_el_nodes" = cc_el_nodes,
-    "mf_weight_nodes" = mf_weight_nodes,
-    "bp_weight_nodes" = bp_weight_nodes,
-    "cc_weight_nodes" = cc_weight_nodes,
-    ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
-    "MF_over" = mf_fisher_tree,
-    "BP_over" = bp_fisher_tree,
-    "CC_over" = cc_fisher_tree,
-    "MF_fisher_tree" = mf_fisher_tree,
-    "BP_fisher_tree" = bp_fisher_tree,
-    "CC_fisher_tree" = cc_fisher_tree,
-    "MF_ks_tree" = mf_ks_tree,
-    "BP_ks_tree" = bp_ks_tree,
-    "CC_ks_tree" = cc_ks_tree,
-    "MF_el_tree" = mf_el_tree,
-    "BP_el_tree" = bp_el_tree,
-    "CC_el_tree" = cc_el_tree,
-    "MF_weight_tree" = mf_weight_tree,
-    "BP_weight_tree" = bp_weight_tree,
-    "CC_weight_tree" = cc_weight_tree)
+      "mf_fisher_nodes" = mf_fisher_nodes,
+      "bp_fisher_nodes" = bp_fisher_nodes,
+      "cc_fisher_nodes" = cc_fisher_nodes,
+      "mf_ks_nodes" = mf_ks_nodes,
+      "bp_ks_nodes" = bp_ks_nodes,
+      "cc_ks_nodes" = cc_ks_nodes,
+      "mf_el_nodes" = mf_el_nodes,
+      "bp_el_nodes" = bp_el_nodes,
+      "cc_el_nodes" = cc_el_nodes,
+      "mf_weight_nodes" = mf_weight_nodes,
+      "bp_weight_nodes" = bp_weight_nodes,
+      "cc_weight_nodes" = cc_weight_nodes,
+      ## copying these here for consistent returns between goseq/cluster/topgo/gostats.
+      "MF_over" = mf_fisher_tree,
+      "BP_over" = bp_fisher_tree,
+      "CC_over" = cc_fisher_tree,
+      "MF_fisher_tree" = mf_fisher_tree,
+      "BP_fisher_tree" = bp_fisher_tree,
+      "CC_fisher_tree" = cc_fisher_tree,
+      "MF_ks_tree" = mf_ks_tree,
+      "BP_ks_tree" = bp_ks_tree,
+      "CC_ks_tree" = cc_ks_tree,
+      "MF_el_tree" = mf_el_tree,
+      "BP_el_tree" = bp_el_tree,
+      "CC_el_tree" = cc_el_tree,
+      "MF_weight_tree" = mf_weight_tree,
+      "BP_weight_tree" = bp_weight_tree,
+      "CC_weight_tree" = cc_weight_tree)
   return(trees)
 }
 
@@ -1233,9 +1233,9 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_over_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = mf_over_included,
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(mf_GOdata, mf_over_nodes, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = mf_over_included,
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(mf_over_tree_data) == "try-error") {
     message("There was an error generating the over MF tree.")
     mf_over_tree <- NULL
@@ -1255,9 +1255,9 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_over_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = bp_over_included,
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(bp_GOdata, bp_over_nodes, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = bp_over_included,
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(bp_over_tree_data) == "try-error") {
     message("There was an error generating the over BP tree.")
     bp_over_tree <- NULL
@@ -1277,9 +1277,9 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_over_tree_data <- try(suppressWarnings(
-    topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo = "all",
-                          sigForAll = TRUE, firstSigNodes = cc_over_included,
-                          useFullNames = TRUE, plotFunction = hpgl_GOplot)))
+      topGO::showSigOfNodes(cc_GOdata, cc_over_nodes, useInfo = "all",
+                            sigForAll = TRUE, firstSigNodes = cc_over_included,
+                            useFullNames = TRUE, plotFunction = hpgl_GOplot)))
   if (class(cc_over_tree_data) == "try-error") {
     message("There was an error generating the over CC tree.")
     cc_over_tree <- NULL
@@ -1290,13 +1290,13 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   file.remove(tmp_file)
 
   trees <- list(
-    "MF_over" = mf_over_tree,
-    "BP_over" = bp_over_tree,
-    "CC_over" = cc_over_tree,
-    "MF_overdata" = mf_over_tree_data,
-    "BP_overdata" = bp_over_tree_data,
-    "CC_overdata" = cc_over_tree_data
-    )
+      "MF_over" = mf_over_tree,
+      "BP_over" = bp_over_tree,
+      "CC_over" = cc_over_tree,
+      "MF_overdata" = mf_over_tree_data,
+      "BP_overdata" = bp_over_tree_data,
+      "CC_overdata" = cc_over_tree_data
+  )
   return(trees)
 }
 

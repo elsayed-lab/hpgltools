@@ -197,27 +197,27 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
   if (!is.null(wb)) {
     message("Writing a sheet containing the legend.")
     legend <- data.frame(rbind(
-      c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
-      c("Category", "Gene ontology Identifier."),
-      c("Term", "Short definition of the category."),
-      c("Over p-value", "Estimate of cp over-representation in the category."),
-      c("Q-value", "False discovery rate correction of the p-value."),
-      c("DE genes in cat", "What genes provided are in this specific category?"),
-      c("All genes in cat", "The full set of annotations included in this category."),
-      c("Num. de", "The number of genes in column 'F'."),
-      c("Num. in cat", "The number of genes in column 'G'.")
+        c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+        c("Category", "Gene ontology Identifier."),
+        c("Term", "Short definition of the category."),
+        c("Over p-value", "Estimate of cp over-representation in the category."),
+        c("Q-value", "False discovery rate correction of the p-value."),
+        c("DE genes in cat", "What genes provided are in this specific category?"),
+        c("All genes in cat", "The full set of annotations included in this category."),
+        c("Num. de", "The number of genes in column 'F'."),
+        c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
                              title = "Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
-      c("Queried BP ontologies", nrow(cp_result[["enrich_go"]][["BP_all"]])),
-      c("Significant BP ontologies", nrow(cp_result[["enrich_go"]][["BP_sig"]])),
-      c("Queried MF ontologies", nrow(cp_result[["enrich_go"]][["MF_all"]])),
-      c("Significant MF ontologies", nrow(cp_result[["enrich_go"]][["MF_sig"]])),
-      c("Queried CC ontologies", nrow(cp_result[["enrich_go"]][["CC_all"]])),
-      c("Significant CC ontologies", nrow(cp_result[["enrich_go"]][["CC_sig"]]))))
+        c("Queried BP ontologies", nrow(cp_result[["enrich_go"]][["BP_all"]])),
+        c("Significant BP ontologies", nrow(cp_result[["enrich_go"]][["BP_sig"]])),
+        c("Queried MF ontologies", nrow(cp_result[["enrich_go"]][["MF_all"]])),
+        c("Significant MF ontologies", nrow(cp_result[["enrich_go"]][["MF_sig"]])),
+        c("Queried CC ontologies", nrow(cp_result[["enrich_go"]][["CC_all"]])),
+        c("Significant CC ontologies", nrow(cp_result[["enrich_go"]][["CC_sig"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
     xls_result <- write_xlsx(wb, data = summary_df, sheet = "legend", rownames = FALSE,
                              title = "Summary of the cp search.", start_row = 1, start_col = 4)
@@ -298,7 +298,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
     kegg_idx <- order(cp_kegg[[order_by]], decreasing = decreasing)
     cp_kegg <- cp_kegg[kegg_idx, ]
   }
-  
+
   cp_david <- cp_result[["david_data"]]
   skip_david <- FALSE
   if (is.null(cp_david)) {
@@ -479,27 +479,27 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
   if (!is.null(wb)) {
     message("Writing a sheet containing the legend.")
     legend <- data.frame(rbind(
-      c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
-      c("Category", "Gene ontology Identifier."),
-      c("Term", "Short definition of the category."),
-      c("Over p-value", "Estimate of goseq over-representation in the row's category."),
-      c("Q-value", "False discovery rate correction of the p-value."),
-      c("DE genes in cat", "What genes provided are in this specific category?"),
-      c("All genes in cat", "The full set of gene annotations included in this category."),
-      c("Num. de", "The number of genes in column 'F'."),
-      c("Num. in cat", "The number of genes in column 'G'.")
+        c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+        c("Category", "Gene ontology Identifier."),
+        c("Term", "Short definition of the category."),
+        c("Over p-value", "Estimate of goseq over-representation in the row's category."),
+        c("Q-value", "False discovery rate correction of the p-value."),
+        c("DE genes in cat", "What genes provided are in this specific category?"),
+        c("All genes in cat", "The full set of gene annotations included in this category."),
+        c("Num. de", "The number of genes in column 'F'."),
+        c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
                              title = "Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
-      c("Queried BP ontologies", nrow(goseq_result[["bp_subset"]])),
-      c("Significant BP ontologies", nrow(goseq_result[["bp_interesting"]])),
-      c("Queried MF ontologies", nrow(goseq_result[["mf_subset"]])),
-      c("Significant MF ontologies", nrow(goseq_result[["mf_interesting"]])),
-      c("Queried CC ontologies", nrow(goseq_result[["cc_subset"]])),
-      c("Significant CC ontologies", nrow(goseq_result[["cc_interesting"]]))))
+        c("Queried BP ontologies", nrow(goseq_result[["bp_subset"]])),
+        c("Significant BP ontologies", nrow(goseq_result[["bp_interesting"]])),
+        c("Queried MF ontologies", nrow(goseq_result[["mf_subset"]])),
+        c("Significant MF ontologies", nrow(goseq_result[["mf_interesting"]])),
+        c("Queried CC ontologies", nrow(goseq_result[["cc_subset"]])),
+        c("Significant CC ontologies", nrow(goseq_result[["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
     xls_result <- write_xlsx(wb, data = summary_df, sheet = "legend", rownames = FALSE,
                              title = "Summary of the goseq search.", start_row = 1, start_col = 4)
@@ -646,27 +646,27 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
   if (!is.null(wb)) {
     message("Writing a sheet containing the legend.")
     legend <- data.frame(rbind(
-      c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
-      c("Category", "Gene ontology Identifier."),
-      c("Term", "Short definition of the category."),
-      c("Over p-value", "Estimate of gostats over-representation in the row's category."),
-      c("Q-value", "False discovery rate correction of the p-value."),
-      c("DE genes in cat", "What genes provided are in this specific category?"),
-      c("All genes in cat", "The full set of gene annotations included in this category."),
-      c("Num. de", "The number of genes in column 'F'."),
-      c("Num. in cat", "The number of genes in column 'G'.")
+        c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+        c("Category", "Gene ontology Identifier."),
+        c("Term", "Short definition of the category."),
+        c("Over p-value", "Estimate of gostats over-representation in the row's category."),
+        c("Q-value", "False discovery rate correction of the p-value."),
+        c("DE genes in cat", "What genes provided are in this specific category?"),
+        c("All genes in cat", "The full set of gene annotations included in this category."),
+        c("Num. de", "The number of genes in column 'F'."),
+        c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
                              title = "Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
-      c("Queried BP ontologies", nrow(gostats_result[["tables"]][["bp_subset"]])),
-      c("Significant BP ontologies", nrow(gostats_result[["tables"]][["bp_interesting"]])),
-      c("Queried MF ontologies", nrow(gostats_result[["tables"]][["mf_subset"]])),
-      c("Significant MF ontologies", nrow(gostats_result[["tables"]][["mf_interesting"]])),
-      c("Queried CC ontologies", nrow(gostats_result[["tables"]][["cc_subset"]])),
-      c("Significant CC ontologies", nrow(gostats_result[["tables"]][["cc_interesting"]]))))
+        c("Queried BP ontologies", nrow(gostats_result[["tables"]][["bp_subset"]])),
+        c("Significant BP ontologies", nrow(gostats_result[["tables"]][["bp_interesting"]])),
+        c("Queried MF ontologies", nrow(gostats_result[["tables"]][["mf_subset"]])),
+        c("Significant MF ontologies", nrow(gostats_result[["tables"]][["mf_interesting"]])),
+        c("Queried CC ontologies", nrow(gostats_result[["tables"]][["cc_subset"]])),
+        c("Significant CC ontologies", nrow(gostats_result[["tables"]][["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
     xls_result <- write_xlsx(wb, data = summary_df, sheet = "legend", rownames = FALSE,
                              title = "Summary of the gostats search.", start_row = 1, start_col = 4)
@@ -785,46 +785,46 @@ sig_ontologies <- function(significant_result,
     down_table <- down_lst[[c]]
     chosen_column <- glue("{search_by}_logfc")
     switchret <- switch(
-      type,
-      "goseq" = {
-        up_ret[[name]] <- try(simple_goseq(
-          up_table, excel = up_name, ...))
-        down_ret[[name]] <- try(simple_goseq(
-          down_table, excel = down_name, ...))
-      },
-      "cp" = {
-        up_ret[[name]] <- try(simple_clusterprofiler(
-          up_table, excel = up_name, ...))
-        down_ret[[name]] <- try(simple_clusterprofiler(
-          down_table, excel = down_name, ...))
-      },
-      "topgo" = {
-        up_ret[[name]] <- try(simple_topgo(
-          up_table, excel = up_name, ...))
-        down_ret[[name]] <- try(simple_topgo(
-          down_table, excel = down_name, ...))
-      },
-      "gostats" = {
-        up_ret[[name]] <- try(simple_gostats(
-          up_table, excel = up_name, ...))
-        down_ret[[name]] <- try(simple_gostats(
-          down_table, excel = down_name, ...))
-      },
-      "gprofiler" = {
-        up_ret[[name]] <- try(simple_gprofiler(
-          up_table, first_col = chosen_column, excel = up_name, ...))
-        down_ret[[name]] <- try(simple_gprofiler(
-          down_table, first_col = chosen_column, excel = down_name, ...))
-      },
-      {
-        message("It appears you did not choose a type. Doing nothing.")
-        return(NULL)
-      }
+        type,
+        "goseq" = {
+          up_ret[[name]] <- try(simple_goseq(
+              up_table, excel = up_name, ...))
+          down_ret[[name]] <- try(simple_goseq(
+              down_table, excel = down_name, ...))
+        },
+        "cp" = {
+          up_ret[[name]] <- try(simple_clusterprofiler(
+              up_table, excel = up_name, ...))
+          down_ret[[name]] <- try(simple_clusterprofiler(
+              down_table, excel = down_name, ...))
+        },
+        "topgo" = {
+          up_ret[[name]] <- try(simple_topgo(
+              up_table, excel = up_name, ...))
+          down_ret[[name]] <- try(simple_topgo(
+              down_table, excel = down_name, ...))
+        },
+        "gostats" = {
+          up_ret[[name]] <- try(simple_gostats(
+              up_table, excel = up_name, ...))
+          down_ret[[name]] <- try(simple_gostats(
+              down_table, excel = down_name, ...))
+        },
+        "gprofiler" = {
+          up_ret[[name]] <- try(simple_gprofiler(
+              up_table, first_col = chosen_column, excel = up_name, ...))
+          down_ret[[name]] <- try(simple_gprofiler(
+              down_table, first_col = chosen_column, excel = down_name, ...))
+        },
+        {
+          message("It appears you did not choose a type. Doing nothing.")
+          return(NULL)
+        }
     )
   }
   retlist <- list(
-    "ups" = up_ret,
-    "downs" = down_ret
+      "ups" = up_ret,
+      "downs" = down_ret
   )
   return(retlist)
 }
@@ -904,12 +904,12 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
           image_files <- c(image_files, plot_try[["filename"]])
         }
       }
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
       new_row <- new_row + nrow(bp_data) + 2
     }
 
     new_row <- 1
     sheet <- "GO_MF"
-
     if (nrow(mf_data) > 0) {
       dfwrite <- write_xlsx(data = mf_data, wb = wb, sheet = sheet,
                             title = glue("MF Results from {sheet}."), start_row = new_row)
@@ -924,12 +924,12 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
           image_files <- c(image_files, plot_try[["filename"]])
         }
       }
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
       new_row <- new_row + nrow(mf_data) + 2
     }
 
     new_row <- 1
     sheet <- "GO_CC"
-
     if (nrow(cc_data) > 0) {
       dfwrite <- write_xlsx(data = cc_data, wb = wb, sheet = sheet,
                             title = glue("CC Results from {sheet}."),
@@ -946,10 +946,10 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
         }
       }
       new_row <- new_row + nrow(cc_data) + 2
+      openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
     }
-    openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
   } ## End checking if go data is null
-    
+
   do_kegg <- TRUE
   if (is.null(gprofiler_result[["kegg"]])) {
     do_kegg <- FALSE
@@ -1003,9 +1003,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["tf_plot_over"]]
       plot_try <- xlsx_plot_png(
-        a_plot, wb = wb, sheet = sheet, width = width, height = height,
-        start_col = ncol(tf_data) + 2, start_row = new_row,
-        plotname = "tf_plot", savedir = excel_basename, doWeights = FALSE)
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(tf_data) + 2, start_row = new_row,
+          plotname = "tf_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
@@ -1035,9 +1035,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["reactome_plot_over"]]
       plot_try <- xlsx_plot_png(
-        a_plot, wb = wb, sheet = sheet, width = width, height = height,
-        start_col = ncol(react_data) + 2, start_row = new_row,
-        plotname = "react_plot", savedir = excel_basename, doWeights = FALSE)
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(react_data) + 2, start_row = new_row,
+          plotname = "react_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
@@ -1067,9 +1067,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["mi_plot_over"]]
       plot_try <- xlsx_plot_png(
-        a_plot, wb = wb, sheet = sheet, width = width, height = height,
-        start_col = ncol(mi_data) + 2, start_row = new_row,
-        plotname = "mi_plot", savedir = excel_basename, doWeights = FALSE)
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(mi_data) + 2, start_row = new_row,
+          plotname = "mi_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
@@ -1099,9 +1099,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["hp_plot_over"]]
       plot_try <- xlsx_plot_png(
-        a_plot, wb = wb, sheet = sheet, width = width, height = height,
-        start_col = ncol(hp_data) + 2, start_row = new_row,
-        plotname = "hp_plot", savedir = excel_basename, doWeights = FALSE)
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(hp_data) + 2, start_row = new_row,
+          plotname = "hp_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
@@ -1131,9 +1131,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["corum_plot_over"]]
       plot_try <- xlsx_plot_png(
-        a_plot, wb = wb, sheet = sheet, width = width, height = height,
-        start_col = ncol(corum_data) + 2, start_row = new_row,
-        plotname = "corum_plot", savedir = excel_basename, doWeights = FALSE)
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(corum_data) + 2, start_row = new_row,
+          plotname = "corum_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
@@ -1198,27 +1198,27 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
   if (!is.null(wb)) {
     message("Writing a sheet containing the legend.")
     legend <- data.frame(rbind(
-      c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
-      c("Category", "Gene ontology Identifier."),
-      c("Term", "Short definition of the category."),
-      c("Over p-value", "Estimate of topgo over-representation in the row's category."),
-      c("Q-value", "False discovery rate correction of the p-value."),
-      c("DE genes in cat", "What genes provided are in this specific category?"),
-      c("All genes in cat", "The full set of gene annotations included in this category."),
-      c("Num. de", "The number of genes in column 'F'."),
-      c("Num. in cat", "The number of genes in column 'G'.")
+        c("Ontology", "Molecular Function, Biological Process, or Cellular Component."),
+        c("Category", "Gene ontology Identifier."),
+        c("Term", "Short definition of the category."),
+        c("Over p-value", "Estimate of topgo over-representation in the row's category."),
+        c("Q-value", "False discovery rate correction of the p-value."),
+        c("DE genes in cat", "What genes provided are in this specific category?"),
+        c("All genes in cat", "The full set of gene annotations included in this category."),
+        c("Num. de", "The number of genes in column 'F'."),
+        c("Num. in cat", "The number of genes in column 'G'.")
     ))
     colnames(legend) <- c("column name", "column definition")
     xls_result <- write_xlsx(wb, data = legend, sheet = "legend", rownames = FALSE,
                              title = "Columns used in the following tables.")
     summary_row <- nrow(legend) + 5
     summary_df <- data.frame(rbind(
-      c("Queried BP ontologies", nrow(table_list[["bp"]])),
-      c("Significant BP ontologies", nrow(table_list[["bp_interesting"]])),
-      c("Queried MF ontologies", nrow(table_list[["mf"]])),
-      c("Significant MF ontologies", nrow(table_list[["mf_interesting"]])),
-      c("Queried CC ontologies", nrow(table_list[["cc"]])),
-      c("Significant CC ontologies", nrow(table_list[["cc_interesting"]]))))
+        c("Queried BP ontologies", nrow(table_list[["bp"]])),
+        c("Significant BP ontologies", nrow(table_list[["bp_interesting"]])),
+        c("Queried MF ontologies", nrow(table_list[["mf"]])),
+        c("Significant MF ontologies", nrow(table_list[["mf_interesting"]])),
+        c("Queried CC ontologies", nrow(table_list[["cc"]])),
+        c("Significant CC ontologies", nrow(table_list[["cc_interesting"]]))))
     colnames(summary_df) <- c("Ontology type", "Number found")
     xls_result <- write_xlsx(wb, data = summary_df, sheet = "legend", rownames = FALSE,
                              title = "Summary of the topgo search.", start_row = 1, start_col = 4)
@@ -1283,11 +1283,11 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
     kept_columns <- kept_columns[kept_columns_idx]
     categories <- categories[, kept_columns]
     better_column_names <- c(
-      "Ontology", "Category", "Term", "Annotated genes in cat.",
-      "Significant genes in cat.", "Expected genes in cat.", "Fisher score",
-      "KS score", "EL score", "weighted score", "qvalue",
-      "All genes in cat.", "DE genes in cat.",
-      "FC from limma", "FC from DESeq", "FC from edgeR")
+        "Ontology", "Category", "Term", "Annotated genes in cat.",
+        "Significant genes in cat.", "Expected genes in cat.", "Fisher score",
+        "KS score", "EL score", "weighted score", "qvalue",
+        "All genes in cat.", "DE genes in cat.",
+        "FC from limma", "FC from DESeq", "FC from edgeR")
     better_column_names <- better_column_names[kept_columns_idx]
     colnames(categories) <- better_column_names
 
@@ -1304,9 +1304,9 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
       a_plot <- topgo_result[["pvalue_plots"]][[p_plot_name]]
       if (!is.null(a_plot)) {
         plot_try <- sm(xlsx_plot_png(
-          a_plot, wb = wb, sheet = ont, width = width, height = height,
-          start_col = ncol(categories) + 2, start_row = new_row,
-          plotname = p_plot_name, savedir = excel_basename, doWeights = FALSE))
+            a_plot, wb = wb, sheet = ont, width = width, height = height,
+            start_col = ncol(categories) + 2, start_row = new_row,
+            plotname = p_plot_name, savedir = excel_basename, doWeights = FALSE))
         if (! "try-error" %in% class(plot_try)) {
           image_files <- c(image_files, plot_try[["filename"]])
         }
@@ -1314,9 +1314,9 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
       a_plot <- trees[[tree_plot_name]]
       if (!is.null(a_plot)) {
         plot_try <- sm(xlsx_plot_png(
-          trees[[tree_plot_name]], wb = wb, sheet = ont, width = 12, height = 12,
-          start_col = ncol(categories) + 2, start_row = 80, res = 210,
-          plotname = tree_plot_name, savedir = excel_basename))
+            trees[[tree_plot_name]], wb = wb, sheet = ont, width = 12, height = 12,
+            start_col = ncol(categories) + 2, start_row = 80, res = 210,
+            plotname = tree_plot_name, savedir = excel_basename))
         if (! "try-error" %in% class(plot_try)) {
           image_files <- c(image_files, plot_try[["filename"]])
         }
@@ -2271,17 +2271,17 @@ write_go_xls <- function(goseq, cluster, topgo, gostats, gprofiler,
   gostats_bp <- head(gostats[["bp_over_all"]], n = n)
   gostats_cc <- head(gostats[["cc_over_all"]], n = n)
   gostats_mf[["t"]] <- gsub(
-    x = gostats_mf[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
+      x = gostats_mf[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
   gostats_bp[["t"]] <- gsub(
-    x = gostats_bp[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
+      x = gostats_bp[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
   gostats_cc[["t"]] <- gsub(
-    x = gostats_cc[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
+      x = gostats_cc[["Term"]], pattern = ".*\">(.*)</a>", replacement = "\\1")
   gostats_mf[["Term"]] <- gsub(
-    x = gostats_mf[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
+      x = gostats_mf[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
   gostats_bp[["Term"]] <- gsub(
-    x = gostats_bp[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
+      x = gostats_bp[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
   gostats_cc[["Term"]] <- gsub(
-    x = gostats_cc[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
+      x = gostats_cc[["Term"]], pattern = "<a href=\"(.*)\">.*", replacement = "\\1")
   gostats_mf[["ont"]] <- "MF"
   gostats_bp[["ont"]] <- "BP"
   gostats_cc[["ont"]] <- "CC"

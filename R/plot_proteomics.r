@@ -55,8 +55,8 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
 
   chosen_palette <- "Dark2"
   sample_colors <- sm(
-    grDevices::colorRampPalette(
-                 RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+      grDevices::colorRampPalette(
+                     RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
 
   ## Randomize the rows of the df so we can see if any sample is actually overrepresented
   plot_df <- plot_df[sample(nrow(plot_df)), ]
@@ -69,14 +69,14 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
   }
 
   int_vs_mz <- ggplot(data = plot_df, aes_string(x = "mz", y = "intensity",
-                                               fill = "sample", colour = "sample")) +
+                                                 fill = "sample", colour = "sample")) +
     ggplot2::geom_point(alpha = alpha, size = 0.5) +
     ggplot2::scale_fill_manual(
-               name = "Sample", values = sample_colors,
-               guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+                 name = "Sample", values = sample_colors,
+                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::scale_color_manual(
-               name = "Sample", values = sample_colors,
-               guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+                 name = "Sample", values = sample_colors,
+                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::theme_bw(base_size = base_size)
 
   if (!is.null(x_scale)) {
@@ -91,8 +91,8 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
       ggplot2::geom_smooth(method = "loess", size = 1.0)
   }
   retlist <- list(
-    "data" = plotted_data,
-    "plot" = int_vs_mz)
+      "data" = plotted_data,
+      "plot" = int_vs_mz)
   return(retlist)
 }
 
@@ -292,8 +292,8 @@ plot_pyprophet_counts <- function(pyprophet_data, type = "count", keep_real = TR
                                ylabel = y_label)
 
   retlist <- list(
-    "df" = plotted_data,
-    "plot" = our_plot)
+      "df" = plotted_data,
+      "plot" = our_plot)
   return(retlist)
 }
 
@@ -531,10 +531,10 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   }
 
   retlist <- list(
-    "violin" = violin,
-    "boxplot" = boxplot,
-    "dotboxplot" = dotboxplot,
-    "density" = density)
+      "violin" = violin,
+      "boxplot" = boxplot,
+      "dotboxplot" = dotboxplot,
+      "density" = density)
   return(retlist)
 }
 
@@ -730,8 +730,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
 
   if (scale == "log") {
     violin <- violin + ggplot2::scale_y_continuous(
-                                  labels = scales::scientific,
-                                  trans = scales::log2_trans())
+                                    labels = scales::scientific,
+                                    trans = scales::log2_trans())
   } else if (scale == "logdim") {
     violin <- violin + ggplot2::coord_trans(y = "log2")
   } else if (isTRUE(scale)) {
@@ -802,8 +802,8 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
   if (color_by == "sample") {
     chosen_palette <- "Dark2"
     sample_colors <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
   } else {
     sample_colors <- colors
   }
@@ -826,14 +826,14 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
   }
 
   x_vs_y <- ggplot(data = plot_df, aes_string(x = xaxis, y = yaxis,
-                                            fill = "sample", colour = "sample")) +
+                                              fill = "sample", colour = "sample")) +
     ggplot2::geom_point(alpha = alpha, size = 0.5) +
     ggplot2::scale_fill_manual(
-               name = "Sample", values = sample_colors,
-               guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+                 name = "Sample", values = sample_colors,
+                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::scale_color_manual(
-               name = "Sample", values = sample_colors,
-               guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+                 name = "Sample", values = sample_colors,
+                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::theme_bw(base_size = base_size)
 
   if (!is.null(xscale)) {
@@ -854,8 +854,8 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
     x_vs_y <- x_vs_y + ggplot2::geom_rug(colour = "gray50", alpha = alpha)
   }
   retlist <- list(
-    "data" = plot_df,
-    "plot" = x_vs_y)
+      "data" = plot_df,
+      "plot" = x_vs_y)
   return(retlist)
 }
 
@@ -899,8 +899,8 @@ plot_peprophet_data <- function(table, xaxis = "precursor_neutral_mass", xscale 
     color_list <- c("darkred", "darkblue")
   } else {
     color_list <- sm(
-      grDevices::colorRampPalette(
-                   RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+        grDevices::colorRampPalette(
+                       RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
   }
 
   if (is.null(table[[xaxis]])) {
@@ -972,7 +972,7 @@ plot_peprophet_data <- function(table, xaxis = "precursor_neutral_mass", xscale 
   table[["text"]] <- glue("{table[['protein']]}:{table[['peptide']]}")
 
   a_plot <- ggplot(data = table, aes_string(x = xaxis, y = yaxis, text = "text",
-                                          color = "color", size = "size")) +
+                                            color = "color", size = "size")) +
     ggplot2::geom_point(alpha = 0.4, aes_string(fill = "color", color = "color")) +
     ggplot2::scale_color_manual(name = "color", values = color_list) +
     ggplot2::geom_rug() +
@@ -1059,8 +1059,8 @@ cleavage_histogram <- function(pep_sequences, enzyme = "trypsin",
     ggplot2::scale_x_continuous(limits = c(start, end))
 
   retlist <- list(
-    "plot" = plot,
-    "masses" = new_df)
+      "plot" = plot,
+      "masses" = new_df)
   return(retlist)
 }
 

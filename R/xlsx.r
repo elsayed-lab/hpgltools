@@ -136,9 +136,9 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
     ## glue'd() strings are not just class character, but their own thing,
     ## which means that just dumping them in this situation leads to unexpected results.
     xl_result <- openxlsx::writeData(
-                             wb = wb, sheet = sheet,
-                             x = as.character(title),
-                             startCol = new_col, startRow = new_row)
+                               wb = wb, sheet = sheet,
+                               x = as.character(title),
+                               startCol = new_col, startRow = new_row)
     new_row <- new_row + 1
   }
 
@@ -206,10 +206,10 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
   }
   end_col <- new_col + ncol(data) + 1
   ret <- list(
-    "workbook" = wb,
-    "sheet" = sheet,
-    "end_row" = new_row,
-    "end_col" = end_col)
+      "workbook" = wb,
+      "sheet" = sheet,
+      "end_row" = new_row,
+      "end_col" = end_col)
   if (!is.null(excel)) {
     mesg("Saving to: ", excel)
     save_result <- openxlsx::saveWorkbook(wb, excel, overwrite = TRUE)
@@ -336,11 +336,11 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
     message("The png file name did not exist: ", png_name)
   }
   ret <- list(
-    "filename" = png_name,
-    "png_fh" = png_ret,
-    "png_print" = print_ret,
-    "fancy_print" = fancy_ret,
-    "openxlsx" = insert_ret)
+      "filename" = png_name,
+      "png_fh" = png_ret,
+      "png_print" = print_ret,
+      "fancy_print" = fancy_ret,
+      "openxlsx" = insert_ret)
   return(ret)
 }
 

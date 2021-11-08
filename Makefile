@@ -56,7 +56,7 @@ deps:
 
 document: roxygen vignette reference
 
-install: reference roxygen
+install: reference roxygen clean
 	echo "Performing R CMD INSTALL hpgltools."
 	R CMD INSTALL --install-tests .
 

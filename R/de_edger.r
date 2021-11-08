@@ -226,21 +226,21 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   retlist <- list(
-    "all_tables" = result_list,
-    "batches" = batches,
-    "batches_table" = batches_table,
-    "conditions" = conditions,
-    "conditions_table" = conditions_table,
-    "contrast_list" = contrast_list,
-    "contrasts" = apc,
-    "contrast_string" = contrast_string,
-    "contrasts_performed" = apc[["names"]],
-    "dispersion_plot" = dispersion_plot,
-    "input_data" = input,
-    "lrt" = lrt_list,
-    "method" = "edger",
-    "model" = model_data,
-    "model_string" = model_string)
+      "all_tables" = result_list,
+      "batches" = batches,
+      "batches_table" = batches_table,
+      "conditions" = conditions,
+      "conditions_table" = conditions_table,
+      "contrast_list" = contrast_list,
+      "contrasts" = apc,
+      "contrast_string" = contrast_string,
+      "contrasts_performed" = apc[["names"]],
+      "dispersion_plot" = dispersion_plot,
+      "input_data" = input,
+      "lrt" = lrt_list,
+      "method" = "edger",
+      "model" = model_data,
+      "model_string" = model_string)
   class(retlist) <- c("edger_result", "list")
   if (!is.null(arglist[["edger_excel"]])) {
     retlist[["edger_excel"]] <- write_edger(retlist, excel = arglist[["edger_excel"]])

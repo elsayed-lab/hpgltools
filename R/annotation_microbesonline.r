@@ -72,7 +72,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(prot)) {
     prot_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
+        "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=proteomes")
     prot_file <- glue("{id}_proteome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", prot_file, ".")
@@ -82,7 +82,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(tx)) {
     tx_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
+        "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=transcriptomes")
     tx_file <- glue("{id}_tx.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", tx_file, ".")
@@ -92,7 +92,7 @@ download_microbesonline_files <- function(id = "160490", type = NULL) {
 
   if (isTRUE(genome)) {
     genome_url <- glue(
-      "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
+        "http://microbesonline.org/cgi-bin/genomeInfo.cgi?tId={id};export=genomes")
     genome_file <- glue("{id}_genome.fasta")
     message("The species being downloaded is: ", species,
             " and is being downloaded as ", genome_file, ".")
