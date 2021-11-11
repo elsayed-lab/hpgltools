@@ -63,7 +63,7 @@ untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
 ## plotting, metadata is a copy of the metadata, and sample_data is the fun.
 pyprophet_fun <- extract_pyprophet_data(metadata = meta,
                                         pyprophet_column = "diascored")
-test_that("Did extract_pyprotphet_data have failures?", {
+test_that("Did extract_pyprophet_data have failures?", {
   expect_equal(NULL, pyprophet_fun[["failed"]])
 })
 expected <- 35

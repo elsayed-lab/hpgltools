@@ -1,3 +1,4 @@
+#' Validation function when creating a circos class.
 check_circos <- function(object) {
   ret <- c()
   base_dir <- dirname(object@data_dir)
@@ -68,3 +69,71 @@ setMethod("iDA", "matrix",
             iDAoutput <- iDA_core(object, ...)
             return(iDAoutput)
           })
+
+## Methods for plotting functions.
+##setGeneric("plot_libsize",
+##           valueClass = "matrix",
+##           function(data, ...) {
+##             standardGeneric("plot_libsize")
+##             ## plot_libsize(data, ...)
+##           })
+
+#' Send a SummarizedExperiment to plot_libsize().
+#'
+#' @param data SummarizedExperiment presumably created by create_se().
+#' @param condition Set of conditions observed in the metadata, overriding
+#'  the metadata in the SE.
+#' @param colors Set of colors for the plot, overriding the SE metadata.
+#' @param text Print text with the counts/sample observed at the top of the bars?
+#' @param order Optionally redefine the order of the bars of the plot.
+#' @param title Plot title!
+#' @param yscale Explicitly set the scale on the log or base10 scale.
+#' @param expt_names Optionally change the names of the bars.
+#' @param label_chars If the names of the bars are larger than this, abbreviate them.
+#' @param ... Additonal arbitrary arguments.
+#' @return Plot of library sizes and a couple tables describing the data.
+#' @export
+setMethod("plot_libsize",
+          signature = signature(data = "SummarizedExperiment"),
+          definition = function(data, condition = NULL, colors = NULL, text = TRUE,
+                                order = NULL, title = NULL, yscale = NULL,
+                                expt_names = NULL, label_chars = 10, ...) {
+            mtrx <- as.matrix(assay(data))
+            condition <- metadata(data)[["conditions"]]
+            colors <- metadata(data)[["colors"]]
+            plot_libsize(mtrx, condition = condition, colors = colors, ...)
+          })
+setMethod("plot_libsize",
+          signature = signature(data = "expt"),
+          definition = function(data, condition = NULL, colors = NULL, text = TRUE,
+                                order = NULL, title = NULL, yscale = NULL,
+                                expt_names = NULL, label_chars = 10, ...) {
+            mtrx <- exprs(data)
+            condition <- pData(data)[["condition"]]
+            colors = data[["colors"]]
+            plot_libsize(mtrx, condition = condition, colors = colors, ...)
+          })
+setMethod("plot_libsize",
+          signature = signature(data = "ExpressionSet"),
+          definition = function(data, condition = NULL, colors = NULL, text = TRUE,
+                                order = NULL, title = NULL, yscale = NULL,
+                                expt_names = NULL, label_chars = 10, ...) {
+            mtrx <- exprs(data)
+            condition <- pData(data)[["conditions"]]
+            plot_libsize(mtrx, condition = condition, ...)
+          })
+setMethod("plot_libsize",
+          signature = signature(data = "data.frame", condition = "factor", colors = "character"),
+          definition = function(data, condition, colors, text = TRUE,
+                                order = NULL, title = NULL, yscale = NULL,
+                                expt_names = NULL, label_chars = 10, ...) {
+            data <- as.matrix(data)
+            plot_libsize(data, condition = condition, colors = colors) # , ...)
+          })
+##setMethod("plot_libsize",
+##          signature = signature(data = "matrix", condition = "factor", colors = "character"),
+##          definition = function(data, condition, colors, text = TRUE,
+##                                order = NULL, title = NULL, yscale = NULL,
+##                                expt_names = NULL, label_chars = 10, ...) {
+##            plot_libsize(data, condition = condition, colors = colors) # , ...)
+##          })
