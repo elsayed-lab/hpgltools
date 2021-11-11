@@ -40,7 +40,7 @@ test_that("Do we get the expected amount of orgdb transcript data?", {
 ## evidences we accept, as this table is astonishingly redundant.
 testing <- load_orgdb_go(gene_ids = test_genes)
 ## Another function on which I get different answers on different hosts.
-expected <- 11500
+expected <- 8100
 actual <- nrow(testing)
 ## 0506
 test_that("Do we get the expected amount of orgdb GO data?", {
