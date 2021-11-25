@@ -6,6 +6,7 @@
 \usage{
 load_genbank_annotations(
   accession = "AE009949",
+  file = NULL,
   reread = TRUE,
   savetxdb = FALSE
 )
