@@ -8,6 +8,7 @@ various preprocessing tools.}
 gather_preprocessing_metadata(
   starting_metadata,
   specification = NULL,
+  basedir = "preprocessing",
   new_metadata = NULL,
   verbose = FALSE,
   ...

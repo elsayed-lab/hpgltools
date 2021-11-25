@@ -4,7 +4,7 @@
 \alias{dispatch_gc}
 \title{Pull GC content into the metadata sheet.}
 \usage{
-dispatch_gc(meta, input_file_spec, verbose = FALSE)
+dispatch_gc(meta, input_file_spec, verbose = FALSE, basedir = "preprocessing")
 }
 \arguments{
 \item{meta}{Input metadata}

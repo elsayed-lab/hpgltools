@@ -7,6 +7,7 @@
 circos_hist(
   cfg,
   df,
+  annot_source = "cfg",
   colname = "logFC",
   basename = "",
   color = "blue",

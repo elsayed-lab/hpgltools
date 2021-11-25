@@ -9,6 +9,7 @@ dispatch_regex_search(
   search,
   replace,
   input_file_spec,
+  basedir = "preprocessing",
   extraction = "\\\\1",
   which = "first",
   verbose = FALSE,

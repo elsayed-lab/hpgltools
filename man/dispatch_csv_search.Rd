@@ -9,6 +9,7 @@ dispatch_csv_search(
   column,
   input_file_spec,
   type = "csv",
+  basedir = "preprocessing",
   which = "first",
   verbose = FALSE,
   ...

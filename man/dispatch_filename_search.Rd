@@ -4,7 +4,12 @@
 \alias{dispatch_filename_search}
 \title{Pull out the filename matching an input spec}
 \usage{
-dispatch_filename_search(meta, input_file_spec, verbose = verbose)
+dispatch_filename_search(
+  meta,
+  input_file_spec,
+  verbose = verbose,
+  basedir = "preprocessing"
+)
 }
 \arguments{
 \item{meta}{Input metadata}

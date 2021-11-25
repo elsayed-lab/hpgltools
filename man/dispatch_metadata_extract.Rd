@@ -10,6 +10,7 @@ dispatch_metadata_extract(
   entry_type,
   input_file_spec,
   specification,
+  basedir = "preprocessing",
   verbose = FALSE,
   ...
 )
