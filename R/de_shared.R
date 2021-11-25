@@ -281,7 +281,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' @param topn Number of genes to consider (or percentage of the
 #'  whole).
 #' @export
-calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
+calculate_aucc <- function(tbl, tbl2 = NULL, px="deseq_adjp", py="edger_adjp",
                            lx="deseq_logfc", ly="edger_logfc",
                            topn=0.1) {
   ## If the topn argument is an integer, the just ask for that number.
@@ -295,13 +295,31 @@ calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
     topn <- ceiling(nrow(tbl) * topn)
   }
 
+  ## By default, assume all the relevant columns are in the tbl variable.
+  ## However, if a second tbl is provided, then do not assume that.
+  if (!is.null(tbl2)) {
+    tbl3 <- merge(tbl, tbl2, by = "row.names")
+    rownames(tbl3) <- tbl3[["Row.names"]]
+    tbl3[["Row.names"]] <- NULL
+    tbl <- tbl3
+    if (px == py) {
+      px <- paste0(px, ".x")
+      py <- paste0(py, ".y")
+      lx <- paste0(lx, ".x")
+      ly <- paste0(ly, ".y")
+    }
+  }
+
   x_df <- tbl[, c(px, lx)]
-  y_df <- tbl[, c(py, ly)]
+  x_order <- rownames(x_df)
+  y_df <- tbl[x_order, c(py, ly)]
+
+
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
-  x_idx <- order(x_df[[1]], decreasing=FALSE)
+  x_idx <- order(x_df[[px]], decreasing=FALSE)
   x_df <- x_df[x_idx, ]
-  y_idx <- order(y_df[[1]], decreasing=FALSE)
+  y_idx <- order(y_df[[py]], decreasing=FALSE)
   y_df <- y_df[y_idx, ]
 
   ## Then, we created lists of the top-ranked genes in each dataset of
@@ -315,7 +333,7 @@ calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
   intersections <- rep(0, topn)
   for (i in 1:topn) {
     if (i == 1) {
-      x_intersections[i] <- rownames(x_df)[i] == rownames(y_df)[i]
+      intersections[i] <- rownames(x_df)[i] == rownames(y_df)[i]
     } else {
       x_set <- rownames(x_df)[1:i]
       y_set <- rownames(y_df)[1:i]
@@ -331,7 +349,28 @@ calculate_aucc <- function(tbl, px="deseq_adjp", py="edger_adjp",
   sumint <- sum(intersections)
   norm <- (topn * (topn + 1)) /2
   aucc <- sumint / norm
-  return(aucc)
+
+  intersection_df <- data.frame(x = 1:topn, y = intersections)
+  intersection_lm <- lm(intersection_df, formula = y ~ x)
+  inter <- as.numeric(coef(intersection_lm))
+  inter_inter <- inter[1]
+  inter_slope <- inter[2]
+  intersection_plot <- ggplot(data = intersection_df,
+                              aes_string(x = "x", y = "y")) +
+    ggplot2::geom_point() +
+    ggplot2::geom_abline(colour = "grey", slope = 1, intercept = 0) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(0, topn)) +
+    ggplot2::scale_y_continuous(expand = c(0, 0)) +
+    ggplot2::geom_abline(colour = "blue", slope = inter_slope, intercept = inter_inter) +
+    ggplot2::geom_smooth(method = "loess", formula = y ~ x) +
+    ggplot2::annotate("text", x = topn / 1.5, y = topn / 10,
+                      label = glue::glue("AUCC: {signif(aucc, 3)},
+ AUCC slope: {signif(inter_slope, 3)}"))
+
+  retlist <- list(
+      "aucc" = aucc,
+      "plot" = intersection_plot)
+ return(retlist)
 }
 
 #' Use sva's f.pvalue to adjust p-values for data adjusted by combat.

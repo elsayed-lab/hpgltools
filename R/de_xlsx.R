@@ -1804,7 +1804,8 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
   ## the extraneous message() statements and instead fill that information into
   ## this data frame.
-  summary_df <- data.frame(row.names = names(ret[["limma"]][["ups"]]))
+  name_element <- according_to[1]
+  summary_df <- data.frame(row.names = names(ret[[name_element]][["ups"]]))
 
   sig_bar_plots <- NULL
   if (isTRUE(do_excel) & isTRUE(sig_bar)) {
