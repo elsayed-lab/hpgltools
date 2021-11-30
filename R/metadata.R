@@ -341,6 +341,22 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "possible_host_species" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*filter_kraken_host/*.log"),
+        "pernt_plus_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
         "salmon_mapped" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
         "shovill_contigs" = list(
@@ -404,7 +420,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
         "ictv_genus" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/notes.txt"))
+            "file" = "{basedir}/{meta[['sampleid']]}/notes.txt")
+    ) ## Finish the list on a separate line because this is already absurd enough.
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -535,30 +552,86 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
                                          which = "first", verbose = verbose, basedir = basedir)
       },
+      "pernt_plus_mean_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "mean",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_median_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "median",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_max_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "max",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_min_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "min",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_mean_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "mean",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_median_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "median",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_max_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "max",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_min_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "min",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
       "ictv_taxonomy" = {
         ## column <- "taxon"
         column <- "name"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "all", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_accession" = {
         column <- "hit_accession"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "all", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_family" = {
         ## column <- "taxon"
         column <- "hit_family"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "first", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_genus" = {
         ## column <- "taxon"
         column <- "hit_genus"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "first", verbose = verbose, basedir = basedir,
                                        ...)
       },
@@ -771,7 +844,8 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       },
       "phastaf_num_hits" = {
         search <- "^.*$"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose, basedir = basedir)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "prodigal_positive_strand" = {
         search <- "\\t\\+\\t"
@@ -1128,7 +1202,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
 #' @param which Take the first entry, or some subset.
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
-dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
+dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv", chosen_func = NULL,
                                 basedir = "preprocessing", which = "first", verbose = FALSE,
                                 ...) {
   arglist <- list(...)
@@ -1154,19 +1228,33 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       next
     }
 
-    if (type == 'csv') {
-      input_df <- readr::read_csv(input_file)
-    } else if (type == 'tsv') {
-      input_df <- readr::read_tsv(input_file)
+    if (file_type == "csv") {
+      input_df <- sm(readr::read_csv(input_file))
+    } else if (file_type == "tsv") {
+      input_df <- sm(readr::read_tsv(input_file))
     } else {
       message("Assuming csv input.")
-      input_df <- readr::read_csv(input_file)
+      input_df <- sm(readr::read_csv(input_file))
     }
 
     if (which == "first") {
       output_entries[row] <- input_df[1, column]
     } else if (which == "all") {
-      stringified <- gsub(x=toString(input_df[[column]]), pattern = ",", replacement = ";")
+      stringified <- gsub(x = toString(input_df[[column]]), pattern = ",", replacement = ";")
+      output_entries[row] <- stringified
+    } else if (which == "function") {
+      ## I was thinking to just use do.call() here, but I want to use na.rm=TRUE
+      ## and I am not certain how to get that set up correctly with do.call.
+      stringified <- 0
+      if (chosen_func == "mean") {
+        stringified <- mean(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "median") {
+        stringified <- median(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "max") {
+        stringified <- max(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "min") {
+        stringified <- min(input_df[[column]], na.rm = TRUE)
+      }
       output_entries[row] <- stringified
     } else {
       ## Assume a number was provided for the desired row
