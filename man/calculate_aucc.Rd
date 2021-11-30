@@ -6,6 +6,7 @@
 \usage{
 calculate_aucc(
   tbl,
+  tbl2 = NULL,
   px = "deseq_adjp",
   py = "edger_adjp",
   lx = "deseq_logfc",
