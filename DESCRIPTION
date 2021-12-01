@@ -59,7 +59,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Collate:
   '01_hpgltools.r'
   'annotation_biomart.r'
@@ -123,6 +123,5 @@ Collate:
   'xlsx.r'
   'motif.r'
   'tf.r'
-  'expt_app_helpers.R'
   'set_methods.R'
-  'zzz_app.R'
+

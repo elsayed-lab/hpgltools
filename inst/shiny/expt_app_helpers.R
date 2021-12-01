@@ -29,27 +29,32 @@ get_annots <- function(annots = "TMRC2", orgdb = "org.Lpanamensis.MHOMCOL81L13.v
 
 }
 
-get_data <- function(data = "TMRC2") {
+get_data <- function(datadir) {
   expt <- NULL
-  if (data == "TMRC2") {
-    if (file.exists("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/expt.rda")) {
-      load("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/expt.rda")
-      expt <- expt %>%
-        set_expt_conditions(fact = "zymodemecategorical") %>%
-        subset_expt(nonzero = 8550) %>%
-        subset_expt(coverage = 5000000) %>%
-        semantic_expt_filter(semantic = c("amastin", "gp63", "leishmanolysin"),
-                             semantic_column = "annot_gene_product")
-    }
+  #if (data == "TMRC2") {
+   # if (file.exists("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/expt.rda")) {
+    #  load("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/expt.rda")
+     # expt <- expt %>%
+      #  set_expt_conditions(fact = "zymodemecategorical") %>%
+       # subset_expt(nonzero = 8550) %>%
+        #subset_expt(coverage = 5000000) %>%
+        #semantic_expt_filter(semantic = c("amastin", "gp63", "leishmanolysin"),
+         #                    semantic_column = "annot_gene_product")
+    #}
 
-  } else if (data == "TMRC3") {
-    if (file.exists("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/hs_expt_all-v202110.rda")) {
-      load("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/hs_expt_all-v202110.rda")
-      expt <- expt %>%
-        exclude_genes_expt(column="gene_biotype", method="keep",
-                           patterns="protein_coding", meta_column="ncrna_lost")
-    }
+  #} else if (data == "TMRC3") {
+   # if (file.exists("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/hs_expt_all-v202110.rda")) {
+    #  load("/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/hs_expt_all-v202110.rda")
+     # expt <- expt %>%
+      #  exclude_genes_expt(column="gene_biotype", method="keep",
+       #                    patterns="protein_coding", meta_column="ncrna_lost")
+  #  }
+  #}
+  if (file.exists(datadir)){
+    #"/mnt/cbcb/fs00_reesyxan/cbcb-lab/nelsayed/scratch/atb/rnaseq/lpanamensis_tmrc_2019/rda/expt.rda")) {
+    load(datadir)
   }
+  
   return(expt)
 }
 
