@@ -18,6 +18,8 @@ dispatch_fasta_lengths(
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 Get the lengths of sequences from a fasta file.

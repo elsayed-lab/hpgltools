@@ -31,6 +31,8 @@ easier to calculate ratios of column_x/column_y; but it is a
 def-facto argument to either get rid of input_file_spec as an arg
 or to just get rid of this function.}
 
+\item{basedir}{Root directory containing the files/logs of metadata.}
+
 \item{verbose}{used for testing regexes.}
 
 \item{...}{passed to glue to add more variables to the file spec.}

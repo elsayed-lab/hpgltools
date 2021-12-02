@@ -6,6 +6,14 @@
 \usage{
 check_circos(object)
 }
+\arguments{
+\item{object}{The object to check for validity.}
+}
+\value{
+TRUE or FALSE
+}
 \description{
-Validation function when creating a circos class.
+This is the one of the first steps taken to make the circos plot
+builder into an object oriented set of functions.  Thank you,
+Theresa!
 }

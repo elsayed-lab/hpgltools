@@ -12,9 +12,11 @@ load_genbank_annotations(
 )
 }
 \arguments{
-\item{accession}{Accession to download and import}
+\item{accession}{Accession to download and import.}
 
-\item{reread}{Re-read (download) the file from genbank}
+\item{file}{Use a file instead of downloading the accession?}
+
+\item{reread}{Re-read (download) the file from genbank.}
 
 \item{savetxdb}{Attempt saving a txdb object?}
 }

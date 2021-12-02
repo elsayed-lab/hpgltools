@@ -271,6 +271,7 @@ gather_trimomatic_metadata <- function(metadata,
 #'  column to append to the sample sheet.  Each element in turn is a
 #'  list containing column names and/or input filenames (and
 #' presumably other stuff as I think of it).
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param new_metadata Filename to which to write the new metadata
 #' @param verbose Currently just used to debug the regexes.
 #' @param ... This is one of the few instances where I used
@@ -479,6 +480,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 #'  easier to calculate ratios of column_x/column_y; but it is a
 #'  def-facto argument to either get rid of input_file_spec as an arg
 #'  or to just get rid of this function.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param verbose used for testing regexes.
 #' @param ... passed to glue to add more variables to the file spec.
 #' @return Vector of entries which will be used to populate the new
@@ -939,6 +941,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param basedir Root directory containing the files/logs of metadata.
 dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose,
                                  basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
@@ -976,6 +979,7 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param basedir Root directory containing the files/logs of metadata.
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
                                    basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
@@ -1008,6 +1012,7 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param basedir Root directory containing the files/logs of metadata.
 dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
                                      basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
@@ -1041,6 +1046,7 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param basedir Root directory containing the files/logs of metadata.
 dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
                         basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
@@ -1110,6 +1116,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param replace probably the same regex with parentheses in place
 #'  for gsub().
 #' @param input_file_spec filename extractor expression.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param extraction the replacement portion of gsub(). I am thinking
 #'  to make it possible to have this function return more interesting
 #'  outputs if this changes, but for the moment I am sort of assuming
@@ -1198,7 +1205,9 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
 #' @param column Column to yank from
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
-#' @param type csv or tsv?
+#' @param file_type csv or tsv?
+#' @param chosen_func If set, use this function to summarize the result.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param which Take the first entry, or some subset.
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.

@@ -6,6 +6,13 @@
 \usage{
 find_working_dataset(mart, trydataset, species)
 }
+\arguments{
+\item{mart}{Biomart instance to poke at in an attempt to find a dataset.}
+
+\item{trydataset}{Dataset to attempt to query.}
+
+\item{species}{Species at the mart for which to search.}
+}
 \description{
 Search a mart for a usable dataset.
 }

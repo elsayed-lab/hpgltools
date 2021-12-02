@@ -13,6 +13,8 @@ dispatch_gc(meta, input_file_spec, verbose = FALSE, basedir = "preprocessing")
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 As the name suggests, this only works for fasta files.

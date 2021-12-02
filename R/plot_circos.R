@@ -254,6 +254,8 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
 #' @param df Dataframe with starts/ends and the floating point information.
+#' @param annot_source This parameter was added to make it possible to add an
+#'  arbitrary dataframe of other annotation information.
 #' @param colname Name of the column with the data of interest.
 #' @param basename Location to write the circos data (usually cwd).
 #' @param color Color of the plotted data.
@@ -267,8 +269,9 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename = "", color = "blue", fill_color = "blue",
-                        fill_under = "yes", extend_bin = "no", thickness = "0", orientation = "out",
+circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename = "",
+                        color = "blue", fill_color = "blue", fill_under = "yes",
+                        extend_bin = "no", thickness = "0", orientation = "out",
                         outer = 0.9, width = 0.08, spacing = 0.0) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
@@ -303,7 +306,6 @@ circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename
     keep_idx <- !is.na(full_table[["stop"]])
     full_table <- full_table[keep_idx, ]
   }
-
 
   ## FIXME: Redo this with %>%
   hist_cfg_file <- cfg@cfg_file
@@ -1360,7 +1362,8 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
   tile_data_file <- file.path(cfg@data_dir, basename(tile_cfg_file))
   tile_data_file <- gsub(pattern = ".conf$", replacement = ".txt", x = tile_data_file)
   message("Writing data file: ", tile_data_file, " with the ", basename, colname, " column.")
-  write.table(full_table, file = tile_data_file, quote = FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(full_table, file = tile_data_file, quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
 
   num_colors <- 1
   if (is.null(colors)) {

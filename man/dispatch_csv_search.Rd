@@ -8,7 +8,8 @@ dispatch_csv_search(
   meta,
   column,
   input_file_spec,
-  type = "csv",
+  file_type = "csv",
+  chosen_func = NULL,
   basedir = "preprocessing",
   which = "first",
   verbose = FALSE,
@@ -23,7 +24,11 @@ dispatch_csv_search(
 \item{input_file_spec}{Input file specification to hunt down the
 file of interest.}
 
-\item{type}{csv or tsv?}
+\item{file_type}{csv or tsv?}
+
+\item{chosen_func}{If set, use this function to summarize the result.}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 
 \item{which}{Take the first entry, or some subset.}
 

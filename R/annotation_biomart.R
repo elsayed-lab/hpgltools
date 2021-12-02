@@ -4,6 +4,9 @@
 
 #' Search a mart for a usable dataset.
 #'
+#' @param mart Biomart instance to poke at in an attempt to find a dataset.
+#' @param trydataset Dataset to attempt to query.
+#' @param species Species at the mart for which to search.
 #' @export
 find_working_dataset <- function(mart, trydataset, species) {
   chosen_dataset <- NULL
@@ -369,7 +372,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #' @param drop_haplotypes Some chromosomes have stupid names because they are
 #'  from non-standard haplotypes and they should go away.  Setting this to
 #'  false stops that.
-#' @param secondtry The newer mart name.
+#' @param trydataset Define a dataset to which to attempt connecting.
 #' @param dl_rows List of rows from the final biomart object to download.
 #' @param dl_rowsv2 A second list of potential rows.
 #' @return List containing the following:  data frame of ontology data, a copy
@@ -484,6 +487,11 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
 #' @param second_species Linnean species name for the second species.
 #' @param host Ensembl server to query.
 #' @param trymart Assumed mart name to use.
+#' @param archive Use an archive server?
+#' @param default_hosts Set of default hosts to query.
+#' @param year When using an archive server, use this year (otherwise it will choose last year).
+#' @param month When using an archive server, use this month (otherwise, this month).
+#' @param trydataset Choose a dataset to query.
 #' @param attributes Key to query
 #' @return list of 4 elements:  The first is the set of all ids, as getLDS seems
 #'  to always send them all; the second is the subset corresponding to the

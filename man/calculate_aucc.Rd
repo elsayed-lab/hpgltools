@@ -17,6 +17,8 @@ calculate_aucc(
 \arguments{
 \item{tbl}{DE table}
 
+\item{tbl2}{Second table}
+
 \item{px}{first set of p-values column}
 
 \item{py}{second set}
