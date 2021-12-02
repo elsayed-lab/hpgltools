@@ -4,7 +4,7 @@
 \alias{dispatch_gc}
 \title{Pull GC content into the metadata sheet.}
 \usage{
-dispatch_gc(meta, input_file_spec, verbose = FALSE)
+dispatch_gc(meta, input_file_spec, verbose = FALSE, basedir = "preprocessing")
 }
 \arguments{
 \item{meta}{Input metadata}
@@ -13,6 +13,8 @@ dispatch_gc(meta, input_file_spec, verbose = FALSE)
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 As the name suggests, this only works for fasta files.

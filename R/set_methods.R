@@ -1,4 +1,11 @@
 #' Validation function when creating a circos class.
+#'
+#' This is the one of the first steps taken to make the circos plot
+#' builder into an object oriented set of functions.  Thank you,
+#' Theresa!
+#'
+#' @param object The object to check for validity.
+#' @return TRUE or FALSE
 check_circos <- function(object) {
   ret <- c()
   base_dir <- dirname(object@data_dir)

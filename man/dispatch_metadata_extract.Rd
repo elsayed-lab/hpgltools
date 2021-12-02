@@ -10,6 +10,7 @@ dispatch_metadata_extract(
   entry_type,
   input_file_spec,
   specification,
+  basedir = "preprocessing",
   verbose = FALSE,
   ...
 )
@@ -29,6 +30,8 @@ as a separate function might be stupid.  I added it to make it
 easier to calculate ratios of column_x/column_y; but it is a
 def-facto argument to either get rid of input_file_spec as an arg
 or to just get rid of this function.}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 
 \item{verbose}{used for testing regexes.}
 

@@ -254,6 +254,8 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
 #' @param df Dataframe with starts/ends and the floating point information.
+#' @param annot_source This parameter was added to make it possible to add an
+#'  arbitrary dataframe of other annotation information.
 #' @param colname Name of the column with the data of interest.
 #' @param basename Location to write the circos data (usually cwd).
 #' @param color Color of the plotted data.
@@ -267,35 +269,43 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(cfg, df, colname = "logFC", basename = "", color = "blue", fill_color = "blue",
-                        fill_under = "yes", extend_bin = "no", thickness = "0", orientation = "out",
+circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename = "",
+                        color = "blue", fill_color = "blue", fill_under = "yes",
+                        extend_bin = "no", thickness = "0", orientation = "out",
                         outer = 0.9, width = 0.08, spacing = 0.0) {
   ## I am going to have this take as input a data frame with genes as rownames
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
-  annot <- cfg@annot
-  full_table <- merge(df, annot, by = "row.names")
-  if (nrow(full_table) == 0) {
-    stop("Merging the annotations and data failed.")
-  }
-  start_colnames <- colnames(full_table)
-  new_colnames <- gsub(x = start_colnames, pattern = "\\.x$", replacement = "")
-  colnames(full_table) <- new_colnames
-  rownames(full_table) <- full_table[["Row.names"]]
-  full_table[["Row.names"]] <- NULL
+  annot <- NULL
+  full_table <- data.frame()
+  if (is.null(annot_source)) {
+    full_table <- df
+  } else {
+    annot <- cfg@annot
+    full_table <- merge(df, annot, by = "row.names")
+    if (nrow(full_table) == 0) {
+      stop("Merging the annotations and data failed.")
+    }
 
-  full_table <- full_table[, c("chr", "start", "stop", colname)]
-  start_undefined_idx <- full_table[["start"]] == "undefined"
-  full_table <- full_table[!start_undefined_idx, ]
-  stop_undefined_idx <- full_table[["stop"]] == "undefined"
-  full_table <- full_table[!stop_undefined_idx, ]
-  full_table[["start"]] <- as.numeric(full_table[["start"]])
-  full_table[["stop"]] <- as.numeric(full_table[["stop"]])
-  keep_idx <- !is.na(full_table[["start"]])
-  full_table <- full_table[keep_idx, ]
-  keep_idx <- !is.na(full_table[["stop"]])
-  full_table <- full_table[keep_idx, ]
+    start_colnames <- colnames(full_table)
+    new_colnames <- gsub(x = start_colnames, pattern = "\\.x$", replacement = "")
+    colnames(full_table) <- new_colnames
+    rownames(full_table) <- full_table[["Row.names"]]
+    full_table[["Row.names"]] <- NULL
+
+    full_table <- full_table[, c("chr", "start", "stop", colname)]
+    start_undefined_idx <- full_table[["start"]] == "undefined"
+    full_table <- full_table[!start_undefined_idx, ]
+    stop_undefined_idx <- full_table[["stop"]] == "undefined"
+    full_table <- full_table[!stop_undefined_idx, ]
+    full_table[["start"]] <- as.numeric(full_table[["start"]])
+    full_table[["stop"]] <- as.numeric(full_table[["stop"]])
+    keep_idx <- !is.na(full_table[["start"]])
+    full_table <- full_table[keep_idx, ]
+    keep_idx <- !is.na(full_table[["stop"]])
+    full_table <- full_table[keep_idx, ]
+  }
 
   ## FIXME: Redo this with %>%
   hist_cfg_file <- cfg@cfg_file
@@ -426,7 +436,7 @@ circos_ideogram <- function(name = "default", conf_dir = "circos/conf", band_url
   cat(end_string, file = out, sep = "")
   close(out)
   message("Wrote karyotype to ", ideogram_outfile)
-  message("This should match the karyotype= line in ", name, ".conf")
+  message("This should match the ideogram= line in ", name, ".conf")
   return(ideogram_outfile)
 }
 
@@ -961,7 +971,7 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
     minus_string <- -1
   }
   if (is.null(annotation[[start_column]]) | is.null(annotation[[stop_column]]) |
-      is.null(annotation[[strand_column]]) | is.null(annotation[[cog_column]])) {
+      is.null(annotation[[strand_column]])) {
     stop("This function assumes columns for start, stop, strand, chromosome names, and cog.")
   }
   plus_cfg_file <- cfgout
@@ -986,15 +996,23 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
   minus_idx <- annotation[[strand_column]] == minus_string
   minus_gids <- gids[minus_idx]
 
-  needed_columns <- c(chr_column, start_column, stop_column, cog_column)
+  needed_columns <- c(chr_column, start_column, stop_column)
+  if (!is.null(annotation[[cog_column]])) {
+    needed_columns <- c(needed_columns, cog_column)
+  }
   plus_df <- as.data.frame(annotation[plus_idx, needed_columns])
-  rownames(plus_df) <- plus_gids
-  colnames(plus_df) <- c("chr", "start", "stop", "cog")
   minus_df <- as.data.frame(annotation[minus_idx, needed_columns])
+  rownames(plus_df) <- plus_gids
   rownames(minus_df) <- minus_gids
-  colnames(minus_df) <- c("chr", "start", "stop", "cog")
-  plus_df[["value"]] <- glue::glue("value={plus_df[['cog']]}0")
-  minus_df[["value"]] <- glue::glue("value={minus_df[['cog']]}0")
+  if (is.null(annotation[[cog_column]])) {
+    colnames(plus_df) <- c("chr", "start", "stop")
+    colnames(minus_df) <- c("chr", "start", "stop")
+  } else {
+    colnames(plus_df) <- c("chr", "start", "stop", "cog")
+    colnames(minus_df) <- c("chr", "start", "stop", "cog")
+    plus_df[["value"]] <- glue::glue("value={plus_df[['cog']]}0")
+    minus_df[["value"]] <- glue::glue("value={minus_df[['cog']]}0")
+  }
 
   needed_columns <- c(chr_column, start_column, stop_column, strand_column)
   annot <- annotation[, needed_columns]
@@ -1344,7 +1362,8 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
   tile_data_file <- file.path(cfg@data_dir, basename(tile_cfg_file))
   tile_data_file <- gsub(pattern = ".conf$", replacement = ".txt", x = tile_data_file)
   message("Writing data file: ", tile_data_file, " with the ", basename, colname, " column.")
-  write.table(full_table, file = tile_data_file, quote = FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(full_table, file = tile_data_file, quote = FALSE,
+              row.names = FALSE, col.names = FALSE)
 
   num_colors <- 1
   if (is.null(colors)) {

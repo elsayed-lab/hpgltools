@@ -4,7 +4,12 @@
 \alias{dispatch_filename_search}
 \title{Pull out the filename matching an input spec}
 \usage{
-dispatch_filename_search(meta, input_file_spec, verbose = verbose)
+dispatch_filename_search(
+  meta,
+  input_file_spec,
+  verbose = verbose,
+  basedir = "preprocessing"
+)
 }
 \arguments{
 \item{meta}{Input metadata}
@@ -13,6 +18,8 @@ dispatch_filename_search(meta, input_file_spec, verbose = verbose)
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 This is useful for putting the count table name into a metadata file.

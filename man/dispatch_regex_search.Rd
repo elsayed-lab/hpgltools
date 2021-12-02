@@ -9,6 +9,7 @@ dispatch_regex_search(
   search,
   replace,
   input_file_spec,
+  basedir = "preprocessing",
   extraction = "\\\\1",
   which = "first",
   verbose = FALSE,
@@ -24,6 +25,8 @@ dispatch_regex_search(
 for gsub().}
 
 \item{input_file_spec}{filename extractor expression.}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 
 \item{extraction}{the replacement portion of gsub(). I am thinking
 to make it possible to have this function return more interesting

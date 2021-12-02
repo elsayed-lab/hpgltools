@@ -7,6 +7,7 @@
 circos_hist(
   cfg,
   df,
+  annot_source = "cfg",
   colname = "logFC",
   basename = "",
   color = "blue",
@@ -24,6 +25,9 @@ circos_hist(
 \item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
 
 \item{df}{Dataframe with starts/ends and the floating point information.}
+
+\item{annot_source}{This parameter was added to make it possible to add an
+arbitrary dataframe of other annotation information.}
 
 \item{colname}{Name of the column with the data of interest.}
 

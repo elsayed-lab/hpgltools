@@ -271,6 +271,7 @@ gather_trimomatic_metadata <- function(metadata,
 #'  column to append to the sample sheet.  Each element in turn is a
 #'  list containing column names and/or input filenames (and
 #' presumably other stuff as I think of it).
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param new_metadata Filename to which to write the new metadata
 #' @param verbose Currently just used to debug the regexes.
 #' @param ... This is one of the few instances where I used
@@ -281,7 +282,8 @@ gather_trimomatic_metadata <- function(metadata,
 #'  suspect there is something more useful it should do.
 #' @export
 gather_preprocessing_metadata <- function(starting_metadata, specification = NULL,
-                                          new_metadata = NULL, verbose = FALSE, ...) {
+                                          basedir = "preprocessing", new_metadata = NULL,
+                                          verbose = FALSE, ...) {
   ## I want to create a set of specifications for different tasks:
   ## tnseq/rnaseq/assembly/phage/phylogenetics/etc.
   ## For the moment, the following is specific for phage assembly.
@@ -289,109 +291,138 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     specification <- list(
         ## First task performed is pretty much always trimming
         "input_r1" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "input_r2" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "trimomatic_input" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
         "trimomatic_output" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
         ##"racer_changed" = list(
         ##    "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
         "host_filter_species" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/host_species.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
         "hisat_single_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_multi_concordant" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_single_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_multi_all" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
         "hisat_singlecon_ratio" = list(
             "column" = "hisat_single_concordant_percent"),
         "hisat_singleall_ratio" = list(
             "column" = "hisat_single_all_percent"),
         "hisat_count_table" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*hisat2_*/*.count.xz"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*.count.xz"),
         "jellyfish_count_table" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
         "jellyfish_observed" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
         "kraken_viral_classified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
         "kraken_viral_unclassified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
         "kraken_first_viral_species" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
         "kraken_first_viral_species_reads" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
         "kraken_standard_classified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
         "kraken_standard_unclassified" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
         "kraken_first_standard_species" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "kraken_first_standard_species_reads" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+        "possible_host_species" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*filter_kraken_host/*.log"),
+        "pernt_plus_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_plus_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_minus_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
         "salmon_mapped" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
         "shovill_contigs" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_length" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_estlength" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "shovill_minlength" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
         "unicycler_lengths" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
         "unicycler_relative_coverage" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
         "filtered_relative_coverage" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/??filter_depth/final_assembly.fasta"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??filter_depth/final_assembly.fasta"),
         "phastaf_num_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
         "phageterm_dtr_length" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
         "prodigal_positive_strand" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "prodigal_negative_strand" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "glimmer_positive_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
+        "glimmer_negative_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
+        "phanotate_positive_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
+        "phanotate_negative_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
         "final_gc_content" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
         "interpro_signalp_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_phobius_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_pfam_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_tmhmm_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_cdd_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_smart_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_gene3d_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_superfamily_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "tRNA_hits" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+        "aragorn_tRNAs" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*aragorn/aragorn.txt"),
         "ictv_taxonomy" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_accession" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_family" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_genus" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(
-            "file" = "preprocessing/{meta[['sampleid']]}/notes.txt"))
+            "file" = "{basedir}/{meta[['sampleid']]}/notes.txt")
+    ) ## Finish the list on a separate line because this is already absurd enough.
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -410,11 +441,10 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       warning("Column: ", new_column, " already exists, replacing it.")
     }
     input_file_spec <- specification[[entry_type]][["file"]]
-    new_entries <- dispatch_metadata_extract(meta, entry_type,
-                                             input_file_spec,
-                                             specification,
-                                             verbose = verbose,
-                                             ...)
+    new_entries <- dispatch_metadata_extract(
+        meta, entry_type, input_file_spec, specification,
+        basedir = basedir, verbose = verbose,
+        ...)
     if (is.null(new_entries)) {
       message("Not including new entries for: ", new_column, ".")
     } else {
@@ -450,43 +480,52 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 #'  easier to calculate ratios of column_x/column_y; but it is a
 #'  def-facto argument to either get rid of input_file_spec as an arg
 #'  or to just get rid of this function.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param verbose used for testing regexes.
 #' @param ... passed to glue to add more variables to the file spec.
 #' @return Vector of entries which will be used to populate the new
 #'  column in the metadata.
 dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
-                                      specification, verbose = FALSE, ...) {
+                                      specification, basedir = "preprocessing", verbose = FALSE,
+                                      ...) {
   switchret <- switch(
       entry_type,
+      "aragorn_tRNAs" = {
+        search <-"^\\d+ genes found"
+        replace <- "^(\\d+) genes found"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, basedir = basedir, verbose = verbose,
+                                         ...)
+      },
       "final_gc_content" = {
-        entries <- dispatch_gc(meta, input_file_spec, verbose = verbose)
+        entries <- dispatch_gc(meta, input_file_spec, basedir = basedir, verbose = verbose)
       },
       "hisat_single_concordant" = {
         search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, basedir = basedir, verbose = verbose,
                                          ...)
       },
       "hisat_multi_concordant" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, basedir = basedir, verbose = verbose,
                                          ...)
       },
       "hisat_single_all" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "hisat_multi_all" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "hisat_singlecon_ratio" = {
@@ -506,130 +545,194 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
       "hisat_count_table" = {
-        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose)
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
       },
       "host_filter_species" = {
         search <- "^.*$"
-        replace <- "(.*)"
+        replace <- "^(.*)$"
         entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
-                                         which = "all", verbose = verbose)
+                                         which = "first", verbose = verbose, basedir = basedir)
+      },
+      "pernt_plus_mean_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "mean",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_median_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "median",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_max_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "max",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_plus_min_coverage" = {
+        column <- "Coverage +"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "min",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_mean_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "mean",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_median_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "median",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_max_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "max",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
+      },
+      "pernt_minus_min_coverage" = {
+        column <- "Coverage -"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+                                       which = "function", chosen_func = "min",
+                                       verbose = verbose, basedir = basedir,
+                                       ...)
       },
       "ictv_taxonomy" = {
         ## column <- "taxon"
         column <- "name"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
-                                       which = "all", verbose = verbose,
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
+                                       which = "all", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_accession" = {
         column <- "hit_accession"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
-                                       which = "all", verbose = verbose,
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
+                                       which = "all", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_family" = {
         ## column <- "taxon"
         column <- "hit_family"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
-                                       which = "first", verbose = verbose,
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
+                                       which = "first", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "ictv_genus" = {
         ## column <- "taxon"
         column <- "hit_genus"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, type = 'tsv',
-                                       which = "first", verbose = verbose,
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
+                                       which = "first", verbose = verbose, basedir = basedir,
                                        ...)
       },
       "input_r1" = {
         search <- "^\\s+<\\(less .+\\).*$"
         replace <- "^\\s+<\\(less (.+?)\\).*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "input_r2" = {
         search <- "^\\s+<\\(less .+\\) <\\(less .+\\).*$"
         replace <- "^\\s+<\\(less .+\\) <\\(less (.+)\\).*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "jellyfish_count_table" = {
-        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose)
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
       },
       "jellyfish_observed" = {
         search <- "^.*$"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose,
+                                        basedir = basedir)
       },
       "kraken_viral_classified" = {
         search <- "^\\s+\\d+ sequences classified.*$"
         replace <- "^\\s+(\\d+) sequences classified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_viral_unclassified" = {
         search <- "^\\s+\\d+ sequences unclassified.*$"
         replace <- "^\\s+(\\d+) sequences unclassified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_first_viral_species" = {
         search <- "^.*s__.*\\t\\d+$"
         replace <- "^.*s__(.*)\\t\\d+$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_first_viral_species_reads" = {
         search <- "^.*s__.*\\t\\d+$"
         replace <- "^.*s__.*\\t(\\d+)$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_standard_classified" = {
         search <- "^\\s+\\d+ sequences classified.*$"
         replace <- "^\\s+(\\d+) sequences classified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_standard_unclassified" = {
         search <- "^\\s+\\d+ sequences unclassified.*$"
         replace <- "^\\s+(\\d+) sequences unclassified.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_first_standard_species" = {
         search <- "^.*s__.*\\t\\d+$"
         replace <- "^.*s__(.*)\\t\\d+$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "kraken_first_standard_species_reads" = {
         search <- "^.*s__.*\\t\\d+$"
         replace <- "^.*s__.*\\t(\\d+)$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "notes" = {
         search <- "^.*$"
         replace <- "^(.*)$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "all")
+      },
+      "possible_host_species" = {
+        search <- ".*times\\.$"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "racer_changed" = {
         search <- "^Number of changed positions"
         replace <- "^Number of changed positions\\s+(\\d+)$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "first",
                                          ...)
       },
@@ -637,7 +740,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
         replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "shovill_contigs" = {
@@ -645,7 +748,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^\\[shovill\\] It contains \\d+ .*$"
         replace <- "^\\[shovill\\] It contains (\\d+) .*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "last",
                                          ...)
       },
@@ -654,7 +757,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^\\[shovill\\] It contains \\d+ .* contigs totalling \\d+ bp\\.$"
         replace <- "^\\[shovill\\] It contains \\d+ .* contigs totalling (\\d+) bp\\.$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "last",
                                          ...)
       },
@@ -663,7 +766,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^\\[shovill\\] Assembly is \\d+\\, estimated genome size was \\d+.*$"
         replace <- "^\\[shovill\\] Assembly is \\d+\\, estimated genome size was (\\d+).*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "last",
                                          ...)
       },
@@ -672,7 +775,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^\\[shovill\\] It contains \\d+ \\(min=\\d+\\).*$"
         replace <- "^\\[shovill\\] It contains \\d+ \\(min=(\\d+)\\).*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "last",
                                          ...)
       },
@@ -680,14 +783,14 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^Input Read Pairs: \\d+ .*$"
         replace <- "^Input Read Pairs: (\\d+) .*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "trimomatic_output" = {
         search <- "^Input Read Pairs: \\d+ Both Surviving: \\d+ .*$"
         replace <- "^Input Read Pairs: \\d+ Both Surviving: (\\d+) .*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          ...)
       },
       "trimomatic_ratio" = {
@@ -708,7 +811,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^>\\d+ length=\\d+ depth.*$"
         replace <- "^>\\d+ length=(\\d+) depth.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "all",
                                          ...)
       },
@@ -717,7 +820,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^>\\d+ length=\\d+ depth=.*x.*$"
         replace <- "^>\\d+ length=\\d+ depth=(.*)x.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "all",
                                          ...)
       },
@@ -726,7 +829,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^>\\d+ length=\\d+ coverage=.*x.*$"
         replace <- "^>\\d+ length=\\d+ coverage=(.*)x.*$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose,
+                                         input_file_spec, verbose = verbose, basedir = basedir,
                                          which = "all",
                                          ...)
       },
@@ -735,54 +838,87 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^.*Found \\d+ tRNAs"
         replace <- "^.*Found (\\d+) tRNAs"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose)
+                                         input_file_spec, verbose = verbose, basedir = basedir)
       },
       "phageterm_dtr_length" = {
-        entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
+        entries <- dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose,
+                                          basedir = basedir)
       },
       "phastaf_num_hits" = {
         search <- "^.*$"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "prodigal_positive_strand" = {
         search <- "\\t\\+\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "prodigal_negative_strand" = {
         search <- "\\t-\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
+      "glimmer_positive_strand" = {
+        search <- "\\s+\\+\\d+\\s+"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
+      },
+      "glimmer_negative_strand" = {
+        search <- "\\s+-\\d+\\s+"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
+      },
+      "phanotate_positive_strand" = {
+        search <- "\\t\\+\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
+      },
+      "phanotate_negative_strand" = {
+        search <- "\\t-\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
+      },
+
       "interpro_signalp_hits" = {
-        search <- "\\tSiglapP.*\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        search <- "\\tSignalP.*\\t"
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_phobius_hits" = {
         search <- "\\tPhobius\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_pfam_hits" = {
         search <- "\\tPfam\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_tmhmm_hits" = {
         search <- "\\tTMHMM\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_cdd_hits" = {
         search <- "\\tCDD\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_smart_hits" = {
         search <- "\\tSMART\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_gene3d_hits" = {
         search <- "\\tGene3D\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       "interpro_superfamily_hits" = {
         search <- "\\tSUPERFAMILY\\t"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                        basedir = basedir)
       },
       {
         stop("I do not know this spec: ", entry_type)
@@ -805,7 +941,9 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
-dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose) {
+#' @param basedir Root directory containing the files/logs of metadata.
+dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose,
+                                 basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
@@ -841,7 +979,9 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
-dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
+#' @param basedir Root directory containing the files/logs of metadata.
+dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
+                                   basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
@@ -872,7 +1012,9 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose) {
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
-dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
+#' @param basedir Root directory containing the files/logs of metadata.
+dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
+                                     basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
@@ -904,7 +1046,9 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose=verbose) {
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
-dispatch_gc <- function(meta, input_file_spec, verbose = FALSE) {
+#' @param basedir Root directory containing the files/logs of metadata.
+dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
+                        basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
@@ -972,6 +1116,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param replace probably the same regex with parentheses in place
 #'  for gsub().
 #' @param input_file_spec filename extractor expression.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param extraction the replacement portion of gsub(). I am thinking
 #'  to make it possible to have this function return more interesting
 #'  outputs if this changes, but for the moment I am sort of assuming
@@ -979,7 +1124,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param which Usually 'first', which means grab the first match and get out.
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
-dispatch_regex_search <- function(meta, search, replace, input_file_spec,
+dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedir = "preprocessing",
                                   extraction = "\\1", which = "first", verbose = FALSE,
                                   ...) {
   arglist <- list(...)
@@ -1009,7 +1154,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
       next
     }
 
-    input_handle <- file(input_file, "r", blocking = FALSE)
+    input_handle <- file(input_file, "r") ## , blocking = FALSE)
     input_vector <- readLines(input_handle)
     if (length(input_vector) == 0) {
       ## Empty file, move on.
@@ -1060,12 +1205,14 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 #' @param column Column to yank from
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
-#' @param type csv or tsv?
+#' @param file_type csv or tsv?
+#' @param chosen_func If set, use this function to summarize the result.
+#' @param basedir Root directory containing the files/logs of metadata.
 #' @param which Take the first entry, or some subset.
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
-dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
-                                which = "first", verbose = FALSE,
+dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv", chosen_func = NULL,
+                                basedir = "preprocessing", which = "first", verbose = FALSE,
                                 ...) {
   arglist <- list(...)
   filenames_with_wildcards <- glue::glue(input_file_spec,
@@ -1090,19 +1237,33 @@ dispatch_csv_search <- function(meta, column, input_file_spec, type = 'csv',
       next
     }
 
-    if (type == 'csv') {
-      input_df <- readr::read_csv(input_file)
-    } else if (type == 'tsv') {
-      input_df <- readr::read_tsv(input_file)
+    if (file_type == "csv") {
+      input_df <- sm(readr::read_csv(input_file))
+    } else if (file_type == "tsv") {
+      input_df <- sm(readr::read_tsv(input_file))
     } else {
       message("Assuming csv input.")
-      input_df <- readr::read_csv(input_file)
+      input_df <- sm(readr::read_csv(input_file))
     }
 
     if (which == "first") {
       output_entries[row] <- input_df[1, column]
     } else if (which == "all") {
-      stringified <- gsub(x=toString(input_df[[column]]), pattern = ",", replacement = ";")
+      stringified <- gsub(x = toString(input_df[[column]]), pattern = ",", replacement = ";")
+      output_entries[row] <- stringified
+    } else if (which == "function") {
+      ## I was thinking to just use do.call() here, but I want to use na.rm=TRUE
+      ## and I am not certain how to get that set up correctly with do.call.
+      stringified <- 0
+      if (chosen_func == "mean") {
+        stringified <- mean(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "median") {
+        stringified <- median(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "max") {
+        stringified <- max(input_df[[column]], na.rm = TRUE)
+      } else if (chosen_func == "min") {
+        stringified <- min(input_df[[column]], na.rm = TRUE)
+      }
       output_entries[row] <- stringified
     } else {
       ## Assume a number was provided for the desired row

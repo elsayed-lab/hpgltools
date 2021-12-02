@@ -6,6 +6,7 @@
 \usage{
 calculate_aucc(
   tbl,
+  tbl2 = NULL,
   px = "deseq_adjp",
   py = "edger_adjp",
   lx = "deseq_logfc",
@@ -15,6 +16,8 @@ calculate_aucc(
 }
 \arguments{
 \item{tbl}{DE table}
+
+\item{tbl2}{Second table}
 
 \item{px}{first set of p-values column}
 

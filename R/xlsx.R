@@ -51,7 +51,8 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   if (isFALSE(excel)) {
     excel <- NULL
   }
-  excel_basename <- gsub(pattern = "\\.xlsx", replacement = "", x = excel)
+  ## Thank you, Najib for this new and more robust regular expression.
+  excel_basename <- gsub(pattern = "\\.xlsx$|\\.xl.+$", replacement = "", x = excel)
 
   if (is.null(excel)) {
     return(NULL)
@@ -66,7 +67,10 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
     file.remove(excel)
   }
   wb <- openxlsx::createWorkbook(creator = "hpgltools")
-  retlist <- list("basename" = excel_basename, "wb" = wb)
+  retlist <- list(
+      "dirname" = excel_dir,
+      "basename" = excel_basename,
+      "wb" = wb)
   return(retlist)
 }
 
@@ -273,7 +277,7 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {
-      dir.create(savedir, recursive = TRUE)
+      created <- dir.create(savedir, recursive = TRUE)
     }
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file = high_quality))

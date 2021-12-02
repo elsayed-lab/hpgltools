@@ -6,14 +6,17 @@
 \usage{
 load_genbank_annotations(
   accession = "AE009949",
+  file = NULL,
   reread = TRUE,
   savetxdb = FALSE
 )
 }
 \arguments{
-\item{accession}{Accession to download and import}
+\item{accession}{Accession to download and import.}
 
-\item{reread}{Re-read (download) the file from genbank}
+\item{file}{Use a file instead of downloading the accession?}
+
+\item{reread}{Re-read (download) the file from genbank.}
 
 \item{savetxdb}{Attempt saving a txdb object?}
 }

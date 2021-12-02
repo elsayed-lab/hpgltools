@@ -4,7 +4,13 @@
 \alias{dispatch_count_lines}
 \title{Count the number of lines in an input file spec and add it to the metadata.}
 \usage{
-dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
+dispatch_count_lines(
+  meta,
+  search,
+  input_file_spec,
+  verbose = verbose,
+  basedir = "preprocessing"
+)
 }
 \arguments{
 \item{meta}{Input metadata}
@@ -15,6 +21,8 @@ dispatch_count_lines(meta, search, input_file_spec, verbose = verbose)
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 Sometimes the number of lines of a file is a good proxy for some

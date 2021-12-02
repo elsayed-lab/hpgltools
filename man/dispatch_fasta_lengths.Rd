@@ -4,7 +4,12 @@
 \alias{dispatch_fasta_lengths}
 \title{Get the lengths of sequences from a fasta file.}
 \usage{
-dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
+dispatch_fasta_lengths(
+  meta,
+  input_file_spec,
+  verbose = verbose,
+  basedir = "preprocessing"
+)
 }
 \arguments{
 \item{meta}{Input metadata}
@@ -13,6 +18,8 @@ dispatch_fasta_lengths(meta, input_file_spec, verbose = verbose)
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 Get the lengths of sequences from a fasta file.
