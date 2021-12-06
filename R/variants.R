@@ -1213,8 +1213,8 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
 
     ## So there are 4 obvious scenarios we want to collect
     ## When the feature is surrounding the amplicon
-    ## The feature overlaps the 5' of the amplicon watson
-    ## The feature overlaps the 3' of the amplicon watson
+    ## The feature overlaps the 5' of the amplicon rosalind
+    ## The feature overlaps the 3' of the amplicon rosalind
     ## The feature is entirely inside the amplicon
 
     ## If all those fail, we want to find the closest feature.
