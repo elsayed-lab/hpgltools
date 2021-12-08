@@ -246,7 +246,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #' @param plot_legend Include a legend on the side?
 #' @param expt_names Use pretty names for the samples?
 #' @param label_chars Maximum number of characters before abbreviating sample names.
-#' @param title Title for the graph.
+#' @param plot_title Title for the graph.
 #' @param dot_size How large should the glyphs be?
 #' @param ... More parameters to make you happy!
 #' @return ggplot of the standard median something
@@ -263,7 +263,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #' }
 #' @export
 plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE,
-                    expt_names = NULL, label_chars = 10, title = NULL, dot_size = 5,
+                    expt_names = NULL, label_chars = 10, plot_title = NULL, dot_size = 5,
                     ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
@@ -389,7 +389,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
                                   limits = c(1, nrow(sm_df))) +
       ggplot2::ylab(glue("Standard Median {method}")) +
       ggplot2::xlab("Sample") +
-      ggplot2::ggtitle(title) +
+      ggplot2::ggtitle(plot_title) +
       ggplot2::theme_bw(base_size = base_size) +
       ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                      legend.position = legend_position,
@@ -410,7 +410,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
                             aes_string(fill = "as.factor(condition)")) +
       ggplot2::ylab(glue("Standard Median {method}")) +
       ggplot2::xlab("Sample") +
-      ggplot2::ggtitle(title) +
+      ggplot2::ggtitle(plot_title) +
       ggplot2::theme_bw(base_size = base_size) +
       ggplot2::theme(
                    legend.position = legend_position,

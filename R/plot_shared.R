@@ -59,7 +59,7 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
 #'  with images re-encoded base64.
 #' @param libdir htmlwidgets: Directory into which to put dependencies.
 #' @param background htmlwidgets: String for the background of the image.
-#' @param title htmlwidgets: Title of the page!
+#' @param plot_title htmlwidgets: Title of the page!
 #' @param knitrOptions htmlwidgets: I am not a fan of camelCase, but
 #'  nonetheless, options from knitr for htmlwidgets.
 #' @param ... Any remaining elipsis options are passed to ggplotly.
@@ -68,18 +68,14 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
 #' @export
 ggplt <- function(gg, filename = "ggplot.html",
                   selfcontained = TRUE, libdir = NULL, background = "white",
-                  title = class(gg)[[1]], knitrOptions = list(), ...) {
+                  plot_title = class(gg)[[1]], knitrOptions = list(), ...) {
   base <- basename(filename)
   dir <- dirname(filename)
   out <- plotly::ggplotly(gg,
                           ...)
-  ##widget <- htmlwidgets::saveWidget(
-  ##                         widget = plotly::as_widget(out), file = base, selcontained = selfcontained,
-  ##                         libdir = libdir, background = background, title = title,
-  ##                         knitrOptions = knitrOptions)
   widget <- htmlwidgets::saveWidget(
                              plotly::as_widget(out), base, selfcontained, libdir = libdir,
-                             background = background, title = title, knitrOptions = knitrOptions)
+                             background = background, title = plot_title, knitrOptions = knitrOptions)
   final <- base
   if (dir != ".") {
     final <- file.path(dir, base)
@@ -178,73 +174,73 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   ## I am putting the ... arguments on a separate line so that I can check that
   ## each of these functions is working properly in an interactive session.
   mesg("Graphing number of non-zero genes with respect to CPM by library.")
-  nonzero <- try(plot_nonzero(expt, title = nonzero_title,
+  nonzero <- try(plot_nonzero(expt, plot_title = nonzero_title,
                               ...))
   if ("try-error" %in% class(nonzero)) {
     nonzero <- list()
   }
   mesg("Graphing library sizes.")
-  libsize <- try(plot_libsize(expt, title = libsize_title,
+  libsize <- try(plot_libsize(expt, plot_title = libsize_title,
                               ...))
   if ("try-error" %in% class(libsize)) {
     libsize <- list()
   }
   mesg("Graphing a boxplot.")
-  boxplot <- try(plot_boxplot(expt, title = boxplot_title,
+  boxplot <- try(plot_boxplot(expt, plot_title = boxplot_title,
                               ...))
   if ("try-error" %in% class(boxplot)) {
     boxplot <- NULL
   }
   mesg("Graphing a correlation heatmap.")
-  corheat <- try(plot_corheat(expt, method = cormethod, title = corheat_title,
+  corheat <- try(plot_corheat(expt, method = cormethod, plot_title = corheat_title,
                               ...))
   if ("try-error" %in% class(corheat)) {
     corheat <- list()
   }
   mesg("Graphing a standard median correlation.")
-  smc <- try(plot_sm(expt, method = cormethod, title = smc_title,
+  smc <- try(plot_sm(expt, method = cormethod, plot_title = smc_title,
                      ...))
   if ("try-error" %in% class(smc)) {
     smc <- NULL
   }
   mesg("Graphing a distance heatmap.")
-  disheat <- try(plot_disheat(expt, method = distmethod, title = disheat_title,
+  disheat <- try(plot_disheat(expt, method = distmethod, plot_title = disheat_title,
                               ...))
   if ("try-error" %in% class(disheat)) {
     disheat <- list()
   }
   mesg("Graphing a standard median distance.")
-  smd <- try(plot_sm(expt, method = distmethod, title = smd_title,
+  smd <- try(plot_sm(expt, method = distmethod, plot_title = smd_title,
                      ...))
   if ("try-error" %in% class(smd)) {
     smd <- NULL
   }
   mesg("Graphing a PCA plot.")
-  pca <- try(plot_pca(expt, title = pca_title,
+  pca <- try(plot_pca(expt, plot_title = pca_title,
                       ...))
   if ("try-error" %in% class(pca)) {
     pca <- list()
   }
   mesg("Graphing a T-SNE plot.")
-  tsne <- try(plot_tsne(expt, title = tsne_title,
+  tsne <- try(plot_tsne(expt, plot_title = tsne_title,
                         ...))
   if ("try-error" %in% class(tsne)) {
     tsne <- list()
   }
   mesg("Plotting a density plot.")
-  density <- try(plot_density(expt, title = dens_title,
+  density <- try(plot_density(expt, plot_title = dens_title,
                               ...))
   if ("try-error" %in% class(density)) {
     density <- list()
   }
   mesg("Plotting a CV plot.")
-  cv <- try(plot_variance_coefficients(expt, title = dens_title,
+  cv <- try(plot_variance_coefficients(expt, plot_title = dens_title,
                                        ...))
   if ("try-error" %in% class(cv)) {
     cv <- list()
   }
   mesg("Plotting the representation of the top-n genes.")
-  topn <- try(plot_topn(expt, title = topn_title,
+  topn <- try(plot_topn(expt, plot_title = topn_title,
                         ...))
   if ("try-error" %in% class(topn)) {
     topn <- list()
@@ -253,7 +249,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   pcload <- list()
   if (nrow(exprs(tmp_expt)) > ncol(exprs(tmp_expt))) {
     mesg("Plotting the expression of the top-n PC loaded genes.")
-    pcload <- try(plot_pcload(tmp_expt, title = pc_loading_title))
+    pcload <- try(plot_pcload(tmp_expt, plot_title = pc_loading_title))
     if ("try-error" %in% class(pcload)) {
       pcload <- list()
     }

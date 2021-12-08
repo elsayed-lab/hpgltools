@@ -9,7 +9,7 @@ plot_variance_coefficients(
   data,
   x_axis = "condition",
   colors = NULL,
-  title = NULL,
+  plot_title = NULL,
   ...
 )
 }
@@ -21,7 +21,7 @@ and calculate the dispersion metrics.}
 
 \item{colors}{Set of colors to use when making the violins}
 
-\item{title}{Optional title to include with the plot.}
+\item{plot_title}{Optional title to include with the plot.}
 
 \item{...}{Extra arguments to pass along.}
 }

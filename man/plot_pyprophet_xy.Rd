@@ -14,7 +14,7 @@ plot_pyprophet_xy(
   label_chars = 10,
   x_type = "count",
   y_type = "intensity",
-  title = NULL,
+  plot_title = NULL,
   scale = NULL,
   ...
 )
@@ -39,7 +39,7 @@ shortening.}
 
 \item{y_type}{Column in the data to put on the y-axis.}
 
-\item{title}{Plot title.}
+\item{plot_title}{Plot title.}
 
 \item{scale}{Put the data onto the log scale?}
 

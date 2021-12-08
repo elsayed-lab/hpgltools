@@ -11,7 +11,7 @@ plot_density(
   position = "identity",
   direct = TRUE,
   fill = NULL,
-  title = NULL,
+  plot_title = NULL,
   scale = NULL,
   colors_by = "condition",
   label_chars = 10,
@@ -31,7 +31,7 @@ plot_density(
 
 \item{fill}{Fill the distributions?  This might make the plot unreasonably colorful.}
 
-\item{title}{Title for the plot.}
+\item{plot_title}{Title for the plot.}
 
 \item{scale}{Plot on the log scale?}
 

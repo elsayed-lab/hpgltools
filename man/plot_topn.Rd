@@ -6,7 +6,7 @@
 \usage{
 plot_topn(
   data,
-  title = NULL,
+  plot_title = NULL,
   num = 100,
   expt_names = NULL,
   plot_labels = "direct",
@@ -18,7 +18,7 @@ plot_topn(
 \arguments{
 \item{data}{Dataframe/matrix/whatever for performing topn-plot.}
 
-\item{title}{A title for the plot.}
+\item{plot_title}{A title for the plot.}
 
 \item{num}{The N in top-n genes, if null, do them all.}
 

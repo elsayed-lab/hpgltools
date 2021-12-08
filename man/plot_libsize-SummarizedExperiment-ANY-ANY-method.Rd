@@ -10,7 +10,7 @@
   colors = NULL,
   text = TRUE,
   order = NULL,
-  title = NULL,
+  plot_title = NULL,
   yscale = NULL,
   expt_names = NULL,
   label_chars = 10,
@@ -29,8 +29,6 @@ the metadata in the SE.}
 
 \item{order}{Optionally redefine the order of the bars of the plot.}
 
-\item{title}{Plot title!}
-
 \item{yscale}{Explicitly set the scale on the log or base10 scale.}
 
 \item{expt_names}{Optionally change the names of the bars.}
@@ -38,6 +36,8 @@ the metadata in the SE.}
 \item{label_chars}{If the names of the bars are larger than this, abbreviate them.}
 
 \item{...}{Additonal arbitrary arguments.}
+
+\item{title}{Plot title!}
 }
 \value{
 Plot of library sizes and a couple tables describing the data.

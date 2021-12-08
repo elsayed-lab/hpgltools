@@ -8,7 +8,7 @@ ggplotly_url(
   plot,
   filename = "ggplotly_url.html",
   id_column = "id",
-  title = NULL,
+  plot_title = NULL,
   url_info = NULL,
   tooltip = "all",
   url_column = "url"
@@ -21,7 +21,7 @@ ggplotly_url(
 
 \item{id_column}{Column containing the gene IDs.}
 
-\item{title}{Provide a title for the generated html file.}
+\item{plot_title}{Provide a title for the generated html file.}
 
 \item{url_info}{Either a glue() string or column of urls.}
 

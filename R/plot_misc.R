@@ -248,13 +248,13 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
 #' @param plot Plot generated via ggplot2.
 #' @param filename filename to save the output html plot.
 #' @param id_column Column containing the gene IDs.
-#' @param title Provide a title for the generated html file.
+#' @param plot_title Provide a title for the generated html file.
 #' @param url_info Either a glue() string or column of urls.
 #' @param tooltip Passed to ggplotly().
 #' @param url_column Column in the url_info containing URLs.
 #' @return plotly with clicky links.
 #' @export
-ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", title = NULL,
+ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", plot_title = NULL,
                          url_info = NULL, tooltip = "all", url_column = "url") {
   first_tooltip_column <- "label"
   if (is.null(tooltip) | tooltip == "all") {
@@ -300,7 +300,7 @@ function(el, x) {
     window.open(url);
   });
 }")
-  out <- htmlwidgets::saveWidget(plotly, filename, title = title)
+  out <- htmlwidgets::saveWidget(plotly, filename, title = plot_title)
   retlist <- list(
       "out" = out,
       "plotly" = plotly,

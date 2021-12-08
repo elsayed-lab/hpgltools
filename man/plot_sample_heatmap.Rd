@@ -11,7 +11,7 @@ plot_sample_heatmap(
   expt_names = NULL,
   dendrogram = "column",
   row_label = NA,
-  title = NULL,
+  plot_title = NULL,
   Rowv = TRUE,
   Colv = TRUE,
   label_chars = 10,
@@ -32,7 +32,7 @@ plot_sample_heatmap(
 
 \item{row_label}{Passed through to heatmap.2.}
 
-\item{title}{Title of the plot!}
+\item{plot_title}{Title of the plot!}
 
 \item{Rowv}{Reorder the rows by expression?}
 

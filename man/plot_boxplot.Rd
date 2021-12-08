@@ -7,7 +7,7 @@
 plot_boxplot(
   data,
   colors = NULL,
-  title = NULL,
+  plot_title = NULL,
   order = NULL,
   violin = FALSE,
   scale = NULL,
@@ -21,7 +21,7 @@ plot_boxplot(
 
 \item{colors}{Color scheme, if not provided will make its own.}
 
-\item{title}{A title!}
+\item{plot_title}{A title!}
 
 \item{order}{Set the order of boxen.}
 

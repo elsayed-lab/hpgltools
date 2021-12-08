@@ -11,7 +11,7 @@ plot_sample_bars(
   integerp = FALSE,
   order = NULL,
   text = TRUE,
-  title = NULL,
+  plot_title = NULL,
   yscale = NULL,
   ...
 )
@@ -29,7 +29,7 @@ plot_sample_bars(
 
 \item{text}{Add the numeric values inside the top of the bars of the plot?}
 
-\item{title}{Title for the plot.}
+\item{plot_title}{Title for the plot.}
 
 \item{yscale}{Whether or not to log10 the y-axis.}
 

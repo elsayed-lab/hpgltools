@@ -10,7 +10,7 @@ plot_libsize(
   colors = NULL,
   text = TRUE,
   order = NULL,
-  title = NULL,
+  plot_title = NULL,
   yscale = NULL,
   expt_names = NULL,
   label_chars = 10,
@@ -28,7 +28,7 @@ plot_libsize(
 
 \item{order}{Explicitly set the order of samples in the plot?}
 
-\item{title}{Title for the plot.}
+\item{plot_title}{Title for the plot.}
 
 \item{yscale}{Whether or not to log10 the y-axis.}
 

@@ -12,7 +12,7 @@ plot_nonzero(
   expt_names = NULL,
   label_chars = 10,
   plot_legend = FALSE,
-  title = NULL,
+  plot_title = NULL,
   ...
 )
 }
@@ -34,7 +34,7 @@ graphed point.}
 
 \item{plot_legend}{Print a legend for this plot?}
 
-\item{title}{Add a title?}
+\item{plot_title}{Add a title?}
 
 \item{...}{rawr!}
 }
