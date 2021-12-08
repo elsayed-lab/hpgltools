@@ -5,7 +5,7 @@
 \title{Write a dataframe to an excel spreadsheet sheet.}
 \usage{
 write_xlsx(
-  data = "undef",
+  data = NULL,
   wb = NULL,
   sheet = "first",
   excel = NULL,

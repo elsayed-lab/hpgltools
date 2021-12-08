@@ -11,7 +11,7 @@ plot_pyprophet_counts(
   keep_decoys = TRUE,
   expt_names = NULL,
   label_chars = 10,
-  title = NULL,
+  plot_title = NULL,
   scale = NULL,
   ...
 )
@@ -30,7 +30,7 @@ we only want the decoys)}
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
-\item{title}{Title the plot?}
+\item{plot_title}{Title the plot?}
 
 \item{scale}{Put the data on a specific scale?}
 

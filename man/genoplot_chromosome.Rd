@@ -8,7 +8,7 @@ genoplot_chromosome(
   accession = "AE009949",
   start = NULL,
   end = NULL,
-  title = "Genome plot"
+  plot_title = "Genome plot"
 )
 }
 \arguments{
@@ -18,7 +18,7 @@ genoplot_chromosome(
 
 \item{end}{Final segment to plot (doesn't quite work yet).}
 
-\item{title}{Put a title on the resulting plot.}
+\item{plot_title}{Put a title on the resulting plot.}
 }
 \value{
 Hopefully a pretty plot of a genome

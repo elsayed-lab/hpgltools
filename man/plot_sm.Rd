@@ -11,7 +11,7 @@ plot_sm(
   plot_legend = FALSE,
   expt_names = NULL,
   label_chars = 10,
-  title = NULL,
+  plot_title = NULL,
   dot_size = 5,
   ...
 )
@@ -29,7 +29,7 @@ plot_sm(
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
 
-\item{title}{Title for the graph.}
+\item{plot_title}{Title for the graph.}
 
 \item{dot_size}{How large should the glyphs be?}
 

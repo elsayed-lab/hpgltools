@@ -9,7 +9,7 @@ plot_sample_cvheatmap(
   fun = "mean",
   fact = "condition",
   row_label = NA,
-  title = NULL,
+  plot_title = NULL,
   Rowv = TRUE,
   Colv = TRUE,
   label_chars = 10,
@@ -32,7 +32,7 @@ plot_sample_cvheatmap(
 
 \item{row_label}{Label the rows?}
 
-\item{title}{Title for the plot}
+\item{plot_title}{Title for the plot}
 
 \item{Rowv}{Row vs (yeah I forgot what this does.)}
 

@@ -112,13 +112,13 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
 #'  'precursorintensity'.
 #' @param violin Print the samples as violins rather than only box/whiskers?
 #' @param names Names for the x-axis of the plot.
-#' @param title Title the plot?
+#' @param plot_title Title the plot?
 #' @param scale Put the data on a specific scale?
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the requested column of data in the set of mzXML files.
 #' @export
 plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precursorintensity",
-                               violin = FALSE, names = NULL, title = NULL, scale = NULL, ...) {
+                               violin = FALSE, names = NULL, plot_title = NULL, scale = NULL, ...) {
   arglist <- list(...)
   metadata <- mzxml_data[["metadata"]]
   colors <- mzxml_data[["colors"]]
@@ -179,8 +179,8 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
     ggplot2::xlab("Sample") + ggplot2::ylab(column)
-  if (!is.null(title)) {
-    boxplot <- boxplot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    boxplot <- boxplot + ggplot2::ggtitle(plot_title)
   }
   if (!is.null(names)) {
     boxplot <- boxplot + ggplot2::scale_x_discrete(labels = names)
@@ -210,14 +210,14 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
 #' @param keep_decoys Do we keep the decoys when plotting the data?
 #' @param expt_names Names for the x-axis of the plot.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
-#' @param title Title the plot?
+#' @param plot_title Title the plot?
 #' @param scale Put the data on a specific scale?
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_counts <- function(pyprophet_data, type = "count", keep_real = TRUE,
                                   keep_decoys = TRUE, expt_names = NULL, label_chars = 10,
-                                  title = NULL, scale = NULL, ...) {
+                                  plot_title = NULL, scale = NULL, ...) {
   arglist <- list(...)
   metadata <- pyprophet_data[["metadata"]]
   colors <- pyprophet_data[["colors"]]
@@ -316,14 +316,14 @@ plot_pyprophet_counts <- function(pyprophet_data, type = "count", keep_real = TR
 #'  shortening.
 #' @param x_type Column in the data to put on the x-axis.
 #' @param y_type Column in the data to put on the y-axis.
-#' @param title Plot title.
+#' @param plot_title Plot title.
 #' @param scale Put the data onto the log scale?
 #' @param ... Extra arguments passed along.
 #' @export
 plot_pyprophet_xy <- function(pyprophet_data, keep_real = TRUE, size = 6, label_size = 4,
                               keep_decoys = TRUE, expt_names = NULL, label_chars = 10,
                               x_type = "count", y_type = "intensity",
-                              title = NULL, scale = NULL, ...) {
+                              plot_title = NULL, scale = NULL, ...) {
   arglist <- list(...)
 
   x_data <- plot_pyprophet_counts(pyprophet_data,
@@ -332,7 +332,7 @@ plot_pyprophet_xy <- function(pyprophet_data, keep_real = TRUE, size = 6, label_
                                   keep_decoys = keep_decoys,
                                   expt_names = expt_names,
                                   label_chars = label_chars,
-                                  title = title,
+                                  plot_title = plot_title,
                                   scale = scale,
                                   ...)
   y_data <- plot_pyprophet_counts(pyprophet_data,
@@ -341,7 +341,7 @@ plot_pyprophet_xy <- function(pyprophet_data, keep_real = TRUE, size = 6, label_
                                   keep_decoys = keep_decoys,
                                   expt_names = expt_names,
                                   label_chars = label_chars,
-                                  title = title,
+                                  plot_title = plot_title,
                                   scale = scale,
                                   ...)
   the_df <- x_data[["df"]]
@@ -389,14 +389,14 @@ plot_pyprophet_xy <- function(pyprophet_data, keep_real = TRUE, size = 6, label_
 #' @param keep_decoys Do we keep the decoys when plotting the data?
 #' @param expt_names Names for the x-axis of the plot.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
-#' @param title Title the plot?
+#' @param plot_title Title the plot?
 #' @param scale Put the data on a specific scale?
 #' @param ... Further arguments, presumably for colors or some such.
 #' @return Boxplot describing the desired column from the data.
 #' @export
 plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", keep_real = TRUE,
                                         keep_decoys = TRUE, expt_names = NULL, label_chars = 10,
-                                        title = NULL, scale = NULL, ...) {
+                                        plot_title = NULL, scale = NULL, ...) {
   arglist <- list(...)
   metadata <- pyprophet_data[["metadata"]]
   colors <- pyprophet_data[["colors"]]
@@ -487,8 +487,8 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
     ggplot2::xlab("Sample") + ggplot2::ylab(column)
-  if (!is.null(title)) {
-    boxplot <- boxplot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    boxplot <- boxplot + ggplot2::ggtitle(plot_title)
   }
 
   density <- ggplot(data = plot_df, ggplot2::aes_string(x = column, colour = "sample")) +
@@ -552,7 +552,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
 #' @param label_chars Maximum number of characters before abbreviating sample
 #'   names.
 #' @param protein chosen protein(s) to plot.
-#' @param title Title the plot?
+#' @param plot_title Title the plot?
 #' @param scale Put the data on a specific scale?
 #' @param legend Include the legend?
 #' @param order_by Reorder the samples by some factor, presumably condition.
@@ -562,7 +562,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
 #' @export
 plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_real = TRUE,
                                    keep_decoys = FALSE, expt_names = NULL, label_chars = 10,
-                                   protein = NULL, title = NULL, scale = NULL, legend = NULL,
+                                   protein = NULL, plot_title = NULL, scale = NULL, legend = NULL,
                                    order_by = "condition", show_all = TRUE,
                                    ...) {
   arglist <- list(...)
@@ -724,8 +724,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
                       y = max(final_df[[column]] + (0.2 * max(final_df[[column]]))),
                       label = as.character(obs)) +
     ggplot2::labs(caption = glue::glue("Number observed peptides in all samples: {sum_obs}"))
-  if (!is.null(title)) {
-    violin <- violin + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    violin <- violin + ggplot2::ggtitle(plot_title)
   }
 
   if (scale == "log") {

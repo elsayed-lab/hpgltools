@@ -9,7 +9,7 @@
 #' @param colors Color scheme if the data is not an expt.
 #' @param text Add the numeric values inside the top of the bars of the plot?
 #' @param order Explicitly set the order of samples in the plot?
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param expt_names Design column or manually selected names for printing sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
@@ -23,7 +23,7 @@
 #' }
 #' @export
 plot_libsize <- function(data, condition = NULL, colors = NULL,
-                         text = TRUE, order = NULL, title = NULL, yscale = NULL,
+                         text = TRUE, order = NULL, plot_title = NULL, yscale = NULL,
                          expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
@@ -37,23 +37,6 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
     chosen_palette <- arglist[["palette"]]
   }
 
-  ##design <- NULL
-  ##data_class <- class(data)[1]
-  ##if (data_class == "expt") {
-  ##  design <- pData(data)
-  ##  condition <- design[["condition"]]
-  ##  colors <- data[["colors"]]
-  ##  mtrx <- exprs(data)
-  ##} else if (data_class == "ExpressionSet") {
-  ##  design <- pData(data)
-  ##  condition <- design[["condition"]]
-  ##  mtrx <- exprs(data)
-  ##} else if (data_class == "matrix" | data_class == "data.frame") {
-  ##  ## some functions prefer matrix, so I am keeping this explicit for the moment
-  ##  mtrx <- as.matrix(data)
-  ##} else {
-  ##  stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
-  ##}
   mtrx <- as.matrix(data)
   if (is.null(colors)) {
     pal <- RColorBrewer::brewer.pal(ncol(mtrx), chosen_palette)
@@ -93,7 +76,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                                                      "max" = max(sum)),
                                               by = "condition"]
   libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
-                                   text = text, order = order, title = title, integerp = integerp,
+                                   text = text, order = order, plot_title = plot_title, integerp = integerp,
                                    yscale = yscale,
                                    ...)
   retlist <- list(
@@ -209,7 +192,7 @@ labeled by counts/genes removed.")
 #' @param colors Color scheme if the data is not an expt.
 #' @param names Alternate names for the x-axis.
 #' @param text Add the numeric values inside the top of the bars of the plot?
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... More parameters for your good time!
 #' @return a ggplot2 bar plot of every sample's size
@@ -221,7 +204,7 @@ labeled by counts/genes removed.")
 #' }
 #' @export
 plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NULL,
-                          names = NULL, text = TRUE, title = NULL, yscale = NULL, ...) {
+                          names = NULL, text = TRUE, plot_title = NULL, yscale = NULL, ...) {
   arglist <- list(...)
   table <- data
   if (class(data) == "expt") {
@@ -263,7 +246,8 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
                         "condition" = condition,
                         "colors" = as.character(colors))
   kept_plot <- plot_sample_bars(kept_df, condition = condition, colors = colors,
-                                names = names, text = text, title = title, yscale = yscale, ...)
+                                names = names, text = text,
+                                plot_title = plot_title, yscale = yscale, ...)
   return(kept_plot)
 }
 
@@ -277,12 +261,12 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
 #' @param integerp Is this comprised of integer values?
 #' @param order Explicitly set the order of samples in the plot?
 #' @param text Add the numeric values inside the top of the bars of the plot?
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param yscale Whether or not to log10 the y-axis.
 #' @param ... Used to catch random arguments which are unused here.
 plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
                              integerp = FALSE, order = NULL,
-                             text = TRUE, title = NULL, yscale = NULL, ...) {
+                             text = TRUE, plot_title = NULL, yscale = NULL, ...) {
   arglist <- list(...)
 
   y_label <- "Library size in pseudocounts."
@@ -344,8 +328,8 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
                                 label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))
   }
 
-  if (!is.null(title)) {
-    sample_plot <- sample_plot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    sample_plot <- sample_plot + ggplot2::ggtitle(plot_title)
   }
   if (is.null(yscale)) {
     scale_difference <- max(as.numeric(sample_df[["sum"]])) /

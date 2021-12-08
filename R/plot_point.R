@@ -609,7 +609,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @param expt_names Column or character list of preferred sample names.
 #' @param label_chars How many characters for sample names before abbreviation.
 #' @param plot_legend Print a legend for this plot?
-#' @param title Add a title?
+#' @param plot_title Add a title?
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each
 #'  library's CPM.
@@ -621,7 +621,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @export
 plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
                          expt_names = NULL, label_chars = 10, plot_legend = FALSE,
-                         title = NULL, ...) {
+                         plot_title = NULL, ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   names <- NULL
@@ -709,8 +709,8 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
       directlabels::geom_dl(ggplot2::aes_string(label = "id"), method = "first.qp")
   }
 
-  if (!is.null(title)) {
-    non_zero_plot <- non_zero_plot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    non_zero_plot <- non_zero_plot + ggplot2::ggtitle(plot_title)
   }
   non_zero_plot <- non_zero_plot +
     ggplot2::theme(axis.ticks = ggplot2::element_blank(),

@@ -103,39 +103,49 @@ setMethod("iDA", "matrix",
 setMethod("plot_libsize",
           signature = signature(data = "SummarizedExperiment"),
           definition = function(data, condition = NULL, colors = NULL, text = TRUE,
-                                order = NULL, title = NULL, yscale = NULL,
+                                order = NULL, plot_title = NULL, yscale = NULL,
                                 expt_names = NULL, label_chars = 10, ...) {
             mtrx <- as.matrix(assay(data))
             condition <- metadata(data)[["conditions"]]
             colors <- metadata(data)[["colors"]]
-            plot_libsize(mtrx, condition = condition, colors = colors, ...)
+            plot_libsize(mtrx, condition = condition, colors = colors, text = text,
+                         order = order, plot_title = plot_title, yscale = yscale,
+                         expt_names = expt_names, label_chars = label_chars,
+                         ...)
           })
 setMethod("plot_libsize",
           signature = signature(data = "expt"),
           definition = function(data, condition = NULL, colors = NULL, text = TRUE,
-                                order = NULL, title = NULL, yscale = NULL,
+                                order = NULL, plot_title = NULL, yscale = NULL,
                                 expt_names = NULL, label_chars = 10, ...) {
             mtrx <- exprs(data)
             condition <- pData(data)[["condition"]]
             colors = data[["colors"]]
-            plot_libsize(mtrx, condition = condition, colors = colors, ...)
+            plot_libsize(mtrx, condition = condition, colors = colors, text = text,
+                         order = order, plot_title = plot_title, yscale = yscale,
+                         expt_names = expt_names, label_chars = label_chars, ...)
           })
 setMethod("plot_libsize",
           signature = signature(data = "ExpressionSet"),
           definition = function(data, condition = NULL, colors = NULL, text = TRUE,
-                                order = NULL, title = NULL, yscale = NULL,
+                                order = NULL, plot_title = NULL, yscale = NULL,
                                 expt_names = NULL, label_chars = 10, ...) {
             mtrx <- exprs(data)
             condition <- pData(data)[["conditions"]]
-            plot_libsize(mtrx, condition = condition, ...)
+            plot_libsize(mtrx, condition = condition, colors = colors,
+                         text = text, order = order, plot_title = plot_title,
+                         yscale = yscale, expt_names = expt_names, label_chars = label_chars,
+                         ...)
           })
 setMethod("plot_libsize",
           signature = signature(data = "data.frame", condition = "factor", colors = "character"),
           definition = function(data, condition, colors, text = TRUE,
-                                order = NULL, title = NULL, yscale = NULL,
+                                order = NULL, plot_title = NULL, yscale = NULL,
                                 expt_names = NULL, label_chars = 10, ...) {
             data <- as.matrix(data)
-            plot_libsize(data, condition = condition, colors = colors) # , ...)
+            plot_libsize(data, condition = condition, colors = colors,
+                         text = text, order = order, plot_title = plot_title, yscale = yscale,
+                         expt_names = expt_names, label_chars = label_chars, ...) # , ...)
           })
 ##setMethod("plot_libsize",
 ##          signature = signature(data = "matrix", condition = "factor", colors = "character"),

@@ -3,7 +3,6 @@
 ## because I was having annoying problems creating expressionSets.  Thus, >90%
 ## of the logic here is intended to simplify and standardize that process.
 
-
 #' Take two expressionsets and smoosh them together.
 #'
 #' Because of the extra sugar I added to expressionSets, the combine() function
@@ -1487,9 +1486,6 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       stop("There was an error reading: ", files[1])
     }
     mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
-    ## Following lines not needed for data.table
-    ## rownames(count_table) <- make.names(count_table[, "ID"], unique = TRUE)
-    ## count_table <- count_table[, -1, drop = FALSE]
     ## iterate over and append remaining samples
     for (table in 2:length(files)) {
       if (file.exists(tolower(files[table]))) {
@@ -1521,7 +1517,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       post_merge <- nrow(count_table)
       mesg(files[table], " contains ", pre_merge,
            " rows and merges to ", post_merge, " rows.")
-    }
+    } ## End for loop
 
     ## remove summary fields added by HTSeq
     if (!isTRUE(include_summary_rows)) {

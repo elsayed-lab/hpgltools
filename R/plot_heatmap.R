@@ -341,7 +341,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @param expt_names Alternate samples names.
 #' @param dendrogram Where to put dendrograms?
 #' @param row_label Passed through to heatmap.2.
-#' @param title Title of the plot!
+#' @param plot_title Title of the plot!
 #' @param Rowv Reorder the rows by expression?
 #' @param Colv Reorder the columns by expression?
 #' @param label_chars Maximum number of characters before abbreviating sample names.
@@ -352,7 +352,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @export
 plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
                                 expt_names = NULL, dendrogram = "column",
-                                row_label = NA, title = NULL, Rowv = TRUE,
+                                row_label = NA, plot_title = NULL, Rowv = TRUE,
                                 Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
   data_class <- class(data)[1]
   if (data_class == "expt") {
@@ -397,7 +397,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
   controlled <- dev.control("enable")
   heatmap.3(data, keysize = 0.8, labRow = row_label, col = heatmap_colors, dendrogram = dendrogram,
             labCol = expt_names, margins = c(12, 8), trace = "none", ColSideColors = colors,
-            linewidth = 0.5, main = title, Rowv = Rowv, Colv = Colv)
+            linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   dev.off()
   file.remove(tmp_file)
@@ -410,7 +410,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
 #' @param fun mean or median
 #' @param fact Which factor to slice/dice the data?
 #' @param row_label Label the rows?
-#' @param title Title for the plot
+#' @param plot_title Title for the plot
 #' @param Rowv Row vs (yeah I forgot what this does.)
 #' @param Colv Col vs
 #' @param label_chars Maximum number of characters in the sample IDs.
@@ -424,7 +424,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
 #' @param remove_equal Filter uninteresting genes.
 #' @export
 plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
-                                  row_label = NA, title = NULL, Rowv = TRUE,
+                                  row_label = NA, plot_title = NULL, Rowv = TRUE,
                                   Colv = TRUE, label_chars = 10, dendrogram = "column",
                                   min_delta = 0.5, x_factor = 1, y_factor = 2, min_cvsd = NULL,
                                   cv_min = 1, cv_max = Inf, remove_equal = TRUE) {
@@ -470,7 +470,7 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
   controlled <- dev.control("enable")
   heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,
             margins = c(12, 8), trace = "none", ColSideColors = colors,
-            linewidth = 0.5, main = title, Rowv = Rowv, Colv = Colv)
+            linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   cv_heatmap_plot <- grDevices::recordPlot()
   dev.off()
 

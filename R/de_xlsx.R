@@ -140,8 +140,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
       "data" = list(),
       "table_names" = list(),
       "plots" = list(),
-      "summaries" = data.frame()
-  )
+      "summaries" = data.frame())
   if ("list" %in% class(keepers)) {
     ## Here, we will look for only those elements in the keepers list.
     ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
@@ -197,6 +196,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   venns <- list()
   venns_sig <- list()
   comp <- list()
+
+  ## The following if() is too long and should be split into its own function.
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
     ## I am considering adding some logic to collect the linear models
