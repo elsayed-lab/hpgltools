@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+devtools::load_all("../../")
 library(shiny)
 library(hpgltools)
 library(ggplot2)

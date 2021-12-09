@@ -5,6 +5,8 @@
 \title{Pipe operator}
 \usage{
 lhs \%>\% rhs
+
+lhs \%>\% rhs
 }
 \description{
 Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32

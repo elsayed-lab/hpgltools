@@ -680,8 +680,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
     final_df[sample_idx, "colors"] <- sample_color
   }
 
-  scale_data <- check_plot_scale(final_df[[column]], scale = scale,
-                                 ...)
+  scale_data <- check_plot_scale(final_df[[column]], scale = scale)
+  ## ...)
   if (is.null(scale)) {
     scale <- scale_data[["scale"]]
   }
