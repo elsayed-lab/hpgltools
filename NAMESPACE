@@ -340,10 +340,6 @@ import(Biobase)
 import(grDevices)
 import(graphics)
 import(methods)
-<<<<<<< HEAD
-import(plotly)
-=======
->>>>>>> theresa/master
 import(shiny)
 import(utils)
 importFrom(Biobase,exprs)
