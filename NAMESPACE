@@ -340,7 +340,10 @@ import(Biobase)
 import(grDevices)
 import(graphics)
 import(methods)
+<<<<<<< HEAD
 import(plotly)
+=======
+>>>>>>> theresa/master
 import(shiny)
 import(utils)
 importFrom(Biobase,exprs)
@@ -372,6 +375,7 @@ importFrom(glue,glue)
 importFrom(glue,glue_data)
 importFrom(grDevices,recordPlot)
 importFrom(magrittr,"%>%")
+importFrom(plotly,plot_ly)
 importFrom(rlang,abort)
 importFrom(rlang,sym)
 importFrom(stats,aggregate)
