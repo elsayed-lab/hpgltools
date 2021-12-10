@@ -17,6 +17,12 @@
 #' @export
 pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   ext <- tolower(tools::file_ext(file))
+  file_dir <- dirname(file)
+  if (!file.exists(file_dir)) {
+    warning("The directory: ", file_dir, " does not exist, will attempt to create it.")
+    dir.create(file_dir, recursive = TRUE)
+  }
+
   start_dev <- dev.list()
   result <- NULL
   switchret <- switch(

@@ -471,8 +471,13 @@ plot_de_pvals <- function(combined_data, type = "limma", p_type = "both", column
   }
   if (p_type == "all") {
     columns <- c(paste0(type, "_p"), paste0(type, "_adjp"), paste0(type, "_adjp_ihw"))
+  } else if (p_type == "both") {
+    columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
   } else if (is.null(columns)) {
     columns <- c(paste0(type, "_p"), paste0(type, "_adjp"))
+  } else {
+    columns <- c(paste0(type, "_p"), paste0(type, "_adjp"), paste0(type, "_adjp_", tolower(p_type)))
+    p_type <- "all"
   }
   plot_df <- combined_data[, columns]
   for (c in 1:ncol(plot_df)) {

@@ -105,6 +105,8 @@ test_that("Do we get expected features greater than some cutoffs?", {
 })
 
 ## make_exampledata()
+## Strange, in my last run of make test, this failed.  Running it interactively
+## provides no warnings nor errors.
 testing <- DESeq2::counts(make_exampledata())
 actual <- dim(testing)
 expected <- c(1000, 5)
