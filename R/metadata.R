@@ -341,22 +341,14 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "possible_host_species" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*filter_kraken_host/*.log"),
-        "pernt_plus_mean_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_median_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_min_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_max_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_mean_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_median_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_min_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_max_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
+        "pernt_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
         "salmon_mapped" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
         "shovill_contigs" = list(
@@ -552,58 +544,30 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
                                          which = "first", verbose = verbose, basedir = basedir)
       },
-      "pernt_plus_mean_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_mean_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "mean",
                                        verbose = verbose, basedir = basedir,
                                        ...)
       },
-      "pernt_plus_median_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_median_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "median",
                                        verbose = verbose, basedir = basedir,
                                        ...)
       },
-      "pernt_plus_max_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_max_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "max",
                                        verbose = verbose, basedir = basedir,
                                        ...)
       },
-      "pernt_plus_min_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "min",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_mean_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "mean",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_median_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "median",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_max_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "max",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_min_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_min_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "min",
                                        verbose = verbose, basedir = basedir,
                                        ...)
