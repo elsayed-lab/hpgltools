@@ -18,6 +18,8 @@ dispatch_filename_search(
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 This is useful for putting the count table name into a metadata file.

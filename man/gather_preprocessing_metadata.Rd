@@ -22,6 +22,8 @@ gather_preprocessing_metadata(
  list containing column names and/or input filenames (and
 presumably other stuff as I think of it).}
 
+\item{basedir}{Root directory containing the files/logs of metadata.}
+
 \item{new_metadata}{Filename to which to write the new metadata}
 
 \item{verbose}{Currently just used to debug the regexes.}

@@ -26,6 +26,9 @@ circos_hist(
 
 \item{df}{Dataframe with starts/ends and the floating point information.}
 
+\item{annot_source}{This parameter was added to make it possible to add an
+arbitrary dataframe of other annotation information.}
+
 \item{colname}{Name of the column with the data of interest.}
 
 \item{basename}{Location to write the circos data (usually cwd).}

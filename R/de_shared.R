@@ -274,6 +274,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' Cridland.  I will put the link in shortly, I need to go.
 #'
 #' @param tbl DE table
+#' @param tbl2 Second table
 #' @param px first set of p-values column
 #' @param py second set
 #' @param lx first set of logFCs column
@@ -281,9 +282,9 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' @param topn Number of genes to consider (or percentage of the
 #'  whole).
 #' @export
-calculate_aucc <- function(tbl, tbl2 = NULL, px="deseq_adjp", py="edger_adjp",
-                           lx="deseq_logfc", ly="edger_logfc",
-                           topn=0.1) {
+calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp",
+                           lx = "deseq_logfc", ly = "edger_logfc",
+                           topn = 0.1) {
   ## If the topn argument is an integer, the just ask for that number.
   ## If it is a floating point 0<x<1, then set topn to that proportion
   ## of the number of genes.
@@ -317,9 +318,9 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px="deseq_adjp", py="edger_adjp",
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
-  x_idx <- order(x_df[[px]], decreasing=FALSE)
+  x_idx <- order(x_df[[px]], decreasing = FALSE)
   x_df <- x_df[x_idx, ]
-  y_idx <- order(y_df[[py]], decreasing=FALSE)
+  y_idx <- order(y_df[[py]], decreasing = FALSE)
   y_df <- y_df[y_idx, ]
 
   ## Then, we created lists of the top-ranked genes in each dataset of

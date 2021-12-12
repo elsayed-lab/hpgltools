@@ -13,8 +13,9 @@
 #' facilitate downloading genomes from genbank and dumping them into a local
 #' txdb instance.
 #'
-#' @param accession Accession to download and import
-#' @param reread Re-read (download) the file from genbank
+#' @param accession Accession to download and import.
+#' @param file Use a file instead of downloading the accession?
+#' @param reread Re-read (download) the file from genbank.
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
 #'  haven't yet finalized.

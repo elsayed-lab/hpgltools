@@ -10,7 +10,7 @@ ggplt(
   selfcontained = TRUE,
   libdir = NULL,
   background = "white",
-  title = class(gg)[[1]],
+  plot_title = class(gg)[[1]],
   knitrOptions = list(),
   ...
 )
@@ -27,7 +27,7 @@ with images re-encoded base64.}
 
 \item{background}{htmlwidgets: String for the background of the image.}
 
-\item{title}{htmlwidgets: Title of the page!}
+\item{plot_title}{htmlwidgets: Title of the page!}
 
 \item{knitrOptions}{htmlwidgets: I am not a fan of camelCase, but
 nonetheless, options from knitr for htmlwidgets.}

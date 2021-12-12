@@ -10,7 +10,7 @@ plot_mzxml_boxplot(
   column = "precursorintensity",
   violin = FALSE,
   names = NULL,
-  title = NULL,
+  plot_title = NULL,
   scale = NULL,
   ...
 )
@@ -29,7 +29,7 @@ likely choices include: 'peakscount', 'basepeakmz', 'basepeakintensity'; if
 
 \item{names}{Names for the x-axis of the plot.}
 
-\item{title}{Title the plot?}
+\item{plot_title}{Title the plot?}
 
 \item{scale}{Put the data on a specific scale?}
 

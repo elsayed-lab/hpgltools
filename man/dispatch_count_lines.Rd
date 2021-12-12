@@ -21,6 +21,8 @@ dispatch_count_lines(
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
+
+\item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{
 Sometimes the number of lines of a file is a good proxy for some

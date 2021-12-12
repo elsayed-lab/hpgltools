@@ -124,6 +124,4 @@ Collate:
   'xlsx.R'
   'motif.R'
   'tf.R'
-  'expt_app_helpers.R'
   'set_methods.R'
-  'zzz_app.R'

@@ -51,7 +51,8 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   if (isFALSE(excel)) {
     excel <- NULL
   }
-  excel_basename <- gsub(pattern = "\\.xlsx", replacement = "", x = excel)
+  ## Thank you, Najib for this new and more robust regular expression.
+  excel_basename <- gsub(pattern = "\\.xlsx$|\\.xl.+$", replacement = "", x = excel)
 
   if (is.null(excel)) {
     return(NULL)
@@ -59,14 +60,17 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 
   excel_dir <- dirname(as.character(excel))
   if (!file.exists(excel_dir)) {
-    dir.create(excel_dir, recursive = TRUE)
+    created <- dir.create(excel_dir, recursive = TRUE)
   }
   if (file.exists(excel)) {
     message("Deleting the file ", excel, " before writing the tables.")
-    file.remove(excel)
+    removed <- file.remove(excel)
   }
   wb <- openxlsx::createWorkbook(creator = "hpgltools")
-  retlist <- list("basename" = excel_basename, "wb" = wb)
+  retlist <- list(
+      "dirname" = excel_dir,
+      "basename" = excel_basename,
+      "wb" = wb)
   return(retlist)
 }
 
@@ -98,7 +102,7 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #'  }
 #'
 #' @export
-write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL, rownames = TRUE,
+write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, rownames = TRUE,
                        start_row = 1, start_col = 1, title = NULL, ...) {
   arglist <- list(...)
   if (is.null(data)) {
@@ -153,42 +157,42 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
   final_colnames <- make.names(final_colnames)
   colnames(data) <- final_colnames
 
-  for (col in colnames(data)) {
-    ## Originally, this was a single test condition, but I fear I need to do
-    ## separate tasks for each data type. If that proves to be the case, I am
-    ## ready, but until then it remains a series of as.character() castings.
-    if ("list" %in% class(data[, col])) {
+  final_data <- as.data.frame(data)
+  for (col in 1:ncol(final_data)) {
+    column_name <- colnames(final_data)[col]
+    if ("list" %in% class(final_data[[col]])) {
       ## The above did not work, trying what I found in:
       ## https://stackoverflow.com/questions/15930880/unlist-all-list-elements-in-a-dataframe
       ##list_entries <- is.list(data[, test_column])
       ##ListCols <- sapply(data, is.list)
       ##cbind(data[!ListCols], t(apply(data[ListCols], 1, unlist)))
-      data[, col] <- as.character(data[, col])
-    } else if ("vector" %in% class(data[, col])) {
-      data[, col] <- as.character(data[, col])
-    } else if ("factor" %in% class(data[, test_column])) {
-      data[, col] <- as.character(data[, col])
-    } else if ("AsIs" %in% class(data[, test_column])) {
-      data[, col] <- as.character(data[, col])
+      final_data[[col]] <- as.character(final_data[[col]])
+    } else if ("vector" %in% class(final_data[[col]])) {
+      final_data[[col]] <- as.character(final_data[[col]])
+    } else if ("factor" %in% class(final_data[[col]])) {
+      final_data[[col]] <- as.character(final_data[[col]])
+    } else if ("AsIs" %in% class(final_data[[col]])) {
+      final_data[[col]] <- as.character(final_data[[col]])
     }
   }  ## Finished adjusting stupid column types.
 
-  wtf <- try(openxlsx::writeDataTable(wb = wb, sheet = sheet, x = data, startCol = new_col,
-                                      startRow = new_row, tableStyle = table_style,
-                                      rowNames = rownames, colNames = TRUE))
-  new_row <- new_row + nrow(data) + 2
+  written <- try(openxlsx::writeDataTable(wb = wb, sheet = sheet, x = final_data, startCol = new_col,
+                                          startRow = new_row, tableStyle = table_style,
+                                          rowNames = rownames, colNames = TRUE))
+  new_row <- new_row + nrow(final_data) + 2
+
   ## Set the column lengths, hard set the first to 20,
   ## then try to set it to auto if the length is not too long.
-  for (data_col in 1:ncol(data)) {
+  for (data_col in 1:ncol(final_data)) {
     ## Make an explicit check that the data is not null, which comes out here as character(0)
-    test_column <- as.character(data[[data_col]])
+    test_column <- as.character(final_data[[data_col]])
     test_column[is.na(test_column)] <- ""
     test_null <- identical(as.character(test_column), character(0))
     test_max <- 4
 
     if (isTRUE(test_null)) {
       test_max <- 1
-      data[[data_col]] <- NULL  ## Drop the offending column.
+      final_data[[data_col]] <- NULL  ## Drop the offending column.
     } else {
       test_max <- max(nchar(as.character(test_column)), na.rm = TRUE)
     }
@@ -204,7 +208,8 @@ write_xlsx <- function(data = "undef", wb = NULL, sheet = "first", excel = NULL,
       openxlsx::setColWidths(wb, sheet, current_col, "auto")
     }
   }
-  end_col <- new_col + ncol(data) + 1
+  end_col <- new_col + ncol(final_data) + 1
+
   ret <- list(
       "workbook" = wb,
       "sheet" = sheet,
@@ -273,7 +278,7 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
   if (!is.null(savedir)) {
     if (!file.exists(savedir)) {
-      dir.create(savedir, recursive = TRUE)
+      created <- dir.create(savedir, recursive = TRUE)
     }
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file = high_quality))

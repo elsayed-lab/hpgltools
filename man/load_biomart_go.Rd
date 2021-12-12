@@ -46,11 +46,11 @@ character, it will assume it is a specific archive hostname.}
 from non-standard haplotypes and they should go away.  Setting this to
 false stops that.}
 
+\item{trydataset}{Define a dataset to which to attempt connecting.}
+
 \item{dl_rows}{List of rows from the final biomart object to download.}
 
 \item{dl_rowsv2}{A second list of potential rows.}
-
-\item{secondtry}{The newer mart name.}
 }
 \value{
 List containing the following:  data frame of ontology data, a copy

@@ -30,6 +30,16 @@ load_biomart_orthologs(
 
 \item{trymart}{Assumed mart name to use.}
 
+\item{archive}{Use an archive server?}
+
+\item{default_hosts}{Set of default hosts to query.}
+
+\item{year}{When using an archive server, use this year (otherwise it will choose last year).}
+
+\item{month}{When using an archive server, use this month (otherwise, this month).}
+
+\item{trydataset}{Choose a dataset to query.}
+
 \item{attributes}{Key to query}
 }
 \value{

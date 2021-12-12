@@ -12,7 +12,7 @@ plot_pyprophet_protein(
   expt_names = NULL,
   label_chars = 10,
   protein = NULL,
-  title = NULL,
+  plot_title = NULL,
   scale = NULL,
   legend = NULL,
   order_by = "condition",
@@ -37,7 +37,7 @@ names.}
 
 \item{protein}{chosen protein(s) to plot.}
 
-\item{title}{Title the plot?}
+\item{plot_title}{Title the plot?}
 
 \item{scale}{Put the data on a specific scale?}
 

@@ -10,7 +10,7 @@
 #'
 #' @param data Expt or data frame set of samples.
 #' @param colors Color scheme, if not provided will make its own.
-#' @param title A title!
+#' @param plot_title A title!
 #' @param order Set the order of boxen.
 #' @param violin  Print this as a violin rather than a just box/whiskers?
 #' @param scale Whether to log scale the y-axis.
@@ -32,7 +32,7 @@
 #'  a_boxplot  ## ooo pretty boxplot look at the lines
 #' }
 #' @export
-plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
+plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
                          violin = FALSE, scale = NULL, expt_names = NULL, label_chars = 10,
                          ...) {
   arglist <- list(...)
@@ -119,8 +119,8 @@ plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
                    axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
     ggplot2::xlab("Sample") +
     ggplot2::ylab("Per-gene (pseudo)count distribution")
-  if (!is.null(title)) {
-    boxplot <- boxplot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    boxplot <- boxplot + ggplot2::ggtitle(plot_title)
   }
 
   if (scale == "log") {
@@ -149,7 +149,7 @@ plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
 #' @param position How to place the lines, either let them overlap (identity), or stack them.
 #' @param direct Use direct.labels for labeling the plot?
 #' @param fill Fill the distributions?  This might make the plot unreasonably colorful.
-#' @param title Title for the plot.
+#' @param plot_title Title for the plot.
 #' @param scale Plot on the log scale?
 #' @param colors_by Factor for coloring the lines
 #' @param label_chars Maximum number of characters in sample names before abbreviation.
@@ -162,7 +162,7 @@ plot_boxplot <- function(data, colors = NULL, title = NULL, order = NULL,
 #' }
 #' @export
 plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity", direct = TRUE,
-                         fill = NULL, title = NULL, scale = NULL, colors_by = "condition",
+                         fill = NULL, plot_title = NULL, scale = NULL, colors_by = "condition",
                          label_chars = 10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
@@ -241,8 +241,8 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                    legend.key.size = ggplot2::unit(0.3, "cm"))
-  if (!is.null(title)) {
-    densityplot <- densityplot + ggplot2::ggtitle(title)
+  if (!is.null(plot_title)) {
+    densityplot <- densityplot + ggplot2::ggtitle(plot_title)
   }
 
   if (scale == "log") {
@@ -541,7 +541,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
 #' resulting curve is also a useful diagnostic in this question.
 #'
 #' @param data Dataframe/matrix/whatever for performing topn-plot.
-#' @param title A title for the plot.
+#' @param plot_title A title for the plot.
 #' @param num The N in top-n genes, if null, do them all.
 #' @param expt_names Column or character list of sample names.
 #' @param plot_labels Method for labelling the lines.
@@ -550,7 +550,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
 #' @param ... Extra arguments, currently unused.
 #' @return List containing the ggplot2
 #' @export
-plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
+plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
                       plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
@@ -615,9 +615,9 @@ plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
     ggplot2::geom_smooth(method = smoother, level = 0.5, na.rm = TRUE) +
     ggplot2::theme_bw(base_size = base_size)
 
-  if (!is.null(title)) {
+  if (!is.null(plot_title)) {
     topn_plot <- topn_plot +
-      ggplot2::ggtitle(title)
+      ggplot2::ggtitle(plot_title)
   }
 
   if (plot_labels == "direct") {
@@ -648,12 +648,12 @@ plot_topn <- function(data, title = NULL, num = 100, expt_names = NULL,
 #' @param x_axis Factor in the experimental design we may use to group the data
 #'  and calculate the dispersion metrics.
 #' @param colors Set of colors to use when making the violins
-#' @param title Optional title to include with the plot.
+#' @param plot_title Optional title to include with the plot.
 #' @param ... Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
 plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL,
-                                       title = NULL, ...) {
+                                       plot_title = NULL, ...) {
   arglist <- list(...)
   plot_legend <- FALSE
   if (!is.null(arglist[["plot_legend"]])) {
@@ -773,9 +773,9 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
                      axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
       ggplot2::ylab(as.character(y_labels[type])) +
       ggplot2::xlab("")
-    if (!is.null(title)) {
+    if (!is.null(plot_title)) {
       retlst[[type]] <- retlst[[type]] +
-        ggplot2::ggtitle(title)
+        ggplot2::ggtitle(plot_title)
     }
     if (isFALSE(plot_legend)) {
       retlst[[type]] <- retlst[[type]] +

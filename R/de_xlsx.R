@@ -140,8 +140,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
       "data" = list(),
       "table_names" = list(),
       "plots" = list(),
-      "summaries" = data.frame()
-  )
+      "summaries" = data.frame())
   if ("list" %in% class(keepers)) {
     ## Here, we will look for only those elements in the keepers list.
     ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
@@ -197,6 +196,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   venns <- list()
   venns_sig <- list()
   comp <- list()
+
+  ## The following if() is too long and should be split into its own function.
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
     ## I am considering adding some logic to collect the linear models
@@ -579,7 +580,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
                                     include_basic = TRUE, include_deseq = TRUE,
                                     include_edger = TRUE, include_limma = TRUE,
                                     include_ebseq = FALSE, loess = FALSE, logfc = 1, p = 0.05,
-                                    do_inverse = FALSE, found_table = NULL) {
+                                    do_inverse = FALSE, found_table = NULL, p_type = "all") {
   combined_data <- combined[["data"]]
   plots <- list()
   if (isTRUE(include_deseq)) {
@@ -642,7 +643,12 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     if (is.null(p_name)) {
       mesg("Skipping p-value plot for ", t, ".")
     } else {
-      pval_plot <- plot_de_pvals(combined[["data"]], type = type, p_type = "all")
+      ## If one sets the padj_type, then one will need to pull the correct columns
+      ## from the data at this point.  In my vignette, I set padj_type to 'BH'
+      ## and as a result I have a series of columns: 'limma_adj_bh' etc.
+      ## Therefore we need to get that information to this function call.
+      pval_plot <- plot_de_pvals(combined[["data"]], type = type,
+                                 p_type = p_type)
       plots[[p_name]] <- pval_plot[["plot"]]
     }
   }
@@ -1175,7 +1181,7 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
         include_basic = include_basic, include_deseq = include_deseq,
         include_edger = include_edger, include_limma = include_limma,
         include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
-        found_table = name)
+        found_table = name, p_type = padj_type)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
     extracted[["numerators"]] <- numerators
@@ -1338,7 +1344,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
           include_basic = include_basic, include_deseq = include_deseq,
           include_edger = include_edger, include_limma = include_limma,
           include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
-          do_inverse = do_inverse, found_table = found_table), silent = TRUE)
+          do_inverse = do_inverse, found_table = found_table, p_type = padj_type), silent = TRUE)
       if ("try-error" %in% class(extracted_plots)) {
         extracted[["plots"]][[name]] <- NULL
       } else {
@@ -1434,7 +1440,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
       include_basic = include_basic, include_deseq = include_deseq,
       include_edger = include_edger, include_limma = include_limma,
       include_ebseq = include_ebseq, loess = loess, found_table = table,
-      logfc = lfc_cutoff, p = p_cutoff, do_inverse = do_inverse)
+      logfc = lfc_cutoff, p = p_cutoff, do_inverse = do_inverse, p_type = padj_type)
   extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                     as.data.frame(combined[["summary"]]))
   extracted[["numerators"]] <- numerator
