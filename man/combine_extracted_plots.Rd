@@ -19,7 +19,8 @@ combine_extracted_plots(
   logfc = 1,
   p = 0.05,
   do_inverse = FALSE,
-  found_table = NULL
+  found_table = NULL,
+  p_type = "all"
 )
 }
 \arguments{

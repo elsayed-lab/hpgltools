@@ -255,13 +255,7 @@ variancePartition may be used to seek out which experimental factors correlate w
 the most variance in the data.
 
 ```{r variancePartition}
-test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("condition", "batch"))
-test_varpart$percent_plot
-test_varpart$partition_plot
-
-## Here, let us test the variance contributed by strain, time, and replicate.
-test_varpart <- simple_varpart(fission_expt, predictor = NULL,
-                               factors = c("condition", "strain", "minute", "replicate"))
+test_varpart <- simple_varpart(fission_expt, predictor = NULL, factors = c("strain", "minute", "replicate"))
 test_varpart$percent_plot
 test_varpart$partition_plot
 ```

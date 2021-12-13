@@ -96,7 +96,7 @@ class instead be a SummarizedExperiment.
 ## Extract the meta data from the fission dataset
 meta <- as.data.frame(fission@colData)
 ## Make conditions and batches
-meta[["condition"]] <- paste(meta$strain, meta$minute, sep = ".")
+meta[["condition"]] <- paste(meta[["strain"]], meta[["minute"]], sep = ".")
 meta[["batch"]] <- meta[["replicate"]]
 meta[["sample.id"]] <- rownames(meta)
 ## Grab the count data
@@ -272,21 +272,24 @@ written_gff <- rtracklayer::export.gff3(gff_from_txdb, con = "pombe.gff")
 
 ## GOSeq test
 
+Since I changed the annotation source of this data, I need to rethink my strategy for
+matching up the IDs of the genes and their go/lengths.
+
 ```{r test_goseq}
 summary(updown_genes)
 test_genes <- updown_genes[["down_genes"]]
-rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-lengths[["ID"]] <- paste0(lengths[["ID"]], ".1")
-goseq_result <- sm(simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
-                                length_db = lengths))
+lengths[["ID"]] <- gsub(x = lengths[["ID"]], pattern = "^gene:", replacement = "")
+lengths[["ID"]] <- gsub(x = lengths[["ID"]], pattern = "\\.1$", replacement = "")
+pombe_goids[["ID"]] <- gsub(x = pombe_goids[["ID"]], pattern = "\\.1$", replacement = "")
+goseq_result <- simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
+                                length_db = lengths)
 head(goseq_result[["all_data"]])
 goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
 goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
 
 test_genes <- updown_genes[["up_genes"]]
-rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-goseq_result <- sm(simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
-                                length_db = lengths))
+goseq_result <- simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
+                             length_db = lengths)
 head(goseq_result[["all_data"]])
 goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
 goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
@@ -308,13 +311,14 @@ if (! "org.Spombe.eg.db" %in% installed.packages()) {
   devtools::install_local("org.Spombe.eg.db")
 }
 library(org.Spombe.eg.db)
+
 ## Don't forget to remove the terminal .1 from the gene names...
 ## If you do forget this, it will fail for no easily visible reason until you remember
 ## this and get really mad at yourself.
-rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
-pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
+##rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
+##pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
 cp_result <- simple_clusterprofiler(sig_genes = test_genes, do_david = FALSE, do_gsea = FALSE,
-                                    de_table = all_combined$data[[1]],
+                                    de_table = all_combined[["data"]][[1]],
                                     orgdb = org.Spombe.eg.db, orgdb_to = "ALIAS")
 cp_result[["pvalue_plots"]][["ego_all_mf"]]
 ## Yay bar plots!
@@ -322,9 +326,9 @@ cp_result[["pvalue_plots"]][["ego_all_mf"]]
 
 ```{r test_tp}
 ## Get rid of those stupid terminal .1s.
-rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
-pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
-tp_result <- sm(simple_topgo(sig_genes = test_genes, go_db = pombe_goids, pval_column = "limma_adjp"))
+##rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
+##pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
+tp_result <- simple_topgo(sig_genes = test_genes, go_db = pombe_goids, pval_column = "limma_adjp")
 
 tp_result[["pvalue_plots"]][["mfp_plot_over"]]
 tp_result[["pvalue_plots"]][["bpp_plot_over"]]

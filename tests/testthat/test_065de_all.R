@@ -240,6 +240,9 @@ test_that("choose_dataset provides some expected output?", {
 
 ## we did test_condbatch, test_cond, test_sva
 test_condbatch_combined <- combine_de_tables(test_condbatch)
+## For the life of me I cannot find where this warning is coming from.
+warnings()  ## Crap in a hat, doing Rscript on this file still has not
+## brought out the source of these warnings when I run 'make test'
 ## 24
 test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_condbatch_combined[["data"]]), 15)
