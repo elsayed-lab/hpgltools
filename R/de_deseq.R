@@ -8,10 +8,14 @@
 ## of visit number in the Leishmania panamensis data.
 deseq_lrt <- function(expt, interactor_column = "visitnumber",
                       interest_column = "clinicaloutcome", transform = "rlog",
-                      factors = NULL, cutoff = 0.05, minc = 3) {
-  full_string <- glue::glue("~ {interactor_column} + {interest_column} + \\
+                      factors = NULL, cutoff = 0.05, minc = 3, interaction = TRUE) {
+  reduced_string <- glue::glue("~ {interest_column}")
+  full_string <- glue::glue("~ {interactor_column} + {interest_column}")
+  if (isTRUE(interaction)) {
+    reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
+    full_string <- glue::glue("{full_string} + \\
  {interactor_column}:{interest_column}")
-  reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
+  }
   full_model <- as.formula(full_string)
   reduced_model <- as.formula(reduced_string)
   col_data <- pData(expt)
@@ -36,6 +40,19 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
   }
   mesg("The full model is: ", as.character(full_model), ".")
   mesg("The truncated model is: ", as.character(reduced_model), ".")
+
+  ## Lets check the rank of this design before making the DESeq data structure.
+  deseq_test <- pData(expt)
+  data_full_model <- stats::model.matrix.default(full_model, data = pData(expt))
+  data_reduced_model <-  stats::model.matrix.default(reduced_model, data = pData(expt))
+  full_model_columns <- ncol(data_full_model)
+  reduced_model_columns <- ncol(data_reduced_model)
+  full_model_rank <- qr(data_full_model)[["rank"]]
+  reduced_model_rank <- qr(data_reduced_model)[["rank"]]
+  if (full_model_rank < full_model_columns) {
+    message("Creating the data set will fail because the resulting model is too low rank.")
+    message("Consider trying without the interaction.")
+  }
 
   deseq_input <- DESeq2::DESeqDataSetFromMatrix(countData = exprs(expt),
                                                 colData = col_data,

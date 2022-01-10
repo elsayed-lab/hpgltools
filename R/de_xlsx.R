@@ -2393,8 +2393,8 @@ stringsAsFactors = FALSE)
       !isTRUE(include_basic) & !isTRUE(include_ebseq)) {
     stop("None of the DE tools appear to have worked.")
   }
-  if (table_names == 0) {
-    stop("Could not find the set of tables names.")
+  if (length(table_names) == 0) {
+    stop("Could not find the set of table names.")
   }
 
   if (isTRUE(include_limma) & isTRUE(include_deseq) &

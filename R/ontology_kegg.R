@@ -292,6 +292,75 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
   return(retdf)
 }
 
+get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
+                               species = "leishmania major", savefile = NULL) {
+  if (is.null(abbreviation) & is.null(species)) {
+    stop("This requires either a species or 3 letter kegg id.")
+  } else if (is.null(abbreviation)) {
+    ## Then the species was provided.
+    abbreviation <- get_kegg_orgn(species)
+    message("The abbreviation detected was: ", abbreviation)
+  }
+
+  result <- NULL
+  species <- gsub(pattern = " ", replacement = "_", x = as.character(species))
+  savefile <- glue("kegg_{species}.rda.xz")
+  kegg_data <- NULL
+  if (file.exists(savefile)) {
+    message("Reading from the savefile, delete ", savefile, " to regenerate.")
+    result <- new.env()
+    load(savefile, envir = result)
+    result <- result[["result"]]
+  } else {
+    paths <- list()
+    if (pathway == "all") {
+      all_pathways <- unique(KEGGREST::keggLink("pathway", abbreviation))
+      paths <- all_pathways
+      paths <- gsub("path:", "", paths)
+      ## all_modules = unique(KEGGREST::keggLink("module", abbreviation))
+    } else if (class(pathway) == "list") {
+      paths <- pathway
+    } else {
+      paths[1] <- pathway
+    }
+    total_genes <- 0
+    result <- data.frame()
+    for (count in 1:length(paths)) {
+      path <- paths[count]
+      message("Extracting: ", path, ".")
+
+      path_data <- KEGGREST::keggGet(path)
+      kegg_class <- path_name[[1]]$CLASS
+      if (is.null(kegg_class)) {
+        kegg_class <- ""
+      }
+      kegg_description <- path_data[[1]]$DESCRIPTION
+      if (is.null(kegg_description)) {
+        kegg_description <- ""
+      }
+      kegg_name <- path_data[[1]]$NAME
+      kegg_name <- gsub("(.*) - .*", "\\1", kegg_name)
+      kegg_name <- tolower(kegg_name)
+      kegg_name <- gsub(" ", "_", kegg_name)
+
+      compounds <- path_data[[1]]$COMPOUND
+      if (is.null(compounds)) {
+        next
+      }
+      this_df <- as.data.frame(t(rbind(names(compounds), as.character(compounds))))
+      colnames(this_df) <- c("kegg_compound_id", "compound_name")
+      this_df[["kegg_pathway_id"]] <- path
+      this_df[["pathway_name"]] <- kegg_name
+      if (count == 1) {
+        result <- this_df
+      } else {
+        result <- rbind(result, this_df)
+      }
+    } ## End iterating over pathways
+  }
+  return(result)
+}
+
 #' Extract the set of geneIDs matching pathways for a given species.
 #'
 #' This uses KEGGREST to extract the mappings for all genes for a species and
