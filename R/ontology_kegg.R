@@ -292,6 +292,19 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
   return(retdf)
 }
 
+#' Gather all Compounds from all pathways for a given species.
+#'
+#' This function attempts to iterate over every pathway for a given
+#' abbreviation/species and extract from them the set of compounds.
+#' This was mostly copy/pasted from get_kegg_genes.
+#'
+#' @param pathway One or more pathways, all does what it says on the tin.
+#' @param abbreviation Approximately 3 character KEGG abbreviation.
+#' @param species If you do not have the abbreviation, this will try
+#' to find it.
+#' @param savefile Currently unused I think, but eventually should
+#' make a savefile of the results.
+#' @export
 get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
                                species = "leishmania major", savefile = NULL) {
   if (is.null(abbreviation) & is.null(species)) {

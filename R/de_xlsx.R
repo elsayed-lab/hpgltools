@@ -1647,6 +1647,10 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     n <- floor(nrow(all_tables[[1]]) * (top_percent / 100))
     mesg("Setting n to ", n)
   }
+  if (!is.null(n)) {
+    lfc <- NULL
+    p <- NULL
+  }
 
   logfc_suffix <- "_logfc"
   p_suffix <- "_p"
@@ -2154,6 +2158,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
   summary_start <- ((num_tables + 2) * summary_count) + 1
   xls_summary_result <- write_xlsx(wb = wb, data = summary, start_col = 1, start_row = summary_start,
                                    sheet = "number_changed", title = summary_title)
+  xls_result <- NULL
   for (table_count in 1:length(names(ups))) {
     base_name <- names(ups)[table_count]
     up_name <- glue::glue("up_{according}_{base_name}")
