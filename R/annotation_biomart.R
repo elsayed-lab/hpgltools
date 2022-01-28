@@ -215,8 +215,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
         "host" = "savefile",
         "mart_name" = "savefile",
         "rows" = "savefile",
-        "dataset" = "savefile"
-    )
+        "dataset" = "savefile")
     return(retlist)
   }
   martlst <- NULL
