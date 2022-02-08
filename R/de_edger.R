@@ -67,9 +67,9 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force = force)
   design <- pData(input)
-  conditions <- input_data[["conditions"]]
+  conditions <- design[["condition"]]
   conditions_table <- table(conditions)
-  batches <- input_data[["batches"]]
+  batches <- design[["batch"]]
   batches_table <- table(batches)
   data <- input_data[["data"]]
   conditions <- as.factor(conditions)
@@ -80,7 +80,8 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
                                model_batch = model_batch,
                                model_cond = model_cond,
                                model_intercept = model_intercept,
-                               alt_model = alt_model, ...)
+                               alt_model = alt_model,
+                               ...)
   ##model_choice <- choose_model(input, conditions, batches,
   ##                             model_batch = model_batch,
   ##                             model_cond = model_cond,

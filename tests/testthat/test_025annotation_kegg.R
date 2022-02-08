@@ -56,7 +56,7 @@ test_that("Do we get the expected KEGG pathways?", {
 ## map_kegg_ensembl()
 mapped <- map_kegg_dbs(kegg_ids)
 ## Picked up a new mapping!
-expected <- c(6, 8)
+expected <- c(6, 7)
 actual <- dim(mapped)
 ## 0607
 test_that("Do we get the expected db mapping size?", {

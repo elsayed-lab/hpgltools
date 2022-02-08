@@ -9,6 +9,7 @@ dispatch_metadata_ratio(
   numerator_column = NULL,
   denominator_column = NULL,
   digits = 3,
+  numerator_add = NULL,
   verbose = FALSE
 )
 }

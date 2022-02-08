@@ -2206,6 +2206,8 @@ sanitize_expt <- function(expt) {
   batches <- gsub(pattern = "[^\\PP_]", replacement = "", x = batches, perl = TRUE)
   conditions <- gsub(pattern = "[[:blank:]]", replacement = "", x = conditions)
   batches <- gsub(pattern = "[[:blank:]]", replacement = "", x = batches)
+  conditions <- gsub(pattern="[[:punct:]]", replacement = "", x = conditions)
+  batches <- gsub(pattern="[[:punct:]]", replacement = "", x = batches)
   conditions <- as.factor(conditions)
   batches <- as.factor(batches)
   expressionset <- expt[["expressionset"]]

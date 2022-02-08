@@ -24,7 +24,7 @@ simple_gprofiler2(
   do_under = FALSE,
   evcodes = TRUE,
   threshold = 0.05,
-  adjp = "fdr",
+  adjp = "g_SCS",
   domain_scope = "annotated",
   bg = NULL,
   pseudo_gsea = TRUE,

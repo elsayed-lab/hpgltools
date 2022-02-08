@@ -162,7 +162,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   retlst[["gost_plots"]] <- gost_plots
   retlst[["gost_links"]] <- gost_links
   retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst))
-
+  retlst[["species_info"]] <- species_info
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))

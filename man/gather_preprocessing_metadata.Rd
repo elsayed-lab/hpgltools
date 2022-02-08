@@ -10,6 +10,8 @@ gather_preprocessing_metadata(
   specification = NULL,
   basedir = "preprocessing",
   new_metadata = NULL,
+  species = "*",
+  type = "genome",
   verbose = FALSE,
   ...
 )

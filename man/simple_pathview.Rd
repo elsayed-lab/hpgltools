@@ -5,7 +5,8 @@
 \title{Print some data onto KEGG pathways.}
 \usage{
 simple_pathview(
-  path_data,
+  gene_input = NULL,
+  compound_input = NULL,
   indir = "pathview_in",
   outdir = "pathview",
   pathway = "all",
@@ -13,6 +14,7 @@ simple_pathview(
   from_list = NULL,
   to_list = NULL,
   suffix = "_colored",
+  id_column = "kegg_ids",
   filenames = "id",
   fc_column = "limma_logfc",
   format = "png",
@@ -20,8 +22,6 @@ simple_pathview(
 )
 }
 \arguments{
-\item{path_data}{Some differentially expressed genes.}
-
 \item{indir}{Directory into which the unmodified kegg images will be
 downloaded (or already exist).}
 
@@ -47,6 +47,8 @@ format to another.}
 well.}
 
 \item{verbose}{When on, this function is quite chatty.}
+
+\item{path_data}{Some differentially expressed genes.}
 }
 \value{
 A list of some information for every KEGG pathway
