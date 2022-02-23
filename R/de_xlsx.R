@@ -34,6 +34,8 @@
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
+#' @param gmt Write a gmt file of the significant and/or abundant genes.
+#' @param rda Write a rda file of the results.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
@@ -57,7 +59,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
                               plot_dim = 6, compare_plots = TRUE, padj_type = "ihw",
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
-                              ...) {
+                              gmt = NULL, rda = NULL, ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -536,17 +538,17 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   ## that here.
   if (!is.null(sig_excel)) {
     mesg("Invoking extract_significant_genes().")
-    significant <- try(extract_significant_genes(ret, excel = sig_excel, ...), silent = TRUE)
+    significant <- try(extract_significant_genes(ret, excel = sig_excel, gmt = gmt, ...), silent = TRUE)
     ret[["significant"]] <- significant
   }
   if (!is.null(abundant_excel)) {
     mesg("Invoking extract_abundant_genes().")
-    abundant <- try(extract_abundant_genes(apr, excel = abundant_excel, ...), silent = TRUE)
+    abundant <- try(extract_abundant_genes(apr, excel = abundant_excel, gmt = gmt, ...), silent = TRUE)
     ## abundant <- try(extract_abundant_genes(apr, excel=abundant_excel))
     ret[["abundant"]] <- abundant
   }
-  if (!is.null(arglist[["rda"]])) {
-    saved <- save(list = "ret", file = arglist[["rda"]])
+  if (!is.null(rda)) {
+    saved <- save(list = "ret", file = rda)
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
@@ -1593,14 +1595,13 @@ extract_siggenes <- function(...) {
 extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                       p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, top_percent = NULL,
                                       ma = TRUE, p_type = "adj", invert_barplots = FALSE,
-                                      excel = NULL,
-                                      siglfc_cutoffs = c(0, 1, 2),
-                                      ...) {
+                                      excel = NULL, fc_column = NULL, p_column = NULL,
+                                      siglfc_cutoffs = c(0, 1, 2), column_suffix = TRUE,
+                                      gmt = NULL, ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
-  fc_column <- ""
-  if (!is.null(arglist[["fc_column"]])) {
-    fc_column <- arglist[["fc_column"]]
+  if (is.null(fc_column)) {
+    fc_column <- ""
   }
 
   xlsx <- init_xlsx(excel)
@@ -1655,10 +1656,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   logfc_suffix <- "_logfc"
   p_suffix <- "_p"
   adjp_suffix <- "_adjp"
-  column_suffix <- TRUE
-  if (!is.null(arglist[["column_suffix"]])) {
-    column_suffix <- arglist[["column_suffix"]]
-  }
   if (!isTRUE(column_suffix)) {
     logfc_suffix <- ""
     p_suffix <- ""
@@ -1747,18 +1744,14 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       factor <- length(according_to)
       ## FIXME: hmm this looks redundant redundant, reconcile this with the section ~ line 1615 above.
       table <- all_tables[[table_name]]
-      if (is.null(arglist[["fc_column"]])) {
+      if (is.null(fc_column)) {
         fc_column <- glue::glue("{according}{logfc_suffix}")
-      } else {
-        fc_column <- arglist[["fc_column"]]
       }
       if (is.null(arglist[["p_column"]])) {
         p_column <- glue::glue("{according}{adjp_suffix}")
         if (p_type != "adj") {
           p_column <- glue::glue("{according}{p_suffix}")
         }
-      } else {
-        p_column <- arglist[["p_column"]]
       }
 
       trimming <- get_sig_genes(
@@ -1783,12 +1776,8 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
     summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
-    ## xls_result <- write_xlsx(data=change_counts, sheet="number_changed", file=sig_table,
-    ##                         title=summary_title,
-    ##                         overwrite_file=TRUE, newsheet=TRUE)
 
     ret[[according]] <- list(
-        ##"input"=combined,
         "ups" = trimmed_up,
         "downs" = trimmed_down,
         "counts" = change_counts,
@@ -1796,6 +1785,13 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
         "down_titles" = down_titles,
         "counts_title" = summary_title,
         "ma_plots" = ma_plots)
+
+    ## I want to start writing out msigdb compatible gmt files and therefore
+    ## want to start creating gene set collections from our data.
+    if (!is.null(gmt)) {
+      message("Going to attempt to create gmt files from these results.")
+    }
+
     do_excel <- TRUE
     if (is.null(excel)) {
       do_excel <- FALSE

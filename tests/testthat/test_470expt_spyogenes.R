@@ -58,7 +58,7 @@ test_that("Do we get reasonably high similarities among the various DE tools?", 
 mgas_combined <- sm(combine_de_tables(mgas_pairwise, excel = FALSE))
 mgas_sig <- sm(extract_significant_genes(mgas_combined, excel = FALSE))
 expected <- 209
-actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wt_ll_cf_vs_mga1_ll_cf"]])
+actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wtllcf_vs_mga1llcf"]])
 ## 08
 test_that("Do we find some significant genes in the mga/wt fructose analysis?", {
   expect_equal(expected, actual)
@@ -117,8 +117,8 @@ rownames(circos_annot_df) <- make.names(gsub(x = mgas_df[["sysName"]],
 ## There is no way circos will work on travis, lets be realistic.
 ##if (identical(Sys.getenv("HAS_CIRCOS"), "true")) {
 ## Plot the coefficients of latelog glucose
-glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1_ll_cg"]]
-wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wt_ll_cg_vs_mga1_ll_cg"]]
+glucose_table <- mgas_pairwise[["limma"]][["identity_tables"]][["mga1llcg"]]
+wtvmga_glucose <- mgas_pairwise[["limma"]][["all_tables"]][["wtllcg_vs_mga1llcg"]]
 relevant_widths <- merge(glucose_table, mgas_df, by.x = "row.names",
                          by.y = "sysName", all.x = TRUE)
 ## Since genbankr died, get the gene lengths from microbesonline

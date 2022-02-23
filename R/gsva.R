@@ -500,7 +500,7 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @param first_ids The required IDs for a single set.
 #' @param second_ids Potentially null optionally used for a second, presumably
 #'  contrasting set.
-#' @param orgdb Orgdb annotation, used to translate IDs to the required type.
+#' @param annotation_name Orgdb annotation, used to translate IDs to the required type.
 #' @param researcher_name Prefix of the name for the generated set(s).
 #' @param study_name Second element in the name of the generated set(s).
 #' @param category_name Third element in the name of the generated set(s).
@@ -511,9 +511,10 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @return Small list comprised of the created gene set collection(s).
 #' @seealso [GSEABase]
 #' @export
-make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.db",
+make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "org.Hs.eg.db",
                               researcher_name = "elsayed", study_name = "macrophage",
                               category_name = "infection", phenotype_name = NULL,
+                              identifier_type = "entrez", organism = NULL,
                               pair_names = "up", current_id = "ENSEMBL", required_id = "ENTREZID") {
   first <- NULL
   second <- NULL
@@ -529,10 +530,10 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
   } else {
     message("Converting the rownames() of the expressionset to ENTREZID.")
     ## tt <- sm(try(do.call("library", as.list(orgdb)), silent = TRUE))
-    lib_result <- sm(requireNamespace(orgdb))
+    lib_result <- sm(requireNamespace(annotation_name))
 
-    att_restul <- sm(try(attachNamespace(orgdb), silent = TRUE))
-    first_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+    att_restul <- sm(try(attachNamespace(annotation_name), silent = TRUE))
+    first_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                           keys = first_ids,
                                           keytype = current_id,
                                           columns = c(required_id)))
@@ -546,7 +547,7 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
     first_ids <- first_ids[first_idx, ]
     first <- first_ids[[required_id]]
     if (!is.null(second_ids)) {
-      second_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+      second_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                              keys = second_ids,
                                              keytype = current_id,
                                              columns = c(required_id)))
@@ -572,12 +573,25 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
   fst[["direction"]] <- pair_names[1]
   fst[["phenotype"]] <- phenotype_name
 
+  study_name <- gsub(x = study_name, pattern = "_", replacement = "")
+  category_name <- gsub(x = category_name, pattern = "_", replacement = "")
   set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
   fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
-  fst_gsc <- GSEABase::GeneSet(
-                           GSEABase::EntrezIdentifier(),
-                           setName = fst_name,
-                           geneIds = as.character(rownames(fst)))
+  identifier <- NULL
+  if (identifier_type == "entrez") {
+    identifier <- GSEABase::EntrezIdentifier()
+  } else if (identifier_type == "ensembl") {
+    identifier <- GSEABase::ENSEMBLIdentifier()
+  } else {
+    identifier <- GSEABase::AnnotationIdentifier()
+  }
+  first_args <- list("type" = identifier,
+                     "setName" = fst_name,
+                     "geneIds" = as.character(rownames(fst)))
+  if (!is.null(organism)) {
+    first_args[["organism"]] <- organism
+  }
+  fst_gsc <- base::do.call(GSEABase::GeneSet, first_args)
   if (!is.null(second)) {
     sec <- data.frame(row.names = unique(second))
     if (is.null(phenotype_name)) {
@@ -593,17 +607,22 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, orgdb = "org.Hs.eg.d
     sec[["phenotype"]] <- phenotype_name
     both <- rbind(fst, sec)
     color_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
-    sec_gsc <- GSEABase::GeneSet(
-                             GSEABase::EntrezIdentifier(),
-                             setName = sec_name,
-                             geneIds = as.character(rownames(sec)))
-    all_colored = GSEABase::GeneColorSet(
-                                GSEABase::EntrezIdentifier(),
-                                setName = color_name,
-                                geneIds = rownames(both),
-                                phenotype = phenotype_name,
-                                geneColor = as.factor(both[["direction"]]),
-                                phenotypeColor = as.factor(both[["phenotype"]]))
+    second_args <- list("type" = identifier,
+                     "setName" = sec_name,
+                     "geneIds" = as.character(rownames(sec)))
+    colored_args <- list(
+        "type" = identifier,
+        "setName" = color_name,
+        "geneIds" = rownames(both),
+        "phenotype" = phenotype_name,
+        "geneColor" = as.factor(both[["direction"]]),
+        "phenotypeColor" = as.factor(both[["phenotype"]]))
+    if (!is.null(organism)) {
+      second_args[["organism"]] <- organism
+      colored_args[["organism"]] <- organism
+    }
+    sec_gsc <- base::do.call(GSEABase::GeneSet, second_args)
+    all_colored = base::do.call(GSEABase::GeneColorSet, colored_args)
   }
   retlst <- list()
   retlst[[fst_name]] <- fst_gsc
