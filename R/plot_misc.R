@@ -29,7 +29,8 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
       ext,
       "png" = {
         result <- png(filename = file, width = width, height = height,
-                      units = "in", res = res, ...)
+                      units = "in", res = res,
+                      ...)
       },
       "bmp" = {
         result <- bmp(filename = file, ...)
@@ -70,7 +71,8 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
       }) ## End of the switch
   ## Find the new device for closing later.
   now_dev <- dev.list()
-  new_dev <- now_dev[length(now_dev)]
+  new_dev_idx <- ! names(now_dev) %in% names(start_dev)
+  new_dev <- now_dev[new_dev_idx]
 
   ## Check and make sure I am not looking at something containing a plot, as a bunch of
   ## my functions are lists with a plot slot.
@@ -82,7 +84,7 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 
   if (is.null(image)) {
     mesg("Going to write the image to: ", file, " when dev.off() is called.")
-    return(invisible(image))
+    mesg("Do not forget to close the device when you are done.")
   } else {
     mesg("Writing the image to: ", file, " and calling dev.off().")
     if (class(image)[[1]] == "recordedplot") {
@@ -90,7 +92,11 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
     } else {
       plot(image)
     }
-    dev.off(which = new_dev)
+    if (length(new_dev) > 0) {
+      dev.off(which = new_dev)
+    } else {
+      warning("There is no device to shut down.")
+    }
   }
 
   return(image)

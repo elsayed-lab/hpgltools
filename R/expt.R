@@ -2011,7 +2011,12 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
     if (is.null(class)) {
       stop("If columns is set, then this assumes you want to set those columns to a given class.")
     }
+    meta_columns <- colnames(pd)
     for (col in columns) {
+      if (! col %in% meta_columns) {
+        warning("The column: ", col, " is not in the metadata, skipping it.")
+        next
+      }
       mesg("Setting ", col, " to type ", class, ".")
       if (class == "factor") {
         if (table == "metadata") {
@@ -2142,6 +2147,13 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' }
 #' @export
 set_expt_samplenames <- function(expt, newnames) {
+  if (length(newnames) == 1) {
+    ## assume it is a factor in the metadata and act accordingly.
+    newer_names <- make.names(pData(expt)[[newnames]], unique=TRUE)
+    result <- set_expt_samplenames(expt, newer_names)
+    return(result)
+  }
+
   new_expt <- expt
   ## oldnames <- rownames(new_expt[["design"]])
   oldnames <- sampleNames(new_expt)

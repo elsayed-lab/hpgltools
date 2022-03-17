@@ -1747,7 +1747,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       if (is.null(fc_column)) {
         fc_column <- glue::glue("{according}{logfc_suffix}")
       }
-      if (is.null(arglist[["p_column"]])) {
+      if (is.null(p_column)) {
         p_column <- glue::glue("{according}{adjp_suffix}")
         if (p_type != "adj") {
           p_column <- glue::glue("{according}{p_suffix}")
@@ -1755,7 +1755,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       }
 
       trimming <- get_sig_genes(
-          table, lfc = lfc, p = p, z = z, n = n, column = fc_column, p_column = p_column)
+          table, lfc = lfc, p = p, z = z, n = n, column = chosen_column, p_column = p_column)
 
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])

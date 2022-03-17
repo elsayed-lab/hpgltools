@@ -79,20 +79,22 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
   colnames(dataframe) <- c("gene", "sample", "reads")
 
   dataframe[["sample"]] <- factor(dataframe[["sample"]])
-  if (is.null(order)) {
-    ## Order it by sample names lexically
-    lexical <- order(levels(dataframe[["sample"]]))
-    new_levels <- levels(dataframe[["sample"]])[lexical]
-    levels(dataframe[["sample"]]) <- new_levels
-  } else {
-    new_df <- data.frame()
-    for (o in order) {
-      matches <- grep(pattern = o, x = dataframe[["sample"]])
-      adders <- dataframe[matches, ]
-      new_df <- rbind(new_df, adders)
+  if (!is.null(order)) {
+    if (order == "lexical") {
+      ## Order it by sample names lexically
+      lexical <- order(levels(dataframe[["sample"]]))
+      new_levels <- levels(dataframe[["sample"]])[lexical]
+      levels(dataframe[["sample"]]) <- new_levels
+    } else {
+      new_df <- data.frame()
+      for (o in order) {
+        matches <- grep(pattern = o, x = dataframe[["sample"]])
+        adders <- dataframe[matches, ]
+        new_df <- rbind(new_df, adders)
+      }
+      dataframe <- new_df
+      dataframe[["sample"]] <- factor(dataframe[["sample"]], order)
     }
-    dataframe <- new_df
-    dataframe[["sample"]] <- factor(dataframe[["sample"]], order)
   }
 
   ## The use of data= and aes() leads to no visible binding for global variable warnings

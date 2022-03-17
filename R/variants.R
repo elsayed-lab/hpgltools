@@ -1,5 +1,9 @@
 #' Gather snp information for an expt
 #'
+#' I made some pretty significant changes to the set of data which I
+#' retain when using mpileup/freebayes.  As a result, this function
+#' needs to be reworked.
+#'
 #' This function attempts to gather a set of variant positions using an extant
 #' expressionset.  This therefore seeks to keep the sample metadata consistent
 #' with the original data.  In its current iteration, it therefore makes some
@@ -23,7 +27,7 @@
 #'  ## be the source of the numbers found when doing exprs(snp_expt).
 #' }
 #' @export
-count_expt_snps <- function(expt, type = "counts", annot_column = "bcftable", tolower = TRUE,
+count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
                             snp_column = "diff_count") {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
@@ -34,17 +38,11 @@ count_expt_snps <- function(expt, type = "counts", annot_column = "bcftable", to
     stop("This requires a set of bcf filenames, the column: ", annot_column, " does not have any.")
   }
   ## Create a data table of snp columns
-  chosen_column <- snp_column
-  if (is.null(chosen_column)) {
-    if (type == "percent") {
-      message("Making a matrix of percentages.")
-      chosen_column <- "pct"
-    } else {
-      message("Making a matrix of counts.")
-      chosen_column <- "diff_count"
-    }
+  if (is.null(snp_column)) {
+    stop("This requires a tag column to extract from the freebayes output.")
   }
-  snp_dt <- read_snp_columns(samples, file_lst, column = chosen_column)
+
+  snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
   test_names <- snp_dt[["rownames"]]
   test <- grep(pattern = "^chr", x = test_names)
   if (length(test) == 0) {
@@ -279,7 +277,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   ## Read the first file
   first_sample <- samples[1]
   first_file <- file_lst[1]
-  first_read <- readr::read_tsv(first_file)
+  first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
   ## Create a simplified data table from it.
   first_column <- data.table::as.data.table(first_read[[column]])
   first_column[["rownames"]] <- first_read[[1]]
@@ -300,7 +298,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
     }
     sample <- samples[sample_num]
     file <- file_lst[sample_num]
-    new_table <- try(readr::read_tsv(file))
+    new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
     if (class(new_table)[1] == "try-error") {
       next
     }

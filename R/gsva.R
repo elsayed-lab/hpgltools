@@ -166,12 +166,14 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
                                 wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
   msig_result <- xml2::read_xml(x = msig_xml)
 
-  db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
+  ##db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
+  db_data <- rvest::html_elements(x = msig_result, xpath = "//MSIGDB")
   db_name <- rvest::html_attr(x = db_data, name = "NAME")
   db_ver <- rvest::html_attr(x = db_data, name = "VERSION")
   db_date <- rvest::html_attr(x = db_data, name = "BUILD_DATE")
 
-  genesets <- rvest::xml_nodes(x = msig_result, "GENESET")
+  ##genesets <- rvest::xml_nodes(x = msig_result, "GENESET")
+  genesets <- rvest::html_elements(x = msig_result, "GENESET")
   row_names <- rvest::html_attr(x = genesets, name = "STANDARD_NAME")
   column_names <- names(rvest::html_attrs(x = genesets[[1]]))
   all_data <- data.frame(row.names = row_names)

@@ -6,7 +6,7 @@
 #' Use pathfindR to get a dataframe of KEGG IDs.
 #'
 #' The various KEGG conversion methods from KEGGREST appear to only work
-#' for a small subset of species now.  This uses a differnt query format to get
+#' for a small subset of species now.  This uses a different query format to get
 #' a less flexible version of the same information. But at least it works.
 #'
 #' @param org_code Organism code from KEGG.

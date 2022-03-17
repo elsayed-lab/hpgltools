@@ -28,6 +28,8 @@ combine_de_tables(
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
+  gmt = NULL,
+  rda = NULL,
   ...
 )
 }
@@ -79,6 +81,10 @@ certain contrasts in specific orders and orientations.}
 \item{p_cutoff}{In this context, used for volcano/MA plots.}
 
 \item{de_types}{Used for plotting pvalue/logFC cutoffs.}
+
+\item{gmt}{Write a gmt file of the significant and/or abundant genes.}
+
+\item{rda}{Write a rda file of the results.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }
