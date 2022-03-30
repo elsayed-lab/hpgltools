@@ -571,7 +571,11 @@ clean:
     make_command <- glue::glue("cd circos && touch Makefile && make {make_target} >/dev/null 2>&1")
   }
   result <- system(make_command)
-  return(result)
+  retlist <- list(
+      "output_png" = make_target_png,
+      "output_svg" = make_target_svg,
+      "make_result" = result)
+  return(retlist)
 }
 
 #' Write tiles of bacterial ontology groups using the categories from
@@ -652,7 +656,12 @@ circos_plus_minus <- function(cfg, outer = 1.0, width = 0.08, thickness = 95,
   plus_df <- cfg@plus_df
   minus_df <- cfg@minus_df
   annotation <- cfg@annotation
-
+  ## FIXME: This may not be appropriate!
+  na_idx <- is.na(plus_df)
+  plus_df[na_idx] <- 0
+  na_idx <- is.na(minus_df)
+  minus_df[na_idx] <- 0
+  ## End of FIXME
   plus_drop_idx <- (plus_df[["stop"]] - plus_df[["start"]]) > max
   if (sum(plus_drop_idx) > 0) {
     plus_df <- plus_df[!plus_drop_idx, ]
@@ -1005,14 +1014,13 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
   rownames(plus_df) <- plus_gids
   rownames(minus_df) <- minus_gids
   if (is.null(annotation[[cog_column]])) {
-    colnames(plus_df) <- c("chr", "start", "stop")
-    colnames(minus_df) <- c("chr", "start", "stop")
-  } else {
-    colnames(plus_df) <- c("chr", "start", "stop", "cog")
-    colnames(minus_df) <- c("chr", "start", "stop", "cog")
-    plus_df[["value"]] <- glue::glue("value={plus_df[['cog']]}0")
-    minus_df[["value"]] <- glue::glue("value={minus_df[['cog']]}0")
+    plus_df[["cog"]] <- "X"
+    minus_df[["cog"]] <- "X"
   }
+  colnames(plus_df) <- c("chr", "start", "stop", "cog")
+  colnames(minus_df) <- c("chr", "start", "stop", "cog")
+  plus_df[["value"]] <- glue::glue("value={plus_df[['cog']]}0")
+  minus_df[["value"]] <- glue::glue("value={minus_df[['cog']]}0")
 
   needed_columns <- c(chr_column, start_column, stop_column, strand_column)
   annot <- annotation[, needed_columns]

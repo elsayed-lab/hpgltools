@@ -61,6 +61,9 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
                               trymart = "ENSEMBL_MART_ENSEMBL", archive = FALSE,
                               year = NULL, month = NULL) {
   if (isTRUE(archive)) {
+    month_strings <- c("jan", "feb", "mar", "apr", "may", "jun", "jul",
+                       "aug", "sep", "oct", "nov", "dec")
+    year_strings <- "2020"
     if (is.null(month)) {
       ## Then assume this month
       month_numeric <- lubridate::month(lubridate::date(lubridate::now()))
@@ -215,8 +218,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
         "host" = "savefile",
         "mart_name" = "savefile",
         "rows" = "savefile",
-        "dataset" = "savefile"
-    )
+        "dataset" = "savefile")
     return(retlist)
   }
   martlst <- NULL

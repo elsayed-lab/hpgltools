@@ -45,11 +45,11 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                               do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
                               do_corum = TRUE, do_hp = TRUE, do_hpa = TRUE, do_wp = TRUE,
                               significant = FALSE, exclude_iea = FALSE, do_under = FALSE,
-                              evcodes = TRUE, threshold = 0.05, adjp = "fdr",
+                              evcodes = TRUE, threshold = 0.05, adjp = "g_SCS",
                               domain_scope = "annotated", bg = NULL,
                               pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
   gene_list <- NULL
-  if (class(sig_genes) == "character") {
+  if ("character" %in% class(sig_genes)) {
     gene_ids <- sig_genes
   } else {
     if (!is.null(sig_genes[[first_col]])) {
@@ -70,6 +70,12 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     }
   }
 
+  ## Check that the provided species is in gprofiler2
+  species_info <- try(gprofiler2::get_version_info(organism = species))
+  if ("try-error" %in% class(species_info)) {
+    stop("The organism ", species, " is not supported by gprofiler2.")
+  }
+
   retlst <- list()
   if (isTRUE(do_go)) {
     retlst[["GO"]] <- data.frame()
@@ -80,23 +86,23 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   if (isTRUE(do_reactome)) {
     retlst[["REAC"]] <- data.frame()
   }
+  if (isTRUE(do_wp)) {
+    retlst[["WP"]] <- data.frame()
+  }
   if (isTRUE(do_tf)) {
     retlst[["TF"]] <- data.frame()
   }
   if (isTRUE(do_mi)) {
-    retlst[["MI"]] <- data.frame()
+    retlst[["MIRNA"]] <- data.frame()
+  }
+  if (isTRUE(do_hpa)) {
+    retlst[["HPA"]] <- data.frame()
   }
   if (isTRUE(do_corum)) {
     retlst[["CORUM"]] <- data.frame()
   }
   if (isTRUE(do_hp)) {
     retlst[["HP"]] <- data.frame()
-  }
-  if (isTRUE(do_hpa)) {
-    retlst[["HPA"]] <- data.frame()
-  }
-  if (isTRUE(do_wp)) {
-    retlst[["WP"]] <- data.frame()
   }
 
   if (sum(grepl(pattern = "gene:", x = gene_ids)) > 0) {
@@ -105,6 +111,9 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   }
 
   type_names <- names(retlst)
+  interactive_plots <- list()
+  gost_plots <- list()
+  gost_links <- list()
   for (t in 1:length(type_names)) {
     type <- type_names[t]
     message("Performing gProfiler ", type, " search of ",
@@ -116,29 +125,44 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     a_result <- try(gprofiler2::gost(
                                     query = gene_ids,
                                     organism = species,
-                                    ordered_query = pseudo_gsea,
-                                    multi_query = FALSE,
-                                    significant = significant,
-                                    exclude_iea = exclude_iea,
-                                    measure_underrepresentation = do_under,
                                     evcodes = evcodes,
+                                    significant = significant,
+                                    ordered_query = pseudo_gsea,
                                     user_threshold = threshold,
                                     correction_method = adjp,
                                     domain_scope = domain_scope,
                                     custom_bg = bg,
-                                    sources = type))
+                                    sources = type), silent = TRUE)
 
-    if (class(a_result) == "try-error") {
-      a_result <- data.frame(stringsAsFactors = FALSE)
+    a_df <- data.frame(stringsAsFactors = FALSE)
+    if ("try-error" %in% class(a_result)) {
+      message("The ", type, " method failed for this organism.")
     } else {
-      a_result <- a_result[["result"]]
+      a_df <- a_result[["result"]]
+      gost_links[[type]] <- gprofiler2::gost(
+                                            query = gene_ids,
+                                            organism = species,
+                                            evcodes = evcodes,
+                                            significant = significant,
+                                            ordered_query = pseudo_gsea,
+                                            user_threshold = threshold,
+                                            correction_method = adjp,
+                                            domain_scope = domain_scope,
+                                            custom_bg = bg,
+                                            sources = type,
+                                            as_short_link = TRUE)
+      interactive_plots[[type]] <- gprofiler2::gostplot(a_result, capped = TRUE, interactive = TRUE)
+      gost_plots[[type]] <- gprofiler2::gostplot(a_result, capped = FALSE, interactive = FALSE)
     }
     message(type, " search found ", nrow(a_result), " hits.")
-    retlst[[type]] <- a_result
-  }
+    retlst[[type]] <- a_df
+  } ## End iterating over the set of default sources.
 
+  retlst[["interactive_plots"]] <- interactive_plots
+  retlst[["gost_plots"]] <- gost_plots
+  retlst[["gost_links"]] <- gost_links
   retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst))
-
+  retlst[["species_info"]] <- species_info
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))

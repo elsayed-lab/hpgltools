@@ -7,11 +7,13 @@
 make_gsc_from_ids(
   first_ids,
   second_ids = NULL,
-  orgdb = "org.Hs.eg.db",
+  annotation_name = "org.Hs.eg.db",
   researcher_name = "elsayed",
   study_name = "macrophage",
   category_name = "infection",
   phenotype_name = NULL,
+  identifier_type = "entrez",
+  organism = NULL,
   pair_names = "up",
   current_id = "ENSEMBL",
   required_id = "ENTREZID"
@@ -23,7 +25,7 @@ make_gsc_from_ids(
 \item{second_ids}{Potentially null optionally used for a second, presumably
 contrasting set.}
 
-\item{orgdb}{Orgdb annotation, used to translate IDs to the required type.}
+\item{annotation_name}{Orgdb annotation, used to translate IDs to the required type.}
 
 \item{researcher_name}{Prefix of the name for the generated set(s).}
 

@@ -34,41 +34,56 @@
 #'                                    string_to = "_Spy_", filenames = "pathname")
 #' }
 #' @export
-simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview",
+simple_pathview <- function(gene_input = NULL, compound_input = NULL,
+                            indir = "pathview_in", outdir = "pathview",
                             pathway = "all", species = "lma", from_list = NULL,
-                            to_list = NULL, suffix = "_colored",
+                            to_list = NULL, suffix = "_colored", id_column = "kegg_ids",
                             filenames = "id", fc_column = "limma_logfc",
                             format = "png", verbose = TRUE) {
+
+  ## In the most recent iteration of using this, we were asked to create images of
+  ## both compounds and genes.  Thus we will separate the input into
+  ## two variables as per pathview().
+  if (is.null(gene_input) & is.null(compound_input)) {
+    stop("This requires at least one of gene_input or compound_input to exist.")
+  }
+
   ## Please note that the KGML parser fails if other XML parsers are loaded into R
   ## eh = new.env(hash = TRUE, size = NA)
   ## There is a weird namespace conflict when using pathview, so I will reload it here
-  ## tmp <- sm(library(pathview)) ## I am not sure how else to avoid the error
+  tmp <- sm(library(pathview)) ## I am not sure how else to avoid the error
   ## 'unable to load 'bods''
   ## If a table from limma was passed to this, just assume that one wants logFC
   ## Similar stanzas should probably be added for deseq/edger
   ## This is added because pathview() only works with dataframes/lists with only numbers.
   ## So it is wise to pull only the column of numbers one cares about.
-  if (class(path_data) == "data.frame") {
-    if (is.null(path_data[[fc_column]])) {
+  if (class(gene_input) == "data.frame") {
+    if (is.null(gene_input[[fc_column]])) {
       fc_column <- "logFC"
     }
-    if (is.null(path_data[[fc_column]])) {
+    if (is.null(gene_input[[fc_column]])) {
       stop("Unable to find the fold change column.")
     }
-    tmp_data <- as.vector(path_data[[fc_column]])
-    names(tmp_data) <- rownames(path_data)
 
-  } else {
-    tmp_data <- path_data
+    ## Extract the set of FC values and give it names appropriate for KEGG
+    ## Oh, crap in a hat, also keep in mind that KEGG does not use the
+    ## three letter prefix internally.  A fact which I annoyingly forgot.
+    tmp_data <- as.vector(gene_input[[fc_column]])
+    if (is.null(id_column)) {
+      names(tmp_data) <- rownames(gene_input)
+    } else {
+      names(tmp_data) <- gene_input[[id_column]]
+    }
+  } else { ## If it is not a dataframe, assume it is a named vector.
+    tmp_data <- gene_input
   }
 
   ## This little section is weird, that is because pathview does not handle non-numeric
   ## representations of the data well.
   ## So we must make certain that the FCs are numeric vectors with the names maintained.
-  path_data <- as.numeric(tmp_data)
-  names(path_data) <- names(tmp_data)
-  rm(tmp_data)
-  tmp_names <- names(path_data)
+  input_vector <- as.numeric(tmp_data)
+  names(input_vector) <- names(tmp_data)
+  tmp_names <- names(input_vector)
 
   ## Reset the names to KEGG standard names.
   if (is.null(from_list)) {
@@ -112,19 +127,19 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
     if (!grepl(pattern = glue("^{species}"), x = canonical_path)) {
       canonical_path <- glue("{species}{path}")
     }
-    path_name <- try(KEGGREST::keggGet(canonical_path), silent = TRUE)
-    if (class(path_name) == "try-error") {
+    path_data <- try(KEGGREST::keggGet(canonical_path), silent = TRUE)
+    if (class(path_data) == "try-error") {
       next
     }
-    path_name <- path_name[[1]][["NAME"]]
+    path_name <- path_data[[1]][["NAME"]]
     path_name <- gsub("(.*) - .*", "\\1", path_name)
     path_name <- tolower(path_name)
     path_name <- gsub(" ", "_", path_name)
     ## RCurl is crap and fails sometimes for no apparent reason.
     gene_examples <- try(KEGGREST::keggLink(paste("path", canonical_path, sep = ":"))[, 2])
     ## limits = c(min(path_data, na.rm = TRUE), max(path_data, na.rm = TRUE))
-    limit_test <- c(abs(min(as.numeric(path_data), na.rm = TRUE)),
-                    abs(max(as.numeric(path_data), na.rm = TRUE)))
+    limit_test <- c(abs(min(as.numeric(input_vector), na.rm = TRUE)),
+                    abs(max(as.numeric(input_vector), na.rm = TRUE)))
     limit_min <- -1.0 * max(limit_test)
     limit_max <- max(limit_test)
     limits <- c(limit_min, limit_max)
@@ -133,18 +148,18 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
     if (isTRUE(verbose)) {
       if (count < 4) {
         ## Test if we have overlaps
-        overlap_test <- glue::glue("{species}: {names(path_data)}")
+        overlap_test <- glue::glue("{species}:{names(input_vector)}")
         num_overlap <- sum(gene_examples %in% overlap_test)
         message("Here are some path gene examples: ", example_string)
-        message("Here are your genes: ", toString(head(names(path_data))))
+        message("Here are your genes: ", toString(head(names(input_vector))))
         message("There were ", num_overlap, " overlapping genes observed.")
       }
     }
     if (format == "png") {
       ## In this invocation, include all the possible arguments for debugging.
       pv <- suppressWarnings(
-          try(pathview::pathview(gene.data = path_data,
-                                 cpd.data = NULL,
+          try(pathview::pathview(gene.data = input_vector,
+                                 cpd.data = compound_input,
                                  pathway.id = canonical_path,
                                  species = species,
                                  kegg.dir = indir,
@@ -164,9 +179,9 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
                                  bins = list(gene = 10, cpd = 10),
                                  both.dirs = list(gene = TRUE, cpd = TRUE),
                                  trans.fun = list(gene = NULL, cpd = NULL),
-                                 low = list(gene = "green", cpd = "blue"),
+                                 low = list(gene = "red", cpd = "yellow"),
                                  mid = list(gene = "gray", cpd = "gray"),
-                                 high = list(gene = "red", cpd = "yellow"),
+                                 high = list(gene = "green", cpd = "blue"),
                                  na.col = "transparent",
                                  out.suffix = suffix,
                                  same.layer = FALSE,
@@ -174,9 +189,9 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
                                  new.signature = FALSE,
                                  cex = 0.05,
                                  key.pos = "topright")))
-    } else {
+    } else { ## The other format is svg, and at least in the past it was rather more picky.
       pv <- suppressWarnings(
-          try(pathview::pathview(gene.data = path_data,
+          try(pathview::pathview(gene.data = input_vector,
                                  kegg.dir = indir,
                                  pathway.id = canonical_path,
                                  species = species,
@@ -207,7 +222,7 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
       }
       colored_genes <- dim(pv[["plot.data.gene"]])[1]
       ## "lma04070._proeff.png"
-      oldfile <- glue::glue("{species}{path}.{suffix}{filetype}")
+      oldfile <- glue::glue("{path}.{suffix}{filetype}")
       ## An if-statement to see if the user prefers pathnames by kegg ID or pathway name
       ## Dr. McIver wants path names...
       newfile <- NULL
@@ -226,8 +241,8 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
         warning("It is likely easiest to just delete the pathview input directory.")
         newfile <- "undefined"
       }
-      data_low <- summary(path_data)[2]
-      data_high <- summary(path_data)[3]
+      data_low <- summary(input_vector)[2]
+      data_high <- summary(input_vector)[3]
       pathway_data <- as.data.frame(pv[["plot.data.gene"]])
 
       total_mapped <- pathway_data[["all.mapped"]] != ""
@@ -255,7 +270,7 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
     if (isTRUE(verbose)) {
       message(count, "/", length(paths), ": Finished ",
               path_name, " id: ", path, " with ", total_pct_mapped, "% genes mapped(",
-              total_pct_mapped, " unique).")
+              sum(unique_mapped), " unique).")
     }
   } ## End for loop
 
@@ -270,26 +285,109 @@ simple_pathview <- function(path_data, indir = "pathview_in", outdir = "pathview
   retdf[["unique_mapped_pct"]] <- NA
   colnames(retdf) <- c("file", "genes", "up", "down", "total_mapped_nodes",
                        "total_mapped_pct", "unique_mapped_nodes", "unique_mapped_pct")
-  for (path in names(return_list)) {
+  for (p in 1:length(return_list)) {
+    path <- names(return_list)[p]
     if (is.null(return_list[[path]][["genes"]])) {
       retdf[path, "genes"] <- 0
     } else {
       retdf[path, "genes"] <- as.numeric(return_list[[path]][["genes"]])
     }
-    retdf[path, "file"] <- try(as.character(return_list[[path]][["file"]]), silent = TRUE)
-    retdf[path, "up"] <- try(as.numeric(return_list[[path]][["up"]]), silent = TRUE)
-    retdf[path, "down"] <- try(as.numeric(return_list[[path]][["down"]]), silent = TRUE)
-    retdf[path, "total_mapped_nodes"] <- try(
-        as.numeric(return_list[[path]][["total_mapped_nodes"]]), silent = TRUE)
-    retdf[path, "total_mapped_pct"] <- try(
-        as.numeric(return_list[[path]][["total_mapped_pct"]]), silent = TRUE)
-    retdf[path, "unique_mapped_nodes"] <- try(
-        as.numeric(return_list[[path]][["unique_mapped_nodes"]]), silent = TRUE)
-    retdf[path, "unique_mapped_pct"] <- try(
-        as.numeric(return_list[[path]][["unique_mapped_pct"]]), silent = TRUE)
+    if (!is.null(return_list[[path]][["file"]])) {
+      retdf[path, "file"] <- as.character(return_list[[path]][["file"]])
+      retdf[path, "up"] <- as.numeric(return_list[[path]][["up"]])
+      retdf[path, "down"] <- as.numeric(return_list[[path]][["down"]])
+      retdf[path, "total_mapped_nodes"] <- as.numeric(return_list[[path]][["total_mapped_nodes"]])
+      retdf[path, "total_mapped_pct"] <- as.numeric(return_list[[path]][["total_mapped_pct"]])
+      retdf[path, "unique_mapped_nodes"] <- as.numeric(return_list[[path]][["unique_mapped_nodes"]])
+      retdf[path, "unique_mapped_pct"] <- as.numeric(return_list[[path]][["unique_mapped_pct"]])
+      }
   }
   retdf <- retdf[with(retdf, order(up, down)), ]
+  keepers <- !is.na(retdf[["total_mapped_pct"]])
+  retdf <- retdf[keepers, ]
   return(retdf)
+}
+
+#' Gather all Compounds from all pathways for a given species.
+#'
+#' This function attempts to iterate over every pathway for a given
+#' abbreviation/species and extract from them the set of compounds.
+#' This was mostly copy/pasted from get_kegg_genes.
+#'
+#' @param pathway One or more pathways, all does what it says on the tin.
+#' @param abbreviation Approximately 3 character KEGG abbreviation.
+#' @param species If you do not have the abbreviation, this will try
+#' to find it.
+#' @param savefile Currently unused I think, but eventually should
+#' make a savefile of the results.
+#' @export
+get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
+                               species = "leishmania major", savefile = NULL) {
+  if (is.null(abbreviation) & is.null(species)) {
+    stop("This requires either a species or 3 letter kegg id.")
+  } else if (is.null(abbreviation)) {
+    ## Then the species was provided.
+    abbreviation <- get_kegg_orgn(species)
+    message("The abbreviation detected was: ", abbreviation)
+  }
+
+  result <- NULL
+  species <- gsub(pattern = " ", replacement = "_", x = as.character(species))
+  savefile <- glue("kegg_{species}.rda.xz")
+  kegg_data <- NULL
+  if (file.exists(savefile)) {
+    message("Reading from the savefile, delete ", savefile, " to regenerate.")
+    result <- new.env()
+    load(savefile, envir = result)
+    result <- result[["result"]]
+  } else {
+    paths <- list()
+    if (pathway == "all") {
+      all_pathways <- unique(KEGGREST::keggLink("pathway", abbreviation))
+      paths <- all_pathways
+      paths <- gsub("path:", "", paths)
+      ## all_modules = unique(KEGGREST::keggLink("module", abbreviation))
+    } else if (class(pathway) == "list") {
+      paths <- pathway
+    } else {
+      paths[1] <- pathway
+    }
+    total_genes <- 0
+    result <- data.frame()
+    for (count in 1:length(paths)) {
+      path <- paths[count]
+      message("Extracting: ", path, ".")
+
+      path_data <- KEGGREST::keggGet(path)
+      kegg_class <- path_name[[1]]$CLASS
+      if (is.null(kegg_class)) {
+        kegg_class <- ""
+      }
+      kegg_description <- path_data[[1]]$DESCRIPTION
+      if (is.null(kegg_description)) {
+        kegg_description <- ""
+      }
+      kegg_name <- path_data[[1]]$NAME
+      kegg_name <- gsub("(.*) - .*", "\\1", kegg_name)
+      kegg_name <- tolower(kegg_name)
+      kegg_name <- gsub(" ", "_", kegg_name)
+
+      compounds <- path_data[[1]]$COMPOUND
+      if (is.null(compounds)) {
+        next
+      }
+      this_df <- as.data.frame(t(rbind(names(compounds), as.character(compounds))))
+      colnames(this_df) <- c("kegg_compound_id", "compound_name")
+      this_df[["kegg_pathway_id"]] <- path
+      this_df[["pathway_name"]] <- kegg_name
+      if (count == 1) {
+        result <- this_df
+      } else {
+        result <- rbind(result, this_df)
+      }
+    } ## End iterating over pathways
+  }
+  return(result)
 }
 
 #' Extract the set of geneIDs matching pathways for a given species.

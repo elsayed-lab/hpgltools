@@ -239,7 +239,9 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
                         notes = NULL, countdir = NULL, include_type = "all",
                         include_gff = NULL, file_column = "file", id_column = NULL,
-                        savefile = NULL, low_files = FALSE, handle_na = "drop", ...) {
+                        savefile = NULL, low_files = FALSE, handle_na = "drop",
+                        researcher = "elsayed", study_name = NULL,
+                        annotation_name = "org.Hs.eg.db", ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -257,13 +259,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     notes <- glue::glue("Created on {date()}.
 ")
   }
-  ## An expressionset needs to have a Biobase::annotation() in order for
-  ## GSEABase to work with it. Reading the documentation, these are primarily
-  ## used for naming the type of microarray chip used.
-  annotation_name <- "org.Hs.eg.db"
-  if (!is.null(arglist[["annotation"]])) {
-    annotation_name <- arglist[["annotation"]]
-  }
+
   ## Palette for colors when auto-chosen
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["palette"]])) {
@@ -697,6 +693,10 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 
   feature_data <- methods::new("AnnotatedDataFrame", final_annotations)
   Biobase::featureNames(feature_data) <- rownames(final_counts)
+
+  ## An expressionset needs to have a Biobase::annotation() in order for
+  ## GSEABase to work with it. Reading the documentation, these are primarily
+  ## used for naming the type of microarray chip used.
   experiment <- methods::new("ExpressionSet",
                              exprs = final_counts,
                              phenoData = metadata,
@@ -714,8 +714,11 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## can keep backups etc.
   expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
 
-  ## I only leared fairly recently that there is quite a bit of redundancy between my expt
-  ## and ExpressionSets. I do not mind this. Yet.
+  if (is.null(study_name)) {
+    study_name <- basename(getwd())
+  }
+  expt[["study"]] <- study_name
+  expt[["researcher"]] <- researcher
   expt[["title"]] <- title
   expt[["notes"]] <- toString(notes)
   expt[["design"]] <- sample_definitions
@@ -2008,7 +2011,12 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
     if (is.null(class)) {
       stop("If columns is set, then this assumes you want to set those columns to a given class.")
     }
+    meta_columns <- colnames(pd)
     for (col in columns) {
+      if (! col %in% meta_columns) {
+        warning("The column: ", col, " is not in the metadata, skipping it.")
+        next
+      }
       mesg("Setting ", col, " to type ", class, ".")
       if (class == "factor") {
         if (table == "metadata") {
@@ -2139,6 +2147,13 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 #' }
 #' @export
 set_expt_samplenames <- function(expt, newnames) {
+  if (length(newnames) == 1) {
+    ## assume it is a factor in the metadata and act accordingly.
+    newer_names <- make.names(pData(expt)[[newnames]], unique=TRUE)
+    result <- set_expt_samplenames(expt, newer_names)
+    return(result)
+  }
+
   new_expt <- expt
   ## oldnames <- rownames(new_expt[["design"]])
   oldnames <- sampleNames(new_expt)

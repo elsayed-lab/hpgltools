@@ -217,38 +217,6 @@ analyses more difficult/impossible.")
   return(sample_definitions)
 }
 
-#' Gather metadata for trimomatic.
-#'
-#' Simplify the specification for extracting trimomatic data.
-#'
-#' @param metadata Starting metadata
-#' @param file_spec Filename containing the information of interest.
-#' @param columns Arbitrarily set the column names
-#' @param new_metadata Filename for the new metadata.
-#' @param ... extra stuff for glue.
-gather_trimomatic_metadata <- function(metadata,
-                                       file_spec = "preprocessing/{meta[['sampleid']]}/outputs/*-trimomatic.out",
-                                       columns = NULL, new_metadata = NULL, ...) {
-  specification <- list(
-      "trimomatic_input" = list(
-          "file" = file_spec),
-      "trimomatic_output" = list(
-          "file" = file_spec),
-      "trimomatic_ratio" = list(
-          "column" = "trimomatic_percent"))
-  if (!is.null(columns)) {
-    for (d in 1:length(columns)) {
-      element_name <- names(columns)[d]
-      element_value <- columns[[element_name]]
-      specification[[element_name]][["column"]] <- element_value
-    }
-  }
-  result <- gather_preprocessing_metadata(starting_metadata = metadata,
-                                          specification = specification,
-                                          new_metadata = new_metadata, ...)
-  return(result)
-}
-
 #' Automagically fill in a sample sheet with the results of the
 #' various preprocessing tools.
 #'
@@ -283,146 +251,16 @@ gather_trimomatic_metadata <- function(metadata,
 #' @export
 gather_preprocessing_metadata <- function(starting_metadata, specification = NULL,
                                           basedir = "preprocessing", new_metadata = NULL,
-                                          verbose = FALSE, ...) {
+                                          species = "*", type = "genome", verbose = FALSE, ...) {
   ## I want to create a set of specifications for different tasks:
   ## tnseq/rnaseq/assembly/phage/phylogenetics/etc.
   ## For the moment, the following is specific for phage assembly.
   if (is.null(specification)) {
-    specification <- list(
-        ## First task performed is pretty much always trimming
-        "input_r1" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
-        "input_r2" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
-        "trimomatic_input" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
-        "trimomatic_output" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
-        "trimomatic_ratio" = list(
-            "column" = "trimomatic_percent"),
-        ## Second task is likely error correction
-        ##"racer_changed" = list(
-        ##    "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
-        "host_filter_species" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/host_species.txt"),
-        ## After those, things can get pretty arbitrary...
-        "hisat_single_concordant" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
-        "hisat_multi_concordant" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
-        "hisat_single_all" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
-        "hisat_multi_all" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.err"),
-        "hisat_singlecon_ratio" = list(
-            "column" = "hisat_single_concordant_percent"),
-        "hisat_singleall_ratio" = list(
-            "column" = "hisat_single_all_percent"),
-        "hisat_count_table" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*.count.xz"),
-        "jellyfish_count_table" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
-        "jellyfish_observed" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
-        "kraken_viral_classified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
-        "kraken_viral_unclassified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
-        "kraken_first_viral_species" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
-        "kraken_first_viral_species_reads" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
-        "kraken_standard_classified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
-        "kraken_standard_unclassified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
-        "kraken_first_standard_species" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
-        "kraken_first_standard_species_reads" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
-        "possible_host_species" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*filter_kraken_host/*.log"),
-        "pernt_plus_mean_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_median_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_min_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_plus_max_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_mean_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_median_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_min_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "pernt_minus_max_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??phageterm_*/{meta[['sampleid']]}_statistics.csv"),
-        "salmon_mapped" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.err"),
-        "shovill_contigs" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
-        "shovill_length" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
-        "shovill_estlength" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
-        "shovill_minlength" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
-        "unicycler_lengths" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
-        "unicycler_relative_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
-        "filtered_relative_coverage" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??filter_depth/final_assembly.fasta"),
-        "phastaf_num_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
-        "phageterm_dtr_length" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
-        "prodigal_positive_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
-        "prodigal_negative_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
-        "glimmer_positive_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
-        "glimmer_negative_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
-        "phanotate_positive_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
-        "phanotate_negative_strand" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
-        "final_gc_content" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
-        "interpro_signalp_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_phobius_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_pfam_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_tmhmm_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_cdd_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_smart_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_gene3d_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "interpro_superfamily_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
-        "tRNA_hits" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
-        "aragorn_tRNAs" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*aragorn/aragorn.txt"),
-        "ictv_taxonomy" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
-        "ictv_accession" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
-        "ictv_family" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
-        "ictv_genus" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
-        "notes" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/notes.txt")
-    ) ## Finish the list on a separate line because this is already absurd enough.
+    specification <- make_assembly_spec()
+  } else if (class(specification)[1] == "list") {
+    message("Using provided specification")
+  } else if (specification == "rnaseq") {
+    specification = make_rnaseq_spec()
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -443,7 +281,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     input_file_spec <- specification[[entry_type]][["file"]]
     new_entries <- dispatch_metadata_extract(
         meta, entry_type, input_file_spec, specification,
-        basedir = basedir, verbose = verbose,
+        basedir = basedir, verbose = verbose, species = species, type = type,
         ...)
     if (is.null(new_entries)) {
       message("Not including new entries for: ", new_column, ".")
@@ -487,66 +325,98 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 #'  column in the metadata.
 dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       specification, basedir = "preprocessing", verbose = FALSE,
-                                      ...) {
+                                      species = "*", type = "genome", ...) {
   switchret <- switch(
       entry_type,
       "aragorn_tRNAs" = {
         search <-"^\\d+ genes found"
         replace <- "^(\\d+) genes found"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, basedir = basedir, verbose = verbose,
+                                         input_file_spec, basedir = basedir,
+                                         verbose = verbose, as = "numeric",
                                          ...)
       },
       "final_gc_content" = {
         entries <- dispatch_gc(meta, input_file_spec, basedir = basedir, verbose = verbose)
       },
-      "hisat_single_concordant" = {
+      "hisat_rrna_single_concordant" = {
         search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, basedir = basedir, verbose = verbose,
-                                         ...)
+                                         input_file_spec, basedir = basedir,
+                                         as = "numeric", verbose = verbose,
+                                         species = species, ...)
       },
-      "hisat_multi_concordant" = {
+      "hisat_rrna_multi_concordant" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, basedir = basedir, verbose = verbose,
-                                         ...)
+                                         input_file_spec, basedir = basedir,
+                                         as = "numeric", verbose = verbose,
+                                         species = species, ...)
       },
-      "hisat_single_all" = {
+      "hisat_rrna_percent" = {
+        numerator_column <- specification[["hisat_rrna_multi_concordant"]][["column"]]
+        if (is.null(numerator_column)) {
+          numerator_column <- "hisat_rrna_multi_concordant"
+        }
+        numerator_add <- specification[["hisat_rrna_single_concordant"]][["column"]]
+        if (is.null(numerator_add)) {
+          numerator_add <- "hisat_rrna_single_concordant"
+        }
+        denominator_column <- specification[["trimomatic_output"]][["column"]]
+        if (is.null(denominator_column)) {
+          denominator_column <- "trimomatic_output"
+        }
+        entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column,
+                                           numerator_add = numerator_add)
+      },
+      "hisat_genome_single_concordant" = {
+        search <-"^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
+        replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly exactly 1 time"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, basedir = basedir,
+                                         as = "numeric", verbose = verbose,
+                                         species = species, ...)
+      },
+      "hisat_genome_multi_concordant" = {
+        search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
+        replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, basedir = basedir,
+                                         as = "numeric", verbose = verbose,
+                                         species = species, ...)
+      },
+      "hisat_genome_single_all" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned exactly 1 time"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned exactly 1 time"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose, basedir = basedir,
-                                         ...)
+                                         input_file_spec, verbose = verbose,
+                                         as = "numeric", basedir = basedir,
+                                         species = species, ...)
       },
-      "hisat_multi_all" = {
+      "hisat_genome_multi_all" = {
         search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
         replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose, basedir = basedir,
-                                         ...)
+                                         input_file_spec, verbose = verbose,
+                                         as = "numeric", basedir = basedir,
+                                         species = species, ...)
       },
-      "hisat_singlecon_ratio" = {
-        numerator_column <- specification[["hisat_single_concordant"]][["column"]]
-        denominator_column <- specification[["trimomatic_input"]][["column"]]
-        entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
-      },
-      "hisat_singleall_ratio" = {
-        numerator_column <- "hisat_single_all"
-        if (!is.null(specification[["hisat_single_all"]][["column"]])) {
-          numerator_column <- specification[["hisat_single_all"]][["column"]]
+      "hisat_genome_percent" = {
+        numerator_column <- specification[["hisat_genome_single_concordant"]][["column"]]
+        if (is.null(numerator_column)) {
+          numerator_column <- "hisat_genome_single_concordant"
         }
-        denominator_column <- "trimomatic_input"
-        if (!is.null(specification[["trimomatic_input"]][["column"]])) {
-          denominator_column <- specification[["trimomatic_input"]][["column"]]
+        denominator_column <- specification[["trimomatic_output"]][["column"]]
+        if (is.null(denominator_column)) {
+          denominator_column <- "trimomatic_output"
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
       },
       "hisat_count_table" = {
         entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
-                                            basedir = basedir)
+                                            species = species, type = "genome", basedir = basedir)
       },
       "host_filter_species" = {
         search <- "^.*$"
@@ -554,58 +424,30 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_regex_search(meta, search, replace, input_file_spec,
                                          which = "first", verbose = verbose, basedir = basedir)
       },
-      "pernt_plus_mean_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_mean_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "mean",
                                        verbose = verbose, basedir = basedir,
-                                       ...)
+                                       as = "numeric", ...)
       },
-      "pernt_plus_median_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_median_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "median",
                                        verbose = verbose, basedir = basedir,
-                                       ...)
+                                       as = "numeric", ...)
       },
-      "pernt_plus_max_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_max_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "max",
                                        verbose = verbose, basedir = basedir,
                                        ...)
       },
-      "pernt_plus_min_coverage" = {
-        column <- "Coverage +"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "min",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_mean_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "mean",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_median_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "median",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_max_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
-                                       which = "function", chosen_func = "max",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
-      },
-      "pernt_minus_min_coverage" = {
-        column <- "Coverage -"
-        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "csv",
+      "pernt_min_coverage" = {
+        column <- "Coverage"
+        entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "min",
                                        verbose = verbose, basedir = basedir,
                                        ...)
@@ -740,7 +582,8 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
         replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
         entries <- dispatch_regex_search(meta, search, replace,
-                                         input_file_spec, verbose = verbose, basedir = basedir,
+                                         input_file_spec, verbose = verbose,
+                                         as = "numeric", basedir = basedir,
                                          ...)
       },
       "shovill_contigs" = {
@@ -749,7 +592,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         replace <- "^\\[shovill\\] It contains (\\d+) .*$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose, basedir = basedir,
-                                         which = "last",
+                                         as = "numeric", which = "last",
                                          ...)
       },
       "shovill_length" = {
@@ -758,7 +601,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         replace <- "^\\[shovill\\] It contains \\d+ .* contigs totalling (\\d+) bp\\.$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose, basedir = basedir,
-                                         which = "last",
+                                         which = "last", as = "numeric",
                                          ...)
       },
       "shovill_estlength" = {
@@ -767,7 +610,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         replace <- "^\\[shovill\\] Assembly is \\d+\\, estimated genome size was (\\d+).*$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose, basedir = basedir,
-                                         which = "last",
+                                         which = "last", as = "numeric",
                                          ...)
       },
       "shovill_minlength" = {
@@ -776,7 +619,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         replace <- "^\\[shovill\\] It contains \\d+ \\(min=(\\d+)\\).*$"
         entries <- dispatch_regex_search(meta, search, replace,
                                          input_file_spec, verbose = verbose, basedir = basedir,
-                                         which = "last",
+                                         which = "last", as = "numeric",
                                          ...)
       },
       "trimomatic_input" = {
@@ -805,6 +648,26 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         }
         entries <- dispatch_metadata_ratio(meta, numerator_column,
                                            denominator_column, verbose = verbose)
+      },
+      "fastqc_pct_gc" = {
+        ## %GC     62
+        search <- "^%GC	\\d+$"
+        replace <- "^%GC	(\\d+)$"
+        entries <- dispatch_regex_search(meta, search, replace,
+                                         input_file_spec, verbose = verbose,
+                                         as = "numeric", basedir = basedir,
+                                         ...)
+      },
+      "fastqc_most_overrepresented" = {
+        ## Two lines after:
+        ## >>Overrepresented sequences     fail
+        ## #Sequence       Count   Percentage      Possible Source
+        ## CTCCGCTATCGGTTCTACATGCTTAGCCAGCTCTACTGAGTTAACTCCGCGCCGCCCGA     68757   1.9183387064598885      No Hit
+        message("Skipping for now")
+        ##entries <- dispatch_regex_search(meta, search, replace,
+        ##                                 input_file_spec, verbose = verbose, basedir = basedir,
+        ##                                 ...)
+        entries <- NULL
       },
       "unicycler_lengths" = {
         ## >1 length=40747 depth=1.00x circular=true
@@ -1014,7 +877,7 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
 #' @param verbose Print diagnostic information while running?
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
-                                     basedir = "preprocessing") {
+                                     species = "*", type = "genome", basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
@@ -1023,8 +886,7 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
     if (length(input_file) == 0) {
-      warning("There is no file matching: ", filenames_with_wildcards[row],
-              ".")
+      warning("There is no file matching: ", filenames_with_wildcards[row], ".")
       output_entries[row] <- ''
       next
     }
@@ -1081,7 +943,7 @@ dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
 #' @param verbose unsed for the moment.
 dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
                                     denominator_column = NULL, digits = 3,
-                                    verbose = FALSE) {
+                                    numerator_add = NULL, verbose = FALSE) {
   column_number <- ncol(meta)
   if (is.null(numerator_column)) {
     numerator_column <- colnames(meta)[ncol(meta)]
@@ -1097,7 +959,12 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
   } else {
     message("The numerator column is: ", numerator_column, ".")
     message("The denominator column is: ", denominator_column, ".")
-    entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
+    if (is.null(numerator_add)) {
+      entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
+    } else {
+      entries <- (as.numeric(meta[[numerator_column]]) + as.numeric(meta[[numerator_add]])) /
+        as.numeric(meta[[denominator_column]])
+    }
     if (!is.null(digits)) {
       entries <- signif(entries, digits)
     }
@@ -1125,7 +992,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
 dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedir = "preprocessing",
-                                  extraction = "\\1", which = "first", verbose = FALSE,
+                                  extraction = "\\1", which = "first", as = NULL, verbose = FALSE,
                                   ...) {
   arglist <- list(...)
   ##if (length(arglist) > 0) {
@@ -1193,6 +1060,13 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
       output_entries[row] <- gsub(x=initial_string, pattern=",", replacement=";")
     }
   } ## End looking at every row of the metadata
+  if (!is.null(as)) {
+    if (as == "numeric") {
+      output_entries <- as.numeric(output_entries)
+    } else if (as == "character") {
+      output_entries <- as.character(output_entries)
+    }
+  }
   return(output_entries)
 }
 
@@ -1212,7 +1086,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
 dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv", chosen_func = NULL,
-                                basedir = "preprocessing", which = "first", verbose = FALSE,
+                                basedir = "preprocessing", which = "first",  as = NULL, verbose = FALSE,
                                 ...) {
   arglist <- list(...)
   filenames_with_wildcards <- glue::glue(input_file_spec,
@@ -1325,6 +1199,176 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
   pData(expt[["expressionset"]]) <- pd
   expt[["design"]] <- pd
   return(expt)
+}
+
+make_assembly_spec <- function() {
+    specification <- list(
+        ## First task performed is pretty much always trimming
+        "input_r1" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+        "input_r2" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+        "trimomatic_input" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+        "trimomatic_output" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+        "trimomatic_ratio" = list(
+            "column" = "trimomatic_percent"),
+        ## Second task is likely error correction
+        ##"racer_changed" = list(
+        ##    "file" = "preprocessing/{meta[['sampleid']]}/outputs/*racer/racer.out"),
+        "host_filter_species" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/host_species.txt"),
+        ## After those, things can get pretty arbitrary...
+        "hisat_single_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+        "hisat_multi_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+        "hisat_single_all" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+        "hisat_multi_all" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+        "hisat_singlecon_ratio" = list(
+            "column" = "hisat_single_concordant_percent"),
+        "hisat_singleall_ratio" = list(
+            "column" = "hisat_single_all_percent"),
+        "hisat_count_table" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*_{species}_genome*.count.xz"),
+        "jellyfish_count_table" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
+        "jellyfish_observed" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
+        "kraken_viral_classified" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+        "kraken_viral_unclassified" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+        "kraken_first_viral_species" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+        "kraken_first_viral_species_reads" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
+        "kraken_standard_classified" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+        "kraken_standard_unclassified" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+        "kraken_first_standard_species" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+        "kraken_first_standard_species_reads" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
+        "possible_host_species" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*filter_kraken_host/*.log"),
+        "pernt_mean_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_median_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_min_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "pernt_max_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+        "salmon_mapped" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.stderr"),
+        "shovill_contigs" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+        "shovill_length" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+        "shovill_estlength" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+        "shovill_minlength" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
+        "unicycler_lengths" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "unicycler_relative_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*unicycler/*final_assembly.fasta"),
+        "filtered_relative_coverage" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/??filter_depth/final_assembly.fasta"),
+        "phastaf_num_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
+        "phageterm_dtr_length" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+        "prodigal_positive_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "prodigal_negative_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
+        "glimmer_positive_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
+        "glimmer_negative_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*glimmer/glimmer3.predict"),
+        "phanotate_positive_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
+        "phanotate_negative_strand" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
+        "final_gc_content" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
+        "interpro_signalp_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_phobius_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_pfam_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_tmhmm_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_cdd_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_smart_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_gene3d_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "interpro_superfamily_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
+        "tRNA_hits" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.log"),
+        "aragorn_tRNAs" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*aragorn/aragorn.txt"),
+        "ictv_taxonomy" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_accession" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_family" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "ictv_genus" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        "notes" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/notes.txt")
+    ) ## Finish the list on a separate line because this is already absurd enough.
+    return(specification)
+}
+
+make_rnaseq_spec <- function() {
+    specification <- list(
+        ## First task performed is pretty much always trimming
+        ##"input_r1" = list(
+        ##    "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+        ##"input_r2" = list(
+        ##    "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+        "trimomatic_input" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+        "trimomatic_output" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+        "trimomatic_ratio" = list(
+            "column" = "trimomatic_percent"),
+        "fastqc_pct_gc" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
+        "fastqc_most_overrepresented" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
+        "hisat_rrna_single_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*rRNA*.stderr"),
+        "hisat_rrna_multi_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*rRNA*.stderr"),
+        "hisat_rrna_percent" = list(
+            "column" = "hisat_rrna_percent"),
+        "hisat_genome_single_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+        "hisat_genome_multi_concordant" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+        "hisat_genome_single_all" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+        "hisat_genome_multi_all" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+        "hisat_genome_percent" = list(
+            "column" = "hisat_genome_percent"),
+        "hisat_count_table" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*_{species}_{type}*.count.xz")
+        )
+    return(specification)
 }
 
 ## EOF

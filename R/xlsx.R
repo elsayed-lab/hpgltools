@@ -60,11 +60,11 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 
   excel_dir <- dirname(as.character(excel))
   if (!file.exists(excel_dir)) {
-    dir.create(excel_dir, recursive = TRUE)
+    created <- dir.create(excel_dir, recursive = TRUE)
   }
   if (file.exists(excel)) {
     message("Deleting the file ", excel, " before writing the tables.")
-    file.remove(excel)
+    removed <- file.remove(excel)
   }
   wb <- openxlsx::createWorkbook(creator = "hpgltools")
   retlist <- list(

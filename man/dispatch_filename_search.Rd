@@ -8,6 +8,8 @@ dispatch_filename_search(
   meta,
   input_file_spec,
   verbose = verbose,
+  species = "*",
+  type = "genome",
   basedir = "preprocessing"
 )
 }

@@ -12,6 +12,7 @@ dispatch_regex_search(
   basedir = "preprocessing",
   extraction = "\\\\1",
   which = "first",
+  as = NULL,
   verbose = FALSE,
   ...
 )

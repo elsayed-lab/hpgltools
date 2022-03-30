@@ -20,6 +20,9 @@ create_expt(
   savefile = NULL,
   low_files = FALSE,
   handle_na = "drop",
+  researcher = "elsayed",
+  study_name = NULL,
+  annotation_name = "org.Hs.eg.db",
   ...
 )
 }

@@ -18,7 +18,11 @@ extract_significant_genes(
   p_type = "adj",
   invert_barplots = FALSE,
   excel = NULL,
+  fc_column = NULL,
+  p_column = NULL,
   siglfc_cutoffs = c(0, 1, 2),
+  column_suffix = TRUE,
+  gmt = NULL,
   ...
 )
 }

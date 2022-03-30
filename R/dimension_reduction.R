@@ -643,8 +643,21 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
 
   ## Pull out the batches and conditions used in this plot.
   ## Probably could have just used xxx[stuff, drop = TRUE]
-  included_batches <- as.factor(as.character(design[[batch_column]]))
-  included_conditions <- as.factor(as.character(design[[cond_column]]))
+  included_batches <- factor()
+  if (class(design[[batch_column]])[1] != "factor") {
+    included_batches <- as.factor(as.character(design[[batch_column]]))
+  } else {
+    included_batches <- design[[batch_column]] %>%
+      droplevels()
+  }
+
+  included_conditions <- factor()
+  if (class(design[[cond_column]])[1] != "factor") {
+    included_conditions <- as.factor(as.character(design[[cond_column]]))
+  } else {
+    included_conditions <- design[[cond_column]] %>%
+      droplevels()
+  }
 
   ## Expected things to retrieve from any dimension reduction method.
   x_label <- NULL
@@ -742,11 +755,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
         x_name <- glue::glue("Factor{x_pc}")
         y_name <- glue::glue("Factor{y_pc}")
 
-        ## Pull out the batches and conditions used in this plot.
-        ## Probably could have just used xxx[stuff, drop = TRUE]
-        included_batches <- as.factor(as.character(design[[batch_column]]))
-        included_conditions <- as.factor(as.character(design[[cond_column]]))
-
         residual_df <- get_res(svd_result, design, res_slot = "Y", var_slot = "itercosts")
         prop_lst <- residual_df[["prop_var"]]
         if (x_pc > components | y_pc > components) {
@@ -766,8 +774,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
         y_name <- glue::glue("Factor{y_pc}")
         x_label <- x_name
         y_label <- y_name
-        included_batch <- as.factor(as.character(design[[batch_column]]))
-        included_conditions <- as.factor(as.character(design[[cond_column]]))
       },
       "uwot" = {
         plotting_data <- t(mtrx)
@@ -778,8 +784,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
         y_name <- glue::glue("Factor{y_pc}")
         x_label <- x_name
         y_label <- y_name
-        included_batch <- as.factor(as.character(design[[batch_column]]))
-        included_conditions <- as.factor(as.character(design[[cond_column]]))
       },
       "ida" = {
         svd_result <- iDA::iDA_core(data.use = mtrx, NormCounts = mtrx)
@@ -788,8 +792,6 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
         y_name <- glue::glue("LD{y_pc}")
         x_label <- x_name
         y_label <- y_name
-        included_batch <- as.factor(as.character(design[[batch_column]]))
-        included_conditions <- as.factor(as.character(design[[cond_column]]))
         ## residual_df <- get_res(svd_result, design)
         ## prop_lst <- residual_df[["prop_var"]]
         ## get the percentage of variance accounted for in each PC
@@ -1560,7 +1562,10 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                      plot_alpha = NULL, size_column = NULL, rug = TRUE, max_overlaps = 20,
                      cis = c(0.95, 0.9), label_size = 4, ...) {
   arglist <- list(...)
-  batches <- as.factor(pca_data[["batch"]])
+  batches <- pca_data[["batch"]]
+  if (class(batches)[1] != "factor") {
+    batches <- as.factor(pca_data[["batch"]])
+  }
   label_column <- "condition"
   if (!is.null(arglist[["label_column"]])) {
     label_column <- arglist[["label_column"]]
@@ -1592,7 +1597,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   pca_plot <- NULL
   color_listing <- pca_data[, c("condition", "colors")]
   color_listing <- unique(color_listing)
-  color_list <- as.character(color_listing[["colors"]])
+  color_list <- color_listing[["colors"]]
   names(color_list) <- as.character(color_listing[["condition"]])
   ## Ok, so this is shockingly difficult.  For <5 batch data I want properly
   ## colored points with black outlines The legend colors need to match, in
@@ -1612,8 +1617,8 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   }
 
   pca_data <- as.data.frame(pca_data)
-  pca_data[["condition"]] <- as.factor(pca_data[["condition"]])
-  pca_data[["batch"]] <- as.factor(pca_data[["batch"]])
+  #pca_data[["condition"]] <- as.factor(pca_data[["condition"]])
+  #pca_data[["batch"]] <- as.factor(pca_data[["batch"]])
   pca_plot <- ggplot(data = pca_data,
                      aes_string(x = "get(first)", y = "get(second)", text = "sampleid"))
 
