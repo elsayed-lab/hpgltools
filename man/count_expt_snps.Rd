@@ -6,7 +6,6 @@
 \usage{
 count_expt_snps(
   expt,
-  type = "counts",
   annot_column = "bcftable",
   tolower = TRUE,
   snp_column = "diff_count"
@@ -15,18 +14,23 @@ count_expt_snps(
 \arguments{
 \item{expt}{an expressionset from which to extract information.}
 
-\item{type}{Use counts / samples or ratios?}
-
 \item{annot_column}{Column in the metadata for getting the table of bcftools calls.}
 
 \item{tolower}{Lowercase stuff like 'HPGL'?}
 
 \item{snp_column}{Which column of the parsed bcf table contains our interesting material?}
+
+\item{type}{Use counts / samples or ratios?}
 }
 \value{
 A new expt object
 }
 \description{
+I made some pretty significant changes to the set of data which I
+retain when using mpileup/freebayes.  As a result, this function
+needs to be reworked.
+}
+\details{
 This function attempts to gather a set of variant positions using an extant
 expressionset.  This therefore seeks to keep the sample metadata consistent
 with the original data.  In its current iteration, it therefore makes some

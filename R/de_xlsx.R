@@ -12,8 +12,6 @@
 #' @param apr Output from all_pairwise().
 #' @param extra_annot Add some annotation information?
 #' @param excel Filename for the excel workbook, or null if not printed.
-#' @param sig_excel Filename for writing significant tables.
-#' @param abundant_excel Filename for writing abundance tables.
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'  string 'YYY', that will be replaced by the contrast name.
 #' @param keepers List of reformatted table names to explicitly keep
@@ -52,8 +50,7 @@
 #' }
 #' @export
 combine_de_tables <- function(apr, extra_annot = NULL,
-                              excel = NULL, sig_excel = NULL, abundant_excel = NULL,
-                              excel_title = "Table SXXX: Combined Differential Expression of YYY",
+                              excel = NULL, excel_title = "Table SXXX: Combined Differential Expression of YYY",
                               keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
                               include_deseq = TRUE, include_edger = TRUE, include_ebseq = TRUE,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
@@ -534,19 +531,6 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   }
   class(ret) <- c("combined_de", "list")
 
-  ## If someone asked for the siginficant/abundant genes to be printed, just do
-  ## that here.
-  if (!is.null(sig_excel)) {
-    mesg("Invoking extract_significant_genes().")
-    significant <- try(extract_significant_genes(ret, excel = sig_excel, gmt = gmt, ...), silent = TRUE)
-    ret[["significant"]] <- significant
-  }
-  if (!is.null(abundant_excel)) {
-    mesg("Invoking extract_abundant_genes().")
-    abundant <- try(extract_abundant_genes(apr, excel = abundant_excel, gmt = gmt, ...), silent = TRUE)
-    ## abundant <- try(extract_abundant_genes(apr, excel=abundant_excel))
-    ret[["abundant"]] <- abundant
-  }
   if (!is.null(rda)) {
     saved <- save(list = "ret", file = rda)
   }

@@ -337,14 +337,20 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
     if (scale_difference > 10.0) {
       mesg("The scale difference between the smallest and largest
 libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
-      scale <- TRUE
+      yscale <- TRUE
     } else {
-      scale <- FALSE
+      yscale <- FALSE
     }
   }
-  if (isTRUE(scale)) {
+  if (isTRUE(yscale)) {
     sample_plot <- sample_plot +
       ggplot2::scale_y_log10(labels = scales::scientific)
+  } else if (yscale == "log10") {
+    sample_plot <- sample_plot +
+      ggplot2::scale_y_log10(labels = scales::scientific)
+  } else if (yscale == "log2") {
+    sample_plot <- sample_plot +
+      ggplot2::scale_y_log2(labels = scales::scientific)
   } else {
     sample_plot <- sample_plot +
       ggplot2::scale_y_continuous(labels = scales::scientific)

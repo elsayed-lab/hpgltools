@@ -8,8 +8,6 @@ combine_de_tables(
   apr,
   extra_annot = NULL,
   excel = NULL,
-  sig_excel = NULL,
-  abundant_excel = NULL,
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all",
   excludes = NULL,
@@ -39,10 +37,6 @@ combine_de_tables(
 \item{extra_annot}{Add some annotation information?}
 
 \item{excel}{Filename for the excel workbook, or null if not printed.}
-
-\item{sig_excel}{Filename for writing significant tables.}
-
-\item{abundant_excel}{Filename for writing abundance tables.}
 
 \item{excel_title}{Title for the excel sheet(s).  If it has the
 string 'YYY', that will be replaced by the contrast name.}
