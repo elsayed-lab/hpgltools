@@ -34,7 +34,7 @@ untarred <- utils::untar(tarfile = system.file("share/clbr/vcfutils_output.tar.x
                                                package = "hpgltools"))
 ## Type in this context may be either percent or counts, this just defines the
 ## column to extract from the bcf file.
-snp_expt <- count_expt_snps(all_expt, type = "percent", annot_column = "bcffile")
+snp_expt <- count_expt_snps(all_expt, annot_column = "bcffile")
 expected <- 8295
 test_that("Do we have a decent number of variants?", {
   expect_equal(expected, nrow(exprs(snp_expt)))

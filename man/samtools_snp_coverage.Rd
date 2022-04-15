@@ -6,7 +6,6 @@
 \usage{
 samtools_snp_coverage(
   expt,
-  type = "counts",
   input_dir = "preprocessing/outputs",
   tolower = TRUE,
   bam_suffix = ".bam",
@@ -16,8 +15,6 @@ samtools_snp_coverage(
 \arguments{
 \item{expt}{Expressionset to analyze}
 
-\item{type}{counts or percent?}
-
 \item{input_dir}{Directory containing the samtools results.}
 
 \item{tolower}{lowercase the sample names?}
@@ -25,6 +22,8 @@ samtools_snp_coverage(
 \item{bam_suffix}{In case the data came from sam.}
 
 \item{annot_column}{Passed along to count_expt_snps()}
+
+\item{type}{counts or percent?}
 }
 \value{
 It is so slow I no longer know if it works.

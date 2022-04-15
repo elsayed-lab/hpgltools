@@ -46,7 +46,7 @@ plot_histogram <- function(df, binwidth = NULL, log = FALSE, bins = 500, adjust 
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
   if (log) {
     log_histogram <- try(a_histogram +
-                         ggplot2::scale_x_log10())
+                         ggplot2::scale_x_continuous(trans = "log10"))
     if (log_histogram != "try-error") {
       a_histogram <- log_histogram
     }
@@ -128,7 +128,7 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
       ggplot2::scale_color_manual(values = colors)
   }
   if (log) {
-    logged <- try(multi + ggplot2::scale_x_log10())
+    logged <- try(multi + ggplot2::scale_x_continuous(trans = "log10"))
     if (class(logged) != "try-error") {
       multi <- logged
     }

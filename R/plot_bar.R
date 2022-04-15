@@ -155,7 +155,7 @@ labeled by counts/genes removed.")
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
-    ggplot2::scale_y_log10(labels = scales::scientific) +
+    ggplot2::scale_y_continuous(trans = "log10", labels = scales::scientific) +
     ggplot2::ggtitle(count_title)
 
   low_title <- glue::glue("Genes with less than {low_limit} reads before/after filtering, labeled by delta.")
@@ -344,13 +344,16 @@ libraries is > 10. Assuming a log10 scale is better, set scale = FALSE if not.")
   }
   if (isTRUE(yscale)) {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_log10(labels = scales::scientific)
+      ggplot2::scale_y_continuous(trans = "log10",
+                                  labels = scales::scientific)
   } else if (yscale == "log10") {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_log10(labels = scales::scientific)
+      ggplot2::scale_y_continuous(trans = "log10",
+                                  labels = scales::scientific)
   } else if (yscale == "log2") {
     sample_plot <- sample_plot +
-      ggplot2::scale_y_log2(labels = scales::scientific)
+      ggplot2::scale_y_continuous(trans = "log2",
+                                  labels = scales::scientific)
   } else {
     sample_plot <- sample_plot +
       ggplot2::scale_y_continuous(labels = scales::scientific)

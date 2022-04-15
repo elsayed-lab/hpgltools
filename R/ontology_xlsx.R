@@ -565,8 +565,9 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
     ## Now write the data.
     new_row <- 1
     message("Writing the ", ont, " data.")
-    write_xlsx(data = categories, wb = wb, sheet = ont,
-               title = glue("{ont} Results from goseq."))
+    ## Added the suppresswarnings in case a category has too many genes to be written without complaint.
+    written <- suppressWarnings(write_xlsx(data = categories, wb = wb, sheet = ont,
+                                           title = glue("{ont} Results from goseq.")))
 
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
@@ -589,8 +590,8 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
       }
     }
     new_row <- new_row + nrow(categories) + 2
-    openxlsx::setColWidths(wb, sheet = ont, cols = 2:9, widths = "auto")
-    openxlsx::setColWidths(wb, sheet = ont, cols = 6:7, widths = 30)
+    widths <- openxlsx::setColWidths(wb, sheet = ont, cols = 2:9, widths = "auto")
+    widths <- openxlsx::setColWidths(wb, sheet = ont, cols = 6:7, widths = 30)
     table_list[[ont]] <- categories
   } ## End of the for loop
 

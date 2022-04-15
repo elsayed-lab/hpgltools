@@ -187,11 +187,11 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
   }
   scale <- "log"
   if (scale == "log") {
-    boxplot <- boxplot + ggplot2::scale_y_continuous(trans = scales::log2_trans())
+    boxplot <- boxplot + ggplot2::scale_y_continuous(trans = "log2")
   } else if (scale == "logdim") {
     boxplot <- boxplot + ggplot2::coord_trans(y = "log2")
   } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
+    boxplot <- boxplot + ggplot2::scale_y_continuous(trans = "log10")
   }
 
   return(boxplot)
@@ -525,9 +525,9 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
     dotboxplot <- dotboxplot + ggplot2::coord_trans(y = "log2")
     violin <- violin + ggplot2::coord_trans(y = "log2")
   } else if (isTRUE(scale)) {
-    boxplot <- boxplot + ggplot2::scale_y_log10()
-    dotboxplot <- dotboxplot + ggplot2::scale_y_log10()
-    violin <- violin + ggplot2::scale_y_log10()
+    boxplot <- boxplot + ggplot2::scale_y_continuous(trans = "log10")
+    dotboxplot <- dotboxplot + ggplot2::scale_y_continuous(trans = "log10")
+    violin <- violin + ggplot2::scale_y_continuous(trans = "log10")
   }
 
   retlist <- list(
@@ -735,7 +735,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
   } else if (scale == "logdim") {
     violin <- violin + ggplot2::coord_trans(y = "log2")
   } else if (isTRUE(scale)) {
-    violin <- violin + ggplot2::scale_y_log10()
+    violin <- violin + ggplot2::scale_y_continuous(trans = "log10")
   }
   if (is.null(legend)) {
     violin <- violin + ggplot2::theme(legend.position = "none")

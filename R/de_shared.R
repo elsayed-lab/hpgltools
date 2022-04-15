@@ -98,9 +98,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   if (isTRUE(test_pca)) {
     pre_batch <- sm(normalize_expt(input, filter = TRUE, batch = FALSE,
                                    transform = "log2", convert = convert, norm = norm))
-    if (isTRUE(verbose)) {
-      message("Plotting a PCA before surrogate/batch inclusion.")
-    }
+    mesg("Plotting a PCA before surrogate/batch inclusion.")
     pre_pca <- plot_pca(pre_batch, plot_labels = FALSE,
                         ...)
     post_batch <- pre_batch
@@ -111,17 +109,13 @@ all_pairwise <- function(input = NULL, conditions = NULL,
       }
       post_batch <- sm(normalize_expt(input, filter = TRUE, batch = TRUE, transform = "log2"))
     } else if (class(model_type)[1] == "character") {
-      if (isTRUE(verbose)) {
-        message("Using ", model_type, " to visualize before/after batch inclusion.")
-      }
+      mesg("Using ", model_type, " to visualize before/after batch inclusion.")
       test_norm <- "quant"
       if (model_type != "TRUE" & model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
-      if (isTRUE(verbose)) {
-        message("Performing a test normalization with: ", test_norm)
-      }
+      mesg("Performing a test normalization with: ", test_norm)
       if (!isFALSE(model_batch)) {
         post_batch <- try(normalize_expt(input, filter = TRUE, batch = model_type,
                                          transform = "log2", convert = "cpm",
@@ -131,9 +125,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
       }
     } else {
       model_type <- "none"
-      if (isTRUE(verbose)) {
-        message("Assuming no batch in model for testing pca.")
-      }
+      mesg("Assuming no batch in model for testing pca.")
     }
     post_pca <- plot_pca(post_batch, plot_labels = FALSE,
                          ...)
