@@ -241,7 +241,6 @@ test_that("choose_dataset provides some expected output?", {
 ## we did test_condbatch, test_cond, test_sva
 test_condbatch_combined <- combine_de_tables(test_condbatch)
 ## For the life of me I cannot find where this warning is coming from.
-warnings()  ## Crap in a hat, doing Rscript on this file still has not
 ## brought out the source of these warnings when I run 'make test'
 ## 24
 test_that("combine_de_tables() gave expected tables?", {
@@ -441,8 +440,6 @@ test_that("extract_de_plots() gave some plots?", {
   expect_equal(class(testing[["scatter"]]), c("gg", "ggplot"))
 })
 
-
-
 testing <- de_venn(test_condbatch_combined[["data"]][[1]])
 ## 5253
 test_that("de_venn() gave some plots?", {
@@ -468,10 +465,10 @@ test_that("extract_abundant_genes() gave some stuff?", {
 
 testing <- extract_significant_genes(combined = test_condbatch_combined, excel = NULL)
 actual <- dim(testing[["limma"]][["ups"]][["mut15_vs_mut0"]])
-expected <- c(160, 34)
+expected <- c(150, 34)
 ## 60
 test_that("Did extract_significant_genes() get some stuff?", {
-  expect_gt(expected[1], actual[1])
+  expect_gt(actual[1], expected[1])
   expect_equal(expected[2], actual[2])
 })
 

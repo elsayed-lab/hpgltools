@@ -3,9 +3,19 @@
 ## This seeks to simplify these invocations and ensure that it will work under
 ## most likely use-case scenarios.
 
-## The function is just written as a reminder that LRT may prove
-## useful/important for some of our data, most notably the comparisons
-## of visit number in the Leishmania panamensis data.
+#' Bring together some of the likelihood ratio test analyses.
+#'
+#' This function hopes to wrap up some of the ideas/methods for LRT.
+#'
+#' @param expt Input expressionset
+#' @param interactor_column Potentially interacting metadata
+#' @param interest_column Essentially the condition in other analyses.
+#' @param transform DESeq2 transformation applied (vst or rlog).
+#' @param factors Other factors of interest
+#' @param cutoff Significance cutoff
+#' @param minc Minimum number of elements for a group
+#' @param interaction Use an interaction model?
+#' @export
 deseq_lrt <- function(expt, interactor_column = "visitnumber",
                       interest_column = "clinicaloutcome", transform = "rlog",
                       factors = NULL, cutoff = 0.05, minc = 3, interaction = TRUE) {
@@ -90,15 +100,20 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
   }
   clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
 
-  cluster_data <- DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
-                                         time = interactor_column, col = interest_column,
-                                         minc = minc)
-  cluster_df <- cluster_data[["df"]]
-  cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
-  group_lst <- list()
-  for (c in levels(cluster_df[["cluster"]])) {
-    group_idx <- cluster_df[["cluster"]] == c
-    group_lst[[c]] <- cluster_df[group_idx, ]
+  cluster_data <- try(DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
+                                             time = interactor_column, col = interest_column,
+                                             minc = minc))
+
+  group_lst <- NULL
+  cluster_data <- NULL
+  if (! "try-error" %in% class(cluster_data)) {
+    cluster_df <- cluster_data[["df"]]
+    cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
+    group_lst <- list()
+    for (c in levels(cluster_df[["cluster"]])) {
+      group_idx <- cluster_df[["cluster"]] == c
+      group_lst[[c]] <- cluster_df[group_idx, ]
+    }
   }
   retlist <- list(
       "deseq_result" = deseq_lrt,

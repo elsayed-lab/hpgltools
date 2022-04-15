@@ -62,8 +62,8 @@ hpgl_norm <- sm(normalize_expt(pasilla_expt, transform = "log2", norm = "quant",
 ## Use this section to ensure that our invocation of limma without an intercept
 ## matches that from cbcbSEQ.
 
-int_limma <- sm(limma_pairwise(hpgl_norm, model_batch = TRUE, limma_method = "ls",
-                               model_intercept = TRUE, which_voom = "hpgl"))
+int_limma <- limma_pairwise(hpgl_norm, model_batch = TRUE, limma_method = "ls",
+                            model_intercept = TRUE, which_voom = "hpgl")
 int_voom <- int_limma[["voom_result"]]
 int_fit <- int_limma[["fit"]]
 int_eb <- int_limma[["pairwise_comparisons"]]
@@ -78,9 +78,12 @@ test_that("Do cbcbSEQ and hpgltools agree on the voom output?", {
   expect_equal(expected, actual)
 })
 
-## Fix the column names for the following tables to simplify things.
-int_names <- c("(Intercept)", "untreated", "single_end")
+## Note: 202204, I started more aggressively sanitizing the condition names,
+## so remove the '_' from 'single_end'
 
+## Fix the column names for the following tables to simplify things.
+## int_names <- c("(Intercept)", "untreated", "single_end")
+int_names <- c("(Intercept)", "untreated", "singleend")
 expected <- cbcb_fit[["coefficients"]]
 colnames(expected) <- int_names
 expected <- expected[table_order, ]

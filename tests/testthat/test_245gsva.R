@@ -44,15 +44,17 @@ load(file = "test_065_significant.rda", envir = cb_sig)
 ups <- cb_sig[["deseq"]][["ups"]][["wt30_vs_wt0"]]
 downs <- cb_sig[["deseq"]][["downs"]][["wt30_vs_wt0"]]
 sig_gsc <- make_gsc_from_ids(first_ids = rownames(ups), second_ids = rownames(downs),
-                             orgdb = NULL, researcher_name = "Idunno",
+                             researcher_name = "Idunno",
                              current_id = NULL, required_id = NULL,
                              study_name = "fission", category_name = "30vs0")
 test_that("We can make gene set collections from DE outputs?", {
   expect_equal(3, length(names(sig_gsc)))
-  expect_gt(length(GSEABase::geneIds(sig_gsc[[1]])), 500)
+  expect_gt(length(GSEABase::geneIds(sig_gsc[[1]])), 400)
 })
 
-xcell_result <- simple_xcell(expt = hs_filt, column = "cds_length", cores = 1)
+## The following xcell call throws a warning because there is a gene with no variance.
+## I do not particularly care, so I will suppress it.
+xcell_result <- suppressWarnings(simple_xcell(expt = hs_filt, column = "cds_length", cores = 1))
 test_that("We get some expected results from xCell?", {
   expect_equal("recordedplot", class(xcell_result[["heatmap"]])[1])
 })

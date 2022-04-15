@@ -202,7 +202,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
     bar <- utils::txtProgressBar(style = 3)
   }
   end <- length(res)
-  message("Iterating over ", end, " elements.")
+  mesg("Iterating over ", end, " elements.")
   for (element in 1:end) {
     if (isTRUE(show_progress)) {
       pct_done <- element / length(res)
@@ -327,9 +327,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
 #' @param bam_suffix In case the data came from sam.
 #' @return It is so slow I no longer know if it works.
 #' @seealso [count_expt_snps()] [Rsamtools] [GenomicRanges]
-samtools_snp_coverage <- function(expt, type = "counts", input_dir = "preprocessing/outputs",
+samtools_snp_coverage <- function(expt, input_dir = "preprocessing/outputs",
                                   tolower = TRUE, bam_suffix = ".bam", annot_column = annot_column) {
-  snp_counts <- count_expt_snps(expt, type = type, tolower = tolower)
+  snp_counts <- count_expt_snps(expt, tolower = tolower)
   snp_counts <- fData(snp_counts)
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
@@ -854,7 +854,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   start_rows <- nrow(snp_table)
   interest_rows <- rowMeans(snp_table) >= cutoff
   snp_table <- snp_table[interest_rows, ]
-  message("Started with ", start_rows, ", after cutoff there are ",
+  mesg("Started with ", start_rows, ", after cutoff there are ",
           sum(interest_rows), " rows left.")
   position_table <- data.frame(row.names = rownames(snp_table))
   position_table[["chromosome"]] <- gsub(x = rownames(position_table),
@@ -884,7 +884,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   ## have a BSgenome from which to get the actual chromosome lengths.
   for (ch in 1:length(chromosomes)) {
     chr <- chromosomes[ch]
-    message("Starting chromosome: ", chr, ".")
+    mesg("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
     chr_data <- position_table[chr_idx, ]
     if (is.null(genome)) {
@@ -951,11 +951,11 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   long_density_vector <- long_density_vector[most_idx]
   long_variant_vector <- long_variant_vector[most_idx]
 
-  message("Extracting primer regions.")
+  mesg("Extracting primer regions.")
   sequence_df <- sm(choose_sequence_regions(long_variant_vector, topn = topn,
                                             max_primer_length = max_primer_length,
                                             genome = genome))
-  message("Searching for overlapping/closest genes.")
+  mesg("Searching for overlapping/closest genes.")
   sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
                               feature_type = feature_type, feature_start = feature_start,
                               feature_end = feature_end, feature_strand = feature_strand,
@@ -964,10 +964,10 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   ## Get rid of any regions with 'N' in them
 
   dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "N")
-  message("Dropped ", sum(dropme), " regions with Ns in the 5' region.")
+  mesg("Dropped ", sum(dropme), " regions with Ns in the 5' region.")
   sequence_df <- sequence_df[!dropme, ]
   dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "N")
-  message("Dropped ", sum(dropme), " regions with Ns in the 3' region.")
+  mesg("Dropped ", sum(dropme), " regions with Ns in the 3' region.")
   sequence_df <- sequence_df[!dropme, ]
 
   keepers <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
@@ -1177,7 +1177,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   wanted_rows <- annotation[[feature_type_column]] == feature_type
   annotation <- annotation[wanted_rows, wanted_columns]
   colnames(annotation) <- c("id", "name", "chr", "start", "end", "strand")
-  message("Now the annotation has ", nrow(annotation),  " rows.")
+  mesg("Now the annotation has ", nrow(annotation),  " rows.")
 
   sequence_df[["overlap_gene_id"]] <- ""
   sequence_df[["overlap_gene_description"]] <- ""
@@ -1298,7 +1298,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
 find_subseq_target_temp <- function(sequence, target=53, direction="forward", verbose=FALSE) {
   cheapo <- cheap_tm(sequence)
   if (isTRUE(verbose)) {
-    message("Starting with ", sequence, " and ", cheapo)
+    mesg("Starting with ", sequence, " and ", cheapo)
   }
   if (nchar(sequence) < 1) {
     stop("Never hit the target tm, something is wrong.")
@@ -1313,7 +1313,7 @@ find_subseq_target_temp <- function(sequence, target=53, direction="forward", ve
     }
     result <- find_subseq_target_temp(subseq, target=target, direction=direction)
   } else {
-    message("Final tm is: ", cheapo[["tm"]], " from sequence: ", sequence, ".")
+    mesg("Final tm is: ", cheapo[["tm"]], " from sequence: ", sequence, ".")
     return(sequence)
   }
 }

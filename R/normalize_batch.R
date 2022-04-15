@@ -114,7 +114,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
   zero_rows <- rowSums(linear_mtrx, na.rm = TRUE) == 0
   num_zero_rows <- sum(zero_rows, na.rm = TRUE)
   if (num_zero_rows > 0) {
-    warning("batch_counts: Before batch/surrogate estimation, ",
+    mesg("batch_counts: Before batch/surrogate estimation, ",
             zero_rows, " rows are 0.")
   }
 
@@ -125,15 +125,15 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
        num_normal, " entries are x>1: ", normal_pct, ".")
   num_zero <- sum(linear_mtrx == 0, na.rm = TRUE)
   zero_pct <- scales::percent(num_zero / elements)
-  message("batch_counts: Before batch/surrogate estimation, ",
-          num_zero, " entries are x==0: ", zero_pct, ".")
+  mesg("batch_counts: Before batch/surrogate estimation, ",
+       num_zero, " entries are x==0: ", zero_pct, ".")
   num_low <- sum(linear_mtrx < 1 & linear_mtrx > 0, na.rm = TRUE)
   low_pct <- scales::percent(num_low / elements)
   if (is.null(num_low)) {
     num_low <- 0
   }
   if (num_low > 0) {
-    message("batch_counts: Before batch/surrogate estimation, ",
+    mesg("batch_counts: Before batch/surrogate estimation, ",
             num_low, " entries are 0<x<1: ", low_pct, ".")
   }
   num_neg <- sum(linear_mtrx < 0, na.rm = TRUE)

@@ -128,13 +128,14 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
   if (scale == "log") {
     boxplot <- boxplot +
       ggplot2::scale_y_continuous(labels = scales::scientific,
-                                  trans = scales::log2_trans())
+                                  trans = "log2")
   } else if (scale == "logdim") {
     boxplot <- boxplot +
       ggplot2::coord_trans(y = "log2", labels = scales::scientific)
   } else if (isTRUE(scale)) {
     boxplot <- boxplot +
-      ggplot2::scale_y_log10(labels = scales::scientific)
+      ggplot2::scale_y_continuous(trans = "log10",
+                                  labels = scales::scientific)
   }
   return(boxplot)
 }

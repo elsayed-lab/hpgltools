@@ -332,49 +332,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     ## If neither of these cases is true, start looking for the files in the
     ## processed_data/ directory
   } else if (is.null(sample_definitions[[file_column]])) {
-    success <- 0
-    ## There are two main organization schemes I have used in the past, the following
-    ## checks for both in case I forgot to put a file column in the metadata.
-    ## Look for files organized by sample
-    test_filenames <- file.path(
-        "preprocessing", "count_tables",
-        rownames(sample_definitions),
-        glue::glue("{file_prefix}{rownames(sample_definitions)}{file_suffix}"))
-    num_found <- sum(file.exists(test_filenames))
-    if (num_found == num_samples) {
-      success <- success + 1
-      sample_definitions[[file_column]] <- test_filenames
-    } else {
-      lower_test_filenames <- tolower(test_filenames)
-      num_found <- sum(file.exists(lower_test_filenames))
-      if (num_found == num_samples) {
-        success <- success + 1
-        sample_definitions[[file_column]] <- lower_test_filenames
-      }
-    }
-    if (success == 0) {
-      ## Did not find samples by id, try them by type
-      test_filenames <- file.path(
-          "preprocessing", "count_tables",
-          tolower(as.character(sample_definitions[["type"]])),
-          tolower(as.character(sample_definitions[["stage"]])),
-          glue::glue("{rownames(sample_definitions)}{file_suffix}"))
-      num_found <- sum(file.exists(test_filenames))
-      if (num_found == num_samples) {
-        success <- success + 1
-        sample_definitions[[file_column]] <- test_filenames
-      } else {
-        test_filenames <- tolower(test_filenames)
-        num_found <- sum(file.exists(test_filenames))
-        if (num_found == num_samples) {
-          success <- success + 1
-          sample_definitions[[file_column]] <- test_filenames
-        }
-      }
-    } ## tried by type
-    if (success == 0) {
-      stop("I could not find your count tables by sample nor type, uppercase nor lowercase.")
-    }
+    stop("This requires either a count dataframe/matrix or column containing the filenames.")
   }
 
   ## At this point sample_definitions$file should be filled in no matter what;
@@ -1348,29 +1306,14 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   ids <- ids [!skippers]
   retlist[["kept_ids"]] <- ids
   retlist[["kept_files"]] <- files
-  lower_filenames <- files
-  dirs <- dirname(lower_filenames)
-  low_files <- tolower(basename(files))
-  if (!is.null(suffix)) {
-    low_hpgl <- gsub(suffix, "", basename(files))
-    low_hpgl <- tolower(low_hpgl)
-    low_hpgl <- paste(low_hpgl, suffix, sep = "")
-  } else {
-    low_hpgl <- gsub("HPGL", "hpgl", basename(files))
-  }
-  lower_filenames <- paste(dirs, low_files, sep = "/")
-  lowhpgl_filenames <- paste(dirs, low_hpgl, sep = "/")
-  if (file.exists(tolower(files[1]))) {
-    files[1] <- tolower(files[1])
-  } else if (file.exists(lowhpgl_filenames[1])) {
-    files[1] <- lowhpgl_filenames[1]
-  } else if (file.exists(lower_filenames[1])) {
-    files[1] <- lower_filenames[1]
-  }
+  ## lower_filenames <- files
+  dirs <- dirname(files)
 
   count_table <- NULL
   for (f in 1:length(files)) {
+    ## Get rid of any lurking spaces
     files[f] <- gsub(pattern = " ", replacement = "", x = files[f])
+    ## Check if these are relative or absolute paths and standardize them to absolute.
     if (!grepl(pattern = "^\\/", x = files[f])) {
       files[f] <- file.path(getwd(), files[f])
     }
@@ -1485,28 +1428,31 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     count_table <- count_table[keepers_idx, ]
     count_table <- data.table::as.data.table(count_table)
     count_table <- data.table::setkey(count_table, rownames)
+    first_rownames <- sort(count_table[["rownames"]])
     if (class(count_table)[1] == "try-error") {
       stop("There was an error reading: ", files[1])
     }
     mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## iterate over and append remaining samples
-    for (table in 2:length(files)) {
-      if (file.exists(tolower(files[table]))) {
-        files[table] <- tolower(files[table])
-      } else if (file.exists(lowhpgl_filenames[table])) {
-        files[table] <- lowhpgl_filenames[table]
-      } else if (file.exists(lower_filenames[table])) {
-        files[table] <- lower_filenames[table]
+    for (num in 2:length(files)) {
+      table <- files[num]
+      if (file.exists(tolower(table))) {
+        table <- tolower(table)
       }
-      tmp_count <- try(read.table(files[table], header = header))
+      tmp_count <- try(read.table(table, header = header))
       ## Drop the rows with NAs before coercing to numeric.
       keepers_idx <- tmp_count[[1]] != na_rownames
       tmp_count <- tmp_count[keepers_idx, ]
+      current_rownames <- sort(tmp_count[[1]])
+      mismatched_rownames <- sum(first_rownames != current_rownames)
+      if (mismatched_rownames > 0) {
+        warning("The file: ", table, " has mismatched rownames.")
+      }
       tmp_count[, 2] <- as.numeric(tmp_count[, 2])
       if (class(tmp_count)[1] == "try-error") {
-        stop("There was an error reading: ", files[table])
+        stop("There was an error reading: ", table)
       }
-      colnames(tmp_count) <- c("rownames", ids[table])
+      colnames(tmp_count) <- c("rownames", ids[num])
       tmp_count <- data.table::as.data.table(tmp_count)
       pre_merge <- nrow(tmp_count)
       if (merge_type == "merge") {
@@ -1518,8 +1464,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
       ## count_table <- count_table[, -1, drop = FALSE]
       ## post_merge <- length(rownames(count_table))
       post_merge <- nrow(count_table)
-      mesg(files[table], " contains ", pre_merge,
-           " rows and merges to ", post_merge, " rows.")
+      mesg(table, " contains ", pre_merge, " rows and merges to ", post_merge, " rows.")
     } ## End for loop
 
     ## remove summary fields added by HTSeq
