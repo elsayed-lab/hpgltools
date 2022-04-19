@@ -2021,12 +2021,14 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     their_column <- NULL
     ## Grab the first ID in the first column.
     ## We will explicitly assume there are 2 columns in the data frame.
-    test_first_id <- ids[1, 1]
-    test_second_id <- ids[1, 2]
-    if (test_first_id %in% current_ids) {
+    test_first <- sum(ids[[1]] %in% current_ids)
+    test_second <- sum(ids[[2]] %in% current_ids)
+    if (test_first > 0) {
+      mesg("Found: ", test_first, " ids in common using the first column of the IDs.")
       our_column <- colnames(ids)[1]
       their_column <- colnames(ids)[2]
-    } else if (test_second_id %in% current_ids) {
+    } else if (test_second > 0) {
+      mesg("Found: ", test_second, " ids in common using the second column of the IDs.")
       our_column <- colnames(ids)[2]
       their_column <- colnames(ids)[1]
     } else {
