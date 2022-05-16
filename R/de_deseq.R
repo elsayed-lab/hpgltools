@@ -242,7 +242,18 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ## choose_model should now take all of the following into account
   ## Therefore the following 8 or so lines should not be needed any longer.
   model_string <- NULL
-  if (isTRUE(model_batch) & isTRUE(model_cond)) {
+  if (!is.null(alt_model)) {
+    message("DESeq2 step 1/5: Using a user-supplied model.")
+    model_string <- model_choice[["chosen_string"]]
+    if (is.null(model_string)) {
+      model_string <- model_choice[["int_string"]]
+    }
+    column_data[["condition"]] <- as.factor(column_data[["condition"]])
+    column_data[["batch"]] <- as.factor(column_data[["batch"]])
+    summarized <- import_deseq(data, column_data,
+                               model_string, tximport = input[["tximport"]][["raw"]])
+    dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(model_string))
+  } else if (isTRUE(model_batch) & isTRUE(model_cond)) {
     message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
     ## summarized <- DESeqDataSetFromMatrix(countData = data, colData = pData(input$expressionset),
     ##                                     design=~ 0 + condition + batch)

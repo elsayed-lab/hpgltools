@@ -303,6 +303,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   ## libsize -- a final libsize from hpgl_norm()
   new_expt[["normalized"]] <- normalized
   new_expt[["state"]] <- new_state
+  new_expt[["SVs"]] <- NULL
+  if (nrow(normalized[["sv_df"]]) > 0) {
+    new_expt[["sv_df"]] <- normalized[["sv_df"]]
+  }
 
   ## My concept of the 'best library size' comes from Kwame's work where the
   ## libsize was kept after performing quantile normalization, but before doing
@@ -457,31 +461,33 @@ hpgl_norm <- function(data, ...) {
     } else {
       mesg("Step ", arglist[["batch_step"]], ": doing batch correction with ",
            arglist[["batch"]], ".")
-      tmp_counts <- try(batch_counts(count_table, method = method,
+      new_counts <- try(batch_counts(count_table, method = method,
                                      expt_design = expt_design,
                                      current_state = current_state,
                                      ...))
-      ##tmp_counts <- batch_counts(count_table, method = method, expt_design = expt_design,
+      ##new_counts <- batch_counts(count_table, method = method, expt_design = expt_design,
       ##                           adjust_method = adjust_method, current_state = current_state)
-      if (class(tmp_counts) == "try-error") {
+      if (class(new_counts)[1] == "try-error") {
         warning("The batch_counts call failed.  Returning non-batch reduced data.")
         batched_counts <<- NULL
         batch_performed <- "raw"
         adjust_performed <- "none"
       } else {
-        batched_counts <- tmp_counts
+        batched_counts <- new_counts
         batch_performed <<- batch
         adjust_performed <- adjust_method
-        count_table <- batched_counts[["count_table"]]
       }
     }
-    return(count_table)
+    return(batched_counts)
   }
-
+  sv_df <- data.frame()
   if (batch_step == 1) {
-    count_table <- do_batch(count_table, method = batch,
-                            current_design = expt_design,
-                            ...)
+    batch_data <- do_batch(count_table, method = batch,
+                           current_design = expt_design,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    sv_df <- batch_data[["result"]][["model_adjust"]]
   }
 
   ## Step 1: count filtering
@@ -506,10 +512,14 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 2) {
-    count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design,
-                            current_state = current_state,
-                            ...)
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    sv_df <- batch_data[["result"]][["model_adjust"]]
+
   }
   ## Step 2: Normalization
   ## This section handles the various normalization strategies
@@ -538,10 +548,13 @@ hpgl_norm <- function(data, ...) {
   ## cpm and rpkm are both from edgeR
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
-    count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design,
-                            current_state = current_state,
-                            ...)
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    sv_df <- batch_data[["result"]][["model_adjust"]]
   }
   converted_counts <- NULL
   convert <- "raw"
@@ -563,10 +576,13 @@ hpgl_norm <- function(data, ...) {
   ## Step 4: Transformation
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
-    count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design,
-                            current_state = current_state,
-                            ...)
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    sv_df <- batch_data[["result"]][["model_adjust"]]
     ## count_table <- do_batch(count_table, method = batch,
     ##                         expt_design = expt_design, current_state = current_state)
   }
@@ -593,10 +609,13 @@ hpgl_norm <- function(data, ...) {
   }
 
   if (batch_step == 5) {
-    count_table <- do_batch(count_table, method = batch,
-                            expt_design = expt_design,
-                            current_state = current_state,
-                            ...)
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    sv_df <- batch_data[["result"]][["model_adjust"]]
     ## count_table <- do_batch(count_table, arglist)
   }
 
@@ -628,6 +647,7 @@ hpgl_norm <- function(data, ...) {
       "intermediate_counts" = intermediate_counts,
       "count_table" = count_table,  ## The final count table
       "final_state" = current_state,
+      "sv_df" = sv_df,
       "libsize" = colSums(count_table, na.rm = TRUE)  ## The final libsizes
   )
   return(ret_list)

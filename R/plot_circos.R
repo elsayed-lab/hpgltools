@@ -121,12 +121,24 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' @param spacing Radial distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_heatmap <- function(cfg, df, colname = "logFC",
+circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
                            color_mapping = 0, min_value = NULL, max_value = NULL,
                            basename = "", colors = NULL,
                            color_choice = "spectral-9-div", scale_log_base = 1, outer = 0.9, rules = NULL,
                            width = 0.08, spacing = 0.02) {
   annot <- cfg@annot
+  df <- data.frame()
+  if ("combined_de" %in% class(input)) {
+    if (is.null(tablename)) {
+      message("Using the first table of the combined tables, this may be incorrect.")
+      df <- input[["data"]][[1]]
+    } else {
+      df <- input[["data"]][[tablename]]
+    }
+  } else {
+    message("Assuming the input is a dataframe.")
+    df <- input
+  }
   full_table <- merge(df, annot, by = "row.names")
   if (nrow(full_table) == 0) {
     stop("Merging the annotations and data failed.")
@@ -269,7 +281,7 @@ circos_heatmap <- function(cfg, df, colname = "logFC",
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename = "",
+circos_hist <- function(cfg, input, tablename = NULL, annot_source = "cfg", colname = "logFC", basename = "",
                         color = "blue", fill_color = "blue", fill_under = "yes",
                         extend_bin = "no", thickness = "0", orientation = "out",
                         outer = 0.9, width = 0.08, spacing = 0.0) {
@@ -277,6 +289,19 @@ circos_hist <- function(cfg, df, annot_source="cfg", colname = "logFC", basename
   ## starts, ends, and functional calls
   ## I will tell R to print out a suitable stanza for circos while I am at it
   ## because I am tired of mistyping something stupid.
+  df <- data.frame()
+  if ("combined_de" %in% class(input)) {
+    if (is.null(tablename)) {
+      message("Using the first table of the combined tables, this may be incorrect.")
+      df <- input[["data"]][[1]]
+    } else {
+      df <- input[["data"]][[tablename]]
+    }
+  } else {
+    message("Assuming the input is a dataframe.")
+    df <- input
+  }
+
   annot <- NULL
   full_table <- data.frame()
   if (is.null(annot_source)) {
@@ -1000,6 +1025,22 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
     gids <- annotation[[id_column]]
   }
 
+  null_idx <- is.null(annotation[[strand_column]])
+  if (sum(null_idx) > 0) {
+    annotation[null_idx, strand_column] <- "+"
+    message("Setting ", sum(null_idx), " null entries to the plus strand.")
+  }
+  na_idx <- is.na(annotation[[strand_column]])
+  if (sum(na_idx) > 0) {
+    annotation[na_idx, strand_column] <- "+"
+    message("Setting ", sum(null_idx), " NA entries to the plus strand.")
+  }
+  undef_idx <- annotation[[strand_column]] == "undefined"
+  if (sum(undef_idx) > 0) {
+    annotation[undef_idx, strand_column] <- "+"
+    message("Setting ", sum(undef_idx), " undefined entries to the plus strand.")
+  }
+
   plus_idx <- annotation[[strand_column]] == plus_string
   plus_gids <- gids[plus_idx]
   minus_idx <- annotation[[strand_column]] == minus_string
@@ -1019,6 +1060,24 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
   }
   colnames(plus_df) <- c("chr", "start", "stop", "cog")
   colnames(minus_df) <- c("chr", "start", "stop", "cog")
+  ## Coerce the start/stops to numeric.
+  plus_df[["start"]] <- as.numeric(plus_df[["start"]])
+  plus_df[["stop"]] <- as.numeric(plus_df[["stop"]])
+  minus_df[["start"]] <- as.numeric(minus_df[["start"]])
+  minus_df[["stop"]] <- as.numeric(minus_df[["stop"]])
+  na_idx <- is.na(plus_df[["start"]])
+  plus_df <- plus_df[!na_idx, ]
+  na_idx <- is.na(minus_df[["start"]])
+  minus_df <- minus_df[!na_idx, ]
+  cog_na <- is.na(plus_df[["cog"]])
+  plus_df[cog_na, "cog"] <- "undefined"
+  cog_na <- is.na(minus_df[["cog"]])
+  minus_df[cog_na, "cog"] <- "undefined"
+  plus_undef <- plus_df[["cog"]] == "undefined"
+  plus_df[plus_undef, "cog"] <- "X"
+  minus_undef <- minus_df[["cog"]] == "undefined"
+  minus_df[minus_undef, "cog"] <- "X"
+
   plus_df[["value"]] <- glue::glue("value={plus_df[['cog']]}0")
   minus_df[["value"]] <- glue::glue("value={minus_df[['cog']]}0")
 

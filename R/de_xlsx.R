@@ -635,7 +635,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       ## Therefore we need to get that information to this function call.
       pval_plot <- plot_de_pvals(combined[["data"]], type = type,
                                  p_type = p_type)
-      plots[[p_name]] <- pval_plot[["plot"]]
+      plots[[p_name]] <- pval_plot
     }
   }
   return(plots)

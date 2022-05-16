@@ -6,7 +6,8 @@
 \usage{
 circos_hist(
   cfg,
-  df,
+  input,
+  tablename = NULL,
   annot_source = "cfg",
   colname = "logFC",
   basename = "",
@@ -23,8 +24,6 @@ circos_hist(
 }
 \arguments{
 \item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
-
-\item{df}{Dataframe with starts/ends and the floating point information.}
 
 \item{annot_source}{This parameter was added to make it possible to add an
 arbitrary dataframe of other annotation information.}
@@ -50,6 +49,8 @@ arbitrary dataframe of other annotation information.}
 \item{width}{Radial width of each tile.}
 
 \item{spacing}{Distance between outer, inner, and inner to whatever follows.}
+
+\item{df}{Dataframe with starts/ends and the floating point information.}
 }
 \value{
 Radius after adding the histogram and the spacing.
