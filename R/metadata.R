@@ -121,7 +121,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", ...) {
                          grepl(pattern = "^#", x = sample_definitions[, id_column]))
   if (length(empty_samples) > 0) {
     message("Dropped ", length(empty_samples),
-            " rows from the sample metadata because they were blank.")
+            " rows from the sample metadata because the sample ID is blank.")
     sample_definitions <- sample_definitions[-empty_samples, ]
   }
 

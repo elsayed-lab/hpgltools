@@ -92,7 +92,7 @@ test_that("plot_essentiality returns expected outputs?", {
   expect_equal("gg", class(ess_plts[["span_plot"]])[1])
 })
 
-plt <- sm(tnseq_multi_saturation(meta = pData(a909_expt), meta_column = "a909esswig"))
+plt <- tnseq_multi_saturation(meta = pData(a909_expt), meta_column = "a909esswig")
 ## 10
 test_that("tnseq_multi_saturation returns some fun?", {
   expect_equal("gg", class(plt[["plot"]])[1])

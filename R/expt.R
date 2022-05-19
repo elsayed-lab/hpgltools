@@ -26,7 +26,7 @@
 #'   combined <- combine_expts(expt1, expt2, merge_meta = TRUE)
 #' }
 #' @export
-combine_expts <- function(expt1, expt2, condition = "condition",
+combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, all_y = TRUE,
                           batch = "batch", merge_meta = TRUE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
@@ -61,25 +61,30 @@ combine_expts <- function(expt1, expt2, condition = "condition",
   if (!is.null(expt1[["tximport"]])) {
     raw1 <- expt1[["tximport"]][["raw"]]
     raw2 <- expt2[["tximport"]][["raw"]]
-    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by = "row.names")
+    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["abundance"]] <- merged
-    merged <- merge(raw1[["counts"]], raw2[["counts"]], by = "row.names")
+    merged <- merge(raw1[["counts"]], raw2[["counts"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["counts"]] <- merged
-    merged <- merge(raw1[["length"]], raw2[["length"]], by = "row.names")
+    merged <- merge(raw1[["length"]], raw2[["length"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["length"]] <- merged
     scaled1 <- expt1[["tximport"]][["scaled"]]
     scaled2 <- expt2[["tximport"]][["scaled"]]
-    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names")
+    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
-    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names")
+    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["scaled"]][["counts"]] <- merged
@@ -96,6 +101,17 @@ combine_expts <- function(expt1, expt2, condition = "condition",
   tmp <- expt1[["expressionset"]]
   exprs(tmp) <- as.matrix(new_exprs)
   expt1[["expressionset"]] <- tmp
+
+  if (isFALSE(all_x) | isFALSE(all_y)) {
+    found_first <- rownames(exprs(expt1)) %in% rownames(exprs(exp1))
+    shared_first_ids <- rownames(exprs(expt1))[found_first]
+    expt1 <- exclude_genes_expt(expt1, ids = shared_first_ids, method = "keep")
+
+    found_second <- rownames(exprs(expt1)) %in% rownames(exprs(exp2))
+    shared_second_ids <- rownames(exprs(expt1))[found_second]
+    expt1 <- exclude_genes_expt(expt1, ids = shared_second_ids, method = "keep")
+  }
+
   return(expt1)
 }
 
@@ -324,7 +340,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     } else {
       message("The count table column names are: ",
               toString(sort(colnames(count_dataframe))))
-      message("The  meta   data  row  names are: ",
+      message("The metadata row names are: ",
               toString(sort(rownames(sample_definitions))))
       stop("The count table column names are not the same as the sample definition row names.")
     }
@@ -729,7 +745,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
   message("The final expressionset has ", nrow(exprs(expt)),
-          " rows and ", ncol(exprs(expt)), " columns.")
+          " features and ", ncol(exprs(expt)), " samples.")
   return(expt)
 }
 
@@ -828,7 +844,8 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
     }
   }
 
-  message("Before removal, there were ", nrow(Biobase::fData(ex)), " genes, now there are ",
+  message("remove_genes_expt(), before removal, there were ",
+          nrow(Biobase::fData(ex)), " genes, now there are ",
           nrow(Biobase::fData(kept)), ".")
   all_tables <- Biobase::exprs(ex)
   all_sums <- colSums(all_tables)

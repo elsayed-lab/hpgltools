@@ -7,6 +7,7 @@
 load_genbank_annotations(
   accession = "AE009949",
   file = NULL,
+  sequence = TRUE,
   reread = TRUE,
   savetxdb = FALSE
 )

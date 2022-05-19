@@ -47,7 +47,6 @@ test_that("Is the batch state maintained?", {
 })
 
 mgas_pairwise <- sm(all_pairwise(mgas_expt, parallel = FALSE))
-
 expected <- 0.64
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
 ## 07
@@ -55,8 +54,8 @@ test_that("Do we get reasonably high similarities among the various DE tools?", 
   expect_gt(actual, expected)
 })
 
-mgas_combined <- sm(combine_de_tables(mgas_pairwise, excel = FALSE))
-mgas_sig <- sm(extract_significant_genes(mgas_combined, excel = FALSE))
+mgas_combined <- combine_de_tables(mgas_pairwise, excel = FALSE)
+mgas_sig <- extract_significant_genes(mgas_combined, excel = FALSE)
 expected <- 150
 actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wtllcf_vs_mga1llcf"]])
 ## 08
@@ -64,7 +63,7 @@ test_that("Do we find some significant genes in the mga/wt fructose analysis?", 
   expect_gt(actual, expected)
 })
 
-mgas_data <- sm(load_genbank_annotations(accession = "AE009949"))
+mgas_data <- load_genbank_annotations(accession = "AE009949")
 expected <- 1895017
 actual <- GenomicRanges::width(mgas_data[["seq"]])  ## This fails on travis?
 actual_width <- actual

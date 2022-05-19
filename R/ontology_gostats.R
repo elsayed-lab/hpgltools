@@ -62,12 +62,6 @@ simple_gostats <- function(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL, u
   tt <- sm(requireNamespace("GSEABase"))
   tt <- sm(requireNamespace("AnnotationDbi"))
   tt <- sm(requireNamespace("Category"))
-  ## message("The namespaces/environments uses by GOstats are entirely too complex.")
-  ## message("If I try to call functions with Category:: or GOstats:: then they collide")
-  ## message("And things fail without error, but if I try library() then R CMD check")
-  ## message("gets pissed, well I tried both ways and I am calling library().")
-  ## message("R CMD check can bite my shiny metal ass.")
-  ## tt <- sm(library("GOstats"))
   lib_result <- sm(requireNamespace("GOstats"))
   att_result <- sm(try(attachNamespace("GOstats"), silent = TRUE))
   message("simple_gostats(): gff_type is: ", gff_type,
