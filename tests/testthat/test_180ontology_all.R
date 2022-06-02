@@ -115,6 +115,9 @@ if (file.exists("test_cp_write.xlsx")) {
 ## } ## End checking for github actions
 
 go_test <- simple_goseq(ups, go_db = pombe_go, length_db = pombe_lengths)
+## As of 202205, there are 3 new elements in the result list;
+## mf_enrich, bp_enrich, and cc_enrich.  These should make it possible to strip out
+## all of my ontology plotting functions in favor of clusterprofiler/enrichplot's.
 
 actual <- nrow(go_test[["bp_interesting"]])
 expected <- 90
@@ -154,6 +157,18 @@ test_that("Did the table of all results include the expected material?", {
   expect_equal(p_expected, p_actual, tolerance = 0.001)
   expect_equal(q_expected, q_actual, tolerance = 0.2)
   expect_equal(5, sum(cat_expected %in% cat_actual))
+})
+
+## Test if the goseq enrichResult elements are plottable.
+test_enrichplot <- enrichplot::dotplot(go_test[["mf_enrich"]])
+expected <- "gg"
+test_that("We can enrichplot::dotplot the new goseq outputs?", {
+  expect_true(expected %in% class(test_enrichplot))
+})
+
+test_enrichplot <- enrichplot::cnetplot(go_test[["mf_enrich"]])
+test_that("We can enrichplot::cnetplot the new goseq outputs?", {
+  expect_true(expected %in% class(test_enrichplot))
 })
 
 go_written <- write_goseq_data(go_test, excel = "test_go_write.xlsx")

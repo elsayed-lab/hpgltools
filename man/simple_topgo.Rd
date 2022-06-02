@@ -15,7 +15,7 @@ simple_topgo(
   sigforall = TRUE,
   numchar = 300,
   selector = "topDiffGenes",
-  pval_column = "adj.P.Val",
+  pval_column = "deseq_adjp",
   overwrite = FALSE,
   densities = FALSE,
   pval_plots = TRUE,
@@ -64,6 +64,10 @@ Big list including the various outputs from topgo
 }
 \description{
 This will attempt to make it easier to run topgo on a set of genes.
+The way I organized these data structures is completely stupid. I
+want to convert the data from topgo to clusterprofiler for ease of
+plotting, but because of the terrible way I organized everything
+that is likely to be difficult.
 }
 \seealso{
 [topGO]

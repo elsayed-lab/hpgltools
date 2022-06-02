@@ -72,17 +72,16 @@ cbcb_qcpm <- cbcbSEQ::qNorm(cbcb_data)
 cbcb_edger_qcpm <- edgeR::cpm(cbcb_qcpm)
 cbcb_quantile <- cbcbSEQ::qNorm(cbcb_data)
 expected <- cbcb_quantile[sort(rownames(cbcb_quantile)), ]
-hpgl_quantile <- hpgl_norm(pasilla_expt, norm = "quant")
-hpgl_quantile <- hpgl_quantile[["count_table"]]
+hpgl_quantile <- normalize_expt(pasilla_expt, norm = "quant")
+hpgl_quantile <- exprs(hpgl_quantile)
 actual <- hpgl_quantile[sort(rownames(hpgl_quantile)), ]
 test_that("Are quantile() normalizations identical?", {
   expect_equal(expected, actual)
 })
 
 ## Check that cpm(quantile()) normalizations are identical
-hpgl_qcpm <- hpgl_norm(pasilla_expt, norm = "quant", convert = "cpm", filter = FALSE)
-hpgl_qcpm <- hpgl_qcpm[["count_table"]]
-hpgl_qcpm <- hpgl_qcpm[sort(rownames(hpgl_qcpm)), ]
+hpgl_qcpm <- normalize_expt(pasilla_expt, norm = "quant", convert = "cpm", filter = FALSE)
+hpgl_qcpm <- exprs(hpgl_qcpm)
 expected <- cbcb_edger_qcpm
 actual <- hpgl_qcpm
 test_that("Are cpm(quantile()) conversions identical?", {
@@ -94,9 +93,9 @@ test_that("Are cpm(quantile()) conversions identical?", {
 ## explicitly (and hopefully redundantly) invoke both
 cbcb_l2qcpm_data <- cbcbSEQ::log2CPM(cbcb_quantile)
 cbcb_l2qcpm <- cbcb_l2qcpm_data[["y"]]
-hpgl_l2qcpm_data <- hpgl_norm(pasilla_expt, transform = "log2", norm = "quant",
-                              convert = "cbcbcpm", filter = FALSE)
-hpgl_l2qcpm <- hpgl_l2qcpm_data[["count_table"]]
+hpgl_l2qcpm_data <- normalize_expt(pasilla_expt, transform = "log2", norm = "quant",
+                                   convert = "cbcbcpm", filter = FALSE)
+hpgl_l2qcpm <- exprs(hpgl_l2qcpm_data)
 hpgl_l2qcpm <- hpgl_l2qcpm[sort(rownames(hpgl_l2qcpm)), ]
 hpgl_l2qcpm_expt <- normalize_expt(pasilla_expt, transform = "log2", norm = "quant",
                                    convert = "cbcbcpm", filter = FALSE)
@@ -114,7 +113,7 @@ test_that("Are l2qcpm conversions/transformations identical using cbcbSEQ vs. no
 
 ## Check that the libsizes are properly maintained
 cbcb_libsize <- cbcb_l2qcpm_data[["lib.size"]]
-hpgl_libsize <- hpgl_l2qcpm_data[["intermediate_counts"]][["normalization"]][["libsize"]]
+hpgl_libsize <- hpgl_l2qcpm_data[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
 expected <- cbcb_libsize
 actual <- hpgl_libsize
 test_that("In preparing for voom(), are the library sizes maintained?", {

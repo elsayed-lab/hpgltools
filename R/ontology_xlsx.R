@@ -88,12 +88,10 @@ gather_ontology_genes <- function(result, ontology = NULL,
     return(retlist)
   }
   input <- result[["input"]]
-  ##categories <- subset(categories, over_represented_pvalue <= pval)
-  categories <- categories[categories[[column]] <= pval, ]
-  cats <- rownames(categories)
+  filtered_categories <- categories[categories[[column]] <= pval, ]
+  cats <- rownames(filtered_categories)
   go_db <- result[["go_db"]]
   genes_per_ont <- function(cat) {
-    ## all_entries <- subset(go_db, GO==cat)[["ID"]]
     colnames(go_db) <- c("ID", "GO")
     ## Only keep the set of entries which are filled in.
     go_db <- go_db[complete.cases(go_db), ]

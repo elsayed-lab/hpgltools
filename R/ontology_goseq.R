@@ -3,7 +3,7 @@
 ## to amend that.
 
 extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue = 0.05,
-                                      adjust = 0.05, padjust_method = "BH") {
+                                      minimum_interesting = 1, adjust = 0.05, padjust_method = "BH") {
   ## Add a little logic if we are using a non-GO input database.
   ## This is relevant if you use something like msigdb/reactome/kegg
   ## I should probably make the rest of this function generic so that this is not required.
@@ -70,6 +70,10 @@ extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue =
                                        "over_represented_pvalue", "qvalue", "term")]
   retlist <- list(
       "godata" = godata,
+      "interesting" = godata_interesting,
+      "mf_subset" = mf_subset,
+      "bp_subset" = bp_subset,
+      "cc_subset" = cc_subset,
       "MF" = mf_interesting,
       "BP" = bp_interesting,
       "CC" = cc_interesting)
@@ -435,6 +439,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   ## simply as the set of categories with full annotations.
   interesting <- extract_interesting_goseq(godata, expand_categories = expand_categories,
                                            pvalue = pvalue, adjust = adjust,
+                                           minimum_interesting = minimum_interesting,
                                            padjust_method = padjust_method)
 
   retlist <- list(
@@ -444,22 +449,22 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       "all_data" = interesting[["godata"]],
       "go_db" = godf,
       "pvalue_histogram" = goseq_p,
-      "godata_interesting" = godata_interesting,
+      "godata_interesting" = interesting[["interesting"]],
       "mf_interesting" = interesting[["MF"]],
       "bp_interesting" = interesting[["BP"]],
       "cc_interesting" = interesting[["CC"]],
       "goadjust_method" = goseq_method,
       "adjust_method" = padjust_method,
-      "mf_subset" = mf_subset,
-      "bp_subset" = bp_subset,
-      "cc_subset" = cc_subset)
+      "mf_subset" = interesting[["mf_subset"]],
+      "bp_subset" = interesting[["bp_subset"]],
+      "cc_subset" = interesting[["cc_subset"]])
   class(retlist) <- c("goseq_result", "list")
-  retlist[["MF_enrich"]] <- goseq2enrich(retlist, godf, mf_interesting,
-                                         ontology = "MF", cutoff = pvalue)
-  retlist[["BP_enrich"]] <- goseq2enrich(retlist, godf, bp_interesting,
-                                         ontology = "BP", cutoff = pvalue)
-  retlist[["CC_enrich"]] <- goseq2enrich(retlist, godf, bp_interesting,
-                                         ontology = "CC", cutoff = pvalue)
+  retlist[["mf_enrich"]] <- goseq2enrich(retlist, ontology = "MF",
+                                         cutoff = pvalue, padjust_method = padjust_method)
+  retlist[["bp_enrich"]] <- goseq2enrich(retlist, ontology = "BP",
+                                         cutoff = pvalue, padjust_method = padjust_method)
+  retlist[["cc_enrich"]] <- goseq2enrich(retlist, ontology = "CC",
+                                         cutoff = pvalue, padjust_method = padjust_method)
   return(retlist)
 }
 

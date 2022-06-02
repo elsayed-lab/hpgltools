@@ -2,13 +2,13 @@
 ## seek to simplify performing the various dimension reduction methods and plot
 ## the results.
 
-compare_pc_sv <- function(expt, norm=NULL, transform="log2", convert="cpm",
-                          filter=TRUE, batch="svaseq") {
-  start <- normalize_expt(expt, norm=norm, transform=transform,
-                          convert=convert, filter=filter)
+compare_pc_sv <- function(expt, norm = NULL, transform = "log2", convert = "cpm",
+                          filter = TRUE, batch = "svaseq") {
+  start <- normalize_expt(expt, norm = norm, transform = transform,
+                          convert = convert, filter = filter)
   start_pc <- plot_pca(start)
-  new <- normalize_expt(expt, norm=norm, transform=transform, convert=convert,
-                        filter=filter, batch=batch)
+  new <- normalize_expt(expt, norm = norm, transform = transform, convert = convert,
+                        filter = filter, batch = batch)
   sv_df <- new[["sv_df"]]
   num_svs <- ncol(sv_df)
   new_pc <- plot_pca(new)
@@ -16,14 +16,21 @@ compare_pc_sv <- function(expt, norm=NULL, transform="log2", convert="cpm",
   start_pc_df <- as.matrix(start_pc[["table"]][, start_pc_df_columns])
   new_pc_df <- as.matrix(new_pc[["table"]][, start_pc_df_columns])
   delta_pc_df <- start_pc_df - new_pc_df
-  combined_df <- data.frame(row.names=rownames(start_pc_df))
+  combined_df <- data.frame(row.names = rownames(start_pc_df))
   for (sv in 1:num_svs) {
     two_columns <- cbind(sv_df[, sv], delta_pc_df[, sv])
     colnames(two_columns) <- c(paste0("sv", sv), paste0("pc", sv))
     combined_df <- cbind(combined_df, two_columns)
   }
 
-  pc_df <- ggplot2
+  combined_df[["condition"]] <- pData(expt)[["condition"]]
+  combined_df[["batch"]] <- pData(expt)[["batch"]]
+  queried <- 1
+  x_query <- paste0("pc", queried)
+  y_query <- paste0("sv", queried)
+  pc_df <- ggplot(data = combined_df, aes_string(x = x_query, y = y_query, color = "condition", size = 5,
+                                                 fill = "condition", shape = "batch")) +
+    geom_point()
 }
 
 #' Collect the r^2 values from a linear model fitting between a singular

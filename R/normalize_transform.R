@@ -108,7 +108,6 @@ transform_counts <- function(count_table, design = NULL, method = "raw",
   ## We should consider further how to deal with this.
   num_before <- nrow(count_table)
   nans <- is.nan(count_table)
-  ## print(head(nans))
   nans_sum <- sum(nans)
   ##if (nans_sum > 0) {
   ##message("Setting nan containing elements to 0.")

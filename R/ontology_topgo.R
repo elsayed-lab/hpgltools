@@ -31,7 +31,7 @@
 simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                          pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
                          sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
-                         pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
+                         pval_column = "deseq_adjp", overwrite = FALSE, densities = FALSE,
                          pval_plots = TRUE, excel = NULL, ...) {
   ## Some neat ideas from the topGO documentation:
   ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
@@ -43,7 +43,6 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   ## set up the GOdata object like this: mf_GOdata = new("topGOdata",
   ## description = "something", ontology = "BP", allGenes = entire_geneList,
   ## geneSel = topDiffGenes, annot = annFUN.gene2GO, gene2GO = geneID2GO, nodeSize = 2)
-  ## The following library invocation is in case it was unloaded for pathview
   if (isTRUE(overwrite) & file.exists(goid_map)) {
     removed <- file.remove(goid_map)
   }
@@ -119,7 +118,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   p_dists <- list()
   for (o in c("BP", "MF", "CC")) {
     for (m in methods) {
-      name <- glue::glue("{tolower(o)}_{m}")
+      name <- glue::glue("{tolower(o)}_{limitby}")
       p_dists[[name]] <- try(plot_histogram(
           ontology_result[[o]][[m]][["test_result"]]@score,
           bins = 20))
@@ -161,19 +160,10 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     tables <- NULL
   }
 
-  enrich_results <- list()
-  for (method_type in c("fisher", "ks", "el", "weight")) {
-    for (ont in c("bp", "mf", "cc")) {
-      result_name <- glue("{method_type}_{ont}")
-      enrich_results[[result_name]] <- topgo2enrich(godata[[enrich_name]],
-                                                    results[[enrich_name]], ontology = ont)
-    }
-  }
-
   mf_densities <- bp_densities <- cc_densities <- list()
   if (isTRUE(densities)) {
     bp_densities <- sm(
-        plot_topgo_densities(results[["fbp_godata"]], tables[["bp_interesting"]]))
+        plot_topgo_densities(results[["fisher_bp"]], tables[["bp_interesting"]]))
     mf_densities <- sm(
         plot_topgo_densities(results[["fmf_godata"]], tables[["mf_interesting"]]))
     cc_densities <- sm(
@@ -185,12 +175,21 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   retlist <- list(
       "go_db" = go_db,
       "input" = sig_genes,
+      "godata" = godata,
       "results" = results,
       "tables" = tables,
       "mf_densities" = mf_densities,
       "bp_densities" = bp_densities,
       "cc_densities" = cc_densities,
       "pdists" = p_dists)
+
+  enrich_results <- list()
+  for (ont in c("bp", "mf", "cc")) {
+    message("Getting enrichResult for ontology: ", ont, ".")
+    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = pval,
+                                                  column = limitby)
+  }
+  retlist[["enrich_results"]] <- enrich_results
 
   pval_histograms <- list()
   fisher_ps <- c(retlist[["tables"]][["mf_subset"]][["fisher"]],

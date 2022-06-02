@@ -1,6 +1,77 @@
+#' Create a clusterProfiler compatible enrichResult data structure from a goseq result.
+#'
+#' The metrics and visualization methods in clusterProfiler are the
+#' best.  It is not always trivial to get non-model organisms working
+#' well with clusterProfiler.  Therefore I still like using tools like
+#' topgo/goseq/gostats/gprofiler.  This function and its companions
+#' seek to make them cross-compatible.  Ideally, they will lead me to
+#' being able to rip out a lot of superfluous material.
+#'
+#' @param retlist Result from simple_goseq().
+#' @param ontology Ontology sub-tree of interest.
+#' @param cutoff (adjusted)p cutoff.
+#' @param organism Currently unused.
+#' @return enrichResult object ready to pass to things like dotplot.
+goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
+                         organism = NULL, padjust_method = "BH") {
+  godf <- retlist[["go_db"]]
+  sig_genes <- rownames(retlist[["input"]])
+  interesting_name <- paste0(tolower(ontology), "_interesting")
+  interesting <- retlist[[interesting_name]]
+  if (is.null(interesting)) {
+    return(NULL)
+  }
+  ## I would like to write this data as an enrichResult as per
+  ## DOSE/clusterProfiler so that I may use their plotting functions
+  ## without fighting. Therefore I will coerce the various results I
+  ## create into that data structure's format.
+  ## The enrichResult is a class created with the following code:
+  bg_genes <- sum(!duplicated(sort(godf[["ID"]])))
+  adjusted <- p.adjust(interesting[["over_represented_pvalue"]])
+  genes_per_category <- gather_ontology_genes(retlist, ontology = ontology,
+                                              column = "over_represented_pvalue",
+                                              pval = cutoff)
+  category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])
+  interesting[["tmp"]] <- bg_genes
+  ## FIXME: This is _definitely_ wrong for BgRatio
+  representation_df <- data.frame(
+      "ID" = rownames(interesting),
+      "Description" = interesting[["term"]],
+      ## The following two lines are ridiculous, but required for the enrichplots to work.
+      "GeneRatio" = paste0(interesting[["numDEInCat"]], "/", interesting[["numInCat"]]),
+      "BgRatio" = paste0(interesting[["numDEInCat"]], "/", interesting[["tmp"]]),
+      "pvalue" = interesting[["over_represented_pvalue"]],
+      "p.adjust" = adjusted,
+      "qvalue" = interesting[["qvalue"]],
+      "geneID" = category_genes,
+      "Count" = interesting[["numDEInCat"]],
+      stringsAsFactors = FALSE)
+  rownames(representation_df) <- representation_df[["ID"]]
+  if (is.null(organism)) {
+    organism <- "UNKNOWN"
+  }
+  ret <- new("enrichResult",
+             result = representation_df,
+             pvalueCutoff = cutoff,
+             pAdjustMethod = padjust_method,
+             qvalueCutoff = cutoff,
+             gene = sig_genes,
+             universe = godf[["ID"]],
+             ## universe = extID,
+             geneSets = list(up=sig_genes),
+             ## geneSets = geneSets,
+             organism = organism,
+             keytype = "UNKNOWN",
+             ontology = ontology,
+             readable = FALSE)
+  return(ret)
+}
 
-goseq2enrich <- function(retlist, godf, interesting, ontology = "MF", cutoff = 1,
-                         organism = NULL) {
+gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
+                             organism = NULL) {
+  godf <- retlist[["go_db"]]
+  interesting_name <- paste0(tolower(ontology), "_interesting")
+  interesting <- retlist[[interesting_name]]
   if (is.null(interesting)) {
     return(NULL)
   }
@@ -50,11 +121,27 @@ goseq2enrich <- function(retlist, godf, interesting, ontology = "MF", cutoff = 1
   return(ret)
 }
 
-topgo2enrich <- function(retlist, ontology = "MF", pval = 0.05,
+#' Convert a simple_topgo() result to an enrichResult.
+#'
+#' Same idea as goseq2enrich.
+#'
+#' @param retlist result from simple_topgo()
+#' @param ontology Ontology subtree to act upon.
+#' @param pval Cutoff, hmm I think I need to standardize these.
+#' @param column Table column to export.
+topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05,
                          column = "fisher") {
-  godata <- retlist[["godata"]]
-  enrich_data <- retlist[["results"]]
+  result_name <- paste0(column, "_", tolower(ontology))
+  if (column == "el") {
+    column <- "EL"
+  }
+  if (column == "ks") {
+    column <- "KS"
+  }
+
   interesting_name <- paste0(tolower(ontology), "_interesting")
+  godata <- retlist[["godata"]][[result_name]]
+  result_data <- retlist[["results"]][[result_name]]
   interesting <- retlist[["tables"]][[interesting_name]]
   bg_genes <- godata@allGenes
   scores <- interesting[[column]]
@@ -62,7 +149,9 @@ topgo2enrich <- function(retlist, ontology = "MF", pval = 0.05,
   sig_genes <- rownames(retlist[["input"]])
 
   genes_per_category <- gather_ontology_genes(retlist, ontology = ontology, pval = pval,
-                                              column = column)
+                                              column = column)[[toupper(ontology)]]
+  ## One of the biggest oddities of enrichResult objects: the scores
+  ## are explicitly ratio _string_, thus 0.05 is '5/100'.
   category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])
   names(category_genes) <- rownames(genes_per_category)
   keepers <- names(category_genes) %in% rownames(interesting)

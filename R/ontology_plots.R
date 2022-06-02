@@ -1,3 +1,38 @@
+#' Invoke ther various fun plots created by Guangchuang Yu.
+#'
+#' I would like to replace all of my bad ontology plotting functions
+#' with the nicer versions from enrichplot.  I therefore have a series
+#' of functions which recast my ontology results to enrichResults,
+#' which is suitable for those plots.
+#'
+#' For the moment this is just a skeleton with reminders to me for the
+#' various plots available.  Also, when I looked up these plots it
+#' appears that clusterProfiler has some new functionality to make it
+#' easier to send results to it.
+#'
+#' @param enrichresult S4 object of type enrichResult.
+plot_enrichresult <- function(enrichresult) {
+  bar <- enrichplot::barplot(enrichresult)
+  dot <- enrichplot::dotplot(enrichresult)
+  cnet <- enrichplot::cnetplot(enrichresult)
+  heat <- enrichplot::heatplot(enrichresult)
+  tree <- enrichplot::treeplot(enrichresult)
+  map <- enrichplot::emapplot(enrichresult)
+  up <- enrichplot::upsetplot(enrichresult)
+  ## Used for gsea
+  ## gsea <- enrichplot::gseaplot2(enrichresult)
+  ## gsea_ridge <- enrichplot::ridgeplot(enrichresult
+  retlist <- list(
+      "bar" = bar,
+      "dot" = dot,
+      "cnet" = cnet,
+      "heat" = heat,
+      "tree" = tree,
+      "map" = map,
+      "up" = up)
+  return(retlist)
+}
+
 #' Plot the density of categories vs. the possibilities of all categories.
 #'
 #' This can make a large number of plots.
