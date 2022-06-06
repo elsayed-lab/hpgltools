@@ -307,6 +307,8 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   x_order <- rownames(x_df)
   y_df <- tbl[x_order, c(py, ly)]
 
+  ## Do a simple correlation test just to have it as a comparison point
+  simple_cor <- cor.test(tbl3[[lx]], tbl3[[ly]])
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
@@ -362,6 +364,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
 
   retlist <- list(
       "aucc" = aucc,
+      "cor" = simple_cor,
       "plot" = intersection_plot)
  return(retlist)
 }
