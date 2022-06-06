@@ -1211,9 +1211,9 @@ make_assembly_spec <- function() {
         "input_r2" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "trimomatic_input" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
         "trimomatic_output" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
