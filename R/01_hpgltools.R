@@ -10,18 +10,6 @@
 #' @usage lhs \%>\% rhs
 NULL
 
-
-#' 
-#'
-#' @name %>%
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-NULL
-
-
 #' data.table's funky column assignment operator
 #'
 #' Shamelessly scabbed from Hadley: https://github.com/sckott/analogsea/issues/32
@@ -44,7 +32,6 @@ NULL
 #' @importFrom foreach %dopar%
 NULL
 
-
 #' Plotly for interactive 3-D plotting in the Shiny App
 #'
 #' @name plot_ly
@@ -54,9 +41,8 @@ NULL
 #' Shiny App for interactively visualizing RNAseq data
 #'
 #' @name shiny
-#' @import shiny 
+#' @import shiny
 NULL
-
 
 #' hpgltools: a suite of tools to make our analyses easier
 #'

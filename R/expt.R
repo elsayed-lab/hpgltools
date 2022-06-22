@@ -854,8 +854,11 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   removed_tables <- Biobase::exprs(removed)
   removed_sums <- colSums(removed_tables)
   pct_kept <- (kept_sums / all_sums) * 100.0
-
+  pct_na <- is.na(pct_kept)
+  pct_kept[pct_na] <- 0
   pct_removed <- (removed_sums / all_sums) * 100.0
+  pct_na <- is.na(pct_removed)
+  pct_removed[pct_na] <- 0
   summary_table <- rbind(kept_sums, removed_sums, all_sums,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
@@ -3281,6 +3284,16 @@ expt_set <- setOldClass("expt")
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
+
+setMethod("annotation", signature = "expt",
+          function(object) {
+            Biobase::annotation(object[["expressionset"]])
+          })
+setMethod("annotation<-", signature = "expt",
+          function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
+          })
 setMethod("assay", signature = "expt",
           function(x, withDimnames = TRUE, ...) {
             mtrx <- Biobase::exprs(x[["expressionset"]])

@@ -48,6 +48,18 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
   return(retlist)
 }
 
+color_int <- function(rgb) {
+  hex <- gsub(pattern = "^\\#", replacement = "", x = rgb)
+  red <- as.integer(as.hexmode(gsub(pattern = "^(.{2}).{4}$", replacement = "\\1", x = hex)))
+  green <- as.integer(as.hexmode(gsub(pattern = "^.{2}(.{2}).{2}$", replacement = "\\1", x = hex)))
+  blue <- as.integer(as.hexmode(gsub(pattern = "^.{4}(.{2})$", replacement = "\\1", x = hex)))
+  retlist <- list(
+      "red" = red,
+      "green" = green,
+      "blue" = blue)
+  return(retlist)
+}
+
 #' Simplify plotly ggplot conversion so that there are no shenanigans.
 #'
 #' I am a fan of ggplotly, but its conversion to an html file is not perfect.

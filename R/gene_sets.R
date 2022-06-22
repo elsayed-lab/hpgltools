@@ -319,6 +319,10 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
                                    ...) {
   ups <- list()
   downs <- list()
+  if ("all" %in% according_to || length(according_to) > 1) {
+    message("For now, limiting this to deseq.")
+    according_to = "deseq"
+  }
   if (class(pairwise)[1] == "data.frame") {
     ups <- pairwise
   } else if (class(pairwise)[1] == "all_pairwise") {
@@ -338,6 +342,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "sig_genes") {
+    updown <- pairwise[[according_to]]
     ups <- updown[["ups"]]
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "character") {
@@ -355,6 +360,26 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
   ## tt <- sm(library(orgdb, character.only = TRUE))
   lib_result <- sm(requireNamespace(orgdb))
   att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
+
+  ## Check that the current_id and required_id are in the orgdb.
+  pkg <- get0(orgdb)
+  available <- columns(pkg)
+  if (! current_id %in% available) {
+    warning("The column: ", current_id, " is not in the set of available orgdb columns.")
+    message("Here are the available columns:")
+    print(available)
+    message("Arbitrarily choosing 'GID'.")
+    current_id <- 'GID'
+  }
+
+  if (! required_id %in% available) {
+    warning("The column: ", required_id, " is not in the set of available orgdb columns.")
+    message("Here are the available columns:")
+    print(available)
+    message("Arbitrarily choosing 'GID'.")
+    required_id <- 'GID'
+  }
+
   up_lst <- list()
   down_lst <- list()
   colored_lst <- list()
@@ -428,9 +453,9 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
 
     ## Choose the Identifier for the colorsets.  For the moment just make it either entrez or null.
     identifier <- GSEABase::NullIdentifier()
-    if (grep(x=tolower(required_id), pattern="entrez")) {
+    if (grepl(x=tolower(required_id), pattern="entrez")) {
       identifier <- GSEABase::EntrezIdentifier()
-    } else if (grep(x=tolower(required_id), pattern="ensemb")) {
+    } else if (grepl(x=tolower(required_id), pattern="ensemb")) {
       identifier <- GSEABase::ENSEMBLIdentifier()
     }
 

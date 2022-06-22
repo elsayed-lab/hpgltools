@@ -1218,6 +1218,30 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   return(retlist)
 }
 
+compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
+                              fcy = "deseq_logfc", py = "deseq_adjp",
+                              first_table = NULL, second_table = NULL) {
+  if (!is.null(first_table)) {
+    ## Then assume this is a combine_de_tables() result.
+    first <- first[["data"]][[first_table]]
+  }
+  if (!is.null(second_table)) {
+    second <- second[["data"]][[second_table]]
+  }
+  merged <- merge(first, second, by = "row.names")
+  rownames(merged) <- merged[["Row.names"]]
+  merged[["Row.names"]] <- NULL
+  kept_columns <- c(fcx, px, fcy, py)
+  if (fcx == fcy) {
+    kept_columns <- c(paste0(fcx, ".x"), paste0(px, ".x"),
+                      paste0(fcy, ".y"), paste0(fcy, ".y"))
+  }
+  merged <- merged[, kept_columns]
+  colnames(merged) <- c("first_lfc", "first_p", "second_lfc", "second_p")
+  scatter <- plot_linear_scatter(merged[, c("first_lfc", "second_lfc")])
+  return(scatter)
+}
+
 #' See how similar are results from limma/deseq/edger/ebseq.
 #'
 #' limma, DEseq2, and EdgeR all make somewhat different assumptions.

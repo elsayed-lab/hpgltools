@@ -12,7 +12,9 @@
 #' @param cutoff (adjusted)p cutoff.
 #' @param organism Currently unused.
 #' @return enrichResult object ready to pass to things like dotplot.
+#' @export
 goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
+                         cutoff_column = "over_represented_pvalue",
                          organism = NULL, padjust_method = "BH") {
   godf <- retlist[["go_db"]]
   sig_genes <- rownames(retlist[["input"]])
@@ -27,24 +29,28 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   ## create into that data structure's format.
   ## The enrichResult is a class created with the following code:
   bg_genes <- sum(!duplicated(sort(godf[["ID"]])))
-  adjusted <- p.adjust(interesting[["over_represented_pvalue"]])
+  adjusted <- p.adjust(interesting[["over_represented_pvalue"]], method=padjust_method)
+  interesting[["adjusted"]] <- adjusted
+  interesting[["tmp"]] <- bg_genes
+  interesting_cutoff_idx <- interesting[[cutoff_column]] <= cutoff
+  interesting_cutoff <- interesting[interesting_cutoff_idx, ]
   genes_per_category <- gather_ontology_genes(retlist, ontology = ontology,
                                               column = "over_represented_pvalue",
                                               pval = cutoff)
   category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])
-  interesting[["tmp"]] <- bg_genes
+
   ## FIXME: This is _definitely_ wrong for BgRatio
   representation_df <- data.frame(
-      "ID" = rownames(interesting),
-      "Description" = interesting[["term"]],
+      "ID" = rownames(interesting_cutoff),
+      "Description" = interesting_cutoff[["term"]],
       ## The following two lines are ridiculous, but required for the enrichplots to work.
-      "GeneRatio" = paste0(interesting[["numDEInCat"]], "/", interesting[["numInCat"]]),
-      "BgRatio" = paste0(interesting[["numDEInCat"]], "/", interesting[["tmp"]]),
-      "pvalue" = interesting[["over_represented_pvalue"]],
-      "p.adjust" = adjusted,
-      "qvalue" = interesting[["qvalue"]],
+      "GeneRatio" = paste0(interesting_cutoff[["numDEInCat"]], "/", interesting_cutoff[["numInCat"]]),
+      "BgRatio" = paste0(interesting_cutoff[["numDEInCat"]], "/", interesting_cutoff[["tmp"]]),
+      "pvalue" = interesting_cutoff[["over_represented_pvalue"]],
+      "p.adjust" = interesting_cutoff[["adjusted"]],
+      "qvalue" = interesting_cutoff[["qvalue"]],
       "geneID" = category_genes,
-      "Count" = interesting[["numDEInCat"]],
+      "Count" = interesting_cutoff[["numDEInCat"]],
       stringsAsFactors = FALSE)
   rownames(representation_df) <- representation_df[["ID"]]
   if (is.null(organism)) {

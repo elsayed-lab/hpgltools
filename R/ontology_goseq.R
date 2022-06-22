@@ -442,12 +442,21 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                                            minimum_interesting = minimum_interesting,
                                            padjust_method = padjust_method)
 
+  mesg("simple_goseq(): Making pvalue plots for the ontologies.")
+  pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
+                                  ...)
+  pval_plots <- list(
+      "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
+      "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
+      "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
+
   retlist <- list(
       "input" = sig_genes,
       "pwf" = pwf,
       "pwf_plot" = pwf_plot,
       "all_data" = interesting[["godata"]],
       "go_db" = godf,
+      "godata" = godata,
       "pvalue_histogram" = goseq_p,
       "godata_interesting" = interesting[["interesting"]],
       "mf_interesting" = interesting[["MF"]],
@@ -457,7 +466,8 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       "adjust_method" = padjust_method,
       "mf_subset" = interesting[["mf_subset"]],
       "bp_subset" = interesting[["bp_subset"]],
-      "cc_subset" = interesting[["cc_subset"]])
+      "cc_subset" = interesting[["cc_subset"]],
+      "pvalue_plots" = pval_plots)
   class(retlist) <- c("goseq_result", "list")
   retlist[["mf_enrich"]] <- goseq2enrich(retlist, ontology = "MF",
                                          cutoff = pvalue, padjust_method = padjust_method)
@@ -465,6 +475,9 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                                          cutoff = pvalue, padjust_method = padjust_method)
   retlist[["cc_enrich"]] <- goseq2enrich(retlist, ontology = "CC",
                                          cutoff = pvalue, padjust_method = padjust_method)
+  if (!is.null(excel)) {
+    excel_result <- write_goseq_data(retlist, excel = excel, ...)
+  }
   return(retlist)
 }
 
