@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
-context("70expt_spyogenes.R: Does a small bacterial RNAseq experiment load?
+context("470expt_spyogenes.R: Does a small bacterial RNAseq experiment load?
   1234567890123456789012345678901\n")
 
 mgas_data <- new.env()
@@ -46,8 +46,7 @@ test_that("Is the batch state maintained?", {
   expect_equal("combat_scale", mgas_norm[["state"]][["batch"]])
 })
 
-mgas_pairwise <- sm(all_pairwise(mgas_expt, parallel = FALSE))
-
+mgas_pairwise <- all_pairwise(mgas_expt, parallel = FALSE)
 expected <- 0.64
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
 ## 07
@@ -55,8 +54,8 @@ test_that("Do we get reasonably high similarities among the various DE tools?", 
   expect_gt(actual, expected)
 })
 
-mgas_combined <- sm(combine_de_tables(mgas_pairwise, excel = FALSE))
-mgas_sig <- sm(extract_significant_genes(mgas_combined, excel = FALSE))
+mgas_combined <- combine_de_tables(mgas_pairwise, excel = FALSE)
+mgas_sig <- extract_significant_genes(mgas_combined, excel = FALSE)
 expected <- 150
 actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wtllcf_vs_mga1llcf"]])
 ## 08
@@ -64,7 +63,7 @@ test_that("Do we find some significant genes in the mga/wt fructose analysis?", 
   expect_gt(actual, expected)
 })
 
-mgas_data <- sm(load_genbank_annotations(accession = "AE009949"))
+mgas_data <- load_genbank_annotations(accession = "AE009949")
 expected <- 1895017
 actual <- GenomicRanges::width(mgas_data[["seq"]])  ## This fails on travis?
 actual_width <- actual
@@ -88,7 +87,7 @@ test_that("Can I extract the chromosome sequence from a genbank file? (gene name
 })
 
 taxon <- "293653"
-mgas_df <- sm(load_microbesonline_annotations(id = taxon))
+mgas_df <- load_microbesonline_annotations(id = taxon)
 mgas_df[["sysName"]] <- gsub(pattern = "Spy_", replacement = "Spy", x = mgas_df[["sysName"]])
 expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
 actual <- as.character(head(mgas_df[["name"]]))
@@ -97,7 +96,7 @@ test_that("Did the mgas annotations download?", {
   expect_equal(expected, actual)
 })
 
-mgas_go <- sm(load_microbesonline_go(taxon))
+mgas_go <- load_microbesonline_go(taxon)
 colnames(mgas_go) <- c("ID", "GO")
 mgas_go <- unique(mgas_go)
 expected <- c(4161, 2)
@@ -135,13 +134,17 @@ lengths <- 1835600
 names(lengths) <- "chr1"
 circos_kary <- circos_karyotype(circos_test, lengths = lengths)
 circos_plus <- circos_plus_minus(circos_test)
-circos_hist_ll_cg <- circos_hist(circos_test, df = glucose_table,
+circos_hist_ll_cg <- circos_hist(circos_test, glucose_table,
                                  colname = "logFC", outer = circos_plus)
-circos_tile_wtmga <- circos_tile(circos_test, df = wtvmga_glucose,
+circos_tile_wtmga <- circos_tile(circos_test, wtvmga_glucose,
                                  colname = "logFC", outer = circos_hist_ll_cg)
 circos_suffix(circos_test)
-circos_made <- sm(circos_make(circos_test, target = "mgas"))
-##}
+circos_made <- circos_make(circos_test, target = "mgas")
+
+expected <- "circos/amgas.svg"
+test_that("Did circos run?", {
+  expect_true(file.exists(expected))
+})
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = (as.numeric(end - start)))

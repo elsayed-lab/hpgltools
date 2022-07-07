@@ -26,7 +26,7 @@
 #'   combined <- combine_expts(expt1, expt2, merge_meta = TRUE)
 #' }
 #' @export
-combine_expts <- function(expt1, expt2, condition = "condition",
+combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, all_y = TRUE,
                           batch = "batch", merge_meta = TRUE) {
   exp1 <- expt1[["expressionset"]]
   exp2 <- expt2[["expressionset"]]
@@ -61,25 +61,30 @@ combine_expts <- function(expt1, expt2, condition = "condition",
   if (!is.null(expt1[["tximport"]])) {
     raw1 <- expt1[["tximport"]][["raw"]]
     raw2 <- expt2[["tximport"]][["raw"]]
-    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by = "row.names")
+    merged <- merge(raw1[["abundance"]], raw2[["abundance"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["abundance"]] <- merged
-    merged <- merge(raw1[["counts"]], raw2[["counts"]], by = "row.names")
+    merged <- merge(raw1[["counts"]], raw2[["counts"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["counts"]] <- merged
-    merged <- merge(raw1[["length"]], raw2[["length"]], by = "row.names")
+    merged <- merge(raw1[["length"]], raw2[["length"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["raw"]][["length"]] <- merged
     scaled1 <- expt1[["tximport"]][["scaled"]]
     scaled2 <- expt2[["tximport"]][["scaled"]]
-    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names")
+    merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
-    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names")
+    merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names",
+                    all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
     merged <- merged[, -1]
     expt1[["tximport"]][["scaled"]][["counts"]] <- merged
@@ -96,6 +101,17 @@ combine_expts <- function(expt1, expt2, condition = "condition",
   tmp <- expt1[["expressionset"]]
   exprs(tmp) <- as.matrix(new_exprs)
   expt1[["expressionset"]] <- tmp
+
+  if (isFALSE(all_x) | isFALSE(all_y)) {
+    found_first <- rownames(exprs(expt1)) %in% rownames(exprs(exp1))
+    shared_first_ids <- rownames(exprs(expt1))[found_first]
+    expt1 <- exclude_genes_expt(expt1, ids = shared_first_ids, method = "keep")
+
+    found_second <- rownames(exprs(expt1)) %in% rownames(exprs(exp2))
+    shared_second_ids <- rownames(exprs(expt1))[found_second]
+    expt1 <- exclude_genes_expt(expt1, ids = shared_second_ids, method = "keep")
+  }
+
   return(expt1)
 }
 
@@ -324,7 +340,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     } else {
       message("The count table column names are: ",
               toString(sort(colnames(count_dataframe))))
-      message("The  meta   data  row  names are: ",
+      message("The metadata row names are: ",
               toString(sort(rownames(sample_definitions))))
       stop("The count table column names are not the same as the sample definition row names.")
     }
@@ -729,7 +745,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     warning("Saving the expt object failed, perhaps you do not have permissions?")
   }
   message("The final expressionset has ", nrow(exprs(expt)),
-          " rows and ", ncol(exprs(expt)), " columns.")
+          " features and ", ncol(exprs(expt)), " samples.")
   return(expt)
 }
 
@@ -828,7 +844,8 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
     }
   }
 
-  message("Before removal, there were ", nrow(Biobase::fData(ex)), " genes, now there are ",
+  message("remove_genes_expt(), before removal, there were ",
+          nrow(Biobase::fData(ex)), " genes, now there are ",
           nrow(Biobase::fData(kept)), ".")
   all_tables <- Biobase::exprs(ex)
   all_sums <- colSums(all_tables)
@@ -837,8 +854,11 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   removed_tables <- Biobase::exprs(removed)
   removed_sums <- colSums(removed_tables)
   pct_kept <- (kept_sums / all_sums) * 100.0
-
+  pct_na <- is.na(pct_kept)
+  pct_kept[pct_na] <- 0
   pct_removed <- (removed_sums / all_sums) * 100.0
+  pct_na <- is.na(pct_removed)
+  pct_removed[pct_na] <- 0
   summary_table <- rbind(kept_sums, removed_sums, all_sums,
                          pct_kept, pct_removed)
   rownames(summary_table) <- c("kept_sums", "removed_sums", "all_sums",
@@ -2021,12 +2041,14 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
     their_column <- NULL
     ## Grab the first ID in the first column.
     ## We will explicitly assume there are 2 columns in the data frame.
-    test_first_id <- ids[1, 1]
-    test_second_id <- ids[1, 2]
-    if (test_first_id %in% current_ids) {
+    test_first <- sum(ids[[1]] %in% current_ids)
+    test_second <- sum(ids[[2]] %in% current_ids)
+    if (test_first > 0) {
+      mesg("Found: ", test_first, " ids in common using the first column of the IDs.")
       our_column <- colnames(ids)[1]
       their_column <- colnames(ids)[2]
-    } else if (test_second_id %in% current_ids) {
+    } else if (test_second > 0) {
+      mesg("Found: ", test_second, " ids in common using the second column of the IDs.")
       our_column <- colnames(ids)[2]
       their_column <- colnames(ids)[1]
     } else {
@@ -3262,6 +3284,16 @@ expt_set <- setOldClass("expt")
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
+
+setMethod("annotation", signature = "expt",
+          function(object) {
+            Biobase::annotation(object[["expressionset"]])
+          })
+setMethod("annotation<-", signature = "expt",
+          function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
+          })
 setMethod("assay", signature = "expt",
           function(x, withDimnames = TRUE, ...) {
             mtrx <- Biobase::exprs(x[["expressionset"]])

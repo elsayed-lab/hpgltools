@@ -6,6 +6,7 @@
 \usage{
 topgo_tables(
   result,
+  godata,
   limit = 0.1,
   limitby = "fisher",
   numchar = 300,

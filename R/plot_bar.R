@@ -302,6 +302,18 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
   color_list <- as.character(color_listing[["colors"]])
   names(color_list) <- as.character(color_listing[["condition"]])
 
+  ## Set a cutoff of the sum of the rgbs of the bar colors, if the color is > than that cutoff
+  ## Set the text color to black.
+  sample_df[["text_color"]] <- "#ffffff"
+  text_lst <- color_int(sample_df[["colors"]])
+  for (r in 1:nrow(sample_df)) {
+    color_sum <- text_lst[["red"]][[r]] + text_lst[["green"]][[r]] + text_lst[["blue"]][[r]]
+    if (color_sum > 385) {
+      sample_df[r, "text_color"] <- "#000000"
+    }
+  }
+  text_colors <- sample_df[["text_color"]]
+
   sample_plot <- ggplot(data = sample_df,
                         colour = colors,
                         aes_string(x = "order",
@@ -320,9 +332,10 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
     if (!isTRUE(integerp)) {
       sample_df[["sum"]] <- sprintf("%.2f", round(as.numeric(sample_df[["sum"]]), 2))
     }
+
     sample_plot <- sample_plot +
       ggplot2::geom_text(
-                   parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
+                   parse = FALSE, angle = 90, size = 4, hjust = 1.2, colour = text_colors,
                    ggplot2::aes_string(
                                 x = "order",
                                 label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))

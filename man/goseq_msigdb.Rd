@@ -19,7 +19,6 @@ goseq_msigdb(
   go_keytype = "entrezid",
   goseq_method = "Wallenius",
   padjust_method = "BH",
-  bioc_length_db = "ensGene",
   excel = NULL,
   orgdb = "org.Hs.eg.db"
 )
@@ -58,8 +57,6 @@ this parameter, everything is just passed directly to simple_goseq()}
 \item{goseq_method}{passed to simple_goseq()}
 
 \item{padjust_method}{passed to simple_goseq()}
-
-\item{bioc_length_db}{passed to simple_goseq()}
 
 \item{excel}{passed to simple_goseq()}
 

@@ -8,6 +8,8 @@ combine_expts(
   expt1,
   expt2,
   condition = "condition",
+  all_x = TRUE,
+  all_y = TRUE,
   batch = "batch",
   merge_meta = TRUE
 )

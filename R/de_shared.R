@@ -307,6 +307,8 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   x_order <- rownames(x_df)
   y_df <- tbl[x_order, c(py, ly)]
 
+  ## Do a simple correlation test just to have it as a comparison point
+  simple_cor <- cor.test(tbl3[[lx]], tbl3[[ly]])
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
@@ -362,6 +364,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
 
   retlist <- list(
       "aucc" = aucc,
+      "cor" = simple_cor,
       "plot" = intersection_plot)
  return(retlist)
 }
@@ -1213,6 +1216,30 @@ compare_de_results <- function(first, second, cor_method = "pearson",
       "p_heat" = p_heat,
       "adjp_heat" = adjp_heat)
   return(retlist)
+}
+
+compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
+                              fcy = "deseq_logfc", py = "deseq_adjp",
+                              first_table = NULL, second_table = NULL) {
+  if (!is.null(first_table)) {
+    ## Then assume this is a combine_de_tables() result.
+    first <- first[["data"]][[first_table]]
+  }
+  if (!is.null(second_table)) {
+    second <- second[["data"]][[second_table]]
+  }
+  merged <- merge(first, second, by = "row.names")
+  rownames(merged) <- merged[["Row.names"]]
+  merged[["Row.names"]] <- NULL
+  kept_columns <- c(fcx, px, fcy, py)
+  if (fcx == fcy) {
+    kept_columns <- c(paste0(fcx, ".x"), paste0(px, ".x"),
+                      paste0(fcy, ".y"), paste0(fcy, ".y"))
+  }
+  merged <- merged[, kept_columns]
+  colnames(merged) <- c("first_lfc", "first_p", "second_lfc", "second_p")
+  scatter <- plot_linear_scatter(merged[, c("first_lfc", "second_lfc")])
+  return(scatter)
 }
 
 #' See how similar are results from limma/deseq/edger/ebseq.

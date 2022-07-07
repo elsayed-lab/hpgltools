@@ -121,7 +121,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", ...) {
                          grepl(pattern = "^#", x = sample_definitions[, id_column]))
   if (length(empty_samples) > 0) {
     message("Dropped ", length(empty_samples),
-            " rows from the sample metadata because they were blank.")
+            " rows from the sample metadata because the sample ID is blank.")
     sample_definitions <- sample_definitions[-empty_samples, ]
   }
 
@@ -268,6 +268,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   }
 
   meta <- extract_metadata(starting_metadata)
+  ## Perhaps use sanitize instead?
+  meta[[1]] <- gsub(pattern="\\s+", replacement="", x=meta[[1]])
   for (entry in 1:length(specification)) {
     entry_type <- names(specification[entry])
     message("Starting ", entry_type, ".")
@@ -1209,9 +1211,9 @@ make_assembly_spec <- function() {
         "input_r2" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "trimomatic_input" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
         "trimomatic_output" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stdout"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
         "trimomatic_ratio" = list(
             "column" = "trimomatic_percent"),
         ## Second task is likely error correction
@@ -1220,18 +1222,14 @@ make_assembly_spec <- function() {
         "host_filter_species" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
-        "hisat_single_concordant" = list(
+        "hisat_genome_single_concordant" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
-        "hisat_multi_concordant" = list(
+        "hisat_genome_multi_concordant" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
-        "hisat_single_all" = list(
+        "hisat_genome_single_all" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
-        "hisat_multi_all" = list(
+        "hisat_genome_multi_all" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
-        "hisat_singlecon_ratio" = list(
-            "column" = "hisat_single_concordant_percent"),
-        "hisat_singleall_ratio" = list(
-            "column" = "hisat_single_all_percent"),
         "hisat_count_table" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*_{species}_genome*.count.xz"),
         "jellyfish_count_table" = list(
@@ -1322,8 +1320,8 @@ make_assembly_spec <- function() {
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_accession" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
-        "ictv_family" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
+        ##"ictv_family" = list(
+        ##    "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "ictv_genus" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*classify_*/*_filtered.tsv"),
         "notes" = list(

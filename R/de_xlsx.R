@@ -32,7 +32,6 @@
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
-#' @param gmt Write a gmt file of the significant and/or abundant genes.
 #' @param rda Write a rda file of the results.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
@@ -56,7 +55,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
                               plot_dim = 6, compare_plots = TRUE, padj_type = "ihw",
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
-                              gmt = NULL, rda = NULL, ...) {
+                              rda = NULL, ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -635,7 +634,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       ## Therefore we need to get that information to this function call.
       pval_plot <- plot_de_pvals(combined[["data"]], type = type,
                                  p_type = p_type)
-      plots[[p_name]] <- pval_plot[["plot"]]
+      plots[[p_name]] <- pval_plot
     }
   }
   return(plots)
@@ -1581,11 +1580,19 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                       ma = TRUE, p_type = "adj", invert_barplots = FALSE,
                                       excel = NULL, fc_column = NULL, p_column = NULL,
                                       siglfc_cutoffs = c(0, 1, 2), column_suffix = TRUE,
-                                      gmt = NULL, ...) {
+                                      gmt = NULL, category = "category",
+                                      phenotype_name = "phenotype", set_name = "set",
+                                      current_id = "ENSEMBL", required_id = "ENTREZID", ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
+
+  ## The following two if statements are a little silly, but will be used later
+  ## To check for the existence of a column in the input data via p_column %in% colnames()
   if (is.null(fc_column)) {
     fc_column <- ""
+  }
+  if (is.null(p_column)) {
+    p_column <- ""
   }
 
   xlsx <- init_xlsx(excel)
@@ -1677,24 +1684,55 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   ret <- list()
   sheet_count <- 0
   according_kept <- according_to
+  chosen_columns <- list()
+  ## Iterate over the according_to entries to see if there are valid p-value and logfc columns
   for (summary_count in 1:length(according_to)) {
     according <- according_to[summary_count]
-    test_column <- glue::glue("{according}_logfc")
+    test_fc_param <- fc_column  ## Check if a column was provided by the user
+    ## Otherwise make a column name from the method employed followed by the suffix.
+    test_fc_column <- glue::glue("{according}{logfc_suffix}")
+    test_p_param <- p_column
+    test_p_column <- glue::glue("{according}{p_suffix}")
+    test_adjp_column <- glue::glue("{according}{adjp_suffix}")
     skip <- TRUE
-    chosen_column <- NULL
-    if (fc_column %in% colnames(combined[["data"]][[1]])) {
+    if (test_fc_param %in% colnames(combined[["data"]][[1]])) {
+      chosen_columns[[according]][["fc"]] <- test_fc_param
+      if (test_p_param %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_p_param
+      } else if (test_p_column %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_p_column
+      } else if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_adjp_column
+      }
+    } else if (test_fc_column %in% colnames(combined[["data"]][[1]])) {
       skip <- FALSE
-      chosen_column <- fc_column
-    } else if (test_column %in% colnames(combined[["data"]][[1]])) {
-      skip <- FALSE
-      chosen_column <- test_column
+      chosen_columns[[according]][["fc"]] <- test_fc_column
+      if (test_p_param %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_p_param
+      } else if (test_p_column %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_p_column
+      } else if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
+        skip <- FALSE
+        chosen_columns[[according]][["p"]] <- test_adjp_column
+      }
     }
+    ## We have given some chances to not skip this group, if skip never got set to FALSE
+    ## then this is probably not a useful criterion for searching.
     if (isTRUE(skip)) {
       mesg("Did not find the ", test_column, ", skipping ", according, ".")
       according_kept <- according_to[!according == according_to]
       next
     }
-  }
+  } ## End checking set of according_tos for valid entries.
+  ## Our list of chosen_columns should have two levels, the first by method
+  ## The second with logfc and p, which contain the columns of interest.
+
+  according <- NULL
   according_to <- according_kept
   for (summary_count in 1:length(according_to)) {
     according <- according_to[summary_count]
@@ -1702,6 +1740,8 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     ma_plots <- list()
     change_counts_up <- list()
     change_counts_down <- list()
+    this_fc_column <- chosen_columns[[according]][["fc"]]
+    this_p_column <- chosen_columns[[according]][["p"]]
     for (table_count in 1:length(table_names)) {
       table_name <- names(table_names)[table_count]
       plot_name <- as.character(table_names)[table_count]
@@ -1725,21 +1765,10 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
         }
       }
 
-      factor <- length(according_to)
-      ## FIXME: hmm this looks redundant redundant, reconcile this with the section ~ line 1615 above.
-      table <- all_tables[[table_name]]
-      if (is.null(fc_column)) {
-        fc_column <- glue::glue("{according}{logfc_suffix}")
-      }
-      if (is.null(p_column)) {
-        p_column <- glue::glue("{according}{adjp_suffix}")
-        if (p_type != "adj") {
-          p_column <- glue::glue("{according}{p_suffix}")
-        }
-      }
-
+      this_table <- all_tables[[table_name]]
       trimming <- get_sig_genes(
-          table, lfc = lfc, p = p, z = z, n = n, column = chosen_column, p_column = p_column)
+          this_table, lfc = lfc, p = p, z = z, n = n, column = this_fc_column,
+          p_column = this_p_column)
 
       trimmed_up[[table_name]] <- trimming[["up_genes"]]
       change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
@@ -1772,9 +1801,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
     ## I want to start writing out msigdb compatible gmt files and therefore
     ## want to start creating gene set collections from our data.
-    if (!is.null(gmt)) {
-      message("Going to attempt to create gmt files from these results.")
-    }
 
     do_excel <- TRUE
     if (is.null(excel)) {
@@ -1862,6 +1888,29 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
   class(ret) <- c("sig_genes", "list")
+
+  if (!is.null(gmt)) {
+    message("Going to attempt to create gmt files from these results.")
+    annotation_name <- annotation(combined[["input"]][["input"]])
+    gsc <- make_gsc_from_pairwise(ret, according_to = according_to, orgdb = annotation_name,
+                                  pair_names = c("ups", "downs"), category_name = category,
+                                  phenotype_name = phenotype_name, set_name = set_name,
+                                  current_id = current_id, required_id = required_id)
+    types <- c("colored", "up", "down")
+    for (t in types) {
+      if (!is.null(gsc[[t]])) {
+        for (g in 1:length(gsc[[t]])) {
+          datum <- gsc[[t]][[g]]
+          contrast_name <- names(gsc[[t]])[g]
+          dname <- dirname(gmt)
+          bname <- gsub(x = basename(gmt), pattern = "\\.gmt", replacement = "")
+          newname <- paste0(bname, "_", t, "_", contrast_name, ".gmt")
+          write_to <- file.path(dname, newname)
+          written <- GSEABase::toGmt(datum, write_to)
+        }
+      }
+    }
+  }
   return(ret)
 }
 

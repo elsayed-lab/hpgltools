@@ -1,6 +1,10 @@
 #' Perform a simplified topgo analysis.
 #'
 #' This will attempt to make it easier to run topgo on a set of genes.
+#' The way I organized these data structures is completely stupid. I
+#' want to convert the data from topgo to clusterprofiler for ease of
+#' plotting, but because of the terrible way I organized everything
+#' that is likely to be difficult.
 #'
 #' @param sig_genes Data frame of differentially expressed genes, containing IDs
 #'  any other columns.
@@ -27,7 +31,7 @@
 simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                          pvals = NULL, limitby = "fisher", limit = 0.1, signodes = 100,
                          sigforall = TRUE, numchar = 300, selector = "topDiffGenes",
-                         pval_column = "adj.P.Val", overwrite = FALSE, densities = FALSE,
+                         pval_column = "deseq_adjp", overwrite = FALSE, densities = FALSE,
                          pval_plots = TRUE, excel = NULL, ...) {
   ## Some neat ideas from the topGO documentation:
   ## geneList <- getPvalues(exprs(eset), classlabel = y, alternative = "greater")
@@ -39,7 +43,6 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   ## set up the GOdata object like this: mf_GOdata = new("topGOdata",
   ## description = "something", ontology = "BP", allGenes = entire_geneList,
   ## geneSel = topDiffGenes, annot = annFUN.gene2GO, gene2GO = geneID2GO, nodeSize = 2)
-  ## The following library invocation is in case it was unloaded for pathview
   if (isTRUE(overwrite) & file.exists(goid_map)) {
     removed <- file.remove(goid_map)
   }
@@ -115,42 +118,44 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   p_dists <- list()
   for (o in c("BP", "MF", "CC")) {
     for (m in methods) {
-      name <- glue::glue("{tolower(o)}_{m}")
+      name <- glue::glue("{tolower(o)}_{limitby}")
       p_dists[[name]] <- try(plot_histogram(
           ontology_result[[o]][[m]][["test_result"]]@score,
           bins = 20))
     }
   }
 
-  results <- list(
-      ## The godata
-      "fbp_godata" = ontology_result[["BP"]][["fisher"]][["godata"]],
-      "fmf_godata" = ontology_result[["MF"]][["fisher"]][["godata"]],
-      "fcc_godata" = ontology_result[["CC"]][["fisher"]][["godata"]],
-      "kbp_godata" = ontology_result[["BP"]][["KS"]][["godata"]],
-      "kmf_godata" = ontology_result[["MF"]][["KS"]][["godata"]],
-      "kcc_godata" = ontology_result[["CC"]][["KS"]][["godata"]],
-      "ebp_godata" = ontology_result[["BP"]][["EL"]][["godata"]],
-      "emf_godata" = ontology_result[["MF"]][["EL"]][["godata"]],
-      "ecc_godata" = ontology_result[["CC"]][["EL"]][["godata"]],
-      "wbp_godata" = ontology_result[["BP"]][["weight"]][["godata"]],
-      "wmf_godata" = ontology_result[["MF"]][["weight"]][["godata"]],
-      "wcc_godata" = ontology_result[["CC"]][["weight"]][["godata"]],
-      ## The test results
-      "bp_fisher" = ontology_result[["BP"]][["fisher"]][["test_result"]],
-      "mf_fisher" = ontology_result[["MF"]][["fisher"]][["test_result"]],
-      "cc_fisher" = ontology_result[["CC"]][["fisher"]][["test_result"]],
-      "bp_ks" = ontology_result[["BP"]][["KS"]][["test_result"]],
-      "mf_ks" = ontology_result[["MF"]][["KS"]][["test_result"]],
-      "cc_ks" = ontology_result[["CC"]][["KS"]][["test_result"]],
-      "bp_el" = ontology_result[["BP"]][["EL"]][["test_result"]],
-      "mf_el" = ontology_result[["MF"]][["EL"]][["test_result"]],
-      "cc_el" = ontology_result[["CC"]][["EL"]][["test_result"]],
-      "bp_weight" = ontology_result[["BP"]][["weight"]][["test_result"]],
-      "mf_weight" = ontology_result[["MF"]][["weight"]][["test_result"]],
-      "cc_weight" = ontology_result[["CC"]][["weight"]][["test_result"]])
+  godata = list(
+      ## The full godata structures
+      "fisher_bp" = ontology_result[["BP"]][["fisher"]][["godata"]],
+      "fisher_mf" = ontology_result[["MF"]][["fisher"]][["godata"]],
+      "fisher_cc" = ontology_result[["CC"]][["fisher"]][["godata"]],
+      "ks_bp" = ontology_result[["BP"]][["KS"]][["godata"]],
+      "ks_mf" = ontology_result[["MF"]][["KS"]][["godata"]],
+      "ks_cc" = ontology_result[["CC"]][["KS"]][["godata"]],
+      "el_bp" = ontology_result[["BP"]][["EL"]][["godata"]],
+      "el_mf" = ontology_result[["MF"]][["EL"]][["godata"]],
+      "el_cc" = ontology_result[["CC"]][["EL"]][["godata"]],
+      "weight_bp" = ontology_result[["BP"]][["weight"]][["godata"]],
+      "weight_mf" = ontology_result[["MF"]][["weight"]][["godata"]],
+      "weight_cc" = ontology_result[["CC"]][["weight"]][["godata"]])
 
-  tables <- try(topgo_tables(results, limitby = limitby, limit = limit))
+  results <- list(
+      ## The test results
+      "fisher_bp" = ontology_result[["BP"]][["fisher"]][["test_result"]],
+      "fisher_mf" = ontology_result[["MF"]][["fisher"]][["test_result"]],
+      "fisher_cc" = ontology_result[["CC"]][["fisher"]][["test_result"]],
+      "ks_bp" = ontology_result[["BP"]][["KS"]][["test_result"]],
+      "ks_mf" = ontology_result[["MF"]][["KS"]][["test_result"]],
+      "ks_cc" = ontology_result[["CC"]][["KS"]][["test_result"]],
+      "el_bp" = ontology_result[["BP"]][["EL"]][["test_result"]],
+      "el_mf" = ontology_result[["MF"]][["EL"]][["test_result"]],
+      "el_cc" = ontology_result[["CC"]][["EL"]][["test_result"]],
+      "weight_bp" = ontology_result[["BP"]][["weight"]][["test_result"]],
+      "weight_mf" = ontology_result[["MF"]][["weight"]][["test_result"]],
+      "weight_cc" = ontology_result[["CC"]][["weight"]][["test_result"]])
+
+  tables <- try(topgo_tables(results, godata, limitby = limitby, limit = limit))
   if (class(tables)[1] == "try-error") {
     tables <- NULL
   }
@@ -158,7 +163,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   mf_densities <- bp_densities <- cc_densities <- list()
   if (isTRUE(densities)) {
     bp_densities <- sm(
-        plot_topgo_densities(results[["fbp_godata"]], tables[["bp_interesting"]]))
+        plot_topgo_densities(results[["fisher_bp"]], tables[["bp_interesting"]]))
     mf_densities <- sm(
         plot_topgo_densities(results[["fmf_godata"]], tables[["mf_interesting"]]))
     cc_densities <- sm(
@@ -170,15 +175,21 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   retlist <- list(
       "go_db" = go_db,
       "input" = sig_genes,
+      "godata" = godata,
       "results" = results,
       "tables" = tables,
       "mf_densities" = mf_densities,
       "bp_densities" = bp_densities,
       "cc_densities" = cc_densities,
       "pdists" = p_dists)
-  pval_plots <- plot_topgo_pval(retlist,
-                                ...)
-  retlist[["pvalue_plots"]] <- pval_plots
+
+  enrich_results <- list()
+  for (ont in c("bp", "mf", "cc")) {
+    message("Getting enrichResult for ontology: ", ont, ".")
+    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = pval,
+                                                  column = limitby)
+  }
+  retlist[["enrich_results"]] <- enrich_results
 
   pval_histograms <- list()
   fisher_ps <- c(retlist[["tables"]][["mf_subset"]][["fisher"]],
@@ -347,26 +358,26 @@ do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
 #' @return prettier tables
 #' @seealso [topGO]
 #' @export
-topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
+topgo_tables <- function(result, godata, limit = 0.1, limitby = "fisher",
                          numchar = 300, orderby = "fisher", ranksof = "fisher") {
   ## The following if statement could be replaced by get(limitby)
   ## But I am leaving it as a way to ensure that no shenanigans ensue
   if (limitby == "fisher") {
-    mf_siglist <- names(which(result[["mf_fisher"]]@score <= limit))
-    bp_siglist <- names(which(result[["bp_fisher"]]@score <= limit))
-    cc_siglist <- names(which(result[["bp_fisher"]]@score <= limit))
+    mf_siglist <- names(which(result[["fisher_mf"]]@score <= limit))
+    bp_siglist <- names(which(result[["fisher_bp"]]@score <= limit))
+    cc_siglist <- names(which(result[["fisher_bp"]]@score <= limit))
   } else if (limitby == "KS") {
-    mf_siglist <- names(which(result[["mf_ks"]]@score <= limit))
-    bp_siglist <- names(which(result[["bp_ks"]]@score <= limit))
-    cc_siglist <- names(which(result[["bp_ks"]]@score <= limit))
+    mf_siglist <- names(which(result[["ks_mf"]]@score <= limit))
+    bp_siglist <- names(which(result[["ks_bp"]]@score <= limit))
+    cc_siglist <- names(which(result[["ks_bp"]]@score <= limit))
   } else if (limitby == "EL") {
-    mf_siglist <- names(which(result[["mf_el"]]@score <= limit))
-    bp_siglist <- names(which(result[["bp_el"]]@score <= limit))
-    cc_siglist <- names(which(result[["bp_el"]]@score <= limit))
+    mf_siglist <- names(which(result[["el_mf"]]@score <= limit))
+    bp_siglist <- names(which(result[["el_bp"]]@score <= limit))
+    cc_siglist <- names(which(result[["el_bp"]]@score <= limit))
   } else if (limitby == "weight") {
-    mf_siglist <- names(which(result[["mf_weight"]]@score <= limit))
-    bp_siglist <- names(which(result[["bp_weight"]]@score <= limit))
-    cc_siglist <- names(which(result[["bp_weight"]]@score <= limit))
+    mf_siglist <- names(which(result[["weight_mf"]]@score <= limit))
+    bp_siglist <- names(which(result[["weight_bp"]]@score <= limit))
+    cc_siglist <- names(which(result[["weight_bp"]]@score <= limit))
   } else {
     stop("I can only limit by: fisher, KS, EL, or weight.")
   }
@@ -381,14 +392,13 @@ topgo_tables <- function(result, limit = 0.1, limitby = "fisher",
   interest_lst <- list()
   allres_lst <- list()
   for (ont in c("mf", "bp", "cc")) {
-    godata_name <- glue::glue("f{ont}_godata")
-    fisher_name <- glue::glue("{ont}_fisher")
-    ks_name <- glue::glue("{ont}_ks")
-    el_name <- glue::glue("{ont}_el")
-    weight_name <- glue::glue("{ont}_weight")
+    fisher_name <- glue::glue("fisher_{ont}")
+    ks_name <- glue::glue("ks_{ont}")
+    el_name <- glue::glue("el_{ont}")
+    weight_name <- glue::glue("weight_{ont}")
     if (topnode_list[[ont]] > 0) {
       allres <- try(topGO::GenTable(
-                               result[[godata_name]], fisher = result[[fisher_name]],
+                               godata[[fisher_name]], fisher = result[[fisher_name]],
                                KS = result[[ks_name]], EL = result[[el_name]],
                                weight = result[[weight_name]], orderBy = orderby,
                                ranksOf = ranksof, topNodes = topnode_list[[ont]], numChar = numchar))

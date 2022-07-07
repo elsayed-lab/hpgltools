@@ -81,6 +81,7 @@ Collate:
   'de_limma.R'
   'de_plots.R'
   'de_xlsx.R'
+  'gene_sets.R'
   'metadata.R'
   'normalize_shared.R'
   'normalize_filter.R'

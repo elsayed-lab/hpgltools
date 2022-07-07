@@ -2,6 +2,84 @@
 ## first GSEA tool I learned about.  It is not particularly robust, this seeks
 ## to amend that.
 
+extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue = 0.05,
+                                      minimum_interesting = 1, adjust = 0.05, padjust_method = "BH") {
+  ## Add a little logic if we are using a non-GO input database.
+  ## This is relevant if you use something like msigdb/reactome/kegg
+  ## I should probably make the rest of this function generic so that this is not required.
+  if (is.null(godata[["ontology"]])) {
+    godata[["ontology"]] <- "MF"
+  }
+
+  godata_interesting <- godata
+  if (isTRUE(expand_categories)) {
+    mesg("simple_goseq(): Filling godata with terms, this is slow.")
+    godata_interesting <- goseq_table(godata)
+  } else {
+    ## Set the 'term' category for plotting.
+    godata_interesting[["term"]] <- godata_interesting[["category"]]
+    godata[["term"]] <- godata[["category"]]
+  }
+
+  if (is.null(adjust)) {
+    interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
+    godata_interesting <- godata[godata_interesting, ]
+    padjust_method <- "none"
+  } else {
+    ## There is a requested pvalue adjustment
+    interesting_idx <- godata[["over_represented_pvalue"]] <= adjust
+    godata_interesting <- godata[interesting_idx, ]
+    if (dim(godata_interesting)[1] < minimum_interesting) {
+      message("simple_goseq(): There are no genes with an adj.p < ", adjust, " using: ",
+              padjust_method, ".")
+      message("simple_goseq(): Providing genes with raw pvalue < ", pvalue, ".")
+      interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
+      godata_interesting <- godata_interesting[interesting_idx, ]
+      padjust_method <- "none"
+    }
+  }
+
+  na_idx <- is.na(godata[["ontology"]])
+  godata <- godata[!na_idx, ]
+  mf_idx <- godata[["ontology"]] == "MF"
+  mf_subset <- godata[mf_idx, ]
+  rownames(mf_subset) <- mf_subset[["category"]]
+  bp_idx <- godata[["ontology"]] == "BP"
+  bp_subset <- godata[bp_idx, ]
+  rownames(bp_subset) <- bp_subset[["category"]]
+  cc_idx <- godata[["ontology"]] == "CC"
+  cc_subset <- godata[cc_idx, ]
+  rownames(cc_subset) <- cc_subset[["category"]]
+
+  na_idx <- is.na(godata_interesting[["ontology"]])
+  godata_interesting <- godata_interesting[!na_idx, ]
+  mf_idx <- godata_interesting[["ontology"]] == "MF"
+  mf_interesting <- godata_interesting[mf_idx, ]
+  rownames(mf_interesting) <- mf_interesting[["category"]]
+  mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                       "over_represented_pvalue", "qvalue", "term")]
+  bp_idx <- godata_interesting[["ontology"]] == "BP"
+  bp_interesting <- godata_interesting[bp_idx, ]
+  rownames(bp_interesting) <- bp_interesting[["category"]]
+  bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                       "over_represented_pvalue", "qvalue", "term")]
+  cc_idx <- godata_interesting[["ontology"]] == "CC"
+  cc_interesting <- godata_interesting[cc_idx, ]
+  rownames(cc_interesting) <- cc_interesting[["category"]]
+  cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                       "over_represented_pvalue", "qvalue", "term")]
+  retlist <- list(
+      "godata" = godata,
+      "interesting" = godata_interesting,
+      "mf_subset" = mf_subset,
+      "bp_subset" = bp_subset,
+      "cc_subset" = cc_subset,
+      "MF" = mf_interesting,
+      "BP" = bp_interesting,
+      "CC" = cc_interesting)
+  return(retlist)
+}
+
 #' Pass MSigDB categorical data to goseq and run it.
 #'
 #' goseq is probably the easiest method to push varying data types into.  Thus
@@ -28,7 +106,6 @@
 #' @param go_keytype passed to simple_goseq()
 #' @param goseq_method passed to simple_goseq()
 #' @param padjust_method passed to simple_goseq()
-#' @param bioc_length_db passed to simple_goseq()
 #' @param excel passed to simple_goseq()
 #' @param orgdb Ideally used to help goseq collect lengths.
 #' @return Some goseq data!
@@ -39,7 +116,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                          length_db = NULL, doplot = TRUE, adjust = 0.1, pvalue = 0.1,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
-                         bioc_length_db = "ensGene", excel = NULL, orgdb = "org.Hs.eg.db") {
+                         excel = NULL, orgdb = "org.Hs.eg.db") {
   sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
                                   signature_category = signature_category)
   mesg("Starting to coerce the msig data to the ontology format.")
@@ -75,7 +152,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                             length_keytype = "transcripts", go_keytype = "entrezid",
                             goseq_method = "Wallenius", padjust_method = "BH",
                             plot_title = "Enriched MSIG categories",
-                            bioc_length_db = "ensGene", expand_categories = FALSE,
+                            expand_categories = FALSE,
                             excel = excel, add_trees = FALSE, gather_genes = FALSE, width = 20)
   return(go_result)
 }
@@ -153,7 +230,6 @@ goseq_table <- function(df, file = NULL) {
 #' @param go_keytype Keytype to provide to extract go IDs
 #' @param goseq_method Statistical test for goseq to use.
 #' @param padjust_method Which method to use to adjust the pvalues.
-#' @param bioc_length_db Source of gene lengths?
 #' @param expand_categories Expand the GO categories to make the results more readable?
 #' @param excel Print the results to an excel file?
 #' @param ... Extra parameters which I do not recall
@@ -179,7 +255,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                          adjust = 0.1, pvalue = 0.1, plot_title = NULL,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
-                         bioc_length_db = "ensGene", expand_categories = TRUE, excel = NULL,
+                         expand_categories = TRUE, excel = NULL,
                          ...) {
   arglist <- list(...)
 
@@ -359,74 +435,16 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
                                         method = padjust_method)
 
-  ## Add a little logic if we are using a non-GO input database.
-  ## This is relevant if you use something like msigdb/reactome/kegg
-  ## I should probably make the rest of this function generic so that this is not required.
-  if (is.null(godata[["ontology"]])) {
-    godata[["ontology"]] <- "MF"
-  }
-
-  godata_interesting <- godata
-  if (isTRUE(expand_categories)) {
-    mesg("simple_goseq(): Filling godata with terms, this is slow.")
-    godata_interesting <- goseq_table(godata)
-  } else {
-    ## Set the 'term' category for plotting.
-    godata_interesting[["term"]] <- godata_interesting[["category"]]
-    godata[["term"]] <- godata[["category"]]
-  }
-
-  if (is.null(adjust)) {
-    interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
-    godata_interesting <- godata[godata_interesting, ]
-    padjust_method <- "none"
-  } else {
-    ## There is a requested pvalue adjustment
-    interesting_idx <- godata[["over_represented_pvalue"]] <= adjust
-    godata_interesting <- godata[interesting_idx, ]
-    if (dim(godata_interesting)[1] < minimum_interesting) {
-      message("simple_goseq(): There are no genes with an adj.p < ", adjust, " using: ",
-              padjust_method, ".")
-      message("simple_goseq(): Providing genes with raw pvalue < ", pvalue, ".")
-      interesting_idx <- godata[["over_represented_pvalue"]] <= pvalue
-      godata_interesting <- godata_interesting[interesting_idx, ]
-      padjust_method <- "none"
-    }
-  }
+  ## Subset the result for 'interesting' categories, which is defined
+  ## simply as the set of categories with full annotations.
+  interesting <- extract_interesting_goseq(godata, expand_categories = expand_categories,
+                                           pvalue = pvalue, adjust = adjust,
+                                           minimum_interesting = minimum_interesting,
+                                           padjust_method = padjust_method)
 
   mesg("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
                                   ...)
-  na_idx <- is.na(godata[["ontology"]])
-  godata <- godata[!na_idx, ]
-  mf_idx <- godata[["ontology"]] == "MF"
-  mf_subset <- godata[mf_idx, ]
-  rownames(mf_subset) <- mf_subset[["category"]]
-  bp_idx <- godata[["ontology"]] == "BP"
-  bp_subset <- godata[bp_idx, ]
-  rownames(bp_subset) <- bp_subset[["category"]]
-  cc_idx <- godata[["ontology"]] == "CC"
-  cc_subset <- godata[cc_idx, ]
-  rownames(cc_subset) <- cc_subset[["category"]]
-
-  na_idx <- is.na(godata_interesting[["ontology"]])
-  godata_interesting <- godata_interesting[!na_idx, ]
-  mf_idx <- godata_interesting[["ontology"]] == "MF"
-  mf_interesting <- godata_interesting[mf_idx, ]
-  rownames(mf_interesting) <- mf_interesting[["category"]]
-  mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
-  bp_idx <- godata_interesting[["ontology"]] == "BP"
-  bp_interesting <- godata_interesting[bp_idx, ]
-  rownames(bp_interesting) <- bp_interesting[["category"]]
-  bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
-  cc_idx <- godata_interesting[["ontology"]] == "CC"
-  cc_interesting <- godata_interesting[cc_idx, ]
-  rownames(cc_interesting) <- cc_interesting[["category"]]
-  cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
-
   pval_plots <- list(
       "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
       "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
@@ -436,24 +454,29 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       "input" = sig_genes,
       "pwf" = pwf,
       "pwf_plot" = pwf_plot,
-      "all_data" = godata,
+      "all_data" = interesting[["godata"]],
       "go_db" = godf,
+      "godata" = godata,
       "pvalue_histogram" = goseq_p,
-      "godata_interesting" = godata_interesting,
-      "mf_interesting" = mf_interesting,
-      "bp_interesting" = bp_interesting,
-      "cc_interesting" = cc_interesting,
+      "godata_interesting" = interesting[["interesting"]],
+      "mf_interesting" = interesting[["MF"]],
+      "bp_interesting" = interesting[["BP"]],
+      "cc_interesting" = interesting[["CC"]],
       "goadjust_method" = goseq_method,
       "adjust_method" = padjust_method,
-      "mf_subset" = mf_subset,
-      "pvalue_plots" = pval_plots,
-      "bp_subset" = bp_subset,
-      "cc_subset" = cc_subset)
+      "mf_subset" = interesting[["mf_subset"]],
+      "bp_subset" = interesting[["bp_subset"]],
+      "cc_subset" = interesting[["cc_subset"]],
+      "pvalue_plots" = pval_plots)
   class(retlist) <- c("goseq_result", "list")
+  retlist[["mf_enrich"]] <- goseq2enrich(retlist, ontology = "MF",
+                                         cutoff = pvalue, padjust_method = padjust_method)
+  retlist[["bp_enrich"]] <- goseq2enrich(retlist, ontology = "BP",
+                                         cutoff = pvalue, padjust_method = padjust_method)
+  retlist[["cc_enrich"]] <- goseq2enrich(retlist, ontology = "CC",
+                                         cutoff = pvalue, padjust_method = padjust_method)
   if (!is.null(excel)) {
-    mesg("Writing data to: ", excel, ".")
-    excel_ret <- try(write_goseq_data(retlist, excel = excel,
-                                      ...))
+    excel_result <- write_goseq_data(retlist, excel = excel, ...)
   }
   return(retlist)
 }

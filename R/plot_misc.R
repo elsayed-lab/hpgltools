@@ -85,22 +85,23 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   if (is.null(image)) {
     mesg("Going to write the image to: ", file, " when dev.off() is called.")
     mesg("Do not forget to close the device when you are done.")
-    return(result)
-  } else {
-    mesg("Writing the image to: ", file, " and calling dev.off().")
-    if (class(image)[[1]] == "recordedplot") {
-      print(image)
-    } else {
-      plot(image)
-    }
-
-    if (length(new_dev) > 0) {
-      dev.off(which = new_dev)
-    } else {
-      warning("There is no device to shut down.")
-    }
-    return(image)
+    return(invisible(result))
   }
+
+
+  mesg("Writing the image to: ", file, " and calling dev.off().")
+  if (class(image)[[1]] == "recordedplot") {
+    print(image)
+  } else {
+    plot(image)
+  }
+
+  if (length(new_dev) > 0) {
+    dev.off(which = new_dev)
+  } else {
+    warning("There is no device to shut down.")
+  }
+  return(image)
 }
 
 #' Make spirographs!

@@ -24,7 +24,7 @@
 #'  sagalacticae_genbank_annot <- load_genbank_annotations(accession = "AE009948")
 #'  dim(as.data.frame(sagalacticae_genbank_annot$cds))
 #' @export
-load_genbank_annotations <- function(accession = "AE009949", file = NULL,
+load_genbank_annotations <- function(accession = "AE009949", file = NULL, sequence = TRUE,
                                      reread = TRUE, savetxdb = FALSE) {
   gbk <- NULL
   if (!is.null(file)) {
@@ -37,12 +37,14 @@ load_genbank_annotations <- function(accession = "AE009949", file = NULL,
     } else {
       ## Note that different versions of genbankr require somewhat different
       ## methods of querying here.
+      mesg("Downloading accession from genbank.")
       gba <- genbankr::GBAccession(accession)
-      gbk <- genbankr::readGenBank(gba, partial = TRUE, verbose = TRUE)
+      mesg("Reading genbank file.")
+      gbk <- genbankr::readGenBank(gba, partial = TRUE, verbose = TRUE, ret.seq = sequence)
     }
   }
   gbr <- try(genbankr::makeTxDbFromGenBank(gbk))
-  seq <- Biostrings::getSeq(gbk)
+  seq <- genbankr::getSeq(gbk)
   others <- genbankr::otherFeatures(gbk)
   genes <- GenomicFeatures::genes(gbk)
   exons <- GenomicFeatures::exons(gbk)

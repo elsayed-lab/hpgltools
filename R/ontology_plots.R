@@ -1,3 +1,38 @@
+#' Invoke ther various fun plots created by Guangchuang Yu.
+#'
+#' I would like to replace all of my bad ontology plotting functions
+#' with the nicer versions from enrichplot.  I therefore have a series
+#' of functions which recast my ontology results to enrichResults,
+#' which is suitable for those plots.
+#'
+#' For the moment this is just a skeleton with reminders to me for the
+#' various plots available.  Also, when I looked up these plots it
+#' appears that clusterProfiler has some new functionality to make it
+#' easier to send results to it.
+#'
+#' @param enrichresult S4 object of type enrichResult.
+plot_enrichresult <- function(enrichresult) {
+  bar <- enrichplot::barplot(enrichresult)
+  dot <- enrichplot::dotplot(enrichresult)
+  cnet <- enrichplot::cnetplot(enrichresult)
+  heat <- enrichplot::heatplot(enrichresult)
+  tree <- enrichplot::treeplot(enrichresult)
+  map <- enrichplot::emapplot(enrichresult)
+  up <- enrichplot::upsetplot(enrichresult)
+  ## Used for gsea
+  ## gsea <- enrichplot::gseaplot2(enrichresult)
+  ## gsea_ridge <- enrichplot::ridgeplot(enrichresult
+  retlist <- list(
+      "bar" = bar,
+      "dot" = dot,
+      "cnet" = cnet,
+      "heat" = heat,
+      "tree" = tree,
+      "map" = map,
+      "up" = up)
+  return(retlist)
+}
+
 #' Plot the density of categories vs. the possibilities of all categories.
 #'
 #' This can make a large number of plots.
@@ -38,8 +73,8 @@ plot_topgo_densities <- function(godata, table) {
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso [ggplot2]
 #' @export
-plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
-                         numerator = NULL, denominator = NULL) {
+plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, text_location = "right", test_color = "black",
+                         x_column = "score", numerator = NULL, denominator = NULL) {
   if (nrow(df) == 0) {
     return(NULL)
   }
@@ -71,15 +106,22 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
   ## Sometimes max(df[["score"]]) throws an error -- I think this just needs na.rm
   ## but if I am wrong, I will catch any other errors and just send it to
   ## (0, 1/4, 1/2, 3/4, 1)
-  max_score <- max(df[["score"]], na.rm = TRUE)
-  if (class(max_score) == "try-error") {
-    max_score <- 1
+  if (x_column == "score") {
+    max_score <- max(df[["score"]], na.rm = TRUE)
+    if (class(max_score) == "try-error") {
+      max_score <- 1
+    }
+  } else {
+    max_score <- max(df[[x_column]], na.rm = TRUE)
   }
-  break_list <- c(0, 1/4 * max_score,
-                  1/2 * max_score, 3/4 * max_score,
+
+  break_list <- c(0, floor(1/4 * max_score),
+                  floor(1/2 * max_score),
+                  floor(3/4 * max_score),
                   max_score)
+
   pvalue_plot <- ggplot(df, aes_string(x = "reorder_size(df)",
-                                       y = "score", fill = "pvalue")) +
+                                       y = x_column, fill = "pvalue")) +
     ggplot2::geom_col() +
     ggplot2::scale_y_continuous(expand = c(0, 0), breaks = break_list,
                                 limits = c(0, max_score)) +
@@ -90,8 +132,14 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
     ggplot2::theme_bw(base_size = fontsize)
 
   if (!is.null(df[["score_string"]])) {
+    hjsut <- 1.2
+    if (text_location == "right") {
+      hjust <- 0.0
+    } else if (test_location == "inside") {
+      hjust <- 1.2
+    }
     pvalue_plot <- pvalue_plot +
-      ggplot2::geom_text(parse = FALSE, size = 3, color = "white", hjust = 1.2,
+      ggplot2::geom_text(parse = FALSE, size = 3, color = test_color, hjust = hjust,
                          ggplot2::aes_string(label = "score_string"))
   }
   return(pvalue_plot)
@@ -113,8 +161,11 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
 #' @return Plots!
 #' @seealso [ggplot2]
 #' @export
-plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
-                            n = 30, mincat = 5, level = NULL, ...) {
+plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1, x_column = "score",
+                            order_by = "score", decreasing = FALSE, n = 30, mincat = 5, level = NULL, ...) {
+  if (class(goterms)[1] == "goseq_result") {
+    goterms <- goterms[["godata"]]
+  }
   if (!is.null(level)) {
     keepers <- data.frame()
     message("Getting all go levels.  This takes a moment.")
@@ -146,82 +197,57 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1,
   } ## End if a go level was provided.
   complete_idx <- complete.cases(goterms)
   goterms_complete <- goterms[complete_idx, ]
-  mf_idx <- goterms_complete[["ontology"]] == "MF"
-  bp_idx <- goterms_complete[["ontology"]] == "BP"
-  cc_idx <- goterms_complete[["ontology"]] == "CC"
-  plotting_mf <- goterms_complete[mf_idx, ]
-  plotting_bp <- goterms_complete[bp_idx, ]
-  plotting_cc <- goterms_complete[cc_idx, ]
 
-  plotting_mf[["score"]] <- plotting_mf[["numDEInCat"]] / plotting_mf[["numInCat"]]
-  new_order <- order(plotting_mf[["score"]], decreasing = FALSE)
-  plotting_mf <- plotting_mf[new_order, ]
-  plotting_mf <- plotting_mf[plotting_mf[["term"]] != "NULL", ]
-  plotting_mf <- plotting_mf[plotting_mf[["over_represented_pvalue"]] <= cutoff, ]
-  plotting_mf <- plotting_mf[plotting_mf[["numInCat"]] >= mincat, ]
-  ##plotting_mf <- head(plotting_mf, n = n)
-  ## Because of the way ggplot wants to order the bars, we need to go from the
-  ## bottom up, ergo tail here. This ordering will be maintained in the plot by
-  ## setting the levels of the factor in plot_ontpval, which should have a note.
-  plotting_mf <- tail(plotting_mf, n = n)
-  plotting_mf <- plotting_mf[, c("term", "over_represented_pvalue", "score",
-                                 "numDEInCat", "numInCat")]
-  plotting_mf[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_mf[["term"]])
-  plotting_mf[["term"]] <- as.character(lapply(strwrap(plotting_mf[["term"]],
-                                                       wrapped_width,
-                                                       simplify = FALSE), paste, collapse = "\n"))
-  colnames(plotting_mf) <- c("term", "pvalue", "score", "num_de", "num_cat")
-  mf_pval_plot <- plot_ontpval(plotting_mf,
-                               ontology = "MF",
-                               numerator = "num_de",
-                               denominator = "num_cat")
+  plot_list <- list()
+  for (ont in c("mf", "bp", "cc")) {
+    idx <- goterms_complete[["ontology"]] == toupper(ont)
+    plotting <- goterms_complete[idx, ]
+    chosen_order = "score"
+    if (is.null(plotting[[order_by]])) {
+      message("The ", order_by, " column is null, defaulting to score.")
+      message("Possible columns are: ")
+      print(colnames(plotting))
+    } else {
+      chosen_order <- order_by
+    }
+    plotting[["score"]] <- plotting[["numDEInCat"]] / plotting[["numInCat"]]
+    new_order <- order(plotting[[chosen_order]], decreasing = decreasing)
+    plotting <- plotting[new_order, ]
+    plotting <- plotting[plotting[["term"]] != "NULL", ]
+    plotting <- plotting[plotting[["over_represented_pvalue"]] <= cutoff, ]
+    plotting <- plotting[plotting[["numInCat"]] >= mincat, ]
 
-  plotting_bp[["score"]] <- plotting_bp[["numDEInCat"]] / plotting_bp[["numInCat"]]
-  new_order <- order(plotting_bp[["score"]], decreasing = FALSE)
-  plotting_bp <- plotting_bp[new_order, ]
-  plotting_bp <- plotting_bp[plotting_bp[["term"]] != "NULL", ]
-  plotting_bp <- plotting_bp[plotting_bp[["over_represented_pvalue"]] <= cutoff, ]
-  plotting_bp <- plotting_bp[plotting_bp[["numInCat"]] >= mincat, ]
-  plotting_bp <- tail(plotting_bp, n = n)
-  plotting_bp <- plotting_bp[, c("term", "over_represented_pvalue", "score",
-                                 "numDEInCat", "numInCat")]
-  colnames(plotting_bp) <- c("term", "pvalue", "score", "num_de", "num_cat")
-  plotting_bp[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_bp[["term"]])
-  plotting_bp[["term"]] <- as.character(lapply(strwrap(plotting_bp[["term"]],
-                                                       wrapped_width,
-                                                       simplify = FALSE), paste, collapse = "\n"))
-  bp_pval_plot <- plot_ontpval(plotting_bp,
-                               ontology = "BP",
-                               numerator = "num_de",
-                               denominator = "num_cat")
+    ## Because of the way ggplot wants to order the bars, we need to go from the
+    ## bottom up, ergo tail here. This ordering will be maintained in the plot by
+    ## setting the levels of the factor in plot_ontpval, which should have a note.
+    plotting <- tail(plotting, n = n)
+    plotting <- plotting[, c("term", "over_represented_pvalue", "score",
+                             "numDEInCat", "numInCat")]
+    plotting[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting[["term"]])
+    plotting[["term"]] <- as.character(lapply(strwrap(plotting[["term"]],
+                                                      wrapped_width,
+                                                      simplify = FALSE), paste, collapse = "\n"))
+    colnames(plotting) <- c("term", "pvalue", "score", "num_de", "num_cat")
 
-  plotting_cc[["score"]] <- plotting_cc[["numDEInCat"]] / plotting_cc[["numInCat"]]
-  new_order <- order(plotting_cc[["score"]], decreasing = FALSE)
-  plotting_cc <- plotting_cc[new_order, ]
-  plotting_cc <- plotting_cc[plotting_cc[["term"]] != "NULL", ]
-  plotting_cc <- plotting_cc[plotting_cc[["over_represented_pvalue"]] <= cutoff, ]
-  plotting_cc <- plotting_cc[plotting_cc[["numInCat"]] >= mincat, ]
-  plotting_cc <- head(plotting_cc, n = n)
-  plotting_cc <- plotting_cc[, c("term", "over_represented_pvalue", "score",
-                                 "numDEInCat", "numInCat")]
-  colnames(plotting_cc) <- c("term", "pvalue", "score", "num_de", "num_cat")
-  plotting_cc[["term"]] <- gsub(pattern = "_", replacement = " ", x = plotting_cc[["term"]])
-  plotting_cc[["term"]] <- as.character(lapply(strwrap(plotting_cc[["term"]],
-                                                       wrapped_width,
-                                                       simplify = FALSE), paste, collapse = "\n"))
-  cc_pval_plot <- plot_ontpval(plotting_cc,
-                               ontology = "CC",
-                               numerator = "num_de",
-                               denominator = "num_cat")
-
-  pval_plots <- list(
-      "mfp_plot_over" = mf_pval_plot,
-      "bpp_plot_over" = bp_pval_plot,
-      "ccp_plot_over" = cc_pval_plot,
-      "mf_subset_over" = plotting_mf,
-      "bp_subset_over" = plotting_bp,
-      "cc_subset_over" = plotting_cc)
-  return(pval_plots)
+    chosen_x <- "score"
+    if (is.null(plotting[[x_column]])) {
+      message("The ", x_column, " column is null, defaulting to score.")
+      message("Possible columns are: ")
+      print(colnames(plotting))
+    } else {
+      chosen_x <- x_column
+    }
+    pval_plot <- plot_ontpval(plotting,
+                              x_column = chosen_x,
+                              ontology = toupper(ont),
+                              numerator = "num_de",
+                              denominator = "num_cat")
+    plot_slot <- paste0(ont, "p_plot_over")
+    plot_list[[plot_slot]] <- pval_plot
+    subset_slot <- paste0(ont, "_subset_over")
+    plot_list[[subset_slot]] <- plotting
+  }
+  return(plot_list)
 }
 
 #' Make a pvalue plot from topgo data.
