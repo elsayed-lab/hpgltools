@@ -363,7 +363,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
 
   ## Check that the current_id and required_id are in the orgdb.
   pkg <- get0(orgdb)
-  available <- columns(pkg)
+  available <- AnnotationDbi::columns(pkg)
   if (! current_id %in% available) {
     warning("The column: ", current_id, " is not in the set of available orgdb columns.")
     message("Here are the available columns:")

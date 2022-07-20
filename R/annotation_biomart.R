@@ -74,7 +74,16 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
         }
       }
       month_strings <- as.character(lubridate::month(month_nums, label = TRUE, abbr = TRUE))
+    } else if (is.na(suppressWarnings(as.numeric(month))) &
+               month %in% month_strings) {
+      ## Then it is pretty much guaranteed to be 'jan'
+      month_strings <- month
+    } else if (!is.na(suppressWarnings(as.numeric(month)))) {
+      month_strings <- month_strings[month]
+    } else {
+      stop("I do not know how to interpret this month.")
     }
+
     if (is.null(year)) {
       year_numeric <- lubridate::year(lubridate::date(lubridate::now()))
       year_strings <- as.character(c(year_numeric - 1, year_numeric - 2, year_numeric - 3))
@@ -388,35 +397,27 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #'  dim(hs_biomart_ontology$go)
 #' @export
 load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = TRUE,
-                            host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
+                            host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = FALSE,
                             default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
                                               "www.ensembl.org", "asia.ensembl.org"),
-                            year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
-                            dl_rows = c("ensembl_gene_id", "go_accession"),
+                            year = NULL, month = NULL, trydataset = NULL,
+                            dl_rows = c("ensembl_gene_id", "go_id"),
                             dl_rowsv2 = c("ensembl_gene_id", "go_id")) {
-  savefile <- glue("{species}_go_annotations.rda")
-  if (!identical(FALSE, do_save)) {
-    if (class(do_save)[1] == "character") {
-      savefile <- do_save
-      do_save <- TRUE
-    }
-  }
 
+  savefile <- glue("{species}_go_annotations.rda")
+  biomart_go <- NULL
   if (file.exists(savefile) & overwrite == FALSE) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
-    ## load_string <- paste0("load('", savefile, "', envir = fresh)")
-    load_string <- glue("load('{savefile}', envir = fresh)")
-    eval(parse(text = load_string))
-    biomart_go <- fresh[["biomart_go"]]
+    load(savefile, envir = fresh)
+    biomart_go <- fresh[["biomart_annotations"]]
     retlist <- list(
         "go" = biomart_go,
         "mart" = "savefile",
         "host" = "savefile",
         "mart_name" = "savefile",
         "rows" = "savefile",
-        "dataset" = "savefile"
-    )
+        "dataset" = "savefile")
     return(retlist)
   }
 
@@ -441,7 +442,7 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
 
   ensembl <- find_working_dataset(mart, trydataset, species)
 
-  biomart_go <- try(biomaRt::getBM(attributes = dl_rows, mart = ensembl), silent = TRUE)
+  biomart_go <- try(biomaRt::getBM(attributes = dl_rows, mart = ensembl))
   if (class(biomart_go) == "try-error") {
     biomart_go <- try(biomaRt::getBM(attributes = dl_rowsv2, mart = ensembl), silent = TRUE)
     dl_rows <- dl_rowsv2

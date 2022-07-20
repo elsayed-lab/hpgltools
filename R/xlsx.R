@@ -1,4 +1,4 @@
-## xlsx.r: Functions to simplify working with the xlsx format.  Most of the
+ ## xlsx.r: Functions to simplify working with the xlsx format.  Most of the
 ## people with whom we work prefer Excel files. I am not particularly a fan and
 ## so wanted a way to create reasonably nice workbooks without intervention and
 ## therefore hopefully without significant chance of shenanigans.
@@ -52,7 +52,7 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
     excel <- NULL
   }
   ## Thank you, Najib for this new and more robust regular expression.
-  excel_basename <- gsub(pattern = "\\.xlsx$|\\.xl.+$", replacement = "", x = excel)
+  excel_basename <- basename(gsub(pattern = "\\.xlsx$|\\.xl.+$", replacement = "", x = excel))
 
   if (is.null(excel)) {
     return(NULL)
@@ -72,6 +72,44 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
       "basename" = excel_basename,
       "wb" = wb)
   return(retlist)
+}
+
+#' Sanitize unreliable presentation of percent values from excel.
+#'
+#' In a recent sample sheet, we had some percentage values which were
+#' '0.5', '5%', ' 6%' and a few other weirdo things. This function
+#' should sanitize such shenanigans.
+#'
+#' @param numbers Either a vector of excel crap, or a column
+#'  name/number.
+#' @param df When provided, a data frame from which to extract the
+#'  numbers.
+#' @return Either the numbers or dataframe with the sanitized information.
+sanitize_percent <- function(numbers, df=NULL) {
+  number_column <- NULL
+  if (!is.null(df)) {
+    number_column <- numbers
+    numbers <- df[[numbers]]
+  }
+  numbers <- gsub(pattern = "\\s+", replacement = "", x = numbers)
+
+  for (n in 1:length(numbers)) {
+    pct <- grepl(x = numbers[n], pattern = "\\%")
+    new_number <- NA
+    if (pct) {
+      new_number <- gsub(x = numbers[n], pattern = "\\%", replacement = "") / 100.0
+    } else {
+      new_number <- numbers[n]
+    }
+    numbers[n] <- as.numeric(new_number)
+  }
+
+  ## If a df was provided, return that instead of the number vector.
+  if (!is.null(df)) {
+    df[[number_column]] <- numbers
+    numbers <- df
+  }
+  return(numbers)
 }
 
 #' Write a dataframe to an excel spreadsheet sheet.

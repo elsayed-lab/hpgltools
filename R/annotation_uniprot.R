@@ -20,14 +20,15 @@
 #'  uniprot_sc_downloaded$filename
 #'  uniprot_sc_downloaded$species
 #' @export
-download_uniprot_proteome <- function(accession = NULL, species = NULL,
-                                      taxonomy = NULL, all = FALSE, first = FALSE) {
+load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
+                                     taxonomy = NULL, all = FALSE, first = FALSE) {
   final_species <- ""
   if (!is.null(taxonomy)) {
     request_url <- glue::glue("https://www.uniprot.org/proteomes/?query=taxonomy%3A{xml2::url_escape(taxonomy)}")
     destination <- glue("{taxonomy}.txt.gz")
     if (!file.exists(destination)) {
-      tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+      ## tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+      tt <- download.file(url = request_url, destfile = destination, quiet = TRUE)
     }
     result <- xml2::read_html(destination)
     result_html <- rvest::html_nodes(result, "tr")
@@ -51,61 +52,72 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
       accession <- "UP000001584"
     } else if (is.null(accession)) {
       message("Querying uniprot for the accession matching: ", species, ".")
-      destination <- glue("{tempfile()}.txt.gz")
-      request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
-      if (!file.exists(destination)) {
-        tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
-      }
-      result <- xml2::read_html(destination)
-      result_html <- rvest::html_nodes(result, "tr")
-      accessions_text <- rvest::html_attr(result_html, "id")
-      ## The first two elements are headers
-      accessions_text <- accessions_text[3:length(accessions_text)]
-      accessions <- gsub(x = accessions_text, pattern = "^(UP[0-9]+)(.*$)", replacement = "\\1")
-      species_text <- rvest::html_nodes(result, "td") %>%
-        rvest::html_nodes("span") %>%
-        rvest::html_text()
-      final_species <- species_text[species_text != ""]
-      removed <- file.remove(destination)
-      if (length(accessions) == 1) {
-        accession <- accessions
-      } else if (isTRUE(all)) {
-        for (a in 1:length(accessions)) {
-          name <- final_species[a]
-          accession <- accessions[a]
-          message("Downloading the proteome for ", name, ".")
-          tmp <- download_uniprot_proteome(accession = accession)
-          Sys.sleep(time = 3)
-        }
-      } else if (isTRUE(first)) {
-        accession <- accessions[1]
-        name <- final_species[1]
-        message("Downloading the proteome for ", name, ".")
-        tmp <- download_uniprot_proteome(accession = accession)
-      } else {
-        message("Here are the species found, please choose one and try again.")
-        for (a in 1:length(accessions)) {
-          name <- final_species[a]
-          accession <- accessions[a]
-          message(a, ") ", accession, ": ", name)
-        }
-        message(toString(final_species))
-        return(NULL)
-      }
+      ##destination <- glue("{tempfile()}.txt.gz")
+      ## request_url <- glue("https://www.uniprot.org/proteomes/?query={xml2::url_escape(species)}")
+
+      ## Uniprot changed their web server in a few interesting ways which ultimately will make
+      ## downloading annotations easier/better, but will also require me to rewrite a bunch
+      ## of this code...
+      ## The easiest way to deal with this in the short term is to use the website
+      ## to 'download rest link' and get a new URL which will return TSV text which
+      ## I can just dump to a tbl and play with...
+
+      request_url <- glue("https://rest.uniprot.org/proteomes/stream?compressed=false&fields=upid%2Corganism%2Corganism_id%2Cprotein_count%2Cbusco%2Ccpd&format=tsv&query={xml2::url_escape(species)}")
+      ##if (!file.exists(destination)) {
+      ##  ## tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
+      ##  tt <- download.file(url = request_url, destfile = destination)
+      ##}
+      ##result <- xml2::read_html(destination)
+      ##result_html <- rvest::html_nodes(result, "tr")
+      ##accessions_text <- rvest::html_attr(result_html, "id")
+      #### The first two elements are headers
+      ##accessions_text <- accessions_text[3:length(accessions_text)]
+      ##accessions <- gsub(x = accessions_text, pattern = "^(UP[0-9]+)(.*$)", replacement = "\\1")
+      ##species_text <- rvest::html_nodes(result, "td") %>%
+      ##  rvest::html_nodes("span") %>%
+      ##  rvest::html_text()
+      ##final_species <- species_text[species_text != ""]
+      ##removed <- file.remove(destination)
+      ##if (length(accessions) == 1) {
+      ##  accession <- accessions
+      ##} else if (isTRUE(all)) {
+      ##  for (a in 1:length(accessions)) {
+      ##    name <- final_species[a]
+      ##    accession <- accessions[a]
+      ##    message("Downloading the proteome for ", name, ".")
+      ##    tmp <- download_uniprot_proteome(accession = accession)
+      ##    Sys.sleep(time = 3)
+      ##  }
+      ##} else if (isTRUE(first)) {
+      ##  accession <- accessions[1]
+      ##  name <- final_species[1]
+      ##  message("Downloading the proteome for ", name, ".")
+      ##  tmp <- download_uniprot_proteome(accession = accession)
+      ##} else {
+      ##  message("Here are the species found, please choose one and try again.")
+      ##  for (a in 1:length(accessions)) {
+      ##    name <- final_species[a]
+      ##    accession <- accessions[a]
+      ##    message(a, ") ", accession, ": ", name)
+      ##  }
+      ##  message(toString(final_species))
+      ##  return(NULL)
+      ##}
+      accession_tbl <- as.data.frame(readr::read_tsv(request_url))
+      message("This species provides: ", nrow(accession_tbl), " hits.")
+      message("Arbitrarily downloading the first: ", accession_tbl[1, "Organism"], ".")
+      accession <- as.character(accession_tbl[1, "Proteome Id"])
     }
   }
+  ##request_url <- glue(
+  ##    "https://www.uniprot.org/uniprot/?query=proteome:\\
+  ##   {accession}&compress=yes&force=true&format=txt")
+
+
   request_url <- glue(
-      "https://www.uniprot.org/uniprot/?query=proteome:\\
-     {accession}&compress=yes&force=true&format=txt")
-  destination <- glue("{accession}.txt.gz")
-  if (!file.exists(destination)) {
-    tt <- download.file(url = request_url, destfile = destination, method = "wget", quiet = TRUE)
-  }
-  retlist <- list(
-      "filename" = destination,
-      "species" = final_species,
-      "accession" = accession)
-  return(retlist)
+      "https://rest.uniprot.org/uniprotkb/stream?compressed=false&fields=accession%2Clineage%2Cvirus_hosts%2Clineage_ids%2Cgene_synonym%2Corganism_name%2Corganism_id%2Cprotein_name%2Cgene_orf%2Cgene_oln%2Cgene_names%2Cid%2Cgene_primary%2Cxref_proteomes%2Cabsorption%2Cft_act_site%2Cft_binding%2Cft_ca_bind%2Ccc_catalytic_activity%2Ccc_cofactor%2Cft_dna_bind%2Cec%2Ccc_activity_regulation%2Ccc_function%2Ckinetics%2Cft_metal%2Cft_np_bind%2Ccc_pathway%2Cph_dependence%2Credox_potential%2Crhea%2Cft_site%2Ctemp_dependence%2Cannotation_score%2Ccc_caution%2Ckeyword%2Ckeywordid%2Cprotein_existence%2Ccc_miscellaneous%2Creviewed%2Ctools%2Cuniparc_id%2Ccomment_count%2Cfeature_count%2Ccc_interaction%2Ccc_subunit%2Cgo_p%2Cgo_c%2Cgo%2Cgo_f%2Cgo_id%2Ccc_allergen%2Ccc_biotechnology%2Ccc_disruption_phenotype%2Ccc_disease%2Cft_mutagen%2Ccc_pharmaceutical%2Ccc_toxic_dose%2Cft_intramem%2Ccc_subcellular_location%2Cft_topo_dom%2Cft_transmem%2Cft_chain%2Cft_crosslnk%2Cft_init_met%2Cft_lipid%2Ccc_ptm%2Cft_propep%2Cstructure_3d%2Cft_strand%2Cft_helix%2Cft_turn%2Clit_pubmed_id%2Cft_coiled%2Cft_compbias%2Cft_domain%2Cft_motif%2Cft_region%2Cft_repeat&format=tsv&query=proteome%3A{accession}")
+  retdf <- readr::read_tsv(request_url)
+  return(retdf)
 }
 
 #' Read a uniprot text file and extract as much information from it as possible.
@@ -122,7 +134,7 @@ download_uniprot_proteome <- function(accession = NULL, species = NULL,
 #'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
 #'  dim(sc_uniprot_annot)
 #' @export
-load_uniprot_annotations <- function(file = NULL, species = NULL, savefile = TRUE) {
+load_uniprot_text_annotations <- function(file = NULL, species = NULL, savefile = TRUE) {
   if (is.null(file) & is.null(species)) {
     stop("This requires either a filename or species name.")
   } else if (is.null(file)) {

@@ -23,6 +23,11 @@ extract_significant_genes(
   siglfc_cutoffs = c(0, 1, 2),
   column_suffix = TRUE,
   gmt = NULL,
+  category = "category",
+  phenotype_name = "phenotype",
+  set_name = "set",
+  current_id = "ENSEMBL",
+  required_id = "ENTREZID",
   ...
 )
 }

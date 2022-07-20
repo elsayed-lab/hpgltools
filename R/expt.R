@@ -1670,7 +1670,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   if (length(fact) == 1) {
     ## Assume it is a column in the design
     if (fact %in% colnames(pData(expt))) {
-      fact <- expt[["design"]][[fact]]
+      fact <- pData(expt)[[fact]]
     } else {
       stop("The provided factor is not in the design matrix.")
     }
@@ -1742,7 +1742,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       colors_allocated <- names(colors) %in% levels(pData(expt)[["condition"]])
       if (sum(colors_allocated) < length(colors)) {
         missing_colors <- colors[!colors_allocated]
-        warning("Colors for the following categories are not being used: ",
+        stop("Colors for the following categories are not being used: ",
                 names(missing_colors), ".")
       }
       possible_conditions <- levels(pData(expt)[["condition"]])

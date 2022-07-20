@@ -1724,7 +1724,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     ## We have given some chances to not skip this group, if skip never got set to FALSE
     ## then this is probably not a useful criterion for searching.
     if (isTRUE(skip)) {
-      mesg("Did not find the ", test_column, ", skipping ", according, ".")
+      mesg("Did not find the ", test_fc_column, ", skipping ", according, ".")
       according_kept <- according_to[!according == according_to]
       next
     }
@@ -1888,6 +1888,16 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
   class(ret) <- c("sig_genes", "list")
+
+  ## If there is no gmt fielname provided, but an excel filename is provided,
+  ## save a .gmt with the xlsx file's basename
+  if (is.null(gmt)) {
+    if (!is.null(excel_basename)) {
+      output_dir <- xlsx[["dirname"]]
+      output_base <- paste0(xlsx[["basename"]], ".gmt")
+      gmt <- file.path(output_dir, output_base)
+    }
+  }
 
   if (!is.null(gmt)) {
     message("Going to attempt to create gmt files from these results.")
@@ -2446,7 +2456,7 @@ stringsAsFactors = FALSE)
   xls_result <- NULL
   image_files <- c()
   if (isTRUE(do_excel)) {
-    mesg("Printing a pca plot before/after surrogates/batch estimation.")
+    mesg("Printing pca plots before and after surrogate|batch estimation.")
     ## Add PCA before/after
     chosen_estimate <- apr[["batch_type"]]
     xl_result <- openxlsx::writeData(

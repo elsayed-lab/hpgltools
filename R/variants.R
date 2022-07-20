@@ -37,10 +37,6 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
   if (is.null(file_lst)) {
     stop("This requires a set of bcf filenames, the column: ", annot_column, " does not have any.")
   }
-  ## Create a data table of snp columns
-  if (is.null(snp_column)) {
-    stop("This requires a tag column to extract from the freebayes output.")
-  }
 
   snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
   test_names <- snp_dt[["rownames"]]
@@ -276,10 +272,15 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
 read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   ## Read the first file
   first_sample <- samples[1]
+  mesg("Reading sample: ", first_sample, ".")
   first_file <- file_lst[1]
   first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  if (is.null(first_read[[column]])) {
+    stop("The column: ", column, " does not appear to exist in the variant summary file.")
+  }
   ## Create a simplified data table from it.
-  first_column <- data.table::as.data.table(first_read[[column]])
+  input_column <- as.numeric(first_read[[column]])
+  first_column <- data.table::as.data.table(input_column)
   first_column[["rownames"]] <- first_read[[1]]
   colnames(first_column) <- c(first_sample, "rownames")
   ## Copy that dt to the final data structure.
@@ -297,12 +298,17 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
       setTxtProgressBar(bar, pct_done)
     }
     sample <- samples[sample_num]
+    mesg("Reading sample: ", sample, ", number ", sample_num, " of ",
+         length(samples), ".")
     file <- file_lst[sample_num]
     new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
     if (class(new_table)[1] == "try-error") {
       next
     }
-    new_column <- data.table::as.data.table(new_table[[column]])
+    ## I am not sure why, but a recent sample came up as a character vector
+    ## instead of numeric...
+    input_column <- as.numeric(new_table[[column]])
+    new_column <- data.table::as.data.table(input_column)
     new_column[["rownames"]] <- new_table[[1]]
     colnames(new_column) <- c(sample, "rownames")
     snp_columns <- merge(snp_columns, new_column, by = "rownames", all = TRUE)

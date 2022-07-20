@@ -10,14 +10,13 @@ load_biomart_go(
   do_save = TRUE,
   host = NULL,
   trymart = "ENSEMBL_MART_ENSEMBL",
-  archive = TRUE,
+  archive = FALSE,
   default_hosts = c("useast.ensembl.org", "uswest.ensembl.org", "www.ensembl.org",
     "asia.ensembl.org"),
   year = NULL,
   month = NULL,
-  drop_haplotypes = TRUE,
   trydataset = NULL,
-  dl_rows = c("ensembl_gene_id", "go_accession"),
+  dl_rows = c("ensembl_gene_id", "go_id"),
   dl_rowsv2 = c("ensembl_gene_id", "go_id")
 )
 }
@@ -42,15 +41,15 @@ character, it will assume it is a specific archive hostname.}
 
 \item{month}{Choose specific month(s) for the archive servers?}
 
-\item{drop_haplotypes}{Some chromosomes have stupid names because they are
-from non-standard haplotypes and they should go away.  Setting this to
-false stops that.}
-
 \item{trydataset}{Define a dataset to which to attempt connecting.}
 
 \item{dl_rows}{List of rows from the final biomart object to download.}
 
 \item{dl_rowsv2}{A second list of potential rows.}
+
+\item{drop_haplotypes}{Some chromosomes have stupid names because they are
+from non-standard haplotypes and they should go away.  Setting this to
+false stops that.}
 }
 \value{
 List containing the following:  data frame of ontology data, a copy

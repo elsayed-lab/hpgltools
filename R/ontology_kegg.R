@@ -565,7 +565,7 @@ gostats_kegg <- function(organism = "Homo sapiens",
 #' }
 #' @export
 get_kegg_orgn <- function(species = "Leishmania", short = TRUE) {
-  all_organisms <- RCurl::getURL("http://rest.kegg.jp/list/organism")
+  all_organisms <- RCurl::getURL("https://rest.kegg.jp/list/organism")
   org_tsv <- textConnection(all_organisms)
   all <- read.table(org_tsv, sep = "\t", quote = "", fill = TRUE)
   close(org_tsv)

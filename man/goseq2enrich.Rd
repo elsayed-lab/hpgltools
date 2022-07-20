@@ -4,7 +4,14 @@
 \alias{goseq2enrich}
 \title{Create a clusterProfiler compatible enrichResult data structure from a goseq result.}
 \usage{
-goseq2enrich(retlist, ontology = "MF", cutoff = 1, organism = NULL)
+goseq2enrich(
+  retlist,
+  ontology = "MF",
+  cutoff = 1,
+  cutoff_column = "over_represented_pvalue",
+  organism = NULL,
+  padjust_method = "BH"
+)
 }
 \arguments{
 \item{retlist}{Result from simple_goseq().}

@@ -1030,4 +1030,57 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
   return(retlist)
 }
 
+upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
+                       down=TRUE, both=FALSE) {
+
+  ## Start by pulling the gene lists from the significant gene sets.
+  start <- sig[[according_to]]
+  ups <- NULL
+  downs <- NULL
+  if (isTRUE(up)) {
+    ups <- start[["ups"]]
+  }
+  if (isTRUE(down)) {
+    downs <- start[["downs"]]
+  }
+
+  ## Figure out which contrasts (if not all of them) are desired to plot.
+  wanted_contrasts <- names(start[["ups"]])
+  if (!is.null(contrasts)) {
+    wanted_idx <- wanted_contrasts %in% contrasts
+    wanted_contrasts <- wanted_contrasts[wanted_idx]
+  }
+
+  ## Setup the lists of significant genes to plot.
+  upsetr_up_list <- list()
+  upsetr_down_list <- list()
+  upsetr_both_list <- list()
+  for (entry in wanted_contrasts) {
+    if (!is.null(ups)) {
+      upsetr_up_list[[entry]] <- rownames(ups[[entry]])
+    }
+    if (!is.null(downs)) {
+      upsetr_down_list[[entry]] <- rownames(downs[[entry]])
+    }
+    if (isTRUE(both)) {
+      upsetr_both_list[[entry]] <- c(rownames(ups[[entry]]),
+                                     rownames(downs[[entry]]))
+    }
+  } ## End looking for things to list
+
+  ## Do the plots.
+  retlist <- list()
+  if (isTRUE(up)) {
+    retlist[["up"]] <- UpSetR::upset(UpSetR::fromList(upsetr_up_list))
+  }
+  if (isTRUE(down)) {
+    retlist[["down"]] <- UpSetR::upset(UpSetR::fromList(upsetr_down_list))
+  }
+  if (isTRUE(both)) {
+    retlist[["both"]] <- UpSetR::upset(UpSetR::fromList(upsetr_both_list))
+  }
+
+  return(retlist)
+}
+
 ## EOF
