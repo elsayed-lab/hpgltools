@@ -784,6 +784,34 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
                                         basedir = basedir)
       },
+      "assembly_fasta_nt" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_genbank_annotated" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_genbank_stripped" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_cds_amino_acids" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_cds_nucleotides" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_gff" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_tsv" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -1208,6 +1236,20 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
 make_assembly_spec <- function() {
     specification <- list(
         ## First task performed is pretty much always trimming
+        "assembly_fasta_nt" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/unicycler_assembly.fasta"),
+        "assembly_genbank_annotated" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}.gbk"),
+        "assembly_genbank_stripped" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}_stripped.gbk"),
+        "assembly_cds_amino_acids" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.faa"),
+        "assembly_cds_nucleotides" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.ffn"),
+        "assembly_gff" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.gff"),
+        "assembly_tsv" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.tsv"),
         "input_r1" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "input_r2" = list(
