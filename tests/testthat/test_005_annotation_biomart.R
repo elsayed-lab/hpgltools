@@ -6,7 +6,8 @@ context("005annotation_biomart.R
 ## 2017-12, exported functions in annotation_biomart:
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 
-testing <- load_biomart_annotations(species = "hsapiens", overwrite=TRUE, year = "2020")
+testing <- load_biomart_annotations(species = "hsapiens", overwrite=TRUE,
+                                    year = "2020", month = "jan")
 annotations <- testing[["annotation"]]
 gene_ids <- head(sort(annotations[["ensembl_transcript_id"]]))
 expected <- c("ENST00000000233", "ENST00000000412", "ENST00000000442",
@@ -25,7 +26,7 @@ test_that("Do we receive expected output from load_biomart_annotations()?", {
 })
 
 ## load_biomart_go()
-testing <- load_biomart_go(species = "hsapiens", overwrite = TRUE, year = "2020")
+testing <- load_biomart_go(species = "hsapiens", overwrite = TRUE)
 data <- testing[["go"]]
 expected <- 40000
 actual <- nrow(data)

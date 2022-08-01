@@ -9,6 +9,9 @@ plot_ontpval(
   ontology = "MF",
   fontsize = 14,
   plot_title = NULL,
+  text_location = "right",
+  test_color = "black",
+  x_column = "score",
   numerator = NULL,
   denominator = NULL
 )

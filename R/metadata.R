@@ -270,6 +270,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   meta <- extract_metadata(starting_metadata)
   ## Perhaps use sanitize instead?
   meta[[1]] <- gsub(pattern="\\s+", replacement="", x=meta[[1]])
+  colnames(meta)[1] <- "sampleid"
   for (entry in 1:length(specification)) {
     entry_type <- names(specification[entry])
     message("Starting ", entry_type, ".")
@@ -431,28 +432,26 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "mean",
                                        verbose = verbose, basedir = basedir,
-                                       as = "numeric", ...)
+                                       as = "numeric")
       },
       "pernt_median_coverage" = {
         column <- "Coverage"
         entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
-                                       which = "function", chosen_func = "median",
-                                       verbose = verbose, basedir = basedir,
-                                       as = "numeric", ...)
+                                       chosen_func = "median", basedir = basedir,
+                                       which = "function", as = "numeric",
+                                       verbose = verbose)
       },
       "pernt_max_coverage" = {
         column <- "Coverage"
         entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "max",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
+                                       verbose = verbose, basedir = basedir)
       },
       "pernt_min_coverage" = {
         column <- "Coverage"
         entries <- dispatch_csv_search(meta, column, input_file_spec, file_type = "tsv",
                                        which = "function", chosen_func = "min",
-                                       verbose = verbose, basedir = basedir,
-                                       ...)
+                                       verbose = verbose, basedir = basedir)
       },
       "ictv_taxonomy" = {
         ## column <- "taxon"
@@ -785,6 +784,34 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
                                         basedir = basedir)
       },
+      "assembly_fasta_nt" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_genbank_annotated" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_genbank_stripped" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_cds_amino_acids" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_cds_nucleotides" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_gff" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
+      "assembly_tsv" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -1002,6 +1029,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
   ##}
   filenames_with_wildcards <- glue::glue(input_file_spec,
                                          ...)
+  ## filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   test_file <- Sys.glob(filenames_with_wildcards[1])
   if (length(test_file) == 0) {
@@ -1038,7 +1066,8 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
         next
       }
       input_line <- input_vector[i]
-      if (grepl(x = input_line, pattern = search)) {
+      found_boolean <- grepl(x = input_line, pattern = search)
+      if (found_boolean) {
         if (isTRUE(verbose)) {
           message("Found the correct line: ")
           message(input_line)
@@ -1052,6 +1081,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
       }
       last_found <- this_found
       all_found <- c(all_found, this_found)
+      output_entries[row] <- last_found
     } ## End looking at every line of the log file specified by the input file spec for this row
     close(input_handle)
     ## Handle cases where one might want to pull only the last entry in a log, or all of them.
@@ -1206,6 +1236,20 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
 make_assembly_spec <- function() {
     specification <- list(
         ## First task performed is pretty much always trimming
+        "assembly_fasta_nt" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/unicycler_assembly.fasta"),
+        "assembly_genbank_annotated" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}.gbk"),
+        "assembly_genbank_stripped" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}_stripped.gbk"),
+        "assembly_cds_amino_acids" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.faa"),
+        "assembly_cds_nucleotides" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.ffn"),
+        "assembly_gff" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.gff"),
+        "assembly_tsv" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.tsv"),
         "input_r1" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "input_r2" = list(
@@ -1223,31 +1267,31 @@ make_assembly_spec <- function() {
             "file" = "{basedir}/{meta[['sampleid']]}/host_species.txt"),
         ## After those, things can get pretty arbitrary...
         "hisat_genome_single_concordant" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/hisat2_*.stderr"),
         "hisat_genome_multi_concordant" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/hisat2_*.stderr"),
         "hisat_genome_single_all" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/hisat2_*.stderr"),
         "hisat_genome_multi_all" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*.stderr"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/hisat2_*.stderr"),
         "hisat_count_table" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*_{species}_genome*.count.xz"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/*_{species}_genome*.count.xz"),
         "jellyfish_count_table" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
         "jellyfish_observed" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
         "kraken_viral_classified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken.stderr"),
         "kraken_viral_unclassified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken.stderr"),
         "kraken_first_viral_species" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
         "kraken_first_viral_species_reads" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_viral*/kraken_report.txt"),
         "kraken_standard_classified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken.stderr"),
         "kraken_standard_unclassified" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_out.txt"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken.stderr"),
         "kraken_first_standard_species" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_standard*/kraken_report.txt"),
         "kraken_first_standard_species_reads" = list(
@@ -1281,7 +1325,7 @@ make_assembly_spec <- function() {
         "phastaf_num_hits" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phastaf_*/phage.bed"),
         "phageterm_dtr_length" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phageterm_*/direct-terminal-repeats.fasta"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phageterm_*/phageterm_final_dtr.fasta"),
         "prodigal_positive_strand" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prodigal_*/predicted_cds.gff"),
         "prodigal_negative_strand" = list(
@@ -1295,7 +1339,7 @@ make_assembly_spec <- function() {
         "phanotate_negative_strand" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*phanotate/*_phanotate.tsv.xz"),
         "final_gc_content" = list(
-            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka_*/{meta[['sampleid']]}.fna"),
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*prokka/{meta[['sampleid']]}.fna"),
         "interpro_signalp_hits" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*interproscan_*/{meta[['sampleid']]}.faa.tsv"),
         "interpro_phobius_hits" = list(

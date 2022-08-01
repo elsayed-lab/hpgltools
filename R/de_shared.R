@@ -78,6 +78,26 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   if (is.null(model_intercept)) {
     model_intercept <- FALSE
   }
+
+  if (isTRUE(model_cond)) {
+    message("This DE analysis will perform all pairwise comparisons among:")
+    print(table(pData(input)[["condition"]]))
+    if (isTRUE(model_batch)) {
+      message("This analysis will include a batch factor in the model comprised of:")
+      print(table(pData(input)[["batch"]]))
+    } else if ("character" %in% class(model_batch)) {
+      message("This analysis will include surrogate estimates from: ", model_batch, ".")
+    } else if ("matrix" %in% class(model_batch)) {
+      message("This analysis will include a matrix of surrogate estimates.")
+    }
+    if (!is.null(filter)) {
+      message("This will pre-filter the input data using normalize_expt's: ",
+              filter, " argument.")
+    }
+  } else {
+    message("This analysis is not using the condition factor from the data.")
+  }
+
   if (!is.null(filter)) {
     input <- sm(normalize_expt(input, filter = filter))
   }

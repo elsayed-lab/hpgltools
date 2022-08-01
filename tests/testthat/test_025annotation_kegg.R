@@ -8,6 +8,8 @@ context("025annotation_kegg.R
 ## There are some functions in ontology_kegg which probably should be moved here.
 
 ## load_kegg_annotations()
+
+## rest.kegg.jp  finally moved to https, sadly KEGGREST has not (yet).
 test_kegg <- load_kegg_annotations()
 actual <- head(test_kegg[["GID"]])
 expected <- c("b0001", "b0002", "b0003", "b0004", "b0005", "b0006")

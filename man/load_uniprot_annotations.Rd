@@ -2,28 +2,41 @@
 % Please edit documentation in R/annotation_uniprot.R
 \name{load_uniprot_annotations}
 \alias{load_uniprot_annotations}
-\title{Read a uniprot text file and extract as much information from it as possible.}
+\title{Download the txt uniprot data for a given accession/species.}
 \usage{
-load_uniprot_annotations(file = NULL, species = NULL, savefile = TRUE)
+load_uniprot_annotations(
+  accession = NULL,
+  species = "H37Rv",
+  taxonomy = NULL,
+  all = FALSE,
+  first = FALSE
+)
 }
 \arguments{
-\item{file}{Uniprot file to read and parse}
+\item{accession}{Which accession to grab?}
 
-\item{species}{Species name to download/load.}
+\item{species}{Or perhaps species?}
 
-\item{savefile}{Do a save?}
+\item{taxonomy}{Query for a specific taxonomy ID rather than species/accession?}
+
+\item{all}{If there are more than 1 hit, grab them all?}
+
+\item{first}{Or perhaps just grab the first hit?}
 }
 \value{
-Big dataframe of annotation data.
+A filename/accession tuple.
 }
 \description{
-I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
+Uniprot is an astonishing resource, but man is it a pain to use.  Hopefully
+this function will help.  It takes either a uniprot accession, taxonomy ID,
+or species name and does its best to find the appropriate uniprot data.  This
+is therefore primarily used by load_uniprot_annotations().
 }
 \examples{
  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
- sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
- dim(sc_uniprot_annot)
+ uniprot_sc_downloaded$filename
+ uniprot_sc_downloaded$species
 }
 \seealso{
-[download_uniprot_proteome()]
+[xml2] [rvest]
 }

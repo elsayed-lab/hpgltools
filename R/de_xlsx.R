@@ -1724,7 +1724,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     ## We have given some chances to not skip this group, if skip never got set to FALSE
     ## then this is probably not a useful criterion for searching.
     if (isTRUE(skip)) {
-      mesg("Did not find the ", test_column, ", skipping ", according, ".")
+      mesg("Did not find the ", test_fc_column, ", skipping ", according, ".")
       according_kept <- according_to[!according == according_to]
       next
     }
@@ -1889,24 +1889,36 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   }
   class(ret) <- c("sig_genes", "list")
 
+  ## If there is no gmt fielname provided, but an excel filename is provided,
+  ## save a .gmt with the xlsx file's basename
+  if (is.null(gmt)) {
+    if (!is.null(excel_basename)) {
+      output_dir <- xlsx[["dirname"]]
+      output_base <- paste0(xlsx[["basename"]], ".gmt")
+      gmt <- file.path(output_dir, output_base)
+    }
+  }
+
   if (!is.null(gmt)) {
     message("Going to attempt to create gmt files from these results.")
     annotation_name <- annotation(combined[["input"]][["input"]])
-    gsc <- make_gsc_from_pairwise(ret, according_to = according_to, orgdb = annotation_name,
+    gsc <- try(make_gsc_from_pairwise(ret, according_to = according_to, orgdb = annotation_name,
                                   pair_names = c("ups", "downs"), category_name = category,
                                   phenotype_name = phenotype_name, set_name = set_name,
-                                  current_id = current_id, required_id = required_id)
-    types <- c("colored", "up", "down")
-    for (t in types) {
-      if (!is.null(gsc[[t]])) {
-        for (g in 1:length(gsc[[t]])) {
-          datum <- gsc[[t]][[g]]
-          contrast_name <- names(gsc[[t]])[g]
-          dname <- dirname(gmt)
-          bname <- gsub(x = basename(gmt), pattern = "\\.gmt", replacement = "")
-          newname <- paste0(bname, "_", t, "_", contrast_name, ".gmt")
-          write_to <- file.path(dname, newname)
-          written <- GSEABase::toGmt(datum, write_to)
+                                  current_id = current_id, required_id = required_id))
+    if (! "try-error" %in% class(gsc)) {
+      types <- c("colored", "up", "down")
+      for (t in types) {
+        if (!is.null(gsc[[t]])) {
+          for (g in 1:length(gsc[[t]])) {
+            datum <- gsc[[t]][[g]]
+            contrast_name <- names(gsc[[t]])[g]
+            dname <- dirname(gmt)
+            bname <- gsub(x = basename(gmt), pattern = "\\.gmt", replacement = "")
+            newname <- paste0(bname, "_", t, "_", contrast_name, ".gmt")
+            write_to <- file.path(dname, newname)
+            written <- GSEABase::toGmt(datum, write_to)
+          }
         }
       }
     }
@@ -2446,7 +2458,7 @@ stringsAsFactors = FALSE)
   xls_result <- NULL
   image_files <- c()
   if (isTRUE(do_excel)) {
-    mesg("Printing a pca plot before/after surrogates/batch estimation.")
+    mesg("Printing pca plots before and after surrogate|batch estimation.")
     ## Add PCA before/after
     chosen_estimate <- apr[["batch_type"]]
     xl_result <- openxlsx::writeData(

@@ -627,7 +627,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   names <- NULL
   data_class <- class(data)[1]
   if (data_class == "expt") {
-    design <- data[["design"]]
+    design <- pData(data)
     colors <- data[["colors"]]
     names <- data[["samplenames"]]
     data <- exprs(data)
@@ -640,10 +640,8 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
-  shapes <- as.integer(as.factor(design[["batch"]]))
   condition <- design[["condition"]]
   batch <- design[["batch"]]
-
   if (!is.null(expt_names) & class(expt_names)[1] == "character") {
     if (length(expt_names) == 1) {
       colnames(data) <- make.names(design[[expt_names]], unique = TRUE)
@@ -656,7 +654,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   }
   nz_df <- data.frame(
       "id" = colnames(data),
-      "nonzero_genes" = colSums(data >= 1),
+      "nonzero_genes" = colSums(data > 0),
       "cpm" = colSums(data) * 1e-6,
       "condition" = condition,
       "batch" = batch,
@@ -667,15 +665,38 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   color_list <- as.character(color_listing[["color"]])
   names(color_list) <- as.character(color_listing[["condition"]])
   nz_df[["label"]] <- rownames(nz_df)
+  num_batches <- length(unique(nz_df[["batch"]]))
 
   non_zero_plot <- ggplot(data = nz_df,
                           aes_string(x = "cpm", y = "nonzero_genes", label = "label"),
-                          environment = hpgl_env) +
+                          environment = hpgl_env)
+  if (num_batches <= 5) {
+    non_zero_plot <- non_zero_plot +
+      ggplot2::geom_point(size = 3,
+                          aes_string(shape = "batch",
+                                     colour = "as.factor(condition)",
+                                     fill = "as.factor(condition)")) +
+      ggplot2::geom_point(size = 3, colour = "black", show.legend = FALSE,
+                          aes_string(shape = "batch",
+                                     fill = "as.factor(condition)")) +
+      ggplot2::scale_color_manual(name = "Condition",
+                                  values = color_list) +
+      ggplot2::scale_fill_manual(name = "Condition",
+                                 values = color_list) +
+      ggplot2::scale_shape_manual(
+                   name = "Batch",
+                   labels = levels(as.factor(nz_df[["batch"]])),
+                   values = 21:25)
+    } else {
+    non_zero_plot <- non_zero_plot +
     ggplot2::geom_point(size = 3, shape = 21,
                         aes_string(colour = "as.factor(condition)",
                                    fill = "as.factor(condition)")) +
     ggplot2::geom_point(size = 3, shape = 21, colour = "black", show.legend = FALSE,
-                        aes_string(fill = "as.factor(condition)")) +
+                        aes_string(fill = "as.factor(condition)"))
+    }
+
+  non_zero_plot <- non_zero_plot +
     ggplot2::scale_color_manual(name = "Condition",
                                 guide = "legend",
                                 values = color_list) +
