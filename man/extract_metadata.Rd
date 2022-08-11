@@ -4,7 +4,7 @@
 \alias{extract_metadata}
 \title{Pull metadata from a table (xlsx/xls/csv/whatever)}
 \usage{
-extract_metadata(metadata, id_column = "sampleid", ...)
+extract_metadata(metadata, id_column = "sampleid", fill = NULL, ...)
 }
 \arguments{
 \item{metadata}{file or df of metadata}

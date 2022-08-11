@@ -27,7 +27,7 @@
 network_from_matrix <- function(scores, metadata = NULL, type = "distcor", simplify = TRUE,
                                 mode = "undirected", weighted = TRUE, diag = FALSE) {
   if ("character" %in% class(scores)) {
-    scores <- as.matrix(read.table(score_file, header = TRUE, sep = "\t",
+    scores <- as.matrix(read.table(scores, header = TRUE, sep = "\t",
                                    row.names = 1))
   } else {
     scores <- as.matrix(scores)
