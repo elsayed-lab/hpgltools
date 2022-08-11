@@ -23,6 +23,7 @@ combine_single_de_table(
   include_basic = TRUE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
+  format_sig = 4,
   excludes = NULL,
   sheet_count = 0
 )

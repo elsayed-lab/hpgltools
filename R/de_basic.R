@@ -71,7 +71,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   ## First use conditions to rbind a table of medians by condition.
   message("Basic step 1/3: Creating ", fx, " and variance tables.")
   median_colnames <- c()
-  for (c in 1:num_conds) {
+  for (c in seq_len(num_conds)) {
     condition_name <- types[c]
     median_colnames <- append(median_colnames, condition_name)
     columns <- which(conditions == condition_name)
@@ -125,7 +125,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (c in 1:length(apc[["names"]])) {
+  for (c in seq_along(apc[["names"]])) {
     if (isTRUE(show_progress)) {
       pct_done <- c / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
@@ -152,7 +152,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
 
     t_data <- vector("list", nrow(xdata))
     p_data <- vector("list", nrow(xdata))
-    for (j in 1:nrow(xdata)) {
+    for (j in seq_len(nrow(xdata))) {
       test_result <- try(t.test(xdata[j, ], ydata[j, ]), silent = TRUE)
       if (class(test_result) == "htest") {
         t_data[[j]] <- test_result[[1]]
@@ -199,7 +199,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   all_tables <- list()
 
   message("Basic step 3/3: Creating faux DE Tables.")
-  for (e in 1:length(colnames(comparisons))) {
+  for (e in seq_along(colnames(comparisons))) {
     colname <- colnames(comparisons)[[e]]
     fc_column <- comparisons[, e]
     t_column <- as.numeric(tvalues[, e])

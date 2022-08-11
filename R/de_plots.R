@@ -397,7 +397,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   if (!is.null(table[["data"]])) {
     ## Then this is the result of combine_de
     retlist <- list()
-    for (i in 1:length(names(table[["data"]]))) {
+    for (i in seq_along(names(table[["data"]]))) {
       a_table <- table[["data"]][[i]]
       retlist[[i]] <- de_venn(a_table, adjp = adjp, p = p, lfc = lfc, arglist)
     }
@@ -480,7 +480,7 @@ plot_de_pvals <- function(combined_data, type = "limma", p_type = "both", column
     p_type <- "all"
   }
   plot_df <- combined_data[, columns]
-  for (c in 1:ncol(plot_df)) {
+  for (c in seq_len(ncol(plot_df))) {
     plot_df[[c]] <- as.numeric(plot_df[[c]])
   }
 
@@ -562,7 +562,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   down_nums <- data.frame()
   pup_nums <- data.frame()
   pdown_nums <- data.frame()
-  for (inc in 1:bins) {
+  for (inc in seq_len(bins)) {
     current_up_fc <- current_up_fc - up_increments
     current_down_fc <- current_down_fc - down_increments
     current_p <- current_p + p_increments
@@ -570,7 +570,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     down_nums_row <- c()
     pup_nums_row <- c()
     pdown_nums_row <- c()
-    for (c in 1:length(lfc_columns)) {
+    for (c in seq_along(lfc_columns)) {
       lfc_col <- lfc_columns[c]
       p_col <- p_columns[c]
       num_up <- sum(table[[lfc_col]] >= current_up_fc & table[[p_col]] <= constant_p)
@@ -876,7 +876,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
       fc_name <- glue::glue("fc_{fc}")
       fc_names <- append(fc_names, fc_name)
 
-      for (tab in 1:table_length) {
+      for (tab in seq_len(table_length)) {
         ## The table names are shared across methods and ups/downs
         table_names <- names(fc_sig[[type]][["ups"]])
         if (isTRUE(invert)) {
@@ -936,7 +936,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
     papa_bear <- fc_names[[1]]  ## Because it is the largest grouping
     mama_bear <- fc_names[[2]]  ## The middle grouping
     baby_bear <- fc_names[[3]]  ## And the smallest grouping
-    for (t in 1:table_length) {
+    for (t in seq_len(table_length)) {
       table_names <- names(sig_lists_up[[type]][[1]])
       table_name <- table_names[t]
       ##table_names <- names(sig_lists_up[[type]][[1]])[t]

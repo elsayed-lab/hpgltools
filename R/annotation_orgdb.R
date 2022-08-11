@@ -367,7 +367,7 @@ guess_orgdb_keytype <- function(ids, orgdb = NULL, verbose = FALSE) {
   found_ids <- 0
   current_type <- NULL
   possible_keytypes <- AnnotationDbi::keytypes(orgdb)
-  for (k in 1:length(possible_keytypes)) {
+  for (k in seq_along(possible_keytypes)) {
     type <- possible_keytypes[k]
     possible_keys <- try(AnnotationDbi::keys(x = orgdb, keytype = type), silent = TRUE)
     if (class(possible_keys)[1] == "try-error") {

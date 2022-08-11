@@ -188,7 +188,7 @@ load_uniprot_text_annotations <- function(file = NULL, species = NULL, savefile 
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (i in 1:length(read_vec)) {
+  for (i in seq_along(read_vec)) {
     if (isTRUE(show_progress)) {
       pct_done <- i / length(read_vec)
       utils::setTxtProgressBar(bar, pct_done)
@@ -602,12 +602,8 @@ load_uniprot_text_annotations <- function(file = NULL, species = NULL, savefile 
 #'  head(sc_uniprot_go)
 #' }
 #' @export
-load_uniprot_go <- function(input) {
-  if ("character" %in% class(input)) {
-    input <- load_uniprot_annotations(file = input)
-  } else if ("data.frame" %in% class(input)) {
-    input <- as.data.frame(input)
-  }
+load_uniprot_go <- function(...) {
+  input <- load_uniprot_annotations(...)
 
   kept <- input[, c("uniprot_accessions", "go", "aa_length")] %>%
     tidyr::separate_rows("uniprot_accessions")

@@ -68,7 +68,7 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
       ## Then assume this month
       month_numeric <- lubridate::month(lubridate::date(lubridate::now()))
       month_nums <- c(month_numeric, month_numeric - 1, month_numeric - 2)
-      for (m in 1:length(month_nums)) {
+      for (m in seq_along(month_nums)) {
         if (month_nums[m] < 1) {
           month_nums[m] <- month_nums[m] + 12
         }

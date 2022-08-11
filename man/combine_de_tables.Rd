@@ -23,6 +23,7 @@ combine_de_tables(
   plot_dim = 6,
   compare_plots = TRUE,
   padj_type = "ihw",
+  fancy = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),

@@ -661,7 +661,7 @@ normalize <- function(expt, todo = list()) {
   design <- pData(expt)
   count_table <- list("count_table" = counts,
                       "libsize" = expt[["libsize"]])
-  for (i in 1:length(todo)) {
+  for (i in seq_along(todo)) {
     type <- names(todo)[i]
     operation <- todo[[i]]
     method <- operation[[1]]

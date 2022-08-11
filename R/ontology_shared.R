@@ -73,8 +73,21 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   return(ret)
 }
 
+#' Recast gProfiler data to the output class produced by clusterProfiler.
+#'
+#' I would like to use the various clusterProfiler plots more easily.
+#' Therefore I figured it would be advantageous to coerce the various
+#' outputs from gprofiler and friends into the datastructure produced by
+#' clusterProfiler.
+#'
+#' @param retlist Output from simple_gprofiler()
+#' @param ontology Category type to extract, currently only GO?
+#' @param cutoff Use a p-value cutoff to get only the significant
+#'  categories?
+#' @param organism Set the orgdb organism name?
+#' @param padjust_method what it says on the tin.
 gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
-                             organism = NULL) {
+                             organism = NULL, padjust_method = "BH") {
   godf <- retlist[["go_db"]]
   interesting_name <- paste0(tolower(ontology), "_interesting")
   interesting <- retlist[[interesting_name]]
@@ -90,12 +103,17 @@ gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   adjusted <- p.adjust(interesting[["over_represented_pvalue"]])
   genes_per_category <- gather_ontology_genes(retlist, ontology = ontology,
                                               column = "over_represented_pvalue",
-                                              pval = pvalue)
+                                              pval = adjusted)
   category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])
   interesting[["tmp"]] <- bg_genes
+
+  ## The following line may in fact be incorrect, I need to look at
+  ## the constructure for the enrichResult again.
+  sig_genes <- rownames(interesting)
+
   ## FIXME: This is _definitely_ wrong for BgRatio
   representation_df <- data.frame(
-      "ID" = rownames(interesting),
+      "ID" = sig_genes,
       "Description" = interesting[["term"]],
       ## The following two lines are ridiculous, but required for the enrichplots to work.
       "GeneRatio" = paste0(interesting[["numDEInCat"]], "/", interesting[["numInCat"]]),
@@ -301,7 +319,7 @@ extract_lengths <- function(db = NULL, gene_list = NULL,
   ## methods we have of acquiring gene lengths. The code in the for loop
   ## should therefore invoke each of these in turn and figure out which
   ## provides the best overlap and use that.
-  for (c in 1:length(possible_types)) {
+  for (c in seq_along(possible_types)) {
     testing <- NULL
     ty <- possible_types[c]
     ## make a granges/iranges using the function in possible_types.
@@ -691,7 +709,7 @@ gather_genes_orgdb <- function(goseq_data, orgdb_go, orgdb_ensembl) {
   my_table[["entrez_ids"]] <- ""
   my_table[["ensembl_ids"]] <- ""
   my_table[["all_ensembl_in_ontology"]] <- ""
-  for (count in 1:nrow(my_table)) {
+  for (count in seq_len(nrow(my_table))) {
     ont <- my_table[count, "category"]
     test_map <- try(as.list(orgdb_go[ont]), silent = TRUE)
     if (class(test_map) == "list") {
@@ -796,7 +814,7 @@ limma_pairwise(), edger_pairwise(), or deseq_pairwise().")
   }
 
   output <- list()
-  for (c in 1:length(de_out)) {
+  for (c in seq_along(de_out)) {
     datum <- de_out[[c]]
     if (!is.null(datum[["Row.names"]])) {
       rownames(datum) <- datum[["Row.names"]]
@@ -957,7 +975,7 @@ subset_ontology_search <- function(changed_counts, doplot = TRUE, do_goseq = TRU
                   "up_gprofiler", "down_gprofiler")
   names_list <- names(up_list)
   names_length <- length(names_list)
-  for (cluster_count in 1:names_length) {
+  for (cluster_count in seq_len(names_length)) {
     name <- names_list[[cluster_count]]
     uppers <- up_list[[cluster_count]]
     downers <- down_list[[cluster_count]]

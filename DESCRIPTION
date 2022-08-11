@@ -60,7 +60,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
 Collate:
   '01_hpgltools.R'
   'annotation_biomart.R'

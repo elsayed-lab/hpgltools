@@ -24,9 +24,11 @@ extract_keepers_single(
   include_basic,
   excludes,
   padj_type,
+  fancy = FALSE,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  format_sig = 4
 )
 }
 \arguments{

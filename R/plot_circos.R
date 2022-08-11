@@ -509,7 +509,7 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
   outfile <- glue::glue("{conf_dir}/karyotypes/{name}.conf")
   out <- file(outfile, open = "w+")
   ## First write the summary line
-  for (ch in 1:chr_num) {
+  for (ch in seq_len(chr_num)) {
     chr_name <- chr_df[ch, "names"]
     ## chr_name <- gsub(pattern = "^(\\w+)(.*)$", replacement = "\\1", x = chr_name)
     chr_name <- stringi::stri_extract_first_words(chr_name)
@@ -523,7 +523,7 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
     if (chr_width < 100000) {
       individual_segments <- 1
     }
-    for (segment in 1:individual_segments) {
+    for (segment in seq_len(individual_segments)) {
       current <- segment - 1
       begin <- floor(current * (chr_width / individual_segments))
       end <- floor(segment * (chr_width / individual_segments))
@@ -1469,7 +1469,7 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
 ")
   tile_cfg_out <- file(tile_cfg_file, open = "w+")
   cat(tile_cfg_string, file = tile_cfg_out, sep = "")
-  for (c in 1:num_colors) {
+  for (c in seq_len(num_colors)) {
     red_component <- "0x00"
     green_component <- "0x00"
     blue_compnent <- "0x00"

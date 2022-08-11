@@ -213,7 +213,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     }
     ## foreach returns the results in no particular order
     ## Therefore, I will reorder the results now and ensure that they are happy.
-    for (r in 1:length(res)) {
+    for (r in seq_along(res)) {
       a_result <- res[[r]]
       type <- a_result[["type"]]
       results[[type]] <- a_result
@@ -310,11 +310,14 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
 
   ## By default, assume all the relevant columns are in the tbl variable.
   ## However, if a second tbl is provided, then do not assume that.
-  if (!is.null(tbl2)) {
-    tbl3 <- merge(tbl, tbl2, by = "row.names")
-    rownames(tbl3) <- tbl3[["Row.names"]]
-    tbl3[["Row.names"]] <- NULL
-    tbl <- tbl3
+  if (is.null(tbl2)) {
+    message("A second table was not providing, performing comparison among columns of the first.")
+  } else {
+    tmp_tbl <- merge(tbl, tbl2, by = "row.names")
+    rownames(tmp_tbl) <- tmp_tbl[["Row.names"]]
+    tmp_tbl[["Row.names"]] <- NULL
+    tbl <- tmp_tbl
+    rm("tmp_tbl")
     if (px == py) {
       px <- paste0(px, ".x")
       py <- paste0(py, ".y")
@@ -328,7 +331,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   y_df <- tbl[x_order, c(py, ly)]
 
   ## Do a simple correlation test just to have it as a comparison point
-  simple_cor <- cor.test(tbl3[[lx]], tbl3[[ly]])
+  simple_cor <- cor.test(tbl[[lx]], tbl[[ly]])
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
@@ -346,7 +349,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   ## number of top-ranked genes considered.
 
   intersections <- rep(0, topn)
-  for (i in 1:topn) {
+  for (i in seq_len(topn)) {
     if (i == 1) {
       intersections[i] <- rownames(x_df)[i] == rownames(y_df)[i]
     } else {
@@ -408,7 +411,7 @@ sva_modify_pvalues <- function(results) {
   if (isTRUE(verbose)) {
     message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
   }
-  for (it in 1:length(results[["edger"]][["all_tables"]])) {
+  for (it in seq_along(results[["edger"]][["all_tables"]])) {
     name <- names(results[["edger"]][["all_tables"]])[it]
     if (isTRUE(verbose)) {
       message("Readjusting the p-values for comparison: ", name)
@@ -1113,7 +1116,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   comparisons <- c("logfc", "p", "adjp")
   ## First make sure we can collect the data for each differential expression method.
   methods <- c()
-  for (m in 1:length(try_methods)) {
+  for (m in seq_along(try_methods)) {
     method <- try_methods[m]
     message("Testing method: ", method, ".")
     test_column <- glue("{method}_logfc")
@@ -1128,15 +1131,15 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   }
 
   ## Now start building tables containing the correlations between the methods/contrasts.
-  for (m in 1:length(methods)) {
+  for (m in seq_along(methods)) {
     method <- methods[m]
     result[[method]] <- list()
     tables <- names(first[["data"]])
-    for (t in 1:length(tables)) {
+    for (t in seq_along(tables)) {
       table <- tables[t]
       message(" Starting method ", method, ", table ", table, ".")
       result[[method]][[table]] <- list()
-      for (c in 1:length(comparisons)) {
+      for (c in seq_along(comparisons)) {
         comparison <- comparisons[c]
         column_name <- glue("{method}_{comparison}")
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
@@ -1174,9 +1177,9 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   adjp_df <- data.frame(row.names = names(result[[1]]))
   cols <- names(result)
   rows <- names(result[[1]])
-  for (i in 1:length(rows)) {
+  for (i in seq_along(rows)) {
     row <- rows[i]
-    for (j in 1:length(cols)) {
+    for (j in seq_along(cols)) {
       col <- cols[j]
       if (col == "basic") {
         next
@@ -1332,14 +1335,14 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (c in 1:lenminus) {
+  for (c in seq_len(lenminus)) {
     c_name <- methods[c]
     nextc <- c + 1
-    for (d in nextc:length(methods)) {
+    for (d in seq(from = nextc, to = length(methods))) {
       d_name <- methods[d]
       method_comp_name <- glue("{c_name}_vs_{d_name}")
       contrast_name_list <- c()
-      for (l in 1:len) {
+      for (l in seq_len(len)) {
         progress_count <- progress_count + 1
         if (isTRUE(verbose)) {
           pct_done <- progress_count / total_comparisons
@@ -1450,7 +1453,7 @@ compare_logfc_plots <- function(combined_tables) {
   }
   tnames <- names(data)
   retlist <- list()
-  for (c in 1:length(tnames)) {
+  for (c in seq_along(tnames)) {
     tname <- tnames[c]
     tab <- data[[tname]]
     if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
@@ -1515,7 +1518,7 @@ compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
                                           weights = FALSE, contrasts = c(1, 2, 3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
-  for (i in 1:length(contrasts)) {
+  for (i in seq_along(contrasts)) {
     contr <- contrasts[i]
     if (is.numeric(contr)) {
       contrasts[i] <- contrast_names[i]
@@ -1526,7 +1529,7 @@ compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
   }
   up_lst <- list()
   down_lst <- list()
-  for (c in 1:length(contrasts)) {
+  for (c in seq_along(contrasts)) {
     contr <- contrasts[c]
     up_lst[[contr]] <- rownames(sig_tables[[compare_by]][["ups"]][[contr]])
     down_lst[[contr]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
@@ -2066,7 +2069,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   identities <- list()
   contrast_string <- ""
   eval_strings <- list()
-  for (c in 1:length(condition_table)) {
+  for (c in seq_along(condition_table)) {
     identity_name <- names(condition_table[c])
     identity_string <- paste(identity_name, " = ", identity_name, ",", sep = "")
     identities[identity_name] <- identity_string
@@ -2081,10 +2084,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   all_pairwise <- list()
   identity_names <- names(identities)
   lenminus <- length(identities) - 1
-  for (c in 1:lenminus) {
+  for (c in seq_len(lenminus)) {
     c_name <- names(identities[c])
     nextc <- c + 1
-    for (d in nextc:length(identities)) {
+    for (d in seq(from = nextc, to = length(identities))) {
       d_name <- names(identities[d])
       minus_string <- paste(d_name, "_vs_", c_name, sep = "")
       exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
@@ -2110,7 +2113,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
     extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
-    for (i in 1:length(extra_eval_strings)) {
+    for (i in seq_along(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
       extra_eval_string <- extra_eval_strings[[i]]
       extra_eval_string <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_string, perl = TRUE)
@@ -2123,7 +2126,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   }
   ## Add them to makeContrasts()
   contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
-  for (f in 1:length(eval_strings)) {
+  for (f in seq_along(eval_strings)) {
     eval_name = names(eval_strings[f])
     ## Get a little defensive to make sure I do not have contrasts which start with
     ## silly things like numbers of punctuation.
@@ -2185,7 +2188,9 @@ mymakeContrasts <- function(..., contrasts = NULL, levels) {
     out
   }
   levelsenv <- new.env()
-  for (i in 1:n) assign(levels[i], indicator(i, n), pos = levelsenv)
+  for (i in seq_len(n)) {
+    assign(levels[i], indicator(i, n), pos = levelsenv)
+  }
   if (!is.null(contrasts)) {
     if (length(e) > 1)
       stop("Can't specify both ... and contrasts")
@@ -2195,7 +2200,7 @@ mymakeContrasts <- function(..., contrasts = NULL, levels) {
                                            Contrasts = e))
     if (ne == 0)
       return(cm)
-    for (j in 1:ne) {
+    for (j in seq_len(ne)) {
       ej <- parse(text = e[j])
       cm[, j] <- eval(ej, envir = levelsenv)
     }
@@ -2211,7 +2216,7 @@ mymakeContrasts <- function(..., contrasts = NULL, levels) {
                                              Contrasts = cn))
   if (ne < 2)
     return(cm)
-  for (j in 1:(ne - 1)) {
+  for (j in seq(from = 1, to = ne - 1)) {
     ej <- e[[j + 1]]
     if (is.character(ej))
       ej <- parse(text = ej)
@@ -2331,7 +2336,7 @@ semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE,
   }
 
   numbers_removed <- list()
-  for (count in 1:length(table_list)) {
+  for (count in seq_along(table_list)) {
     tab <- table_list[[count]]
     table_name <- names(table_list)[[count]]
     numbers_removed[[table_name]] <- list()
@@ -2386,7 +2391,7 @@ semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE,
 
     ## Now recreate the original table lists as either de tables or significance.
     if (table_type == "combined") {
-      for (count in 1:length(table_list)) {
+      for (count in seq_along(table_list)) {
         input[["data"]][[count]] <- table_list[[count]]
       }
     } else {

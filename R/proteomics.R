@@ -37,7 +37,7 @@ add_conditional_nas <- function(expt, fact = "condition", method = "NA") {
   types <- levels(fact)
   used_columns <- c()
   observations_df <- data.frame(row.names = rownames(mtrx))
-  for (t in 1:length(types)) {
+  for (t in seq_along(types)) {
     type <- types[t]
     used_columns <- grep(pattern = type, x = fact)
     if (length(used_columns) < 1) {
@@ -70,7 +70,7 @@ add_conditional_nas <- function(expt, fact = "condition", method = "NA") {
     observations_df <- cbind(observations_df, observation_column)
     colnames(observations_df)[t] <- glue::glue("{type}_observations")
 
-    for (c in 1:length(used_columns)) {
+    for (c in seq_along(used_columns)) {
       replace_col <- used_columns[c]
       mtrx[, replace_col] <- sub_mtrx[, c]
     }
@@ -231,7 +231,7 @@ extract_mzXML_scans <- function(file, id = NULL, write_acquisitions = TRUE,
   if (!isTRUE(allow_window_overlap)) {
     previous_end <- acquisition_windows[1, "end"]
     ## If we are not allowing windows to overlap, then we will add 0.01 to the previous endpoint.
-    for (it in 2:nrow(acquisition_windows)) {
+    for (it in seq(from = 2, to = nrow(acquisition_windows))) {
       new_start <- acquisition_windows[it, "start"]
       if (new_start != previous_end) {
         acquisition_windows[it, "start"] <- previous_end
@@ -430,7 +430,7 @@ extract_msraw_data <- function(metadata, write_windows = TRUE, id_column = "samp
     parallel::stopCluster(cl)
   } else {
     res_names <- c()
-    for (i in 1:num_files) {
+    for (i in seq_len(num_files)) {
       file <- meta[i, "file"]
       id <- meta[i, "id"]
       file_result <- try(extract_scan_data(file, id = id, write_acquisitions = write_windows,
@@ -585,7 +585,7 @@ extract_peprophet_data <- function(pepxml, decoy_string = "DECOY_", ...) {
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (i in 1:length(modification_test)) {
+  for (i in seq_along(modification_test)) {
     if (isTRUE(show_progress)) {
       pct_done <- i / length(modification_test)
       setTxtProgressBar(bar, pct_done)
@@ -786,7 +786,7 @@ extract_pyprophet_data <- function(metadata, pyprophet_column = "diascored",
   res <- list()
   num_files <- nrow(meta)
   failed_files <- c()
-  for (i in 1:num_files) {
+  for (i in seq_len(num_files)) {
     file <- meta[i, "scored"]
     id <- meta[i, "id"]
     message("Attempting to read the tsv file for: ", id, ": ", file, ".")
@@ -949,7 +949,7 @@ mean_by_bioreplicate <- function(expt, fact = "bioreplicate", fun = "mean") {
   final <- median_by_factor(expt, fact = fact, fun = fun)[["medians"]]
   current_design <- pData(expt)
   new_design <- data.frame()
-  for (c in 1:length(colnames(final))) {
+  for (c in seq_along(colnames(final))) {
     colname <- colnames(final)[c]
     possible_rows <- which(current_design[[fact]] == colname)
     chosen_row_idx <- possible_rows[1]
@@ -983,7 +983,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (r in 1:nrow(result)) {
+  for (r in seq_len(nrow(result))) {
     if (isTRUE(show_progress)) {
       pct_done <- r / nrow(result)
       setTxtProgressBar(bar, pct_done)
@@ -1069,7 +1069,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
   if (isTRUE(show_progress)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (g in 1:length(group_data)) {
+  for (g in seq_along(group_data)) {
     if (isTRUE(show_progress)) {
       pct_done <- g / length(group_data)
       setTxtProgressBar(bar, pct_done)
@@ -1077,7 +1077,7 @@ read_thermo_xlsx <- function(xlsx_file, test_row = NULL) {
     group <- as.character(names(group_data)[g])
     protein_group <- group_data[[group]][["data"]]
     protein_accessions <- names(protein_group)
-    for (p in 1:length(protein_accessions)) {
+    for (p in seq_along(protein_accessions)) {
       protein <- protein_accessions[p]
       protein_names <- c(protein_names, protein)
       protein_summary <- group_data[[group]][["data"]][[protein]][["summary"]]
@@ -1378,7 +1378,7 @@ subset_pyprophet_data <- function(lst, subset = NULL, column = "protein_id", ope
   data <- lst[["sample_data"]]
   ## First, I want to get the simple Rv ID from the data, this is annoyingly Tb
   ## specific and should be removed or in some way made generic for other data.
-  for (c in 1:length(data)) {
+  for (c in seq_along(data)) {
     datum <- data[[c]]
     datum[["protein_id"]] <- gsub(x = datum[["proteinname"]], pattern = "^1/",
                                   replacement = "")
@@ -1388,7 +1388,7 @@ subset_pyprophet_data <- function(lst, subset = NULL, column = "protein_id", ope
   }
 
   ## Now, separately subset the data to find the proteins of interest.
-  for (c in 1:length(data)) {
+  for (c in seq_along(data)) {
     datum <- data[[c]]
     datum_idx <- rep(TRUE, nrow(datum))
     if (operator == "in") {

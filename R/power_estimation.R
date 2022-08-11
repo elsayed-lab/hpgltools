@@ -195,7 +195,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     ## The points on the x-axis are: 0, 10, 20, 40, 80, 160, 320, 640, 1280, inf
     cutoffs <- c(10, 20, 40, 80, 160, 320, 640, 1280, 2560)
     clen <- length(cutoffs)
-    for (d in 1:clen) {
+    for (d in seq_len(clen)) {
       cutoff <- cutoffs[d]
       adder <- d - 1
       if (all_coverage < cutoff) {
@@ -304,7 +304,9 @@ run.DESeq2 <- "PROPER" %:::% "run.DESeq2"
 #' A version of PROPER:::runsims which is (hopefully) a little more robust.
 #'
 #' When I was testing PROPER, it fell down mysteriously on a few occasions.  The
-#' source ended up being in runsims(), ergo this function.
+#' source ended up being in runsims(), ergo this function.  This is
+#' therefore mostly a copy/paste of that function with a few small
+#' changes.
 #'
 #' @param Nreps Vector of numbers of replicates to simulate.
 #' @param Nreps2 Second vector of replicates.
@@ -331,13 +333,13 @@ my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
                                   dim = c(sim.opts[["ngenes"]],
                                           length(Nreps), nsims))
   DEids <- lfcs <- NULL
-  for (i in 1:nsims) {
+  for (i in seq_len(nsims)) {
     sim.opts[["sim.seed"]] <- sim.opts[["sim.seed"]] + 1
     sim.opts <- update.RNAseq.SimOptions.2grp(sim.opts)
     dat.sim.big <- PROPER::simRNAseq(sim.opts, n1, n2)
     DEids[[i]] <- dat.sim.big[["DEid"]]
     lfcs[[i]] <- dat.sim.big[["simOptions"]][["lfc"]]
-    for (j in 1:length(Nreps)) {
+    for (j in seq_along(Nreps)) {
       nn1 <- Nreps[j]
       nn2 <- Nreps2[j]
       idx <- c(1:nn1, n1 + (1:nn2))

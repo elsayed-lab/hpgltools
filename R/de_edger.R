@@ -183,7 +183,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (con in 1:length(apc[["names"]])) {
+  for (con in seq_along(apc[["names"]])) {
     name <- apc[["names"]][[con]]
     if (isTRUE(verbose)) {
       pct_done <- con / length(apc[["names"]])

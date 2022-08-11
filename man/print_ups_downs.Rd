@@ -10,7 +10,8 @@ print_ups_downs(
   excel_basename,
   according = "limma",
   summary_count = 1,
-  ma = FALSE
+  ma = FALSE,
+  fancy = FALSE
 )
 }
 \arguments{

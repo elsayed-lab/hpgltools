@@ -72,7 +72,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     ## characters.
     pvals <- as.vector(as.numeric(sig_genes[[pval_column]]))
     names(pvals) <- rownames(sig_genes)
-    for (p in 1:length(pvals)) {
+    for (p in seq_along(pvals)) {
       name <- names(pvals)[p]
       ks_interesting_genes[[name]] <- pvals[p]
     }
@@ -107,7 +107,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")
   }
-  for (r in 1:length(methods)) {
+  for (r in seq_along(methods)) {
     a_result <- res[[r]]
     type <- a_result[["MF"]][["type"]]
     ontology_result[["MF"]][[type]] <- a_result[["MF"]]

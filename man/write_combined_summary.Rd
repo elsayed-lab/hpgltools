@@ -11,7 +11,8 @@ write_combined_summary(
   extracted,
   compare_plots,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  fancy = FALSE
 )
 }
 \arguments{

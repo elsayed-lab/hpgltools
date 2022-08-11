@@ -1,4 +1,4 @@
-# Note to self, I think for future ggplot2 plots, I must start by creating the data frame
+## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
 ## Then cast every column in it explicitly, and only then invoke ggplot(data = df ...)
 
 ## If I see something like:
@@ -48,6 +48,9 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
   return(retlist)
 }
 
+#' Translate the hexadecimal color codes to three decimal numbers.
+#'
+#' @param rgb hexadecimal color input.
 color_int <- function(rgb) {
   hex <- gsub(pattern = "^\\#", replacement = "", x = rgb)
   red <- as.integer(as.hexmode(gsub(pattern = "^(.{2}).{4}$", replacement = "\\1", x = hex)))
@@ -388,7 +391,7 @@ plot_legend <- function(stuff) {
 plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
-  numPlots <- length(plots)
+  num_plots <- length(plots)
   if (is.null(cols)) {
     cols <- ceiling(sqrt(length(plots)))
   }
@@ -397,11 +400,11 @@ plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
     ## Make the panel
     ## ncol: Number of columns of plots
     ## nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
-                     ncol = cols, nrow = ceiling(numPlots / cols))
+    layout <- matrix(seq(1, cols * ceiling(num_plots / cols)),
+                     ncol = cols, nrow = ceiling(num_plots / cols))
   }
 
-  if (numPlots==1) {
+  if (num_plots==1) {
     print(plots[[1]])
   } else {
     ## Set up the page
@@ -409,7 +412,7 @@ plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
     grid::pushViewport(grid::viewport(
                                  layout = grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
-    for (i in 1:numPlots) {
+    for (i in seq_len(num_plots)) {
       ## Get the i,j matrix positions of the regions that contain this subplot
       matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
       print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx[["row"]],

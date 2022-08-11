@@ -121,7 +121,7 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                                   signature_category = signature_category)
   mesg("Starting to coerce the msig data to the ontology format.")
   go_db <- data.table::data.table()
-  for (i in 1:length(sig_data)) {
+  for (i in seq_along(sig_data)) {
     gsc <- sig_data[[i]]
     gsc_id <- gsc@setName
     gsc_genes <- gsc@geneIds

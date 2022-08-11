@@ -303,7 +303,7 @@ ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id",
     plot[["data"]][[first_tooltip_column]] <- rownames(plot[["data"]])
   }
   plotly <- plotly::ggplotly(plot, tooltip = tooltip)
-  for (i in 1:length(plotly[["x"]][["data"]])) {
+  for (i in seq_along(plotly[["x"]][["data"]])) {
     plotly[["x"]][["data"]][[i]][["customdata"]] <- plot[["data"]][[url_column]]
   }
   plotly <- htmlwidgets::onRender(plotly, "

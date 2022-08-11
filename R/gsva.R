@@ -146,7 +146,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
-  for (t in 1:length(gsva_limma[["all_tables"]])) {
+  for (t in seq_along(gsva_limma[["all_tables"]])) {
     table_name <- names(gsva_limma[["all_table"]])[t]
     table <- gsva_limma[["all_tables"]][[t]]
     contrast <- num_den_string[[t]]
@@ -291,12 +291,12 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
   venn_names <- list()
   ## Skip the non-existant set of 00, thus 2:length()
   ## Top level loop iterates through the observed intersections/unions from Vennerable.
-  for (i in 2:length(sig_int)) {
+  for (i in seq(from = 2, to = length(sig_int))) {
     name <- names(sig_int)[i]
     ## Make a human readable version of the venn names.
     name_chars <- strsplit(x = name, split = "")[[1]]
     venn_name <- ""
-    for (c in 1:length(name_chars)) {
+    for (c in seq_along(name_chars)) {
       char <- name_chars[[c]]
       if (char == "1") {
         venn_name <- glue("{venn_name}_{names(lst)[c]}")
@@ -309,11 +309,11 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
     gene_ids <- sig_annot[["ids"]]
     internal_ret <- list()
     ## This loop iterates through the set of observed gene IDs in each intersection
-    for (j in 1:length(gene_ids)) {
+    for (j in seq_along(gene_ids)) {
       id_lst <- gene_ids[j]
       ids <- strsplit(id_lst, ", ")[[1]]
       ## Finally, we count how many times each id is observed in each signature
-      for (k in 1:length(ids)) {
+      for (k in seq_along(ids)) {
         element <- ids[k]
         if (is.null(internal_ret[[element]])) {
           internal_ret[[element]] <- 1
@@ -445,7 +445,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     message("Testing each factor against the others.")
     fact_lvls <- levels(as.factor(design[[factor_column]]))
     result_df <- data.frame()
-    for (f in 1:length(fact_lvls)) {
+    for (f in seq_along(fact_lvls)) {
       fact <- fact_lvls[f]
       message("Scoring ", fact, " against everything else.")
       sample_idx <- design[[factor_column]] == fact
@@ -634,7 +634,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
 
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""
-  for (i in 1:length(sig_data)) {
+  for (i in seq_along(sig_data)) {
     fdata_df[i, "description"] <- description(sig_data[[i]])
     fdata_df[i, "ids"] <- toString(GSEABase::geneIds(sig_data[[i]]))
   }
@@ -872,7 +872,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
 
   limma_tables <- retlist[["gsva_limma"]][["all_tables"]]
   table_names <- names(limma_tables)
-  for (i in 1:length(table_names)) {
+  for (i in seq_along(table_names)) {
     table_name <- table_names[i]
     title <- glue::glue("Result from using limma to compare {table_name}.")
     table <- limma_tables[[table_name]]
