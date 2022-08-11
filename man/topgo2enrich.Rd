@@ -4,7 +4,13 @@
 \alias{topgo2enrich}
 \title{Convert a simple_topgo() result to an enrichResult.}
 \usage{
-topgo2enrich(retlist, ontology = "mf", pval = 0.05, column = "fisher")
+topgo2enrich(
+  retlist,
+  ontology = "mf",
+  pval = 0.05,
+  column = "fisher",
+  padjust_method = "BH"
+)
 }
 \arguments{
 \item{retlist}{result from simple_topgo()}

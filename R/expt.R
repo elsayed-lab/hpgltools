@@ -12,6 +12,8 @@
 #' @param expt1 First expt object.
 #' @param expt2 Second expt object.
 #' @param condition Column with which to reset the conditions.
+#' @param all_x Keep all of the first expt's annotations/counts if there are mismatches?
+#' @param all_y Keep all the second expt's annotations/counts if there are mismatches?
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
@@ -209,6 +211,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @param low_files Explicitly lowercase the filenames when searching the
 #'  filesystem?
 #' @param handle_na How does one wish to deal with NA values in the data?
+#' @param researcher Used to make the creation of gene sets easier, set the researcher tag.
+#' @param study_name Ibid, but set the study tag.
+#' @param annotation_name Ibid, but set the orgdb (or other annotation) instance.
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
@@ -3301,7 +3306,7 @@ setMethod("assay", signature = "expt",
           })
 setMethod("assay", "ExpressionSet",
           function(x, withDimnames = TRUE, ...) {
-            Biobase::exprs(object)
+            Biobase::exprs(x)
           })
 setMethod("assay<-", signature = "expt",
           function(x, i, withDimnames = TRUE, ..., value) {

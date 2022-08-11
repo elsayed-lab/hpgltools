@@ -61,6 +61,25 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{siglfc_cutoffs}{Set of cutoffs used to define levels of 'significant.'}
 
+\item{column_suffix}{Used to help determine which columns are used to find significant
+genes via logfc/p-value.}
+
+\item{gmt}{Write a gmt file using this result?}
+
+\item{category}{When writing gmt files, set the category here.}
+
+\item{fancy}{Write fancy plots with the xlsx file?}
+
+\item{phenotype_name}{When writing gmt files, set the phenotype flag here.}
+
+\item{set_name}{When writing gmt files, assign the set here.}
+
+\item{current_id}{Choose the current ID type for an output gmt file.}
+
+\item{required_id}{Choose the desired ID type for an output gmt file.}
+
+\item{min_gmt_genes}{Define the minimum number of genes in a gene set for writing a gmt file.}
+
 \item{...}{Arguments passed into arglist.}
 }
 \value{

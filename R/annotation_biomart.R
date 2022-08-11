@@ -380,9 +380,6 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #' @param default_hosts List of biomart mirrors to try.
 #' @param year Choose specific year(s) for the archive servers?
 #' @param month Choose specific month(s) for the archive servers?
-#' @param drop_haplotypes Some chromosomes have stupid names because they are
-#'  from non-standard haplotypes and they should go away.  Setting this to
-#'  false stops that.
 #' @param trydataset Define a dataset to which to attempt connecting.
 #' @param dl_rows List of rows from the final biomart object to download.
 #' @param dl_rowsv2 A second list of potential rows.

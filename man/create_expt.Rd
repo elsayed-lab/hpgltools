@@ -65,6 +65,12 @@ filesystem?}
 
 \item{handle_na}{How does one wish to deal with NA values in the data?}
 
+\item{researcher}{Used to make the creation of gene sets easier, set the researcher tag.}
+
+\item{study_name}{Ibid, but set the study tag.}
+
+\item{annotation_name}{Ibid, but set the orgdb (or other annotation) instance.}
+
 \item{...}{More parameters are fun!}
 }
 \value{

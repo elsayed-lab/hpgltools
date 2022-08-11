@@ -28,6 +28,10 @@ presumably other stuff as I think of it).}
 
 \item{new_metadata}{Filename to which to write the new metadata}
 
+\item{species}{Define a desired species when file hunting.}
+
+\item{type}{Define a feature type when file hunting.}
+
 \item{verbose}{Currently just used to debug the regexes.}
 
 \item{...}{This is one of the few instances where I used

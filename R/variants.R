@@ -12,7 +12,6 @@
 #' cyoa.
 #'
 #' @param expt an expressionset from which to extract information.
-#' @param type Use counts / samples or ratios?
 #' @param annot_column Column in the metadata for getting the table of bcftools calls.
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
@@ -319,116 +318,6 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   na_positions <- is.na(snp_columns)
   snp_columns[na_positions] <- 0
   return(snp_columns)
-}
-
-#' Use Rsamtools to read alignments and get snp coverage.
-#'
-#' This is horrifyingly slow.  I think I might remove this function.
-#'
-#' @param expt Expressionset to analyze
-#' @param type counts or percent?
-#' @param input_dir Directory containing the samtools results.
-#' @param annot_column Passed along to count_expt_snps()
-#' @param tolower lowercase the sample names?
-#' @param bam_suffix In case the data came from sam.
-#' @return It is so slow I no longer know if it works.
-#' @seealso [count_expt_snps()] [Rsamtools] [GenomicRanges]
-samtools_snp_coverage <- function(expt, input_dir = "preprocessing/outputs",
-                                  tolower = TRUE, bam_suffix = ".bam", annot_column = annot_column) {
-  snp_counts <- count_expt_snps(expt, tolower = tolower)
-  snp_counts <- fData(snp_counts)
-  samples <- rownames(pData(expt))
-  if (isTRUE(tolower)) {
-    samples <- tolower(samples)
-  }
-  if (type == "counts") {
-    file_suffix <- "_parsed_count.txt"
-  } else {
-    file_suffix <- "_parsed_ratio.txt"
-  }
-  bam_filenames <- c()
-  for (sample_num in seq_along(samples)) {
-    bam_filenames[sample_num] <- paste0(file.path(input_dir, sample), bam_suffix)
-    if (!file.exists(bam_filenames[sample_num])) {
-      warning(glue("The bam filename does not exist: {bam_filenames[sample_num]}"))
-    }
-  }
-
-  ## Now I have a data table of rownames and percentages
-  ## Next I need to cross reference these against the coverage by position, ergo
-  ## I must split out the rownames
-  pileup_info <- Rsamtools::PileupFiles(bam_filenames)
-  ## Taken directly from the Rsamtools manual
-  queries <- glue("{snp_counts[['species']]}_{snp_counts[['chromosome']]}:\\
-                  {as.numeric(snp_counts[['position']]) - 1}-\\
-                  {as.numeric(snp_counts[['position']]) + 1}")
-  which <- GenomicRanges::GRanges(queries)
-  which_list <- split(which, GenomicRanges::seqnames(which))
-  returns <- list()
-  res <- list()
-  what <- "seq"
-
-  cl <- parallel::makeCluster(8)
-  doParallel::registerDoParallel(cl)
-  tt <- sm(requireNamespace("parallel"))
-  tt <- sm(requireNamespace("doParallel"))
-  tt <- sm(requireNamespace("iterators"))
-  tt <- sm(requireNamespace("foreach"))
-  res <- foreach(c = 1:length(which_list), .packages = c("hpgltools", "Rsamtools")) %dopar% {
-    chr_name <- names(which_list)[c]
-    chr_param <- Rsamtools::ApplyPileupsParam(which = which_list[[c]], what = what)
-    snp_calc_coverage <- function(x) {
-      ## information at each pile-up position
-      qme <- function(y) {
-        y <- y[c("A", "C", "G", "T"), , drop = FALSE]
-        y <- y + 1L
-        result <- colSums(y)
-        return(result)
-      }
-      info <- apply(x[["seq"]], 2, qme)
-      retlist <- list(seqnames = x[["seqnames"]], pos = x[["pos"]], info = info)
-      return(retlist)
-    }
-    coverage_result <- Rsamtools::applyPileups(
-                                      pileup_info,
-                                      snp_calc_coverage,
-                                      param = chr_param)
-    result_list[[c]] <- coverage_result
-  }
-  stopped <- parallel::stopCluster(cl)
-
-  ## result is a list of n elements where n is the number of rows in snp_dt
-  ## Each element of result is in turn a list containing the following slots:
-  ##  seqnames (chromosome), pos (position(s)), info (coverage by file)
-  ## The piece of information we want to put into snp_dt is therefore:
-  ## coverage_list <- result[[snp_dt_row]][[info]][2, ]
-  ## coverage_list is in turn a character list named by filename (which begins
-  ## with the sample ID) We will therefore extract the hpglID from it and the
-  ## coverage for every sample.
-
-  ## I am not sure if the following line is correct, but I think it is -- either
-  ## way, snp_dt is missing without it.  Somewhere along the way I forgot to
-  ## make sure to keep the variable snp_dt alive, the most logical existence for
-  ## it is as a recasting of the matrix resulting from exprs(snp_counts)
-  ## For a reminder of why I say this, check out the first 15 lines of count_expt_snps()
-  snp_dt <- data.table::as.data.table(exprs(snp_counts))
-  names(coverage_result) <- snp_dt[["rownames"]]
-
-  ## Now extract from the rather strange coverage_result data the coverage by position/sample
-  new_dt <- NULL
-  snp_extract_coverage <- function(element) {
-    row <- element[["info"]][2, ]
-    names(row) <- samples
-    new_dt <<- rbind(new_dt, row)
-  }
-  ## unused_var <- try(lapply(coverage_result, snp_extract_coverage))
-  unused_var <- try(parallel::mclapply(coverage_result, snp_extract_coverage))
-  if (class(unused_var) == "try-error") {
-    message("There was an error when creating the data table of coverage.")
-  }
-  new_dt <- data.table::as.data.table(new_dt)
-  new_dt[["rownames"]] <- snp_dt[["rownames"]]
-
 }
 
 #' The real worker.  This extracts positions for a single chromosome and puts

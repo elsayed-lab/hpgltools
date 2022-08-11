@@ -160,6 +160,8 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @param study_name Second element in the name of the generated set(s).
 #' @param category_name Third element in the name of the generated set(s).
 #' @param phenotype_name Optional phenotype data for the generated set(s).
+#' @param identifier_type ID type to use in the gene set.
+#' @param organism Set the organism for the gsc object.
 #' @param pair_names The suffix of the generated set(s).
 #' @param current_id What type of ID is the data currently using?
 #' @param required_id What type of ID should the use?
@@ -342,7 +344,7 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
 #' @seealso [combine_de_tables()] [extract_significant_genes()] [make_gsc_from_ids()]
 #'  [GSEABase]
 #' @export
-make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
+make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", annotation_name = "org.Hs.eg.db",
                                    pair_names = c("ups", "downs"), category_name = "infection",
                                    phenotype_name = "parasite", set_name = "elsayed_macrophage",
                                    color = TRUE, current_id = "ENSEMBL", required_id = "ENTREZID",
@@ -372,7 +374,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     downs <- updown[["downs"]]
   } else if (class(pairwise)[1] == "character") {
     message("Invoking make_gsc_from_ids().")
-    ret <- make_gsc_from_ids(pairwise, orgdb = orgdb,
+    ret <- make_gsc_from_ids(pairwise, annotation_name = annotation_name,
                              pair_names = pair_names, category_name = category_name,
                              phenotype_name = phenotype_name, current_id = current_id,
                              required_id = required_id, ...)
@@ -382,12 +384,12 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  ## tt <- sm(library(orgdb, character.only = TRUE))
-  lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
+  ## tt <- sm(library(annotation_name, character.only = TRUE))
+  lib_result <- sm(requireNamespace(annotation_name))
+  att_result <- sm(try(attachNamespace(annotation_name), silent = TRUE))
 
   ## Check that the current_id and required_id are in the orgdb.
-  pkg <- get0(orgdb)
+  pkg <- get0(annotation_name)
   available <- AnnotationDbi::columns(pkg)
   if (! current_id %in% available) {
     warning("The column: ", current_id, " is not in the set of available orgdb columns.")
@@ -424,7 +426,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
       down[[required_id]] <- rownames(down)
     } else {
       mesg("Converting the rownames() of the expressionset to ", required_id, ".")
-      up_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+      up_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                          keys = up_ids,
                                          keytype = current_id,
                                          columns = c(required_id)))
@@ -432,7 +434,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
       up_ids <- up_ids[up_idx, ]
       up <- merge(up, up_ids, by.x = "row.names", by.y = current_id)
       if (!is.null(down_ids)) {
-        down_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+        down_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                              keys = down_ids,
                                              keytype = current_id,
                                              columns = c(required_id)))
@@ -538,7 +540,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
   return(retlst)
 }
 
-make_gsc_from_significant <- function(significant, according_to = "deseq", orgdb = "org.Hs.eg.db",
+make_gsc_from_significant <- function(significant, according_to = "deseq", annotation_name = "org.Hs.eg.db",
                                       category_name = "infection",
                                       phenotype_name = "parasite", set_name = "elsayed_macrophage",
                                       color = TRUE, current_id = "ENSEMBL", required_id = "ENTREZID",
@@ -573,10 +575,10 @@ make_gsc_from_significant <- function(significant, according_to = "deseq", orgdb
   down_ids <- list()
   both_ids <- list()
   for (contrast in contrasts) {
-    up_ids[[contrast]] <- collect_gsc_ids_from_df(ups[[contrast]], orgdb,
+    up_ids[[contrast]] <- collect_gsc_ids_from_df(ups[[contrast]], annotation_name,
                                                   current_id, required_id)
     message("Number of up IDs in contrast ", contrast, ": ", length(up_ids[[contrast]]), ".")
-    down_ids[[contrast]] <- collect_gsc_ids_from_df(downs[[contrast]], orgdb,
+    down_ids[[contrast]] <- collect_gsc_ids_from_df(downs[[contrast]], annotation_name,
                                                     current_id, required_id)
     message("Number of down IDs in contrast ", contrast, ": ", length(down_ids[[contrast]]), ".")
     both_factor_names <- c(up_ids[[contrast]], down_ids[[contrast]])
@@ -692,7 +694,7 @@ collect_gsc_ids_from_df <- function(df, orgdb, current_id, required_id) {
 #'  'colored', one of the highs, and one of the lows.
 #' @seealso [extract_abundant_genes()] [make_gsc_from_ids()] [GSEABase]
 #' @export
-make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "org.Hs.eg.db",
+make_gsc_from_abundant <- function(pairwise, according_to = "deseq", annotation_name = "org.Hs.eg.db",
                                    researcher_name = "elsayed", study_name = "macrophage",
                                    category_name = "infection", phenotype_name = NULL,
                                    pair_names = "high", current_id = "ENSEMBL",
@@ -717,7 +719,7 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
         pairwise, according_to = according_to, least = TRUE, ...)[[according_to]])
   } else if (class(pairwise)[1] == "character") {
     message("Invoking make_gsc_from_ids().")
-    ret <- make_gsc_from_ids(pairwise, orgdb = orgdb,
+    ret <- make_gsc_from_ids(pairwise, annotation_name = annotation_name,
                              pair_names = pair_names, category_name = category_name,
                              phenotype_name = phenotype_name,
                              current_id = current_id, required_id = required_id, ...)
@@ -727,9 +729,9 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
   }
 
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  ## tt <- sm(library(orgdb, character.only = TRUE))
-  lib_result <- sm(requireNamespace(orgdb))
-  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
+  ## tt <- sm(library(annotation_name, character.only = TRUE))
+  lib_result <- sm(requireNamespace(annotation_name))
+  att_result <- sm(try(attachNamespace(annotation_name), silent = TRUE))
   high_lst <- list()
   low_lst <- list()
   colored_lst <- list()
@@ -749,7 +751,7 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
       low[[required_id]] <- rownames(low)
     } else {
       message("Converting the rownames() of the expressionset to ENTREZID.")
-      high_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+      high_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                            keys = high_ids,
                                            keytype = current_id,
                                            columns = c(required_id)))
@@ -757,7 +759,7 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
       high_ids <- high_ids[high_idx, ]
       high <- merge(high, high_ids, by.x = "row.names", by.y = current_id)
       if (!is.null(low_ids)) {
-        low_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+        low_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                             keys = low_ids,
                                             keytype = current_id,
                                             columns = c(required_id)))

@@ -8,6 +8,7 @@
 #' @param expt_design Experimental design, requiring columns named 'condition' and 'batch'.
 #' @param current_state State of the data before messing with it.
 #' @param adjust_method Method to use to modify the counts after finding the surrogates.
+#' @param batch_step Choose when to perform this in the set of normalization tasks.
 #' @param ... Extra arguments passed to sva and friends.
 do_batch <- function(count_table, method = "raw", expt_design = expt_design,
                      current_state = current_state, adjust_method = adjust_method,

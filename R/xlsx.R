@@ -145,13 +145,15 @@ sanitize_percent <- function(numbers, df = NULL) {
   return(numbers)
 }
 
+#' Re-encode South American numbers so they fit my preconceptions.
+#'
 #' Ensure that we handle numbers encoded as '4.012.321,10' are
 #' properly (from the perspective of R using my encoding system)
 #' interpreted as 'four million twelve thousand three hundred
 #' twenty-one and one tenth.'
 #'
 #' @param numbers Column of numbers.
-#' @param optional df
+#' @param df optional df rather than just a vector.
 sanitize_number_encoding <- function(numbers, df = NULL) {
   number_column <- NULL
   if (!is.null(df)) {
@@ -341,6 +343,7 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 #' @param res Resolution of the png image inserted into the sheet.
 #' @param plotname Prefix of the pdf file created.
 #' @param savedir Directory to which to save pdf copies of the plots.
+#' @param fancy Plot fancy plots with the xlsx file?
 #' @param fancy_type Plot publication quality images in this format.
 #' @param start_row Row on which to place the plot in the sheet.
 #' @param start_col Column on which to place the plot in the sheet.

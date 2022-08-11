@@ -7,7 +7,7 @@
 load_uniprot_go(...)
 }
 \arguments{
-\item{input}{uniprot filename or dataframe.}
+\item{...}{Whatever args are required for load_uniprot_annotations()}
 }
 \value{
 Ontology dataframe

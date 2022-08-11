@@ -21,6 +21,10 @@ file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
 
+\item{species}{Specify a species to search for, or '*' for anything.}
+
+\item{type}{Some likely filename searches may be for genome vs. rRNA vs other feature types.}
+
 \item{basedir}{Root directory containing the files/logs of metadata.}
 }
 \description{

@@ -36,6 +36,10 @@ contrasting set.}
 
 \item{phenotype_name}{Optional phenotype data for the generated set(s).}
 
+\item{identifier_type}{ID type to use in the gene set.}
+
+\item{organism}{Set the organism for the gsc object.}
+
 \item{pair_names}{The suffix of the generated set(s).}
 
 \item{current_id}{What type of ID is the data currently using?}

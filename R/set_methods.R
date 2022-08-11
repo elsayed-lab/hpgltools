@@ -73,7 +73,7 @@ setGeneric("iDA", signature = c("object"),
 #' @export
 setMethod("iDA", "matrix",
           function(object, ...) {
-            iDAoutput <- iDA_core(object, ...)
+            iDAoutput <- iDA::iDA_core(object, ...)
             return(iDAoutput)
           })
 

@@ -70,6 +70,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{padj_type}{Add a consistent p adjustment of this type.}
 
+\item{fancy}{Save a set of fancy plots along with the xlsx file?}
+
 \item{lfc_cutoff}{In this context, only used for plotting volcano/MA plots.}
 
 \item{p_cutoff}{In this context, used for volcano/MA plots.}

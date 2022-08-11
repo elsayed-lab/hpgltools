@@ -10,7 +10,9 @@
 #' @param retlist Result from simple_goseq().
 #' @param ontology Ontology sub-tree of interest.
 #' @param cutoff (adjusted)p cutoff.
+#' @param cutoff_column Choose a column of p-values.
 #' @param organism Currently unused.
+#' @param padjust_method Define the desired p.adjust method.
 #' @return enrichResult object ready to pass to things like dotplot.
 #' @export
 goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
@@ -29,7 +31,7 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   ## create into that data structure's format.
   ## The enrichResult is a class created with the following code:
   bg_genes <- sum(!duplicated(sort(godf[["ID"]])))
-  adjusted <- p.adjust(interesting[["over_represented_pvalue"]], method=padjust_method)
+  adjusted <- p.adjust(interesting[["over_represented_pvalue"]], method = padjust_method)
   interesting[["adjusted"]] <- adjusted
   interesting[["tmp"]] <- bg_genes
   interesting_cutoff_idx <- interesting[[cutoff_column]] <= cutoff
@@ -37,7 +39,7 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   genes_per_category <- gather_ontology_genes(retlist, ontology = ontology,
                                               column = "over_represented_pvalue",
                                               pval = cutoff)
-  category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])
+  category_genes <- gsub(pattern = ", ", replacement = "/", x = genes_per_category[["sig"]])
 
   ## FIXME: This is _definitely_ wrong for BgRatio
   representation_df <- data.frame(
@@ -154,7 +156,7 @@ gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
 #' @param pval Cutoff, hmm I think I need to standardize these.
 #' @param column Table column to export.
 topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05,
-                         column = "fisher") {
+                         column = "fisher", padjust_method = "BH") {
   result_name <- paste0(column, "_", tolower(ontology))
   if (column == "el") {
     column <- "EL"
@@ -201,9 +203,9 @@ topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05,
   }
   ret <- new("enrichResult",
              result = representation_df,
-             pvalueCutoff = cutoff,
+             pvalueCutoff = pval,
              pAdjustMethod = padjust_method,
-             qvalueCutoff = cutoff,
+             qvalueCutoff = pval,
              gene = sig_genes,
              universe = godata@graph@nodes,
              ## universe = extID,

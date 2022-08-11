@@ -186,7 +186,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   enrich_results <- list()
   for (ont in c("bp", "mf", "cc")) {
     message("Getting enrichResult for ontology: ", ont, ".")
-    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = pval,
+    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = limit,
                                                   column = limitby)
   }
   retlist[["enrich_results"]] <- enrich_results
@@ -350,6 +350,7 @@ do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
 #' be obnoxious.
 #'
 #' @param result Topgo result.
+#' @param godata The ontology database.
 #' @param limit Pvalue limit defining 'significant'.
 #' @param limitby Type of test to perform.
 #' @param numchar How many characters to allow in the description?

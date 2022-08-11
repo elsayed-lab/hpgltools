@@ -28,6 +28,7 @@
 #' @param loess Add time intensive loess estimation to plots?
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @param compare_plots Add some plots comparing the results.
+#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param padj_type Add a consistent p adjustment of this type.
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
@@ -562,6 +563,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
 #' @param p For Volcano/MA plot lines.
 #' @param do_inverse Flip the numerator/denominator?
 #' @param found_table The table name actually used.
+#' @param p_type Use this/these methods' p-value for determining significance.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     include_basic = TRUE, include_deseq = TRUE,
                                     include_edger = TRUE, include_limma = TRUE,
@@ -666,6 +668,8 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
 #' @param include_basic Include the basic table?
 #' @param lfc_cutoff Preferred logfoldchange cutoff.
 #' @param p_cutoff Preferred pvalue cutoff.
+#' @param format_sig How many significant digits to print?  Set it to something not
+#'  numeric to not use any significant digit formatting.
 #' @param excludes Set of genes to exclude from the output.
 #' @param sheet_count What sheet is being written?
 #' @return List containing a) Dataframe containing the merged
@@ -1396,9 +1400,11 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
+#' @param fancy Print fancy plots with the xlsx file?
 #' @param loess Add a loess to plots?
 #' @param lfc_cutoff Passed for volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param format_sig If numeric, reformat and use this number of significant digits.
 extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -1597,19 +1603,29 @@ extract_siggenes <- function(...) {
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
 #' @param excel Write the results to this excel file, or NULL.
 #' @param siglfc_cutoffs Set of cutoffs used to define levels of 'significant.'
+#' @param column_suffix Used to help determine which columns are used to find significant
+#'  genes via logfc/p-value.
+#' @param gmt Write a gmt file using this result?
+#' @param category When writing gmt files, set the category here.
+#' @param fancy Write fancy plots with the xlsx file?
+#' @param phenotype_name When writing gmt files, set the phenotype flag here.
+#' @param set_name When writing gmt files, assign the set here.
+#' @param current_id Choose the current ID type for an output gmt file.
+#' @param required_id Choose the desired ID type for an output gmt file.
+#' @param min_gmt_genes Define the minimum number of genes in a gene set for writing a gmt file.
 #' @param ... Arguments passed into arglist.
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
-                                      p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, top_percent = NULL,
-                                      ma = TRUE, p_type = "adj", invert_barplots = FALSE,
-                                      excel = NULL, fc_column = NULL, p_column = NULL,
-                                      siglfc_cutoffs = c(0, 1, 2), column_suffix = TRUE,
-                                      gmt = FALSE, category = "category", fancy = FALSE,
-                                      phenotype_name = "phenotype", set_name = "set",
-                                      current_id = "ENSEMBL", required_id = "ENTREZID",
-                                      min_gmt_genes = 10, ...) {
+                                      p = 0.05, sig_bar = TRUE, z = NULL, n = NULL,
+                                      top_percent = NULL, ma = TRUE, p_type = "adj",
+                                      invert_barplots = FALSE, excel = NULL, fc_column = NULL,
+                                      p_column = NULL, siglfc_cutoffs = c(0, 1, 2),
+                                      column_suffix = TRUE, gmt = FALSE, category = "category",
+                                      fancy = FALSE, phenotype_name = "phenotype",
+                                      set_name = "set", current_id = "ENSEMBL",
+                                      required_id = "ENTREZID", min_gmt_genes = 10, ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
 
@@ -1957,6 +1973,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 #'
 #' The columns have names with explicit lfc values, but the numbers which get put in them
 #' may represent any arbitrary cutoff employed by the caller.
+#'
+#' @param ups The set of ups!
+#' @param downs and downs!
 summarize_ups_downs <- function(ups, downs) {
   ## The ups and downs tables have 1 row for each contrast, 3 columns of numbers named
   ## 'a_up_inner', 'b_up_middle', 'c_up_outer'.
@@ -2211,6 +2230,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @param ma Include ma plots?
+#' @param fancy Print fancy plots with the xlsx file?x
 #' @return Return from write_xlsx.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
@@ -2291,6 +2311,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
 #' @param basic Basic data
 #' @param include_basic Include the basic result?
 #' @param padj_type P-adjustment employed.
+#' @param fancy Write fancy plots with the xlsx file?
 write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
                                   limma, include_limma,
                                   deseq, include_deseq,
@@ -2541,6 +2562,7 @@ stringsAsFactors = FALSE)
 #' @param compare_plots series of plots to print out.
 #' @param lfc_cutoff Used for volcano/MA plots.
 #' @param p_cutoff Used for volcano/MA plots.
+#' @param fancy Write fancy plots with the xlsx file?
 write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
                                    lfc_cutoff = 1, p_cutoff = 0.05, fancy = FALSE) {
   image_files <- c()

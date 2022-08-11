@@ -104,7 +104,9 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
-#' @param df Dataframe with starts/ends and the floating point information.
+#' @param input Dataframe with starts/ends and the floating point information.
+#' @param tablename Provide a name for the input table in case it is coming from a
+#'  combine_de_tables result.
 #' @param colname Name of the column with the data of interest.
 #' @param color_mapping 0 means no overflows for min/max, 1 means overflows
 #'  of min get a chosen color, 2 means overflows of both min/max get chosen colors.
@@ -265,7 +267,9 @@ circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
-#' @param df Dataframe with starts/ends and the floating point information.
+#' @param input Dataframe or table with starts/ends and the floating point information.
+#' @param tablename A likely input for this is a combine_de_tables() result, if so, provide
+#'  the table's name here.
 #' @param annot_source This parameter was added to make it possible to add an
 #'  arbitrary dataframe of other annotation information.
 #' @param colname Name of the column with the data of interest.

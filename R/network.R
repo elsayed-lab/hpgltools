@@ -6,7 +6,7 @@
 #' In its current form it takes a matrix of pairwise scores and
 #' generates an adjacency graph of those scores.
 #'
-#' @param score_file tsv or matrix of scores with column and row names containing IDs.
+#' @param scores tsv or matrix of scores with column and row names containing IDs.
 #' @param metadata Currently unused, but intended to provide a
 #'  starting point for annotating the resulting adjacency network.
 #'  When implemented, it should make use of the annotate_network()
@@ -39,12 +39,12 @@ network_from_matrix <- function(scores, metadata = NULL, type = "distcor", simpl
     input <- as.matrix(cor(input))
   } else if (type == "dist") {
     mesg("Calculating distance matrix.")
-    input <- as.matrix(as.dist(input))
+    input <- as.matrix(stats::as.dist(input))
   } else if (type == "distcor") {
     mesg("Calculating correlation matrix.")
     cor_mtrx <- cor(input)
     mesg("Calculating distance matrix of correlations.")
-    input <- as.matrix(as.dist(cor_mtrx))
+    input <- as.matrix(stats::as.dist(cor_mtrx))
   }
 
   ## initial <- igraph::graph.adjacency(input, mode="undirected", weighted=TRUE, diag=FALSE)

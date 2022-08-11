@@ -39,6 +39,8 @@ xlsx_plot_png(
 
 \item{savedir}{Directory to which to save pdf copies of the plots.}
 
+\item{fancy}{Plot fancy plots with the xlsx file?}
+
 \item{fancy_type}{Plot publication quality images in this format.}
 
 \item{start_row}{Row on which to place the plot in the sheet.}

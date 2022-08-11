@@ -17,6 +17,8 @@ topgo_tables(
 \arguments{
 \item{result}{Topgo result.}
 
+\item{godata}{The ontology database.}
+
 \item{limit}{Pvalue limit defining 'significant'.}
 
 \item{limitby}{Type of test to perform.}

@@ -26,6 +26,8 @@ print_ups_downs(
 \item{summary_count}{For spacing sequential tables one after another.}
 
 \item{ma}{Include ma plots?}
+
+\item{fancy}{Print fancy plots with the xlsx file?x}
 }
 \value{
 Return from write_xlsx.

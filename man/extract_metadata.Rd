@@ -11,6 +11,8 @@ extract_metadata(metadata, id_column = "sampleid", fill = NULL, ...)
 
 \item{id_column}{Column in the metadat containing the sample names.}
 
+\item{fill}{Fill missing data with this.}
+
 \item{...}{Arguments to pass to the child functions (read_csv etc).}
 }
 \value{

@@ -24,6 +24,12 @@ plot_goseq_pval(
 
 \item{cutoff}{Pvalue cutoff for the plot.}
 
+\item{x_column}{Choose the data column to put on the x-axis of the plot.}
+
+\item{order_by}{Choose the data column for ordering the bars.}
+
+\item{decreasing}{When ordering the bars, go up or down?}
+
 \item{n}{How many groups to include?}
 
 \item{mincat}{Minimum size of the category for inclusion.}

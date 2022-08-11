@@ -65,6 +65,9 @@ combine_single_de_table(
 
 \item{p_cutoff}{Preferred pvalue cutoff.}
 
+\item{format_sig}{How many significant digits to print?  Set it to something not
+numeric to not use any significant digit formatting.}
+
 \item{excludes}{Set of genes to exclude from the output.}
 
 \item{sheet_count}{What sheet is being written?}

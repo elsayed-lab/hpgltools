@@ -10,7 +10,7 @@ plot_ontpval(
   fontsize = 14,
   plot_title = NULL,
   text_location = "right",
-  test_color = "black",
+  text_color = "black",
   x_column = "score",
   numerator = NULL,
   denominator = NULL
@@ -24,6 +24,12 @@ plot_ontpval(
 \item{fontsize}{Fiddling with the font size may make some plots more readable.}
 
 \item{plot_title}{Set an explicit plot title.}
+
+\item{text_location}{Choose where to put the text describing the number of genes in the category.}
+
+\item{text_color}{Choose the text color, I have a fun function for this now...}
+
+\item{x_column}{Use this column to arrange the x-axis.}
 
 \item{numerator}{Column used for printing a ratio of genes/category.}
 

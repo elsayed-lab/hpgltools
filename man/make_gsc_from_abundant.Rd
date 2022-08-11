@@ -7,7 +7,7 @@
 make_gsc_from_abundant(
   pairwise,
   according_to = "deseq",
-  orgdb = "org.Hs.eg.db",
+  annotation_name = "org.Hs.eg.db",
   researcher_name = "elsayed",
   study_name = "macrophage",
   category_name = "infection",
@@ -22,8 +22,6 @@ make_gsc_from_abundant(
 \item{pairwise}{A pairwise result, or combined de result, or extracted genes.}
 
 \item{according_to}{When getting significant genes, use this method.}
-
-\item{orgdb}{Annotation dataset.}
 
 \item{researcher_name}{Prefix of the name for the generated set(s).}
 
@@ -40,6 +38,8 @@ make_gsc_from_abundant(
 \item{required_id}{What type of ID should the use?}
 
 \item{...}{Extra arguments for extract_abundant_genes().}
+
+\item{orgdb}{Annotation dataset.}
 }
 \value{
 List containing 3 GSCs, one containing both the highs/lows called

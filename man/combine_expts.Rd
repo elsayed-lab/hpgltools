@@ -21,6 +21,10 @@ combine_expts(
 
 \item{condition}{Column with which to reset the conditions.}
 
+\item{all_x}{Keep all of the first expt's annotations/counts if there are mismatches?}
+
+\item{all_y}{Keep all the second expt's annotations/counts if there are mismatches?}
+
 \item{batch}{Column with which to reset the batches.}
 
 \item{merge_meta}{Merge the metadata when they mismatch?  This should perhaps default to TRUE.}

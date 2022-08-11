@@ -53,6 +53,8 @@ combine_extracted_plots(
 \item{do_inverse}{Flip the numerator/denominator?}
 
 \item{found_table}{The table name actually used.}
+
+\item{p_type}{Use this/these methods' p-value for determining significance.}
 }
 \description{
 It should be possible to significantly simplify the arguments passed to this

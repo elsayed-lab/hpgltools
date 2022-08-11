@@ -68,12 +68,16 @@ plot_topgo_densities <- function(godata, table) {
 #' @param ontology Ontology to plot (MF,BP,CC).
 #' @param fontsize Fiddling with the font size may make some plots more readable.
 #' @param plot_title Set an explicit plot title.
+#' @param text_location Choose where to put the text describing the number of genes in the category.
+#' @param text_color Choose the text color, I have a fun function for this now...
+#' @param x_column Use this column to arrange the x-axis.
 #' @param numerator Column used for printing a ratio of genes/category.
 #' @param denominator Column used for printing a ratio of genes/category.
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso [ggplot2]
 #' @export
-plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, text_location = "right", test_color = "black",
+plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
+                         text_location = "right", text_color = "black",
                          x_column = "score", numerator = NULL, denominator = NULL) {
   if (nrow(df) == 0) {
     return(NULL)
@@ -135,7 +139,7 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
     hjsut <- 1.2
     if (text_location == "right") {
       hjust <- 0.0
-    } else if (test_location == "inside") {
+    } else if (text_location == "inside") {
       hjust <- 1.2
     }
     pvalue_plot <- pvalue_plot +
@@ -154,6 +158,9 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
 #' @param goterms Some data from goseq!
 #' @param wrapped_width Number of characters before wrapping to help legibility.
 #' @param cutoff Pvalue cutoff for the plot.
+#' @param x_column Choose the data column to put on the x-axis of the plot.
+#' @param order_by Choose the data column for ordering the bars.
+#' @param decreasing When ordering the bars, go up or down?
 #' @param n How many groups to include?
 #' @param mincat Minimum size of the category for inclusion.
 #' @param level Levels of the ontology tree to use.
@@ -162,7 +169,8 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
 #' @seealso [ggplot2]
 #' @export
 plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1, x_column = "score",
-                            order_by = "score", decreasing = FALSE, n = 30, mincat = 5, level = NULL, ...) {
+                            order_by = "score", decreasing = FALSE, n = 30,
+                            mincat = 5, level = NULL, ...) {
   if (class(goterms)[1] == "goseq_result") {
     goterms <- goterms[["godata"]]
   }

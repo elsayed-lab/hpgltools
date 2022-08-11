@@ -4,7 +4,8 @@
 #' with arbitrary data. Unfortunately they are somewhat evil to use.  This
 #' attempts to alleviate that.
 #'
-#' @param path_data Some differentially expressed genes.
+#' @param gene_input Some differentially expressed genes.
+#' @param compount_input Sets of compounds which have changed in the data of interest.
 #' @param indir Directory into which the unmodified kegg images will be
 #'  downloaded (or already exist).
 #' @param outdir Directory which will contain the colored images.
@@ -15,6 +16,7 @@
 #' @param to_list Regex to help in renaming KEGG categories/gene names from one
 #'  format to another.
 #' @param suffix Add a suffix to the completed, colored files.
+#' @param id_column use this to handle the peculiar ways in which kegg handles IDs.
 #' @param filenames Name the final files by id or name?
 #' @param fc_column What is the name of the fold-change column to extract?
 #' @param format Format of the resulting images, I think only png really works

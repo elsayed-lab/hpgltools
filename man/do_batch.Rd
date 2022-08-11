@@ -25,6 +25,8 @@ do_batch(
 
 \item{adjust_method}{Method to use to modify the counts after finding the surrogates.}
 
+\item{batch_step}{Choose when to perform this in the set of normalization tasks.}
+
 \item{...}{Extra arguments passed to sva and friends.}
 }
 \description{

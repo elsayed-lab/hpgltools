@@ -6,6 +6,11 @@
 \usage{
 summarize_ups_downs(ups, downs)
 }
+\arguments{
+\item{ups}{The set of ups!}
+
+\item{downs}{and downs!}
+}
 \description{
 The columns have names with explicit lfc values, but the numbers which get put in them
 may represent any arbitrary cutoff employed by the caller.

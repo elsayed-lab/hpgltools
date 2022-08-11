@@ -20,7 +20,11 @@ goseq2enrich(
 
 \item{cutoff}{(adjusted)p cutoff.}
 
+\item{cutoff_column}{Choose a column of p-values.}
+
 \item{organism}{Currently unused.}
+
+\item{padjust_method}{Define the desired p.adjust method.}
 }
 \value{
 enrichResult object ready to pass to things like dotplot.

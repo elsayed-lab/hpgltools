@@ -15,6 +15,7 @@
 #'
 #' @param accession Accession to download and import.
 #' @param file Use a file instead of downloading the accession?
+#' @param sequence Download the sequence with the annotations?
 #' @param reread Re-read (download) the file from genbank.
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I

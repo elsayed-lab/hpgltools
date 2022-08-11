@@ -15,6 +15,8 @@ network_from_matrix(
 )
 }
 \arguments{
+\item{scores}{tsv or matrix of scores with column and row names containing IDs.}
+
 \item{metadata}{Currently unused, but intended to provide a
 starting point for annotating the resulting adjacency network.
 When implemented, it should make use of the annotate_network()
@@ -36,8 +38,6 @@ understand what happens when you mess with this.}
 
 \item{diag}{Include the matrix-diagonal nodes?  I do not know when
 one would want these.}
-
-\item{score_file}{tsv or matrix of scores with column and row names containing IDs.}
 }
 \value{
 igraph adjacency network.

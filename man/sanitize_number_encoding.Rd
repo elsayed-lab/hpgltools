@@ -2,17 +2,14 @@
 % Please edit documentation in R/xlsx.R
 \name{sanitize_number_encoding}
 \alias{sanitize_number_encoding}
-\title{Ensure that we handle numbers encoded as '4.012.321,10' are
-properly (from the perspective of R using my encoding system)
-interpreted as 'four million twelve thousand three hundred
-twenty-one and one tenth.'}
+\title{Re-encode South American numbers so they fit my preconceptions.}
 \usage{
 sanitize_number_encoding(numbers, df = NULL)
 }
 \arguments{
 \item{numbers}{Column of numbers.}
 
-\item{optional}{df}
+\item{df}{optional df rather than just a vector.}
 }
 \description{
 Ensure that we handle numbers encoded as '4.012.321,10' are
