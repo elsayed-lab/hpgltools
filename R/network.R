@@ -35,15 +35,15 @@ network_from_matrix <- function(scores, metadata = NULL, type = "distcor", simpl
 
   input <- scores
   if (type == "cor") {
-    message("Calculating correlation matrix.")
+    mesg("Calculating correlation matrix.")
     input <- as.matrix(cor(input))
   } else if (type == "dist") {
-    message("Calculating distance matrix.")
+    mesg("Calculating distance matrix.")
     input <- as.matrix(as.dist(input))
   } else if (type == "distcor") {
-    message("Calculating correlation matrix.")
+    mesg("Calculating correlation matrix.")
     cor_mtrx <- cor(input)
-    message("Calculating distance matrix of correlations.")
+    mesg("Calculating distance matrix of correlations.")
     input <- as.matrix(as.dist(cor_mtrx))
   }
 
@@ -71,14 +71,14 @@ network_from_matrix <- function(scores, metadata = NULL, type = "distcor", simpl
 #' @return a new network!
 annotate_network <- function(network, names, color = NULL, default = NULL,
                              annot_name = "type", annot_value = "high") {
-  net_names <- igraph::V(network)$name
+  net_names <- igraph::vertex_attr(network, name = "name")
   if (!is.null(default)) {
     network <- igraph::set_vertex_attr(graph = network, name = annot_name,
                                        value = default)
   }
   for (name in names) {
     wanted_names <- grepl(x = net_names, pattern = name)
-    message("Network name: ", name, " was found ", sum(wanted_names), " times.")
+    mesg("Network name: ", name, " was found ", sum(wanted_names), " times.")
     network <- igraph::set_vertex_attr(graph = network, name = annot_name,
                                        index = wanted_names, value = annot_value)
     if (!is.null(color)) {
@@ -102,10 +102,10 @@ annotate_network <- function(network, names, color = NULL, default = NULL,
 #' @param default Set a default?
 annotate_network_df <- function(network, df, default = NULL) {
   new <- network
-  net_names <- igraph::V(network)$name
+  net_names <- igraph::vertex_attr(network, name = "name")
   df <- as.data.frame(df)
   for (col in colnames(df)) {
-    message("Starting annotation of ", col, ".")
+    mesg("Starting annotation of ", col, ".")
     values <- df[[col]]
     names(values) <- rownames(df)
     if (!is.null(default)) {
@@ -113,22 +113,70 @@ annotate_network_df <- function(network, df, default = NULL) {
     }
     possibilities <- as.factor(values)
     for (pos in levels(possibilities)) {
-      message("Setting vertices to: ", pos, ".")
+      mesg("Setting vertices to: ", pos, ".")
       pos_idx <- values == pos
       pos_names <- names(values)[pos_idx]
       pos_positive <- net_names %in% pos_names
       positive_vertices <- igraph::V(network)[pos_positive]
-      new <- igraph::set_vertex_attr(graph = new, name = pos,
+      new <- igraph::set_vertex_attr(graph = new, name = col,
                                      index = positive_vertices, value = pos)
     }
   }
   return(new)
 }
 
+annotate_network_nodes <- function(network, df, column = "assemblyxls", col_number = 5,
+                                   column_name = "interpfamvalue") {
+  entries <- rownames(df)
+  net_names <- igraph::vertex_attr(network, name = "name")
+  nodes_annotated <- 0
+  for (e in 1:length(entries)) {
+    entry <- entries[e]
+    gene_annotation_file <- df[e, column]
+    gene_annotations <- try(sm(extract_metadata(gene_annotation_file, fill = "")), silent=TRUE)
+    if ("try-error" %in% class(gene_annotations)) {
+      next
+    }
+    pfam_names <- as.data.frame(stringr::str_split_fixed(gene_annotations[[column_name]],
+                                                         ",", col_number))[[col_number]]
+    names(pfam_names) <- rownames(gene_annotations)
+
+    defined_names <- pfam_names != ""
+    pfam_defined <- pfam_names[defined_names]
+    entries_found <- 0
+    nodes_found <- 0
+    for (d in 1:length(pfam_defined)) {
+      defined_name <- names(pfam_defined)[d]
+      defined_value <- pfam_defined[d]
+      pfam_nodes <- net_names == defined_name
+      times_found <- sum(pfam_nodes)
+      if (times_found > 0) {
+        entries_found <- entries_found + 1
+        nodes_found <- nodes_found + times_found
+        nodes_annotated <- nodes_annotated + times_found
+        pfam_vertices <- igraph::V(network)[pfam_nodes]
+        network <- igraph::set_vertex_attr(graph = network, name = column_name,
+                                           index = pfam_vertices, value = defined_value)
+      }
+      mesg("Finished searching sample: ", entry, ", found ", entries_found, " genes across ",
+           nodes_found, " network vertices.")
+    }
+  }
+  message("Finished iterating over annotations, annotated: ", nodes_annotated,
+          " vertices out of ", length(net_names), ".")
+  return(network)
+}
+
+#' Exclude nodes from a network which are not well connected.
+#'
+#' @param network input network to prune.
+#' @param min_weight Minimum acceptable weight.
+#' @param min_connectivity Minimum number of nodes to which to be connected.
+#' @return A hopefully smaller, but not too small network.
 prune_network <- function(network, min_weight = 0.4, min_connectivity = 1) {
   start_vertices <- length(igraph::V(network))
   start_edges <- length(igraph::E(network))
-  low_nodes <- igraph::E(network)$weight <= min_weight
+  low_nodes <- igraph::edge_attr(network, name = "weight") <= min_weight
   low_edges <- igraph::E(network)[low_nodes]
   pruned_edges <- igraph::delete_edges(network, low_edges)
   low_degree <- igraph::degree(pruned_edges) <= min_connectivity
@@ -140,10 +188,10 @@ prune_network <- function(network, min_weight = 0.4, min_connectivity = 1) {
   end_edges <- length(igraph::E(pruned_vertices))
   delta_vertices <- start_vertices - end_vertices
   delta_edges <- start_edges - end_edges
-  message("Network pruning vertices, start: ", start_vertices, ", end: ",
+  mesg("Network pruning vertices, start: ", start_vertices, ", end: ",
           end_vertices, ", delta: ", delta_vertices, ".")
   if (start_edges > 0) {
-    message("Network pruning edges, start: ", start_edges, ", end: ",
+    mesg("Network pruning edges, start: ", start_edges, ", end: ",
             end_edges, ", delta: ", delta_edges, ".")
   }
   return(pruned_vertices)

@@ -60,7 +60,7 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #'   saniclean <- extract_metadata(some_goofy_df)
 #' }
 #' @export
-extract_metadata <- function(metadata, id_column = "sampleid", ...) {
+extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...) {
   arglist <- list(...)
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
@@ -214,6 +214,12 @@ analyses more difficult/impossible.")
   sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
                                           levels = unique(sample_definitions[["batch"]]),
                                           labels = pre_batch)
+
+  if (!is.null(fill)) {
+    na_idx <- is.na(sample_definitions)
+    sample_definitions[na_idx] <- fill
+  }
+
   return(sample_definitions)
 }
 
@@ -812,6 +818,10 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
                                             basedir = basedir)
       },
+      "assembly_xls" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -1250,6 +1260,8 @@ make_assembly_spec <- function() {
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.gff"),
         "assembly_tsv" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.tsv"),
+        "assembly_xls" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}.xlsx"),
         "input_r1" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "input_r2" = list(
