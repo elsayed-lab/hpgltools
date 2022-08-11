@@ -114,7 +114,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   interactive_plots <- list()
   gost_plots <- list()
   gost_links <- list()
-  for (t in 1:length(type_names)) {
+  for (t in seq_along(type_names)) {
     type <- type_names[t]
     message("Performing gProfiler ", type, " search of ",
             length(gene_ids), " against ", species, ".")
@@ -242,7 +242,7 @@ simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
       "HP" = do_hp)
   type_names <- names(retlst)
   gene_ids <- as.vector(gene_ids)
-  for (t in 1:length(type_names)) {
+  for (t in seq_along(type_names)) {
     type <- type_names[t]
     if (isTRUE(retlst[[type]])) {
       message("Performing gProfiler ", type, " search of ",

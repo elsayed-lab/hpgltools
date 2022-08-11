@@ -438,7 +438,7 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   ## Get rid of rows which will be annoying.
   ## If somehow a list got into the data table, this will fail, lets fix that now.
   tmp_table <- table
-  for (c in 1:ncol(tmp_table)) {
+  for (c in seq_len(ncol(tmp_table))) {
     tmp_table[[c]] <- as.character(table[[c]])
   }
   rows_without_na <- complete.cases(tmp_table)
@@ -777,9 +777,9 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
   plot_list <- list()
-  for (c in 1:(length(colnames(data)) - 1)) {
+  for (c in seq(from = 1, to = length(colnames(data)) - 1)) {
     nextc <- c + 1
-    for (d in nextc:length(colnames(data))) {
+    for (d in seq(from = nextc, to = length(colnames(data)))) {
       first <- as.numeric(data[, c])
       second <- as.numeric(data[, d])
       if (max(first) > 1000) {

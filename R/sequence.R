@@ -72,7 +72,7 @@ gather_eupath_utrs_padding <- function(species_name = "Leishmania major", entry 
   ## Gather the chromosome lengths to make sure we don't pass them.
   genome_info <- BiocGenerics::as.data.frame(BSgenome::seqinfo(bsgenome))
   chr_names <- rownames(genome_info)
-  for (l in 1:length(chr_names)) {
+  for (l in seq_along(chr_names)) {
     name <- chr_names[l]
     len <- genome_info[l, "seqlengths"]
     chr_idx <- annot_df[["chromosome"]] == name

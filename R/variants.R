@@ -199,7 +199,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
   }
   end <- length(res)
   mesg("Iterating over ", end, " elements.")
-  for (element in 1:end) {
+  for (element in seq_len(end)) {
     if (isTRUE(show_progress)) {
       pct_done <- element / length(res)
       utils::setTxtProgressBar(bar, pct_done)
@@ -292,7 +292,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   }
   ## Foreach sample, do the same read of the data and merge it onto the end of the
   ## final data table.
-  for (sample_num in 2:length(samples)) {
+  for (sample_num in seq(from = 2, to = length(samples))) {
     if (isTRUE(show_progress)) {
       pct_done <- sample_num / length(samples)
       setTxtProgressBar(bar, pct_done)
@@ -347,7 +347,7 @@ samtools_snp_coverage <- function(expt, input_dir = "preprocessing/outputs",
     file_suffix <- "_parsed_ratio.txt"
   }
   bam_filenames <- c()
-  for (sample_num in 1:length(samples)) {
+  for (sample_num in seq_along(samples)) {
     bam_filenames[sample_num] <- paste0(file.path(input_dir, sample), bam_suffix)
     if (!file.exists(bam_filenames[sample_num])) {
       warning(glue("The bam filename does not exist: {bam_filenames[sample_num]}"))
@@ -453,7 +453,7 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
   limit_true_false <- as.data.frame(medians >= limit)
   x_lst <- list()
   possibilities <- unique(c(possibilities, colnames(limit_true_false)))
-  for (d in 1:length(possibilities)) {
+  for (d in seq_along(possibilities)) {
     column_name <- colnames(limit_true_false)[d]
     column_data <- limit_true_false[[column_name]]
     included_snps <- rownames(limit_true_false)[column_data]
@@ -472,7 +472,7 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
     symbols <- strsplit(as.character(symbolic), "")[[1]]
     name <- c()
     invert_name <- c()
-    for (s in 1:length(symbols)) {
+    for (s in seq_along(symbols)) {
       symbol <- symbols[s]
       if (symbol == 1) {
         name <- c(name, possibilities[s])
@@ -757,7 +757,7 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   ## This will let us find the positions unique to a condition.
   S4Vectors::mcols(snp_granges)[, "snp_name"] <- names(snp_granges)
   snp_columns <- colnames(snp_result[["medians"]])
-  for (c in 1:length(snp_columns)) {
+  for (c in seq_along(snp_columns)) {
     colname <- snp_columns[c]
     S4Vectors::mcols(snp_granges)[, colname] <- snp_result[["medians"]][[colname]]
   }
@@ -793,7 +793,7 @@ write_snps <- function(expt, output_file = "funky.aln") {
   start_mtrx <- exprs(expt)
   samples <- colnames(start_mtrx)
   aln_string <- ""
-  for (r in 1:ncol(start_mtrx)) {
+  for (r in seq_len(ncol(start_mtrx))) {
     aln_string <- glue::glue("{aln_string}{samples[r]}     {start_mtrx[[r]]}
 ")
   }
@@ -888,7 +888,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   variant_lst <- list()
   ## This was written in an attempt to make it work if one does or does not
   ## have a BSgenome from which to get the actual chromosome lengths.
-  for (ch in 1:length(chromosomes)) {
+  for (ch in seq_len(chromosomes)) {
     chr <- chromosomes[ch]
     mesg("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
@@ -906,7 +906,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     density_vector <- rep(0, ceiling(this_length / bin_width))
     variant_vector <- rep('', ceiling(this_length / bin_width))
     density_name <- 0
-    for (i in 1:length(density_vector)) {
+    for (i in seq_len(density_vector)) {
       range_min <- density_name
       range_max <- (density_name + bin_width) - 1
       ## We want to subtract the maximum primer length from the position
@@ -943,7 +943,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 
   long_density_vector <- vector()
   long_variant_vector <- vector()
-  for (ch in 1:length(density_lst)) {
+  for (ch in seq_len(density_lst)) {
     chr <- names(density_lst)[ch]
     density_vec <- density_lst[[chr]]
     variant_vec <- variant_lst[[chr]]
@@ -1088,7 +1088,7 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I want to fill in the fivep/threep_superprimer columns with the longer
   ## sequence/revcomp regions of interest.
   ## Then I want to chip away at the beginning/end of them to get the actual fivep/threep primer.
-  for (i in 1:nrow(sequence_df)) {
+  for (i in seq_len(nrow(sequence_df))) {
     chr <- sequence_df[i, "chr"]
 
     silence = TRUE
@@ -1197,7 +1197,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   sequence_df[["closest_gene_after_description"]] <- ""
   sequence_df[["closest_gene_after_start"]] <- ""
   sequence_df[["closest_gene_after_end"]] <- ""
-  for (r in 1:nrow(sequence_df)) {
+  for (r in seq_len(nrow(sequence_df))) {
     entry <- sequence_df[r, ]
     amplicon_chr <- entry[["chr"]]
     amplicon_start <- as.numeric(entry[["bin_start"]])

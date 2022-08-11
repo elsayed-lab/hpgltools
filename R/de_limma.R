@@ -644,11 +644,11 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
     ## If we do have an intercept model, then we get the data
     ## in a slightly different fashion.
-    for (c in 1:ncol(fit[["coefficients"]])) {
+    for (c in seq_len(ncol(fit[["coefficients"]]))) {
       data_table <-  limma::topTable(fit, adjust.method = adjust,
                                      n = n, coef = c, sort.by = "logFC")
 
-      for (column in 1:ncol(data_table)) {
+      for (column in seq_len(ncol(data_table))) {
         data_table[[column]] <- signif(x = as.numeric(data_table[[column]]), digits = 4)
       }
       if (!is.null(annot_df)) {
@@ -666,7 +666,7 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
   } else {
     ## If we do not have an intercept (~ 0 + ...)
     ## Then extract the coefficients and identities separately.
-    for (c in 1:end) {
+    for (c in seq_len(end)) {
       comparison <- coef[c]
       message("Limma step 6/6: ", c, "/", end, ": Creating table: ",
               comparison, ".  Adjust = ", adjust)
@@ -677,10 +677,10 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
     ## Take a moment to prettily format the numbers in the tables
     ## and fill in the identity table.
-    for (d in 1:length(data_tables)) {
+    for (d in seq_along(data_tables)) {
       comparison <- coef[d]
       table <- data_tables[[d]]
-      for (column in 1:ncol(table)) {
+      for (column in seq_len(ncol(table))) {
         table[[column]] <- signif(x = as.numeric(table[[column]]), digits = 4)
       }
       if (!is.null(annot_df)) {

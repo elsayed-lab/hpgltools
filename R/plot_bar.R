@@ -304,11 +304,14 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
 
   ## Set a cutoff of the sum of the rgbs of the bar colors, if the color is > than that cutoff
   ## Set the text color to black.
-  sample_df[["text_color"]] <- "#ffffff"
+  ## I reversed the logic for these colors!
+  ## sample_df[["text_color"]] <- "#ffffff"
+  sample_df[["text_color"]] <- "#FFFFFF"
   text_lst <- color_int(sample_df[["colors"]])
-  for (r in 1:nrow(sample_df)) {
+  for (r in seq_len(nrow(sample_df))) {
     color_sum <- text_lst[["red"]][[r]] + text_lst[["green"]][[r]] + text_lst[["blue"]][[r]]
-    if (color_sum > 385) {
+    if (color_sum >= 385) {
+      ## Hahah I am a doofus and reversed the logic!
       sample_df[r, "text_color"] <- "#000000"
     }
   }
@@ -488,7 +491,7 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
   up_sums <- list()
   down_sums <- list()
   comp_names <- ups[ups[["variable"]] == "a_up_inner", ][["comparisons"]]
-  for (comp in 1:length(comp_names)) {
+  for (comp in seq_along(comp_names)) {
     comp_name <- comp_names[[comp]]
     idx <- ups[["comparisons"]] == comp_name
     up_sums[[comp_name]] <- sum(as.numeric(ups[idx, ][["value"]]))
@@ -516,7 +519,7 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
                    legend.position = "none")
 
   if (isTRUE(text)) {
-    for (comp in 1:length(comp_names)) {
+    for (comp in seq_along(comp_names)) {
       comp_name <- comp_names[[comp]]
       upstring <- as.character(up_sums[[comp_name]])
       downstring <- as.character(down_sums[[comp_name]])

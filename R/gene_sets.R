@@ -25,7 +25,7 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
   if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (g in 1:length(gsc)) {
+  for (g in seq_len(gsc)) {
     if (isTRUE(verbose)) {
       pct_done <- g / length(gsc_lst)
       setTxtProgressBar(bar, pct_done)
@@ -72,7 +72,7 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
   row_names <- rvest::html_attr(x = genesets, name = "STANDARD_NAME")
   column_names <- names(rvest::html_attrs(x = genesets[[1]]))
   all_data <- data.frame(row.names = row_names)
-  for (i in 2:length(column_names)) {
+  for (i in seq(from = 2, to = length(column_names))) {
     c_name <- column_names[i]
     c_data <- rvest::html_attr(x = genesets, name = c_name)
     all_data[[c_name]] <- c_data
@@ -163,6 +163,7 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @param pair_names The suffix of the generated set(s).
 #' @param current_id What type of ID is the data currently using?
 #' @param required_id What type of ID should the use?
+#' @param min_gmt_genes Minimum number of genes in the set for consideration.
 #' @return Small list comprised of the created gene set collection(s).
 #' @seealso [GSEABase]
 #' @export
@@ -170,9 +171,12 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
                               researcher_name = "elsayed", study_name = "macrophage",
                               category_name = "infection", phenotype_name = NULL,
                               identifier_type = "entrez", organism = NULL,
-                              pair_names = "up", current_id = "ENSEMBL", required_id = "ENTREZID") {
+                              pair_names = "up", current_id = "ENSEMBL",
+                              required_id = "ENTREZID", min_gmt_genes = 10) {
   first <- NULL
   second <- NULL
+  do_first <- TRUE
+  do_second <- TRUE
   if (is.null(current_id) | is.null(required_id)) {
     first <- first_ids
     current_id <- ""
@@ -187,68 +191,89 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
     ## tt <- sm(try(do.call("library", as.list(orgdb)), silent = TRUE))
     lib_result <- sm(requireNamespace(annotation_name))
 
-    att_restul <- sm(try(attachNamespace(annotation_name), silent = TRUE))
+    att_result <- sm(try(attachNamespace(annotation_name), silent = TRUE))
     first_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                           keys = first_ids,
                                           keytype = current_id,
                                           columns = c(required_id)))
 
     first_idx <- complete.cases(first_ids)
-
-    if(!all(first_idx)) {
-      message(sum(first_idx == FALSE),
-              " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now.")
+    if (sum(first_idx) == 0) {
+      do_first <- FALSE
+    } else {
+      if(!all(first_idx)) {
+        message(sum(first_idx) == FALSE,
+                " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from first list of IDs given. Dropping them now.")
+      }
+      first_ids <- first_ids[first_idx, ]
+      first <- first_ids[[required_id]]
     }
-    first_ids <- first_ids[first_idx, ]
-    first <- first_ids[[required_id]]
+
     if (!is.null(second_ids)) {
       second_ids <- sm(AnnotationDbi::select(x = get0(annotation_name),
                                              keys = second_ids,
                                              keytype = current_id,
                                              columns = c(required_id)))
       second_idx <- complete.cases(second_ids)
-
-      if(!all(second_idx)) {
-        message(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now.")
+      if (sum(second_idx) == 0) {
+        do_second <- FALSE
+      } else {
+        if(!all(second_idx)) {
+          message(sum(second_idx == FALSE), " ENSEMBL ID's didn't have a matching ENTEREZ ID in this database from second list of IDs given. Dropping them now.")
+        }
+        second_ids <- second_ids[second_idx, ]
+        second <- second_ids[[required_id]]
       }
-
-      second_ids <- second_ids[second_idx, ]
-      second <- second_ids[[required_id]]
-    } else {
-      second <- NULL
     }
   }
 
   all_colored <- NULL
+  fst_gsc <- NULL
   sec_gsc <- NULL
-  fst <- data.frame(row.names = unique(first))
-  if (is.null(phenotype_name)) {
-    phenotype_name <- "unknown"
-  }
-  fst[["direction"]] <- pair_names[1]
-  fst[["phenotype"]] <- phenotype_name
-
-  study_name <- gsub(x = study_name, pattern = "_", replacement = "")
-  category_name <- gsub(x = category_name, pattern = "_", replacement = "")
-  set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
-  fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
+  fst <- NULL
+  sec <- NULL
   identifier <- NULL
-  if (identifier_type == "entrez") {
-    identifier <- GSEABase::EntrezIdentifier()
-  } else if (identifier_type == "ensembl") {
-    identifier <- GSEABase::ENSEMBLIdentifier()
-  } else {
-    identifier <- GSEABase::AnnotationIdentifier()
-  }
-  first_args <- list("type" = identifier,
-                     "setName" = fst_name,
-                     "geneIds" = as.character(rownames(fst)))
-  if (!is.null(organism)) {
-    first_args[["organism"]] <- organism
-  }
-  fst_gsc <- base::do.call(GSEABase::GeneSet, first_args)
+  included_first <- unique(first)
   if (!is.null(second)) {
-    sec <- data.frame(row.names = unique(second))
+    included_second <- unique(second)
+    if (length(included_second) >= min_gmt_genes) {
+      do_second <- TRUE
+      sec <- data.frame(row.names = included_second)
+    }
+  }
+
+  if (length(included_first) >= min_gmt_genes) {
+    fst <- data.frame(row.names = unique(first))
+    if (is.null(phenotype_name)) {
+      phenotype_name <- "unknown"
+    }
+    fst[["direction"]] <- pair_names[1]
+    fst[["phenotype"]] <- phenotype_name
+    study_name <- gsub(x = study_name, pattern = "_", replacement = "")
+    category_name <- gsub(x = category_name, pattern = "_", replacement = "")
+    set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
+    fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
+    if (identifier_type == "entrez") {
+      identifier <- GSEABase::EntrezIdentifier()
+    } else if (identifier_type == "ensembl") {
+      identifier <- GSEABase::ENSEMBLIdentifier()
+    } else {
+      identifier <- GSEABase::AnnotationIdentifier()
+    }
+    first_args <- list("type" = identifier,
+                       "setName" = fst_name,
+                       "geneIds" = as.character(rownames(fst)))
+    if (!is.null(organism)) {
+      first_args[["organism"]] <- organism
+    }
+    fst_gsc <- base::do.call(GSEABase::GeneSet, first_args)
+  } else {
+    message("There are: ", length(included_first), " genes in the first set.")
+    message("According to the min_gmt_genes parameter, this is insufficient.")
+    fst_gsc <- NULL
+  }
+
+  if (isTRUE(do_second)) {
     if (is.null(phenotype_name)) {
       phenotype_name <- "unknown"
     }
@@ -278,10 +303,15 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
     }
     sec_gsc <- base::do.call(GSEABase::GeneSet, second_args)
     all_colored = base::do.call(GSEABase::GeneColorSet, colored_args)
+  } else {
+    ## End testing if we should do the second gsc
+    message("There are: ", length(included_second), " genes in the second set.")
+    message("According to the min_gmt_genes parameter, this is insufficient.")
+    sec_gsc <- NULL
   }
   retlst <- list()
   retlst[[fst_name]] <- fst_gsc
-  if (!is.na(pair_names[2])) {
+  if (isTRUE(do_second)) {
     ## Then there is a colored/down
     retlst[[sec_name]] <- sec_gsc
     retlst[["colored"]] <- all_colored
@@ -317,12 +347,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
                                    phenotype_name = "parasite", set_name = "elsayed_macrophage",
                                    color = TRUE, current_id = "ENSEMBL", required_id = "ENTREZID",
                                    ...) {
-  ups <- list()
-  downs <- list()
-  if ("all" %in% according_to || length(according_to) > 1) {
-    message("For now, limiting this to deseq.")
-    according_to = "deseq"
-  }
+
   if (class(pairwise)[1] == "data.frame") {
     ups <- pairwise
   } else if (class(pairwise)[1] == "all_pairwise") {
@@ -369,7 +394,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     message("Here are the available columns:")
     print(available)
     message("Arbitrarily choosing 'GID'.")
-    current_id <- 'GID'
+    current_id <- "GID"
   }
 
   if (! required_id %in% available) {
@@ -377,20 +402,20 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     message("Here are the available columns:")
     print(available)
     message("Arbitrarily choosing 'GID'.")
-    required_id <- 'GID'
+    required_id <- "GID"
   }
 
   up_lst <- list()
   down_lst <- list()
   colored_lst <- list()
-  for (c in 1:length(ups)) {
+  for (c in seq_len(ups)) {
     name <- names(ups)[c]
     up <- ups[[name]]
     down <- downs[[name]]
-    if (class(up) == "character") {
+    if (class(up)[1] == "character") {
       up_ids <- up
       down_ids <- down
-    } else if (class(up) == "data.frame") {
+    } else if (class(up)[1] == "data.frame") {
       up_ids <- rownames(up)
       down_ids <- rownames(down)
     }
@@ -422,7 +447,6 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     up[["phenotype"]] <- phenotype_name
     down[["direction"]] <- pair_names[2]
     down[["phenotype"]] <- phenotype_name
-
     both <- rbind(up, down)
     shared_ids <- up[[required_id]] %in% down[[required_id]]
     if (sum(shared_ids) > 0) {
@@ -462,37 +486,190 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", orgdb = "or
     set_prefix <- glue("{set_name}_{category_name}")
     color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
     up_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
-    colored_gsc <- GSEABase::GeneColorSet(
-                                 identifier,
-                                 setName = color_set_name,
-                                 geneIds = as.character(both[[required_id]]),
-                                 phenotype = phenotype_name,
-                                 geneColor = as.factor(both[["direction"]]),
-                                 phenotypeColor = as.factor(both[["phenotype"]]))
-    colored_lst[[name]] <- colored_gsc
-    up_gsc <- GSEABase::GeneSet(
-                            identifier,
-                            setName = up_name,
-                            geneIds = as.character(up[[required_id]]))
-    up_lst[[name]] <- up_gsc
+
+    colored_ids <- both[[required_id]]
+    if (is.null(colored_ids)) {
+      colored_gsc <- NULL
+    } else {
+      colored_gsc <- GSEABase::GeneColorSet(
+                                   identifier,
+                                   setName = color_set_name,
+                                   geneIds = as.character(both[[required_id]]),
+                                   phenotype = phenotype_name,
+                                   geneColor = as.factor(both[["direction"]]),
+                                   phenotypeColor = as.factor(both[["phenotype"]]))
+      colored_lst[[name]] <- colored_gsc
+    }
+
+    up_ids <- up[[required_id]]
+    message(up_ids)
+    message("here?")
+    if (is.null(up_ids)) {
+      up_gsc <- NULL
+    } else {
+      up_gsc <- GSEABase::GeneSet(
+                              identifier,
+                              setName = up_name,
+                              geneIds = as.character(up[[required_id]]))
+      up_lst[[name]] <- up_gsc
+    }
+
     down_gsc <- NULL
-    down_lst[[name]] <- down_gsc
-    if (!is.null(pair_names[2])) {
-      down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
-      down_gsc <- GSEABase::GeneSet(
-                                identifier,
-                                setName = down_name,
-                                geneIds = as.character(down[[required_id]]))
+    down_ids <- down[[required_id]]
+    if (!is.null(down_ids)) {
       down_lst[[name]] <- down_gsc
+      if (!is.null(pair_names[2])) {
+        down_name <- toupper(glue("{set_prefix}_{pair_names[2]}"))
+        down_gsc <- GSEABase::GeneSet(
+                                  identifier,
+                                  setName = down_name,
+                                  geneIds = as.character(down[[required_id]]))
+        down_lst[[name]] <- down_gsc
+        message("Created down_gsc")
+      }
     }
   } ## End of the for loop.
 
+  message("Got to retlist")
   retlst <- list(
       "colored" = colored_lst,
       "up" = up_lst,
       "down" = down_lst)
   return(retlst)
 }
+
+make_gsc_from_significant <- function(significant, according_to = "deseq", orgdb = "org.Hs.eg.db",
+                                      category_name = "infection",
+                                      phenotype_name = "parasite", set_name = "elsayed_macrophage",
+                                      color = TRUE, current_id = "ENSEMBL", required_id = "ENTREZID",
+                                      min_gmt_genes = 10, ...) {
+  ups <- list()
+  downs <- list()
+  if ("all" %in% according_to || length(according_to) > 1) {
+    message("For now, limiting this to deseq.")
+    according_to = "deseq"
+  }
+  ups <- significant[[according_to]][["ups"]]
+  downs <- significant[[according_to]][["downs"]]
+
+  set_prefix <- glue("{set_name}_{category_name}")
+  color_set_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
+  up_name <- toupper(glue("{set_prefix}_up"))
+  down_name <- toupper(glue("{set_prefix}_down"))
+
+  ## Choose the Identifier for the colorsets.  For the moment just make it either entrez or null.
+  identifier <- GSEABase::NullIdentifier()
+  if (grepl(x=tolower(required_id), pattern="entrez")) {
+    identifier <- GSEABase::EntrezIdentifier()
+  } else if (grepl(x=tolower(required_id), pattern="ensemb")) {
+    identifier <- GSEABase::ENSEMBLIdentifier()
+  }
+
+  contrasts <- names(ups)
+  up_gscs <- list()
+  down_gscs <- list()
+  both_gscs <- list()
+  up_ids <- list()
+  down_ids <- list()
+  both_ids <- list()
+  for (contrast in contrasts) {
+    up_ids[[contrast]] <- collect_gsc_ids_from_df(ups[[contrast]], orgdb,
+                                                  current_id, required_id)
+    message("Number of up IDs in contrast ", contrast, ": ", length(up_ids[[contrast]]), ".")
+    down_ids[[contrast]] <- collect_gsc_ids_from_df(downs[[contrast]], orgdb,
+                                                    current_id, required_id)
+    message("Number of down IDs in contrast ", contrast, ": ", length(down_ids[[contrast]]), ".")
+    both_factor_names <- c(up_ids[[contrast]], down_ids[[contrast]])
+    both_factor_values <- c(rep("up", length(up_ids[[contrast]])),
+                            rep("down", length(down_ids[[contrast]])))
+    names(both_factor_values) <- both_factor_names
+    both_ids[[contrast]] <- as.factor(both_factor_values)
+
+    up_gscs[[contrast]] <- down_gscs[[contrast]] <- both_gscs[[contrast]] <- NULL
+    if (!is.null(up_ids[[contrast]]) & length(up_ids[[contrast]]) >= min_gmt_genes) {
+      up_name <- glue("{contrast}_up")
+      up_gscs[[contrast]] <- GSEABase::GeneSet(identifier, setName = up_name,
+                                               geneIds = as.character(up_ids[[contrast]]))
+    }
+    if (!is.null(down_ids[[contrast]]) & length(up_ids[[contrast]]) >= min_gmt_genes) {
+      down_name <- glue("{contrast}_down")
+      down_gscs[[contrast]] <- GSEABase::GeneSet(identifier, setName = down_name,
+                                                 geneIds = as.character(down_ids[[contrast]]))
+    }
+
+    if (!is.null(both_ids[[contrast]])) {
+      both_name <- glue("{contrast}_both")
+      both_elements <- names(both_ids[[contrast]])
+      dup_elements <- duplicated(both_elements)
+      if (sum(dup_elements) > 0) {
+        warning("There are ", sum(dup_elements),
+                " non-unique elements in the IDs of the shared.")
+        unique_names <- both_elements[!dup_elements]
+        both_ids[[contrast]] <- both_ids[[contrast]][unique_names]
+      }
+
+      if (length(both_ids[[contrast]]) >= min_gmt_genes) {
+        both_names <- names(both_ids[[contrast]])
+        both_gscs[[contrast]] <- GSEABase::GeneColorSet(
+                                               identifier,
+                                               setName = both_name,
+                                               geneIds = as.character(both_names),
+                                               phenotype = phenotype_name,
+                                               geneColor = both_ids[[contrast]])
+      }
+    }
+  } ## End looking at every contrast.
+  retlist <- list(
+      "ups" = up_gscs,
+      "downs" = down_gscs,
+      "both" = both_gscs)
+  return(retlist)
+}
+
+collect_gsc_ids_from_df <- function(df, orgdb, current_id, required_id) {
+  ret_gsc <- NULL
+  if (nrow(df) == 0) {
+    return(NULL)
+  }
+  if (current_id == required_id) {
+    return(rownames(df))
+  }
+
+  ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
+  ## tt <- sm(library(orgdb, character.only = TRUE))
+  lib_result <- sm(requireNamespace(orgdb))
+  att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
+
+  ## Check that the current_id and required_id are in the orgdb.
+  pkg <- get0(orgdb)
+  available <- AnnotationDbi::columns(pkg)
+  if (! current_id %in% available) {
+    warning("The column: ", current_id, " is not in the set of available orgdb columns.")
+    message("Here are the available columns:")
+    print(available)
+    message("Arbitrarily choosing 'GID'.")
+    current_id <- "GID"
+  }
+
+  if (! required_id %in% available) {
+    warning("The column: ", required_id, " is not in the set of available orgdb columns.")
+    message("Here are the available columns:")
+    print(available)
+    message("Arbitrarily choosing 'GID'.")
+    required_id <- "GID"
+  }
+
+  mesg("Converting the rownames() of the df to ", required_id, ".")
+  req_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
+                                      keys = rownames(df),
+                                      keytype = current_id,
+                                      columns = c(required_id)))
+  idx <- complete.cases(req_ids)
+  req_ids <- req_ids[idx, required_id]
+  return(req_ids)
+}
+
+
 
 #' Given a pairwise result, make a gene set collection.
 #'
@@ -556,7 +733,7 @@ make_gsc_from_abundant <- function(pairwise, according_to = "deseq", orgdb = "or
   high_lst <- list()
   low_lst <- list()
   colored_lst <- list()
-  for (c in 1:length(high_lst[["abundances"]])) {
+  for (c in seq_len(high_lst[["abundances"]])) {
     name <- names(high_lst[["abundances"]])[c]
     high <- high_lst[["abundances"]][[name]]
     low <- low_lst[["abundances"]][[name]]

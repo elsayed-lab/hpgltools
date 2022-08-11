@@ -22,12 +22,14 @@ extract_significant_genes(
   p_column = NULL,
   siglfc_cutoffs = c(0, 1, 2),
   column_suffix = TRUE,
-  gmt = NULL,
+  gmt = FALSE,
   category = "category",
+  fancy = FALSE,
   phenotype_name = "phenotype",
   set_name = "set",
   current_id = "ENSEMBL",
   required_id = "ENTREZID",
+  min_gmt_genes = 10,
   ...
 )
 }

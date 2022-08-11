@@ -13,6 +13,7 @@ xlsx_plot_png(
   res = 90,
   plotname = "plot",
   savedir = "saved_plots",
+  fancy = FALSE,
   fancy_type = "pdf",
   start_row = 1,
   start_col = 1,

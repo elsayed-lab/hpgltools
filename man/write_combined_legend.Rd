@@ -19,7 +19,8 @@ write_combined_legend(
   include_ebseq,
   basic,
   include_basic,
-  padj_type
+  padj_type,
+  fancy = FALSE
 )
 }
 \arguments{

@@ -1,3 +1,9 @@
+#' Collect gene IDs from a table and make them readable.
+#'
+#' @param table Gene table from (initially) clusterProfiler.
+#' @param mappings Table of mapped gene IDs.
+#' @param new String used to disambiguate mappings when it is not provided by the table.
+#' @param primary_key Column name to use when extracting IDs.
 gather_cp_genes <- function(table, mappings, new = "ORF", primary_key = 1) {
   strings <- table[["geneID"]]
   if (nrow(table) == 0) {

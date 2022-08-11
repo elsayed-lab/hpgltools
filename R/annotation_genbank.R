@@ -84,7 +84,7 @@ download_gbk <- function(accessions = "AE009949", write = TRUE) {
   num_downloaded <- 0
   strings <- list()
   written_file <- NULL
-  for (i in 1:nrequest) {
+  for (i in seq_len(nrequest)) {
     a <- (i - 1) * 400 + 1
     b <- 400 * i
     if (i == nrequest) {

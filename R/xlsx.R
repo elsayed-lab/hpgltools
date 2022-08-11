@@ -1,4 +1,4 @@
- ## xlsx.r: Functions to simplify working with the xlsx format.  Most of the
+## xlsx.r: Functions to simplify working with the xlsx format.  Most of the
 ## people with whom we work prefer Excel files. I am not particularly a fan and
 ## so wanted a way to create reasonably nice workbooks without intervention and
 ## therefore hopefully without significant chance of shenanigans.
@@ -85,7 +85,74 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #' @param df When provided, a data frame from which to extract the
 #'  numbers.
 #' @return Either the numbers or dataframe with the sanitized information.
-sanitize_percent <- function(numbers, df=NULL) {
+sanitize_percent <- function(numbers, df = NULL) {
+  number_column <- NULL
+  if (!is.null(df)) {
+    number_column <- numbers
+    numbers <- df[[numbers]]
+  }
+
+  ## Count up the things we changed
+  num_pct_removed <- 0
+  num_gt_one <- 0
+  num_na <- 0
+  num_other <- 0
+  num_numeric <- 0
+
+  numbers <- gsub(pattern = "\\s+", replacement = "", x = numbers)
+
+  encoded <- grepl(x = numbers, pattern = "\\%")
+  numericable <- suppressWarnings(as.numeric(numbers))
+  num_encoded <- sum(encoded)
+  for (n in seq_along(numbers)) {
+    start <- numbers[n]
+    encode <- encoded[n]
+
+    if (isTRUE(encode)) {
+      re_encoded <- gsub(x = start, pattern = "\\%",
+                         replacement = "")
+      re_encoded <- as.numeric(re_encoded) / 100.0
+      num_pct_removed <- num_pct_removed + 1
+    } else if (is.na(start))  {
+      re_encoded <- NA
+      num_na <- num_na + 1
+    } else if (is.na(numericable[n])) {
+      re_encoded <- NA
+      num_other <- num_other + 1
+    } else if (as.numeric(start) > 1) {
+      re_encoded <- as.numeric(start) / 100.0
+      num_gt_one <- num_gt_one + 1
+    } else {
+      re_encoded <- as.numeric(start)
+      num_numeric <- num_numeric + 1
+    }
+    numbers[n] <- re_encoded
+  }
+  numbers <- as.numeric(numbers)
+
+  mesg("Re-encoded the following: ")
+  mesg("Contained a '%': ", num_pct_removed, ".")
+  mesg("Written as greater than 1: ", num_gt_one, ".")
+  mesg("Written as a non-number: ", num_other, ".")
+  mesg("Written as NA: ", num_na, ".")
+  mesg("Written as a normal number from 0-1: ", num_numeric, ".")
+
+  ## If a df was provided, return that instead of the number vector.
+  if (!is.null(df)) {
+    df[[number_column]] <- numbers
+    numbers <- df
+  }
+  return(numbers)
+}
+
+#' Ensure that we handle numbers encoded as '4.012.321,10' are
+#' properly (from the perspective of R using my encoding system)
+#' interpreted as 'four million twelve thousand three hundred
+#' twenty-one and one tenth.'
+#'
+#' @param numbers Column of numbers.
+#' @param optional df
+sanitize_number_encoding <- function(numbers, df = NULL) {
   number_column <- NULL
   if (!is.null(df)) {
     number_column <- numbers
@@ -93,18 +160,19 @@ sanitize_percent <- function(numbers, df=NULL) {
   }
   numbers <- gsub(pattern = "\\s+", replacement = "", x = numbers)
 
-  for (n in 1:length(numbers)) {
-    pct <- grepl(x = numbers[n], pattern = "\\%")
-    new_number <- NA
-    if (pct) {
-      new_number <- gsub(x = numbers[n], pattern = "\\%", replacement = "") / 100.0
-    } else {
-      new_number <- numbers[n]
-    }
-    numbers[n] <- as.numeric(new_number)
+  ## If any numbers in the set have a . followed by a ,
+  ## Then let us first get rid of any .'s and then replace
+  ## the comma with a .
+  encoded <- grepl(x = numbers, pattern = "\\..*\\,")
+  num_encoded <- sum(encoded)
+  if (num_encoded > 0) {
+    removed_dot <- gsub(x = numbers, pattern = "\\.",
+                        replacement = "")
+    replaced_comma <- gsub(x = removed_dot, pattern = "\\,",
+                           replacement = "\\.")
+    numbers <- as.numeric(replaced_comma)
   }
 
-  ## If a df was provided, return that instead of the number vector.
   if (!is.null(df)) {
     df[[number_column]] <- numbers
     numbers <- df
@@ -152,14 +220,12 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   if ("data.table" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
-  if (is.null(wb)) {
-    wb <- openxlsx::createWorkbook(creator = "hpgltools")
-  } else if ("list" %in% class(wb)) {
-    ## In case the return from write_xlsx() was passed to write_xlsx()
-    wb <- wb[["workbook"]]
-  } else if (! "Workbook" %in% class(wb)) {
-    stop("A workbook was passed to this, but the format is not understood.")
+
+  if (!is.null(excel)) {
+    xlsx <- init_xlsx(excel = excel)
+    wb <- xlsx[["wb"]]
   }
+
   ## Heading style 1 (For titles)
   hs1 <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT", textDecoration = "bold",
                                border = "Bottom", fontSize = "30")
@@ -196,7 +262,7 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   colnames(data) <- final_colnames
 
   final_data <- as.data.frame(data)
-  for (col in 1:ncol(final_data)) {
+  for (col in seq_len(ncol(final_data))) {
     column_name <- colnames(final_data)[col]
     if ("list" %in% class(final_data[[col]])) {
       ## The above did not work, trying what I found in:
@@ -221,7 +287,7 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 
   ## Set the column lengths, hard set the first to 20,
   ## then try to set it to auto if the length is not too long.
-  for (data_col in 1:ncol(final_data)) {
+  for (data_col in seq_len(ncol(final_data))) {
     ## Make an explicit check that the data is not null, which comes out here as character(0)
     test_column <- as.character(final_data[[data_col]])
     test_column[is.na(test_column)] <- ""
@@ -293,8 +359,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 #' }
 #' @export
 xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, res = 90,
-                          plotname = "plot", savedir = "saved_plots", fancy_type = "pdf",
-                          start_row = 1, start_col = 1, file_type = "png", units = "in", ...) {
+                          plotname = "plot", savedir = "saved_plots", fancy = FALSE,
+                          fancy_type = "pdf", start_row = 1, start_col = 1,
+                          file_type = "png", units = "in", ...) {
   arglist <- list(...)
   if (is.null(a_plot)) {
     return(NULL)
@@ -312,11 +379,13 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
-  high_quality <- file.path(savedir, glue("{plotname}.{fancy_type}"))
-  insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
-  if (!is.null(savedir)) {
-    if (!file.exists(savedir)) {
-      created <- dir.create(savedir, recursive = TRUE)
+  if (isTRUE(fancy)) {
+    high_quality <- file.path(savedir, glue("{plotname}.{fancy_type}"))
+    insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
+    if (!is.null(savedir)) {
+      if (!file.exists(savedir)) {
+        created <- dir.create(savedir, recursive = TRUE)
+      }
     }
     if (fancy_type == "pdf") {
       fancy_ret <- try(pdf(file = high_quality))
@@ -331,7 +400,6 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
       high_quality_renamed <- gsub(pattern = "\\..*$", replacement = "\\.pdf", x = high_quality)
       fancy_ret <- try(pdf(file = high_quality_renamed))
     }
-
     ## I do not understand why some images are plot()ed while others
     ## seem to need to be print()ed.  Adding a try to attempt
     ## to work around this concern.
@@ -382,8 +450,10 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
       "filename" = png_name,
       "png_fh" = png_ret,
       "png_print" = print_ret,
-      "fancy_print" = fancy_ret,
       "openxlsx" = insert_ret)
+  if (isTRUE(fancy)) {
+    ret[["fancy_print"]] <- fancy_ret
+  }
   return(ret)
 }
 

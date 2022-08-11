@@ -46,7 +46,7 @@ simple_gadem <- function(inputfile, genome = "BSgenome.Hsapiens.UCSC.hs19",
   plots <- list()
   pvals <- list()
   motif_names <- names(gadem_motifs)
-  for (m in 1:length(gadem_motifs)) {
+  for (m in seq_along(gadem_motifs)) {
     name <- motif_names[m]
     motif_matrix <- gadem_motifs[[name]]
     pwm <- seqLogo::makePWM(as.matrix(motif_matrix))

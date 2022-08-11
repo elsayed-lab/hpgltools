@@ -435,7 +435,7 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
   expt_colors <- expt[["colors"]]
   fact_info <- pData(expt)[[fact]]
   names(expt_colors) <- fact_info
-  for (i in 1:length(expt_colors)) {
+  for (i in seq_along(expt_colors)) {
     name <- names(expt_colors)[i]
     this_color <- as.character(expt_colors[i])
     colors[name] <- this_color

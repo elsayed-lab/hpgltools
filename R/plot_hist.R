@@ -78,7 +78,7 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
     columns <- colnames(df)
     summary_df <- summary(df)
     play_all <- data.frame()
-    for (col in 1:length(colnames(df))) {
+    for (col in seq_along(colnames(df))) {
       new_column <- data.frame(expression = df[, col], cond = colnames(df)[col])
       play_all <- BiocGenerics::rbind(play_all, new_column)
     }

@@ -511,7 +511,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 
   ## Take a moment to remove columns which are blank
   columns_to_remove <- NULL
-  for (col in 1:length(colnames(gene_info))) {
+  for (col in seq_along(colnames(gene_info))) {
     sum_na <- sum(is.na(gene_info[[col]]))
     sum_null <- sum(is.null(gene_info[[col]]))
     sum_empty <- sum_na + sum_null
@@ -922,7 +922,7 @@ features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE
   number_table <- numeric(length = ncol(data))
   names(number_table) <- colnames(data)
   feature_tables <- list()
-  for (col in 1:length(colnames(data))) {
+  for (col in seq_along(colnames(data))) {
     column_name <- colnames(data)[col]
     column_data <- data[[column_name]]
     num_features <- NULL
@@ -1127,7 +1127,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   design <- as.data.frame(conds)
   rownames(design) <- colnames(m)
   colnames(design) <- "condition"
-  for (i in 1:ncol(m)) {
+  for (i in seq_len(ncol(m))) {
     m[, i] <- as.integer(m[, i])
   }
   design[["condition"]] <- as.factor(design[["condition"]])
@@ -1330,7 +1330,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   dirs <- dirname(files)
 
   count_table <- NULL
-  for (f in 1:length(files)) {
+  for (f in seq_along(files)) {
     ## Get rid of any lurking spaces
     files[f] <- gsub(pattern = " ", replacement = "", x = files[f])
     ## Check if these are relative or absolute paths and standardize them to absolute.
@@ -1454,7 +1454,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     }
     mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## iterate over and append remaining samples
-    for (num in 2:length(files)) {
+    for (num in seq(from = 2, to = length(files))) {
       table <- files[num]
       if (file.exists(tolower(table))) {
         table <- tolower(table)
@@ -1766,7 +1766,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -1809,7 +1809,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -1829,7 +1829,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -2251,7 +2251,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     notes <- glue::glue("{notes}{note_appended}")
   }
 
-  for (col in 1:ncol(subset_design)) {
+  for (col in seq_len(ncol(subset_design))) {
     if (class(subset_design[[col]])[1] == "factor") {
       subset_design[[col]] <- droplevels(subset_design[[col]])
     }
@@ -2309,7 +2309,7 @@ subtract_expt <- function(expt, new_meta, sample_column = "sample",
   new_exprs <- data.frame(row.names = rownames(mtrx))
   new_pdata <- data.frame()
   sub_names <- rownames(new_meta)
-  for (s in 1:nrow(new_meta)) {
+  for (s in seq_len(nrow(new_meta))) {
     sub_name <- sub_names[s]
     numerator <- new_meta[sub_name, "numerator"]
     denominator <- new_meta[sub_name, "denominator"]

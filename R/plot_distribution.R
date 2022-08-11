@@ -353,7 +353,7 @@ plot_qq_all <- function(data, labels = "short", ...) {
   rows <- nrow(data)
   ## I want to make a square containing the graphs.
   count <- 1
-  for (i in 1:comparisons) {
+  for (i in seq_len(comparisons)) {
     ith <- colnames(data)[i]
     message("Making plot of ", ith, "(", i, ") vs. a sample distribution.")
     tmpdf <- data.frame("ith"=data[, i],

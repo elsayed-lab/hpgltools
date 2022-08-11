@@ -334,7 +334,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
         if (is.null(confounders)) {
           confounder_lst[["batch"]] <- as.numeric(batches)
         } else {
-          for (c in 1:length(confounders)) {
+          for (c in seq_along(confounders)) {
             name <- confounders[c]
             confounder_lst[[name]] <- as.numeric(my_design[[name]])
           }
@@ -342,7 +342,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
         confounder_mtrx <- matrix(data = confounder_lst[[1]], ncol = 1)
         colnames(confounder_mtrx) <- names(confounder_lst)[1]
         if (length(confounder_lst) > 1) {
-          for (i in 2:length(confounder_lst)) {
+          for (i in seq(from = 2, to = length(confounder_lst))) {
             confounder_mtrx <- cbind(confounder_mtrx, confounder_lst[[i]])
             names(confounder_mtrx)[i] <- names(confounder_lst)[i]
           }
@@ -700,7 +700,11 @@ batch_counts <- function(count_table, method = TRUE, expt_design = NULL, batch1 
   conditional_model <- model.matrix(~conditions, data = count_df)
   null_model <- conditional_model[, 1]
   ## Set the number of surrogates for sva/ruv based methods.
-  mesg("Passing the data to all_adjusters using the ", method, " estimate type.")
+  method_class <- "estimate type."
+  ##if (grep(pattern = "combat", x = method)) {
+  ##  method_class <- "batch correction."
+  ##}
+  mesg("Passing the data to all_adjusters using the ", method, " ", method_class)
   new_material <- all_adjusters(count_table, design = design, estimate_type = method,
                                 cpus = cpus, batch1 = batch1, batch2 = batch2,
                                 expt_state = used_state, noscale = noscale,
@@ -849,13 +853,13 @@ compare_batches <- function(expt = NULL, methods = NULL) {
   }
   combined <- data.frame()
   lst <- list()
-  for (m in 1:length(methods)) {
+  for (m in seq_along(methods)) {
     method <- methods[m]
     res <- exprs(normalize_expt(expt, filter = TRUE, batch = method))
     lst[[method]] <- res
     column <- c()
     names <- c()
-    for (c in 1:length(colnames(res))) {
+    for (c in seq_along(colnames(res))) {
       names <- c(names, rownames(res))
       column <- c(column, res[, c])
     }
@@ -1039,7 +1043,7 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
   oldpar <- par(mar = c(5, 5, 5, 5))
   num_adjust <- length(adjust_names)
   ## Now perform other adjustments
-  for (a in 1:num_adjust) {
+  for (a in seq_len(num_adjust)) {
     adjust_name <- adjust_names[a]
     adjust <- adjustments[a]
     if (adjust_name == "batch" & !isTRUE(do_batch)) {
@@ -1076,7 +1080,7 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
   ## Final catplot plotting, if necessary.
   if (isTRUE(do_catplots)) {
     catplot_df <- as.data.frame(catplots[[1]][[2]])
-    for (c in 2:length(catplots)) {
+    for (c in seq(from = 2, to = length(catplots))) {
       cat <- catplots[[c]]
       catplot_df <- cbind(catplot_df, cat[["concordance"]])
     }
@@ -1170,12 +1174,6 @@ counts_from_surrogates <- function(data, adjust = NULL, design = NULL, method = 
     adjust[["SV1"]] <- 1
   }
   adjust_mtrx <- as.matrix(adjust)
-  ##for (col in 1:ncol(adjust_mtrx)) {
-  ##  new_model <- cbind(new_model, adjust_mtrx[, col])
-  ##  new_colname <- glue("sv{col}")
-  ##  new_colnames <- append(new_colnames, new_colname)
-  ##}
-  ##colnames(new_model) <- new_colnames
   full_models <- sm(choose_model(data, conditions = conditions, batches = batches,
                                  model_batch = adjust_mtrx))
   full_model <- full_models[["noint_model"]]
@@ -1370,7 +1368,7 @@ I set it to 1 not knowing what its purpose is.")
     mse <- as.matrix((dat - t(design %*% B.hat)) ^ 2) %*% second_half
     hld <- NULL
     bayesdata <- dat
-    for (k in 1:n.batch) {
+    for (k in seq_len(n.batch)) {
       mesg("Fitting 'shrunk' batch ", k, " effects.")
       sel <- batches[[k]]
       gammaMLE <- rowMeans(m.data[, sel])
@@ -1441,7 +1439,7 @@ I set it to 1 not knowing what its purpose is.")
       }
     } else {
       mesg("Finding nonparametric adjustments.")
-      for (i in 1:n.batch) {
+      for (i in seq_len(n.batch)) {
         temp <- int.eprior(as.matrix(s.data[, batches[[i]]]),
                            gamma.hat[i, ], delta.hat[i, ])
         gamma.star <- rbind(gamma.star, temp[1, ])
@@ -1486,14 +1484,14 @@ my_isva <- function(data.m, pheno.v, cf.m = NULL, factor.log = FALSE, pvthCF = 0
     treatfactor <- c(FALSE, factor.log)
     pv.m <- matrix(nrow = ncol(isva.o$isv), ncol = 1 + ncol(cf.m))
     colnames(pv.m) <- c("POI", colnames(cf.m))
-    for (c in 1:ncol(tmp.m)) {
+    for (c in seq_len(ncol(tmp.m))) {
       if (treatfactor[c] == FALSE) {
-        for (sv in 1:ncol(isva.o[["isv"]])) {
+        for (sv in seq_len(ncol(isva.o[["isv"]]))) {
           lm.o <- lm(isva.o[["isv"]][, sv] ~ as.numeric(tmp.m[, c]))
           pv.m[sv, c] <- summary(lm.o)[["coefficients"]][2, 4]
         }
       } else {
-        for (sv in 1:ncol(isva.o$isv)) {
+        for (sv in seq_len(ncol(isva.o$isv))) {
           lm.o <- lm(
               isva.o$isv[, sv] ~ as.factor(tmp.m[, c]))
           pv.m[sv, c] <- stats::pf(summary(lm.o)$fstat[1], summary(lm.o)$fstat[2],
@@ -1502,7 +1500,7 @@ my_isva <- function(data.m, pheno.v, cf.m = NULL, factor.log = FALSE, pvthCF = 0
       }
     }
     selisv.idx <- vector()
-    for (sv in 1:nrow(pv.m)) {
+    for (sv in seq_len(nrow(pv.m))) {
       ncf <- length(which(pv.m[sv, 2:ncol(pv.m)] < pvthCF))
       minpv <- min(pv.m[sv, 2:ncol(pv.m)])
       phpv <- pv.m[sv, 1]

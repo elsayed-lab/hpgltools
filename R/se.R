@@ -272,7 +272,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
 
   ## Take a moment to remove columns which are blank
   columns_to_remove <- NULL
-  for (col in 1:length(colnames(gene_info))) {
+  for (col in seq_along(colnames(gene_info))) {
     sum_na <- sum(is.na(gene_info[[col]]))
     sum_null <- sum(is.null(gene_info[[col]]))
     sum_empty <- sum_na + sum_null
