@@ -47,6 +47,39 @@ convert_gsc_ids <- function(gsc, orgdb = "org.Hs.eg.db", from_type = NULL, to_ty
   return(gsc)
 }
 
+#' Get an Identifier function from a shorthand name.
+#'
+#' I am hoping to write one for EuPathDB and some other source, thus the switch.
+#'
+#' @param type String name for the identifier in question.
+get_identifier <- function(type) {
+  id_function <- GSEABase::NullIdentifier
+  switchret <- switch(
+      type,
+      "entrez" = {
+        id_function <- GSEABase::EntrezIdentifier
+      },
+      "symbol" = {
+        id_function <- GSEABase::SymbolIdentifier
+      },
+      "ensembl" = {
+        id_function <- GSEABase::ENSEMBLIdentifier
+      },
+      "uniprot" = {
+        id_function <- GSEABase::UniprotIdentifier
+      },
+      "refseq" = {
+        id_function <- GSEABase::RefseqIdentifier
+      },
+      "name" = {
+        id_function <- GSEABase::GenenameIdentifier
+      },
+      {
+        id_function <- GSEABase::NullIdentifier
+      })
+  return(id_function)
+}
+
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
@@ -117,16 +150,20 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
 #'  package, presumably GSVAdata.
 #' @param signature_category Probably not needed unless you download a signature
 #'  file containing lots of different categories.
+#' @param id_type Specify the ID type in the data.
 #' @return signature dataset which may be used by gsva()
 #' @seealso [GSEABase]
 #' @export
 load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata",
-                                signature_category = "c2") {
+                                signature_category = "c2", id_type = "entrez") {
   sig_data <- NULL
+
+  id_function <- get_identifier(id_type)
+
   if (class(signatures)[1] == "character" && grepl(pattern = "\\.gmt$", x = signatures)) {
     sig_data <- GSEABase::getGmt(signatures,
                                  collectionType = GSEABase::BroadCollection(category = signature_category),
-                                 geneIdType = GSEABase::EntrezIdentifier())
+                                 geneIdType = id_function())
   } else if (class(signatures)[1] == "character" && grepl(pattern = "\\.xml$", x = signatures)) {
     gsc <- GSEABase::getBroadSets(signatures)
     types <- sapply(gsc, function(elt) GSEABase::bcCategory(GSEABase::collectionType(elt)))
@@ -142,6 +179,7 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
   } else {
     sig_data <- signatures
   }
+  mesg("Loaded ", length(sig_data), " gene sets.")
   return(sig_data)
 }
 
@@ -255,13 +293,7 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
     category_name <- gsub(x = category_name, pattern = "_", replacement = "")
     set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
     fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
-    if (identifier_type == "entrez") {
-      identifier <- GSEABase::EntrezIdentifier()
-    } else if (identifier_type == "ensembl") {
-      identifier <- GSEABase::ENSEMBLIdentifier()
-    } else {
-      identifier <- GSEABase::AnnotationIdentifier()
-    }
+    identifier <- get_identifier(identifier_type)
     first_args <- list("type" = identifier,
                        "setName" = fst_name,
                        "geneIds" = as.character(rownames(fst)))
@@ -478,6 +510,7 @@ make_gsc_from_pairwise <- function(pairwise, according_to = "deseq", annotation_
     }
 
     ## Choose the Identifier for the colorsets.  For the moment just make it either entrez or null.
+    ## Perhaps this logic should be added to get_identifier()?
     identifier <- GSEABase::NullIdentifier()
     if (grepl(x=tolower(required_id), pattern="entrez")) {
       identifier <- GSEABase::EntrezIdentifier()

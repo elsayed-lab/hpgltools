@@ -64,7 +64,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
     colnames(mtrx) <- abbreviate(colnames(mtrx), minlength = label_chars)
   }
 
-  libsize_df <- data.frame("id" = colnames(mtrx),
+  libsize_df <- data.frame("id" = as.character(colnames(mtrx)),
                            "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))

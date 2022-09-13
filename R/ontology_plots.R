@@ -143,7 +143,7 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
       hjust <- 1.2
     }
     pvalue_plot <- pvalue_plot +
-      ggplot2::geom_text(parse = FALSE, size = 3, color = test_color, hjust = hjust,
+      ggplot2::geom_text(parse = FALSE, size = 3, color = text_color, hjust = hjust,
                          ggplot2::aes_string(label = "score_string"))
   }
   return(pvalue_plot)

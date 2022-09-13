@@ -188,27 +188,44 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   gl <- score_gsva_likelihoods(gsva_result, factor = fact, label_size = label_size)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
-  subset_eset <- subset_eset[keep_idx, ]
-  jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
-                                              "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  scored_ht <- subset_table <- scored_ht_plot <- NULL
+  if (sum(keep_idx) > 1) {
+    subset_eset <- subset_eset[keep_idx, ]
+    jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
+                                                "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
+    if (is.null(label_size)) {
+      scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin))
+    } else {
+      scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin),
+                             cexRow = label_size)
+    }
+    scored_ht_plot <- grDevices::recordPlot()
+    dev.off()
+    removed <- suppressWarnings(file.remove(tmp_file))
+    subset_order <- rev(scored_ht[["rowInd"]])
+    subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
-  scored_ht <- NULL
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
-  this_plot <- png(filename = tmp_file)
-  controlled <- dev.control("enable")
-  if (is.null(label_size)) {
-    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
-                           margins = c(col_margin, row_margin))
+    ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
+    ## are not the same as the rownames of exprs(subset_mtrx)
+    ## which AFAIK should not be possible, but clearly I was wrong.
+    ## At least when I create an expressionset, the fData and exprs have the
+    ## same rownames from beginning to end.
+    ## I guess this does not really matter, since we can use the full annotation table.
+    subset_tbl <- as.data.frame(exprs(subset_eset))
+    order_column <- colnames(subset_tbl)[1]
+    subset_table <- merge(annot, subset_tbl, by = "row.names")
+    rownames(subset_table) <- subset_table[["Row.names"]]
+    subset_table[["Row.names"]] <- NULL
+    ## Set the table row order to the same as the hclust from the heatmap.
+    subset_table <- subset_table[subset_rownames, ]
   } else {
-    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
-                           margins = c(col_margin, row_margin),
-                           cexRow = label_size)
+    mesg("There are not many entries which pass the cutoff for significance.")
   }
-  scored_ht_plot <- grDevices::recordPlot()
-  dev.off()
-  removed <- suppressWarnings(file.remove(tmp_file))
-  subset_order <- rev(scored_ht[["rowInd"]])
-  subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
   order_column <- colnames(values)[1]
   gsva_table <- merge(annot, values, by = "row.names")
@@ -216,20 +233,6 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   gsva_table[["Row.names"]] <- NULL
   reordered_gsva_idx <- order(gsva_table[[order_column]], decreasing = TRUE)
   gsva_table <- gsva_table[reordered_gsva_idx, ]
-
-  ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
-  ## are not the same as the rownames of exprs(subset_mtrx)
-  ## which AFAIK should not be possible, but clearly I was wrong.
-  ## At least when I create an expressionset, the fData and exprs have the
-  ## same rownames from beginning to end.
-  ## I guess this does not really matter, since we can use the full annotation table.
-  subset_tbl <- as.data.frame(exprs(subset_eset))
-  order_column <- colnames(subset_tbl)[1]
-  subset_table <- merge(annot, subset_tbl, by = "row.names")
-  rownames(subset_table) <- subset_table[["Row.names"]]
-  subset_table[["Row.names"]] <- NULL
-  ## Set the table row order to the same as the hclust from the heatmap.
-  subset_table <- subset_table[subset_rownames, ]
 
   gl_tbl <- as.data.frame(gl[["likelihoods"]])
   order_column <- colnames(gl_tbl)[1]
@@ -558,7 +561,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)) {
-    cores <- min(parallel::detectCores() - 1, 8)
+    cores <- min(parallel::detectCores() - 1, 16)
   }
 
   if (!is.null(msig_xml)) {

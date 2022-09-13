@@ -911,10 +911,14 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
                             fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = TRUE, size = 2,
+                            shapes_by_state = TRUE, size = 2, invert = FALSE,
                             label = NULL, ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
+
+  if (isTRUE(invert)) {
+    table[[fc_col]] <- table[[fc_col]] * -1.0
+  }
 
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors = TRUE)

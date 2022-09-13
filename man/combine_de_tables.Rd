@@ -28,6 +28,7 @@ combine_de_tables(
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
   rda = NULL,
+  start_worksheet = "S02",
   ...
 )
 }

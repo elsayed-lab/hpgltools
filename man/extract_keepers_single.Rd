@@ -28,7 +28,9 @@ extract_keepers_single(
   loess = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
-  format_sig = 4
+  format_sig = 4,
+  sheet_prefix = NULL,
+  sheet_number = NULL
 )
 }
 \arguments{

@@ -25,7 +25,10 @@ extract_keepers_lst(
   padj_type,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  sheet_prefix = NULL,
+  sheet_number = NULL,
+  format_sig = 4
 )
 }
 \arguments{

@@ -26,7 +26,9 @@ extract_keepers_all(
   padj_type,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  sheet_prefix = NULL,
+  sheet_number = NULL
 )
 }
 \arguments{

@@ -139,7 +139,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
       if (!isFALSE(model_batch)) {
         post_batch <- try(normalize_expt(input, filter = TRUE, batch = model_type,
                                          transform = "log2", convert = "cpm",
-                                         norm = test_norm))
+                                         norm = test_norm, surrogates = surrogates))
       } else {
         post_batch <- NULL
       }
@@ -173,27 +173,34 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   ## Put a series of empty lists in the final results data structure
   ## so that later I will know to perform each of these analyses without
   ## having to query do_method.
+  num_cpus_needed <- 0
   results <- list()
   if (isTRUE(do_basic)) {
+    num_cpus_needed <- num_cpus_needed + 1
     results[["basic"]] <- list()
   }
   if (isTRUE(do_deseq)) {
+    num_cpus_needed <- num_cpus_needed + 1
     results[["deseq"]] <- list()
   }
   if (isTRUE(do_ebseq)) {
+    num_cpus_needed <- num_cpus_needed + 1
     results[["ebseq"]] <- list()
   }
   if (isTRUE(do_edger)) {
+    num_cpus_needed <- num_cpus_needed + 1
     results[["edger"]] <- list()
   }
   if (isTRUE(do_limma)) {
+    num_cpus_needed <- num_cpus_needed + 1
     results[["limma"]] <- list()
   }
 
   res <- NULL
   if (isTRUE(parallel)) {
-    cl <- parallel::makeCluster(4)
-    doParallel::registerDoParallel(cl)
+    ## Make a cluster with one cpu for each method used: basic, edger, ebseq, limma, deseq.
+    cl <- parallel::makeCluster(num_cpus_needed)
+    registered <- doParallel::registerDoParallel(cl)
     tt <- sm(requireNamespace("parallel"))
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
@@ -204,7 +211,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
           type, input = input, conditions = conditions, batches = batches,
           model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
           extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-          annot_df = annot_df,
+          annot_df = annot_df, surrogates = surrogates,
           ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
@@ -229,7 +236,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
           type, input = input, conditions = conditions, batches = batches,
           model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
           extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-          annot_df = annot_df,
+          annot_df = annot_df, surrogates = surrogates,
           ...)
     }
   } ## End performing a serial comparison

@@ -56,7 +56,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
                               plot_dim = 6, compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
-                              rda = NULL, ...) {
+                              rda = NULL, start_worksheet = "S02", ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -65,6 +65,24 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   do_excel <- TRUE
   if (is.null(wb)) {
     do_excel <- FALSE
+  }
+
+  ## Add a little logic to fill in table numbers in the worksheets.
+  ## To do this, replace the default SXXX with something, either a number or
+  ## a prefix followed by a number, and increment the number for each sheet.
+  sheet_prefix <- NULL
+  sheet_number <- NULL
+  if (!is.null(start_worksheet)) {
+    captured <- utils::strcapture(pattern = "^([A-Za-z]*)([0-9]+)",
+                                  x = start_worksheet,
+                                  proto = list(prefix = character(),
+                                               number = integer()))
+    if (stringr::str_length(captured[["prefix"]]) > 0) {
+      sheet_prefix <- captured[["prefix"]]
+    }
+    if (stringr::str_length(captured[["number"]]) > 0) {
+      sheet_number <- captured[["number"]]
+    }
   }
 
   ## Create a list of image files so that they may be properly cleaned up
@@ -153,7 +171,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
                                      loess =  loess, lfc_cutoff = lfc_cutoff,
-                                     p_cutoff =  p_cutoff)
+                                     p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
+                                     sheet_number = sheet_number)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -168,7 +187,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
                                      loess = loess, lfc_cutoff = lfc_cutoff,
-                                     p_cutoff =  p_cutoff)
+                                     p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
+                                     sheet_number = sheet_number)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -181,7 +201,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                         include_ebseq, include_limma,
                                         include_basic, excludes, padj_type,
                                         loess =  loess, lfc_cutoff = lfc_cutoff,
-                                        p_cutoff = p_cutoff)
+                                        p_cutoff = p_cutoff, sheet_prefix = sheet_prefix,
+                                        sheet_number = sheet_number)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -205,6 +226,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
     ## when setting up the contrasts such that something got duplicated.
     tnames <- names(extracted[["table_names"]])
     tsources <- as.character(extracted[["table_names"]])
+    sheet_increment <- 0
     for (x in seq_along(tnames)) {
       tab <- tnames[x]
       written_table <- extracted[["data"]][[tab]]
@@ -214,6 +236,22 @@ combine_de_tables <- function(apr, extra_annot = NULL,
       }
       final_excel_title <- gsub(pattern = "YYY", replacement = tab, x = excel_title)
       final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  Contrast denominator: {denominators[x]}.")
+
+      ## Replace the excel table name with the incrementing value
+      sheet_increment_start <- "SXXX"
+      sheet_increment_string <- sheet_increment_start
+      sheet_increment_number <- sheet_number + sheet_increment
+      if (is.null(sheet_prefix)) {
+        if (!is.null(sheet_number)) {
+          sheet_increment_string <- as.character(sheet_number)
+        }
+      } else {
+        sheet_increment_string <- glue("{sheet_prefix}{sheet_increment_number}")
+      }
+      sheet_increment <- sheet_increment + 1
+      final_excel_title <- gsub(pattern = sheet_increment_start,
+                                replacement = sheet_increment_string, x = excel_title)
+
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data = written_table, wb = wb, sheet = tab,
                                title = final_excel_title, rownames = rownames)
@@ -506,14 +544,14 @@ combine_de_tables <- function(apr, extra_annot = NULL,
 
     design_result <- write_sample_design(wb, apr)
 
-    mesg("Performing save of ", excel, ".")
+    mesg("Writing ", excel, ".")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
     if (class(save_result)[1] == "try-error") {
       warning("Saving xlsx failed.")
     }
   } ## End if !is.null(excel)
 
-  ## We have finished!  Dump the important stuff into a return list.
+  ## Finished!  Dump the important stuff into a return list.
   ret <- NULL
   if (is.null(retlist)) {
     ret <- list(
@@ -533,7 +571,11 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   class(ret) <- c("combined_de", "list")
 
   if (!is.null(rda)) {
-    saved <- save(list = "ret", file = rda)
+    varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
+    assigned <- assign(varname, ret)
+    message("Saving de result as ", varname, " to ", rda, ".")
+    saved <- save(list = varname, file = rda)
+    removed <- rm(varname)
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
@@ -1158,7 +1200,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type, loess = FALSE,
-                                lfc_cutoff = 1, p_cutoff = 0.05) {
+                                lfc_cutoff = 1, p_cutoff = 0.05,
+                                sheet_prefix = NULL, sheet_number = NULL) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
@@ -1238,7 +1281,9 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type,
-                                loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05) {
+                                loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05,
+                                sheet_prefix = NULL, sheet_number = NULL,
+                                format_sig = 4) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   keeper_names <- names(keepers)
@@ -1341,7 +1386,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
           adjp = adjp, annot_df = annot_df,
           excludes = excludes, padj_type = padj_type,
           lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
-          format_sig = 4)
+          format_sig = format_sig)
       extracted[["data"]][[name]] <- combined[["data"]]
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
@@ -1414,7 +1459,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    include_basic, excludes, padj_type,
                                    fancy = FALSE, loess = FALSE,
                                    lfc_cutoff = 1, p_cutoff = 0.05,
-                                   format_sig = 4) {
+                                   format_sig = 4, sheet_prefix = NULL,
+                                   sheet_number = NULL) {
   splitted <- strsplit(x = keepers, split = "_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
@@ -1782,7 +1828,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     change_counts_down <- list()
     this_fc_column <- chosen_columns[[according]][["fc"]]
     this_p_column <- chosen_columns[[according]][["p"]]
-    message("Using p column: ", this_p_column, ".")
     for (table_count in seq_along(table_names)) {
       table_name <- names(table_names)[table_count]
       plot_name <- as.character(table_names)[table_count]
@@ -1799,7 +1844,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
         }
         single_ma <- try(extract_de_plots(
             combined[["input"]], type = according, table = plot_name, lfc = ma_lfc, p = ma_p), silent = TRUE)
-        if ("try-error" %in% single_ma) {
+        if ("try-error" %in% class(single_ma)) {
           ma_plots[[table_name]] <- NULL
         } else {
           ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]

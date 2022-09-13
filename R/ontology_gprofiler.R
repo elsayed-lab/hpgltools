@@ -1,3 +1,37 @@
+#' Run simple_gprofiler on every table from extract_significant_genes()
+#'
+#' @param sig
+all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
+  ret <- list()
+  input_up <- sig[[according_to]][["ups"]]
+  input_down <- sig[[according_to]][["downs"]]
+  sig_names <- names(input_up)
+  for (i in seq_along(sig_names)) {
+    Sys.sleep(1)
+    name <- sig_names[i]
+    retname_up <- paste0(name, "_up")
+    retname_down <- paste0(name, "_down")
+    up <- input_up[[name]]
+    down <- input_down[[name]]
+    if (isTRUE(together)) {
+      up <- rbind(up, down)
+      down <- data.frame()
+    }
+    if (nrow(up) > 0) {
+      ret[[retname_up]] <- simple_gprofiler(up, ...)
+    } else {
+      ret[[retname_up]] <- NULL
+    }
+    if (nrow(down) > 0) {
+      ret[[retname_down]] <- simple_gprofiler(down, ...)
+    } else {
+      ret[[retname_down]] <- NULL
+    }
+  }
+  return(ret)
+}
+
+
 #' Run searches against the web service g:Profiler.
 #'
 #' This is the beginning of a reimplementation to use gprofiler2.  However,
@@ -209,9 +243,11 @@ simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
                              do_corum = TRUE, do_hp = TRUE, significant = TRUE,
                              pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
   gene_list <- NULL
-  if (class(sig_genes) == "character") {
+  if (class(sig_genes)[1] == "AsIs") {
+    gene_ids <- as.character(sig_genes)
+  } else if (class(sig_genes)[1] == "character") {
     gene_ids <- sig_genes
-  } else if (class(sig_genes) == "numeric") {
+  } else if (class(sig_genes)[1] == "numeric") {
     gene_ids <- names(sig_genes)
   } else {
     if (!is.null(sig_genes[[first_col]])) {

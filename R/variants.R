@@ -300,6 +300,14 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
     mesg("Reading sample: ", sample, ", number ", sample_num, " of ",
          length(samples), ".")
     file <- file_lst[sample_num]
+    if (is.na(file)) {
+      mesg("There is no file listed for ", sample, ".")
+      next
+    }
+    if (!file.exists(file)) {
+      mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
+      next
+    }
     new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
     if (class(new_table)[1] == "try-error") {
       next
@@ -777,7 +785,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   variant_lst <- list()
   ## This was written in an attempt to make it work if one does or does not
   ## have a BSgenome from which to get the actual chromosome lengths.
-  for (ch in seq_len(chromosomes)) {
+  for (ch in seq_along(chromosomes)) {
     chr <- chromosomes[ch]
     mesg("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
@@ -795,7 +803,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     density_vector <- rep(0, ceiling(this_length / bin_width))
     variant_vector <- rep('', ceiling(this_length / bin_width))
     density_name <- 0
-    for (i in seq_len(density_vector)) {
+    for (i in seq_along(density_vector)) {
       range_min <- density_name
       range_max <- (density_name + bin_width) - 1
       ## We want to subtract the maximum primer length from the position
@@ -832,7 +840,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 
   long_density_vector <- vector()
   long_variant_vector <- vector()
-  for (ch in seq_len(density_lst)) {
+  for (ch in seq_along(density_lst)) {
     chr <- names(density_lst)[ch]
     density_vec <- density_lst[[chr]]
     variant_vec <- variant_lst[[chr]]
@@ -847,9 +855,9 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   long_variant_vector <- long_variant_vector[most_idx]
 
   mesg("Extracting primer regions.")
-  sequence_df <- sm(choose_sequence_regions(long_variant_vector, topn = topn,
-                                            max_primer_length = max_primer_length,
-                                            genome = genome))
+  sequence_df <- choose_sequence_regions(long_variant_vector, topn = topn,
+                                         max_primer_length = max_primer_length,
+                                         bin_width = bin_width, genome = genome)
   mesg("Searching for overlapping/closest genes.")
   sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
                               feature_type = feature_type, feature_start = feature_start,
@@ -901,13 +909,13 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 #'  to a hopefully usable primer size.
 #' @param topn Choose this number of variant regions from the rather
 #'  larger set of possibilities..
-#' @param bin_size Separate the genome into chunks of this size when
+#' @param bin_width Separate the genome into chunks of this size when
 #'  hunting for primers, this size will therefore be the approximate
 #'  PCR amplicon length.
 #' @param genome (BS)Genome to search.
 #' @param target_temp PCR temperature to attempt to match.
 choose_sequence_regions <- function(vector, max_primer_length = 45,
-                                    topn = 200, bin_size = 600,
+                                    topn = 200, bin_width = 600,
                                     genome = NULL, target_temp = 58) {
   ## Now get the nucleotides of the first 30 nt of each window
   sequence_df <- as.data.frame(head(vector, n = topn))
@@ -962,9 +970,9 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I am making explicit columns for these so I can look manually
   ## and make sure I am not trying to get sequences which run off the chromosome.
   sequence_df[["fivep_superprimer_start"]] <- sequence_df[["bin_start"]] - max_primer_length - 1
-  sequence_df[["threep_superprimer_start"]] <- sequence_df[["bin_start"]] + bin_size + max_primer_length + 1
+  sequence_df[["threep_superprimer_start"]] <- sequence_df[["bin_start"]] + bin_width + max_primer_length + 1
   sequence_df[["fivep_superprimer_end"]] <- sequence_df[["bin_start"]] - 1
-  sequence_df[["threep_superprimer_end"]] <- sequence_df[["bin_start"]] + bin_size
+  sequence_df[["threep_superprimer_end"]] <- sequence_df[["bin_start"]] + bin_width
   ## The super_primers are the entire region of length == max_primer_length, I will
   ## iteratively remove bases from the 5' until the target is reached.
   sequence_df[["fivep_superprimer"]] <- ""
@@ -977,14 +985,13 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I want to fill in the fivep/threep_superprimer columns with the longer
   ## sequence/revcomp regions of interest.
   ## Then I want to chip away at the beginning/end of them to get the actual fivep/threep primer.
-  for (i in seq_len(nrow(sequence_df))) {
+  for (i in seq_along(nrow(sequence_df))) {
     chr <- sequence_df[i, "chr"]
 
     silence = TRUE
-    fivep_superprimer <- try(Biostrings::subseq(genome[[chr]],
-                                                sequence_df[i, "fivep_superprimer_start"],
-                                                sequence_df[i, "fivep_superprimer_end"]),
-                             silent = silence)
+    fivep_superprimer <- Biostrings::subseq(genome[[chr]],
+                                            sequence_df[i, "fivep_superprimer_start"],
+                                            sequence_df[i, "fivep_superprimer_end"])
     if ("try-error" %in% class(fivep_superprimer)) {
       sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
     } else if (sequence_df[i, "fivep_superprimer_start"] < 0) {
@@ -1086,7 +1093,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   sequence_df[["closest_gene_after_description"]] <- ""
   sequence_df[["closest_gene_after_start"]] <- ""
   sequence_df[["closest_gene_after_end"]] <- ""
-  for (r in seq_len(nrow(sequence_df))) {
+  for (r in seq_along(nrow(sequence_df))) {
     entry <- sequence_df[r, ]
     amplicon_chr <- entry[["chr"]]
     amplicon_start <- as.numeric(entry[["bin_start"]])

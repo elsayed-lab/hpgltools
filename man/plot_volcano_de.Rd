@@ -19,6 +19,7 @@ plot_volcano_de(
   p = 0.05,
   shapes_by_state = TRUE,
   size = 2,
+  invert = FALSE,
   label = NULL,
   ...
 )

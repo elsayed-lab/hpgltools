@@ -219,7 +219,7 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
         logfc = logfc, p = p, invert = invert,
         ...)
     vol_material <- plot_volcano_de(
-        table = the_table, fc_col = fc_col, p_col = p_col,
+        table = the_table, fc_col = fc_col, p_col = p_col, invert = invert,
         logfc = logfc, p = p,
         ...)
   }
