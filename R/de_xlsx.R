@@ -284,7 +284,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc > 0.",
                                      startRow = current_row, startCol = current_column)
           up_plot <- venn_nop_lfc0[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "lfc0upvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -297,7 +297,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc > 1.",
                                      startRow = 1, startCol = current_column)
           up_plot <- venn_nop[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "upvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -310,7 +310,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value up genes, lfc > 0.",
                                      startRow = 1, startCol = current_column)
           up_plot <- venn_list[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "upvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -323,7 +323,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value up genes, lfc > 1.",
                                      startRow = current_row, startCol = current_column)
           sig_up_plot <- venn_sig_list[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               sig_up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height =  (plot_dim / 2),
               start_col = current_column, plotname = "upvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -347,7 +347,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by fc going up.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["up"]], wb = wb, sheet =  sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col =  current_column, plotname =  "siggenesup",
@@ -360,7 +360,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by p going up.",
                                        startRow = 1, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["pup"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenespup",
@@ -377,7 +377,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc < 0.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_nop_lfc0[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "lfc0downvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -390,7 +390,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc < -1.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_nop[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -403,7 +403,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value down genes, lfc < 0.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -416,7 +416,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value down genes, lfc < -1.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_sig_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -429,7 +429,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by fc going down.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["down"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenesup",
@@ -442,7 +442,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by p going down.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["pdown"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenespdown",
@@ -478,7 +478,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = printme,
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "scatter")
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 plt[["scatter"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = plot_dim, start_col = current_column,
                 plotname = plotname, savedir = excel_basename, start_row = current_row + 1)
@@ -491,7 +491,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "ma")
             ## I think something here is failing and leaving behind a tempfile.
-            try_ma_result <- xlsx_plot_png(
+            try_ma_result <- xlsx_insert_png(
                 ma_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, plotname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -503,7 +503,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = paste0(type, " volcano plot"),
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "vol")
-            try_vol_result <- xlsx_plot_png(
+            try_vol_result <- xlsx_insert_png(
                 vol_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, pltname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -515,7 +515,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = paste0(type, " p-value plot"),
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "p")
-            try_p_result <- xlsx_plot_png(
+            try_p_result <- xlsx_insert_png(
                 p_plt, wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, pltname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -1894,7 +1894,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     }
     if (isFALSE(excel)) {
       do_excel <- FALSE
-    } else {
+    }
+
+    if (isTRUE(do_excel)) {
       mesg("Printing significant genes to the file: ", excel)
       xlsx_ret <- print_ups_downs(ret[[according]], wb, excel_basename, according = according,
                                   summary_count = summary_count, ma = ma, fancy = fancy)
@@ -1946,7 +1948,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                   startRow = plot_row, startCol = plot_col)
       plot_row <- plot_row + 1
       plotname <- glue::glue("sigbar_{according}")
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           a_plot = sig_bar_plots[[according]], wb = wb, sheet = "number_changed",
           plotname = plotname, savedir = excel_basename, width = 9, height = 6,
           start_row = plot_row, start_col = plot_col, fancy = fancy)
@@ -2236,14 +2238,14 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
                               sheet = "summary", title = venn_title,
                               start_row = venn_row, start_col = venn_col)
       venn_row <- venn_row + 4
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           up_plot, wb = wb, sheet = "summary", width = 6, height = 6,
           start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
       venn_col <- venn_col + 12
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           down_plot, wb = wb, sheet = "summary", width = 6, height = 6,
           start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
@@ -2313,7 +2315,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
         ma_col <- xls_result[["end_col"]] + 1
         if (!is.null(ma_plots[[base_name]])) {
           plot_name <- glue::glue("ma_{according}_{base_name}")
-          try_result <- xlsx_plot_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
+          try_result <- xlsx_insert_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
                                       plotname = plot_name, savedir = excel_basename,
                                       start_row = ma_row, start_col = ma_col, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
@@ -2369,6 +2371,9 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
   ## surrogate variable, then we will not have TRUE/FALSE but instead a matrix.
   do_excel <- TRUE
   if (length(excel_basename) == 0) {
+    do_excel <- FALSE
+  }
+  if (is.null(wb)) {
     do_excel <- FALSE
   }
   reminder_model_cond <- apr[["model_cond"]]
@@ -2545,14 +2550,16 @@ stringsAsFactors = FALSE)
     legend <- rbind(legend, summary_legend)
   }
   colnames(legend) <- c("column name", "column definition")
-  xls_result <- write_xlsx(
-      wb, data = legend, sheet = "legend", rownames = FALSE,
-      title = "Columns used in the following tables.")
+  xls_result <- NULL
+  if (isTRUE(do_excel)) {
+    xls_result <- write_xlsx(
+        wb, data = legend, sheet = "legend", rownames = FALSE,
+        title = "Columns used in the following tables.")
+  }
 
   ## Some folks have asked for some PCA showing the before/after surrogates.
   ## Put that on the first sheet, then.
   ## This if (isTRUE()) is a little odd, perhaps it should be removed or moved up.
-  xls_result <- NULL
   image_files <- c()
   if (isTRUE(do_excel)) {
     mesg("Printing pca plots before and after surrogate|batch estimation.")
@@ -2562,7 +2569,7 @@ stringsAsFactors = FALSE)
                                wb = wb, sheet = "legend",
                                x = "PCA plot before surrogate estimation.",
                                startRow = 1, startCol = 10)
-    try_result <- xlsx_plot_png(
+    try_result <- xlsx_insert_png(
         apr[["pre_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 2,
         width = (plot_dim * 3/2), height = plot_dim, start_col = 10,
         plotname = "pre_pca", savedir = excel_basename,
@@ -2574,7 +2581,7 @@ stringsAsFactors = FALSE)
                                wb = wb, sheet = "legend",
                                x = as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
                                startRow = 36, startCol = 10)
-    try_result <- xlsx_plot_png(
+    try_result <- xlsx_insert_png(
         apr[["post_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 37,
         width = (plot_dim * 3/2), height = plot_dim, start_col = 10,
         plotname = "pre_pca", savedir = excel_basename,
@@ -2626,7 +2633,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
 
     new_row <- xls_result[["end_row"]] + 2
     if (class(apr[["comparison"]][["heat"]])[1] == "recordedplot") {
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           apr[["comparison"]][["heat"]], wb = wb, sheet = sheetname, plotname = "pairwise_summary",
           savedir = excel_basename, start_row = new_row + 1, start_col = 1, fancy = fancy)
       if (! "try-error" %in% class(try_result)) {
@@ -2654,7 +2661,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x="Log2FC(Limma vs. EdgeR)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               le, wb = wb, sheet = "pairwise_summary", plotname = "compare_le",
               savedir = excel_basename, start_row = new_row, start_col = tmpcol,
               fancy = fancy)
@@ -2668,7 +2675,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x = "Log2FC(Limma vs. DESeq2)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               ld, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
               start_row = new_row, start_col = tmpcol, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
@@ -2681,7 +2688,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x = "Log2FC(DESeq2 vs. EdgeR)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               de, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
               start_row = new_row, start_col = tmpcol, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {

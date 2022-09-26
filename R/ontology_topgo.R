@@ -102,7 +102,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                    returns[[type]] <- do_topgo(type, go_map = geneID2GO,
                                                fisher_genes = fisher_interesting_genes,
                                                ks_genes = ks_interesting_genes)
-                 }
+  }
   stopped <- parallel::stopCluster(cl)
   if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")

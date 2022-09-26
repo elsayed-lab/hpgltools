@@ -204,8 +204,8 @@ colnames(annot) <- c("txid", "txid2", "ID", "description", "type", "width",
                      "chromosome", "strand", "start", "end")
 gos_test <- simple_gostats(ups, go_db = pombe_go, gff_df = annot, gff_type = "protein_coding")
 cat_actual <- head(gos_test[["tables"]][["mf_over_enriched"]][["GOMFID"]])
-cat_expected <- c("GO:0016491", "GO:0016616", "GO:0016614",
-                  "GO:0004032", "GO:0008106", "GO:0010844")
+cat_expected <- c("GO:0016491", "GO:0016614", "GO:0016616",
+                  "GO:0004033", "GO:0047834", "GO:0004032")
 test_that("Do we get expected stuff from gostats? (cat)", {
   expect_equal(6, sum(cat_expected %in% cat_actual))
 })

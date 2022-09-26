@@ -610,6 +610,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @param label_chars How many characters for sample names before abbreviation.
 #' @param plot_legend Print a legend for this plot?
 #' @param plot_title Add a title?
+#' @param cutoff Minimum proportion (or number) of genes below which samples might be in trouble.
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each
 #'  library's CPM.
@@ -621,7 +622,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @export
 plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
                          expt_names = NULL, label_chars = 10, plot_legend = FALSE,
-                         plot_title = NULL, ...) {
+                         plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   names <- NULL
@@ -659,6 +660,22 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
       "condition" = condition,
       "batch" = batch,
       "color" = as.character(colors))
+
+  ## Add a little logic to warn the user if samples have poor representation
+  ## using a cutoff which may either be a proportion of the number of available
+  ## rows, or an aribtrary cutoff
+  sad_samples <- NULL
+  if (!is.null(cutoff)) {
+    if (cutoff < 1) { ## Then it is a proportion
+      cutoff <- nrow(data) * cutoff
+    }
+    sad_idx <- nz_df[["nonzero_genes"]] <= cutoff
+    sad_samples <- nz_df[sad_idx, "id"]
+    if (length(sad_samples) > 0) {
+      message("The following samples have less than ", cutoff, " genes.")
+      print(sad_samples)
+    }
+  }
 
   color_listing <- nz_df[, c("condition", "color")]
   color_listing <- unique(color_listing)
@@ -907,22 +924,37 @@ plot_scatter <- function(df, color = "black", xlab = NULL,
 #' }
 #' @export
 plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE"="darkblue", "TRUE"="darkred"),
+                            color_list = c("FALSE" = "darkblue", "TRUE" = "darkred"),
                             fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
                             shapes_by_state = TRUE, size = 2, invert = FALSE,
-                            label = NULL, ...) {
+                            label = NULL, label_column = "hgncsymbol", ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
 
-  if (isTRUE(invert)) {
-    table[[fc_col]] <- table[[fc_col]] * -1.0
+  if (! fc_col %in% colnames(table)) {
+    stop("Column: ", fc_col, " is not in the table.")
+  }
+  if (! p_col %in% colnames(table)) {
+    stop("Column: ", p_col, " is not in the table.")
   }
 
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
-                   "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors = TRUE)
+                   "yaxis" = as.numeric(table[[p_col]]))
   rownames(df) <- rownames(table)
+
+  if (isTRUE(invert)) {
+    df[["xaxis"]] <- df[["xaxis"]] * -1.0
+  }
+
+  ## Add the label column if it exists.
+  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[table_column]]
+  } else {
+    df[["label"]] <- rownames(table)
+  }
+
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
   df[["pcut"]] <- df[["yaxis"]] <= p
@@ -934,7 +966,6 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
                           "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
-  df[["label"]] <- rownames(df)
 
   ## shape 25 is the down arrow, 22 is the square, 23 the diamond, 24 the up arrow
   state_shapes <- c(25, 22, 23, 24)
@@ -942,12 +973,12 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
 
   color_column <- "pcut"
   color_column_number <- 2
-  default_color_list <- c("FALSE"="darkred", "TRUE"="darkblue")
+  default_color_list <- c("FALSE" = "darkred", "TRUE" = "darkblue")
   if (color_by != "p") {
     color_column <- "state"
     color_column_number <- 4
-    default_color_list <- c("downsig"="blue", "fcinsig"="darkgrey",
-                            "pinsig"="darkgrey", "upsig"="red")
+    default_color_list <- c("downsig" = "blue", "fcinsig" = "darkgrey",
+                            "pinsig" = "darkgrey", "upsig" = "red")
   }
   ## Now make sure that the color column has the correct number of elements.
   if (length(color_list) != color_column_number) {
@@ -1017,13 +1048,20 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   ##  axis.text.x = ggplot2::element_text(angle=-90))
 
   if (!is.null(label)) {
-    reordered_idx <- order(df[["xaxis"]])
-    reordered <- df[reordered_idx, ]
-    sig_idx <- reordered[["logyaxis"]] > horiz_line
-    reordered <- reordered[sig_idx, ]
-    top <- head(reordered, n = label)
-    bottom <- tail(reordered, n = label)
-    df_subset <- rbind(top, bottom)
+    if (is.numeric(label)) {
+      reordered_idx <- order(df[["xaxis"]])
+      reordered <- df[reordered_idx, ]
+      sig_idx <- reordered[["logyaxis"]] > horiz_line
+      reordered <- reordered[sig_idx, ]
+      top <- head(reordered, n = label)
+      bottom <- tail(reordered, n = label)
+      df_subset <- rbind(top, bottom)
+    } else if (is.character(label)) {
+      sig_idx <- rownames(df) %in% label
+      df_subset <- df[sig_idx, ]
+    } else {
+      stop("I do not understand this set of IDs to label.")
+    }
     plt <- plt +
       ggrepel::geom_text_repel(data = df_subset,
                                aes_string(label = "label", y = "logyaxis", x = "xaxis"),

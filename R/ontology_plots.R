@@ -209,6 +209,9 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1, x_column 
   plot_list <- list()
   for (ont in c("mf", "bp", "cc")) {
     idx <- goterms_complete[["ontology"]] == toupper(ont)
+    if (sum(idx) == 0) {
+      next
+    }
     plotting <- goterms_complete[idx, ]
     chosen_order = "score"
     if (is.null(plotting[[order_by]])) {

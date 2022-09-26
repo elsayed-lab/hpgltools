@@ -21,6 +21,7 @@ plot_volcano_de(
   size = 2,
   invert = FALSE,
   label = NULL,
+  label_column = "hgncsymbol",
   ...
 )
 }

@@ -8,6 +8,7 @@ topgo2enrich(
   retlist,
   ontology = "mf",
   pval = 0.05,
+  organism = NULL,
   column = "fisher",
   padjust_method = "BH"
 )

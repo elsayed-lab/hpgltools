@@ -156,7 +156,13 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     ## first <- gsva_score_means[["Index"]][numerator][[1]]
     ## second <- gsva_score_means[["Index"]][denominator][[1]]
     numerator_samples <- gsva_score_means[["indexes"]][[numerator]]
+    if (is.null(numerator_samples)) {
+      next
+    }
     denominator_samples <- gsva_score_means[["indexes"]][[denominator]]
+    if (is.null(denominator_samples)) {
+      next
+    }
     ## get maximum value of group means in each contrast
     ## maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
     max_values <- apply(exprs(gsva_scores)[, numerator_samples | denominator_samples], 1, max)
@@ -838,7 +844,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
       title = "Summary and sheets in this workbook.")
   xl_result <- openxlsx::writeData(wb = wb, sheet = "legend", x = "PCA of categories vs sample type.",
                                    startRow = 1, startCol = 8)
-  try_result <- xlsx_plot_png(retlist[["score_pca"]], wb = wb, sheet = "legend",
+  try_result <- xlsx_insert_png(retlist[["score_pca"]], wb = wb, sheet = "legend",
                               start_row = 2, start_col = 8,
                               width=(plot_dim * 3/2), height = plot_dim,
                               plotname = "gsva_pca", savedir = excel_basename)
@@ -849,7 +855,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 8
   plot_height <- 16
-  try_result <- xlsx_plot_png(a_plot = retlist[["raw_plot"]], wb = wb, sheet = "gsva_scores",
+  try_result <- xlsx_insert_png(a_plot = retlist[["raw_plot"]], wb = wb, sheet = "gsva_scores",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 
@@ -859,7 +865,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 6
   plot_height <- 15
-  try_result <- xlsx_plot_png(a_plot = retlist[["score_plot"]], wb = wb, sheet = "likelihood_scores",
+  try_result <- xlsx_insert_png(a_plot = retlist[["score_plot"]], wb = wb, sheet = "likelihood_scores",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 
@@ -869,7 +875,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 6
   plot_height <- 6
-  try_result <- xlsx_plot_png(a_plot = retlist[["subset_plot"]], wb = wb, sheet = "subset_table",
+  try_result <- xlsx_insert_png(a_plot = retlist[["subset_plot"]], wb = wb, sheet = "subset_table",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 

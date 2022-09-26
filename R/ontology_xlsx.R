@@ -54,8 +54,8 @@ gather_ontology_genes <- function(result, ontology = NULL,
                                   column = "over_represented_pvalue",
                                   pval = 0.1, include_all = FALSE, ...) {
   arglist <- list(...)
+  ontology <- toupper(ontology)
   categories <- NULL
-
   ## I should reorganize the results from goseq
   ## But until then, just put a silly test here.
   table_list <- NULL
@@ -325,7 +325,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- cp_result[["plots"]][["ego_sig_bp"]]
-      plot_try <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
+      plot_try <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
                                 start_col = ncol(cp_bp) + 2, start_row = new_row,
                                 plotname = "bp_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
@@ -333,7 +333,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
       }
       b_plot <- cp_result[["plots"]][["tree_sig_bp"]]
       if (!is.null(b_plot)) {
-        plot_try <- xlsx_plot_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
+        plot_try <- xlsx_insert_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
                                   start_col = ncol(cp_bp) + 2, start_row = 80, res = 210,
                                   plotname = "bp_trees", savedir = excel_basename)
         if (! "try-error" %in% class(plot_try)) {
@@ -357,7 +357,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- cp_result[["plots"]][["ego_sig_mf"]]
-      plot_try <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
+      plot_try <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
                                 start_col = ncol(cp_mf) + 2, start_row = new_row,
                                 plotname = "mf_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
@@ -365,7 +365,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
       }
       b_plot <- cp_result[["plots"]][["tree_sig_mf"]]
       if (!is.null(b_plot)) {
-        plot_try <- xlsx_plot_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
+        plot_try <- xlsx_insert_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
                                   start_col = ncol(cp_mf) + 2, start_row = 80, res = 210,
                                   plotname = "mf_trees", savedir = excel_basename)
         if (! "try-error" %in% class(plot_try)) {
@@ -390,7 +390,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- cp_result[["plots"]][["ego_sig_cc"]]
-      plot_try <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
+      plot_try <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = width, height = height,
                                 start_col = ncol(cp_cc) + 2, start_row = new_row,
                                 plotname = "cc_plot", savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
@@ -398,7 +398,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
       }
       b_plot <- cp_result[["plots"]][["tree_sig_cc"]]
       if (!is.null(b_plot)) {
-        plot_try <- xlsx_plot_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
+        plot_try <- xlsx_insert_png(b_plot, wb = wb, sheet = sheet, width = 12, height = 12,
                                   start_col = ncol(cp_cc) + 2, start_row = 80, res = 210,
                                   plotname = "cc_trees", savedir = excel_basename)
         if (! "try-error" %in% class(plot_try)) {
@@ -511,13 +511,13 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
       printme <- "Histogram of observed ontology (adjusted) p-values by goseq."
       xl_result <- openxlsx::writeData(wb, "legend", x = printme,
                                        startRow = summary_row - 1, startCol = 1)
-      plot_try <- xlsx_plot_png(goseq_result[["pvalue_histogram"]], wb = wb, sheet = "legend",
+      plot_try <- xlsx_insert_png(goseq_result[["pvalue_histogram"]], wb = wb, sheet = "legend",
                                 start_col = 1, start_row = summary_row, plotname = "p_histogram",
                                 savedir = excel_basename)
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
-      plot_try <- xlsx_plot_png(goseq_result[["pwf_plot"]], wb = wb, sheet = "legend",
+      plot_try <- xlsx_insert_png(goseq_result[["pwf_plot"]], wb = wb, sheet = "legend",
                                 start_col = 8, start_row = summary_row, plotname = "pwf_plot",
                                 savedir = excel_basename)
       if (! "try-error" %in% class(plot_try)) {
@@ -577,7 +577,7 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
     if (isTRUE(add_plots)) {
       plot_name <- glue("{tolower(ont)}p_plot_over")
       a_plot <- goseq_result[["pvalue_plots"]][[plot_name]]
-      plot_try <- xlsx_plot_png(a_plot, wb = wb, sheet = ont, width = width, height = height,
+      plot_try <- xlsx_insert_png(a_plot, wb = wb, sheet = ont, width = width, height = height,
                                 start_col = ncol(categories) + 2, start_row = new_row,
                                 plotname = plot_name, savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
@@ -585,7 +585,7 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
       }
       tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
-        plot_try <- xlsx_plot_png(trees[[tree_name]], wb = wb, sheet = ont, width = 12, height = 12,
+        plot_try <- xlsx_insert_png(trees[[tree_name]], wb = wb, sheet = ont, width = 12, height = 12,
                                   start_col = ncol(categories) + 2, start_row = 80, res = 210,
                                   plotname = tree_name, savedir = excel_basename)
         if (! "try-error" %in% class(plot_try)) {
@@ -679,7 +679,7 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
       printme <- "Histogram of observed ontology (adjusted) p-values by gostats."
       xl_result <- openxlsx::writeData(wb, "legend", x = printme,
                                        startRow = summary_row - 1, startCol = 1)
-      plot_try <- xlsx_plot_png(gostats_result[["pvalue_histogram"]], wb = wb, sheet = "legend",
+      plot_try <- xlsx_insert_png(gostats_result[["pvalue_histogram"]], wb = wb, sheet = "legend",
                                 start_col = 1, start_row = summary_row, plotname = "p_histogram",
                                 savedir = excel_basename)
       if (! "try-error" %in% class(plot_try)) {
@@ -728,7 +728,7 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
     if (isTRUE(add_plots)) {
       plot_name <- glue("{tolower(ont)}p_plot_over")
       a_plot <- gostats_result[["pvalue_plots"]][[plot_name]]
-      plot_try <- xlsx_plot_png(a_plot, wb = wb, sheet = ont, width = width, height = height,
+      plot_try <- xlsx_insert_png(a_plot, wb = wb, sheet = ont, width = width, height = height,
                                 start_col = ncol(categories) + 2, start_row = new_row,
                                 plotname = plot_name, savedir = excel_basename, doWeights = FALSE)
       if (! "try-error" %in% class(plot_try)) {
@@ -736,7 +736,7 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
       }
       tree_name <- glue("{ont}_over")
       if (!is.null(trees[[tree_name]])) {
-        plot_try <- xlsx_plot_png(trees[[tree_name]], wb = wb, sheet = ont, width = 12, height = 12,
+        plot_try <- xlsx_insert_png(trees[[tree_name]], wb = wb, sheet = ont, width = 12, height = 12,
                                   start_col = ncol(categories) + 2, start_row = 80, res = 210,
                                   plotname = tree_name, savedir = excel_basename)
         if (! "try-error" %in% class(plot_try)) {
@@ -901,7 +901,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]]
-        plot_try <- xlsx_plot_png(
+        plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(bp_data) + 2, start_row = new_row,
             plotname = "bp_plot", savedir = excel_basename, doWeights = FALSE)
@@ -921,7 +921,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- gprofiler_result[["pvalue_plots"]][["mfp_plot_over"]]
-        plot_try <- xlsx_plot_png(
+        plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(mf_data) + 2, start_row = new_row,
             plotname = "mf_plot", savedir = excel_basename, doWeights = FALSE)
@@ -942,7 +942,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- gprofiler_result[["pvalue_plots"]][["ccp_plot_over"]]
-        plot_try <- xlsx_plot_png(
+        plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(cc_data) + 2, start_row = new_row,
             plotname = "cc_plot", savedir = excel_basename, doWeights = FALSE)
@@ -975,7 +975,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["kegg_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(kegg_data) + 2, start_row = new_row,
           plotname = "kegg_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1007,7 +1007,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["tf_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(tf_data) + 2, start_row = new_row,
           plotname = "tf_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1039,7 +1039,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["reactome_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(react_data) + 2, start_row = new_row,
           plotname = "react_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1071,7 +1071,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["mi_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(mi_data) + 2, start_row = new_row,
           plotname = "mi_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1103,7 +1103,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["hp_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(hp_data) + 2, start_row = new_row,
           plotname = "hp_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1135,7 +1135,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
     if (isTRUE(add_plots)) {
       a_plot <- gprofiler_result[["pvalue_plots"]][["corum_plot_over"]]
-      plot_try <- xlsx_plot_png(
+      plot_try <- xlsx_insert_png(
           a_plot, wb = wb, sheet = sheet, width = width, height = height,
           start_col = ncol(corum_data) + 2, start_row = new_row,
           plotname = "corum_plot", savedir = excel_basename, doWeights = FALSE)
@@ -1231,28 +1231,28 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
       printme <- "Histogram of observed ontology p-values by topgo."
       xl_result <- openxlsx::writeData(wb, "legend", x = printme,
                                        startRow = summary_row - 1, startCol = 1)
-      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["fisher"]],
+      plot_try <- sm(xlsx_insert_png(topgo_result[["pvalue_histograms"]][["fisher"]],
                                    wb = wb, sheet = "legend", start_col = 1,
                                    start_row = summary_row, plotname = "fisher_histogram",
                                    savedir = excel_basename))
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
-      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["KS"]],
+      plot_try <- sm(xlsx_insert_png(topgo_result[["pvalue_histograms"]][["KS"]],
                                    wb = wb, sheet = "legend", start_col = 11,
                                    start_row = summary_row, plotname = "ks_histogram",
                                    savedir = excel_basename))
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
-      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["EL"]],
+      plot_try <- sm(xlsx_insert_png(topgo_result[["pvalue_histograms"]][["EL"]],
                                    wb = wb, sheet = "legend", start_col = 21,
                                    start_row = summary_row, plotname = "el_histogram",
                                    savedir = excel_basename))
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
-      plot_try <- sm(xlsx_plot_png(topgo_result[["pvalue_histograms"]][["weight"]],
+      plot_try <- sm(xlsx_insert_png(topgo_result[["pvalue_histograms"]][["weight"]],
                                    wb = wb, sheet = "legend", start_col = 1,
                                    start_row = summary_row + 31, plotname = "weight_histogram",
                                    savedir = excel_basename))
@@ -1308,7 +1308,7 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
     if (isTRUE(add_plots)) {
       a_plot <- topgo_result[["pvalue_plots"]][[p_plot_name]]
       if (!is.null(a_plot)) {
-        plot_try <- sm(xlsx_plot_png(
+        plot_try <- sm(xlsx_insert_png(
             a_plot, wb = wb, sheet = ont, width = width, height = height,
             start_col = ncol(categories) + 2, start_row = new_row,
             plotname = p_plot_name, savedir = excel_basename, doWeights = FALSE))
@@ -1318,7 +1318,7 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
       }
       a_plot <- trees[[tree_plot_name]]
       if (!is.null(a_plot)) {
-        plot_try <- sm(xlsx_plot_png(
+        plot_try <- sm(xlsx_insert_png(
             trees[[tree_plot_name]], wb = wb, sheet = ont, width = 12, height = 12,
             start_col = ncol(categories) + 2, start_row = 80, res = 210,
             plotname = tree_plot_name, savedir = excel_basename))
@@ -1561,7 +1561,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["goseq_bp"]]) + 2,
                                     start_row = new_row, plotname = "goseq_bp",
                                     savedir = excel_basename)
@@ -1579,7 +1579,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["goseq_mf"]]) + 2,
                                     start_row = new_row, plotname = "goseq_mf",
                                     savedir = excel_basename)
@@ -1597,7 +1597,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_goseq"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["goseq_cc"]]) + 2,
                                     start_row = new_row, plotname = "goseq_cc",
                                     savedir = excel_basename)
@@ -1619,7 +1619,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["bp_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["cluster_bp"]]) + 2,
                                     start_row = new_row, plotname = "cluster_bp",
                                     savedir = excel_basename)
@@ -1637,7 +1637,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["mf_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["cluster_mf"]]) + 2,
                                     start_row = new_row, plotname = "cluster_mf",
                                     savedir = excel_basename)
@@ -1655,7 +1655,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_cluster"]][[name]][["pvalue_plots"]][["cc_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["cluster_cc"]]) + 2,
                                     start_row = new_row, plotname = "cluster_cc",
                                     savedir = excel_basename)
@@ -1677,7 +1677,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["topgo_bp"]]) + 2,
                                     start_row = new_row, plotname = "topgo_bp",
                                     savedir = excel_basename)
@@ -1695,7 +1695,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["topgo_mf"]]) + 2,
                                     start_row = new_row, plotname = "topgo_mf",
                                     savedir = excel_basename)
@@ -1713,7 +1713,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_topgo"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["topgo_cc"]]) + 2,
                                     start_row = new_row, plotname = "topgo_cc",
                                     savedir = excel_basename)
@@ -1738,7 +1738,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       names(links) <- up_stuff[["gostats_bp"]][["Category"]]
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["bp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gostats_bp"]]) + 2,
                                     start_row = new_row, plotname = "gostats_bp",
                                     savedir = excel_basename)
@@ -1762,7 +1762,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       names(links) <- up_stuff[["gostats_mf"]][["Category"]]
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["mf_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gostats_mf"]]) + 2,
                                     start_row = new_row, plotname = "gostats_mf",
                                     savedir = excel_basename)
@@ -1785,7 +1785,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       names(links) <- up_stuff[["gostats_cc"]][["Category"]]
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gostats"]][[name]][["pvalue_plots"]][["cc_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gostats_cc"]]) + 2,
                                     start_row = new_row, plotname = "gostats_cc",
                                     savedir = excel_basename)
@@ -1807,7 +1807,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gprofiler_bp"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_bp",
                                     savedir = excel_basename)
@@ -1825,7 +1825,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gprofiler_mf"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_mf",
                                     savedir = excel_basename)
@@ -1843,7 +1843,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["up_gprofiler"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(up_stuff[["gprofiler_cc"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_cc",
                                     savedir = excel_basename)
@@ -1875,7 +1875,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["goseq_bp"]]) + 2,
                                     start_row = new_row, plotname = "goseq_bp",
                                     savedir = excel_basename)
@@ -1893,7 +1893,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["goseq_mf"]]) + 2,
                                     start_row = new_row, plotname = "goseq_mf",
                                     savedir = excel_basename)
@@ -1911,7 +1911,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_goseq"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["goseq_cc"]]) + 2,
                                     start_row = new_row, plotname = "goseq_cc",
                                     savedir = excel_basename)
@@ -1933,7 +1933,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_cluster"]][[name]][["pvalue_plots"]][["bp_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["cluster_bp"]]) + 2,
                                     start_row = new_row, plotname = "cluster_bp",
                                     savedir = excel_basename)
@@ -1951,7 +1951,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_cluster"]][[name]][["pvalue_plots"]][["mf_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["cluster_mf"]]) + 2,
                                     start_row = new_row, plotname = "cluster_mf",
                                     savedir = excel_basename)
@@ -1969,7 +1969,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_cluster"]][[name]][["cc_all_barplot"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["cluster_cc"]]) + 2,
                                     start_row = new_row, plotname = "cluster_cc",
                                     savedir = excel_basename)
@@ -1990,7 +1990,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["topgo_bp"]]) + 2,
                                     start_row = new_row, plotname = "topgo_bp",
                                     savedir = excel_basename)
@@ -2008,7 +2008,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["topgo_mf"]]) + 2,
                                     start_row = new_row, plotname = "topgo_mf",
                                     savedir = excel_basename)
@@ -2026,7 +2026,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_topgo"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["topgo_cc"]]) + 2,
                                     start_row = new_row, plotname = "topgo_cc",
                                     savedir = excel_basename)
@@ -2047,7 +2047,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["bp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gostats_bp"]]) + 2,
                                     start_row = new_row, plotname = "gotats_bp",
                                     savedir = excel_basename)
@@ -2069,7 +2069,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["mf_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gostats_mf"]]) + 2,
                                     start_row = new_row, plotname = "gostats_mf",
                                     savedir = excel_basename)
@@ -2091,7 +2091,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gostats"]][[name]][["pvalue_plots"]][["cc_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gostats_cc"]]) + 2,
                                     start_row = new_row, plotname = "gostats_cc",
                                     savedir = excel_basename)
@@ -2117,7 +2117,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["bpp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gprofiler_bp"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_bp",
                                     savedir = excel_basename)
@@ -2135,7 +2135,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["mfp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gprofiler_mf"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_mf",
                                     savedir = excel_basename)
@@ -2153,7 +2153,7 @@ write_subset_ontologies <- function(kept_ontology, outfile = "excel/subset_go", 
                             start_row = new_row)
       if (isTRUE(add_plots)) {
         a_plot <- kept_ontology[["down_gprofiler"]][[name]][["pvalue_plots"]][["ccp_plot_over"]]
-        try_result <- xlsx_plot_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
+        try_result <- xlsx_insert_png(a_plot, wb = wb, sheet = sheet, width = 6, height = 6,
                                     start_col = ncol(down_stuff[["gprofiler_cc"]]) + 2,
                                     start_row = new_row, plotname = "gprofiler_cc",
                                     savedir = excel_basename)

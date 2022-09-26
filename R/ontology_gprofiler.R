@@ -1,13 +1,16 @@
 #' Run simple_gprofiler on every table from extract_significant_genes()
 #'
-#' @param sig
+#' @param sig Result from extract_significant_genes
+#' @param according_to Use this result type for the gprofiler searches.
+#' @param together Concatenate the up/down genes into one set?
+#' @param ... Arguments to pass to simple_gprofiler().
 all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
   ret <- list()
   input_up <- sig[[according_to]][["ups"]]
   input_down <- sig[[according_to]][["downs"]]
   sig_names <- names(input_up)
   for (i in seq_along(sig_names)) {
-    Sys.sleep(1)
+    slept <- Sys.sleep(1)
     name <- sig_names[i]
     retname_up <- paste0(name, "_up")
     retname_down <- paste0(name, "_down")
@@ -75,7 +78,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
 #' }
 #' @export
 simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
-                              first_col = "logFC", second_col = "deseq_logfc", do_go = TRUE,
+                              first_col = "deseq_logfc", second_col = "logfc", do_go = TRUE,
                               do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
                               do_corum = TRUE, do_hp = TRUE, do_hpa = TRUE, do_wp = TRUE,
                               significant = FALSE, exclude_iea = FALSE, do_under = FALSE,
@@ -105,10 +108,10 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   }
 
   ## Check that the provided species is in gprofiler2
-  species_info <- try(gprofiler2::get_version_info(organism = species))
-  if ("try-error" %in% class(species_info)) {
-    stop("The organism ", species, " is not supported by gprofiler2.")
-  }
+  ##species_info <- try(gprofiler2::get_version_info(organism = species))
+  ##if ("try-error" %in% class(species_info)) {
+  ##  stop("The organism ", species, " is not supported by gprofiler2.")
+  ##}
 
   retlst <- list()
   if (isTRUE(do_go)) {
@@ -185,10 +188,12 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                                             custom_bg = bg,
                                             sources = type,
                                             as_short_link = TRUE)
-      interactive_plots[[type]] <- gprofiler2::gostplot(a_result, capped = TRUE, interactive = TRUE)
-      gost_plots[[type]] <- gprofiler2::gostplot(a_result, capped = FALSE, interactive = FALSE)
+      interactive_plots[[type]] <- try(
+          gprofiler2::gostplot(a_result, capped = TRUE, interactive = TRUE), silent = TRUE)
+      gost_plots[[type]] <- try(
+          gprofiler2::gostplot(a_result, capped = FALSE, interactive = FALSE), silent = TRUE)
     }
-    message(type, " search found ", nrow(a_result), " hits.")
+    ## message(type, " search found ", nrow(a_result), " hits.")
     retlst[[type]] <- a_df
   } ## End iterating over the set of default sources.
 
@@ -206,6 +211,17 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   class(retlst) <- c("gprofiler_result", "list")
   return(retlst)
 }
+
+#' Redirect users to simple_gprofiler2
+#'
+#' @export
+simple_gprofiler <- function(...) {
+  message("Redirecting to simple_gprofiler2().
+If you wish to roll the bones with the previous function, try:
+simple_gprofiler_old().")
+  simple_gprofiler2(...)
+}
+
 
 #' Run searches against the web service g:Profiler.
 #'
@@ -237,7 +253,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
 #'  gprofiler_is_nice_and_easy <- simple_gprofiler(genes, species='mmusculus')
 #' }
 #' @export
-simple_gprofiler <- function(sig_genes, species = "hsapiens", convert = TRUE,
+simple_gprofiler_old <- function(sig_genes, species = "hsapiens", convert = TRUE,
                              first_col = "logFC", second_col = "limma_logfc", do_go = TRUE,
                              do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
                              do_corum = TRUE, do_hp = TRUE, significant = TRUE,

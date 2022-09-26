@@ -56,18 +56,33 @@ extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue =
   mf_idx <- godata_interesting[["ontology"]] == "MF"
   mf_interesting <- godata_interesting[mf_idx, ]
   rownames(mf_interesting) <- mf_interesting[["category"]]
-  mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(mf_interesting[["term"]])) {
+    mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   bp_idx <- godata_interesting[["ontology"]] == "BP"
   bp_interesting <- godata_interesting[bp_idx, ]
   rownames(bp_interesting) <- bp_interesting[["category"]]
-  bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(bp_interesting[["term"]])) {
+    bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   cc_idx <- godata_interesting[["ontology"]] == "CC"
   cc_interesting <- godata_interesting[cc_idx, ]
   rownames(cc_interesting) <- cc_interesting[["category"]]
-  cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(cc_interesting[["term"]])) {
+    cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   retlist <- list(
       "godata" = godata,
       "interesting" = godata_interesting,
@@ -422,7 +437,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     pwf_plot <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- file.remove(tmp_file)
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))

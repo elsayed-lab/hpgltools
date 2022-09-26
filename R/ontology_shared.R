@@ -25,6 +25,9 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   if (is.null(interesting)) {
     return(NULL)
   }
+  if (nrow(interesting) == 0) {
+    return(NULL)
+  }
   ## I would like to write this data as an enrichResult as per
   ## DOSE/clusterProfiler so that I may use their plotting functions
   ## without fighting. Therefore I will coerce the various results I
@@ -155,7 +158,7 @@ gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
 #' @param ontology Ontology subtree to act upon.
 #' @param pval Cutoff, hmm I think I need to standardize these.
 #' @param column Table column to export.
-topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05,
+topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05, organism = NULL,
                          column = "fisher", padjust_method = "BH") {
   result_name <- paste0(column, "_", tolower(ontology))
   if (column == "el") {
@@ -175,7 +178,7 @@ topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05,
   sig_genes <- rownames(retlist[["input"]])
 
   genes_per_category <- gather_ontology_genes(retlist, ontology = ontology, pval = pval,
-                                              column = column)[[toupper(ontology)]]
+                                              column = column)
   ## One of the biggest oddities of enrichResult objects: the scores
   ## are explicitly ratio _string_, thus 0.05 is '5/100'.
   category_genes <- gsub(pattern=", ", replacement="/", x=genes_per_category[["sig"]])

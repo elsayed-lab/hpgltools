@@ -25,22 +25,26 @@
 #' @param max_data Define the upper limit for the heuristic.
 #' @param min_data Define the lower limit for the heuristic.
 check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10) {
-  if (max(data) > max_data & min(data) < min_data) {
-    mesg("This data will benefit from being displayed on the log scale.")
-    mesg("If this is not desired, set scale='raw'")
-    scale <- "log"
-    negative_idx <- data < 0
-    if (sum(negative_idx) > 0) {
-      data[negative_idx] <- 0
-      message("Changed ", sum(negative_idx), " negative features to 0.")
-    }
-    zero_idx <- data == 0
-    if (sum(zero_idx) > 0) {
-      message(sum(zero_idx), " entries are 0.  We are on a log scale, adding 1 to the data.")
-      data <- data + 1
+  if (is.null(scale)) {
+    if (max(data) > max_data & min(data) < min_data) {
+      mesg("This data will benefit from being displayed on the log scale.")
+      mesg("If this is not desired, set scale='raw'")
+      scale <- "log"
+      negative_idx <- data < 0
+      if (sum(negative_idx) > 0) {
+        data[negative_idx] <- 0
+        message("Changed ", sum(negative_idx), " negative features to 0.")
+      }
+      zero_idx <- data == 0
+      if (sum(zero_idx) > 0) {
+        message(sum(zero_idx), " entries are 0.  We are on a log scale, adding 1 to the data.")
+        data <- data + 1
+      }
+    } else {
+      scale <- "raw"
     }
   } else {
-    scale <- "raw"
+    mesg("An explicit scale was requested: ", scale, ".")
   }
   retlist <- list(
       "data" = data,

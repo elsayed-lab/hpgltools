@@ -14,6 +14,9 @@
 #' @seealso [openxlsx::addWorksheet()]
 check_xlsx_worksheet <- function(wb, sheet) {
   newsheet <- NULL
+  if (is.null(wb)) {
+    return(NULL)
+  }
   current_sheets <- wb@.xData[[".->sheet_names"]]
   found_sheets <- 0
   if (sheet %in% current_sheets) {
@@ -358,10 +361,10 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 #'   fun_plot <- plot_pca(stuff)$plot
 #'   df <- some_data_frame
 #'   wb <- write_xlsx(df, excel = "funkytown.xlsx")$workbook
-#'   try_results <- xlsx_plot_png(fun_plot, wb = wb)
+#'   try_results <- xlsx_insert_png(fun_plot, wb = wb)
 #' }
 #' @export
-xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, res = 90,
+xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, res = 90,
                           plotname = "plot", savedir = "saved_plots", fancy = FALSE,
                           fancy_type = "pdf", start_row = 1, start_col = 1,
                           file_type = "png", units = "in", ...) {
@@ -382,9 +385,10 @@ xlsx_plot_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, r
   } else if (class(wb)[1] != "Workbook") {
     stop("A workbook was passed to this, but the format is not understood.")
   }
+
+  insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
   if (isTRUE(fancy)) {
     high_quality <- file.path(savedir, glue("{plotname}.{fancy_type}"))
-    insert_ret <- fancy_ret <- png_ret <- print_ret <- NULL
     if (!is.null(savedir)) {
       if (!file.exists(savedir)) {
         created <- dir.create(savedir, recursive = TRUE)

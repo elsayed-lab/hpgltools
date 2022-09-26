@@ -206,6 +206,7 @@ load_gmt_signatures <- function(signatures = "c2BroadSets", data_pkg = "GSVAdata
 #' @param min_gmt_genes Minimum number of genes in the set for consideration.
 #' @return Small list comprised of the created gene set collection(s).
 #' @seealso [GSEABase]
+#' @importFrom GSEABase GeneSet GeneColorSet
 #' @export
 make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "org.Hs.eg.db",
                               researcher_name = "elsayed", study_name = "macrophage",
@@ -294,13 +295,16 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
     set_prefix <- glue("{researcher_name}_{study_name}_{category_name}")
     fst_name <- toupper(glue("{set_prefix}_{pair_names[1]}"))
     identifier <- get_identifier(identifier_type)
-    first_args <- list("type" = identifier,
+    first_args <- list("type" = identifier(),
                        "setName" = fst_name,
                        "geneIds" = as.character(rownames(fst)))
     if (!is.null(organism)) {
       first_args[["organism"]] <- organism
     }
-    fst_gsc <- base::do.call(GSEABase::GeneSet, first_args)
+    required <- requireNamespace("GSEABase")
+    loaded <- loadNamespace("GSEABase")
+    loaded <- try(attachNamespace("GSEABase"), silent = TRUE)
+    fst_gsc <- do.call("GeneSet", first_args)
   } else {
     message("There are: ", length(included_first), " genes in the first set.")
     message("According to the min_gmt_genes parameter, this is insufficient.")
@@ -321,11 +325,11 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
     sec[["phenotype"]] <- phenotype_name
     both <- rbind(fst, sec)
     color_name <- toupper(glue("{set_prefix}_{phenotype_name}"))
-    second_args <- list("type" = identifier,
+    second_args <- list("type" = identifier(),
                      "setName" = sec_name,
                      "geneIds" = as.character(rownames(sec)))
     colored_args <- list(
-        "type" = identifier,
+        "type" = identifier(),
         "setName" = color_name,
         "geneIds" = rownames(both),
         "phenotype" = phenotype_name,
@@ -335,8 +339,8 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
       second_args[["organism"]] <- organism
       colored_args[["organism"]] <- organism
     }
-    sec_gsc <- base::do.call(GSEABase::GeneSet, second_args)
-    all_colored = base::do.call(GSEABase::GeneColorSet, colored_args)
+    sec_gsc <- base::do.call("GeneSet", second_args)
+    all_colored = base::do.call("GeneColorSet", colored_args)
   } else {
     ## End testing if we should do the second gsc
     message("There are: ", length(included_second), " genes in the second set.")
