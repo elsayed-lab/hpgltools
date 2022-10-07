@@ -618,6 +618,90 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   return(pval_plots)
 }
 
+#' Make a pvalue plot from gprofiler data.
+#'
+#' The p-value plots from clusterProfiler are pretty, this sets the gprofiler
+#' data into a format suitable for plotting in that fashion and returns the
+#' resulting plots of significant ontologies.
+#'
+#' @param gp_result Some data from gProfiler.
+#' @param wrapped_width Maximum width of the text names.
+#' @param cutoff P-value cutoff for the plots.
+#' @param n Maximum number of ontologies to include.
+#' @param group_minsize Minimum ontology group size to include.
+#' @param scorer Which column to use for scoring the data.
+#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @return List of MF/BP/CC pvalue plots.
+#' @seealso [ggplot2]
+#' @export
+plot_gprofiler2_pval <- function(gp_result, wrapped_width = 30,
+                                cutoff = 0.1, n = 30,
+                                group_minsize = 5, scorer = "recall",
+                                ...) {
+
+  types <- c("MF", "BP", "CC", "KEGG", "REAC", "WP", "TF", "MIRNA", "HPA", "CORUM", "HP")
+  go_result <- gp_result[["GO"]]
+  mf_idx <- go_result[["source"]] == "GO:MF"
+  gp_result[["MF"]] <- go_result[mf_idx, ]
+  bp_idx <- go_result[["source"]] == "GO:BP"
+  gp_result[["BP"]] <- go_result[bp_idx, ]
+  cc_idx <- go_result[["source"]] == "GO:CC"
+  gp_result[["CC"]] <- go_result[cc_idx, ]
+
+  kept_columns <- c("p_value", "term_size", "query_size",
+                    "intersection_size", "recall", "precision",
+                    "term_id", "term_name", "effective_domain_size")
+  old_options <- options(scipen = 4)
+
+  gp_rewrite_df <- function(plotting_df) {
+    ## First set the order of the table to be something most descriptive.
+    ## For the moment, we want that to be the score.
+    plotting_df[["score"]] <- plotting_df[[scorer]]
+    new_order <- order(plotting_df[["score"]], decreasing = FALSE)
+    plotting_df <- plotting_df[new_order, ]
+    ## Drop anything with no term name
+    kidx <- plotting_df[["term_name"]] != "NULL"
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything outside of our pvalue cutoff
+    kidx <- plotting_df[["p_value"]] <= cutoff
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything with fewer than x genes in the group
+    kidx <- plotting_df[["query_size"]] >= group_minsize
+    plotting_df <- plotting_df[kidx, ]
+    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+    ## the factor in plot_ontpval, which should have a note.
+    plotting_df <- tail(plotting_df, n = n)
+    plotting_df <- plotting_df[, c("term_name", "p_value", "score")]
+    colnames(plotting_df) <- c("term", "pvalue", "score")
+    plotting_df[["term"]] <- as.character(
+        lapply(strwrap(plotting_df[["term"]],
+                       wrapped_width, simplify = FALSE),
+               paste, collapse = "\n"))
+    return(plotting_df)
+  }
+
+  over_plots <- list()
+  for (num in seq_along(types)) {
+    table <- types[num]
+    plotting <- gp_result[[table]]
+    plot <- NULL
+    if (is.null(plotting) | nrow(plotting) == 0) {
+      plot <- NULL
+    } else {
+      plotting <- gp_rewrite_df(plotting)
+      plot <- try(plot_ontpval(plotting, ontology = table))
+    }
+    if (class(plot)[[1]] == "try-error") {
+      plot <- NULL
+    }
+    over_plots[[table]] <- plot
+  }
+
+  new_options <- options(old_options)
+  return(over_plots)
+}
+
 #' Make fun trees a la topgo from goseq data.
 #'
 #' This seeks to force goseq data into a format suitable for topGO and then use

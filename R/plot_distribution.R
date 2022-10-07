@@ -104,9 +104,7 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
     boxplot <- boxplot +
       ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area",
                            show.legend = FALSE) +
-      ggplot2::scale_fill_manual(values = as.character(colors), guide = "none") +
-      ggplot2::geom_boxplot(aes_string(fill = "sample"), outlier.alpha = 0.01,
-                            width = 0.1)
+      ggplot2::scale_fill_manual(values = as.character(colors), guide = "none")
   } else {
     boxplot <- boxplot +
       sm(ggplot2::geom_boxplot(aes_string(fill = "sample"),

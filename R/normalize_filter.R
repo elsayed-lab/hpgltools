@@ -27,6 +27,13 @@ filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
                           cv_min = 0.01, cv_max = 1000, thresh = 2, min_samples = 2, ...) {
   arglist <- list(...)
   start <- count_table
+
+  ## Make sure I catch it if the argument provided is 'threshold' and not 'thresh'.
+  if (!is.null(arglist[["threshold"]])) {
+    message("This function generally expects the threshold argument to be used with 'thresh'.")
+    thresh <- arglist[["threshold"]]
+  }
+
   if (class(count_table)[1] == "list") {
     count_table <- count_table[["count_table"]]
   }
@@ -66,6 +73,9 @@ filter_counts <- function(count_table, method = "cbcb", p = 0.01, A = 1, k = 1,
       "cv" = {
         filtered_counts <- genefilter_cv_counts(count_table, cv_min = cv_min,
                                                 cv_max = cv_max)
+      },
+      "rowmax" = {
+        filtered_counts <- rowmax_filter_counts(count_table, threshold = thresh)
       },
       "simple" = {
         filtered_counts <- simple_filter_counts(count_table, threshold = thresh)
@@ -119,75 +129,6 @@ cbcb_filter_counts <- function(count_table, threshold = 1, min_samples = 2, libs
   counts <- list(
       "count_table" = count_table,
       "libsize" = libsize)
-  return(counts)
-}
-
-#' Filter low-count genes from a data set using cpm data and a threshold.
-#'
-#' This is identical to cbcb_filter_counts except it does not do the somewhat tortured
-#' log2CPM() but instead just uses a 4 cpm non-log threshold.  It should therefore give
-#' basically the same result, but without the shenanigans.
-#'
-#' @param count_table Data frame of (pseudo)counts by sample.
-#' @param threshold Lower threshold of counts for each gene.
-#' @param min_samples Minimum number of samples.
-#' @param libsize  Table of library sizes.
-#' @param ...  Arguments passed to cpm and friends.
-#' @return Dataframe of counts without the low-count genes.
-#' @seealso [edgeR]
-#' @examples
-#' \dontrun{
-#'  filtered_table <- cbcb_filter_counts(count_table)
-#' }
-#' @export
-hpgl_filter_counts <- function(count_table, threshold = 2, min_samples = 2, libsize = NULL, ...) {
-  neg_idx <- count_table < 0
-  neg_sum <- sum(neg_idx)
-  if (sum(neg_sum) > 0) {
-    warning("Found ", neg_sum, " negative entries, setting them to 0.")
-    count_table[neg_idx] <- 0
-  }
-  cpms <- edgeR::cpm(count_table)
-  keep <- rowSums(cpms > threshold) >= min_samples
-  num_before <- nrow(count_table)
-  count_table <- count_table[keep, ]
-  num_after <- nrow(count_table)
-  removed_rows <- num_before - num_after
-  message("Removing ", removed_rows, " low-count genes (",
-          num_after, " remaining).")
-  libsize <- colSums(count_table)
-  counts <- list(
-      "count_table" = count_table,
-      "libsize" = libsize)
-  return(counts)
-}
-
-#' Filter low-count genes from a data set only using a simple threshold and number of samples.
-#'
-#' This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count
-#' genes.  It drops genes based on a threshold and number of samples.
-#'
-#' @param count_table Data frame of (pseudo)counts by sample.
-#' @param threshold Lower threshold of counts for each gene.
-#' @return Dataframe of counts without the low-count genes.
-#' @seealso [edgeR]
-#' @examples
-#' \dontrun{
-#'  filtered_table <- simple_filter_counts(count_table)
-#' }
-#' @export
-simple_filter_counts <- function(count_table, threshold = 2) {
-  num_before <- nrow(count_table)
-  sums <- rowSums(count_table)
-  keepers <- (sums >= threshold)
-  count_table <- count_table[keepers, ]
-
-  message(sprintf("Removing %d low-count genes (%d remaining).",
-                  num_before - nrow(count_table), nrow(count_table)))
-
-  libsize <- colSums(count_table)
-  counts <- list("count_table" = count_table,
-                 "libsize" = libsize)
   return(counts)
 }
 
@@ -295,6 +236,101 @@ genefilter_kofa_counts <- function(count_table, k = 1, A = 1) {
                   num_before - nrow(count_table), nrow(count_table)))
   libsize <- colSums(count_table)
   counts <- list(count_table = count_table, libsize = libsize)
+  return(counts)
+}
+
+#' Filter low-count genes from a data set using cpm data and a threshold.
+#'
+#' This is identical to cbcb_filter_counts except it does not do the somewhat tortured
+#' log2CPM() but instead just uses a 4 cpm non-log threshold.  It should therefore give
+#' basically the same result, but without the shenanigans.
+#'
+#' @param count_table Data frame of (pseudo)counts by sample.
+#' @param threshold Lower threshold of counts for each gene.
+#' @param min_samples Minimum number of samples.
+#' @param libsize  Table of library sizes.
+#' @param ...  Arguments passed to cpm and friends.
+#' @return Dataframe of counts without the low-count genes.
+#' @seealso [edgeR]
+#' @examples
+#' \dontrun{
+#'  filtered_table <- cbcb_filter_counts(count_table)
+#' }
+#' @export
+hpgl_filter_counts <- function(count_table, threshold = 2, min_samples = 2, libsize = NULL, ...) {
+  neg_idx <- count_table < 0
+  neg_sum <- sum(neg_idx)
+  if (sum(neg_sum) > 0) {
+    warning("Found ", neg_sum, " negative entries, setting them to 0.")
+    count_table[neg_idx] <- 0
+  }
+  cpms <- edgeR::cpm(count_table)
+  keep <- rowSums(cpms > threshold) >= min_samples
+  num_before <- nrow(count_table)
+  count_table <- count_table[keep, ]
+  num_after <- nrow(count_table)
+  removed_rows <- num_before - num_after
+  message("Removing ", removed_rows, " low-count genes (",
+          num_after, " remaining).")
+  libsize <- colSums(count_table)
+  counts <- list(
+      "count_table" = count_table,
+      "libsize" = libsize)
+  return(counts)
+}
+
+#' Filter low-count genes from a data set only using a simple maximum-count threshold.
+#'
+#' @param count_table Data frame of (pseudo)counts by sample.
+#' @param threshold Lower threshold of counts for each gene.
+#' @return Dataframe of counts without the low-count genes.
+#' @seealso [edgeR]
+#' @examples
+#' \dontrun{
+#'  filtered_table <- rowmax_filter_counts(count_table)
+#' }
+#' @export
+rowmax_filter_counts <- function(count_table, threshold = 2) {
+  num_before <- nrow(count_table)
+  max <- matrixStats::rowMaxs(count_table)
+  keepers <- (max >= threshold)
+  count_table <- count_table[keepers, ]
+
+  message(sprintf("Removing %d low-maximum genes < %d: (%d remaining).",
+                  num_before - nrow(count_table), threshold, nrow(count_table)))
+
+  libsize <- colSums(count_table)
+  counts <- list("count_table" = count_table,
+                 "libsize" = libsize)
+  return(counts)
+}
+
+#' Filter low-count genes from a data set only using a simple threshold and number of samples.
+#'
+#' This was a function written by Kwame Okrah and perhaps also Laura Dillon to remove low-count
+#' genes.  It drops genes based on a threshold and number of samples.
+#'
+#' @param count_table Data frame of (pseudo)counts by sample.
+#' @param threshold Lower threshold of counts for each gene.
+#' @return Dataframe of counts without the low-count genes.
+#' @seealso [edgeR]
+#' @examples
+#' \dontrun{
+#'  filtered_table <- simple_filter_counts(count_table)
+#' }
+#' @export
+simple_filter_counts <- function(count_table, threshold = 2) {
+  num_before <- nrow(count_table)
+  sums <- rowSums(count_table)
+  keepers <- (sums >= threshold)
+  count_table <- count_table[keepers, ]
+
+  message(sprintf("Removing %d low-count genes (%d remaining).",
+                  num_before - nrow(count_table), nrow(count_table)))
+
+  libsize <- colSums(count_table)
+  counts <- list("count_table" = count_table,
+                 "libsize" = libsize)
   return(counts)
 }
 

@@ -660,8 +660,10 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     if (is.null(ma_name)) {
       mesg("Skipping volcano/MA plot for ", type, ".")
     } else {
+      ## I think the do_inverse is wrong.
       ma_vol <- try(extract_de_plots(
-          plot_inputs[[type]], type = type, invert = do_inverse,
+          ## plot_inputs[[type]], type = type, invert = do_inverse,
+          plot_inputs[[type]], type = type,
           logfc = logfc, p = p, table = found_table), silent = TRUE)
       if ("try-error" %in% class(ma_vol)) {
         plots[[ma_name]] <- NULL

@@ -151,6 +151,33 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
   return(retlist)
 }
 
+get_biomart_example_gene <- function(species = "mmusculus", attributes = "feature_page",
+                                     host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
+                                     default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
+                                                       "www.ensembl.org", "asia.ensembl.org"),
+                                     gene_requests = c("ensembl_gene_id", "version")) {
+  message("Grabbing all gene IDs from biomart for ", species, ".")
+  start <- load_biomart_annotations(species = species, overwrite = TRUE, do_save = FALSE,
+                                    gene_requests = gene_requests, include_lengths = FALSE)
+  mart <- start[["mart"]]
+  all <- biomaRt::listAttributes(mart)
+  example_gene <- start[["annotation"]][1, 1]
+  wanted_attributes = "feature_page"
+  wanted_idx <- all[["page"]] == wanted_attributes
+  wanted <- all[wanted_idx, "name"]
+  final <- sum(wanted_idx)
+  min <- 1
+  result <- c()
+  while (min <= final) {
+    example <- biomaRt::getBM(attributes = wanted[min], filters = "ensembl_gene_id",
+                              mart = mart, values = example_gene)[1, ]
+    message("Column: ", wanted[min], " has value: ", example)
+    result <- c(result, example)
+    min <- min + 1
+  }
+  return(result)
+}
+
 #' Extract annotation information from biomart.
 #'
 #' Biomart is an amazing resource of information, but using it is a bit

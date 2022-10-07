@@ -178,14 +178,14 @@ test_that("Are the deseq significant downs expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 90
+expected <- 40
 actual <- nrow(sig_tables[["basic"]][["ups"]][[table]])
 ## 19
 test_that("Are the basic significant ups expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 60
+expected <- 20
 actual <- nrow(sig_tables[["basic"]][["downs"]][[table]])
 ## 20
 test_that("Are the basic significant downs expected?", {
@@ -294,7 +294,7 @@ test_that("Is the number of significant down genes as expected? (edger)", {
 })
 
 actual <- nrow(significant_excel[["ebseq"]][["downs"]][[table]])
-expected <- 90
+expected <- 80
 ## 34
 test_that("Is the number of significant down genes as expected? (ebseq)", {
   expect_gt(actual, expected)

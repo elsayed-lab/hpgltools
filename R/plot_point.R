@@ -950,7 +950,7 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
 
   ## Add the label column if it exists.
   if (!is.null(label_column) & !is.null(table[[label_column]])) {
-    df[["label"]] <- table[[table_column]]
+    df[["label"]] <- table[[label_column]]
   } else {
     df[["label"]] <- rownames(table)
   }

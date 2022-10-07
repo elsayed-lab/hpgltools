@@ -34,7 +34,6 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
   return(ret)
 }
 
-
 #' Run searches against the web service g:Profiler.
 #'
 #' This is the beginning of a reimplementation to use gprofiler2.  However,
@@ -107,12 +106,6 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     }
   }
 
-  ## Check that the provided species is in gprofiler2
-  ##species_info <- try(gprofiler2::get_version_info(organism = species))
-  ##if ("try-error" %in% class(species_info)) {
-  ##  stop("The organism ", species, " is not supported by gprofiler2.")
-  ##}
-
   retlst <- list()
   if (isTRUE(do_go)) {
     retlst[["GO"]] <- data.frame()
@@ -148,14 +141,17 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   }
 
   type_names <- names(retlst)
+  retlst[["input"]] <- sig_genes
+
   interactive_plots <- list()
   gost_plots <- list()
   gost_links <- list()
+  sig_tables <- list()
   for (t in seq_along(type_names)) {
     type <- type_names[t]
     message("Performing gProfiler ", type, " search of ",
             length(gene_ids), " against ", species, ".")
-    Sys.sleep(3)
+    Sys.sleep(1)
     ## To avoid the error: "'names' attribute [14] must be the same length as
     ## the vector [1]"
     gene_ids <- as.vector(gene_ids)
@@ -169,45 +165,51 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                                     correction_method = adjp,
                                     domain_scope = domain_scope,
                                     custom_bg = bg,
-                                    sources = type), silent = TRUE)
-
+                                    sources = type))
     a_df <- data.frame(stringsAsFactors = FALSE)
     if ("try-error" %in% class(a_result)) {
       message("The ", type, " method failed for this organism.")
     } else {
       a_df <- a_result[["result"]]
-      gost_links[[type]] <- gprofiler2::gost(
-                                            query = gene_ids,
-                                            organism = species,
-                                            evcodes = evcodes,
-                                            significant = significant,
-                                            ordered_query = pseudo_gsea,
-                                            user_threshold = threshold,
-                                            correction_method = adjp,
-                                            domain_scope = domain_scope,
-                                            custom_bg = bg,
-                                            sources = type,
-                                            as_short_link = TRUE)
+      sig_idx <- a_df[["p_value"]] <= threshold
+      sig_df <- a_df[sig_idx, ]
+      message(type, " search found ", nrow(sig_df), " hits.")
+      sig_tables[[type]] <- sig_df
+      gost_links[[type]] <- gprofiler2::gost(query = gene_ids, organism = species,
+                                             evcodes = evcodes, significant = significant,
+                                             ordered_query = pseudo_gsea,
+                                             user_threshold = threshold,
+                                             correction_method = adjp,
+                                             domain_scope = domain_scope,
+                                             custom_bg = bg, sources = type,
+                                             as_short_link = TRUE)
       interactive_plots[[type]] <- try(
           gprofiler2::gostplot(a_result, capped = TRUE, interactive = TRUE), silent = TRUE)
       gost_plots[[type]] <- try(
           gprofiler2::gostplot(a_result, capped = FALSE, interactive = FALSE), silent = TRUE)
     }
-    ## message(type, " search found ", nrow(a_result), " hits.")
     retlst[[type]] <- a_df
   } ## End iterating over the set of default sources.
 
   retlst[["interactive_plots"]] <- interactive_plots
   retlst[["gost_plots"]] <- gost_plots
   retlst[["gost_links"]] <- gost_links
-  retlst[["pvalue_plots"]] <- try(plot_gprofiler_pval(retlst))
-  retlst[["species_info"]] <- species_info
+  retlst[["significant"]] <- sig_tables
+  retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
   if (!is.null(excel)) {
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
     retlst[["excel"]] <- excel_ret
     message("Finished writing data.")
   }
+  for (t in seq_along(type_names)) {
+    type <- type_names[t]
+    type_name <- paste0(type, "_enrich")
+    ## Note to self, now that I think about it I think gprofiler2 provides its own p-adjustment.
+    retlst[[type_name]] <- gprofiler22enrich(retlst, ontology = type,
+                                             cutoff = threshold)
+  }
+
   class(retlst) <- c("gprofiler_result", "list")
   return(retlst)
 }
@@ -221,7 +223,6 @@ If you wish to roll the bones with the previous function, try:
 simple_gprofiler_old().")
   simple_gprofiler2(...)
 }
-
 
 #' Run searches against the web service g:Profiler.
 #'
@@ -326,6 +327,75 @@ simple_gprofiler_old <- function(sig_genes, species = "hsapiens", convert = TRUE
   }
   class(retlst) <- c("gprofiler_result", "list")
   return(retlst)
+}
+
+#' Recast gProfiler data to the output class produced by clusterProfiler.
+#'
+#' I would like to use the various clusterProfiler plots more easily.
+#' Therefore I figured it would be advantageous to coerce the various
+#' outputs from gprofiler and friends into the datastructure produced by
+#' clusterProfiler.
+#'
+#' @param retlist Output from simple_gprofiler()
+#' @param ontology Category type to extract, currently only GO?
+#' @param cutoff Use a p-value cutoff to get only the significant
+#'  categories?
+#' @param organism Set the orgdb organism name?
+#' @param padjust_method what it says on the tin.
+gprofiler22enrich <- function(retlist, ontology = "MF", cutoff = 1,
+                              organism = NULL, padjust_method = "BH") {
+  interesting <- retlist[[ontology]]
+  sig_genes <- rownames(retlist[["input"]])
+  if (is.null(interesting)) {
+    return(NULL)
+  }
+  if (nrow(interesting) == 0) {
+    return(NULL)
+  }
+
+  bg_genes <- sum(!duplicated(sort(interesting[["term_id"]])))
+  interesting[["tmp"]] <- bg_genes
+  interesting[["adjusted"]] <- p.adjust(interesting[["p_value"]], method = padjust_method)
+
+  genes_per_category <- interesting[, c("term_id", "intersection")]
+  category_genes <- gsub(pattern=",\\s*", replacement="/", x = genes_per_category[["intersection"]])
+
+  ## Right now the cutoff is 1.0, which is not particularly interesting/useful.
+  interesting_cutoff_idx <- interesting[["p_value"]] <= cutoff
+  interesting_cutoff <- interesting[interesting_cutoff_idx, ]
+
+  ## Note that for the moment I am repeating the pvalue/p.adjust/qvalue because
+  ## I am reasonably certain that gprofiler2 does its own adjustment.
+  representation_df <- data.frame(
+      "ID" = interesting[["term_id"]],
+      "Description" = interesting[["term_name"]],
+      ## The following two lines are ridiculous, but required for the enrichplots to work.
+      "GeneRatio" = paste0(interesting[["intersection_size"]], "/", interesting[["term_size"]]),
+      "BgRatio" = paste0(interesting[["term_size"]], "/", interesting[["query_size"]]),
+      "pvalue" = interesting[["p_value"]],
+      "p.adjust" = interesting[["p_value"]],
+      "qvalue" = interesting[["p_value"]],
+      "geneID" = category_genes,
+      "Count" = interesting[["intersection_size"]],
+      stringsAsFactors = FALSE)
+  rownames(representation_df) <- representation_df[["ID"]]
+  if (is.null(organism)) {
+    organism <- "UNKNOWN"
+  }
+  ret <- new("enrichResult",
+             result = representation_df,
+             pvalueCutoff = cutoff,
+             pAdjustMethod = padjust_method,
+             qvalueCutoff = cutoff,
+             gene = sig_genes,
+             ## universe = extID,
+             geneSets = list(up=sig_genes),
+             ## geneSets = geneSets,
+             organism = organism,
+             keytype = "UNKNOWN",
+             ontology = ontology,
+             readable = FALSE)
+  return(ret)
 }
 
 ## EOF

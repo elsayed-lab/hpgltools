@@ -261,7 +261,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL,
-                        annotation_name = "org.Hs.eg.db", ...) {
+                        annotation_name = "org.Hs.eg.db", tx_gene_map = NULL, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -370,7 +370,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
-                                   ...)
+                                   tx_gene_map = tx_gene_map, ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -1362,7 +1362,6 @@ It is likely to require the transcript ID followed by a '.' and the ensembl colu
 'transcript_version', which is explicitly different than the gene version column.
 If this is not correctly performed, very few genes will be observed")
     txout <- FALSE
-    tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
     mesg("Reading kallisto data with tximport.")
