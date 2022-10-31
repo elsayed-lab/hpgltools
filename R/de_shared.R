@@ -1680,7 +1680,7 @@ do_pairwise <- function(type, ...) {
 #' }
 #' @export
 get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
-                               unique = FALSE) {
+                               fx = "mean", unique = FALSE) {
   if (is.null(z) & is.null(n)) {
     n <- 100
   }
@@ -1718,6 +1718,9 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
     coefficient_df <- datum[["coefficients"]]
   } else if (type == "basic") {
     coefficient_df <- datum[["medians"]]
+    if (is.null(coefficient_df)) {
+      coefficient_df <- datum[["means"]]
+    }
   }
 
   abundant_list <- list(
@@ -1729,15 +1732,25 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
   coef_ordered <- NULL
   for (coef in coefficients) {
     new_order <- order(coefficient_df[[coef]], decreasing = TRUE)
-    coef_ordered <- coefficient_df[new_order, ][[coef]]
-    names(coef_ordered) <- coefficient_rows
+    new_ordered_df <- coefficient_df[new_order, ]
+    coef_ordered <- new_ordered_df[[coef]]
+    new_names <- rownames(new_ordered_df)
+    names(coef_ordered) <- new_names
     kept_rows <- NULL
     if (is.null(n)) {
       ## Then do it on a z-score
       tmp_summary <- summary(coef_ordered)
-      tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm = TRUE))
-      tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
-      tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
+      if (fx == "mean") {
+        tmp_mad <- stats::sd(as.numeric(coef_ordered, na.rm = TRUE))
+        tmp_up_median_dist <- tmp_summary["Median"] + (tmp_mad * z)
+        tmp_down_median_dist <- tmp_summary["Median"] - (tmp_mad * z)
+      } else if (fx == "median") {
+        tmp_mad <- stats::mad(as.numeric(coef_ordered, na.rm = TRUE))
+        tmp_up_median_dist <- tmp_summary["Mean"] + (tmp_mad * z)
+        tmp_down_median_dist <- tmp_summary["Mean"] - (tmp_mad * z)
+      } else {
+        stop("I do not understand this summary statistic.")
+      }
       high_idx <- coef_ordered >= tmp_up_median_dist
       low_idx <- coef_ordered <= tmp_down_median_dist
       high_rows <- coef_ordered[high_idx]

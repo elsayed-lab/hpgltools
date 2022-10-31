@@ -106,7 +106,7 @@ load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
       ##  message(toString(final_species))
       ##  return(NULL)
       ##}
-      accession_tbl <- as.data.frame(readr::read_tsv(request_url))
+      accession_tbl <- as.data.frame(readr::read_tsv(request_url, show_col_types = FALSE))
       message("This species provides: ", nrow(accession_tbl), " hits.")
       message("Arbitrarily downloading the first: ", accession_tbl[1, "Organism"], ".")
       accession <- as.character(accession_tbl[1, "Proteome Id"])
@@ -138,6 +138,9 @@ load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
       "ft_motif%2Cprotein_families%2Cft_region%2Cft_repeat%2Cft_zn_fing&format=tsv&query=%28",
       "proteome%3A", accession, "%29")
 
+  num_columns <- stringr::str_count(request_url, "%2C")
+  column_spec <- rep("c", num_columns)
+
   ##request_url <- paste0(
   ##    "https://rest.uniprot.org/uniprotkb/stream?compressed=false&fields=accession%2C",
   ##    "lineage%2Cvirus_hosts%2Clineage_ids%2Cgene_synonym%2Corganism_name%2C",
@@ -156,7 +159,18 @@ load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
       ## "lit_pubmed_id%2Cft_coiled%2Cft_compbias%2Cft_domain%2Cft_motif%2Cft_region%2C",
       ##"ft_repeat&format=tsv&query=proteome%3A", accession, "%29")
   ## tt <- download.file(url = request_url, destfile = "test.tsv")
-  retdf <- readr::read_tsv(request_url)
+
+  ## Some uniprot results lead to a complaint from readr which looks like:
+  ##      row   col expected           actual                                    file
+  ##  <int> <int> <chr>              <chr>                                     <chr>
+  ##  1    99    19 1/0/T/F/TRUE/FALSE "BIOPHYSICOCHEMICAL PROPERTIES:  Redox p… ""
+  ##  2   219    85 1/0/T/F/TRUE/FALSE "CARBOHYD 49; /note=\"O-linked (Man...) … ""
+  ##  3   700    85 1/0/T/F/TRUE/FALSE "CARBOHYD 48; /note=\"O-linked (Man...) … ""
+  ## When I first read this, I assumed that the column-type interpolation failed, and
+  ## I would be able to just tell it every column is a character (with the above cheesy
+  ## counting of the number of %2Cs
+  ## It turns out this was not the problem, but I am not certain what it is.
+  retdf <- suppressWarnings(readr::read_tsv(request_url, col_types = column_spec))
   return(retdf)
 }
 

@@ -23,6 +23,7 @@ create_expt(
   researcher = "elsayed",
   study_name = NULL,
   annotation_name = "org.Hs.eg.db",
+  tx_gene_map = NULL,
   ...
 )
 }

@@ -189,6 +189,11 @@ plots_wt_mut[["volcano"]][["plot"]]
 ```{r simple_all}
 all_comparisons <- sm(all_pairwise(fun_data, model_batch = TRUE, parallel = FALSE))
 all_combined <- sm(combine_de_tables(all_comparisons, excel = FALSE))
+
+save(file="de_table.rda", list="all_combined")
+devtools::load_all("~/hpgltools")
+slide_de_threshold(all_combined)
+
 head(all_combined$data[[1]], n = 3)
 sig_genes <- sm(extract_significant_genes(all_combined, excel = FALSE))
 head(sig_genes$limma$ups[[1]], n = 3)

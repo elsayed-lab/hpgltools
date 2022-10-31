@@ -764,7 +764,7 @@ Defaulting to fdr.")
                      "ebseq_postfc" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0,
                      "ebseq_adjp" = 0)
   rownames(ebdf) <- "dropme"
-  badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+  badf <- data.frame("numerator_avg" = 0, "denominator_avg" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   rownames(badf) <- "dropme"
 
@@ -1533,7 +1533,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
+extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
                                    z = NULL, unique = FALSE,
                                    excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
@@ -1552,6 +1552,9 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
     datum <- pairwise[[type]]
     abundant_lists[[type]] <- get_abundant_genes(datum, type = type, n = n, z = z,
                                                  unique = unique)
+    ## Something to note: the coefficient df from deseq (for example) includes coefficients
+    ## across every factor in the model.  As a result, if one considers the default model of
+    ## condition + batch, there will likely be coefficients which are not explicitly of interest.
   }
 
   if (class(excel)[1] == "character") {
@@ -1567,8 +1570,12 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
   }
 
   ## Now make the excel sheet for each method/coefficient
+  ## Given that the set of coefficients may be more than we want, using
+  ## names(abundant_lists[[according]][["high"]]) is probably not wise.
+  ## Instead we should just be taking the levels of the condition factor.
+  wanted_coefficients <- levels(pairwise[["deseq"]][["conditions"]])
   for (according in names(abundant_lists)) {
-    for (coef in names(abundant_lists[[according]][["high"]])) {
+    for (coef in wanted_coefficients) {
       sheetname <- glue::glue("{according}_high_{coef}")
       annotations <- fData(pairwise[["input"]])
       high_abundances <- abundant_lists[[according]][["high"]][[coef]]
@@ -1577,7 +1584,10 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
       kept_annotations <- annotations[kept_idx, ]
       high_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        high_data <- merge(data.frame(high_abundances), annotations, by = "row.names", all.x = TRUE)
+        high_df <- as.data.frame(high_abundances)
+        rownames(high_df) <- names(high_abundances)
+        high_data <- merge(high_df, annotations,
+                           by = "row.names", all.x = TRUE)
         rownames(high_data) <- high_data[["Row.names"]]
         high_data[["Row.names"]] <- NULL
       } else {
@@ -1597,7 +1607,9 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
       kept_annotations <- annotations[kept_idx, ]
       low_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        low_data <- merge(data.frame(low_abundances), annotations,
+        low_df <- as.data.frame(low_abundances)
+        rownames(low_df) <- names(low_abundances)
+        low_data <- merge(data.frame(low_df), annotations,
                           by = "row.names", all.x = TRUE)
         rownames(low_data) <- low_data[["Row.names"]]
         low_data[["Row.names"]] <- NULL

@@ -285,7 +285,10 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
   available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
   found_attribs <- gene_requests %in% available_attribs
   if (length(gene_requests) != sum(found_attribs)) {
-    message("Some attributes in your request list were not in the ensembl database.")
+    missing_requests_idx <- ! gene_requests %in% available_attribs
+    missing_requests <- gene_requests[missing_requests_idx]
+    message("Some attributes in your request list were not in the ensembl database: ",
+            missing_requests, ".")
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes = gene_requests,

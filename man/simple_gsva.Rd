@@ -18,8 +18,9 @@ simple_gsva(
   kcdf = NULL,
   ranking = FALSE,
   msig_xml = NULL,
-  wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
-  mx_diff = TRUE
+  wanted_meta = "all",
+  mx_diff = TRUE,
+  verbose = FALSE
 )
 }
 \arguments{

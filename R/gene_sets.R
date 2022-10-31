@@ -92,6 +92,14 @@ get_identifier <- function(type) {
 #' @export
 get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml",
                                 wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")) {
+  list_result <- list()
+  list_input <- FALSE
+  if (class(gsva_result)[1] == "list") {
+    list_result <- gsva_result
+    list_input <- TRUE
+    gsva_result <- gsva_result[["expt"]]
+  }
+
   msig_result <- xml2::read_xml(x = msig_xml)
 
   ##db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
@@ -114,24 +122,37 @@ get_msigdb_metadata <- function(gsva_result = NULL, msig_xml = "msigdb_v6.2.xml"
   ## all_data is my dataframe of xml annotations, lets extract the wanted columns before
   ## adding it to the gsva result expressionset.
   sub_data <- all_data
-  if (!is.null(wanted_meta)) {
+  if (wanted_meta[1] == "all") {
+    message("Not subsetting the msigdb metadata, the wanted_meta argument was 'all'.")
+  } else if (is.null(wanted_meta)) {
+    message("Not subsetting the msigdb metadata, the wanted_meta argument was NULL.")
+  } else if (class(wanted_meta)[1] == "character") {
     sub_data <- sub_data[, wanted_meta]
   }
   ## The full set of xml annotations has waay more IDs than any single category,
   ## so this should drop it from 30,000+ to <10,000.
   found_idx <- rownames(sub_data) %in% rownames(exprs(gsva_result))
+  message("The downloaded msigdb contained ", sum(found_idx),
+          " rownames shared with the gsva result out of ", length(rownames(exprs(gsva_result))), ".")
   sub_data <- sub_data[found_idx, ]
 
-  retlist <- list(
+  if (is.null(gsva_result)) {
+    retlist <- list(
       "all_data" = all_data,
       "sub_data" = sub_data)
-  if (!is.null(gsva_result)) {
+    return(retlist)
+  } else {
     current_fdata <- fData(gsva_result)
     new_fdata <- merge(current_fdata, sub_data, by = "row.names")
     rownames(new_fdata) <- new_fdata[["Row.names"]]
     new_fdata[["Row.names"]] <- NULL
     fData(gsva_result) <- new_fdata
-    retlist[["gsva_result"]] <- gsva_result
+    if (isTRUE(list_input)) {
+      list_result[["expt"]] <- gsva_result
+      return(list_result)
+    } else {
+      return(gsva_result)
+    }
   }
   return(retlist)
 }

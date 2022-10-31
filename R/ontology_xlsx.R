@@ -1335,7 +1335,12 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
   res <- openxlsx::saveWorkbook(wb, excel, overwrite = TRUE)
   message("Finished writing excel file.")
   for (img in image_files) {
-    removed <- file.remove(img)
+    if (file.exists(img)) {
+      removed <- file.remove(img)
+    } else {
+      mesg("The file ", img,
+           " does not exist, there is likely a missing image in the xlsx document.")
+    }
   }
   return(res)
 }

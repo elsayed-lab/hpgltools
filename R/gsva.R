@@ -135,6 +135,16 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
                                     type = "mean") {
   gsva_scores <- gsva_result[["expt"]]
 
+  ## FIXME: If one uses factor_column in this current function, that will likely lead to
+  ## incorrect results because limma is using the 'condition' metadata factor; but
+  ## median_by_factor() is using this new column 'factor_column'.  As
+  ## a result our mean gsva scores will no longer have any connection
+  ## to the results from limma.
+  ## I think this may be trivially fixed though? ...
+  if (factor_column != "condition") {
+    gsva_scores <- set_expt_conditions(gsva_scores, fact = factor_column)
+  }
+
   ## Use limma on the gsva result
   gsva_limma <- limma_pairwise(gsva_scores, model_batch = model_batch,
                                which_voom = "none")
@@ -556,8 +566,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
                         method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
-                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
-                        mx_diff = TRUE) {
+                        ## wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+                        wanted_meta = "all", mx_diff = TRUE, verbose = FALSE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -632,13 +642,16 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  ## Responding to Theresa: cores is defined in the function definition.
-  ## Sadly, some versions of gsva crash if one sets it to > 1, so for the moment
-  ## it is set to 1 and gsva is not running in parallel, but I wanted to keep the
-  ## possibility of speeding it up, ergo the cores option.
-  gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                               min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                               parallel.sz = cores, mx.diff = mx_diff))
+  gsva_result <- NULL
+  if (isTRUE(verbose)) {
+    gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                              min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                              parallel.sz = cores, mx.diff = mx_diff)
+  } else {
+    gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                                 min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                                 parallel.sz = cores, mx.diff = mx_diff))
+  }
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
@@ -655,7 +668,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     message("Adding annotations from ", msig_xml, ".")
     improved <- get_msigdb_metadata(msig_xml = msig_xml, wanted_meta = wanted_meta,
                                     gsva_result = gsva_result)
-    new_expt[["expressionset"]] <- improved[["gsva_result"]]
+    new_expt[["expressionset"]] <- improved
   }
 
   retlist <- list(

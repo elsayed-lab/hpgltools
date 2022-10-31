@@ -239,8 +239,9 @@ load_microbesonline_go <- function(id = NULL, species = NULL, table_df = NULL, i
     ## message(head(as.data.frame(table_df), n = 2))
     stop()
   }
+  ## Addressing a warning from tidyr, I am not quite certain what it was telling me TBH.
   go_df <- table_df[, c(id_column, data_column)] %>%
-    tidyr::separate_rows(data_column, sep = ",")
+    tidyr::separate_rows(tidyr::all_of(data_column), sep = ",")
   keep_idx <- go_df[[data_column]] != ""
   go_df <- go_df[keep_idx, ]
   return(go_df)

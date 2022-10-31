@@ -6,8 +6,21 @@
 #' @param ... Arguments to pass to simple_gprofiler().
 all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
   ret <- list()
-  input_up <- sig[[according_to]][["ups"]]
-  input_down <- sig[[according_to]][["downs"]]
+  input_up <- list()
+  input_down <- list()
+  source <- "significant"
+  ## Check if this came from extract_significant_genes or extract_abundant_genes.
+  if (!is.null(sig[[according_to]][["ups"]])) {
+    input_up <- sig[[according_to]][["ups"]]
+    input_down <- sig[[according_to]][["downs"]]
+  } else if (!is.null(sig[["abundances"]])) {
+    source <- "abundance"
+    input_up <- sig[["abundances"]][[according_to]][["high"]]
+    input_down <- sig[["abundances"]][[according_to]][["low"]]
+  } else {
+    stop("I do not understand this input.")
+  }
+
   sig_names <- names(input_up)
   for (i in seq_along(sig_names)) {
     slept <- Sys.sleep(1)
@@ -16,16 +29,36 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
     retname_down <- paste0(name, "_down")
     up <- input_up[[name]]
     down <- input_down[[name]]
-    if (isTRUE(together)) {
-      up <- rbind(up, down)
-      down <- data.frame()
+    up_elements <- 0
+    down_elements <- 0
+    if (source == "abundance") {
+      up <- names(up)
+      down <- names(down)
+      up_elements <- length(up)
+      down_elements <- length(down)
+    } else {
+      up_elements <- nrow(up)
+      down_elements <- nrow(down)
     }
-    if (nrow(up) > 0) {
+    if (isTRUE(together)) {
+      if (source == "abundance") {
+        up <- c(up, down)
+        up_elements <- up_elements + down_elements
+        down <- c()
+        down_elements <- 0
+      } else {
+        up <- rbind(up, down)
+        up_elements <- nrow(up)
+        down <- data.frame()
+        down_elements <- 0
+      }
+    }
+    if (up_elements > 0) {
       ret[[retname_up]] <- simple_gprofiler(up, ...)
     } else {
       ret[[retname_up]] <- NULL
     }
-    if (nrow(down) > 0) {
+    if (down_elements > 0) {
       ret[[retname_down]] <- simple_gprofiler(down, ...)
     } else {
       ret[[retname_down]] <- NULL
@@ -147,6 +180,9 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   gost_plots <- list()
   gost_links <- list()
   sig_tables <- list()
+  types <- c("GO", "KEGG", "REAC", "WP", "TF", "MIRNA", "HPA", "CORUM", "HP")
+  num_hits <- rep(0, length(types))
+  names(num_hits) <- types
   for (t in seq_along(type_names)) {
     type <- type_names[t]
     message("Performing gProfiler ", type, " search of ",
@@ -174,6 +210,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
       sig_idx <- a_df[["p_value"]] <= threshold
       sig_df <- a_df[sig_idx, ]
       message(type, " search found ", nrow(sig_df), " hits.")
+      num_hits[[type]] <- nrow(sig_df)
       sig_tables[[type]] <- sig_df
       gost_links[[type]] <- gprofiler2::gost(query = gene_ids, organism = species,
                                              evcodes = evcodes, significant = significant,
@@ -192,6 +229,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   } ## End iterating over the set of default sources.
 
   retlst[["interactive_plots"]] <- interactive_plots
+  retlst[["num_hits"]] <- num_hits
   retlst[["gost_plots"]] <- gost_plots
   retlst[["gost_links"]] <- gost_links
   retlst[["significant"]] <- sig_tables
@@ -218,9 +256,6 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
 #'
 #' @export
 simple_gprofiler <- function(...) {
-  message("Redirecting to simple_gprofiler2().
-If you wish to roll the bones with the previous function, try:
-simple_gprofiler_old().")
   simple_gprofiler2(...)
 }
 
@@ -342,10 +377,19 @@ simple_gprofiler_old <- function(sig_genes, species = "hsapiens", convert = TRUE
 #'  categories?
 #' @param organism Set the orgdb organism name?
 #' @param padjust_method what it says on the tin.
-gprofiler22enrich <- function(retlist, ontology = "MF", cutoff = 1,
+gprofiler22enrich <- function(retlst, ontology = "MF", cutoff = 1,
                               organism = NULL, padjust_method = "BH") {
-  interesting <- retlist[[ontology]]
-  sig_genes <- rownames(retlist[["input"]])
+  interesting <- retlst[[ontology]]
+
+  sig_genes <- c()
+  sig_genes_input <- retlst[["input"]]
+  if (class(sig_genes_input)[1] == "character") {
+    sig_genes <- sig_genes_input
+  } else if ("data.frame" %in% class(sig_genes_input)) {
+    sig_genes <- rownames(retlst[["input"]])
+  } else {
+    stop("I do not know this input data type when extracting the input genes.")
+  }
   if (is.null(interesting)) {
     return(NULL)
   }

@@ -431,6 +431,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   tf_result <- gp_result[["tf"]]
   corum_result <- gp_result[["corum"]]
   hp_result <- gp_result[["hp"]]
+  hpa_result <- gp_result[["hpa"]]
 
   kept_columns <- c("p.value", "term.size", "query.size",
                     "overlap.size", "recall", "precision",
@@ -518,7 +519,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_kegg_over <- kegg_result
   kegg_pval_plot_over <- NULL
-  if (is.null(kegg_result) | nrow(kegg_result) == 0) {
+  if (is.null(kegg_result)) {
+    kegg_result <- data.frame()
+  }
+  if (nrow(kegg_result) == 0) {
     plotting_kegg_over <- NULL
   } else {
     plotting_kegg_over <- gp_rewrite_df(plotting_kegg_over)
@@ -531,7 +535,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_reactome_over <- reactome_result
   reactome_pval_plot_over <- NULL
-  if (is.null(reactome_result) | nrow(reactome_result) == 0) {
+  if (is.null(reactome_result)) {
+    reactome_result <- data.frame()
+  }
+  if (nrow(reactome_result) == 0) {
     plotting_reactome_over <- NULL
   } else {
     plotting_reactome_over <- gp_rewrite_df(plotting_reactome_over)
@@ -544,7 +551,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_mi_over <- mi_result
   mi_pval_plot_over <- NULL
-  if (is.null(mi_result) | nrow(mi_result) == 0) {
+  if (is.null(mi_result)) {
+    mi_result <- data.frame()
+  }
+  if (nrow(mi_result) == 0) {
     plotting_mi_over <- NULL
   } else {
     plotting_mi_over <- gp_rewrite_df(plotting_mi_over)
@@ -557,7 +567,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_tf_over <- tf_result
   tf_pval_plot_over <- NULL
-  if (is.null(tf_result) | nrow(tf_result) == 0) {
+  if (is.null(tf_result)) {
+    tf_result <- data.frame()
+  }
+  if (nrow(tf_result) == 0) {
     plotting_tf_over <- NULL
   } else {
     plotting_tf_over <- gp_rewrite_df(plotting_tf_over)
@@ -570,7 +583,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_corum_over <- corum_result
   corum_pval_plot_over <- NULL
-  if (is.null(corum_result) | nrow(corum_result) == 0) {
+  if (is.null(corum_result)) {
+    corum_result <- data.frame()
+  }
+  if (nrow(corum_result) == 0) {
     plotting_corum_over <- NULL
   } else {
     plotting_corum_over <- gp_rewrite_df(plotting_corum_over)
@@ -583,7 +599,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_hp_over <- hp_result
   hp_pval_plot_over <- NULL
-  if (is.null(hp_result) | nrow(hp_result) == 0) {
+  if (is.null(hp_result)) {
+    hp_result <- data.frame()
+  }
+  if (nrow(hp_result) == 0) {
     plotting_hp_over <- NULL
   } else {
     plotting_hp_over <- gp_rewrite_df(plotting_hp_over)
@@ -592,6 +611,22 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   }
   if (class(hp_pval_plot_over)[[1]] == "try-error") {
     hp_pval_plot_over <- NULL
+  }
+
+  plotting_hpa_over <- hpa_result
+  hpa_pval_plot_over <- NULL
+  if (is.null(hpa_result)) {
+    hpa_result <- data.frame()
+  }
+  if (nrow(hpa_result) == 0) {
+    plotting_hpa_over <- NULL
+  } else {
+    plotting_hpa_over <- gp_rewrite_df(plotting_hpa_over)
+    hpa_pval_plot_over <- try(plot_ontpval(plotting_hpa_over, ontology = "HPA"),
+                              silent = TRUE)
+  }
+  if (class(hpa_pval_plot_over)[[1]] == "try-error") {
+    hpa_pval_plot_over <- NULL
   }
 
   pval_plots <- list(
@@ -604,6 +639,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
       "tf_plot_over" = tf_pval_plot_over,
       "corum_plot_over" = corum_pval_plot_over,
       "hp_plot_over" = hp_pval_plot_over,
+      "hpa_plot_over" = hp_pval_plot_over,
       "mf_subset_over" = plotting_mf_over,
       "bp_subset_over" = plotting_bp_over,
       "cc_subset_over" = plotting_cc_over,
@@ -612,7 +648,8 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
       "mi_subset" = plotting_mi_over,
       "tf_subset" = plotting_tf_over,
       "corum_subset" = plotting_corum_over,
-      "hp_subset" = plotting_hp_over
+      "hp_subset" = plotting_hp_over,
+      "hpa_subset" = plotting_hpa_over
   )
   new_options <- options(old_options)
   return(pval_plots)

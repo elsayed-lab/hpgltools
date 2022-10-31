@@ -90,8 +90,11 @@ ggplt <- function(gg, filename = "ggplot.html",
                   plot_title = class(gg)[[1]], knitrOptions = list(), ...) {
   base <- basename(filename)
   dir <- dirname(filename)
-  out <- plotly::ggplotly(gg,
-                          ...)
+
+  ## 202210: There is a deprecated function call in plotly, which is out
+  ## of the scope of my interest.
+  out <- suppressWarnings(plotly::ggplotly(gg,
+                                           ...))
   widget <- htmlwidgets::saveWidget(
                              plotly::as_widget(out), base, selfcontained, libdir = libdir,
                              background = background, title = plot_title, knitrOptions = knitrOptions)
