@@ -19,8 +19,8 @@ load_biomart_annotations(
   trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
     "transcript_version", "hgnc_symbol", "description", "gene_biotype"),
-  length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name", "strand",
-    "start_position", "end_position"),
+  length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name",
+    "strand", "start_position", "end_position"),
   include_lengths = TRUE
 )
 }

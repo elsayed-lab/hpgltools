@@ -6,8 +6,8 @@
 \usage{
 extract_abundant_genes(
   pairwise,
-  according_to = "all",
-  n = 200,
+  according_to = "deseq",
+  n = 100,
   z = NULL,
   unique = FALSE,
   excel = "excel/abundant_genes.xlsx",

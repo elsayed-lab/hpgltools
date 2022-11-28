@@ -5,7 +5,14 @@
 \title{Find the set of most/least abundant genes according to limma and friends
 following a differential expression analysis.}
 \usage{
-get_abundant_genes(datum, type = "limma", n = NULL, z = NULL, unique = FALSE)
+get_abundant_genes(
+  datum,
+  type = "limma",
+  n = NULL,
+  z = NULL,
+  fx = "mean",
+  unique = FALSE
+)
 }
 \arguments{
 \item{datum}{Output from the _pairwise() functions.}
