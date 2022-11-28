@@ -595,9 +595,9 @@ clean:
   make_target_svg <- glue::glue("{make_target}.svg")
   make_target_png <- glue::glue("{make_target}.png")
 
-  make_command <- glue::glue("cd circos && touch Makefile && make {make_target} 2>&1 | grep -v Redundant")
+  make_command <- glue::glue("cd circos && eval $(modulecmd bash add circos) && touch Makefile && make {make_target} 2>&1 | grep -v Redundant")
   if (!isTRUE(verbose)) {
-    make_command <- glue::glue("cd circos && touch Makefile && make {make_target} >/dev/null 2>&1")
+    make_command <- glue::glue("cd circos && eval $(modulecmd bash add circos) && touch Makefile && make {make_target} >/dev/null 2>&1")
   }
   result <- system(make_command)
   retlist <- list(

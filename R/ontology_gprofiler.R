@@ -113,7 +113,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                               first_col = "deseq_logfc", second_col = "logfc", do_go = TRUE,
                               do_kegg = TRUE, do_reactome = TRUE, do_mi = TRUE, do_tf = TRUE,
                               do_corum = TRUE, do_hp = TRUE, do_hpa = TRUE, do_wp = TRUE,
-                              significant = FALSE, exclude_iea = FALSE, do_under = FALSE,
+                              significant = TRUE, exclude_iea = FALSE, do_under = FALSE,
                               evcodes = TRUE, threshold = 0.05, adjp = "g_SCS",
                               domain_scope = "annotated", bg = NULL,
                               pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
@@ -205,6 +205,8 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     a_df <- data.frame(stringsAsFactors = FALSE)
     if ("try-error" %in% class(a_result)) {
       message("The ", type, " method failed for this organism.")
+    } else if (is.null(a_result)) {
+      message("There was no result for the ", type, " search.")
     } else {
       a_df <- a_result[["result"]]
       sig_idx <- a_df[["p_value"]] <= threshold
