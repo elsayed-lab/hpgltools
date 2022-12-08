@@ -151,7 +151,7 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
   possible_tables <- names(all_tables)
   the_table <- NULL
   ## Now that we have the columns, figure out which table.
-  if (class(all_tables) == "data.frame") {
+  if ("data.frame" %in% class(all_tables)) {
     ## This came from the creation of combine_de_tables()
     the_table <- all_tables
   } else if (is.numeric(wanted_table)) {
@@ -218,9 +218,12 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
         table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
         logfc = logfc, p = p, invert = invert,
         ...)
-    vol_material <- plot_volcano_de(
-        table = the_table, fc_col = fc_col, p_col = p_col, invert = invert,
-        logfc = logfc, p = p,
+    vol_material <- plot_volcano_condition_de(
+        pairwise, de_table = wanted_table,
+        ##de_table = the_table,
+        fc_col = fc_col,
+        p_col = p_col, invert = invert,
+        logfc = logfc, p = p, label = 5,
         ...)
   }
 

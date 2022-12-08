@@ -143,13 +143,23 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
     tmp_db <- data.table::data.table("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
     go_db <- rbind(go_db, tmp_db)
   }
-  mesg("Finished coercing the msig data.")
+  mesg("Finished coercing the msig data into a df with ", nrow(go_db), " rows.")
 
-  new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
-  new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
-  ## We cannot guarantee that the IDs acquired in this fashion are unique.
-  ## rownames(new_sig) <- new_sig[[required_id]]
-  new_sig[["ID"]] <- new_sig[[required_id]]
+  new_ids <- NULL
+  new_sig <- data.frame()
+  if ("character" %in% class(sig_genes)) {
+    new_ids <- convert_ids(sig_genes, from = current_id, to = required_id, orgdb = orgdb)
+    new_sig <- new_ids
+    colnames(new_sig) <- c(current_id, "ID")
+    new_sig <- new_sig[, c("ID", current_id)]
+    rownames(new_sig) <- new_sig[["ID"]]
+  } else if ("data.frame" %in% class(sig_genes)) {
+    new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
+    new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
+    new_sig[["ID"]] <- new_sig[[required_id]]
+  } else {
+    stop("I do not understand this input data format for sig_genes.")
+  }
 
   new_lids <- convert_ids(rownames(length_db), from = current_id, to = required_id, orgdb = orgdb)
   new_length <- merge(new_lids, length_db, by.x = current_id, by.y = "row.names")

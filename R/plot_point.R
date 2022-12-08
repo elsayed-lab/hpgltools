@@ -923,13 +923,14 @@ plot_scatter <- function(df, color = "black", xlab = NULL,
 #'  ## check for that, but I have not yet.
 #' }
 #' @export
-plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE" = "darkblue", "TRUE" = "darkred"),
+plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
+                            p_color_list = c("FALSE" = "darkblue", "TRUE" = "darkred"),
                             fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = TRUE, size = 2, invert = FALSE,
-                            label = NULL, label_column = "hgncsymbol", ...) {
+                            shapes_by_state = FALSE,
+                            size = 2, invert = FALSE, label = NULL,
+                            label_column = "hgncsymbol", ...) {
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(p)
 
@@ -958,6 +959,8 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
   df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
+
   df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
                    ifelse(table[[p_col]] <= p &
                           table[[fc_col]] >= logfc, "upsig",
@@ -1039,6 +1042,134 @@ plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
     ggplot2::scale_fill_manual(name = color_column, values = color_list,
                                guide = "none") +
     ggplot2::scale_color_manual(name = color_column, values = color_list,
+                                guide = "none") +
+    ggplot2::xlab(label = fc_name) +
+    ggplot2::ylab(label = p_name) +
+    ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
+  ##  axis.text.x = ggplot2::element_text(angle=-90))
+
+  if (!is.null(label)) {
+    if (is.numeric(label)) {
+      reordered_idx <- order(df[["xaxis"]])
+      reordered <- df[reordered_idx, ]
+      sig_idx <- reordered[["logyaxis"]] > horiz_line
+      reordered <- reordered[sig_idx, ]
+      top <- head(reordered, n = label)
+      bottom <- tail(reordered, n = label)
+      df_subset <- rbind(top, bottom)
+    } else if (is.character(label)) {
+      sig_idx <- rownames(df) %in% label
+      df_subset <- df[sig_idx, ]
+    } else {
+      stop("I do not understand this set of IDs to label.")
+    }
+    plt <- plt +
+      ggrepel::geom_text_repel(data = df_subset,
+                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+                               point.padding = ggplot2::unit(1.6, "lines"),
+                               arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  retlist <- list("plot" = plt,
+                  "df" = df)
+  return(retlist)
+}
+
+
+plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
+                                      fc_col = "logFC", fc_name = "log2 fold change",
+                                      line_color = "black", line_position = "bottom", logfc = 1.0,
+                                      p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
+                                      shapes_by_state = FALSE,
+                                      size = 2, invert = FALSE, label = NULL,
+                                      label_column = "hgncsymbol", ...) {
+  table <- de_result[["all_tables"]][[de_table]]
+
+  ## Make a list of the colors by condition name.
+  colors <- de_result[["input_data"]][["colors"]]
+  start_names <- pData(de_result[["input_data"]])[["condition"]]
+  ## Make sure to do the same sanitization as performed by all_pairwise()
+  sanitized_names <- gsub(x = start_names, pattern = "[[:punct:]]", replacement = "")
+  names(colors) <- sanitized_names
+  single_idx <- !duplicated(colors)
+  colors <- colors[single_idx]
+
+  split <- strsplit(x = de_table, split = "_vs_")
+  numerator <- split[[1]][1]
+  denominator <- split[[1]][2]
+
+  message("Plotting volcano plot of the DE results of ", de_table, " according to the columns: ",
+          fc_col, " and ", p_col, " using the expressionset colors.")
+
+  low_vert_line <- 0.0 - logfc
+  horiz_line <- -1 * log10(p)
+
+  if (! fc_col %in% colnames(table)) {
+    stop("Column: ", fc_col, " is not in the table.")
+  }
+  if (! p_col %in% colnames(table)) {
+    stop("Column: ", p_col, " is not in the table.")
+  }
+
+  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
+                   "yaxis" = as.numeric(table[[p_col]]))
+  rownames(df) <- rownames(table)
+
+  if (isTRUE(invert)) {
+    df[["xaxis"]] <- df[["xaxis"]] * -1.0
+  }
+
+  ## Add the label column if it exists.
+  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[label_column]]
+  } else {
+    df[["label"]] <- rownames(table)
+  }
+
+  ## This might have been converted to a string
+  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
+  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
+
+  df[["state"]] <- "insignificant"
+  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= p
+  df[numerator_sig, "state"] <- numerator
+  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= p
+  df[denominator_sig, "state"] <- denominator
+  df[["state"]] <- as.factor(df[["state"]])
+
+  plot_colors <- c("#555555", colors[numerator], colors[denominator])
+  names(plot_colors) <- c("insignificant", numerator, denominator)
+
+  plt <- ggplot(data = df,
+                aes_string(x = "xaxis", y = "logyaxis", label = "label",
+                           fill = "state", colour = "state"))
+
+  ## Now define when to put lines vs. points
+  if (line_position == "bottom") {
+    ## lines, then points.
+    plt <- plt +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  } else {
+    ## points, then lines
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
+  }
+
+  ## Now set the colors and axis labels
+  plt <- plt +
+    ggplot2::scale_fill_manual(name = "state", values = colors,
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "state", values = colors,
                                 guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +

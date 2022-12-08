@@ -185,8 +185,8 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   names(num_hits) <- types
   for (t in seq_along(type_names)) {
     type <- type_names[t]
-    message("Performing gProfiler ", type, " search of ",
-            length(gene_ids), " against ", species, ".")
+    mesg("Performing gProfiler ", type, " search of ",
+         length(gene_ids), " against ", species, ".")
     Sys.sleep(1)
     ## To avoid the error: "'names' attribute [14] must be the same length as
     ## the vector [1]"
@@ -204,14 +204,14 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                                     sources = type))
     a_df <- data.frame(stringsAsFactors = FALSE)
     if ("try-error" %in% class(a_result)) {
-      message("The ", type, " method failed for this organism.")
+      mesg("The ", type, " method failed for this organism.")
     } else if (is.null(a_result)) {
-      message("There was no result for the ", type, " search.")
+      mesg("There was no result for the ", type, " search.")
     } else {
       a_df <- a_result[["result"]]
       sig_idx <- a_df[["p_value"]] <= threshold
       sig_df <- a_df[sig_idx, ]
-      message(type, " search found ", nrow(sig_df), " hits.")
+      mesg(type, " search found ", nrow(sig_df), " hits.")
       num_hits[[type]] <- nrow(sig_df)
       sig_tables[[type]] <- sig_df
       gost_links[[type]] <- gprofiler2::gost(query = gene_ids, organism = species,
@@ -237,10 +237,10 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   retlst[["significant"]] <- sig_tables
   retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
   if (!is.null(excel)) {
-    message("Writing data to: ", excel, ".")
+    mesg("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
     retlst[["excel"]] <- excel_ret
-    message("Finished writing data.")
+    mesg("Finished writing data.")
   }
   for (t in seq_along(type_names)) {
     type <- type_names[t]

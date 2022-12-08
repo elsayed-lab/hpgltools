@@ -612,6 +612,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
                                     include_ebseq = FALSE, loess = FALSE, logfc = 1, p = 0.05,
                                     do_inverse = FALSE, found_table = NULL,
                                     p_type = "all") {
+  message("Starting combine_extracted_plots() with do_inverse as: ", do_inverse, ".")
   combined_data <- combined[["data"]]
   plots <- list()
   if (isTRUE(include_deseq)) {
@@ -660,10 +661,8 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     if (is.null(ma_name)) {
       mesg("Skipping volcano/MA plot for ", type, ".")
     } else {
-      ## I think the do_inverse is wrong.
       ma_vol <- try(extract_de_plots(
-          ## plot_inputs[[type]], type = type, invert = do_inverse,
-          plot_inputs[[type]], type = type,
+          plot_inputs[[type]], type = type, invert = do_inverse,
           logfc = logfc, p = p, table = found_table), silent = TRUE)
       if ("try-error" %in% class(ma_vol)) {
         plots[[ma_name]] <- NULL
