@@ -340,7 +340,7 @@ hpgl_rpkm <- function(count_table, ...) {
   count_table_in[["temporary_id_number"]] <- 1:nrow(count_table_in)
   merged_annotations <- merge(count_table_in, annotations, by = "row.names", all.x = TRUE)
   rownames(merged_annotations) <- merged_annotations[, "Row.names"]
-  merged_annotations <- merged_annotations[-1]
+  merged_annotations[["Row.names"]] <- NULL
   new_order <- order(merged_annotations[["temporary_id_number"]])
   merged_annotations <- merged_annotations[new_order, ]
   kept_stuff <- colnames(merged_annotations) %in% colnames(count_table)
@@ -386,6 +386,9 @@ hpgl_rpkm <- function(count_table, ...) {
   na_idx <- is.na(merged_annot[[chosen_column]])
   merged_annot[na_idx, chosen_column] <- "undefined"
   undef_idx <- merged_annot[[chosen_column]] == "undefined"
+  if (sum(undef_idx) > 0) {
+    message("There appear to be ", sum(undef_idx), " genes without a length.")
+  }
   merged_annot[undef_idx, chosen_column] <- NA
   lenvec <- as.vector(as.numeric(merged_annot[[chosen_column]]))
 

@@ -186,7 +186,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   for (t in seq_along(type_names)) {
     type <- type_names[t]
     mesg("Performing gProfiler ", type, " search of ",
-         length(gene_ids), " against ", species, ".")
+         length(gene_ids), " genes against ", species, ".")
     Sys.sleep(1)
     ## To avoid the error: "'names' attribute [14] must be the same length as
     ## the vector [1]"
@@ -246,7 +246,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     type <- type_names[t]
     type_name <- paste0(type, "_enrich")
     ## Note to self, now that I think about it I think gprofiler2 provides its own p-adjustment.
-    retlst[[type_name]] <- gprofiler22enrich(retlst, ontology = type,
+    retlst[[type_name]] <- gprofiler2enrich(retlst, ontology = type,
                                              cutoff = threshold)
   }
 
@@ -373,13 +373,13 @@ simple_gprofiler_old <- function(sig_genes, species = "hsapiens", convert = TRUE
 #' outputs from gprofiler and friends into the datastructure produced by
 #' clusterProfiler.
 #'
-#' @param retlist Output from simple_gprofiler()
+#' @param retlst Output from simple_gprofiler()
 #' @param ontology Category type to extract, currently only GO?
 #' @param cutoff Use a p-value cutoff to get only the significant
 #'  categories?
 #' @param organism Set the orgdb organism name?
 #' @param padjust_method what it says on the tin.
-gprofiler22enrich <- function(retlst, ontology = "MF", cutoff = 1,
+gprofiler2enrich <- function(retlst, ontology = "MF", cutoff = 1,
                               organism = NULL, padjust_method = "BH") {
   interesting <- retlst[[ontology]]
 

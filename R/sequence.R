@@ -437,4 +437,67 @@ sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
   return(attribs)
 }
 
+#' Extract CDS sequences from a genome and set of annotations.
+#'
+#' Given a BSGenome and some annotations, write out the CDS entries.
+#'
+#' @param genome BSGenome containing the raw sequence.
+#' @param annot Annotation dataframe.
+#' @param ids Set of annotations to write, write them all if null.
+#' @param output Fasta file to write.
+#' @param strand_column Column name with the strand information.
+#' @param chr_column Column name with the chromosomes.
+#' @param start_column Column with the start positions.
+#' @param end_column Column with the end positions.
+#' @param name_column Names of the CDS
+#' @param name_prefix Prefix to add to the entries.
+#' @export
+write_cds_entries <- function(genome, annot, ids = NULL, output = "all_cds.fasta",
+                              strand_column = "strand", chr_column = "chromosome",
+                              start_column = "start", end_column = "end",
+                              name_column = "rownames", name_prefix = "lpanamensis_mcol") {
+  if (class(genome)[1] == "character") {
+    genome <- Rsamtools::FaFile(genome)
+  }
+  seq_obj <- Biostrings::getSeq(genome)
+
+  na_idx <- is.na(annot[[strand_column]])
+  annot[na_idx, strand_column] <- "undef"
+  annot[[strand_column]] <- as.character(annot[[strand_column]])
+  na_idx <- is.na(annot[[start_column]])
+  annot[na_idx, start_column] <- 0
+  annot[[start_column]] <- as.numeric(annot[[start_column]])
+  na_idx <- is.na(annot[[end_column]])
+  annot[na_idx, end_column] <- 1
+  annot[[end_column]] <- as.numeric(annot[[end_column]])
+  na_idx <- is.na(annot[[chr_column]])
+  annot[na_idx, chr_column] <- "undef"
+  annot[[chr_column]] <- as.character(annot[[chr_column]])
+
+  wanted_entries_idx <- rownames(annot) %in% ids
+  message("Found ", sum(wanted_entries_idx), " in the annotation data.")
+  wanted <- annot[wanted_entries_idx, ]
+
+  if (name_column == "rownames") {
+    wanted[["ID"]] <- rownames(wanted)
+    name_column <- "ID"
+  }
+  if (!is.null(name_prefix)) {
+    wanted[[name_column]] <- paste0(name_prefix, "_", wanted[[name_column]])
+  }
+
+  wanted_ranges <- GenomicRanges::GRanges(
+                                      seqnames = S4Vectors::Rle(wanted[[chr_column]]),
+                                      ranges = IRanges::IRanges(start = wanted[[start_column]],
+                                                                end = wanted[[end_column]]),
+                                      strand = S4Vectors::Rle(wanted[[strand_column]]),
+                                      name = S4Vectors::Rle(wanted[[name_column]]))
+
+  wanted_seqstrings <- Biostrings::getSeq(genome, wanted_ranges)
+  names(wanted_seqstrings) <- wanted[[name_column]]
+
+  written <- Biostrings::writeXStringSet(wanted_seqstrings, output, append = FALSE,
+                                         compress = FALSE, format = "fasta")
+}
+
 ## EOF

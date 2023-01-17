@@ -739,7 +739,7 @@ collect_gsc_ids_from_df <- function(df, orgdb, current_id, required_id) {
 #'
 #' @param pairwise A pairwise result, or combined de result, or extracted genes.
 #' @param according_to When getting significant genes, use this method.
-#' @param orgdb Annotation dataset.
+#' @param annotation_name Name of the annotation dataset.
 #' @param researcher_name Prefix of the name for the generated set(s).
 #' @param study_name Second element in the name of the generated set(s).
 #' @param category_name Third element in the name of the generated set(s).

@@ -19,7 +19,7 @@ simple_gprofiler2(
   do_hp = TRUE,
   do_hpa = TRUE,
   do_wp = TRUE,
-  significant = FALSE,
+  significant = TRUE,
   exclude_iea = FALSE,
   do_under = FALSE,
   evcodes = TRUE,

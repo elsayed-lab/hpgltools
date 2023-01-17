@@ -1515,14 +1515,16 @@ compare_logfc_plots <- function(combined_tables) {
 #' contrasts in a differential expression analysis.
 #'
 #' @param sig_tables Set of significance tables to poke at.
+#' @param second_sig_tables Separate set of significant results, intra vs. inter comparisons.
 #' @param compare_by Use which program for the comparisons?
 #' @param weights When printing venn diagrams, weight them?
 #' @param contrasts List of contrasts to compare.
 #' @return List containing the intersections of the contrasts and plots describing them.
 #' @seealso [Vennerable]
 #' @export
-compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
-                                          weights = FALSE, contrasts = c(1, 2, 3)) {
+compare_significant_contrasts <- function(sig_tables, second_sig_tables = NULL,
+                                          compare_by = "deseq", weights = FALSE,
+                                          contrasts = c(1, 2, 3)) {
   retlist <- NULL
   contrast_names <- names(sig_tables[[compare_by]][["ups"]])
   for (i in seq_along(contrasts)) {
@@ -1538,8 +1540,15 @@ compare_significant_contrasts <- function(sig_tables, compare_by = "deseq",
   down_lst <- list()
   for (c in seq_along(contrasts)) {
     contr <- contrasts[c]
-    up_lst[[contr]] <- rownames(sig_tables[[compare_by]][["ups"]][[contr]])
-    down_lst[[contr]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
+    if (is.null(second_sig_tables)) {
+      up_lst[[contr]] <- rownames(sig_tables[[compare_by]][["ups"]][[contr]])
+      down_lst[[contr]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
+    } else {
+      up_lst[["first"]] <- rownames(sig_tables[[compare_by]][["ups"]][[contr]])
+      down_lst[["first"]] <- rownames(sig_tables[[compare_by]][["downs"]][[contr]])
+      up_lst[["second"]] <- rownames(second_sig_tables[[compare_by]][["ups"]][[contr]])
+      down_lst[["second"]] <- rownames(second_sig_tables[[compare_by]][["downs"]][[contr]])
+    }
   }
 
   up_venn <- Vennerable::Venn(Sets = up_lst)
@@ -1666,6 +1675,7 @@ do_pairwise <- function(type, ...) {
 #' @param type Extract abundant genes according to what?
 #' @param n Perhaps take just the top/bottom n genes.
 #' @param z Or take genes past a given z-score.
+#' @param fx Choose a function when choosing the most abundant genes.
 #' @param unique Unimplemented: take only the genes unique among the conditions surveyed.
 #' @return List of data frames containing the genes of interest.
 #' @seealso [get_sig_genes()]

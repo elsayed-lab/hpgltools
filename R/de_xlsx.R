@@ -34,6 +34,7 @@
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
 #' @param rda Write a rda file of the results.
+#' @param start_worksheet This will now increment worksheet titles from this point forward.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
@@ -1194,6 +1195,8 @@ Defaulting to fdr.")
 #' @param loess Include a loess estimator in the plots?
 #' @param lfc_cutoff Passed for plotting volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param sheet_prefix Prefix for this worksheet id.
+#' @param sheet_number Which sheet is this?
 extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1275,6 +1278,9 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param loess Add a loess to plots?
 #' @param lfc_cutoff Passed for volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param sheet_prefix Prefix for this worksheet id.
+#' @param sheet_number Which sheet is this?
+#' @param format_sig Number of significant digits for stuff like pvalues.
 extract_keepers_lst <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1451,6 +1457,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param lfc_cutoff Passed for volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
 #' @param format_sig If numeric, reformat and use this number of significant digits.
+#' @param sheet_prefix Prefix for this sheet id.
+#' @param sheet_number Which worksheet is this?
 extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -1661,6 +1669,8 @@ extract_siggenes <- function(...) {
 #' @param p_type use an adjusted p-value?
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
 #' @param excel Write the results to this excel file, or NULL.
+#' @param fc_column Column in the DE data containing the foldchange values.
+#' @param p_column Column in the DE data containing the pvalues.
 #' @param siglfc_cutoffs Set of cutoffs used to define levels of 'significant.'
 #' @param column_suffix Used to help determine which columns are used to find significant
 #'  genes via logfc/p-value.

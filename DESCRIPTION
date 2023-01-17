@@ -26,7 +26,7 @@ Suggests:
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
-  graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2, GSEABase,
+  graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
   iDA, igraph, IHW, inflection, IRanges, isva, iterators,
   jsonlite,
@@ -34,7 +34,7 @@ Suggests:
   lattice, limma, locfit, lubridate,
   matrixStats, miscTools, MLSeq, motifRG, MSnbase, mygene, mzR,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, plotly, plyr, preprocessCore, PROPER,
+  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
@@ -48,7 +48,7 @@ Suggests:
 Imports:
   data.table, dplyr,
   foreach,
-  ggplot2, GenomicFeatures, glue,
+  ggplot2, GenomicFeatures, glue, GSEABase,
   knitr,
   magrittr, methods,
   plotly,
@@ -61,7 +61,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Collate:
   '01_hpgltools.R'
   'alt_splicing.R'

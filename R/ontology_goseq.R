@@ -469,6 +469,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   mesg("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
+                                  x_column = "over_represented_pvalue",
                                   ...)
   pval_plots <- list(
       "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],

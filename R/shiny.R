@@ -18,8 +18,8 @@ slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, acco
   server <- function(input, output) {
     myProcess <- reactiveVal(NULL)
     observeEvent(input$stopSession, {
-      cat(sprintf("Closing session %s\n", session$token))
-      session$close()
+      cat(sprintf("Closing session %s\n", input$token))
+      input$close()
     })
     dat <- reactive({
       p_idx <- df[["deseq_adjp"]] <= input[["p"]]
@@ -49,7 +49,7 @@ slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, acco
       stuff <- dat()
       df <- stuff[["df"]]
       ggplot(df, aes_string(x = "deseq_logfc", y = "lp", color = "both_sig")) +
-        geom_point()
+        ggplot2::geom_point()
     }, height = 400,width = 600)
     output$volcano_summary <- renderTable({
       stuff <- dat()

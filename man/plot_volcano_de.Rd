@@ -6,9 +6,9 @@
 \usage{
 plot_volcano_de(
   table,
-  alpha = 0.6,
+  alpha = 0.5,
   color_by = "p",
-  color_list = c(`FALSE` = "darkblue", `TRUE` = "darkred"),
+  p_color_list = c(`FALSE` = "darkblue", `TRUE` = "darkred"),
   fc_col = "logFC",
   fc_name = "log2 fold change",
   line_color = "black",
@@ -17,7 +17,7 @@ plot_volcano_de(
   p_col = "adj.P.Val",
   p_name = "-log10 p-value",
   p = 0.05,
-  shapes_by_state = TRUE,
+  shapes_by_state = FALSE,
   size = 2,
   invert = FALSE,
   label = NULL,
@@ -32,8 +32,6 @@ adjusted p-value.}
 \item{alpha}{How transparent to make the dots.}
 
 \item{color_by}{By p-value something else?}
-
-\item{color_list}{List of colors for significance.}
 
 \item{fc_col}{Which column contains the fc data?}
 
@@ -59,6 +57,8 @@ interesting.}
 \item{label}{Label the top/bottom n logFC values?}
 
 \item{...}{I love parameters!}
+
+\item{color_list}{List of colors for significance.}
 }
 \value{
 Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)

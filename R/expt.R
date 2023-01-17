@@ -213,6 +213,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @param researcher Used to make the creation of gene sets easier, set the researcher tag.
 #' @param study_name Ibid, but set the study tag.
 #' @param annotation_name Ibid, but set the orgdb (or other annotation) instance.
+#' @param tx_gene_map Dataframe of transcripts to genes, primarily for tools like salmon.
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
@@ -1690,7 +1691,6 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   return(expt)
 }
 
-
 #' Change the colors of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -2382,6 +2382,25 @@ sum_eupath_exon_counts <- function(counts) {
   counts <- counts[-multi_exon_idx, ]
   counts <- as.matrix(counts)
   return(counts)
+}
+
+#' Add some gene annotations based on the mean/variance in the data.
+#'
+#' Why?  Maria Adelaida is interested in pulling the least-variant
+#' genes in our data, this seems like it might be generally applicable.
+#'
+#' @param expt Expressionset to which to add this information.
+#' @return Slightly modified gene annotations including the mean/variance.
+#' @export
+variance_expt <- function(expt) {
+  df <- exprs(expt)
+  vars <- matrixStats::rowVars(df)
+  sds <- matrixStats::rowSds(df)
+  mean <- rowMeans(df)
+  fData(expt)[["exprs_gene_variance"]] <- vars
+  fData(expt)[["exprs_gene_stdev"]] <- sds
+  fData(expt)[["exprs_gene_mean"]] <- mean
+  return(expt)
 }
 
 #' Print a string describing what happened to this data.

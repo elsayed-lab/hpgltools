@@ -209,6 +209,11 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
     expr_col <- "log_basemean"
   }
 
+  ## Check that the wanted table is numeric
+  if (is.numeric(wanted_table)) {
+    wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
+  }
+
   ma_material <- NULL
   vol_material <- NULL
   if (!is.null(the_table[[expr_col]]) &
@@ -1033,6 +1038,46 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
   return(retlist)
 }
 
+## Taken from: https://github.com/hms-dbmi/UpSetR/issues/85
+## and lightly modified to match my style and so I could more
+## easily understand what it is doing.
+overlap_groups <- function (lst, sort = TRUE) {
+  ## lst could look like this:
+  ## $one
+  ## [1] "a" "b" "c" "e" "g" "h" "k" "l" "m"
+  ## $two
+  ## [1] "a" "b" "d" "e" "j"
+  ## $three
+  ## [1] "a" "e" "f" "g" "h" "i" "j" "l" "m"
+  input_mtrx <- fromList(lst) == 1
+  ##     one   two three
+  ## a  TRUE  TRUE  TRUE
+  ## b  TRUE  TRUE FALSE
+  ##...
+  ## condensing matrix to unique combinations elements
+  unique_lst <- unique(input_mtrx)
+  groups <- list()
+  ## going through all unique combinations and collect elements for each in a list
+  for (i in 1:nrow(unique_lst)) {
+    current_row <- unique_lst[i,]
+    my_elements <- which(apply(input_mtrx, 1, function(x) all(x == current_row)))
+    attr(my_elements, "groups") <- current_row
+    groups[[paste(colnames(unique_lst)[current_row], collapse = ":")]] <- my_elements
+    my_elements
+    ## attr(,"groups")
+    ##   one   two three
+    ## FALSE FALSE  TRUE
+    ##  f  i
+    ## 12 13
+  }
+  if (sort) {
+    groups <- groups[order(sapply(groups, function(x) length(x)), decreasing = TRUE)]
+  }
+  attr(groups, "elements") <- unique(unlist(lst))
+  return(groups)
+  ## save element list to facilitate access using an index in case rownames are not named
+}
+
 upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
                        down=TRUE, both=FALSE) {
 
@@ -1075,12 +1120,15 @@ upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
   retlist <- list()
   if (isTRUE(up)) {
     retlist[["up"]] <- UpSetR::upset(UpSetR::fromList(upsetr_up_list))
+    retlist[["up_groups"]] <- overlap_groups(upsetr_up_list)
   }
   if (isTRUE(down)) {
     retlist[["down"]] <- UpSetR::upset(UpSetR::fromList(upsetr_down_list))
+    retlist[["down_groups"]] <- overlap_groups(upsetr_down_list)
   }
   if (isTRUE(both)) {
     retlist[["both"]] <- UpSetR::upset(UpSetR::fromList(upsetr_both_list))
+    retlist[["both_groups"]] <- overlap_groups(upsetr_both_list)
   }
 
   return(retlist)
