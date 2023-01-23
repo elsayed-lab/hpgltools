@@ -23,6 +23,8 @@ get_abundant_genes(
 
 \item{z}{Or take genes past a given z-score.}
 
+\item{fx}{Choose a function when choosing the most abundant genes.}
+
 \item{unique}{Unimplemented: take only the genes unique among the conditions surveyed.}
 }
 \value{

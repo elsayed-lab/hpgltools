@@ -81,6 +81,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{rda}{Write a rda file of the results.}
 
+\item{start_worksheet}{This will now increment worksheet titles from this point forward.}
+
 \item{...}{Arguments passed to significance and abundance tables.}
 }
 \value{

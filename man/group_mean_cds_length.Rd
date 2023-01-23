@@ -21,7 +21,7 @@ group_mean_cds_length(
 \item{length_column}{Column containing the cds lengths.}
 }
 \value{
-The annotations with a new column 'mean_cdS_len' at the end.
+The annotations with a new column 'mean_cds_len' at the end.
 }
 \description{
 Average the cds length over known transcripts for a single gene.

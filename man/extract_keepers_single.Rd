@@ -82,6 +82,10 @@ experimental metadata.}
 \item{p_cutoff}{Passed for volcano/MA plots.}
 
 \item{format_sig}{If numeric, reformat and use this number of significant digits.}
+
+\item{sheet_prefix}{Prefix for this sheet id.}
+
+\item{sheet_number}{Which worksheet is this?}
 }
 \description{
 When a single 'keeper' contrast is specified, find and extract it.
