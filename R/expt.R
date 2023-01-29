@@ -12,6 +12,8 @@
 #' @param expt1 First expt object.
 #' @param expt2 Second expt object.
 #' @param condition Column with which to reset the conditions.
+#' @param all_x Keep all of the first expt's annotations/counts if there are mismatches?
+#' @param all_y Keep all the second expt's annotations/counts if there are mismatches?
 #' @param batch Column with which to reset the batches.
 #' @param merge_meta Merge the metadata when they mismatch?  This should perhaps default to TRUE.
 #' @return Larger expt.
@@ -177,7 +179,6 @@ concatenate_runs <- function(expt, column = "replicate") {
   return(final_expt)
 }
 
-
 #' Wrap bioconductor's expressionset to include some extra information.
 #'
 #' The primary innovation of this function is that it will check the metadata
@@ -209,6 +210,10 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @param low_files Explicitly lowercase the filenames when searching the
 #'  filesystem?
 #' @param handle_na How does one wish to deal with NA values in the data?
+#' @param researcher Used to make the creation of gene sets easier, set the researcher tag.
+#' @param study_name Ibid, but set the study tag.
+#' @param annotation_name Ibid, but set the orgdb (or other annotation) instance.
+#' @param tx_gene_map Dataframe of transcripts to genes, primarily for tools like salmon.
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
@@ -257,7 +262,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL,
-                        annotation_name = "org.Hs.eg.db", ...) {
+                        annotation_name = "org.Hs.eg.db", tx_gene_map = NULL, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if (is.null(metadata)) {
@@ -366,7 +371,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
-                                   ...)
+                                   tx_gene_map = tx_gene_map, ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -511,7 +516,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 
   ## Take a moment to remove columns which are blank
   columns_to_remove <- NULL
-  for (col in 1:length(colnames(gene_info))) {
+  for (col in seq_along(colnames(gene_info))) {
     sum_na <- sum(is.na(gene_info[[col]]))
     sum_null <- sum(is.null(gene_info[[col]]))
     sum_empty <- sum_na + sum_null
@@ -740,6 +745,9 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
       savefile <- "expt.rda"
     }
   }
+  if (!dir.exists(dirname(savefile))) {
+    created <- dir.create(dirname(savefile), recursive = TRUE)
+  }
   save_result <- try(save(expt, file = savefile), silent = TRUE)
   if (class(save_result) == "try-error") {
     warning("Saving the expt object failed, perhaps you do not have permissions?")
@@ -748,7 +756,6 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
           " features and ", ncol(exprs(expt)), " samples.")
   return(expt)
 }
-
 
 #' Exclude some genes given a pattern match
 #'
@@ -880,7 +887,6 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   return(expt)
 }
 
-
 #' Do features_greater_than() inverted!
 #'
 #' @param  ... Arguments passed to features_greather_than()
@@ -922,7 +928,7 @@ features_greater_than <- function(data, cutoff = 1, hard = TRUE, inverse = FALSE
   number_table <- numeric(length = ncol(data))
   names(number_table) <- colnames(data)
   feature_tables <- list()
-  for (col in 1:length(colnames(data))) {
+  for (col in seq_along(colnames(data))) {
     column_name <- colnames(data)[col]
     column_data <- data[[column_name]]
     num_features <- NULL
@@ -1023,7 +1029,6 @@ features_in_single_condition <- function(expt, cutoff = 2, factor = "condition",
   )
   return(retlist)
 }
-
 
 #' Set up default colors for a data structure containing usable metadata
 #'
@@ -1127,7 +1132,7 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   design <- as.data.frame(conds)
   rownames(design) <- colnames(m)
   colnames(design) <- "condition"
-  for (i in 1:ncol(m)) {
+  for (i in seq_len(ncol(m))) {
     m[, i] <- as.integer(m[, i])
   }
   design[["condition"]] <- as.factor(design[["condition"]])
@@ -1135,7 +1140,6 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
                                                colData = design, design = ~condition))
   return(example)
 }
-
 
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
@@ -1230,7 +1234,6 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
   return(retlist)
 }
 
-
 #' Create a Schizosaccharomyces cerevisiae expt.
 #'
 #' This just saves some annoying typing if one wishes to make a standard
@@ -1260,17 +1263,21 @@ make_pombe_expt <- function(annotation = TRUE) {
   annotations <- NULL
   if (isTRUE(annotation)) {
     ## Neat, it works, and even figures out that the default mart is incorrect by itself.
-    pombe_annotations <- load_biomart_annotations(
+    pombe_annotations <- try(load_biomart_annotations(
         host = "fungi.ensembl.org", trymart = "fungi_mart",
         trydataset = "spombe_eg_gene",
         gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
                           "hgnc_symbol", "description", "gene_biotype"),
-        species = "spombe", overwrite = TRUE)
-    pombe_mart <- pombe_annotations[["mart"]]
-    annotations <- pombe_annotations[["annotation"]]
-    rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
-                                             replacement = "",
-                                             x = rownames(annotations)), unique = TRUE)
+        species = "spombe", overwrite = TRUE))
+    if ("try-error" %in% class(pombe_annotations)) {
+      warning("There was an error downloading the pombe annotations, this will still return.")
+    } else {
+      pombe_mart <- pombe_annotations[["mart"]]
+      annotations <- pombe_annotations[["annotation"]]
+      rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
+                                               replacement = "",
+                                               x = rownames(annotations)), unique = TRUE)
+    }
   }
   pombe_expt <- sm(create_expt(metadata = meta,
                                count_dataframe = fission_data,
@@ -1278,7 +1285,6 @@ make_pombe_expt <- function(annotation = TRUE) {
   detach("package:fission")
   return(pombe_expt)
 }
-
 
 #' Read a bunch of count tables and create a usable data frame from them.
 #'
@@ -1300,6 +1306,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param merge_type Choose one, merge or join.
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param countdir Optional count directory to read from.
+#' @param tx_gene_map Dataframe which provides a mapping between transcript IDs and gene IDs.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso [data.table] [create_expt()] [tximport]
@@ -1310,7 +1317,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @export
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
                              all.x = TRUE, all.y = FALSE, merge_type = "merge",
-                             suffix = NULL, countdir = NULL, ...) {
+                             suffix = NULL, countdir = NULL, tx_gene_map = NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
@@ -1330,7 +1337,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   dirs <- dirname(files)
 
   count_table <- NULL
-  for (f in 1:length(files)) {
+  for (f in seq_along(files)) {
     ## Get rid of any lurking spaces
     files[f] <- gsub(pattern = " ", replacement = "", x = files[f])
     ## Check if these are relative or absolute paths and standardize them to absolute.
@@ -1349,11 +1356,13 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   ## Therefore, I will set the flags tx2gene and txOut accordingly.
   mesg("Reading count tables.")
   txout <- TRUE
-  tx_gene_map <- NULL
-  if (!is.null(arglist[["tx_gene_map"]])) {
+  if (!is.null(tx_gene_map)) {
     mesg("Using the transcript to gene mapping.")
+    message("In some cases, (notably salmon) the format of the IDs used by this can be tricky.
+It is likely to require the transcript ID followed by a '.' and the ensembl column:
+'transcript_version', which is explicitly different than the gene version column.
+If this is not correctly performed, very few genes will be observed")
     txout <- FALSE
-    tx_gene_map <- arglist[["tx_gene_map"]]
   }
   if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
     mesg("Reading kallisto data with tximport.")
@@ -1454,7 +1463,7 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
     }
     mesg(files[1], " contains ", length(rownames(count_table)), " rows.")
     ## iterate over and append remaining samples
-    for (num in 2:length(files)) {
+    for (num in seq(from = 2, to = length(files))) {
       table <- files[num]
       if (file.exists(tolower(table))) {
         table <- tolower(table)
@@ -1505,7 +1514,6 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   mesg("Finished reading count data.")
   return(retlist)
 }
-
 
 #' Given a table of meta data, read it in for use by create_expt().
 #'
@@ -1560,7 +1568,6 @@ read_metadata <- function(file, ...) {
   colnames(definitions) <- make.names(colnames(definitions), unique = TRUE)
   return(definitions)
 }
-
 
 #' Remove/keep specifically named genes from an expt.
 #'
@@ -1646,7 +1653,6 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
   return(input)
 }
 
-
 #' Change the batches of an expt.
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1682,9 +1688,9 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["batches"]] <- fact
   pData(expt[["expressionset"]])[["batch"]] <- fact
   expt[["design"]][["batch"]] <- fact
+  print(table(pData(expt)[["batch"]]))
   return(expt)
 }
-
 
 #' Change the colors of an expt
 #'
@@ -1766,7 +1772,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -1809,7 +1815,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -1829,7 +1835,7 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
       ## This is changing them by sample id.
       ## In this instance, we are changing specific colors to the provided colors.
       chosen_colors <- expt[["colors"]]
-      for (snum in 1:length(names(colors))) {
+      for (snum in seq_along(names(colors))) {
         sampleid <- names(colors)[snum]
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
@@ -1870,7 +1876,6 @@ set_expt_colors <- function(expt, colors = TRUE, chosen_palette = "Dark2", chang
   expt[["colors"]] <- chosen_colors
   return(expt)
 }
-
 
 #' Change the condition of an expt
 #'
@@ -1936,10 +1941,10 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
     new_expt[["design"]][["condition"]] <- fact
   }
 
+  print(table(pData(new_expt)[["condition"]]))
   new_expt <- set_expt_colors(new_expt)
   return(new_expt)
 }
-
 
 #' Change the factors (condition and batch) of an expt
 #'
@@ -2010,7 +2015,6 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
   fData(expt[["expressionset"]]) <- fd
   return(expt)
 }
-
 
 #' Change the gene names of an expt.
 #'
@@ -2098,7 +2102,6 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
   return(expt)
 }
 
-
 #' Change the sample names of an expt.
 #'
 #' Sometimes one does not like the hpgl identifiers, so provide a way to change
@@ -2145,7 +2148,6 @@ set_expt_samplenames <- function(expt, newnames) {
   new_expt[["samplenames"]] <- newnames
   return(new_expt)
 }
-
 
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
@@ -2212,6 +2214,10 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     ## standard deviation or somesuch...
     mesg("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
+
+    if (is.null(pData(expt)[["sample_coverage"]])) {
+      pData(expt)[["sample_coverage"]] <- coverages
+    }
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
@@ -2221,12 +2227,22 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   } else if (is.null(coverage)) {
     ## Remove samples with less than this number of non-zero genes.
     nonzero_idx <- exprs(expt) != 0
-    remove_idx <- colSums(nonzero_idx) < nonzero
+    num_nonzero <- colSums(nonzero_idx)
+    if (is.null(pData(expt)[["num_nonzero"]])) {
+      pData(expt)[["num_nonzero"]] <- num_nonzero
+    }
+    remove_idx <- num_nonzero < nonzero
+    if (sum(remove_idx) == 0) {
+      message("No samples have fewer than ", nonzero, " observed genes.")
+      return(expt)
+    }
+    samples_dropped <- num_nonzero[remove_idx]
     subset_design <- starting_metadata[!remove_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
     message("The samples (and read coverage) removed when filtering ",
             nonzero, " non-zero genes are: ")
     print(colSums(exprs(expt))[remove_idx])
+    print(num_nonzero[remove_idx])
   } else {
     stop("Unable to determine what is being subset.")
   }
@@ -2251,7 +2267,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     notes <- glue::glue("{notes}{note_appended}")
   }
 
-  for (col in 1:ncol(subset_design)) {
+  for (col in seq_len(ncol(subset_design))) {
     if (class(subset_design[[col]])[1] == "factor") {
       subset_design[[col]] <- droplevels(subset_design[[col]])
     }
@@ -2276,7 +2292,6 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
           length(final_samples), " samples.")
   return(new_expt)
 }
-
 
 #' Try a very literal subtraction
 #'
@@ -2309,7 +2324,7 @@ subtract_expt <- function(expt, new_meta, sample_column = "sample",
   new_exprs <- data.frame(row.names = rownames(mtrx))
   new_pdata <- data.frame()
   sub_names <- rownames(new_meta)
-  for (s in 1:nrow(new_meta)) {
+  for (s in seq_len(nrow(new_meta))) {
     sub_name <- sub_names[s]
     numerator <- new_meta[sub_name, "numerator"]
     denominator <- new_meta[sub_name, "denominator"]
@@ -2362,7 +2377,6 @@ subtract_expt <- function(expt, new_meta, sample_column = "sample",
   return(new_expt)
 }
 
-
 #' I want an easy way to sum counts in eupathdb-derived data sets.
 #' These have a few things which should make this relatively easy.
 #' Notably: The gene IDs look like: "exon_ID-1 exon_ID-2 exon_ID-3"
@@ -2386,6 +2400,24 @@ sum_eupath_exon_counts <- function(counts) {
   return(counts)
 }
 
+#' Add some gene annotations based on the mean/variance in the data.
+#'
+#' Why?  Maria Adelaida is interested in pulling the least-variant
+#' genes in our data, this seems like it might be generally applicable.
+#'
+#' @param expt Expressionset to which to add this information.
+#' @return Slightly modified gene annotations including the mean/variance.
+#' @export
+variance_expt <- function(expt) {
+  df <- exprs(expt)
+  vars <- matrixStats::rowVars(df)
+  sds <- matrixStats::rowSds(df)
+  mean <- rowMeans(df)
+  fData(expt)[["exprs_gene_variance"]] <- vars
+  fData(expt)[["exprs_gene_stdev"]] <- sds
+  fData(expt)[["exprs_gene_mean"]] <- mean
+  return(expt)
+}
 
 #' Print a string describing what happened to this data.
 #'
@@ -2475,7 +2507,6 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 
   return(what)
 }
-
 
 #' Make pretty xlsx files of count data.
 #'
@@ -2623,7 +2654,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_row <- new_row + 1
   new_col <- 1
   legend_plot <- metrics[["legend"]]
-  try_result <- xlsx_plot_png(legend_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(legend_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "01_legend", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -2631,7 +2662,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   libsize_plot <- metrics[["libsize"]]
-  try_result <- xlsx_plot_png(libsize_plot, wb = wb, sheet = sheet,
+  try_result <- xlsx_insert_png(libsize_plot, wb = wb, sheet = sheet,
                               width = plot_dim, height = plot_dim,
                               start_col = new_col, start_row = new_row,
                               plotname = "02_libsize", savedir = excel_basename)
@@ -2642,7 +2673,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
   nonzero_plot <- metrics[["nonzero"]]
-  try_result <- xlsx_plot_png(nonzero_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nonzero_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "03_nonzero", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2661,7 +2692,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   density_plot <- metrics[["density"]]
   new_row <- new_row + 1
-  try_result <- xlsx_plot_png(density_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(density_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "04_density", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2669,7 +2700,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   boxplot_plot <- metrics[["boxplot"]]
-  try_result <- xlsx_plot_png(boxplot_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(boxplot_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "05_boxplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2677,7 +2708,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   topn_plot <- metrics[["topnplot"]]
-  try_result <- xlsx_plot_png(topn_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(topn_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "06_topnplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2685,7 +2716,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   cv_plot <- metrics[["cvplot"]]
-  try_result <- xlsx_plot_png(cv_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(cv_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "07_cvplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2704,7 +2735,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   new_row <- new_row + 1
   corheat_plot <- metrics[["corheat"]]
-  try_result <- xlsx_plot_png(corheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(corheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "08_corheat", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2712,7 +2743,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   disheat_plot <- metrics[["disheat"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(disheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(disheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "09_disheat", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2722,7 +2753,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
     tmp_expt <- sm(normalize_expt(expt, transform = "log2", filter = TRUE))
     sampleheat_plot <- plot_sample_heatmap(tmp_expt)
     new_col <- new_col + plot_cols + 1
-    try_result <- xlsx_plot_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+    try_result <- xlsx_insert_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                                 height = plot_dim, start_col = new_col, start_row = new_row,
                                 plotname = "09a_sampleheat", savedir = excel_basename)
     if (! "try-error" %in% class(try_result)) {
@@ -2742,7 +2773,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   new_row <- new_row + 1
   smc_plot <- metrics[["smc"]]
-  try_result <- xlsx_plot_png(smc_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(smc_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "10_smc", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -2750,7 +2781,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   new_col <- new_col + plot_cols + 1
   smd_plot <- metrics[["smd"]]
-  try_result <- xlsx_plot_png(smd_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(smd_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "11_smd", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -2785,14 +2816,14 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   pca_table <- metrics[["pc_table"]]
   tsne_plot <- metrics[["tsne_plot"]]
   tsne_table <- metrics[["tsne_table"]]
-  try_result <- xlsx_plot_png(pca_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(pca_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "12_pcaplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(pca_topn, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(pca_topn, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "13_pctopn", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -2810,21 +2841,21 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   rtsne_table <- rtsne[["residual_df"]]
   rm(tmp_data)
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(rspca_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(rspca_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "14_norm_pcaplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(tsne_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(tsne_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "15_tsneplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(rtsne_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(rtsne_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "16_rtsneplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -2832,7 +2863,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   qq_plot <- metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(qq_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(qq_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "17_qqlog", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2851,7 +2882,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
-      try_result <- xlsx_plot_png(violin_plot, wb = wb, sheet = sheet, width = plot_dim,
+      try_result <- xlsx_insert_png(violin_plot, wb = wb, sheet = sheet, width = plot_dim,
                                   height = plot_dim, start_col = new_col, start_row = new_row,
                                   plotname = "18_violin", savedir = excel_basename)
       if (! "try-error" %in% class(try_result)) {
@@ -2860,7 +2891,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       new_col <- new_col + plot_cols + 1
 
       pct_plot <- varpart_raw[["percent_plot"]]
-      try_result <- xlsx_plot_png(pct_plot, wb = wb, sheet = sheet, width = plot_dim,
+      try_result <- xlsx_insert_png(pct_plot, wb = wb, sheet = sheet, width = plot_dim,
                                   height = plot_dim, start_col = new_col, start_row = new_row,
                                   plotname = "19_pctvar", savedir = excel_basename)
       if (! "try-error" %in% class(try_result)) {
@@ -2934,14 +2965,14 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   new_row <- new_row + 1
   new_plot <- norm_metrics[["legend"]]
-  try_result <- xlsx_plot_png(new_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(new_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row)
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
   nlibsize_plot <- norm_metrics[["libsize"]]
-  try_result <- xlsx_plot_png(nlibsize_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nlibsize_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "20_nlibsize", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2950,7 +2981,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Same row, non-zero plot
   new_col <- new_col + plot_cols + 1
   nnzero_plot <- norm_metrics[["nonzero"]]
-  try_result <- xlsx_plot_png(nnzero_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nnzero_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "21_nnzero", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2969,7 +3000,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   ndensity_plot <- norm_metrics[["density"]]
   new_row <- new_row + 1
-  try_result <- xlsx_plot_png(ndensity_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(ndensity_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "22_ndensity", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2977,7 +3008,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   nboxplot_plot <- norm_metrics[["boxplot"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(nboxplot_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nboxplot_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "23_nboxplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -2985,7 +3016,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   ntopn_plot <- norm_metrics[["topnplot"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(ntopn_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(ntopn_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "24_nboxplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -3004,7 +3035,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   ncorheat_plot <- norm_metrics[["corheat"]]
   new_row <- new_row + 1
-  try_result <- xlsx_plot_png(ncorheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(ncorheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "25_ncorheat", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -3012,7 +3043,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   ndisheat_plot <- norm_metrics[["disheat"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(ndisheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(ndisheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "26_ndisheat", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -3021,7 +3052,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   if (isTRUE(sample_heat)) {
     sampleheat_plot <- plot_sample_heatmap(norm_data)
     new_col <- new_col + plot_cols + 1
-    try_result <- xlsx_plot_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+    try_result <- xlsx_insert_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                                 height = plot_dim, start_col = new_col, start_row = new_row,
                                 plotname = "26a_sampleheat", savedir = excel_basename)
     if (! "try-error" %in% class(try_result)) {
@@ -3041,7 +3072,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- 1
   nsmc_plot <- norm_metrics[["smc"]]
   new_row <- new_row + 1
-  try_result <- xlsx_plot_png(nsmc_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nsmc_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "27_nsmc", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -3049,7 +3080,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   nsmd_plot <- norm_metrics[["smd"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(nsmd_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nsmd_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "28_nsmd", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -3078,21 +3109,21 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   npca_table <- norm_metrics[["pc_table"]]
   ntsne_table <- norm_metrics[["tsne_table"]]
   new_row <- new_row + 1
-  try_result <- xlsx_plot_png(npca_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(npca_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "29_npcaplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(npc_topnplot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(npc_topnplot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "30_npcloadplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(ntsne_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(ntsne_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "31_ntsneplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
@@ -3100,7 +3131,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   }
   nqq_plot <- norm_metrics[["qqlog"]]
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_plot_png(nqq_plot, wb = wb, sheet = sheet, width = plot_dim,
+  try_result <- xlsx_insert_png(nqq_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "32_nqqplot", savedir = excel_basename)
   if (! "try-error" %in% class(try_result)) {
@@ -3119,7 +3150,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
-      try_result <- xlsx_plot_png(nvarpart_plot, wb = wb, sheet = sheet, width = plot_dim,
+      try_result <- xlsx_insert_png(nvarpart_plot, wb = wb, sheet = sheet, width = plot_dim,
                                   height = plot_dim, start_col = new_col, start_row = new_row,
                                   plotname = "33_nviolin", savedir = excel_basename)
       if (! "try-error" %in% class(try_result)) {
@@ -3127,7 +3158,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       }
       new_col <- new_col + plot_cols + 1
       npct_plot <- varpart_norm[["percent_plot"]]
-      try_result <- xlsx_plot_png(npct_plot, wb = wb, sheet = sheet, width = plot_dim,
+      try_result <- xlsx_insert_png(npct_plot, wb = wb, sheet = sheet, width = plot_dim,
                                   height = plot_dim, start_col = new_col, start_row = new_row,
                                   plotname = "34_npctplot", savedir = excel_basename)
       if (! "try-error" %in% class(try_result)) {
@@ -3244,7 +3275,6 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 ## default, R code is loaded in alphabetical order, but that won’t always work
 ## for your situation.
 
-
 #' An expt is an ExpressionSet superclass with a shorter name.
 #'
 #' It is also a simple list so that one may summarize it more simply,
@@ -3284,7 +3314,7 @@ expt_set <- setOldClass("expt")
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
-
+#' @importFrom Biobase annotation annotation<-
 setMethod("annotation", signature = "expt",
           function(object) {
             Biobase::annotation(object[["expressionset"]])
@@ -3301,7 +3331,7 @@ setMethod("assay", signature = "expt",
           })
 setMethod("assay", "ExpressionSet",
           function(x, withDimnames = TRUE, ...) {
-            Biobase::exprs(object)
+            Biobase::exprs(x)
           })
 setMethod("assay<-", signature = "expt",
           function(x, i, withDimnames = TRUE, ..., value) {

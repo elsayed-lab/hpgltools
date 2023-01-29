@@ -26,7 +26,9 @@ extract_keepers_all(
   padj_type,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  sheet_prefix = NULL,
+  sheet_number = NULL
 )
 }
 \arguments{
@@ -74,6 +76,10 @@ experimental metadata.}
 \item{lfc_cutoff}{Passed for plotting volcano/MA plots.}
 
 \item{p_cutoff}{Passed for volcano/MA plots.}
+
+\item{sheet_prefix}{Prefix for this worksheet id.}
+
+\item{sheet_number}{Which sheet is this?}
 }
 \description{
 This has a couple of cousin functions, extract_keepers_list and _single.

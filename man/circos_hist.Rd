@@ -25,6 +25,11 @@ circos_hist(
 \arguments{
 \item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
 
+\item{input}{Dataframe or table with starts/ends and the floating point information.}
+
+\item{tablename}{A likely input for this is a combine_de_tables() result, if so, provide
+the table's name here.}
+
 \item{annot_source}{This parameter was added to make it possible to add an
 arbitrary dataframe of other annotation information.}
 
@@ -49,8 +54,6 @@ arbitrary dataframe of other annotation information.}
 \item{width}{Radial width of each tile.}
 
 \item{spacing}{Distance between outer, inner, and inner to whatever follows.}
-
-\item{df}{Dataframe with starts/ends and the floating point information.}
 }
 \value{
 Radius after adding the histogram and the spacing.

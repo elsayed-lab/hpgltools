@@ -24,9 +24,13 @@ extract_keepers_single(
   include_basic,
   excludes,
   padj_type,
+  fancy = FALSE,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  format_sig = 4,
+  sheet_prefix = NULL,
+  sheet_number = NULL
 )
 }
 \arguments{
@@ -69,11 +73,19 @@ experimental metadata.}
 
 \item{padj_type}{Choose a specific p adjustment.}
 
+\item{fancy}{Print fancy plots with the xlsx file?}
+
 \item{loess}{Add a loess to plots?}
 
 \item{lfc_cutoff}{Passed for volcano/MA plots.}
 
 \item{p_cutoff}{Passed for volcano/MA plots.}
+
+\item{format_sig}{If numeric, reformat and use this number of significant digits.}
+
+\item{sheet_prefix}{Prefix for this sheet id.}
+
+\item{sheet_number}{Which worksheet is this?}
 }
 \description{
 When a single 'keeper' contrast is specified, find and extract it.

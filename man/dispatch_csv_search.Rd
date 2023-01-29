@@ -12,7 +12,6 @@ dispatch_csv_search(
   chosen_func = NULL,
   basedir = "preprocessing",
   which = "first",
-  as = NULL,
   verbose = FALSE,
   ...
 )

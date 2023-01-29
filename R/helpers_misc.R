@@ -9,7 +9,7 @@
 #' @param backups How many revisions?
 backup_file <- function(backup_file, backups = 4) {
   if (file.exists(backup_file)) {
-    for (i in backups:01) {
+    for (i in seq(from = backups, to = 1)) {
       j <- i + 1
       i <- sprintf("%02d", i)
       j <- sprintf("%02d", j)
@@ -264,7 +264,7 @@ make_simplified_contrast_matrix <- function(numerators, denominators) {
   for (col in (colnames(contrasts))) {
     contrasts[, col] <- 0
   }
-  for (n in 1:length(numerators)) {
+  for (n in seq_along(numerators)) {
     num <- numerators[[n]]
     den <- denominators[[n]]
     cont <- glue("{num}_vs_{den}")
@@ -570,7 +570,7 @@ please_install <- function(lib, update = FALSE) {
 #' @export
 rex <- function(display = ":0") {
   if (!is.null(dev.list())) {
-    for (i in 1:length(dev.list())) {
+    for (i in seq_along(dev.list())) {
       dev.off()
     }
   }

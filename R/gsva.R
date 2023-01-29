@@ -135,6 +135,16 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
                                     type = "mean") {
   gsva_scores <- gsva_result[["expt"]]
 
+  ## FIXME: If one uses factor_column in this current function, that will likely lead to
+  ## incorrect results because limma is using the 'condition' metadata factor; but
+  ## median_by_factor() is using this new column 'factor_column'.  As
+  ## a result our mean gsva scores will no longer have any connection
+  ## to the results from limma.
+  ## I think this may be trivially fixed though? ...
+  if (factor_column != "condition") {
+    gsva_scores <- set_expt_conditions(gsva_scores, fact = factor_column)
+  }
+
   ## Use limma on the gsva result
   gsva_limma <- limma_pairwise(gsva_scores, model_batch = model_batch,
                                which_voom = "none")
@@ -146,7 +156,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   ## gsva_score_means <- get_group_gsva_means(gsva_scores, groups)
   num_den_string <- strsplit(x = names(gsva_limma[["all_tables"]]), split = "_vs_")
 
-  for (t in 1:length(gsva_limma[["all_tables"]])) {
+  for (t in seq_along(gsva_limma[["all_tables"]])) {
     table_name <- names(gsva_limma[["all_table"]])[t]
     table <- gsva_limma[["all_tables"]][[t]]
     contrast <- num_den_string[[t]]
@@ -156,7 +166,13 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     ## first <- gsva_score_means[["Index"]][numerator][[1]]
     ## second <- gsva_score_means[["Index"]][denominator][[1]]
     numerator_samples <- gsva_score_means[["indexes"]][[numerator]]
+    if (is.null(numerator_samples)) {
+      next
+    }
     denominator_samples <- gsva_score_means[["indexes"]][[denominator]]
+    if (is.null(denominator_samples)) {
+      next
+    }
     ## get maximum value of group means in each contrast
     ## maxs <- apply(exprs(gsva_scores)[, first | second], 1, max)
     max_values <- apply(exprs(gsva_scores)[, numerator_samples | denominator_samples], 1, max)
@@ -188,27 +204,44 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   gl <- score_gsva_likelihoods(gsva_result, factor = fact, label_size = label_size)
   likelihoods <- gl[["likelihoods"]]
   keep_idx <- likelihoods[[fact]] >= cutoff
-  subset_eset <- subset_eset[keep_idx, ]
-  jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
-                                              "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+  scored_ht <- subset_table <- scored_ht_plot <- NULL
+  if (sum(keep_idx) > 1) {
+    subset_eset <- subset_eset[keep_idx, ]
+    jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
+                                                "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
+    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
+    if (is.null(label_size)) {
+      scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin))
+    } else {
+      scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
+                             margins = c(col_margin, row_margin),
+                             cexRow = label_size)
+    }
+    scored_ht_plot <- grDevices::recordPlot()
+    dev.off()
+    removed <- suppressWarnings(file.remove(tmp_file))
+    subset_order <- rev(scored_ht[["rowInd"]])
+    subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
-  scored_ht <- NULL
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
-  this_plot <- png(filename = tmp_file)
-  controlled <- dev.control("enable")
-  if (is.null(label_size)) {
-    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
-                           margins = c(col_margin, row_margin))
+    ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
+    ## are not the same as the rownames of exprs(subset_mtrx)
+    ## which AFAIK should not be possible, but clearly I was wrong.
+    ## At least when I create an expressionset, the fData and exprs have the
+    ## same rownames from beginning to end.
+    ## I guess this does not really matter, since we can use the full annotation table.
+    subset_tbl <- as.data.frame(exprs(subset_eset))
+    order_column <- colnames(subset_tbl)[1]
+    subset_table <- merge(annot, subset_tbl, by = "row.names")
+    rownames(subset_table) <- subset_table[["Row.names"]]
+    subset_table[["Row.names"]] <- NULL
+    ## Set the table row order to the same as the hclust from the heatmap.
+    subset_table <- subset_table[subset_rownames, ]
   } else {
-    scored_ht <- heatmap.3(exprs(subset_eset), trace = "none", col = jet_colors,
-                           margins = c(col_margin, row_margin),
-                           cexRow = label_size)
+    mesg("There are not many entries which pass the cutoff for significance.")
   }
-  scored_ht_plot <- grDevices::recordPlot()
-  dev.off()
-  removed <- suppressWarnings(file.remove(tmp_file))
-  subset_order <- rev(scored_ht[["rowInd"]])
-  subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
   order_column <- colnames(values)[1]
   gsva_table <- merge(annot, values, by = "row.names")
@@ -216,20 +249,6 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   gsva_table[["Row.names"]] <- NULL
   reordered_gsva_idx <- order(gsva_table[[order_column]], decreasing = TRUE)
   gsva_table <- gsva_table[reordered_gsva_idx, ]
-
-  ## Here is a bizarre little fact: the rownames of fData(subset_mtrx)
-  ## are not the same as the rownames of exprs(subset_mtrx)
-  ## which AFAIK should not be possible, but clearly I was wrong.
-  ## At least when I create an expressionset, the fData and exprs have the
-  ## same rownames from beginning to end.
-  ## I guess this does not really matter, since we can use the full annotation table.
-  subset_tbl <- as.data.frame(exprs(subset_eset))
-  order_column <- colnames(subset_tbl)[1]
-  subset_table <- merge(annot, subset_tbl, by = "row.names")
-  rownames(subset_table) <- subset_table[["Row.names"]]
-  subset_table[["Row.names"]] <- NULL
-  ## Set the table row order to the same as the hclust from the heatmap.
-  subset_table <- subset_table[subset_rownames, ]
 
   gl_tbl <- as.data.frame(gl[["likelihoods"]])
   order_column <- colnames(gl_tbl)[1]
@@ -291,12 +310,12 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
   venn_names <- list()
   ## Skip the non-existant set of 00, thus 2:length()
   ## Top level loop iterates through the observed intersections/unions from Vennerable.
-  for (i in 2:length(sig_int)) {
+  for (i in seq(from = 2, to = length(sig_int))) {
     name <- names(sig_int)[i]
     ## Make a human readable version of the venn names.
     name_chars <- strsplit(x = name, split = "")[[1]]
     venn_name <- ""
-    for (c in 1:length(name_chars)) {
+    for (c in seq_along(name_chars)) {
       char <- name_chars[[c]]
       if (char == "1") {
         venn_name <- glue("{venn_name}_{names(lst)[c]}")
@@ -309,11 +328,11 @@ intersect_signatures <- function(gsva_result, lst, freq_cutoff = 2,
     gene_ids <- sig_annot[["ids"]]
     internal_ret <- list()
     ## This loop iterates through the set of observed gene IDs in each intersection
-    for (j in 1:length(gene_ids)) {
+    for (j in seq_along(gene_ids)) {
       id_lst <- gene_ids[j]
       ids <- strsplit(id_lst, ", ")[[1]]
       ## Finally, we count how many times each id is observed in each signature
-      for (k in 1:length(ids)) {
+      for (k in seq_along(ids)) {
         element <- ids[k]
         if (is.null(internal_ret[[element]])) {
           internal_ret[[element]] <- 1
@@ -445,7 +464,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     message("Testing each factor against the others.")
     fact_lvls <- levels(as.factor(design[[factor_column]]))
     result_df <- data.frame()
-    for (f in 1:length(fact_lvls)) {
+    for (f in seq_along(fact_lvls)) {
       fact <- fact_lvls[f]
       message("Scoring ", fact, " against everything else.")
       sample_idx <- design[[factor_column]] == fact
@@ -536,6 +555,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #' @param msig_xml XML file contining msigdb annotations.
 #' @param wanted_meta Desired metadata elements from the mxig_xml file.
 #' @param mx_diff Passed to gsva(), I do not remember what it does.
+#' @param verbose Print some information while running?
 #' @return List containing three elements: first a modified expressionset using
 #'  the result of gsva in place of the original expression data; second the
 #'  result from gsva, and third a data frame of the annotation data for the
@@ -547,8 +567,8 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
                         method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
-                        wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
-                        mx_diff = TRUE) {
+                        ## wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
+                        wanted_meta = "all", mx_diff = TRUE, verbose = FALSE) {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -558,7 +578,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   }
 
   if (is.null(cores)) {
-    cores <- min(parallel::detectCores() - 1, 8)
+    cores <- min(parallel::detectCores() - 1, 16)
   }
 
   if (!is.null(msig_xml)) {
@@ -623,18 +643,21 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
-  ## Responding to Theresa: cores is defined in the function definition.
-  ## Sadly, some versions of gsva crash if one sets it to > 1, so for the moment
-  ## it is set to 1 and gsva is not running in parallel, but I wanted to keep the
-  ## possibility of speeding it up, ergo the cores option.
-  gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                               min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                               parallel.sz = cores, mx.diff = mx_diff))
+  gsva_result <- NULL
+  if (isTRUE(verbose)) {
+    gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                              min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                              parallel.sz = cores, mx.diff = mx_diff)
+  } else {
+    gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
+                                 min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
+                                 parallel.sz = cores, mx.diff = mx_diff))
+  }
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""
-  for (i in 1:length(sig_data)) {
+  for (i in seq_along(sig_data)) {
     fdata_df[i, "description"] <- description(sig_data[[i]])
     fdata_df[i, "ids"] <- toString(GSEABase::geneIds(sig_data[[i]]))
   }
@@ -646,7 +669,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     message("Adding annotations from ", msig_xml, ".")
     improved <- get_msigdb_metadata(msig_xml = msig_xml, wanted_meta = wanted_meta,
                                     gsva_result = gsva_result)
-    new_expt[["expressionset"]] <- improved[["gsva_result"]]
+    new_expt[["expressionset"]] <- improved
   }
 
   retlist <- list(
@@ -835,7 +858,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
       title = "Summary and sheets in this workbook.")
   xl_result <- openxlsx::writeData(wb = wb, sheet = "legend", x = "PCA of categories vs sample type.",
                                    startRow = 1, startCol = 8)
-  try_result <- xlsx_plot_png(retlist[["score_pca"]], wb = wb, sheet = "legend",
+  try_result <- xlsx_insert_png(retlist[["score_pca"]], wb = wb, sheet = "legend",
                               start_row = 2, start_col = 8,
                               width=(plot_dim * 3/2), height = plot_dim,
                               plotname = "gsva_pca", savedir = excel_basename)
@@ -846,7 +869,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 8
   plot_height <- 16
-  try_result <- xlsx_plot_png(a_plot = retlist[["raw_plot"]], wb = wb, sheet = "gsva_scores",
+  try_result <- xlsx_insert_png(a_plot = retlist[["raw_plot"]], wb = wb, sheet = "gsva_scores",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 
@@ -856,7 +879,7 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 6
   plot_height <- 15
-  try_result <- xlsx_plot_png(a_plot = retlist[["score_plot"]], wb = wb, sheet = "likelihood_scores",
+  try_result <- xlsx_insert_png(a_plot = retlist[["score_plot"]], wb = wb, sheet = "likelihood_scores",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 
@@ -866,13 +889,13 @@ write_gsva <- function(retlist, excel, plot_dim = 6) {
   current_row <- 1
   plot_width <- 6
   plot_height <- 6
-  try_result <- xlsx_plot_png(a_plot = retlist[["subset_plot"]], wb = wb, sheet = "subset_table",
+  try_result <- xlsx_insert_png(a_plot = retlist[["subset_plot"]], wb = wb, sheet = "subset_table",
                               start_row = current_row, start_col = current_column,
                               width = plot_width, height = plot_height)
 
   limma_tables <- retlist[["gsva_limma"]][["all_tables"]]
   table_names <- names(limma_tables)
-  for (i in 1:length(table_names)) {
+  for (i in seq_along(table_names)) {
     table_name <- table_names[i]
     title <- glue::glue("Result from using limma to compare {table_name}.")
     table <- limma_tables[[table_name]]

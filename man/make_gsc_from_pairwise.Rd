@@ -7,7 +7,7 @@
 make_gsc_from_pairwise(
   pairwise,
   according_to = "deseq",
-  orgdb = "org.Hs.eg.db",
+  annotation_name = "org.Hs.eg.db",
   pair_names = c("ups", "downs"),
   category_name = "infection",
   phenotype_name = "parasite",
@@ -22,8 +22,6 @@ make_gsc_from_pairwise(
 \item{pairwise}{A pairwise result, or combined de result, or extracted genes.}
 
 \item{according_to}{When getting significant genes, use this method.}
-
-\item{orgdb}{Annotation dataset.}
 
 \item{pair_names}{Describe the contrasts of the GSC: up vs. down, high vs. low, etc.}
 
@@ -40,6 +38,8 @@ make_gsc_from_pairwise(
 \item{required_id}{gsva uses entrezids by default.}
 
 \item{...}{Extra arguments for extract_significant_genes().}
+
+\item{orgdb}{Annotation dataset.}
 }
 \value{
 List containing 3 GSCs, one containing both the ups/downs called

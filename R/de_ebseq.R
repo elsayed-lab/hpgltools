@@ -148,7 +148,7 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
     bar <- utils::txtProgressBar(style = 3)
   }
   retlst <- list()
-  for (c in 1:length(apc[["names"]])) {
+  for (c in seq_along(apc[["names"]])) {
     if (isTRUE(verbose)) {
       pct_done <- c / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
@@ -253,7 +253,7 @@ ebseq_few <- function(data, conditions,
   interesting_patterns <- as.data.frame(patterns[-1, ])
 
   table_lst <- list()
-  for (i in 1:ncol(fold_changes[["FCMat"]])) {
+  for (i in seq_len(ncol(fold_changes[["FCMat"]]))) {
     column <- colnames(fold_changes[["FCMat"]])[i]
     contrast <- gsub(pattern = "Over", replacement = "_vs_", x = column)
     numerator <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\1", x = contrast)

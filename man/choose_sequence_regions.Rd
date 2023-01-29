@@ -10,7 +10,7 @@ choose_sequence_regions(
   vector,
   max_primer_length = 45,
   topn = 200,
-  bin_size = 600,
+  bin_width = 600,
   genome = NULL,
   target_temp = 58
 )
@@ -25,7 +25,7 @@ to a hopefully usable primer size.}
 \item{topn}{Choose this number of variant regions from the rather
 larger set of possibilities..}
 
-\item{bin_size}{Separate the genome into chunks of this size when
+\item{bin_width}{Separate the genome into chunks of this size when
 hunting for primers, this size will therefore be the approximate
 PCR amplicon length.}
 

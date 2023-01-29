@@ -13,6 +13,7 @@ plot_nonzero(
   label_chars = 10,
   plot_legend = FALSE,
   plot_title = NULL,
+  cutoff = 0.65,
   ...
 )
 }
@@ -35,6 +36,8 @@ graphed point.}
 \item{plot_legend}{Print a legend for this plot?}
 
 \item{plot_title}{Add a title?}
+
+\item{cutoff}{Minimum proportion (or number) of genes below which samples might be in trouble.}
 
 \item{...}{rawr!}
 }

@@ -25,6 +25,11 @@ circos_heatmap(
 \arguments{
 \item{cfg}{Result of circos_prefix(), contains a bunch of useful material.}
 
+\item{input}{Dataframe with starts/ends and the floating point information.}
+
+\item{tablename}{Provide a name for the input table in case it is coming from a
+combine_de_tables result.}
+
 \item{colname}{Name of the column with the data of interest.}
 
 \item{color_mapping}{0 means no overflows for min/max, 1 means overflows
@@ -50,8 +55,6 @@ respect to the values in the data.}
 \item{width}{Width of each tile in the heatmap.}
 
 \item{spacing}{Radial distance between outer, inner, and inner to whatever follows.}
-
-\item{df}{Dataframe with starts/ends and the floating point information.}
 }
 \value{
 Radius after adding the histogram and the spacing.

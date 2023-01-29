@@ -100,7 +100,7 @@ simple_dorothea <- function(expt, gene_column="ensembl_gene_id",
   ## Since this looks just like gsva to me, I will treat it as such.
   delta_tf <- limma_pairwise(new_expt, which_voom="none")
   sig_tf_lst <- list()
-  for (tbl in 1:length(delta_tf[["all_tables"]])) {
+  for (tbl in seq_len(delta_tf[["all_tables"]])) {
     tbl_name <- names(delta_tf[["all_tables"]])[tbl]
     tbl_df <- delta_tf[["all_tables"]][[tbl_name]]
     sig_tf_lst[[tbl_name]] <- get_sig_genes(tbl_df, lfc = lfc, p = p)

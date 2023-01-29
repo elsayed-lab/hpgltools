@@ -33,7 +33,7 @@ pombe_subset <- subset_expt(
   subset = "minute == 0 | minute == 15 | minute == 30")
 
 ## Well, in the previous test, we created pombe_expt, so let us use it.
-testing <- sm(basic_pairwise(pombe_subset))
+testing <- basic_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
 ## 01
@@ -63,7 +63,7 @@ test_that("write_basic() did something?", {
   expect_true(file.exists("test_basic_pairwise.xlsx"))
 })
 
-testing <- sm(deseq_pairwise(pombe_subset))
+testing <- deseq_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
 ## 05
@@ -93,7 +93,7 @@ test_that("write_deseq() did something?", {
 })
 
 ## edger_pairwise()
-testing <- sm(edger_pairwise(pombe_subset))
+testing <- edger_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
 ## 09
@@ -346,8 +346,11 @@ test_that("Did get_abundant_genes get some stuff?", {
 })
 
 actual <- names(head(testing[["high"]][["mut0"]]))
-expected <- c("SPAC212.09c", "SPAC212.04c", "SPAC977.11",
-              "SPAC977.13c", "SPAC977.15", "SPAC977.16c")
+##expected <- c("SPAC212.09c", "SPAC212.04c", "SPAC977.11",
+##              "SPAC977.13c", "SPAC977.15", "SPAC977.16c")
+expected <- c("SPRRNA.49", "SPRRNA.01", "SPNCRNA.98",
+              "SPRRNA.46", "SPSNRNA.07", "SPBC14F5.04c")
+
 ## 35
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
@@ -460,7 +463,7 @@ test_that("plot_num_siggenes() gave some plots?", {
 testing <- extract_abundant_genes(test_sva, excel = NULL)
 ## 58
 test_that("extract_abundant_genes() gave some stuff?", {
-  expect_equal(200, length(testing[["abundances"]][["limma"]][["high"]][["mut0"]]))
+  expect_equal(100, length(testing[["abundances"]][["deseq"]][["high"]][["mut0"]]))
 })
 
 testing <- extract_significant_genes(combined = test_condbatch_combined, excel = NULL)

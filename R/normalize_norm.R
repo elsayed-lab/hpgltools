@@ -233,7 +233,7 @@ hpgl_qshrink <- function(data = NULL, groups = NULL, refType = "mean",
   wQref <- matrix(rep(1, nrow(X)), ncol = 1) %*% t(wQref)
   normExprs <- t(wQBETAS + wQref)
   RANKS <- t(matrixStats::colRanks(data, ties.method = "average"))
-  for (k in 1:ncol(normExprs)) {
+  for (k in seq_len(ncol(normExprs))) {
     x <- normExprs[, k]
     normExprs[, k] <- x[RANKS[, k]]
   }

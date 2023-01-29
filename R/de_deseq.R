@@ -105,7 +105,6 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
                                              minc = minc))
 
   group_lst <- NULL
-  cluster_data <- NULL
   if (! "try-error" %in% class(cluster_data)) {
     cluster_df <- cluster_data[["df"]]
     cluster_df[["cluster"]] <- as.factor(cluster_df[["cluster"]])
@@ -120,8 +119,7 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
       "deseq_table" = deseq_lrt_table,
       "cluster_data" = cluster_data,
       "group_list" = group_lst,
-      "favorite_genes" = cluster_data[["df"]]
-  )
+      "favorite_genes" = cluster_data[["df"]])
   return(retlist)
 }
 
@@ -134,7 +132,6 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
 #' @seealso [deseq2_pairwise()]
 #' @export
 deseq_pairwise <- function(...) {
-  message("Hey you, use deseq2 pairwise.")
   deseq2_pairwise(...)
 }
 
@@ -275,7 +272,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
     message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
-    for (i in 1:length(ncol(data))) {
+    for (i in seq_along(ncol(data))) {
       data[[i]] <- as.integer(data[[i]])
     }
     summarized <- import_deseq(data, column_data,
@@ -387,7 +384,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
   }
-  for (i in 1:length(contrast_order)) {
+  for (i in seq_along(contrast_order)) {
     contrast_name <- contrast_order[[i]]
     contrast_string <- contrast_strings[[i]]
     if (isTRUE(verbose)) {
@@ -472,7 +469,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
       ## Now grab a list of every other column
       not_intercepts_idx <- ! grepl(pattern = intercept_name, x = unlist(intercept_pairing))
       not_intercepts <- unlist(intercept_pairing)[not_intercepts_idx]
-      for (count in 1:ncol(coefficient_df)) {
+      for (count in seq_len(ncol(coefficient_df))) {
         column_name <- colnames(coefficient_df)[count]
         if (count == 1) {
           colnames(coefficient_df)[1] <- intercept_name
@@ -505,7 +502,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
       ## SVs (except the first column of course, that is the intercept.
       extra_names_idx <- ! columns %in% num_den
       extra_names <- columns[extra_names_idx]
-      for (count in 1:ncol(coefficient_df)) {
+      for (count in seq_len(ncol(coefficient_df))) {
         column_name <- colnames(coefficient_df)[count]
         if (count == 1) {
           colnames(coefficient_df)[1] <- missing_name
@@ -568,7 +565,7 @@ deseq_try_sv <- function(data, summarized, svs, num_sv = NULL) {
     num_sv <- ncol(svs)
   }
   formula_string <- "as.formula(~ "
-  for (count in 1:num_sv) {
+  for (count in seq_len(num_sv)) {
     colname <- glue("SV{count}")
     summarized[[colname]] <- svs[, count]
     formula_string <- glue("{formula_string} {colname} + ")

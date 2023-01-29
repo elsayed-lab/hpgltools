@@ -104,7 +104,9 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
-#' @param df Dataframe with starts/ends and the floating point information.
+#' @param input Dataframe with starts/ends and the floating point information.
+#' @param tablename Provide a name for the input table in case it is coming from a
+#'  combine_de_tables result.
 #' @param colname Name of the column with the data of interest.
 #' @param color_mapping 0 means no overflows for min/max, 1 means overflows
 #'  of min get a chosen color, 2 means overflows of both min/max get chosen colors.
@@ -265,7 +267,9 @@ circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
 #' and finally adds an include to circos/bob.conf
 #'
 #' @param cfg Result of circos_prefix(), contains a bunch of useful material.
-#' @param df Dataframe with starts/ends and the floating point information.
+#' @param input Dataframe or table with starts/ends and the floating point information.
+#' @param tablename A likely input for this is a combine_de_tables() result, if so, provide
+#'  the table's name here.
 #' @param annot_source This parameter was added to make it possible to add an
 #'  arbitrary dataframe of other annotation information.
 #' @param colname Name of the column with the data of interest.
@@ -509,7 +513,7 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
   outfile <- glue::glue("{conf_dir}/karyotypes/{name}.conf")
   out <- file(outfile, open = "w+")
   ## First write the summary line
-  for (ch in 1:chr_num) {
+  for (ch in seq_len(chr_num)) {
     chr_name <- chr_df[ch, "names"]
     ## chr_name <- gsub(pattern = "^(\\w+)(.*)$", replacement = "\\1", x = chr_name)
     chr_name <- stringi::stri_extract_first_words(chr_name)
@@ -523,7 +527,7 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
     if (chr_width < 100000) {
       individual_segments <- 1
     }
-    for (segment in 1:individual_segments) {
+    for (segment in seq_len(individual_segments)) {
       current <- segment - 1
       begin <- floor(current * (chr_width / individual_segments))
       end <- floor(segment * (chr_width / individual_segments))
@@ -591,9 +595,9 @@ clean:
   make_target_svg <- glue::glue("{make_target}.svg")
   make_target_png <- glue::glue("{make_target}.png")
 
-  make_command <- glue::glue("cd circos && touch Makefile && make {make_target} 2>&1 | grep -v Redundant")
+  make_command <- glue::glue("cd circos && eval $(modulecmd bash add circos) && touch Makefile && make {make_target} 2>&1 | grep -v Redundant")
   if (!isTRUE(verbose)) {
-    make_command <- glue::glue("cd circos && touch Makefile && make {make_target} >/dev/null 2>&1")
+    make_command <- glue::glue("cd circos && eval $(modulecmd bash add circos) && touch Makefile && make {make_target} >/dev/null 2>&1")
   }
   result <- system(make_command)
   retlist <- list(
@@ -1469,7 +1473,7 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
 ")
   tile_cfg_out <- file(tile_cfg_file, open = "w+")
   cat(tile_cfg_string, file = tile_cfg_out, sep = "")
-  for (c in 1:num_colors) {
+  for (c in seq_len(num_colors)) {
     red_component <- "0x00"
     green_component <- "0x00"
     blue_compnent <- "0x00"

@@ -72,7 +72,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     ## characters.
     pvals <- as.vector(as.numeric(sig_genes[[pval_column]]))
     names(pvals) <- rownames(sig_genes)
-    for (p in 1:length(pvals)) {
+    for (p in seq_along(pvals)) {
       name <- names(pvals)[p]
       ks_interesting_genes[[name]] <- pvals[p]
     }
@@ -102,12 +102,12 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
                    returns[[type]] <- do_topgo(type, go_map = geneID2GO,
                                                fisher_genes = fisher_interesting_genes,
                                                ks_genes = ks_interesting_genes)
-                 }
+  }
   stopped <- parallel::stopCluster(cl)
   if (class(stopped)[1] == "try-error") {
     warning("There was a problem stopping the parallel cluster.")
   }
-  for (r in 1:length(methods)) {
+  for (r in seq_along(methods)) {
     a_result <- res[[r]]
     type <- a_result[["MF"]][["type"]]
     ontology_result[["MF"]][[type]] <- a_result[["MF"]]
@@ -186,7 +186,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   enrich_results <- list()
   for (ont in c("bp", "mf", "cc")) {
     message("Getting enrichResult for ontology: ", ont, ".")
-    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = pval,
+    enrich_results[[ont]] <- topgo2enrich(retlist, ontology = ont, pval = limit,
                                                   column = limitby)
   }
   retlist[["enrich_results"]] <- enrich_results
@@ -350,6 +350,7 @@ do_topgo <- function(type, go_map = NULL, fisher_genes = NULL, ks_genes = NULL,
 #' be obnoxious.
 #'
 #' @param result Topgo result.
+#' @param godata The ontology database.
 #' @param limit Pvalue limit defining 'significant'.
 #' @param limitby Type of test to perform.
 #' @param numchar How many characters to allow in the description?

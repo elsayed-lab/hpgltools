@@ -10,7 +10,8 @@ print_ups_downs(
   excel_basename,
   according = "limma",
   summary_count = 1,
-  ma = FALSE
+  ma = FALSE,
+  fancy = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ print_ups_downs(
 \item{summary_count}{For spacing sequential tables one after another.}
 
 \item{ma}{Include ma plots?}
+
+\item{fancy}{Print fancy plots with the xlsx file?x}
 }
 \value{
 Return from write_xlsx.

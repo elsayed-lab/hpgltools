@@ -15,6 +15,7 @@
 #'
 #' @param accession Accession to download and import.
 #' @param file Use a file instead of downloading the accession?
+#' @param sequence Download the sequence with the annotations?
 #' @param reread Re-read (download) the file from genbank.
 #' @param savetxdb Attempt saving a txdb object?
 #' @return List containing a txDb, sequences, and some other stuff which I
@@ -84,7 +85,7 @@ download_gbk <- function(accessions = "AE009949", write = TRUE) {
   num_downloaded <- 0
   strings <- list()
   written_file <- NULL
-  for (i in 1:nrequest) {
+  for (i in seq_len(nrequest)) {
     a <- (i - 1) * 400 + 1
     b <- 400 * i
     if (i == nrequest) {

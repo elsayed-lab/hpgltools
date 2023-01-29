@@ -52,6 +52,7 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #'
 #' @param metadata file or df of metadata
 #' @param id_column Column in the metadat containing the sample names.
+#' @param fill Fill missing data with this.
 #' @param ... Arguments to pass to the child functions (read_csv etc).
 #' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
 #' @examples
@@ -60,7 +61,7 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #'   saniclean <- extract_metadata(some_goofy_df)
 #' }
 #' @export
-extract_metadata <- function(metadata, id_column = "sampleid", ...) {
+extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...) {
   arglist <- list(...)
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
@@ -147,7 +148,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", ...) {
                                        x = rownames(sample_definitions))
 
   sample_columns_to_remove <- NULL
-  for (col in 1:length(colnames(sample_definitions))) {
+  for (col in seq_along(colnames(sample_definitions))) {
     sum_na <- sum(is.na(sample_definitions[[col]]))
     sum_null <- sum(is.null(sample_definitions[[col]]))
     sum_empty <- sum_na + sum_null
@@ -214,6 +215,12 @@ analyses more difficult/impossible.")
   sample_definitions[["batch"]] <- factor(sample_definitions[["batch"]],
                                           levels = unique(sample_definitions[["batch"]]),
                                           labels = pre_batch)
+
+  if (!is.null(fill)) {
+    na_idx <- is.na(sample_definitions)
+    sample_definitions[na_idx] <- fill
+  }
+
   return(sample_definitions)
 }
 
@@ -241,6 +248,8 @@ analyses more difficult/impossible.")
 #' presumably other stuff as I think of it).
 #' @param basedir Root directory containing the files/logs of metadata.
 #' @param new_metadata Filename to which to write the new metadata
+#' @param species Define a desired species when file hunting.
+#' @param type Define a feature type when file hunting.
 #' @param verbose Currently just used to debug the regexes.
 #' @param ... This is one of the few instances where I used
 #' ... intelligently.  Pass extra variables to the file specification
@@ -271,7 +280,7 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   ## Perhaps use sanitize instead?
   meta[[1]] <- gsub(pattern="\\s+", replacement="", x=meta[[1]])
   colnames(meta)[1] <- "sampleid"
-  for (entry in 1:length(specification)) {
+  for (entry in seq_along(specification)) {
     entry_type <- names(specification[entry])
     message("Starting ", entry_type, ".")
     new_column <- entry_type
@@ -323,6 +332,8 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 #'  or to just get rid of this function.
 #' @param basedir Root directory containing the files/logs of metadata.
 #' @param verbose used for testing regexes.
+#' @param species Choose a specific species for which to search (for filenames generally).
+#' @param type Set the type of file to search.
 #' @param ... passed to glue to add more variables to the file spec.
 #' @return Vector of entries which will be used to populate the new
 #'  column in the metadata.
@@ -812,6 +823,10 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
                                             basedir = basedir)
       },
+      "assembly_xls" = {
+        entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+                                            basedir = basedir)
+      },
       {
         stop("I do not know this spec: ", entry_type)
       })
@@ -839,7 +854,7 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -877,7 +892,7 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -904,13 +919,15 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param species Specify a species to search for, or '*' for anything.
+#' @param type Some likely filename searches may be for genome vs. rRNA vs other feature types.
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
                                      species = "*", type = "genome", basedir = "preprocessing") {
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -943,7 +960,7 @@ dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
   filenames_with_wildcards <- glue::glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -969,6 +986,7 @@ dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
 #' @param numerator_column what it says on the tin.
 #' @param denominator_column what it says on the tin.
 #' @param digits Number of significant digits to keep in the output.
+#' @param numerator_add Add this column to the numerator in case one needs multiple columns.
 #' @param verbose unsed for the moment.
 dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
                                     denominator_column = NULL, digits = 3,
@@ -1018,6 +1036,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #'  outputs if this changes, but for the moment I am sort of assuming
 #'  \\1 will always suffice.
 #' @param which Usually 'first', which means grab the first match and get out.
+#' @param as Coerce the output to a specific data type (numeric/character/etc).
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
 dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedir = "preprocessing",
@@ -1037,7 +1056,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
     return(NULL)
   }
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -1060,7 +1079,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
     last_found <- NULL
     this_found <- NULL
     all_found <- c()
-    for (i in 1:length(input_vector)) {
+    for (i in seq_along(input_vector)) {
       if (which == "first" & found == 1) {
         output_entries[row] <- last_found
         next
@@ -1118,7 +1137,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
 dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv", chosen_func = NULL,
-                                basedir = "preprocessing", which = "first",  as = NULL, verbose = FALSE,
+                                basedir = "preprocessing", which = "first", verbose = FALSE,
                                 ...) {
   arglist <- list(...)
   filenames_with_wildcards <- glue::glue(input_file_spec,
@@ -1130,7 +1149,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
     return(NULL)
   }
   output_entries <- rep(0, length(filenames_with_wildcards))
-  for (row in 1:nrow(meta)) {
+  for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
@@ -1202,7 +1221,7 @@ sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplica
   if (is.null(columns)) {
     columns <- colnames(pd)
   }
-  for (col in 1:length(columns)) {
+  for (col in seq_along(columns)) {
     todo <- columns[col]
     mesg("Sanitizing metadata column: ", todo, ".")
     if (! todo %in% colnames(pd)) {
@@ -1250,6 +1269,8 @@ make_assembly_spec <- function() {
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.gff"),
         "assembly_tsv" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/outputs/*merge_cds_predictions/{meta[['sampleid']]}.tsv"),
+        "assembly_xls" = list(
+            "file" = "{basedir}/{meta[['sampleid']]}/outputs/*mergeannot/{meta[['sampleid']]}.xlsx"),
         "input_r1" = list(
             "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
         "input_r2" = list(

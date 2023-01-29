@@ -4,7 +4,14 @@
 \alias{topgo2enrich}
 \title{Convert a simple_topgo() result to an enrichResult.}
 \usage{
-topgo2enrich(retlist, ontology = "mf", pval = 0.05, column = "fisher")
+topgo2enrich(
+  retlist,
+  ontology = "mf",
+  pval = 0.05,
+  organism = NULL,
+  column = "fisher",
+  padjust_method = "BH"
+)
 }
 \arguments{
 \item{retlist}{result from simple_topgo()}
@@ -13,7 +20,14 @@ topgo2enrich(retlist, ontology = "mf", pval = 0.05, column = "fisher")
 
 \item{pval}{Cutoff, hmm I think I need to standardize these.}
 
+\item{organism}{org name/data.}
+
 \item{column}{Table column to export.}
+
+\item{padjust_method}{Use this method for the pvalues for the enrich result.}
+}
+\value{
+enrichResult object ready to pass to things like dotplot.
 }
 \description{
 Same idea as goseq2enrich.

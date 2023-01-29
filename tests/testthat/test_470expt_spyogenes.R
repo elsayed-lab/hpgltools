@@ -141,7 +141,7 @@ circos_tile_wtmga <- circos_tile(circos_test, wtvmga_glucose,
 circos_suffix(circos_test)
 circos_made <- circos_make(circos_test, target = "mgas")
 
-expected <- "circos/amgas.svg"
+expected <- "circos/mgas.svg"
 test_that("Did circos run?", {
   expect_true(file.exists(expected))
 })

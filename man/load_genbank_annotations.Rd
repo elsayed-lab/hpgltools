@@ -17,6 +17,8 @@ load_genbank_annotations(
 
 \item{file}{Use a file instead of downloading the accession?}
 
+\item{sequence}{Download the sequence with the annotations?}
+
 \item{reread}{Re-read (download) the file from genbank.}
 
 \item{savetxdb}{Attempt saving a txdb object?}

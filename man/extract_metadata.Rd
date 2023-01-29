@@ -4,12 +4,14 @@
 \alias{extract_metadata}
 \title{Pull metadata from a table (xlsx/xls/csv/whatever)}
 \usage{
-extract_metadata(metadata, id_column = "sampleid", ...)
+extract_metadata(metadata, id_column = "sampleid", fill = NULL, ...)
 }
 \arguments{
 \item{metadata}{file or df of metadata}
 
 \item{id_column}{Column in the metadat containing the sample names.}
+
+\item{fill}{Fill missing data with this.}
 
 \item{...}{Arguments to pass to the child functions (read_csv etc).}
 }

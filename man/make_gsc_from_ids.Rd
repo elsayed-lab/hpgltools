@@ -16,7 +16,8 @@ make_gsc_from_ids(
   organism = NULL,
   pair_names = "up",
   current_id = "ENSEMBL",
-  required_id = "ENTREZID"
+  required_id = "ENTREZID",
+  min_gmt_genes = 10
 )
 }
 \arguments{
@@ -35,11 +36,17 @@ contrasting set.}
 
 \item{phenotype_name}{Optional phenotype data for the generated set(s).}
 
+\item{identifier_type}{ID type to use in the gene set.}
+
+\item{organism}{Set the organism for the gsc object.}
+
 \item{pair_names}{The suffix of the generated set(s).}
 
 \item{current_id}{What type of ID is the data currently using?}
 
 \item{required_id}{What type of ID should the use?}
+
+\item{min_gmt_genes}{Minimum number of genes in the set for consideration.}
 }
 \value{
 Small list comprised of the created gene set collection(s).

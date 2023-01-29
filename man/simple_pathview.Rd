@@ -22,6 +22,10 @@ simple_pathview(
 )
 }
 \arguments{
+\item{gene_input}{Some differentially expressed genes.}
+
+\item{compound_input}{Sets of compounds which have changed in the data of interest.}
+
 \item{indir}{Directory into which the unmodified kegg images will be
 downloaded (or already exist).}
 
@@ -39,6 +43,8 @@ format to another.}
 
 \item{suffix}{Add a suffix to the completed, colored files.}
 
+\item{id_column}{use this to handle the peculiar ways in which kegg handles IDs.}
+
 \item{filenames}{Name the final files by id or name?}
 
 \item{fc_column}{What is the name of the fold-change column to extract?}
@@ -47,8 +53,6 @@ format to another.}
 well.}
 
 \item{verbose}{When on, this function is quite chatty.}
-
-\item{path_data}{Some differentially expressed genes.}
 }
 \value{
 A list of some information for every KEGG pathway

@@ -101,7 +101,7 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   hit_idx <- hit_positions[[column]] != 0
   hit_positions <- hit_positions[hit_idx, 1]
   hit_averages <- vector(length = length(hit_positions - 1))
-  for (position in 2:length(hit_positions)) {
+  for (position in seq(from = 2, to = length(hit_positions))) {
     last_position <- position - 1
     hit_averages[last_position] <- hit_positions[position] - hit_positions[last_position]
   }
@@ -219,7 +219,7 @@ score_mhess <- function(expt, ess_column = "essm1") {
   file_lst <- design[[ess_column]]
   counts <- exprs(expt)
   scores <- data.frame(stringsAsFactors = FALSE)
-  for (f in 1:length(file_lst)) {
+  for (f in seq_along(file_lst)) {
     sample <- colnames(counts)[f]
     file <- file_lst[f]
     ess <- readr::read_tsv(file = file, comment = "#",
@@ -292,7 +292,7 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit = 100,
                                    column = "Reads", adjust = 1, ggstatsplot = FALSE) {
   table <- NULL
   filenames <- meta[[meta_column]]
-  for (f in 1:length(filenames)) {
+  for (f in seq_along(filenames)) {
     file <- filenames[f]
     sample <- rownames(meta)[f]
     column_data <- read.table(file = file, header = 1, comment.char = "#")

@@ -438,7 +438,7 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   ## Get rid of rows which will be annoying.
   ## If somehow a list got into the data table, this will fail, lets fix that now.
   tmp_table <- table
-  for (c in 1:ncol(tmp_table)) {
+  for (c in seq_len(ncol(tmp_table))) {
     tmp_table[[c]] <- as.character(table[[c]])
   }
   rows_without_na <- complete.cases(tmp_table)
@@ -610,6 +610,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @param label_chars How many characters for sample names before abbreviation.
 #' @param plot_legend Print a legend for this plot?
 #' @param plot_title Add a title?
+#' @param cutoff Minimum proportion (or number) of genes below which samples might be in trouble.
 #' @param ... rawr!
 #' @return a ggplot2 plot of the number of non-zero genes with respect to each
 #'  library's CPM.
@@ -621,7 +622,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' @export
 plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
                          expt_names = NULL, label_chars = 10, plot_legend = FALSE,
-                         plot_title = NULL, ...) {
+                         plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
   hpgl_env <- environment()
   names <- NULL
@@ -659,6 +660,22 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
       "condition" = condition,
       "batch" = batch,
       "color" = as.character(colors))
+
+  ## Add a little logic to warn the user if samples have poor representation
+  ## using a cutoff which may either be a proportion of the number of available
+  ## rows, or an aribtrary cutoff
+  sad_samples <- NULL
+  if (!is.null(cutoff)) {
+    if (cutoff < 1) { ## Then it is a proportion
+      cutoff <- nrow(data) * cutoff
+    }
+    sad_idx <- nz_df[["nonzero_genes"]] <= cutoff
+    sad_samples <- nz_df[sad_idx, "id"]
+    if (length(sad_samples) > 0) {
+      message("The following samples have less than ", cutoff, " genes.")
+      print(sad_samples)
+    }
+  }
 
   color_listing <- nz_df[, c("condition", "color")]
   color_listing <- unique(color_listing)
@@ -777,9 +794,9 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
   plot_list <- list()
-  for (c in 1:(length(colnames(data)) - 1)) {
+  for (c in seq(from = 1, to = length(colnames(data)) - 1)) {
     nextc <- c + 1
-    for (d in nextc:length(colnames(data))) {
+    for (d in seq(from = nextc, to = length(colnames(data)))) {
       first <- as.numeric(data[, c])
       second <- as.numeric(data[, d])
       if (max(first) > 1000) {
@@ -862,175 +879,6 @@ plot_scatter <- function(df, color = "black", xlab = NULL,
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = 10, colour = "black"))
   return(first_vs_second)
-}
-
-#' Make a pretty Volcano plot!
-#'
-#' Volcano plots and MA plots provide quick an easy methods to view the set of
-#' (in)significantly differentially expressed genes.  In the case of a volcano
-#' plot, it places the -log10 of the p-value estimate on the y-axis and the
-#' fold-change between conditions on the x-axis.  Here is a neat snippet from
-#' wikipedia: "The concept of volcano plot can be generalized to other
-#' applications, where the x-axis is related to a measure of the strength of a
-#' statistical signal, and y-axis is related to a measure of the statistical
-#' significance of the signal."
-#'
-#' @param table Dataframe from limma's toptable which includes log(fold change) and an
-#'  adjusted p-value.
-#' @param alpha How transparent to make the dots.
-#' @param color_by By p-value something else?
-#' @param color_list List of colors for significance.
-#' @param fc_col Which column contains the fc data?
-#' @param fc_name Name of the fold-change to put on the plot.
-#' @param line_color What color for the significance lines?
-#' @param line_position Put the significance lines above or below the dots?
-#' @param logfc Cutoff defining the minimum/maximum fold change for
-#'  interesting.
-#' @param p_col Which column contains the p-value data?
-#' @param p_name Name of the p-value to put on the plot.
-#' @param p Cutoff defining significant from not.
-#' @param shapes_by_state Add fun shapes for the various significance states?
-#' @param size How big are the dots?
-#' @param label Label the top/bottom n logFC values?
-#' @param ... I love parameters!
-#' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
-#'   with respect to log(fold change).  The cutoff values are delineated with
-#'   lines and mark the boundaries between 'significant' and not.  This will
-#'   make a fun clicky googleVis graph if requested.
-#' @seealso [all_pairwise()]
-#' @examples
-#' \dontrun{
-#'  plot_volcano_de(table)
-#'  ## Currently this assumes that a variant of toptable was used which
-#'  ## gives adjusted p-values.  This is not always the case and I should
-#'  ## check for that, but I have not yet.
-#' }
-#' @export
-plot_volcano_de <- function(table, alpha = 0.6, color_by = "p",
-                            color_list = c("FALSE"="darkblue", "TRUE"="darkred"),
-                            fc_col = "logFC", fc_name = "log2 fold change",
-                            line_color = "black", line_position = "bottom", logfc = 1.0,
-                            p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = TRUE, size = 2,
-                            label = NULL, ...) {
-  low_vert_line <- 0.0 - logfc
-  horiz_line <- -1 * log10(p)
-
-  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
-                   "yaxis" = as.numeric(table[[p_col]]), stringsAsFactors = TRUE)
-  rownames(df) <- rownames(table)
-  ## This might have been converted to a string
-  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
-  df[["pcut"]] <- df[["yaxis"]] <= p
-  df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] >= logfc, "upsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] <= (-1 * logfc),
-                          "downsig", "fcinsig")))
-  df[["pcut"]] <- as.factor(df[["pcut"]])
-  df[["state"]] <- as.factor(df[["state"]])
-  df[["label"]] <- rownames(df)
-
-  ## shape 25 is the down arrow, 22 is the square, 23 the diamond, 24 the up arrow
-  state_shapes <- c(25, 22, 23, 24)
-  names(state_shapes) <- c("downsig", "fcinsig", "pinsig", "upsig")
-
-  color_column <- "pcut"
-  color_column_number <- 2
-  default_color_list <- c("FALSE"="darkred", "TRUE"="darkblue")
-  if (color_by != "p") {
-    color_column <- "state"
-    color_column_number <- 4
-    default_color_list <- c("downsig"="blue", "fcinsig"="darkgrey",
-                            "pinsig"="darkgrey", "upsig"="red")
-  }
-  ## Now make sure that the color column has the correct number of elements.
-  if (length(color_list) != color_column_number) {
-    message("The color list must have ", color_column_number,
-            ", setting it to the default.")
-    color_list <- default_color_list
-  }
-
-  ## Count the numbers in the categories
-  num_downsig <- sum(df[["state"]] == "downsig")
-  num_fcinsig <- sum(df[["state"]] == "fcinsig")
-  num_pinsig <- sum(df[["state"]] == "pinsig")
-  num_upsig <- sum(df[["state"]] == "upsig")
-
-  plt <- NULL
-  if (isTRUE(shapes_by_state)) {
-    plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column, shape = "state"))
-  } else {
-    plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column))
-  }
-
-  ## Now define when to put lines vs. points
-  if (line_position == "bottom") {
-    ## lines, then points.
-    plt <- plt +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
-  } else {
-    ## points, then lines
-    plt <- plt +
-      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
-  }
-
-  ## If shapes are being set by state,  add that to the legend now.
-  if (isTRUE(shapes_by_state)) {
-    plt <- plt +
-      ggplot2::scale_shape_manual(
-                   name = "state", values = state_shapes,
-                   labels = c(
-                       glue("Down Sig.: {num_downsig}"),
-                       glue("FC Insig.: {num_fcinsig}"),
-                       glue("P Insig.: {num_pinsig}"),
-                       glue("Up Sig.: {num_upsig}")),
-                   guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
-  }
-
-  ## Now set the colors and axis labels
-  plt <- plt +
-    ggplot2::scale_fill_manual(name = color_column, values = color_list,
-                               guide = "none") +
-    ggplot2::scale_color_manual(name = color_column, values = color_list,
-                                guide = "none") +
-    ggplot2::xlab(label = fc_name) +
-    ggplot2::ylab(label = p_name) +
-    ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
-    ggplot2::theme_bw(base_size = base_size) +
-    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
-  ##  axis.text.x = ggplot2::element_text(angle=-90))
-
-  if (!is.null(label)) {
-    reordered_idx <- order(df[["xaxis"]])
-    reordered <- df[reordered_idx, ]
-    sig_idx <- reordered[["logyaxis"]] > horiz_line
-    reordered <- reordered[sig_idx, ]
-    top <- head(reordered, n = label)
-    bottom <- tail(reordered, n = label)
-    df_subset <- rbind(top, bottom)
-    plt <- plt +
-      ggrepel::geom_text_repel(data = df_subset,
-                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
-                               colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
-                               point.padding = ggplot2::unit(1.6, "lines"),
-                               arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
-  }
-
-  retlist <- list("plot" = plt,
-                  "df" = df)
-  return(retlist)
 }
 
 ## EOF

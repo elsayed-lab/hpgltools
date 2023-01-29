@@ -8,7 +8,8 @@ GSVAdata data set in R.}
 load_gmt_signatures(
   signatures = "c2BroadSets",
   data_pkg = "GSVAdata",
-  signature_category = "c2"
+  signature_category = "c2",
+  id_type = "entrez"
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ package, presumably GSVAdata.}
 
 \item{signature_category}{Probably not needed unless you download a signature
 file containing lots of different categories.}
+
+\item{id_type}{Specify the ID type in the data.}
 }
 \value{
 signature dataset which may be used by gsva()

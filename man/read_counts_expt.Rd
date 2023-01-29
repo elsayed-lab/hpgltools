@@ -14,6 +14,7 @@ read_counts_expt(
   merge_type = "merge",
   suffix = NULL,
   countdir = NULL,
+  tx_gene_map = NULL,
   ...
 )
 }
@@ -35,6 +36,8 @@ read_counts_expt(
 \item{suffix}{Optional suffix to add to the filenames when reading them.}
 
 \item{countdir}{Optional count directory to read from.}
+
+\item{tx_gene_map}{Dataframe which provides a mapping between transcript IDs and gene IDs.}
 
 \item{...}{More options for happy time!}
 }

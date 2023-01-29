@@ -29,7 +29,9 @@ numbers of genes, logFC values, etc.}
 }
 \description{
 When I was testing PROPER, it fell down mysteriously on a few occasions.  The
-source ended up being in runsims(), ergo this function.
+source ended up being in runsims(), ergo this function.  This is
+therefore mostly a copy/paste of that function with a few small
+changes.
 }
 \seealso{
 [PROPER]

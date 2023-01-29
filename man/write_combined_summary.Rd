@@ -11,7 +11,8 @@ write_combined_summary(
   extracted,
   compare_plots,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  fancy = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ write_combined_summary(
 \item{lfc_cutoff}{Used for volcano/MA plots.}
 
 \item{p_cutoff}{Used for volcano/MA plots.}
+
+\item{fancy}{Write fancy plots with the xlsx file?}
 }
 \description{
 Internal function to write a summary of some combined data

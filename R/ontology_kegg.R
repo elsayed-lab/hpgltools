@@ -4,7 +4,8 @@
 #' with arbitrary data. Unfortunately they are somewhat evil to use.  This
 #' attempts to alleviate that.
 #'
-#' @param path_data Some differentially expressed genes.
+#' @param gene_input Some differentially expressed genes.
+#' @param compound_input Sets of compounds which have changed in the data of interest.
 #' @param indir Directory into which the unmodified kegg images will be
 #'  downloaded (or already exist).
 #' @param outdir Directory which will contain the colored images.
@@ -15,6 +16,7 @@
 #' @param to_list Regex to help in renaming KEGG categories/gene names from one
 #'  format to another.
 #' @param suffix Add a suffix to the completed, colored files.
+#' @param id_column use this to handle the peculiar ways in which kegg handles IDs.
 #' @param filenames Name the final files by id or name?
 #' @param fc_column What is the name of the fold-change column to extract?
 #' @param format Format of the resulting images, I think only png really works
@@ -92,7 +94,7 @@ simple_pathview <- function(gene_input = NULL, compound_input = NULL,
     to_list <- substitutions[["replaces"]]
   }
   if (!is.null(from_list)) {
-    for (sub_count in 1:length(from_list)) {
+    for (sub_count in seq_along(from_list)) {
       my_from <- from_list[[sub_count]]
       my_to <- to_list[[sub_count]]
       tmp_names <- gsub(pattern = my_from, replacement = my_to, x = tmp_names, perl = TRUE)
@@ -117,7 +119,7 @@ simple_pathview <- function(gene_input = NULL, compound_input = NULL,
     paths <- pathway
   }
   return_list <- list()
-  for (count in 1:length(paths)) {
+  for (count in seq_along(paths)) {
     total_mapped <- 0
     total_pct_mapped <- 0
     unique_mapped <- 0
@@ -285,7 +287,7 @@ simple_pathview <- function(gene_input = NULL, compound_input = NULL,
   retdf[["unique_mapped_pct"]] <- NA
   colnames(retdf) <- c("file", "genes", "up", "down", "total_mapped_nodes",
                        "total_mapped_pct", "unique_mapped_nodes", "unique_mapped_pct")
-  for (p in 1:length(return_list)) {
+  for (p in seq_along(return_list)) {
     path <- names(return_list)[p]
     if (is.null(return_list[[path]][["genes"]])) {
       retdf[path, "genes"] <- 0
@@ -354,12 +356,12 @@ get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
     }
     total_genes <- 0
     result <- data.frame()
-    for (count in 1:length(paths)) {
+    for (count in seq_along(paths)) {
       path <- paths[count]
       message("Extracting: ", path, ".")
 
       path_data <- KEGGREST::keggGet(path)
-      kegg_class <- path_name[[1]]$CLASS
+      kegg_class <- path_data[[1]]$CLASS
       if (is.null(kegg_class)) {
         kegg_class <- ""
       }
@@ -441,7 +443,7 @@ get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
     }
     total_genes <- 0
     result <- NULL
-    for (count in 1:length(paths)) {
+    for (count in seq_along(paths)) {
       path <- paths[count]
       path_name <- KEGGREST::keggGet(path)
       kegg_class <- path_name[[1]]$CLASS
@@ -466,12 +468,12 @@ get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
       replaces <- kegg_subst[["replaces"]]
       message(count, "/", length(paths), ": Working on path: ",
               path, " which has ", length(kegg_geneids), " genes.")
-      for (r in 1:length(kegg_subst[["patterns"]])) {
+      for (r in seq_along(kegg_subst[["patterns"]])) {
         tritryp_geneids <- gsub(pattern = patterns[r], replacement = replaces[r],
                                 x = tritryp_geneids)
       }
 
-      for (s in 1:length(tritryp_geneids)) {
+      for (s in seq_along(tritryp_geneids)) {
         result <- rbind(result, data.frame(
                                     "GID" = tritryp_geneids[s],
                                     "KEGG_NAME" = kegg_name,
@@ -627,7 +629,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
   diff_edges <- list()
   path_edges <- list()
   last_path <- length(paths)
-  for (count in 1:length(paths)) {
+  for (count in seq_along(paths)) {
     path <- paths[count]
     path_name <- try(KEGGREST::keggGet(path), silent = TRUE)
     if (class(path_name) == "try-error") {
@@ -668,7 +670,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
     }
   } ## End of the for() loop.
   path_data <- data.frame()
-  for (c in 1:length(path_ids)) {
+  for (c in seq_along(path_ids)) {
     a_row <- list(
         "pathway" = path_ids[[c]],
         "path_name" = path_names[[c]],
@@ -697,7 +699,7 @@ pct_all_kegg <- function(all_ids, sig_ids, organism = "dme", pathways = "all",
     a_row <- gsub(pattern = "\\\n", replacement = "", x = a_row)
     ## Get rid of excess space
     a_row <- gsub(pattern = " +", replacement = " ", x = a_row)
-    for (k in 1:length(a_row)) {
+    for (k in seq_along(a_row)) {
       a_row[[k]] <- toString(a_row[[k]])
     }
     a_row <- as.list(a_row)

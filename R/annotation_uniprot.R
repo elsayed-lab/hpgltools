@@ -1,5 +1,8 @@
 ## annotation_uniprot.r: Some functions to simplify working with uniprot web
 ## services and text files.
+## Recently I noticed that uniprot pretty drastically changed the ways in which one may
+## access their data.  I think these changes will make it drastically easier to gather data
+## from them, but I have only poked at a little thus far.
 
 #' Download the txt uniprot data for a given accession/species.
 #'
@@ -16,7 +19,7 @@
 #' @return A filename/accession tuple.
 #' @seealso [xml2] [rvest]
 #' @examples
-#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
+#'  uniprot_sc_downloaded <- load_uniprot_annotations(species = "Saccharomyces cerevisiae S288c")
 #'  uniprot_sc_downloaded$filename
 #'  uniprot_sc_downloaded$species
 #' @export
@@ -103,7 +106,7 @@ load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
       ##  message(toString(final_species))
       ##  return(NULL)
       ##}
-      accession_tbl <- as.data.frame(readr::read_tsv(request_url))
+      accession_tbl <- as.data.frame(readr::read_tsv(request_url, show_col_types = FALSE))
       message("This species provides: ", nrow(accession_tbl), " hits.")
       message("Arbitrarily downloading the first: ", accession_tbl[1, "Organism"], ".")
       accession <- as.character(accession_tbl[1, "Proteome Id"])
@@ -113,485 +116,67 @@ load_uniprot_annotations <- function(accession = NULL, species = "H37Rv",
   ##    "https://www.uniprot.org/uniprot/?query=proteome:\\
   ##   {accession}&compress=yes&force=true&format=txt")
 
+  request_url <- paste0(
+      "https://rest.uniprot.org/uniprotkb/stream?fields=accession%2Creviewed%2Cid%2C",
+      "protein_name%2Cgene_names%2Corganism_name%2Cabsorption%2Cft_act_site%2C",
+      "ft_binding%2Ccc_catalytic_activity%2Ccc_cofactor%2Cft_dna_bind%2Cec%2C",
+      "cc_activity_regulation%2Ccc_function%2Ckinetics%2Ccc_pathway%2Cph_dependence%2C",
+      "redox_potential%2Crhea%2Cft_site%2Ctemp_dependence%2Cft_var_seq%2C",
+      "cc_alternative_products%2Cerror_gmodel_pred%2Cfragment%2Corganelle%2Ccc_mass_spectrometry%2C",
+      "length%2Cmass%2Cft_variant%2Cft_non_cons%2Cft_non_std%2Cft_non_ter%2Ccc_polymorphism%2C",
+      "cc_rna_editing%2Csequence%2Ccc_sequence_caution%2Cft_conflict%2Cft_unsure%2C",
+      "sequence_version%2Cgene_oln%2Cgene_orf%2Cgene_primary%2Cgene_synonym%2Corganism_id%2C",
+      "xref_proteomes%2Clineage%2Clineage_ids%2Cvirus_hosts%2Cannotation_score%2Ccc_caution%2C",
+      "keyword%2Ckeywordid%2Ccc_miscellaneous%2Cprotein_existence%2Ctools%2Cuniparc_id%2C",
+      "comment_count%2Cfeature_count%2Ccc_interaction%2Ccc_subunit%2Ccc_developmental_stage%2C",
+      "cc_induction%2Ccc_tissue_specificity%2Cgo_p%2Cgo%2Cgo_c%2Cgo_f%2Cgo_id%2Ccc_allergen%2C",
+      "cc_disruption_phenotype%2Ccc_biotechnology%2Cft_mutagen%2Ccc_disease%2Ccc_pharmaceutical%2C",
+      "cc_toxic_dose%2Cft_intramem%2Ccc_subcellular_location%2Cft_topo_dom%2Cft_transmem%2C",
+      "ft_chain%2Cft_crosslnk%2Cft_disulfid%2Cft_carbohyd%2Cft_init_met%2Cft_lipid%2Cft_mod_res%2C",
+      "ft_peptide%2Ccc_ptm%2Cft_propep%2Cft_signal%2Cft_transit%2Cstructure_3d%2Cft_strand%2C",
+      "ft_helix%2Cft_turn%2Clit_pubmed_id%2Cft_coiled%2Cft_compbias%2Ccc_domain%2Cft_domain%2C",
+      "ft_motif%2Cprotein_families%2Cft_region%2Cft_repeat%2Cft_zn_fing&format=tsv&query=%28",
+      "proteome%3A", accession, "%29")
 
-  request_url <- glue(
-      "https://rest.uniprot.org/uniprotkb/stream?compressed=false&fields=accession%2Clineage%2Cvirus_hosts%2Clineage_ids%2Cgene_synonym%2Corganism_name%2Corganism_id%2Cprotein_name%2Cgene_orf%2Cgene_oln%2Cgene_names%2Cid%2Cgene_primary%2Cxref_proteomes%2Cabsorption%2Cft_act_site%2Cft_binding%2Cft_ca_bind%2Ccc_catalytic_activity%2Ccc_cofactor%2Cft_dna_bind%2Cec%2Ccc_activity_regulation%2Ccc_function%2Ckinetics%2Cft_metal%2Cft_np_bind%2Ccc_pathway%2Cph_dependence%2Credox_potential%2Crhea%2Cft_site%2Ctemp_dependence%2Cannotation_score%2Ccc_caution%2Ckeyword%2Ckeywordid%2Cprotein_existence%2Ccc_miscellaneous%2Creviewed%2Ctools%2Cuniparc_id%2Ccomment_count%2Cfeature_count%2Ccc_interaction%2Ccc_subunit%2Cgo_p%2Cgo_c%2Cgo%2Cgo_f%2Cgo_id%2Ccc_allergen%2Ccc_biotechnology%2Ccc_disruption_phenotype%2Ccc_disease%2Cft_mutagen%2Ccc_pharmaceutical%2Ccc_toxic_dose%2Cft_intramem%2Ccc_subcellular_location%2Cft_topo_dom%2Cft_transmem%2Cft_chain%2Cft_crosslnk%2Cft_init_met%2Cft_lipid%2Ccc_ptm%2Cft_propep%2Cstructure_3d%2Cft_strand%2Cft_helix%2Cft_turn%2Clit_pubmed_id%2Cft_coiled%2Cft_compbias%2Cft_domain%2Cft_motif%2Cft_region%2Cft_repeat&format=tsv&query=proteome%3A{accession}")
-  retdf <- readr::read_tsv(request_url)
+  num_columns <- stringr::str_count(request_url, "%2C")
+  column_spec <- rep("c", num_columns)
+
+  ##request_url <- paste0(
+  ##    "https://rest.uniprot.org/uniprotkb/stream?compressed=false&fields=accession%2C",
+  ##    "lineage%2Cvirus_hosts%2Clineage_ids%2Cgene_synonym%2Corganism_name%2C",
+  ##    "organism_id%2Cprotein_name%2Cgene_orf%2Cgene_oln%2Cgene_names%2Cid%2C",
+  ##    "gene_primary%2Cxref_proteomes%2Cabsorption%2Cft_act_site%2Cft_binding%2C",
+      ## "ft_ca_bind%2Ccc_catalytic_activity%2Ccc_cofactor%2Cft_dna_bind%2Cec%2C",
+      ## "cc_activity_regulation%2Ccc_function%2Ckinetics%2Cft_metal%2Cft_np_bind%2C",
+      ## "cc_pathway%2Cph_dependence%2Credox_potential%2Crhea%2Cft_site%2Ctemp_dependence%2C",
+      ## "annotation_score%2Ccc_caution%2Ckeyword%2Ckeywordid%2Cprotein_existence%2C",
+      ## "cc_miscellaneous%2Creviewed%2Ctools%2Cuniparc_id%2Ccomment_count%2Cfeature_count%2C",
+      ## "cc_interaction%2Ccc_subunit%2Cgo_p%2Cgo_c%2Cgo%2Cgo_f%2Cgo_id%2Ccc_allergen%2C",
+      ## "cc_biotechnology%2Ccc_disruption_phenotype%2Ccc_disease%2Cft_mutagen%2C",
+      ## "cc_pharmaceutical%2Ccc_toxic_dose%2Cft_intramem%2Ccc_subcellular_location%2C",
+      ## "ft_topo_dom%2Cft_transmem%2Cft_chain%2Cft_crosslnk%2Cft_init_met%2Cft_lipid%2C",
+      ## "cc_ptm%2Cft_propep%2Cstructure_3d%2Cft_strand%2Cft_helix%2Cft_turn%2C",
+      ## "lit_pubmed_id%2Cft_coiled%2Cft_compbias%2Cft_domain%2Cft_motif%2Cft_region%2C",
+      ##"ft_repeat&format=tsv&query=proteome%3A", accession, "%29")
+  ## tt <- download.file(url = request_url, destfile = "test.tsv")
+
+  ## Some uniprot results lead to a complaint from readr which looks like:
+  ##      row   col expected           actual                                    file
+  ##  <int> <int> <chr>              <chr>                                     <chr>
+  ##  1    99    19 1/0/T/F/TRUE/FALSE "BIOPHYSICOCHEMICAL PROPERTIES:  Redox p… ""
+  ##  2   219    85 1/0/T/F/TRUE/FALSE "CARBOHYD 49; /note=\"O-linked (Man...) … ""
+  ##  3   700    85 1/0/T/F/TRUE/FALSE "CARBOHYD 48; /note=\"O-linked (Man...) … ""
+  ## When I first read this, I assumed that the column-type interpolation failed, and
+  ## I would be able to just tell it every column is a character (with the above cheesy
+  ## counting of the number of %2Cs
+  ## It turns out this was not the problem, but I am not certain what it is.
+  retdf <- suppressWarnings(readr::read_tsv(request_url, col_types = column_spec))
   return(retdf)
-}
-
-#' Read a uniprot text file and extract as much information from it as possible.
-#'
-#' I spent entirely too long fighting with Uniprot.ws, finally got mad and wrote this.
-#'
-#' @param file Uniprot file to read and parse
-#' @param species Species name to download/load.
-#' @param savefile Do a save?
-#' @return Big dataframe of annotation data.
-#' @seealso [download_uniprot_proteome()]
-#' @examples
-#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
-#'  sc_uniprot_annot <- load_uniprot_annotations(file = uniprot_sc_downloaded$filename)
-#'  dim(sc_uniprot_annot)
-#' @export
-load_uniprot_text_annotations <- function(file = NULL, species = NULL, savefile = TRUE) {
-  if (is.null(file) & is.null(species)) {
-    stop("This requires either a filename or species name.")
-  } else if (is.null(file)) {
-    info <- download_uniprot_proteome(species = species)
-    message("Downloaded proteome for: ", info[["species"]], " accession: ",
-            info[["accession"]], " to file: ", info[["filename"]], ".")
-    file <- info[["filename"]]
-  }
-
-  if (isTRUE(savefile)) {
-    savefile <- "uniprot.rda"
-  }
-  ##if (!is.null(savefile) & savefile != NULL) {
-  ##  if (file.exists(savefile)) {
-  ##    uniprot_data <- new.env()
-  ##    loaded <- load(savefile, envir = retlist)
-  ##    uniprot_data <- uniprot_data[["uniprot_data"]]
-  ##    return(retlist)
-  ##  }
-  ##}
-  read_vec <- readr::read_lines(file)
-  gene_num <- 0
-  num_genes <- length(grep(pattern = "^ID", x = read_vec))
-  ## Vectors for those elements which will only have 1 answer
-  many_ids <- list()
-  id_types <- c(
-      "primary_id", "amino_acids",
-      "primary_accession", "uniprot_accessions",
-      "recnames", "loci", "orfnames", "shortnames", "synonyms",
-      ## The very many DR IDs
-      "embl", "ccds", "pir", "refseq", "unigene", "proteinmodelportal", "smr",
-      "intact", "string", "iptmnet", "phosphosite", "biomuta", "dmdm",
-      "epd", "pax", "peptideatlas", "pride", "proteomicsdb", "dnasu",
-      "ensembl", "ensbact", "geneid", "kegg", "tuberculist", "ucsc",
-      "ctd", "eupathdb", "genecards", "hgnc", "hpa", "mim", "nextprot",
-      "opentargets", "pharmgkb", "eggnog", "ko", "genetreee", "hogenom",
-      "hovergen", "inparanoid", "oma", "orthodb", "phylomedb", "treefam",
-      "genewiki", "genomernai", "pro", "proteomes", "bgee", "cleanex",
-      "unipathway", "expressionatlas", "genevisible", "go", "cdd",
-      "gene3d", "hamap", "interpro", "panther", "pfam", "pirsf", "prints",
-      "supfam", "tigrfam",
-      ## Final stuff
-      "mw", "aa_length", "aa_sequence")
-  uniprot_data <- data.frame(row.names = 1:num_genes)
-  for (id in id_types) {
-    uniprot_data[[id]] <- ""
-  }
-
-  reading_sequence <- FALSE
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
-  for (i in 1:length(read_vec)) {
-    if (isTRUE(show_progress)) {
-      pct_done <- i / length(read_vec)
-      utils::setTxtProgressBar(bar, pct_done)
-    }
-
-    ## Start by skipping field types that we will never use.
-    ## DT: History of the entry
-    ## OS: Species, we kind of already know that.
-    ## OC: Taxonomy of the species.
-    ## RN: Looks like an arbitrary number
-    ## RA: Authors
-    ## RT: vector?
-    ## RP: Data source?
-    ## RX: Pubmed ID and DOI, this might be useful.
-    ## CC: Reaction information
-    ## PE: Evidence information
-    ## KW: More reaction information
-    ## FT: PDB information
-    line <- read_vec[i]
-    typestring <- substr(line, 1, 2)
-    switchret <- switch(
-        typestring,
-        "DT|OS|OC|RN|RA|RT|RP|RX|CC|PE|KW|FT|OX" = {
-          next
-        },
-        "ID" = {
-          ## The master ID:
-          ## Example: ID   3MGH_MYCTU              Reviewed;         203 AA.
-          gene_num <- gene_num + 1
-          material <- strsplit(x = line, split = "\\s+")[[1]]
-          gene_id <- material[2]
-          uniprot_data[gene_num, "primary_id"] <- gene_id
-          uniprot_data[gene_num, "amino_acids"] <- material[4]
-          next
-        },
-        "AC" = {
-          ## Now pull the primary uniprot accesstions
-          ## Example: AC   P9WJP7; L0TAC1; O33190; P65412;
-          tmp_ids <- gsub(pattern = ";", replacement = "", x = strsplit(x = line, split = "\\s+")[[1]])
-          uniprot_data[gene_num, "primary_accession"] <- tmp_ids[2]
-          tmp_ids <- toString(tmp_ids[2:length(tmp_ids)])
-          uniprot_data[gene_num, "uniprot_accessions"] <- tmp_ids
-          next
-        },
-        "DE" = {
-          ## Get the record names if available
-          ## Example:
-          ## DE RecName: Full = Putative 3-methyl DNA glycosylase {ECO:0000255|HAMAP-Rule:MF_00527};
-          ##          DE            EC = 3.2.2.- {ECO:0000255|HAMAP-Rule:MF_00527};
-          if (grepl(pattern = "DE\\s+RecName:", x = line)) {
-            tmp_ids <- gsub(pattern = "^.*Full=(.*?);.*$", replacement = "\\1", x = line)
-            uniprot_data[gene_num, "recnames"] <- tmp_ids
-            next
-          } else {
-            next
-          }
-        },
-        "GN" = {
-          ## The GN field has a few interesting pieces of information and I think
-          ## makes the primary link between uniprot and the IDs available at genbank,
-          ## ensembl, microbesonline, etc. We may find one or more of the above fields
-          ## in the GN, so I should take into account the various possible iterations.
-          ## Example: GN   Name = pgl; Synonyms = devB; OrderedLocusNames = Rv1445c;
-          ##          GN   ORFNames = MTCY493.09;
-          if (grepl(pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", x = line)) {
-            ## message("Got a locusname on line ", i, " for gene number ", gene_num)
-            ## i = 565 is first interesting one.
-            tmp_ids <- gsub(pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement = "\\1", x = line)
-            tmp_ids <- gsub(pattern = "^(.*?),.*", replacement = "\\1", x = tmp_ids)
-            uniprot_data[gene_num, "loci"] <- gsub(
-                pattern = "^(.*?) \\{.*", replacement = "\\1", x = tmp_ids)
-            next
-          } else if (grepl(pattern = "^GN\\s+.*ORFNames=(.*?);.*$", x = line)) {
-            uniprot_data[gene_num, "orfnames"] <- gsub(
-                pattern = "^GN\\s+.*ORFNames=(.*?);.*$", replacement = "\\1", x = line)
-            next
-          } else if (grepl(pattern = "^GN\\s+.*Name=(.*?);.*$", x = line)) {
-            tmp_ids <- gsub(
-                pattern = "^GN\\s+.*Name=(.*?);.*$", replacement = "\\1", x = line)
-            uniprot_data[gene_num, "shortnames"] <- gsub(
-                pattern = "^(.*?) .*", replacement = "\\1", x = tmp_ids)
-            next
-          } else if (grepl(pattern = "^GN\\s+.*Synonyms=(.*?);.*$", x = line)) {
-            uniprot_data[gene_num, "synonyms"] <- gsub(
-                pattern = "^GN\\s+.*OrderedLocusNames=(.*?);.*$", replacement = "\\1", x = line)
-            next
-          } else {
-            next
-          }
-        },
-        "DR" = {
-          ## The DR field contains mappings to many other databases
-          ## Sadly, it too is quite a mess
-          ## This stanza looks for EMBL IDs:
-          ## Example: DR   EMBL; AL123456; CCP44204.1; -; Genomic_DNA.
-          rest <- substr(x = line, start = 6, stop = nchar(line))
-          matches <- stringr::str_match(rest, "^(\\w+);\\s+(.*?)(\\.$|; \\-.$|\\. \\[.*\\]$)")
-          intype <- matches[1, 2]
-          information <- gsub(pattern = ";", replacement = "\\,", x = matches[1, 3])
-          inswitchret <- switch(
-              intype,
-              "EMBL" = {
-                uniprot_data[gene_num, "embl"] <- information
-              },
-              "CCDS" = {
-                ## Consensus CDS protein set: https://www.ncbi.nlm.nih.gov/projects/CCDS/CcdsBrowse.cgi
-                uniprot_data[gene_num, "ccds"] <- information
-              },
-              "PIR" = {
-                ## The protein information resource: https://pir.georgetown.edu/
-                uniprot_data[gene_num, "pir"] <- information
-              },
-              "RefSeq" = {
-                ## RefSeq: https://www.ncbi.nlm.nih.gov/refseq/
-                if (uniprot_data[gene_num, "refseq"] == "") {
-                  uniprot_data[gene_num, "refseq"] <- information
-                } else {
-                  uniprot_data[gene_num, "refseq"] <- toString(
-                      c(uniprot_data[gene_num, "refseq"], information))
-                }
-              },
-              "UniGene" = {
-                ## UniGene: https://www.ncbi.nlm.nih.gov/unigene
-                uniprot_data[gene_num, "unigene"] <- information
-              },
-              "ProteinModelPortal" = {
-                uniprot_data[gene_num, "proteinmodelportal"] <- information
-              },
-              "SMR" = {
-                ## Small Multidrug Resistance proteins: This is actually a boolean identifying SMR proteins.
-                uniprot_data[gene_num, "smr"] <- information
-              },
-              "IntAct" = {
-                ## IntAct: Molecular Interaction Database: https://www.ebi.ac.uk/intact/
-                uniprot_data[gene_num, "intact"] <- information
-              },
-              "STRING" = {
-                ## STRING: The protein-protein interaction network database: https://string-db.org/
-                uniprot_data[gene_num, "string"] <- information
-              },
-              "iPTMnet" = {
-                ## iPTMnet: Protein post-translational modification database: https://research.bioinformatics.udel.edu/iptmnet/
-                uniprot_data[gene_num, "iptmnet"] <- information
-              },
-              "PhosphoSitePlus" = {
-                ## PhosphoSitePlus: Phosphorylation site database: https://www.phosphosite.org/homeAction.action
-                uniprot_data[gene_num, "phosphosite"] <- information
-              },
-              "BioMuta" = {
-                ## BioMuta: Single Nucleotide Variants in Cancer: https://hive.biochemistry.gwu.edu/biomuta
-                uniprot_data[gene_num, "biomuta"] <- information
-              },
-              "DMDM" = {
-                ## DMDM: Domain Mapping of Disease Mutations: http://bioinf.umbc.edu/dmdm/
-                uniprot_data[gene_num, "dmdm"] <- information
-              },
-              "EPD" = {
-                ## EPD: The Eukaryotic Promoter Database: https://epd.epfl.ch/index.php
-                uniprot_data[gene_num, "epd"] <- information
-              },
-              "PaxDB" = {
-                ## PaxDB: Protein Abundance Database: https://pax-db.org/
-                uniprot_data[gene_num, "pax"] <- information
-              },
-              "PeptideAtlas" = {
-                ## PeptideAtlas: Compendium of peptides in tandem mass spec datasets: http://www.peptideatlas.org/
-                uniprot_data[gene_num, "peptideatlas"] <- information
-              },
-              "PRIDE" = {
-                ## PRIDE: PRoteomics IDentifications database: https://www.ebi.ac.uk/pride/archive/
-                uniprot_data[gene_num, "pride"] <- information
-              },
-              "ProteomicsDB" = {
-                ## ProteomicsDB: https://www.proteomicsdb.org/
-                uniprot_data[gene_num, "proteomicsdb"] <- information
-              },
-              "DNASU" = {
-                ## DNASU: Plasmid Repository: https://dnasu.org/DNASU/Home.do
-                uniprot_data[gene_num, "dnasu"] <- information
-              },
-              "Ensembl" = {
-                ## Ensembl: https://useast.ensembl.org/index.html
-                uniprot_data[gene_num, "ensembl"] <- information
-              },
-              "EnsemblBacteria" = {
-                ## https://bacteria.ensembl.org/index.html
-                uniprot_data[gene_num, "ensbact"] <- information
-              },
-              "GeneID" = {
-                ## GeneID: http://genome.crg.es/software/geneid/
-                uniprot_data[gene_num, "geneid"] <- information
-              },
-              "KEGG" = {
-                ## Kyoto Encyclopedia of Genes and Genomes: https://www.genome.jp/kegg/
-                uniprot_data[gene_num, "kegg"] <- information
-              },
-              "TubercuList" = {
-                ## Tuberculist! http://genolist.pasteur.fr/TubercuList/
-                uniprot_data[gene_num, "tuberculist"] <- information
-              },
-              "UCSC" = {
-                uniprot_data[gene_num, "ucsc"] <- information
-              },
-              "CTD" = {
-                uniprot_data[gene_num, "ctd"] <- information
-              },
-              "EuPathDB" = {
-                ## EuPathDB: Eukaryotic Pathogen Database: https://eupathdb.org/eupathdb/
-                uniprot_data[gene_num, "eupathdb"] <- information
-              },
-              "GeneCards" = {
-                ## GeneCards: The Human Gene Database: https://www.genecards.org/
-                uniprot_data[gene_num, "genecards"] <- information
-              },
-              "HGNC" = {
-                ## HGNC: The HUGO Gene Nomenclature Commit: https://www.genenames.org/
-                uniprot_data[gene_num, "hgnc"] <- information
-              },
-              "HPA" = {
-                ## HPA: The Human Protein Atlas: https://www.proteinatlas.org/
-                uniprot_data[gene_num, "hpa"] <- information
-              },
-              "MIM" = {
-                ## MIM: Online Mendelian Inheritance in Man: https://www.omim.org/
-                uniprot_data[gene_num, "mim"] <- information
-              },
-              "neXtProt" = {
-                ## neXtProt: The human protein database: https://www.nextprot.org/
-                uniprot_data[gene_num, "nextprot"] <- information
-              },
-              "OpenTargets" = {
-                ## OpenTargets: Evaluate validity of therapeutic targets: https://www.opentargets.org/
-                uniprot_data[gene_num, "opentargets"] <- information
-              },
-              "PharmGKB" = {
-                ## PharmGKB: The Pharmacogenomics Knowledgebase: https://www.pharmgkb.org/
-                uniprot_data[gene_num, "pharmgkb"] <- information
-              },
-              "eggNOG" = {
-                ## eggNOG: Orthology predictions and function annotation: http://eggnogdb.embl.de/#/app/home
-                if (uniprot_data[gene_num, "eggnog"] == "") {
-                  uniprot_data[gene_num, "eggnog"] <- information
-                } else {
-                  uniprot_data[gene_num, "eggnog"] <- toString(
-                      c(uniprot_data[gene_num, "eggnog"], information))
-                }
-              },
-              "KO" = {
-                ## KO: KEGG Orthology database: https://www.genome.jp/kegg/ko.html
-                uniprot_data[gene_num, "ko"] <- information
-              },
-              "GeneTree" = {
-                ## GeneTree: Ensembl Genomes
-                uniprot_data[gene_num, "genetree"] <- information
-              },
-              "HOGENOM" = {
-                ## HOGENOM: Database of Complete Genome Homologous Gene Families:
-                ## http://doua.prabi.fr/databases/hogenom/home.php?contents = query
-                uniprot_data[gene_num, "hogenom"] <- information
-              },
-              "HOVERGEN" = {
-                ## HOVERGEN: Homologous Vertebrate Genes Database:
-                ## http://pbil.univ-lyon1.fr/databases/hovergen.php
-                uniprot_data[gene_num, "hovergen"] <- information
-              },
-              "InParanoid" = {
-                ## InParanoid: Ortholog groups with inparalogs: http://inparanoid.sbc.su.se/cgi-bin/index.cgi
-                uniprot_data[gene_num, "inparanoid"] <- information
-              },
-              "OMA" = {
-                ## OMA: Ortholog browser: https://omabrowser.org/oma/home/
-                uniprot_data[gene_num, "oma"] <- information
-              },
-              "OrthoDB" = {
-                ## OrthoDB: The heirarchical catalog of orthologs
-                uniprot_data[gene_num, "orthodb"] <- information
-              },
-              "PhylomeDB" = {
-                ## PhylomeDB: Repository of large scale phylogenetic information: http://phylomedb.org/
-                uniprot_data[gene_num, "phylomedb"] <- information
-              },
-              "TreeFam" = {
-                ## TreeFam: Phylogenetic Tree Database: http://www.treefam.org/
-                uniprot_data[gene_num, "treefam"] <- information
-              },
-              "GeneWiki" = {
-                ## GeneWiki: Wikipedia Gene Database: https://en.wikipedia.org/wiki/Gene_Wiki
-                uniprot_data[gene_num, "genewiki"] <- information
-              },
-              "GenomeRNAi" = {
-                ## GenomeRNAi: RNAi phenotypes and reagents: http://www.genomernai.org/
-                uniprot_data[gene_num, "genomernai"] <- information
-              },
-              "PRO" = {
-                ## PRO: Proteomics DB? https://www.proteomicsdb.org/
-                uniprot_data[gene_num, "pro"] <- information
-              },
-              "Proteomes" = {
-                ## Proteomes: uniprot proteomes database
-                uniprot_data[gene_num, "proteomes"] <- information
-              },
-              "Bgee" = {
-                ## Bgee: Gene Expression Data in Animals
-                uniprot_data[gene_num, "bgee"] <- information
-              },
-              "CleanEx" = {
-                ## CleanEx: Database of gene expression profiles: https://cleanex.epfl.ch//
-                uniprot_data[gene_num, "cleanex"] <- information
-              },
-              "UniPathway" = {
-                ## Uniprot pathways
-                uniprot_data[gene_num, "unipathway"] <- information
-              },
-              "ExpressionAtlas" = {
-                ## ExpressionAtlas: Gene expression results across species: https://www.ebi.ac.uk/gxa/home
-                uniprot_data[gene_num, "expressionatlas"] <- information
-              },
-              "Genevisible" = {
-                ## Genevisible: https://genevisible.com/search
-                uniprot_data[gene_num, "genevisible"] <- information
-              },
-              "GO" = {
-                ## Gene Ontology
-                if (uniprot_data[gene_num, "go"] == "") {
-                  uniprot_data[gene_num, "go"] <- information
-                } else {
-                  uniprot_data[gene_num, "go"] <- toString(
-                      c(uniprot_data[gene_num, "go"], information))
-                }
-              },
-              "CDD" = {
-                uniprot_data[gene_num, "cdd"] <- information
-              },
-              "Gene3D" = {
-                uniprot_data[gene_num, "gene3d"] <- information
-              },
-              "HAMAP" = {
-                uniprot_data[gene_num, "hamap"] <- information
-              },
-              "InterPro" = {
-                if (uniprot_data[gene_num, "interpro"] == "") {
-                  uniprot_data[gene_num, "interpro"] <- information
-                } else {
-                  uniprot_data[gene_num, "interpro"] <- toString(
-                      c(uniprot_data[gene_num, "interpro"], information))
-                }
-              },
-              "PANTHER" = {
-                uniprot_data[gene_num, "panther"] <- information
-              },
-              "Pfam" = {
-                uniprot_data[gene_num, "pfam"] <- information
-              },
-              "PIRSF" = {
-                uniprot_data[gene_num, "pirsf"] <- information
-              },
-              "PRINTS" = {
-                uniprot_data[gene_num, "prints"] <- information
-              },
-              "SUPFAM" = {
-                uniprot_data[gene_num, "supfam"] <- information
-              },
-              "TIGRFAMs" = {
-                uniprot_data[gene_num, "tigrfam"] <- information
-              })
-        },
-        "SQ" = {
-          aa_seq <- ""
-          reading_sequence <- TRUE
-          mweight <- gsub(
-              pattern = "^SQ\\s+SEQUENCE\\s+\\d+\\s+AA;\\s+(\\d+)\\s+MW.*$", replacement = "\\1", x = line)
-          uniprot_data[gene_num, "mw"] <- mweight
-          aa_length <- gsub(
-              pattern = "^SQ\\s+SEQUENCE\\s+(\\d+)\\s+AA;\\s+\\d+\\s+MW.*$", replacement = "\\1", x = line)
-          uniprot_data[gene_num, "aa_length"] <- aa_length
-          if (isTRUE(reading_sequence)) {
-            if (grepl(pattern = "^\\s+", x = line)) {
-              aa_line <- gsub(pattern = "\\s", replacement = "", x = line)
-              aa_seq <- paste0(aa_seq, aa_line)
-            }
-          }
-          if (grepl(pattern = "^\\/\\/", x = line)) {
-            uniprot_data[gene_num, "aa_sequence"] <- aa_seq
-            reading_sequence <- FALSE
-          }
-        })
-  } ## End of the for loop
-  if (isTRUE(show_progress)) {
-    close(bar)
-  }
-  message("Finished parsing, creating data frame.")
-
-  if (!is.null(savefile)) {
-    if (savefile != FALSE) {
-      saved <- save(list = "uniprot_data", file = savefile)
-    }
-  }
-  return(uniprot_data)
 }
 
 #' Extract ontology information from a uniprot dataframe.
 #'
-#' @param input uniprot filename or dataframe.
+#' @param ... Whatever args are required for load_uniprot_annotations()
 #' @return Ontology dataframe
 #' @seealso [load_uniprot_annotations()] [stringr] [tidyr]
 #' @examples
@@ -602,12 +187,8 @@ load_uniprot_text_annotations <- function(file = NULL, species = NULL, savefile 
 #'  head(sc_uniprot_go)
 #' }
 #' @export
-load_uniprot_go <- function(input) {
-  if ("character" %in% class(input)) {
-    input <- load_uniprot_annotations(file = input)
-  } else if ("data.frame" %in% class(input)) {
-    input <- as.data.frame(input)
-  }
+load_uniprot_go <- function(...) {
+  input <- load_uniprot_annotations(...)
 
   kept <- input[, c("uniprot_accessions", "go", "aa_length")] %>%
     tidyr::separate_rows("uniprot_accessions")

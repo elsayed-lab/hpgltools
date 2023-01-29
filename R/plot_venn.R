@@ -83,7 +83,7 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
   radii <- list()
   edges_x <- list()
   edges_y <- list()
-  for (i in (1:length(ones))) {
+  for (i in seq_along(ones)) {
     factor <- 0.98
     single <- ones[i]
     single_name <- names(single)
@@ -107,7 +107,7 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
   }
 
   if (isTRUE(do_doubles)) {
-    for (i in (1:length(twos))) {
+    for (i in seq_along(twos)) {
       factor <- 0.97
       double <- twos[i]
       double_name <- names(double)
@@ -131,7 +131,7 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
   }
 
   if (isTRUE(do_triples)) {
-    for (i in (1:length(threes))) {
+    for (i in seq_along(threes)) {
       factor <- 0.8
       triple <- threes[i]
       triple_name <- names(triple)
@@ -156,7 +156,7 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
   }
 
   if (isTRUE(do_quads)) {
-    for (i in (1:length(fours))) {
+    for (i in seq_along(fours)) {
       factor <- 0.7
       quad <- fours[i]
       quad_name <- names(quad)
@@ -188,11 +188,11 @@ plot_fun_venn <- function(ones = c(), twos = c(), threes = c(),
 rename_vennerable_intersections <- function(venn, lst) {
   intersects <- venn@IntersectionSets
   list_names <- names(lst)
-  for (i in 2:(length(intersects)-1)) {
+  for (i in seq(from = 2, to = length(intersects) - 1)) {
     characters <- names(intersects)[i]
     characters <- strsplit(x = characters, split = "")[[1]]
     new_name <- ""
-    for (c in 1:length(characters)) {
+    for (c in seq_along(characters)) {
       char <- characters[c]
       if (char == "1") {
         list_name <- list_names[c]
@@ -213,7 +213,7 @@ get_vennerable_rows <- function(tables, intersections) {
   table_names <- names(tables)
   int_names <- names(intersections)
   ## Skip 'none'
-  for (t in 2:length(intersections)) {
+  for (t in seq(from = 2, to = length(intersections))) {
     int_name <- int_names[t]
     chosen_table_name <- strsplit(x = int_name, split = ", ")[[1]][1]
     chosen_table <- tables[[chosen_table_name]]

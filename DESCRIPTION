@@ -22,32 +22,33 @@ Suggests:
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
   DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
   dorothea, DOSE, doSNOW, DSS,
-  EBSeq, EDASeq, edgeR, EuPathDB,
+  EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
-  graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2, GSEABase,
+  graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
-  IHW, inflection, IRanges, isva, iterators,
+  iDA, igraph, IHW, inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph,
   lattice, limma, locfit, lubridate,
   matrixStats, miscTools, MLSeq, motifRG, MSnbase, mygene, mzR,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, plotly, plyr, preprocessCore, PROPER,
+  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
   qvalue,
   R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
   rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
-  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, statmod, stringi, stringr, survJamda, SWATH2stats,
+  S4Vectors, scales, SeqTools, seqLogo, SmartSVA, spgs, statmod, stringi,
+  stringr, survJamda, SWATH2stats,
   taxize, testthat, tibble, tidyr, topGO, tximport,
-  UniProt.ws, uwot, webp,
+  UniProt.ws, UpSetR, uwot, webp,
   xCell, xml2,
   Vennerable, venneuler
 Imports:
   data.table, dplyr,
   foreach,
-  ggplot2, GenomicFeatures, glue,
+  ggplot2, GenomicFeatures, glue, GSEABase,
   knitr,
   magrittr, methods,
   plotly,
@@ -60,9 +61,10 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.3
 Collate:
   '01_hpgltools.R'
+  'alt_splicing.R'
   'annotation_biomart.R'
   'annotation_genbank.R'
   'annotation_gff.R'
@@ -72,7 +74,6 @@ Collate:
   'annotation_txt.R'
   'annotation_uniprot.R'
   'annotation_shared.R'
-  'expt.R'
   'de_shared.R'
   'de_basic.R'
   'de_edger.R'
@@ -81,8 +82,15 @@ Collate:
   'de_limma.R'
   'de_plots.R'
   'de_xlsx.R'
+  'dimension_reduction.R'
+  'expt.R'
   'gene_sets.R'
+  'gsva.R'
+  'helpers_misc.R'
   'metadata.R'
+  'model_testing.R'
+  'model_varpartition.R'
+  'motif.R'
   'network.R'
   'normalize_shared.R'
   'normalize_filter.R'
@@ -90,6 +98,16 @@ Collate:
   'normalize_transform.R'
   'normalize_norm.R'
   'normalize_batch.R'
+  'ontology_shared.R'
+  'ontology_goseq.R'
+  'ontology_gprofiler.R'
+  'ontology_gostats.R'
+  'ontology_topgo.R'
+  'ontology_clusterprofiler.R'
+  'ontology_plots.R'
+  'ontology_xlsx.R'
+  'ontology_kegg.R'
+  'peptides.R'
   'plot_shared.R'
   'plot_bar.R'
   'plot_distribution.R'
@@ -97,33 +115,19 @@ Collate:
   'plot_heatmap.R'
   'plot_hist.R'
   'plot_point.R'
+  'plot_proteomics.R'
   'plot_venn.R'
-  'gsva.R'
-  'ontology_shared.R'
-  'ontology_goseq.R'
-  'ontology_gprofiler.R'
-  'ontology_gostats.R'
-  'helpers_misc.R'
-  'ontology_topgo.R'
-  'ontology_clusterprofiler.R'
-  'ontology_plots.R'
-  'ontology_xlsx.R'
-  'ontology_kegg.R'
-  'dimension_reduction.R'
   'plot_circos.R'
   'plot_genplot.R'
   'plot_misc.R'
-  'model_testing.R'
-  'alt_splicing.R'
-  'model_varpartition.R'
-  'tnseq.R'
+  'power_estimation.R'
   'proteomics.R'
-  'plot_proteomics.R'
-  'variants.R'
   'se.R'
   'sequence.R'
-  'power_estimation.R'
-  'xlsx.R'
-  'motif.R'
-  'tf.R'
   'set_methods.R'
+  'shiny.R'
+  'singlecell.R'
+  'tf.R'
+  'tnseq.R'
+  'variants.R'
+  'xlsx.R'

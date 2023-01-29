@@ -64,7 +64,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
     colnames(mtrx) <- abbreviate(colnames(mtrx), minlength = label_chars)
   }
 
-  libsize_df <- data.frame("id" = colnames(mtrx),
+  libsize_df <- data.frame("id" = as.character(colnames(mtrx)),
                            "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))
@@ -151,7 +151,7 @@ labeled by counts/genes removed.")
                        aes_string(
                            x = "id",
                            ## label='as.character(all_tab$subtraction)')) +
-                           label="subtraction_string")) +
+                           label = "subtraction_string")) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
@@ -304,11 +304,19 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
 
   ## Set a cutoff of the sum of the rgbs of the bar colors, if the color is > than that cutoff
   ## Set the text color to black.
-  sample_df[["text_color"]] <- "#ffffff"
+  ## I reversed the logic for these colors!
+  ## sample_df[["text_color"]] <- "#ffffff"
+  sample_df[["text_color"]] <- "#FFFFFF"
   text_lst <- color_int(sample_df[["colors"]])
-  for (r in 1:nrow(sample_df)) {
-    color_sum <- text_lst[["red"]][[r]] + text_lst[["green"]][[r]] + text_lst[["blue"]][[r]]
-    if (color_sum > 385) {
+  for (r in seq_len(nrow(sample_df))) {
+    ## Some recommendations for color cutoffs from:
+    ## https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+    ## Thanks to Theresa
+    color_sum <- (text_lst[["red"]][[r]] * 0.299) +
+      (text_lst[["green"]][[r]] * 0.587) +
+      (text_lst[["blue"]][[r]] * 0.114)
+    if (color_sum >= 186) {
+      ## Hahah I am a doofus and reversed the logic!
       sample_df[r, "text_color"] <- "#000000"
     }
   }
@@ -488,7 +496,7 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
   up_sums <- list()
   down_sums <- list()
   comp_names <- ups[ups[["variable"]] == "a_up_inner", ][["comparisons"]]
-  for (comp in 1:length(comp_names)) {
+  for (comp in seq_along(comp_names)) {
     comp_name <- comp_names[[comp]]
     idx <- ups[["comparisons"]] == comp_name
     up_sums[[comp_name]] <- sum(as.numeric(ups[idx, ][["value"]]))
@@ -516,7 +524,7 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
                    legend.position = "none")
 
   if (isTRUE(text)) {
-    for (comp in 1:length(comp_names)) {
+    for (comp in seq_along(comp_names)) {
       comp_name <- comp_names[[comp]]
       upstring <- as.character(up_sums[[comp_name]])
       downstring <- as.character(down_sums[[comp_name]])

@@ -25,7 +25,10 @@ extract_keepers_lst(
   padj_type,
   loess = FALSE,
   lfc_cutoff = 1,
-  p_cutoff = 0.05
+  p_cutoff = 0.05,
+  sheet_prefix = NULL,
+  sheet_number = NULL,
+  format_sig = 4
 )
 }
 \arguments{
@@ -71,6 +74,12 @@ experimental metadata.}
 \item{lfc_cutoff}{Passed for volcano/MA plots.}
 
 \item{p_cutoff}{Passed for volcano/MA plots.}
+
+\item{sheet_prefix}{Prefix for this worksheet id.}
+
+\item{sheet_number}{Which sheet is this?}
+
+\item{format_sig}{Number of significant digits for stuff like pvalues.}
 }
 \description{
 This is the most interesting of the extract_keeper functions.  It must check

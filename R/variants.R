@@ -12,7 +12,6 @@
 #' cyoa.
 #'
 #' @param expt an expressionset from which to extract information.
-#' @param type Use counts / samples or ratios?
 #' @param annot_column Column in the metadata for getting the table of bcftools calls.
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
@@ -199,7 +198,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain", limit = 1,
   }
   end <- length(res)
   mesg("Iterating over ", end, " elements.")
-  for (element in 1:end) {
+  for (element in seq_len(end)) {
     if (isTRUE(show_progress)) {
       pct_done <- element / length(res)
       utils::setTxtProgressBar(bar, pct_done)
@@ -275,6 +274,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   mesg("Reading sample: ", first_sample, ".")
   first_file <- file_lst[1]
   first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  colnames(first_read) <- make.names(
+      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
+      unique = TRUE)
   if (is.null(first_read[[column]])) {
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
@@ -292,7 +294,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   }
   ## Foreach sample, do the same read of the data and merge it onto the end of the
   ## final data table.
-  for (sample_num in 2:length(samples)) {
+  for (sample_num in seq(from = 2, to = length(samples))) {
     if (isTRUE(show_progress)) {
       pct_done <- sample_num / length(samples)
       setTxtProgressBar(bar, pct_done)
@@ -301,7 +303,18 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
     mesg("Reading sample: ", sample, ", number ", sample_num, " of ",
          length(samples), ".")
     file <- file_lst[sample_num]
+    if (is.na(file)) {
+      mesg("There is no file listed for ", sample, ".")
+      next
+    }
+    if (!file.exists(file)) {
+      mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
+      next
+    }
     new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
+    colnames(new_table) <- make.names(
+        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
+        unique = TRUE)
     if (class(new_table)[1] == "try-error") {
       next
     }
@@ -319,116 +332,6 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   na_positions <- is.na(snp_columns)
   snp_columns[na_positions] <- 0
   return(snp_columns)
-}
-
-#' Use Rsamtools to read alignments and get snp coverage.
-#'
-#' This is horrifyingly slow.  I think I might remove this function.
-#'
-#' @param expt Expressionset to analyze
-#' @param type counts or percent?
-#' @param input_dir Directory containing the samtools results.
-#' @param annot_column Passed along to count_expt_snps()
-#' @param tolower lowercase the sample names?
-#' @param bam_suffix In case the data came from sam.
-#' @return It is so slow I no longer know if it works.
-#' @seealso [count_expt_snps()] [Rsamtools] [GenomicRanges]
-samtools_snp_coverage <- function(expt, input_dir = "preprocessing/outputs",
-                                  tolower = TRUE, bam_suffix = ".bam", annot_column = annot_column) {
-  snp_counts <- count_expt_snps(expt, tolower = tolower)
-  snp_counts <- fData(snp_counts)
-  samples <- rownames(pData(expt))
-  if (isTRUE(tolower)) {
-    samples <- tolower(samples)
-  }
-  if (type == "counts") {
-    file_suffix <- "_parsed_count.txt"
-  } else {
-    file_suffix <- "_parsed_ratio.txt"
-  }
-  bam_filenames <- c()
-  for (sample_num in 1:length(samples)) {
-    bam_filenames[sample_num] <- paste0(file.path(input_dir, sample), bam_suffix)
-    if (!file.exists(bam_filenames[sample_num])) {
-      warning(glue("The bam filename does not exist: {bam_filenames[sample_num]}"))
-    }
-  }
-
-  ## Now I have a data table of rownames and percentages
-  ## Next I need to cross reference these against the coverage by position, ergo
-  ## I must split out the rownames
-  pileup_info <- Rsamtools::PileupFiles(bam_filenames)
-  ## Taken directly from the Rsamtools manual
-  queries <- glue("{snp_counts[['species']]}_{snp_counts[['chromosome']]}:\\
-                  {as.numeric(snp_counts[['position']]) - 1}-\\
-                  {as.numeric(snp_counts[['position']]) + 1}")
-  which <- GenomicRanges::GRanges(queries)
-  which_list <- split(which, GenomicRanges::seqnames(which))
-  returns <- list()
-  res <- list()
-  what <- "seq"
-
-  cl <- parallel::makeCluster(8)
-  doParallel::registerDoParallel(cl)
-  tt <- sm(requireNamespace("parallel"))
-  tt <- sm(requireNamespace("doParallel"))
-  tt <- sm(requireNamespace("iterators"))
-  tt <- sm(requireNamespace("foreach"))
-  res <- foreach(c = 1:length(which_list), .packages = c("hpgltools", "Rsamtools")) %dopar% {
-    chr_name <- names(which_list)[c]
-    chr_param <- Rsamtools::ApplyPileupsParam(which = which_list[[c]], what = what)
-    snp_calc_coverage <- function(x) {
-      ## information at each pile-up position
-      qme <- function(y) {
-        y <- y[c("A", "C", "G", "T"), , drop = FALSE]
-        y <- y + 1L
-        result <- colSums(y)
-        return(result)
-      }
-      info <- apply(x[["seq"]], 2, qme)
-      retlist <- list(seqnames = x[["seqnames"]], pos = x[["pos"]], info = info)
-      return(retlist)
-    }
-    coverage_result <- Rsamtools::applyPileups(
-                                      pileup_info,
-                                      snp_calc_coverage,
-                                      param = chr_param)
-    result_list[[c]] <- coverage_result
-  }
-  stopped <- parallel::stopCluster(cl)
-
-  ## result is a list of n elements where n is the number of rows in snp_dt
-  ## Each element of result is in turn a list containing the following slots:
-  ##  seqnames (chromosome), pos (position(s)), info (coverage by file)
-  ## The piece of information we want to put into snp_dt is therefore:
-  ## coverage_list <- result[[snp_dt_row]][[info]][2, ]
-  ## coverage_list is in turn a character list named by filename (which begins
-  ## with the sample ID) We will therefore extract the hpglID from it and the
-  ## coverage for every sample.
-
-  ## I am not sure if the following line is correct, but I think it is -- either
-  ## way, snp_dt is missing without it.  Somewhere along the way I forgot to
-  ## make sure to keep the variable snp_dt alive, the most logical existence for
-  ## it is as a recasting of the matrix resulting from exprs(snp_counts)
-  ## For a reminder of why I say this, check out the first 15 lines of count_expt_snps()
-  snp_dt <- data.table::as.data.table(exprs(snp_counts))
-  names(coverage_result) <- snp_dt[["rownames"]]
-
-  ## Now extract from the rather strange coverage_result data the coverage by position/sample
-  new_dt <- NULL
-  snp_extract_coverage <- function(element) {
-    row <- element[["info"]][2, ]
-    names(row) <- samples
-    new_dt <<- rbind(new_dt, row)
-  }
-  ## unused_var <- try(lapply(coverage_result, snp_extract_coverage))
-  unused_var <- try(parallel::mclapply(coverage_result, snp_extract_coverage))
-  if (class(unused_var) == "try-error") {
-    message("There was an error when creating the data table of coverage.")
-  }
-  new_dt <- data.table::as.data.table(new_dt)
-  new_dt[["rownames"]] <- snp_dt[["rownames"]]
-
 }
 
 #' The real worker.  This extracts positions for a single chromosome and puts
@@ -453,7 +356,7 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
   limit_true_false <- as.data.frame(medians >= limit)
   x_lst <- list()
   possibilities <- unique(c(possibilities, colnames(limit_true_false)))
-  for (d in 1:length(possibilities)) {
+  for (d in seq_along(possibilities)) {
     column_name <- colnames(limit_true_false)[d]
     column_data <- limit_true_false[[column_name]]
     included_snps <- rownames(limit_true_false)[column_data]
@@ -472,7 +375,7 @@ snp_by_chr <- function(medians, chr_name = "01", limit = 1) {
     symbols <- strsplit(as.character(symbolic), "")[[1]]
     name <- c()
     invert_name <- c()
-    for (s in 1:length(symbols)) {
+    for (s in seq_along(symbols)) {
       symbol <- symbols[s]
       if (symbol == 1) {
         name <- c(name, possibilities[s])
@@ -757,7 +660,7 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   ## This will let us find the positions unique to a condition.
   S4Vectors::mcols(snp_granges)[, "snp_name"] <- names(snp_granges)
   snp_columns <- colnames(snp_result[["medians"]])
-  for (c in 1:length(snp_columns)) {
+  for (c in seq_along(snp_columns)) {
     colname <- snp_columns[c]
     S4Vectors::mcols(snp_granges)[, colname] <- snp_result[["medians"]][[colname]]
   }
@@ -793,7 +696,7 @@ write_snps <- function(expt, output_file = "funky.aln") {
   start_mtrx <- exprs(expt)
   samples <- colnames(start_mtrx)
   aln_string <- ""
-  for (r in 1:ncol(start_mtrx)) {
+  for (r in seq_len(ncol(start_mtrx))) {
     aln_string <- glue::glue("{aln_string}{samples[r]}     {start_mtrx[[r]]}
 ")
   }
@@ -888,7 +791,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   variant_lst <- list()
   ## This was written in an attempt to make it work if one does or does not
   ## have a BSgenome from which to get the actual chromosome lengths.
-  for (ch in 1:length(chromosomes)) {
+  for (ch in seq_along(chromosomes)) {
     chr <- chromosomes[ch]
     mesg("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
@@ -906,7 +809,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     density_vector <- rep(0, ceiling(this_length / bin_width))
     variant_vector <- rep('', ceiling(this_length / bin_width))
     density_name <- 0
-    for (i in 1:length(density_vector)) {
+    for (i in seq_along(density_vector)) {
       range_min <- density_name
       range_max <- (density_name + bin_width) - 1
       ## We want to subtract the maximum primer length from the position
@@ -943,7 +846,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 
   long_density_vector <- vector()
   long_variant_vector <- vector()
-  for (ch in 1:length(density_lst)) {
+  for (ch in seq_along(density_lst)) {
     chr <- names(density_lst)[ch]
     density_vec <- density_lst[[chr]]
     variant_vec <- variant_lst[[chr]]
@@ -958,9 +861,9 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   long_variant_vector <- long_variant_vector[most_idx]
 
   mesg("Extracting primer regions.")
-  sequence_df <- sm(choose_sequence_regions(long_variant_vector, topn = topn,
-                                            max_primer_length = max_primer_length,
-                                            genome = genome))
+  sequence_df <- choose_sequence_regions(long_variant_vector, topn = topn,
+                                         max_primer_length = max_primer_length,
+                                         bin_width = bin_width, genome = genome)
   mesg("Searching for overlapping/closest genes.")
   sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
                               feature_type = feature_type, feature_start = feature_start,
@@ -1012,13 +915,13 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
 #'  to a hopefully usable primer size.
 #' @param topn Choose this number of variant regions from the rather
 #'  larger set of possibilities..
-#' @param bin_size Separate the genome into chunks of this size when
+#' @param bin_width Separate the genome into chunks of this size when
 #'  hunting for primers, this size will therefore be the approximate
 #'  PCR amplicon length.
 #' @param genome (BS)Genome to search.
 #' @param target_temp PCR temperature to attempt to match.
 choose_sequence_regions <- function(vector, max_primer_length = 45,
-                                    topn = 200, bin_size = 600,
+                                    topn = 200, bin_width = 600,
                                     genome = NULL, target_temp = 58) {
   ## Now get the nucleotides of the first 30 nt of each window
   sequence_df <- as.data.frame(head(vector, n = topn))
@@ -1073,9 +976,9 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I am making explicit columns for these so I can look manually
   ## and make sure I am not trying to get sequences which run off the chromosome.
   sequence_df[["fivep_superprimer_start"]] <- sequence_df[["bin_start"]] - max_primer_length - 1
-  sequence_df[["threep_superprimer_start"]] <- sequence_df[["bin_start"]] + bin_size + max_primer_length + 1
+  sequence_df[["threep_superprimer_start"]] <- sequence_df[["bin_start"]] + bin_width + max_primer_length + 1
   sequence_df[["fivep_superprimer_end"]] <- sequence_df[["bin_start"]] - 1
-  sequence_df[["threep_superprimer_end"]] <- sequence_df[["bin_start"]] + bin_size
+  sequence_df[["threep_superprimer_end"]] <- sequence_df[["bin_start"]] + bin_width
   ## The super_primers are the entire region of length == max_primer_length, I will
   ## iteratively remove bases from the 5' until the target is reached.
   sequence_df[["fivep_superprimer"]] <- ""
@@ -1088,14 +991,13 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
   ## I want to fill in the fivep/threep_superprimer columns with the longer
   ## sequence/revcomp regions of interest.
   ## Then I want to chip away at the beginning/end of them to get the actual fivep/threep primer.
-  for (i in 1:nrow(sequence_df)) {
+  for (i in seq_along(nrow(sequence_df))) {
     chr <- sequence_df[i, "chr"]
 
     silence = TRUE
-    fivep_superprimer <- try(Biostrings::subseq(genome[[chr]],
-                                                sequence_df[i, "fivep_superprimer_start"],
-                                                sequence_df[i, "fivep_superprimer_end"]),
-                             silent = silence)
+    fivep_superprimer <- Biostrings::subseq(genome[[chr]],
+                                            sequence_df[i, "fivep_superprimer_start"],
+                                            sequence_df[i, "fivep_superprimer_end"])
     if ("try-error" %in% class(fivep_superprimer)) {
       sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
     } else if (sequence_df[i, "fivep_superprimer_start"] < 0) {
@@ -1197,7 +1099,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   sequence_df[["closest_gene_after_description"]] <- ""
   sequence_df[["closest_gene_after_start"]] <- ""
   sequence_df[["closest_gene_after_end"]] <- ""
-  for (r in 1:nrow(sequence_df)) {
+  for (r in seq_along(nrow(sequence_df))) {
     entry <- sequence_df[r, ]
     amplicon_chr <- entry[["chr"]]
     amplicon_start <- as.numeric(entry[["bin_start"]])

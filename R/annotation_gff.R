@@ -114,7 +114,7 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   }
 
   annot <- NULL
-  for (att in 1:length(attempts)) {
+  for (att in seq_along(attempts)) {
     annotations <- NULL
     message("Trying attempt: ", attempts[[att]])
     attempt <- attempts[[att]]
@@ -270,7 +270,7 @@ sum_exon_widths <- function(data = NULL, gff = NULL, annotdf = NULL,
   rownames(new_data) <- column[["Parent"]]
   colnames(new_data) <- c("width")
 
-  for (c in 1:length(colnames(data))) {
+  for (c in seq_along(colnames(data))) {
     column_name <- colnames(data)[[c]]
     column <- aggregate(tmp_data[, column_name], by = list(Parent = tmp_data[, parent]), FUN = sum)
     rownames(column) <- column[["Parent"]]

@@ -296,7 +296,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
                            annot_df = NULL, libsize = NULL,
                            force = FALSE, ...) {
   arglist <- list(...)
-
+  print(summary(input))
   ## This is used in the invocation of a voom() implementation for normalization.
   voom_norm <- "quantile"  ## a normalize.method supported by limma.
   if (!is.null(arglist[["voom_norm"]])) {
@@ -326,9 +326,9 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   message("Starting limma pairwise comparison.")
-  input <- sanitize_expt(input)
-  input_data <- choose_limma_dataset(input, force = force, which_voom = which_voom)
-  design <- pData(input)
+  san_input <- sanitize_expt(input)
+  input_data <- choose_limma_dataset(san_input, force = force, which_voom = which_voom)
+  design <- pData(san_input)
   if (is.null(conditions)) {
     conditions <- design[["condition"]]
   }
@@ -338,27 +338,27 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
 
   ## The following small piece of logic is intended to handle situations where we use
   ## tximport for limma (kallisto/sailfish/salmon).
-  if (is.null(input[["tximport"]])) {
+  if (is.null(san_input[["tximport"]])) {
     data <- input_data[["data"]]
   } else {
-    data <- edgeR::DGEList(input[["tximport"]][["scaled"]][["counts"]])
+    data <- edgeR::DGEList(san_input[["tximport"]][["scaled"]][["counts"]])
     data <- edgeR::calcNormFactors(data)
   }
 
   if (is.null(libsize)) {
     message("libsize was not specified, this parameter has profound effects on limma's result.")
-    if (!is.null(input[["best_libsize"]])) {
+    if (!is.null(san_input[["best_libsize"]])) {
       message("Using the libsize from expt$best_libsize.")
-      libsize <- input[["best_libsize"]]
+      libsize <- san_input[["best_libsize"]]
     } else if (!is.null(input[["libsize"]])) {
       message("Using the libsize from expt$libsize.")
-      libsize <- input[["libsize"]]
+      libsize <- san_input[["libsize"]]
     } else if (!is.null(
-                    input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
+                    san_input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]])) {
       libsize <- colSums(data, na.rm = TRUE)
     } else {
       message("Using the libsize from expt$normalized$intermediate_counts$normalization$libsize")
-      libsize <- input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
+      libsize <- san_input[["normalized"]][["intermediate_counts"]][["normalization"]][["libsize"]]
     }
   } else {
     message("libsize was specified.  This parameter has profound effects on limma's result.")
@@ -373,7 +373,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   batches <- as.factor(batches)
 
   message("Limma step 1/6: choosing model.")
-  model <- choose_model(input = input,
+  model <- choose_model(input = san_input,
                         conditions = conditions,
                         batches = batches,
                         model_batch = model_batch,
@@ -395,7 +395,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   ## Leaving the following here for the moment, but I think it will no longer be needed.
   ## Instead, I am checking the data state before passing it to this function with the
   ## choose_limma_dataset() call above.
-  loggedp <- input[["state"]][["transform"]]
+  loggedp <- san_input[["state"]][["transform"]]
   if (is.null(loggedp)) {
     message("I don't know if this data is logged, testing if it is integer.")
     if (is.integer(data)) {
@@ -411,7 +411,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     }
   }
 
-  convertedp <- input[["state"]][["conversion"]]
+  convertedp <- san_input[["state"]][["conversion"]]
   if (is.null(convertedp)) {
     message("I cannot determine if this data has been converted, assuming no.")
     convertedp <- FALSE
@@ -489,7 +489,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     voom_plot <- grDevices::recordPlot()
   }
   one_replicate <- FALSE
-  fun_design <- pData(input)
+  fun_design <- pData(san_input)
   if (is.null(fun_voom)) {
     ## Apparently voom returns null where there is only 1 replicate.
     message("voom returned null, I am not sure what will happen.")
@@ -567,6 +567,8 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     contrasts_performed <- names(limma_tables)
   }
 
+  print(summary(input))
+
   retlist <- list(
       "all_pairwise" = all_pairwise,
       "all_tables" = limma_tables,
@@ -581,7 +583,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
       "identities" = identities,
       "identity_tables" = limma_identities,
       "identity_comparisons" = all_identity_comparisons,
-      "input_data" = data,
+      "input_data" = input,
       "method" = "limma",
       "model" = model,
       "model_string" = model_string,
@@ -644,11 +646,11 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
     ## If we do have an intercept model, then we get the data
     ## in a slightly different fashion.
-    for (c in 1:ncol(fit[["coefficients"]])) {
+    for (c in seq_len(ncol(fit[["coefficients"]]))) {
       data_table <-  limma::topTable(fit, adjust.method = adjust,
                                      n = n, coef = c, sort.by = "logFC")
 
-      for (column in 1:ncol(data_table)) {
+      for (column in seq_len(ncol(data_table))) {
         data_table[[column]] <- signif(x = as.numeric(data_table[[column]]), digits = 4)
       }
       if (!is.null(annot_df)) {
@@ -666,7 +668,7 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
   } else {
     ## If we do not have an intercept (~ 0 + ...)
     ## Then extract the coefficients and identities separately.
-    for (c in 1:end) {
+    for (c in seq_len(end)) {
       comparison <- coef[c]
       message("Limma step 6/6: ", c, "/", end, ": Creating table: ",
               comparison, ".  Adjust = ", adjust)
@@ -677,10 +679,10 @@ make_limma_tables <- function(fit = NULL, adjust = "BH", n = 0, coef = NULL,
 
     ## Take a moment to prettily format the numbers in the tables
     ## and fill in the identity table.
-    for (d in 1:length(data_tables)) {
+    for (d in seq_along(data_tables)) {
       comparison <- coef[d]
       table <- data_tables[[d]]
-      for (column in 1:ncol(table)) {
+      for (column in seq_len(ncol(table))) {
         table[[column]] <- signif(x = as.numeric(table[[column]]), digits = 4)
       }
       if (!is.null(annot_df)) {

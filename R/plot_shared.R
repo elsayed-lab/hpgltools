@@ -1,4 +1,4 @@
-# Note to self, I think for future ggplot2 plots, I must start by creating the data frame
+## Note to self, I think for future ggplot2 plots, I must start by creating the data frame
 ## Then cast every column in it explicitly, and only then invoke ggplot(data = df ...)
 
 ## If I see something like:
@@ -25,22 +25,26 @@
 #' @param max_data Define the upper limit for the heuristic.
 #' @param min_data Define the lower limit for the heuristic.
 check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10) {
-  if (max(data) > max_data & min(data) < min_data) {
-    mesg("This data will benefit from being displayed on the log scale.")
-    mesg("If this is not desired, set scale='raw'")
-    scale <- "log"
-    negative_idx <- data < 0
-    if (sum(negative_idx) > 0) {
-      data[negative_idx] <- 0
-      message("Changed ", sum(negative_idx), " negative features to 0.")
-    }
-    zero_idx <- data == 0
-    if (sum(zero_idx) > 0) {
-      message(sum(zero_idx), " entries are 0.  We are on a log scale, adding 1 to the data.")
-      data <- data + 1
+  if (is.null(scale)) {
+    if (max(data) > max_data & min(data) < min_data) {
+      mesg("This data will benefit from being displayed on the log scale.")
+      mesg("If this is not desired, set scale='raw'")
+      scale <- "log"
+      negative_idx <- data < 0
+      if (sum(negative_idx) > 0) {
+        data[negative_idx] <- 0
+        message("Changed ", sum(negative_idx), " negative features to 0.")
+      }
+      zero_idx <- data == 0
+      if (sum(zero_idx) > 0) {
+        message(sum(zero_idx), " entries are 0.  We are on a log scale, adding 1 to the data.")
+        data <- data + 1
+      }
+    } else {
+      scale <- "raw"
     }
   } else {
-    scale <- "raw"
+    mesg("An explicit scale was requested: ", scale, ".")
   }
   retlist <- list(
       "data" = data,
@@ -48,6 +52,9 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
   return(retlist)
 }
 
+#' Translate the hexadecimal color codes to three decimal numbers.
+#'
+#' @param rgb hexadecimal color input.
 color_int <- function(rgb) {
   hex <- gsub(pattern = "^\\#", replacement = "", x = rgb)
   red <- as.integer(as.hexmode(gsub(pattern = "^(.{2}).{4}$", replacement = "\\1", x = hex)))
@@ -83,8 +90,11 @@ ggplt <- function(gg, filename = "ggplot.html",
                   plot_title = class(gg)[[1]], knitrOptions = list(), ...) {
   base <- basename(filename)
   dir <- dirname(filename)
-  out <- plotly::ggplotly(gg,
-                          ...)
+
+  ## 202210: There is a deprecated function call in plotly, which is out
+  ## of the scope of my interest.
+  out <- suppressWarnings(plotly::ggplotly(gg,
+                                           ...))
   widget <- htmlwidgets::saveWidget(
                              plotly::as_widget(out), base, selfcontained, libdir = libdir,
                              background = background, title = plot_title, knitrOptions = knitrOptions)
@@ -388,7 +398,7 @@ plot_legend <- function(stuff) {
 plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
   ## Make a list from the ... arguments and plotlist
   ##  plots <- c(list(...), plotlist)
-  numPlots <- length(plots)
+  num_plots <- length(plots)
   if (is.null(cols)) {
     cols <- ceiling(sqrt(length(plots)))
   }
@@ -397,11 +407,11 @@ plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
     ## Make the panel
     ## ncol: Number of columns of plots
     ## nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots / cols)),
-                     ncol = cols, nrow = ceiling(numPlots / cols))
+    layout <- matrix(seq(1, cols * ceiling(num_plots / cols)),
+                     ncol = cols, nrow = ceiling(num_plots / cols))
   }
 
-  if (numPlots==1) {
+  if (num_plots==1) {
     print(plots[[1]])
   } else {
     ## Set up the page
@@ -409,7 +419,7 @@ plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
     grid::pushViewport(grid::viewport(
                                  layout = grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
-    for (i in 1:numPlots) {
+    for (i in seq_len(num_plots)) {
       ## Get the i,j matrix positions of the regions that contain this subplot
       matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
       print(plots[[i]], vp = grid::viewport(layout.pos.row = matchidx[["row"]],

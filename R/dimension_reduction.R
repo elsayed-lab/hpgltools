@@ -2,6 +2,18 @@
 ## seek to simplify performing the various dimension reduction methods and plot
 ## the results.
 
+#' Incomplete function to compare PCs and SVs.
+#'
+#' This function is the beginning of a method to get a sense of what
+#' happens to data when performing things like SVA.
+#'
+#' @param expt Input expressionset.
+#' @param norm Normalization performed.
+#' @param transform Assuming using PCA and so log2 the data.
+#' @param convert Scale the data, presumably with cpm().
+#' @param filter Low-count filter the data?
+#' @param batch Method which provides SVs to apply.
+#' @return Currently just a plot of the SVs.
 compare_pc_sv <- function(expt, norm = NULL, transform = "log2", convert = "cpm",
                           filter = TRUE, batch = "svaseq") {
   start <- normalize_expt(expt, norm = norm, transform = transform,
@@ -17,7 +29,7 @@ compare_pc_sv <- function(expt, norm = NULL, transform = "log2", convert = "cpm"
   new_pc_df <- as.matrix(new_pc[["table"]][, start_pc_df_columns])
   delta_pc_df <- start_pc_df - new_pc_df
   combined_df <- data.frame(row.names = rownames(start_pc_df))
-  for (sv in 1:num_svs) {
+  for (sv in seq_len(num_svs)) {
     two_columns <- cbind(sv_df[, sv], delta_pc_df[, sv])
     colnames(two_columns) <- c(paste0("sv", sv), paste0("pc", sv))
     combined_df <- cbind(combined_df, two_columns)
@@ -30,7 +42,7 @@ compare_pc_sv <- function(expt, norm = NULL, transform = "log2", convert = "cpm"
   y_query <- paste0("sv", queried)
   pc_df <- ggplot(data = combined_df, aes_string(x = x_query, y = y_query, color = "condition", size = 5,
                                                  fill = "condition", shape = "batch")) +
-    geom_point()
+    ggplot2::geom_point()
 }
 
 #' Collect the r^2 values from a linear model fitting between a singular
@@ -62,7 +74,7 @@ factor_rsquared <- function(datum, fact, type = "factor") {
   } else {
     lm_summaries <- summary(svd_lm)
     rsq_result <- c()
-    for (i in 1:length(lm_summaries)) {
+    for (i in seq_along(lm_summaries)) {
       rsq <- lm_summaries[[i]][["r.squared"]]
       rsq_result[i] <- rsq
     }
@@ -92,7 +104,7 @@ get_res <- function(svd_result, design, factors = c("condition", "batch"),
       "prop_var" = rsquared_column,
       "cum_prop_var" = cumulative_sum_column)
 
-  for (j in 1:length(factors)) {
+  for (j in seq_along(factors)) {
     factor <- factors[j]
     if (!is.null(design[[factor]])) {
       fact <- design[[factor]]
@@ -196,7 +208,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   }
 
   ## Now fill in the pca_df with the data from the various PCs
-  for (pc in 1:num_components) {
+  for (pc in seq_len(num_components)) {
     name <- glue::glue("PC{pc}")
     ## v is a matrix, don't forget that.
     pca_data[[name]] <- v[, pc] ## note you _must_ not shortcut this with [[pc]]
@@ -207,10 +219,10 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   pca_plots <- list()
   if (isTRUE(plot_pcas)) {
     nminus_one <- num_components - 1
-    for (pc in 1:nminus_one) {
+    for (pc in seq_len(nminus_one)) {
       next_pc <- pc + 1
       name <- glue::glue("PC{pc}")
-      for (second_pc in next_pc:num_components) {
+      for (second_pc in seq(from = next_pc, to = num_components)) {
         if (pc < second_pc & second_pc <= num_components) {
           second_name <- glue::glue("PC{second_pc}")
           list_name <- glue::glue("{name}_{second_name}")
@@ -245,9 +257,9 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   anova_p <- data.frame()
   anova_rss <- data.frame()
   anova_fstats <- data.frame()
-  for (f in 1:length(expt_factors)) {
+  for (f in seq_along(expt_factors)) {
     fact <- expt_factors[f]
-    for (pc in 1:num_components) {
+    for (pc in seq_len(num_components)) {
       pc_name <- glue::glue("pc_{pc}")
       tmp_df <- merge(factor_df, pca_data, by = "row.names")
       test_column <- glue::glue("{fact}.x")
@@ -446,7 +458,7 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
 
   highest <- NULL
   lowest <- NULL
-  for (pc in 1:length(colnames(another_pca[["scores"]]))) {
+  for (pc in seq_along(colnames(another_pca[["scores"]]))) {
     tmphigh <- another_pca[["scores"]]
     tmplow <- another_pca[["scores"]]
     tmphigh <- tmphigh[order(tmphigh[, pc], decreasing = TRUE), ]
@@ -957,7 +969,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   comp_data[[x_name]] <- pc_table[, x_pc]
   comp_data[[y_name]] <- pc_table[, y_pc]
   tmp <- as.data.frame(pc_table)
-  for (pc in 1:num_pc) {
+  for (pc in seq_len(num_pc)) {
     oldname <- glue::glue("PC{pc}")
     pc_name <- glue::glue("pc_{pc}")
     comp_data[[pc_name]] <- tmp[[oldname]]
@@ -1446,7 +1458,7 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
   comp_data[[x_name]] <- pc_table[, x_pc]
   comp_data[[y_name]] <- pc_table[, y_pc]
   tmp <- as.data.frame(pc_table)
-  for (pc in 1:num_pc) {
+  for (pc in seq_len(num_pc)) {
     oldname <- glue::glue("PC{pc}")
     pc_name <- glue::glue("pc_{pc}")
     comp_data[[pc_name]] <- tmp[[oldname]]

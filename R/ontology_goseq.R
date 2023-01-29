@@ -2,6 +2,19 @@
 ## first GSEA tool I learned about.  It is not particularly robust, this seeks
 ## to amend that.
 
+#' Filter a goseq significance search
+#'
+#' Given a goseq result, use some simple filters to pull out the
+#' categories of likely interest.
+#'
+#' @param godata goseq result
+#' @param expand_categories Extract GO terms from GO.db and add them
+#'  to the table
+#' @param pvalue Significance filter.
+#' @param minimum_interesting The category should have more than this
+#'  number of elements.
+#' @param adjust Adjusted p-value filter.
+#' @param padjust_method Method for adjusting the p-values.
 extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue = 0.05,
                                       minimum_interesting = 1, adjust = 0.05, padjust_method = "BH") {
   ## Add a little logic if we are using a non-GO input database.
@@ -56,18 +69,33 @@ extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue =
   mf_idx <- godata_interesting[["ontology"]] == "MF"
   mf_interesting <- godata_interesting[mf_idx, ]
   rownames(mf_interesting) <- mf_interesting[["category"]]
-  mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(mf_interesting[["term"]])) {
+    mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    mf_interesting <- mf_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   bp_idx <- godata_interesting[["ontology"]] == "BP"
   bp_interesting <- godata_interesting[bp_idx, ]
   rownames(bp_interesting) <- bp_interesting[["category"]]
-  bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(bp_interesting[["term"]])) {
+    bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    bp_interesting <- bp_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   cc_idx <- godata_interesting[["ontology"]] == "CC"
   cc_interesting <- godata_interesting[cc_idx, ]
   rownames(cc_interesting) <- cc_interesting[["category"]]
-  cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
-                                       "over_represented_pvalue", "qvalue", "term")]
+  if (is.null(cc_interesting[["term"]])) {
+    cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue")]
+  } else {
+    cc_interesting <- cc_interesting[, c("ontology", "numDEInCat", "numInCat",
+                                         "over_represented_pvalue", "qvalue", "term")]
+  }
   retlist <- list(
       "godata" = godata,
       "interesting" = godata_interesting,
@@ -121,20 +149,32 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
                                   signature_category = signature_category)
   mesg("Starting to coerce the msig data to the ontology format.")
   go_db <- data.table::data.table()
-  for (i in 1:length(sig_data)) {
+  for (i in seq_along(sig_data)) {
     gsc <- sig_data[[i]]
     gsc_id <- gsc@setName
     gsc_genes <- gsc@geneIds
     tmp_db <- data.table::data.table("ID" = gsc_genes, "GO" = rep(gsc_id, length(gsc_genes)))
     go_db <- rbind(go_db, tmp_db)
   }
-  mesg("Finished coercing the msig data.")
+  mesg("Finished coercing the msig data into a df with ", nrow(go_db), " rows.")
 
-  new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
-  new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
-  ## We cannot guarantee that the IDs acquired in this fashion are unique.
-  ## rownames(new_sig) <- new_sig[[required_id]]
-  new_sig[["ID"]] <- new_sig[[required_id]]
+  new_ids <- NULL
+  new_sig <- data.frame()
+  if ("character" %in% class(sig_genes)) {
+    new_ids <- convert_ids(sig_genes, from = current_id, to = required_id, orgdb = orgdb)
+    new_sig <- new_ids
+    colnames(new_sig) <- c(current_id, "ID")
+    new_sig <- new_sig[, c("ID", current_id)]
+    rownames(new_sig) <- make.names(new_sig[["ID"]], unique = TRUE)
+  } else if ("data.frame" %in% class(sig_genes)) {
+    new_ids <- convert_ids(rownames(sig_genes), from = current_id,
+                           to = required_id, orgdb = orgdb)
+    new_sig <- merge(new_ids, sig_genes, by.x = current_id,
+                     by.y = "row.names")
+    new_sig[["ID"]] <- new_sig[[required_id]]
+  } else {
+    stop("I do not understand this input data format for sig_genes.")
+  }
 
   new_lids <- convert_ids(rownames(length_db), from = current_id, to = required_id, orgdb = orgdb)
   new_length <- merge(new_lids, length_db, by.x = current_id, by.y = "row.names")
@@ -422,7 +462,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     pwf_plot <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- file.remove(tmp_file)
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))
@@ -444,6 +484,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   mesg("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
+                                  x_column = "over_represented_pvalue",
                                   ...)
   pval_plots <- list(
       "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],

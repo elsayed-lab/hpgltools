@@ -23,10 +23,13 @@ combine_de_tables(
   plot_dim = 6,
   compare_plots = TRUE,
   padj_type = "ihw",
+  fancy = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
   rda = NULL,
+  start_worksheet = "S02",
+  format_sig = 4,
   ...
 )
 }
@@ -69,6 +72,8 @@ certain contrasts in specific orders and orientations.}
 
 \item{padj_type}{Add a consistent p adjustment of this type.}
 
+\item{fancy}{Save a set of fancy plots along with the xlsx file?}
+
 \item{lfc_cutoff}{In this context, only used for plotting volcano/MA plots.}
 
 \item{p_cutoff}{In this context, used for volcano/MA plots.}
@@ -76,6 +81,8 @@ certain contrasts in specific orders and orientations.}
 \item{de_types}{Used for plotting pvalue/logFC cutoffs.}
 
 \item{rda}{Write a rda file of the results.}
+
+\item{start_worksheet}{This will now increment worksheet titles from this point forward.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }

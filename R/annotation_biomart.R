@@ -68,7 +68,7 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
       ## Then assume this month
       month_numeric <- lubridate::month(lubridate::date(lubridate::now()))
       month_nums <- c(month_numeric, month_numeric - 1, month_numeric - 2)
-      for (m in 1:length(month_nums)) {
+      for (m in seq_along(month_nums)) {
         if (month_nums[m] < 1) {
           month_nums[m] <- month_nums[m] + 12
         }
@@ -149,6 +149,33 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
       "used_mart" = used_mart,
       "mart" = mart)
   return(retlist)
+}
+
+get_biomart_example_gene <- function(species = "mmusculus", attributes = "feature_page",
+                                     host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
+                                     default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
+                                                       "www.ensembl.org", "asia.ensembl.org"),
+                                     gene_requests = c("ensembl_gene_id", "version")) {
+  message("Grabbing all gene IDs from biomart for ", species, ".")
+  start <- load_biomart_annotations(species = species, overwrite = TRUE, do_save = FALSE,
+                                    gene_requests = gene_requests, include_lengths = FALSE)
+  mart <- start[["mart"]]
+  all <- biomaRt::listAttributes(mart)
+  example_gene <- start[["annotation"]][1, 1]
+  wanted_attributes = "feature_page"
+  wanted_idx <- all[["page"]] == wanted_attributes
+  wanted <- all[wanted_idx, "name"]
+  final <- sum(wanted_idx)
+  min <- 1
+  result <- c()
+  while (min <= final) {
+    example <- biomaRt::getBM(attributes = wanted[min], filters = "ensembl_gene_id",
+                              mart = mart, values = example_gene)[1, ]
+    message("Column: ", wanted[min], " has value: ", example)
+    result <- c(result, example)
+    min <- min + 1
+  }
+  return(result)
 }
 
 #' Extract annotation information from biomart.
@@ -258,7 +285,10 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
   available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
   found_attribs <- gene_requests %in% available_attribs
   if (length(gene_requests) != sum(found_attribs)) {
-    message("Some attributes in your request list were not in the ensembl database.")
+    missing_requests_idx <- ! gene_requests %in% available_attribs
+    missing_requests <- gene_requests[missing_requests_idx]
+    message("Some attributes in your request list were not in the ensembl database: ",
+            missing_requests, ".")
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes = gene_requests,
@@ -380,9 +410,6 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #' @param default_hosts List of biomart mirrors to try.
 #' @param year Choose specific year(s) for the archive servers?
 #' @param month Choose specific month(s) for the archive servers?
-#' @param drop_haplotypes Some chromosomes have stupid names because they are
-#'  from non-standard haplotypes and they should go away.  Setting this to
-#'  false stops that.
 #' @param trydataset Define a dataset to which to attempt connecting.
 #' @param dl_rows List of rows from the final biomart object to download.
 #' @param dl_rowsv2 A second list of potential rows.

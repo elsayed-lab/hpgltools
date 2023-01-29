@@ -115,7 +115,7 @@ a909_tables <- combine_de_tables(
   excel = "a909_tables.xlsx")
 ## 12
 test_that("all_pairwise returned?", {
-  expect_equal("combined_de", class(a909_tables)[1])
+  expect_true("combined_de" %in% class(a909_tables))
 })
 
 a909_sig <- extract_significant_genes(

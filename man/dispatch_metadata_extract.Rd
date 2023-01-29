@@ -37,6 +37,10 @@ or to just get rid of this function.}
 
 \item{verbose}{used for testing regexes.}
 
+\item{species}{Choose a specific species for which to search (for filenames generally).}
+
+\item{type}{Set the type of file to search.}
+
 \item{...}{passed to glue to add more variables to the file spec.}
 }
 \value{

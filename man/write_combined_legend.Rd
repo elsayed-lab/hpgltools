@@ -19,7 +19,8 @@ write_combined_legend(
   include_ebseq,
   basic,
   include_basic,
-  padj_type
+  padj_type,
+  fancy = FALSE
 )
 }
 \arguments{
@@ -52,6 +53,8 @@ write_combined_legend(
 \item{include_basic}{Include the basic result?}
 
 \item{padj_type}{P-adjustment employed.}
+
+\item{fancy}{Write fancy plots with the xlsx file?}
 }
 \description{
 Write the legend of an excel file for combine_de_tables()

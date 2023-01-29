@@ -68,12 +68,16 @@ plot_topgo_densities <- function(godata, table) {
 #' @param ontology Ontology to plot (MF,BP,CC).
 #' @param fontsize Fiddling with the font size may make some plots more readable.
 #' @param plot_title Set an explicit plot title.
+#' @param text_location Choose where to put the text describing the number of genes in the category.
+#' @param text_color Choose the text color, I have a fun function for this now...
+#' @param x_column Use this column to arrange the x-axis.
 #' @param numerator Column used for printing a ratio of genes/category.
 #' @param denominator Column used for printing a ratio of genes/category.
 #' @return Ggplot2 plot of pvalues vs. ontology.
 #' @seealso [ggplot2]
 #' @export
-plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, text_location = "right", test_color = "black",
+plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
+                         text_location = "right", text_color = "black",
                          x_column = "score", numerator = NULL, denominator = NULL) {
   if (nrow(df) == 0) {
     return(NULL)
@@ -135,11 +139,11 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
     hjsut <- 1.2
     if (text_location == "right") {
       hjust <- 0.0
-    } else if (test_location == "inside") {
+    } else if (text_location == "inside") {
       hjust <- 1.2
     }
     pvalue_plot <- pvalue_plot +
-      ggplot2::geom_text(parse = FALSE, size = 3, color = test_color, hjust = hjust,
+      ggplot2::geom_text(parse = FALSE, size = 3, color = text_color, hjust = hjust,
                          ggplot2::aes_string(label = "score_string"))
   }
   return(pvalue_plot)
@@ -154,6 +158,9 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
 #' @param goterms Some data from goseq!
 #' @param wrapped_width Number of characters before wrapping to help legibility.
 #' @param cutoff Pvalue cutoff for the plot.
+#' @param x_column Choose the data column to put on the x-axis of the plot.
+#' @param order_by Choose the data column for ordering the bars.
+#' @param decreasing When ordering the bars, go up or down?
 #' @param n How many groups to include?
 #' @param mincat Minimum size of the category for inclusion.
 #' @param level Levels of the ontology tree to use.
@@ -162,7 +169,8 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL, 
 #' @seealso [ggplot2]
 #' @export
 plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1, x_column = "score",
-                            order_by = "score", decreasing = FALSE, n = 30, mincat = 5, level = NULL, ...) {
+                            order_by = "score", decreasing = FALSE, n = 30,
+                            mincat = 5, level = NULL, ...) {
   if (class(goterms)[1] == "goseq_result") {
     goterms <- goterms[["godata"]]
   }
@@ -201,6 +209,9 @@ plot_goseq_pval <- function(goterms, wrapped_width = 30, cutoff = 0.1, x_column 
   plot_list <- list()
   for (ont in c("mf", "bp", "cc")) {
     idx <- goterms_complete[["ontology"]] == toupper(ont)
+    if (sum(idx) == 0) {
+      next
+    }
     plotting <- goterms_complete[idx, ]
     chosen_order = "score"
     if (is.null(plotting[[order_by]])) {
@@ -420,6 +431,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   tf_result <- gp_result[["tf"]]
   corum_result <- gp_result[["corum"]]
   hp_result <- gp_result[["hp"]]
+  hpa_result <- gp_result[["hpa"]]
 
   kept_columns <- c("p.value", "term.size", "query.size",
                     "overlap.size", "recall", "precision",
@@ -507,7 +519,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_kegg_over <- kegg_result
   kegg_pval_plot_over <- NULL
-  if (is.null(kegg_result) | nrow(kegg_result) == 0) {
+  if (is.null(kegg_result)) {
+    kegg_result <- data.frame()
+  }
+  if (nrow(kegg_result) == 0) {
     plotting_kegg_over <- NULL
   } else {
     plotting_kegg_over <- gp_rewrite_df(plotting_kegg_over)
@@ -520,7 +535,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_reactome_over <- reactome_result
   reactome_pval_plot_over <- NULL
-  if (is.null(reactome_result) | nrow(reactome_result) == 0) {
+  if (is.null(reactome_result)) {
+    reactome_result <- data.frame()
+  }
+  if (nrow(reactome_result) == 0) {
     plotting_reactome_over <- NULL
   } else {
     plotting_reactome_over <- gp_rewrite_df(plotting_reactome_over)
@@ -533,7 +551,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_mi_over <- mi_result
   mi_pval_plot_over <- NULL
-  if (is.null(mi_result) | nrow(mi_result) == 0) {
+  if (is.null(mi_result)) {
+    mi_result <- data.frame()
+  }
+  if (nrow(mi_result) == 0) {
     plotting_mi_over <- NULL
   } else {
     plotting_mi_over <- gp_rewrite_df(plotting_mi_over)
@@ -546,7 +567,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_tf_over <- tf_result
   tf_pval_plot_over <- NULL
-  if (is.null(tf_result) | nrow(tf_result) == 0) {
+  if (is.null(tf_result)) {
+    tf_result <- data.frame()
+  }
+  if (nrow(tf_result) == 0) {
     plotting_tf_over <- NULL
   } else {
     plotting_tf_over <- gp_rewrite_df(plotting_tf_over)
@@ -559,7 +583,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_corum_over <- corum_result
   corum_pval_plot_over <- NULL
-  if (is.null(corum_result) | nrow(corum_result) == 0) {
+  if (is.null(corum_result)) {
+    corum_result <- data.frame()
+  }
+  if (nrow(corum_result) == 0) {
     plotting_corum_over <- NULL
   } else {
     plotting_corum_over <- gp_rewrite_df(plotting_corum_over)
@@ -572,7 +599,10 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
 
   plotting_hp_over <- hp_result
   hp_pval_plot_over <- NULL
-  if (is.null(hp_result) | nrow(hp_result) == 0) {
+  if (is.null(hp_result)) {
+    hp_result <- data.frame()
+  }
+  if (nrow(hp_result) == 0) {
     plotting_hp_over <- NULL
   } else {
     plotting_hp_over <- gp_rewrite_df(plotting_hp_over)
@@ -581,6 +611,22 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
   }
   if (class(hp_pval_plot_over)[[1]] == "try-error") {
     hp_pval_plot_over <- NULL
+  }
+
+  plotting_hpa_over <- hpa_result
+  hpa_pval_plot_over <- NULL
+  if (is.null(hpa_result)) {
+    hpa_result <- data.frame()
+  }
+  if (nrow(hpa_result) == 0) {
+    plotting_hpa_over <- NULL
+  } else {
+    plotting_hpa_over <- gp_rewrite_df(plotting_hpa_over)
+    hpa_pval_plot_over <- try(plot_ontpval(plotting_hpa_over, ontology = "HPA"),
+                              silent = TRUE)
+  }
+  if (class(hpa_pval_plot_over)[[1]] == "try-error") {
+    hpa_pval_plot_over <- NULL
   }
 
   pval_plots <- list(
@@ -593,6 +639,7 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
       "tf_plot_over" = tf_pval_plot_over,
       "corum_plot_over" = corum_pval_plot_over,
       "hp_plot_over" = hp_pval_plot_over,
+      "hpa_plot_over" = hp_pval_plot_over,
       "mf_subset_over" = plotting_mf_over,
       "bp_subset_over" = plotting_bp_over,
       "cc_subset_over" = plotting_cc_over,
@@ -601,10 +648,95 @@ plot_gprofiler_pval <- function(gp_result, wrapped_width = 30,
       "mi_subset" = plotting_mi_over,
       "tf_subset" = plotting_tf_over,
       "corum_subset" = plotting_corum_over,
-      "hp_subset" = plotting_hp_over
+      "hp_subset" = plotting_hp_over,
+      "hpa_subset" = plotting_hpa_over
   )
   new_options <- options(old_options)
   return(pval_plots)
+}
+
+#' Make a pvalue plot from gprofiler data.
+#'
+#' The p-value plots from clusterProfiler are pretty, this sets the gprofiler
+#' data into a format suitable for plotting in that fashion and returns the
+#' resulting plots of significant ontologies.
+#'
+#' @param gp_result Some data from gProfiler.
+#' @param wrapped_width Maximum width of the text names.
+#' @param cutoff P-value cutoff for the plots.
+#' @param n Maximum number of ontologies to include.
+#' @param group_minsize Minimum ontology group size to include.
+#' @param scorer Which column to use for scoring the data.
+#' @param ... Options I might pass from other functions are dropped into arglist.
+#' @return List of MF/BP/CC pvalue plots.
+#' @seealso [ggplot2]
+#' @export
+plot_gprofiler2_pval <- function(gp_result, wrapped_width = 30,
+                                cutoff = 0.1, n = 30,
+                                group_minsize = 5, scorer = "recall",
+                                ...) {
+
+  types <- c("MF", "BP", "CC", "KEGG", "REAC", "WP", "TF", "MIRNA", "HPA", "CORUM", "HP")
+  go_result <- gp_result[["GO"]]
+  mf_idx <- go_result[["source"]] == "GO:MF"
+  gp_result[["MF"]] <- go_result[mf_idx, ]
+  bp_idx <- go_result[["source"]] == "GO:BP"
+  gp_result[["BP"]] <- go_result[bp_idx, ]
+  cc_idx <- go_result[["source"]] == "GO:CC"
+  gp_result[["CC"]] <- go_result[cc_idx, ]
+
+  kept_columns <- c("p_value", "term_size", "query_size",
+                    "intersection_size", "recall", "precision",
+                    "term_id", "term_name", "effective_domain_size")
+  old_options <- options(scipen = 4)
+
+  gp_rewrite_df <- function(plotting_df) {
+    ## First set the order of the table to be something most descriptive.
+    ## For the moment, we want that to be the score.
+    plotting_df[["score"]] <- plotting_df[[scorer]]
+    new_order <- order(plotting_df[["score"]], decreasing = FALSE)
+    plotting_df <- plotting_df[new_order, ]
+    ## Drop anything with no term name
+    kidx <- plotting_df[["term_name"]] != "NULL"
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything outside of our pvalue cutoff
+    kidx <- plotting_df[["p_value"]] <= cutoff
+    plotting_df <- plotting_df[kidx, ]
+    ## Drop anything with fewer than x genes in the group
+    kidx <- plotting_df[["query_size"]] >= group_minsize
+    plotting_df <- plotting_df[kidx, ]
+    ## Because of the way ggplot wants to order the bars, we need to go from the bottom up,
+    ## ergo tail here. This ordering will be maintained in the plot by setting the levels of
+    ## the factor in plot_ontpval, which should have a note.
+    plotting_df <- tail(plotting_df, n = n)
+    plotting_df <- plotting_df[, c("term_name", "p_value", "score")]
+    colnames(plotting_df) <- c("term", "pvalue", "score")
+    plotting_df[["term"]] <- as.character(
+        lapply(strwrap(plotting_df[["term"]],
+                       wrapped_width, simplify = FALSE),
+               paste, collapse = "\n"))
+    return(plotting_df)
+  }
+
+  over_plots <- list()
+  for (num in seq_along(types)) {
+    table <- types[num]
+    plotting <- gp_result[[table]]
+    plot <- NULL
+    if (is.null(plotting) | nrow(plotting) == 0) {
+      plot <- NULL
+    } else {
+      plotting <- gp_rewrite_df(plotting)
+      plot <- try(plot_ontpval(plotting, ontology = table))
+    }
+    if (class(plot)[[1]] == "try-error") {
+      plot <- NULL
+    }
+    over_plots[[table]] <- plot
+  }
+
+  new_options <- options(old_options)
+  return(over_plots)
 }
 
 #' Make fun trees a la topgo from goseq data.

@@ -16,7 +16,7 @@ make_kegg_df <- function(org_code) {
   genes <- pathl[["gene_sets"]]
   annot <- pathl[["descriptions"]]
   pathdf <- data.frame()
-  for (p in 1:length(genes)) {
+  for (p in seq_along(genes)) {
     path <- genes[p]
     tmpdf <- as.data.frame(path)
     tmpdf[["path"]] <- colnames(tmpdf)[1]
@@ -58,7 +58,7 @@ kegg_vector_to_df <- function(vector, final_colname = "first", flatten = TRUE) {
     duplicated_vector <- sorted_vector[duplicated_names]
     ## Now append the duplicated entries to the existing data frame.
     if (length(duplicated_vector) > 0) {
-      for (c in 1:length(duplicated_vector)) {
+      for (c in seq_along(duplicated_vector)) {
         append_name <- names(duplicated_vector)[c]
         append_entry <- as.character(duplicated_vector[c])
         unique_df[append_name, final_colname] <- glue(
@@ -183,7 +183,7 @@ map_kegg_dbs <- function(kegg_ids) {
   for (x in split_kegg) {
     x <- as.character(unlist(x))
     query <- KEGGREST::keggGet(x)
-    for (d in 1:length(query)) {
+    for (d in seq_along(query)) {
       count <- count + 1
       item <- query[d]
       dblinks <- item[[1]][["DBLINKS"]]

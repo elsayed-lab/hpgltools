@@ -23,6 +23,7 @@ combine_single_de_table(
   include_basic = TRUE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
+  format_sig = 4,
   excludes = NULL,
   sheet_count = 0
 )
@@ -63,6 +64,9 @@ combine_single_de_table(
 \item{lfc_cutoff}{Preferred logfoldchange cutoff.}
 
 \item{p_cutoff}{Preferred pvalue cutoff.}
+
+\item{format_sig}{How many significant digits to print?  Set it to something not
+numeric to not use any significant digit formatting.}
 
 \item{excludes}{Set of genes to exclude from the output.}
 

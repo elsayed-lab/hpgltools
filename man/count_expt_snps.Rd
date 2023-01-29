@@ -19,8 +19,6 @@ count_expt_snps(
 \item{tolower}{Lowercase stuff like 'HPGL'?}
 
 \item{snp_column}{Which column of the parsed bcf table contains our interesting material?}
-
-\item{type}{Use counts / samples or ratios?}
 }
 \value{
 A new expt object

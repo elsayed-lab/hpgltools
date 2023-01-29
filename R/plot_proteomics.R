@@ -25,7 +25,7 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
   plot_df <- data.frame()
   samples <- length(sample_data)
   keepers <- c()
-  for (i in 1:samples) {
+  for (i in seq_len(samples)) {
     name <- metadata[i, "sampleid"]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
@@ -126,7 +126,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
   plot_df <- data.frame()
   samples <- length(sample_data)
   keepers <- c()
-  for (i in 1:samples) {
+  for (i in seq_len(samples)) {
     name <- metadata[i, "sampleid"]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
@@ -236,7 +236,7 @@ plot_pyprophet_counts <- function(pyprophet_data, type = "count", keep_real = TR
 
   keepers <- c()
   plotted_data <- data.frame()
-  for (i in 1:samples) {
+  for (i in seq_len(samples)) {
     name <- names(sample_data)[i]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
@@ -414,7 +414,7 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   }
 
   keepers <- c()
-  for (i in 1:samples) {
+  for (i in seq_len(samples)) {
     name <- names(sample_data)[i]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
@@ -594,7 +594,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
 
   slength <- length(samples)
   keepers <- c()
-  for (i in 1:slength) {
+  for (i in seq_len(slength)) {
     name <- samples[i]
     if (class(sample_data[[name]])[1] == "try-error") {
       next
@@ -643,7 +643,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
     kept_prot_idx <- grepl(pattern = protein, x = plot_df[["proteinname"]])
     plot_df <- plot_df[kept_prot_idx, ]
     data_minimum <- min(as.numeric(plot_df[[column]])) / 2
-    for (s in 1:length(sample_order)) {
+    for (s in seq_along(sample_order)) {
       sample <- sample_order[s]
       found <- sample %in% plot_df[["sample"]]
       if (isTRUE(found)) {
@@ -698,7 +698,7 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
   observations_by_sample <- table(final_df[["sample"]])
   obs <- as.numeric(observations_by_sample)
   names(obs) <- names(observations_by_sample)
-  for (c in 1:length(null_samples)) {
+  for (c in seq_along(null_samples)) {
     sample_id <- names(null_samples)[c]
     if (isTRUE(null_samples[sample_id])) {
       obs[sample_id] <- 0
@@ -775,7 +775,7 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
   plot_df <- data.frame()
   samples <- length(sample_data)
   keepers <- c()
-  for (i in 1:samples) {
+  for (i in seq_len(samples)) {
     name <- metadata[i, "sampleid"]
     if (class(sample_data[[i]])[1] == "try-error") {
       next
@@ -1010,10 +1010,10 @@ plot_cleaved <- function(pep_sequences, enzyme = "trypsin", start = 600, end = 1
   plot(NA, xlim = c(start, end), ylim = c(0, 1),
        xlab = "mass in Daltons", ylab = "relative intensity",
        main = glue("Digested sequences with: {enzyme}"))
-  for (pep in 1:length(products)) {
+  for (pep in seq_along(products)) {
     seq <- names(pep_sequences)[[pep]]
     prod <- products[[pep]]
-    for (i in 1:length(prod)) {
+    for (i in seq_along(prod)) {
       atoms <- try(BRAIN::getAtomsFromSeq(prod[[i]]), silent = TRUE)
       if (class(atoms) != "try-error") {
         d <- BRAIN::useBRAIN(atoms)

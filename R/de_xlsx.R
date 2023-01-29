@@ -28,11 +28,13 @@
 #' @param loess Add time intensive loess estimation to plots?
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @param compare_plots Add some plots comparing the results.
+#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param padj_type Add a consistent p adjustment of this type.
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
 #' @param rda Write a rda file of the results.
+#' @param start_worksheet This will now increment worksheet titles from this point forward.
 #' @param ... Arguments passed to significance and abundance tables.
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
@@ -53,9 +55,9 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                               keepers = "all", excludes = NULL, adjp = TRUE, include_limma = TRUE,
                               include_deseq = TRUE, include_edger = TRUE, include_ebseq = TRUE,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
-                              plot_dim = 6, compare_plots = TRUE, padj_type = "ihw",
+                              plot_dim = 6, compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
-                              rda = NULL, ...) {
+                              rda = NULL, start_worksheet = "S02", format_sig = 4, ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -64,6 +66,24 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   do_excel <- TRUE
   if (is.null(wb)) {
     do_excel <- FALSE
+  }
+
+  ## Add a little logic to fill in table numbers in the worksheets.
+  ## To do this, replace the default SXXX with something, either a number or
+  ## a prefix followed by a number, and increment the number for each sheet.
+  sheet_prefix <- NULL
+  sheet_number <- NULL
+  if (!is.null(start_worksheet)) {
+    captured <- utils::strcapture(pattern = "^([A-Za-z]*)([0-9]+)",
+                                  x = start_worksheet,
+                                  proto = list(prefix = character(),
+                                               number = integer()))
+    if (stringr::str_length(captured[["prefix"]]) > 0) {
+      sheet_prefix <- captured[["prefix"]]
+    }
+    if (stringr::str_length(captured[["number"]]) > 0) {
+      sheet_number <- captured[["number"]]
+    }
   }
 
   ## Create a list of image files so that they may be properly cleaned up
@@ -152,7 +172,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
                                      loess =  loess, lfc_cutoff = lfc_cutoff,
-                                     p_cutoff =  p_cutoff)
+                                     p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
+                                     sheet_number = sheet_number, format_sig = format_sig)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -167,7 +188,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      include_ebseq, include_limma,
                                      include_basic, excludes, padj_type,
                                      loess = loess, lfc_cutoff = lfc_cutoff,
-                                     p_cutoff =  p_cutoff)
+                                     p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
+                                     sheet_number = sheet_number)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
@@ -180,7 +202,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                         include_ebseq, include_limma,
                                         include_basic, excludes, padj_type,
                                         loess =  loess, lfc_cutoff = lfc_cutoff,
-                                        p_cutoff = p_cutoff)
+                                        p_cutoff = p_cutoff, sheet_prefix = sheet_prefix,
+                                        sheet_number = sheet_number)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -204,7 +227,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
     ## when setting up the contrasts such that something got duplicated.
     tnames <- names(extracted[["table_names"]])
     tsources <- as.character(extracted[["table_names"]])
-    for (x in 1:length(tnames)) {
+    sheet_increment <- 0
+    for (x in seq_along(tnames)) {
       tab <- tnames[x]
       written_table <- extracted[["data"]][[tab]]
       if (! "data.frame" %in% class(written_table)) {
@@ -213,6 +237,22 @@ combine_de_tables <- function(apr, extra_annot = NULL,
       }
       final_excel_title <- gsub(pattern = "YYY", replacement = tab, x = excel_title)
       final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  Contrast denominator: {denominators[x]}.")
+
+      ## Replace the excel table name with the incrementing value
+      sheet_increment_start <- "SXXX"
+      sheet_increment_string <- sheet_increment_start
+      sheet_increment_number <- sheet_number + sheet_increment
+      if (is.null(sheet_prefix)) {
+        if (!is.null(sheet_number)) {
+          sheet_increment_string <- as.character(sheet_number)
+        }
+      } else {
+        sheet_increment_string <- glue("{sheet_prefix}{sheet_increment_number}")
+      }
+      sheet_increment <- sheet_increment + 1
+      final_excel_title <- gsub(pattern = sheet_increment_start,
+                                replacement = sheet_increment_string, x = excel_title)
+
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data = written_table, wb = wb, sheet = tab,
                                title = final_excel_title, rownames = rownames)
@@ -245,7 +285,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc > 0.",
                                      startRow = current_row, startCol = current_column)
           up_plot <- venn_nop_lfc0[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "lfc0upvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -258,7 +298,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc > 1.",
                                      startRow = 1, startCol = current_column)
           up_plot <- venn_nop[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "upvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -271,7 +311,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value up genes, lfc > 0.",
                                      startRow = 1, startCol = current_column)
           up_plot <- venn_list[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height = (plot_dim / 2),
               start_col = current_column, plotname = "upvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -284,7 +324,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value up genes, lfc > 1.",
                                      startRow = current_row, startCol = current_column)
           sig_up_plot <- venn_sig_list[["up_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               sig_up_plot, wb = wb, sheet = sheetname, width = (plot_dim / 2), height =  (plot_dim / 2),
               start_col = current_column, plotname = "upvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -308,7 +348,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by fc going up.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["up"]], wb = wb, sheet =  sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col =  current_column, plotname =  "siggenesup",
@@ -321,7 +361,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by p going up.",
                                        startRow = 1, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["pup"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenespup",
@@ -338,7 +378,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc < 0.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_nop_lfc0[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "lfc0downvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -351,7 +391,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of all genes, lfc < -1.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_nop[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvennnop", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -364,7 +404,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value down genes, lfc < 0.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -377,7 +417,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      x = "Venn of p-value down genes, lfc < -1.",
                                      startRow = current_row, startCol = current_column)
           down_plot <- venn_sig_list[["down_venn"]]
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               down_plot, wb = wb, sheet = sheetname, width = plot_dim / 2, height = plot_dim / 2,
               start_col = current_column, plotname = "downvenn", savedir = excel_basename,
               start_row = current_row + 1, doWeights = FALSE)
@@ -390,7 +430,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by fc going down.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["down"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenesup",
@@ -403,7 +443,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname,
                                        x = "Significant genes by p going down.",
                                        startRow = current_row, startCol = current_column)
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 siggene_lst[["pdown"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = (plot_dim / 2),
                 start_col = current_column, plotname = "siggenespdown",
@@ -416,7 +456,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
         } ## End checking on venns
         ## Now add the coefficients, ma, and volcanoes below the venns.
         ## Text on row 18, plots from 19-49 (30 rows)
-        for (t in 1:length(de_types)) {
+        for (t in seq_along(de_types)) {
           type <- de_types[t]
           sc <- paste0(type, "_scatter_plots")
           ma <- paste0(type, "_ma_plots")
@@ -439,7 +479,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = printme,
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "scatter")
-            try_result <- xlsx_plot_png(
+            try_result <- xlsx_insert_png(
                 plt[["scatter"]], wb = wb, sheet = sheetname,
                 width = plot_dim, height = plot_dim, start_col = current_column,
                 plotname = plotname, savedir = excel_basename, start_row = current_row + 1)
@@ -451,7 +491,8 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = paste0(type, " MA plot"),
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "ma")
-            try_ma_result <- xlsx_plot_png(
+            ## I think something here is failing and leaving behind a tempfile.
+            try_ma_result <- xlsx_insert_png(
                 ma_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, plotname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -463,7 +504,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = paste0(type, " volcano plot"),
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "vol")
-            try_vol_result <- xlsx_plot_png(
+            try_vol_result <- xlsx_insert_png(
                 vol_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, pltname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -475,7 +516,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                        wb = wb, sheet = sheetname, x = paste0(type, " p-value plot"),
                                        startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "p")
-            try_p_result <- xlsx_plot_png(
+            try_p_result <- xlsx_insert_png(
                 p_plt, wb = wb, sheet = sheetname, width = plot_dim,
                 height = plot_dim, start_col = current_column, pltname = plotname,
                 savedir = excel_basename, start_row = current_row + 1)
@@ -504,14 +545,14 @@ combine_de_tables <- function(apr, extra_annot = NULL,
 
     design_result <- write_sample_design(wb, apr)
 
-    mesg("Performing save of ", excel, ".")
+    mesg("Writing ", excel, ".")
     save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
     if (class(save_result)[1] == "try-error") {
       warning("Saving xlsx failed.")
     }
   } ## End if !is.null(excel)
 
-  ## We have finished!  Dump the important stuff into a return list.
+  ## Finished!  Dump the important stuff into a return list.
   ret <- NULL
   if (is.null(retlist)) {
     ret <- list(
@@ -531,7 +572,11 @@ combine_de_tables <- function(apr, extra_annot = NULL,
   class(ret) <- c("combined_de", "list")
 
   if (!is.null(rda)) {
-    saved <- save(list = "ret", file = rda)
+    varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
+    assigned <- assign(varname, ret)
+    message("Saving de result as ", varname, " to ", rda, ".")
+    saved <- save(list = varname, file = rda)
+    removed <- rm(varname)
   }
   ## Cleanup the saved image files.
   for (img in image_files) {
@@ -561,11 +606,14 @@ combine_de_tables <- function(apr, extra_annot = NULL,
 #' @param p For Volcano/MA plot lines.
 #' @param do_inverse Flip the numerator/denominator?
 #' @param found_table The table name actually used.
+#' @param p_type Use this/these methods' p-value for determining significance.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     include_basic = TRUE, include_deseq = TRUE,
                                     include_edger = TRUE, include_limma = TRUE,
                                     include_ebseq = FALSE, loess = FALSE, logfc = 1, p = 0.05,
-                                    do_inverse = FALSE, found_table = NULL, p_type = "all") {
+                                    do_inverse = FALSE, found_table = NULL,
+                                    p_type = "all") {
+  message("Starting combine_extracted_plots() with do_inverse as: ", do_inverse, ".")
   combined_data <- combined[["data"]]
   plots <- list()
   if (isTRUE(include_deseq)) {
@@ -596,7 +644,7 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
   if (isTRUE(include_deseq)) {
     types <- c("deseq", types)
   }
-  for (t in 1:length(types)) {
+  for (t in seq_along(types)) {
     type <- types[t]
     sc_name <- paste0(type, "_scatter_plots")
     ma_name <- paste0(type, "_ma_plots")
@@ -664,6 +712,8 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
 #' @param include_basic Include the basic table?
 #' @param lfc_cutoff Preferred logfoldchange cutoff.
 #' @param p_cutoff Preferred pvalue cutoff.
+#' @param format_sig How many significant digits to print?  Set it to something not
+#'  numeric to not use any significant digit formatting.
 #' @param excludes Set of genes to exclude from the output.
 #' @param sheet_count What sheet is being written?
 #' @return List containing a) Dataframe containing the merged
@@ -678,7 +728,8 @@ combine_single_de_table <- function(li = NULL, ed = NULL, eb = NULL, de = NULL, 
                                     include_deseq = TRUE, include_edger = TRUE,
                                     include_ebseq = TRUE, include_limma = TRUE,
                                     include_basic = TRUE, lfc_cutoff = 1,
-                                    p_cutoff = 0.05, excludes = NULL, sheet_count = 0) {
+                                    p_cutoff = 0.05, format_sig = 4,
+                                    excludes = NULL, sheet_count = 0) {
   if (padj_type[1] != "ihw" & !padj_type %in% p.adjust.methods) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
 Defaulting to fdr.")
@@ -713,7 +764,7 @@ Defaulting to fdr.")
                      "ebseq_postfc" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0,
                      "ebseq_adjp" = 0)
   rownames(ebdf) <- "dropme"
-  badf <- data.frame("numerator_median" = 0, "denominator_median" = 0, "numerator_var" = 0,
+  badf <- data.frame("numerator_avg" = 0, "denominator_avg" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   rownames(badf) <- "dropme"
 
@@ -734,6 +785,7 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_lidf)) {
         warning("The limma table seems to be missing.")
+        include_limma <- FALSE
       } else {
         lidf <- test_lidf
       }
@@ -759,6 +811,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC and stat.")
       if (is.null(test_dedf)) {
         warning("The deseq table seems to be missing.")
+        dedf <- data.frame()
+        include_deseq <- FALSE
       } else {
         dedf <- test_dedf
       }
@@ -784,6 +838,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_eddf)) {
         warning("The edger table seems to be missing.")
+        eddr <- data.frame()
+        include_edger <- FALSE
       } else {
         eddf <- test_eddf
       }
@@ -809,6 +865,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_ebdf)) {
         warning("The ebseq table seems to be missing.")
+        ebdf <- data.frame()
+        include_ebseq <- FALSE
       } else {
         ebdf <- test_ebdf
       }
@@ -834,6 +892,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_badf)) {
         warning("The basic table seems to be missing.")
+        badf <- data.frame()
+        include_basic <- FALSE
       } else {
         badf <- test_badf
       }
@@ -842,37 +902,45 @@ Defaulting to fdr.")
     }
   }
 
-  colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
-                      "limma_adjp", "limma_b")
-  li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
-  li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+  if (isTRUE(include_limma)) {
+    colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
+                        "limma_adjp", "limma_b")
+    li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
+    li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+  }
 
-  colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
-                      "deseq_stat", "deseq_p", "deseq_adjp")
-  de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
-  de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+  if (isTRUE(include_deseq)) {
+    colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
+                        "deseq_stat", "deseq_p", "deseq_adjp")
+    de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
+    de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+  }
 
-  colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
-  ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
-  ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
-  colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
-                      "ebseq_c2mean", "ebseq_mean", "ebseq_var",
-                      "ebseq_postfc", "ebseq_ppee", "ebseq_ppde",
-                      "ebseq_adjp")
+  if (isTRUE(include_edger)) {
+    colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
+    ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
+    ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
+    colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
+                        "ebseq_c2mean", "ebseq_mean", "ebseq_var",
+                        "ebseq_postfc", "ebseq_ppee", "ebseq_ppde",
+                        "ebseq_adjp")
+  }
 
   ## I recently changed basic to optionally do means or medians.  I need to take that into
   ## account when working with these tables.  For the moment, I think I will simply rename
   ## the column to _median to avoid confusion.
-  mean_idx <- "numerator_mean" == colnames(badf)
-  if (sum(mean_idx) > 0) {
-    colnames(badf)[mean_idx] <- "numerator_median"
-    mean_idx <- "denominator_mean" == colnames(badf)
-    colnames(badf)[mean_idx] <- "denominator_median"
+  if (isTRUE(include_basic)) {
+    mean_idx <- "numerator_mean" == colnames(badf)
+    if (sum(mean_idx) > 0) {
+      colnames(badf)[mean_idx] <- "numerator_median"
+      mean_idx <- "denominator_mean" == colnames(badf)
+      colnames(badf)[mean_idx] <- "denominator_median"
+    }
+    ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
+                         "denominator_var", "logFC", "t", "p", "adjp")]
+    colnames(ba_stats) <- c("basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
+                            "basic_logfc", "basic_t", "basic_p", "basic_adjp")
   }
-  ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
-                       "denominator_var", "logFC", "t", "p", "adjp")]
-  colnames(ba_stats) <- c("basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
-                          "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
   datalst <- list()
   statslst <- list()
@@ -918,11 +986,11 @@ Defaulting to fdr.")
   } else {
     ## There is more than one set of data to merge.
     comb <- datalst[[1]]
-    for (i in 2:length(datalst)) {
+    for (i in seq(from = 2, to = length(datalst))) {
       comb <- merge(comb, datalst[[i]], by = "rownames", all = TRUE)
     }
     if (length(statslst) > 0) {
-      for (j in 1:length(statslst)) {
+      for (j in seq_along(statslst)) {
         comb <- merge(comb, statslst[[j]], by = "rownames", all = TRUE)
       }
     }
@@ -962,32 +1030,47 @@ Defaulting to fdr.")
   if (!is.null(comb[["limma_p"]])) {
     colname <- glue::glue("limma_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "limma_p", mean_column = "limma_ave",
-                                    method = padj_type, significance = 0.05)
-    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
+                                    method = padj_type, significance = p_cutoff)
+    if (is.numeric(format_sig)) {
+      comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+    }
   }
   if (!is.null(comb[["deseq_p"]])) {
     colname <- glue::glue("deseq_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "deseq_p", mean_column = "deseq_basemean",
-                                    method = padj_type, significance = 0.05)
-    comb[[colname]] <- format(x=comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
+                                    method = padj_type, significance = p_cutoff)
+    if (is.numeric(format_sig)) {
+      comb[[colname]] <- format(x=comb[[colname]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+    }
   }
   if (!is.null(comb[["edger_p"]])) {
     colname <- glue::glue("edger_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "edger_p", mean_column = "edger_logcpm",
-                                    method = padj_type, significance = 0.05)
-    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
+                                    method = padj_type, significance = p_cutoff)
+    if (is.numeric(format_sig)) {
+      comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+    }
   }
   if (!is.null(comb[["ebseq_ppde"]])) {
     colname <- glue::glue("ebseq_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "ebseq_ppde", mean_column = "ebseq_mean",
-                                    method = padj_type, significance = 0.05)
-    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
+                                    method = padj_type, significance = p_cutoff)
+    if (is.numeric(format_sig)) {
+      comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+    }
   }
   if (!is.null(comb[["basic_p"]])) {
     colname <- glue::glue("basic_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "basic_p", mean_column = "basic_nummed",
-                                    method = padj_type, significance = 0.05)
-    comb[[colname]] <- format(x = comb[[colname]], digits = 4, scientific = TRUE, trim = TRUE)
+                                    method = padj_type, significance = p_cutoff)
+    if (is.numeric(format_sig)) {
+      comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+    }
   }
 
   ## I made an odd choice in a moment to normalize.quantiles the combined fold changes
@@ -1006,11 +1089,17 @@ Defaulting to fdr.")
                     as.numeric(comb[["deseq_p"]]))
     comb[["p_meta"]] <- rowMeans(temp_p, na.rm = TRUE)
     comb[["p_var"]] <- genefilter::rowVars(temp_p, na.rm = TRUE)
-    comb[["lfc_meta"]] <- signif(x=comb[["lfc_meta"]], digits = 4)
-    comb[["lfc_var"]] <- format(x=comb[["lfc_var"]], digits = 4, scientific = TRUE, trim = TRUE)
-    comb[["lfc_varbymed"]] <- format(x=comb[["lfc_varbymed"]], digits = 4, scientific = TRUE, trim = TRUE)
-    comb[["p_var"]] <- format(x=comb[["p_var"]], digits = 4, scientific = TRUE, trim = TRUE)
-    comb[["p_meta"]] <- format(x=comb[["p_meta"]], digits = 4, scientific = TRUE, trim = TRUE)
+    if (is.numeric(format_sig)) {
+      comb[["lfc_meta"]] <- signif(x = comb[["lfc_meta"]], digits = format_sig)
+      comb[["lfc_var"]] <- format(x = comb[["lfc_var"]], digits = format_sig,
+                                  scientific = TRUE, trim = TRUE)
+      comb[["lfc_varbymed"]] <- format(x = comb[["lfc_varbymed"]], digits = format_sig,
+                                       scientific = TRUE, trim = TRUE)
+      comb[["p_var"]] <- format(x = comb[["p_var"]], digits = format_sig,
+                                scientific = TRUE, trim = TRUE)
+      comb[["p_meta"]] <- format(x = comb[["p_meta"]], digits = format_sig,
+                                 scientific = TRUE, trim = TRUE)
+    }
   }
   if (!is.null(annot_df)) {
     colnames(annot_df) <- gsub(pattern = "[[:punct:]]",
@@ -1024,9 +1113,9 @@ Defaulting to fdr.")
 
   ## Exclude rows based on a list of unwanted columns/strings
   if (!is.null(excludes)) {
-    for (colnum in 1:length(excludes)) {
+    for (colnum in seq_along(excludes)) {
       col <- names(excludes)[colnum]
-      for (exclude_num in 1:length(excludes[[col]])) {
+      for (exclude_num in seq_along(excludes[[col]])) {
         exclude <- excludes[[col]][exclude_num]
         remove_column <- comb[[col]]
         remove_idx <- grep(pattern = exclude, x = remove_column, perl = TRUE, invert = TRUE)
@@ -1123,6 +1212,8 @@ Defaulting to fdr.")
 #' @param loess Include a loess estimator in the plots?
 #' @param lfc_cutoff Passed for plotting volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param sheet_prefix Prefix for this worksheet id.
+#' @param sheet_number Which sheet is this?
 extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1130,11 +1221,12 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type, loess = FALSE,
-                                lfc_cutoff = 1, p_cutoff = 0.05) {
+                                lfc_cutoff = 1, p_cutoff = 0.05,
+                                sheet_prefix = NULL, sheet_number = NULL) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
-  for (a in 1:names_length) {
+  for (a in seq_len(names_length)) {
     name <- table_names[a]
     kept_tables[a] <- name
     mesg("Working on table ", a, "/", names_length, ": ", name)
@@ -1203,6 +1295,9 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
 #' @param loess Add a loess to plots?
 #' @param lfc_cutoff Passed for volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param sheet_prefix Prefix for this worksheet id.
+#' @param sheet_number Which sheet is this?
+#' @param format_sig Number of significant digits for stuff like pvalues.
 extract_keepers_lst <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1210,7 +1305,9 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                 include_deseq, include_edger,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type,
-                                loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05) {
+                                loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05,
+                                sheet_prefix = NULL, sheet_number = NULL,
+                                format_sig = 4) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   keeper_names <- names(keepers)
@@ -1246,7 +1343,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
   keeper_len <- length(names(keepers))
   contrast_list <- names(keepers)
   kept_tables <- list()
-  for (a in 1:length(names(keepers))) {
+  for (a in seq_along(names(keepers))) {
     name <- names(keepers)[a]
     extracted[["data"]][[name]] <- list()  ## Provided by combine_de_table() shortly.
 
@@ -1279,7 +1376,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     found <- 0
     found_table <- NULL
     do_inverse <- FALSE
-    for (t in 1:length(table_names)) {
+    for (t in seq_along(table_names)) {
       tab <- table_names[t]
       if (tab == same_string) {
         do_inverse <- FALSE
@@ -1312,7 +1409,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
           table_name = found_table, do_inverse = do_inverse,
           adjp = adjp, annot_df = annot_df,
           excludes = excludes, padj_type = padj_type,
-          lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
+          lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
+          format_sig = format_sig)
       extracted[["data"]][[name]] <- combined[["data"]]
       extracted[["table_names"]][[name]] <- combined[["summary"]][["table"]]
       extracted[["kept"]] <- kept_tables
@@ -1371,9 +1469,13 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
+#' @param fancy Print fancy plots with the xlsx file?
 #' @param loess Add a loess to plots?
 #' @param lfc_cutoff Passed for volcano/MA plots.
 #' @param p_cutoff Passed for volcano/MA plots.
+#' @param format_sig If numeric, reformat and use this number of significant digits.
+#' @param sheet_prefix Prefix for this sheet id.
+#' @param sheet_number Which worksheet is this?
 extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -1381,7 +1483,10 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    include_deseq, include_edger,
                                    include_ebseq, include_limma,
                                    include_basic, excludes, padj_type,
-                                   loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05) {
+                                   fancy = FALSE, loess = FALSE,
+                                   lfc_cutoff = 1, p_cutoff = 0.05,
+                                   format_sig = 4, sheet_prefix = NULL,
+                                   sheet_number = NULL) {
   splitted <- strsplit(x = keepers, split = "_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
@@ -1405,10 +1510,9 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
       include_deseq = include_deseq, include_edger = include_edger,
       include_ebseq = include_ebseq, include_limma = include_limma,
       include_basic = include_basic,
-      table_name = table,
-      adjp = adjp, annot_df = annot_df,
+      table_name = table, adjp = adjp, annot_df = annot_df,
       excludes = excludes, padj_type = padj_type,
-      lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff)
+      lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, format_sig = format_sig)
   extracted[["data"]][[table]] <- combined[["data"]]
   extracted[["table_names"]][[table]] <- combined[["summary"]][["table"]]
   extracted[["kept"]] <- table
@@ -1453,7 +1557,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
 #' @return The set of most/least abundant genes by contrast/tool.
 #' @seealso \pkg{openxlsx}
 #' @export
-extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
+extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
                                    z = NULL, unique = FALSE,
                                    excel = "excel/abundant_genes.xlsx", ...) {
   arglist <- list(...)
@@ -1472,6 +1576,9 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
     datum <- pairwise[[type]]
     abundant_lists[[type]] <- get_abundant_genes(datum, type = type, n = n, z = z,
                                                  unique = unique)
+    ## Something to note: the coefficient df from deseq (for example) includes coefficients
+    ## across every factor in the model.  As a result, if one considers the default model of
+    ## condition + batch, there will likely be coefficients which are not explicitly of interest.
   }
 
   if (class(excel)[1] == "character") {
@@ -1487,8 +1594,12 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
   }
 
   ## Now make the excel sheet for each method/coefficient
+  ## Given that the set of coefficients may be more than we want, using
+  ## names(abundant_lists[[according]][["high"]]) is probably not wise.
+  ## Instead we should just be taking the levels of the condition factor.
+  wanted_coefficients <- levels(pairwise[["deseq"]][["conditions"]])
   for (according in names(abundant_lists)) {
-    for (coef in names(abundant_lists[[according]][["high"]])) {
+    for (coef in wanted_coefficients) {
       sheetname <- glue::glue("{according}_high_{coef}")
       annotations <- fData(pairwise[["input"]])
       high_abundances <- abundant_lists[[according]][["high"]][[coef]]
@@ -1497,7 +1608,10 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
       kept_annotations <- annotations[kept_idx, ]
       high_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        high_data <- merge(data.frame(high_abundances), annotations, by = "row.names", all.x = TRUE)
+        high_df <- as.data.frame(high_abundances)
+        rownames(high_df) <- names(high_abundances)
+        high_data <- merge(high_df, annotations,
+                           by = "row.names", all.x = TRUE)
         rownames(high_data) <- high_data[["Row.names"]]
         high_data[["Row.names"]] <- NULL
       } else {
@@ -1517,7 +1631,9 @@ extract_abundant_genes <- function(pairwise, according_to = "all", n = 200,
       kept_annotations <- annotations[kept_idx, ]
       low_data <- data.frame()
       if (nrow(annotations) > 0 & ncol(annotations) > 0) {
-        low_data <- merge(data.frame(low_abundances), annotations,
+        low_df <- as.data.frame(low_abundances)
+        rownames(low_df) <- names(low_abundances)
+        low_data <- merge(data.frame(low_df), annotations,
                           by = "row.names", all.x = TRUE)
         rownames(low_data) <- low_data[["Row.names"]]
         low_data[["Row.names"]] <- NULL
@@ -1570,19 +1686,32 @@ extract_siggenes <- function(...) {
 #' @param p_type use an adjusted p-value?
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
 #' @param excel Write the results to this excel file, or NULL.
+#' @param fc_column Column in the DE data containing the foldchange values.
+#' @param p_column Column in the DE data containing the pvalues.
 #' @param siglfc_cutoffs Set of cutoffs used to define levels of 'significant.'
+#' @param column_suffix Used to help determine which columns are used to find significant
+#'  genes via logfc/p-value.
+#' @param gmt Write a gmt file using this result?
+#' @param category When writing gmt files, set the category here.
+#' @param fancy Write fancy plots with the xlsx file?
+#' @param phenotype_name When writing gmt files, set the phenotype flag here.
+#' @param set_name When writing gmt files, assign the set here.
+#' @param current_id Choose the current ID type for an output gmt file.
+#' @param required_id Choose the desired ID type for an output gmt file.
+#' @param min_gmt_genes Define the minimum number of genes in a gene set for writing a gmt file.
 #' @param ... Arguments passed into arglist.
 #' @return The set of up-genes, down-genes, and numbers therein.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
-                                      p = 0.05, sig_bar = TRUE, z = NULL, n = NULL, top_percent = NULL,
-                                      ma = TRUE, p_type = "adj", invert_barplots = FALSE,
-                                      excel = NULL, fc_column = NULL, p_column = NULL,
-                                      siglfc_cutoffs = c(0, 1, 2), column_suffix = TRUE,
-                                      gmt = NULL, category = "category",
-                                      phenotype_name = "phenotype", set_name = "set",
-                                      current_id = "ENSEMBL", required_id = "ENTREZID", ...) {
+                                      p = 0.05, sig_bar = TRUE, z = NULL, n = NULL,
+                                      top_percent = NULL, ma = TRUE, p_type = "adj",
+                                      invert_barplots = FALSE, excel = NULL, fc_column = NULL,
+                                      p_column = NULL, siglfc_cutoffs = c(0, 1, 2),
+                                      column_suffix = TRUE, gmt = FALSE, category = "category",
+                                      fancy = FALSE, phenotype_name = "phenotype",
+                                      set_name = "set", current_id = "ENSEMBL",
+                                      required_id = "ENTREZID", min_gmt_genes = 10, ...) {
   arglist <- list(...)
   image_files <- c()  ## For cleaning up tmp image files after saving the xlsx file.
 
@@ -1614,7 +1743,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   } else if (class(combined)[1] == "combined_de") {
     ## Then this is the result of combine_de_tables()
     num_tables <- length(names(combined[["data"]]))
-    ##table_names <- names(combined[["data"]])
     table_names <- combined[["table_names"]]
     all_tables <- combined[["data"]]
     table_mappings <- table_names
@@ -1686,7 +1814,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   according_kept <- according_to
   chosen_columns <- list()
   ## Iterate over the according_to entries to see if there are valid p-value and logfc columns
-  for (summary_count in 1:length(according_to)) {
+  for (summary_count in seq_along(according_to)) {
     according <- according_to[summary_count]
     test_fc_param <- fc_column  ## Check if a column was provided by the user
     ## Otherwise make a column name from the method employed followed by the suffix.
@@ -1700,10 +1828,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       if (test_p_param %in% colnames(combined[["data"]][[1]])) {
         skip <- FALSE
         chosen_columns[[according]][["p"]] <- test_p_param
-      } else if (test_p_column %in% colnames(combined[["data"]][[1]])) {
-        skip <- FALSE
-        chosen_columns[[according]][["p"]] <- test_p_column
-      } else if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
+      }
+      ## Adjusted p takes precedence.
+      if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
         skip <- FALSE
         chosen_columns[[according]][["p"]] <- test_adjp_column
       }
@@ -1713,10 +1840,9 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       if (test_p_param %in% colnames(combined[["data"]][[1]])) {
         skip <- FALSE
         chosen_columns[[according]][["p"]] <- test_p_param
-      } else if (test_p_column %in% colnames(combined[["data"]][[1]])) {
-        skip <- FALSE
-        chosen_columns[[according]][["p"]] <- test_p_column
-      } else if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
+      }
+
+      if (test_adjp_column %in% colnames(combined[["data"]][[1]])) {
         skip <- FALSE
         chosen_columns[[according]][["p"]] <- test_adjp_column
       }
@@ -1734,7 +1860,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
 
   according <- NULL
   according_to <- according_kept
-  for (summary_count in 1:length(according_to)) {
+  for (summary_count in seq_along(according_to)) {
     according <- according_to[summary_count]
     ret[[according]] <- list()
     ma_plots <- list()
@@ -1742,7 +1868,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     change_counts_down <- list()
     this_fc_column <- chosen_columns[[according]][["fc"]]
     this_p_column <- chosen_columns[[according]][["p"]]
-    for (table_count in 1:length(table_names)) {
+    for (table_count in seq_along(table_names)) {
       table_name <- names(table_names)[table_count]
       plot_name <- as.character(table_names)[table_count]
       plot_name <- gsub(pattern = "-inverted", replacement = "", x = plot_name)
@@ -1758,7 +1884,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
         }
         single_ma <- try(extract_de_plots(
             combined[["input"]], type = according, table = plot_name, lfc = ma_lfc, p = ma_p), silent = TRUE)
-        if ("try-error" %in% single_ma) {
+        if ("try-error" %in% class(single_ma)) {
           ma_plots[[table_name]] <- NULL
         } else {
           ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
@@ -1766,20 +1892,30 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       }
 
       this_table <- all_tables[[table_name]]
-      trimming <- get_sig_genes(
+      ## Added this try() because I am not sure how I want to deal with
+      ## extra contrasts, and until I decide it is easier to skip them
+      trimming <- try(get_sig_genes(
           this_table, lfc = lfc, p = p, z = z, n = n, column = this_fc_column,
-          p_column = this_p_column)
-
-      trimmed_up[[table_name]] <- trimming[["up_genes"]]
-      change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
-      trimmed_down[[table_name]] <- trimming[["down_genes"]]
-      change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-      up_title <- glue::glue("Table SXXX: Genes deemed significantly up in \\
+          p_column = this_p_column), silent = TRUE)
+      if ("try-error" %in% class(trimming)) {
+        trimmed_up[[table_name]] <- data.frame()
+        trimmed_down[[table_name]] <- data.frame()
+        change_counts_up[[table_name]] <- 0
+        change_counts_down[[table_name]] <- 0
+        up_titles[[table_name]] <- "This table was not processed."
+        down_titles[[table_name]] <- "This table was not processed."
+      } else {
+        trimmed_up[[table_name]] <- trimming[["up_genes"]]
+        change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
+        trimmed_down[[table_name]] <- trimming[["down_genes"]]
+        change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
+        up_title <- glue::glue("Table SXXX: Genes deemed significantly up in \\
                        {table_name} with {title_append} according to {according}.")
-      up_titles[[table_name]] <- up_title
-      down_title <- glue::glue("Table SXXX: Genes deemed significantly down in \\
+        up_titles[[table_name]] <- up_title
+        down_title <- glue::glue("Table SXXX: Genes deemed significantly down in \\
                          {table_name} with {title_append} according to {according}.")
-      down_titles[[table_name]] <- down_title
+        down_titles[[table_name]] <- down_title
+      }
     } ## End extracting significant genes for loop
 
     change_counts <- as.data.frame(cbind(as.numeric(change_counts_up),
@@ -1808,11 +1944,13 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     }
     if (isFALSE(excel)) {
       do_excel <- FALSE
-    } else {
+    }
+
+    if (isTRUE(do_excel)) {
       mesg("Printing significant genes to the file: ", excel)
       xlsx_ret <- print_ups_downs(ret[[according]], wb, excel_basename, according = according,
-                                  summary_count = summary_count, ma = ma)
-      image_files <- c(xlsx_ret[["images_files"]], image_files)
+                                  summary_count = summary_count, ma = ma, fancy = fancy)
+      image_files <- c(image_files, xlsx_ret[["image_files"]])
       ## This is in case writing the sheet resulted in it being shortened.
       ## wb <- xlsx_ret[["workbook"]]
     } ## End of an if whether to print the data to excel
@@ -1860,9 +1998,10 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                   startRow = plot_row, startCol = plot_col)
       plot_row <- plot_row + 1
       plotname <- glue::glue("sigbar_{according}")
-      try_result <- xlsx_plot_png(
-          a_plot = sig_bar_plots[[according]], wb = wb, sheet = "number_changed", plotname = plotname,
-          savedir = excel_basename, width = 9, height = 6, start_row = plot_row, start_col = plot_col)
+      try_result <- xlsx_insert_png(
+          a_plot = sig_bar_plots[[according]], wb = wb, sheet = "number_changed",
+          plotname = plotname, savedir = excel_basename, width = 9, height = 6,
+          start_row = plot_row, start_col = plot_col, fancy = fancy)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
@@ -1899,18 +2038,19 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     }
   }
 
-  if (!is.null(gmt)) {
-    message("Going to attempt to create gmt files from these results.")
+  if (!isFALSE(gmt)) {
+    mesg("Going to attempt to create gmt files from these results.")
     annotation_name <- annotation(combined[["input"]][["input"]])
-    gsc <- try(make_gsc_from_pairwise(ret, according_to = according_to, orgdb = annotation_name,
-                                  pair_names = c("ups", "downs"), category_name = category,
-                                  phenotype_name = phenotype_name, set_name = set_name,
-                                  current_id = current_id, required_id = required_id))
+    gsc <- try(make_gsc_from_significant(ret, according_to = according_to, orgdb = annotation_name,
+                                         pair_names = c("ups", "downs"), category_name = category,
+                                         phenotype_name = phenotype_name, set_name = set_name,
+                                         current_id = current_id, required_id = required_id,
+                                         min_gmt_genes = min_gmt_genes))
     if (! "try-error" %in% class(gsc)) {
-      types <- c("colored", "up", "down")
+      types <- c("both", "up", "down")
       for (t in types) {
         if (!is.null(gsc[[t]])) {
-          for (g in 1:length(gsc[[t]])) {
+          for (g in seq_along(gsc[[t]])) {
             datum <- gsc[[t]][[g]]
             contrast_name <- names(gsc[[t]])[g]
             dname <- dirname(gmt)
@@ -1926,6 +2066,13 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   return(ret)
 }
 
+#' Create a summary table of the ranges of fold-change values of potential interest.
+#'
+#' The columns have names with explicit lfc values, but the numbers which get put in them
+#' may represent any arbitrary cutoff employed by the caller.
+#'
+#' @param ups The set of ups!
+#' @param downs and downs!
 summarize_ups_downs <- function(ups, downs) {
   ## The ups and downs tables have 1 row for each contrast, 3 columns of numbers named
   ## 'a_up_inner', 'b_up_middle', 'c_up_outer'.
@@ -1996,7 +2143,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
   alternate_selectors <- c()
   ## Use the column names from the first table to make this decision.
   possible_columns <- colnames(combined[["data"]][[1]])
-  for (c in 1:length(selectors)) {
+  for (c in seq_along(selectors)) {
     rawname <- selectors[c]
     conjugate <- glue::glue("{rawname}_logfc")
     if (rawname %in% possible_columns) {
@@ -2035,12 +2182,12 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
   venn_col <- 1
   ## Arbitrarily pull the set of ups from the first 'chooser'
   table_lst <- names(sig_genes[[1]][["ups"]])
-  for (t in 1:length(table_lst)) {
+  for (t in seq_along(table_lst)) {
     table <- table_lst[t]
     lst[["ups"]][[table]] <- list()
     lst[["downs"]][[table]] <- list()
     for (dir in c("ups", "downs")) {
-      for (i in 1:length(chosen_selectors)) {
+      for (i in seq_along(chosen_selectors)) {
         name <- chosen_selectors[i]
         lst[[dir]][[table]][[name]] <- rownames(sig_genes[[name]][[dir]][[table]])
       } ## End pulling the significants by selectors.
@@ -2066,7 +2213,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
         inner_count <- inner_count + 1
         symbols <- strsplit(as.character(symbolic), "")[[1]]
         name <- c()
-        for (s in 1:length(symbols)) {
+        for (s in seq_along(symbols)) {
           symbol <- symbols[s]
           if (symbol == 1) {
             name <- c(name, chosen_selectors[s])
@@ -2092,7 +2239,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
       xlsx_row <- 1
       xlsx_table <- ""
       lst[[dir]][[table]][["data"]] <- list()
-      for (s in 1:length(set_names)) {
+      for (s in seq_along(set_names)) {
         sname <- set_names[s]
         set_selection_name <- names(sname)
         clean_sname <- sname
@@ -2141,14 +2288,14 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
                               sheet = "summary", title = venn_title,
                               start_row = venn_row, start_col = venn_col)
       venn_row <- venn_row + 4
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           up_plot, wb = wb, sheet = "summary", width = 6, height = 6,
           start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
       venn_col <- venn_col + 12
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           down_plot, wb = wb, sheet = "summary", width = 6, height = 6,
           start_col = venn_col, start_row = venn_row)
       if (! "try-error" %in% class(try_result)) {
@@ -2180,12 +2327,13 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
 #' @param according Use limma, deseq, or edger for defining 'significant'.
 #' @param summary_count For spacing sequential tables one after another.
 #' @param ma Include ma plots?
+#' @param fancy Print fancy plots with the xlsx file?x
 #' @return Return from write_xlsx.
 #' @seealso \code{\link{combine_de_tables}}
 #' @export
 print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
-                            summary_count = 1, ma = FALSE) {
-  image_files <- c()
+                            summary_count = 1, ma = FALSE, fancy = FALSE) {
+  local_image_files <- c()
   ups <- upsdowns[["ups"]]
   downs <- upsdowns[["downs"]]
   up_titles <- upsdowns[["up_titles"]]
@@ -2197,10 +2345,11 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
   summary_count <- summary_count - 1
   num_tables <- length(names(ups))
   summary_start <- ((num_tables + 2) * summary_count) + 1
-  xls_summary_result <- write_xlsx(wb = wb, data = summary, start_col = 1, start_row = summary_start,
+  xls_summary_result <- write_xlsx(wb = wb, data = summary, start_col = 1,
+                                   start_row = summary_start,
                                    sheet = "number_changed", title = summary_title)
   xls_result <- NULL
-  for (table_count in 1:length(names(ups))) {
+  for (table_count in seq_along(names(ups))) {
     base_name <- names(ups)[table_count]
     up_name <- glue::glue("up_{according}_{base_name}")
     down_name <- glue::glue("down_{according}_{base_name}")
@@ -2216,18 +2365,17 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
         ma_col <- xls_result[["end_col"]] + 1
         if (!is.null(ma_plots[[base_name]])) {
           plot_name <- glue::glue("ma_{according}_{base_name}")
-          try_result <- xlsx_plot_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
+          try_result <- xlsx_insert_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
                                       plotname = plot_name, savedir = excel_basename,
-                                      start_row = ma_row, start_col = ma_col)
+                                      start_row = ma_row, start_col = ma_col, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
-            image_files <- c(image_files, try_result[["filename"]])
+            local_image_files <- c(local_image_files, try_result[["filename"]])
           }
         }
       }
     } else {
       mesg("The up table ", base_name, " is empty.")
     }
-
 
     down_table <- downs[[table_count]]
     down_title <- down_titles[[table_count]]
@@ -2239,7 +2387,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
   } ## End for each name in ups
   retlist <- list(
       "result" = xls_result,
-      "image_files" = image_files)
+      "image_files" = local_image_files)
   return(retlist)
 }
 
@@ -2260,18 +2408,22 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
 #' @param basic Basic data
 #' @param include_basic Include the basic result?
 #' @param padj_type P-adjustment employed.
+#' @param fancy Write fancy plots with the xlsx file?
 write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
                                   limma, include_limma,
                                   deseq, include_deseq,
                                   edger, include_edger,
                                   ebseq, include_ebseq,
                                   basic, include_basic,
-                                  padj_type) {
+                                  padj_type, fancy = FALSE) {
   ## I want to print a string reminding the user what kind of model was used in
   ## the analysis. Do that here.  Noting that if 'batch' is actually from a
   ## surrogate variable, then we will not have TRUE/FALSE but instead a matrix.
   do_excel <- TRUE
   if (length(excel_basename) == 0) {
+    do_excel <- FALSE
+  }
+  if (is.null(wb)) {
     do_excel <- FALSE
   }
   reminder_model_cond <- apr[["model_cond"]]
@@ -2448,14 +2600,16 @@ stringsAsFactors = FALSE)
     legend <- rbind(legend, summary_legend)
   }
   colnames(legend) <- c("column name", "column definition")
-  xls_result <- write_xlsx(
-      wb, data = legend, sheet = "legend", rownames = FALSE,
-      title = "Columns used in the following tables.")
+  xls_result <- NULL
+  if (isTRUE(do_excel)) {
+    xls_result <- write_xlsx(
+        wb, data = legend, sheet = "legend", rownames = FALSE,
+        title = "Columns used in the following tables.")
+  }
 
   ## Some folks have asked for some PCA showing the before/after surrogates.
   ## Put that on the first sheet, then.
   ## This if (isTRUE()) is a little odd, perhaps it should be removed or moved up.
-  xls_result <- NULL
   image_files <- c()
   if (isTRUE(do_excel)) {
     mesg("Printing pca plots before and after surrogate|batch estimation.")
@@ -2465,10 +2619,11 @@ stringsAsFactors = FALSE)
                                wb = wb, sheet = "legend",
                                x = "PCA plot before surrogate estimation.",
                                startRow = 1, startCol = 10)
-    try_result <- xlsx_plot_png(
+    try_result <- xlsx_insert_png(
         apr[["pre_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 2,
         width = (plot_dim * 3/2), height = plot_dim, start_col = 10,
-        plotname = "pre_pca", savedir = excel_basename)
+        plotname = "pre_pca", savedir = excel_basename,
+        fancy = fancy)
     if (! "try-error" %in% class(try_result)) {
       image_files <- c(image_files, try_result[["filename"]])
     }
@@ -2476,10 +2631,11 @@ stringsAsFactors = FALSE)
                                wb = wb, sheet = "legend",
                                x = as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
                                startRow = 36, startCol = 10)
-    try_result <- xlsx_plot_png(
+    try_result <- xlsx_insert_png(
         apr[["post_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 37,
         width = (plot_dim * 3/2), height = plot_dim, start_col = 10,
-        plotname = "pre_pca", savedir = excel_basename)
+        plotname = "pre_pca", savedir = excel_basename,
+        fancy = fancy)
     if (! "try-error" %in% class(try_result)) {
       image_files <- c(image_files, try_result[["filename"]])
     }
@@ -2508,8 +2664,9 @@ stringsAsFactors = FALSE)
 #' @param compare_plots series of plots to print out.
 #' @param lfc_cutoff Used for volcano/MA plots.
 #' @param p_cutoff Used for volcano/MA plots.
+#' @param fancy Write fancy plots with the xlsx file?
 write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_plots,
-                                   lfc_cutoff = 1, p_cutoff = 0.05) {
+                                   lfc_cutoff = 1, p_cutoff = 0.05, fancy = FALSE) {
   image_files <- c()
   if (length(apr[["comparison"]]) == 0) {
     compare_plots <- FALSE
@@ -2526,9 +2683,9 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
 
     new_row <- xls_result[["end_row"]] + 2
     if (class(apr[["comparison"]][["heat"]])[1] == "recordedplot") {
-      try_result <- xlsx_plot_png(
+      try_result <- xlsx_insert_png(
           apr[["comparison"]][["heat"]], wb = wb, sheet = sheetname, plotname = "pairwise_summary",
-          savedir = excel_basename, start_row = new_row + 1, start_col = 1)
+          savedir = excel_basename, start_row = new_row + 1, start_col = 1, fancy = fancy)
       if (! "try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
       }
@@ -2537,7 +2694,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
     if (class(logfc_comparisons) != "try-error") {
       logfc_names <- names(logfc_comparisons)
       new_row <- new_row + 2
-      for (c in 1:length(logfc_names)) {
+      for (c in seq_along(logfc_names)) {
         lname <- logfc_names[c]
         new_row <- new_row + 32
         le <- logfc_comparisons[[c]][["le"]]
@@ -2554,9 +2711,10 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x="Log2FC(Limma vs. EdgeR)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               le, wb = wb, sheet = "pairwise_summary", plotname = "compare_le",
-              savedir = excel_basename, start_row = new_row, start_col = tmpcol)
+              savedir = excel_basename, start_row = new_row, start_col = tmpcol,
+              fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2567,9 +2725,9 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x = "Log2FC(Limma vs. DESeq2)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               ld, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
-              start_row = new_row, start_col = tmpcol)
+              start_row = new_row, start_col = tmpcol, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2580,9 +2738,9 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
                                      wb = wb, sheet = sheetname,
                                      startRow = new_row - 1, startCol = tmpcol,
                                      x = "Log2FC(DESeq2 vs. EdgeR)")
-          try_result <- xlsx_plot_png(
+          try_result <- xlsx_insert_png(
               de, wb = wb, sheet = sheetname, plotname = "compare_ld", savedir = excel_basename,
-              start_row = new_row, start_col = tmpcol)
+              start_row = new_row, start_col = tmpcol, fancy = fancy)
           if (! "try-error" %in% class(try_result)) {
             image_files <- c(image_files, try_result[["filename"]])
           }
@@ -2649,7 +2807,7 @@ write_de_table <- function(data, type = "limma", excel = "de_table.xlsx", ...) {
 
   return_data <- list()
   end <- length(coef)
-  for (c in 1:end) {
+  for (c in seq_len(end)) {
     comparison <- coef[c]
     mesg("Writing ", c, "/", end, ": table: ", comparison, ".")
     table <- data[["all_tables"]][[c]]

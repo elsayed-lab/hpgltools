@@ -4,10 +4,10 @@
 \alias{load_uniprot_go}
 \title{Extract ontology information from a uniprot dataframe.}
 \usage{
-load_uniprot_go(input)
+load_uniprot_go(...)
 }
 \arguments{
-\item{input}{uniprot filename or dataframe.}
+\item{...}{Whatever args are required for load_uniprot_annotations()}
 }
 \value{
 Ontology dataframe

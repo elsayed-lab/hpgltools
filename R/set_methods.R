@@ -73,7 +73,7 @@ setGeneric("iDA", signature = c("object"),
 #' @export
 setMethod("iDA", "matrix",
           function(object, ...) {
-            iDAoutput <- iDA_core(object, ...)
+            iDAoutput <- iDA::iDA_core(object, ...)
             return(iDAoutput)
           })
 
@@ -93,7 +93,7 @@ setMethod("iDA", "matrix",
 #' @param colors Set of colors for the plot, overriding the SE metadata.
 #' @param text Print text with the counts/sample observed at the top of the bars?
 #' @param order Optionally redefine the order of the bars of the plot.
-#' @param title Plot title!
+#' @param plot_title Plot title!
 #' @param yscale Explicitly set the scale on the log or base10 scale.
 #' @param expt_names Optionally change the names of the bars.
 #' @param label_chars If the names of the bars are larger than this, abbreviate them.
