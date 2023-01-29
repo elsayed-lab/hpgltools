@@ -126,6 +126,7 @@ Collate:
   'sequence.R'
   'set_methods.R'
   'shiny.R'
+  'singlecell.R'
   'tf.R'
   'tnseq.R'
   'variants.R'

@@ -274,6 +274,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
   mesg("Reading sample: ", first_sample, ".")
   first_file <- file_lst[1]
   first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  colnames(first_read) <- make.names(
+      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
+      unique = TRUE)
   if (is.null(first_read[[column]])) {
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
@@ -309,6 +312,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count") {
       next
     }
     new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
+    colnames(new_table) <- make.names(
+        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
+        unique = TRUE)
     if (class(new_table)[1] == "try-error") {
       next
     }

@@ -12,6 +12,17 @@ slide_de_threshold(
   according_to = "deseq"
 )
 }
+\arguments{
+\item{de_table}{Table of DE results.}
+
+\item{lfc}{LogFC starting cutoff.}
+
+\item{p}{Starting pvalue cutoff.}
+
+\item{according_to}{Which method to deem the arbiter of truth?}
+
+\item{control}{Which contrast to examine?}
+}
 \description{
 make a slideable threshold for cutting off significant genes in a DE table.
 }

@@ -7,6 +7,7 @@ Adelaida.}
 \usage{
 compare_significant_contrasts(
   sig_tables,
+  second_sig_tables = NULL,
   compare_by = "deseq",
   weights = FALSE,
   contrasts = c(1, 2, 3)
@@ -14,6 +15,8 @@ compare_significant_contrasts(
 }
 \arguments{
 \item{sig_tables}{Set of significance tables to poke at.}
+
+\item{second_sig_tables}{Separate set of significant results, intra vs. inter comparisons.}
 
 \item{compare_by}{Use which program for the comparisons?}
 

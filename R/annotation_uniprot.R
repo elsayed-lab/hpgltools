@@ -19,7 +19,7 @@
 #' @return A filename/accession tuple.
 #' @seealso [xml2] [rvest]
 #' @examples
-#'  uniprot_sc_downloaded <- download_uniprot_proteome(species = "Saccharomyces cerevisiae S288c")
+#'  uniprot_sc_downloaded <- load_uniprot_annotations(species = "Saccharomyces cerevisiae S288c")
 #'  uniprot_sc_downloaded$filename
 #'  uniprot_sc_downloaded$species
 #' @export

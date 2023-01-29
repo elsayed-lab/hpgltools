@@ -76,6 +76,10 @@ experimental metadata.}
 \item{lfc_cutoff}{Passed for plotting volcano/MA plots.}
 
 \item{p_cutoff}{Passed for volcano/MA plots.}
+
+\item{sheet_prefix}{Prefix for this worksheet id.}
+
+\item{sheet_number}{Which sheet is this?}
 }
 \description{
 This has a couple of cousin functions, extract_keepers_list and _single.

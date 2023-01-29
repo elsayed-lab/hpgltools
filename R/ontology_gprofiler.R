@@ -256,6 +256,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
 
 #' Redirect users to simple_gprofiler2
 #'
+#' @param ... Arguments passed to simple_gprofiler2()
 #' @export
 simple_gprofiler <- function(...) {
   simple_gprofiler2(...)

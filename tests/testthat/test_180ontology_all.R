@@ -39,7 +39,8 @@ pombe_expt <- make_pombe_expt()
 pombe_lengths <- fData(pombe_expt)[, c("ensembl_gene_id", "cds_length")]
 colnames(pombe_lengths) <- c("ID", "length")
 
-pombe_go <- load_biomart_go(species = "spombe", host = "fungi.ensembl.org")[["go"]]
+pombe_go <- load_biomart_go(species = "spombe", host = "fungi.ensembl.org",
+                            overwrite = TRUE)[["go"]]
 
 ## Note that I default to using entrez IDs, but the eupathdb does not,
 ## so change the orgdb_to argument.
@@ -113,7 +114,6 @@ if (file.exists("test_cp_write.xlsx")) {
 }
 
 ## } ## End checking for github actions
-
 go_test <- simple_goseq(ups, go_db = pombe_go, length_db = pombe_lengths)
 ## As of 202205, there are 3 new elements in the result list;
 ## mf_enrich, bp_enrich, and cc_enrich.  These should make it possible to strip out

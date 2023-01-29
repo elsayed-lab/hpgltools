@@ -29,6 +29,8 @@ the metadata in the SE.}
 
 \item{order}{Optionally redefine the order of the bars of the plot.}
 
+\item{plot_title}{Plot title!}
+
 \item{yscale}{Explicitly set the scale on the log or base10 scale.}
 
 \item{expt_names}{Optionally change the names of the bars.}
@@ -36,8 +38,6 @@ the metadata in the SE.}
 \item{label_chars}{If the names of the bars are larger than this, abbreviate them.}
 
 \item{...}{Additonal arbitrary arguments.}
-
-\item{title}{Plot title!}
 }
 \value{
 Plot of library sizes and a couple tables describing the data.

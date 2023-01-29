@@ -91,6 +91,7 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
 #'  categories?
 #' @param organism Set the orgdb organism name?
 #' @param padjust_method what it says on the tin.
+#' @return enrichResult object ready to pass to things like dotplot.
 gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
                              organism = NULL, padjust_method = "BH") {
   godf <- retlist[["go_db"]]
@@ -157,7 +158,10 @@ gprofiler2enrich <- function(retlist, ontology = "MF", cutoff = 1,
 #' @param retlist result from simple_topgo()
 #' @param ontology Ontology subtree to act upon.
 #' @param pval Cutoff, hmm I think I need to standardize these.
+#' @param organism org name/data.
 #' @param column Table column to export.
+#' @param padjust_method Use this method for the pvalues for the enrich result.
+#' @return enrichResult object ready to pass to things like dotplot.
 topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05, organism = NULL,
                          column = "fisher", padjust_method = "BH") {
   result_name <- paste0(column, "_", tolower(ontology))

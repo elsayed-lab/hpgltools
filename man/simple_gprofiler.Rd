@@ -6,6 +6,9 @@
 \usage{
 simple_gprofiler(...)
 }
+\arguments{
+\item{...}{Arguments passed to simple_gprofiler2()}
+}
 \description{
 Redirect users to simple_gprofiler2
 }

@@ -20,7 +20,14 @@ topgo2enrich(
 
 \item{pval}{Cutoff, hmm I think I need to standardize these.}
 
+\item{organism}{org name/data.}
+
 \item{column}{Table column to export.}
+
+\item{padjust_method}{Use this method for the pvalues for the enrich result.}
+}
+\value{
+enrichResult object ready to pass to things like dotplot.
 }
 \description{
 Same idea as goseq2enrich.

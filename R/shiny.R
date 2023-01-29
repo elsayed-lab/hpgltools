@@ -1,7 +1,14 @@
 ## A place to put shiny things
+## I got it in my head to try to make a set of shiny widgets for common tasks.
+## I promptly forgot about it.
 
 #' make a slideable threshold for cutting off significant genes in a DE table.
 #'
+#' @param de_table Table of DE results.
+#' @param control Which contrast to examine?
+#' @param lfc LogFC starting cutoff.
+#' @param p Starting pvalue cutoff.
+#' @param according_to Which method to deem the arbiter of truth?
 #' @import shiny
 slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, according_to = "deseq") {
   df <- de_table[["data"]][[contrast]][, c("deseq_logfc", "deseq_adjp")]

@@ -1688,6 +1688,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["batches"]] <- fact
   pData(expt[["expressionset"]])[["batch"]] <- fact
   expt[["design"]][["batch"]] <- fact
+  print(table(pData(expt)[["batch"]]))
   return(expt)
 }
 
@@ -1940,6 +1941,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
     new_expt[["design"]][["condition"]] <- fact
   }
 
+  print(table(pData(new_expt)[["condition"]]))
   new_expt <- set_expt_colors(new_expt)
   return(new_expt)
 }
@@ -2212,6 +2214,10 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     ## standard deviation or somesuch...
     mesg("Subsetting given a minimal number of counts/sample.")
     coverages <- colSums(exprs(expt))
+
+    if (is.null(pData(expt)[["sample_coverage"]])) {
+      pData(expt)[["sample_coverage"]] <- coverages
+    }
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
@@ -2221,12 +2227,22 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   } else if (is.null(coverage)) {
     ## Remove samples with less than this number of non-zero genes.
     nonzero_idx <- exprs(expt) != 0
-    remove_idx <- colSums(nonzero_idx) < nonzero
+    num_nonzero <- colSums(nonzero_idx)
+    if (is.null(pData(expt)[["num_nonzero"]])) {
+      pData(expt)[["num_nonzero"]] <- num_nonzero
+    }
+    remove_idx <- num_nonzero < nonzero
+    if (sum(remove_idx) == 0) {
+      message("No samples have fewer than ", nonzero, " observed genes.")
+      return(expt)
+    }
+    samples_dropped <- num_nonzero[remove_idx]
     subset_design <- starting_metadata[!remove_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
     message("The samples (and read coverage) removed when filtering ",
             nonzero, " non-zero genes are: ")
     print(colSums(exprs(expt))[remove_idx])
+    print(num_nonzero[remove_idx])
   } else {
     stop("Unable to determine what is being subset.")
   }
@@ -3298,7 +3314,7 @@ expt_set <- setOldClass("expt")
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
-
+#' @importFrom Biobase annotation annotation<-
 setMethod("annotation", signature = "expt",
           function(object) {
             Biobase::annotation(object[["expressionset"]])

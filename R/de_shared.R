@@ -1192,13 +1192,25 @@ compare_de_results <- function(first, second, cor_method = "pearson",
         next
       }
       element <- result[[col]][[row]][["logfc"]]
-      comp_df[row, col] <- element
-      element <- result[[col]][[row]][["p"]]
-      p_df[row, col] <- element
-      element <- result[[col]][[row]][["adjp"]]
-      adjp_df[row, col] <- element
+
+      ## Note that in the case of tables with 'extra' contrasts
+      ## this may come out null and therefore need to be skipped.
+      if (is.null(element)) {
+        comp_df[row, col] <- NA
+        p_df[row, col] <- NA
+        adjp_df[row, col] <- NA
+      } else {
+        comp_df[row, col] <- element
+        element <- result[[col]][[row]][["p"]]
+        p_df[row, col] <- element
+        element <- result[[col]][[row]][["adjp"]]
+        adjp_df[row, col] <- element
+      }
     }
   }
+  comp_df <- na.omit(comp_df)
+  p_df <- na.omit(p_df)
+  adjp_df <- na.omit(adjp_df)
 
   original <- par(mar = c(7, 4, 4, 2) + 0.1)
   text_size <- 1.0
@@ -1248,6 +1260,16 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   return(retlist)
 }
 
+#' Use plot_linear_scatter to compare to de tables.
+#'
+#' @param first First table to compare.
+#' @param second Second table to compare.
+#' @param fcx Column for the x-axis fold-change.
+#' @param px Column for the x-axis p-value.
+#' @param fcy Column containing the y-axis fold-change.
+#' @param py Column containing the y-axis p-value.
+#' @param first_table If the input data are actually of type de_table, then find the table(s) inside them.
+#' @param second_table Ibid.
 compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
                               fcy = "deseq_logfc", py = "deseq_adjp",
                               first_table = NULL, second_table = NULL) {

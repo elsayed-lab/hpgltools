@@ -29,6 +29,7 @@ combine_de_tables(
   de_types = c("limma", "deseq", "edger"),
   rda = NULL,
   start_worksheet = "S02",
+  format_sig = 4,
   ...
 )
 }
@@ -80,6 +81,8 @@ certain contrasts in specific orders and orientations.}
 \item{de_types}{Used for plotting pvalue/logFC cutoffs.}
 
 \item{rda}{Write a rda file of the results.}
+
+\item{start_worksheet}{This will now increment worksheet titles from this point forward.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }

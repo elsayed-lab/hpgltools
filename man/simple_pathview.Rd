@@ -24,6 +24,8 @@ simple_pathview(
 \arguments{
 \item{gene_input}{Some differentially expressed genes.}
 
+\item{compound_input}{Sets of compounds which have changed in the data of interest.}
+
 \item{indir}{Directory into which the unmodified kegg images will be
 downloaded (or already exist).}
 
@@ -51,8 +53,6 @@ format to another.}
 well.}
 
 \item{verbose}{When on, this function is quite chatty.}
-
-\item{compount_input}{Sets of compounds which have changed in the data of interest.}
 }
 \value{
 A list of some information for every KEGG pathway

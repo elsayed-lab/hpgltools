@@ -5,7 +5,7 @@
 #' attempts to alleviate that.
 #'
 #' @param gene_input Some differentially expressed genes.
-#' @param compount_input Sets of compounds which have changed in the data of interest.
+#' @param compound_input Sets of compounds which have changed in the data of interest.
 #' @param indir Directory into which the unmodified kegg images will be
 #'  downloaded (or already exist).
 #' @param outdir Directory which will contain the colored images.

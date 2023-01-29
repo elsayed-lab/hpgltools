@@ -653,6 +653,352 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   return(retlist)
 }
 
+#' Make a pretty Volcano plot!
+#'
+#' Volcano plots and MA plots provide quick an easy methods to view the set of
+#' (in)significantly differentially expressed genes.  In the case of a volcano
+#' plot, it places the -log10 of the p-value estimate on the y-axis and the
+#' fold-change between conditions on the x-axis.  Here is a neat snippet from
+#' wikipedia: "The concept of volcano plot can be generalized to other
+#' applications, where the x-axis is related to a measure of the strength of a
+#' statistical signal, and y-axis is related to a measure of the statistical
+#' significance of the signal."
+#'
+#' @param table Dataframe from limma's toptable which includes log(fold change) and an
+#'  adjusted p-value.
+#' @param alpha How transparent to make the dots.
+#' @param color_by By p-value something else?
+#' @param p_color_list List of colors for significance.
+#' @param fc_col Which column contains the fc data?
+#' @param fc_name Name of the fold-change to put on the plot.
+#' @param line_color What color for the significance lines?
+#' @param line_position Put the significance lines above or below the dots?
+#' @param logfc Cutoff defining the minimum/maximum fold change for
+#'  interesting.
+#' @param p_col Which column contains the p-value data?
+#' @param p_name Name of the p-value to put on the plot.
+#' @param p Cutoff defining significant from not.
+#' @param shapes_by_state Add fun shapes for the various significance states?
+#' @param size How big are the dots?
+#' @param invert Flip the x-axis?
+#' @param label Label the top/bottom n logFC values?
+#' @param label_column Use this column of annotations for labels instead of rownames?
+#' @param ... I love parameters!
+#' @return Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)
+#'   with respect to log(fold change).  The cutoff values are delineated with
+#'   lines and mark the boundaries between 'significant' and not.  This will
+#'   make a fun clicky googleVis graph if requested.
+#' @seealso [all_pairwise()]
+#' @examples
+#' \dontrun{
+#'  plot_volcano_de(table)
+#'  ## Currently this assumes that a variant of toptable was used which
+#'  ## gives adjusted p-values.  This is not always the case and I should
+#'  ## check for that, but I have not yet.
+#' }
+#' @export
+plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
+                            color_list = c("FALSE" = "darkblue", "TRUE" = "darkred"),
+                            fc_col = "logFC", fc_name = "log2 fold change",
+                            line_color = "black", line_position = "bottom", logfc = 1.0,
+                            p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
+                            shapes_by_state = FALSE,
+                            size = 2, invert = FALSE, label = NULL,
+                            label_column = "hgncsymbol", ...) {
+  low_vert_line <- 0.0 - logfc
+  horiz_line <- -1 * log10(p)
+
+  if (! fc_col %in% colnames(table)) {
+    stop("Column: ", fc_col, " is not in the table.")
+  }
+  if (! p_col %in% colnames(table)) {
+    stop("Column: ", p_col, " is not in the table.")
+  }
+
+  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
+                   "yaxis" = as.numeric(table[[p_col]]))
+  rownames(df) <- rownames(table)
+
+  if (isTRUE(invert)) {
+    df[["xaxis"]] <- df[["xaxis"]] * -1.0
+  }
+
+  ## Add the label column if it exists.
+  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[label_column]]
+  } else {
+    df[["label"]] <- rownames(table)
+  }
+
+  ## This might have been converted to a string
+  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
+  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
+
+  df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
+                   ifelse(table[[p_col]] <= p &
+                          table[[fc_col]] >= logfc, "upsig",
+                   ifelse(table[[p_col]] <= p &
+                          table[[fc_col]] <= (-1 * logfc),
+                          "downsig", "fcinsig")))
+  df[["pcut"]] <- as.factor(df[["pcut"]])
+  df[["state"]] <- as.factor(df[["state"]])
+
+  ## shape 25 is the down arrow, 22 is the square, 23 the diamond, 24 the up arrow
+  state_shapes <- c(25, 22, 23, 24)
+  names(state_shapes) <- c("downsig", "fcinsig", "pinsig", "upsig")
+
+  color_column <- "pcut"
+  color_column_number <- 2
+  if (color_by != "p") {
+    color_column <- "state"
+    color_column_number <- 4
+    color_list <- c("downsig" = "blue", "fcinsig" = "darkgrey",
+                    "pinsig" = "darkgrey", "upsig" = "red")
+  }
+  ## Now make sure that the color column has the correct number of elements.
+  if (length(color_list) != color_column_number) {
+    message("The color list must have ", color_column_number,
+            ", setting it to the default.")
+  }
+
+  ## Count the numbers in the categories
+  num_downsig <- sum(df[["state"]] == "downsig")
+  num_fcinsig <- sum(df[["state"]] == "fcinsig")
+  num_pinsig <- sum(df[["state"]] == "pinsig")
+  num_upsig <- sum(df[["state"]] == "upsig")
+
+  plt <- NULL
+  if (isTRUE(shapes_by_state)) {
+    plt <- ggplot(data = df,
+                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
+                             fill = color_column, colour = color_column, shape = "state"))
+  } else {
+    plt <- ggplot(data = df,
+                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
+                             fill = color_column, colour = color_column))
+  }
+
+  ## Now define when to put lines vs. points
+  if (line_position == "bottom") {
+    ## lines, then points.
+    plt <- plt +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  } else {
+    ## points, then lines
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
+  }
+
+  ## If shapes are being set by state,  add that to the legend now.
+  if (isTRUE(shapes_by_state)) {
+    plt <- plt +
+      ggplot2::scale_shape_manual(
+                   name = "state", values = state_shapes,
+                   labels = c(
+                       glue("Down Sig.: {num_downsig}"),
+                       glue("FC Insig.: {num_fcinsig}"),
+                       glue("P Insig.: {num_pinsig}"),
+                       glue("Up Sig.: {num_upsig}")),
+                   guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
+  }
+
+  ## Now set the colors and axis labels
+  plt <- plt +
+    ggplot2::scale_fill_manual(name = color_column, values = color_list,
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = color_column, values = color_list,
+                                guide = "none") +
+    ggplot2::xlab(label = fc_name) +
+    ggplot2::ylab(label = p_name) +
+    ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
+  ##  axis.text.x = ggplot2::element_text(angle=-90))
+
+  if (!is.null(label)) {
+    if (is.numeric(label)) {
+      reordered_idx <- order(df[["xaxis"]])
+      reordered <- df[reordered_idx, ]
+      sig_idx <- reordered[["logyaxis"]] > horiz_line
+      reordered <- reordered[sig_idx, ]
+      top <- head(reordered, n = label)
+      bottom <- tail(reordered, n = label)
+      df_subset <- rbind(top, bottom)
+    } else if (is.character(label)) {
+      sig_idx <- rownames(df) %in% label
+      df_subset <- df[sig_idx, ]
+    } else {
+      stop("I do not understand this set of IDs to label.")
+    }
+    plt <- plt +
+      ggrepel::geom_text_repel(data = df_subset,
+                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+                               point.padding = ggplot2::unit(1.6, "lines"),
+                               arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  retlist <- list("plot" = plt,
+                  "df" = df)
+  return(retlist)
+}
+
+#' Theresa's volcano plots are objectively nicer because they are colored by condition.
+#'
+#' I therefore took a modified copy of her implementation and added it here.
+#'
+#' @param de_result Table of DE values, likely from combine_de_tables().
+#' @param de_table Which table from the result to use?
+#' @param alpha Make see-through.
+#' @param fc_col Column containing the fold-change values.
+#' @param fc_name Axis label.
+#' @param line_color Color for the demarcation lines.
+#' @param line_position Put the lines above or below the dots.
+#' @param logfc Demarcation line for fold-change significance.
+#' @param p_col Column containing the significance information.
+#' @param p_name Axis label for the significance.
+#' @param p Demarcation for (in)significance.
+#' @param shapes_by_state Change point shapes according to their states?
+#' @param size Point size
+#' @param invert Flip the plot?
+#' @param label Label some points?
+#' @param label_column Using this column in the data.
+#' @param ... Extra arguments.
+#' @export
+plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
+                                      fc_col = "logFC", fc_name = "log2 fold change",
+                                      line_color = "black", line_position = "bottom", logfc = 1.0,
+                                      p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
+                                      shapes_by_state = FALSE,
+                                      size = 2, invert = FALSE, label = NULL,
+                                      label_column = "hgncsymbol", ...) {
+  table <- de_result[["all_tables"]][[de_table]]
+
+  ## Make a list of the colors by condition name.
+  colors <- de_result[["input_data"]][["colors"]]
+  start_names <- pData(de_result[["input_data"]])[["condition"]]
+  ## Make sure to do the same sanitization as performed by all_pairwise()
+  sanitized_names <- gsub(x = start_names, pattern = "[[:punct:]]", replacement = "")
+  names(colors) <- sanitized_names
+  single_idx <- !duplicated(colors)
+  colors <- colors[single_idx]
+
+  split <- strsplit(x = de_table, split = "_vs_")
+  numerator <- split[[1]][1]
+  denominator <- split[[1]][2]
+
+  message("Plotting volcano plot of the DE results of ", de_table, " according to the columns: ",
+          fc_col, " and ", p_col, " using the expressionset colors.")
+
+  low_vert_line <- 0.0 - logfc
+  horiz_line <- -1 * log10(p)
+
+  if (! fc_col %in% colnames(table)) {
+    stop("Column: ", fc_col, " is not in the table.")
+  }
+  if (! p_col %in% colnames(table)) {
+    stop("Column: ", p_col, " is not in the table.")
+  }
+
+  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
+                   "yaxis" = as.numeric(table[[p_col]]))
+  rownames(df) <- rownames(table)
+
+  if (isTRUE(invert)) {
+    df[["xaxis"]] <- df[["xaxis"]] * -1.0
+  }
+
+  ## Add the label column if it exists.
+  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[label_column]]
+  } else {
+    df[["label"]] <- rownames(table)
+  }
+
+  ## This might have been converted to a string
+  df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
+  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
+
+  df[["state"]] <- "insignificant"
+  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= p
+  df[numerator_sig, "state"] <- numerator
+  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= p
+  df[denominator_sig, "state"] <- denominator
+  df[["state"]] <- as.factor(df[["state"]])
+
+  plot_colors <- c("#555555", colors[numerator], colors[denominator])
+  names(plot_colors) <- c("insignificant", numerator, denominator)
+
+  plt <- ggplot(data = df,
+                aes_string(x = "xaxis", y = "logyaxis", label = "label",
+                           fill = "state", colour = "state"))
+
+  ## Now define when to put lines vs. points
+  if (line_position == "bottom") {
+    ## lines, then points.
+    plt <- plt +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  } else {
+    ## points, then lines
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
+  }
+
+  ## Now set the colors and axis labels
+  plt <- plt +
+    ggplot2::scale_fill_manual(name = "state", values = colors,
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "state", values = colors,
+                                guide = "none") +
+    ggplot2::xlab(label = fc_name) +
+    ggplot2::ylab(label = p_name) +
+    ## ggplot2::guides(shape = ggplot2::guide_legend(override.aes = list(size = 3))) +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
+  ##  axis.text.x = ggplot2::element_text(angle=-90))
+
+  if (!is.null(label)) {
+    if (is.numeric(label)) {
+      reordered_idx <- order(df[["xaxis"]])
+      reordered <- df[reordered_idx, ]
+      sig_idx <- reordered[["logyaxis"]] > horiz_line
+      reordered <- reordered[sig_idx, ]
+      top <- head(reordered, n = label)
+      bottom <- tail(reordered, n = label)
+      df_subset <- rbind(top, bottom)
+    } else if (is.character(label)) {
+      sig_idx <- rownames(df) %in% label
+      df_subset <- df[sig_idx, ]
+    } else {
+      stop("I do not understand this set of IDs to label.")
+    }
+    plt <- plt +
+      ggrepel::geom_text_repel(data = df_subset,
+                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+                               point.padding = ggplot2::unit(1.6, "lines"),
+                               arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  retlist <- list("plot" = plt,
+                  "df" = df)
+  return(retlist)
+}
+
 #' Plot the rank order of the data in two tables against each other.
 #'
 #' Steve Christensen has some neat plots showing the relationship between two
@@ -1038,9 +1384,15 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
   return(retlist)
 }
 
-## Taken from: https://github.com/hms-dbmi/UpSetR/issues/85
-## and lightly modified to match my style and so I could more
-## easily understand what it is doing.
+#' Extract overlapping groups from an upset
+#'
+#' Taken from: https://github.com/hms-dbmi/UpSetR/issues/85
+#' and lightly modified to match my style and so I could more
+#' easily understand what it is doing.
+#'
+#' @param lst upset data structure.
+#' @param sort Sort the result?
+#' @export
 overlap_groups <- function (lst, sort = TRUE) {
   ## lst could look like this:
   ## $one
@@ -1049,7 +1401,7 @@ overlap_groups <- function (lst, sort = TRUE) {
   ## [1] "a" "b" "d" "e" "j"
   ## $three
   ## [1] "a" "e" "f" "g" "h" "i" "j" "l" "m"
-  input_mtrx <- fromList(lst) == 1
+  input_mtrx <- UpSetR::fromList(lst) == 1
   ##     one   two three
   ## a  TRUE  TRUE  TRUE
   ## b  TRUE  TRUE FALSE
@@ -1078,8 +1430,19 @@ overlap_groups <- function (lst, sort = TRUE) {
   ## save element list to facilitate access using an index in case rownames are not named
 }
 
+#' Use UpSetR to compare significant gene lists.
+#'
+#' @param sig datastructure of significantly DE genes.
+#' @param according_to Choose your favorite method.
+#' @param contrasts Choose a specific contrast(s)
+#' @param up Make a plot of the up genes?
+#' @param down Make a plot of the down genes?
+#' @param both Make a plot of the up+down genes?
+#' @param scale Make the numbers larger and easier to read?
+#' @param ... Other parameters to pass to upset().
+#' @export
 upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
-                       down=TRUE, both=FALSE) {
+                       down=TRUE, both=FALSE, scale = 2, ...) {
 
   ## Start by pulling the gene lists from the significant gene sets.
   start <- sig[[according_to]]
@@ -1119,15 +1482,18 @@ upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
   ## Do the plots.
   retlist <- list()
   if (isTRUE(up)) {
-    retlist[["up"]] <- UpSetR::upset(UpSetR::fromList(upsetr_up_list))
+    retlist[["up"]] <- UpSetR::upset(UpSetR::fromList(upsetr_up_list),
+                                     text.scale = scale, ...)
     retlist[["up_groups"]] <- overlap_groups(upsetr_up_list)
   }
   if (isTRUE(down)) {
-    retlist[["down"]] <- UpSetR::upset(UpSetR::fromList(upsetr_down_list))
+    retlist[["down"]] <- UpSetR::upset(UpSetR::fromList(upsetr_down_list),
+                                       text.scale = scale, ...)
     retlist[["down_groups"]] <- overlap_groups(upsetr_down_list)
   }
   if (isTRUE(both)) {
-    retlist[["both"]] <- UpSetR::upset(UpSetR::fromList(upsetr_both_list))
+    retlist[["both"]] <- UpSetR::upset(UpSetR::fromList(upsetr_both_list),
+                                       text.scale = scale, ...)
     retlist[["both_groups"]] <- overlap_groups(upsetr_both_list)
   }
 

@@ -23,6 +23,8 @@ make_gsc_from_abundant(
 
 \item{according_to}{When getting significant genes, use this method.}
 
+\item{annotation_name}{Name of the annotation dataset.}
+
 \item{researcher_name}{Prefix of the name for the generated set(s).}
 
 \item{study_name}{Second element in the name of the generated set(s).}
@@ -38,8 +40,6 @@ make_gsc_from_abundant(
 \item{required_id}{What type of ID should the use?}
 
 \item{...}{Extra arguments for extract_abundant_genes().}
-
-\item{orgdb}{Annotation dataset.}
 }
 \value{
 List containing 3 GSCs, one containing both the highs/lows called

@@ -57,7 +57,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                               include_basic = TRUE, rownames = TRUE, add_plots = TRUE, loess = FALSE,
                               plot_dim = 6, compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
-                              rda = NULL, start_worksheet = "S02", ...) {
+                              rda = NULL, start_worksheet = "S02", format_sig = 4, ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -173,7 +173,7 @@ combine_de_tables <- function(apr, extra_annot = NULL,
                                      include_basic, excludes, padj_type,
                                      loess =  loess, lfc_cutoff = lfc_cutoff,
                                      p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
-                                     sheet_number = sheet_number)
+                                     sheet_number = sheet_number, format_sig = format_sig)
   } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
@@ -785,6 +785,7 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_lidf)) {
         warning("The limma table seems to be missing.")
+        include_limma <- FALSE
       } else {
         lidf <- test_lidf
       }
@@ -810,6 +811,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC and stat.")
       if (is.null(test_dedf)) {
         warning("The deseq table seems to be missing.")
+        dedf <- data.frame()
+        include_deseq <- FALSE
       } else {
         dedf <- test_dedf
       }
@@ -835,6 +838,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_eddf)) {
         warning("The edger table seems to be missing.")
+        eddr <- data.frame()
+        include_edger <- FALSE
       } else {
         eddf <- test_eddf
       }
@@ -860,6 +865,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_ebdf)) {
         warning("The ebseq table seems to be missing.")
+        ebdf <- data.frame()
+        include_ebseq <- FALSE
       } else {
         ebdf <- test_ebdf
       }
@@ -885,6 +892,8 @@ Defaulting to fdr.")
       mesg("Used the inverse table, might need to -1 the logFC.")
       if (is.null(test_badf)) {
         warning("The basic table seems to be missing.")
+        badf <- data.frame()
+        include_basic <- FALSE
       } else {
         badf <- test_badf
       }
@@ -893,37 +902,45 @@ Defaulting to fdr.")
     }
   }
 
-  colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
-                      "limma_adjp", "limma_b")
-  li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
-  li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+  if (isTRUE(include_limma)) {
+    colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
+                        "limma_adjp", "limma_b")
+    li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
+    li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+  }
 
-  colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
-                      "deseq_stat", "deseq_p", "deseq_adjp")
-  de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
-  de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+  if (isTRUE(include_deseq)) {
+    colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
+                        "deseq_stat", "deseq_p", "deseq_adjp")
+    de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p")]
+    de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+  }
 
-  colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
-  ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
-  ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
-  colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
-                      "ebseq_c2mean", "ebseq_mean", "ebseq_var",
-                      "ebseq_postfc", "ebseq_ppee", "ebseq_ppde",
-                      "ebseq_adjp")
+  if (isTRUE(include_edger)) {
+    colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
+    ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
+    ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
+    colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
+                        "ebseq_c2mean", "ebseq_mean", "ebseq_var",
+                        "ebseq_postfc", "ebseq_ppee", "ebseq_ppde",
+                        "ebseq_adjp")
+  }
 
   ## I recently changed basic to optionally do means or medians.  I need to take that into
   ## account when working with these tables.  For the moment, I think I will simply rename
   ## the column to _median to avoid confusion.
-  mean_idx <- "numerator_mean" == colnames(badf)
-  if (sum(mean_idx) > 0) {
-    colnames(badf)[mean_idx] <- "numerator_median"
-    mean_idx <- "denominator_mean" == colnames(badf)
-    colnames(badf)[mean_idx] <- "denominator_median"
+  if (isTRUE(include_basic)) {
+    mean_idx <- "numerator_mean" == colnames(badf)
+    if (sum(mean_idx) > 0) {
+      colnames(badf)[mean_idx] <- "numerator_median"
+      mean_idx <- "denominator_mean" == colnames(badf)
+      colnames(badf)[mean_idx] <- "denominator_median"
+    }
+    ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
+                         "denominator_var", "logFC", "t", "p", "adjp")]
+    colnames(ba_stats) <- c("basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
+                            "basic_logfc", "basic_t", "basic_p", "basic_adjp")
   }
-  ba_stats <- badf[, c("numerator_median", "denominator_median", "numerator_var",
-                       "denominator_var", "logFC", "t", "p", "adjp")]
-  colnames(ba_stats) <- c("basic_nummed", "basic_denmed", "basic_numvar", "basic_denvar",
-                          "basic_logfc", "basic_t", "basic_p", "basic_adjp")
 
   datalst <- list()
   statslst <- list()
@@ -1013,7 +1030,7 @@ Defaulting to fdr.")
   if (!is.null(comb[["limma_p"]])) {
     colname <- glue::glue("limma_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "limma_p", mean_column = "limma_ave",
-                                    method = padj_type, significance = 0.05)
+                                    method = padj_type, significance = p_cutoff)
     if (is.numeric(format_sig)) {
       comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
                                 scientific = TRUE, trim = TRUE)
@@ -1022,7 +1039,7 @@ Defaulting to fdr.")
   if (!is.null(comb[["deseq_p"]])) {
     colname <- glue::glue("deseq_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "deseq_p", mean_column = "deseq_basemean",
-                                    method = padj_type, significance = 0.05)
+                                    method = padj_type, significance = p_cutoff)
     if (is.numeric(format_sig)) {
       comb[[colname]] <- format(x=comb[[colname]], digits = format_sig,
                                 scientific = TRUE, trim = TRUE)
@@ -1031,7 +1048,7 @@ Defaulting to fdr.")
   if (!is.null(comb[["edger_p"]])) {
     colname <- glue::glue("edger_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "edger_p", mean_column = "edger_logcpm",
-                                    method = padj_type, significance = 0.05)
+                                    method = padj_type, significance = p_cutoff)
     if (is.numeric(format_sig)) {
       comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
                                 scientific = TRUE, trim = TRUE)
@@ -1040,7 +1057,7 @@ Defaulting to fdr.")
   if (!is.null(comb[["ebseq_ppde"]])) {
     colname <- glue::glue("ebseq_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "ebseq_ppde", mean_column = "ebseq_mean",
-                                    method = padj_type, significance = 0.05)
+                                    method = padj_type, significance = p_cutoff)
     if (is.numeric(format_sig)) {
       comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
                                 scientific = TRUE, trim = TRUE)
@@ -1049,7 +1066,7 @@ Defaulting to fdr.")
   if (!is.null(comb[["basic_p"]])) {
     colname <- glue::glue("basic_adjp_{padj_type}")
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "basic_p", mean_column = "basic_nummed",
-                                    method = padj_type, significance = 0.05)
+                                    method = padj_type, significance = p_cutoff)
     if (is.numeric(format_sig)) {
       comb[[colname]] <- format(x = comb[[colname]], digits = format_sig,
                                 scientific = TRUE, trim = TRUE)
@@ -1875,20 +1892,30 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       }
 
       this_table <- all_tables[[table_name]]
-      trimming <- get_sig_genes(
+      ## Added this try() because I am not sure how I want to deal with
+      ## extra contrasts, and until I decide it is easier to skip them
+      trimming <- try(get_sig_genes(
           this_table, lfc = lfc, p = p, z = z, n = n, column = this_fc_column,
-          p_column = this_p_column)
-
-      trimmed_up[[table_name]] <- trimming[["up_genes"]]
-      change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
-      trimmed_down[[table_name]] <- trimming[["down_genes"]]
-      change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-      up_title <- glue::glue("Table SXXX: Genes deemed significantly up in \\
+          p_column = this_p_column), silent = TRUE)
+      if ("try-error" %in% class(trimming)) {
+        trimmed_up[[table_name]] <- data.frame()
+        trimmed_down[[table_name]] <- data.frame()
+        change_counts_up[[table_name]] <- 0
+        change_counts_down[[table_name]] <- 0
+        up_titles[[table_name]] <- "This table was not processed."
+        down_titles[[table_name]] <- "This table was not processed."
+      } else {
+        trimmed_up[[table_name]] <- trimming[["up_genes"]]
+        change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
+        trimmed_down[[table_name]] <- trimming[["down_genes"]]
+        change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
+        up_title <- glue::glue("Table SXXX: Genes deemed significantly up in \\
                        {table_name} with {title_append} according to {according}.")
-      up_titles[[table_name]] <- up_title
-      down_title <- glue::glue("Table SXXX: Genes deemed significantly down in \\
+        up_titles[[table_name]] <- up_title
+        down_title <- glue::glue("Table SXXX: Genes deemed significantly down in \\
                          {table_name} with {title_append} according to {according}.")
-      down_titles[[table_name]] <- down_title
+        down_titles[[table_name]] <- down_title
+      }
     } ## End extracting significant genes for loop
 
     change_counts <- as.data.frame(cbind(as.numeric(change_counts_up),

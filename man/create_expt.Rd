@@ -72,6 +72,8 @@ filesystem?}
 
 \item{annotation_name}{Ibid, but set the orgdb (or other annotation) instance.}
 
+\item{tx_gene_map}{Dataframe of transcripts to genes, primarily for tools like salmon.}
+
 \item{...}{More parameters are fun!}
 }
 \value{

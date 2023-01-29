@@ -2,6 +2,19 @@
 ## first GSEA tool I learned about.  It is not particularly robust, this seeks
 ## to amend that.
 
+#' Filter a goseq significance search
+#'
+#' Given a goseq result, use some simple filters to pull out the
+#' categories of likely interest.
+#'
+#' @param godata goseq result
+#' @param expand_categories Extract GO terms from GO.db and add them
+#'  to the table
+#' @param pvalue Significance filter.
+#' @param minimum_interesting The category should have more than this
+#'  number of elements.
+#' @param adjust Adjusted p-value filter.
+#' @param padjust_method Method for adjusting the p-values.
 extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue = 0.05,
                                       minimum_interesting = 1, adjust = 0.05, padjust_method = "BH") {
   ## Add a little logic if we are using a non-GO input database.
@@ -152,10 +165,12 @@ goseq_msigdb <- function(sig_genes, signatures = "c2BroadSets", data_pkg = "GSVA
     new_sig <- new_ids
     colnames(new_sig) <- c(current_id, "ID")
     new_sig <- new_sig[, c("ID", current_id)]
-    rownames(new_sig) <- new_sig[["ID"]]
+    rownames(new_sig) <- make.names(new_sig[["ID"]], unique = TRUE)
   } else if ("data.frame" %in% class(sig_genes)) {
-    new_ids <- convert_ids(rownames(sig_genes), from = current_id, to = required_id, orgdb = orgdb)
-    new_sig <- merge(new_ids, sig_genes, by.x = current_id, by.y = "row.names")
+    new_ids <- convert_ids(rownames(sig_genes), from = current_id,
+                           to = required_id, orgdb = orgdb)
+    new_sig <- merge(new_ids, sig_genes, by.x = current_id,
+                     by.y = "row.names")
     new_sig[["ID"]] <- new_sig[[required_id]]
   } else {
     stop("I do not understand this input data format for sig_genes.")

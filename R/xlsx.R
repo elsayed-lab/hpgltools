@@ -112,8 +112,9 @@ sanitize_percent <- function(numbers, df = NULL) {
     encode <- encoded[n]
 
     if (isTRUE(encode)) {
-      re_encoded <- gsub(x = start, pattern = "\\%",
-                         replacement = "")
+      re_encoded <- gsub(x = start, pattern = "^.*?(\\d+)\\%.*$",
+                         replacement = "\\1", perl = TRUE)
+      re_encoded
       re_encoded <- as.numeric(re_encoded) / 100.0
       num_pct_removed <- num_pct_removed + 1
     } else if (is.na(start))  {

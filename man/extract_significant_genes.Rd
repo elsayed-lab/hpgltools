@@ -59,6 +59,10 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{excel}{Write the results to this excel file, or NULL.}
 
+\item{fc_column}{Column in the DE data containing the foldchange values.}
+
+\item{p_column}{Column in the DE data containing the pvalues.}
+
 \item{siglfc_cutoffs}{Set of cutoffs used to define levels of 'significant.'}
 
 \item{column_suffix}{Used to help determine which columns are used to find significant
