@@ -92,6 +92,52 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
   return(radius)
 }
 
+#' Make sure I haven't mixed and matched genomes.
+#'
+#' This is mostly intended to stop things early if I accidently use
+#' the wrong reference genome, but it currently does return the number
+#' of observed chrosomes.
+circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
+                                     annot_gene_column = "rownames", df_chr_column = "names",
+                                     df_gene_column = NULL) {
+  annot_chromosome_names <- unique(cfg@annot[[annot_chr_column]])
+  annot_gene_names <- rownames(cfg@annot)
+  df_chromosome_names <- unique(df[[df_chr_column]])
+  df_gene_names <- NULL
+  if (!is.null(df_gene_column)) {
+    if (df_gene_column[1] == "rownames") {
+      df_gene_names <- rownames(df)
+    } else {
+      df_gene_names <- df[[df_gene_column]]
+    }
+  }
+
+  found_chromosomes <- df_chromosome_names %in% annot_chromosome_names
+  if (sum(found_chromosomes) == 0) {
+    stop("The chromosomes do not match the configuration.")
+  } else if (sum(found_chromosomes) != length(annot_chromosome_names)) {
+    message("Not all chromosomes are in the annotations, this might be ok if there are lots of contigs.")
+  }
+
+  found_genes <- sum(df_gene_names %in% annot_gene_names)
+  if (found_genes == 0) {
+    message("The genes in the provided data do not match the annotations.")
+    message("Here are the first few of each, annotation: ")
+    print(head(annot_gene_names))
+    message("The df: ")
+    print(head(df_gene_names))
+    stop("The genes in the provided data frame do not match the annotations.")
+  } else if (found_genes != length(annot_gene_names)) {
+    message("There were ", found_genes, " observed in the annotations out of a total: ",
+            length(annot_gene_names), ".")
+  }
+
+  retlist <- list(
+      "found_chromosomes" = found_chromosomes,
+      "found_genes" = found_genes)
+  return(retlist)
+}
+
 #' Write tiles of arbitrary heat-mappable data in circos.
 #'
 #' This function tries to make the writing circos heatmaps easier.  Like
@@ -336,6 +382,10 @@ circos_hist <- function(cfg, input, tablename = NULL, annot_source = "cfg", coln
     full_table <- full_table[keep_idx, ]
   }
 
+  ## Add a check that we pulled the same chromosomes as exist in the annotations.
+  happyp <- circos_check_chromosomes(cfg, full_table,
+                                     df_chr_column = "chr", df_gene_column = "rownames")
+
   ## FIXME: Redo this with %>%
   hist_cfg_file <- cfg@cfg_file
   hist_cfg_file <- gsub(pattern = ".conf$", replacement = "", x = hist_cfg_file)
@@ -508,6 +558,9 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
     chr_df <- data.frame("width" = BiocGenerics::width(all_seq), "names" = names(all_seq))
     chr_df[["names"]] <- gsub(x = chr_df[["names"]], pattern = "^(\\w+) .*", replacement = "\\1")
   }
+
+  ## Add a check that we pulled the same chromosomes as exist in the annotations.
+  happyp <- circos_check_chromosomes(cfg, chr_df)
 
   chr_num <- nrow(chr_df)
   outfile <- glue::glue("{conf_dir}/karyotypes/{name}.conf")

@@ -720,6 +720,13 @@ sm <- function(..., wrap = TRUE) {
   return(ret)
 }
 
+#' Some ggplot2 stats functions have not yet implemented the new dropped_aes
+#' flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.
+#' @export
+sp <- function(...) {
+  suppressWarnings(print(...))
+}
+
 #' Remove the AsIs attribute from some data structure.
 #'
 #' Notably, when using some gene ontology libraries, the returned data

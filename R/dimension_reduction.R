@@ -1677,13 +1677,15 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   if (!is.null(cis)) {
     ci_idx <- pca_data[[ci_group]] %in% ci_keepers[[ci_group]]
     ci_data <- pca_data[ci_idx, ]
+    ci_data[[ci_group]] <- as.factor(ci_data[[ci_group]])
+    ci_data[[ci_fill]] <- as.factor(ci_data[[ci_fill]])
     alpha <- 0
     for (ci in cis) {
       alpha <- alpha + 0.1
       pca_plot <- pca_plot +
-        ggplot2::stat_ellipse(data = ci_data,
-                              mapping = aes_string(group = ci_group, fill = ci_fill),
-                              geom = "polygon", type = "t", level = ci, alpha = alpha)
+        ggplot2::stat_ellipse(
+                     data = ci_data, mapping = aes(group = .data[[ci_group]], fill = .data[[ci_fill]]),
+                     geom = "polygon", type = "t", level = ci, alpha = alpha)
     }
   }
 

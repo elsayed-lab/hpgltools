@@ -4,14 +4,14 @@
 \alias{add_clonotype_annotations}
 \title{Add VDJ information using some code I found.}
 \usage{
-add_clonotype_annotations(obj, start_path, type = "t")
+add_clonotype_annotations(scd, start_path, type = "t")
 }
 \arguments{
-\item{obj}{Seurat object to which we will add some information.}
-
 \item{start_path}{root of the 10x data in which the vdj information should reside.}
 
 \item{type}{The type of VDJ we expect, heavy(B) or light(T).}
+
+\item{obj}{Seurat object to which we will add some information.}
 }
 \value{
 The Seurat object with some new information.
