@@ -108,6 +108,7 @@ Collate:
   'ontology_xlsx.R'
   'ontology_kegg.R'
   'peptides.R'
+  'phylo.R'
   'plot_shared.R'
   'plot_bar.R'
   'plot_distribution.R'
