@@ -1177,16 +1177,26 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
 
   medians <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   cvs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  mins <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  maxs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  sums <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
   rownames(cvs) <- rownames(data)
+  rownames(mins) <- rownames(data)
+  rownames(maxs) <- rownames(data)
+  rownames(sums) <- rownames(data)
   fact <- as.factor(fact)
   used_columns <- c()
   group_indexes <- list()
+  samples_per_condition <- c()
+  condition_names <- c()
   for (type in levels(fact)) {
     ## columns <- grep(pattern = type, x = fact)
     columns <- as.character(fact) == type
     group_indexes[[type]] <- columns
+    samples_per_condition <- c(sum(columns), samples_per_condition)
+    condition_names <- c(type, condition_names)
     med <- NULL
     if (sum(columns) < 1) {
       warning("The level ", type, " of the factor has no columns.")
@@ -1197,7 +1207,13 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
       cv <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      min <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      max <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      sum <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
     } else {
+      min <- MatrixGenerics::rowMins(data[, columns], na.rm = TRUE)
+      max <- MatrixGenerics::rowMaxs(data[, columns], na.rm = TRUE)
+      sum <- rowSums(data[, columns], na.rm = TRUE)
       if (fun == "median") {
         message("The factor ", type, " has ", sum(columns), " rows.")
         med <- matrixStats::rowMedians(data[, columns], na.rm = TRUE)
@@ -1219,18 +1235,32 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
     }
     medians <- cbind(medians, med)
     cvs <- cbind(cvs, cv)
+    mins <- cbind(mins, min)
+    maxs <- cbind(maxs, max)
+    sums <- cbind(sums, sum)
   }
+  names(samples_per_condition) <- condition_names
   medians <- medians[, -1, drop = FALSE]
   cvs <- cvs[, -1, drop = FALSE]
+  mins <- mins[, -1, drop = FALSE]
+  maxs <- maxs[, -1, drop = FALSE]
+  sums <- sums[, -1, drop = FALSE]
   ## Sometimes not all levels of the original experimental design are used.
   ## Thus lets make sure to use only those which appeared.
   colnames(medians) <- used_columns
   colnames(cvs) <- used_columns
+  colnames(mins) <- used_columns
+  colnames(maxs) <- used_columns
+  colnames(sums) <- used_columns
   retlist <- list(
-      "method" = fun,
-      "medians" = medians,
-      "cvs" = cvs,
-      "indexes" = group_indexes)
+    "samples_per_condition" = samples_per_condition,
+    "method" = fun,
+    "medians" = medians,
+    "cvs" = cvs,
+    "mins" = mins,
+    "maxs" = maxs,
+    "sums" = sums,
+    "indexes" = group_indexes)
   return(retlist)
 }
 
@@ -2412,10 +2442,15 @@ variance_expt <- function(expt) {
   df <- exprs(expt)
   vars <- matrixStats::rowVars(df)
   sds <- matrixStats::rowSds(df)
+  meds <- matrixStats::rowMedians(df)
+  iqrs <- matrixStats::rowIQRs(df)
   mean <- rowMeans(df)
   fData(expt)[["exprs_gene_variance"]] <- vars
   fData(expt)[["exprs_gene_stdev"]] <- sds
   fData(expt)[["exprs_gene_mean"]] <- mean
+  fData(expt)[["exprs_gene_median"]] <- meds
+  fData(expt)[["exprs_gene_interquart"]] <- iqrs
+  fData(expt)[["exprs_cv"]] <- sds / mean
   return(expt)
 }
 

@@ -7,12 +7,11 @@
 combine_de_tables(
   apr,
   extra_annot = NULL,
-  excel = NULL,
-  excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all",
   excludes = NULL,
   adjp = TRUE,
   include_limma = TRUE,
+  excel = NULL,
   include_deseq = TRUE,
   include_edger = TRUE,
   include_ebseq = TRUE,
@@ -27,6 +26,7 @@ combine_de_tables(
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
+  excel_title = "Table SXXX: Combined Differential Expression of YYY",
   rda = NULL,
   start_worksheet = "S02",
   format_sig = 4,
@@ -38,11 +38,6 @@ combine_de_tables(
 
 \item{extra_annot}{Add some annotation information?}
 
-\item{excel}{Filename for the excel workbook, or null if not printed.}
-
-\item{excel_title}{Title for the excel sheet(s).  If it has the
-string 'YYY', that will be replaced by the contrast name.}
-
 \item{keepers}{List of reformatted table names to explicitly keep
 certain contrasts in specific orders and orientations.}
 
@@ -51,6 +46,8 @@ certain contrasts in specific orders and orientations.}
 \item{adjp}{Perhaps you do not want the adjusted p-values for plotting?}
 
 \item{include_limma}{Include limma analyses in the table?}
+
+\item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{include_deseq}{Include deseq analyses in the table?}
 
@@ -79,6 +76,9 @@ certain contrasts in specific orders and orientations.}
 \item{p_cutoff}{In this context, used for volcano/MA plots.}
 
 \item{de_types}{Used for plotting pvalue/logFC cutoffs.}
+
+\item{excel_title}{Title for the excel sheet(s).  If it has the
+string 'YYY', that will be replaced by the contrast name.}
 
 \item{rda}{Write a rda file of the results.}
 

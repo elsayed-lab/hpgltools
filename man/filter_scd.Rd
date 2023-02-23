@@ -10,6 +10,7 @@ filter_scd(
   max_num_rna = NULL,
   min_pct_ribo = 5,
   max_pct_ribo = NULL,
+  remerge = NULL,
   max_pct_mito = 15,
   min_pct_mito = NULL,
   mito_pattern = "^mt-",

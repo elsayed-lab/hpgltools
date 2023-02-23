@@ -232,16 +232,19 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                          "cds_length", "chromosome_name",
                                                          "strand", "start_position",
                                                          "end_position"),
-                                     include_lengths = TRUE) {
+                                     include_lengths = TRUE, do_load = TRUE, savefile = NULL) {
 
   ## An attempt to get around 'unable to get local issuer certificate':
   ## As per: https://github.com/grimbough/biomaRt/issues/39
   new_config <- httr::config(ssl_verifypeer = FALSE)
   httr::set_config(new_config, override = FALSE)
 
-  savefile <- glue("{species}_biomart_annotations.rda")
+  if (is.null(savefile)) {
+    savefile <- glue("{species}_biomart_annotations.rda")
+  }
+
   biomart_annotations <- NULL
-  if (file.exists(savefile) & overwrite == FALSE) {
+  if (file.exists(savefile) & isTRUE(do_load)) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
     ## load_string <- paste0("load('", savefile, "', envir = fresh)")

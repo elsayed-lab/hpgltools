@@ -753,7 +753,8 @@ unAsIs <- function(stuff) {
 ymxb_print <- function(lm_model, as = "glue") {
   coefficients <- summary(lm_model)[["coefficients"]]
   int <- signif(x = coefficients["(Intercept)", 1], digits = 3)
-  m <- signif(x = coefficients["first", 1], digits = 3)
+  ## Some invocations of lm() provide different row/column names.
+  m <- signif(x = coefficients[2, 1], digits = 3)
   ret <- NULL
   if (as != "glue") {
     retlst <- list(

@@ -39,9 +39,9 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   interesting[["tmp"]] <- bg_genes
   interesting_cutoff_idx <- interesting[[cutoff_column]] <= cutoff
   interesting_cutoff <- interesting[interesting_cutoff_idx, ]
-  genes_per_category <- gather_ontology_genes(retlist, ontology = ontology,
-                                              column = "over_represented_pvalue",
-                                              pval = cutoff)
+  genes_per_category <- gather_ontology_genes(
+    retlist, ontology = ontology, column = "over_represented_pvalue",
+    pval = cutoff, include_all = FALSE)
   category_genes <- gsub(pattern = ", ", replacement = "/", x = genes_per_category[["sig"]])
 
   ## FIXME: This is _definitely_ wrong for BgRatio

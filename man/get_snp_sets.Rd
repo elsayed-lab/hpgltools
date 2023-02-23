@@ -7,9 +7,10 @@
 get_snp_sets(
   snp_expt,
   factor = "pathogenstrain",
-  limit = 1,
+  stringency = NULL,
   do_save = FALSE,
-  savefile = "variants.rda"
+  savefile = "variants.rda",
+  proportion = 0.9
 )
 }
 \arguments{
@@ -17,12 +18,12 @@ get_snp_sets(
 
 \item{factor}{Experimental factor to use for cutting and splicing the data.}
 
-\item{limit}{Minimum median number of hits / factor to define a position as
-a hit.}
-
 \item{do_save}{Save the result?}
 
 \item{savefile}{Prefix for a savefile if one chooses to save the result.}
+
+\item{limit}{Minimum median number of hits / factor to define a position as
+a hit.}
 }
 \value{
 A funky list by chromosome containing:  'medians', the median number

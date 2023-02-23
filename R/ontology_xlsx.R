@@ -69,11 +69,10 @@ gather_ontology_genes <- function(result, ontology = NULL,
     retlist <- list()
     message("No ontology provided, performing all.")
     for (type in c("MF", "BP", "CC")) {
-      retlist[[type]] <- gather_ontology_genes(result, ontology = type,
-                                               column = column,
-                                               pval = pval,
-                                               include_all = include_all,
-                                               ...)
+      retlist[[type]] <- gather_ontology_genes(
+        result, ontology = type, column = column,
+        pval = pval, include_all = include_all,
+        ...)
     }
     return(retlist)
   } else if (ontology == "MF") {
@@ -86,10 +85,10 @@ gather_ontology_genes <- function(result, ontology = NULL,
     retlist <- list()
     message("No ontology provided, performing all.")
     for (type in c("MF", "BP", "CC")) {
-      retlist[[type]] <- gather_ontology_genes(result, column = column,
-                                               ontology = type, pval = pval,
-                                               include_all = include_all,
-                                               ...)
+      retlist[[type]] <- gather_ontology_genes(
+        result, column = column, ontology = type, pval = pval,
+        include_all = include_all,
+        ...)
     }
     return(retlist)
   }
@@ -110,30 +109,33 @@ gather_ontology_genes <- function(result, ontology = NULL,
     ## Extract the limma logFC for all genes.
     all_names <- toString(all_entries)
     ## Now find the 'significant' genes in this set.
-    entries_in_sig <- input[rownames(input) %in% all_entries, ]
+    sig_limma <- sig_deseq <- sig_edger <- sig_basic <- sig_other <- c("")
+    if ("character" %in% class(input)) {
+      entries_in_sig <- input %in% all_entries
+      sig_names <- input[entries_in_sig]
+    } else if ("data.frame" %in% class(input)) {
+      entries_in_sig <- input[rownames(input) %in% all_entries, ]
+      sig_names <- toString(as.character(rownames(entries_in_sig)))
+      if (!is.null(entries_in_sig[["limma_logfc"]])) {
+        sig_limma <- toString(as.character(entries_in_sig[["limma_logfc"]]))
+      }
+      if (!is.null(entries_in_sig[["deseq_logfc"]])) {
+        sig_deseq <- toString(as.character(entries_in_sig[["deseq_logfc"]]))
+      }
+      if (!is.null(entries_in_sig[["edger_logfc"]])) {
+        sig_edger <- toString(as.character(entries_in_sig[["edger_logfc"]]))
+      }
+      if (!is.null(entries_in_sig[["basic_logfc"]])) {
+        sig_basic <- toString(as.character(entries_in_sig[["basic_logfc"]]))
+      }
+      if (!is.null(entries_in_sig[["logFC"]])) {
+        sig_other <- toString(as.character(entries_in_sig[["logFC"]]))
+      }
+    } else {
+      stop("This currently only understands vectors and dataframes.")
+    }
     ## And get their names.
-    sig_names <- toString(as.character(rownames(entries_in_sig)))
-    ## Along with the logFC from limma
-    sig_limma <- c("")
-    if (!is.null(entries_in_sig[["limma_logfc"]])) {
-      sig_limma <- toString(as.character(entries_in_sig[["limma_logfc"]]))
-    }
-    sig_deseq <- c("")
-    if (!is.null(entries_in_sig[["deseq_logfc"]])) {
-      sig_deseq <- toString(as.character(entries_in_sig[["deseq_logfc"]]))
-    }
-    sig_edger <- c("")
-    if (!is.null(entries_in_sig[["edger_logfc"]])) {
-      sig_edger <- toString(as.character(entries_in_sig[["edger_logfc"]]))
-    }
-    sig_basic <- c("")
-    if (!is.null(entries_in_sig[["basic_logfc"]])) {
-      sig_basic <- toString(as.character(entries_in_sig[["basic_logfc"]]))
-    }
-    sig_other <- c("")
-    if (!is.null(entries_in_sig[["logFC"]])) {
-      sig_other <- toString(as.character(entries_in_sig[["logFC"]]))
-    }
+
     ## names <- toString(as.character(rownames(entries_in_input)))
     retlist <- list("all" = all_names,
                     "sig" = sig_names,

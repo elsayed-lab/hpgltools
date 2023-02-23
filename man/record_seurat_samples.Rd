@@ -11,7 +11,8 @@ record_seurat_samples(
   column_name = NULL,
   column_prefix = NULL,
   verbose = TRUE,
-  group = "orig.ident"
+  group = "Idents",
+  assay = "RNA"
 )
 }
 \arguments{

@@ -6,7 +6,7 @@
 #' dimplot or something of each state vs. all others as a binary pair
 #' rather than as n separate groups.
 add_binary_states <- function(scd, column = NULL) {
-  identity_levels <- levels(as.factor(Idents(object = scd)))
+  identity_levels <- levels(as.factor(Seurat::Idents(object = scd)))
   if (!is.null(column)) {
     identity_levels <- levels(as.factor(scd[[column]]))
   }
@@ -18,7 +18,7 @@ add_binary_states <- function(scd, column = NULL) {
       ## A little lisp predicate happiness
       group_name <- paste0(group, "_identp")
       scd@meta.data[[group_name]] <- not_value
-      true_idx <- Idents(object = scd) == group
+      true_idx <- Seurat::Idents(object = scd) == group
     } else {
       group_name <- paste0(group, "_", column, "p")
       scd@meta.data[[group_name]] <- not_value
@@ -140,7 +140,7 @@ create_scd <- function(metadata, expression_column = "gexfile",
         ## If there are more than 1 type, then obj should be a list.
         obj <- Seurat::Read10X(full_path)
         gex <- Seurat::CreateSeuratObject(obj[[1]])
-        Idents(object = gex) <- path_name
+        Seurat::Idents(object = gex) <- path_name
         ## gex@meta.data[["orig.ident"]] <- path_name
         ab <- Seurat::CreateAssayObject(obj[[2]])
         gex[["ab"]] <- ab
@@ -233,7 +233,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   filt_scd <- scd
 
   pre_plots <- plot_seurat_scatter(scd)
-  sufficient_rna <- NULL
+  sufficient_rna <- nFeature_RNA <- NULL
   if (!is.null(min_num_rna) & !is.null(max_num_rna)) {
     mesg("Filtering both less than minimum and more than maximum.")
     sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= min_num_rna) &
@@ -292,14 +292,14 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
 
   ##mesg("We now have ", current_cells, " cells, ", current_genes,
   ##     " genes, and ", current_counts, " counts.")
-  sufficient_ribo <- NULL
+  sufficient_ribo <- pct_ribo <- pct_mito <- NULL
   if (!is.null(min_pct_ribo) & !is.null(max_pct_ribo)) {
-    sufficient_ribo <- WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo) &
-      WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo) &
+      Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
   } else if (!is.null(min_pct_ribo)) {
-    sufficient_ribo <- WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo)
+    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo)
   } else if (!is.null(max_pct_ribo)) {
-    sufficient_ribo <- WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
   }
   if (is.null(sufficient_ribo)) {
     mesg("Not filtering based on sufficient ribosomal protein percentage observed.")
@@ -324,12 +324,12 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   ##     " genes, and ", current_counts, " counts.")
   sufficient_mito <- NULL
   if (!is.null(min_pct_mito) & !is.null(max_pct_mito)) {
-    sufficient_mito <- WhichCells(filt_scd, expression = pct_mito >= min_pct_mito) &
-      WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito) &
+      Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
   } else if (!is.null(min_pct_mito)) {
-    sufficient_mito <- WhichCells(filt_scd, expression = pct_mito >= min_pct_mito)
+    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito)
   } else if (!is.null(max_pct_mito)) {
-    sufficient_mito <- WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
   }
   if (is.null(sufficient_mito)) {
     mesg("Not filtering based on excessive mitochondrial RNA percentage observed.")
@@ -406,7 +406,7 @@ record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
                                   assay = "RNA") {
   scd_meta <- scd@meta.data
   if (is.null(scd_meta[[group]])) {
-    scd[["Idents"]] <- Idents(scd)
+    scd[["Idents"]] <- Seurat::Idents(scd)
     group <- "Idents"
   }
 
@@ -622,8 +622,8 @@ skim_seurat_metadata <- function(sample_meta, obj_meta, meta_query = "nCount_RNA
   if (isTRUE(verbose)) {
     sample_meta[[column_name]] <- obj_meta %>%
       group_by(!!rlang::sym(group_column)) %>%
-      skim_tee(meta_query) %>%
-      skim(meta_query) %>%
+      skimr::skim_tee(meta_query) %>%
+      skimr::skim(meta_query) %>%
       dplyr::select(summary_query) %>%
       unlist()
   } else {

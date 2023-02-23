@@ -173,6 +173,7 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
 #' }
 #' @export
 plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FALSE,
+                                xcol = NULL, ycol = NULL, text_col = NULL,
                                 identity = FALSE, z_lines = FALSE, first = NULL, second = NULL,
                                 base_url = NULL, pretty_colors = TRUE, xlab = NULL, ylab = NULL,
                                 color_high = NULL, color_low = NULL, alpha = 0.4, ...) {
@@ -186,23 +187,25 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     color_low <- "#7B9F35"
   }
 
-  df <- data.frame(df[, c(1, 2)])
-  df <- df[complete.cases(df), ]
-  correlation <- try(cor.test(df[, 1], df[, 2], method = cormethod, exact = FALSE))
+
+  if (is.null(xcol)) {
+    xcol <- colnames(df)[1]
+    ycol <- colnames(df)[2]
+  }
+
+  correlation <- try(cor.test(df[[xcol]], df[[ycol]], method = cormethod, exact = FALSE))
   if (class(correlation)[1] == "try-error") {
     correlation <- NULL
   }
   df_columns <- colnames(df)
-  df_x_axis <- df_columns[1]
-  df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-    xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue::glue("Expression of {xcol}")
   }
   if (is.null(ylab)) {
-    ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue::glue("Expression of {ycol}")
   }
-  colnames(df) <- c("first", "second")
-  model_test <- try(robustbase::lmrob(formula = second ~ first,
+  test_formula <- as.formula(paste0(ycol, " ~ ", xcol))
+  model_test <- try(robustbase::lmrob(formula = test_formula,
                                       data = df, method = "SMDM"), silent = TRUE)
   linear_model <- NULL
   linear_model_summary <- NULL
@@ -211,7 +214,7 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   linear_model_intercept <- NULL
   linear_model_slope <- NULL
   if (class(model_test)[1] == "try-error") {
-    model_test <- try(lm(formula = second ~ first, data = df), silent = TRUE)
+    model_test <- try(lm(formula = test_formula, data = df), silent = TRUE)
   } else {
     linear_model <- model_test
     linear_model_summary <- summary(linear_model)
@@ -221,7 +224,7 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     linear_model_slope <- stats::coef(linear_model_summary)[2]
   }
   if (class(model_test)[1] == "try-error") {
-    model_test <- try(glm(formula = second ~ first, data = df), silent = TRUE)
+    model_test <- try(glm(formula = test_formula, data = df), silent = TRUE)
   } else {
     linear_model <- model_test
     linear_model_summary <- summary(linear_model)
@@ -239,13 +242,18 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     return(ret)
   }
 
-  first_median <- summary(df[["first"]])[["Median"]]
-  second_median <- summary(df[["second"]])[["Median"]]
-  first_mad <- stats::mad(df[["first"]], na.rm = TRUE)
-  second_mad <- stats::mad(df[["second"]], na.rm = TRUE)
+  first_median <- summary(df[[xcol]])[["Median"]]
+  second_median <- summary(df[[ycol]])[["Median"]]
+  first_mad <- stats::mad(df[[xcol]], na.rm = TRUE)
+  second_mad <- stats::mad(df[[ycol]], na.rm = TRUE)
   line_size <- size / 2
   df[["label"]] <- rownames(df)
-  first_vs_second <- ggplot(df, aes_string(x = "first", y = "second", label = "label")) +
+  if (is.null(text_col)) {
+    aesthetics <- aes_string(x = xcol, y = ycol, label = "label")
+  } else {
+    aesthetics <- aes_string(x = xcol, y = ycol, label = "label", text = text_col)
+  }
+  first_vs_second <- ggplot(df, mapping = aesthetics) +
     ggplot2::xlab(xlab) +
     ggplot2::ylab(ylab) +
     ggplot2::geom_vline(
@@ -270,8 +278,9 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     ## If you want to color the above or below identity line points, then you
     ## will need subsets to define them
     tmpdf <- df
-    tmpdf[["ratio"]] <- tmpdf[, 2] - tmpdf[, 1]
-    subset_points <- sm(get_sig_genes(tmpdf, column = "ratio", ...))
+    tmpdf[["ratio"]] <- tmpdf[[ycol]] - tmpdf[[xcol]]
+    subset_points <- sm(get_sig_genes(tmpdf, column = "ratio",
+                                      ...))
     high_subset <- subset_points[["up_genes"]]
     low_subset <- subset_points[["down_genes"]]
     original_df <- tmpdf
@@ -331,16 +340,9 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
 
-  if (!is.null(first) & !is.null(second)) {
-    colnames(df) <- c(first, second)
-  } else if (!is.null(first)) {
-    colnames(df) <- c(first, "second")
-  } else if (!is.null(second)) {
-    colnames(df) <- c("first", second)
-  }
-  x_histogram <- plot_histogram(data.frame(df[, 1]), fillcolor = "lightblue", color = "blue")
-  y_histogram <- plot_histogram(data.frame(df[, 2]), fillcolor = "pink", color = "red")
-  both_histogram <- plot_multihistogram(df)
+  x_histogram <- plot_histogram(data.frame(df[[xcol]]), fillcolor = "lightblue", color = "blue")
+  y_histogram <- plot_histogram(data.frame(df[[ycol]]), fillcolor = "pink", color = "red")
+  both_histogram <- plot_multihistogram(df[ , c(xcol, ycol)])
   plots <- list(
       "data" = df,
       "scatter" = first_vs_second,

@@ -44,6 +44,15 @@ NULL
 #' @import shiny
 NULL
 
+#' Taken from Nathan Eastwood to help using mutate and friends.
+#'
+#' It is fairly common for me to get annoyed with R CMD check due to NSE,
+#' thus the previous declarations and the rando NULL assignments in this package.
+#' https://nathaneastwood.github.io/2019/08/18/no-visible-binding-for-global-variable/
+#' @name .data
+#' @importFrom rlang .data
+NULL
+
 #' hpgltools: a suite of tools to make our analyses easier
 #'
 #' This provides a series of helpers for working with sequencing data
