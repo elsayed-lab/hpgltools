@@ -79,7 +79,7 @@ NULL
 #' @importFrom data.table data.table
 #' @importFrom dplyr filter group_by n summarise
 #' @importFrom foreach foreach
-#' @importFrom ggplot2 aes aes_string ggplot
+#' @importFrom ggplot2 aes ggplot
 #' @importFrom glue glue glue_data
 #' @importFrom grDevices recordPlot
 #' @importFrom rlang abort sym
@@ -162,9 +162,9 @@ getGOLevel <- "clusterProfiler" %:::% "getGOLevel"
 #' @export
 get_spyogenes_data <- function() {
   retlist <- list(
-      "gff" =  system.file("share", "gas.gff", package = "hpgltools"),
-      "fasta" = system.file("share", "spyogenes_5005.fasta", package = "hpgltools"),
-      "expt" =  system.file("share", "cdm_expt.rda", package = "hpgltools")
+    "gff" =  system.file("share", "gas.gff", package = "hpgltools"),
+    "fasta" = system.file("share", "spyogenes_5005.fasta", package = "hpgltools"),
+    "expt" =  system.file("share", "cdm_expt.rda", package = "hpgltools")
   )
   return(retlist)
 }
@@ -189,11 +189,11 @@ get_spyogenes_data <- function() {
 #' @export
 get_paeruginosa_data <- function() {
   retlist <- list(
-      "sample_sheet" = system.file("share", "pa_samples.xlsx", package = "hpgltools"),
-      "gff" = system.file("share", "paeruginosa_pa14.gff", package = "hpgltools"),
-      "fasta" = system.file("share", "paeruginosa_pa14.fasta", package = "hpgltools"),
-      "gb" = system.file("share", "paeruginosa.pa14.gb", package = "hpgltools"),
-      "counts" = system.file("share", "counts", package = "hpgltools")
+    "sample_sheet" = system.file("share", "pa_samples.xlsx", package = "hpgltools"),
+    "gff" = system.file("share", "paeruginosa_pa14.gff", package = "hpgltools"),
+    "fasta" = system.file("share", "paeruginosa_pa14.fasta", package = "hpgltools"),
+    "gb" = system.file("share", "paeruginosa.pa14.gb", package = "hpgltools"),
+    "counts" = system.file("share", "counts", package = "hpgltools")
   )
   return(retlist)
 }
@@ -206,7 +206,7 @@ get_paeruginosa_data <- function() {
 #' @export
 get_hsapiens_data <- function() {
   retlist <- list(
-      "expt" =  system.file("share", "hs_expt.rda", package = "hpgltools")
+    "expt" =  system.file("share", "hs_expt.rda", package = "hpgltools")
   )
   return(retlist)
 }
@@ -245,13 +245,13 @@ get_circos_data <- function() {
 #' @export
 get_tcruzi_data <- function() {
   retlist <- list(
-      "sample_sheet" = system.file("share", "clbr", "clbr_samples_combined.xlsx",
-                                   package = "hpgltools"),
-      "count_tables" = system.file("share", "clbr", "clbr_counts.tar.xz", package = "hpgltools"),
-      "gff" = system.file("share", "clbr", "clbrener_8.1_complete_genes.gff.gz",
-                          package = "hpgltools"),
-      "vcf_data" = system.file("share", "clbr", "vcfutils_output.tar.xz",
-                               package = "hpgltools")
+    "sample_sheet" = system.file("share", "clbr", "clbr_samples_combined.xlsx",
+                                 package = "hpgltools"),
+    "count_tables" = system.file("share", "clbr", "clbr_counts.tar.xz", package = "hpgltools"),
+    "gff" = system.file("share", "clbr", "clbrener_8.1_complete_genes.gff.gz",
+                        package = "hpgltools"),
+    "vcf_data" = system.file("share", "clbr", "vcfutils_output.tar.xz",
+                             package = "hpgltools")
   )
   return(retlist)
 }
@@ -282,18 +282,18 @@ get_tcruzi_data <- function() {
 #' @export
 get_sagalactiae_data <- function() {
   retlist = list(
-      "sample_sheet" = system.file("share", "gbs_tnseq", "sagalactiae_samples.xlsx",
-                                   package = "hpgltools"),
-      "gff" = system.file("share", "gbs_tnseq", "sagalactiae_a909.gff",
+    "sample_sheet" = system.file("share", "gbs_tnseq", "sagalactiae_samples.xlsx",
+                                 package = "hpgltools"),
+    "gff" = system.file("share", "gbs_tnseq", "sagalactiae_a909.gff",
+                        package = "hpgltools"),
+    "fasta" = system.file("share", "gbs_tnseq", "sagalactiae_a909.fasta",
                           package = "hpgltools"),
-      "fasta" = system.file("share", "gbs_tnseq", "sagalactiae_a909.fasta",
-                            package = "hpgltools"),
-      "count_tables" = system.file("share", "gbs_tnseq", "gbs_essentiality_counts.tar.xz",
-                                   package = "hpgltools"),
-      "essentiality_in" = system.file("share", "gbs_tnseq", "gbs_essentiality_wig.tar.xz",
-                                      package = "hpgltools"),
-      "essentiality_out" = system.file("share", "gbs_tnseq", "gbs_essentiality.tar.xz",
-                                       package = "hpgltools")
+    "count_tables" = system.file("share", "gbs_tnseq", "gbs_essentiality_counts.tar.xz",
+                                 package = "hpgltools"),
+    "essentiality_in" = system.file("share", "gbs_tnseq", "gbs_essentiality_wig.tar.xz",
+                                    package = "hpgltools"),
+    "essentiality_out" = system.file("share", "gbs_tnseq", "gbs_essentiality.tar.xz",
+                                     package = "hpgltools")
   )
   return(retlist)
 }
@@ -308,8 +308,8 @@ get_sagalactiae_data <- function() {
 #' @export
 get_lmajor_data <- function() {
   retlist = list(
-      "utrs" = system.file("share", "motif", "pro_high.fasta",
-                           package = "hpgltools")
+    "utrs" = system.file("share", "motif", "pro_high.fasta",
+                         package = "hpgltools")
   )
   return(retlist)
 }
@@ -332,11 +332,11 @@ get_lmajor_data <- function() {
 #' @export
 get_mtuberculosis_data <- function() {
   retlist <- list(
-      "dia_sample_sheet" = system.file("share", "mtb_prot", "dia_samples.ods",
-                                       package = "hpgltools"),
-      "dia_counts" = system.file("share", "mtb_prot", "sb_prot.tar.xz", package = "hpgltools"),
-      "rmats_out" = system.file("share", "mtb_rmats.tar.xz", package = "hpgltools"),
-      "suppa_out" = system.file("share", "mtb_suppa.tar.xz", package = "hpgltools")
+    "dia_sample_sheet" = system.file("share", "mtb_prot", "dia_samples.ods",
+                                     package = "hpgltools"),
+    "dia_counts" = system.file("share", "mtb_prot", "sb_prot.tar.xz", package = "hpgltools"),
+    "rmats_out" = system.file("share", "mtb_rmats.tar.xz", package = "hpgltools"),
+    "suppa_out" = system.file("share", "mtb_suppa.tar.xz", package = "hpgltools")
   )
   return(retlist)
 }
@@ -356,8 +356,8 @@ get_mtuberculosis_data <- function() {
 #' @export
 get_sbetaceum_data <- function() {
   retlist <- list(
-      "counts" = system.file("share", "sb", "preprocessing.tar.xz", package = "hpgltools"),
-      "annot" = system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgltools")
+    "counts" = system.file("share", "sb", "preprocessing.tar.xz", package = "hpgltools"),
+    "annot" = system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgltools")
   )
   return(retlist)
 }

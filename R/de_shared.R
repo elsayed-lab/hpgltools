@@ -208,11 +208,11 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     res <- foreach(c = 1:length(names(results)), .packages = c("hpgltools")) %dopar% {
       type <- names(results)[c]
       results[[type]] <- do_pairwise(
-          type, input = input, conditions = conditions, batches = batches,
-          model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
-          extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-          annot_df = annot_df, surrogates = surrogates,
-          ...)
+        type, input = input, conditions = conditions, batches = batches,
+        model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
+        extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
+        annot_df = annot_df, surrogates = surrogates,
+        ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     if (isTRUE(verbose)) {
@@ -233,11 +233,11 @@ all_pairwise <- function(input = NULL, conditions = NULL,
         message("Starting ", type, "_pairwise().")
       }
       results[[type]] <- do_pairwise(
-          type, input = input, conditions = conditions, batches = batches,
-          model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
-          extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-          annot_df = annot_df, surrogates = surrogates,
-          ...)
+        type, input = input, conditions = conditions, batches = batches,
+        model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
+        extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
+        annot_df = annot_df, surrogates = surrogates,
+        ...)
     }
   } ## End performing a serial comparison
 
@@ -261,20 +261,20 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   ## So that if I use combine_tables() I can report in the resulting tables
   ## some information about what was performed.
   ret <- list(
-      "basic" = results[["basic"]],
-      "deseq" = results[["deseq"]],
-      "ebseq" = results[["ebseq"]],
-      "edger" = results[["edger"]],
-      "limma" = results[["limma"]],
-      "batch_type" = model_type,
-      "comparison" = result_comparison,
-      "extra_contrasts" = extra_contrasts,
-      "input" = input,
-      "model_cond" = model_cond,
-      "model_batch" = model_batch,
-      "original_pvalues" = original_pvalues,
-      "pre_batch" = pre_pca,
-      "post_batch" = post_pca)
+    "basic" = results[["basic"]],
+    "deseq" = results[["deseq"]],
+    "ebseq" = results[["ebseq"]],
+    "edger" = results[["edger"]],
+    "limma" = results[["limma"]],
+    "batch_type" = model_type,
+    "comparison" = result_comparison,
+    "extra_contrasts" = extra_contrasts,
+    "input" = input,
+    "model_cond" = model_cond,
+    "model_batch" = model_batch,
+    "original_pvalues" = original_pvalues,
+    "pre_batch" = pre_pca,
+    "post_batch" = post_pca)
   class(ret) <- c("all_pairwise", "list")
 
   if (!is.null(arglist[["combined_excel"]])) {
@@ -381,7 +381,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   inter_inter <- inter[1]
   inter_slope <- inter[2]
   intersection_plot <- ggplot(data = intersection_df,
-                              aes_string(x = "x", y = "y")) +
+                              aes(x = .data[["x"]], y = .data[["y"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_abline(colour = "grey", slope = 1, intercept = 0) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(0, topn)) +
@@ -393,10 +393,10 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
  AUCC slope: {signif(inter_slope, 3)}"))
 
   retlist <- list(
-      "aucc" = aucc,
-      "cor" = simple_cor,
-      "plot" = intersection_plot)
- return(retlist)
+    "aucc" = aucc,
+    "cor" = simple_cor,
+    "plot" = intersection_plot)
+  return(retlist)
 }
 
 #' Use sva's f.pvalue to adjust p-values for data adjusted by combat.
@@ -414,7 +414,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
 sva_modify_pvalues <- function(results) {
   input <- results[["input"]]
   original_pvalues <- data.table::data.table(
-                                      rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
+    rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
   if (isTRUE(verbose)) {
     message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
   }
@@ -501,7 +501,7 @@ sva_modify_pvalues <- function(results) {
       reordered_adjp <- new_adjp[limma_table_order]
       ## Create a temporary dt with the old p-values and merge it into original_pvalues.
       tmpdt <- data.table::data.table(
-                               results[["limma"]][["all_tables"]][[name]][["P.Value"]])
+        results[["limma"]][["all_tables"]][[name]][["P.Value"]])
       tmpdt[["rownames"]] <- rownames(results[["limma"]][["all_tables"]][[name]])
       ## Change the column name of the new data to reflect that it is from limma.
       colnames(tmpdt) <- c(glue("limma_{name}"), "rownames")
@@ -515,7 +515,7 @@ sva_modify_pvalues <- function(results) {
       reordered_pvalues <- new_pvalues[edger_table_order]
       reordered_adjp <- new_adjp[edger_table_order]
       tmpdt <- data.table::data.table(
-                               results[["edger"]][["all_tables"]][[name]][["PValue"]])
+        results[["edger"]][["all_tables"]][[name]][["PValue"]])
       tmpdt[["rownames"]] <- rownames(results[["edger"]][["all_tables"]][[name]])
       colnames(tmpdt) <- c(glue("edger_{name}"), "rownames")
       original_pvalues <- merge(original_pvalues, tmpdt, by = "rownames")
@@ -525,7 +525,7 @@ sva_modify_pvalues <- function(results) {
       ## Ibid.
       deseq_table_order <- rownames(results[["deseq"]][["all_tables"]][[name]])
       tmpdt <- data.table::data.table(
-                               results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
+        results[["deseq"]][["all_tables"]][[name]][["P.Value"]])
       tmpdt[["rownames"]] <- rownames(results[["deseq"]][["all_tables"]][[name]])
       colnames(tmpdt) <- c(glue("deseq_{name}"), "rownames")
       original_pvalues <- merge(original_pvalues, tmpdt, by = "rownames")
@@ -535,8 +535,8 @@ sva_modify_pvalues <- function(results) {
   }  ## End foreach table
   original_pvalues <- as.data.frame(original_pvalues)
   retlist <- list(
-      "original" = original_pvalues,
-      "results" = results)
+    "original" = original_pvalues,
+    "results" = results)
   return(retlist)
 }
 
@@ -638,10 +638,10 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
   }
 
   retlist <- list(
-      "libsize" = libsize,
-      "conditions" = conditions,
-      "batches" = batches,
-      "data" = data)
+    "libsize" = libsize,
+    "conditions" = conditions,
+    "batches" = batches,
+    "data" = data)
   if (warn_user == 1) {
     warning("This data was inappropriately forced into integers.")
   }
@@ -758,10 +758,10 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
         message("Leaving the data alone, regardless of normalization state.")
       }
       retlist <- list(
-          "libsize" = libsize,
-          "conditions" = conditions,
-          "batches" = batches,
-          "data" = data)
+        "libsize" = libsize,
+        "conditions" = conditions,
+        "batches" = batches,
+        "data" = data)
       return(retlist)
     }
 
@@ -782,10 +782,10 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
     libsize <- colSums(data)
   }
   retlist <- list(
-      "libsize" = libsize,
-      "conditions" = conditions,
-      "batches" = batches,
-      "data" = data)
+    "libsize" = libsize,
+    "conditions" = conditions,
+    "batches" = batches,
+    "data" = data)
   return(retlist)
 }
 
@@ -871,51 +871,51 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
 
   cond_noint_string <- "~ 0 + condition"
   cond_noint_model <- try(stats::model.matrix(
-                                     object = as.formula(cond_noint_string),
-                                     contrasts.arg = clist,
-                                     data = design), silent = TRUE)
+    object = as.formula(cond_noint_string),
+    contrasts.arg = clist,
+    data = design), silent = TRUE)
 
   batch_noint_string <- "~ 0 + batch"
   batch_noint_model <- try(stats::model.matrix(
-                                      object = as.formula(batch_noint_string),
-                                      contrasts.arg = blist,
-                                      data = design), silent = TRUE)
+    object = as.formula(batch_noint_string),
+    contrasts.arg = blist,
+    data = design), silent = TRUE)
 
   condbatch_noint_string <- "~ 0 + condition + batch"
   condbatch_noint_model <- try(stats::model.matrix(
-                                          object = as.formula(condbatch_noint_string),
-                                          contrasts.arg = cblist,
-                                          data = design), silent = TRUE)
+    object = as.formula(condbatch_noint_string),
+    contrasts.arg = cblist,
+    data = design), silent = TRUE)
 
   batchcond_noint_string <- "~ 0 + batch + condition"
   batchcond_noint_model <- try(stats::model.matrix(
-                                          object = as.formula(batchcond_noint_string),
-                                          contrasts.arg = cblist,
-                                          data = design), silent = TRUE)
+    object = as.formula(batchcond_noint_string),
+    contrasts.arg = cblist,
+    data = design), silent = TRUE)
 
   cond_int_string <- "~ condition"
   cond_int_model <- try(stats::model.matrix(
-                                   object = as.formula(cond_int_string),
-                                   contrasts.arg = clist,
-                                   data = design), silent = TRUE)
+    object = as.formula(cond_int_string),
+    contrasts.arg = clist,
+    data = design), silent = TRUE)
 
   batch_int_string <- "~ batch"
   batch_int_model <- try(stats::model.matrix(
-                                    object = as.formula(batch_int_string),
-                                    contrasts.arg = blist,
-                                    data = design), silent = TRUE)
+    object = as.formula(batch_int_string),
+    contrasts.arg = blist,
+    data = design), silent = TRUE)
 
   condbatch_int_string <- "~ condition + batch"
   condbatch_int_model <- try(stats::model.matrix(
-                                        object = as.formula(condbatch_int_string),
-                                        contrasts.arg = cblist,
-                                        data = design), silent = TRUE)
+    object = as.formula(condbatch_int_string),
+    contrasts.arg = cblist,
+    data = design), silent = TRUE)
 
   batchcond_int_string <- "~ batch + condition"
   batchcond_int_model <- try(stats::model.matrix(
-                                        object = as.formula(batchcond_int_string),
-                                        contrasts.arg = cblist,
-                                        data = design), silent = TRUE)
+    object = as.formula(batchcond_int_string),
+    contrasts.arg = cblist,
+    data = design), silent = TRUE)
 
   noint_model <- NULL
   int_model <- NULL
@@ -1081,14 +1081,14 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   }
 
   retlist <- list(
-      "int_model" = int_model,
-      "noint_model" = noint_model,
-      "int_string" = int_string,
-      "noint_string" = noint_string,
-      "chosen_model" = chosen_model,
-      "chosen_string" = chosen_string,
-      "model_batch" = model_batch,
-      "including" = including)
+    "int_model" = int_model,
+    "noint_model" = noint_model,
+    "int_string" = int_string,
+    "noint_string" = noint_string,
+    "chosen_model" = chosen_model,
+    "chosen_string" = chosen_string,
+    "model_batch" = model_batch,
+    "including" = including)
   return(retlist)
 }
 
@@ -1250,13 +1250,13 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   new <- par(original)
 
   retlist <- list(
-      "result" = result,
-      "logfc" = logfc_result,
-      "p" = p_result,
-      "adjp" = adjp_result,
-      "lfc_heat" = lfc_heat,
-      "p_heat" = p_heat,
-      "adjp_heat" = adjp_heat)
+    "result" = result,
+    "logfc" = logfc_result,
+    "p" = p_result,
+    "adjp" = adjp_result,
+    "lfc_heat" = lfc_heat,
+    "p_heat" = p_heat,
+    "adjp_heat" = adjp_heat)
   return(retlist)
 }
 
@@ -1522,9 +1522,9 @@ compare_logfc_plots <- function(combined_tables) {
       db <- NULL
     }
     compared <- list(
-        "name" = tname,
-        "le" = le, "ld" = ld, "de" = de,
-        "lb" = lb, "db" = db, "eb" = eb)
+      "name" = tname,
+      "le" = le, "ld" = ld, "de" = de,
+      "lb" = lb, "db" = db, "eb" = eb)
     retlist[[tname]] <- compared
   }
   return(retlist)
@@ -1587,14 +1587,14 @@ compare_significant_contrasts <- function(sig_tables, second_sig_tables = NULL,
   down_plot <- grDevices::recordPlot(down_plot)
 
   retlst <- list(
-      "up_intersections" = up_intersect,
-      "down_intersections" = down_intersect,
-      "up_venn" = up_venn,
-      "down_venn" = down_venn,
-      "up_tables" = up_tables,
-      "down_tables" = down_tables,
-      "up_plot" = up_plot,
-      "down_plot" = down_plot)
+    "up_intersections" = up_intersect,
+    "down_intersections" = down_intersect,
+    "up_venn" = up_venn,
+    "down_venn" = down_venn,
+    "up_tables" = up_tables,
+    "down_tables" = down_tables,
+    "up_plot" = up_plot,
+    "down_plot" = down_plot)
   return(retlst)
 }
 
@@ -1617,7 +1617,7 @@ compare_significant_contrasts <- function(sig_tables, second_sig_tables = NULL,
 disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_contrast) {
   ## arglist <- list(...)
   contr_level_counts <- rowSums(
-      contrast_fit[["contrasts"]][, c(conj_contrasts, disj_contrast)] != 0)
+    contrast_fit[["contrasts"]][, c(conj_contrasts, disj_contrast)] != 0)
   ## Define the condition levels involved in the tests
   levels_to_use <- names(contr_level_counts)[contr_level_counts > 0]
   ## Extract the average counts for each, make into table
@@ -1633,19 +1633,19 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
   fcs <- as.data.frame(contrast_fit[["coef"]][, conj_contrasts])
   names(fcs) <- paste("logFC", names(fcs), sep = ":")
   conj_pvals <- as.data.frame(
-      apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method = "BH"))
+    apply(contrast_fit[["p.value"]][, conj_contrasts], 2, p.adjust, method = "BH"))
   names(conj_pvals) <- paste("adj.P.Val", names(conj_pvals), sep = ":")
   conj_table <- data.frame("ID" = rownames(contrast_fit), stringsAsFactors = FALSE)
   conj_table <- cbind(conj_table, fcs, conj_pvals, stat = stat, adj.P.Value = adj.pval)
   names(conj_table)[seq(2 + 2 * length(conj_contrasts), ncol(conj_table))] <- paste(
-      c("stat", "adj.P.Value"), paste(conj_contrasts, collapse = ":"), sep = ":")
+    c("stat", "adj.P.Value"), paste(conj_contrasts, collapse = ":"), sep = ":")
 
   ## Make the table for the 'other' test
   disj_table <- data.frame(
-      "ID" = rownames(contrast_fit),
-      "logFC" = contrast_fit[["coef"]][, disj_contrast],
-      "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method = "BH"),
-      stringsAsFactors = FALSE)
+    "ID" = rownames(contrast_fit),
+    "logFC" = contrast_fit[["coef"]][, disj_contrast],
+    "adj.P.Value" = p.adjust(contrast_fit[["p.value"]][, disj_contrast], method = "BH"),
+    stringsAsFactors = FALSE)
   names(disj_table)[-1] <- paste(c("logFC", "adj.P.Value"), disj_contrast, sep = ":")
   ## Combine tables, making sure all tables are in the same order
   stopifnot(all(exp_table$ID == conj_table[["ID"]] & exp_table[["ID"]] == disj_table[["ID"]]))
@@ -1756,8 +1756,8 @@ get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
   }
 
   abundant_list <- list(
-      "high" = list(),
-      "low" = list())
+    "high" = list(),
+    "low" = list())
   coefficient_df <- as.data.frame(coefficient_df)
   coefficients <- colnames(coefficient_df)
   coefficient_rows <- rownames(coefficient_df)
@@ -1853,11 +1853,11 @@ get_pairwise_gene_abundances <- function(datum, type = "limma", excel = NULL) {
       ## The discussion seems to me to have settled on:
       ## std.error =  fit$stdev.unscaled * fit$sigma
       stdev_mtrx[, cond] <- as.numeric(
-          datum[["limma"]][["identity_comparisons"]][["stdev.unscaled"]][row_order, cond])
+        datum[["limma"]][["identity_comparisons"]][["stdev.unscaled"]][row_order, cond])
       sigma_mtrx[, cond] <- as.numeric(
-          datum[["limma"]][["identity_comparisons"]][["sigma"]])
+        datum[["limma"]][["identity_comparisons"]][["sigma"]])
       s2post_mtrx[, cond] <- as.numeric(
-          datum[["limma"]][["identity_comparisons"]][["s2.post"]])
+        datum[["limma"]][["identity_comparisons"]][["s2.post"]])
       std_error <- stdev_mtrx * sigma_mtrx
       another_error <- stdev_mtrx * s2post_mtrx
       ## another_error <- stdev_table * s2post_table
@@ -1865,11 +1865,11 @@ get_pairwise_gene_abundances <- function(datum, type = "limma", excel = NULL) {
   } ## End if type is limma
 
   retlist <- list(
-      "expression_values" = expression_mtrx,
-      "t_values" = t_mtrx,
-      "error_values" = std_error,
-      "another_error" = another_error,
-      "stdev_values" = stdev_mtrx)
+    "expression_values" = expression_mtrx,
+    "t_values" = t_mtrx,
+    "error_values" = std_error,
+    "another_error" = another_error,
+    "stdev_values" = stdev_mtrx)
   if (!is.null(excel)) {
     annotations <- fData(datum[["input"]])
     expressions <- retlist[["expression_values"]]
@@ -1883,9 +1883,9 @@ get_pairwise_gene_abundances <- function(datum, type = "limma", excel = NULL) {
     rownames(expression_table) <- expression_table[["Row.names"]]
     expression_table <- expression_table[, -1]
     expression_written <- write_xlsx(
-        data = expression_table,
-        sheet = "expression_values",
-        title = "Values comprising the logFCs and errors (expression / t-statistic)")
+      data = expression_table,
+      sheet = "expression_values",
+      title = "Values comprising the logFCs and errors (expression / t-statistic)")
     write_result <- openxlsx::saveWorkbook(wb = expression_written[["workbook"]],
                                            file = excel, overwrite = TRUE)
   }
@@ -2069,8 +2069,8 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing = TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing = FALSE), ]
   ret <- list(
-      "up_genes" = up_genes,
-      "down_genes" = down_genes)
+    "up_genes" = up_genes,
+    "down_genes" = down_genes)
   return(ret)
 }
 
@@ -2197,12 +2197,12 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
 
   colnames(all_pairwise_contrasts) <- eval_names
   result <- list(
-      "all_pairwise_contrasts" = all_pairwise_contrasts,
-      "identities" = identities,
-      "identity_names" = identity_names,
-      "all_pairwise" = all_pairwise,
-      "contrast_string" = contrast_string,
-      "names" = eval_names)
+    "all_pairwise_contrasts" = all_pairwise_contrasts,
+    "identities" = identities,
+    "identity_names" = identity_names,
+    "all_pairwise" = all_pairwise,
+    "contrast_string" = contrast_string,
+    "names" = eval_names)
   return(result)
 }
 
@@ -2291,9 +2291,9 @@ mymakeContrasts <- function(..., contrasts = NULL, levels) {
 sanitize_expt <- function(expt) {
   design <- pData(expt)
   conditions <- gsub(
-      pattern = "^(\\d+)$", replacement = "c\\1", x = as.character(design[["condition"]]))
+    pattern = "^(\\d+)$", replacement = "c\\1", x = as.character(design[["condition"]]))
   batches <- gsub(
-      pattern = "^(\\d+)$", replacement = "b\\1", x = as.character(design[["batch"]]))
+    pattern = "^(\\d+)$", replacement = "b\\1", x = as.character(design[["batch"]]))
   ## To be honest, there is absolutely no way I would have thought of this
   ## regular expression:
   ## https://stackoverflow.com/questions/30945993

@@ -54,12 +54,13 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   max_reads <- max(table[[column]], na.rm = TRUE)
   table[["l2"]] <- log2(table[[column]] + 1)
   table[["sample"]] <- "sample"
-  density_plot <- ggplot2::ggplot(data = table, mapping = aes_string(x = "l2")) +
-    ggplot2::geom_density(y = "..count..", position = "identity", adjust = adjust) +
+  count <- NULL
+  density_plot <- ggplot(data = table, mapping = aes(x = .data[["l2"]])) +
+    ggplot2::geom_density(y = after_stat(count), position = "identity", adjust = adjust) +
     ggplot2::scale_y_continuous(limits = c(0, 0.25)) +
     ggplot2::labs(x = "log2(Number of reads observed)", y = "Number of TAs")
 
-  violin_plot <- ggplot(data = table, mapping = aes_string(x = "sample", y = "l2")) +
+  violin_plot <- ggplot(data = table, mapping = aes(x = .data[["sample"]], y = .data[["l2"]])) +
     ggplot2::geom_violin()
 
   data_list <- as.numeric(table[, column])
@@ -108,21 +109,21 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   hits_summary <- summary(hit_averages)
 
   retlist <- list(
-      "maximum_reads" = max_reads,
-      "hits_by_position" = table,
-      "num_hit_table" = raw,
-      "eq_0" = num_zeros,
-      "gt_1" = num_gt_one,
-      "gt_2" = num_gt_two,
-      "gt_4" = num_gt_four,
-      "gt_8" = num_gt_eight,
-      "gt_16" = num_gt_sixteen,
-      "gt_32" = num_gt_thirtytwo,
-      "ratios" = saturation_ratios,
-      "hit_positions" = hit_positions,
-      "hits_summary" = hits_summary,
-      "density" = density_plot,
-      "plot" = data_plot
+    "maximum_reads" = max_reads,
+    "hits_by_position" = table,
+    "num_hit_table" = raw,
+    "eq_0" = num_zeros,
+    "gt_1" = num_gt_one,
+    "gt_2" = num_gt_two,
+    "gt_4" = num_gt_four,
+    "gt_8" = num_gt_eight,
+    "gt_16" = num_gt_sixteen,
+    "gt_32" = num_gt_thirtytwo,
+    "ratios" = saturation_ratios,
+    "hit_positions" = hit_positions,
+    "hits_summary" = hits_summary,
+    "density" = density_plot,
+    "plot" = data_plot
   )
 
   return(retlist)
@@ -170,7 +171,7 @@ plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FA
   dropped_esses <- 0
   num_essential <- sum(ess[["posterior_zbar"]] >= max_sig)
   num_uncertain <- sum(ess[["posterior_zbar"]] < max_sig &
-                       ess[["posterior_zbar"]] > min_sig)
+                         ess[["posterior_zbar"]] > min_sig)
   num_insig <- sum(ess[["posterior_zbar"]] <= min_sig)
   insig_border <- num_insig
   esses_idx <- ess[["posterior_zbar"]] > -1
@@ -182,8 +183,9 @@ plot_essentiality <- function(file, order_by = "posterior_zbar", keep_esses = FA
   sig_border <- insig_border + num_uncertain
 
   ess[["rank"]] <- 1:nrow(ess)
-  zbar_plot <- ggplot2::ggplot(data = ess,
-                               aes_string(x = "rank", y = "posterior_zbar", colour = "call")) +
+  zbar_plot <- ggplot(
+    data = ess,
+    aes(x = .data[["rank"]], y = .data[["posterior_zbar"]], colour = .data[["call"]])) +
     ggplot2::geom_point(stat = "identity", size = 2) +
     ggplot2::geom_hline(color = "grey", yintercept = min_sig) +
     ggplot2::geom_hline(color = "grey", yintercept = max_sig) +
@@ -196,13 +198,13 @@ Non-Essential genes: {num_insig}")) +
   ggplot2::theme_bw()
 
   span_df <- ess[, c("max_run", "max_run_span")]
-  span <- plot_linear_scatter(span_df)
+  span <- plot_linear_scatter(as.data.frame(span_df))
   retlist <- list(
-      "zbar" = zbar_plot,
-      "span_plot" = span[["scatter"]],
-      "span_cor" = span[["correlation"]],
-      "span_hist" = span[["both_histogram"]],
-      "span_model" = span[["lm_model"]])
+    "zbar" = zbar_plot,
+    "span_plot" = span[["scatter"]],
+    "span_cor" = span[["correlation"]],
+    "span_hist" = span[["both_histogram"]],
+    "span_model" = span[["lm_model"]])
   return(retlist)
 }
 
@@ -272,9 +274,9 @@ score_mhess <- function(expt, ess_column = "essm1") {
   changed_df[hun_idx] <- "E"
 
   retlist <- list(
-      "score_df" = scores,
-      "changed_genes" = changed_genes,
-      "changed_state" = changed_df)
+    "score_df" = scores,
+    "changed_genes" = changed_genes,
+    "changed_state" = changed_df)
   return(retlist)
 }
 
@@ -309,13 +311,14 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit = 100,
                            value.name = "reads", varnames = "sample")
   colnames(melted) <- c("start", "sample", "reads")
   melted[["log2"]] <- log2(melted[["reads"]] + 1)
-  plt <- ggplot(data = melted, mapping = aes_string(x = "log2", fill = "sample")) +
-    ggplot2::geom_density(mapping = aes_string(y = "..count.."), position = "identity",
+  count <- NULL
+  plt <- ggplot(data = melted, mapping = aes(x = .data[["log2"]], fill = .data[["sample"]])) +
+    ggplot2::geom_density(mapping = aes(y = ggplot2::after_stat(count)), position = "identity",
                           adjust = adjust, alpha = 0.3) +
     ggplot2::scale_y_continuous(limits = c(0, ylimit)) +
     ggplot2::labs(x = "log2(Number of reads observed)", y = "Number of TAs")
 
-  violin <- ggplot(data = melted, mapping = aes_string(x = "sample", y = "log2")) +
+  violin <- ggplot(data = melted, mapping = aes(x = .data[["sample"]], y = .data[["log2"]])) +
     ggplot2::geom_violin()
 
   ggstats <- NULL
@@ -327,9 +330,9 @@ tnseq_multi_saturation <- function(meta, meta_column, ylimit = 100,
   }
 
   retlist <- list(
-      "table" = table,
-      "plot" = plt,
-      "ggstats" = ggstats)
+    "table" = table,
+    "plot" = plt,
+    "ggstats" = ggstats)
   return(retlist)
 }
 

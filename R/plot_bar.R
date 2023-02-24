@@ -80,9 +80,9 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                                    yscale = yscale,
                                    ...)
   retlist <- list(
-      "plot" = libsize_plot,
-      "table" = libsize_df,
-      "summary" = summary_df)
+    "plot" = libsize_plot,
+    "table" = libsize_df,
+    "summary" = summary_df)
   return(retlist)
 }
 
@@ -144,14 +144,15 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
 
   count_title <- glue::glue("Counts remaining after filtering less than {low_limit} reads,
 labeled by counts/genes removed.")
-  count_columns <- ggplot(all_tab, aes_string(x = "id", y = "sum")) +
-    ggplot2::geom_col(position = "identity", color = "black", aes_string(fill = "colors")) +
+  count_columns <- ggplot(all_tab,
+                          aes(x = .data[["id"]], y = .data[["sum"]])) +
+    ggplot2::geom_col(position = "identity", color = "black",
+                      aes(fill = .data[["colors"]])) +
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "white", hjust = 1.2,
-                       aes_string(
-                           x = "id",
+                       aes(x = .data[["id"]],
                            ## label='as.character(all_tab$subtraction)')) +
-                           label = "subtraction_string")) +
+                           label = .data[["subtraction_string"]])) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
@@ -159,25 +160,23 @@ labeled by counts/genes removed.")
     ggplot2::ggtitle(count_title)
 
   low_title <- glue::glue("Genes with less than {low_limit} reads before/after filtering, labeled by delta.")
-  low_columns <- ggplot(all_tab, aes_string(x = "id", y = "low")) +
+  low_columns <- ggplot(all_tab, aes(x = .data[["id"]], y = .data[["low"]])) +
     ggplot2::geom_col(position = "identity", color = "black",
-                      aes_string(alpha = "alpha", fill = "colors")) +
+                      aes(alpha = .data[["alpha"]], fill = .data[["colors"]])) +
     ggplot2::scale_fill_manual(values = c(levels(as.factor(all_tab[["colors"]])))) +
     ggplot2::geom_text(parse = FALSE, angle = 90, size = 4, color = "black", hjust = 1.2,
-                       aes_string(
-                           x = "id",
-                           label = "sub_low")) +
+                       aes(x = .data[["id"]], label = .data[["sub_low"]])) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = 10, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
     ggplot2::ggtitle(low_title)
 
   retlist <- list(
-      "start" = start,
-      "end" = end,
-      "table" = all_tab,
-      "count_plot" = count_columns,
-      "lowgene_plot" = low_columns)
+    "start" = start,
+    "end" = end,
+    "table" = all_tab,
+    "count_plot" = count_columns,
+    "lowgene_plot" = low_columns)
   return(retlist)
 }
 
@@ -234,8 +233,8 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
 
   if (is.null(colors)) {
     colors <- grDevices::colorRampPalette(
-                             RColorBrewer::brewer.pal(ncol(data),
-                                                      chosen_palette))(ncol(data))
+      RColorBrewer::brewer.pal(ncol(data),
+                               chosen_palette))(ncol(data))
   }
   if (is.null(condition)) {
     stop("Missing condition label vector.")
@@ -324,12 +323,11 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
 
   sample_plot <- ggplot(data = sample_df,
                         colour = colors,
-                        aes_string(x = "order",
-                                   y = "sum")) +
+                        aes(x = .data[["order"]], y = .data[["sum"]])) +
     ggplot2::geom_bar(stat = "identity",
                       colour = "black",
                       fill = sample_df[["colors"]],
-                      aes_string(x = "order")) +
+                      aes(x = .data[["order"]])) +
     ggplot2::xlab("Sample ID") +
     ggplot2::ylab(y_label) +
     ggplot2::theme_bw(base_size = base_size) +
@@ -343,10 +341,9 @@ plot_sample_bars <- function(sample_df, condition = NULL, colors = NULL,
 
     sample_plot <- sample_plot +
       ggplot2::geom_text(
-                   parse = FALSE, angle = 90, size = 4, hjust = 1.2, colour = text_colors,
-                   ggplot2::aes_string(
-                                x = "order",
-                                label='prettyNum(as.character(sample_df$sum), big.mark = ",")'))
+        parse = FALSE, angle = 90, size = 4, hjust = 1.2, colour = text_colors,
+        aes(x = .data[["order"]],
+            label = prettyNum(as.character(sample_df[["sum"]]), big.mark = ",")))
   }
 
   if (!is.null(plot_title)) {
@@ -425,10 +422,10 @@ plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.
   cds <- rpm_region[cds_idx, ]
 
   eval(substitute(
-      expr = {
-        stupid <- aes(y = 0, yend = 0, x = my_start, xend = my_end)
-      },
-      env <- list(my_start = my_start, my_end = my_end)))
+    expr = {
+      stupid <- aes(y = 0, yend = 0, x = my_start, xend = my_end)
+    },
+    env <- list(my_start = my_start, my_end = my_end)))
 
   if (strand == "+") {
     gene_arrow <- grid::arrow(type = "closed", ends = "last")
@@ -436,7 +433,7 @@ plot_rpm <- function(input, workdir = "images", output = "01.svg", name = "LmjF.
     gene_arrow <- grid::arrow(type = "closed", ends = "first")
   }
   xlabel_string <- glue("{name}: {my_start} to {my_end}")
-  my_plot <- ggplot(rpm_region, aes_string(x = "position", y = "log")) +
+  my_plot <- ggplot(rpm_region, aes(x = .data[["position"]], y = .data[["log"]])) +
     ggplot2::xlab(xlabel_string) +
     ggplot2::ylab("Log2(RPM) reads") +
     ggplot2::geom_bar(data = rpm_region, stat = "identity", fill = "black", colour = "black") +
@@ -515,8 +512,14 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
   levels(ups[["variable"]]) <- c("c_up_outer", "b_up_middle", "a_up_inner")
   levels(downs[["variable"]]) <- c("c_down_outer", "b_down_middle", "a_down_inner")
   sigbar_plot <- ggplot() +
-    ggplot2::geom_col(data = ups, aes_string(x = "comparisons", y = "value", fill = "variable")) +
-    ggplot2::geom_col(data = downs, aes_string(x = "comparisons", y = "value", fill = "variable")) +
+    ggplot2::geom_col(
+      data = ups,
+      aes(x = .data[["comparisons"]], y = .data[["value"]],
+          fill = .data[["variable"]])) +
+    ggplot2::geom_col(
+      data = downs,
+      aes(x = .data[["comparisons"]], y = .data[["value"]],
+          fill = .data[["variable"]])) +
     ggplot2::scale_fill_manual(values = color_list) +
     ggplot2::coord_flip() +
     ggplot2::theme_bw(base_size = base_size) +

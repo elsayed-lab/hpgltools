@@ -26,49 +26,49 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   start_dev <- dev.list()
   result <- NULL
   switchret <- switch(
-      ext,
-      "png" = {
-        result <- png(filename = file, width = width, height = height,
-                      units = "in", res = res,
-                      ...)
-      },
-      "bmp" = {
-        result <- bmp(filename = file, ...)
-      },
-      "jpg" = {
-        result <- jpeg(filename = file, ...)
-      },
-      "webp" = {
-        result <- webp::write_webp(target = file, ...)
-      },
-      "svg" = {
-        result <- svg(filename = file, ...)
-      },
-      "ps" = {
-        result <- postscript(file = file, width = width, height = height, ...)
-      },
-      "eps" = {
-        result <- cairo_ps(filename = file, width = width, height = height, ...)
-      },
-      "pdf" = {
-        result <- cairo_pdf(filename = file, ...)
-      },
-      "tif" = {
-        result <- tiff(filename = file, width = width, height = height,
-                       units = "in", res = res, ...)
-      },
-      "tiff" = {
-        result <- tiff(filename = file, width = width, height = height,
-                       units = "in", res = res, ...)
-      },
-      "emf" = {
-        result <- devEMF::emf(file = file, width = width, height = height, ...)
-      },
-      {
-        mesg("Defaulting to tiff.")
-        result <- tiff(filename = file, width = width, height = height,
-                       units = "in", res = res, ...)
-      }) ## End of the switch
+    ext,
+    "png" = {
+      result <- png(filename = file, width = width, height = height,
+                    units = "in", res = res,
+                    ...)
+    },
+    "bmp" = {
+      result <- bmp(filename = file, ...)
+    },
+    "jpg" = {
+      result <- jpeg(filename = file, ...)
+    },
+    "webp" = {
+      result <- webp::write_webp(target = file, ...)
+    },
+    "svg" = {
+      result <- svg(filename = file, ...)
+    },
+    "ps" = {
+      result <- postscript(file = file, width = width, height = height, ...)
+    },
+    "eps" = {
+      result <- cairo_ps(filename = file, width = width, height = height, ...)
+    },
+    "pdf" = {
+      result <- cairo_pdf(filename = file, ...)
+    },
+    "tif" = {
+      result <- tiff(filename = file, width = width, height = height,
+                     units = "in", res = res, ...)
+    },
+    "tiff" = {
+      result <- tiff(filename = file, width = width, height = height,
+                     units = "in", res = res, ...)
+    },
+    "emf" = {
+      result <- devEMF::emf(file = file, width = width, height = height, ...)
+    },
+    {
+      mesg("Defaulting to tiff.")
+      result <- tiff(filename = file, width = width, height = height,
+                     units = "in", res = res, ...)
+    }) ## End of the switch
   ## Find the new device for closing later.
   now_dev <- dev.list()
   new_dev_idx <- ! names(now_dev) %in% names(start_dev)
@@ -141,8 +141,8 @@ plot_spirograph <- function(radius_a = 1, radius_b=-4, dist_bc=-2,
   point_c[["y"]] <- center_b[["y"]] + opposite
   points <- data.frame(point_c)
   points[["counter"]] <- seq(1, nrow(points))
-  spiro <- ggplot2::ggplot(data = points, ggplot2::aes_string(x = "x", y = "y")) +
-    ggplot2::geom_point(ggplot2::aes_string(colour = "counter"), size = 0.5) +
+  spiro <- ggplot(data = points, aes(x = .data[["x"]], y = .data[["y"]])) +
+    ggplot2::geom_point(ggplot2::aes(colour = .data[["counter"]]), size = 0.5) +
     ggplot2::theme_bw() +
     ggplot2::scale_colour_gradientn(colours = grDevices::rainbow(4)) +
     ggplot2::theme(axis.line = ggplot2::element_blank(),
@@ -191,7 +191,8 @@ plot_hypotrochoid <- function(radius_a = 3, radius_b = 7, dist_b = 1,
   positions <- as.data.frame(positions)
   petals <- dist_b / radius_b
   message("The spirograph will have ", petals, " petals.")
-  image <- ggplot2::ggplot(data = positions, ggplot2::aes_string(x = "x_points", y = "y_points")) +
+  image <- ggplot(
+    data = positions, aes(x = .data[["x_points"]], y = .data[["y_points"]])) +
     ggplot2::geom_point(size = 1) + ggplot2::theme_bw() +
     ggplot2::theme(axis.line = ggplot2::element_blank(),
                    axis.text.x = ggplot2::element_blank(),
@@ -237,7 +238,8 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
   positions <- cbind(points, x_points)
   positions <- cbind(positions, y_points)
   positions <- as.data.frame(positions)
-  image <- ggplot2::ggplot(data = positions, ggplot2::aes_string(x = "x_points", y = "y_points")) +
+  image <- ggplot(data = positions,
+                  aes(x = .data[["x_points"]], y = .data[["y_points"]])) +
     ggplot2::geom_point(size = 1) + ggplot2::theme_bw() +
     ggplot2::theme(axis.line = ggplot2::element_blank(),
                    axis.text.x = ggplot2::element_blank(),
@@ -316,9 +318,9 @@ function(el, x) {
 }")
   out <- htmlwidgets::saveWidget(plotly, filename, title = plot_title)
   retlist <- list(
-      "out" = out,
-      "plotly" = plotly,
-      "modified_df" = plot[["data"]])
+    "out" = out,
+    "plotly" = plotly,
+    "modified_df" = plot[["data"]])
   return(retlist)
 }
 

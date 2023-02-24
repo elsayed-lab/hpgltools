@@ -217,24 +217,24 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
   ma_material <- NULL
   vol_material <- NULL
   if (!is.null(the_table[[expr_col]]) &
-      !is.null(the_table[[fc_col]]) &
-      !is.null(the_table[[p_col]])) {
+        !is.null(the_table[[fc_col]]) &
+         !is.null(the_table[[p_col]])) {
     ma_material <- plot_ma_de(
-        table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
-        logfc = logfc, p = p, invert = invert,
-        ...)
+      table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+      logfc = logfc, p = p, invert = invert,
+      ...)
     vol_material <- plot_volcano_condition_de(
-        pairwise, de_table = wanted_table,
-        ##de_table = the_table,
-        fc_col = fc_col,
-        p_col = p_col, invert = invert,
-        logfc = logfc, p = p, label = 5,
-        ...)
+      pairwise, de_table = wanted_table,
+      ##de_table = the_table,
+      fc_col = fc_col,
+      p_col = p_col, invert = invert,
+      logfc = logfc, p = p, label = 5,
+      ...)
   }
 
   retlist <- list(
-      "ma" = ma_material,
-      "volcano" = vol_material)
+    "ma" = ma_material,
+    "volcano" = vol_material)
   return(retlist)
 }
 
@@ -427,13 +427,13 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
                                 column = "deseq_logfc", p_column = deseq_p, p = p))
   up_venn_lst <- list(
-      "deseq" = rownames(deseq_sig[["up_genes"]]),
-      "edger" = rownames(edger_sig[["up_genes"]]),
-      "limma" = rownames(limma_sig[["up_genes"]]))
+    "deseq" = rownames(deseq_sig[["up_genes"]]),
+    "edger" = rownames(edger_sig[["up_genes"]]),
+    "limma" = rownames(limma_sig[["up_genes"]]))
   down_venn_lst <- list(
-      "deseq" = rownames(deseq_sig[["down_genes"]]),
-      "edger" = rownames(edger_sig[["down_genes"]]),
-      "limma" = rownames(limma_sig[["down_genes"]]))
+    "deseq" = rownames(deseq_sig[["down_genes"]]),
+    "edger" = rownames(edger_sig[["down_genes"]]),
+    "limma" = rownames(limma_sig[["down_genes"]]))
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
@@ -451,10 +451,10 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   removed <- file.remove(tmp_file)
 
   retlist <- list(
-      "up_venn" = up_venn,
-      "up_noweight" = up_venn_noweight,
-      "down_venn" = down_venn,
-      "down_noweight" = down_venn_noweight)
+    "up_venn" = up_venn,
+    "up_noweight" = up_venn_noweight,
+    "down_venn" = down_venn,
+    "down_noweight" = down_venn_noweight)
   return(retlist)
 }
 
@@ -609,7 +609,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   down_nums <- reshape2::melt(down_nums, id.vars = "fc")
   colnames(down_nums) <- c("fc", "method", "value")
 
-  up_plot <- ggplot(data = up_nums, aes_string(x = "fc", y = "value", color = "method")) +
+  up_plot <- ggplot(data = up_nums,
+                    aes(x = .data[["fc"]], y = .data[["value"]],
+                        color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -617,7 +619,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept = 1.0, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  down_plot <- ggplot(data = down_nums, aes_string(x = "fc", y = "value", color = "method")) +
+  down_plot <- ggplot(data = down_nums,
+                      aes(x = .data[["fc"]], y = .data[["value"]],
+                          color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -625,7 +629,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept=-1.0, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  pup_plot <- ggplot(data = pup_nums, aes_string(x = "p", y = "value", color = "method")) +
+  pup_plot <- ggplot(data = pup_nums,
+                     aes(x = .data[["p"]], y = .data[["value"]],
+                         color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -633,7 +639,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept = 0.05, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  pdown_plot <- ggplot(data = pdown_nums, aes_string(x = "p", y = "value", color = "method")) +
+  pdown_plot <- ggplot(data = pdown_nums,
+                       aes(x = .data[["p"]], y = .data[["value"]],
+                           color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -642,14 +650,14 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::theme_bw(base_size = base_size)
 
   retlist <- list(
-      "up" = up_plot,
-      "down" = down_plot,
-      "pup" = pup_plot,
-      "pdown" = pdown_plot,
-      "up_data" = up_nums,
-      "down_data" = down_nums,
-      "pup_data" = pup_nums,
-      "pdown_data" = pdown_nums)
+    "up" = up_plot,
+    "down" = down_plot,
+    "pup" = pup_plot,
+    "pdown" = pdown_plot,
+    "up_data" = up_nums,
+    "down_data" = down_nums,
+    "pup_data" = pup_nums,
+    "pdown_data" = pdown_nums)
   return(retlist)
 }
 
@@ -736,11 +744,11 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
 
   df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] >= logfc, "upsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] <= (-1 * logfc),
-                          "downsig", "fcinsig")))
+                          ifelse(table[[p_col]] <= p &
+                                   table[[fc_col]] >= logfc, "upsig",
+                                 ifelse(table[[p_col]] <= p &
+                                          table[[fc_col]] <= (-1 * logfc),
+                                        "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
 
@@ -771,12 +779,14 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   plt <- NULL
   if (isTRUE(shapes_by_state)) {
     plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column, shape = "state"))
+                  aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                      label = .data[["label"]],
+                      fill = color_column, colour = color_column, shape = "state"))
   } else {
     plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column))
+                  aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                      label = .data[["label"]], fill = .data[[color_column]],
+                      colour = .data[[color_column]]))
   }
 
   ## Now define when to put lines vs. points
@@ -800,13 +810,13 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   if (isTRUE(shapes_by_state)) {
     plt <- plt +
       ggplot2::scale_shape_manual(
-                   name = "state", values = state_shapes,
-                   labels = c(
-                       glue("Down Sig.: {num_downsig}"),
-                       glue("FC Insig.: {num_fcinsig}"),
-                       glue("P Insig.: {num_pinsig}"),
-                       glue("Up Sig.: {num_upsig}")),
-                   guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
+        name = "state", values = state_shapes,
+        labels = c(
+          glue("Down Sig.: {num_downsig}"),
+          glue("FC Insig.: {num_fcinsig}"),
+          glue("P Insig.: {num_pinsig}"),
+          glue("Up Sig.: {num_upsig}")),
+        guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
   }
 
   ## Now set the colors and axis labels
@@ -839,7 +849,8 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
     }
     plt <- plt +
       ggrepel::geom_text_repel(data = df_subset,
-                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               aes(label = .data[["label"]], y = .data[["logyaxis"]],
+                                   x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -938,8 +949,9 @@ plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
   names(plot_colors) <- c("insignificant", numerator, denominator)
 
   plt <- ggplot(data = df,
-                aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                           fill = "state", colour = "state"))
+                aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                    label = .data[["label"]], fill = .data[["state"]],
+                    colour = .data[["state"]]))
 
   ## Now define when to put lines vs. points
   if (line_position == "bottom") {
@@ -988,7 +1000,8 @@ plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
     }
     plt <- plt +
       ggrepel::geom_text_repel(data = df_subset,
-                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               aes(label = .data[["label"]], y = .data[["logyaxis"]],
+                                   x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -1104,13 +1117,13 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged[["state"]] <- as.factor(merged[["state"]])
 
   first_table_colname <- glue::glue(
-                                   "Table: {first_table}, Type: {first_type}, column: {first_column}")
+    "Table: {first_table}, Type: {first_type}, column: {first_column}")
   second_table_colname <- glue::glue(
-                                    "Table: {second_table}, Type: {second_type}, column: {second_column}")
+    "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data = merged,
-                aes_string(color = "state", fill = "state",
-                           x = "x", y = "y", label = "label")) +
+                aes(color = .data[["state"]], fill = .data[["state"]],
+                    x = .data[["x"]], y = .data[["y"]], label = .data[["label"]])) +
     ggplot2::geom_point(size = 1, alpha = alpha) +
     ggplot2::scale_color_manual(name = "state",
                                 values = c("both"=both_color,
@@ -1128,10 +1141,10 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   model_summary <- summary(model_test)
   cor <- cor.test(merged[[c1]], merged[[c2]], method = "pearson")
   retlist <- list(
-      "plot" = plt,
-      "model" = model_test,
-      "summary" = model_summary,
-      "correlation" = cor)
+    "plot" = plt,
+    "model" = model_test,
+    "summary" = model_summary,
+    "correlation" = cor)
 
   return(retlist)
 }
@@ -1171,35 +1184,35 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
                                  according_to = "all", order = NULL, maximum = NULL, ...) {
   arglist <- list(...)
   sig_lists_up <- list(
-      "limma" = list(),
-      "edger" = list(),
-      "deseq" = list(),
-      "ebseq" = list(),
-      "basic" = list())
+    "limma" = list(),
+    "edger" = list(),
+    "deseq" = list(),
+    "ebseq" = list(),
+    "basic" = list())
   sig_lists_down <- list(
-      "limma" = list(),
-      "edger" = list(),
-      "deseq" = list(),
-      "ebseq" = list(),
-      "basic" = list())
+    "limma" = list(),
+    "edger" = list(),
+    "deseq" = list(),
+    "ebseq" = list(),
+    "basic" = list())
   plots <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   tables_up <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   tables_down <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   table_length <- 0
   fc_names <- c()
 
@@ -1363,23 +1376,23 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
     ## plots[[type]] <- plot_significant_bar(up, down, maximum = maximum) #, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
   retlist <- list(
-      "ups" = uplist,
-      "downs" = downlist,
-      "limma_up_table" = tables_up[["limma"]],
-      "limma_down_table"= tables_down[["limma"]],
-      "limma" = plots[["limma"]],
-      "deseq_up_table" = tables_up[["deseq"]],
-      "deseq_down_table"= tables_down[["deseq"]],
-      "deseq" = plots[["deseq"]],
-      "edger_up_table" = tables_up[["edger"]],
-      "edger_down_table"= tables_down[["edger"]],
-      "edger" = plots[["edger"]],
-      "ebseq_up_table" = tables_up[["ebseq"]],
-      "ebseq_down_table"= tables_down[["ebseq"]],
-      "ebseq" = plots[["ebseq"]],
-      "basic_up_table" = tables_up[["basic"]],
-      "basic_down_table"= tables_down[["basic"]],
-      "basic" = plots[["basic"]]
+    "ups" = uplist,
+    "downs" = downlist,
+    "limma_up_table" = tables_up[["limma"]],
+    "limma_down_table"= tables_down[["limma"]],
+    "limma" = plots[["limma"]],
+    "deseq_up_table" = tables_up[["deseq"]],
+    "deseq_down_table"= tables_down[["deseq"]],
+    "deseq" = plots[["deseq"]],
+    "edger_up_table" = tables_up[["edger"]],
+    "edger_down_table"= tables_down[["edger"]],
+    "edger" = plots[["edger"]],
+    "ebseq_up_table" = tables_up[["ebseq"]],
+    "ebseq_down_table"= tables_down[["ebseq"]],
+    "ebseq" = plots[["ebseq"]],
+    "basic_up_table" = tables_up[["basic"]],
+    "basic_down_table"= tables_down[["basic"]],
+    "basic" = plots[["basic"]]
   )
   return(retlist)
 }

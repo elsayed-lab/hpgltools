@@ -85,7 +85,7 @@ test_that("We expect an average of 67ish hits per TA:", {
 })
 
 ess_plts <- plot_essentiality(
-    "preprocessing/01/outputs/essentiality_sagalactiae_a909/mh_ess-trimmed_ca-v0M1_gene_tas_m1.csv")
+  "preprocessing/01/outputs/essentiality_sagalactiae_a909/mh_ess-trimmed_ca-v0M1_gene_tas_m1.csv")
 ## 08 09
 test_that("plot_essentiality returns expected outputs?", {
   expect_equal("gg", class(ess_plts[["zbar"]])[1])
@@ -119,7 +119,7 @@ test_that("all_pairwise returned?", {
 })
 
 a909_sig <- extract_significant_genes(
-    a909_tables, excel = "a909_sig.xlsx")
+  a909_tables, excel = "a909_sig.xlsx")
 expected <- 15
 actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_up"]
 ## 13

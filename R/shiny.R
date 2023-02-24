@@ -13,14 +13,14 @@
 slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, according_to = "deseq") {
   df <- de_table[["data"]][[contrast]][, c("deseq_logfc", "deseq_adjp")]
   ui <- fluidPage(
-      titlePanel(title = h4("Test", align = "center")),
-      sidebarPanel(
-          sliderInput("lfc", "logFC cutoff: ", 1.0, min = 0.0, max = 12.0, step = 0.1),
-          sliderInput("p", "p-value cutoff: ", 0.05, min = 0.0, max = 0.2, step = 0.001)),
-      mainPanel(
-          plotOutput("volcano"),
-          tableOutput("volcano_summary")
-      ))
+    titlePanel(title = h4("Test", align = "center")),
+    sidebarPanel(
+      sliderInput("lfc", "logFC cutoff: ", 1.0, min = 0.0, max = 12.0, step = 0.1),
+      sliderInput("p", "p-value cutoff: ", 0.05, min = 0.0, max = 0.2, step = 0.001)),
+    mainPanel(
+      plotOutput("volcano"),
+      tableOutput("volcano_summary")
+    ))
 
   server <- function(input, output) {
     myProcess <- reactiveVal(NULL)
@@ -46,16 +46,18 @@ slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, acco
       df[["p_sig"]] <- as.factor(df[["p_sig"]])
       df[["both_sig"]] <- as.factor(df[["both_sig"]])
       ret <- list(
-          "p" = p_idx,
-          "lfc" = lfc_idx,
-          "both" = both_idx,
-          "df" = df)
+        "p" = p_idx,
+        "lfc" = lfc_idx,
+        "both" = both_idx,
+        "df" = df)
       return(ret)
     })
     output$volcano <- renderPlot({
       stuff <- dat()
       df <- stuff[["df"]]
-      ggplot(df, aes_string(x = "deseq_logfc", y = "lp", color = "both_sig")) +
+      ggplot(
+        df, aes(x = .data[["deseq_logfc"]], y = .data[["lp"]],
+                color = .data[["both_sig"]])) +
         ggplot2::geom_point()
     }, height = 400,width = 600)
     output$volcano_summary <- renderTable({
