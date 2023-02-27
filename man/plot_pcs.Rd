@@ -21,6 +21,8 @@ plot_pcs(
   rug = TRUE,
   max_overlaps = 20,
   cis = c(0.95, 0.9),
+  ellipse_type = "t",
+  ellipse_geom = "polygon",
   label_size = 4,
   ...
 )

@@ -101,7 +101,7 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
     return(new_fact)
   }
 
-  if (!is.null(numerator) & !is.null(denominator)) {
+  if (!is.null(numerator) && !is.null(denominator)) {
     df[["score_string"]] <- glue("{df[[numerator]]} / {df[[denominator]]}")
   } else if (!is.null(numerator)) {
     df[["score_string"]] <- df[[numerator]]
@@ -124,7 +124,7 @@ plot_ontpval <- function(df, ontology = "MF", fontsize = 14, plot_title = NULL,
                   floor(3/4 * max_score),
                   max_score)
 
-  pvalue_plot <- ggplot(df, aes(x = reorder_size(.data[["df"]]),
+  pvalue_plot <- ggplot(df, aes(x = reorder_size(.data),
                                 y = .data[[x_column]], fill = .data[["pvalue"]])) +
     ggplot2::geom_col() +
     ggplot2::scale_y_continuous(expand = c(0, 0), breaks = break_list,

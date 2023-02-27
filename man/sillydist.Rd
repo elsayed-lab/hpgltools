@@ -27,7 +27,7 @@ the result, and normalizes against the max of all point.
 \examples{
 \dontrun{
  mydist <- sillydist(df[,1], df[,2], first_median, second_median)
- first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x = "first", y = "second"),
+ first_vs_second <- ggplot(df, aes(x = .data[["first"]], y = .data[["second"]]),
                                     environment = hpgl_env) +
    ggplot2::xlab(paste("Expression of", df_x_axis)) +
    ggplot2::ylab(paste("Expression of", df_y_axis)) +
