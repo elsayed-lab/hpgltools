@@ -28,7 +28,8 @@ extract_keepers_lst(
   p_cutoff = 0.05,
   sheet_prefix = NULL,
   sheet_number = NULL,
-  format_sig = 4
+  format_sig = 4,
+  plot_colors = plot_colors
 )
 }
 \arguments{

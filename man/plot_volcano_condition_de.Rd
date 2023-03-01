@@ -5,8 +5,8 @@
 \title{Theresa's volcano plots are objectively nicer because they are colored by condition.}
 \usage{
 plot_volcano_condition_de(
-  de_result,
-  de_table = 1,
+  input,
+  table_name,
   alpha = 0.5,
   fc_col = "logFC",
   fc_name = "log2 fold change",
@@ -15,20 +15,17 @@ plot_volcano_condition_de(
   logfc = 1,
   p_col = "adj.P.Val",
   p_name = "-log10 p-value",
-  p = 0.05,
+  pval = 0.05,
   shapes_by_state = FALSE,
+  color_high = NULL,
+  color_low = NULL,
   size = 2,
   invert = FALSE,
   label = NULL,
-  label_column = "hgncsymbol",
-  ...
+  label_column = "hgncsymbol"
 )
 }
 \arguments{
-\item{de_result}{Table of DE values, likely from combine_de_tables().}
-
-\item{de_table}{Which table from the result to use?}
-
 \item{alpha}{Make see-through.}
 
 \item{fc_col}{Column containing the fold-change values.}
@@ -45,8 +42,6 @@ plot_volcano_condition_de(
 
 \item{p_name}{Axis label for the significance.}
 
-\item{p}{Demarcation for (in)significance.}
-
 \item{shapes_by_state}{Change point shapes according to their states?}
 
 \item{size}{Point size}
@@ -56,6 +51,12 @@ plot_volcano_condition_de(
 \item{label}{Label some points?}
 
 \item{label_column}{Using this column in the data.}
+
+\item{de_result}{Table of DE values, likely from combine_de_tables().}
+
+\item{de_table}{Which table from the result to use?}
+
+\item{p}{Demarcation for (in)significance.}
 
 \item{...}{Extra arguments.}
 }

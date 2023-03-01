@@ -17,10 +17,14 @@ combine_extracted_plots(
   include_ebseq = FALSE,
   loess = FALSE,
   logfc = 1,
-  p = 0.05,
+  pval = 0.05,
   do_inverse = FALSE,
   found_table = NULL,
-  p_type = "all"
+  z = 1.5,
+  alpha = 0.4,
+  p_type = "all",
+  plot_colors = NULL,
+  z_lines = FALSE
 )
 }
 \arguments{
@@ -48,13 +52,13 @@ combine_extracted_plots(
 
 \item{logfc}{For Volcano/MA plot lines.}
 
-\item{p}{For Volcano/MA plot lines.}
-
 \item{do_inverse}{Flip the numerator/denominator?}
 
 \item{found_table}{The table name actually used.}
 
 \item{p_type}{Use this/these methods' p-value for determining significance.}
+
+\item{p}{For Volcano/MA plot lines.}
 }
 \description{
 It should be possible to significantly simplify the arguments passed to this

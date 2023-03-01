@@ -30,7 +30,8 @@ extract_keepers_single(
   p_cutoff = 0.05,
   format_sig = 4,
   sheet_prefix = NULL,
-  sheet_number = NULL
+  sheet_number = NULL,
+  plot_colors = NULL
 )
 }
 \arguments{

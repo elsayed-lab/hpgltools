@@ -11,15 +11,13 @@ extract_coefficient_scatter(
   x = 1,
   y = 2,
   z = 1.5,
-  p = NULL,
-  lfc = NULL,
+  logfc = NULL,
   n = NULL,
+  z_lines = FALSE,
   loess = FALSE,
   alpha = 0.4,
   color_low = "#DD0000",
-  z_lines = FALSE,
-  color_high = "#7B9F35",
-  ...
+  color_high = "#7B9F35"
 )
 }
 \arguments{
@@ -37,14 +35,10 @@ combine_de_tables().}
 \item{z}{Define the range of genes to color (FIXME: extend this to p-value
 and fold-change).}
 
-\item{p}{Set a p-value cutoff for coloring the scatter plot (currently not
-supported).}
-
-\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot
-(currently not supported.)}
-
 \item{n}{Set a top-n fold-change for coloring the points in the scatter plot
 (this should work, actually).}
+
+\item{z_lines}{Add lines to show the z-score demarcations.}
 
 \item{loess}{Add a loess estimation (This is slow.)}
 
@@ -52,9 +46,13 @@ supported).}
 
 \item{color_low}{Color for the genes less than the mean.}
 
-\item{z_lines}{Add lines to show the z-score demarcations.}
-
 \item{color_high}{Color for the genes greater than the mean.}
+
+\item{p}{Set a p-value cutoff for coloring the scatter plot (currently not
+supported).}
+
+\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot
+(currently not supported.)}
 
 \item{...}{More arguments are passed to arglist.}
 }

@@ -22,10 +22,283 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
-                             p_type = "adj", p = 0.05, invert = FALSE, ...) {
+extract_de_plots <- function(pairwise, type = "edger", invert = FALSE,
+                             x = NULL, y = NULL, alpha = 0.4, z = 1.5,
+                             logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
+                             color_high = NULL, color_low = NULL, loess = FALSE,
+                             z_lines = FALSE) {
+
+  coef_result <- try(extract_coefficient_scatter(pairwise, type = type, x = x, y = y,
+                                                 z = z, n = n, loess = loess, alpha = alpha / 2.0,
+                                                 color_low = color_low, color_high = color_high,
+                                                 z_lines = z_lines))
+  source_info <- get_plot_columns(pairwise, type, found_table = found_table, p_type = p_type)
+  input <- source_info[["the_table"]]
+  expr_col <- source_info[["expr_col"]]
+  fc_col <- source_info[["fc_col"]]
+  p_col <- source_info[["p_col"]]
+  invert <- source_info[["invert"]]
+
+  ma_material <- NULL
+  vol_material <- NULL
+  if (!is.null(input[[expr_col]]) &&
+        !is.null(input[[fc_col]]) &&
+         !is.null(input[[p_col]])) {
+    ma_material <- plot_ma_condition_de(
+      input = input, table_name = found_table,
+      expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+      logfc = logfc, pval = pval, invert = invert,
+      color_high = color_high, color_low = color_low)
+    vol_material <- plot_volcano_condition_de(
+      input = input, table_name = found_table,
+      fc_col = fc_col, p_col = p_col,
+      color_high = color_high, color_low = color_low,
+      invert = invert, logfc = logfc, pval = pval, label = 5)
+  }
+
+retlist <- list(
+  "coef" = coef_result,
+  "ma" = ma_material,
+  "volcano" = vol_material)
+  return(retlist)
+}
+
+#' Perform a coefficient scatter plot of a limma/deseq/edger/basic table.
+#'
+#' Plot the gene abundances for two coefficients in a differential expression
+#' comparison. By default, genes past 1.5 z scores from the mean are colored
+#' red/green.
+#'
+#' @param output Result from the de_ family of functions, all_pairwise, or
+#'  combine_de_tables().
+#' @param toptable Chosen table to query for abundances.
+#' @param type Query limma, deseq, edger, or basic outputs.
+#' @param x The x-axis column to use, either a number of name.
+#' @param y The y-axis column to use.
+#' @param z Define the range of genes to color (FIXME: extend this to p-value
+#'  and fold-change).
+#' @param p Set a p-value cutoff for coloring the scatter plot (currently not
+#'  supported).
+#' @param lfc Set a fold-change cutoff for coloring points in the scatter plot
+#'  (currently not supported.)
+#' @param n Set a top-n fold-change for coloring the points in the scatter plot
+#'  (this should work, actually).
+#' @param loess Add a loess estimation (This is slow.)
+#' @param alpha How see-through to make the dots.
+#' @param color_low Color for the genes less than the mean.
+#' @param color_high Color for the genes greater than the mean.
+#' @param z_lines Add lines to show the z-score demarcations.
+#' @param ... More arguments are passed to arglist.
+#' @seealso [plot_linear_scatter()]
+#' @examples
+#' \dontrun{
+#'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)
+#'  pairwise_output <- all_pairwise(expt)
+#'  scatter_plot <- extract_coefficient_scatter(pairwise_output,
+#'                                              type = "deseq", x = "uninfected", y = "infected")
+#' }
+#' @export
+extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
+                                        x = 1, y = 2, z = 1.5, logfc = NULL, n = NULL,
+                                        z_lines = FALSE, loess = FALSE, alpha = 0.4,
+                                        color_low = "#DD0000", color_high = "#7B9F35") {
+  ## This is an explicit test against all_pairwise() and reduces it to result from type.
+  if (!is.null(output[[type]])) {
+    output <- output[[type]]
+  }
+
+  ## Extract the set of available names -- FIXME this should be standardized!!
+  coefficients <- data.frame()
+  thenames <- NULL
+  if (type == "edger") {
+    thenames <- names(output[["contrasts"]][["identities"]])
+  } else if (type == "limma") {
+    coefficients <- as.data.frame(output[["identity_comparisons"]][["coefficients"]])
+    thenames <- colnames(coefficients)
+  } else if (type == "deseq") {
+    coefficients <- as.data.frame(output[["coefficients"]])
+    thenames <- colnames(output[["coefficients"]])
+  } else if (type == "basic") {
+    thenames <- names(output[["conditions_table"]])
+  } else if (type == "ebseq") {
+    thenames <- names(output[["conditions_table"]])
+  } else {
+    stop("I do not know what type you wish to query.")
+  }
+
+  message("This can do comparisons among the following columns in the pairwise result:")
+  message(toString(thenames))
+  xname <- ""
+  yname <- ""
+  if (is.numeric(x)) {
+    xname <- thenames[[x]]
+  } else {
+    xname <- x
+  }
+  if (is.numeric(y)) {
+    yname <- thenames[[y]]
+  } else {
+    yname <- y
+  }
+  message("Actually comparing ", xname, " and ", yname, ".")
+
+  ## Now extract the coefficent df
+  if (type == "edger") {
+    coefficient_df <- as.data.frame(output[["lrt"]][[1]][["coefficients"]])
+    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+    coef_offset <- min(coefficient_df)
+    ## This is dumb.
+    coefficient_df <- coefficient_df + (coef_offset * -1.0)
+  } else if (type == "limma") {
+    coefficient_df <- as.data.frame(output[["pairwise_comparisons"]][["coefficients"]])
+    if (is.null(coefficients[[x]]) || is.null(coefficients[[y]])) {
+      message("Did not find ", x, " or ", y, ".")
+      return(NULL)
+    }
+    coefficient_df <- coefficients[, c(x, y)]
+  } else if (type == "deseq") {
+    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
+    coefficient_df <- coefficients[, c(xname, yname)]
+  } else if (type == "ebseq") {
+    tables <- names(output[["all_tables"]])
+    verted <- glue::glue("{xname}_vs_{yname}")
+    inverted <- glue::glue("{yname}_vs_{xname}")
+    coefficient_df <- data.frame()
+    if (verted %in% tables) {
+      table_idx <- verted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c1mean", "ebseq_c2mean")]
+    } else if (inverted %in% tables) {
+      table_idx <- inverted == tables
+      table <- output[["all_tables"]][[tables[table_idx]]]
+      coefficient_df <- table[, c("ebseq_c2mean", "ebseq_c1mean")]
+    } else {
+      stop("Did not find the table for ebseq.")
+    }
+    colnames(coefficient_df) <- c(xname, yname)
+    coefficient_df[[1]] <- log2(coefficient_df[[1]])
+    coefficient_df[[2]] <- log2(coefficient_df[[2]])
+  } else if (type == "basic") {
+    coefficient_df <- output[["medians"]]
+    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
+      message("Did not find ", xname, " or ", yname, ".")
+      return(NULL)
+    }
+    coefficient_df <- coefficient_df[, c(xname, yname)]
+  }
+  maxvalue <- max(coefficient_df) + 1.0
+  minvalue <- min(coefficient_df) - 1.0
+  plot <- plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
+                              alpha = alpha, pretty_colors = FALSE,
+                              color_low = color_low, color_high = color_high,
+                              n = n, z = z, logfc = logfc, z_lines = z_lines)
+  plot[["scatter"]] <- plot[["scatter"]] +
+    ggplot2::scale_x_continuous(limits = c(minvalue, maxvalue)) +
+    ggplot2::scale_y_continuous(limits = c(minvalue, maxvalue))
+  plot[["df"]] <- coefficient_df
+  return(plot)
+}
+
+#' Create venn diagrams describing how well deseq/limma/edger agree.
+#'
+#' The sets of genes provided by limma and friends would ideally always agree,
+#' but they do not. Use this to see out how much the (dis)agree.
+#'
+#' @param table Which table to query?
+#' @param adjp Use adjusted p-values
+#' @param p p-value cutoff, I forget what for right now.
+#' @param lfc What fold-change cutoff to include?
+#' @param ... More arguments are passed to arglist.
+#' @return A list of venn plots
+#' @seealso [Vennerable] [get_sig_genes()]
+#' @examples
+#' \dontrun{
+#'  bunchovenns <- de_venn(pairwise_result)
+#' }
+#' @export
+de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   arglist <- list(...)
-  table_source <- "all_pairwise"
+  if (!is.null(table[["data"]])) {
+    ## Then this is the result of combine_de
+    retlist <- list()
+    for (i in seq_along(names(table[["data"]]))) {
+      a_table <- table[["data"]][[i]]
+      retlist[[i]] <- de_venn(a_table, adjp = adjp, p = p, lfc = lfc, arglist)
+    }
+    return(retlist)
+  }
+  limma_p <- "limma_p"
+  deseq_p <- "deseq_p"
+  edger_p <- "edger_p"
+  if (isTRUE(adjp)) {
+    limma_p <- "limma_adjp"
+    deseq_p <- "deseq_adjp"
+    edger_p <- "edger_adjp"
+  }
+
+  limma_sig <- sm(get_sig_genes(table, lfc = lfc,
+                                column = "limma_logfc", p_column = limma_p, p = p))
+  edger_sig <- sm(get_sig_genes(table, lfc = lfc,
+                                column = "edger_logfc", p_column = edger_p, p = p))
+  deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
+                                column = "deseq_logfc", p_column = deseq_p, p = p))
+  up_venn_lst <- list(
+    "deseq" = rownames(deseq_sig[["up_genes"]]),
+    "edger" = rownames(edger_sig[["up_genes"]]),
+    "limma" = rownames(limma_sig[["up_genes"]]))
+  down_venn_lst <- list(
+    "deseq" = rownames(deseq_sig[["down_genes"]]),
+    "edger" = rownames(edger_sig[["down_genes"]]),
+    "limma" = rownames(limma_sig[["down_genes"]]))
+
+  up_venn <- Vennerable::Venn(Sets = up_venn_lst)
+  down_venn <- Vennerable::Venn(Sets = down_venn_lst)
+  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
+  up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
+  up_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  this_plot <- png(filename = tmp_file)
+  controlled <- dev.control("enable")
+  down_res <- Vennerable::plot(down_venn, doWeights = FALSE)
+  down_venn_noweight <- grDevices::recordPlot()
+  dev.off()
+  removed <- file.remove(tmp_file)
+
+  retlist <- list(
+    "up_venn" = up_venn,
+    "up_noweight" = up_venn_noweight,
+    "down_venn" = down_venn,
+    "down_noweight" = down_venn_noweight)
+  return(retlist)
+}
+
+#' A small rat's nest of if statements intended to figure out what columns
+#' are wanted to plot a MA/Volcano from any one of a diverse set of possible
+#' input types.
+#'
+#' I split this function away from the main body of extract_de_plots()
+#' so that I can come back to it and strip it down to something a bit
+#' more legible.  One idea is to make use of the fact that I gave
+#' class assignments to all of the outputs from xxx_pairwise()
+get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj") {
+  ret <- list(
+    "p_col" = "P.Val",
+    "fc_col" = "logFC",
+    "expr_col" = "baseMean",
+    "wanted_table" = NULL,
+    "invert" = FALSE,
+    "input" = NULL,
+    "table_source" = "all_pairwise")
+
   ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
   ## edger_pairwise, basic_pairwise, combine_de_tables.
   if (!is.null(pairwise[["method"]])) {
@@ -36,11 +309,12 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
 
   ## If the user did not ask for a specific table, assume the first one
   wanted_table <- NULL
-  if (is.null(table)) {
+  if (is.null(found_table)) {
     wanted_table <- 1
   } else {
-    wanted_table <- table
+    wanted_table <- found_table
   }
+
   if ("combined_de" %in% class(pairwise)) {
     wanted_tablename <- pairwise[["kept"]][[wanted_table]]
     actual_tablenames <- pairwise[["keepers"]][[wanted_table]]
@@ -48,10 +322,10 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
     actual_denominator <- actual_tablenames[[2]]
     actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
     if (actual_tablename != wanted_tablename) {
-      invert <- TRUE
+      retlist[["invert"]] <- TRUE
     }
     wanted_table <- wanted_tablename
-    pairwise <- pairwise[["input"]]
+    input <- pairwise[["input"]]
     print(wanted_table)
   }
 
@@ -164,10 +438,10 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
     the_table <- wanted_table
     revname <- strsplit(x = the_table, split = "_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+    if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
-    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+    } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
       message("Unable to find the table in the set of possible tables.")
       message("The possible tables are: ", toString(possible_tables))
       stop()
@@ -190,14 +464,14 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
     revname <- strsplit(x = the_table, split = "_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(pairwise[["data"]])
-    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
+    if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       message("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
-    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
+    } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
       stop("Unable to find the table in the set of possible tables.")
     } else {
       ##the_table <- pairwise[["data"]][[the_table]]
-      the_tale <- all_tables[[the_table]]
+      the_table <- all_tables[[the_table]]
     }
   } else {
     stop("Unable to discern the table requested.")
@@ -214,247 +488,11 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
     wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
   }
 
-  ma_material <- NULL
-  vol_material <- NULL
-  if (!is.null(the_table[[expr_col]]) &
-        !is.null(the_table[[fc_col]]) &
-         !is.null(the_table[[p_col]])) {
-    ma_material <- plot_ma_de(
-      table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
-      logfc = logfc, p = p, invert = invert,
-      ...)
-    vol_material <- plot_volcano_condition_de(
-      pairwise, de_table = wanted_table,
-      ##de_table = the_table,
-      fc_col = fc_col,
-      p_col = p_col, invert = invert,
-      logfc = logfc, p = p, label = 5,
-      ...)
-  }
-
-  retlist <- list(
-    "ma" = ma_material,
-    "volcano" = vol_material)
-  return(retlist)
-}
-
-#' Perform a coefficient scatter plot of a limma/deseq/edger/basic table.
-#'
-#' Plot the gene abundances for two coefficients in a differential expression
-#' comparison. By default, genes past 1.5 z scores from the mean are colored
-#' red/green.
-#'
-#' @param output Result from the de_ family of functions, all_pairwise, or
-#'  combine_de_tables().
-#' @param toptable Chosen table to query for abundances.
-#' @param type Query limma, deseq, edger, or basic outputs.
-#' @param x The x-axis column to use, either a number of name.
-#' @param y The y-axis column to use.
-#' @param z Define the range of genes to color (FIXME: extend this to p-value
-#'  and fold-change).
-#' @param p Set a p-value cutoff for coloring the scatter plot (currently not
-#'  supported).
-#' @param lfc Set a fold-change cutoff for coloring points in the scatter plot
-#'  (currently not supported.)
-#' @param n Set a top-n fold-change for coloring the points in the scatter plot
-#'  (this should work, actually).
-#' @param loess Add a loess estimation (This is slow.)
-#' @param alpha How see-through to make the dots.
-#' @param color_low Color for the genes less than the mean.
-#' @param color_high Color for the genes greater than the mean.
-#' @param z_lines Add lines to show the z-score demarcations.
-#' @param ... More arguments are passed to arglist.
-#' @seealso [plot_linear_scatter()]
-#' @examples
-#' \dontrun{
-#'  expt <- create_expt(metadata = "some_metadata.xlsx", gene_info = annotations)
-#'  pairwise_output <- all_pairwise(expt)
-#'  scatter_plot <- extract_coefficient_scatter(pairwise_output,
-#'                                              type = "deseq", x = "uninfected", y = "infected")
-#' }
-#' @export
-extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma", x = 1, y = 2, z = 1.5,
-                                        p = NULL, lfc = NULL, n = NULL, loess = FALSE,
-                                        alpha = 0.4, color_low = "#DD0000", z_lines = FALSE,
-                                        color_high = "#7B9F35", ...) {
-  arglist <- list(...)
-  ## This is an explicit test against all_pairwise() and reduces it to result from type.
-  if (!is.null(output[[type]])) {
-    output <- output[[type]]
-  }
-
-  ## Extract the set of available names -- FIXME this should be standardized!!
-  coefficients <- data.frame()
-  thenames <- NULL
-  if (type == "edger") {
-    thenames <- names(output[["contrasts"]][["identities"]])
-  } else if (type == "limma") {
-    coefficients <- as.data.frame(output[["identity_comparisons"]][["coefficients"]])
-    thenames <- colnames(coefficients)
-  } else if (type == "deseq") {
-    coefficients <- as.data.frame(output[["coefficients"]])
-    thenames <- colnames(output[["coefficients"]])
-  } else if (type == "basic") {
-    thenames <- names(output[["conditions_table"]])
-  } else if (type == "ebseq") {
-    thenames <- names(output[["conditions_table"]])
-  } else {
-    stop("I do not know what type you wish to query.")
-  }
-
-  message("This can do comparisons among the following columns in the pairwise result:")
-  message(toString(thenames))
-  xname <- ""
-  yname <- ""
-  if (is.numeric(x)) {
-    xname <- thenames[[x]]
-  } else {
-    xname <- x
-  }
-  if (is.numeric(y)) {
-    yname <- thenames[[y]]
-  } else {
-    yname <- y
-  }
-  message("Actually comparing ", xname, " and ", yname, ".")
-
-  ## Now extract the coefficent df
-  if (type == "edger") {
-    coefficient_df <- as.data.frame(output[["lrt"]][[1]][["coefficients"]])
-    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
-      message("Did not find ", xname, " or ", yname, ".")
-      return(NULL)
-    }
-    coefficient_df <- coefficient_df[, c(xname, yname)]
-    coef_offset <- min(coefficient_df)
-    ## This is dumb.
-    coefficient_df <- coefficient_df + (coef_offset * -1.0)
-  } else if (type == "limma") {
-    coefficient_df <- as.data.frame(output[["pairwise_comparisons"]][["coefficients"]])
-    if (is.null(coefficients[[x]]) || is.null(coefficients[[y]])) {
-      message("Did not find ", x, " or ", y, ".")
-      return(NULL)
-    }
-    coefficient_df <- coefficients[, c(x, y)]
-  } else if (type == "deseq") {
-    if (is.null(coefficients[[xname]]) || is.null(coefficients[[yname]])) {
-      message("Did not find ", xname, " or ", yname, ".")
-      return(NULL)
-    }
-    coefficient_df <- coefficients[, c(xname, yname)]
-  } else if (type == "ebseq") {
-    tables <- names(output[["all_tables"]])
-    verted <- glue::glue("{xname}_vs_{yname}")
-    inverted <- glue::glue("{yname}_vs_{xname}")
-    coefficient_df <- data.frame()
-    if (verted %in% tables) {
-      table_idx <- verted == tables
-      table <- output[["all_tables"]][[tables[table_idx]]]
-      coefficient_df <- table[, c("ebseq_c1mean", "ebseq_c2mean")]
-    } else if (inverted %in% tables) {
-      table_idx <- inverted == tables
-      table <- output[["all_tables"]][[tables[table_idx]]]
-      coefficient_df <- table[, c("ebseq_c2mean", "ebseq_c1mean")]
-    } else {
-      stop("Did not find the table for ebseq.")
-    }
-    colnames(coefficient_df) <- c(xname, yname)
-    coefficient_df[[1]] <- log2(coefficient_df[[1]])
-    coefficient_df[[2]] <- log2(coefficient_df[[2]])
-  } else if (type == "basic") {
-    coefficient_df <- output[["medians"]]
-    if (is.null(coefficient_df[[xname]]) || is.null(coefficient_df[[yname]])) {
-      message("Did not find ", xname, " or ", yname, ".")
-      return(NULL)
-    }
-    coefficient_df <- coefficient_df[, c(xname, yname)]
-  }
-
-  maxvalue <- max(coefficient_df) + 1.0
-  minvalue <- min(coefficient_df) - 1.0
-  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
-                                 alpha = alpha, pretty_colors = FALSE,
-                                 color_low = color_low, color_high = color_high,
-                                 p = p, lfc = lfc, n = n, z = z, z_lines = z_lines))
-  plot[["scatter"]] <- plot[["scatter"]] +
-    ggplot2::scale_x_continuous(limits = c(minvalue, maxvalue)) +
-    ggplot2::scale_y_continuous(limits = c(minvalue, maxvalue))
-  plot[["df"]] <- coefficient_df
-  return(plot)
-}
-
-#' Create venn diagrams describing how well deseq/limma/edger agree.
-#'
-#' The sets of genes provided by limma and friends would ideally always agree,
-#' but they do not. Use this to see out how much the (dis)agree.
-#'
-#' @param table Which table to query?
-#' @param adjp Use adjusted p-values
-#' @param p p-value cutoff, I forget what for right now.
-#' @param lfc What fold-change cutoff to include?
-#' @param ... More arguments are passed to arglist.
-#' @return A list of venn plots
-#' @seealso [Vennerable] [get_sig_genes()]
-#' @examples
-#' \dontrun{
-#'  bunchovenns <- de_venn(pairwise_result)
-#' }
-#' @export
-de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
-  arglist <- list(...)
-  if (!is.null(table[["data"]])) {
-    ## Then this is the result of combine_de
-    retlist <- list()
-    for (i in seq_along(names(table[["data"]]))) {
-      a_table <- table[["data"]][[i]]
-      retlist[[i]] <- de_venn(a_table, adjp = adjp, p = p, lfc = lfc, arglist)
-    }
-    return(retlist)
-  }
-  limma_p <- "limma_p"
-  deseq_p <- "deseq_p"
-  edger_p <- "edger_p"
-  if (isTRUE(adjp)) {
-    limma_p <- "limma_adjp"
-    deseq_p <- "deseq_adjp"
-    edger_p <- "edger_adjp"
-  }
-
-  limma_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "limma_logfc", p_column = limma_p, p = p))
-  edger_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "edger_logfc", p_column = edger_p, p = p))
-  deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "deseq_logfc", p_column = deseq_p, p = p))
-  up_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["up_genes"]]),
-    "edger" = rownames(edger_sig[["up_genes"]]),
-    "limma" = rownames(limma_sig[["up_genes"]]))
-  down_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["down_genes"]]),
-    "edger" = rownames(edger_sig[["down_genes"]]),
-    "limma" = rownames(limma_sig[["down_genes"]]))
-
-  up_venn <- Vennerable::Venn(Sets = up_venn_lst)
-  down_venn <- Vennerable::Venn(Sets = down_venn_lst)
-  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
-  this_plot <- png(filename = tmp_file)
-  controlled <- dev.control("enable")
-  up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
-  up_venn_noweight <- grDevices::recordPlot()
-  dev.off()
-  this_plot <- png(filename = tmp_file)
-  controlled <- dev.control("enable")
-  down_res <- Vennerable::plot(down_venn, doWeights = FALSE)
-  down_venn_noweight <- grDevices::recordPlot()
-  dev.off()
-  removed <- file.remove(tmp_file)
-
-  retlist <- list(
-    "up_venn" = up_venn,
-    "up_noweight" = up_venn_noweight,
-    "down_venn" = down_venn,
-    "down_noweight" = down_venn_noweight)
+  retlist[["the_table"]] <- the_table
+  retlist[["expr_col"]] <- expr_col
+  retlist[["fc_col"]] <- fc_col
+  retlist[["p_col"]] <- p_col
+  retlist[["wanted_table"]] <- wanted_table
   return(retlist)
 }
 
@@ -883,70 +921,58 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param label_column Using this column in the data.
 #' @param ... Extra arguments.
 #' @export
-plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
+plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",
                                       line_color = "black", line_position = "bottom", logfc = 1.0,
-                                      p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
+                                      p_col = "adj.P.Val", p_name = "-log10 p-value", pval = 0.05,
                                       shapes_by_state = FALSE,
+                                      color_high = NULL, color_low = NULL,
                                       size = 2, invert = FALSE, label = NULL,
-                                      label_column = "hgncsymbol", ...) {
-  table <- de_result[["all_tables"]][[de_table]]
+                                      label_column = "hgncsymbol") {
 
-  ## Make a list of the colors by condition name.
-  colors <- de_result[["input_data"]][["colors"]]
-  start_names <- pData(de_result[["input_data"]])[["condition"]]
-  ## Make sure to do the same sanitization as performed by all_pairwise()
-  sanitized_names <- gsub(x = start_names, pattern = "[[:punct:]]", replacement = "")
-  names(colors) <- sanitized_names
-  single_idx <- !duplicated(colors)
-  colors <- colors[single_idx]
-
-  split <- strsplit(x = de_table, split = "_vs_")
-  numerator <- split[[1]][1]
-  denominator <- split[[1]][2]
-
-  message("Plotting volcano plot of the DE results of ", de_table, " according to the columns: ",
-          fc_col, " and ", p_col, " using the expressionset colors.")
+  message("Plotting volcano plot of the DE results of ", table_name,
+          " according to the columns: ", fc_col, " and ", p_col,
+          " using the expressionset colors.")
 
   low_vert_line <- 0.0 - logfc
-  horiz_line <- -1 * log10(p)
+  horiz_line <- -1 * log10(pval)
 
-  if (! fc_col %in% colnames(table)) {
+  if (! fc_col %in% colnames(input)) {
     stop("Column: ", fc_col, " is not in the table.")
   }
-  if (! p_col %in% colnames(table)) {
+  if (! p_col %in% colnames(input)) {
     stop("Column: ", p_col, " is not in the table.")
   }
 
-  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
-                   "yaxis" = as.numeric(table[[p_col]]))
-  rownames(df) <- rownames(table)
+  df <- data.frame("xaxis" = as.numeric(input[[fc_col]]),
+                   "yaxis" = as.numeric(input[[p_col]]))
+  rownames(df) <- rownames(input)
 
   if (isTRUE(invert)) {
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
 
   ## Add the label column if it exists.
-  if (!is.null(label_column) & !is.null(table[[label_column]])) {
-    df[["label"]] <- table[[label_column]]
+  if (!is.null(label_column) & !is.null(input[[label_column]])) {
+    df[["label"]] <- input[[label_column]]
   } else {
-    df[["label"]] <- rownames(table)
+    df[["label"]] <- rownames(input)
   }
 
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
-  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["pcut"]] <- df[["yaxis"]] <= pval
   df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
 
   df[["state"]] <- "insignificant"
-  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= p
-  df[numerator_sig, "state"] <- numerator
-  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= p
-  df[denominator_sig, "state"] <- denominator
+  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= pval
+  df[numerator_sig, "state"] <- "up"
+  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= pval
+  df[denominator_sig, "state"] <- "down"
   df[["state"]] <- as.factor(df[["state"]])
 
-  plot_colors <- c("#555555", colors[numerator], colors[denominator])
-  names(plot_colors) <- c("insignificant", numerator, denominator)
+  plot_colors <- c("#555555", color_low, color_high)
+  names(plot_colors) <- c("insignificant", "up", "down")
 
   plt <- ggplot(data = df,
                 aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
@@ -957,24 +983,24 @@ plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
   if (line_position == "bottom") {
     ## lines, then points.
     plt <- plt +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
   } else {
     ## points, then lines
     plt <- plt +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2))
   }
 
   ## Now set the colors and axis labels
   plt <- plt +
-    ggplot2::scale_fill_manual(name = "state", values = colors,
+    ggplot2::scale_fill_manual(name = "state", values = plot_colors,
                                guide = "none") +
-    ggplot2::scale_color_manual(name = "state", values = colors,
+    ggplot2::scale_color_manual(name = "state", values = plot_colors,
                                 guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +

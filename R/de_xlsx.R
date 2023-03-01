@@ -51,13 +51,14 @@
 #' }
 #' @export
 combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes = NULL,
-                              adjp = TRUE, include_limma = TRUE, excel = NULL, include_deseq = TRUE,
+                              adjp = TRUE, include_limma = TRUE, include_deseq = TRUE,
                               include_edger = TRUE, include_ebseq = TRUE, include_basic = TRUE,
                               rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
                               compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1, p_cutoff = 0.05, de_types = c("limma", "deseq", "edger"),
                               excel_title = "Table SXXX: Combined Differential Expression of YYY",
-                              rda = NULL, start_worksheet = "S02", format_sig = 4, ...) {
+                              rda = NULL, start_worksheet = "S02",
+                              format_sig = 4, excel = NULL, ...) {
   arglist <- list(...)
   retlist <- NULL
   xlsx <- init_xlsx(excel)
@@ -67,6 +68,14 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   if (is.null(wb)) {
     do_excel <- FALSE
   }
+
+  plot_colors <- apr[["input"]][["colors"]]
+  start_names <- pData(apr[["input"]])[["condition"]]
+  ## Make sure to do the same sanitization as performed by all_pairwise()
+  sanitized_names <- gsub(x = start_names, pattern = "[[:punct:]]", replacement = "")
+  names(plot_colors) <- sanitized_names
+  single_idx <- !duplicated(plot_colors)
+  plot_colors <- plot_colors[single_idx]
 
   ## Add a little logic to fill in table numbers in the worksheets.
   ## To do this, replace the default SXXX with something, either a number or
@@ -131,7 +140,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   if (!is.null(extra_annot)) {
     annot_df <- merge(annot_df, extra_annot, by = "row.names", all.x = TRUE)
     rownames(annot_df) <- annot_df[["Row.names"]]
-    annot_df <- annot_df[, -1, drop = FALSE]
+    annot_df[["Row.names"]] <- NULL
   }
 
   ## Write the legend.
@@ -154,36 +163,38 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     "table_names" = list(),
     "plots" = list(),
     "summaries" = data.frame())
+  table_names <- legend[["table_names"]]
   if ("list" %in% class(keepers)) {
     ## Here, we will look for only those elements in the keepers list.
     ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
     ## flip the logFCs.
     extracted <- extract_keepers_lst(
-      extracted, keepers, legend[["table_names"]], all_coefficients,
+      extracted, keepers, table_names, all_coefficients,
       limma, edger, ebseq, deseq, basic, adjp, annot_df, include_deseq, include_edger,
       include_ebseq, include_limma, include_basic, excludes, padj_type, loess =  loess,
       lfc_cutoff = lfc_cutoff, p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
-      sheet_number = sheet_number, format_sig = format_sig)
-  } else if (class(keepers)[1] == "character" & keepers[1] == "all") {
+      sheet_number = sheet_number, format_sig = format_sig,
+      plot_colors = plot_colors)
+  } else if (class(keepers)[1] == "character" && keepers[1] == "all") {
     ## If you want all the tables in a dump
     ## The logic here is the same as above without worrying about a_vs_b, but
     ## instead just iterating through every returned table, combining them, and
     ## printing them to the excel.
     extracted <- extract_keepers_all(
-      apr, extracted, keepers, legend[["table_names"]], all_coefficients,
+      apr, extracted, keepers, table_names, all_coefficients,
       limma, edger, ebseq, deseq, basic, adjp, annot_df, include_deseq, include_edger,
       include_ebseq, include_limma, include_basic, excludes, padj_type, loess = loess,
       lfc_cutoff = lfc_cutoff, p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
-      sheet_number = sheet_number)
+      sheet_number = sheet_number, plot_colors = plot_colors)
   } else if (class(keepers)[1] == "character") {
     ## Finally, the simplest case, just print a single table.  Otherwise the logic
     ## should be identical to the first case above.
     extracted <- extract_keepers_single(
-      apr, extracted, keepers, legend[["table_names"]], all_coefficients,
+      apr, extracted, keepers, table_names, all_coefficients,
       limma, edger, ebseq, deseq, basic, adjp, annot_df, include_deseq, include_edger,
       include_ebseq, include_limma, include_basic, excludes, padj_type, loess =  loess,
       lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, sheet_prefix = sheet_prefix,
-      sheet_number = sheet_number)
+      sheet_number = sheet_number, plot_colors = plot_colors)
   } else {
     stop("I don't know what to do with your specification of tables to keep.")
   } ## End different types of things to keep.
@@ -459,7 +470,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
             plotname <- paste0(short, "ma")
             ## I think something here is failing and leaving behind a tempfile.
             try_ma_result <- xlsx_insert_png(
-              ma_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
+              ma_plt, wb = wb, sheet = sheetname, width = plot_dim,
               height = plot_dim, start_col = current_column, plotname = plotname,
               savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_ma_result)) {
@@ -471,7 +482,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
               startRow = current_row, startCol = current_column)
             plotname <- paste0(short, "vol")
             try_vol_result <- xlsx_insert_png(
-              vol_plt[["plot"]], wb = wb, sheet = sheetname, width = plot_dim,
+              vol_plt, wb = wb, sheet = sheetname, width = plot_dim,
               height = plot_dim, start_col = current_column, pltname = plotname,
               savedir = excel_basename, start_row = current_row + 1)
             if (! "try-error" %in% class(try_vol_result)) {
@@ -576,9 +587,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     include_basic = TRUE, include_deseq = TRUE,
                                     include_edger = TRUE, include_limma = TRUE,
-                                    include_ebseq = FALSE, loess = FALSE, logfc = 1, p = 0.05,
-                                    do_inverse = FALSE, found_table = NULL,
-                                    p_type = "all") {
+                                    include_ebseq = FALSE, loess = FALSE, logfc = 1, pval = 0.05,
+                                    do_inverse = FALSE, found_table = NULL, z = 1.5, alpha = 0.4,
+                                    p_type = "all", plot_colors = NULL, z_lines = FALSE) {
   message("Starting combine_extracted_plots() with do_inverse as: ", do_inverse, ".")
   combined_data <- combined[["data"]]
   plots <- list()
@@ -616,29 +627,34 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     ma_name <- paste0(type, "_ma_plots")
     vol_name <- paste0(type, "_vol_plots")
     p_name <- paste0(type, "_p_plots")
-    if (is.null(sc_name)) {
-      mesg("Skipping scatter plot for ", type, ".")
+    ## I think I should include the coefficient plot with the
+    ## MA/volcano.  I am stealing the following 6 lines from the
+    ## volcano/MA plotter to make pretty colors
+    x_y <- strsplit(x = found_table, split = "_vs_")[[1]]
+    color_low <- plot_colors[x_y[2]]
+    color_high <- plot_colors[x_y[1]]
+
+    ma_vol_coef <- try(extract_de_plots(
+      plot_inputs[[type]], type = type, invert = do_inverse,
+      x = x_y[1], y = x_y[2], alpha = alpha, z = z,
+      logfc = logfc, pval = pval, found_table = found_table, p_type = p_type,
+      color_low = color_low, color_high = color_high, z_lines = z_lines))
+    if ("try-error" %in% class(ma_vol_coef[["coef"]])) {
+      plots[[sc_name]] <- NULL
     } else {
-      x_y <- strsplit(x = found_table, split = "_vs_")[[1]]
-      coef_scatter <- sm(try(extract_coefficient_scatter(
-        plot_inputs[[type]], type = type, invert = do_inverse,
-        x = x_y[1], y = x_y[2])))
-      plots[[sc_name]] <- coef_scatter
+      plots[[sc_name]] <- ma_vol_coef[["coef"]]
     }
-    if (is.null(ma_name)) {
-      mesg("Skipping volcano/MA plot for ", type, ".")
+    if ("try-error" %in% class(ma_vol_coef[["volcano"]])) {
+      plots[[vol_name]] <- NULL
     } else {
-      ma_vol <- try(extract_de_plots(
-        plot_inputs[[type]], type = type, invert = do_inverse,
-        logfc = logfc, p = p, table = found_table), silent = TRUE)
-      if ("try-error" %in% class(ma_vol)) {
-        plots[[ma_name]] <- NULL
-        plots[[vol_name]] <- NULL
-      } else {
-        plots[[ma_name]] <- ma_vol[["ma"]]
-        plots[[vol_name]] <- ma_vol[["volcano"]]
-      }
+      plots[[vol_name]] <- ma_vol_coef[["volcano"]][["plot"]]
     }
+    if ("try-error" %in% class(ma_vol_coef[["ma"]])) {
+      plots[[ma_name]] <- NULL
+    } else {
+      plots[[ma_name]] <- ma_vol_coef[["ma"]][["plot"]]
+    }
+
     if (is.null(p_name)) {
       mesg("Skipping p-value plot for ", t, ".")
     } else {
@@ -760,7 +776,7 @@ Defaulting to fdr.")
   }
 
   ## Check that the deseq result is valid.
-  if (is.null(de) | class(de)[1] == "try-error") {
+  if (is.null(de) || class(de)[1] == "try-error") {
     mesg("The deseq table is null.")
     de <- NULL
     include_deseq <- FALSE
@@ -787,7 +803,7 @@ Defaulting to fdr.")
   }
 
   ## Check that the edger result is valid.
-  if (is.null(ed) | class(ed)[1] == "try-error") {
+  if (is.null(ed) || class(ed)[1] == "try-error") {
     mesg("The edger table is null.")
     ed <- NULL
     include_edger <- FALSE
@@ -1071,7 +1087,7 @@ Defaulting to fdr.")
                                replacement = "", x = colnames(annot_df))
     comb <- merge(annot_df, comb, by = "row.names", all.y = TRUE)
     rownames(comb) <- comb[["Row.names"]]
-    comb <- comb[, -1, drop = FALSE]
+    comb[["Row.names"]] <- NULL
     colnames(comb) <- make.names(tolower(colnames(comb)), unique = TRUE)
   }
 
@@ -1186,7 +1202,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
                                 include_ebseq, include_limma,
                                 include_basic, excludes, padj_type, loess = FALSE,
                                 lfc_cutoff = 1, p_cutoff = 0.05,
-                                sheet_prefix = NULL, sheet_number = NULL) {
+                                sheet_prefix = NULL, sheet_number = NULL,
+                                plot_colors = NULL) {
   names_length <- length(table_names)
   kept_tables <- list()
   numerators <- denominators <- c()
@@ -1221,8 +1238,8 @@ extract_keepers_all <- function(apr, extracted, keepers, table_names,
       name, combined, denominator, numerator, plot_inputs,
       include_basic = include_basic, include_deseq = include_deseq,
       include_edger = include_edger, include_limma = include_limma,
-      include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
-      found_table = name, p_type = padj_type)
+      include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, pval = p_cutoff,
+      found_table = name, p_type = padj_type, plot_colors = plot_colors)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
     extracted[["numerators"]] <- numerators
@@ -1271,7 +1288,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                 include_basic, excludes, padj_type,
                                 loess = FALSE, lfc_cutoff = 1, p_cutoff = 0.05,
                                 sheet_prefix = NULL, sheet_number = NULL,
-                                format_sig = 4) {
+                                format_sig = 4, plot_colors = plot_colors) {
   ## First check that your set of kepers is in the data
   all_keepers <- as.character(unlist(keepers))
   keeper_names <- names(keepers)
@@ -1290,8 +1307,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
   if (sum(found_names_deseq_idx) > 0) {
     extra_names <- c(extra_names, names(deseq[["all_tables"]])[found_names_deseq_idx])
   }
-  if (sum(found_names_deseq_idx) > 0) {
-    extra_names <- c(extra_names, names(deseq[["all_tables"]])[found_names_deseq_idx])
+  if (sum(found_names_limma_idx) > 0) {
+    extra_names <- c(extra_names, names(limma[["all_tables"]])[found_names_limma_idx])
   }
   extra_names <- unique(extra_names)
 
@@ -1309,8 +1326,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
   kept_tables <- list()
   for (a in seq_along(names(keepers))) {
     name <- names(keepers)[a]
-    extracted[["data"]][[name]] <- list()  ## Provided by combine_de_table() shortly.
-
+    extracted[["data"]][[name]] <- list()  ## Provided by combine_de_table()
     ## Initially, set same_string to the name of the table, then if there is a
     ## table with that, just use it directly rather than hunt for numerator/denominator.
     same_string <- name
@@ -1390,9 +1406,11 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
         name, combined, denominator, numerator, plot_inputs,
         include_basic = include_basic, include_deseq = include_deseq,
         include_edger = include_edger, include_limma = include_limma,
-        include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, p = p_cutoff,
-        do_inverse = do_inverse, found_table = found_table, p_type = padj_type), silent = TRUE)
+        include_ebseq = include_ebseq, loess = loess, logfc = lfc_cutoff, pval = p_cutoff,
+        do_inverse = do_inverse, found_table = found_table, p_type = padj_type,
+        plot_colors = plot_colors), silent = TRUE)
       if ("try-error" %in% class(extracted_plots)) {
+        message("There was an error extracting the ", name, " plot.")
         extracted[["plots"]][[name]] <- NULL
       } else {
         extracted[["plots"]][[name]] <- extracted_plots
@@ -1450,7 +1468,7 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
                                    fancy = FALSE, loess = FALSE,
                                    lfc_cutoff = 1, p_cutoff = 0.05,
                                    format_sig = 4, sheet_prefix = NULL,
-                                   sheet_number = NULL) {
+                                   sheet_number = NULL, plot_colors = NULL) {
   splitted <- strsplit(x = keepers, split = "_vs_")
   numerator <- splitted[[1]][1]
   denominator <- splitted[[1]][2]
@@ -1493,7 +1511,8 @@ extract_keepers_single <- function(apr, extracted, keepers, table_names,
     include_basic = include_basic, include_deseq = include_deseq,
     include_edger = include_edger, include_limma = include_limma,
     include_ebseq = include_ebseq, loess = loess, found_table = table,
-    logfc = lfc_cutoff, p = p_cutoff, do_inverse = do_inverse, p_type = padj_type)
+    logfc = lfc_cutoff, pval = p_cutoff,
+    do_inverse = do_inverse, p_type = padj_type, plot_colors = plot_colors)
   extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                     as.data.frame(combined[["summary"]]))
   extracted[["numerators"]] <- numerator
@@ -1669,7 +1688,7 @@ extract_siggenes <- function(...) {
 #' @export
 extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
                                       p = 0.05, sig_bar = TRUE, z = NULL, n = NULL,
-                                      top_percent = NULL, ma = TRUE, p_type = "adj",
+                                      top_percent = NULL, p_type = "adj",
                                       invert_barplots = FALSE, excel = NULL, fc_column = NULL,
                                       p_column = NULL, siglfc_cutoffs = c(0, 1, 2),
                                       column_suffix = TRUE, gmt = FALSE, category = "category",
@@ -1691,9 +1710,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   xlsx <- init_xlsx(excel)
   wb <- xlsx[["wb"]]
   excel_basename <- xlsx[["basename"]]
-  if (is.null(excel)) {
-    ma <- FALSE
-  }
   num_tables <- 0
   table_names <- NULL
   all_tables <- NULL
@@ -1827,7 +1843,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   for (summary_count in seq_along(according_to)) {
     according <- according_to[summary_count]
     ret[[according]] <- list()
-    ma_plots <- list()
     change_counts_up <- list()
     change_counts_down <- list()
     this_fc_column <- chosen_columns[[according]][["fc"]]
@@ -1836,24 +1851,6 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       table_name <- names(table_names)[table_count]
       plot_name <- as.character(table_names)[table_count]
       plot_name <- gsub(pattern = "-inverted", replacement = "", x = plot_name)
-      ## Extract the MA data if requested.
-      if (isTRUE(ma)) {
-        ma_lfc <- lfc
-        ma_p <- p
-        if (is.null(ma_lfc)) {
-          ma_lfc <- 1
-        }
-        if (is.null(ma_p)) {
-          ma_p <- 0.05
-        }
-        single_ma <- try(extract_de_plots(
-          combined[["input"]], type = according, table = plot_name, lfc = ma_lfc, p = ma_p), silent = TRUE)
-        if ("try-error" %in% class(single_ma)) {
-          ma_plots[[table_name]] <- NULL
-        } else {
-          ma_plots[[table_name]] <- single_ma[["ma"]][["plot"]]
-        }
-      }
 
       this_table <- all_tables[[table_name]]
       ## Added this try() because I am not sure how I want to deal with
@@ -1896,8 +1893,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       "counts" = change_counts,
       "up_titles" = up_titles,
       "down_titles" = down_titles,
-      "counts_title" = summary_title,
-      "ma_plots" = ma_plots)
+      "counts_title" = summary_title)
 
     ## I want to start writing out msigdb compatible gmt files and therefore
     ## want to start creating gene set collections from our data.
@@ -1913,7 +1909,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     if (isTRUE(do_excel)) {
       mesg("Printing significant genes to the file: ", excel)
       xlsx_ret <- print_ups_downs(ret[[according]], wb, excel_basename, according = according,
-                                  summary_count = summary_count, ma = ma, fancy = fancy)
+                                  summary_count = summary_count)
       image_files <- c(image_files, xlsx_ret[["image_files"]])
       ## This is in case writing the sheet resulted in it being shortened.
       ## wb <- xlsx_ret[["workbook"]]

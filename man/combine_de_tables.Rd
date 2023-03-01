@@ -11,7 +11,6 @@ combine_de_tables(
   excludes = NULL,
   adjp = TRUE,
   include_limma = TRUE,
-  excel = NULL,
   include_deseq = TRUE,
   include_edger = TRUE,
   include_ebseq = TRUE,
@@ -30,6 +29,7 @@ combine_de_tables(
   rda = NULL,
   start_worksheet = "S02",
   format_sig = 4,
+  excel = NULL,
   ...
 )
 }
@@ -46,8 +46,6 @@ certain contrasts in specific orders and orientations.}
 \item{adjp}{Perhaps you do not want the adjusted p-values for plotting?}
 
 \item{include_limma}{Include limma analyses in the table?}
-
-\item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{include_deseq}{Include deseq analyses in the table?}
 
@@ -83,6 +81,8 @@ string 'YYY', that will be replaced by the contrast name.}
 \item{rda}{Write a rda file of the results.}
 
 \item{start_worksheet}{This will now increment worksheet titles from this point forward.}
+
+\item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }

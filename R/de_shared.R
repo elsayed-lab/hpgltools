@@ -2045,7 +2045,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores
     ## from the median.
-    message("Getting the genes >= ", z, " z scores away from the median of all.")
+    message("Getting the genes >= ", z, " stdevs away from the mean of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)

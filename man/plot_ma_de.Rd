@@ -9,7 +9,7 @@ plot_ma_de(
   expr_col = "logCPM",
   fc_col = "logFC",
   p_col = "qvalue",
-  p = 0.05,
+  pval = 0.05,
   alpha = 0.4,
   logfc = 1,
   label_numbers = TRUE,
@@ -29,8 +29,6 @@ plot_ma_de(
 
 \item{p_col}{Column containing the relevant p values.}
 
-\item{p}{Name of the pvalue column to use for cutoffs.}
-
 \item{alpha}{How transparent to make the dots.}
 
 \item{logfc}{Fold change cutoff.}
@@ -46,6 +44,8 @@ plot_ma_de(
 \item{label}{Label the top/bottom n logFC values?}
 
 \item{...}{More options for you}
+
+\item{p}{Name of the pvalue column to use for cutoffs.}
 }
 \value{
 ggplot2 MA scatter plot.  This is defined as the rowmeans of the
