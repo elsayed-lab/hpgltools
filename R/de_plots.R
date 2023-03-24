@@ -126,8 +126,8 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     stop("I do not know what type you wish to query.")
   }
 
-  message("This can do comparisons among the following columns in the pairwise result:")
-  message(toString(thenames))
+  mesg("This can do comparisons among the following columns in the pairwise result:")
+  mesg(toString(thenames))
   xname <- ""
   yname <- ""
   if (is.numeric(x)) {
@@ -140,7 +140,7 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
   } else {
     yname <- y
   }
-  message("Actually comparing ", xname, " and ", yname, ".")
+  mesg("Actually comparing ", xname, " and ", yname, ".")
 
   ## Now extract the coefficent df
   if (type == "edger") {
@@ -322,7 +322,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     actual_denominator <- actual_tablenames[[2]]
     actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
     if (actual_tablename != wanted_tablename) {
-      retlist[["invert"]] <- TRUE
+      ret[["invert"]] <- TRUE
     }
     wanted_table <- wanted_tablename
     input <- pairwise[["input"]]
@@ -439,7 +439,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     revname <- strsplit(x = the_table, split = "_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
-      message("Trey you doofus, you reversed the name of the table.")
+      mesg("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
     } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
       message("Unable to find the table in the set of possible tables.")
@@ -465,7 +465,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(pairwise[["data"]])
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
-      message("Trey you doofus, you reversed the name of the table.")
+      mesg("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
     } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
       stop("Unable to find the table in the set of possible tables.")
@@ -488,12 +488,12 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
   }
 
-  retlist[["the_table"]] <- the_table
-  retlist[["expr_col"]] <- expr_col
-  retlist[["fc_col"]] <- fc_col
-  retlist[["p_col"]] <- p_col
-  retlist[["wanted_table"]] <- wanted_table
-  return(retlist)
+  ret[["the_table"]] <- the_table
+  ret[["expr_col"]] <- expr_col
+  ret[["fc_col"]] <- fc_col
+  ret[["p_col"]] <- p_col
+  ret[["wanted_table"]] <- wanted_table
+  return(ret)
 }
 
 #' Given a DE table with p-values, plot them.
@@ -699,6 +699,393 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   return(retlist)
 }
 
+#' Make a pretty MA plot from one of limma, deseq, edger, or basic.
+#'
+#' Because I can never remember, the following from wikipedia: "An MA plot is an
+#' application of a Bland-Altman plot for visual representation of two channel
+#' DNA microarray gene expression data which has been transformed onto the M
+#' (log ratios) and A (mean average) scale."
+#'
+#' @param table Df of linear-modelling, normalized counts by sample-type,
+#' @param expr_col Column showing the average expression across genes.
+#' @param fc_col Column showing the logFC for each gene.
+#' @param p_col Column containing the relevant p values.
+#' @param p Name of the pvalue column to use for cutoffs.
+#' @param alpha How transparent to make the dots.
+#' @param logfc Fold change cutoff.
+#' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
+#' @param size How big are the dots?
+#' @param shapes Provide different shapes for up/down/etc?
+#' @param invert Invert the ma plot?
+#' @param label Label the top/bottom n logFC values?
+#' @param ... More options for you
+#' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
+#'  normalized counts by type across all sample types on the x axis, and the
+#'  log fold change between conditions on the y-axis. Dots are colored
+#'  depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#' @examples
+#'  \dontrun{
+#'   plot_ma(voomed_data, table)
+#'   ## Currently this assumes that a variant of toptable was used which
+#'   ## gives adjusted p-values.  This is not always the case and I should
+#'   ## check for that, but I have not yet.
+#'  }
+#' @export
+plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
+                       pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
+                       size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
+  ## Set up the data frame which will describe the plot
+  arglist <- list(...)
+  ## I like dark blue and dark red for significant and insignificant genes respectively.
+  ## Others may disagree and change that with sig_color, insig_color.
+  sig_color <- "darkred"
+  if (!is.null(arglist[["sig_color"]])) {
+    sig_color <- arglist[["sig_color"]]
+  }
+  insig_color <- "darkblue"
+  if (!is.null(arglist[["insig_color"]])) {
+    insig_color <- arglist[["insig_color"]]
+  }
+  ## A recent request was to color gene families within these plots.
+  ## Below there is a short function,  recolor_points() which handles this.
+  ## The following 2 arguments are used for that.
+  ## That function should work for other things like volcano or scatter plots.
+  family <- NULL
+  if (!is.null(arglist[["family"]])) {
+    family <- arglist[["family"]]
+  }
+  family_color <- "red"
+  if (!is.null(arglist[["family_color"]])) {
+    family_color <- arglist[["family_color"]]
+  }
+
+  ## The data frame used for these MA plots needs to include a few aspects of the state
+  ## Including: average expression (the y axis), log-fold change, p-value, a
+  ## boolean of the p-value state, and a factor of the state which will be
+  ## counted and provide some information on the side of the plot. One might
+  ## note that I am pre-filling in this data frame with 4 blank entries. This is
+  ## to make absolutely certain that ggplot will not re-order my damn
+  ## categories.
+  df <- data.frame(
+    "avg" = c(0, 0, 0),
+    "logfc" = c(0, 0, 0),
+    "pval" = c(0, 0, 0),
+    "pcut" = c(FALSE, FALSE, FALSE),
+    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
+
+  ## Get rid of rows which will be annoying.
+  ## If somehow a list got into the data table, this will fail, lets fix that now.
+  tmp_table <- table
+  for (c in seq_len(ncol(tmp_table))) {
+    tmp_table[[c]] <- as.character(table[[c]])
+  }
+  rows_without_na <- complete.cases(tmp_table)
+  rm(tmp_table)
+  table <- table[rows_without_na, ]
+
+  ## Extract the information of interest from my original table
+  newdf <- data.frame("avg" = table[[expr_col]],
+                      "logfc" = table[[fc_col]],
+                      "pval" = table[[p_col]])
+  rownames(newdf) <- rownames(table)
+  if (isTRUE(invert)) {
+    newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
+  }
+  ## Check if the data is on a log or base10 scale, if the latter, then convert it.
+  if (max(newdf[["avg"]]) > 1000) {
+    newdf[["avg"]] <- log(newdf[["avg"]])
+  }
+
+  ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
+  newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
+  newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
+                             ifelse(newdf[["pval"]] <= pval &
+                                      newdf[["logfc"]] >= logfc, "a_upsig",
+                                    ifelse(newdf[["pval"]] <= pval &
+                                             newdf[["logfc"]] <= (-1.0 * logfc),
+                                           "b_downsig", "c_insig")))
+  newdf[["state"]] <- as.factor(newdf[["state"]])
+  df <- rbind(df, newdf)
+  rm(newdf)
+
+  ## Subtract one from each value because I filled in a fake value of each category to start.
+  num_downsig <- sum(df[["state"]] == "b_downsig") - 1
+  num_insig <- sum(df[["state"]] == "c_insig") - 1
+  num_upsig <- sum(df[["state"]] == "a_upsig") - 1
+
+  ## Make double-certain that my states are only factors or numbers where necessary.
+  df[["avg"]] <- as.numeric(df[[1]])
+  df[["logfc"]] <- as.numeric(df[[2]])
+  df[["pval"]] <- as.numeric(df[[3]])
+  df[["pcut"]] <- as.factor(df[[4]])
+  df[["state"]] <- as.factor(df[[5]])
+  df[["label"]] <- rownames(df)
+
+  ## Set up the labels for the legend by significance.
+  ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
+  ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
+  state_shapes <- 21
+  if (isTRUE(state_shapes)) {
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  } else {
+    state_shapes <- c(21, 21, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  }
+
+  ## make the plot!
+  plt <- ggplot(data = df,
+                ## I am setting x, y, fill color, outline color, and the shape.
+                aes(x = .data[["avg"]],
+                    y = .data[["logfc"]],
+                    label = .data[["label"]],
+                    fill = as.factor(.data[["pcut"]]),
+                    colour = as.factor(.data[["pcut"]]),
+                    shape = as.factor(.data[["state"]]))) +
+    ggplot2::geom_hline(yintercept = c((logfc * -1.0), logfc),
+                        color = "red", size=(size / 3)) +
+    ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  if (isTRUE(label_numbers)) {
+    plt <- plt +
+      ## The following scale_shape_manual() sets the labels of the legend on the right side.
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  labels = c(
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
+                                  guide = ggplot2::guide_legend(override.aes = aes(size = 3,
+                                                                                   fill = "grey")))
+  } else {
+    plt <- plt +
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  guide = "none")
+  }
+
+  plt <- plt +
+    ## Set the colors of the significant/insignificant points.
+    ggplot2::scale_fill_manual(name = "as.factor(pcut)",
+                               values = c("FALSE"=insig_color, "TRUE"=sig_color),
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "as.factor(pcut)",
+                                values = c("FALSE"=insig_color, "TRUE"=sig_color),
+                                guide = "none") +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
+    ggplot2::xlab("Average log2(Counts)") +
+    ggplot2::ylab("log2(fold change)")
+
+  ## Recolor a family of genes if requested.
+  if (!is.null(family)) {
+    plt <- recolor_points(plt, df, family, color = family_color)
+  }
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["logfc"]])
+    reordered <- df[reordered_idx, ]
+    top <- head(reordered, n = label)
+    bottom <- tail(reordered, n = label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(
+        data = df_subset,
+        aes(label = .data[["label"]], x = .data[["avg"]], y = .data[["logfc"]]),
+        colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+        point.padding = ggplot2::unit(1.6, "lines"),
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  ## Return the plot, some numbers, and the data frame used to make the plot so
+  ## that I may check my work.
+  retlist <- list(
+    "num_upsig" = num_upsig,
+    "num_downsig" = num_downsig,
+    "num_insig" = num_insig,
+    "plot" = plt,
+    "df" = df)
+  return(retlist)
+}
+
+
+plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
+                                 fc_col = "logFC", p_col = "qvalue",
+                                 color_high = "red", color_low = "blue",
+                                 pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
+                                 size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
+  ## Set up the data frame which will describe the plot
+
+  ## Example caller:
+  ## ma_material <- plot_ma_condition_de(
+  ##     pairwise, table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+  ##     logfc = logfc, pval = pval, invert = invert,
+
+  arglist <- list(...)
+
+  ## A recent request was to color gene families within these plots.
+  ## Below there is a short function,  recolor_points() which handles this.
+  ## The following 2 arguments are used for that.
+  ## That function should work for other things like volcano or scatter plots.
+  family <- NULL
+  if (!is.null(arglist[["family"]])) {
+    family <- arglist[["family"]]
+  }
+  family_color <- "red"
+  if (!is.null(arglist[["family_color"]])) {
+    family_color <- arglist[["family_color"]]
+  }
+
+  ## The data frame used for these MA plots needs to include a few aspects of the state
+  ## Including: average expression (the y axis), log-fold change, p-value, a
+  ## boolean of the p-value state, and a factor of the state which will be
+  ## counted and provide some information on the side of the plot. One might
+  ## note that I am pre-filling in this data frame with 4 blank entries. This is
+  ## to make absolutely certain that ggplot will not re-order my damn
+  ## categories.
+  df <- data.frame(
+    "avg" = c(0, 0, 0),
+    "logfc" = c(0, 0, 0),
+    "pval" = c(0, 0, 0),
+    "pcut" = c(FALSE, FALSE, FALSE),
+    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
+
+  ## Get rid of rows which will be annoying.
+  ## If somehow a list got into the data table, this will fail, lets fix that now.
+  tmp_table <- input
+  for (c in seq_len(ncol(tmp_table))) {
+    tmp_table[[c]] <- as.character(input[[c]])
+  }
+  rows_without_na <- complete.cases(tmp_table)
+  rm(tmp_table)
+  input <- input[rows_without_na, ]
+
+  ## Extract the information of interest from my original table
+  newdf <- data.frame("avg" = input[[expr_col]],
+                      "logfc" = input[[fc_col]],
+                      "pval" = input[[p_col]])
+  rownames(newdf) <- rownames(input)
+  if (isTRUE(invert)) {
+    newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
+  }
+  ## Check if the data is on a log or base10 scale, if the latter, then convert it.
+  if (max(newdf[["avg"]]) > 1000) {
+    newdf[["avg"]] <- log(newdf[["avg"]])
+  }
+
+  ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
+  newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
+  newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
+                             ifelse(newdf[["pval"]] <= pval &
+                                      newdf[["logfc"]] >= logfc, "a_upsig",
+                                    ifelse(newdf[["pval"]] <= pval &
+                                             newdf[["logfc"]] <= (-1.0 * logfc),
+                                           "b_downsig", "c_insig")))
+  newdf[["state"]] <- as.factor(newdf[["state"]])
+  df <- rbind(df, newdf)
+  rm(newdf)
+
+  ## Subtract one from each value because I filled in a fake value of each category to start.
+  num_downsig <- sum(df[["state"]] == "b_downsig") - 1
+  num_insig <- sum(df[["state"]] == "c_insig") - 1
+  num_upsig <- sum(df[["state"]] == "a_upsig") - 1
+
+  ## Make double-certain that my states are only factors or numbers where necessary.
+  df[["avg"]] <- as.numeric(df[["avg"]])
+  df[["logfc"]] <- as.numeric(df[["logfc"]])
+  df[["pval"]] <- as.numeric(df[["pval"]])
+  df[["pcut"]] <- as.factor(df[["pcut"]])
+  df[["state"]] <- as.factor(df[["state"]])
+  df[["label"]] <- rownames(df)
+
+  ## Set up the labels for the legend by significance.
+  ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
+  ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
+  state_shapes <- 21
+  if (isTRUE(state_shapes)) {
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  } else {
+    state_shapes <- c(21, 21, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  }
+
+  plot_colors <- c("#555555", color_high, color_low)
+  names(plot_colors) <- c("c_insig", "a_upsig", "b_downsig")
+
+  ## make the plot!
+  plt <- ggplot(data = df,
+                ## I am setting x, y, fill color, outline color, and the shape.
+                aes(x = .data[["avg"]],
+                    y = .data[["logfc"]],
+                    label = .data[["label"]],
+                    fill = as.factor(.data[["state"]]),
+                    colour = as.factor(.data[["state"]]),
+                    shape = as.factor(.data[["state"]]))) +
+    ggplot2::geom_hline(yintercept = c((logfc * -1.0), logfc),
+                        color = "red", size=(size / 3)) +
+    ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  if (isTRUE(label_numbers)) {
+    plt <- plt +
+      ## The following scale_shape_manual() sets the labels of the legend on the right side.
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  labels = c(
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
+                                  guide = ggplot2::guide_legend(override.aes = aes(size = 3,
+                                                                                   fill = "grey")))
+  } else {
+    plt <- plt +
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  guide = "none")
+  }
+
+  plt <- plt +
+    ## Set the colors of the significant/insignificant points.
+    ggplot2::scale_fill_manual(name = "state",
+                               values = plot_colors,
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "state",
+                                values = plot_colors,
+                                guide = "none") +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
+    ggplot2::xlab("Average log2(Counts)") +
+    ggplot2::ylab("log2(fold change)")
+
+  ## Recolor a family of genes if requested.
+  if (!is.null(family)) {
+    plt <- recolor_points(plt, df, family, color = family_color)
+  }
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["logfc"]])
+    reordered <- df[reordered_idx, ]
+    top <- head(reordered, n = label)
+    bottom <- tail(reordered, n = label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(
+        data = df_subset,
+        aes(label = .data[["label"]], x = .data[["avg"]], y = .data[["logfc"]]),
+        colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+        point.padding = ggplot2::unit(1.6, "lines"),
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  ## Return the plot, some numbers, and the data frame used to make the plot so
+  ## that I may check my work.
+  retlist <- list(
+    "num_upsig" = num_upsig,
+    "num_downsig" = num_downsig,
+    "num_insig" = num_insig,
+    "plot" = plt,
+    "df" = df)
+  return(retlist)
+}
+
 #' Make a pretty Volcano plot!
 #'
 #' Volcano plots and MA plots provide quick an easy methods to view the set of
@@ -804,8 +1191,8 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   }
   ## Now make sure that the color column has the correct number of elements.
   if (length(color_list) != color_column_number) {
-    message("The color list must have ", color_column_number,
-            ", setting it to the default.")
+    mesg("The color list must have ", color_column_number,
+         ", setting it to the default.")
   }
 
   ## Count the numbers in the categories
@@ -930,10 +1317,7 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       size = 2, invert = FALSE, label = NULL,
                                       label_column = "hgncsymbol") {
 
-  message("Plotting volcano plot of the DE results of ", table_name,
-          " according to the columns: ", fc_col, " and ", p_col,
-          " using the expressionset colors.")
-
+  mesg("Plotting volcano plot of the DE results of ", table_name, ".")
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(pval)
 

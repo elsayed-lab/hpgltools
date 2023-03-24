@@ -30,7 +30,10 @@ combine_de_tables(
   start_worksheet = "S02",
   format_sig = 4,
   excel = NULL,
-  ...
+  plot_columns = 10,
+  alpha = 0.4,
+  z = 1.5,
+  z_lines = FALSE
 )
 }
 \arguments{

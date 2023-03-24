@@ -36,10 +36,9 @@ test_that("Do we receive expected output from load_biomart_go()?", {
 })
 
 ## load_biomart_orthologs()
-## Oh yeah, I moved the default biomart to hg38/90 or 89.  Thus these are unlikely
-## to be correct.  I should just query the number of orthologs found.
+## I should probably set this to an explicit revision of biomart.
 testing <- load_biomart_orthologs(gene_ids = gene_ids, first_species = "hsapiens",
-                                  second_species = "mmusculus")
+                                  second_species = "mmusculus", year = 2020)
 data <- testing[["all_linked_genes"]]
 actual <- nrow(data)
 expected <- 23000

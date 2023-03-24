@@ -1004,6 +1004,37 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   return(trees)
 }
 
+#' Collapse the logic for collecting topgo trees into one little function.
+single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_godata",
+                              score_limit = 0.1, sigforall = TRUE) {
+  sig_results <- topGO::score(tg[["results"]][[score_column]]) <= score_limit
+  num_included <- length(sig_results)
+  if (length(num_included) > 0) {
+    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+    this_plot <- png(filename = tmp_file)
+    controlled <- dev.control("enable")
+    nodes <- try(sm(topGO::showSigOfNodes(
+      tg[["results"]][[node_data]],
+      topGO::score(tg[["results"]][[score_column]]),
+      useInfo = "all",
+      sigForAll = sigforall,
+      firstSigNodes = num_included,
+      useFullNames = TRUE,
+      plotFunction = hpgl_GOplot)))
+    if (class(nodes)[1] != "try-error") {
+      tree_plot <- try(grDevices::recordPlot())
+    }
+    dev.off()
+    file.remove(tmp_file)
+  } else {
+    tree_plot <- NULL
+  }
+  ret <- list(
+    "plot" = tree_plot,
+    "nodes" = nodes)
+  return(ret)
+}
+
 #' Print trees from topGO.
 #'
 #' The tree printing functionality of topGO is pretty cool, but difficult to get
@@ -1036,257 +1067,113 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
                         do_cc_el_tree = FALSE, do_mf_weight_tree = FALSE,
                         do_bp_weight_tree = FALSE, do_cc_weight_tree = FALSE,
                         parallel = FALSE) {
+
   mf_fisher_nodes <- mf_fisher_tree <- NULL
   if (isTRUE(do_mf_fisher_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["mf_fisher"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    mf_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fmf_godata"]],
-      topGO::score(tg[["results"]][["mf_fisher"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(mf_fisher_nodes)[1] != "try-error") {
-      mf_fisher_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    mf_fisher <- single_topgo_tree(tg, score_column = "mf_fisher",
+                                   node_data = "fmf_godata", score_limit = score_limit,
+                                   sigforall = sigforall)
+    mf_fisher_nodes <- mf_fisher[["nodes"]]
+    mf_fisher_tree <- mf_fisher[["plot"]]
   }
+
   bp_fisher_nodes <- bp_fisher_tree <- NULL
   if (isTRUE(do_bp_fisher_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["bp_fisher"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    bp_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fbp_godata"]],
-      topGO::score(tg[["results"]][["bp_fisher"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(bp_fisher_nodes)[1] != "try-error") {
-      bp_fisher_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    bp_fisher <- single_topgo_tree(tg, score_column = "bp_fisher",
+                                   node_data = "fbp_godata", score_limit = score_limit,
+                                   sigforall = sigforall)
+    bp_fisher_nodes <- bp_fisher[["nodes"]]
+    bp_fisher_tree <- bp_fisher[["plot"]]
   }
+
   cc_fisher_nodes <- cc_fisher_tree <- NULL
   if (isTRUE(do_cc_fisher_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["cc_fisher"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    cc_fisher_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fcc_godata"]],
-      topGO::score(tg[["results"]][["cc_fisher"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(cc_fisher_nodes)[1] != "try-error") {
-      cc_fisher_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    cc_fisher <- single_topgo_tree(tg, score_column = "cc_fisher",
+                                   node_data = "fcc_godata", score_limit = score_limit,
+                                   sigforall = sigforall)
+    cc_fisher_nodes <- cc_fisher[["nodes"]]
+    cc_fisher_tree <- cc_fisher[["plot"]]
   }
+
   mf_ks_nodes <- mf_ks_tree <- NULL
   if (isTRUE(do_mf_ks_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["mf_ks"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    mf_ks_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["kmf_godata"]],
-      topGO::score(tg[["results"]][["mf_ks"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(mf_ks_nodes)[1] != "try-error") {
-      mf_ks_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    mf_ks <- single_topgo_tree(tg, score_data = "mf_ks",
+                               node_data = "kmf_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    mf_ks_nodes <- mf_ks[["nodes"]]
+    mf_ks_tree <- mf_ks[["plot"]]
   }
+
   bp_ks_nodes <- bp_ks_tree <- NULL
   if (isTRUE(do_bp_ks_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["bp_ks"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    bp_ks_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["kbp_godata"]],
-      topGO::score(tg[["results"]][["bp_ks"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(bp_ks_nodes)[1] != "try-error") {
-      bp_ks_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    bp_ks <- single_topgo_tree(tg, score_data = "bp_ks",
+                               node_data = "kbp_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    bp_ks_nodes <- bp_ks[["nodes"]]
+    bp_ks_tree <- bp_ks[["plot"]]
   }
+
   cc_ks_nodes <- cc_ks_tree <- NULL
   if (isTRUE(do_cc_ks_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["cc_ks"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    cc_ks_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["kcc_godata"]],
-      topGO::score(tg[["results"]][["cc_ks"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(cc_ks_nodes)[1] != "try-error") {
-      cc_ks_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    cc_ks <- single_topgo_tree(tg, score_data = "cc_ks",
+                               node_data = "kcc_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    cc_ks_nodes <- cc_ks[["nodes"]]
+    cc_ks_tree <- cc_ks[["plot"]]
   }
+
   mf_el_nodes <- mf_el_tree <- NULL
   if (isTRUE(do_mf_el_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["mf_el"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    mf_el_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fmf_godata"]],
-      topGO::score(tg[["results"]][["mf_el"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(mf_el_nodes)[1] != "try-error") {
-      mf_el_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    mf_el <- single_topgo_tree(tg, score_data = "mf_el",
+                               node_data = "fmf_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    mf_el_nodes <- mf_el[["nodes"]]
+    mf_el_tree <- mf_el[["plot"]]
   }
+
   bp_el_nodes <- bp_el_tree <- NULL
   if (isTRUE(do_bp_el_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["bp_el"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    bp_el_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fbp_godata"]],
-      topGO::score(tg[["results"]][["bp_el"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(bp_el_nodes)[1] != "try-error") {
-      bp_el_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    bp_el <- single_topgo_tree(tg, score_data = "bp_el",
+                               node_data = "fbp_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    bp_el_nodes <- mf_el[["nodes"]]
+    bp_el_tree <- mf_el[["plot"]]
   }
+
   cc_el_nodes <- cc_el_tree <- NULL
   if (isTRUE(do_cc_el_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["cc_el"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    cc_el_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["kcc_godata"]],
-      topGO::score(tg[["results"]][["cc_el"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(cc_el_nodes)[1] != "try-error") {
-      cc_el_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    cc_el <- single_topgo_tree(tg, score_data = "cc_el",
+                               node_data = "fcc_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    cc_el_nodes <- mf_el[["nodes"]]
+    cc_el_tree <- mf_el[["plot"]]
   }
+
   mf_weight_nodes <- mf_weight_tree <- NULL
   if (isTRUE(do_mf_weight_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["mf_weight"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    mf_weight_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fmf_godata"]],
-      topGO::score(tg[["results"]][["mf_weight"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(mf_weight_nodes)[1] != "try-error") {
-      mf_weight_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    mf_weight <- single_topgo_tree(tg, score_data = "mf_weight",
+                               node_data = "fmf_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    mf_weight_nodes <- mf_el[["nodes"]]
+    mf_weight_tree <- mf_el[["plot"]]
   }
+
   bp_weight_nodes <- bp_weight_tree <- NULL
   if (isTRUE(do_bp_weight_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["bp_weight"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    bp_weight_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fbp_godata"]],
-      topGO::score(tg[["results"]][["bp_weight"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(bp_weight_nodes)[1] != "try-error") {
-      bp_weight_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    bp_weight <- single_topgo_tree(tg, score_data = "bp_weight",
+                               node_data = "fbp_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    bp_weight_nodes <- bp_el[["nodes"]]
+    bp_weight_tree <- bp_el[["plot"]]
   }
+
   cc_weight_nodes <- cc_weight_tree <- NULL
   if (isTRUE(do_cc_weight_tree)) {
-    included <- length(which(topGO::score(tg[["results"]][["cc_weight"]]) <= score_limit))
-
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
-    this_plot <- png(filename = tmp_file)
-    controlled <- dev.control("enable")
-    cc_weight_nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][["fcc_godata"]],
-      topGO::score(tg[["results"]][["cc_weight"]]),
-      useInfo = "all",
-      sigForAll = sigforall,
-      firstSigNodes = included,
-      useFullNames = TRUE,
-      plotFunction = hpgl_GOplot)))
-    if (class(cc_weight_nodes)[1] != "try-error") {
-      cc_weight_tree <- try(grDevices::recordPlot())
-    }
-    dev.off()
-    file.remove(tmp_file)
+    cc_weight <- single_topgo_tree(tg, score_data = "cc_weight",
+                               node_data = "fcc_godata", score_limit = score_limit,
+                               sigforall = sigforall)
+    cc_weight_nodes <- cc_el[["nodes"]]
+    cc_weight_tree <- cc_el[["plot"]]
   }
 
   trees <- list(

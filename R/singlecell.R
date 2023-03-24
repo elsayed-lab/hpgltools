@@ -231,27 +231,37 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     scd[["pct_ribo"]] <- Seurat::PercentageFeatureSet(scd, pattern = ribo_pattern)
   }
   filt_scd <- scd
+  filt_meta <- filt_scd@meta.data
 
+  if (isTRUE(verbose)) {
+    mesg("Plotting the data before filtering.")
+  }
   pre_plots <- plot_seurat_scatter(scd)
   sufficient_rna <- nFeature_RNA <- NULL
   if (!is.null(min_num_rna) & !is.null(max_num_rna)) {
     mesg("Filtering both less than minimum and more than maximum.")
-    sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= min_num_rna) &
-      Seurat::WhichCells(filt_scd, expression = nFeature_RNA <= max_num_rna)
+    sufficient_rna <- filt_meta[["nFeature_RNA"]] >= min_num_rna &
+      filt_meta[["nFeature_RNA"]] <= max_num_rna
+      ## Seurat::WhichCells(filt_scd, expression = nFeature_RNA <= max_num_rna)
   } else if (!is.null(min_num_rna)) {
     mesg("Filtering less than minimum number of RNAs observed.")
-    sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= min_num_rna)
+    ## sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= min_num_rna)
+    sufficient_rna <- filt_meta[["nFeature_RNA"]] >= min_num_rna
   } else if (!is.null(max_num_rna)) {
     mesg("Filtering more than maximum number of RNAs observed.")
-    sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= max_num_rna)
+    ## sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA <= max_num_rna)
+    sufficient_rna <- filt_meta[["nFeature_RNA"]] <= max_num_rna
   }
 
-  if (is.null(sufficient_rna)) {
+  ## if (is.null(sufficient_rna)) {
+  if (sum(sufficient_rna) == 0) {
     mesg("Not filtering based on sufficient number of genes observed.")
-  } else if (length(sufficient_rna) == current_cells) {
+    ## } else if (length(sufficient_rna) == current_cells) {
+  } else if (sum(sufficient_rna) == current_cells) {
     mesg("The provided filters on sufficient genes observed did not remove any cells.")
   } else {
-    filt_scd <- subset(filt_scd, cells = sufficient_rna)
+    ## filt_scd <- subset(filt_scd, cells = sufficient_rna)
+    filt_scd <- filt_scd[, sufficient_rna]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
     new_counts <- sum(BiocGenerics::colSums(filt_scd))
@@ -294,19 +304,24 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   ##     " genes, and ", current_counts, " counts.")
   sufficient_ribo <- pct_ribo <- pct_mito <- NULL
   if (!is.null(min_pct_ribo) & !is.null(max_pct_ribo)) {
-    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo) &
-      Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo) &
+    ##  Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    sufficient_ribo <- filt_scd[["pct_ribo"]] >= min_pct_ribo &
+      filt_scd[["pct_ribo"]] <= max_pct_ribo
   } else if (!is.null(min_pct_ribo)) {
-    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo)
+    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo)
+    sufficient_ribo <- filt_scd[["pct_ribo"]] >= min_pct_ribo
   } else if (!is.null(max_pct_ribo)) {
-    sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
+    sufficient_ribo <- filt_scd[["pct_ribo"]] <= max_pct_ribo
   }
-  if (is.null(sufficient_ribo)) {
+  if (sum(sufficient_ribo) == 0) {
     mesg("Not filtering based on sufficient ribosomal protein percentage observed.")
-  } else if (length(sufficient_ribo) == current_cells) {
+  } else if (sum(sufficient_ribo) == current_cells) {
     mesg("The sufficient ribosomal percentage filter did not remove any cells.")
   } else {
-    filt_scd <- subset(filt_scd, cells = sufficient_ribo)
+    ## filt_scd <- subset(filt_scd, cells = sufficient_ribo)
+    filt_scd <- filt_scd[, sufficient_ribo]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
     new_counts <- sum(BiocGenerics::colSums(filt_scd))
@@ -324,19 +339,24 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   ##     " genes, and ", current_counts, " counts.")
   sufficient_mito <- NULL
   if (!is.null(min_pct_mito) & !is.null(max_pct_mito)) {
-    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito) &
-      Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    ##sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito) &
+    ##  Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    sufficient_mito <- filt_scd[["pct_mito"]] >= min_pct_mito &
+      filt_scd[["pct_mito"]] <= max_pct_mito
   } else if (!is.null(min_pct_mito)) {
-    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito)
+    ##sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito)
+    sufficient_mito <- filt_scd[["pct_mito"]] >= min_pct_mito
   } else if (!is.null(max_pct_mito)) {
-    sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    ## sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
+    sufficient_mito <- filt_scd[["pct_mito"]] <= max_pct_mito
   }
-  if (is.null(sufficient_mito)) {
+  if (sum(sufficient_mito) == 0) {
     mesg("Not filtering based on excessive mitochondrial RNA percentage observed.")
-  } else if (length(sufficient_mito) == current_cells) {
+  } else if (sum(sufficient_mito) == current_cells) {
     mesg("The mitochondrial filter did not remove any cells.")
   } else {
-    filt_scd <- subset(filt_scd, cells = sufficient_mito)
+    ## filt_scd <- subset(filt_scd, cells = sufficient_mito)
+    filt_scd <- filt_scd[, sufficient_mito]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
     new_counts <- sum(BiocGenerics::colSums(filt_scd))
@@ -381,6 +401,51 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   filt_scd@misc[["pre_plots"]] <- pre_plots
   filt_scd@misc[["post_plots"]] <- post_plots
   return(filt_scd)
+}
+
+proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
+                                   sample_factor = "gexcells") {
+  raw_df <- scd@misc[["Idents_metadata"]][, c("sampleid", sample_factor)]
+  norm_df <- raw_df
+  ## The following is how I extracted this information previously
+  ## But I would like to create an easy table to normalize this information
+  ## by cell group/sample.
+  identity_vector <- scd@meta.data[["Idents"]]
+  cluster_vector <- as.character(fnorm_scd@meta.data[[group_factor]])
+  cluster_names <- levels(as.factor(cluster_vector))
+  cluster_df_names <- paste0("cluster_", cluster_names)
+  concatenated_vector <- paste0(identity_vector, "_", cluster_vector)
+  cell_counts <- summary(as.factor(concatenated_vector))
+  for (cluster in cluster_df_names) {
+    raw_df[[cluster]] <- 0
+    norm_df[[cluster]] <- 0
+  }
+
+  ## Fill in the df of cells observed with respect to cluster of interest.
+  for (sample in start_df[["sampleid"]]) {
+    wanted <- grepl(x = names(cell_counts), pattern = glue("^{sample}_"))
+    counts <- cell_counts[wanted]
+    names(counts) <- cluster_df_names
+    all_counted <- sum(counts)
+    norm_counts <- counts / all_counted
+    for (df_name in cluster_df_names) {
+      raw_df[sample, df_name] <- counts[df_name]
+      norm_df[sample, df_name] <- norm_counts[df_name]
+    }
+  }
+  raw_df[["sampleid"]] <- NULL
+  norm_df[["sampleid"]] <- NULL
+  raw_df[["gexcells"]] <- NULL
+  norm_df[["gexcells"]] <- NULL
+  raw_df <- as.matrix(raw_df)
+  norm_df <- as.matrix(norm_df)
+
+  ## Put these tables back into our misc metadata with a name that makes sense.
+  raw_name <- glue("raw_{group_factor}_vs_{sample_factor}")
+  norm_name <- glue("norm_{group_factor}_vs_{sample_factor}")
+  scd@misc[[raw_name]] <- raw_df
+  scd@misc[[norm_name]] <- norm_df
+  return(scd)
 }
 
 #' Add into the miscellaneous SCD slot a dataframe with some summary stats.

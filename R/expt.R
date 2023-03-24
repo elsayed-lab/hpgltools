@@ -34,13 +34,20 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
+  num_shared <- rownames(exp1) %in% rownames(exp2)
+  total_num <- nrow(exp1)
+  if ((num_shared / total_num) < 0.8) {
+    warning("There are many gene IDs which are not shared among the two datasets, this may fail.")
+    message("There are many gene IDs which are not shared among the two datasets.")
+    message("Here are some from the first: ", head(rownames(exp1)))
+    message("Here are some from the second: ", head(rownames(exp2)))
+  }
+
   if (isTRUE(merge_meta)) {
     design1 <- pData(exp1)
-    d1_rows <- 1:nrow(design1)
+    d1_rows <- seq_len(nrow(design1))
     design2 <- pData(exp2)
     both <- as.data.frame(data.table::rbindlist(list(design1, design2), fill = TRUE))
-    ## na_idx <- is.na(both)
-    ## both[na_idx] <- ""
     d2_rows <- (nrow(design1) + 1):nrow(both)
     new_design1 <- both[d1_rows, ]
     rownames(new_design1) <- rownames(design1)
@@ -50,7 +57,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     pData(exp2) <- new_design2
   }
 
-  new <- combine(exp1, exp2)
+  new <- BiocGenerics::combine(exp1, exp2)
   expt1[["expressionset"]] <- new
   expt1[["design"]] <- pData(new)
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
@@ -83,16 +90,16 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names",
                     all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
     merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names",
                     all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["counts"]] <- merged
     merged <- merge(scaled1[["length"]], scaled2[["length"]], by = "row.names")
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["length"]] <- merged
   }
 
@@ -1720,6 +1727,21 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["design"]][["batch"]] <- fact
   print(table(pData(expt)[["batch"]]))
   return(expt)
+}
+
+#' Get a named vector of colors by condition.
+#'
+#' Usually we give a vector of all samples by colors.  This just
+#' simplifies that to one element each.  Currently only used in
+#' combine_de_tables() but I think it will have use elsewhere.
+get_expt_colors <- function(expt) {
+  all_colors <- expt[["colors"]]
+  condition_fact <- as.character(pData(expt)[["condition"]])
+  condition_fact <- gsub(x = condition_fact, pattern = "[[:punct:]]", replacement = "")
+  names(all_colors) <- condition_fact
+  single_idx <- !duplicated(all_colors)
+  all_colors <- all_colors[single_idx]
+  return(all_colors)
 }
 
 #' Change the colors of an expt

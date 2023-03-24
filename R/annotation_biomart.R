@@ -605,4 +605,21 @@ load_biomart_orthologs <- function(gene_ids = NULL, first_species = "hsapiens",
   return(linked_genes)
 }
 
+#' I keep messing up the creation of the salmon trancript to gene map.
+#'
+#' Maybe this will help.  I have a smarter but much slower method in
+#' the tmrc3 data which first creates an expressionset without
+#' annotations then cross references the rownames against combinations
+#' of columns in the annotations to figure out the correct pairing.
+#' This helps when I have a combined transcriptome and get confused.
+make_tx_gene_map <- function(annotations, gene_column = "ensembl_gene_id",
+                             transcript_column = "ensembl_transcript_id",
+                             tx_version_column = "transcript_version",
+                             new_column = "salmon_transcript") {
+  annotations[[new_column]] <- paste0(annotations[[transcript_column]], ".",
+                                      annotations[[tx_version_column]])
+  annotations <- annotations[, c(new_column, gene_column)]
+  return(annotations)
+}
+
 ## EOF

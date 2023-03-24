@@ -80,22 +80,22 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   if (isTRUE(model_cond)) {
-    message("This DE analysis will perform all pairwise comparisons among:")
+    mesg("This DE analysis will perform all pairwise comparisons among:")
     print(table(pData(input)[["condition"]]))
     if (isTRUE(model_batch)) {
-      message("This analysis will include a batch factor in the model comprised of:")
+      mesg("This analysis will include a batch factor in the model comprised of:")
       print(table(pData(input)[["batch"]]))
     } else if ("character" %in% class(model_batch)) {
-      message("This analysis will include surrogate estimates from: ", model_batch, ".")
+      mesg("This analysis will include surrogate estimates from: ", model_batch, ".")
     } else if ("matrix" %in% class(model_batch)) {
-      message("This analysis will include a matrix of surrogate estimates.")
+      mesg("This analysis will include a matrix of surrogate estimates.")
     }
     if (!is.null(filter)) {
-      message("This will pre-filter the input data using normalize_expt's: ",
+      mesg("This will pre-filter the input data using normalize_expt's: ",
               filter, " argument.")
     }
   } else {
-    message("This analysis is not using the condition factor from the data.")
+    mesg("This analysis is not using the condition factor from the data.")
   }
 
   if (!is.null(filter)) {
@@ -125,7 +125,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     if (isTRUE(model_type)) {
       model_type <- "batch in model/limma"
       if (isTRUE(verbose)) {
-        message("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
+        mesg("Using limma's removeBatchEffect to visualize with(out) batch inclusion.")
       }
       post_batch <- sm(normalize_expt(input, filter = TRUE, batch = TRUE, transform = "log2"))
     } else if (class(model_type)[1] == "character") {
@@ -216,7 +216,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     if (isTRUE(verbose)) {
-      message("Finished running DE analyses, collecting outputs.")
+      mesg("Finished running DE analyses, collecting outputs.")
     }
     ## foreach returns the results in no particular order
     ## Therefore, I will reorder the results now and ensure that they are happy.
@@ -230,7 +230,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   } else {
     for (type in names(results)) {
       if (isTRUE(verbose)) {
-        message("Starting ", type, "_pairwise().")
+        mesg("Starting ", type, "_pairwise().")
       }
       results[[type]] <- do_pairwise(
         type, input = input, conditions = conditions, batches = batches,
@@ -279,7 +279,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 
   if (!is.null(arglist[["combined_excel"]])) {
     if (isTRUE(verbose)) {
-      message("Invoking combine_de_tables().")
+      mesg("Invoking combine_de_tables().")
     }
     combined <- combine_de_tables(ret, excel = arglist[["combined_excel"]], ...)
     ret[["combined"]] <- combined
@@ -318,7 +318,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   ## By default, assume all the relevant columns are in the tbl variable.
   ## However, if a second tbl is provided, then do not assume that.
   if (is.null(tbl2)) {
-    message("A second table was not providing, performing comparison among columns of the first.")
+    mesg("A second table was not providing, performing comparison among columns of the first.")
   } else {
     tmp_tbl <- merge(tbl, tbl2, by = "row.names")
     rownames(tmp_tbl) <- tmp_tbl[["Row.names"]]
@@ -416,12 +416,12 @@ sva_modify_pvalues <- function(results) {
   original_pvalues <- data.table::data.table(
     rownames = rownames(results[["edger"]][["all_tables"]][[1]]))
   if (isTRUE(verbose)) {
-    message("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
+    mesg("Using f.pvalue() to modify the returned p-values of deseq/limma/edger.")
   }
   for (it in seq_along(results[["edger"]][["all_tables"]])) {
     name <- names(results[["edger"]][["all_tables"]])[it]
     if (isTRUE(verbose)) {
-      message("Readjusting the p-values for comparison: ", name)
+      mesg("Readjusting the p-values for comparison: ", name)
     }
     namelst <- strsplit(x = name, split = "_vs_")
     ## something like 'mutant'
@@ -755,7 +755,7 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
     data <- exprs(input)
     if (isTRUE(force)) {
       if (isTRUE(verbose)) {
-        message("Leaving the data alone, regardless of normalization state.")
+        mesg("Leaving the data alone, regardless of normalization state.")
       }
       retlist <- list(
         "libsize" = libsize,
@@ -772,7 +772,7 @@ choose_limma_dataset <- function(input, force = FALSE, which_voom = "limma", ver
       ## Otherwise it should accept pretty much anything.
       if (tran_state == "log2") {
         if (isTRUE(verbose)) {
-          message("Using limma's voom, returning to base 10.")
+          mesg("Using limma's voom, returning to base 10.")
         }
         data <- (2 ^ data) - 1
       }
@@ -969,7 +969,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   } else if (class(model_batch)[1] == "character") {
     ## Then calculate the estimates using all_adjusters
     if (isTRUE(verbose)) {
-      message("Extracting surrogate estimates from ", model_batch,
+      mesg("Extracting surrogate estimates from ", model_batch,
               " and adding them to the model.")
     }
     model_batch_info <- all_adjusters(input, estimate_type = model_batch,
@@ -996,7 +996,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     including <- glue("condition{sv_string}")
   } else if (class(model_batch)[1] == "numeric" | class(model_batch)[1] == "matrix") {
     if (isTRUE(verbose)) {
-      message("Including batch estimates from sva/ruv/pca in the model.")
+      mesg("Including batch estimates from sva/ruv/pca in the model.")
     }
     int_model <- stats::model.matrix(~ condition + model_batch,
                                      contrasts.arg = clist,
@@ -1068,13 +1068,13 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   chosen_string <- NULL
   if (isTRUE(model_intercept)) {
     if (isTRUE(verbose)) {
-      message("Choosing the intercept containing model.")
+      mesg("Choosing the intercept containing model.")
     }
     chosen_model <- int_model
     chosen_string <- int_string
   } else {
     if (isTRUE(verbose)) {
-      message("Choosing the non-intercept containing model.")
+      mesg("Choosing the non-intercept containing model.")
     }
     chosen_model <- noint_model
     chosen_string <- noint_string
@@ -1125,14 +1125,14 @@ compare_de_results <- function(first, second, cor_method = "pearson",
   methods <- c()
   for (m in seq_along(try_methods)) {
     method <- try_methods[m]
-    message("Testing method: ", method, ".")
+    mesg("Testing method: ", method, ".")
     test_column <- glue("{method}_logfc")
     if (is.null(first[["data"]][[1]][[test_column]])) {
       message("The first datum is missing method: ", method, ".")
     } else if (is.null(second[["data"]][[1]][[test_column]])) {
       message("The second datum is missing method: ", method, ".")
     } else {
-      message("Adding method: ", method, " to the set.")
+      mesg("Adding method: ", method, " to the set.")
       methods <- c(methods, method)
     }
   }
@@ -1144,7 +1144,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
     tables <- names(first[["data"]])
     for (t in seq_along(tables)) {
       table <- tables[t]
-      message(" Starting method ", method, ", table ", table, ".")
+      mesg(" Starting method ", method, ", table ", table, ".")
       result[[method]][[table]] <- list()
       for (c in seq_along(comparisons)) {
         comparison <- comparisons[c]
@@ -1356,7 +1356,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   plotlst <- list()
   comparison_df <- data.frame()
   lenminus <- length(methods) - 1
-  message("Comparing analyses.")
+  mesg("Comparing analyses.")
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
   total_comparisons <- lenminus * (length(methods) - 1) * len
@@ -1394,13 +1394,13 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
         if (is.null(fst)) {
           fst <- retlst[[c_name]][[rev_contr]]
           fst[["logFC"]] <- fst[["logFC"]] * -1
-          message("Used reverse contrast for ", c_name, ".")
+          mesg("Used reverse contrast for ", c_name, ".")
           num_reversed <- num_reversed + 1
         }
         if (is.null(scd)) {
           scd <- retlst[[d_name]][[rev_contr]]
           scd[["logFC"]] <- scd[["logFC"]] * -1
-          message("Used reverse contrast for ", d_name, ".")
+          mesg("Used reverse contrast for ", d_name, ".")
           num_reversed <- num_reversed + 1
         }
         ## An extra test condition in case of extra contrasts not performed by all methods.
@@ -2045,7 +2045,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores
     ## from the median.
-    message("Getting the genes >= ", z, " stdevs away from the mean of all.")
+    mesg("Getting the genes >= ", z, " stdevs away from the mean of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)
@@ -2060,7 +2060,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 
   if (!is.null(n)) {
     ## Take a specific number of genes at the top/bottom of the rank ordered list.
-    message("Getting the top and bottom ", n, " genes.")
+    mesg("Getting the top and bottom ", n, " genes.")
     upranked <- up_genes[order(as.numeric(up_genes[[column]]), decreasing = TRUE), ]
     up_genes <- head(upranked, n = n)
     downranked <- down_genes[order(as.numeric(down_genes[[column]])), ]
@@ -2392,7 +2392,7 @@ semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE,
     tab <- table_list[[count]]
     table_name <- names(table_list)[[count]]
     numbers_removed[[table_name]] <- list()
-    message("Working on ", table_name)
+    mesg("Working on ", table_name)
     if (isTRUE(use_files)) {
       file <- ""
       if (table_type == "combined") {
@@ -2432,7 +2432,7 @@ semantic_copynumber_filter <- function(input, max_copies = 2, use_files = FALSE,
       if (num_removed > 0) {
         tab <- tab[idx, ]
         table_list[[count]] <- tab
-        message("Table started with: ", pre_remove_size, ". ", type,
+        mesg("Table started with: ", pre_remove_size, ". ", type,
                 " entries with string ", string,
                 ", found ", num_removed, "; table has ",
                 nrow(tab),  " rows left.")

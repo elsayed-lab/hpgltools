@@ -857,11 +857,9 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
                                  excel = "excel/gprofiler_result.xlsx",
                                  order_by = "recall", add_plots = TRUE, height = 15,
                                  width = 10, decreasing = FALSE, ...) {
+  ## FIXME: This function is dumb, split out the logic and simplify it.
   arglist <- list(...)
   image_files <- c()
-  if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["table_style"]]
-  }
 
   excel_basename <- NULL
   if (is.null(wb)) {
@@ -876,23 +874,23 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   tf_data <- react_data <- mi_data <- hp_data <- corum_data <- NULL
 
   do_go <- TRUE
-  if (is.null(gprofiler_result[["go"]])) {
+  if (is.null(gprofiler_result[["GO"]])) {
     do_go <- FALSE
   }
-  if (nrow(gprofiler_result[["go"]]) == 0) {
+  if (nrow(gprofiler_result[["GO"]]) == 0) {
     do_go <- FALSE
   }
   if (isTRUE(do_go)) {
     new_row <- 1
     sheet <- "GO_BP"
-    go_data <- gprofiler_result[["go"]]
-    bp_data <- go_data[go_data[, "domain"] == "BP", ]
+    go_data <- gprofiler_result[["GO"]]
+    bp_data <- go_data[go_data[, "source"] == "GO:BP", ]
     bp_order <- order(bp_data[[order_by]], decreasing = decreasing)
     bp_data <- bp_data[bp_order, ]
-    mf_data <- go_data[go_data[, "domain"] == "MF", ]
+    mf_data <- go_data[go_data[, "source"] == "GO:MF", ]
     mf_order <- order(mf_data[[order_by]], decreasing = decreasing)
     mf_data <- mf_data[mf_order, ]
-    cc_data <- go_data[go_data[, "domain"] == "CC", ]
+    cc_data <- go_data[go_data[, "source"] == "GO:CC", ]
     cc_order <- order(cc_data[[order_by]], decreasing = decreasing)
     cc_data <- cc_data[cc_order, ]
 
@@ -902,7 +900,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
 
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
-        a_plot <- gprofiler_result[["pvalue_plots"]][["bpp_plot_over"]]
+        a_plot <- gprofiler_result[["pvalue_plots"]][["BP"]]
         plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(bp_data) + 2, start_row = new_row,
@@ -922,7 +920,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
                             title = glue("MF Results from {sheet}."), start_row = new_row)
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
-        a_plot <- gprofiler_result[["pvalue_plots"]][["mfp_plot_over"]]
+        a_plot <- gprofiler_result[["pvalue_plots"]][["MF"]]
         plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(mf_data) + 2, start_row = new_row,
@@ -943,7 +941,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
                             start_row = new_row)
       ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
       if (isTRUE(add_plots)) {
-        a_plot <- gprofiler_result[["pvalue_plots"]][["ccp_plot_over"]]
+        a_plot <- gprofiler_result[["pvalue_plots"]][["CC"]]
         plot_try <- xlsx_insert_png(
             a_plot, wb = wb, sheet = sheet, width = width, height = height,
             start_col = ncol(cc_data) + 2, start_row = new_row,
@@ -958,16 +956,16 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   } ## End checking if go data is null
 
   do_kegg <- TRUE
-  if (is.null(gprofiler_result[["kegg"]])) {
+  if (is.null(gprofiler_result[["KEGG"]])) {
     do_kegg <- FALSE
   }
-  if (nrow(gprofiler_result[["kegg"]]) == 0) {
+  if (nrow(gprofiler_result[["KEGG"]]) == 0) {
     do_kegg <- FALSE
   }
   if (isTRUE(do_kegg)) {
     new_row <- 1
     sheet <- "KEGG"
-    kegg_data <- gprofiler_result[["kegg"]]
+    kegg_data <- gprofiler_result[["KEGG"]]
     kegg_order <- order(kegg_data[[order_by]], decreasing = decreasing)
     kegg_data <- kegg_data[kegg_order, ]
 
@@ -990,16 +988,16 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   } ## End checking KEGG data
 
   do_tf <- TRUE
-  if (is.null(gprofiler_result[["tf"]])) {
+  if (is.null(gprofiler_result[["TF"]])) {
     do_tf <- FALSE
   }
-  if (nrow(gprofiler_result[["tf"]]) == 0) {
+  if (nrow(gprofiler_result[["TF"]]) == 0) {
     do_tf <- FALSE
   }
   if (isTRUE(do_tf)) {
     new_row <- 1
     sheet <- "tf"
-    tf_data <- gprofiler_result[["tf"]]
+    tf_data <- gprofiler_result[["TF"]]
     tf_order <- order(tf_data[[order_by]], decreasing = decreasing)
     tf_data <- tf_data[tf_order, ]
 
@@ -1022,16 +1020,16 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   } ## End checking tf data
 
   do_reactome <- TRUE
-  if (is.null(gprofiler_result[["reac"]])) {
+  if (is.null(gprofiler_result[["REAC"]])) {
     do_reactome <- FALSE
   }
-  if (nrow(gprofiler_result[["reac"]]) == 0) {
+  if (nrow(gprofiler_result[["REAC"]]) == 0) {
     do_reactome <- FALSE
   }
   if (isTRUE(do_reactome)) {
     new_row <- 1
     sheet <- "reactome"
-    react_data <- gprofiler_result[["reac"]]
+    react_data <- gprofiler_result[["REAC"]]
     react_order <- order(react_data[[order_by]], decreasing = decreasing)
     react_data <- react_data[react_order, ]
 
@@ -1054,16 +1052,16 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   } ## End checking reactome data
 
   do_mi <- TRUE
-  if (is.null(gprofiler_result[["mi"]])) {
+  if (is.null(gprofiler_result[["MIRNA"]])) {
     do_mi <- FALSE
   }
-  if (nrow(gprofiler_result[["mi"]]) == 0) {
+  if (nrow(gprofiler_result[["MIRNA"]]) == 0) {
     do_mi <- FALSE
   }
   if (isTRUE(do_mi)) {
     new_row <- 1
     sheet <- "mirna"
-    mi_data <- gprofiler_result[["mi"]]
+    mi_data <- gprofiler_result[["MIRNA"]]
     mi_order <- order(mi_data[[order_by]], decreasing = decreasing)
     mi_data <- mi_data[mi_order, ]
 
@@ -1086,16 +1084,16 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   } ## End checking mirna data
 
   do_hp <- TRUE
-  if (is.null(gprofiler_result[["hp"]])) {
+  if (is.null(gprofiler_result[["HP"]])) {
     do_hp <- FALSE
   }
-  if (nrow(gprofiler_result[["hp"]]) == 0) {
+  if (nrow(gprofiler_result[["HP"]]) == 0) {
     do_hp <- FALSE
   }
   if (isTRUE(do_hp)) {
     new_row <- 1
     sheet <- "hp"
-    hp_data <- gprofiler_result[["hp"]]
+    hp_data <- gprofiler_result[["HP"]]
     hp_order <- order(hp_data[[order_by]], decreasing = decreasing)
     hp_data <- hp_data[hp_order, ]
 
@@ -1115,19 +1113,51 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
     }
     new_row <- new_row + nrow(hp_data) + 2
     openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
-  } ## End checking corum data
+  } ## End checking HP data
+
+  do_hpa <- TRUE
+  if (is.null(gprofiler_result[["HPA"]])) {
+    do_hpa <- FALSE
+  }
+  if (nrow(gprofiler_result[["HPA"]]) == 0) {
+    do_hpa <- FALSE
+  }
+  if (isTRUE(do_hpa)) {
+    new_row <- 1
+    sheet <- "hp"
+    hpa_data <- gprofiler_result[["HPA"]]
+    hpa_order <- order(hpa_data[[order_by]], decreasing = decreasing)
+    hpa_data <- hpa_data[hpa_order, ]
+
+    dfwrite <- write_xlsx(data = hpa_data, wb = wb, sheet = sheet,
+                          title = glue("Results from {sheet}."),
+                          start_row = new_row)
+    ## I want to add the pvalue plots, which are fairly deeply embedded in kept_ontology
+    if (isTRUE(add_plots)) {
+      a_plot <- gprofiler_result[["pvalue_plots"]][["hpa_plot_over"]]
+      plot_try <- xlsx_insert_png(
+          a_plot, wb = wb, sheet = sheet, width = width, height = height,
+          start_col = ncol(hp_data) + 2, start_row = new_row,
+          plotname = "hpa_plot", savedir = excel_basename, doWeights = FALSE)
+      if (! "try-error" %in% class(plot_try)) {
+        image_files <- c(image_files, plot_try[["filename"]])
+      }
+    }
+    new_row <- new_row + nrow(hp_data) + 2
+    openxlsx::setColWidths(wb, sheet = sheet, cols = 2:7, widths = "auto")
+  } ## End checking HPA data
 
   do_corum <- TRUE
-  if (is.null(gprofiler_result[["corum"]])) {
+  if (is.null(gprofiler_result[["CORUM"]])) {
     do_corum <- FALSE
   }
-  if (nrow(gprofiler_result[["corum"]]) == 0) {
+  if (nrow(gprofiler_result[["CORUM"]]) == 0) {
     do_corum <- FALSE
   }
   if (isTRUE(do_corum)) {
     new_row <- 1
     sheet <- "corum"
-    corum_data <- gprofiler_result[["corum"]]
+    corum_data <- gprofiler_result[["CORUM"]]
     corum_order <- order(corum_data[[order_by]], decreasing = decreasing)
     corum_data <- corum_data[corum_order, ]
 
@@ -1180,17 +1210,15 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
 #' @export
 write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL,
                              order_by = "fisher", decreasing = FALSE,
-                             pval = 0.1, add_plots = TRUE, height = 15, width = 10, ...) {
+                             pval = 0.1, add_plots = TRUE, height = 15, width = 10,
+                             ...) {
   arglist <- list(...)
   image_files <- c()
-  if (!is.null(arglist[["table_style"]])) {
-    table_style <- arglist[["table_style"]]
-  }
   excel_basename <- NULL
   if (is.null(wb)) {
     xlsx <- init_xlsx(excel)
     wb <- xlsx[["wb"]]
-    excel_basename <<- xlsx[["basename"]]
+    excel_basename <- xlsx[["basename"]]
   }
   hs1 <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT", textDecoration = "bold",
                                border = "Bottom", fontSize = "30")
@@ -1261,7 +1289,7 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
       if (! "try-error" %in% class(plot_try)) {
         image_files <- c(image_files, plot_try[["filename"]])
       }
-      trees <- try(topgo_trees(topgo_result), silent = TRUE)
+      trees <- try(topgo_trees(topgo_result, score_limit = pval), silent = TRUE)
       if (class(trees)[1] == "try-error") {
         trees <- NULL
       }

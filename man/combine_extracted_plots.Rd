@@ -10,20 +10,21 @@ combine_extracted_plots(
   denominator,
   numerator,
   plot_inputs,
-  include_basic = TRUE,
-  include_deseq = TRUE,
-  include_edger = TRUE,
-  include_limma = TRUE,
-  include_ebseq = FALSE,
+  plot_basic = TRUE,
+  plot_deseq = TRUE,
+  plot_edger = TRUE,
+  plot_limma = TRUE,
+  plot_ebseq = FALSE,
   loess = FALSE,
   logfc = 1,
   pval = 0.05,
-  do_inverse = FALSE,
   found_table = NULL,
-  z = 1.5,
-  alpha = 0.4,
   p_type = "all",
   plot_colors = NULL,
+  fancy = FALSE,
+  do_inverse = FALSE,
+  z = 1.5,
+  alpha = 0.4,
   z_lines = FALSE
 )
 }
@@ -38,6 +39,16 @@ combine_extracted_plots(
 
 \item{plot_inputs}{The individual outputs from limma etc.}
 
+\item{loess}{Add a loess estimation?}
+
+\item{logfc}{For Volcano/MA plot lines.}
+
+\item{found_table}{The table name actually used.}
+
+\item{p_type}{Use this/these methods' p-value for determining significance.}
+
+\item{do_inverse}{Flip the numerator/denominator?}
+
 \item{include_basic}{Add basic data?}
 
 \item{include_deseq}{Add deseq data?}
@@ -47,16 +58,6 @@ combine_extracted_plots(
 \item{include_limma}{Add limma data?}
 
 \item{include_ebseq}{Add ebseq data?}
-
-\item{loess}{Add a loess estimation?}
-
-\item{logfc}{For Volcano/MA plot lines.}
-
-\item{do_inverse}{Flip the numerator/denominator?}
-
-\item{found_table}{The table name actually used.}
-
-\item{p_type}{Use this/these methods' p-value for determining significance.}
 
 \item{p}{For Volcano/MA plot lines.}
 }
