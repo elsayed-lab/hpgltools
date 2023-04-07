@@ -13,8 +13,9 @@ extract_significant_genes(
   sig_bar = TRUE,
   z = NULL,
   n = NULL,
+  min_mean_exprs = NULL,
+  exprs_column = NULL,
   top_percent = NULL,
-  ma = TRUE,
   p_type = "adj",
   invert_barplots = FALSE,
   excel = NULL,
@@ -51,8 +52,6 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{top_percent}{Use a percentage to get the top-n genes.}
 
-\item{ma}{Add ma plots to the sheets of 'up' genes?}
-
 \item{p_type}{use an adjusted p-value?}
 
 \item{invert_barplots}{Invert the significance barplots as per Najib's request?}
@@ -85,6 +84,8 @@ genes via logfc/p-value.}
 \item{min_gmt_genes}{Define the minimum number of genes in a gene set for writing a gmt file.}
 
 \item{...}{Arguments passed into arglist.}
+
+\item{ma}{Add ma plots to the sheets of 'up' genes?}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.

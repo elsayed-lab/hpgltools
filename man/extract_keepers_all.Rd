@@ -5,7 +5,6 @@
 \title{When no set of 'keeper' contrasts is specified, grab them all.}
 \usage{
 extract_keepers_all(
-  apr,
   extracted,
   keepers,
   table_names,
@@ -24,16 +23,20 @@ extract_keepers_all(
   include_basic,
   excludes,
   padj_type,
+  fancy = FALSE,
   loess = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   sheet_prefix = NULL,
-  sheet_number = NULL
+  sheet_number = NULL,
+  format_sig = 4,
+  plot_colors = NULL,
+  z = 1.5,
+  alpha = 0.4,
+  z_lines = FALSE
 )
 }
 \arguments{
-\item{apr}{Result from all_pairwise().}
-
 \item{extracted}{Table of extracted data.}
 
 \item{keepers}{In this case, one may assume either NULL or 'all'.}
@@ -80,6 +83,8 @@ experimental metadata.}
 \item{sheet_prefix}{Prefix for this worksheet id.}
 
 \item{sheet_number}{Which sheet is this?}
+
+\item{apr}{Result from all_pairwise().}
 }
 \description{
 This has a couple of cousin functions, extract_keepers_list and _single.

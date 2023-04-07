@@ -8,7 +8,7 @@ skim_seurat_metadata(
   sample_meta,
   obj_meta,
   meta_query = "nCount_RNA",
-  group_column = "orig.ident",
+  group_column = NULL,
   summary_query = "numeric.mean",
   column_name = NULL,
   column_prefix = NULL,

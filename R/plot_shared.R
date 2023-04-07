@@ -47,8 +47,8 @@ check_plot_scale <- function(data, scale = NULL, max_data = 10000, min_data = 10
     mesg("An explicit scale was requested: ", scale, ".")
   }
   retlist <- list(
-      "data" = data,
-      "scale" = scale)
+    "data" = data,
+    "scale" = scale)
   return(retlist)
 }
 
@@ -61,9 +61,9 @@ color_int <- function(rgb) {
   green <- as.integer(as.hexmode(gsub(pattern = "^.{2}(.{2}).{2}$", replacement = "\\1", x = hex)))
   blue <- as.integer(as.hexmode(gsub(pattern = "^.{4}(.{2})$", replacement = "\\1", x = hex)))
   retlist <- list(
-      "red" = red,
-      "green" = green,
-      "blue" = blue)
+    "red" = red,
+    "green" = green,
+    "blue" = blue)
   return(retlist)
 }
 
@@ -96,8 +96,8 @@ ggplt <- function(gg, filename = "ggplot.html",
   out <- suppressWarnings(plotly::ggplotly(gg,
                                            ...))
   widget <- htmlwidgets::saveWidget(
-                             plotly::as_widget(out), base, selfcontained, libdir = libdir,
-                             background = background, title = plot_title, knitrOptions = knitrOptions)
+    plotly::as_widget(out), base, selfcontained, libdir = libdir,
+    background = background, title = plot_title, knitrOptions = knitrOptions)
   final <- base
   if (dir != ".") {
     final <- file.path(dir, base)
@@ -316,35 +316,35 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   }
 
   ret_data <- list(
-      "boxplot" = boxplot,
-      "corheat" = corheat[["plot"]],
-      "cvplot" = cv[["plot"]],
-      "density" = density[["plot"]],
-      "density_table" = density[["table"]],
-      "disheat" = disheat[["plot"]],
-      "gene_heatmap" = gene_heatmap,
-      "legend" = legend[["plot"]],
-      "legend_colors" = legend[["colors"]],
-      "libsize" = libsize[["plot"]],
-      "libsizes" = libsize[["table"]],
-      "libsize_summary" = libsize[["summary"]],
-      "ma" = ma_plots,
-      "nonzero" = nonzero[["plot"]],
-      "nonzero_table" = nonzero[["table"]],
-      "pc_loadplot" = pcload[["plot"]],
-      "pc_summary" = pca[["residual_df"]],
-      "pc_propvar" = pca[["prop_var"]],
-      "pc_plot" = pca[["plot"]],
-      "pc_table" = pca[["table"]],
-      "qqlog" = qq_logs,
-      "qqrat" = qq_ratios,
-      "smc" = smc[["plot"]],
-      "smd" = smd[["plot"]],
-      "topnplot" = topn[["plot"]],
-      "tsne_summary" = tsne[["residual_df"]],
-      "tsne_propvar" = tsne[["prop_var"]],
-      "tsne_plot" = tsne[["plot"]],
-      "tsne_table" = tsne[["table"]]
+    "boxplot" = boxplot,
+    "corheat" = corheat[["plot"]],
+    "cvplot" = cv[["plot"]],
+    "density" = density[["plot"]],
+    "density_table" = density[["table"]],
+    "disheat" = disheat[["plot"]],
+    "gene_heatmap" = gene_heatmap,
+    "legend" = legend[["plot"]],
+    "legend_colors" = legend[["colors"]],
+    "libsize" = libsize[["plot"]],
+    "libsizes" = libsize[["table"]],
+    "libsize_summary" = libsize[["summary"]],
+    "ma" = ma_plots,
+    "nonzero" = nonzero[["plot"]],
+    "nonzero_table" = nonzero[["table"]],
+    "pc_loadplot" = pcload[["plot"]],
+    "pc_summary" = pca[["residual_df"]],
+    "pc_propvar" = pca[["prop_var"]],
+    "pc_plot" = pca[["plot"]],
+    "pc_table" = pca[["table"]],
+    "qqlog" = qq_logs,
+    "qqrat" = qq_ratios,
+    "smc" = smc[["plot"]],
+    "smd" = smd[["plot"]],
+    "topnplot" = topn[["plot"]],
+    "tsne_summary" = tsne[["residual_df"]],
+    "tsne_propvar" = tsne[["prop_var"]],
+    "tsne_plot" = tsne[["plot"]],
+    "tsne_table" = tsne[["table"]]
   )
   new_options <- options(old_options)
   return(ret_data)
@@ -378,8 +378,8 @@ plot_legend <- function(stuff) {
   dev.off()
   removed <- file.remove(tmp_file)
   ret <- list(
-      colors = plot[["data"]][, c("condition", "batch", "colors")],
-      plot = legend_plot)
+    colors = plot[["data"]][, c("condition", "batch", "colors")],
+    plot = legend_plot)
   return(ret)
 }
 
@@ -417,7 +417,7 @@ plot_multiplot <- function(plots, file, cols = NULL, layout = NULL) {
     ## Set up the page
     grid::grid.newpage()
     grid::pushViewport(grid::viewport(
-                                 layout = grid::grid.layout(nrow(layout), ncol(layout))))
+      layout = grid::grid.layout(nrow(layout), ncol(layout))))
     ## Make each plot, in the correct location
     for (i in seq_len(num_plots)) {
       ## Get the i,j matrix positions of the regions that contain this subplot

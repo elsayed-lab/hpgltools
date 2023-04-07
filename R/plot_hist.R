@@ -35,18 +35,19 @@ plot_histogram <- function(df, binwidth = NULL, log = FALSE, bins = 500, adjust 
     maxval <- max(df, na.rm = TRUE)
     binwidth <- (maxval - minval) / bins
   }
-  a_histogram <- ggplot2::ggplot(df, ggplot2::aes_string(x = "values")) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y = "..density.."),
+  density <- NULL
+  a_histogram <- ggplot(df, aes(x = .data[["values"]])) +
+    ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density)),
                             binwidth = binwidth,
                             colour = color, fill = fillcolor, position = "identity") +
     ggplot2::geom_density(alpha = 0.4, fill = fillcolor, adjust = adjust) +
-    ggplot2::geom_vline(ggplot2::aes_string(xintercept = "mean(values, na.rm = TRUE)"),
+    ggplot2::geom_vline(aes(xintercept = mean(.data[["values"]], na.rm = TRUE)),
                         color = color, linetype = "dashed", size = 1) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"))
   if (log) {
     log_histogram <- try(a_histogram +
-                         ggplot2::scale_x_continuous(trans = "log10"))
+                           ggplot2::scale_x_continuous(trans = "log10"))
     if (log_histogram != "try-error") {
       a_histogram <- log_histogram
     }
@@ -110,13 +111,13 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
   } else {
     message("Both bins and binwidth were provided, using binwidth: ", binwidth, sep = "")
   }
-  multi <- ggplot2::ggplot(play_all,
-                           ggplot2::aes_string(x = "expression", fill = "cond")) +
-    ggplot2::geom_histogram(ggplot2::aes_string(y = "..density.."), binwidth = binwidth,
+  multi <- ggplot(play_all,
+                  aes(x = .data[["expression"]], fill = .data[["cond"]])) +
+    ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density)), binwidth = binwidth,
                             alpha = 0.4, position = "identity") +
     ggplot2::geom_density(alpha = 0.5) +
     ggplot2::geom_vline(data = play_cdf,
-                        ggplot2::aes_string(xintercept = "rating.mean",  colour = "cond"),
+                        aes(xintercept = .data[["rating.mean"]],  colour = .data[["cond"]]),
                         linetype = "dashed", size = 0.75) +
     ggplot2::xlab("Expression") +
     ggplot2::ylab("Observation likelihood") +
@@ -140,10 +141,10 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
   ##  }
 
   returns <- list(
-      "plot" = multi,
-      "data_summary" = summary_df,
-      "uncor_t" = uncor_t,
-      "bon_t" = bon_t)
+    "plot" = multi,
+    "data_summary" = summary_df,
+    "uncor_t" = uncor_t,
+    "bon_t" = bon_t)
   return(returns)
 }
 

@@ -316,7 +316,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   plot(final_map)
   rec_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- file.remove(tmp_file)
   retlist <- list(
       "annotations" = myannot,
       "clusters" = myclust,
@@ -400,7 +400,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- file.remove(tmp_file)
   return(hpgl_heatmap_plot)
 }
 

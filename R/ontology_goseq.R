@@ -295,7 +295,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                          adjust = 0.1, pvalue = 0.1, plot_title = NULL,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
-                         expand_categories = TRUE, excel = NULL,
+                         expand_categories = TRUE, excel = NULL, enrich = TRUE,
                          ...) {
   arglist <- list(...)
 
@@ -317,6 +317,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   if (class(sig_genes) == "character") {
     ## Then this is a character list of gene ids
     gene_list <- sig_genes
+    sig_genes <- data.frame(row.names = sig_genes)
   } else if (class(sig_genes) == "list") {
     gene_list <- names(sig_genes)
   } else if (class(sig_genes) == "data.frame") {
@@ -477,14 +478,13 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   ## Subset the result for 'interesting' categories, which is defined
   ## simply as the set of categories with full annotations.
-  interesting <- extract_interesting_goseq(godata, expand_categories = expand_categories,
-                                           pvalue = pvalue, adjust = adjust,
-                                           minimum_interesting = minimum_interesting,
-                                           padjust_method = padjust_method)
+  interesting <- extract_interesting_goseq(
+    godata, expand_categories = expand_categories, pvalue = pvalue, adjust = adjust,
+    minimum_interesting = minimum_interesting, padjust_method = padjust_method)
 
   mesg("simple_goseq(): Making pvalue plots for the ontologies.")
   pvalue_plots <- plot_goseq_pval(godata, plot_title = plot_title,
-                                  x_column = "over_represented_pvalue",
+                                  x_column = "num_cat",
                                   ...)
   pval_plots <- list(
       "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
@@ -510,12 +510,14 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       "cc_subset" = interesting[["cc_subset"]],
       "pvalue_plots" = pval_plots)
   class(retlist) <- c("goseq_result", "list")
-  retlist[["mf_enrich"]] <- goseq2enrich(retlist, ontology = "MF",
-                                         cutoff = pvalue, padjust_method = padjust_method)
-  retlist[["bp_enrich"]] <- goseq2enrich(retlist, ontology = "BP",
-                                         cutoff = pvalue, padjust_method = padjust_method)
-  retlist[["cc_enrich"]] <- goseq2enrich(retlist, ontology = "CC",
-                                         cutoff = pvalue, padjust_method = padjust_method)
+  if (isTRUE(enrich)) {
+    retlist[["mf_enrich"]] <- goseq2enrich(
+      retlist, ontology = "MF", cutoff = pvalue, padjust_method = padjust_method)
+    retlist[["bp_enrich"]] <- goseq2enrich(
+      retlist, ontology = "BP", cutoff = pvalue, padjust_method = padjust_method)
+    retlist[["cc_enrich"]] <- goseq2enrich(
+      retlist, ontology = "CC", cutoff = pvalue, padjust_method = padjust_method)
+  }
   if (!is.null(excel)) {
     excel_result <- write_goseq_data(retlist, excel = excel, ...)
   }

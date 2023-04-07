@@ -10,17 +10,25 @@ combine_extracted_plots(
   denominator,
   numerator,
   plot_inputs,
-  include_basic = TRUE,
-  include_deseq = TRUE,
-  include_edger = TRUE,
-  include_limma = TRUE,
-  include_ebseq = FALSE,
+  plot_basic = TRUE,
+  plot_deseq = TRUE,
+  plot_edger = TRUE,
+  plot_limma = TRUE,
+  plot_ebseq = FALSE,
   loess = FALSE,
   logfc = 1,
-  p = 0.05,
-  do_inverse = FALSE,
+  pval = 0.05,
   found_table = NULL,
-  p_type = "all"
+  p_type = "all",
+  plot_colors = NULL,
+  fancy = FALSE,
+  do_inverse = FALSE,
+  invert_colors = FALSE,
+  z = 1.5,
+  alpha = 0.4,
+  z_lines = FALSE,
+  label = 10,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{
@@ -34,6 +42,16 @@ combine_extracted_plots(
 
 \item{plot_inputs}{The individual outputs from limma etc.}
 
+\item{loess}{Add a loess estimation?}
+
+\item{logfc}{For Volcano/MA plot lines.}
+
+\item{found_table}{The table name actually used.}
+
+\item{p_type}{Use this/these methods' p-value for determining significance.}
+
+\item{do_inverse}{Flip the numerator/denominator?}
+
 \item{include_basic}{Add basic data?}
 
 \item{include_deseq}{Add deseq data?}
@@ -44,17 +62,7 @@ combine_extracted_plots(
 
 \item{include_ebseq}{Add ebseq data?}
 
-\item{loess}{Add a loess estimation?}
-
-\item{logfc}{For Volcano/MA plot lines.}
-
 \item{p}{For Volcano/MA plot lines.}
-
-\item{do_inverse}{Flip the numerator/denominator?}
-
-\item{found_table}{The table name actually used.}
-
-\item{p_type}{Use this/these methods' p-value for determining significance.}
 }
 \description{
 It should be possible to significantly simplify the arguments passed to this

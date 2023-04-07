@@ -232,16 +232,19 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
                                                          "cds_length", "chromosome_name",
                                                          "strand", "start_position",
                                                          "end_position"),
-                                     include_lengths = TRUE) {
+                                     include_lengths = TRUE, do_load = TRUE, savefile = NULL) {
 
   ## An attempt to get around 'unable to get local issuer certificate':
   ## As per: https://github.com/grimbough/biomaRt/issues/39
   new_config <- httr::config(ssl_verifypeer = FALSE)
   httr::set_config(new_config, override = FALSE)
 
-  savefile <- glue("{species}_biomart_annotations.rda")
+  if (is.null(savefile)) {
+    savefile <- glue("{species}_biomart_annotations.rda")
+  }
+
   biomart_annotations <- NULL
-  if (file.exists(savefile) & overwrite == FALSE) {
+  if (file.exists(savefile) & isTRUE(do_load)) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
     ## load_string <- paste0("load('", savefile, "', envir = fresh)")
@@ -600,6 +603,23 @@ load_biomart_orthologs <- function(gene_ids = NULL, first_species = "hsapiens",
       "first_attribs" = possible_first_attributes,
       "second_attribs" = possible_second_attributes)
   return(linked_genes)
+}
+
+#' I keep messing up the creation of the salmon trancript to gene map.
+#'
+#' Maybe this will help.  I have a smarter but much slower method in
+#' the tmrc3 data which first creates an expressionset without
+#' annotations then cross references the rownames against combinations
+#' of columns in the annotations to figure out the correct pairing.
+#' This helps when I have a combined transcriptome and get confused.
+make_tx_gene_map <- function(annotations, gene_column = "ensembl_gene_id",
+                             transcript_column = "ensembl_transcript_id",
+                             tx_version_column = "transcript_version",
+                             new_column = "salmon_transcript") {
+  annotations[[new_column]] <- paste0(annotations[[transcript_column]], ".",
+                                      annotations[[tx_version_column]])
+  annotations <- annotations[, c(new_column, gene_column)]
+  return(annotations)
 }
 
 ## EOF

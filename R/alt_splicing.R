@@ -66,8 +66,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
     }
   }
   colnames(psi_data) <- c(
-      "denominator1", "denominator2", "denominator3",
-      "numerator1", "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
+    "denominator1", "denominator2", "denominator3",
+    "numerator1", "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
 
   plotting_data <- merge(dpsi_data, tpm_data, by.x = "row.names", by.y = "event")
   rownames(plotting_data) <- plotting_data[["Row.names"]]
@@ -89,25 +89,25 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
                                          replacement = "\\3")
   plotting_data[["plot_cat"]] <- plotting_data[["category"]]
   plotting_data[["plot_cat"]] <- ifelse(
-      test = plotting_data[["plot_cat"]] == "SE",
-      yes = "Skipping exon",
+    test = plotting_data[["plot_cat"]] == "SE",
+    yes = "Skipping exon",
+    no = ifelse(
+      test = plotting_data[["plot_cat"]] == "MX",
+      yes = "Mutually exclusive exons",
       no = ifelse(
-          test = plotting_data[["plot_cat"]] == "MX",
-          yes = "Mutually exclusive exons",
+        test = plotting_data[["plot_cat"]] == "A5",
+        yes = "Alternate 5 prime",
+        no = ifelse(
+          test = plotting_data[["plot_cat"]] == "A3",
+          yes = "Alternate 3 prime",
           no = ifelse(
-              test = plotting_data[["plot_cat"]] == "A5",
-              yes = "Alternate 5 prime",
-              no = ifelse(
-                  test = plotting_data[["plot_cat"]] == "A3",
-                  yes = "Alternate 3 prime",
-                  no = ifelse(
-                      test = plotting_data[["plot_cat"]] == "RI",
-                      yes = "Retained intron",
-                      no = ifelse(plotting_data[["plot_cat"]] == "AF",
-                                  yes = "Alternate first exon",
-                                  no = ifelse(plotting_data[["plot_cat"]] == "AL",
-                                              yes = "Alternate last exon",
-                                              no = "Unknown")))))))
+            test = plotting_data[["plot_cat"]] == "RI",
+            yes = "Retained intron",
+            no = ifelse(plotting_data[["plot_cat"]] == "AF",
+                        yes = "Alternate first exon",
+                        no = ifelse(plotting_data[["plot_cat"]] == "AL",
+                                    yes = "Alternate last exon",
+                                    no = "Unknown")))))))
   plotting_data[["category"]] <- plotting_data[["plot_cat"]]
   insig_idx <- plotting_data[["pvalue"]] > 0.05
   plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
@@ -129,7 +129,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
 
   ## A quick volcano plot, which should be made prettier soon.
   sig_splicing_volplot <- ggplot(plotting_data,
-                                 aes_string(x = "dpsi", y = "log10pval", color = "psig")) +
+                                 aes(x = .data[["dpsi"]], y = .data[["log10pval"]],
+                                     color = .data[["psig"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_vline(xintercept = c(-0.5, 0.5), size = 1) +
     ggplot2::geom_hline(yintercept = 1.3, size = 1)
@@ -155,8 +156,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
 
   ## Now make a quick and dirty ma plot.
   sig_splicing_maplot <- ggplot(plotting_subset,
-                                aes_string(x = "avglogtpm", y = "dpsi",
-                                           color = "plot_cat", fill = "plot_cat")) +
+                                aes(x = .data[["avglogtpm"]], y = .data[["dpsi"]],
+                                    color = .data[["plot_cat"]], fill = .data[["plot_cat"]])) +
     ggplot2::geom_point(alpha = alpha) +
     ggplot2::scale_shape_manual(values = 21) +
     ggplot2::scale_fill_manual(name = "Category",
@@ -170,7 +171,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
     ggrepel::geom_text_repel(data = label_subset,
                              show.legend = FALSE,
                              arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")),
-                             aes_string(x = "avglogtpm", y = "dpsi", label = "gene_name")) +
+                             aes(x = .data[["avglogtpm"]], y = .data[["dpsi"]],
+                                 label = .data[["gene_name"]])) +
     ggplot2::xlab("Average log(transcripts per million).") +
     ggplot2::ylab("Delta PSI calculated by Suppa.") +
     ggplot2::theme_bw(base_size = base_size)
@@ -195,9 +197,9 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
   }
 
   retlist <- list(
-      "volcano" = sig_splicing_volplot,
-      "ma" = sig_splicing_maplot,
-      "data" = plotting_data)
+    "volcano" = sig_splicing_volplot,
+    "ma" = sig_splicing_maplot,
+    "data" = plotting_data)
   return(retlist)
 }
 
@@ -271,7 +273,8 @@ write_suppa_table <- function(table, annotations = NULL, by_table = "gene_name",
 plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NULL,
                        sig_threshold = 0.05, dpsi_threshold = 0.7,
                        label_type = NULL, alpha = 0.7) {
-  if (is.null(se) & is.null(a5ss) & is.null(a3ss) & is.null(mxe) & is.null(ri)) {
+  if (is.null(se) && is.null(a5ss) && is.null(a3ss) &&
+        is.null(mxe) && is.null(ri)) {
     stop("No data was provided.")
   }
 
@@ -287,7 +290,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   a5ss_data <- data.frame()
   if (class(a5ss) == "character") {
     a5ss_data <- read.table(a5ss, header = TRUE)
-  } else if (class(a5ss) == "data.frame" | class(a5ss) == "NULL") {
+  } else if (class(a5ss)[1] == "data.frame" || class(a5ss)[1] == "NULL") {
     a5ss_data <- a5ss_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -296,7 +299,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   a3ss_data <- data.frame()
   if (class(a3ss) == "character") {
     a3ss_data <- read.table(a3ss, header = TRUE)
-  } else if (class(a3ss) == "data.frame" | class(a3ss) == "NULL") {
+  } else if (class(a3ss)[1] == "data.frame" || class(a3ss)[1] == "NULL") {
     a3ss_data <- a3ss_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -305,7 +308,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   mxe_data <- data.frame()
   if (class(mxe) == "character") {
     mxe_data <- read.table(mxe, header = TRUE)
-  } else if (class(mxe) == "data.frame" | class(mxe) == "NULL") {
+  } else if (class(mxe)[1] == "data.frame" || class(mxe)[1] == "NULL") {
     mxe_data <- mxe_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -314,7 +317,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   ri_data <- data.frame()
   if (class(ri) == "character") {
     ri_data <- read.table(ri, header = TRUE)
-  } else if (class(ri) == "data.frame" | class(ri) == "NULL") {
+  } else if (class(ri)[1] == "data.frame" || class(ri)[1] == "NULL") {
     ri_data <- ri_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -368,11 +371,17 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   plotting_data[["l2a"]] <- suppressWarnings(as.numeric(plotting_data[["l2a"]]))
   plotting_data[["l2b"]] <- suppressWarnings(as.numeric(plotting_data[["l2b"]]))
   plotting_data[["id"]] <- rownames(plotting_data)
-  suppressWarnings(plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm = TRUE)), by = id])
-  plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm = TRUE)), by = id]
-  plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm = TRUE)), by = id]
+  ## suppressWarnings(plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm = TRUE)), by = id])
+  plotting_data <- plotting_data %>%
+    group_by(id) %>%
+    dplyr::mutate(l1mean = mean(c(l1a, l1b), na.rm = TRUE),
+                  l2mean = mean(c(l2a, l2b), na.rm = TRUE),
+                  all_mean = mean(c(l1mean, l2mean), na.rm = TRUE))
+  ## plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm = TRUE)), by = id]
+  ## plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm = TRUE)), by = id]
   plotting_data[["check"]] <- plotting_data[["l1mean"]] - plotting_data[["l2mean"]]
-  test <- all.equal(plotting_data[["check"]], plotting_data[["dpsi"]], tolerance = 0.01)
+  test <- all.equal(plotting_data[["check"]],
+                    plotting_data[["dpsi"]], tolerance = 0.01)
   plotting_data[["log10pval"]] <- -1.0 * log10(plotting_data[["pvalue"]])
   plotting_data[["log10adjpval"]] <- -1.0 * log10(plotting_data[["adjp"]])
 
@@ -381,25 +390,25 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
 
   plotting_data[["plot_cat"]] <- plotting_data[["event"]]
   plotting_data[["plot_cat"]] <- ifelse(
-      test = plotting_data[["plot_cat"]] == "SE",
-      yes = "Skipping exon",
+    test = plotting_data[["plot_cat"]] == "SE",
+    yes = "Skipping exon",
+    no = ifelse(
+      test = plotting_data[["plot_cat"]] == "MX",
+      yes = "Mutually exclusive exons",
       no = ifelse(
-          test = plotting_data[["plot_cat"]] == "MX",
-          yes = "Mutually exclusive exons",
+        test = plotting_data[["plot_cat"]] == "A5",
+        yes = "Alternate 5 prime",
+        no = ifelse(
+          test = plotting_data[["plot_cat"]] == "A3",
+          yes = "Alternate 3 prime",
           no = ifelse(
-              test = plotting_data[["plot_cat"]] == "A5",
-              yes = "Alternate 5 prime",
-              no = ifelse(
-                  test = plotting_data[["plot_cat"]] == "A3",
-                  yes = "Alternate 3 prime",
-                  no = ifelse(
-                      test = plotting_data[["plot_cat"]] == "RI",
-                      yes = "Retained intron",
-                      no = ifelse(plotting_data[["plot_cat"]] == "AF",
-                                  yes = "Alternate first exon",
-                                  no = ifelse(plotting_data[["plot_cat"]] == "AL",
-                                              yes = "Alternate last exon",
-                                              no = "Unknown")))))))
+            test = plotting_data[["plot_cat"]] == "RI",
+            yes = "Retained intron",
+            no = ifelse(plotting_data[["plot_cat"]] == "AF",
+                        yes = "Alternate first exon",
+                        no = ifelse(plotting_data[["plot_cat"]] == "AL",
+                                    yes = "Alternate last exon",
+                                    no = "Unknown")))))))
   plotting_data[["category"]] <- plotting_data[["plot_cat"]]
   insig_idx <- plotting_data[["adjp"]] > sig_threshold
   plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
@@ -421,10 +430,11 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
 
   ## A quick volcano plot, which should be made prettier soon.
   sig_splicing_volplot <- ggplot(plotting_data,
-                                 aes_string(x = "dpsi", y = "log10pval", color = "psig")) +
+                                 aes(x = .data[["dpsi"]], y = .data[["log10pval"]],
+                                     color = .data[["psig"]])) +
     ggplot2::geom_point() +
-    ggplot2::geom_vline(xintercept = c(-0.5, 0.5), size = 1) +
-    ggplot2::geom_hline(yintercept = 1.3, size = 1)
+    ggplot2::geom_vline(xintercept = c(-0.5, 0.5), linewidth = 1) +
+    ggplot2::geom_hline(yintercept = 1.3, linewidth = 1)
 
   ## Now a somewhat more involved ma plot, first dropping the super-low tpm stuff
   label_subset_idx <- plotting_data[["psig"]] == TRUE
@@ -449,9 +459,10 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
                     "Insignificant" = "#666666")
 
   ## Now make a quick and dirty ma plot.
-  sig_splicing_maplot <- ggplot(plotting_data,
-                                aes_string(x = "all_mean", y = "dpsi",
-                                           color = "plot_cat", fill = "plot_cat")) +
+  sig_splicing_maplot <- ggplot(
+    plotting_data,
+    aes(x = .data[["all_mean"]], y = .data[["dpsi"]],
+        color = .data[["plot_cat"]], fill = .data[["plot_cat"]])) +
     ggplot2::geom_point(alpha = alpha) +
     ggplot2::scale_shape_manual(values = 21) +
     ggplot2::scale_fill_manual(name = "Category",
@@ -462,18 +473,19 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
                                 values = color_values, ## keep my preferred order.
                                 breaks = levels(plotting_data[["category"]]),
                                 guide = ggplot2::guide_legend(override.aes = list(size = 5))) +
-    ggrepel::geom_text_repel(data = label_subset,
-                             show.legend = FALSE,
-                             arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")),
-                             aes_string(x = "all_mean", y = "dpsi", label = "gene_id")) +
+    ggrepel::geom_text_repel(
+      data = label_subset,
+      show.legend = FALSE,
+      arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")),
+      aes(x = .data[["all_mean"]], y = .data[["dpsi"]], label = .data[["gene_id"]])) +
     ggplot2::xlab("Average Inclusion.") +
     ggplot2::ylab("Delta PSI calculated by rMATS.") +
     ggplot2::theme_bw(base_size = base_size)
 
   retlist <- list(
-      "volcano" = sig_splicing_volplot,
-      "ma" = sig_splicing_maplot,
-      "data" = plotting_data)
+    "volcano" = sig_splicing_volplot,
+    "ma" = sig_splicing_maplot,
+    "data" = plotting_data)
   return(retlist)
 }
 

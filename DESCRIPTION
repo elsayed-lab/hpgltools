@@ -27,7 +27,7 @@ Suggests:
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
-  Heatplus, Hmisc, Homo.sapiens, htmlwidgets, httr,
+  Heatplus, Hmisc, Homo.sapiens, htmlwidgets, hpgldata, httr,
   iDA, igraph, IHW, inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph,
@@ -74,6 +74,7 @@ Collate:
   'annotation_txt.R'
   'annotation_uniprot.R'
   'annotation_shared.R'
+  'classify.R'
   'de_shared.R'
   'de_basic.R'
   'de_edger.R'
@@ -108,6 +109,7 @@ Collate:
   'ontology_xlsx.R'
   'ontology_kegg.R'
   'peptides.R'
+  'phylo.R'
   'plot_shared.R'
   'plot_bar.R'
   'plot_distribution.R'

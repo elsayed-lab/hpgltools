@@ -7,8 +7,6 @@
 combine_de_tables(
   apr,
   extra_annot = NULL,
-  excel = NULL,
-  excel_title = "Table SXXX: Combined Differential Expression of YYY",
   keepers = "all",
   excludes = NULL,
   adjp = TRUE,
@@ -27,21 +25,23 @@ combine_de_tables(
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
+  excel_title = "Table SXXX: Combined Differential Expression of YYY",
   rda = NULL,
   start_worksheet = "S02",
+  label = 10,
+  label_column = "hgncsymbol",
   format_sig = 4,
-  ...
+  excel = NULL,
+  plot_columns = 10,
+  alpha = 0.4,
+  z = 1.5,
+  z_lines = FALSE
 )
 }
 \arguments{
 \item{apr}{Output from all_pairwise().}
 
 \item{extra_annot}{Add some annotation information?}
-
-\item{excel}{Filename for the excel workbook, or null if not printed.}
-
-\item{excel_title}{Title for the excel sheet(s).  If it has the
-string 'YYY', that will be replaced by the contrast name.}
 
 \item{keepers}{List of reformatted table names to explicitly keep
 certain contrasts in specific orders and orientations.}
@@ -80,9 +80,14 @@ certain contrasts in specific orders and orientations.}
 
 \item{de_types}{Used for plotting pvalue/logFC cutoffs.}
 
+\item{excel_title}{Title for the excel sheet(s).  If it has the
+string 'YYY', that will be replaced by the contrast name.}
+
 \item{rda}{Write a rda file of the results.}
 
 \item{start_worksheet}{This will now increment worksheet titles from this point forward.}
+
+\item{excel}{Filename for the excel workbook, or null if not printed.}
 
 \item{...}{Arguments passed to significance and abundance tables.}
 }

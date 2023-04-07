@@ -100,7 +100,6 @@ comparisons, sets up experimental models appropriate for the differential
 expression analyses, and performs them.
 }
 \details{
-Tested in test_29de_shared.R
 This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(),
 basic_pairwise() each in turn. It collects the results and does some simple
 comparisons among them.

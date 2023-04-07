@@ -121,9 +121,9 @@ bioc_all <- function(release = NULL,
     }
     Sys.sleep(sleep)
     ret <- list(
-        "succeeded" = suc,
-        "failed" = fail,
-        "already" = alr)
+      "succeeded" = suc,
+      "failed" = fail,
+      "already" = alr)
     return(ret)
   } ## End attempt
   if (type == "software") {
@@ -142,8 +142,8 @@ bioc_all <- function(release = NULL,
                                      mirror = mirror, base = base,
                                      type = "annotation")
     installed <- list(
-        "software" = software_installed,
-        "annotation" = annotation_installed)
+      "software" = software_installed,
+      "annotation" = annotation_installed)
   }
   return(installed)
 }
@@ -637,7 +637,7 @@ saveme <- function(directory = "savefiles", backups = 2, cpus = 6, filename = "R
   backup_file(savefile, backups = backups)
   ## The following save strings work:
   save_string <- glue(
-      "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
+    "con <- pipe(paste0('pxz > {savefile}'), 'wb'); \\
     save(list = ls(all.names = TRUE, envir = globalenv()),
          envir = globalenv(), file = con, compress = FALSE); \\
     close(con)")
@@ -661,7 +661,7 @@ saveme <- function(directory = "savefiles", backups = 2, cpus = 6, filename = "R
 #' @examples
 #' \dontrun{
 #'  mydist <- sillydist(df[,1], df[,2], first_median, second_median)
-#'  first_vs_second <- ggplot2::ggplot(df, ggplot2::aes_string(x = "first", y = "second"),
+#'  first_vs_second <- ggplot(df, aes(x = .data[["first"]], y = .data[["second"]]),
 #'                                     environment = hpgl_env) +
 #'    ggplot2::xlab(paste("Expression of", df_x_axis)) +
 #'    ggplot2::ylab(paste("Expression of", df_y_axis)) +
@@ -720,6 +720,13 @@ sm <- function(..., wrap = TRUE) {
   return(ret)
 }
 
+#' Some ggplot2 stats functions have not yet implemented the new dropped_aes
+#' flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.
+#' @export
+sp <- function(...) {
+  suppressWarnings(print(...))
+}
+
 #' Remove the AsIs attribute from some data structure.
 #'
 #' Notably, when using some gene ontology libraries, the returned data
@@ -746,12 +753,13 @@ unAsIs <- function(stuff) {
 ymxb_print <- function(lm_model, as = "glue") {
   coefficients <- summary(lm_model)[["coefficients"]]
   int <- signif(x = coefficients["(Intercept)", 1], digits = 3)
-  m <- signif(x = coefficients["first", 1], digits = 3)
+  ## Some invocations of lm() provide different row/column names.
+  m <- signif(x = coefficients[2, 1], digits = 3)
   ret <- NULL
   if (as != "glue") {
     retlst <- list(
-        "m" = m,
-        "int" = int)
+      "m" = m,
+      "int" = int)
     return(retlst)
   }
   if (as.numeric(int) >= 0) {

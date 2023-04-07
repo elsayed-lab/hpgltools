@@ -6,13 +6,24 @@
 \usage{
 extract_de_plots(
   pairwise,
+  combined,
   type = "edger",
-  table = NULL,
-  logfc = 1,
-  p_type = "adj",
-  p = 0.05,
   invert = FALSE,
-  ...
+  invert_colors = c(),
+  numerator = NULL,
+  denominator = NULL,
+  alpha = 0.4,
+  z = 1.5,
+  logfc = 1,
+  pval = 0.05,
+  found_table = NULL,
+  p_type = "adj",
+  color_high = NULL,
+  color_low = NULL,
+  loess = FALSE,
+  z_lines = FALSE,
+  label = label,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{
@@ -21,15 +32,15 @@ handle other invocations too.}
 
 \item{type}{Type of table to use: deseq, edger, limma, basic.}
 
-\item{table}{Result from edger to use, left alone it chooses the first.}
+\item{invert}{Invert the plot?}
 
 \item{logfc}{What logFC to use for the MA plot horizontal lines.}
 
 \item{p_type}{Adjusted or raw pvalues?}
 
-\item{p}{Cutoff to define 'significant' by p-value.}
+\item{table}{Result from edger to use, left alone it chooses the first.}
 
-\item{invert}{Invert the plot?}
+\item{p}{Cutoff to define 'significant' by p-value.}
 
 \item{...}{Extra arguments are passed to arglist.}
 }

@@ -10,6 +10,8 @@ get_sig_genes(
   z = NULL,
   lfc = NULL,
   p = NULL,
+  min_mean_exprs = NULL,
+  exprs_column = "deseq_basemean",
   column = "logFC",
   fold = "plusminus",
   p_column = "adj.P.Val"
@@ -25,6 +27,11 @@ get_sig_genes(
 \item{lfc}{Fold-change cutoff.}
 
 \item{p}{P-value cutoff.}
+
+\item{min_mean_exprs}{Subset the genes deemed significant with an
+minimum expression cutoff.}
+
+\item{exprs_column}{Use this column for filtering by expression.}
 
 \item{column}{Table's column used to distinguish top vs. bottom.}
 
@@ -43,9 +50,6 @@ Take one or more criteria (fold change, rank order, (adj)p-value,
 z-score from median FC) and use them to extract the set of genes
 which are defined as 'differentially expressed.'  If no criteria
 are provided, it arbitrarily chooses all genes outside of 1-z.
-}
-\details{
-Tested in test_29de_shared.R
 }
 \examples{
 \dontrun{

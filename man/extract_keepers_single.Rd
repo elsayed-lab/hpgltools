@@ -5,7 +5,6 @@
 \title{When a single 'keeper' contrast is specified, find and extract it.}
 \usage{
 extract_keepers_single(
-  apr,
   extracted,
   keepers,
   table_names,
@@ -30,12 +29,14 @@ extract_keepers_single(
   p_cutoff = 0.05,
   format_sig = 4,
   sheet_prefix = NULL,
-  sheet_number = NULL
+  sheet_number = NULL,
+  plot_colors = NULL,
+  z = 1.5,
+  alpha = 0.4,
+  z_lines = FALSE
 )
 }
 \arguments{
-\item{apr}{Data from all_pairwise().}
-
 \item{extracted}{Tables extracted in combine_de_tables().}
 
 \item{keepers}{In this case, one may assume either NULL or 'all'.}
@@ -86,6 +87,8 @@ experimental metadata.}
 \item{sheet_prefix}{Prefix for this sheet id.}
 
 \item{sheet_number}{Which worksheet is this?}
+
+\item{apr}{Data from all_pairwise().}
 }
 \description{
 When a single 'keeper' contrast is specified, find and extract it.

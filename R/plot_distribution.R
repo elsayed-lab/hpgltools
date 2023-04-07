@@ -99,15 +99,17 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
 
   ## The use of data= and aes() leads to no visible binding for global variable warnings
   ## I am not sure what to do about them in this context.
-  boxplot <- ggplot2::ggplot(data = dataframe, aes_string(x = "sample", y = "reads"))
+  boxplot <- ggplot(data = dataframe,
+                    aes(x = .data[["sample"]], y = .data[["reads"]]))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area",
+      ggplot2::geom_violin(aes(fill = .data[["sample"]]),
+                           width = 1, scale = "area",
                            show.legend = FALSE) +
       ggplot2::scale_fill_manual(values = as.character(colors), guide = "none")
   } else {
     boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(aes_string(fill = "sample"),
+      sm(ggplot2::geom_boxplot(aes(fill = .data[["sample"]]),
                                na.rm = TRUE, fill = colors, size = 0.5,
                                outlier.size = 1.5,
                                guide = "none",
@@ -228,17 +230,22 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
   }
   densityplot <- NULL
   if (is.null(fill)) {
-    densityplot <- ggplot2::ggplot(data = melted,
-                                   ggplot2::aes_string(x = "counts", colour = "sample"))
+    densityplot <- ggplot(data = melted,
+                          aes(x = .data[["counts"]], colour = .data[["sample"]]))
   } else {
     fill <- "sample"
-    densityplot <- ggplot2::ggplot(data = melted,
-                                   ggplot2::aes_string(x = "counts", colour = "sample", fill = "fill"))
+    densityplot <- ggplot(
+      data = melted,
+      aes(x = .data[["counts"]], colour = .data[["sample"]], fill = .data[["fill"]]))
   }
+  count <- NULL
   densityplot <- densityplot +
-    ggplot2::geom_density(ggplot2::aes_string(x = "counts", y = "..count..", fill = "sample"),
+    ggplot2::geom_density(aes(x = .data[["counts"]],
+                              y = ggplot2::after_stat(count),
+                              fill = .data[["sample"]]),
                           position = position, na.rm = TRUE) +
-    ggplot2::ylab("Number of genes.") + ggplot2::xlab("Number of hits/gene.") +
+    ggplot2::ylab("Number of genes.") +
+    ggplot2::xlab("Number of hits/gene.") +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                    legend.key.size = ggplot2::unit(0.3, "cm"))
@@ -301,11 +308,11 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
                                                      "max"=max(counts)),
                                               by = "sample"]
   retlist <- list(
-      "plot" = densityplot,
-      "condition_summary" = condition_summary,
-      "batch_summary" = batch_summary,
-      "sample_summary" = sample_summary,
-      "table" = melted)
+    "plot" = densityplot,
+    "condition_summary" = condition_summary,
+    "batch_summary" = batch_summary,
+    "sample_summary" = sample_summary,
+    "table" = melted)
   return(retlist)
 }
 
@@ -432,8 +439,8 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   } else {
     y_string <- glue("Ratio of sorted {xlabel}  and {ylabel}.")
   }
-  ratio_plot <- ggplot2::ggplot(ratio_df,
-                                ggplot2::aes_string(x = "increment", y = "ratio")) +
+  ratio_plot <- ggplot(ratio_df,
+                       aes(x = .data[["increment"]], y = .data[["ratio"]])) +
     ggplot2::geom_point(colour = sm(grDevices::densCols(ratio_df[["ratio"]])), stat = "identity",
                         size = 1, alpha = 0.2, na.rm = TRUE) +
     ggplot2::scale_y_continuous(limits = c(0, 2))
@@ -480,8 +487,8 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   colnames(log_df) <- c(xlabel, ylabel)
   log_df[["sub"]] <- log_df[, 1] - log_df[, 2]
   sorted_x <- as.vector(log_df[, 1])
-  log_ratio_plot <- ggplot2::ggplot(log_df,
-                                    ggplot2::aes_string(x = "get(xlabel)", y = "get(ylabel)")) +
+  log_ratio_plot <- ggplot(log_df,
+                           aes(x = get(xlabel), y = get(ylabel))) +
     ggplot2::geom_point(colour = grDevices::densCols(x = sorted_x), stat = "identity") +
     ggplot2::scale_y_continuous(limits = c(0, gg_max)) +
     ggplot2::scale_x_continuous(limits = c(0, gg_max))
@@ -524,9 +531,9 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   }
   log_summary <- summary(log_df[["sub"]])
   qq_plots <- list(
-      "ratio" = ratio_plot,
-      "log" = log_ratio_plot,
-      "summary" = log_summary)
+    "ratio" = ratio_plot,
+    "log" = log_ratio_plot,
+    "summary" = log_summary)
   return(qq_plots)
 }
 
@@ -612,7 +619,10 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
   tmpdf[["value"]] <- as.numeric(tmpdf[["pct"]])
   tmpdf[["sample"]] <- as.factor(tmpdf[["sample"]])
 
-  topn_plot <- ggplot(tmpdf, aes_string(x = "rank", y = "pct", color = "sample")) +
+  topn_plot <- ggplot(
+    tmpdf,
+    aes(x = .data[["rank"]], y = .data[["pct"]],
+        color = .data[["sample"]])) +
     ggplot2::geom_smooth(method = smoother, level = 0.5, na.rm = TRUE) +
     ggplot2::theme_bw(base_size = base_size)
 
@@ -623,7 +633,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 
   if (plot_labels == "direct") {
     topn_plot <- topn_plot +
-      directlabels::geom_dl(aes_string(label = "sample"), method = "smart.grid")
+      directlabels::geom_dl(aes(label = .data[["sample"]]), method = "smart.grid")
   }
   if (isFALSE(plot_legend)) {
     topn_plot <- topn_plot +
@@ -631,8 +641,8 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
   }
 
   retlist <- list(
-      "plot" = topn_plot,
-      "table" = tmpdf)
+    "plot" = topn_plot,
+    "table" = tmpdf)
   return(retlist)
 }
 
@@ -706,10 +716,10 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   cv_data <- melted %>%
     dplyr::group_by(.data[["gene"]], .data[[x_axis]]) %>%
     dplyr::summarize(
-               "mean_exprs" = mean(.data[["exprs"]], na.rm = TRUE),
-               "sd_exprs" = sd(.data[["exprs"]], na.rm = TRUE),
-               "q1" = quantile(.data[["exprs"]], probs = 0.25),
-               "q3" = quantile(.data[["exprs"]], probs = 0.75))
+      "mean_exprs" = mean(.data[["exprs"]], na.rm = TRUE),
+      "sd_exprs" = sd(.data[["exprs"]], na.rm = TRUE),
+      "q1" = quantile(.data[["exprs"]], probs = 0.25),
+      "q3" = quantile(.data[["exprs"]], probs = 0.75))
   cv_data[["cv"]] <- cv_data[["sd_exprs"]] / cv_data[["mean_exprs"]]
   cv_data[["disp"]] <- (cv_data[["q3"]] - cv_data[["q1"]]) / (cv_data[["q3"]] + cv_data[["q1"]])
   na_idx <- is.na(cv_data[["cv"]])
@@ -756,13 +766,13 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
   cv_data[["x_axis"]] <- cv_data[[x_axis]]
   y_labels <- list(
-      "bcv" = "Biological coefficient of variation",
-      "cv" = "Coefficient of variation",
-      "disp" = "Quartile coefficient of dispersion")
+    "bcv" = "Biological coefficient of variation",
+    "cv" = "Coefficient of variation",
+    "disp" = "Quartile coefficient of dispersion")
   retlst <- list()
   for (type in c("cv", "disp")) {
-    retlst[[type]] <- ggplot(cv_data, aes_string(x = "x_axis", y = type)) +
-      ggplot2::geom_violin(aes_string(fill = "x_axis"), width = 1, scale = "area") +
+    retlst[[type]] <- ggplot(cv_data, aes(x = .data[["x_axis"]], y = .data[[type]])) +
+      ggplot2::geom_violin(aes(fill = .data[["x_axis"]]), width = 1, scale = "area") +
       ggplot2::scale_fill_manual(values = color_list, name = x_axis) +
       ggplot2::stat_summary(fun.data = get_mean_cv, geom = "text",
                             position = ggplot2::position_fill(vjust=-0.1)) +

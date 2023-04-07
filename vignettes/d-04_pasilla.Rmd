@@ -32,7 +32,7 @@ vignette: >
 </style>
 
 ```{r options, include = FALSE}
-library("hpgltools")
+library(hpgltools)
 knitr::opts_knit$set(progress = TRUE,
                      verbose = TRUE,
                      width = 90,
@@ -48,6 +48,7 @@ ggplot2::theme_set(ggplot2::theme_bw(base_size = 10))
 set.seed(1)
 ver <- "20170820"
 rmd_file <- "d-04_pasilla.Rmd"
+library(hpgldata)
 ```
 
 # Pasilla vignette: `r ver`

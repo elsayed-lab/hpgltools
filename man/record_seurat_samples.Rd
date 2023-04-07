@@ -10,7 +10,9 @@ record_seurat_samples(
   pattern = NULL,
   column_name = NULL,
   column_prefix = NULL,
-  verbose = TRUE
+  verbose = FALSE,
+  group = "Idents",
+  assay = "RNA"
 )
 }
 \arguments{

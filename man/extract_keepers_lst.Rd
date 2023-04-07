@@ -23,12 +23,19 @@ extract_keepers_lst(
   include_basic,
   excludes,
   padj_type,
+  fancy = FALSE,
   loess = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   sheet_prefix = NULL,
   sheet_number = NULL,
-  format_sig = 4
+  format_sig = 4,
+  plot_colors = plot_colors,
+  z = 1.5,
+  alpha = 0.4,
+  z_lines = FALSE,
+  label = 10,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{

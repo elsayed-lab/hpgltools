@@ -22,219 +22,54 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
-                             p_type = "adj", p = 0.05, invert = FALSE, ...) {
-  arglist <- list(...)
-  table_source <- "all_pairwise"
-  ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
-  ## edger_pairwise, basic_pairwise, combine_de_tables.
-  if (!is.null(pairwise[["method"]])) {
-    if (pairwise[["method"]] != type) {
-      stop("The requested pairwise type and the provided input type do not match.")
-    }
-  }
+extract_de_plots <- function(pairwise, combined, type = "edger",
+                             invert = FALSE, invert_colors = c(),
+                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5,
+                             logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
+                             color_high = NULL, color_low = NULL, loess = FALSE,
+                             z_lines = FALSE, label = label, label_column = "hgncsymbol") {
 
-  ## If the user did not ask for a specific table, assume the first one
-  wanted_table <- NULL
-  if (is.null(table)) {
-    wanted_table <- 1
-  } else {
-    wanted_table <- table
-  }
-  if ("combined_de" %in% class(pairwise)) {
-    wanted_tablename <- pairwise[["kept"]][[wanted_table]]
-    actual_tablenames <- pairwise[["keepers"]][[wanted_table]]
-    actual_numerator <- actual_tablenames[[1]]
-    actual_denominator <- actual_tablenames[[2]]
-    actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
-    if (actual_tablename != wanted_tablename) {
-      invert <- TRUE
-    }
-    wanted_table <- wanted_tablename
-    pairwise <- pairwise[["input"]]
-    print(wanted_table)
-  }
+  #if (type %in% invert_colors) {
+  #  tmp_color <- color_high
+  #  color_high <- color_low
+  #  color_low <- tmp_color
+  #}
+  coef_result <- try(extract_coefficient_scatter(
+    pairwise, type = type, x = denominator, y = numerator,
+    z = z, n = n, loess = loess, alpha = alpha / 2.0,
+    color_low = color_low, color_high = color_high,
+    z_lines = z_lines))
+  source_info <- get_plot_columns(combined, type, p_type = p_type)
 
-  ## if it is in fact all_pairwise, then there should be a set of
-  ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
-  ## essentially convert the input by extracting the relevant type.
-  if (class(pairwise)[1] == "all_pairwise") {
-    table_source <- glue::glue("{type}_pairwise")
-    pairwise <- pairwise[[type]]
-  } else if (!is.null(pairwise[["method"]])) {
-    table_source <- glue::glue("{pairwise[['method']]}_pairwise")
-  } else {
-    stop("Unable to determine the source of this data.")
-  }
-
-  ## Depending on the source, choose appropriate column names.
-  ## The expression column is the same across combined and _pairwise tables.
-  ## The fc and p columns change depending on context.
-  ## So does the set of possible tables.
-  expr_col <- NULL
-  fc_col <- NULL
-  p_col <- NULL
-  all_tables <- NULL
-  if (table_source == "deseq_pairwise") {
-    ## This column will need to be changed from base 10 to log scale.
-    expr_col <- "baseMean"
-    fc_col <- "logFC"  ## The most common
-    if (p_type == "adj") {
-      p_col <- "adj.P.Val"
-    } else {
-      p_col <- "P.Value"
-    }
-    all_tables <- pairwise[["all_tables"]]
-  } else if (table_source == "edger_pairwise") {
-    expr_col <- "logCPM"
-    fc_col <- "logFC"  ## The most common
-    if (p_type == "adj") {
-      p_col <- "FDR"
-    } else {
-      p_col <- "PValue"
-    }
-    all_tables <- pairwise[["all_tables"]]
-  } else if (table_source == "limma_pairwise") {
-    expr_col <- "AveExpr"
-    fc_col <- "logFC"  ## The most common
-    if (p_type == "adj") {
-      p_col <- "adj.P.Val"
-    } else {
-      p_col <- "P.Value"
-    }
-    all_tables <- pairwise[["all_tables"]]
-  } else if (table_source == "basic_pairwise") {
-    ## basic_pairwise() may have columns which are 'numerator_median' or 'numerator_mean'.
-    expr_col <- "numerator_median"
-    if (!is.null(pairwise[["all_tables"]][[1]][["numerator_mean"]])) {
-      expr_col <- "numerator_mean"
-    }
-    fc_col <- "logFC"  ## The most common
-    if (p_type == "adj") {
-      p_col <- "adjp"
-    } else {
-      p_col <- "p"
-    }
-    all_tables <- pairwise[["all_tables"]]
-  } else if (table_source == "ebseq_pairwise") {
-    expr_col <- "ebseq_mean"
-    fc_col <- "logFC"
-    if (p_type == "adj") {
-      p_col <- "ebseq_adjp"
-    } else {
-      p_col <- "ebseq_ppde"
-    }
-    all_tables <- pairwise[["all_tables"]]
-  } else if (table_source == "combined") {
-    if (type == "deseq") {
-      expr_col <- "deseq_basemean"
-    } else if (type == "edger") {
-      expr_col <- "edger_logcpm"
-    } else if (type == "limma") {
-      expr_col <- "limma_ave"
-    } else if (type == "basic") {
-      expr_col <- "basic_nummed"
-    } else if (type =="ebseq") {
-      expr_col <- "ebseq_mean"
-    }
-    fc_col <- glue::glue("{type}_logfc")
-    if (p_type == "adj") {
-      p_col <- glue::glue("{type}_adjp")
-    } else {
-      p_col <- glue::glue("{type}_p")
-    }
-    all_tables <- pairwise[["data"]]
-  } else {
-    stop("Something went wrong, we should have only _pairwise and combined here.")
-  }
-
-  possible_tables <- names(all_tables)
-  the_table <- NULL
-  ## Now that we have the columns, figure out which table.
-  if ("data.frame" %in% class(all_tables)) {
-    ## This came from the creation of combine_de_tables()
-    the_table <- all_tables
-  } else if (is.numeric(wanted_table)) {
-    ## It is possible to just request the 1st, second, etc table
-    ##the_table <- pairwise[["data"]][[table]]
-    the_table <- all_tables[[wanted_table]]
-  } else if (grepl(pattern = "_vs_", x = wanted_table)) {
-    ## The requested table might be a_vs_b, but sometimes a and b get flipped.
-    ## Figure that out here and return the appropriate table.
-    the_table <- wanted_table
-    revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
-      message("Trey you doofus, you reversed the name of the table.")
-      the_table <- all_tables[[revname]]
-    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
-      message("Unable to find the table in the set of possible tables.")
-      message("The possible tables are: ", toString(possible_tables))
-      stop()
-    } else {
-      the_table <- all_tables[[the_table]]
-    }
-  } else if (length(wanted_table) == 1) {
-    ## One might request a name from the keepers list
-    ## If so, figure that out here.
-    table_parts <- pairwise[["keepers"]][[table]]
-    if (is.null(table_parts)) {
-      message("Unable to find the table in the set of possible tables.")
-      message("The possible tables are: ", toString(possible_tables))
-      stop()
-    }
-    the_table <- all_tables[[table]]
-  } else if (length(wanted_table) == 2) {
-    ## Perhaps one will ask for c(numerator, denominator)
-    the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
-    revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    possible_tables <- names(pairwise[["data"]])
-    if (!(the_table %in% possible_tables) & revname %in% possible_tables) {
-      message("Trey you doofus, you reversed the name of the table.")
-      the_table <- all_tables[[revname]]
-    } else if (!(the_table %in% possible_tables) & !(revname %in% possible_tables)) {
-      stop("Unable to find the table in the set of possible tables.")
-    } else {
-      ##the_table <- pairwise[["data"]][[the_table]]
-      the_tale <- all_tables[[the_table]]
-    }
-  } else {
-    stop("Unable to discern the table requested.")
-  }
-
-  ## DESeq2 returns the median values as base 10, but we are using log2 (or log10?)
-  if (type == "deseq") {
-    the_table[["log_basemean"]] <- log2(x = the_table[[expr_col]] + 1.0)
-    expr_col <- "log_basemean"
-  }
-
-  ## Check that the wanted table is numeric
-  if (is.numeric(wanted_table)) {
-    wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
-  }
+  input <- source_info[["the_table"]]
+  expr_col <- source_info[["expr_col"]]
+  fc_col <- source_info[["fc_col"]]
+  p_col <- source_info[["p_col"]]
+  invert <- source_info[["invert"]]
 
   ma_material <- NULL
   vol_material <- NULL
-  if (!is.null(the_table[[expr_col]]) &
-      !is.null(the_table[[fc_col]]) &
-      !is.null(the_table[[p_col]])) {
-    ma_material <- plot_ma_de(
-        table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
-        logfc = logfc, p = p, invert = invert,
-        ...)
+  if (!is.null(input[[expr_col]]) &&
+        !is.null(input[[fc_col]]) &&
+         !is.null(input[[p_col]])) {
+    ma_material <- plot_ma_condition_de(
+      input = input, table_name = found_table,
+      expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+      logfc = logfc, pval = pval, invert = invert,
+      color_high = color_high, color_low = color_low,
+      label = label, label_column = label_column)
     vol_material <- plot_volcano_condition_de(
-        pairwise, de_table = wanted_table,
-        ##de_table = the_table,
-        fc_col = fc_col,
-        p_col = p_col, invert = invert,
-        logfc = logfc, p = p, label = 5,
-        ...)
+      input = input, table_name = found_table,
+      fc_col = fc_col, p_col = p_col,
+      color_high = color_high, color_low = color_low,
+      invert = invert, logfc = logfc, pval = pval, label = 5,
+      label = label, label_column = label_column)
   }
 
-  retlist <- list(
-      "ma" = ma_material,
-      "volcano" = vol_material)
+retlist <- list(
+  "coef" = coef_result,
+  "ma" = ma_material,
+  "volcano" = vol_material)
   return(retlist)
 }
 
@@ -273,11 +108,10 @@ extract_de_plots <- function(pairwise, type = "edger", table = NULL, logfc = 1,
 #'                                              type = "deseq", x = "uninfected", y = "infected")
 #' }
 #' @export
-extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma", x = 1, y = 2, z = 1.5,
-                                        p = NULL, lfc = NULL, n = NULL, loess = FALSE,
-                                        alpha = 0.4, color_low = "#DD0000", z_lines = FALSE,
-                                        color_high = "#7B9F35", ...) {
-  arglist <- list(...)
+extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
+                                        x = 1, y = 2, z = 1.5, logfc = NULL, n = NULL,
+                                        z_lines = FALSE, loess = FALSE, alpha = 0.4,
+                                        color_low = "#DD0000", color_high = "#7B9F35") {
   ## This is an explicit test against all_pairwise() and reduces it to result from type.
   if (!is.null(output[[type]])) {
     output <- output[[type]]
@@ -302,8 +136,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     stop("I do not know what type you wish to query.")
   }
 
-  message("This can do comparisons among the following columns in the pairwise result:")
-  message(toString(thenames))
   xname <- ""
   yname <- ""
   if (is.numeric(x)) {
@@ -316,7 +148,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
   } else {
     yname <- y
   }
-  message("Actually comparing ", xname, " and ", yname, ".")
 
   ## Now extract the coefficent df
   if (type == "edger") {
@@ -369,13 +200,12 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     }
     coefficient_df <- coefficient_df[, c(xname, yname)]
   }
-
   maxvalue <- max(coefficient_df) + 1.0
   minvalue <- min(coefficient_df) - 1.0
-  plot <- sm(plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
-                                 alpha = alpha, pretty_colors = FALSE,
-                                 color_low = color_low, color_high = color_high,
-                                 p = p, lfc = lfc, n = n, z = z, z_lines = z_lines))
+  plot <- plot_linear_scatter(df = coefficient_df, loess = loess, first = xname, second = yname,
+                              alpha = alpha, pretty_colors = FALSE,
+                              color_low = color_low, color_high = color_high,
+                              n = n, z = z, logfc = logfc, z_lines = z_lines)
   plot[["scatter"]] <- plot[["scatter"]] +
     ggplot2::scale_x_continuous(limits = c(minvalue, maxvalue)) +
     ggplot2::scale_y_continuous(limits = c(minvalue, maxvalue))
@@ -427,13 +257,13 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
                                 column = "deseq_logfc", p_column = deseq_p, p = p))
   up_venn_lst <- list(
-      "deseq" = rownames(deseq_sig[["up_genes"]]),
-      "edger" = rownames(edger_sig[["up_genes"]]),
-      "limma" = rownames(limma_sig[["up_genes"]]))
+    "deseq" = rownames(deseq_sig[["up_genes"]]),
+    "edger" = rownames(edger_sig[["up_genes"]]),
+    "limma" = rownames(limma_sig[["up_genes"]]))
   down_venn_lst <- list(
-      "deseq" = rownames(deseq_sig[["down_genes"]]),
-      "edger" = rownames(edger_sig[["down_genes"]]),
-      "limma" = rownames(limma_sig[["down_genes"]]))
+    "deseq" = rownames(deseq_sig[["down_genes"]]),
+    "edger" = rownames(edger_sig[["down_genes"]]),
+    "limma" = rownames(limma_sig[["down_genes"]]))
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
@@ -451,11 +281,247 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   removed <- file.remove(tmp_file)
 
   retlist <- list(
-      "up_venn" = up_venn,
-      "up_noweight" = up_venn_noweight,
-      "down_venn" = down_venn,
-      "down_noweight" = down_venn_noweight)
+    "up_venn" = up_venn,
+    "up_noweight" = up_venn_noweight,
+    "down_venn" = down_venn,
+    "down_noweight" = down_venn_noweight)
   return(retlist)
+}
+
+#' A small rat's nest of if statements intended to figure out what columns
+#' are wanted to plot a MA/Volcano from any one of a diverse set of possible
+#' input types.
+#'
+#' I split this function away from the main body of extract_de_plots()
+#' so that I can come back to it and strip it down to something a bit
+#' more legible.  Eventually I want to dispatch this logic off to
+#' separate functions depending on the class of the input.
+get_plot_columns <- function(data, type, p_type = "adj") {
+  ret <- list(
+    "p_col" = "P.Val",
+    "fc_col" = "logFC",
+    "expr_col" = "baseMean",
+    "wanted_table" = NULL,
+    "invert" = FALSE,
+    "input" = NULL,
+    "table_source" = "data")
+
+  ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
+  ## edger_pairwise, basic_pairwise, combine_de_tables.
+  if (!is.null(data[["method"]])) {
+    if (data[["method"]] != type) {
+      stop("The requested pairwise type and the provided input type do not match.")
+    }
+  }
+
+  ## If the user did not ask for a specific table, assume the first one
+  wanted_table <- NULL
+  if (is.null(found_table)) {
+    wanted_table <- 1
+  } else {
+    wanted_table <- found_table
+  }
+
+  if ("combined_de" %in% class(data)) {
+    wanted_tablename <- data[["kept"]][[wanted_table]]
+    actual_tablenames <- data[["keepers"]][[wanted_table]]
+    actual_numerator <- actual_tablenames[[1]]
+    actual_denominator <- actual_tablenames[[2]]
+    actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
+    if (actual_tablename != wanted_tablename) {
+      ret[["invert"]] <- TRUE
+    }
+    wanted_table <- wanted_tablename
+    input <- data[["input"]]
+    print(wanted_table)
+  } else if ("combined_table" %in% class(data)) {
+    table_source <- "combined_table"
+  } else if (class(data)[1] == "all_pairwise") {
+    ## if it is in fact all_pairwise, then there should be a set of
+    ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
+    ## essentially convert the input by extracting the relevant type.
+    table_source <- glue("{type}_pairwise")
+    data <- data[[type]]
+  } else if (!is.null(pairwise[["method"]])) {
+    table_source <- glue("{data[['method']]}_pairwise")
+  } else {
+    stop("Unable to determine the source of this data.")
+  }
+
+  ## Depending on the source, choose appropriate column names.
+  ## The expression column is the same across combined and _pairwise tables.
+  ## The fc and p columns change depending on context.
+  ## So does the set of possible tables.
+  expr_col <- NULL
+  fc_col <- NULL
+  p_col <- NULL
+  all_tables <- NULL
+  if (table_source == "combined_table") {
+    if (type == "deseq") {
+      expr_col <- "deseq_basemean"
+    } else if (type == "edger") {
+      expr_col <- "edger_logcpm"
+    } else if (type == "limma") {
+      expr_col <- "limma_ave"
+    } else if (type == "basic") {
+      expr_col <- "basic_nummed"
+    } else if (type =="ebseq") {
+      expr_col <- "ebseq_mean"
+    }
+    fc_col <- glue("{type}_logfc")
+    if (p_type == "adj") {
+      p_col <- glue("{type}_adjp")
+    } else {
+      p_col <- glue("{type}_p")
+    }
+    all_tables <- NULL
+  } else if (table_source == "deseq_pairwise") {
+    ## This column will need to be changed from base 10 to log scale.
+    expr_col <- "baseMean"
+    fc_col <- "logFC"  ## The most common
+    if (p_type == "adj") {
+      p_col <- "adj.P.Val"
+    } else {
+      p_col <- "P.Value"
+    }
+    all_tables <- data[["all_tables"]]
+  } else if (table_source == "edger_pairwise") {
+    expr_col <- "logCPM"
+    fc_col <- "logFC"  ## The most common
+    if (p_type == "adj") {
+      p_col <- "FDR"
+    } else {
+      p_col <- "PValue"
+    }
+    all_tables <- data[["all_tables"]]
+  } else if (table_source == "limma_pairwise") {
+    expr_col <- "AveExpr"
+    fc_col <- "logFC"  ## The most common
+    if (p_type == "adj") {
+      p_col <- "adj.P.Val"
+    } else {
+      p_col <- "P.Value"
+    }
+    all_tables <- data[["all_tables"]]
+  } else if (table_source == "basic_pairwise") {
+    ## basic_pairwise() may have columns which are 'numerator_median' or 'numerator_mean'.
+    expr_col <- "numerator"
+    if (!is.null(data[["all_tables"]][[1]][["numerator_mean"]])) {
+      expr_col <- "numerator_mean"
+    }
+    fc_col <- "logFC"  ## The most common
+    if (p_type == "adj") {
+      p_col <- "adjp"
+    } else {
+      p_col <- "p"
+    }
+    all_tables <- data[["all_tables"]]
+  } else if (table_source == "ebseq_pairwise") {
+    expr_col <- "ebseq_mean"
+    fc_col <- "logFC"
+    if (p_type == "adj") {
+      p_col <- "ebseq_adjp"
+    } else {
+      p_col <- "ebseq_ppde"
+    }
+    all_tables <- data[["all_tables"]]
+  } else if (table_source == "combined") {
+    if (type == "deseq") {
+      expr_col <- "deseq_basemean"
+    } else if (type == "edger") {
+      expr_col <- "edger_logcpm"
+    } else if (type == "limma") {
+      expr_col <- "limma_ave"
+    } else if (type == "basic") {
+      expr_col <- "basic_nummed"
+    } else if (type =="ebseq") {
+      expr_col <- "ebseq_mean"
+    }
+    fc_col <- glue("{type}_logfc")
+    if (p_type == "adj") {
+      p_col <- glue("{type}_adjp")
+    } else {
+      p_col <- glue("{type}_p")
+    }
+    all_tables <- pairwise[["data"]]
+  } else {
+    stop("Something went wrong, we should have only _pairwise and combined here.")
+  }
+
+  possible_tables <- names(all_tables)
+  the_table <- NULL
+  ## Now that we have the columns, figure out which table.
+  if (is.null(all_tables)) {
+    the_table <- data[["data"]]
+  } else if ("data.frame" %in% class(all_tables)) {
+    ## This came from the creation of combine_de_tables()
+    the_table <- all_tables
+  } else if (is.numeric(wanted_table)) {
+    ## It is possible to just request the 1st, second, etc table
+    ##the_table <- pairwise[["data"]][[table]]
+    the_table <- all_tables[[wanted_table]]
+  } else if (grepl(pattern = "_vs_", x = wanted_table)) {
+    ## The requested table might be a_vs_b, but sometimes a and b get flipped.
+    ## Figure that out here and return the appropriate table.
+    the_table <- wanted_table
+    revname <- strsplit(x = the_table, split = "_vs_")
+    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
+      mesg("Trey you doofus, you reversed the name of the table.")
+      the_table <- all_tables[[revname]]
+    } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
+      message("Unable to find the table in the set of possible tables.")
+      message("The possible tables are: ", toString(possible_tables))
+      stop()
+    } else {
+      the_table <- all_tables[[the_table]]
+    }
+  } else if (length(wanted_table) == 1) {
+    ## One might request a name from the keepers list
+    ## If so, figure that out here.
+    table_parts <- pairwise[["keepers"]][[table]]
+    if (is.null(table_parts)) {
+      message("Unable to find the table in the set of possible tables.")
+      message("The possible tables are: ", toString(possible_tables))
+      stop()
+    }
+    the_table <- all_tables[[table]]
+  } else if (length(wanted_table) == 2) {
+    ## Perhaps one will ask for c(numerator, denominator)
+    the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
+    revname <- strsplit(x = the_table, split = "_vs_")
+    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    possible_tables <- names(pairwise[["data"]])
+    if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
+      mesg("Trey you doofus, you reversed the name of the table.")
+      the_table <- all_tables[[revname]]
+    } else if (!(the_table %in% possible_tables) && !(revname %in% possible_tables)) {
+      stop("Unable to find the table in the set of possible tables.")
+    } else {
+      ##the_table <- pairwise[["data"]][[the_table]]
+      the_table <- all_tables[[the_table]]
+    }
+  } else {
+    stop("Unable to discern the table requested.")
+  }
+
+  ## DESeq2 returns the median values as base 10, but we are using log2 (or log10?)
+  if (type == "deseq") {
+    the_table[["log_basemean"]] <- log2(x = the_table[[expr_col]] + 1.0)
+    expr_col <- "log_basemean"
+  }
+
+  ## Check that the wanted table is numeric
+  if (is.numeric(wanted_table)) {
+    wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
+  }
+
+  ret[["the_table"]] <- the_table
+  ret[["expr_col"]] <- expr_col
+  ret[["fc_col"]] <- fc_col
+  ret[["p_col"]] <- p_col
+  ret[["wanted_table"]] <- wanted_table
+  return(ret)
 }
 
 #' Given a DE table with p-values, plot them.
@@ -609,7 +675,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   down_nums <- reshape2::melt(down_nums, id.vars = "fc")
   colnames(down_nums) <- c("fc", "method", "value")
 
-  up_plot <- ggplot(data = up_nums, aes_string(x = "fc", y = "value", color = "method")) +
+  up_plot <- ggplot(data = up_nums,
+                    aes(x = .data[["fc"]], y = .data[["value"]],
+                        color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -617,7 +685,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept = 1.0, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  down_plot <- ggplot(data = down_nums, aes_string(x = "fc", y = "value", color = "method")) +
+  down_plot <- ggplot(data = down_nums,
+                      aes(x = .data[["fc"]], y = .data[["value"]],
+                          color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -625,7 +695,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept=-1.0, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  pup_plot <- ggplot(data = pup_nums, aes_string(x = "p", y = "value", color = "method")) +
+  pup_plot <- ggplot(data = pup_nums,
+                     aes(x = .data[["p"]], y = .data[["value"]],
+                         color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -633,7 +705,9 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::geom_vline(xintercept = 0.05, colour = "red") +
     ggplot2::theme_bw(base_size = base_size)
 
-  pdown_plot <- ggplot(data = pdown_nums, aes_string(x = "p", y = "value", color = "method")) +
+  pdown_plot <- ggplot(data = pdown_nums,
+                       aes(x = .data[["p"]], y = .data[["value"]],
+                           color = .data[["method"]])) +
     ggplot2::geom_point() +
     ggplot2::geom_line() +
     ggplot2::scale_fill_brewer(palette = "Set1") +
@@ -642,14 +716,407 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
     ggplot2::theme_bw(base_size = base_size)
 
   retlist <- list(
-      "up" = up_plot,
-      "down" = down_plot,
-      "pup" = pup_plot,
-      "pdown" = pdown_plot,
-      "up_data" = up_nums,
-      "down_data" = down_nums,
-      "pup_data" = pup_nums,
-      "pdown_data" = pdown_nums)
+    "up" = up_plot,
+    "down" = down_plot,
+    "pup" = pup_plot,
+    "pdown" = pdown_plot,
+    "up_data" = up_nums,
+    "down_data" = down_nums,
+    "pup_data" = pup_nums,
+    "pdown_data" = pdown_nums)
+  return(retlist)
+}
+
+#' Make a pretty MA plot from one of limma, deseq, edger, or basic.
+#'
+#' Because I can never remember, the following from wikipedia: "An MA plot is an
+#' application of a Bland-Altman plot for visual representation of two channel
+#' DNA microarray gene expression data which has been transformed onto the M
+#' (log ratios) and A (mean average) scale."
+#'
+#' @param table Df of linear-modelling, normalized counts by sample-type,
+#' @param expr_col Column showing the average expression across genes.
+#' @param fc_col Column showing the logFC for each gene.
+#' @param p_col Column containing the relevant p values.
+#' @param p Name of the pvalue column to use for cutoffs.
+#' @param alpha How transparent to make the dots.
+#' @param logfc Fold change cutoff.
+#' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
+#' @param size How big are the dots?
+#' @param shapes Provide different shapes for up/down/etc?
+#' @param invert Invert the ma plot?
+#' @param label Label the top/bottom n logFC values?
+#' @param ... More options for you
+#' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
+#'  normalized counts by type across all sample types on the x axis, and the
+#'  log fold change between conditions on the y-axis. Dots are colored
+#'  depending on if they are 'significant.'  This will make a fun clicky
+#'  googleVis graph if requested.
+#' @seealso [limma_pairwise()] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#' @examples
+#'  \dontrun{
+#'   plot_ma(voomed_data, table)
+#'   ## Currently this assumes that a variant of toptable was used which
+#'   ## gives adjusted p-values.  This is not always the case and I should
+#'   ## check for that, but I have not yet.
+#'  }
+#' @export
+plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
+                       pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
+                       size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
+  ## Set up the data frame which will describe the plot
+  arglist <- list(...)
+  ## I like dark blue and dark red for significant and insignificant genes respectively.
+  ## Others may disagree and change that with sig_color, insig_color.
+  sig_color <- "darkred"
+  if (!is.null(arglist[["sig_color"]])) {
+    sig_color <- arglist[["sig_color"]]
+  }
+  insig_color <- "darkblue"
+  if (!is.null(arglist[["insig_color"]])) {
+    insig_color <- arglist[["insig_color"]]
+  }
+  ## A recent request was to color gene families within these plots.
+  ## Below there is a short function,  recolor_points() which handles this.
+  ## The following 2 arguments are used for that.
+  ## That function should work for other things like volcano or scatter plots.
+  family <- NULL
+  if (!is.null(arglist[["family"]])) {
+    family <- arglist[["family"]]
+  }
+  family_color <- "red"
+  if (!is.null(arglist[["family_color"]])) {
+    family_color <- arglist[["family_color"]]
+  }
+
+  ## The data frame used for these MA plots needs to include a few aspects of the state
+  ## Including: average expression (the y axis), log-fold change, p-value, a
+  ## boolean of the p-value state, and a factor of the state which will be
+  ## counted and provide some information on the side of the plot. One might
+  ## note that I am pre-filling in this data frame with 4 blank entries. This is
+  ## to make absolutely certain that ggplot will not re-order my damn
+  ## categories.
+  df <- data.frame(
+    "avg" = c(0, 0, 0),
+    "logfc" = c(0, 0, 0),
+    "pval" = c(0, 0, 0),
+    "pcut" = c(FALSE, FALSE, FALSE),
+    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
+
+  ## Get rid of rows which will be annoying.
+  ## If somehow a list got into the data table, this will fail, lets fix that now.
+  tmp_table <- table
+  for (c in seq_len(ncol(tmp_table))) {
+    tmp_table[[c]] <- as.character(table[[c]])
+  }
+  rows_without_na <- complete.cases(tmp_table)
+  rm(tmp_table)
+  table <- table[rows_without_na, ]
+
+  ## Extract the information of interest from my original table
+  newdf <- data.frame("avg" = table[[expr_col]],
+                      "logfc" = table[[fc_col]],
+                      "pval" = table[[p_col]])
+  rownames(newdf) <- rownames(table)
+  if (isTRUE(invert)) {
+    newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
+  }
+  ## Check if the data is on a log or base10 scale, if the latter, then convert it.
+  if (max(newdf[["avg"]]) > 1000) {
+    newdf[["avg"]] <- log(newdf[["avg"]])
+  }
+
+  ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
+  newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
+  newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
+                             ifelse(newdf[["pval"]] <= pval &
+                                      newdf[["logfc"]] >= logfc, "a_upsig",
+                                    ifelse(newdf[["pval"]] <= pval &
+                                             newdf[["logfc"]] <= (-1.0 * logfc),
+                                           "b_downsig", "c_insig")))
+  newdf[["state"]] <- as.factor(newdf[["state"]])
+  df <- rbind(df, newdf)
+  rm(newdf)
+
+  ## Subtract one from each value because I filled in a fake value of each category to start.
+  num_downsig <- sum(df[["state"]] == "b_downsig") - 1
+  num_insig <- sum(df[["state"]] == "c_insig") - 1
+  num_upsig <- sum(df[["state"]] == "a_upsig") - 1
+
+  ## Make double-certain that my states are only factors or numbers where necessary.
+  df[["avg"]] <- as.numeric(df[[1]])
+  df[["logfc"]] <- as.numeric(df[[2]])
+  df[["pval"]] <- as.numeric(df[[3]])
+  df[["pcut"]] <- as.factor(df[[4]])
+  df[["state"]] <- as.factor(df[[5]])
+  df[["label"]] <- rownames(df)
+
+  ## Set up the labels for the legend by significance.
+  ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
+  ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
+  state_shapes <- 21
+  if (isTRUE(state_shapes)) {
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  } else {
+    state_shapes <- c(21, 21, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  }
+
+  ## make the plot!
+  plt <- ggplot(data = df,
+                ## I am setting x, y, fill color, outline color, and the shape.
+                aes(x = .data[["avg"]],
+                    y = .data[["logfc"]],
+                    label = .data[["label"]],
+                    fill = as.factor(.data[["pcut"]]),
+                    colour = as.factor(.data[["pcut"]]),
+                    shape = as.factor(.data[["state"]]))) +
+    ggplot2::geom_hline(yintercept = c((logfc * -1.0), logfc),
+                        color = "red", size=(size / 3)) +
+    ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  if (isTRUE(label_numbers)) {
+    plt <- plt +
+      ## The following scale_shape_manual() sets the labels of the legend on the right side.
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  labels = c(
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
+                                  guide = ggplot2::guide_legend(override.aes = aes(size = 3,
+                                                                                   fill = "grey")))
+  } else {
+    plt <- plt +
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  guide = "none")
+  }
+
+  plt <- plt +
+    ## Set the colors of the significant/insignificant points.
+    ggplot2::scale_fill_manual(name = "as.factor(pcut)",
+                               values = c("FALSE"=insig_color, "TRUE"=sig_color),
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "as.factor(pcut)",
+                                values = c("FALSE"=insig_color, "TRUE"=sig_color),
+                                guide = "none") +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
+    ggplot2::xlab("Average log2(Counts)") +
+    ggplot2::ylab("log2(fold change)")
+
+  ## Recolor a family of genes if requested.
+  if (!is.null(family)) {
+    plt <- recolor_points(plt, df, family, color = family_color)
+  }
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["logfc"]])
+    reordered <- df[reordered_idx, ]
+    top <- head(reordered, n = label)
+    bottom <- tail(reordered, n = label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(
+        data = df_subset,
+        aes(label = .data[["label"]], x = .data[["avg"]], y = .data[["logfc"]]),
+        colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+        point.padding = ggplot2::unit(1.6, "lines"),
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  ## Return the plot, some numbers, and the data frame used to make the plot so
+  ## that I may check my work.
+  retlist <- list(
+    "num_upsig" = num_upsig,
+    "num_downsig" = num_downsig,
+    "num_insig" = num_insig,
+    "plot" = plt,
+    "df" = df)
+  return(retlist)
+}
+
+
+plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
+                                 fc_col = "logFC", p_col = "qvalue",
+                                 color_high = "red", color_low = "blue",
+                                 pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
+                                 size = 2, shapes = TRUE, invert = FALSE,
+                                 label = NULL, label_column = "hgncsymbol", ...) {
+  ## Set up the data frame which will describe the plot
+
+  ## Example caller:
+  ## ma_material <- plot_ma_condition_de(
+  ##     pairwise, table = the_table, expr_col = expr_col, fc_col = fc_col, p_col = p_col,
+  ##     logfc = logfc, pval = pval, invert = invert,
+
+  arglist <- list(...)
+
+  ## A recent request was to color gene families within these plots.
+  ## Below there is a short function,  recolor_points() which handles this.
+  ## The following 2 arguments are used for that.
+  ## That function should work for other things like volcano or scatter plots.
+  family <- NULL
+  if (!is.null(arglist[["family"]])) {
+    family <- arglist[["family"]]
+  }
+  family_color <- "red"
+  if (!is.null(arglist[["family_color"]])) {
+    family_color <- arglist[["family_color"]]
+  }
+
+  ## The data frame used for these MA plots needs to include a few aspects of the state
+  ## Including: average expression (the y axis), log-fold change, p-value, a
+  ## boolean of the p-value state, and a factor of the state which will be
+  ## counted and provide some information on the side of the plot. One might
+  ## note that I am pre-filling in this data frame with 4 blank entries. This is
+  ## to make absolutely certain that ggplot will not re-order my damn
+  ## categories.
+  df <- data.frame(
+    "avg" = c(0, 0, 0),
+    "logfc" = c(0, 0, 0),
+    "pval" = c(0, 0, 0),
+    "pcut" = c(FALSE, FALSE, FALSE),
+    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
+
+  ## Get rid of rows which will be annoying.
+  ## If somehow a list got into the data table, this will fail, lets fix that now.
+  tmp_table <- input
+  for (c in seq_len(ncol(tmp_table))) {
+    tmp_table[[c]] <- as.character(input[[c]])
+  }
+  rows_without_na <- complete.cases(tmp_table)
+  rm(tmp_table)
+  input <- input[rows_without_na, ]
+
+  ## Extract the information of interest from my original table
+  newdf <- data.frame("avg" = input[[expr_col]],
+                      "logfc" = input[[fc_col]],
+                      "pval" = input[[p_col]])
+  rownames(newdf) <- rownames(input)
+  if (isTRUE(invert)) {
+    newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
+  }
+  ## Check if the data is on a log or base10 scale, if the latter, then convert it.
+  if (max(newdf[["avg"]]) > 1000) {
+    newdf[["avg"]] <- log(newdf[["avg"]])
+  }
+
+  ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
+  newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
+  newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
+                             ifelse(newdf[["pval"]] <= pval &
+                                      newdf[["logfc"]] >= logfc, "a_upsig",
+                                    ifelse(newdf[["pval"]] <= pval &
+                                             newdf[["logfc"]] <= (-1.0 * logfc),
+                                           "b_downsig", "c_insig")))
+  newdf[["state"]] <- as.factor(newdf[["state"]])
+  df <- rbind(df, newdf)
+  rm(newdf)
+
+  ## Subtract one from each value because I filled in a fake value of each category to start.
+  num_downsig <- sum(df[["state"]] == "b_downsig") - 1
+  num_insig <- sum(df[["state"]] == "c_insig") - 1
+  num_upsig <- sum(df[["state"]] == "a_upsig") - 1
+
+  ## Make double-certain that my states are only factors or numbers where necessary.
+  df[["avg"]] <- as.numeric(df[["avg"]])
+  df[["logfc"]] <- as.numeric(df[["logfc"]])
+  df[["pval"]] <- as.numeric(df[["pval"]])
+  df[["pcut"]] <- as.factor(df[["pcut"]])
+  df[["state"]] <- as.factor(df[["state"]])
+
+  if (!is.null(label_column) && !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[label_column]]
+  } else {
+    df[["label"]] <- rownames(df)
+  }
+
+  ## Set up the labels for the legend by significance.
+  ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
+  ## shape 24 is the up arrow, 25 the down arrow, 21 the circle.
+  state_shapes <- 21
+  if (isTRUE(state_shapes)) {
+    state_shapes <- c(24, 25, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  } else {
+    state_shapes <- c(21, 21, 21)
+    names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
+  }
+
+  plot_colors <- c("#555555", color_high, color_low)
+  names(plot_colors) <- c("c_insig", "a_upsig", "b_downsig")
+
+  ## make the plot!
+  plt <- ggplot(data = df,
+                ## I am setting x, y, fill color, outline color, and the shape.
+                aes(x = .data[["avg"]],
+                    y = .data[["logfc"]],
+                    label = .data[["label"]],
+                    fill = as.factor(.data[["state"]]),
+                    colour = as.factor(.data[["state"]]),
+                    shape = as.factor(.data[["state"]]))) +
+    ggplot2::geom_hline(yintercept = c((logfc * -1.0), logfc),
+                        color = "red", size=(size / 3)) +
+    ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  if (isTRUE(label_numbers)) {
+    plt <- plt +
+      ## The following scale_shape_manual() sets the labels of the legend on the right side.
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  labels = c(
+                                    glue("Up Sig.: {num_upsig}"),
+                                    glue("Down Sig.: {num_downsig}"),
+                                    glue("Insig.: {num_insig}")),
+                                  guide = ggplot2::guide_legend(override.aes = aes(size = 3,
+                                                                                   fill = "grey")))
+  } else {
+    plt <- plt +
+      ggplot2::scale_shape_manual(name = "State", values = state_shapes,
+                                  guide = "none")
+  }
+
+  plt <- plt +
+    ## Set the colors of the significant/insignificant points.
+    ggplot2::scale_fill_manual(name = "state",
+                               values = plot_colors,
+                               guide = "none") +
+    ggplot2::scale_color_manual(name = "state",
+                                values = plot_colors,
+                                guide = "none") +
+    ggplot2::theme_bw(base_size = base_size) +
+    ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black")) +
+    ggplot2::xlab("Average log2(Counts)") +
+    ggplot2::ylab("log2(fold change)")
+
+  ## Recolor a family of genes if requested.
+  if (!is.null(family)) {
+    plt <- recolor_points(plt, df, family, color = family_color)
+  }
+
+  if (!is.null(label)) {
+    reordered_idx <- order(df[["logfc"]])
+    reordered <- df[reordered_idx, ]
+    top <- head(reordered, n = label)
+    bottom <- tail(reordered, n = label)
+    df_subset <- rbind(top, bottom)
+    plt <- plt +
+      ggrepel::geom_text_repel(
+        data = df_subset,
+        aes(label = .data[["label"]], x = .data[["avg"]], y = .data[["logfc"]]),
+        colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
+        point.padding = ggplot2::unit(1.6, "lines"),
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
+  }
+
+  ## Return the plot, some numbers, and the data frame used to make the plot so
+  ## that I may check my work.
+  retlist <- list(
+    "num_upsig" = num_upsig,
+    "num_downsig" = num_downsig,
+    "num_insig" = num_insig,
+    "plot" = plt,
+    "df" = df)
   return(retlist)
 }
 
@@ -679,6 +1146,10 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @param p_name Name of the p-value to put on the plot.
 #' @param p Cutoff defining significant from not.
 #' @param shapes_by_state Add fun shapes for the various significance states?
+#' @param minimum_p If a pvalue is lower than this, then set it to
+#'  this, thus artificially limiting the y-scale of a volcano plot.
+#'  This is only valid if one thinks that the pvalues are artificially
+#'  low and that is messing with the interpretation of the data.
 #' @param size How big are the dots?
 #' @param invert Flip the x-axis?
 #' @param label Label the top/bottom n logFC values?
@@ -702,7 +1173,7 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
                             fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = FALSE,
+                            shapes_by_state = FALSE, minimum_p = NULL,
                             size = 2, invert = FALSE, label = NULL,
                             label_column = "hgncsymbol", ...) {
   low_vert_line <- 0.0 - logfc
@@ -718,13 +1189,17 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]))
   rownames(df) <- rownames(table)
+  if (!is.null(minimum_p)) {
+    low_idx <- df[["yaxis"]] < minimum_p
+    df[low_idx, "yaxis"] <- minimum_p
+  }
 
   if (isTRUE(invert)) {
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
 
   ## Add the label column if it exists.
-  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+  if (!is.null(label_column) && !is.null(table[[label_column]])) {
     df[["label"]] <- table[[label_column]]
   } else {
     df[["label"]] <- rownames(table)
@@ -736,11 +1211,11 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
 
   df[["state"]] <- ifelse(table[[p_col]] > p, "pinsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] >= logfc, "upsig",
-                   ifelse(table[[p_col]] <= p &
-                          table[[fc_col]] <= (-1 * logfc),
-                          "downsig", "fcinsig")))
+                          ifelse(table[[p_col]] <= p &
+                                   table[[fc_col]] >= logfc, "upsig",
+                                 ifelse(table[[p_col]] <= p &
+                                          table[[fc_col]] <= (-1 * logfc),
+                                        "downsig", "fcinsig")))
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
 
@@ -758,8 +1233,8 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   }
   ## Now make sure that the color column has the correct number of elements.
   if (length(color_list) != color_column_number) {
-    message("The color list must have ", color_column_number,
-            ", setting it to the default.")
+    mesg("The color list must have ", color_column_number,
+         ", setting it to the default.")
   }
 
   ## Count the numbers in the categories
@@ -771,12 +1246,14 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   plt <- NULL
   if (isTRUE(shapes_by_state)) {
     plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column, shape = "state"))
+                  aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                      label = .data[["label"]],
+                      fill = color_column, colour = color_column, shape = "state"))
   } else {
     plt <- ggplot(data = df,
-                  aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                             fill = color_column, colour = color_column))
+                  aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                      label = .data[["label"]], fill = .data[[color_column]],
+                      colour = .data[[color_column]]))
   }
 
   ## Now define when to put lines vs. points
@@ -800,13 +1277,13 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   if (isTRUE(shapes_by_state)) {
     plt <- plt +
       ggplot2::scale_shape_manual(
-                   name = "state", values = state_shapes,
-                   labels = c(
-                       glue("Down Sig.: {num_downsig}"),
-                       glue("FC Insig.: {num_fcinsig}"),
-                       glue("P Insig.: {num_pinsig}"),
-                       glue("Up Sig.: {num_upsig}")),
-                   guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
+        name = "state", values = state_shapes,
+        labels = c(
+          glue("Down Sig.: {num_downsig}"),
+          glue("FC Insig.: {num_fcinsig}"),
+          glue("P Insig.: {num_pinsig}"),
+          glue("Up Sig.: {num_upsig}")),
+        guide = ggplot2::guide_legend(override.aes = aes(size = 3, fill = "grey")))
   }
 
   ## Now set the colors and axis labels
@@ -839,7 +1316,8 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
     }
     plt <- plt +
       ggrepel::geom_text_repel(data = df_subset,
-                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               aes(label = .data[["label"]], y = .data[["logyaxis"]],
+                                   x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -872,97 +1350,82 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param label_column Using this column in the data.
 #' @param ... Extra arguments.
 #' @export
-plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
+plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",
                                       line_color = "black", line_position = "bottom", logfc = 1.0,
-                                      p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
+                                      p_col = "adj.P.Val", p_name = "-log10 p-value", pval = 0.05,
                                       shapes_by_state = FALSE,
+                                      color_high = NULL, color_low = NULL,
                                       size = 2, invert = FALSE, label = NULL,
-                                      label_column = "hgncsymbol", ...) {
-  table <- de_result[["all_tables"]][[de_table]]
-
-  ## Make a list of the colors by condition name.
-  colors <- de_result[["input_data"]][["colors"]]
-  start_names <- pData(de_result[["input_data"]])[["condition"]]
-  ## Make sure to do the same sanitization as performed by all_pairwise()
-  sanitized_names <- gsub(x = start_names, pattern = "[[:punct:]]", replacement = "")
-  names(colors) <- sanitized_names
-  single_idx <- !duplicated(colors)
-  colors <- colors[single_idx]
-
-  split <- strsplit(x = de_table, split = "_vs_")
-  numerator <- split[[1]][1]
-  denominator <- split[[1]][2]
-
-  message("Plotting volcano plot of the DE results of ", de_table, " according to the columns: ",
-          fc_col, " and ", p_col, " using the expressionset colors.")
+                                      label_column = "hgncsymbol") {
 
   low_vert_line <- 0.0 - logfc
-  horiz_line <- -1 * log10(p)
+  horiz_line <- -1 * log10(pval)
 
-  if (! fc_col %in% colnames(table)) {
+  if (! fc_col %in% colnames(input)) {
     stop("Column: ", fc_col, " is not in the table.")
   }
-  if (! p_col %in% colnames(table)) {
+  if (! p_col %in% colnames(input)) {
     stop("Column: ", p_col, " is not in the table.")
   }
 
-  df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
-                   "yaxis" = as.numeric(table[[p_col]]))
-  rownames(df) <- rownames(table)
+  df <- data.frame("xaxis" = as.numeric(input[[fc_col]]),
+                   "yaxis" = as.numeric(input[[p_col]]))
+  rownames(df) <- rownames(input)
 
   if (isTRUE(invert)) {
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
 
   ## Add the label column if it exists.
-  if (!is.null(label_column) & !is.null(table[[label_column]])) {
-    df[["label"]] <- table[[label_column]]
+  if (!is.null(label_column) & !is.null(input[[label_column]])) {
+    df[["label"]] <- input[[label_column]]
   } else {
-    df[["label"]] <- rownames(table)
+    df[["label"]] <- rownames(input)
   }
 
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
-  df[["pcut"]] <- df[["yaxis"]] <= p
+  df[["pcut"]] <- df[["yaxis"]] <= pval
   df[["fccut"]] <- abs(df[["xaxis"]]) >= logfc
 
   df[["state"]] <- "insignificant"
-  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= p
-  df[numerator_sig, "state"] <- numerator
-  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= p
-  df[denominator_sig, "state"] <- denominator
+  numerator_sig <- df[["xaxis"]] >= logfc & df[["yaxis"]] <= pval
+  df[numerator_sig, "state"] <- "up"
+  denominator_sig <- df[["xaxis"]] <= -1.0 * logfc & df[["yaxis"]] <= pval
+  df[denominator_sig, "state"] <- "down"
   df[["state"]] <- as.factor(df[["state"]])
 
-  plot_colors <- c("#555555", colors[numerator], colors[denominator])
-  names(plot_colors) <- c("insignificant", numerator, denominator)
+  plot_colors <- c("#555555", color_high, color_low)
+  names(plot_colors) <- c("insignificant", "up", "down")
 
   plt <- ggplot(data = df,
-                aes_string(x = "xaxis", y = "logyaxis", label = "label",
-                           fill = "state", colour = "state"))
+                aes(x = .data[["xaxis"]], y = .data[["logyaxis"]],
+                    label = .data[["label"]], fill = .data[["state"]],
+                    colour = .data[["state"]]))
 
   ## Now define when to put lines vs. points
   if (line_position == "bottom") {
     ## lines, then points.
     plt <- plt +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2)) +
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
   } else {
     ## points, then lines
     plt <- plt +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
-      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = logfc, color = line_color, size=(size / 2)) +
-      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size=(size / 2))
+      ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
+      ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2))
   }
 
   ## Now set the colors and axis labels
   plt <- plt +
-    ggplot2::scale_fill_manual(name = "state", values = colors,
+    ggplot2::scale_fill_manual(name = "state", values = plot_colors,
                                guide = "none") +
-    ggplot2::scale_color_manual(name = "state", values = colors,
+    ggplot2::scale_color_manual(name = "state", values = plot_colors,
                                 guide = "none") +
     ggplot2::xlab(label = fc_name) +
     ggplot2::ylab(label = p_name) +
@@ -988,7 +1451,8 @@ plot_volcano_condition_de <- function(de_result, de_table = 1, alpha = 0.5,
     }
     plt <- plt +
       ggrepel::geom_text_repel(data = df_subset,
-                               aes_string(label = "label", y = "logyaxis", x = "xaxis"),
+                               aes(label = .data[["label"]], y = .data[["logyaxis"]],
+                                   x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -1104,13 +1568,13 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged[["state"]] <- as.factor(merged[["state"]])
 
   first_table_colname <- glue::glue(
-                                   "Table: {first_table}, Type: {first_type}, column: {first_column}")
+    "Table: {first_table}, Type: {first_type}, column: {first_column}")
   second_table_colname <- glue::glue(
-                                    "Table: {second_table}, Type: {second_type}, column: {second_column}")
+    "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data = merged,
-                aes_string(color = "state", fill = "state",
-                           x = "x", y = "y", label = "label")) +
+                aes(color = .data[["state"]], fill = .data[["state"]],
+                    x = .data[["x"]], y = .data[["y"]], label = .data[["label"]])) +
     ggplot2::geom_point(size = 1, alpha = alpha) +
     ggplot2::scale_color_manual(name = "state",
                                 values = c("both"=both_color,
@@ -1128,10 +1592,10 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   model_summary <- summary(model_test)
   cor <- cor.test(merged[[c1]], merged[[c2]], method = "pearson")
   retlist <- list(
-      "plot" = plt,
-      "model" = model_test,
-      "summary" = model_summary,
-      "correlation" = cor)
+    "plot" = plt,
+    "model" = model_test,
+    "summary" = model_summary,
+    "correlation" = cor)
 
   return(retlist)
 }
@@ -1171,35 +1635,35 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
                                  according_to = "all", order = NULL, maximum = NULL, ...) {
   arglist <- list(...)
   sig_lists_up <- list(
-      "limma" = list(),
-      "edger" = list(),
-      "deseq" = list(),
-      "ebseq" = list(),
-      "basic" = list())
+    "limma" = list(),
+    "edger" = list(),
+    "deseq" = list(),
+    "ebseq" = list(),
+    "basic" = list())
   sig_lists_down <- list(
-      "limma" = list(),
-      "edger" = list(),
-      "deseq" = list(),
-      "ebseq" = list(),
-      "basic" = list())
+    "limma" = list(),
+    "edger" = list(),
+    "deseq" = list(),
+    "ebseq" = list(),
+    "basic" = list())
   plots <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   tables_up <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   tables_down <- list(
-      "limma" = NULL,
-      "edger" = NULL,
-      "deseq" = NULL,
-      "ebseq" = NULL,
-      "basic" = NULL)
+    "limma" = NULL,
+    "edger" = NULL,
+    "deseq" = NULL,
+    "ebseq" = NULL,
+    "basic" = NULL)
   table_length <- 0
   fc_names <- c()
 
@@ -1363,23 +1827,23 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
     ## plots[[type]] <- plot_significant_bar(up, down, maximum = maximum) #, ...)
   } ## End iterating over the 3 types, limma/deseq/edger
   retlist <- list(
-      "ups" = uplist,
-      "downs" = downlist,
-      "limma_up_table" = tables_up[["limma"]],
-      "limma_down_table"= tables_down[["limma"]],
-      "limma" = plots[["limma"]],
-      "deseq_up_table" = tables_up[["deseq"]],
-      "deseq_down_table"= tables_down[["deseq"]],
-      "deseq" = plots[["deseq"]],
-      "edger_up_table" = tables_up[["edger"]],
-      "edger_down_table"= tables_down[["edger"]],
-      "edger" = plots[["edger"]],
-      "ebseq_up_table" = tables_up[["ebseq"]],
-      "ebseq_down_table"= tables_down[["ebseq"]],
-      "ebseq" = plots[["ebseq"]],
-      "basic_up_table" = tables_up[["basic"]],
-      "basic_down_table"= tables_down[["basic"]],
-      "basic" = plots[["basic"]]
+    "ups" = uplist,
+    "downs" = downlist,
+    "limma_up_table" = tables_up[["limma"]],
+    "limma_down_table"= tables_down[["limma"]],
+    "limma" = plots[["limma"]],
+    "deseq_up_table" = tables_up[["deseq"]],
+    "deseq_down_table"= tables_down[["deseq"]],
+    "deseq" = plots[["deseq"]],
+    "edger_up_table" = tables_up[["edger"]],
+    "edger_down_table"= tables_down[["edger"]],
+    "edger" = plots[["edger"]],
+    "ebseq_up_table" = tables_up[["ebseq"]],
+    "ebseq_down_table"= tables_down[["ebseq"]],
+    "ebseq" = plots[["ebseq"]],
+    "basic_up_table" = tables_up[["basic"]],
+    "basic_down_table"= tables_down[["basic"]],
+    "basic" = plots[["basic"]]
   )
   return(retlist)
 }

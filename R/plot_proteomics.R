@@ -55,8 +55,8 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
 
   chosen_palette <- "Dark2"
   sample_colors <- sm(
-      grDevices::colorRampPalette(
-                     RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+    grDevices::colorRampPalette(
+      RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
 
   ## Randomize the rows of the df so we can see if any sample is actually overrepresented
   plot_df <- plot_df[sample(nrow(plot_df)), ]
@@ -68,15 +68,15 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
     plot_df[["intensity"]] <- check_plot_scale(plot_df[["intensity"]], scale)[["data"]]
   }
 
-  int_vs_mz <- ggplot(data = plot_df, aes_string(x = "mz", y = "intensity",
-                                                 fill = "sample", colour = "sample")) +
+  int_vs_mz <- ggplot(data = plot_df, aes(x = .data[["mz"]], y = .data[["intensity"]],
+                                          fill = "sample", colour = "sample")) +
     ggplot2::geom_point(alpha = alpha, size = 0.5) +
     ggplot2::scale_fill_manual(
-                 name = "Sample", values = sample_colors,
-                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+      name = "Sample", values = sample_colors,
+      guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::scale_color_manual(
-                 name = "Sample", values = sample_colors,
-                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+      name = "Sample", values = sample_colors,
+      guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::theme_bw(base_size = base_size)
 
   if (!is.null(x_scale)) {
@@ -91,8 +91,8 @@ plot_intensity_mz <- function(mzxml_data, loess = FALSE, alpha = 0.5, ms1=TRUE, 
       ggplot2::geom_smooth(method = "loess", size = 1.0)
   }
   retlist <- list(
-      "data" = plotted_data,
-      "plot" = int_vs_mz)
+    "data" = plotted_data,
+    "plot" = int_vs_mz)
   return(retlist)
 }
 
@@ -159,16 +159,17 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
   plot_df[[column]] <- scale_data[["data"]]
   plot_df[["color"]] <- as.factor(plot_df[["color"]])
 
-  boxplot <- ggplot2::ggplot(data = plot_df, ggplot2::aes_string(x = "sample", y = column))
+  boxplot <- ggplot(
+    data = plot_df, ggplot2::aes(x = .data[["sample"]], y = .data[[column]]))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
-      ggplot2::geom_violin(aes_string(fill = "sample"),
+      ggplot2::geom_violin(aes(fill = .data[["sample"]]),
                            width = 1, scale = "area", show.legend = FALSE) +
       ggplot2::geom_boxplot(na.rm = TRUE, alpha = 0.3, color = "black", size = 0.5,
                             outlier.alpha = 0.01, width = 0.2)
   } else {
     boxplot <- boxplot +
-      sm(ggplot2::geom_boxplot(aes_string(fill = "sample"),
+      sm(ggplot2::geom_boxplot(aes(fill = .data[["sample"]]),
                                na.rm = TRUE, fill = colors, size = 0.5,
                                outlier.size = 1.5,
                                outlier.colour = ggplot2::alpha("black", 0.2)))
@@ -292,8 +293,8 @@ plot_pyprophet_counts <- function(pyprophet_data, type = "count", keep_real = TR
                                ylabel = y_label)
 
   retlist <- list(
-      "df" = plotted_data,
-      "plot" = our_plot)
+    "df" = plotted_data,
+    "plot" = our_plot)
   return(retlist)
 }
 
@@ -356,19 +357,19 @@ plot_pyprophet_xy <- function(pyprophet_data, keep_real = TRUE, size = 6, label_
   names(color_list) <- as.character(color_listing[["condition"]])
 
   sc_plot <- ggplot(data = the_df,
-                    aes_string(x = x_type, y = y_type, label = "id")) +
+                    aes(x = .data[[x_type]], y = .data[[y_type]], label = .data[["id"]])) +
     ggplot2::geom_point(size = size, shape = 21,
-                        aes_string(colour = "as.factor(condition)",
-                                   fill = "as.factor(condition)")) +
+                        aes(colour = as.factor(.data[["condition"]]),
+                            fill = as.factor(.data[["condition"]]))) +
     ggplot2::geom_point(size = size, shape = 21, colour = "black", show.legend = FALSE,
-                        aes_string(fill = "as.factor(condition)")) +
+                        aes(fill = as.factor(.data[["condition"]]))) +
     ggplot2::scale_color_manual(name = "Condition",
                                 guide = "legend",
                                 values = color_list) +
     ggplot2::scale_fill_manual(name = "Condition",
                                guide = "legend",
                                values = color_list) +
-    ggrepel::geom_text_repel(aes_string(label = "id"),
+    ggrepel::geom_text_repel(aes(label = .data[["id"]]),
                              size = label_size, box.padding = ggplot2::unit(0.5, "lines"),
                              point.padding = ggplot2::unit(1.6, "lines"),
                              arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
@@ -476,9 +477,9 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   if (!is.null(label_chars) & is.numeric(label_chars)) {
     plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength = label_chars)
   }
-  boxplot <- ggplot2::ggplot(data = plot_df, ggplot2::aes_string(x = "sample", y = column)) +
+  boxplot <- ggplot(data = plot_df, aes(x = .data[["sample"]], y = .data[[column]])) +
     sm(ggplot2::geom_boxplot(na.rm = TRUE,
-                             ggplot2::aes_string(fill = "sample"),
+                             ggplot2::aes(fill = .data[["sample"]]),
                              fill = colors,
                              size = 0.5,
                              outlier.size = 1.5,
@@ -490,9 +491,10 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   if (!is.null(plot_title)) {
     boxplot <- boxplot + ggplot2::ggtitle(plot_title)
   }
-
-  density <- ggplot(data = plot_df, ggplot2::aes_string(x = column, colour = "sample")) +
-    ggplot2::geom_density(aes_string(x = column, y = "..count..", fill = "sample"),
+  count <- NULL
+  density <- ggplot(
+    data = plot_df, aes(x = .data[[column]], colour = .data[["sample"]])) +
+    ggplot2::geom_density(aes(x = .data[[column]], y = ggplot2::after_stat(count), fill = .data[["sample"]]),
                           position = "identity", na.rm = TRUE) +
     ggplot2::scale_colour_manual(values = as.character(colors)) +
     ggplot2::scale_fill_manual(values = ggplot2::alpha(as.character(colors), 0.1)) +
@@ -503,9 +505,9 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
                    legend.key.size = ggplot2::unit(0.3, "cm"))
   density <- directlabels::direct.label(density)
 
-  violin <- ggplot(data = plot_df, aes_string(x = "sample", y = column)) +
-    ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area") +
-    ggplot2::geom_boxplot(aes_string(fill = "sample"), outlier.alpha = 0.01, width = 0.2) +
+  violin <- ggplot(data = plot_df, aes(x = .data[["sample"]], y = .data[[column]])) +
+    ggplot2::geom_violin(aes(fill = .data[["sample"]]), width = 1, scale = "area") +
+    ggplot2::geom_boxplot(aes(fill = .data[["sample"]]), outlier.alpha = 0.01, width = 0.2) +
     ggplot2::scale_fill_manual(values = as.character(colors)) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
@@ -531,10 +533,10 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   }
 
   retlist <- list(
-      "violin" = violin,
-      "boxplot" = boxplot,
-      "dotboxplot" = dotboxplot,
-      "density" = density)
+    "violin" = violin,
+    "boxplot" = boxplot,
+    "dotboxplot" = dotboxplot,
+    "density" = density)
   return(retlist)
 }
 
@@ -710,8 +712,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
   }
 
   sum_obs <- sum(obs)
-  violin <- ggplot2::ggplot(data = final_df, ggplot2::aes_string(x = "sample", y = column)) +
-    ggplot2::geom_violin(aes_string(fill = "sample"), width = 1, scale = "area") +
+  violin <- ggplot(data = final_df, aes(x = .data[["sample"]], y = .data[[column]])) +
+    ggplot2::geom_violin(aes(fill = .data[["sample"]]), width = 1, scale = "area") +
     ggplot2::scale_fill_manual(values = as.character(kept_colors)) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
@@ -730,8 +732,8 @@ plot_pyprophet_protein <- function(pyprophet_data, column = "intensity", keep_re
 
   if (scale == "log") {
     violin <- violin + ggplot2::scale_y_continuous(
-                                    labels = scales::scientific,
-                                    trans = scales::log2_trans())
+      labels = scales::scientific,
+      trans = scales::log2_trans())
   } else if (scale == "logdim") {
     violin <- violin + ggplot2::coord_trans(y = "log2")
   } else if (isTRUE(scale)) {
@@ -802,8 +804,8 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
   if (color_by == "sample") {
     chosen_palette <- "Dark2"
     sample_colors <- sm(
-        grDevices::colorRampPalette(
-                       RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
+      grDevices::colorRampPalette(
+        RColorBrewer::brewer.pal(samples, chosen_palette))(samples))
   } else {
     sample_colors <- colors
   }
@@ -825,15 +827,16 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
     plot_df[[yaxis]] <- check_plot_scale(plot_df[[yaxis]], scale)[["data"]]
   }
 
-  x_vs_y <- ggplot(data = plot_df, aes_string(x = xaxis, y = yaxis,
-                                              fill = "sample", colour = "sample")) +
+  x_vs_y <- ggplot(data = plot_df, aes(x = .data[[xaxis]], y = .data[[yaxis]],
+                                       fill = .data[["sample"]],
+                                       colour = .data[["sample"]])) +
     ggplot2::geom_point(alpha = alpha, size = 0.5) +
     ggplot2::scale_fill_manual(
-                 name = "Sample", values = sample_colors,
-                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+      name = "Sample", values = sample_colors,
+      guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::scale_color_manual(
-                 name = "Sample", values = sample_colors,
-                 guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
+      name = "Sample", values = sample_colors,
+      guide = ggplot2::guide_legend(override.aes = aes(size = 3))) +
     ggplot2::theme_bw(base_size = base_size)
 
   if (!is.null(xscale)) {
@@ -854,8 +857,8 @@ plot_pyprophet_points <- function(pyprophet_data, xaxis = "mass", xscale = NULL,
     x_vs_y <- x_vs_y + ggplot2::geom_rug(colour = "gray50", alpha = alpha)
   }
   retlist <- list(
-      "data" = plot_df,
-      "plot" = x_vs_y)
+    "data" = plot_df,
+    "plot" = x_vs_y)
   return(retlist)
 }
 
@@ -899,8 +902,8 @@ plot_peprophet_data <- function(table, xaxis = "precursor_neutral_mass", xscale 
     color_list <- c("darkred", "darkblue")
   } else {
     color_list <- sm(
-        grDevices::colorRampPalette(
-                       RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
+      grDevices::colorRampPalette(
+        RColorBrewer::brewer.pal(num_colors, chosen_palette))(num_colors))
   }
 
   if (is.null(table[[xaxis]])) {
@@ -928,13 +931,13 @@ plot_peprophet_data <- function(table, xaxis = "precursor_neutral_mass", xscale 
   range <- as.numeric(quantile(unique(table[["size"]])))
   table[table[["size"]] >= range[[5]], "size"] <- "06biggest"
   table[table[["size"]] >= range[[4]] &
-        table[["size"]] < range[[5]], "size"] <- "05big"
+          table[["size"]] < range[[5]], "size"] <- "05big"
   table[table[["size"]] >= range[[3]] &
-        table[["size"]] < range[[4]], "size"] <- "04medium_big"
+          table[["size"]] < range[[4]], "size"] <- "04medium_big"
   table[table[["size"]] >= range[[2]] &
-        table[["size"]] < range[[3]], "size"] <- "03medium_small"
+          table[["size"]] < range[[3]], "size"] <- "03medium_small"
   table[table[["size"]] >= range[[1]] &
-        table[["size"]] < range[[2]], "size"] <- "02small"
+          table[["size"]] < range[[2]], "size"] <- "02small"
   table[table[["size"]] < range[[1]], "size"] <- "01smallest"
 
   ## Setting the factor/vector of sizes is a bit confusing to me.
@@ -971,9 +974,10 @@ plot_peprophet_data <- function(table, xaxis = "precursor_neutral_mass", xscale 
 
   table[["text"]] <- glue("{table[['protein']]}:{table[['peptide']]}")
 
-  a_plot <- ggplot(data = table, aes_string(x = xaxis, y = yaxis, text = "text",
-                                            color = "color", size = "size")) +
-    ggplot2::geom_point(alpha = 0.4, aes_string(fill = "color", color = "color")) +
+  a_plot <- ggplot(
+    data = table, aes(x = .data[[xaxis]], y = .data[[yaxis]],
+                      text = .data[["text"]], color = .data[["color"]], size = .data[["size"]])) +
+    ggplot2::geom_point(alpha = 0.4, aes(fill = .data[["color"]], color = .data[["color"]])) +
     ggplot2::scale_color_manual(name = "color", values = color_list) +
     ggplot2::geom_rug() +
     ggplot2::scale_size_manual(values = c(0.2, 0.6, 1.0, 1.4, 1.8, 2.2))
@@ -1054,13 +1058,13 @@ cleavage_histogram <- function(pep_sequences, enzyme = "trypsin",
     dplyr::rowwise() %>%
     dplyr::mutate(mass = gather_masses(sequence))
 
-  plot <- ggplot2::ggplot(data = new_df, ggplot2::aes_string(x = "mass")) +
+  plot <- ggplot(data = new_df, aes(x = .data[["mass"]])) +
     ggplot2::geom_histogram(binwidth = 1, colour = color) +
     ggplot2::scale_x_continuous(limits = c(start, end))
 
   retlist <- list(
-      "plot" = plot,
-      "masses" = new_df)
+    "plot" = plot,
+    "masses" = new_df)
   return(retlist)
 }
 

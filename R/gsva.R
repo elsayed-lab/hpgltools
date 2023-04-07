@@ -11,6 +11,7 @@
 #' @param orgdb Using this orgdb instance.
 #' @return New vector of ENTREZ IDs.
 #' @seealso [AnnotationDbi]
+#' @export
 convert_ids <- function(ids, from = "ENSEMBL", to = "ENTREZID", orgdb = "org.Hs.eg.db") {
   lib_result <- sm(requireNamespace(orgdb))
   att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))

@@ -5,10 +5,10 @@
 \title{The real worker.  This extracts positions for a single chromosome and puts
 them into a parallelizable data structure.}
 \usage{
-snp_by_chr(medians, chr_name = "01", limit = 1)
+snp_by_chr(observations, chr_name = "01", limit = 1)
 }
 \arguments{
-\item{medians}{A set of medians by position to look through}
+\item{observations}{A set of observations by position to look through}
 
 \item{chr_name}{Chromosome name to search}
 

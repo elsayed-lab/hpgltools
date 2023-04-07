@@ -18,6 +18,7 @@ simple_goseq(
   padjust_method = "BH",
   expand_categories = TRUE,
   excel = NULL,
+  enrich = TRUE,
   ...
 )
 }

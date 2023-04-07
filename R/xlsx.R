@@ -212,13 +212,28 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 #'   xls_coords <- write_xlsx(another_df, wb = xls_coords$workbook,
 #'                           sheet = "hpgl_data", start_row = xls_coords$end_col)
 #'  }
-#'
 #' @export
 write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, rownames = TRUE,
                        start_row = 1, start_col = 1, title = NULL, ...) {
   arglist <- list(...)
   if (is.null(data)) {
     return(NULL)
+  }
+  if (class(data)[[1]] == "list") {
+    written <- NULL
+    for (element in seq_along(data)) {
+      sheet_name <- names(data)[element]
+      one_df <- data[[sheet_name]]
+      if (!is.null(written[["workbook"]])) {
+        wb <- written[["workbook"]]
+        print(names(wb))
+      }
+      written <- write_xlsx(data = one_df, wb = wb, sheet = sheet_name, excel = excel, rownames = rownames,
+                            start_row = start_row, start_col = start_col, title = title)
+      print(names(written[["workbook"]]))
+    }
+
+    return(written)
   }
   if ("matrix" %in% class(data) | "character" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
@@ -229,7 +244,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 
   if (!is.null(excel)) {
     xlsx <- init_xlsx(excel = excel)
-    wb <- xlsx[["wb"]]
+    if (is.null(wb)) {
+      wb <- xlsx[["wb"]]
+    }
   }
 
   ## Heading style 1 (For titles)
@@ -285,6 +302,10 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
       final_data[[col]] <- as.character(final_data[[col]])
     }
   }  ## Finished adjusting stupid column types.
+  ## One more check that there are no '.'s in the column names,
+  ## apparently excel doesn't like that sometimes (but others it doesn't care)
+  colnames(final_data) = gsub(x = colnames(final_data),
+                              pattern = "\\.", replacement = "_")
 
   written <- try(openxlsx::writeDataTable(wb = wb, sheet = sheet, x = final_data, startCol = new_col,
                                           startRow = new_row, tableStyle = table_style,
@@ -421,7 +442,12 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     }
     dev.off()
   }
-  png_name <- tempfile(pattern = "figureImage", fileext = glue(".{file_type}"))
+  png_name <- try(tempfile(pattern = "figureImage", fileext = glue(".{file_type}")))
+  if ("try-error" %in% class(png_name)) {
+    warning("There are too many tmp files in your current Rtmp directory.")
+    warning("You need to clean it out ASAP.")
+    png_name <- try(tempfile(pattern = "figureImage2", fileext = glue(".{file_type}")))
+  }
   png_ret <- try(png(filename = png_name,
                      width = width,
                      height = height,

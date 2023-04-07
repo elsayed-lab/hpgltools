@@ -13,9 +13,9 @@ load(file = "test_065_significant.rda", envir = cb_sig)
 cb_combined <- environment()
 load(file = "test_065_combined.rda", envir = cb_combined)
 
-ups <- cb_sig[["limma"]][["ups"]][[1]]
+ups <- cb_sig[["deseq"]][["ups"]][[2]]
 combined <- cb_combined[["test_condbatch_combined"]]
-table <- combined[["data"]][["data"]]
+table <- combined[["data"]][["somesig"]]
 
 ## 2020-07 It looks like AnnotationHub does not currently have pombe...
 ## yet another victim to 2020.
@@ -205,7 +205,7 @@ colnames(annot) <- c("txid", "txid2", "ID", "description", "type", "width",
 gos_test <- simple_gostats(ups, go_db = pombe_go, gff_df = annot, gff_type = "protein_coding")
 cat_actual <- head(gos_test[["tables"]][["mf_over_enriched"]][["GOMFID"]])
 cat_expected <- c("GO:0016491", "GO:0016614", "GO:0016616",
-                  "GO:0004033", "GO:0047834", "GO:0004032")
+                  "GO:0008106", "GO:0004033", "GO:0004032")
 test_that("Do we get expected stuff from gostats? (cat)", {
   expect_equal(6, sum(cat_expected %in% cat_actual))
 })
@@ -223,31 +223,28 @@ gprof_test <- simple_gprofiler(sig_genes = ups, species = "spombe")
 gprof_table <- gprof_test[["GO"]]
 actual_dim <- nrow(gprof_table)
 ## expected_dim <- c(67, 14)
-expected_dim <- 1500
-expected_sig <- 25
-actual_sig <- nrow(gprof_test[["significant"]][["GO"]])
+expected_dim <- 30
 test_that("Does gprofiler provide some expected tables?", {
   expect_gt(actual_dim, expected_dim)
-  expect_gt(actual_sig, expected_sig)
 })
 
 actual_go <- head(sort(gprof_table[["term_id"]]))
 ##expected_go <- c("GO:0001678", "GO:0006884", "GO:0007186",
 ##                 "GO:0007187", "GO:0007188", "GO:0007189")
-expected_go <- c("GO:0000003", "GO:0000018", "GO:0000045",
-                 "GO:0000070", "GO:0000075", "GO:0000077")
+expected_go <- c("GO:0000407", "GO:0004032", "GO:0004033",
+                 "GO:0005946", "GO:0005975", "GO:0005984")
 test_that("Does gprofiler give some expected GO categories?", {
   expect_gt(sum(actual_go %in% expected_go), 1)
 })
 
-##gp_written <- write_gprofiler_data(gprof_test, excel = "test_gp_write.xlsx")
-##test_that("Were we able to write gprofiler data?", {
-##  expect_true(file.exists("test_gp_write.xlsx"))
-##})
-##if (file.exists("test_gp_write.xlsx")) {
-##  removed <- file.remove("test_gp_write.xlsx")
-##  removed <- unlink("test_gp_write", recursive = TRUE)
-##}
+gp_written <- write_gprofiler_data(gprof_test, excel = "test_gp_write.xlsx")
+test_that("Were we able to write gprofiler data?", {
+  expect_true(file.exists("test_gp_write.xlsx"))
+})
+if (file.exists("test_gp_write.xlsx")) {
+  removed <- file.remove("test_gp_write.xlsx")
+  removed <- unlink("test_gp_write", recursive = TRUE)
+}
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))

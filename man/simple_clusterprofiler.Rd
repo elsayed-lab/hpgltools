@@ -14,7 +14,7 @@ simple_clusterprofiler(
   pcutoff = 0.05,
   qcutoff = 0.1,
   fc_column = "logFC",
-  second_fc_column = "limma_logfc",
+  second_fc_column = "deseq_logfc",
   updown = "up",
   permutations = 1000,
   min_groupsize = 5,

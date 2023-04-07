@@ -10,7 +10,10 @@ create_scd(
   vdj_t_column = "vdjtcells",
   vdj_b_column = "vdjbcells",
   prefix = NULL,
-  separate = FALSE
+  separate = FALSE,
+  types = "gex",
+  mito_pattern = "^mt-",
+  ribo_pattern = "^Rp[sl]"
 )
 }
 \arguments{

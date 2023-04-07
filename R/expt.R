@@ -34,13 +34,20 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
+  num_shared <- rownames(exp1) %in% rownames(exp2)
+  total_num <- nrow(exp1)
+  if ((num_shared / total_num) < 0.8) {
+    warning("There are many gene IDs which are not shared among the two datasets, this may fail.")
+    message("There are many gene IDs which are not shared among the two datasets.")
+    message("Here are some from the first: ", head(rownames(exp1)))
+    message("Here are some from the second: ", head(rownames(exp2)))
+  }
+
   if (isTRUE(merge_meta)) {
     design1 <- pData(exp1)
-    d1_rows <- 1:nrow(design1)
+    d1_rows <- seq_len(nrow(design1))
     design2 <- pData(exp2)
     both <- as.data.frame(data.table::rbindlist(list(design1, design2), fill = TRUE))
-    ## na_idx <- is.na(both)
-    ## both[na_idx] <- ""
     d2_rows <- (nrow(design1) + 1):nrow(both)
     new_design1 <- both[d1_rows, ]
     rownames(new_design1) <- rownames(design1)
@@ -50,7 +57,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     pData(exp2) <- new_design2
   }
 
-  new <- combine(exp1, exp2)
+  new <- BiocGenerics::combine(exp1, exp2)
   expt1[["expressionset"]] <- new
   expt1[["design"]] <- pData(new)
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
@@ -83,16 +90,16 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     merged <- merge(scaled1[["abundance"]], scaled2[["abundance"]], by = "row.names",
                     all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["abundance"]] <- merged
     merged <- merge(scaled1[["counts"]], scaled2[["counts"]], by = "row.names",
                     all.x = all_x, all.y = all_y)
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["counts"]] <- merged
     merged <- merge(scaled1[["length"]], scaled2[["length"]], by = "row.names")
     rownames(merged) <- merged[["Row.names"]]
-    merged <- merged[, -1]
+    merged[["Row.names"]] <- NULL
     expt1[["tximport"]][["scaled"]][["length"]] <- merged
   }
 
@@ -1177,16 +1184,26 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
 
   medians <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   cvs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  mins <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  maxs <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
+  sums <- data.frame("ID" = rownames(data), stringsAsFactors = FALSE)
   data <- as.matrix(data)
   rownames(medians) <- rownames(data)
   rownames(cvs) <- rownames(data)
+  rownames(mins) <- rownames(data)
+  rownames(maxs) <- rownames(data)
+  rownames(sums) <- rownames(data)
   fact <- as.factor(fact)
   used_columns <- c()
   group_indexes <- list()
+  samples_per_condition <- c()
+  condition_names <- c()
   for (type in levels(fact)) {
     ## columns <- grep(pattern = type, x = fact)
     columns <- as.character(fact) == type
     group_indexes[[type]] <- columns
+    samples_per_condition <- c(sum(columns), samples_per_condition)
+    condition_names <- c(type, condition_names)
     med <- NULL
     if (sum(columns) < 1) {
       warning("The level ", type, " of the factor has no columns.")
@@ -1197,7 +1214,13 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
       message("The factor ", type, " has only 1 row.")
       med <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
       cv <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      min <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      max <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
+      sum <- as.data.frame(data[, columns], stringsAsFactors = FALSE)
     } else {
+      min <- MatrixGenerics::rowMins(data[, columns], na.rm = TRUE)
+      max <- MatrixGenerics::rowMaxs(data[, columns], na.rm = TRUE)
+      sum <- rowSums(data[, columns], na.rm = TRUE)
       if (fun == "median") {
         message("The factor ", type, " has ", sum(columns), " rows.")
         med <- matrixStats::rowMedians(data[, columns], na.rm = TRUE)
@@ -1219,18 +1242,32 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
     }
     medians <- cbind(medians, med)
     cvs <- cbind(cvs, cv)
+    mins <- cbind(mins, min)
+    maxs <- cbind(maxs, max)
+    sums <- cbind(sums, sum)
   }
+  names(samples_per_condition) <- condition_names
   medians <- medians[, -1, drop = FALSE]
   cvs <- cvs[, -1, drop = FALSE]
+  mins <- mins[, -1, drop = FALSE]
+  maxs <- maxs[, -1, drop = FALSE]
+  sums <- sums[, -1, drop = FALSE]
   ## Sometimes not all levels of the original experimental design are used.
   ## Thus lets make sure to use only those which appeared.
   colnames(medians) <- used_columns
   colnames(cvs) <- used_columns
+  colnames(mins) <- used_columns
+  colnames(maxs) <- used_columns
+  colnames(sums) <- used_columns
   retlist <- list(
-      "method" = fun,
-      "medians" = medians,
-      "cvs" = cvs,
-      "indexes" = group_indexes)
+    "samples_per_condition" = samples_per_condition,
+    "method" = fun,
+    "medians" = medians,
+    "cvs" = cvs,
+    "mins" = mins,
+    "maxs" = maxs,
+    "sums" = sums,
+    "indexes" = group_indexes)
   return(retlist)
 }
 
@@ -1690,6 +1727,21 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["design"]][["batch"]] <- fact
   print(table(pData(expt)[["batch"]]))
   return(expt)
+}
+
+#' Get a named vector of colors by condition.
+#'
+#' Usually we give a vector of all samples by colors.  This just
+#' simplifies that to one element each.  Currently only used in
+#' combine_de_tables() but I think it will have use elsewhere.
+get_expt_colors <- function(expt) {
+  all_colors <- expt[["colors"]]
+  condition_fact <- as.character(pData(expt)[["condition"]])
+  condition_fact <- gsub(x = condition_fact, pattern = "[[:punct:]]", replacement = "")
+  names(all_colors) <- condition_fact
+  single_idx <- !duplicated(all_colors)
+  all_colors <- all_colors[single_idx]
+  return(all_colors)
 }
 
 #' Change the colors of an expt
@@ -2412,10 +2464,15 @@ variance_expt <- function(expt) {
   df <- exprs(expt)
   vars <- matrixStats::rowVars(df)
   sds <- matrixStats::rowSds(df)
+  meds <- matrixStats::rowMedians(df)
+  iqrs <- matrixStats::rowIQRs(df)
   mean <- rowMeans(df)
   fData(expt)[["exprs_gene_variance"]] <- vars
   fData(expt)[["exprs_gene_stdev"]] <- sds
   fData(expt)[["exprs_gene_mean"]] <- mean
+  fData(expt)[["exprs_gene_median"]] <- meds
+  fData(expt)[["exprs_gene_interquart"]] <- iqrs
+  fData(expt)[["exprs_cv"]] <- sds / mean
   return(expt)
 }
 
