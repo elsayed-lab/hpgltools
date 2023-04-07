@@ -6,10 +6,12 @@
 \usage{
 extract_de_plots(
   pairwise,
+  combined,
   type = "edger",
   invert = FALSE,
-  x = NULL,
-  y = NULL,
+  invert_colors = c(),
+  numerator = NULL,
+  denominator = NULL,
   alpha = 0.4,
   z = 1.5,
   logfc = 1,
@@ -19,7 +21,9 @@ extract_de_plots(
   color_high = NULL,
   color_low = NULL,
   loess = FALSE,
-  z_lines = FALSE
+  z_lines = FALSE,
+  label = label,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{

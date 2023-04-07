@@ -126,6 +126,7 @@ actual <- a909_sig[["summary_df"]]["low_vs_control", "edger_up"]
 test_that("Did we get the expected number of up genes between low Ca+ and control according to EdgeR?", {
   expect_gt(actual, expected)
 })
+removed <- file.remove("a909_sig.xlsx")
 
 colors <- c("990000", "008800", "000000", "0000AA")
 names(colors) <- c("E", "NE", "S", "U")

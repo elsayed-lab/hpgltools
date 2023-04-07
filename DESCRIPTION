@@ -74,6 +74,7 @@ Collate:
   'annotation_txt.R'
   'annotation_uniprot.R'
   'annotation_shared.R'
+  'classify.R'
   'de_shared.R'
   'de_basic.R'
   'de_edger.R'

@@ -273,7 +273,8 @@ write_suppa_table <- function(table, annotations = NULL, by_table = "gene_name",
 plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NULL,
                        sig_threshold = 0.05, dpsi_threshold = 0.7,
                        label_type = NULL, alpha = 0.7) {
-  if (is.null(se) & is.null(a5ss) & is.null(a3ss) & is.null(mxe) & is.null(ri)) {
+  if (is.null(se) && is.null(a5ss) && is.null(a3ss) &&
+        is.null(mxe) && is.null(ri)) {
     stop("No data was provided.")
   }
 
@@ -289,7 +290,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   a5ss_data <- data.frame()
   if (class(a5ss) == "character") {
     a5ss_data <- read.table(a5ss, header = TRUE)
-  } else if (class(a5ss) == "data.frame" | class(a5ss) == "NULL") {
+  } else if (class(a5ss)[1] == "data.frame" || class(a5ss)[1] == "NULL") {
     a5ss_data <- a5ss_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -298,7 +299,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   a3ss_data <- data.frame()
   if (class(a3ss) == "character") {
     a3ss_data <- read.table(a3ss, header = TRUE)
-  } else if (class(a3ss) == "data.frame" | class(a3ss) == "NULL") {
+  } else if (class(a3ss)[1] == "data.frame" || class(a3ss)[1] == "NULL") {
     a3ss_data <- a3ss_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -307,7 +308,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   mxe_data <- data.frame()
   if (class(mxe) == "character") {
     mxe_data <- read.table(mxe, header = TRUE)
-  } else if (class(mxe) == "data.frame" | class(mxe) == "NULL") {
+  } else if (class(mxe)[1] == "data.frame" || class(mxe)[1] == "NULL") {
     mxe_data <- mxe_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -316,7 +317,7 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   ri_data <- data.frame()
   if (class(ri) == "character") {
     ri_data <- read.table(ri, header = TRUE)
-  } else if (class(ri) == "data.frame" | class(ri) == "NULL") {
+  } else if (class(ri)[1] == "data.frame" || class(ri)[1] == "NULL") {
     ri_data <- ri_data
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
@@ -370,11 +371,17 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
   plotting_data[["l2a"]] <- suppressWarnings(as.numeric(plotting_data[["l2a"]]))
   plotting_data[["l2b"]] <- suppressWarnings(as.numeric(plotting_data[["l2b"]]))
   plotting_data[["id"]] <- rownames(plotting_data)
-  suppressWarnings(plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm = TRUE)), by = id])
-  plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm = TRUE)), by = id]
-  plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm = TRUE)), by = id]
+  ## suppressWarnings(plotting_data[, `:=` (l1mean = mean(c(l1a, l1b), na.rm = TRUE)), by = id])
+  plotting_data <- plotting_data %>%
+    group_by(id) %>%
+    dplyr::mutate(l1mean = mean(c(l1a, l1b), na.rm = TRUE),
+                  l2mean = mean(c(l2a, l2b), na.rm = TRUE),
+                  all_mean = mean(c(l1mean, l2mean), na.rm = TRUE))
+  ## plotting_data[, `:=` (l2mean = mean(c(l2a, l2b), na.rm = TRUE)), by = id]
+  ## plotting_data[, `:=` (all_mean = mean(c(l1mean, l2mean), na.rm = TRUE)), by = id]
   plotting_data[["check"]] <- plotting_data[["l1mean"]] - plotting_data[["l2mean"]]
-  test <- all.equal(plotting_data[["check"]], plotting_data[["dpsi"]], tolerance = 0.01)
+  test <- all.equal(plotting_data[["check"]],
+                    plotting_data[["dpsi"]], tolerance = 0.01)
   plotting_data[["log10pval"]] <- -1.0 * log10(plotting_data[["pvalue"]])
   plotting_data[["log10adjpval"]] <- -1.0 * log10(plotting_data[["adjp"]])
 
@@ -426,8 +433,8 @@ plot_rmats <- function(se = NULL, a5ss = NULL, a3ss = NULL, mxe = NULL, ri = NUL
                                  aes(x = .data[["dpsi"]], y = .data[["log10pval"]],
                                      color = .data[["psig"]])) +
     ggplot2::geom_point() +
-    ggplot2::geom_vline(xintercept = c(-0.5, 0.5), size = 1) +
-    ggplot2::geom_hline(yintercept = 1.3, size = 1)
+    ggplot2::geom_vline(xintercept = c(-0.5, 0.5), linewidth = 1) +
+    ggplot2::geom_hline(yintercept = 1.3, linewidth = 1)
 
   ## Now a somewhat more involved ma plot, first dropping the super-low tpm stuff
   label_subset_idx <- plotting_data[["psig"]] == TRUE

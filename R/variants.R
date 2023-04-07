@@ -316,10 +316,12 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 #' @param column Column from the bcf file to read.
 #' @seealso [readr]
 #' @return A big honking data table.
-read_snp_columns <- function(samples, file_lst, column = "diff_count") {
+read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose = FALSE) {
   ## Read the first file
   first_sample <- samples[1]
-  mesg("Reading sample: ", first_sample, ".")
+  if (isTRUE(verbose)) {
+    mesg("Reading sample: ", first_sample, ".")
+  }
   first_file <- file_lst[1]
   first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
   colnames(first_read) <- make.names(

@@ -12,8 +12,11 @@ combine_single_de_table(
   ba = NULL,
   table_name = "",
   final_table_names = c(),
+  wanted_numerator = NULL,
+  wanted_denominator = NULL,
+  invert_table = FALSE,
+  invert_plots = FALSE,
   annot_df = NULL,
-  do_inverse = FALSE,
   adjp = TRUE,
   padj_type = "fdr",
   include_deseq = TRUE,
@@ -45,8 +48,6 @@ combine_single_de_table(
 
 \item{annot_df}{Add some annotation information?}
 
-\item{do_inverse}{Invert the fold changes?}
-
 \item{adjp}{Use adjusted p-values?}
 
 \item{padj_type}{Add this consistent p-adjustment.}
@@ -71,6 +72,8 @@ numeric to not use any significant digit formatting.}
 \item{excludes}{Set of genes to exclude from the output.}
 
 \item{sheet_count}{What sheet is being written?}
+
+\item{do_inverse}{Invert the fold changes?}
 }
 \value{
 List containing a) Dataframe containing the merged

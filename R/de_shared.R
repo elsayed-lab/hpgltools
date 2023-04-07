@@ -8,7 +8,6 @@
 #' comparisons, sets up experimental models appropriate for the differential
 #' expression analyses, and performs them.
 #'
-#' Tested in test_29de_shared.R
 #' This runs limma_pairwise(), deseq_pairwise(), edger_pairwise(),
 #' basic_pairwise() each in turn. It collects the results and does some simple
 #' comparisons among them.
@@ -92,7 +91,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     }
     if (!is.null(filter)) {
       mesg("This will pre-filter the input data using normalize_expt's: ",
-              filter, " argument.")
+           filter, " argument.")
     }
   } else {
     mesg("This analysis is not using the condition factor from the data.")
@@ -607,11 +606,11 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
       na_idx <- is.na(data)
       data[na_idx] <- 0
       warn_user <- 1
-    } else if (norm_state != "raw" & tran_state != "raw" & conv_state != "raw") {
+    } else if (norm_state != "raw" && tran_state != "raw" && conv_state != "raw") {
       ## These if statements may be insufficient to check for the appropriate
       ## input for deseq.
       data <- exprs(input[["original_expressionset"]])
-    } else if (norm_state != "raw" | tran_state != "raw") {
+    } else if (norm_state != "raw" || tran_state != "raw") {
       ## This makes use of the fact that the order of operations in the
       ## normalization function is
       ## static. filter->normalization->convert->batch->transform. Thus, if the
@@ -1359,7 +1358,8 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   mesg("Comparing analyses.")
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
-  total_comparisons <- lenminus * (length(methods) - 1) * len
+  ## FIXME: This is wrong.
+  total_comparisons <- (length(methods) - 1) * len
   progress_count <- 0
   if (isTRUE(verbose)) {
     bar <- utils::txtProgressBar(style = 3)
@@ -1941,7 +1941,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
     tmp_table[["base10_mean"]] <- 2 ^ tmp_table[[mean_column]]
     mean_column <- "base10_mean"
   } else if (type == "basic") {
-    tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_nummed"]] + tmp_table[["basic_denmed"]]) / 2)
+    tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_num"]] + tmp_table[["basic_den"]]) / 2)
     mean_column <- "base10_median"
   }
 
@@ -1965,8 +1965,6 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' which are defined as 'differentially expressed.'  If no criteria
 #' are provided, it arbitrarily chooses all genes outside of 1-z.
 #'
-#' Tested in test_29de_shared.R
-#'
 #' @param table Table from limma/edger/deseq.
 #' @param n Rank-order top/bottom number of genes to take.
 #' @param z Number of z-scores >/< the median to take.
@@ -1976,6 +1974,9 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #'  fold-change (plusminus says to get the negative of the
 #'  positive, otherwise 1/positive is taken).  This effectively
 #'  tells me if this is a log fold change or not.
+#' @param min_mean_exprs Subset the genes deemed significant with an
+#'  minimum expression cutoff.
+#' @param exprs_column Use this column for filtering by expression.
 #' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
 #' @return Subset of the up/down genes given the provided criteria.
@@ -1986,8 +1987,9 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' }
 #' @export
 get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
+                          min_mean_exprs = NULL, exprs_column = "deseq_basemean",
                           column = "logFC", fold = "plusminus", p_column = "adj.P.Val") {
-  if (is.null(z) & is.null(n) & is.null(lfc) & is.null(p)) {
+  if (is.null(z) && is.null(n) && is.null(lfc) && is.null(p)) {
     message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
     lfc <- 1.0
@@ -2011,7 +2013,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
     ## In that case, a p-value assertion should still know the difference
     ## between up and down. But it should also still know the difference between
     ## ratio and log changes.
-    if (fold == "plusminus" | fold == "log") {
+    if (fold == "plusminus" || fold == "log") {
       ## up_idx <- up_genes[, column] > 0.0
       up_idx <- as.numeric(up_genes[[column]]) > 0.0
       up_genes <- up_genes[up_idx, ]
@@ -2030,7 +2032,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(lfc)) {
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
     up_genes <- up_genes[up_idx, ]
-    if (fold == "plusminus" | fold == "log") {
+    if (fold == "plusminus" || fold == "log") {
       ## plusminus refers to a positive/negative number of logfold changes from
       ## a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
@@ -2068,6 +2070,20 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   }
   up_genes <- up_genes[order(as.numeric(up_genes[[column]]), decreasing = TRUE), ]
   down_genes <- down_genes[order(as.numeric(down_genes[[column]]), decreasing = FALSE), ]
+
+  if (!is.null(min_mean_exprs)) {
+    if (is.null(up_genes[[exprs_column]])) {
+      warning("The column ", exprs_column,
+              " does not appears to be in the table, cannot filter by expression.")
+    } else {
+      mesg("Subsetting the up/down genes to those with >= ",
+           min_mean_exprs, " expression.")
+      up_idx <- up_genes[[exprs_column]] >= min_mean_exprs
+      up_genes <- up_genes[up_idx, ]
+      down_idx <- down_genes[[exprs_column]] >= min_mean_exprs
+      down_genes <- down_genes[down_idx, ]
+    }
+  }
   ret <- list(
     "up_genes" = up_genes,
     "down_genes" = down_genes)

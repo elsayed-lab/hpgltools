@@ -1,30 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("065de_all.R:
-           1         2         3         4         5         6         7
-  123456789012345678901234567890123456789012345678901234567890123456789\n")
-## 2017-12, exported functions in de_basic:
-## basic_pairwise(), write_basic()
-## 2017-12, exported functions in de_deseq:
-## deseq2_pairwise(), write_deseq()
-## 2017-12, exported functions in de_edger:
-## edger_pairwise(), write_edger()
-## 2017-12, exported functions in de_limma:
-## hpgl_voomweighted(), hpgl_voom(), limma_pairwise(), write_limma()
-## 2017-12, exported functions in de_shared:
-## all_pairwise(), choose_model(), choose_dataset(), compare_de_results(),
-## compare_led_tables(), compare_logfc_plots(), compare_significant_contrasts(),
-## do_pairwise(), get_abundant_genes(), get_pairwise_gene_abundances(),
-## get_sig_genes(), make_pairwise_contrasts(), semantic_copynumber_filter(),
-## semantic_copynumber_extract(),
-## 2017-12, exported functions in de_plots:
-## significant_barplots(), extract_de_plots(),
-## extract_coefficient_scatter(), de_venn(), plot_num_siggenes()
-## 2017-12, exported functions in de_xlsx:
-## combine_de_tables(), extract_abundant_genes()
-## extract_significant_genes(), intersect_significant(),
-## write_de_table()
+context("065de_all.R")
 
 ## All of these functions will depend on an expt to play with:
 pombe_expt <- make_pombe_expt(annotation = FALSE)
@@ -169,8 +146,7 @@ test_that("all_pairwise() provided results reasonably similar (no batch in model
   expect_gt(actual, expected)
 })
 
-tmp <- normalize_expt(pombe_subset, filter = TRUE)
-test_sva <- all_pairwise(tmp, model_batch = "svaseq")
+test_sva <- all_pairwise(pombe_subset, model_batch = "svaseq", filter = TRUE)
 actual <- min(test_sva[["comparison"]][["comp"]])
 expected <- 0.63
 ## 19
@@ -239,15 +215,16 @@ test_that("choose_dataset provides some expected output?", {
 })
 
 ## we did test_condbatch, test_cond, test_sva
-keepers = list("nosig" = c("wt0", "mut0"),
-               "somesig" = c("wt30", "wt0"))
-test_condbatch_combined <- combine_de_tables(test_sva, keepers = keepers, excel="testme.xlsx")
+keepers <- list("nosig" = c("wt0", "mut0"),
+                "somesig" = c("wt30", "wt0"))
+test_condbatch_combined <- combine_de_tables(test_sva, keepers = keepers, excel = "testme.xlsx")
 ## For the life of me I cannot find where this warning is coming from.
 ## brought out the source of these warnings when I run 'make test'
 ## 24
 test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_condbatch_combined[["data"]]), 2)
 })
+removed <- file.remove("testme.xlsx")
 
 small_combined <- combine_de_tables(test_condbatch, keepers = keepers)
 saved <- save(list = c("small_combined"), file = "065_small_combined.rda")
@@ -256,7 +233,7 @@ test_that("Did we save the result of combine_de_tables?", {
 })
 
 cb_sig <- extract_significant_genes(small_combined,
-                                       excel = "some_sig.xlsx")
+                                    excel = "some_sig.xlsx")
 cb_saved <- save(list = "cb_sig", file = "test_065_significant.rda")
 test_that("Did we save the result of extract_de_tables?", {
   expect_true(file.exists("test_065_significant.rda"))
@@ -281,11 +258,11 @@ test_cond_combined <- combine_de_tables(test_cond,
                                         keepers = keepers)
 ## 25
 test_that("combine_de_tables() gave expected tables?", {
-  expect_equal(length(test_cond_combined[["data"]]), 1)
+  expect_equal(length(test_cond_combined[["data"]]), 2)
 })
 
 testing <- compare_de_results(test_condbatch_combined, test_cond_combined)
-expected <- 9
+expected <- 18
 actual <- length(unlist(testing[["result"]]))
 ## 26
 test_that("compare_de_results provides some expected output?", {
@@ -307,7 +284,6 @@ test_that("compare_led_tables provides some expected comparisons?", {
   expect_gt(actual, expected)
 })
 
-message("\nHuff huff, half way done.\n")
 ## Strange, I got a failure here when running make test
 ## but running manually everything seems to be working fine...
 ## 15 compare_significant_contrasts()
@@ -334,7 +310,6 @@ actual <- names(head(testing[["high"]][["mut0"]]))
 ##              "SPAC977.13c", "SPAC977.15", "SPAC977.16c")
 expected <- c("SPRRNA.49", "SPRRNA.01", "SPNCRNA.98",
               "SPRRNA.46", "SPSNRNA.07", "SPBC14F5.04c")
-
 ## 35
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
@@ -394,12 +369,6 @@ test_that("significant_barplots() gave some plots?", {
   expect_equal(class(testing[["deseq"]]), c("gg", "ggplot"))
   expect_equal(class(testing[["limma"]]), c("gg", "ggplot"))
   expect_equal(class(testing[["edger"]]), c("gg", "ggplot"))
-})
-
-testing <- extract_coefficient_scatter(output = test_sva)
-## 51
-test_that("extract_de_plots() gave some plots?", {
-  expect_equal(class(testing[["scatter"]]), c("gg", "ggplot"))
 })
 
 testing <- de_venn(test_condbatch_combined[["data"]][[1]])

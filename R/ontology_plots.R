@@ -1097,7 +1097,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_ks_nodes <- mf_ks_tree <- NULL
   if (isTRUE(do_mf_ks_tree)) {
-    mf_ks <- single_topgo_tree(tg, score_data = "mf_ks",
+    mf_ks <- single_topgo_tree(tg, score_column = "mf_ks",
                                node_data = "kmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_ks_nodes <- mf_ks[["nodes"]]
@@ -1106,7 +1106,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_ks_nodes <- bp_ks_tree <- NULL
   if (isTRUE(do_bp_ks_tree)) {
-    bp_ks <- single_topgo_tree(tg, score_data = "bp_ks",
+    bp_ks <- single_topgo_tree(tg, score_column = "bp_ks",
                                node_data = "kbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_ks_nodes <- bp_ks[["nodes"]]
@@ -1115,7 +1115,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_ks_nodes <- cc_ks_tree <- NULL
   if (isTRUE(do_cc_ks_tree)) {
-    cc_ks <- single_topgo_tree(tg, score_data = "cc_ks",
+    cc_ks <- single_topgo_tree(tg, score_column = "cc_ks",
                                node_data = "kcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_ks_nodes <- cc_ks[["nodes"]]
@@ -1124,7 +1124,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_el_nodes <- mf_el_tree <- NULL
   if (isTRUE(do_mf_el_tree)) {
-    mf_el <- single_topgo_tree(tg, score_data = "mf_el",
+    mf_el <- single_topgo_tree(tg, score_column = "mf_el",
                                node_data = "fmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_el_nodes <- mf_el[["nodes"]]
@@ -1133,7 +1133,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_el_nodes <- bp_el_tree <- NULL
   if (isTRUE(do_bp_el_tree)) {
-    bp_el <- single_topgo_tree(tg, score_data = "bp_el",
+    bp_el <- single_topgo_tree(tg, score_column = "bp_el",
                                node_data = "fbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_el_nodes <- mf_el[["nodes"]]
@@ -1142,7 +1142,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_el_nodes <- cc_el_tree <- NULL
   if (isTRUE(do_cc_el_tree)) {
-    cc_el <- single_topgo_tree(tg, score_data = "cc_el",
+    cc_el <- single_topgo_tree(tg, score_column = "cc_el",
                                node_data = "fcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_el_nodes <- mf_el[["nodes"]]
@@ -1151,7 +1151,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_weight_nodes <- mf_weight_tree <- NULL
   if (isTRUE(do_mf_weight_tree)) {
-    mf_weight <- single_topgo_tree(tg, score_data = "mf_weight",
+    mf_weight <- single_topgo_tree(tg, score_column = "mf_weight",
                                node_data = "fmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_weight_nodes <- mf_el[["nodes"]]
@@ -1160,7 +1160,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_weight_nodes <- bp_weight_tree <- NULL
   if (isTRUE(do_bp_weight_tree)) {
-    bp_weight <- single_topgo_tree(tg, score_data = "bp_weight",
+    bp_weight <- single_topgo_tree(tg, score_column = "bp_weight",
                                node_data = "fbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_weight_nodes <- bp_el[["nodes"]]
@@ -1169,7 +1169,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_weight_nodes <- cc_weight_tree <- NULL
   if (isTRUE(do_cc_weight_tree)) {
-    cc_weight <- single_topgo_tree(tg, score_data = "cc_weight",
+    cc_weight <- single_topgo_tree(tg, score_column = "cc_weight",
                                node_data = "fcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_weight_nodes <- cc_el[["nodes"]]

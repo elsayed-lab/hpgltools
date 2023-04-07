@@ -22,17 +22,25 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_plots <- function(pairwise, type = "edger", invert = FALSE,
-                             x = NULL, y = NULL, alpha = 0.4, z = 1.5,
+extract_de_plots <- function(pairwise, combined, type = "edger",
+                             invert = FALSE, invert_colors = c(),
+                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5,
                              logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
                              color_high = NULL, color_low = NULL, loess = FALSE,
-                             z_lines = FALSE) {
+                             z_lines = FALSE, label = label, label_column = "hgncsymbol") {
 
-  coef_result <- try(extract_coefficient_scatter(pairwise, type = type, x = x, y = y,
-                                                 z = z, n = n, loess = loess, alpha = alpha / 2.0,
-                                                 color_low = color_low, color_high = color_high,
-                                                 z_lines = z_lines))
-  source_info <- get_plot_columns(pairwise, type, found_table = found_table, p_type = p_type)
+  #if (type %in% invert_colors) {
+  #  tmp_color <- color_high
+  #  color_high <- color_low
+  #  color_low <- tmp_color
+  #}
+  coef_result <- try(extract_coefficient_scatter(
+    pairwise, type = type, x = denominator, y = numerator,
+    z = z, n = n, loess = loess, alpha = alpha / 2.0,
+    color_low = color_low, color_high = color_high,
+    z_lines = z_lines))
+  source_info <- get_plot_columns(combined, type, p_type = p_type)
+
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
   fc_col <- source_info[["fc_col"]]
@@ -48,12 +56,14 @@ extract_de_plots <- function(pairwise, type = "edger", invert = FALSE,
       input = input, table_name = found_table,
       expr_col = expr_col, fc_col = fc_col, p_col = p_col,
       logfc = logfc, pval = pval, invert = invert,
-      color_high = color_high, color_low = color_low)
+      color_high = color_high, color_low = color_low,
+      label = label, label_column = label_column)
     vol_material <- plot_volcano_condition_de(
       input = input, table_name = found_table,
       fc_col = fc_col, p_col = p_col,
       color_high = color_high, color_low = color_low,
-      invert = invert, logfc = logfc, pval = pval, label = 5)
+      invert = invert, logfc = logfc, pval = pval, label = 5,
+      label = label, label_column = label_column)
   }
 
 retlist <- list(
@@ -126,8 +136,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     stop("I do not know what type you wish to query.")
   }
 
-  mesg("This can do comparisons among the following columns in the pairwise result:")
-  mesg(toString(thenames))
   xname <- ""
   yname <- ""
   if (is.numeric(x)) {
@@ -140,7 +148,6 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
   } else {
     yname <- y
   }
-  mesg("Actually comparing ", xname, " and ", yname, ".")
 
   ## Now extract the coefficent df
   if (type == "edger") {
@@ -287,9 +294,9 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #'
 #' I split this function away from the main body of extract_de_plots()
 #' so that I can come back to it and strip it down to something a bit
-#' more legible.  One idea is to make use of the fact that I gave
-#' class assignments to all of the outputs from xxx_pairwise()
-get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj") {
+#' more legible.  Eventually I want to dispatch this logic off to
+#' separate functions depending on the class of the input.
+get_plot_columns <- function(data, type, p_type = "adj") {
   ret <- list(
     "p_col" = "P.Val",
     "fc_col" = "logFC",
@@ -297,12 +304,12 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     "wanted_table" = NULL,
     "invert" = FALSE,
     "input" = NULL,
-    "table_source" = "all_pairwise")
+    "table_source" = "data")
 
   ## Possibilities include: all_pairwise, deseq_pairwise, limma_pairwise,
   ## edger_pairwise, basic_pairwise, combine_de_tables.
-  if (!is.null(pairwise[["method"]])) {
-    if (pairwise[["method"]] != type) {
+  if (!is.null(data[["method"]])) {
+    if (data[["method"]] != type) {
       stop("The requested pairwise type and the provided input type do not match.")
     }
   }
@@ -315,9 +322,9 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     wanted_table <- found_table
   }
 
-  if ("combined_de" %in% class(pairwise)) {
-    wanted_tablename <- pairwise[["kept"]][[wanted_table]]
-    actual_tablenames <- pairwise[["keepers"]][[wanted_table]]
+  if ("combined_de" %in% class(data)) {
+    wanted_tablename <- data[["kept"]][[wanted_table]]
+    actual_tablenames <- data[["keepers"]][[wanted_table]]
     actual_numerator <- actual_tablenames[[1]]
     actual_denominator <- actual_tablenames[[2]]
     actual_tablename <- paste0(actual_numerator, "_vs_", actual_denominator)
@@ -325,18 +332,18 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
       ret[["invert"]] <- TRUE
     }
     wanted_table <- wanted_tablename
-    input <- pairwise[["input"]]
+    input <- data[["input"]]
     print(wanted_table)
-  }
-
-  ## if it is in fact all_pairwise, then there should be a set of
-  ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
-  ## essentially convert the input by extracting the relevant type.
-  if (class(pairwise)[1] == "all_pairwise") {
-    table_source <- glue::glue("{type}_pairwise")
-    pairwise <- pairwise[[type]]
+  } else if ("combined_table" %in% class(data)) {
+    table_source <- "combined_table"
+  } else if (class(data)[1] == "all_pairwise") {
+    ## if it is in fact all_pairwise, then there should be a set of
+    ## slots 'limma', 'deseq', 'edger', 'basic' from which we can
+    ## essentially convert the input by extracting the relevant type.
+    table_source <- glue("{type}_pairwise")
+    data <- data[[type]]
   } else if (!is.null(pairwise[["method"]])) {
-    table_source <- glue::glue("{pairwise[['method']]}_pairwise")
+    table_source <- glue("{data[['method']]}_pairwise")
   } else {
     stop("Unable to determine the source of this data.")
   }
@@ -349,7 +356,26 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
   fc_col <- NULL
   p_col <- NULL
   all_tables <- NULL
-  if (table_source == "deseq_pairwise") {
+  if (table_source == "combined_table") {
+    if (type == "deseq") {
+      expr_col <- "deseq_basemean"
+    } else if (type == "edger") {
+      expr_col <- "edger_logcpm"
+    } else if (type == "limma") {
+      expr_col <- "limma_ave"
+    } else if (type == "basic") {
+      expr_col <- "basic_nummed"
+    } else if (type =="ebseq") {
+      expr_col <- "ebseq_mean"
+    }
+    fc_col <- glue("{type}_logfc")
+    if (p_type == "adj") {
+      p_col <- glue("{type}_adjp")
+    } else {
+      p_col <- glue("{type}_p")
+    }
+    all_tables <- NULL
+  } else if (table_source == "deseq_pairwise") {
     ## This column will need to be changed from base 10 to log scale.
     expr_col <- "baseMean"
     fc_col <- "logFC"  ## The most common
@@ -358,7 +384,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else {
       p_col <- "P.Value"
     }
-    all_tables <- pairwise[["all_tables"]]
+    all_tables <- data[["all_tables"]]
   } else if (table_source == "edger_pairwise") {
     expr_col <- "logCPM"
     fc_col <- "logFC"  ## The most common
@@ -367,7 +393,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else {
       p_col <- "PValue"
     }
-    all_tables <- pairwise[["all_tables"]]
+    all_tables <- data[["all_tables"]]
   } else if (table_source == "limma_pairwise") {
     expr_col <- "AveExpr"
     fc_col <- "logFC"  ## The most common
@@ -376,11 +402,11 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else {
       p_col <- "P.Value"
     }
-    all_tables <- pairwise[["all_tables"]]
+    all_tables <- data[["all_tables"]]
   } else if (table_source == "basic_pairwise") {
     ## basic_pairwise() may have columns which are 'numerator_median' or 'numerator_mean'.
-    expr_col <- "numerator_median"
-    if (!is.null(pairwise[["all_tables"]][[1]][["numerator_mean"]])) {
+    expr_col <- "numerator"
+    if (!is.null(data[["all_tables"]][[1]][["numerator_mean"]])) {
       expr_col <- "numerator_mean"
     }
     fc_col <- "logFC"  ## The most common
@@ -389,7 +415,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else {
       p_col <- "p"
     }
-    all_tables <- pairwise[["all_tables"]]
+    all_tables <- data[["all_tables"]]
   } else if (table_source == "ebseq_pairwise") {
     expr_col <- "ebseq_mean"
     fc_col <- "logFC"
@@ -398,7 +424,7 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else {
       p_col <- "ebseq_ppde"
     }
-    all_tables <- pairwise[["all_tables"]]
+    all_tables <- data[["all_tables"]]
   } else if (table_source == "combined") {
     if (type == "deseq") {
       expr_col <- "deseq_basemean"
@@ -411,11 +437,11 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
     } else if (type =="ebseq") {
       expr_col <- "ebseq_mean"
     }
-    fc_col <- glue::glue("{type}_logfc")
+    fc_col <- glue("{type}_logfc")
     if (p_type == "adj") {
-      p_col <- glue::glue("{type}_adjp")
+      p_col <- glue("{type}_adjp")
     } else {
-      p_col <- glue::glue("{type}_p")
+      p_col <- glue("{type}_p")
     }
     all_tables <- pairwise[["data"]]
   } else {
@@ -425,7 +451,9 @@ get_plot_columns <- function(pairwise, type, found_table = NULL, p_type = "adj")
   possible_tables <- names(all_tables)
   the_table <- NULL
   ## Now that we have the columns, figure out which table.
-  if ("data.frame" %in% class(all_tables)) {
+  if (is.null(all_tables)) {
+    the_table <- data[["data"]]
+  } else if ("data.frame" %in% class(all_tables)) {
     ## This came from the creation of combine_de_tables()
     the_table <- all_tables
   } else if (is.numeric(wanted_table)) {
@@ -913,7 +941,8 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
                                  fc_col = "logFC", p_col = "qvalue",
                                  color_high = "red", color_low = "blue",
                                  pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
-                                 size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
+                                 size = 2, shapes = TRUE, invert = FALSE,
+                                 label = NULL, label_column = "hgncsymbol", ...) {
   ## Set up the data frame which will describe the plot
 
   ## Example caller:
@@ -997,7 +1026,12 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   df[["pval"]] <- as.numeric(df[["pval"]])
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
-  df[["label"]] <- rownames(df)
+
+  if (!is.null(label_column) && !is.null(table[[label_column]])) {
+    df[["label"]] <- table[[label_column]]
+  } else {
+    df[["label"]] <- rownames(df)
+  }
 
   ## Set up the labels for the legend by significance.
   ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
@@ -1112,6 +1146,10 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
 #' @param p_name Name of the p-value to put on the plot.
 #' @param p Cutoff defining significant from not.
 #' @param shapes_by_state Add fun shapes for the various significance states?
+#' @param minimum_p If a pvalue is lower than this, then set it to
+#'  this, thus artificially limiting the y-scale of a volcano plot.
+#'  This is only valid if one thinks that the pvalues are artificially
+#'  low and that is messing with the interpretation of the data.
 #' @param size How big are the dots?
 #' @param invert Flip the x-axis?
 #' @param label Label the top/bottom n logFC values?
@@ -1135,7 +1173,7 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
                             fc_col = "logFC", fc_name = "log2 fold change",
                             line_color = "black", line_position = "bottom", logfc = 1.0,
                             p_col = "adj.P.Val", p_name = "-log10 p-value", p = 0.05,
-                            shapes_by_state = FALSE,
+                            shapes_by_state = FALSE, minimum_p = NULL,
                             size = 2, invert = FALSE, label = NULL,
                             label_column = "hgncsymbol", ...) {
   low_vert_line <- 0.0 - logfc
@@ -1151,13 +1189,17 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
   df <- data.frame("xaxis" = as.numeric(table[[fc_col]]),
                    "yaxis" = as.numeric(table[[p_col]]))
   rownames(df) <- rownames(table)
+  if (!is.null(minimum_p)) {
+    low_idx <- df[["yaxis"]] < minimum_p
+    df[low_idx, "yaxis"] <- minimum_p
+  }
 
   if (isTRUE(invert)) {
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
 
   ## Add the label column if it exists.
-  if (!is.null(label_column) & !is.null(table[[label_column]])) {
+  if (!is.null(label_column) && !is.null(table[[label_column]])) {
     df[["label"]] <- table[[label_column]]
   } else {
     df[["label"]] <- rownames(table)
@@ -1317,7 +1359,6 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       size = 2, invert = FALSE, label = NULL,
                                       label_column = "hgncsymbol") {
 
-  mesg("Plotting volcano plot of the DE results of ", table_name, ".")
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(pval)
 
@@ -1355,7 +1396,7 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
   df[denominator_sig, "state"] <- "down"
   df[["state"]] <- as.factor(df[["state"]])
 
-  plot_colors <- c("#555555", color_low, color_high)
+  plot_colors <- c("#555555", color_high, color_low)
   names(plot_colors) <- c("insignificant", "up", "down")
 
   plt <- ggplot(data = df,

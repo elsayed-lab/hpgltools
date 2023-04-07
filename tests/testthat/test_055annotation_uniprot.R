@@ -7,7 +7,7 @@ context("055annotation_uniprot.R:
 ## load_uniprot_annotations() download_uniprot_proteome()
 
 ## load_uniprot_annotations()
-testing <- load_uniprot_annotations(species="H37Rv")
+testing <- load_uniprot_annotations(species = "H37Rv")
 expected <- c(3993, 76)
 actual <- dim(testing)
 ## 0304

@@ -31,7 +31,6 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                       palette = "Dark2", round = FALSE, tx_gene_map = NULL,
                       ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
-
   if (is.null(metadata)) {
     stop("This requires some metadata at minimum.")
   }

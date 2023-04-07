@@ -13,6 +13,8 @@ extract_significant_genes(
   sig_bar = TRUE,
   z = NULL,
   n = NULL,
+  min_mean_exprs = NULL,
+  exprs_column = NULL,
   top_percent = NULL,
   p_type = "adj",
   invert_barplots = FALSE,

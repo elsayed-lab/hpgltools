@@ -56,7 +56,8 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   table[["sample"]] <- "sample"
   count <- NULL
   density_plot <- ggplot(data = table, mapping = aes(x = .data[["l2"]])) +
-    ggplot2::geom_density(y = after_stat(count), position = "identity", adjust = adjust) +
+    ggplot2::geom_density(y = ggplot2::after_stat(count),
+                          position = "identity", adjust = adjust) +
     ggplot2::scale_y_continuous(limits = c(0, 0.25)) +
     ggplot2::labs(x = "log2(Number of reads observed)", y = "Number of TAs")
 
@@ -68,8 +69,8 @@ tnseq_saturation <- function(data, column = "Reads", ylimit = 100, adjust = 2) {
   log2_data_list <- as.numeric(log2(data_list + 1))
   data_plot <- plot_histogram(log2_data_list, bins = 300, adjust = adjust)
   data_plot <- data_plot +
-    ggplot2::scale_x_continuous(limits = c(0, 6))
-  ggplot2::scale_y_continuous(limits = c(0, 2))
+    ggplot2::scale_x_continuous(limits = c(0, 6)) +
+    ggplot2::scale_y_continuous(limits = c(0, 2))
 
   raw <- table(unlist(data_list))
   num_zeros <- raw[as.numeric(names(raw)) == 0]

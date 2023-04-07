@@ -71,7 +71,8 @@ test_that("Do we get the expected number of variants on chromosome 10 shared amo
   expect_equal(actual, expected)
 })
 
-snp_gene_summary <- snps_vs_genes(all_expt, snp_sets, expt_name_col = "seqnames")
+snp_gene_summary <- suppressWarnings(snps_vs_genes(all_expt, snp_sets,
+                                                   expt_name_col = "seqnames"))
 expected <- 18
 actual <- snp_gene_summary[["count_by_gene"]][["TcCLB.507505.10"]]
 test_that("Do we observe the expected variants in a specific gene?", {

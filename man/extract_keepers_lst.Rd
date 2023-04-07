@@ -33,7 +33,9 @@ extract_keepers_lst(
   plot_colors = plot_colors,
   z = 1.5,
   alpha = 0.4,
-  z_lines = FALSE
+  z_lines = FALSE,
+  label = 10,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{

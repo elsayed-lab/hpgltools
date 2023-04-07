@@ -104,13 +104,6 @@ circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
   annot_gene_names <- rownames(cfg@annot)
   df_chromosome_names <- unique(df[[df_chr_column]])
   df_gene_names <- NULL
-  if (!is.null(df_gene_column)) {
-    if (df_gene_column[1] == "rownames") {
-      df_gene_names <- rownames(df)
-    } else {
-      df_gene_names <- df[[df_gene_column]]
-    }
-  }
 
   found_chromosomes <- df_chromosome_names %in% annot_chromosome_names
   if (sum(found_chromosomes) == 0) {
@@ -119,17 +112,28 @@ circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
     message("Not all chromosomes are in the annotations, this might be ok if there are lots of contigs.")
   }
 
+
+  if (!is.null(df_gene_column)) {
+    if (df_gene_column[1] == "rownames") {
+      df_gene_names <- rownames(df)
+    } else {
+      df_gene_names <- df[[df_gene_column]]
+    }
+
   found_genes <- sum(df_gene_names %in% annot_gene_names)
-  if (found_genes == 0) {
-    message("The genes in the provided data do not match the annotations.")
-    message("Here are the first few of each, annotation: ")
-    print(head(annot_gene_names))
-    message("The df: ")
-    print(head(df_gene_names))
-    stop("The genes in the provided data frame do not match the annotations.")
-  } else if (found_genes != length(annot_gene_names)) {
-    message("There were ", found_genes, " observed in the annotations out of a total: ",
-            length(annot_gene_names), ".")
+    if (found_genes == 0) {
+      message("The genes in the provided data do not match the annotations.")
+      message("Here are the first few of each, annotation: ")
+      print(head(annot_gene_names))
+      message("The df: ")
+      print(head(df_gene_names))
+      stop("The genes in the provided data frame do not match the annotations.")
+    } else if (found_genes != length(annot_gene_names)) {
+      message("There were ", found_genes, " observed in the annotations out of a total: ",
+              length(annot_gene_names), ".")
+    }
+  } else {
+    found_genes <- 0
   }
 
   retlist <- list(

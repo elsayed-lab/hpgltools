@@ -28,6 +28,8 @@ combine_de_tables(
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
   rda = NULL,
   start_worksheet = "S02",
+  label = 10,
+  label_column = "hgncsymbol",
   format_sig = 4,
   excel = NULL,
   plot_columns = 10,

@@ -2,8 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 
-context("470expt_spyogenes.R: Does a small bacterial RNAseq experiment load?
-  1234567890123456789012345678901\n")
+context("470expt_spyogenes.R: Does a small bacterial RNAseq experiment load?")
 
 mgas_data <- new.env()
 cdm_data <- system.file("share/cdm_expt.rda", package = "hpgltools")
@@ -46,7 +45,7 @@ test_that("Is the batch state maintained?", {
   expect_equal("combat_scale", mgas_norm[["state"]][["batch"]])
 })
 
-mgas_pairwise <- all_pairwise(mgas_expt, parallel = FALSE)
+mgas_pairwise <- all_pairwise(mgas_expt)
 expected <- 0.64
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
 ## 07

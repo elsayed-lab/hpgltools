@@ -6,11 +6,11 @@
 are wanted to plot a MA/Volcano from any one of a diverse set of possible
 input types.}
 \usage{
-get_plot_columns(pairwise, type, found_table = NULL, p_type = "adj")
+get_plot_columns(data, type, p_type = "adj")
 }
 \description{
 I split this function away from the main body of extract_de_plots()
 so that I can come back to it and strip it down to something a bit
-more legible.  One idea is to make use of the fact that I gave
-class assignments to all of the outputs from xxx_pairwise()
+more legible.  Eventually I want to dispatch this logic off to
+separate functions depending on the class of the input.
 }

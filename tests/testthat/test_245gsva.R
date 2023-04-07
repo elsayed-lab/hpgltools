@@ -41,8 +41,8 @@ test_that("Can we acquire significant gsva scores?", {
 ## Test making geneset Collections.
 cb_sig <- environment()
 load(file = "test_065_significant.rda", envir = cb_sig)
-ups <- cb_sig[["deseq"]][["ups"]][["wt30_vs_wt0"]]
-downs <- cb_sig[["deseq"]][["downs"]][["wt30_vs_wt0"]]
+ups <- cb_sig[["deseq"]][["ups"]][["somesig"]]
+downs <- cb_sig[["deseq"]][["downs"]][["somesig"]]
 sig_gsc <- make_gsc_from_ids(first_ids = rownames(ups), second_ids = rownames(downs),
                              researcher_name = "Idunno",
                              current_id = NULL, required_id = NULL,

@@ -18,6 +18,7 @@ plot_volcano_de(
   p_name = "-log10 p-value",
   p = 0.05,
   shapes_by_state = FALSE,
+  minimum_p = NULL,
   size = 2,
   invert = FALSE,
   label = NULL,
@@ -51,6 +52,11 @@ interesting.}
 \item{p}{Cutoff defining significant from not.}
 
 \item{shapes_by_state}{Add fun shapes for the various significance states?}
+
+\item{minimum_p}{If a pvalue is lower than this, then set it to
+this, thus artificially limiting the y-scale of a volcano plot.
+This is only valid if one thinks that the pvalues are artificially
+low and that is messing with the interpretation of the data.}
 
 \item{size}{How big are the dots?}
 

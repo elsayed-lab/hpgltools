@@ -75,7 +75,7 @@ count_clonotype_by_cluster <- function(scd, column = "res0p2_clusters",
     ret[cluster_num, "cluster_name"] <- cluster
     ret[cluster_num, "cells"] <- sum(meta[[column]] == cluster)
     ret[cluster_num, "has_clono"] <- sum(meta[[column]] == cluster &
-                                         !is.na(meta[["raw_clonotype_id"]]))
+                                           !is.na(meta[["raw_clonotype_id"]]))
   }
   ret[["rownames"]] <- NULL
   ret[["proportion"]] <- ret[["has_clono"]] / ret[["cells"]]
@@ -121,30 +121,33 @@ create_scd <- function(metadata, expression_column = "gexfile",
   count <- 1
   obj <- NULL
   merged <- NULL
+  initial_data <- list()
   if (isTRUE(separate)) {
     merged <- list()
   }
 
+  cell_ids <- c()
   for (dirname in metadata[[expression_column]]) {
     path_name <- basename(dirname)
     start_path <- file.path(dirname, "outs", "per_sample_outs", path_name)
     mesg("Loading sample ", path_name, " from: ", start_path, ".")
+    ## This should perhaps instead use the ID column from the metadata.
     if (!is.null(prefix)) {
       start_path <- file.path(prefix, dirname, "outs", "per_sample_outs", path_name)
     }
     full_path <- file.path(start_path, "count", "sample_filtered_feature_bc_matrix")
     if (length(types) == 1) {
-        obj <- Seurat::Read10X(full_path) %>%
-            Seurat::CreateSeuratObject(project = path_name)
+      obj <- suppressWarnings(Seurat::Read10X(full_path)) %>%
+        suppressWarnings(Seurat::CreateSeuratObject(project = path_name))
     } else {
-        ## If there are more than 1 type, then obj should be a list.
-        obj <- Seurat::Read10X(full_path)
-        gex <- Seurat::CreateSeuratObject(obj[[1]])
-        Seurat::Idents(object = gex) <- path_name
-        ## gex@meta.data[["orig.ident"]] <- path_name
-        ab <- Seurat::CreateAssayObject(obj[[2]])
-        gex[["ab"]] <- ab
-        obj <- gex
+      ## If there are more than 1 type, then obj should be a list.
+      obj <- suppressWarnings(Seurat::Read10X(full_path))
+      gex <- suppressWarnings(Seurat::CreateSeuratObject(obj[[1]]))
+      Seurat::Idents(object = gex) <- path_name
+      ## gex@meta.data[["orig.ident"]] <- path_name
+      ab <- suppressWarnings(Seurat::CreateAssayObject(obj[[2]]))
+      gex[["ab"]] <- ab
+      obj <- gex
     }
 
     if (!is.null(metadata[[vdj_t_column]])) {
@@ -159,21 +162,25 @@ create_scd <- function(metadata, expression_column = "gexfile",
       obj <- add_clonotype_annotations(obj, type = "b",
                                        start_path = start_path)
     }
-
-    if (isTRUE(separate)) {
-      merged[[path_name]] <- obj
-    } else {
-      if (count == 1) {
-        merged <- obj
-      } else {
-        merged <- merge(merged, obj)
-      }
-    }
+    initial_data[[path_name]] <- obj
     count <- count + 1
   } ## End of loop
 
-  merged@misc[["sample_metadata"]] <- metadata
+  if (isTRUE(separate)) {
+    merged <- initial_data
+  } else {
+    first_element <- initial_data[[1]]
+    other_elements <- c()
+    for (elem in seq(2, length(initial_data))) {
+      other_elements <- c(other_elements, initial_data[[elem]])
+    }
+    merged <- merge(x = first_element, y = other_elements, add.cell.ids = names(initial_data))
+  }
 
+  merged@misc[["sample_metadata"]] <- metadata
+  ## Store the identities in a column 'sampleid' in case we change the Identities
+  ## later and forget to store the old ones.
+  merged[["sampleid"]] <- Seurat::Idents(merged)
   merged[["pct_mito"]] <- Seurat::PercentageFeatureSet(merged, pattern = mito_pattern)
   merged[["pct_ribo"]] <- Seurat::PercentageFeatureSet(merged, pattern = ribo_pattern)
 
@@ -215,6 +222,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   start_cells <- current_cells
   start_genes <- current_genes
   start_counts <- current_counts
+  current_meta <- scd@meta.data
 
   remerge_assay <- NULL
   if (!is.null(remerge)) {
@@ -224,14 +232,14 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   mesg("We are starting with ", current_cells, " cells, ", current_genes,
        " genes, and ", current_counts, " counts.")
 
-  if (is.null(scd@meta.data[["pct_mito"]])) {
+  if (is.null(current_meta[["pct_mito"]])) {
     scd[["pct_mito"]] <- Seurat::PercentageFeatureSet(scd, pattern = mito_pattern)
   }
-  if (is.null(scd@meta.data[["pct_ribo"]])) {
+  if (is.null(current_meta[["pct_ribo"]])) {
     scd[["pct_ribo"]] <- Seurat::PercentageFeatureSet(scd, pattern = ribo_pattern)
   }
   filt_scd <- scd
-  filt_meta <- filt_scd@meta.data
+  current_meta <- scd@meta.data
 
   if (isTRUE(verbose)) {
     mesg("Plotting the data before filtering.")
@@ -240,27 +248,21 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   sufficient_rna <- nFeature_RNA <- NULL
   if (!is.null(min_num_rna) & !is.null(max_num_rna)) {
     mesg("Filtering both less than minimum and more than maximum.")
-    sufficient_rna <- filt_meta[["nFeature_RNA"]] >= min_num_rna &
-      filt_meta[["nFeature_RNA"]] <= max_num_rna
-      ## Seurat::WhichCells(filt_scd, expression = nFeature_RNA <= max_num_rna)
+    sufficient_rna <- current_meta[["nFeature_RNA"]] >= min_num_rna &
+      current_meta[["nFeature_RNA"]] <= max_num_rna
   } else if (!is.null(min_num_rna)) {
     mesg("Filtering less than minimum number of RNAs observed.")
-    ## sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA >= min_num_rna)
-    sufficient_rna <- filt_meta[["nFeature_RNA"]] >= min_num_rna
+    sufficient_rna <- current_meta[["nFeature_RNA"]] >= min_num_rna
   } else if (!is.null(max_num_rna)) {
     mesg("Filtering more than maximum number of RNAs observed.")
-    ## sufficient_rna <- Seurat::WhichCells(filt_scd, expression = nFeature_RNA <= max_num_rna)
-    sufficient_rna <- filt_meta[["nFeature_RNA"]] <= max_num_rna
+    sufficient_rna <- current_meta[["nFeature_RNA"]] <= max_num_rna
   }
 
-  ## if (is.null(sufficient_rna)) {
   if (sum(sufficient_rna) == 0) {
     mesg("Not filtering based on sufficient number of genes observed.")
-    ## } else if (length(sufficient_rna) == current_cells) {
   } else if (sum(sufficient_rna) == current_cells) {
     mesg("The provided filters on sufficient genes observed did not remove any cells.")
   } else {
-    ## filt_scd <- subset(filt_scd, cells = sufficient_rna)
     filt_scd <- filt_scd[, sufficient_rna]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
@@ -274,18 +276,22 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     current_genes <- new_genes
     current_counts <- new_counts
   }
+  current_meta <- filt_scd@meta.data
 
-  ##mesg("We now have ", current_cells, " cells, ", current_genes,
-  ##     " genes, and ", current_counts, " counts.")
   if (is.null(min_gene_counts)) {
     mesg("Not filtering based on the minimum number of counts across cells observed.")
   } else {
-    sufficiently_observed <- BiocGenerics::rowSums(filt_scd) >= min_gene_counts
-    sufficient_genes <- rownames(filt_scd)[sufficiently_observed]
-    if (current_genes == length(sufficient_genes)) {
+    sufficiently_observed <- as.logical(BiocGenerics::rowSums(filt_scd) >= min_gene_counts)
+    if (current_genes == sum(sufficiently_observed)) {
       mesg("The minimum number of counts/gene across cells filter did not remove any genes.")
     } else {
-      filt_scd <- subset(filt_scd, features = sufficient_genes)
+      if (!is.null(remerge)) {
+        remerge_assay <- filt_scd[[remerge]]
+      }
+      filt_scd <- filt_scd[sufficiently_observed, ]
+      if (!is.null(remerge)) {
+        filt_scd[[remerge]] <- remerge_assay
+      }
       new_cells <- ncol(filt_scd)
       new_genes <- nrow(filt_scd)
       new_counts <- sum(BiocGenerics::colSums(filt_scd))
@@ -299,21 +305,16 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
       current_counts <- new_counts
     }
   }
+  current_meta <- filt_scd@meta.data
 
-  ##mesg("We now have ", current_cells, " cells, ", current_genes,
-  ##     " genes, and ", current_counts, " counts.")
   sufficient_ribo <- pct_ribo <- pct_mito <- NULL
   if (!is.null(min_pct_ribo) & !is.null(max_pct_ribo)) {
-    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo) &
-    ##  Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
-    sufficient_ribo <- filt_scd[["pct_ribo"]] >= min_pct_ribo &
-      filt_scd[["pct_ribo"]] <= max_pct_ribo
+    sufficient_ribo <- current_meta[["pct_ribo"]] >= min_pct_ribo &
+      current_meta[["pct_ribo"]] <= max_pct_ribo
   } else if (!is.null(min_pct_ribo)) {
-    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo >= min_pct_ribo)
-    sufficient_ribo <- filt_scd[["pct_ribo"]] >= min_pct_ribo
+    sufficient_ribo <- current_meta[["pct_ribo"]] >= min_pct_ribo
   } else if (!is.null(max_pct_ribo)) {
-    ##sufficient_ribo <- Seurat::WhichCells(filt_scd, expression = pct_ribo <= max_pct_ribo)
-    sufficient_ribo <- filt_scd[["pct_ribo"]] <= max_pct_ribo
+    sufficient_ribo <- current_meta[["pct_ribo"]] <= max_pct_ribo
   }
   if (sum(sufficient_ribo) == 0) {
     mesg("Not filtering based on sufficient ribosomal protein percentage observed.")
@@ -334,28 +335,22 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     current_genes <- new_genes
     current_counts <- new_counts
   }
+  current_meta <- filt_scd@meta.data
 
-  ##mesg("We now have ", current_cells, " cells, ", current_genes,
-  ##     " genes, and ", current_counts, " counts.")
   sufficient_mito <- NULL
   if (!is.null(min_pct_mito) & !is.null(max_pct_mito)) {
-    ##sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito) &
-    ##  Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
-    sufficient_mito <- filt_scd[["pct_mito"]] >= min_pct_mito &
+    sufficient_mito <- current_meta[["pct_mito"]] >= min_pct_mito &
       filt_scd[["pct_mito"]] <= max_pct_mito
   } else if (!is.null(min_pct_mito)) {
-    ##sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito >= min_pct_mito)
-    sufficient_mito <- filt_scd[["pct_mito"]] >= min_pct_mito
+    sufficient_mito <- current_meta[["pct_mito"]] >= min_pct_mito
   } else if (!is.null(max_pct_mito)) {
-    ## sufficient_mito <- Seurat::WhichCells(filt_scd, expression = pct_mito <= max_pct_mito)
-    sufficient_mito <- filt_scd[["pct_mito"]] <= max_pct_mito
+    sufficient_mito <- current_meta[["pct_mito"]] <= max_pct_mito
   }
   if (sum(sufficient_mito) == 0) {
     mesg("Not filtering based on excessive mitochondrial RNA percentage observed.")
   } else if (sum(sufficient_mito) == current_cells) {
     mesg("The mitochondrial filter did not remove any cells.")
   } else {
-    ## filt_scd <- subset(filt_scd, cells = sufficient_mito)
     filt_scd <- filt_scd[, sufficient_mito]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
@@ -369,7 +364,9 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     current_genes <- new_genes
     current_counts <- new_counts
   }
+  current_meta <- filt_scd@meta.data
 
+  verbose <- FALSE
   filt_scd <- record_seurat_samples(filt_scd, type = "num_cells",
                                     column_name = "filt_num_cells", verbose = verbose) %>%
     record_seurat_samples(type = "nFeature_RNA", column_name = "filt_nfeature",
@@ -384,19 +381,18 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   post_plots <- plot_seurat_scatter(filt_scd)
 
   message(sprintf("All filters removed %d (%f%%) cells, %d (%f%%) genes, %d (%f%%) counts.",
-          start_cells - current_cells, (1.0 -(current_cells / start_cells)) * 100.0,
-          start_genes - current_genes, (1.0 - (current_genes / start_genes)) * 100.0,
-          start_counts - current_counts, (1.0 - (current_counts / start_counts)) * 100.0))
+                  start_cells - current_cells, (1.0 -(current_cells / start_cells)) * 100.0,
+                  start_genes - current_genes, (1.0 - (current_genes / start_genes)) * 100.0,
+                  start_counts - current_counts, (1.0 - (current_counts / start_counts)) * 100.0))
 
-  if (!is.null(remerge)) {
-    remerge_idx <- colnames(remerge_assay) %in% colnames(filt_scd)
-    dropped <- sum(!remerge_idx)
-    message("Filtering removed ", dropped, " cells from the ", remerge, " assay.")
-    kept <- remerge_assay[, remerge_idx]
-    wanted_cells <- colnames(remerge_assay)[remerge_idx]
-    kept_assay <- subset(remerge_assay, cells = wanted_cells)
-    filt_scd[[remerge]] <- kept_assay
-  }
+  filt_scd@meta.data <- current_meta
+  ## if (!is.null(remerge)) {
+  ##   remerge_idx <- colnames(remerge_assay) %in% colnames(filt_scd)
+  ##   dropped <- sum(!remerge_idx)
+  ##   message("Filtering removed ", dropped, " cells from the ", remerge, " assay.")
+  ##   kept_assay <- remerge_assay[, remerge_idx]
+  ##   filt_scd[[remerge]] <- kept_assay
+  ## }
 
   filt_scd@misc[["pre_plots"]] <- pre_plots
   filt_scd@misc[["post_plots"]] <- post_plots
@@ -422,7 +418,7 @@ proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
   }
 
   ## Fill in the df of cells observed with respect to cluster of interest.
-  for (sample in start_df[["sampleid"]]) {
+  for (sample in raw_df[["sampleid"]]) {
     wanted <- grepl(x = names(cell_counts), pattern = glue("^{sample}_"))
     counts <- cell_counts[wanted]
     names(counts) <- cluster_df_names
@@ -467,7 +463,7 @@ proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
 #' @export
 record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
                                   column_name = NULL, column_prefix = NULL,
-                                  verbose = TRUE, group = "Idents",
+                                  verbose = FALSE, group = "Idents",
                                   assay = "RNA") {
   scd_meta <- scd@meta.data
   if (is.null(scd_meta[[group]])) {
@@ -475,7 +471,7 @@ record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
     group <- "Idents"
   }
 
-  sample_names <- levels(as.factor(scd[[group]]))
+  sample_names <- levels(as.factor(scd_meta[[group]]))
   test_slot <- "sample_metadata"
   if (group != "Idents") {
     test_slot <- paste0(group, "_metadata")
@@ -484,7 +480,7 @@ record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
   sample_meta <- data.frame()
   ## Check that we have existing information to append
   if (is.null(scd@misc[[test_slot]])) {
-    sample_meta <- data.frame(rownames = sample_name)
+    sample_meta <- data.frame(rownames = sample_names)
   } else {
     sample_meta <- scd@misc[[test_slot]]
   }
@@ -493,7 +489,6 @@ record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
   ## the percentage counts with genes matching that pattern (like
   ## ribosomal proteins or mitochondrial RNA)
   if (!is.null(pattern)) {
-    ## scd[[type]] <- Seurat::PercentageFeatureSet(scd, pattern = pattern, assay = assay)
     test <- Seurat::PercentageFeatureSet(scd, pattern = pattern, assay = assay)
     if (class(test)[1] == "data.frame") {
       scd@meta.data[[type]] <- test[[1]]
@@ -507,16 +502,17 @@ record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
   ## of interest.
   if (type == "num_cells") {
     sample_meta[[type]] <- 0
-    for (s in 1:nrow(sample_meta)) {
+    for (s in seq_len(nrow(sample_meta))) {
       sample_name <- rownames(sample_meta)[s]
       sample_meta[s, type] <- sum(scd_meta[[group]] == sample_name)
     }
+
   } else {
     sample_meta <- skim_seurat_metadata(
-        sample_meta, scd_meta, meta_query = type,
-        group_column = group, summary_query = "numeric.mean",
-        column_name = column_name, column_prefix = column_prefix,
-        verbose = verbose)
+      sample_meta, scd_meta, meta_query = type,
+      group_column = group, summary_query = "numeric.mean",
+      column_name = column_name, column_prefix = column_prefix,
+      verbose = verbose)
   }
 
   ## Now put the new information into the misc list of the scd.
@@ -541,10 +537,10 @@ plot_seurat_scatter <- function(scd, set = NULL) {
   plots <- list()
   if (is.null(set)) {
     set <- list(
-        "ribo_vs_mito" = c("pct_ribo", "pct_mito"),
-        "count_vs_genes" = c("nCount_RNA", "nFeature_RNA"),
-        "count_vs_ribo" = c("nCount_RNA", "pct_ribo"),
-        "count_vs_mito" = c("nCount_RNA", "pct_mito"))
+      "ribo_vs_mito" = c("pct_ribo", "pct_mito"),
+      "count_vs_genes" = c("nCount_RNA", "nFeature_RNA"),
+      "count_vs_ribo" = c("nCount_RNA", "pct_ribo"),
+      "count_vs_mito" = c("nCount_RNA", "pct_mito"))
   }
 
   for (p in 1:length(set)) {
@@ -630,7 +626,7 @@ summarize_scd_clusters <- function(scd, fx = "mean", column_prefix = "descartes"
   rownames(sd_df) <- sd_df[[1]]
   sd_df[[1]] <- NULL
   colnames(sd_df) <- gsub(x = colnames(sd_df), pattern = "_name$",
-                            replacement = "")
+                          replacement = "")
   z_df <- mean_df / sd_df
   z_df <- as.matrix(z_df)
 
@@ -648,9 +644,9 @@ summarize_scd_clusters <- function(scd, fx = "mean", column_prefix = "descartes"
   z_df <- as.matrix(z_df)
 
   retlist <- list(
-      "mean_df" = mean_df,
-      "sd_df" = sd_df,
-      "z_df" = z_df)
+    "mean_df" = mean_df,
+    "sd_df" = sd_df,
+    "z_df" = z_df)
   return(retlist)
 }
 
@@ -689,13 +685,13 @@ skim_seurat_metadata <- function(sample_meta, obj_meta, meta_query = "nCount_RNA
       group_by(!!rlang::sym(group_column)) %>%
       skimr::skim_tee(meta_query) %>%
       skimr::skim(meta_query) %>%
-      dplyr::select(summary_query) %>%
+      dplyr::select(all_of(summary_query)) %>%
       unlist()
   } else {
     sample_meta[[column_name]] <- obj_meta %>%
       group_by(!!rlang::sym(group_column)) %>%
       skim(meta_query) %>%
-      dplyr::select(summary_query) %>%
+      dplyr::select(all_of(summary_query)) %>%
       unlist()
   }
   return(sample_meta)

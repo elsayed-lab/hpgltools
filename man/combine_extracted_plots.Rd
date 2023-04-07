@@ -23,9 +23,12 @@ combine_extracted_plots(
   plot_colors = NULL,
   fancy = FALSE,
   do_inverse = FALSE,
+  invert_colors = FALSE,
   z = 1.5,
   alpha = 0.4,
-  z_lines = FALSE
+  z_lines = FALSE,
+  label = 10,
+  label_column = "hgncsymbol"
 )
 }
 \arguments{
