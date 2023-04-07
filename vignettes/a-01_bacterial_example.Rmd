@@ -32,7 +32,8 @@ vignette: >
 </style>
 
 ```{r options, include = FALSE}
-library("hpgltools")
+library(hpgltools)
+library(hpgldata)
 knitr::opts_knit$set(progress = TRUE,
                      verbose = TRUE,
                      width = 90,
@@ -67,7 +68,7 @@ function and the genome annotations were loaded with gff2df().
 
 ```{r loading_data}
 library(hpgltools)
-data_file <- system.file("share/cdm_expt.rda", package = "hpgltools")
+data_file <- system.file("share/cdm_expt.rda", package = "hpgldata")
 cdm <- new.env()
 load(data_file, envir = cdm)
 rm(data_file)
@@ -383,7 +384,7 @@ Much(all) of the following is taken from the material in tests/testthat/test_70m
 ## match my old rnaseq analysis!!  Thus I put my old gff file used for mapping into inst/
 ## and will load the annotation data from that; but I will use this data to gather
 ## the COG information.
-mgas_gff_df <- sm(load_gff_annotations(gff = system.file("share/gas.gff", package = "hpgltools")))
+mgas_gff_df <- sm(load_gff_annotations(gff = system.file("share/gas.gff", package = "hpgldata")))
 mgas_gff_df <- mgas_gff_df[-1, ]
 mgas_gff_df[["sysName"]] <- gsub(pattern = "Spy_", replacement = "Spy",
                                  x = mgas_gff_df[["locus_tag"]])

@@ -27,7 +27,8 @@ vignette: >
 
 ```{r options, include = FALSE}
 ## These are the options I tend to favor
-library("hpgltools")
+library(hpgltools)
+library(hpgldata)
 knitr::opts_knit$set(progress = TRUE,
                      verbose = TRUE,
                      width = 90,
